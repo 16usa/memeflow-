@@ -1,4 +1,4 @@
-run = "cd memeflow-app && node app-server.mjs"
+run = "npm start"
 modules = ["nodejs-24"]
 
 [deployment]
