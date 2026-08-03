@@ -1,0 +1,6 @@
+run = "npm start"
+entrypoint = "app-server.mjs"
+
+[deployment]
+run = ["sh", "-c", "npm start"]
+deploymentTarget = "cloudrun"

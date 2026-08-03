@@ -11,6 +11,27 @@ env = { "CI" = "true" }
 [workflows]
 runButton = "Project"
 
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "MEMEFLOW"
+
+[[workflows.workflow]]
+name = "MEMEFLOW"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd memeflow-app && node app-server.mjs"
+waitForPort = 3000
+
+[workflows.workflow.metadata]
+outputType = "webview"
+
 [agent]
 stack = "PNPM_WORKSPACE"
 expertMode = true
@@ -18,3 +39,15 @@ expertMode = true
 [postMerge]
 path = "scripts/post-merge.sh"
 timeoutMs = 20000
+
+[userenv]
+
+[userenv.shared]
+ALLOW_ANONYMOUS_PAPER = "true"
+DATA_DIR = "./data"
+DISCOVERY_BACKFILL_LIMIT = "100"
+DISCOVERY_ENABLED = "true"
+DISCOVERY_MAX_TOKENS = "5000"
+POLL_ACTIVE_MS = "2000"
+SOLANA_COMMITMENT = "confirmed"
+STALE_MS = "20000"
