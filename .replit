@@ -2,6 +2,7 @@ run = "npm start"
 modules = ["nodejs-24"]
 
 [deployment]
+run = ["node", "memeflow-app/app-server.mjs"]
 router = "application"
 deploymentTarget = "autoscale"
 
