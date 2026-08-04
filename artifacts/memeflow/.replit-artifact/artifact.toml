@@ -1,0 +1,24 @@
+kind = "web"
+previewPath = "/"
+title = "MEMEFLOW"
+description = "Solana meme token monitoring and trading platform. Discovers tokens via Pump program logsSubscribe, evaluates them with a scoring engine, and provides real-time SSE charting. Paper mode is free; live trading requires Stripe Pro or owner entitlement."
+version = "1.0.0"
+id = "artifacts/memeflow"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 25904
+
+[services.development]
+run = "pnpm --filter @workspace/memeflow run dev"
+
+[services.production]
+
+[services.production.run]
+args = ["node", "memeflow-app/app-server.mjs"]
+
+[services.env]
+PORT = "25904"
+BASE_PATH = "/"
