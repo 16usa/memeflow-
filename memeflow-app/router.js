@@ -41,24 +41,18 @@
     /*
      * Mobile layout overrides
      *
-     * The existing CSS at @media(max-width:820px) sets:
-     *   #positions, #wallet { display: none !important; }
+     * NOTE: #positions and #wallet visibility is handled by the existing CSS:
+     *   .context-position #positions { display:block !important; opacity:1 }
+     * That rule (already in index.html line 110) activates when the inner
+     * Position tab is clicked and body.context-position is set. We do NOT
+     * override it globally here — that would permanently show #positions
+     * even in Mission context and break the intended tab behaviour.
      *
-     * That rule was written for a sheet-only mobile design where those sections
-     * were never shown inline. We override it so the Positions and Wallet buttons
-     * can scroll to the actual in-page sections. Both elements become block
-     * containers on mobile; child grids stack naturally via the existing
-     * minmax(0,1fr) overrides in the later CSS block.
-     */
-    '@media (max-width: 820px) {',
-    '  #positions { display: block !important; }',
-    '  #wallet    { display: block !important; }',
-
-    /*
      * Reduce mobile nav height and its reserved space so the bar
      * does not obscure the bottom of any section.
      * Buttons keep ≥ 40 px for touch targets; safe-area is preserved.
      */
+    '@media (max-width: 820px) {',
     '  .mobile-nav {',
     '    height: auto    !important;',
     '    min-height: 0   !important;',
@@ -126,47 +120,43 @@
     return body;
   }
 
+  /*
+   * scrollToElement(el) — scroll the viewport to a visible element.
+   *
+   * Called ONLY for elements that are already display:block at the time
+   * of the call. Do not call for elements that are still display:none.
+   * Use the body-class + rAF approach (see positionsHandler below) when
+   * visibility depends on a CSS body-class toggle.
+   */
+  function scrollToElement(el) {
+    if (!el) return;
+    /*
+     * Two rAFs:
+     *   rAF 1 — style mutations queued before this call are committed.
+     *   rAF 2 — layout is recalculated; getBoundingClientRect() accurate.
+     *
+     * Do NOT use window.scrollTo() or element.scrollIntoView().
+     * Both are silently disabled on iOS Safari when html/body carry
+     * overflow-x:clip/hidden (this page sets that at lines 920 + 927).
+     * document.scrollingElement.scrollTop works on all platforms.
+     */
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        var scroller  = getScroller();
+        var rect      = el.getBoundingClientRect();
+        var absoluteY = scroller.scrollTop + rect.top;
+        var targetY   = Math.max(0, absoluteY - 8); /* 8 px breathing room */
+        scroller.scrollTop = targetY;
+        try { scroller.scrollTo({ top: targetY, behavior: 'smooth' }); } catch (_) {}
+      });
+    });
+  }
+
   function scrollTo(hash) {
     if (!hash || hash === '#') return;
     var id     = hash.replace(/^#/, '');
     var target = document.getElementById(id);
-    if (!target) return;
-
-    /*
-     * Force display:block as an INLINE style (highest CSS specificity).
-     * This overrides every stylesheet rule including !important ones,
-     * so the element definitely has layout when we measure it.
-     * Required for #positions and #wallet which have
-     *   display:none !important  at @media(max-width:820px) in source CSS.
-     */
-    target.style.setProperty('display', 'block', 'important');
-
-    /*
-     * Two rAFs:
-     *   rAF 1 — style mutation is flushed to the rendering pipeline.
-     *   rAF 2 — layout has been recalculated; getBoundingClientRect() is
-     *            now accurate for the newly-visible element.
-     *
-     * Do NOT use window.scrollTo() or element.scrollIntoView() here.
-     * Both are silently disabled on iOS Safari when html/body carry
-     * overflow-x:clip/hidden. Use document.scrollingElement.scrollTop
-     * (direct property assignment) instead — it always works.
-     */
-    requestAnimationFrame(function () {
-      requestAnimationFrame(function () {
-        var scroller   = getScroller();
-        var rect       = target.getBoundingClientRect();
-        /* rect.top is viewport-relative; scroller.scrollTop is absolute. */
-        var absoluteY  = scroller.scrollTop + rect.top;
-        var targetY    = Math.max(0, absoluteY - 8); /* 8 px breathing room */
-
-        /* Primary: direct assignment — iOS Safari compatible */
-        scroller.scrollTop = targetY;
-
-        /* Secondary: smooth scroll where supported (won't hurt iOS) */
-        try { scroller.scrollTo({ top: targetY, behavior: 'smooth' }); } catch (_) {}
-      });
-    });
+    scrollToElement(target);
   }
 
   /* ─────────────────────────────────────────────
@@ -228,14 +218,50 @@
       }
       if (sheet === 'positions') {
         /*
-         * Scroll to the actual #positions section in the page.
-         * Do NOT set window.location.hash before navigate() — doing so
-         * tries to jump to the element before the display:block override
-         * has taken effect, so the browser ignores the jump (display:none
-         * elements have no position). navigate() sets the hash via
-         * pushState and then calls scrollTo() inside a rAF.
+         * One-tap Positions navigation — exact sequence:
+         *
+         *  1. Find the inner "Position" tab (the Mission/Position/Incident
+         *     strip visible on mobile at the top of the page).
+         *  2. Click it — fires our context-tabs handler below, which:
+         *       a. sets the tab active (removes Mission active)
+         *       b. adds body.context-position
+         *       c. CSS then shows #positions:
+         *            .context-position #positions { display:block!important }
+         *          and hides .mission-grid, #workspace.
+         *  3. Wait TWO requestAnimationFrames so layout settles with
+         *     #positions painted and having real height.
+         *  4. Measure #positions and scroll document.scrollingElement.scrollTop
+         *     (window.scrollTo is blocked on iOS Safari by overflow-x:clip).
+         *  5. Update the URL hash via pushState (no native jump).
+         *
+         * We do NOT call navigate() here: navigate() calls scrollTo() which
+         * would measure #positions while it is still display:none (Mission
+         * context), getting rect.top === 0 and scrolling nowhere.
          */
-        navigate('#positions', true);
+        var innerPositionTab = document.querySelector(
+          '.context-tabs button[data-context="position"]'
+        );
+        if (innerPositionTab) {
+          innerPositionTab.click(); /* fires context-tabs handler → body.context-position */
+        } else {
+          /* Fallback: context tabs not in DOM — apply class manually */
+          document.body.classList.remove(
+            'context-mission', 'context-position', 'context-incident'
+          );
+          document.body.classList.add('context-position');
+        }
+
+        /* After the body class is set, CSS has made #positions display:block.
+           Two rAFs ensure the browser has finished layout before we measure. */
+        requestAnimationFrame(function () {
+          requestAnimationFrame(function () {
+            var target = document.getElementById('positions');
+            scrollToElement(target); /* defined above — uses scrollingElement */
+            try {
+              window.history.pushState({ hash: '#positions' }, '', '#positions');
+            } catch (_) {}
+          });
+        });
         return;
       }
       // candidates / wallet / more → open overlay sheet
