@@ -1550,5 +1550,6 @@ render();refresh();setInterval(refresh,10000);
   function selectToken(detail={}){const next=detail.tokenAddress||detail.mint||'';document.getElementById('chartSymbol').textContent=detail.symbol||detail.name||document.getElementById('decisionName')?.textContent||'TOKEN';if(next===tokenAddress&&points.length)return;tokenAddress=next;points=[];load()}
  $$('.chart-intervals button').forEach(btn=>btn.addEventListener('click',()=>{$$('.chart-intervals button').forEach(x=>x.classList.toggle('active',x===btn));interval=btn.dataset.chartInterval;points=[];load()}));window.addEventListener('memeflow:candidatechange',e=>selectToken(e.detail||{}));window.addEventListener('memeflow:trade',e=>{events.push(e.detail||{});render()});window.addEventListener('memeflow:settingschange',e=>{const s=e.detail?.settings||{};window.MEMEFLOW_CHART_SETTINGS={tp1:+(s.tp1||25),tp2:+(s.tp2||60),stopLoss:+(s.stopLoss||25)};render()});setInterval(updateAge,1000);config().then(load);window.MEMEFLOW_CHART={setToken:selectToken,addTrade:e=>{events.push(e);render()},refresh:load,getState:()=>({chainId,tokenAddress,interval,points:[...points]})};
 })();
-</script></body>
+</script><script src="/navigation-fix.js" defer></script>
+</body>
 </html>
