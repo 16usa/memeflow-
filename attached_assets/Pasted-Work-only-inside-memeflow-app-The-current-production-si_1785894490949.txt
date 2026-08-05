@@ -1,0 +1,58 @@
+Work only inside memeflow-app.
+
+The current production site is extremely slow and no buttons, menus, modals, tabs, or page navigation work reliably.
+
+Do not add another CSS patch or overlay. Start from the current source and repair the architecture cleanly.
+
+Required work:
+
+1. Diagnose the exact runtime JavaScript errors in the browser and fix every error that prevents event handlers from binding.
+2. Fix all desktop sidebar links and mobile navigation buttons.
+3. Replace the current anchor-only navigation with a reliable client-side page router:
+   - Mission Control
+   - Decision Studio
+   - Positions
+   - Wallet
+   - System
+   - Plans & Billing
+   - AI & Trading Settings
+4. Only the selected page must be visible. Do not render the entire application as one enormous scrolling page.
+5. Support direct URLs such as #wallet, #billing, and #settings.
+6. Support browser back and forward navigation.
+7. Fix all buttons, tabs, modals, wallet controls, settings controls, chart controls, and billing controls.
+8. Remove invisible overlays or elements that intercept clicks.
+9. Split the 230KB+ inline index.html into:
+   - index.html
+   - styles/app.css
+   - scripts/app.js
+   - scripts/router.js
+   - separate modules where appropriate
+10. Remove duplicated and conflicting CSS layers. Keep one final canonical design layer only.
+11. Defer noncritical scripts and lazy-load Wallet, Billing, Settings, charts, and background effects.
+12. Do not block the first render on API requests.
+13. Reduce or pause polling when the page is hidden.
+14. Add proper caching for static CSS, JS, images, and fonts. Do not use no-store for static assets.
+15. Keep API responses no-cache where necessary.
+16. Add gzip or Brotli compression if supported.
+17. Ensure the server still starts from the repository root with:
+    pnpm start
+18. Test at:
+    - 320px mobile
+    - 390px mobile
+    - tablet
+    - desktop
+19. Run syntax checks and all existing tests.
+20. Verify every navigation item and major button through an automated browser test.
+21. Do not change trading logic, evaluation logic, billing rules, owner entitlement, or API contracts unless required to fix an actual bug.
+22. Do not add demo data.
+23. Do not publish or merge automatically.
+
+Done means:
+- the first interface becomes usable quickly;
+- every menu item opens the correct page;
+- buttons respond immediately;
+- there are no browser console errors;
+- there are no click-blocking overlays;
+- mobile and desktop navigation both work;
+- pnpm start runs successfully;
+- provide a concise report listing root causes, files changed, tests run, and remaining environment variables.

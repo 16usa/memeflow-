@@ -1,4 +1,4 @@
-import http from 'node:http';import fs from 'node:fs';import path from 'node:path';import crypto from 'node:crypto';import {fileURLToPath} from 'node:url';
+import http from 'node:http';import fs from 'node:fs';import path from 'node:path';import crypto from 'node:crypto';import zlib from 'node:zlib';import {fileURLToPath} from 'node:url';
 import {JsonStore,sessionId,defaults} from './src/store.mjs';import {RpcPool,validPubkey,decodeCurve,decodeCreateData} from './src/solana.mjs';import {evaluate} from './src/evaluate.mjs';import {StripeBilling} from './src/billing.mjs';
 const root=path.dirname(fileURLToPath(import.meta.url)),dataDir=path.resolve(root,process.env.DATA_DIR||'data'),store=new JsonStore(dataDir);
 const billing=new StripeBilling({store,secretKey:process.env.STRIPE_SECRET_KEY,priceId:process.env.STRIPE_PRICE_ID,webhookSecret:process.env.STRIPE_WEBHOOK_SECRET,apiBase:process.env.STRIPE_API_BASE});
@@ -44,5 +44,34 @@ async function handler(req,res){const url=new URL(req.url,'http://x');
  if(url.pathname==='/api/chart/history'){const mint=url.searchParams.get('tokenAddress'),t=store.state.tokens[mint];const pts=t?.priceSol?[{t:t.updatedAt,price:t.priceSol,source:t.source}]:[];return json(res,200,{points:pts,status:{stale:!pts.length,source:t?.source||null,error:t?.scanError||null},tokenAddress:mint})}
  if(url.pathname==='/api/chart/stream'){const mint=url.searchParams.get('tokenAddress');res.writeHead(200,{'content-type':'text/event-stream','cache-control':'no-cache','connection':'keep-alive'});res.write(`event: snapshot\ndata: ${JSON.stringify({points:[],status:{stale:true,source:'Solana'}})}\n\n`);if(!streams.has(mint))streams.set(mint,new Set());streams.get(mint).add(res);req.on('close',()=>streams.get(mint)?.delete(res));return}
  if(url.pathname==='/api/live/execute'){if(!hasLiveEntitlement(u))return json(res,402,{error:'LIVE_ENTITLEMENT_REQUIRED',message:'An active MEMEFLOW Pro subscription or verified owner entitlement is required.'});return json(res,423,{error:'LIVE_EXECUTION_NOT_READY',message:u.isOwner?'Owner LIVE entitlement is active, but verified wallet and production execution engine are still required.':'Pro is active, but verified wallet and production execution engine are still required.'})}
- const p=url.pathname==='/'?'index.html':url.pathname.slice(1);const f=path.resolve(root,p);if(!f.startsWith(root)||!fs.existsSync(f)||fs.statSync(f).isDirectory())return json(res,404,{error:'NOT_FOUND'});res.setHeader('content-type',f.endsWith('.html')?'text/html; charset=utf-8':f.endsWith('.js')||f.endsWith('.mjs')?'text/javascript; charset=utf-8':'application/octet-stream');res.setHeader('cache-control','no-store, no-cache, must-revalidate');res.setHeader('pragma','no-cache');res.setHeader('expires','0');fs.createReadStream(f).pipe(res)}
+ const p=url.pathname==='/'?'index.html':url.pathname.slice(1);const f=path.resolve(root,p);if(!f.startsWith(root)||!fs.existsSync(f)||fs.statSync(f).isDirectory())return json(res,404,{error:'NOT_FOUND'});
+ const ext=path.extname(f).toLowerCase();
+ const MIME={'':' text/plain','html':'text/html; charset=utf-8','htm':'text/html; charset=utf-8','js':'text/javascript; charset=utf-8','mjs':'text/javascript; charset=utf-8','css':'text/css; charset=utf-8','json':'application/json; charset=utf-8','svg':'image/svg+xml','ico':'image/x-icon','png':'image/png','jpg':'image/jpeg','jpeg':'image/jpeg','webp':'image/webp','woff':'font/woff','woff2':'font/woff2','ttf':'font/ttf'};
+ const mime=MIME[ext.slice(1)]||'application/octet-stream';
+ const isText=mime.startsWith('text/')||mime.includes('javascript')||mime.includes('json')||mime.includes('svg');
+ const isHTML=ext==='.html'||ext==='.htm';
+ // HTML: no-store (always fresh). Static assets (JS/CSS): 1-hour cache with revalidation.
+ const cacheHeader=isHTML?'no-store, no-cache, must-revalidate':'public, max-age=3600, stale-while-revalidate=86400';
+ res.setHeader('content-type',mime);
+ res.setHeader('cache-control',cacheHeader);
+ if(isHTML){res.setHeader('pragma','no-cache');res.setHeader('expires','0')}
+ // Gzip/Brotli for text assets when the client supports it
+ const ae=req.headers['accept-encoding']||'';
+ const stat=fs.statSync(f);
+ if(isText&&stat.size>512){
+   if(ae.includes('br')){
+     res.setHeader('content-encoding','br');res.setHeader('vary','Accept-Encoding');
+     const br=zlib.createBrotliCompress({params:{[zlib.constants.BROTLI_PARAM_QUALITY]:4}});
+     fs.createReadStream(f).pipe(br).pipe(res);
+   } else if(ae.includes('gzip')){
+     res.setHeader('content-encoding','gzip');res.setHeader('vary','Accept-Encoding');
+     const gz=zlib.createGzip({level:6});
+     fs.createReadStream(f).pipe(gz).pipe(res);
+   } else {
+     fs.createReadStream(f).pipe(res);
+   }
+ } else {
+   fs.createReadStream(f).pipe(res);
+ }
+}
 const server=http.createServer((req,res)=>handler(req,res).catch(e=>json(res,500,{error:'SERVER_ERROR',message:e.message})));server.listen(Number(process.env.PORT||3000),'0.0.0.0',()=>console.log(`MEMEFLOW listening on ${process.env.PORT||3000}`));

@@ -1,181 +1,399 @@
-(() => {
+/* MEMEFLOW — navigation-fix.js
+ * Hash-based client-side router, mobile sheet manager, and button wiring.
+ * Loaded as <script src="/navigation-fix.js" defer> at the bottom of index.html.
+ */
+(function () {
   'use strict';
 
-  const $ = (selector, root = document) => root.querySelector(selector);
-  const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
-  const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  /* ─────────────────────────────────────────────
+     1.  Inject router CSS
+         Uses data-page on .main to show/hide sections.
+         All selectors use higher specificity + !important to beat
+         the existing cascade rules that already use !important.
+  ───────────────────────────────────────────── */
+  var css = document.createElement('style');
+  css.id = 'mf-router-css';
+  css.textContent = [
+    '/* === MEMEFLOW page router (navigation-fix.js) === */',
 
-  function resolveTarget(value) {
-    if (!value || value === '#') return null;
-    try {
-      const id = decodeURIComponent(value.replace(/^#/, ''));
-      return id ? document.getElementById(id) : null;
-    } catch {
-      return null;
-    }
+    /* ── Mission page: hide all non-mission sections ── */
+    '.main[data-page="mission"] #positions,',
+    '.main[data-page="mission"] #system,',
+    '.main[data-page="mission"] #billing,',
+    '.main[data-page="mission"] #settings { display: none !important; }',
+
+    /* ── Positions / Wallet page ── */
+    '.main[data-page="positions"] .context-banner,',
+    '.main[data-page="positions"] .operator-timeline,',
+    '.main[data-page="positions"] .context-tabs,',
+    '.main[data-page="positions"] .connection-strip,',
+    '.main[data-page="positions"] .quality-strip,',
+    '.main[data-page="positions"] .loading-skeleton,',
+    '.main[data-page="positions"] .mission-grid,',
+    '.main[data-page="positions"] .live-strip,',
+    '.main[data-page="positions"] #workspace,',
+    '.main[data-page="positions"] .execution-preview,',
+    '.main[data-page="positions"] .decision-intelligence,',
+    '.main[data-page="positions"] .advanced-intelligence,',
+    '.main[data-page="positions"] #system,',
+    '.main[data-page="positions"] #billing,',
+    '.main[data-page="positions"] #settings { display: none !important; }',
+    '.main[data-page="positions"] #positions { display: grid !important; }',
+
+    '.main[data-page="wallet"] .context-banner,',
+    '.main[data-page="wallet"] .operator-timeline,',
+    '.main[data-page="wallet"] .context-tabs,',
+    '.main[data-page="wallet"] .connection-strip,',
+    '.main[data-page="wallet"] .quality-strip,',
+    '.main[data-page="wallet"] .loading-skeleton,',
+    '.main[data-page="wallet"] .mission-grid,',
+    '.main[data-page="wallet"] .live-strip,',
+    '.main[data-page="wallet"] #workspace,',
+    '.main[data-page="wallet"] .execution-preview,',
+    '.main[data-page="wallet"] .decision-intelligence,',
+    '.main[data-page="wallet"] .advanced-intelligence,',
+    '.main[data-page="wallet"] #system,',
+    '.main[data-page="wallet"] #billing,',
+    '.main[data-page="wallet"] #settings { display: none !important; }',
+    '.main[data-page="wallet"] #positions { display: grid !important; }',
+
+    /* ── System page ── */
+    '.main[data-page="system"] .context-banner,',
+    '.main[data-page="system"] .operator-timeline,',
+    '.main[data-page="system"] .context-tabs,',
+    '.main[data-page="system"] .connection-strip,',
+    '.main[data-page="system"] .quality-strip,',
+    '.main[data-page="system"] .loading-skeleton,',
+    '.main[data-page="system"] .mission-grid,',
+    '.main[data-page="system"] .live-strip,',
+    '.main[data-page="system"] #workspace,',
+    '.main[data-page="system"] .execution-preview,',
+    '.main[data-page="system"] .decision-intelligence,',
+    '.main[data-page="system"] .advanced-intelligence,',
+    '.main[data-page="system"] #positions,',
+    '.main[data-page="system"] #billing,',
+    '.main[data-page="system"] #settings { display: none !important; }',
+    '.main[data-page="system"] #system { display: block !important; }',
+
+    /* ── Billing page ── */
+    '.main[data-page="billing"] .context-banner,',
+    '.main[data-page="billing"] .operator-timeline,',
+    '.main[data-page="billing"] .context-tabs,',
+    '.main[data-page="billing"] .connection-strip,',
+    '.main[data-page="billing"] .quality-strip,',
+    '.main[data-page="billing"] .loading-skeleton,',
+    '.main[data-page="billing"] .mission-grid,',
+    '.main[data-page="billing"] .live-strip,',
+    '.main[data-page="billing"] #workspace,',
+    '.main[data-page="billing"] .execution-preview,',
+    '.main[data-page="billing"] .decision-intelligence,',
+    '.main[data-page="billing"] .advanced-intelligence,',
+    '.main[data-page="billing"] #positions,',
+    '.main[data-page="billing"] #system,',
+    '.main[data-page="billing"] #settings { display: none !important; }',
+    '.main[data-page="billing"] #billing { display: block !important; }',
+
+    /* ── Settings page ── */
+    '.main[data-page="settings"] .context-banner,',
+    '.main[data-page="settings"] .operator-timeline,',
+    '.main[data-page="settings"] .context-tabs,',
+    '.main[data-page="settings"] .connection-strip,',
+    '.main[data-page="settings"] .quality-strip,',
+    '.main[data-page="settings"] .loading-skeleton,',
+    '.main[data-page="settings"] .mission-grid,',
+    '.main[data-page="settings"] .live-strip,',
+    '.main[data-page="settings"] #workspace,',
+    '.main[data-page="settings"] .execution-preview,',
+    '.main[data-page="settings"] .decision-intelligence,',
+    '.main[data-page="settings"] .advanced-intelligence,',
+    '.main[data-page="settings"] #positions,',
+    '.main[data-page="settings"] #system,',
+    '.main[data-page="settings"] #billing { display: none !important; }',
+    '.main[data-page="settings"] #settings { display: block !important; }',
+
+    /* ── Focus view ── */
+    'body.focus-view .change-rail,',
+    'body.focus-view .live-strip { display: none !important; }',
+    '.focus-toggle.active { border-color: rgba(84,221,255,.52); color: var(--cyan); background: rgba(84,221,255,.07); }',
+
+    /* ── Mobile sheet open ── */
+    '.mobile-sheet { display: none; }',
+    '.mobile-sheet.open { display: block !important; }',
+
+    /* ── Sidebar nav active enhancement ── */
+    '.nav a.active { color: #fff; background: rgba(84,221,255,.07); border-color: rgba(84,221,255,.22); }',
+
+    /* ── Mobile nav active ── */
+    '.mobile-nav button.active { color: #fff !important; background: #16202b !important; }',
+  ].join('\n');
+  document.head.appendChild(css);
+
+  /* ─────────────────────────────────────────────
+     2.  Page + hash definitions
+  ───────────────────────────────────────────── */
+  var HASH_TO_PAGE = {
+    '': 'mission',
+    'mission': 'mission',
+    'workspace': 'mission',
+    'decision-studio': 'mission',
+    'inspector': 'mission',
+    'executionpreview': 'mission',
+    'executionPreview': 'mission',
+    'positions': 'positions',
+    'wallet': 'wallet',
+    'system': 'system',
+    'billing': 'billing',
+    'settings': 'settings',
+  };
+
+  function hashToPage(hash) {
+    var h = (hash || '').replace('#', '');
+    return HASH_TO_PAGE[h] || HASH_TO_PAGE[h.toLowerCase()] || 'mission';
   }
 
+  /* ─────────────────────────────────────────────
+     3.  Nav active state
+  ───────────────────────────────────────────── */
+  function setNavActive(hash) {
+    var h = hash || '#mission';
+    var page = hashToPage(h);
+
+    // Sidebar / desktop nav
+    document.querySelectorAll('.nav a').forEach(function (a) {
+      var href = a.getAttribute('href') || '';
+      var active =
+        href === h ||
+        (href === '#mission' && page === 'mission') ||
+        (href === '#workspace' && page === 'mission' && h === '#workspace') ||
+        (href === '#inspector' && page === 'mission' && h === '#inspector');
+      a.classList.toggle('active', active);
+    });
+
+    // Mobile bottom nav
+    document.querySelectorAll('.mobile-nav button[data-sheet]').forEach(function (btn) {
+      var sheet = btn.dataset.sheet;
+      var active =
+        (sheet === 'home' && page === 'mission') ||
+        (sheet === 'positions' && (page === 'positions' || page === 'wallet'));
+      btn.classList.toggle('active', active);
+    });
+  }
+
+  /* ─────────────────────────────────────────────
+     4.  Mobile sheets (overlay panels)
+  ───────────────────────────────────────────── */
   function closeMobileSheets() {
-    $$('.mobile-sheet.open, .mobile-sheet[aria-hidden="false"]').forEach((sheet) => {
-      sheet.classList.remove('open');
-      sheet.setAttribute('aria-hidden', 'true');
+    document.querySelectorAll('.mobile-sheet.open').forEach(function (s) {
+      s.classList.remove('open');
     });
-    document.body.classList.remove('menu-open', 'sheet-open');
-    document.body.style.removeProperty('overflow');
+    document.body.style.overflow = '';
   }
 
-  function setActive(hash) {
-    const normalized = hash && hash !== '#' ? hash : '#mission';
-    $$('.nav a[href^="#"], .mobile-nav a[href^="#"], .mobile-nav button').forEach((item) => {
-      const raw = item.getAttribute('href') || item.dataset.target || item.dataset.section || item.dataset.sheet || item.getAttribute('aria-controls');
-      const target = raw && raw.startsWith('#') ? raw : raw ? `#${raw}` : '';
-      const active = target === normalized;
-      item.classList.toggle('active', active);
-      if (active) item.setAttribute('aria-current', 'page');
-      else item.removeAttribute('aria-current');
-    });
-  }
-
-  function navigate(hash, options = {}) {
-    const target = resolveTarget(hash);
-    if (!target) return false;
-
+  function openSheet(id) {
     closeMobileSheets();
-    const normalized = `#${target.id}`;
-
-    if (window.location.hash !== normalized) {
-      history[options.replace ? 'replaceState' : 'pushState'](null, '', normalized);
+    var sheet = document.getElementById('sheet-' + id);
+    if (sheet) {
+      sheet.classList.add('open');
+      document.body.style.overflow = 'hidden';
     }
+  }
 
-    target.scrollIntoView({
-      behavior: reducedMotion ? 'auto' : 'smooth',
-      block: 'start'
-    });
-    setActive(normalized);
+  /* ─────────────────────────────────────────────
+     5.  Core navigate function
+  ───────────────────────────────────────────── */
+  var MAIN = document.querySelector('.main');
 
-    if (options.focus) {
-      const hadTabIndex = target.hasAttribute('tabindex');
-      if (!hadTabIndex) target.setAttribute('tabindex', '-1');
-      target.focus({ preventScroll: true });
-      if (!hadTabIndex) {
-        target.addEventListener('blur', () => target.removeAttribute('tabindex'), { once: true });
+  function navigate(hash, pushState) {
+    var page = hashToPage(hash);
+    if (MAIN) MAIN.dataset.page = page;
+
+    setNavActive(hash);
+    closeMobileSheets();
+
+    // Scroll behavior
+    if (page !== 'mission') {
+      window.scrollTo(0, 0);
+    } else if (hash && hash !== '#mission' && hash !== '#workspace') {
+      // Smooth-scroll within mission page
+      var target = document.querySelector(hash);
+      if (target) {
+        requestAnimationFrame(function () {
+          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
       }
     }
-    return true;
+
+    // Push history entry so back/forward works
+    if (pushState && window.history && window.history.pushState) {
+      try {
+        window.history.pushState({ page: page, hash: hash }, '', hash || '#mission');
+      } catch (_) { /* cross-origin or blocked — silently ignore */ }
+    }
   }
 
-  function bindAnchors() {
-    document.addEventListener('click', (event) => {
-      const anchor = event.target.closest('a[href^="#"]');
-      if (!anchor) return;
-      const hash = anchor.getAttribute('href');
-      if (!resolveTarget(hash)) return;
-      event.preventDefault();
-      navigate(hash, { focus: true });
-    });
-  }
+  /* ─────────────────────────────────────────────
+     6.  Event listeners — hashchange + popstate
+  ───────────────────────────────────────────── */
+  window.addEventListener('hashchange', function () {
+    navigate(window.location.hash, false);
+  });
 
-  function bindMobileButtons() {
-    $$('.mobile-nav button').forEach((button) => {
-      if (button.dataset.navigationBound === 'true') return;
-      button.dataset.navigationBound = 'true';
+  window.addEventListener('popstate', function (e) {
+    var h = (e.state && e.state.hash) ? e.state.hash : (window.location.hash || '#mission');
+    navigate(h, false);
+  });
 
-      button.addEventListener('click', () => {
-        const raw = button.dataset.target || button.dataset.section || button.dataset.sheet || button.getAttribute('aria-controls');
-        if (!raw) return;
+  /* Intercept sidebar/nav anchor clicks to push a history entry */
+  document.addEventListener('click', function (e) {
+    var a = e.target.closest('a[href^="#"]');
+    if (!a) return;
+    var href = a.getAttribute('href');
+    if (!href || href === '#') return;
+    // Let the browser update location.hash, then sync router state with history
+    setTimeout(function () { navigate(href, true); }, 0);
+  }, true);
 
-        const hash = raw.startsWith('#') ? raw : `#${raw}`;
-        const target = resolveTarget(hash);
-        if (!target) return;
-
-        if (target.classList.contains('mobile-sheet')) {
-          const shouldOpen = !target.classList.contains('open');
-          closeMobileSheets();
-          if (shouldOpen) {
-            target.classList.add('open');
-            target.setAttribute('aria-hidden', 'false');
-            document.body.classList.add('sheet-open');
-            document.body.style.overflow = 'hidden';
-          }
+  /* ─────────────────────────────────────────────
+     7.  Wire up buttons (runs after DOM is ready)
+  ───────────────────────────────────────────── */
+  function wireButtons() {
+    /* ── Mobile bottom nav ── */
+    document.querySelectorAll('.mobile-nav button[data-sheet]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var sheet = this.dataset.sheet;
+        if (sheet === 'home') {
+          window.location.hash = '#mission';
           return;
         }
-
-        navigate(hash, { focus: true });
+        if (sheet === 'positions') {
+          window.location.hash = '#positions';
+          return;
+        }
+        // candidates / wallet / more → open as overlays
+        openSheet(sheet === 'wallet' ? 'wallet' : sheet === 'candidates' ? 'candidates' : 'more');
+        // Mark the tapped button active
+        document.querySelectorAll('.mobile-nav button').forEach(function (b) {
+          b.classList.remove('active');
+        });
+        this.classList.add('active');
       });
     });
 
-    $$('[data-close-sheet], .mobile-sheet-close, .sheet-close').forEach((button) => {
-      button.addEventListener('click', closeMobileSheets);
-    });
-  }
-
-  function bindHashChanges() {
-    window.addEventListener('hashchange', () => {
-      const hash = window.location.hash || '#mission';
-      setActive(hash);
-      resolveTarget(hash)?.scrollIntoView({ behavior: 'auto', block: 'start' });
-    });
-  }
-
-  function repairLinks() {
-    $$('.nav a[href^="#"]').forEach((anchor) => {
-      const target = resolveTarget(anchor.getAttribute('href'));
-      if (!target) {
-        anchor.setAttribute('aria-disabled', 'true');
-        anchor.title = 'Section is not available';
-      } else {
-        anchor.removeAttribute('aria-disabled');
-      }
-    });
-  }
-
-  function observeSections() {
-    if (!('IntersectionObserver' in window)) return;
-
-    const sections = $$('.main [id], main [id]').filter((node) =>
-      document.querySelector(`.nav a[href="#${CSS.escape(node.id)}"], .mobile-nav a[href="#${CSS.escape(node.id)}"]`)
-    );
-
-    const observer = new IntersectionObserver((entries) => {
-      const visible = entries
-        .filter((entry) => entry.isIntersecting)
-        .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
-
-      if (visible?.target?.id) setActive(`#${visible.target.id}`);
-    }, {
-      rootMargin: '-18% 0px -65% 0px',
-      threshold: [0.05, 0.2, 0.5]
+    /* ── Close-sheet buttons ── */
+    document.querySelectorAll('.close-sheet').forEach(function (btn) {
+      btn.addEventListener('click', closeMobileSheets);
     });
 
-    sections.forEach((section) => observer.observe(section));
-  }
+    /* ── Click outside sheet to close ── */
+    document.querySelectorAll('.mobile-sheet').forEach(function (sheet) {
+      sheet.addEventListener('click', function (e) {
+        if (e.target === this) closeMobileSheets();
+      });
+    });
 
-  function init() {
-    bindAnchors();
-    bindMobileButtons();
-    bindHashChanges();
-    repairLinks();
-    observeSections();
-
-    const initialHash = resolveTarget(window.location.hash) ? window.location.hash : '#mission';
-    setActive(initialHash);
-
-    if (window.location.hash && resolveTarget(window.location.hash)) {
-      requestAnimationFrame(() => {
-        resolveTarget(window.location.hash)?.scrollIntoView({ behavior: 'auto', block: 'start' });
+    /* ── Inspector from More sheet ── */
+    var openInspector = document.getElementById('openInspectorFromMore');
+    if (openInspector) {
+      openInspector.addEventListener('click', function () {
+        closeMobileSheets();
+        window.location.hash = '#workspace';
       });
     }
 
-    window.MEMEFLOW_NAVIGATION = {
-      navigate,
-      closeMobileSheets,
-      refresh: init
-    };
+    /* ── Wallet execution settings button ── */
+    var walletExecSettings = document.getElementById('walletExecutionSettings');
+    if (walletExecSettings) {
+      walletExecSettings.addEventListener('click', function () {
+        window.location.hash = '#settings';
+      });
+    }
+    var mobileWalletExec = document.getElementById('mobileWalletExecution');
+    if (mobileWalletExec) {
+      mobileWalletExec.addEventListener('click', function () {
+        closeMobileSheets();
+        window.location.hash = '#settings';
+      });
+    }
+
+    /* ── Focus view toggle ── */
+    var focusToggle = document.getElementById('focusToggle');
+    if (focusToggle) {
+      focusToggle.addEventListener('click', function () {
+        var on = document.body.classList.toggle('focus-view');
+        this.setAttribute('aria-pressed', String(on));
+        this.classList.toggle('active', on);
+        this.textContent = on ? 'Exit focus' : 'Focus view';
+      });
+    }
+
+    /* ── Wallet modal: close on Escape ── */
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') {
+        // Close explain overlay if open
+        var overlay = document.getElementById('explainOverlay');
+        if (overlay && overlay.classList.contains('open')) {
+          overlay.classList.remove('open');
+          return;
+        }
+        // Close wallet modal if open
+        var walletModal = document.getElementById('walletModal');
+        if (walletModal && walletModal.classList.contains('open')) {
+          walletModal.classList.remove('open');
+          document.body.style.overflow = '';
+          return;
+        }
+        // Close any open mobile sheet
+        closeMobileSheets();
+      }
+    });
+
+    /* ── Explain overlay close ── */
+    var closeExplain = document.getElementById('closeExplain');
+    if (closeExplain) {
+      closeExplain.addEventListener('click', function () {
+        var overlay = document.getElementById('explainOverlay');
+        if (overlay) overlay.classList.remove('open');
+      });
+    }
+
+    /* ── Refresh billing button (if not already wired) ── */
+    var refreshBilling = document.getElementById('refreshBilling');
+    if (refreshBilling && !refreshBilling._mfWired) {
+      refreshBilling._mfWired = true;
+      refreshBilling.addEventListener('click', function () {
+        // The billing script handles this via its own status() call
+        // Trigger it via a custom event as a fallback
+        window.dispatchEvent(new CustomEvent('mf:billing-refresh'));
+      });
+    }
+  }
+
+  /* ─────────────────────────────────────────────
+     8.  Expose sheet API on MEMEFLOW_CORE
+  ───────────────────────────────────────────── */
+  function patchCore() {
+    if (window.MEMEFLOW_CORE) {
+      window.MEMEFLOW_CORE.openSheet = openSheet;
+      window.MEMEFLOW_CORE.closeSheets = closeMobileSheets;
+    }
+  }
+
+  /* ─────────────────────────────────────────────
+     9.  Initialise
+  ───────────────────────────────────────────── */
+  function init() {
+    navigate(window.location.hash || '#mission', false);
+    wireButtons();
+    patchCore();
   }
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init, { once: true });
+    document.addEventListener('DOMContentLoaded', init);
   } else {
     init();
   }
+
+  // Re-patch MEMEFLOW_CORE once it's available (it's declared after this script in the HTML)
+  window.addEventListener('load', patchCore);
+
 })();

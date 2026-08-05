@@ -53,3 +53,7 @@ DISCOVERY_MAX_TOKENS = "5000"
 POLL_ACTIVE_MS = "2000"
 SOLANA_COMMITMENT = "confirmed"
 STALE_MS = "20000"
+
+[[ports]]
+localPort = 3000
+externalPort = 80
