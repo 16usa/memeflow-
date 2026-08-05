@@ -103,37 +103,69 @@
   /* ─────────────────────────────────────────────
      3.  Scroll to a section by hash
   ───────────────────────────────────────────── */
+  /*
+   * getScroller() — find the element that owns the page's vertical scroll.
+   *
+   * On iOS Safari, window.scrollTo() and scrollIntoView() are silently
+   * disabled when overflow-x:clip or overflow-x:hidden is set on <html>.
+   * This page sets both of those (lines 920 and 927 of index.html).
+   *
+   * The reliable alternative is document.scrollingElement, which the spec
+   * defines as the viewport's scroll container. On iOS Safari in standards
+   * mode it returns document.documentElement. Setting its .scrollTop
+   * directly always works — it bypasses the overflow-x restriction.
+   */
+  function getScroller() {
+    if (document.scrollingElement) return document.scrollingElement;
+    /* Probe: which element responds to scrollTop writes? */
+    var html = document.documentElement;
+    var body = document.body;
+    var prev = html.scrollTop;
+    html.scrollTop = prev + 1;
+    if (html.scrollTop !== prev) { html.scrollTop = prev; return html; }
+    return body;
+  }
+
   function scrollTo(hash) {
     if (!hash || hash === '#') return;
-    var id = hash.replace(/^#/, '');
+    var id     = hash.replace(/^#/, '');
     var target = document.getElementById(id);
     if (!target) return;
+
     /*
-     * Use explicit window.scrollTo instead of scrollIntoView.
+     * Force display:block as an INLINE style (highest CSS specificity).
+     * This overrides every stylesheet rule including !important ones,
+     * so the element definitely has layout when we measure it.
+     * Required for #positions and #wallet which have
+     *   display:none !important  at @media(max-width:820px) in source CSS.
+     */
+    target.style.setProperty('display', 'block', 'important');
+
+    /*
+     * Two rAFs:
+     *   rAF 1 — style mutation is flushed to the rendering pipeline.
+     *   rAF 2 — layout has been recalculated; getBoundingClientRect() is
+     *            now accurate for the newly-visible element.
      *
-     * scrollIntoView silently does nothing when:
-     *   (a) the element was display:none at call time (e.g. #positions on mobile
-     *       before our CSS override applies), or
-     *   (b) body/html has overflow-x:hidden, which on iOS Safari also
-     *       blocks programmatic vertical scroll.
-     *
-     * Wrapping in requestAnimationFrame ensures that any style changes
-     * (e.g. our #positions display:block override) have been applied by
-     * the browser before we read getBoundingClientRect().
+     * Do NOT use window.scrollTo() or element.scrollIntoView() here.
+     * Both are silently disabled on iOS Safari when html/body carry
+     * overflow-x:clip/hidden. Use document.scrollingElement.scrollTop
+     * (direct property assignment) instead — it always works.
      */
     requestAnimationFrame(function () {
-      var rect    = target.getBoundingClientRect();
-      var scrollY = window.pageYOffset
-                 || document.documentElement.scrollTop
-                 || document.body.scrollTop
-                 || 0;
-      var targetY = Math.max(0, rect.top + scrollY - 8); // 8 px breathing room
-      try {
-        window.scrollTo({ top: targetY, behavior: 'smooth' });
-      } catch (_) {
-        /* Browsers that don't support scroll options */
-        window.scrollTo(0, targetY);
-      }
+      requestAnimationFrame(function () {
+        var scroller   = getScroller();
+        var rect       = target.getBoundingClientRect();
+        /* rect.top is viewport-relative; scroller.scrollTop is absolute. */
+        var absoluteY  = scroller.scrollTop + rect.top;
+        var targetY    = Math.max(0, absoluteY - 8); /* 8 px breathing room */
+
+        /* Primary: direct assignment — iOS Safari compatible */
+        scroller.scrollTop = targetY;
+
+        /* Secondary: smooth scroll where supported (won't hurt iOS) */
+        try { scroller.scrollTo({ top: targetY, behavior: 'smooth' }); } catch (_) {}
+      });
     });
   }
 
