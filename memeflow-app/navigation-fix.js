@@ -94,6 +94,10 @@
     '.main[data-page="billing"] #billing { display: block !important; }',
 
     /* ── Settings page ── */
+    /* NOTE: .decision-intelligence and .advanced-intelligence are siblings of
+       #settings in the DOM (line 1128, after </section> for #settings).
+       They were always visible when the user scrolled to the settings section
+       pre-router, so they must NOT be hidden on this page. */
     '.main[data-page="settings"] .context-banner,',
     '.main[data-page="settings"] .operator-timeline,',
     '.main[data-page="settings"] .context-tabs,',
@@ -104,12 +108,15 @@
     '.main[data-page="settings"] .live-strip,',
     '.main[data-page="settings"] #workspace,',
     '.main[data-page="settings"] .execution-preview,',
-    '.main[data-page="settings"] .decision-intelligence,',
-    '.main[data-page="settings"] .advanced-intelligence,',
     '.main[data-page="settings"] #positions,',
     '.main[data-page="settings"] #system,',
     '.main[data-page="settings"] #billing { display: none !important; }',
     '.main[data-page="settings"] #settings { display: block !important; }',
+    /* Explicitly restore the two AI panels that are DOM-siblings of #settings.
+       On mobile (≤820px) the original stylesheet already hides them with
+       display:none!important, so this only affects desktop. */
+    '.main[data-page="settings"] .decision-intelligence { display: block !important; }',
+    '.main[data-page="settings"] .advanced-intelligence { display: block !important; }',
 
     /* ── Focus view ── */
     'body.focus-view .change-rail,',
