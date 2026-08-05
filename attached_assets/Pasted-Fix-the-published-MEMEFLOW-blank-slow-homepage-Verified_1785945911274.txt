@@ -1,0 +1,95 @@
+Fix the published MEMEFLOW blank/slow homepage.
+
+Verified production behavior:
+- /api/healthz responds immediately with {"status":"ok"}.
+- GET / stays on a blank white page for a long time.
+- The server and deployment are alive.
+- This is now a frontend/static-file startup problem, not a Solana RPC problem.
+
+Required investigation and fixes:
+
+1. Test the published root route with:
+   curl -i https://meme-flow-1.replit.app/
+   curl -i https://meme-flow-1.replit.app/index.html
+
+Report:
+- status code
+- content-type
+- content-length
+- time to first byte
+- total response time
+
+2. Confirm GET / returns the real memeflow-app/index.html.
+It must not return:
+- an empty body
+- JSON
+- a directory
+- the API health response
+- the wrong artifacts frontend
+
+3. Static file routing:
+- / must map directly to memeflow-app/index.html
+- JS, CSS, images, fonts and other assets must be served from memeflow-app
+- prevent path traversal
+- return correct MIME types
+- add cache headers for static assets
+- do not create a user session or call store.save() for static files
+
+4. Inspect index.html for every referenced resource:
+- script src
+- stylesheet href
+- images
+- modules
+- fetch URLs
+
+Verify each referenced local resource returns HTTP 200 in production.
+Fix all 404s and incorrect relative paths.
+
+5. Add production diagnostics:
+- log GET / response time and bytes sent
+- log static-file 404 paths
+- log uncaughtException and unhandledRejection without exposing secrets
+
+6. Check frontend JavaScript:
+- run a browser test against the published URL
+- capture console errors
+- capture failed network requests
+- confirm DOMContentLoaded fires
+- confirm visible app content renders
+- do not consider HTTP 200 alone a successful result
+
+7. Remove any startup overlay or loading screen that waits for:
+- /api/session
+- /api/settings
+- /api/ai/decisions
+- Solana RPC
+- WebSocket discovery
+- billing status
+
+The page shell and navigation must render immediately.
+API data should load afterward asynchronously.
+
+8. Every initial frontend fetch must have:
+- a timeout
+- error handling
+- finally logic that removes the loading state
+One failed API request must not leave a permanent white screen.
+
+9. Do not synchronously send thousands of decisions on initial page load.
+If /api/ai/decisions returns a very large response:
+- add pagination
+- default limit 50
+- return newest decisions first
+- load more only when requested
+Do not serialize every stored token or every user decision during initial render.
+
+10. Validate production:
+- GET / starts returning bytes in under 500 ms
+- visible page shell renders in under 2 seconds
+- no blank screen
+- no uncaught browser errors
+- /api/healthz still responds in under 100 ms
+- run all existing tests
+
+Do not modify Solana discovery, holder filters, billing, authentication rules, user settings, or visual design.
+Report the exact root cause, files changed, failed requests found, browser console errors, and final load timings.
