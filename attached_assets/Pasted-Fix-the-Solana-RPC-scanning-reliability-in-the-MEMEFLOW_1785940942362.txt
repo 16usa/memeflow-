@@ -1,0 +1,139 @@
+Fix the Solana RPC scanning reliability in the MEMEFLOW project.
+
+Current state:
+- Solana WebSocket discovery is connected successfully.
+- /api/discovery/status shows connected:true.
+- Most token enrichment requests fail with "This operation was aborted".
+- Do not modify the frontend design, navigation, authentication, billing, Stripe, trading settings, or existing user data.
+- Do not replace the current Solana-only discovery with Helius.
+- Keep support for SOLANA_RPC_URLS and SOLANA_WS_URLS from Replit Secrets.
+
+Relevant files:
+- memeflow-app/src/solana.mjs
+- memeflow-app/app-server.mjs
+- memeflow-app/src/store.mjs if metrics require extension
+
+Required changes:
+
+1. RPC timeout
+Increase the per-request RPC timeout from 9000 ms to 20000 ms.
+Make it configurable through:
+SOLANA_RPC_TIMEOUT_MS
+Default must be 20000.
+
+2. Retry logic
+Add up to 3 attempts for retryable RPC failures:
+- AbortError / operation aborted
+- HTTP 429
+- HTTP 502
+- HTTP 503
+- HTTP 504
+- fetch/network failures
+
+Use exponential backoff approximately:
+- first retry: 500 ms
+- second retry: 1500 ms
+
+Do not retry invalid request, invalid parameters, or permanent JSON-RPC errors.
+
+3. Concurrency queue
+Do not call processSignature directly for every WebSocket event.
+Add a bounded asynchronous queue.
+
+Default maximum concurrent token/transaction processing:
+RPC_MAX_CONCURRENCY=4
+
+Default maximum queued signatures:
+DISCOVERY_QUEUE_MAX=1000
+
+Deduplicate signatures already queued or processing.
+When the queue is full, drop the oldest item and increment a queueDropped metric.
+The WebSocket message handler must remain non-blocking.
+
+4. Token enrichment
+Keep the existing required calls:
+- getTransaction
+- getTokenSupply
+- getTokenLargestAccounts
+- getAccountInfo for the bonding curve
+
+Do not start unlimited Promise.all batches across all discovered tokens.
+Each token enrichment operation must pass through the concurrency limiter.
+
+5. Error handling
+Do not leave discovery.error permanently set after a later successful event.
+On a successful processed signature, clear transient discovery.error.
+Store the latest error separately as lastError with timestamp.
+Do not overwrite a useful WebSocket connection error with an old RPC timeout.
+
+6. Metrics
+Extend /api/discovery/status with:
+- eventsReceived
+- signaturesQueued
+- signaturesProcessed
+- signaturesDeduplicated
+- queueDepth
+- queueDropped
+- transactionsFetched
+- createsDecoded
+- enrichSucceeded
+- enrichFailed
+- rpcRetries
+- rpcTimeouts
+- lastSuccessfulScanAt
+- lastErrorAt
+
+Keep the existing discovered, scanned, errors, tokens, and users fields for compatibility.
+
+7. Startup and reconnect
+WebSocket discovery must continue reconnecting automatically.
+Do not create duplicate subscriptions or duplicate processing queues after reconnect.
+Clear old reconnect timers correctly.
+
+8. RPC pool
+Continue supporting multiple comma-separated SOLANA_RPC_URLS.
+When one endpoint times out, returns 429, or has a retryable server failure, try the next configured endpoint.
+Do not log complete RPC URLs because they may contain private API keys.
+
+9. Successful scan cleanup
+When token enrichment succeeds:
+- clear token.scanError
+- set holderFresh:true
+- update lastScannedAt
+- evaluate the token
+- publish the update
+
+When enrichment fails:
+- preserve the token
+- set holderFresh:false
+- record a sanitized error
+- do not crash discovery
+
+10. Tests
+Add tests for:
+- timeout retry
+- 429 retry and endpoint failover
+- queue concurrency never exceeding 4
+- signature deduplication
+- successful processing clearing transient error
+- failed enrichment not crashing WebSocket discovery
+
+11. Validation
+Run the existing test suite and syntax checks.
+Start the application and verify:
+- /api/health returns 200
+- /api/discovery/status returns 200
+- /api/system/health returns 200
+- WebSocket discovery remains connected
+- queueDepth changes as events arrive
+- signaturesProcessed increases
+- enrichSucceeded increases
+- the process does not crash
+
+Important:
+- Do not reset or delete memeflow-app/data.
+- Do not add demo tokens.
+- Do not expose Secrets.
+- Do not change the UI.
+- Do not claim success based only on connected:true.
+- Report the exact files changed and the test results.
