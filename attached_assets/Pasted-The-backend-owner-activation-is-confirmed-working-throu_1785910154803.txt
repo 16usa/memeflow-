@@ -1,0 +1,98 @@
+The backend owner activation is confirmed working through the real proxy chain.
+
+POST /api/owner/claim returns exactly:
+
+HTTP 200
+{
+  "ok": true,
+  "code": "OWNER_ACCESS_ACTIVATED",
+  "isOwner": true,
+  "liveEntitled": true,
+  "entitlementSource": "owner"
+}
+
+However, the frontend still displays “Owner activation failed”.
+
+This is now a frontend response-handling bug. Trace and fix the real owner activation handler.
+
+Requirements:
+
+1. Locate the exact frontend handler for “Activate owner access”.
+
+2. Show the exact condition currently used to determine success.
+
+3. Treat the claim as successful when:
+   response.ok === true
+   AND
+   data.ok === true
+   AND
+   data.code === "OWNER_ACCESS_ACTIVATED"
+
+Do not expect data.success, data.owner, or another property that the backend does not return.
+
+4. Separate the owner claim request from all follow-up refresh requests.
+
+Correct structure:
+
+- First POST /api/owner/claim
+- Parse JSON safely
+- If POST succeeds, immediately show:
+  “Owner access activated”
+- Update the visible UI immediately:
+  - isOwner = true
+  - liveEntitled = true
+  - entitlementSource = owner
+  - replace “NO SUBSCRIPTION” with “OWNER ACCESS”
+  - replace “FREE PLAN” with the correct owner/live state
+
+5. Only after displaying successful activation, refresh:
+   - /api/session
+   - /api/settings
+   - entitlement/billing state
+
+6. A failure of a follow-up refresh must NOT change a successful claim into:
+   “Owner activation failed”.
+
+Instead display a separate safe message:
+   “Owner activated, but account data refresh failed.”
+
+7. Ensure the POST uses:
+
+fetch('/api/owner/claim', {
+  method: 'POST',
+  credentials: 'same-origin',
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    accessKey: ownerKeyInput.value.trim()
+  })
+})
+
+8. Confirm the session cookie mf_session is included in:
+   - POST /api/owner/claim
+   - subsequent GET /api/session
+   - subsequent GET /api/settings
+
+9. Add temporary safe frontend diagnostics:
+   OWNER_CLAIM_HTTP_STATUS
+   OWNER_CLAIM_RESPONSE_CODE
+   OWNER_CLAIM_RESPONSE_OK
+   OWNER_REFRESH_SESSION_STATUS
+   OWNER_REFRESH_SETTINGS_STATUS
+
+Never log the key.
+
+10. Check whether the frontend currently has one large try/catch covering both activation and refresh. Split it into separate try/catch blocks.
+
+11. Remove the generic “Owner activation failed” message when the server returned HTTP 200 OWNER_ACCESS_ACTIVATED.
+
+12. Test on the actual mobile Preview:
+
+Expected result after one tap:
+- visible message: “Owner access activated”
+- NO SUBSCRIPTION disappears
+- owner/live entitlement becomes visible
+- page remains activated after refresh using the same mf_session cookie
+
+Do not modify the backend route, Secret, billing rules, wallet logic, or trading logic.

@@ -1483,7 +1483,48 @@ render();refresh();setInterval(refresh,10000);
  ui.checkout?.addEventListener('click',()=>post('/api/billing/checkout').catch(e=>alert(e.message)));
  ui.portal?.addEventListener('click',()=>post('/api/billing/portal').catch(e=>alert(e.message)));
  const ownerBtn=$('#activateOwnerAccess'),ownerKey=$('#ownerAccessKey'),ownerState=$('#ownerAccessState');
- ownerBtn?.addEventListener('click',async()=>{const accessKey=ownerKey?.value||'';if(!accessKey){if(ownerState)ownerState.textContent='Enter the private owner access key.';return}ownerBtn.disabled=true;try{const r=await fetch('/api/owner/claim',{method:'POST',credentials:'include',headers:{'content-type':'application/json'},body:JSON.stringify({accessKey})});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.message||d.error||'Owner activation failed');if(ownerKey)ownerKey.value='';if(ownerState)ownerState.textContent='Owner LIVE entitlement activated for this server account.';await status()}catch(e){if(ownerState)ownerState.textContent=e.message}finally{ownerBtn.disabled=false}});
+ ownerBtn?.addEventListener('click',async()=>{
+  const accessKey=(ownerKey?.value||'').trim();
+  if(!accessKey){if(ownerState)ownerState.textContent='Enter the private owner access key.';return}
+  ownerBtn.disabled=true;
+  // ── CLAIM (isolated try/catch — never confused with refresh failures) ──
+  let claimData=null;
+  try{
+    const r=await fetch('/api/owner/claim',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({accessKey})});
+    const d=await r.json().catch(()=>({}));
+    console.log('[MEMEFLOW] OWNER_CLAIM_HTTP_STATUS',r.status);
+    console.log('[MEMEFLOW] OWNER_CLAIM_RESPONSE_OK',d.ok);
+    console.log('[MEMEFLOW] OWNER_CLAIM_RESPONSE_CODE',d.code);
+    if(!r.ok||d.ok!==true||d.code!=='OWNER_ACCESS_ACTIVATED'){
+      if(ownerState)ownerState.textContent=d.error||d.message||('Server returned HTTP '+r.status);
+      ownerBtn.disabled=false;
+      return;
+    }
+    claimData=d;
+  }catch(e){
+    if(ownerState)ownerState.textContent='Network error: '+e.message;
+    ownerBtn.disabled=false;
+    return;
+  }
+  // ── SUCCESS — update UI immediately from claim response ──
+  if(ownerKey)ownerKey.value='';
+  if(ownerState)ownerState.textContent='Owner access activated';
+  paint({isOwner:true,liveEntitled:true,entitlementSource:'owner'});
+  const emBadge=ownerBtn?.closest('details')?.querySelector('summary em');
+  if(emBadge)emBadge.textContent='OWNER ACCESS';
+  ownerBtn.disabled=false;
+  // ── REFRESH (separate try/catch — failure CANNOT overwrite "Owner access activated") ──
+  // NOTE: status() is intentionally NOT called here. Its error fallback calls
+  // paint({liveEntitled:false}) which would reset the UI back to FREE PLAN when
+  // billing keys are unconfigured. We already have authoritative state from the claim.
+  try{
+    const[rs,rset]=await Promise.all([fetch('/api/settings',{credentials:'same-origin'}),fetch('/api/session',{credentials:'same-origin'})]);
+    console.log('[MEMEFLOW] OWNER_REFRESH_SETTINGS_STATUS',rs.status);
+    console.log('[MEMEFLOW] OWNER_REFRESH_SESSION_STATUS',rset.status);
+  }catch(e){
+    if(ownerState)ownerState.textContent='Owner activated, but account data refresh failed.';
+  }
+ });
  $('#refreshBilling')?.addEventListener('click',status);
  status();
 })();
