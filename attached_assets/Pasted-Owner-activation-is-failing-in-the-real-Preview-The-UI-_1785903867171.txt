@@ -1,0 +1,55 @@
+Owner activation is failing in the real Preview.
+
+The UI accepts the key, but after tapping “Activate owner access” it shows:
+“Owner activation failed”.
+
+Diagnose the complete owner activation flow end to end.
+
+Required checks:
+
+1. Confirm the exact environment variable name used by the backend.
+   It must be:
+   OWNER_ACCESS_KEY
+
+2. Confirm the running Preview process can see it without printing the value:
+   console.log(Boolean(process.env.OWNER_ACCESS_KEY))
+
+3. If false:
+   - verify OWNER_ACCESS_KEY exists in Replit App Secrets;
+   - restart the actual Preview workflow;
+   - verify the workflow is using the same app environment.
+
+4. Find the exact frontend request triggered by “Activate owner access”.
+   Report:
+   - HTTP method
+   - URL
+   - request body
+   - credentials mode
+   - expected response
+
+5. Confirm the corresponding backend route exists.
+   Test it directly with curl against the real Preview server.
+
+6. The route must:
+   - accept the submitted owner key over POST;
+   - compare it safely with process.env.OWNER_ACCESS_KEY;
+   - never log or return the secret;
+   - return HTTP 200 with a clear success JSON when valid;
+   - return HTTP 401 when invalid;
+   - return HTTP 503 when OWNER_ACCESS_KEY is missing.
+
+7. Check whether the current request is incorrectly going to /api/* on a separate api-server that returns 404.
+   If so, add the owner activation route to the server that actually serves this Preview, or proxy the request correctly.
+
+8. Verify CORS and credentials are correct for the real Preview origin.
+
+9. After successful activation:
+   - owner entitlement becomes active;
+   - LIVE access is unlocked without subscription;
+   - the key is not saved in localStorage, sessionStorage, cookies, or the DOM;
+   - only a server-issued owner session/entitlement is retained.
+
+10. Test in the real iPhone Preview using a valid OWNER_ACCESS_KEY.
+11. Do not print the secret in logs or in the report.
+12. Do not change billing, trading logic, Settings, navigation, or deployment configuration beyond this owner-auth fix.
+13. Do not commit or deploy until I verify the Preview.
