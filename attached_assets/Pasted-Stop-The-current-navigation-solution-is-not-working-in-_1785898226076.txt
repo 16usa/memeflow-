@@ -1,0 +1,96 @@
+Stop. The current navigation solution is not working in either Preview or public deployment.
+
+Current state:
+- Public deployment: all content is visible, but no navigation/buttons switch anything.
+- Replit Preview: no navigation/buttons switch anything, and some Settings modules are hidden.
+- The repeated navigation-fix.js CSS overrides have created conflicting behavior.
+
+Remove the current navigation patch architecture and rebuild navigation cleanly.
+
+MANDATORY CLEANUP
+
+1. Delete memeflow-app/navigation-fix.js and remove every reference to it from index.html.
+2. Remove every CSS rule injected by navigation-fix.js.
+3. Remove every data-page router override and visibility patch introduced during this repair.
+4. Restore index.html from the current branch base for navigation-related markup only, preserving all original content and all Settings modules.
+5. Do not delete, move, simplify, or rewrite any trading, AI, wallet, billing, chart, settings, or API logic.
+
+REBUILD NAVIGATION
+
+6. Implement one small navigation controller directly in a new file:
+   memeflow-app/router.js
+
+7. router.js must only:
+   - listen for clicks on desktop sidebar links;
+   - listen for clicks on mobile bottom-nav buttons;
+   - update location.hash;
+   - scroll to the correct existing section;
+   - set the active navigation class;
+   - open and close the existing mobile sheets;
+   - support hashchange, popstate, browser back and forward.
+
+8. Do NOT hide page content.
+9. Do NOT use display:none on main children, sections, panels, details, Settings modules, or route targets.
+10. Do NOT introduce data-page.
+11. Keep the application as the original scrolling document. Clicking a menu item must smoothly scroll to the existing section.
+12. Direct links must work:
+    #mission
+    #workspace
+    #positions
+    #wallet
+    #system
+    #billing
+    #settings
+
+BUTTON REPAIR
+
+13. Audit every existing button and identify buttons without an effective click handler.
+14. Preserve the original handlers already present in index.html.
+15. Wire only genuinely missing handlers:
+    - mobile navigation;
+    - open/close sheets;
+    - settings navigation button;
+    - focus toggle;
+    - wallet modal;
+    - tabs and detail panels if currently unbound.
+16. Remove any invisible overlay that intercepts clicks when closed.
+17. Closed modals/sheets must have pointer-events:none.
+18. Open modals/sheets must have pointer-events:auto.
+
+SETTINGS REQUIREMENT
+
+19. All original Settings content must remain visible in the document:
+    - General
+    - Owner Hard Limits
+    - AI Behavior
+    - Decision Gates
+    - Position Protection
+    - AI Safety
+    - Decision intelligence & model reasoning
+    - Advanced intelligence, research & audit
+20. Do not use any router CSS to control these modules.
+
+SERVER
+
+21. Serve router.js as text/javascript.
+22. Keep the MIME, compression, and static-cache improvements in app-server.mjs.
+23. HTML may stay no-store; JS/CSS can use public cache with revalidation.
+24. Ensure pnpm start launches successfully.
+
+REAL TESTING — REQUIRED
+
+25. Test the actual running Preview, not source-code assumptions.
+26. At 390px and desktop:
+    - click every sidebar item;
+    - click every mobile bottom-nav item;
+    - confirm location.hash changes;
+    - confirm the target section enters the viewport;
+    - confirm all Settings modules remain in the DOM and visible when scrolled to;
+    - confirm wallet modal opens and closes;
+    - confirm tabs switch;
+    - confirm no click-blocking overlay exists.
+27. Check browser console: zero runtime errors and zero 404s.
+28. Verify:
+    fetch('/router.js') => HTTP 200 and JavaScript MIME type.
+29. Do not claim success based only on screenshots. Provide automated browser assertion results for every navigation target.
+30. Do not commit, push, merge, or deploy until I verify Preview.
