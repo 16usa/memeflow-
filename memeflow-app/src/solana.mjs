@@ -4,19 +4,29 @@ export function b58encode(buf){let n=BigInt('0x'+buf.toString('hex')||'0');let r
 export function validPubkey(s){try{return b58decode(s).length===32}catch{return false}}
 
 // ── Pump.fun discriminator constants (sha256("global:<name>")[0:8]) ────────────
-export const PUMP_DISC_CREATE    = [24,30,200,40,5,28,7,119];
-export const PUMP_DISC_CREATE_V2 = [214,144,76,236,95,139,49,180];
-export const PUMP_DISC_BUY       = [102,6,61,18,1,218,235,234];
-export const PUMP_DISC_SELL      = [51,230,133,164,1,127,131,173];
-export const PUMP_DISC_WITHDRAW  = [183,18,70,156,148,109,161,34];
-// Known non-create set (string form for fast lookup)
+export const PUMP_DISC_CREATE             = [24,30,200,40,5,28,7,119];
+export const PUMP_DISC_CREATE_V2          = [214,144,76,236,95,139,49,180];
+export const PUMP_DISC_BUY                = [102,6,61,18,1,218,235,234];
+export const PUMP_DISC_SELL               = [51,230,133,164,1,127,131,173];
+export const PUMP_DISC_WITHDRAW           = [183,18,70,156,148,109,161,34];
+export const PUMP_DISC_BUY_EXACT_SOL_IN   = [56,252,116,8,158,223,205,95];
+// Inner CPI event/log payloads — not instructions, never decode-failed
+export const PUMP_DISC_EVENT_PAYLOAD      = [228,69,165,46,81,203,154,29];
+// Known non-create trade instructions (string form for fast lookup)
 const KNOWN_NON_CREATE = new Set([
   PUMP_DISC_BUY.join(','),
   PUMP_DISC_SELL.join(','),
   PUMP_DISC_WITHDRAW.join(','),
+  PUMP_DISC_BUY_EXACT_SOL_IN.join(','),
+]);
+// Known inner event/CPI payloads — silently skipped, different counter than knownNonCreate
+const KNOWN_EVENT_PAYLOAD = new Set([
+  PUMP_DISC_EVENT_PAYLOAD.join(','),
 ]);
 const DISC_CREATE    = PUMP_DISC_CREATE.join(',');
 const DISC_CREATE_V2 = PUMP_DISC_CREATE_V2.join(',');
+// Rate-limit unknown discriminator logging — log first occurrence per disc key only
+const _loggedUnknownDiscs = new Set();
 
 function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
 
@@ -174,11 +184,18 @@ export function decodePumpCreate(ix, keys) {
     return {ok:false, reason:'pumpInstructionWithoutData'};
   }
   const discKey = discBytes.join(',');
-  // Known non-create — caller must silently skip (not count as decodeFailed)
+  // Known non-create trade instructions — caller increments knownNonCreateIgnored, not decodeFailed
   if (KNOWN_NON_CREATE.has(discKey)) return {ok:false, reason:'knownNonCreate'};
-  // Unknown discriminator — return bytes for diagnostic logging
-  if (discKey !== DISC_CREATE && discKey !== DISC_CREATE_V2)
+  // Known inner event/CPI payloads — caller increments ignoredPumpEventPayloads, not decodeFailed
+  if (KNOWN_EVENT_PAYLOAD.has(discKey)) return {ok:false, reason:'ignoredPumpEventPayload'};
+  // Unknown discriminator — log first occurrence only, then aggregate silently
+  if (discKey !== DISC_CREATE && discKey !== DISC_CREATE_V2) {
+    if (!_loggedUnknownDiscs.has(discKey)) {
+      _loggedUnknownDiscs.add(discKey);
+      console.log(`[DECODE] unknown disc=[${discBytes.join(',')}] dataLen=${dataLen} — first occurrence, subsequent hits aggregated silently`);
+    }
     return {ok:false, reason:'unknownPumpDiscriminator', discBytes, dataLen};
+  }
   // Parse string fields
   let name, symbol, uri;
   try {

@@ -64,6 +64,9 @@ export function makeDiscoveryMetrics() {
     invalidAccountLayout: 0,
     invalidMint: 0,
     createInstructionDecoded: 0,
+    knownNonCreateIgnored: 0,
+    ignoredPumpEventPayloads: 0,
+    unknownPumpDiscriminatorsByValue: {},
     // enrichment
     enrichSucceeded: 0,
     enrichFailed: 0,

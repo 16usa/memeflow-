@@ -7,7 +7,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { makeDiscoveryMetrics, makeDiscoveryQueue, isRateLimitError, isRetryableError } from './discqueue.mjs';
-import { decodePumpCreate, b58encode, b58decode, PUMP_DISC_CREATE, PUMP_DISC_CREATE_V2, PUMP_DISC_BUY, PUMP_DISC_SELL } from './solana.mjs';
+import { decodePumpCreate, b58encode, b58decode, PUMP_DISC_CREATE, PUMP_DISC_CREATE_V2, PUMP_DISC_BUY, PUMP_DISC_SELL, PUMP_DISC_BUY_EXACT_SOL_IN, PUMP_DISC_EVENT_PAYLOAD } from './solana.mjs';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -300,6 +300,96 @@ test('Sell discriminator returns knownNonCreate — never counted as decodeFaile
   const result = decodePumpCreate(ix, []);
   assert.equal(result.ok, false);
   assert.equal(result.reason, 'knownNonCreate', 'Sell must not be decodeFailed');
+});
+
+test('buy_exact_sol_in discriminator returns knownNonCreate — not decodeFailed', () => {
+  const buf = Buffer.from(PUMP_DISC_BUY_EXACT_SOL_IN);
+  const data = b58encode(buf);
+  const ix = { data, accounts: makeAccounts() };
+  const result = decodePumpCreate(ix, []);
+  assert.equal(result.ok, false);
+  assert.equal(result.reason, 'knownNonCreate', 'buy_exact_sol_in must not increment decodeFailed');
+});
+
+test('inner event payload discriminator returns ignoredPumpEventPayload — not decodeFailed', () => {
+  const buf = Buffer.from(PUMP_DISC_EVENT_PAYLOAD);
+  const data = b58encode(buf);
+  const ix = { data, accounts: ['only_one'], _isInner: true };
+  const result = decodePumpCreate(ix, []);
+  assert.equal(result.ok, false);
+  assert.equal(result.reason, 'ignoredPumpEventPayload', 'inner event payload must not increment decodeFailed');
+});
+
+test('discriminator [184,23,238,97,103,197,211,61] stays unknown (diagnostic-only)', () => {
+  const unknownDisc = [184,23,238,97,103,197,211,61];
+  const buf = Buffer.alloc(8);
+  unknownDisc.forEach((b, i) => { buf[i] = b; });
+  const data = b58encode(buf);
+  const ix = { data, accounts: makeAccounts() };
+  const result = decodePumpCreate(ix, []);
+  assert.equal(result.ok, false);
+  assert.equal(result.reason, 'unknownPumpDiscriminator', '[184,...] must remain unknown until identity is confirmed');
+  assert.deepEqual(result.discBytes, unknownDisc);
+});
+
+test('repeated unknown discriminators log only first occurrence', () => {
+  // Use a disc not used by any other test to avoid cross-test Set state
+  const uniqueDisc = [77,88,99,11,22,33,44,55];
+  const buf = Buffer.alloc(8);
+  uniqueDisc.forEach((b, i) => { buf[i] = b; });
+  const data = b58encode(buf);
+  const ix = { data, accounts: makeAccounts() };
+
+  const logLines = [];
+  const origLog = console.log;
+  console.log = (...args) => { logLines.push(args.join(' ')); };
+  try {
+    decodePumpCreate(ix, []); // first — should log
+    decodePumpCreate(ix, []); // second — should NOT log again
+    decodePumpCreate(ix, []); // third — should NOT log again
+  } finally {
+    console.log = origLog;
+  }
+  const discLogs = logLines.filter(l => l.includes('77,88,99,11,22,33,44,55'));
+  assert.equal(discLogs.length, 1, 'unknown discriminator logged exactly once; subsequent hits are silent');
+});
+
+test('transaction with Create + buy_exact_sol_in + event payload: one decoded Create, zero decodeFailed', () => {
+  // Simulate the per-transaction decode loop in app-server.mjs
+  const createData = makeCreateData(PUMP_DISC_CREATE, 'Coin', 'COIN', 'https://example.com');
+  const buyData    = b58encode(Buffer.from(PUMP_DISC_BUY_EXACT_SOL_IN));
+  const eventData  = b58encode(Buffer.from(PUMP_DISC_EVENT_PAYLOAD));
+
+  const accounts = makeAccounts();
+  const instructions = [
+    { data: createData, accounts },
+    { data: buyData, accounts, _isInner: false },
+    { data: eventData, accounts: ['only_one'], _isInner: true },
+  ];
+
+  let decodeFailed = 0;
+  let knownNonCreateIgnored = 0;
+  let ignoredPumpEventPayloads = 0;
+  let createsDecoded = 0;
+  const seenMints = new Set();
+
+  for (const ix of instructions) {
+    const result = decodePumpCreate(ix, []);
+    if (result.ok) {
+      if (!seenMints.has(result.mint)) { seenMints.add(result.mint); createsDecoded++; }
+    } else if (result.reason === 'knownNonCreate') {
+      knownNonCreateIgnored++;
+    } else if (result.reason === 'ignoredPumpEventPayload') {
+      ignoredPumpEventPayloads++;
+    } else {
+      decodeFailed++;
+    }
+  }
+
+  assert.equal(createsDecoded, 1, 'exactly one Create decoded');
+  assert.equal(knownNonCreateIgnored, 1, 'buy_exact_sol_in counted as knownNonCreateIgnored');
+  assert.equal(ignoredPumpEventPayloads, 1, 'event payload counted as ignoredPumpEventPayloads');
+  assert.equal(decodeFailed, 0, 'no decode failures');
 });
 
 // ── Utility: isRateLimitError / isRetryableError ──────────────────────────────

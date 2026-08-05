@@ -1,0 +1,73 @@
+Fix false Pump decode failures using the live discriminator evidence.
+
+Verified live logs:
+
+1. discriminator:
+[56,252,116,8,158,223,205,95]
+dataLen=25 accounts=18 inner=false
+
+This is the official Pump instruction buy_exact_sol_in.
+Classify it as knownNonCreate.
+It must not increment decodeFailed or unknownPumpDiscriminator.
+
+2. discriminator:
+[228,69,165,46,81,203,154,29]
+dataLen approximately 347–368
+accounts=1
+inner=true
+
+This is an inner event/CPI-style payload, not a create instruction.
+Classify this discriminator as knownEventPayload or ignoredInnerEvent.
+It must not increment decodeFailed or unknownPumpDiscriminator.
+Add a separate ignoredPumpEventPayloads metric if useful.
+
+3. discriminator:
+[184,23,238,97,103,197,211,61]
+dataLen=24
+accounts=27
+inner=false
+
+Do not classify this as Create without proof.
+Keep it as an unknown instruction, but aggregate it by discriminator rather
+than writing repeated log lines.
+
+Required changes:
+
+- Add PUMP_DISC_BUY_EXACT_SOL_IN =
+  [56,252,116,8,158,223,205,95]
+  to known non-create instructions.
+
+- Add the observed inner event discriminator
+  [228,69,165,46,81,203,154,29]
+  to ignored event payloads.
+
+- known trade instructions and event payloads must not increment decodeFailed.
+
+- decodeFailed should mean an actual attempted Create decode failure, not every
+  non-Create Pump instruction present in a Create transaction.
+
+- Add status metrics:
+  knownNonCreateIgnored
+  ignoredPumpEventPayloads
+  unknownPumpDiscriminatorsByValue
+
+- Rate-limit unknown discriminator logging:
+  log the first occurrence and then aggregate counts.
+  Do not print the same discriminator for every transaction.
+
+- Keep discriminator
+  [184,23,238,97,103,197,211,61]
+  diagnostic-only until its identity is confirmed.
+
+Tests:
+- buy_exact_sol_in is ignored without decode failure
+- inner event payload is ignored without decode failure
+- actual Create still decodes
+- the remaining 184 discriminator stays unknown
+- repeated unknown values are aggregated
+- transaction with Create + buy + event produces one decoded Create and zero
+  decode failures
+
+Run all tests, restart Project, and report before/after decode metrics.
+Do not modify RPC queueing, frontend, billing, settings, holder filtering, or
+trading logic.

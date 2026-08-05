@@ -81,12 +81,20 @@ async function processSignature(sig){
       discMetrics.createsDecoded++;
       store.addToken({mint:result.mint,curve:result.curve,name:result.name,symbol:result.symbol,uri:result.uri,creator:result.creator,discoveredAt:Date.now(),slot:tx.slot,signature:sig,source:'Pump create'});
       await enrich(result.mint,result.curve);
-    }else if(result.reason!=='knownNonCreate'){
-      // knownNonCreate (Buy/Sell/Withdraw) silently skipped — not a failure
+    }else if(result.reason==='knownNonCreate'){
+      // Known trade instruction (Buy/Sell/Withdraw/buy_exact_sol_in) — not a decode failure
+      discMetrics.knownNonCreateIgnored++;
+    }else if(result.reason==='ignoredPumpEventPayload'){
+      // Inner CPI event payload — not a decode failure
+      discMetrics.ignoredPumpEventPayloads++;
+    }else{
+      // Actual create decode failure (bad layout, invalid mint, unknown disc, no data)
       discMetrics.decodeFailed++;
       discMetrics[result.reason]=(discMetrics[result.reason]||0)+1;
       if(result.reason==='unknownPumpDiscriminator'&&result.discBytes){
-        console.log(`[DECODE] disc=[${result.discBytes.join(',')}] dataLen=${result.dataLen??0} accounts=${(ix.accounts||[]).length} inner=${Boolean(ix._isInner)} ver=${tx.version??'legacy'}`);
+        const dKey=result.discBytes.join(',');
+        discMetrics.unknownPumpDiscriminatorsByValue[dKey]=(discMetrics.unknownPumpDiscriminatorsByValue[dKey]||0)+1;
+        // console.log is rate-limited inside decodePumpCreate (first occurrence only)
       }
     }
   }
