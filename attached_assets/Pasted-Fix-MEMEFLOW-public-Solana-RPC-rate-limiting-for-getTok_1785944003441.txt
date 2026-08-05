@@ -1,0 +1,94 @@
+Fix MEMEFLOW public Solana RPC rate limiting for getTokenLargestAccounts.
+
+Verified live state:
+- WebSocket discovery works.
+- Create filtering works.
+- queueDropped is 0.
+- createsDecoded increases.
+- The failing step is:
+  getTokenLargestAccounts: Too many requests for a specific RPC call
+- We must continue operating without Helius.
+
+Required changes:
+
+1. Do not block token discovery on getTokenLargestAccounts.
+A newly decoded token must immediately be stored, evaluated with available data, published, and shown in the candidate feed even if holder data is unavailable.
+
+2. Split enrichment into two phases.
+
+Phase A — immediate:
+- getTokenSupply
+- getAccountInfo for bonding curve
+- decodeCurve
+- store token
+- evaluateAll
+- publish
+- mark the signature processed
+
+Phase B — delayed holder enrichment:
+- getTokenLargestAccounts
+- calculate Top 10
+- update holderFresh
+- evaluateAll again
+- publish updated token
+
+3. Add a dedicated holder enrichment queue:
+- HOLDER_RPC_MAX_CONCURRENCY default 1
+- HOLDER_QUEUE_MAX default 250
+- HOLDER_INITIAL_DELAY_MS default 15000
+- HOLDER_RETRY_DELAY_MS default 60000
+- HOLDER_MAX_RETRIES default 5
+
+4. On getTokenLargestAccounts rate limit:
+- do not keep the main signature worker busy
+- requeue the mint for a later holder lookup
+- use Retry-After when available
+- otherwise wait at least 60 seconds
+- do not count the entire token scan as failed
+
+5. Prevent duplicate holder jobs:
+- one pending/in-flight job per mint
+- successful holder enrichment removes the mint from the queue
+
+6. Holder data behavior:
+- holderFresh:false until getTokenLargestAccounts succeeds
+- holderCount:null while unavailable
+- top10Pct:null while unavailable
+- UI/API should display unavailable values as “—”
+- the token must still appear in decisions
+
+7. Metrics for /api/discovery/status:
+- holderQueueDepth
+- holderProcessing
+- holderQueued
+- holderSucceeded
+- holderFailed
+- holderRateLimited
+- holderRetries
+- holderDropped
+- lastHolderError
+- lastHolderErrorAt
+
+8. Main discovery health:
+After Phase A completes:
+- signaturesProcessed must increment
+- lastSuccessfulScanAt must update
+- processing worker must be released
+- enrichSucceeded must increment even when holder data is pending
+
+9. Public RPC safe defaults:
+- RPC_MAX_CONCURRENCY=2
+- HOLDER_RPC_MAX_CONCURRENCY=1
+- do not raise concurrency to solve rate limiting
+
+10. Tests:
+- holder rate limit does not block main discovery
+- token is published before holder data arrives
+- signaturesProcessed increments after Phase A
+- duplicate holder jobs are rejected
+- rate-limited holder job is retried later
+- successful retry updates top10Pct and holderFresh
+- 100 create events never produce more than one simultaneous holder RPC request
+
+Do not modify frontend design, authentication, billing, user data, WebSocket filtering, or trading settings.
+Run all tests, restart the Project workflow, and report exact files changed.

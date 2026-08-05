@@ -1,6 +1,10 @@
 /**
  * Per-step token enrichment with partial-result preservation.
- * Imported by app-server.mjs; dep-injected for testability.
+ * Phase A (enrichToken)  — immediate: supply, curve, store, evaluate, publish.
+ * Phase B (enrichHolders) — delayed:  getTokenLargestAccounts, update holderFresh.
+ * makeHolderQueue — bounded, deduplicating holder enrichment queue (dep-injected).
+ *
+ * Imported by app-server.mjs.
  */
 import {decodeCurve} from './solana.mjs';
 
@@ -38,17 +42,42 @@ export function makeEnrichDiag() {
   };
 }
 
-// ── Main ──────────────────────────────────────────────────────────────────────
+export function makeHolderMetrics() {
+  return {
+    holderQueued: 0,
+    holderSucceeded: 0,
+    holderFailed: 0,
+    holderRateLimited: 0,
+    holderRetries: 0,
+    holderDropped: 0,
+    lastHolderError: null,
+    lastHolderErrorAt: null,
+  };
+}
+
+// ── Rate-limit detection ───────────────────────────────────────────────────────
+
+function isRateLimited(e) {
+  const msg = (e?.message || '').toLowerCase();
+  return (
+    msg.includes('429') ||
+    msg.includes('too many') ||
+    msg.includes('rate limit') ||
+    msg.includes('rate-limit') ||
+    msg.includes('data allowance') ||
+    msg.includes('credits') ||
+    msg.includes('quota')
+  );
+}
+
+// ── Phase A: immediate enrichment ─────────────────────────────────────────────
 
 /**
- * Enrich a newly-discovered Pump.fun token with on-chain data.
+ * Enrich a newly-discovered token with on-chain data (Phase A — no holder lookup).
  *
- * Each step is attempted independently. Partial results are stored.
- * Success is defined as: token stored + evaluateAll run + publish called —
- * even when some optional enrichment fields are unavailable.
- *
- * holderFresh reflects ONLY whether getTokenLargestAccounts succeeded;
- * bonding-curve failures do not affect it.
+ * Steps: getTokenSupply → getAccountInfo → decodeCurve → store → evaluate → publish.
+ * holderFresh is always false after Phase A; Phase B sets it true.
+ * holderCount and top10Pct are set to null; Phase B fills them in.
  *
  * @param {string}      mint   token mint address
  * @param {string|null} curve  bonding-curve account address (may be null)
@@ -76,20 +105,7 @@ export async function enrichToken(mint, curve, deps) {
       supply = await rpc.call('getTokenSupply', [mint, {commitment: 'confirmed'}]);
     } catch(e) { fail('getTokenSupply', e); }
 
-    // ── Step 2: getTokenLargestAccounts ────────────────────────────────────
-    // Only meaningful when supply succeeded (need decimals for % calculation).
-    // holderFresh = true ONLY when this step succeeds.
-    let largest = null;
-    let holderFresh = false;
-    if (supply) {
-      try {
-        largest = await rpc.call('getTokenLargestAccounts', [mint, {commitment: 'confirmed'}]);
-        holderFresh = true;
-      } catch(e) { fail('getTokenLargestAccounts', e); }
-    }
-
-    // ── Step 3: getAccountInfo (bonding curve, optional) ───────────────────
-    // Failure here does NOT affect holderFresh or supply data.
+    // ── Step 2: getAccountInfo (bonding curve, optional) ───────────────────
     let curveInfo = null;
     if (curve) {
       try {
@@ -97,7 +113,7 @@ export async function enrichToken(mint, curve, deps) {
       } catch(e) { fail('getAccountInfo', e); }
     }
 
-    // ── Step 4: decodeCurve (optional, depends on curveInfo) ───────────────
+    // ── Step 3: decodeCurve (optional, depends on curveInfo) ───────────────
     let c = {};
     if (curveInfo?.value?.data?.[0]) {
       try {
@@ -108,28 +124,22 @@ export async function enrichToken(mint, curve, deps) {
     // ── Build token update from whatever succeeded ─────────────────────────
     const decimals = supply?.value?.decimals ?? 6;
     const total = Number(supply?.value?.uiAmountString ?? 0);
-    const vals = (largest?.value ?? []).map(x => Number(x.uiAmountString ?? 0));
-    const top10 = (total && vals.length)
-      ? vals.slice(0, 10).reduce((a, b) => a + b, 0) / total * 100
-      : null;
-    const holderCount = largest
-      ? (vals.length === 20 ? null : vals.filter(v => v > 0).length)
-      : null;
     const tw = (tradeWindows?.get?.(mint)) || {buy: 0, sell: 0};
 
     const update = {
       scanError: null,
       lastScannedAt: Date.now(),
-      holderFresh,
+      // Holder data deferred to Phase B
+      holderFresh: false,
+      holderCount: null,
+      top10Pct: null,
       buyPressure: tw.sell ? tw.buy / tw.sell : (tw.buy ? tw.buy : null),
-      dataQuality: [total || null, top10, c.priceSol ?? null].filter(x => x != null).length / 3,
+      dataQuality: [total || null, c.priceSol ?? null].filter(x => x != null).length / 2,
       source: 'Solana RPC',
     };
     // Supply data
     if (supply) { update.decimals = decimals; update.totalSupply = total; }
-    // Holder data (independent of curve)
-    if (largest) { update.top10Pct = top10; update.holderCount = holderCount; }
-    // Curve data (independent of holder)
+    // Curve data
     if (Object.keys(c).length) {
       update.priceSol       = c.priceSol    ?? null;
       update.liquiditySol   = c.liquiditySol ?? null;
@@ -140,7 +150,7 @@ export async function enrichToken(mint, curve, deps) {
     // ── Always store, evaluate, publish ────────────────────────────────────
     const token = store.setToken(mint, update);
 
-    // ── Step 5: evaluate (score the token) ─────────────────────────────────
+    // ── Step 4: evaluate (score the token) ─────────────────────────────────
     try {
       evaluateAll(token);
     } catch(e) { fail('evaluate', e); }
@@ -151,7 +161,7 @@ export async function enrichToken(mint, curve, deps) {
     // Success: token stored and published regardless of step failures
     discMetrics.enrichSucceeded++;
 
-    // Clear stale enrich error only after a fully clean enrichment (no step errors)
+    // Clear stale enrich error only after a fully clean Phase A (no step errors)
     if (!anyStepFailed) {
       enrichDiag.lastEnrichError    = null;
       enrichDiag.lastEnrichErrorAt  = null;
@@ -164,4 +174,174 @@ export async function enrichToken(mint, curve, deps) {
     discMetrics.enrichFailed++;
     recordEnrichError(enrichDiag, mint, 'store/publish', e);
   }
+}
+
+// ── Phase B: delayed holder enrichment ────────────────────────────────────────
+
+/**
+ * Fetch holder data for a previously Phase-A-enriched token.
+ *
+ * Returns { rateLimited: false } on success.
+ * Returns { rateLimited: true, retryAfter?: number } when rate-limited.
+ * Throws on unexpected errors.
+ *
+ * @param {string} mint
+ * @param {object} deps  { rpc, store, evaluateAll, publish, enrichDiag }
+ */
+export async function enrichHolders(mint, deps) {
+  const { rpc, store, evaluateAll, publish, enrichDiag } = deps;
+
+  let largest;
+  try {
+    largest = await rpc.call('getTokenLargestAccounts', [mint, {commitment: 'confirmed'}]);
+  } catch(e) {
+    if (enrichDiag) {
+      enrichDiag.enrichStepFailures.getTokenLargestAccounts++;
+      recordEnrichError(enrichDiag, mint, 'getTokenLargestAccounts', e);
+    }
+    if (isRateLimited(e)) {
+      // Parse Retry-After if encoded in the message (e.g. "Retry-After: 45")
+      const ra = /retry-after[:\s]+(\d+)/i.exec(e.message || '');
+      return { rateLimited: true, retryAfter: ra ? Number(ra[1]) * 1000 : undefined };
+    }
+    throw e; // non-rate-limit error → holderFailed in caller
+  }
+
+  // Compute holder metrics using existing supply data
+  const token = store.state.tokens[mint] || {};
+  const total = token.totalSupply || 0;
+  const vals = (largest?.value ?? []).map(x => Number(x.uiAmountString ?? 0));
+  const top10 = (total && vals.length)
+    ? vals.slice(0, 10).reduce((a, b) => a + b, 0) / total * 100
+    : null;
+  const holderCount = vals.length === 20 ? null : vals.filter(v => v > 0).length;
+
+  const updated = store.setToken(mint, {holderFresh: true, top10Pct: top10, holderCount});
+  try { evaluateAll(updated); } catch {}
+  publish(mint);
+
+  return {rateLimited: false};
+}
+
+// ── Holder queue ─────────────────────────────────────────────────────────────
+
+/**
+ * Create a bounded, deduplicating holder-enrichment queue.
+ *
+ * @param {object} config
+ *   maxConcurrent   — max simultaneous holder RPC calls (default 1)
+ *   queueMax        — max pending+ready items; oldest dropped when full (default 250)
+ *   initialDelayMs  — delay before first attempt (default 15 000)
+ *   retryDelayMs    — delay before each retry (default 60 000)
+ *   maxRetries      — retries before giving up on a mint (default 5)
+ * @param {object} deps
+ *   enrichHoldersFn — (mint) => Promise<{rateLimited, retryAfter?}>
+ *   holderMetrics   — from makeHolderMetrics()
+ * @returns {{ enqueue(mint), queueDepth, processing }}
+ */
+export function makeHolderQueue(config, deps) {
+  const {
+    maxConcurrent  = 1,
+    queueMax       = 250,
+    initialDelayMs = 15000,
+    retryDelayMs   = 60000,
+    maxRetries     = 5,
+  } = config || {};
+  const {enrichHoldersFn, holderMetrics} = deps;
+
+  // scheduled: mints with a pending timer before entering the ready queue
+  const scheduled    = new Map();  // mint → { retries, timer }
+  // ready: ordered queue of items waiting for a concurrency slot
+  const ready        = [];
+  const readySet     = new Set();
+  // active: mints currently running enrichHoldersFn
+  const active       = new Set();
+
+  function _totalPending() {
+    return scheduled.size + ready.length;
+  }
+
+  function _dropOldest() {
+    // Prefer dropping from ready queue (not yet started)
+    if (ready.length > 0) {
+      const dropped = ready.shift();
+      readySet.delete(dropped.mint);
+    } else {
+      // Drop oldest scheduled entry
+      const oldest = scheduled.keys().next().value;
+      const entry  = scheduled.get(oldest);
+      clearTimeout(entry.timer);
+      scheduled.delete(oldest);
+    }
+    holderMetrics.holderDropped++;
+  }
+
+  function _schedule(mint, retries, delayMs) {
+    // Cancel any existing timer for this mint
+    const existing = scheduled.get(mint);
+    if (existing) clearTimeout(existing.timer);
+
+    const timer = setTimeout(() => {
+      scheduled.delete(mint);
+      if (!active.has(mint) && !readySet.has(mint)) {
+        ready.push({mint, retries});
+        readySet.add(mint);
+        _drain();
+      }
+    }, delayMs);
+    scheduled.set(mint, {retries, timer});
+  }
+
+  async function _run(mint, retries) {
+    try {
+      const result = await enrichHoldersFn(mint);
+      if (result.rateLimited) {
+        holderMetrics.holderRateLimited++;
+        if (retries < maxRetries) {
+          holderMetrics.holderRetries++;
+          const delay = result.retryAfter ?? retryDelayMs;
+          active.delete(mint);
+          _schedule(mint, retries + 1, delay);
+          _drain();
+          return;
+        } else {
+          holderMetrics.holderFailed++;
+          holderMetrics.lastHolderError = 'max retries exceeded on rate limit';
+          holderMetrics.lastHolderErrorAt = Date.now();
+        }
+      } else {
+        holderMetrics.holderSucceeded++;
+      }
+    } catch(e) {
+      holderMetrics.holderFailed++;
+      holderMetrics.lastHolderError = sanitize(e?.message || 'unknown');
+      holderMetrics.lastHolderErrorAt = Date.now();
+    }
+    active.delete(mint);
+    _drain();
+  }
+
+  function _drain() {
+    while (active.size < maxConcurrent && ready.length > 0) {
+      const {mint, retries} = ready.shift();
+      readySet.delete(mint);
+      active.add(mint);
+      _run(mint, retries);
+    }
+  }
+
+  function enqueue(mint) {
+    // Dedup: already scheduled, active, or in ready queue
+    if (scheduled.has(mint) || active.has(mint) || readySet.has(mint)) return false;
+    if (_totalPending() >= queueMax) _dropOldest();
+    holderMetrics.holderQueued++;
+    _schedule(mint, 0, initialDelayMs);
+    return true;
+  }
+
+  return {
+    enqueue,
+    get queueDepth()  { return _totalPending(); },
+    get processing()  { return active.size; },
+  };
 }
