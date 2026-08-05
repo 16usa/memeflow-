@@ -1,0 +1,89 @@
+Verify decision recovery after MEMEFLOW restart.
+
+Background:
+- decisions were removed from disk persistence to reduce state size and eliminate event-loop blocking.
+- Decisions are expected to be recomputed from persisted tokens and each user's persisted settings after restart.
+- This must now be verified end-to-end.
+
+Required test:
+
+1. Before restart:
+- record the current token count
+- record the current user count
+- choose at least 3 existing users with different settings
+- record their decision counts by state:
+  WAITING
+  WATCH
+  BLOCK
+  BUY READY
+  BUY
+  SKIP
+- record 10 sample mint + decision-state pairs per user
+
+2. Restart the single production Project workflow.
+
+3. After restart:
+- confirm persisted tokens are restored
+- confirm persisted user settings are restored
+- confirm decisions are recomputed automatically
+- confirm no manual API request is required to trigger recomputation
+- compare decision counts before and after restart
+- compare the recorded sample mint + decision-state pairs
+- confirm no cross-user decision leakage
+
+4. Recovery timing:
+Measure:
+- server listening time
+- time until /api/healthz returns 200
+- time until first user decisions are available
+- time until all persisted tokens have been reevaluated
+
+5. If decisions are not automatically rebuilt:
+Implement a bounded startup recovery job:
+- start only after server.listen()
+- iterate persisted tokens in batches
+- evaluate tokens for users without blocking the event loop
+- configurable batch size and delay
+- expose recovery status in /api/discovery/status
+
+Suggested defaults:
+DECISION_RECOVERY_BATCH_SIZE=25
+DECISION_RECOVERY_DELAY_MS=25
+
+6. Add recovery metrics:
+- decisionRecoveryStatus
+- decisionRecoveryStartedAt
+- decisionRecoveryCompletedAt
+- decisionRecoveryTokensTotal
+- decisionRecoveryTokensProcessed
+- decisionRecoveryDecisionsCreated
+- decisionRecoveryErrors
+
+7. During recovery:
+- site shell and API health must remain responsive
+- do not synchronously evaluate all users and tokens in one loop
+- do not write decisions back to the persisted state file
+- new live token events must continue to work
+
+8. Tests:
+- decisions disappear from memory on simulated restart
+- persisted tokens/settings reload
+- recovery rebuilds decisions
+- different users receive different decisions according to their settings
+- recovery does not persist decisions to disk
+- recovery yields to the event loop
+- recovery resumes safely if one token evaluation fails
+
+9. Do not modify:
+- frontend design
+- Solana discovery
+- RPC configuration
+- billing
+- authentication
+- user settings
+
+Report:
+- exact before/after counts
+- recovery time
+- files changed
+- all test results

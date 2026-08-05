@@ -1,6 +1,7 @@
 import http from 'node:http';import fs from 'node:fs';import path from 'node:path';import crypto from 'node:crypto';import zlib from 'node:zlib';import {fileURLToPath} from 'node:url';
 import {JsonStore,sessionId,defaults} from './src/store.mjs';import {RpcPool,validPubkey,decodeCurve,decodeCreateData} from './src/solana.mjs';import {evaluate} from './src/evaluate.mjs';import {StripeBilling} from './src/billing.mjs';
 import {enrichToken,enrichHolders,makeEnrichDiag,makeHolderQueue,makeHolderMetrics} from './src/enrich.mjs';
+import {makeRecoveryMetrics,startDecisionRecovery} from './src/recovery.mjs';
 const root=path.dirname(fileURLToPath(import.meta.url)),dataDir=path.resolve(root,process.env.DATA_DIR||'data'),store=new JsonStore(dataDir);
 const billing=new StripeBilling({store,secretKey:process.env.STRIPE_SECRET_KEY,priceId:process.env.STRIPE_PRICE_ID,webhookSecret:process.env.STRIPE_WEBHOOK_SECRET,apiBase:process.env.STRIPE_API_BASE});
 const rpcUrls=(process.env.SOLANA_RPC_URLS||'').split(',').map(x=>x.trim()).filter(Boolean),wsUrls=(process.env.SOLANA_WS_URLS||'').split(',').map(x=>x.trim()).filter(Boolean);const rpc=new RpcPool(rpcUrls,process.env.SOLANA_COMMITMENT||'confirmed');
@@ -18,6 +19,9 @@ const queueSet=new Set(),queueList=[],processing=new Set();
 const enrichDiag=makeEnrichDiag();
 const holderMetrics=makeHolderMetrics();
 const holderQueue=makeHolderQueue({maxConcurrent:HOLDER_MAX_CONCURRENT,queueMax:HOLDER_QUEUE_MAX,initialDelayMs:HOLDER_INITIAL_DELAY_MS,retryDelayMs:HOLDER_RETRY_DELAY_MS,maxRetries:HOLDER_MAX_RETRIES},{enrichHoldersFn:(mint)=>enrichHolders(mint,{rpc,store,evaluateAll,publish,enrichDiag}),holderMetrics});
+const recoveryMetrics=makeRecoveryMetrics();
+const DECISION_RECOVERY_BATCH_SIZE=Number(process.env.DECISION_RECOVERY_BATCH_SIZE||25);
+const DECISION_RECOVERY_DELAY_MS=Number(process.env.DECISION_RECOVERY_DELAY_MS||25);
 function enqueue(sig){
   // eventsReceived is counted in ws.onmessage before the log filter — not here
   if(queueSet.has(sig)||processing.has(sig)){discMetrics.signaturesDeduplicated++;return}
@@ -142,7 +146,7 @@ async function handler(req,res){const url=new URL(req.url,'http://x');
  if(url.pathname==='/api/billing/status')return json(res,200,billingStatus(u));
  if(url.pathname==='/api/billing/checkout'&&req.method==='POST'){if(!billing.configured)return json(res,503,{error:'BILLING_NOT_CONFIGURED',message:'Configure STRIPE_SECRET_KEY, STRIPE_PRICE_ID and STRIPE_WEBHOOK_SECRET.'});try{const session=await billing.createCheckout(u,origin(req));return json(res,200,{url:session.url,id:session.id})}catch(e){return json(res,e.status||502,{error:e.code||'STRIPE_ERROR',message:e.message})}}
  if(url.pathname==='/api/billing/portal'&&req.method==='POST'){if(!billing.configured)return json(res,503,{error:'BILLING_NOT_CONFIGURED'});try{const session=await billing.createPortal(u,origin(req));return json(res,200,{url:session.url})}catch(e){return json(res,e.status||502,{error:e.code||'STRIPE_ERROR',message:e.message})}}
- if(url.pathname==='/api/discovery/status')return json(res,200,{...discovery,...discMetrics,...enrichDiag,...holderMetrics,holderQueueDepth:holderQueue.queueDepth,holderProcessing:holderQueue.processing,rpcRetries:rpc.metrics.retries,rpcTimeouts:rpc.metrics.timeouts,processing:processing.size,metrics:store.state.metrics,tokens:store.tokens().length,users:Object.keys(store.state.users).length});
+ if(url.pathname==='/api/discovery/status')return json(res,200,{...discovery,...discMetrics,...enrichDiag,...holderMetrics,...recoveryMetrics,holderQueueDepth:holderQueue.queueDepth,holderProcessing:holderQueue.processing,rpcRetries:rpc.metrics.retries,rpcTimeouts:rpc.metrics.timeouts,processing:processing.size,metrics:store.state.metrics,tokens:store.tokens().length,users:Object.keys(store.state.users).length});
  if(url.pathname==='/api/chart/config')return json(res,200,{chainId:'solana',tokenAddress:store.decisions(u.id)[0]?.mint||''});
  if(url.pathname==='/api/chart/history'){const mint=url.searchParams.get('tokenAddress'),t=store.state.tokens[mint];const pts=t?.priceSol?[{t:t.updatedAt,price:t.priceSol,source:t.source}]:[];return json(res,200,{points:pts,status:{stale:!pts.length,source:t?.source||null,error:t?.scanError||null},tokenAddress:mint})}
  if(url.pathname==='/api/chart/stream'){const mint=url.searchParams.get('tokenAddress');res.writeHead(200,{'content-type':'text/event-stream','cache-control':'no-cache','connection':'keep-alive'});res.write(`event: snapshot\ndata: ${JSON.stringify({points:[],status:{stale:true,source:'Solana'}})}\n\n`);if(!streams.has(mint))streams.set(mint,new Set());streams.get(mint).add(res);req.on('close',()=>streams.get(mint)?.delete(res));return}
@@ -150,4 +154,11 @@ async function handler(req,res){const url=new URL(req.url,'http://x');
 }
 process.on('uncaughtException',e=>{console.error('[MEMEFLOW] uncaughtException',e.message,(e.stack||'').split('\n')[1]||'')});
 process.on('unhandledRejection',r=>{console.error('[MEMEFLOW] unhandledRejection',(r instanceof Error?r.message:String(r)))});
-const server=http.createServer((req,res)=>handler(req,res).catch(e=>json(res,500,{error:'SERVER_ERROR',message:e.message})));server.listen(Number(process.env.PORT||3000),'0.0.0.0',()=>{console.log(`MEMEFLOW listening on ${process.env.PORT||3000}`);startDiscovery();});
+const server=http.createServer((req,res)=>handler(req,res).catch(e=>json(res,500,{error:'SERVER_ERROR',message:e.message})));server.listen(Number(process.env.PORT||3000),'0.0.0.0',()=>{
+  const listenAt=Date.now();
+  console.log(`MEMEFLOW listening on ${process.env.PORT||3000}`);
+  startDiscovery();
+  startDecisionRecovery({store,evaluateAll,metrics:recoveryMetrics,batchSize:DECISION_RECOVERY_BATCH_SIZE,delayMs:DECISION_RECOVERY_DELAY_MS})
+    .then(()=>{const ms=recoveryMetrics.decisionRecoveryCompletedAt-listenAt;console.log(`[RECOVERY] complete in ${ms}ms — ${recoveryMetrics.decisionRecoveryTokensProcessed} tokens, ${recoveryMetrics.decisionRecoveryDecisionsCreated} decisions, ${recoveryMetrics.decisionRecoveryErrors} errors`)})
+    .catch(e=>console.error('[RECOVERY] error',e.message));
+});
