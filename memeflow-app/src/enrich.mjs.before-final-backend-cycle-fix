@@ -1,0 +1,393 @@
+/**
+ * Per-step token enrichment with partial-result preservation.
+ * Phase A (enrichToken)  — immediate: supply, curve, store, evaluate, publish.
+ * Phase B (enrichHolders) — delayed:  getTokenLargestAccounts, update holderFresh.
+ * makeHolderQueue — bounded, deduplicating holder enrichment queue (dep-injected).
+ *
+ * Imported by app-server.mjs.
+ */
+import {decodeCurve} from './solana.mjs';
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+/** Strip RPC URLs and long base58 addresses from error messages. */
+function sanitize(msg) {
+  return (msg || 'unknown error')
+    .replace(/https?:\/\/\S+/gi, '[rpc-url]')
+    .replace(/[1-9A-HJ-NP-Za-km-z]{32,}/g, '[addr]')
+    .slice(0, 200);
+}
+
+export function recordEnrichError(enrichDiag, mint, step, e) {
+  const msg = sanitize(e?.message || String(e));
+  enrichDiag.lastEnrichError = `${step}: ${msg}`;
+  enrichDiag.lastEnrichErrorAt = Date.now();
+  enrichDiag.lastEnrichMint = mint;
+  enrichDiag.enrichFailureReasons[msg] = (enrichDiag.enrichFailureReasons[msg] || 0) + 1;
+}
+
+export function makeEnrichDiag() {
+  return {
+    lastEnrichError: null,
+    lastEnrichErrorAt: null,
+    lastEnrichMint: null,
+    enrichFailureReasons: {},
+    enrichStepFailures: {
+      getTokenSupply: 0,
+      getTokenLargestAccounts: 0,
+      getAccountInfo: 0,
+      decodeCurve: 0,
+      evaluate: 0,
+    },
+    // Permanent Solana parameter errors — do not retry, do not open circuit breaker
+    invalidTokenMint: 0,
+    accountNotFound: 0,
+  };
+}
+
+export function makeHolderMetrics() {
+  return {
+    holderQueued: 0,
+    holderSucceeded: 0,
+    holderFailed: 0,
+    holderRateLimited: 0,
+    holderRetries: 0,
+    holderDropped: 0,
+    lastHolderError: null,
+    lastHolderErrorAt: null,
+  };
+}
+
+// ── Rate-limit detection ───────────────────────────────────────────────────────
+
+function isRateLimited(e) {
+  if (e?.status === 429) return true;
+  const msg = (e?.message || '').toLowerCase();
+  return (
+    msg.includes('429') ||
+    msg.includes('too many') ||
+    msg.includes('rate limit') ||
+    msg.includes('rate-limit') ||
+    msg.includes('data allowance') ||
+    msg.includes('credits') ||
+    msg.includes('quota')
+  );
+}
+
+// ── Phase A: immediate enrichment ─────────────────────────────────────────────
+
+/**
+ * Enrich a newly-discovered token with on-chain data (Phase A — no holder lookup).
+ *
+ * Steps: getTokenSupply → getAccountInfo → decodeCurve → store → evaluate → publish.
+ * holderFresh is always false after Phase A; Phase B sets it true.
+ * holderCount and top10Pct are set to null; Phase B fills them in.
+ *
+ * @param {string}      mint   token mint address
+ * @param {string|null} curve  bonding-curve account address (may be null)
+ * @param {object}      deps   { rpc, store, tradeWindows, evaluateAll,
+ *                               publish, ensurePriceTimer, discMetrics, enrichDiag }
+ */
+export async function enrichToken(mint, curve, deps) {
+  const {
+    rpc, store, tradeWindows, evaluateAll,
+    publish, ensurePriceTimer, discMetrics, enrichDiag,
+  } = deps;
+
+  let anyStepFailed = false;
+
+  function fail(step, e) {
+    anyStepFailed = true;
+    // Permanent Solana parameter errors — count separately, skip enrichFailureReasons
+    if (e?.invalidTokenMint) { enrichDiag.invalidTokenMint++; return; }
+    if (e?.accountNotFound)  { enrichDiag.accountNotFound++;  return; }
+    if (step in enrichDiag.enrichStepFailures) enrichDiag.enrichStepFailures[step]++;
+    recordEnrichError(enrichDiag, mint, step, e);
+  }
+
+  try {
+    // ── Step 1: getTokenSupply ──────────────────────────────────────────────
+    let supply = null;
+    try {
+      supply = await rpc.call('getTokenSupply', [mint, {commitment: 'confirmed'}]);
+    } catch(e) { fail('getTokenSupply', e); }
+
+    // ── Step 2: getAccountInfo (bonding curve, optional) ───────────────────
+    let curveInfo = null;
+    if (curve) {
+      try {
+        curveInfo = await rpc.call('getAccountInfo', [curve, {encoding: 'base64', commitment: 'confirmed'}]);
+      } catch(e) { fail('getAccountInfo', e); }
+    }
+
+    // ── Step 3: decodeCurve (optional, depends on curveInfo) ───────────────
+    let c = {};
+    if (curveInfo?.value?.data?.[0]) {
+      try {
+        c = decodeCurve(curveInfo.value.data[0], supply?.value?.decimals ?? 6);
+      } catch(e) { fail('decodeCurve', e); }
+    }
+
+    // ── Build token update from whatever succeeded ─────────────────────────
+    const decimals = supply?.value?.decimals ?? 6;
+    const total = Number(supply?.value?.uiAmountString ?? 0);
+    const tw = (tradeWindows?.get?.(mint)) || {buy: 0, sell: 0};
+
+    const update = {
+      scanError: null,
+      lastScannedAt: Date.now(),
+      // Holder data deferred to Phase B
+      holderFresh: false,
+      holderCount: null,
+      top10Pct: null,
+      buyPressure: tw.sell ? tw.buy / tw.sell : (tw.buy ? tw.buy : null),
+      dataQuality: [total || null, c.priceSol ?? null].filter(x => x != null).length / 2,
+      source: 'Solana RPC',
+    };
+    // Supply data
+    if (supply) { update.decimals = decimals; update.totalSupply = total; }
+    // Curve data
+    if (Object.keys(c).length) {
+      update.priceSol       = c.priceSol    ?? null;
+      update.liquiditySol   = c.liquiditySol ?? null;
+      update.marketCapSol   = (c.priceSol && total) ? c.priceSol * total : null;
+      /* MEMEFLOW_CANONICAL_ENRICH_FIELDS_V1 */
+      update.marketCap      = update.marketCapSol;
+      update.liquidity      = update.liquiditySol;
+      update.momentum       = update.buyPressure;
+      update.complete       = c.complete     ?? null;
+    }
+
+    // ── Always store, evaluate, publish ────────────────────────────────────
+    const token = store.setToken(mint, update);
+
+    // ── Step 4: evaluate (score the token) ─────────────────────────────────
+    try {
+      evaluateAll(token);
+    } catch(e) { fail('evaluate', e); }
+
+    publish(mint);
+    if (ensurePriceTimer) ensurePriceTimer(mint, curve);
+
+    // Success: token stored and published regardless of step failures
+    discMetrics.enrichSucceeded++;
+
+    // Clear stale enrich error only after a fully clean Phase A (no step errors)
+    if (!anyStepFailed) {
+      enrichDiag.lastEnrichError    = null;
+      enrichDiag.lastEnrichErrorAt  = null;
+      enrichDiag.lastEnrichMint     = null;
+    }
+  } catch(e) {
+    // Truly unrecoverable: store.setToken or publish threw (should not happen)
+    if (store.state?.metrics) store.state.metrics.errors++;
+    store.save?.();
+    discMetrics.enrichFailed++;
+    recordEnrichError(enrichDiag, mint, 'store/publish', e);
+  }
+}
+
+// ── Phase B: delayed holder enrichment ────────────────────────────────────────
+
+/**
+ * Fetch holder data for a previously Phase-A-enriched token.
+ *
+ * Returns { rateLimited: false } on success.
+ * Returns { rateLimited: true, retryAfter?: number } when rate-limited.
+ * Throws on unexpected errors.
+ *
+ * @param {string} mint
+ * @param {object} deps  { rpc, store, evaluateAll, publish, enrichDiag }
+ */
+export async function enrichHolders(mint, deps) {
+  const { rpc, store, evaluateAll, publish, enrichDiag } = deps;
+
+  let largest;
+  try {
+    largest = await rpc.call('getTokenLargestAccounts', [mint, {commitment: 'confirmed'}]);
+  } catch(e) {
+    if (enrichDiag) {
+      enrichDiag.enrichStepFailures.getTokenLargestAccounts++;
+      recordEnrichError(enrichDiag, mint, 'getTokenLargestAccounts', e);
+    }
+    if (isRateLimited(e)) {
+      // Parse Retry-After if encoded in the message (e.g. "Retry-After: 45")
+      const ra = /retry-after[:\s]+(\d+)/i.exec(e.message || '');
+      return { rateLimited: true, retryAfter: ra ? Number(ra[1]) * 1000 : undefined };
+    }
+    throw e; // non-rate-limit error → holderFailed in caller
+  }
+
+  // Compute holder metrics using existing supply data
+  const token = store.state.tokens[mint] || {};
+  const total = token.totalSupply || 0;
+  const vals = (largest?.value ?? []).map(x => Number(x.uiAmountString ?? 0));
+  const top10 = (total && vals.length)
+    ? vals.slice(0, 10).reduce((a, b) => a + b, 0) / total * 100
+    : null;
+  const holderCount = vals.length === 20 ? null : vals.filter(v => v > 0).length;
+
+  /* MEMEFLOW_CREATOR_SHARE_ENRICHMENT_V1 */
+  // Direct creator-wallet ownership. This is the creator wallet's current token
+  // balance only; linked wallets are not guessed or silently combined.
+  let developerPct = token.developerPct ?? null;
+  const creator = token.creator;
+  if (creator && total > 0) {
+    try {
+      const owned = await rpc.call('getTokenAccountsByOwner', [
+        creator,
+        {mint},
+        {encoding:'jsonParsed', commitment:'confirmed'}
+      ]);
+      const creatorAmount=(owned?.value??[]).reduce((sum,row)=>{
+        const amount=row?.account?.data?.parsed?.info?.tokenAmount?.uiAmountString
+          ?? row?.account?.data?.parsed?.info?.tokenAmount?.uiAmount
+          ?? 0;
+        return sum+Number(amount||0);
+      },0);
+      developerPct=creatorAmount/total*100;
+    } catch(e) {
+      if (isRateLimited(e)) return {rateLimited:true};
+      // Preserve holder metrics even when creator ownership is temporarily unavailable.
+      developerPct=null;
+    }
+  }
+
+  const updated = store.setToken(mint, {
+    holderFresh:true,
+    top10Pct:top10,
+    holderCount,
+    developerPct,
+    developerSharePct:developerPct,
+    marketCap:token.marketCapSol??token.marketCap??null,
+    liquidity:token.liquiditySol??token.liquidity??null,
+    momentum:token.buyPressure??token.momentum??null
+  });
+  try { evaluateAll(updated); } catch {}
+  publish(mint);
+
+  return {rateLimited: false};
+}
+
+// ── Holder queue ─────────────────────────────────────────────────────────────
+
+/**
+ * Create a bounded, deduplicating holder-enrichment queue.
+ *
+ * @param {object} config
+ *   maxConcurrent   — max simultaneous holder RPC calls (default 1)
+ *   queueMax        — max pending+ready items; oldest dropped when full (default 250)
+ *   initialDelayMs  — delay before first attempt (default 15 000)
+ *   retryDelayMs    — delay before each retry (default 60 000)
+ *   maxRetries      — retries before giving up on a mint (default 5)
+ * @param {object} deps
+ *   enrichHoldersFn — (mint) => Promise<{rateLimited, retryAfter?}>
+ *   holderMetrics   — from makeHolderMetrics()
+ * @returns {{ enqueue(mint), queueDepth, processing }}
+ */
+export function makeHolderQueue(config, deps) {
+  const {
+    maxConcurrent  = 1,
+    queueMax       = 250,
+    initialDelayMs = 15000,
+    retryDelayMs   = 60000,
+    maxRetries     = 5,
+  } = config || {};
+  const {enrichHoldersFn, holderMetrics} = deps;
+
+  // scheduled: mints with a pending timer before entering the ready queue
+  const scheduled    = new Map();  // mint → { retries, timer }
+  // ready: ordered queue of items waiting for a concurrency slot
+  const ready        = [];
+  const readySet     = new Set();
+  // active: mints currently running enrichHoldersFn
+  const active       = new Set();
+
+  function _totalPending() {
+    return scheduled.size + ready.length;
+  }
+
+  function _dropOldest() {
+    // Prefer dropping from ready queue (not yet started)
+    if (ready.length > 0) {
+      const dropped = ready.shift();
+      readySet.delete(dropped.mint);
+    } else {
+      // Drop oldest scheduled entry
+      const oldest = scheduled.keys().next().value;
+      const entry  = scheduled.get(oldest);
+      clearTimeout(entry.timer);
+      scheduled.delete(oldest);
+    }
+    holderMetrics.holderDropped++;
+  }
+
+  function _schedule(mint, retries, delayMs) {
+    // Cancel any existing timer for this mint
+    const existing = scheduled.get(mint);
+    if (existing) clearTimeout(existing.timer);
+
+    const timer = setTimeout(() => {
+      scheduled.delete(mint);
+      if (!active.has(mint) && !readySet.has(mint)) {
+        ready.push({mint, retries});
+        readySet.add(mint);
+        _drain();
+      }
+    }, delayMs);
+    scheduled.set(mint, {retries, timer});
+  }
+
+  async function _run(mint, retries) {
+    try {
+      const result = await enrichHoldersFn(mint);
+      if (result.rateLimited) {
+        holderMetrics.holderRateLimited++;
+        if (retries < maxRetries) {
+          holderMetrics.holderRetries++;
+          const delay = result.retryAfter ?? retryDelayMs;
+          active.delete(mint);
+          _schedule(mint, retries + 1, delay);
+          _drain();
+          return;
+        } else {
+          holderMetrics.holderFailed++;
+          holderMetrics.lastHolderError = 'max retries exceeded on rate limit';
+          holderMetrics.lastHolderErrorAt = Date.now();
+        }
+      } else {
+        holderMetrics.holderSucceeded++;
+      }
+    } catch(e) {
+      holderMetrics.holderFailed++;
+      holderMetrics.lastHolderError = sanitize(e?.message || 'unknown');
+      holderMetrics.lastHolderErrorAt = Date.now();
+    }
+    active.delete(mint);
+    _drain();
+  }
+
+  function _drain() {
+    while (active.size < maxConcurrent && ready.length > 0) {
+      const {mint, retries} = ready.shift();
+      readySet.delete(mint);
+      active.add(mint);
+      _run(mint, retries);
+    }
+  }
+
+  function enqueue(mint) {
+    // Dedup: already scheduled, active, or in ready queue
+    if (scheduled.has(mint) || active.has(mint) || readySet.has(mint)) return false;
+    if (_totalPending() >= queueMax) _dropOldest();
+    holderMetrics.holderQueued++;
+    _schedule(mint, 0, initialDelayMs);
+    return true;
+  }
+
+  return {
+    enqueue,
+    get queueDepth()  { return _totalPending(); },
+    get processing()  { return active.size; },
+  };
+}
