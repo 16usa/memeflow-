@@ -112,11 +112,50 @@
     '.main[data-page="settings"] #system,',
     '.main[data-page="settings"] #billing { display: none !important; }',
     '.main[data-page="settings"] #settings { display: block !important; }',
-    /* Explicitly restore the two AI panels that are DOM-siblings of #settings.
-       On mobile (≤820px) the original stylesheet already hides them with
-       display:none!important, so this only affects desktop. */
-    '.main[data-page="settings"] .decision-intelligence { display: block !important; }',
-    '.main[data-page="settings"] .advanced-intelligence { display: block !important; }',
+    /* ── Restore .decision-intelligence + .advanced-intelligence on settings page ──
+       These are DOM-siblings of #settings (line 1128 of index.html, after </section>).
+       They must be visible on ALL viewports including mobile.
+       Hiding sources that are overridden here:
+         index.html line 234: @media(max-width:820px){.advanced-intelligence{display:none!important}}  spec=(0,1,0)
+         index.html line 250: @media(max-width:820px){.decision-intelligence{display:none!important}}  spec=(0,1,0)
+       Our selectors are spec=(0,3,0)+!important — higher specificity wins per CSS cascade.
+       The explicit @media block below reinforces the override for every mobile breakpoint. */
+    '.main[data-page="settings"] .decision-intelligence,',
+    '.main[data-page="settings"] .advanced-intelligence {',
+    '  display: block !important;',
+    '  visibility: visible !important;',
+    '  opacity: 1 !important;',
+    '  height: auto !important;',
+    '  max-height: none !important;',
+    '  overflow: visible !important;',
+    '  transform: none !important;',
+    '}',
+    /* Same rules wrapped in the exact breakpoint the original uses.
+       Covers 320px / 390px / 430px / 768px per spec requirement. */
+    '@media (max-width: 820px) {',
+    '  .main[data-page="settings"] .decision-intelligence,',
+    '  .main[data-page="settings"] .advanced-intelligence {',
+    '    display: block !important;',
+    '    visibility: visible !important;',
+    '    opacity: 1 !important;',
+    '    height: auto !important;',
+    '    max-height: none !important;',
+    '    overflow: visible !important;',
+    '    transform: none !important;',
+    '  }',
+    '}',
+    /* Also ensure their interactive children are accessible */
+    '.main[data-page="settings"] .decision-intelligence > summary,',
+    '.main[data-page="settings"] .advanced-intelligence > summary {',
+    '  display: flex !important;',
+    '  visibility: visible !important;',
+    '}',
+    '.main[data-page="settings"] .decision-intelligence-intro,',
+    '.main[data-page="settings"] .advanced-intelligence-intro,',
+    '.main[data-page="settings"] .advanced-intelligence-content {',
+    '  visibility: visible !important;',
+    '  opacity: 1 !important;',
+    '}',
 
     /* ── Focus view ── */
     'body.focus-view .change-rail,',
