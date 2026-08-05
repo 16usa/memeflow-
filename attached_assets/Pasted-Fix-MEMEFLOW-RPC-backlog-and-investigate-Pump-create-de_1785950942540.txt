@@ -1,0 +1,140 @@
+Fix MEMEFLOW RPC backlog and investigate Pump create decode failures.
+
+Verified live status:
+- connected:true
+- queueDepth grows to 40+
+- rpcRetries is very high
+- lastError: "Connection rate limits exceeded"
+- holderSucceeded remains 0
+- createsDecoded: 9
+- decodeFailed: 25
+- Public Solana RPC is being used.
+- Do not modify frontend design, billing, authentication, user settings, recovery, or active-user evaluation.
+
+Part A — reduce RPC backlog
+
+1. Keep public-RPC-safe defaults:
+- RPC_MAX_CONCURRENCY=1
+- DISCOVERY_QUEUE_MAX=250
+
+2. Add signature age control:
+- DISCOVERY_SIGNATURE_MAX_AGE_MS default 120000
+- before fetching a queued signature, drop it if it is older than the configured age
+- increment staleSignaturesDropped
+- do not waste RPC calls on signatures that are no longer useful
+
+3. Prioritize fresh create events:
+- newest accepted create signatures must be processed before old retry items
+- retries must not block fresh creates
+- use separate fresh queue and retry queue, or equivalent priority logic
+
+4. Retry policy:
+- retry getTransaction only for:
+  - 429
+  - 502/503/504
+  - AbortError
+  - network failure
+- max 2 retries for getTransaction
+- respect Retry-After
+- otherwise backoff 2s then 5s
+- do not retry permanent JSON-RPC errors
+
+5. Circuit breaker:
+- when the active endpoint repeatedly returns 429 / connection rate limit:
+  - pause transaction fetches for 10 seconds
+  - keep accepting and deduplicating new create signatures
+  - expose rpcCircuitOpen and rpcCircuitOpenUntil
+- do not hammer the endpoint continuously
+
+6. Endpoint failover:
+- continue supporting comma-separated SOLANA_RPC_URLS
+- rotate immediately to the next endpoint on 429 or connection rate limit
+- never print full RPC URLs or API keys
+- expose sanitized active RPC hostname in /api/discovery/status
+
+7. Queue metrics:
+Add:
+- freshQueueDepth
+- retryQueueDepth
+- staleSignaturesDropped
+- rpcCircuitOpen
+- rpcCircuitOpenUntil
+- transactionRetryScheduled
+- transactionRetryExhausted
+- oldestQueuedSignatureAgeMs
+
+Part B — investigate decodeFailed
+
+8. Separate decode failure reasons:
+Replace one generic decodeFailed counter with:
+- noPumpInstruction
+- pumpInstructionWithoutData
+- unknownPumpDiscriminator
+- invalidAccountLayout
+- invalidMint
+- createInstructionDecoded
+
+Keep decodeFailed as the total for compatibility.
+
+9. Log sanitized decode diagnostics:
+For each unknown Pump instruction, record only:
+- discriminator bytes (first 8 bytes)
+- instruction data length
+- account count
+- whether it was top-level or inner instruction
+- transaction version
+Do not log full transaction, account keys, signatures, or secrets.
+
+10. Confirm current Pump create variants:
+- inspect real failed transactions from live logs
+- identify which discriminators and account layouts correspond to actual create instructions
+- support all observed legitimate Pump create variants
+- do not treat Buy/Sell/Migrate as create
+
+11. Account extraction:
+Do not assume mint is always accounts[0] and bonding curve always accounts[2] without validation.
+For every supported create variant:
+- define and test the correct account positions
+- validate candidate mint as a 32-byte pubkey
+- validate bonding curve pubkey before enrichment
+- reject invalid layouts with invalidAccountLayout metric
+
+12. Inner instructions:
+Ensure create instructions are decoded from both:
+- message.instructions
+- meta.innerInstructions
+
+13. Deduplication:
+A transaction containing the same create instruction in multiple places must add the token only once by mint/signature.
+
+14. Tests:
+Add tests for:
+- queue priority: fresh create before retry
+- stale signatures dropped before RPC
+- circuit breaker after repeated 429
+- endpoint failover
+- retry exhaustion
+- known create discriminator variants decode successfully
+- unknown discriminator increments unknownPumpDiscriminator
+- wrong account count increments invalidAccountLayout
+- invalid mint increments invalidMint
+- same mint in top-level and inner instruction is deduplicated
+- Buy/Sell instructions never count as decode failures after WS filtering
+
+15. Validation:
+Run all tests.
+Restart only the Project workflow.
+Verify after several minutes:
+- queueDepth trends down or remains bounded
+- rpcRetries stops increasing explosively
+- freshQueueDepth does not grow continuously
+- createsDecoded increases
+- unknownPumpDiscriminator shows the real unsupported variants
+- no secrets are exposed
+
+Report:
+- exact files changed
+- exact observed discriminator values
+- which layouts were added
+- before/after queue metrics
+- full test results

@@ -1,8 +1,9 @@
 import http from 'node:http';import fs from 'node:fs';import path from 'node:path';import crypto from 'node:crypto';import zlib from 'node:zlib';import {fileURLToPath} from 'node:url';
-import {JsonStore,sessionId,defaults} from './src/store.mjs';import {RpcPool,validPubkey,decodeCurve,decodeCreateData} from './src/solana.mjs';import {evaluate} from './src/evaluate.mjs';import {StripeBilling} from './src/billing.mjs';
+import {JsonStore,sessionId,defaults} from './src/store.mjs';import {RpcPool,validPubkey,decodeCurve,decodeCreateData,decodePumpCreate} from './src/solana.mjs';import {evaluate} from './src/evaluate.mjs';import {StripeBilling} from './src/billing.mjs';
 import {enrichToken,enrichHolders,makeEnrichDiag,makeHolderQueue,makeHolderMetrics} from './src/enrich.mjs';
 import {makeRecoveryMetrics,startDecisionRecovery,lazyRecoverUser} from './src/recovery.mjs';
 import {makeLiveEvalMetrics,makeEvaluateForActiveUsers} from './src/liveeval.mjs';
+import {makeDiscoveryMetrics,makeDiscoveryQueue} from './src/discqueue.mjs';
 const root=path.dirname(fileURLToPath(import.meta.url)),dataDir=path.resolve(root,process.env.DATA_DIR||'data'),store=new JsonStore(dataDir);
 const billing=new StripeBilling({store,secretKey:process.env.STRIPE_SECRET_KEY,priceId:process.env.STRIPE_PRICE_ID,webhookSecret:process.env.STRIPE_WEBHOOK_SECRET,apiBase:process.env.STRIPE_API_BASE});
 const rpcUrls=(process.env.SOLANA_RPC_URLS||'').split(',').map(x=>x.trim()).filter(Boolean),wsUrls=(process.env.SOLANA_WS_URLS||'').split(',').map(x=>x.trim()).filter(Boolean);const rpc=new RpcPool(rpcUrls,process.env.SOLANA_COMMITMENT||'confirmed');
@@ -12,11 +13,12 @@ const OWNER_USER_IDS=new Set((process.env.OWNER_USER_IDS||'').split(',').map(x=>
 let discovery={connected:false,url:null,lastEventAt:null,reconnects:0,error:null,lastError:null,startedAt:Date.now()},ws=null,wsTimer=null;
 const streams=new Map(),priceTimers=new Map(),tradeWindows=new Map();
 // ── Extended discovery metrics ────────────────────────────────────────────
-const discMetrics={eventsReceived:0,eventsWithoutLogs:0,eventsFiltered:0,nonCreateEventsIgnored:0,createEventsAccepted:0,signaturesQueued:0,signaturesProcessed:0,signaturesDeduplicated:0,queueDepth:0,queueDropped:0,transactionFetchSucceeded:0,transactionFetchFailed:0,createsDecoded:0,decodeFailed:0,enrichSucceeded:0,enrichFailed:0,lastSuccessfulScanAt:null,lastErrorAt:null};
-// ── Bounded concurrency queue (deduplicating) ─────────────────────────────
-const MAX_CONCURRENT=Number(process.env.RPC_MAX_CONCURRENCY||2),QUEUE_MAX=Number(process.env.DISCOVERY_QUEUE_MAX||250);
+const discMetrics=makeDiscoveryMetrics();
+// ── Bounded concurrency queue ─────────────────────────────────────────────
+const MAX_CONCURRENT=Number(process.env.RPC_MAX_CONCURRENCY||1),QUEUE_MAX=Number(process.env.DISCOVERY_QUEUE_MAX||250);
+const SIG_MAX_AGE_MS=Number(process.env.DISCOVERY_SIGNATURE_MAX_AGE_MS||120000);
 const HOLDER_MAX_CONCURRENT=Number(process.env.HOLDER_RPC_MAX_CONCURRENCY||1),HOLDER_QUEUE_MAX=Number(process.env.HOLDER_QUEUE_MAX||250),HOLDER_INITIAL_DELAY_MS=Number(process.env.HOLDER_INITIAL_DELAY_MS||15000),HOLDER_RETRY_DELAY_MS=Number(process.env.HOLDER_RETRY_DELAY_MS||60000),HOLDER_MAX_RETRIES=Number(process.env.HOLDER_MAX_RETRIES||5);
-const queueSet=new Set(),queueList=[],processing=new Set();
+// discQueue defined after processSignature below (forward ref via enqueue wrapper)
 const enrichDiag=makeEnrichDiag();
 const holderMetrics=makeHolderMetrics();
 const holderQueue=makeHolderQueue({maxConcurrent:HOLDER_MAX_CONCURRENT,queueMax:HOLDER_QUEUE_MAX,initialDelayMs:HOLDER_INITIAL_DELAY_MS,retryDelayMs:HOLDER_RETRY_DELAY_MS,maxRetries:HOLDER_MAX_RETRIES},{enrichHoldersFn:(mint)=>enrichHolders(mint,{rpc,store,evaluateAll,publish,enrichDiag}),holderMetrics});
@@ -25,22 +27,8 @@ const DECISION_RECOVERY_BATCH_SIZE=Number(process.env.DECISION_RECOVERY_BATCH_SI
 const DECISION_RECOVERY_DELAY_MS=Number(process.env.DECISION_RECOVERY_DELAY_MS||25);
 const DECISION_RECOVERY_TOKEN_LIMIT=Number(process.env.DECISION_RECOVERY_TOKEN_LIMIT||200);
 const DECISION_RECOVERY_ACTIVE_USER_HOURS=Number(process.env.DECISION_RECOVERY_ACTIVE_USER_HOURS||24);
-function enqueue(sig){
-  // eventsReceived is counted in ws.onmessage before the log filter — not here
-  if(queueSet.has(sig)||processing.has(sig)){discMetrics.signaturesDeduplicated++;return}
-  if(queueList.length>=QUEUE_MAX){const old=queueList.shift();queueSet.delete(old);discMetrics.queueDropped++}
-  queueSet.add(sig);queueList.push(sig);discMetrics.signaturesQueued++;discMetrics.queueDepth=queueList.length;
-  drainQueue();
-}
-function drainQueue(){
-  while(processing.size<MAX_CONCURRENT&&queueList.length>0){
-    const sig=queueList.shift();queueSet.delete(sig);discMetrics.queueDepth=queueList.length;processing.add(sig);
-    processSignature(sig)
-      .then(()=>{discMetrics.signaturesProcessed++;discMetrics.lastSuccessfulScanAt=Date.now();if(discovery.connected&&discovery.error)discovery.error=null;discovery.lastError=null})
-      .catch(e=>{discMetrics.lastErrorAt=Date.now();discovery.lastError={message:e.message,at:Date.now()}})
-      .finally(()=>{processing.delete(sig);drainQueue()});
-  }
-}
+// Thin wrapper so ws.onmessage can call enqueue() before discQueue is defined
+function enqueue(sig){ discQueue.enqueue(sig); }
 function cookies(req){return Object.fromEntries((req.headers.cookie||'').split(';').filter(Boolean).map(x=>{const i=x.indexOf('=');return [x.slice(0,i).trim(),decodeURIComponent(x.slice(i+1))]}))}
 function user(req,res){let id=cookies(req).mf_session;if(!id&&ALLOW_ANON){id=sessionId();res.setHeader('Set-Cookie',`mf_session=${encodeURIComponent(id)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=31536000`)}return id?store.user(id):null}
 function json(res,status,obj){res.statusCode=status;res.setHeader('content-type','application/json; charset=utf-8');res.setHeader('cache-control','no-store');res.end(JSON.stringify(obj))}
@@ -63,26 +51,53 @@ async function enrich(mint,curve){
 function publish(mint){const rows=store.tokens();const t=store.state.tokens[mint];for(const res of streams.get(mint)||[]){res.write(`event: update\ndata: ${JSON.stringify({point:t?.priceSol?{t:Date.now(),price:t.priceSol,source:'Solana'}:null,status:{stale:!t?.priceSol,error:t?.scanError||null,source:t?.source}})}\n\n`)}}
 function ensurePriceTimer(mint,curve){if(priceTimers.has(mint)||!curve)return;const timer=setInterval(async()=>{const t=store.state.tokens[mint];if(Date.now()-(t?.updatedAt||0)>600000&&(streams.get(mint)?.size||0)===0){clearInterval(timer);priceTimers.delete(mint);return}try{const info=await rpc.call('getAccountInfo',[curve,{encoding:'base64',commitment:'confirmed'}]);if(info?.value?.data?.[0]){const c=decodeCurve(info.value.data[0],t.decimals||6);store.setToken(mint,{priceSol:c.priceSol,liquiditySol:c.liquiditySol,complete:c.complete,source:'Solana bonding curve'});publish(mint)}}catch(e){store.setToken(mint,{scanError:e.message})}},Math.max(1000,Number(process.env.POLL_ACTIVE_MS||2000)));priceTimers.set(mint,timer)}
 async function processSignature(sig){
+  // Single attempt — discovery queue handles retries with correct policy
   let tx;
-  try{tx=await rpc.call('getTransaction',[sig,{encoding:'jsonParsed',commitment:'confirmed',maxSupportedTransactionVersion:0}])}
-  catch(e){discMetrics.transactionFetchFailed++;throw e}
+  try{tx=await rpc.callOnce('getTransaction',[sig,{encoding:'jsonParsed',commitment:'confirmed',maxSupportedTransactionVersion:0}])}
+  catch(e){throw e} // queue will account for transactionFetchFailed on final failure
   if(!tx){discMetrics.transactionFetchFailed++;return}
   discMetrics.transactionFetchSucceeded++;
-  const msg=tx.transaction.message,keys=(msg.accountKeys||[]).map(x=>typeof x==='string'?x:x.pubkey),all=[...(msg.instructions||[]),...((tx.meta?.innerInstructions||[]).flatMap(x=>x.instructions||[]))];
+
+  const msg=tx.transaction.message;
+  const keys=(msg.accountKeys||[]).map(x=>typeof x==='string'?x:x.pubkey);
+  // Include both top-level and inner instructions; mark inner for diagnostic logging
+  const topLvl=msg.instructions||[];
+  const inner=(tx.meta?.innerInstructions||[]).flatMap(x=>(x.instructions||[]).map(ix=>({...ix,_isInner:true})));
+  const all=[...topLvl,...inner];
+
+  let pumpCount=0;
+  const seenMints=new Set(); // dedup within this transaction by mint
+
   for(const ix of all){
     const pid=typeof ix.programId==='string'?ix.programId:keys[ix.programIdIndex];
     if(pid!==PUMP)continue;
-    const parsed=ix.data?decodeCreateData(ix.data):null;
-    if(parsed){
+    pumpCount++;
+
+    const result=decodePumpCreate(ix,keys);
+    if(result.ok){
+      if(seenMints.has(result.mint))continue; // same mint in top-level and inner — add once
+      seenMints.add(result.mint);
+      discMetrics.createInstructionDecoded++;
       discMetrics.createsDecoded++;
-      const ac=(ix.accounts||[]).map(a=>typeof a==='number'?keys[a]:a);
-      const mint=ac[0],curve=ac[2];
-      if(validPubkey(mint)){store.addToken({mint,curve,name:parsed.name,symbol:parsed.symbol,uri:parsed.uri,creator:ac[7]||null,discoveredAt:Date.now(),slot:tx.slot,signature:sig,source:'Pump create'});await enrich(mint,curve)}
-    }else{
+      store.addToken({mint:result.mint,curve:result.curve,name:result.name,symbol:result.symbol,uri:result.uri,creator:result.creator,discoveredAt:Date.now(),slot:tx.slot,signature:sig,source:'Pump create'});
+      await enrich(result.mint,result.curve);
+    }else if(result.reason!=='knownNonCreate'){
+      // knownNonCreate (Buy/Sell/Withdraw) silently skipped — not a failure
       discMetrics.decodeFailed++;
+      discMetrics[result.reason]=(discMetrics[result.reason]||0)+1;
+      if(result.reason==='unknownPumpDiscriminator'&&result.discBytes){
+        console.log(`[DECODE] disc=[${result.discBytes.join(',')}] dataLen=${result.dataLen??0} accounts=${(ix.accounts||[]).length} inner=${Boolean(ix._isInner)} ver=${tx.version??'legacy'}`);
+      }
     }
   }
+  if(pumpCount===0)discMetrics.noPumpInstruction++;
 }
+const discQueue=makeDiscoveryQueue(
+  {maxConcurrent:MAX_CONCURRENT,queueMax:QUEUE_MAX,maxSignatureAgeMs:SIG_MAX_AGE_MS,maxRetries:2,circuitBreakerPauseMs:10000,retryDelays:[2000,5000]},
+  {processFn:processSignature,discMetrics,
+   onSignatureProcessed:()=>{if(discovery.connected&&discovery.error)discovery.error=null;discovery.lastError=null},
+   onSignatureFailed:(e)=>{discMetrics.lastErrorAt=Date.now();discovery.lastError={message:e.message,at:Date.now()}}}
+);
 function startDiscovery(i=0){
   if(process.env.DISCOVERY_ENABLED==='false'||!wsUrls.length){discovery.error='SOLANA_WS_URLS not configured';return}
   const url=wsUrls[i%wsUrls.length];
@@ -153,7 +168,7 @@ async function handler(req,res){const url=new URL(req.url,'http://x');
  if(url.pathname==='/api/billing/status')return json(res,200,billingStatus(u));
  if(url.pathname==='/api/billing/checkout'&&req.method==='POST'){if(!billing.configured)return json(res,503,{error:'BILLING_NOT_CONFIGURED',message:'Configure STRIPE_SECRET_KEY, STRIPE_PRICE_ID and STRIPE_WEBHOOK_SECRET.'});try{const session=await billing.createCheckout(u,origin(req));return json(res,200,{url:session.url,id:session.id})}catch(e){return json(res,e.status||502,{error:e.code||'STRIPE_ERROR',message:e.message})}}
  if(url.pathname==='/api/billing/portal'&&req.method==='POST'){if(!billing.configured)return json(res,503,{error:'BILLING_NOT_CONFIGURED'});try{const session=await billing.createPortal(u,origin(req));return json(res,200,{url:session.url})}catch(e){return json(res,e.status||502,{error:e.code||'STRIPE_ERROR',message:e.message})}}
- if(url.pathname==='/api/discovery/status')return json(res,200,{...discovery,...discMetrics,...enrichDiag,...holderMetrics,...recoveryMetrics,...liveEvalMetrics,holderQueueDepth:holderQueue.queueDepth,holderProcessing:holderQueue.processing,rpcRetries:rpc.metrics.retries,rpcTimeouts:rpc.metrics.timeouts,processing:processing.size,metrics:store.state.metrics,tokens:store.tokens().length,users:Object.keys(store.state.users).length,decisionsInMemory:Object.values(store._uidDec).reduce((s,m)=>s+m.size,0)});
+ if(url.pathname==='/api/discovery/status')return json(res,200,{...discovery,...discMetrics,...enrichDiag,...holderMetrics,...recoveryMetrics,...liveEvalMetrics,queueDepth:discMetrics.freshQueueDepth+discMetrics.retryQueueDepth,holderQueueDepth:holderQueue.queueDepth,holderProcessing:holderQueue.processing,rpcRetries:rpc.metrics.retries,rpcTimeouts:rpc.metrics.timeouts,rpcActiveHostname:rpc.activeHostname,processing:discQueue.processing,metrics:store.state.metrics,tokens:store.tokens().length,users:Object.keys(store.state.users).length,decisionsInMemory:Object.values(store._uidDec).reduce((s,m)=>s+m.size,0)});
  if(url.pathname==='/api/chart/config')return json(res,200,{chainId:'solana',tokenAddress:store.decisions(u.id)[0]?.mint||''});
  if(url.pathname==='/api/chart/history'){const mint=url.searchParams.get('tokenAddress'),t=store.state.tokens[mint];const pts=t?.priceSol?[{t:t.updatedAt,price:t.priceSol,source:t.source}]:[];return json(res,200,{points:pts,status:{stale:!pts.length,source:t?.source||null,error:t?.scanError||null},tokenAddress:mint})}
  if(url.pathname==='/api/chart/stream'){const mint=url.searchParams.get('tokenAddress');res.writeHead(200,{'content-type':'text/event-stream','cache-control':'no-cache','connection':'keep-alive'});res.write(`event: snapshot\ndata: ${JSON.stringify({points:[],status:{stale:true,source:'Solana'}})}\n\n`);if(!streams.has(mint))streams.set(mint,new Set());streams.get(mint).add(res);req.on('close',()=>streams.get(mint)?.delete(res));return}
@@ -165,7 +180,7 @@ const server=http.createServer((req,res)=>handler(req,res).catch(e=>json(res,500
   const listenAt=Date.now();
   console.log(`MEMEFLOW listening on ${process.env.PORT||3000}`);
   startDiscovery();
-  startDecisionRecovery({store,metrics:recoveryMetrics,getLiveState:()=>({queueDepth:queueList.length,processing:processing.size}),batchSize:DECISION_RECOVERY_BATCH_SIZE,delayMs:DECISION_RECOVERY_DELAY_MS,tokenLimit:DECISION_RECOVERY_TOKEN_LIMIT,activeUserHoursMs:DECISION_RECOVERY_ACTIVE_USER_HOURS*3600000})
+  startDecisionRecovery({store,metrics:recoveryMetrics,getLiveState:()=>({queueDepth:discQueue.freshQueueDepth+discQueue.retryQueueDepth,processing:discQueue.processing}),batchSize:DECISION_RECOVERY_BATCH_SIZE,delayMs:DECISION_RECOVERY_DELAY_MS,tokenLimit:DECISION_RECOVERY_TOKEN_LIMIT,activeUserHoursMs:DECISION_RECOVERY_ACTIVE_USER_HOURS*3600000})
     .then(()=>{const ms=recoveryMetrics.decisionRecoveryCompletedAt-listenAt;console.log(`[RECOVERY] complete in ${ms}ms — ${recoveryMetrics.decisionRecoveryTokensProcessed} tokens, ${recoveryMetrics.decisionRecoveryDecisionsCreated} decisions, ${recoveryMetrics.decisionRecoveryErrors} errors`)})
     .catch(e=>console.error('[RECOVERY] error',e.message));
 });

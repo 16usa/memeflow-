@@ -1,25 +1,47 @@
 ---
-name: Decision recovery job
-description: Bounded startup recovery that re-evaluates persisted tokens for all users after a restart, since decisions are never persisted to disk.
+name: decision-recovery
+description: Startup recovery job design, optimization history, and live-evaluation wiring
 ---
 
-## Optimized design (v2)
-Startup recovery now evaluates only newest `DECISION_RECOVERY_TOKEN_LIMIT` (default 200) tokens × active users (`lastActiveAt` within `DECISION_RECOVERY_ACTIVE_USER_HOURS=24`). Pauses for live discovery queue. Inactive users get lazy recovery via `lazyRecoverUser()` on first `/api/ai/decisions` call. Recovery time: 35s → 210ms.
+## Startup decision recovery
+- `startDecisionRecovery()` in `src/recovery.mjs` runs once after `server.listen`
+- Re-evaluates newest 200 tokens × active users (lastActiveAt within 24h)
+- Pauses when live queue is busy (checks `getLiveState()`)
+- Decisions never persisted to disk — always re-evaluated after restart
+- `evaluateAll` passed as a dep from `app-server.mjs` (not imported directly)
 
-`store.touchUser(id)` updates `lastActiveAt` on every authenticated request, enabling active-user detection across restarts.
+**Why:** Decisions were excluded from state.json to reduce save size; startup recovery rebuilds them. Recovery must use the same active-user gate as live evaluation for consistency.
 
-## Rule
-After each restart, `startDecisionRecovery()` in `memeflow-app/src/recovery.mjs` re-evaluates all persisted tokens in batches. It is called in `server.listen()` callback in `app-server.mjs` and runs concurrently with live discovery.
+## Per-user decision Map index
+- `store._uidDec` — `Map<uid, Map<key, updatedAt>>`, max 250 per user
+- O(250) lookup vs O(36K) full scan
 
-**Why:** `store.save()` excludes `state.decisions` (to keep the state file small and avoid event-loop blocking). So after restart, `store._uidDec` and `store.state.decisions` are empty. Live discovery only re-evaluates tokens when new Pump.fun events arrive; persisted tokens are never re-enriched by discovery. The recovery job fills the gap.
+## Live evaluation (liveeval.mjs)
+- `makeEvaluateForActiveUsers()` factory — batches evaluation across active users
+- Active = `lastActiveAt` within `LIVE_EVALUATION_ACTIVE_USER_HOURS` (default 24h)
+- Owner users always included regardless of lastActiveAt
+- Returns Promise (fire-and-forget in production; awaitable in tests)
+- `store.touchUser(uid)` called on every authenticated request to track activity
 
-**How to apply:**
-- Batch size: `DECISION_RECOVERY_BATCH_SIZE` env var (default 25 tokens/batch)
-- Delay between batches: `DECISION_RECOVERY_DELAY_MS` env var (default 25ms)
-- Recovery metrics are exposed in `/api/discovery/status` under the `decisionRecovery*` keys
-- With 2,619 tokens and 1,090 users, one recovery run takes ~35 seconds and produces ~2.9M decisions
-- Event loop remains responsive throughout (requests complete in 1-4ms between batch blocks)
-- Decisions are still never written to disk during recovery (save() excludes them)
+## Lazy recovery
+- `lazyRecoverUser()` triggered on first `/api/ai/decisions` if `_uidDec[uid]` is empty
+- Deduplicates via `_lazyInProgress` Map
 
-## Key constraint
-`evaluateAll()` is defined as a closure in `app-server.mjs` and passed into `startDecisionRecovery()` as a dep — it cannot be imported separately.
+## Discovery queue (discqueue.mjs)
+- Priority queue: fresh creates always processed before retries
+- Stale signatures dropped at drain time (`DISCOVERY_SIGNATURE_MAX_AGE_MS=120000`)
+- Circuit breaker: 10s pause on 429/rate-limit, resumes automatically
+- `processSignature` uses `rpc.callOnce` (single attempt); queue owns retry logic
+- Max 2 retries, delays [2000, 5000]ms
+- `RpcPool.callOnce()` rotates endpoint index on 429
+
+## Decode diagnostics (decodePumpCreate in solana.mjs)
+- Replaces generic `decodeFailed` counter with sub-counters:
+  `noPumpInstruction`, `pumpInstructionWithoutData`, `unknownPumpDiscriminator`,
+  `invalidAccountLayout`, `invalidMint`, `createInstructionDecoded`
+- `knownNonCreate` reason for Buy/Sell/Withdraw — caller skips decodeFailed increment
+- Unknown discriminator bytes logged to stdout for live investigation
+- Inner instructions tagged with `_isInner` for diagnostic logging
+- Per-transaction mint dedup (`seenMints` Set) prevents double-counting
+
+**Why:** `decodeFailed: 25` with `createsDecoded: 9` suggested unrecognized discriminators or Buy/Sell instructions slipping through; per-reason counters expose the real cause.
