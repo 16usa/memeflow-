@@ -1,5 +1,5 @@
 import http from 'node:http';import fs from 'node:fs';import path from 'node:path';import crypto from 'node:crypto';import zlib from 'node:zlib';import {fileURLToPath} from 'node:url';
-import {JsonStore,sessionId,defaults} from './src/store.mjs';import {RpcPool,validPubkey,decodeCurve,decodeCreateData,decodePumpCreate} from './src/solana.mjs';import {evaluate} from './src/evaluate.mjs';import {StripeBilling} from './src/billing.mjs';
+import {JsonStore,sessionId,defaults} from './src/store.mjs';import {RpcPool,validPubkey,decodeCurve,decodeCreateData,decodePumpCreate} from './src/solana.mjs';import {evaluate} from './src/evaluate.mjs';import {validateSettings} from './src/settings.mjs';import {StripeBilling} from './src/billing.mjs';
 import {enrichToken,enrichHolders,makeEnrichDiag,makeHolderQueue,makeHolderMetrics} from './src/enrich.mjs';
 import {makeRecoveryMetrics,startDecisionRecovery,lazyRecoverUser} from './src/recovery.mjs';
 import {makeLiveEvalMetrics,makeEvaluateForActiveUsers} from './src/liveeval.mjs';
@@ -37,7 +37,70 @@ async function body(req){const s=await rawBody(req);return s?JSON.parse(s):{}}
 function origin(req){if(process.env.APP_URL||process.env.APP_BASE_URL)return (process.env.APP_URL||process.env.APP_BASE_URL).replace(/\/$/,'');const proto=(req.headers['x-forwarded-proto']||'http').split(',')[0].trim();const host=(req.headers['x-forwarded-host']||req.headers.host||'localhost').split(',')[0].trim();return `${proto}://${host}`}
 function hasLiveEntitlement(u){return Boolean(u?.isOwner||u?.liveEntitled)}
 function billingStatus(u){const owner=Boolean(u.isOwner);const stripe=Boolean(u.liveEntitled);return {plan:owner?'owner':(u.plan||'free'),subscriptionStatus:owner?'owner_grant':(u.subscriptionStatus||'free'),liveEntitled:owner||stripe,entitlementSource:owner?'owner':(stripe?'stripe':'none'),isOwner:owner,price:49.99,currency:'USD',stripeCustomerId:u.stripeCustomerId||null,currentPeriodEnd:owner?null:(u.currentPeriodEnd||null),cancelAtPeriodEnd:owner?false:Boolean(u.cancelAtPeriodEnd)}}
-function candidateView(d){const t=store.state.tokens[d.mint]||{};return {id:d.mint,mint:d.mint,name:t.name||t.symbol||d.mint.slice(0,6),symbol:t.symbol||'TOKEN',state:d.state,score:d.score,confidence:d.confidence,data:Math.round((t.dataQuality||0)*100),lane:d.state==='BUY READY'?'READY':'QUEUE',priority:d.score,meta:t.source||'Solana on-chain',price:t.priceSol,marketCap:t.marketCapSol?`${t.marketCapSol.toFixed(2)} SOL`:'—',holders:t.holderCount,top10:t.top10Pct,developer:t.developerPct,buyPressure:t.buyPressure,evidence:{'Mint':d.mint,'Price (SOL)':t.priceSol??'—','Liquidity (SOL)':t.liquiditySol??'—','Holders':t.holderCount??'—','Top 10':t.top10Pct!=null?t.top10Pct.toFixed(2)+'%':'—','Developer':t.developerPct!=null?t.developerPct.toFixed(2)+'%':'—','Buy pressure':t.buyPressure!=null?t.buyPressure.toFixed(2)+'×':'—','Source':t.source||'Solana'},timeline:t.timeline||[],primaryReason:d.primaryReason,reasons:d.reasons,riskApproved:d.state==='BUY READY',routeApproved:d.priceSol!=null,holderFresh:t.holderFresh,positionSize:null,quoteAgeMs:Date.now()-(t.updatedAt||0),slippagePct:null}}
+/* MEMEFLOW_CANONICAL_CANDIDATE_PAYLOAD_V1 */
+function candidateView(d){
+  const t=store.state.tokens[d.mint]||{};
+  const finite=(v)=>v!==null&&v!==undefined&&Number.isFinite(Number(v))?Number(v):null;
+  const marketCapSol=finite(t.marketCapSol);
+  const liquiditySol=finite(t.liquiditySol);
+  const top10Pct=finite(t.top10Pct);
+  const developerPct=finite(t.developerPct??t.developerSharePct);
+  const buyPressure=finite(t.buyPressure??t.momentum);
+  return {
+    id:d.mint,
+    mint:d.mint,
+    tokenMint:d.mint,
+    tokenAddress:d.mint,
+    name:t.name||t.symbol||d.mint.slice(0,6),
+    symbol:t.symbol||'TOKEN',
+    state:d.state,
+    score:d.score,
+    confidence:d.confidence,
+    data:Math.round((t.dataQuality||0)*100),
+    lane:d.state==='BUY READY'?'READY':'QUEUE',
+    priority:d.score,
+    meta:t.source||'Solana on-chain',
+    source:t.source||'Solana on-chain',
+    price:t.priceSol??null,
+    priceSol:finite(t.priceSol),
+    marketCap:marketCapSol,
+    marketCapSol,
+    marketCapUsd:finite(t.marketCapUsd),
+    liquidity:liquiditySol,
+    liquiditySol,
+    liquidityUsd:finite(t.liquidityUsd),
+    holders:finite(t.holderCount),
+    holderCount:finite(t.holderCount),
+    top10:top10Pct,
+    top10Pct,
+    developer:developerPct,
+    developerPct,
+    developerSharePct:developerPct,
+    buyPressure,
+    momentum:buyPressure,
+    ageMinutes:finite(t.ageMinutes)??(t.discoveredAt?Math.max(0,(Date.now()-t.discoveredAt)/60000):null),
+    evidence:{
+      'Mint':d.mint,
+      'Price (SOL)':finite(t.priceSol)??'—',
+      'Market Cap (SOL)':marketCapSol??'—',
+      'Liquidity (SOL)':liquiditySol??'—',
+      'Holders':finite(t.holderCount)??'—',
+      'Top 10':top10Pct!=null?top10Pct.toFixed(2)+'%':'—',
+      'Developer':developerPct!=null?developerPct.toFixed(2)+'%':'—',
+      'Buy pressure':buyPressure!=null?buyPressure.toFixed(2)+'×':'—',
+      'Source':t.source||'Solana'
+    },
+    timeline:t.timeline||[],
+    primaryReason:d.primaryReason,
+    reasons:d.reasons,
+    riskApproved:d.state==='BUY READY',
+    routeApproved:t.priceSol!=null,
+    holderFresh:t.holderFresh,
+    positionSize:null,
+    quoteAgeMs:Date.now()-(t.updatedAt||0),
+    slippagePct:null
+  };
+}
 const liveEvalMetrics=makeLiveEvalMetrics();
 const LIVE_EVAL_HOURS=Number(process.env.LIVE_EVALUATION_ACTIVE_USER_HOURS||24);
 const LIVE_EVAL_BATCH=Number(process.env.LIVE_EVALUATION_BATCH_SIZE||25);
@@ -49,7 +112,7 @@ async function enrich(mint,curve){
   holderQueue.enqueue(mint);
 }
 function publish(mint){const rows=store.tokens();const t=store.state.tokens[mint];for(const res of streams.get(mint)||[]){res.write(`event: update\ndata: ${JSON.stringify({point:t?.priceSol?{t:Date.now(),price:t.priceSol,source:'Solana'}:null,status:{stale:!t?.priceSol,error:t?.scanError||null,source:t?.source}})}\n\n`)}}
-function ensurePriceTimer(mint,curve){if(priceTimers.has(mint)||!curve)return;const timer=setInterval(async()=>{const t=store.state.tokens[mint];if(Date.now()-(t?.updatedAt||0)>600000&&(streams.get(mint)?.size||0)===0){clearInterval(timer);priceTimers.delete(mint);return}try{const info=await rpc.call('getAccountInfo',[curve,{encoding:'base64',commitment:'confirmed'}]);if(info?.value?.data?.[0]){const c=decodeCurve(info.value.data[0],t.decimals||6);store.setToken(mint,{priceSol:c.priceSol,liquiditySol:c.liquiditySol,complete:c.complete,source:'Solana bonding curve'});publish(mint)}}catch(e){store.setToken(mint,{scanError:e.message})}},Math.max(1000,Number(process.env.POLL_ACTIVE_MS||2000)));priceTimers.set(mint,timer)}
+function ensurePriceTimer(mint,curve){if(priceTimers.has(mint)||!curve)return;const timer=setInterval(async()=>{const t=store.state.tokens[mint];if(Date.now()-(t?.updatedAt||0)>600000&&(streams.get(mint)?.size||0)===0){clearInterval(timer);priceTimers.delete(mint);return}try{const info=await rpc.call('getAccountInfo',[curve,{encoding:'base64',commitment:'confirmed'}]);if(info?.value?.data?.[0]){const c=decodeCurve(info.value.data[0],t.decimals||6);/* MEMEFLOW_TIMER_MARKETCAP_V1 */ const liveMarketCap=(c.priceSol&&t.totalSupply)?c.priceSol*t.totalSupply:null;store.setToken(mint,{priceSol:c.priceSol,liquiditySol:c.liquiditySol,marketCapSol:liveMarketCap,marketCap:liveMarketCap,liquidity:c.liquiditySol,momentum:t.buyPressure??null,complete:c.complete,source:'Solana bonding curve'});publish(mint)}}catch(e){store.setToken(mint,{scanError:e.message})}},Math.max(1000,Number(process.env.POLL_ACTIVE_MS||2000)));priceTimers.set(mint,timer)}
 async function processSignature(sig){
   // Single attempt — discovery queue handles retries with correct policy
   let tx;
@@ -168,7 +231,7 @@ async function handler(req,res){const url=new URL(req.url,'http://x');
  if(!u)return json(res,401,{error:'AUTH_REQUIRED'});
  if(url.pathname==='/api/ai/decisions'){const _lim=Math.min(200,Math.max(1,Number(url.searchParams.get('limit')||50)));const _off=Math.max(0,Number(url.searchParams.get('offset')||0));if(!store._uidDec[u.id]?.size)await lazyRecoverUser({store,uid:u.id,metrics:recoveryMetrics,tokenLimit:DECISION_RECOVERY_TOKEN_LIMIT});const _all=store.decisions(u.id);return json(res,200,{decisions:_all.slice(_off,_off+_lim).map(candidateView),total:_all.length,limit:_lim,offset:_off})}
  if(url.pathname==='/api/settings'&&req.method==='GET')return json(res,200,{settings:u.settings,version:u.updatedAt||1,killSwitchActive:u.killSwitch,capabilities:{liveAutomation:hasLiveEntitlement(u)}});
- if(url.pathname==='/api/settings'&&req.method==='PUT'){const b=await body(req);return json(res,200,{settings:store.setSettings(u.id,b.settings||{}),version:Date.now()})}
+ if(url.pathname==='/api/settings'&&req.method==='PUT'){const b=await body(req);const checked=validateSettings(b.settings||{});if(!checked.ok)return json(res,400,{error:'INVALID_SETTINGS',message:checked.errors.join(' '),errors:checked.errors});const saved=store.setSettings(u.id,checked.settings);const decisionsReevaluated=reevaluateUser(u.id);return json(res,200,{settings:saved,version:Date.now(),decisionsReevaluated})}
  if(url.pathname==='/api/settings/defaults'&&req.method==='POST')return json(res,200,{settings:store.setSettings(u.id,defaults())});
  if(url.pathname==='/api/settings/kill-switch'&&req.method==='POST'){u.killSwitch=true;store.save();return json(res,200,{active:true})}
  if(url.pathname==='/api/owner/status')return json(res,200,{isOwner:Boolean(u.isOwner),entitlementSource:u.isOwner?'owner':'none'});

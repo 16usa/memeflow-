@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
+import {defaultSettings,normalizeSettings} from './settings.mjs';
 
 export class JsonStore {
   constructor(dir){
@@ -22,7 +23,7 @@ export class JsonStore {
   hasStripeEvent(id){return Boolean(this.state.stripeEvents?.[id])}
   recordStripeEvent(id,type){this.state.stripeEvents||={};this.state.stripeEvents[id]={type,processedAt:new Date().toISOString()};const ids=Object.keys(this.state.stripeEvents);for(const old of ids.slice(0,Math.max(0,ids.length-5000)))delete this.state.stripeEvents[old];this.save()}
   touchUser(id){this.user(id).lastActiveAt=Date.now();this.save();return this.user(id)}
-  setSettings(id,s){this.user(id).settings={...defaults(),...s};this.save();return this.user(id).settings}
+  setSettings(id,s){this.user(id).settings=normalizeSettings({...this.settings(id),...s});this.save();return this.user(id).settings}
   addToken(t){const old=this.state.tokens[t.mint]||{};this.state.tokens[t.mint]={...old,...t,updatedAt:Date.now()};this.state.metrics.discovered++;this.save();return this.state.tokens[t.mint]}
   setToken(mint,t){this.state.tokens[mint]={...(this.state.tokens[mint]||{}),...t,updatedAt:Date.now()};this.state.metrics.scanned++;this.save();return this.state.tokens[mint]}
   tokens(){return Object.values(this.state.tokens).sort((a,b)=>(b.discoveredAt||0)-(a.discoveredAt||0))}
@@ -42,5 +43,5 @@ export class JsonStore {
     return[...m.entries()].sort((a,b)=>b[1]-a[1]).slice(0,200).map(([k])=>this.state.decisions[k]).filter(Boolean)
   }
 }
-export function defaults(){return {operatingMode:'observe',profile:'balanced',tradingCapital:0,dailySpendLimit:0,positionSize:0.1,maxPositionSize:0.5,maxOpenPositions:4,maxDailyEntries:10,dailyLossLimit:0,feeReserve:0.05,minScore:72,minConfidence:70,minLiquidityUsd:0,minMarketCapUsd:0,minHolders:30,maxTop10Pct:25,maxDeveloperPct:20,minBuyPressure:1.2,minTokenAgeMinutes:0,maxTokenAgeMinutes:180,requireFreshHolderSnapshot:true,requireWebsiteOrX:false,hardStopPct:25,trailingStopPct:15,tp1Pct:100,tp1SellPct:50,tp2Pct:200,tp2SellPct:25,runnerPct:25,maxHoldMinutes:1440,exitBuyPressure:1.0,adaptiveProfile:false,ownerApproval:true,shadowValidation:true,changeLog:true}}
+export function defaults(){return defaultSettings()}
 export function sessionId(){return crypto.randomUUID()}

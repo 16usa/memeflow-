@@ -151,6 +151,10 @@ export async function enrichToken(mint, curve, deps) {
       update.priceSol       = c.priceSol    ?? null;
       update.liquiditySol   = c.liquiditySol ?? null;
       update.marketCapSol   = (c.priceSol && total) ? c.priceSol * total : null;
+      /* MEMEFLOW_CANONICAL_ENRICH_FIELDS_V1 */
+      update.marketCap      = update.marketCapSol;
+      update.liquidity      = update.liquiditySol;
+      update.momentum       = update.buyPressure;
       update.complete       = c.complete     ?? null;
     }
 
@@ -223,7 +227,42 @@ export async function enrichHolders(mint, deps) {
     : null;
   const holderCount = vals.length === 20 ? null : vals.filter(v => v > 0).length;
 
-  const updated = store.setToken(mint, {holderFresh: true, top10Pct: top10, holderCount});
+  /* MEMEFLOW_CREATOR_SHARE_ENRICHMENT_V1 */
+  // Direct creator-wallet ownership. This is the creator wallet's current token
+  // balance only; linked wallets are not guessed or silently combined.
+  let developerPct = token.developerPct ?? null;
+  const creator = token.creator;
+  if (creator && total > 0) {
+    try {
+      const owned = await rpc.call('getTokenAccountsByOwner', [
+        creator,
+        {mint},
+        {encoding:'jsonParsed', commitment:'confirmed'}
+      ]);
+      const creatorAmount=(owned?.value??[]).reduce((sum,row)=>{
+        const amount=row?.account?.data?.parsed?.info?.tokenAmount?.uiAmountString
+          ?? row?.account?.data?.parsed?.info?.tokenAmount?.uiAmount
+          ?? 0;
+        return sum+Number(amount||0);
+      },0);
+      developerPct=creatorAmount/total*100;
+    } catch(e) {
+      if (isRateLimited(e)) return {rateLimited:true};
+      // Preserve holder metrics even when creator ownership is temporarily unavailable.
+      developerPct=null;
+    }
+  }
+
+  const updated = store.setToken(mint, {
+    holderFresh:true,
+    top10Pct:top10,
+    holderCount,
+    developerPct,
+    developerSharePct:developerPct,
+    marketCap:token.marketCapSol??token.marketCap??null,
+    liquidity:token.liquiditySol??token.liquidity??null,
+    momentum:token.buyPressure??token.momentum??null
+  });
   try { evaluateAll(updated); } catch {}
   publish(mint);
 
