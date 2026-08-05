@@ -1,0 +1,79 @@
+Audit and verify the owner-access integration end to end.
+
+The concern is that the owner access form may not actually be connected to the backend route that reads OWNER_ACCESS_KEY from Replit Secrets.
+
+Do not assume the integration works. Trace the real production code.
+
+Required checks:
+
+1. Locate the exact frontend handler for the “Activate owner access” button.
+
+2. Report:
+   - input element ID/name
+   - button element ID
+   - click/submit handler function
+   - request method
+   - exact request URL
+   - exact JSON body property name
+
+3. Locate the exact backend route receiving this request.
+
+4. Confirm the frontend URL and backend route match exactly, including:
+   - /api prefix
+   - spelling
+   - HTTP method
+   - trailing path
+   - same origin/port behavior
+
+5. Confirm the backend reads:
+   process.env.OWNER_ACCESS_KEY
+
+The frontend must never read, embed, return, expose, or compare OWNER_ACCESS_KEY directly.
+
+6. Confirm the submitted JSON property matches the backend:
+   const submittedKey = String(reqBody.ownerAccessKey || '').trim();
+   const configuredKey = String(process.env.OWNER_ACCESS_KEY || '').trim();
+
+7. Use timing-safe comparison:
+   - reject if either value is empty
+   - convert both to Buffer
+   - compare lengths first
+   - then use crypto.timingSafeEqual()
+
+8. Add safe temporary diagnostics without printing either key:
+   - OWNER_CLAIM_ROUTE_HIT
+   - submitted key length
+   - configured key length
+   - request content type
+   - response status/error code
+
+9. Make the route return exact safe responses:
+   - 400 OWNER_KEY_MISSING
+   - 403 INVALID_OWNER_ACCESS_KEY
+   - 503 OWNER_ACCESS_NOT_CONFIGURED
+   - 200 OWNER_ACCESS_ACTIVATED
+
+10. Test the route internally using the actual environment secret without printing it.
+
+Construct the request dynamically from process.env.OWNER_ACCESS_KEY. The valid-secret test must return HTTP 200.
+
+11. Test the frontend request using the same route and body property.
+
+12. Confirm the frontend displays the exact returned error code instead of generic “Owner activation failed”.
+
+13. Verify this on both running workflows/servers and identify which one the Replit Preview is actually using.
+
+14. Do not expose the secret in HTML, JavaScript, API responses, logs, screenshots, commits, or browser storage.
+
+Provide a concise final report showing the exact chain:
+
+input field
+→ frontend handler
+→ method and route
+→ backend handler
+→ process.env.OWNER_ACCESS_KEY
+→ comparison
+→ HTTP result
+→ frontend status message
+
+Do not change billing, subscription, wallet, or trading logic.
