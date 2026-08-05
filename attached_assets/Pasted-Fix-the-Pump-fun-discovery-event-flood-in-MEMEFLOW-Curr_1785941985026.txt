@@ -1,0 +1,113 @@
+Fix the Pump.fun discovery event flood in MEMEFLOW.
+
+Current verified status:
+- WebSocket is connected.
+- eventsReceived grows extremely fast.
+- queueDepth stays at 1000.
+- queueDropped is above 9000.
+- signaturesProcessed barely increases.
+- lastError says "Too many requests for a specific RPC call".
+- createsDecoded remains 0.
+- Public Solana RPC is being asked to fetch every Pump.fun buy and sell transaction.
+
+Root cause:
+The logsSubscribe callback currently queues every signature mentioning the Pump.fun program. It ignores the log messages included in the WebSocket notification. This sends buys, sells and unrelated Pump instructions into processSignature(), flooding getTransaction.
+
+Required fix:
+
+1. Filter before enqueue
+In ws.onmessage, inspect:
+m.params?.result?.value?.logs
+
+Only enqueue signatures whose logs indicate a token creation instruction.
+
+Accept creation variants such as:
+- "Instruction: Create"
+- "Instruction: CreateV2"
+- "Instruction: Create V2"
+- other clearly identified Pump create instruction variants
+
+Do not enqueue ordinary:
+- Buy
+- Sell
+- Withdraw
+- CollectCreatorFee
+- Migrate
+- unrelated Pump instructions
+
+The filter must happen before enqueue(sig), so rejected events consume no queue capacity and make no getTransaction RPC call.
+
+2. Add discovery metrics
+Add:
+- eventsFiltered
+- createEventsAccepted
+- nonCreateEventsIgnored
+
+Maintain:
+eventsReceived = every WebSocket notification containing a signature
+signaturesQueued = only accepted create signatures
+
+3. Safety fallback
+If the WebSocket notification has no logs array:
+- do not blindly queue every signature
+- increment eventsWithoutLogs
+- ignore it for discovery
+This prevents another RPC flood.
+
+4. Keep trade tracking separate
+Do not use global Pump logsSubscribe plus getTransaction for every buy and sell.
+Do not remove existing stored token data.
+For this task, discovery should process only new token creation events.
+
+5. Queue tuning
+Keep RPC_MAX_CONCURRENCY configurable.
+Set the public-RPC-safe default to 2, not 4.
+Set DISCOVERY_QUEUE_MAX default to 250.
+Do not increase concurrency to solve 429 errors.
+
+6. 429 cooldown
+When RpcPool receives HTTP 429:
+- respect Retry-After if present
+- otherwise use cooldowns of approximately 2 seconds and 5 seconds
+- rotate to the next configured endpoint when available
+- do not immediately hammer the same endpoint
+
+7. Metrics correctness
+Currently enrichFailed can stay 0 when getTransaction fails before enrich().
+Add:
+- transactionFetchFailed
+- transactionFetchSucceeded
+- decodeFailed
+so failures before enrichment are visible.
+
+8. Tests
+Add tests proving:
+- Buy logs are ignored before enqueue
+- Sell logs are ignored before enqueue
+- Create logs are queued
+- missing logs are ignored
+- 10,000 buy notifications produce zero queued signatures
+- accepted creates still reach processSignature
+- HTTP 429 applies cooldown and retry
+- queue concurrency does not exceed configured limit
+
+9. Validation
+Restart every workflow running memeflow-app so no stale process remains.
+Verify /api/discovery/status after restart.
+
+Expected healthy behavior:
+- connected:true
+- eventsReceived grows quickly
+- nonCreateEventsIgnored grows quickly
+- createEventsAccepted grows slowly
+- signaturesQueued stays close to createEventsAccepted
+- queueDepth normally remains near 0
+- queueDropped stops growing rapidly
+- signaturesProcessed increases
+- createsDecoded and enrichSucceeded eventually increase
+- no continuous "Too many requests" errors
+
+Do not modify frontend design, billing, authentication, user data, or trading settings.
+Do not add Helius.
+Do not expose complete RPC URLs or Secrets.
+Report exact files changed and test results.

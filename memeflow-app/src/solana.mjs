@@ -4,7 +4,7 @@ export function validPubkey(s){try{return b58decode(s).length===32}catch{return 
 
 function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
 
-// Retryable: timeout/abort, rate-limit, transient server errors, network issues
+// Retryable: timeout/abort, rate-limit, transient server errors, network failures
 function retryable(e){
   return e.name==='AbortError'||
     /abort|operation was aborted/i.test(e.message)||
@@ -19,22 +19,26 @@ export class RpcPool{
     this.commitment=commitment;
     this.i=0;
     this.last={ok:false,latency:null,url:null,error:'not checked'};
-    // Exposed to app-server for /api/discovery/status metrics
+    // Exposed for /api/discovery/status metrics
     this.metrics={retries:0,timeouts:0};
   }
 
   async call(method,params=[]){
     if(!this.urls.length)throw new Error('SOLANA_RPC_URLS is not configured');
     const TIMEOUT=Number(process.env.SOLANA_RPC_TIMEOUT_MS||20000);
-    const BACKOFF=[500,1500];
     const MAX_ATTEMPTS=3;
     let lastError;
 
     for(let attempt=0;attempt<MAX_ATTEMPTS;attempt++){
       if(attempt>0){
-        await sleep(BACKOFF[attempt-1]);
+        // 429 → respect Retry-After header, else use 2s/5s cooldown; other errors use 500ms/1500ms
+        const is429=lastError?.status===429;
+        const defaultMs=is429?[2000,5000][attempt-1]:[500,1500][attempt-1];
+        const delayMs=lastError?.retryAfterMs??defaultMs;
+        await sleep(delayMs);
         this.metrics.retries++;
       }
+
       for(let k=0;k<this.urls.length;k++){
         const url=this.urls[(this.i+k)%this.urls.length];
         const ac=new AbortController();
@@ -51,15 +55,23 @@ export class RpcPool{
           const j=await r.json();
           if(j.error){
             const code=j.error.code;
-            // Permanent JSON-RPC errors: parse error, invalid request, method/params
+            // Permanent JSON-RPC errors: parse error, invalid request/method/params — no retry
             if(code===-32700||code===-32600||code===-32601||code===-32602)
               throw Object.assign(new Error(j.error.message||`RPC error ${code}`),{permanent:true});
-            // Other RPC errors may be transient; also capture HTTP status for retryable check
             const e=Object.assign(new Error(j.error.message||`RPC error ${code}`),{rpcCode:code});
-            if(!r.ok)e.status=r.status;
+            if(!r.ok){
+              e.status=r.status;
+              // Capture Retry-After for 429 backoff
+              const ra=r.headers?.get?.('retry-after');
+              if(ra&&!isNaN(ra))e.retryAfterMs=Number(ra)*1000;
+            }
             throw e;
           }
-          if(!r.ok)throw Object.assign(new Error(`RPC HTTP ${r.status}`),{status:r.status});
+          if(!r.ok){
+            const ra=r.headers?.get?.('retry-after');
+            const retryAfterMs=ra&&!isNaN(ra)?Number(ra)*1000:null;
+            throw Object.assign(new Error(`RPC HTTP ${r.status}`),{status:r.status,retryAfterMs});
+          }
           // Success — advance round-robin to this working endpoint
           this.i=(this.i+k)%this.urls.length;
           this.last={ok:true,latency:Date.now()-start,url,error:null};
@@ -74,7 +86,7 @@ export class RpcPool{
           // retryable: continue inner loop to try next endpoint in same attempt
         }
       }
-      // All endpoints exhausted for this attempt; outer loop applies backoff before next attempt
+      // All endpoints exhausted for this attempt; outer loop will apply backoff before next attempt
     }
     throw lastError||new Error('RPC failed after retries');
   }

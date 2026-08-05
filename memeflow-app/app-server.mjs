@@ -9,13 +9,13 @@ const OWNER_USER_IDS=new Set((process.env.OWNER_USER_IDS||'').split(',').map(x=>
 let discovery={connected:false,url:null,lastEventAt:null,reconnects:0,error:null,lastError:null,startedAt:Date.now()},ws=null,wsTimer=null;
 const streams=new Map(),priceTimers=new Map(),tradeWindows=new Map();
 // ── Extended discovery metrics ────────────────────────────────────────────
-const discMetrics={eventsReceived:0,signaturesQueued:0,signaturesProcessed:0,signaturesDeduplicated:0,queueDepth:0,queueDropped:0,transactionsFetched:0,createsDecoded:0,enrichSucceeded:0,enrichFailed:0,lastSuccessfulScanAt:null,lastErrorAt:null};
+const discMetrics={eventsReceived:0,eventsWithoutLogs:0,eventsFiltered:0,nonCreateEventsIgnored:0,createEventsAccepted:0,signaturesQueued:0,signaturesProcessed:0,signaturesDeduplicated:0,queueDepth:0,queueDropped:0,transactionFetchSucceeded:0,transactionFetchFailed:0,createsDecoded:0,decodeFailed:0,enrichSucceeded:0,enrichFailed:0,lastSuccessfulScanAt:null,lastErrorAt:null};
 // ── Bounded concurrency queue (deduplicating) ─────────────────────────────
-const MAX_CONCURRENT=Number(process.env.RPC_MAX_CONCURRENCY||4),QUEUE_MAX=Number(process.env.DISCOVERY_QUEUE_MAX||1000);
+const MAX_CONCURRENT=Number(process.env.RPC_MAX_CONCURRENCY||2),QUEUE_MAX=Number(process.env.DISCOVERY_QUEUE_MAX||250);
 const queueSet=new Set(),queueList=[],processing=new Set();
 function enqueue(sig){
-  discMetrics.eventsReceived++;
-  if(queueSet.has(sig)){discMetrics.signaturesDeduplicated++;return}
+  // eventsReceived is counted in ws.onmessage before the log filter — not here
+  if(queueSet.has(sig)||processing.has(sig)){discMetrics.signaturesDeduplicated++;return}
   if(queueList.length>=QUEUE_MAX){const old=queueList.shift();queueSet.delete(old);discMetrics.queueDropped++}
   queueSet.add(sig);queueList.push(sig);discMetrics.signaturesQueued++;discMetrics.queueDepth=queueList.length;
   drainQueue();
@@ -42,7 +42,27 @@ function evaluateAll(token){for(const uid of Object.keys(store.state.users)){con
 async function enrich(mint,curve){try{const [supply,largest,curveInfo]=await Promise.all([rpc.call('getTokenSupply',[mint,{commitment:'confirmed'}]),rpc.call('getTokenLargestAccounts',[mint,{commitment:'confirmed'}]),curve?rpc.call('getAccountInfo',[curve,{encoding:'base64',commitment:'confirmed'}]):Promise.resolve(null)]);const decimals=supply.value.decimals,total=Number(supply.value.uiAmountString||0),vals=(largest.value||[]).map(x=>Number(x.uiAmountString||0));const top10=total?vals.slice(0,10).reduce((a,b)=>a+b,0)/total*100:null;let c={};if(curveInfo?.value?.data?.[0])c=decodeCurve(curveInfo.value.data[0],decimals);const tw=tradeWindows.get(mint)||{buy:0,sell:0};const token=store.setToken(mint,{decimals,totalSupply:total,top10Pct:top10,holderCount:vals.length===20?null:vals.filter(v=>v>0).length,holderFresh:true,scanError:null,lastScannedAt:Date.now(),priceSol:c.priceSol??null,liquiditySol:c.liquiditySol??null,marketCapSol:c.priceSol?c.priceSol*total:null,complete:c.complete??null,buyPressure:tw.sell?tw.buy/tw.sell:tw.buy?tw.buy:null,dataQuality:[total,top10,c.priceSol].filter(x=>x!=null).length/3,source:'Solana RPC'});discMetrics.enrichSucceeded++;evaluateAll(token);publish(mint);ensurePriceTimer(mint,curve)}catch(e){store.state.metrics.errors++;store.setToken(mint,{scanError:e.message,holderFresh:false});store.save();discMetrics.enrichFailed++;/* do not rethrow — enrichment failure must not crash discovery */}}
 function publish(mint){const rows=store.tokens();const t=store.state.tokens[mint];for(const res of streams.get(mint)||[]){res.write(`event: update\ndata: ${JSON.stringify({point:t?.priceSol?{t:Date.now(),price:t.priceSol,source:'Solana'}:null,status:{stale:!t?.priceSol,error:t?.scanError||null,source:t?.source}})}\n\n`)}}
 function ensurePriceTimer(mint,curve){if(priceTimers.has(mint)||!curve)return;const timer=setInterval(async()=>{const t=store.state.tokens[mint];if(Date.now()-(t?.updatedAt||0)>600000&&(streams.get(mint)?.size||0)===0){clearInterval(timer);priceTimers.delete(mint);return}try{const info=await rpc.call('getAccountInfo',[curve,{encoding:'base64',commitment:'confirmed'}]);if(info?.value?.data?.[0]){const c=decodeCurve(info.value.data[0],t.decimals||6);store.setToken(mint,{priceSol:c.priceSol,liquiditySol:c.liquiditySol,complete:c.complete,source:'Solana bonding curve'});publish(mint)}}catch(e){store.setToken(mint,{scanError:e.message})}},Math.max(1000,Number(process.env.POLL_ACTIVE_MS||2000)));priceTimers.set(mint,timer)}
-async function processSignature(sig){const tx=await rpc.call('getTransaction',[sig,{encoding:'jsonParsed',commitment:'confirmed',maxSupportedTransactionVersion:0}]);if(!tx)return;discMetrics.transactionsFetched++;const msg=tx.transaction.message,keys=(msg.accountKeys||[]).map(x=>typeof x==='string'?x:x.pubkey),all=[...(msg.instructions||[]),...((tx.meta?.innerInstructions||[]).flatMap(x=>x.instructions||[]))];for(const ix of all){const pid=typeof ix.programId==='string'?ix.programId:keys[ix.programIdIndex];if(pid!==PUMP)continue;const parsed=ix.data?decodeCreateData(ix.data):null;if(parsed){discMetrics.createsDecoded++;const ac=(ix.accounts||[]).map(a=>typeof a==='number'?keys[a]:a);const mint=ac[0],curve=ac[2];if(validPubkey(mint)){store.addToken({mint,curve,name:parsed.name,symbol:parsed.symbol,uri:parsed.uri,creator:ac[7]||null,discoveredAt:Date.now(),slot:tx.slot,signature:sig,source:'Pump create'});await enrich(mint,curve)}}else{const logs=tx.meta?.logMessages||[],buy=logs.some(x=>/Instruction: Buy/i.test(x)),sell=logs.some(x=>/Instruction: Sell/i.test(x));if(buy||sell){for(const mint of Object.keys(store.state.tokens)){if(keys.includes(mint)){const w=tradeWindows.get(mint)||{buy:0,sell:0};if(buy)w.buy++;if(sell)w.sell++;tradeWindows.set(mint,w);break}}}}}}
+async function processSignature(sig){
+  let tx;
+  try{tx=await rpc.call('getTransaction',[sig,{encoding:'jsonParsed',commitment:'confirmed',maxSupportedTransactionVersion:0}])}
+  catch(e){discMetrics.transactionFetchFailed++;throw e}
+  if(!tx){discMetrics.transactionFetchFailed++;return}
+  discMetrics.transactionFetchSucceeded++;
+  const msg=tx.transaction.message,keys=(msg.accountKeys||[]).map(x=>typeof x==='string'?x:x.pubkey),all=[...(msg.instructions||[]),...((tx.meta?.innerInstructions||[]).flatMap(x=>x.instructions||[]))];
+  for(const ix of all){
+    const pid=typeof ix.programId==='string'?ix.programId:keys[ix.programIdIndex];
+    if(pid!==PUMP)continue;
+    const parsed=ix.data?decodeCreateData(ix.data):null;
+    if(parsed){
+      discMetrics.createsDecoded++;
+      const ac=(ix.accounts||[]).map(a=>typeof a==='number'?keys[a]:a);
+      const mint=ac[0],curve=ac[2];
+      if(validPubkey(mint)){store.addToken({mint,curve,name:parsed.name,symbol:parsed.symbol,uri:parsed.uri,creator:ac[7]||null,discoveredAt:Date.now(),slot:tx.slot,signature:sig,source:'Pump create'});await enrich(mint,curve)}
+    }else{
+      discMetrics.decodeFailed++;
+    }
+  }
+}
 function startDiscovery(i=0){
   if(process.env.DISCOVERY_ENABLED==='false'||!wsUrls.length){discovery.error='SOLANA_WS_URLS not configured';return}
   const url=wsUrls[i%wsUrls.length];
@@ -53,8 +73,23 @@ function startDiscovery(i=0){
       discovery.connected=true;discovery.error=null;
       ws.send(JSON.stringify({jsonrpc:'2.0',id:1,method:'logsSubscribe',params:[{mentions:[PUMP]},{commitment:process.env.SOLANA_COMMITMENT||'confirmed'}]}));
     };
-    // Non-blocking: enqueue signature instead of processing inline
-    ws.onmessage=ev=>{try{const m=JSON.parse(ev.data);const sig=m.params?.result?.value?.signature;if(sig){discovery.lastEventAt=Date.now();enqueue(sig)}}catch{}};
+    // Filter: only create instructions are worth a getTransaction call
+    ws.onmessage=ev=>{
+      try{
+        const m=JSON.parse(ev.data);
+        const sig=m.params?.result?.value?.signature;
+        if(!sig)return;
+        discMetrics.eventsReceived++;
+        const logs=m.params?.result?.value?.logs;
+        if(!Array.isArray(logs)){discMetrics.eventsWithoutLogs++;discMetrics.eventsFiltered++;return}
+        // Accept only Pump.fun token creation instructions; drop Buy/Sell/Withdraw/Migrate/etc.
+        const isCreate=logs.some(l=>/Instruction:\s*Create(?:V2|\s+V2|\s*$)/i.test(l));
+        if(!isCreate){discMetrics.nonCreateEventsIgnored++;discMetrics.eventsFiltered++;return}
+        discMetrics.createEventsAccepted++;
+        discovery.lastEventAt=Date.now();
+        enqueue(sig);
+      }catch{}
+    };
     // WS errors stored as lastError; do not overwrite connection state here
     ws.onerror=e=>{discovery.lastError={message:'WebSocket error'+(e?.message?': '+e.message:''),at:Date.now()}};
     ws.onclose=()=>{discovery.connected=false;discovery.reconnects++;clearTimeout(wsTimer);wsTimer=setTimeout(()=>startDiscovery(i+1),Math.min(30000,1000*2**Math.min(discovery.reconnects,5)))};
