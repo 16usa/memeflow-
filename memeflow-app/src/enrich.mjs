@@ -39,6 +39,9 @@ export function makeEnrichDiag() {
       decodeCurve: 0,
       evaluate: 0,
     },
+    // Permanent Solana parameter errors — do not retry, do not open circuit breaker
+    invalidTokenMint: 0,
+    accountNotFound: 0,
   };
 }
 
@@ -58,6 +61,7 @@ export function makeHolderMetrics() {
 // ── Rate-limit detection ───────────────────────────────────────────────────────
 
 function isRateLimited(e) {
+  if (e?.status === 429) return true;
   const msg = (e?.message || '').toLowerCase();
   return (
     msg.includes('429') ||
@@ -94,6 +98,9 @@ export async function enrichToken(mint, curve, deps) {
 
   function fail(step, e) {
     anyStepFailed = true;
+    // Permanent Solana parameter errors — count separately, skip enrichFailureReasons
+    if (e?.invalidTokenMint) { enrichDiag.invalidTokenMint++; return; }
+    if (e?.accountNotFound)  { enrichDiag.accountNotFound++;  return; }
     if (step in enrichDiag.enrichStepFailures) enrichDiag.enrichStepFailures[step]++;
     recordEnrichError(enrichDiag, mint, step, e);
   }

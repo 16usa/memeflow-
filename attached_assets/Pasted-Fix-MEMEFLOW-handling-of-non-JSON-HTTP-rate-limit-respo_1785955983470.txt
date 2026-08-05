@@ -1,0 +1,92 @@
+Fix MEMEFLOW handling of non-JSON HTTP rate-limit responses from Solana RPC providers.
+
+Verified live state:
+- Helius is active: rpcActiveHostname=mainnet.helius-rpc.com
+- holderSucceeded=30, so Helius is working.
+- Some HTTP 429 responses contain plain text:
+  "Too Many Requests"
+- Current RpcPool attempts response.json() and produces:
+  Unexpected token 'T', "Too Many Requests" is not valid JSON
+- rpcCircuitOpen becomes true and fresh/retry queues accumulate.
+
+Required changes:
+
+1. In both RpcPool.call() and RpcPool.callOnce():
+- read the HTTP response body as text first;
+- attempt JSON.parse only when the body is valid JSON;
+- when HTTP status is 429, classify it as RATE_LIMIT regardless of whether the body is JSON or plain text;
+- preserve and expose Retry-After internally;
+- never expose API keys or complete RPC URLs in errors or logs.
+
+2. Safely handle non-JSON HTTP responses for:
+- 429
+- 502
+- 503
+- 504
+
+Return a sanitized error with:
+- HTTP status
+- retryable=true/false
+- retryAfterMs when present
+
+Do not return JSON parsing errors such as:
+Unexpected token ... is not valid JSON
+
+3. On HTTP 429:
+- rotate immediately to the next configured SOLANA_RPC_URLS endpoint;
+- respect Retry-After when present;
+- otherwise use the existing circuit-breaker delay;
+- do not count JSON parsing failure as an enrichment failure.
+
+4. Add RPC metrics to /api/discovery/status:
+- rpcHttp429
+- rpcNonJsonResponses
+- rpcEndpointFailovers
+- rpcLastHttpStatus
+
+5. Enrichment and holder queue:
+- getTokenSupply, getTokenLargestAccounts, and getAccountInfo receiving 429 must be classified as rate-limited;
+- retry them according to the existing delayed retry logic;
+- do not store "Unexpected token T" in enrichFailureReasons or lastEnrichError.
+
+6. Permanent errors:
+Handle these separately:
+- "Invalid param: not a Token mint"
+- "Invalid param: could not find account"
+
+For these:
+- do not retry indefinitely;
+- classify them as permanent;
+- increment dedicated counters:
+  invalidTokenMint
+  accountNotFound
+- do not open the RPC circuit breaker for permanent parameter errors.
+
+7. Tests:
+Add tests proving:
+- plain-text HTTP 429 is classified as RATE_LIMIT
+- JSON HTTP 429 is classified as RATE_LIMIT
+- Retry-After is respected
+- endpoint failover occurs on 429
+- plain-text 503 is handled safely
+- no JSON syntax error reaches enrichment diagnostics
+- API key never appears in logs or error messages
+- invalid Token mint does not retry forever
+- account not found does not open circuit breaker
+
+8. Validation:
+- run all existing tests
+- restart only the Project workflow
+- verify /api/healthz is fast
+- verify /api/discovery/status returns the new metrics
+- report before/after queueDepth, holderSucceeded, rpcHttp429, rpcNonJsonResponses, and rpcEndpointFailovers
+
+Do not modify:
+- frontend design
+- billing
+- authentication
+- user settings
+- decision recovery
+- active-user evaluation
+- Pump create filtering
+- trading logic

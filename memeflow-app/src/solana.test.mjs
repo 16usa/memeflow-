@@ -125,14 +125,14 @@ test('RpcPool retries on HTTP 429 and fails over to backup endpoint',async()=>{
       return Promise.resolve({
         ok:false,status:429,
         headers:{get:h=>h==='retry-after'?null:null},
-        json:()=>Promise.resolve({error:{code:-32000,message:'rate limited'}})
+        text:()=>Promise.resolve('{"error":{"code":-32000,"message":"rate limited"}}'),
       });
     }
     backup++;
     return Promise.resolve({
       ok:true,status:200,
       headers:{get:()=>null},
-      json:()=>Promise.resolve({jsonrpc:'2.0',result:12345})
+      text:()=>Promise.resolve('{"jsonrpc":"2.0","result":12345}'),
     });
   });
   const pool=new RpcPool(['http://primary.test/','http://backup.test/']);
@@ -153,13 +153,13 @@ test('RpcPool respects Retry-After header on 429',async()=>{
         ok:false,status:429,
         // Retry-After: 0 so test stays fast
         headers:{get:h=>h==='retry-after'?'0':null},
-        json:()=>Promise.resolve({error:{code:-32000,message:'rate limited'}})
+        text:()=>Promise.resolve('{"error":{"code":-32000,"message":"rate limited"}}'),
       });
     }
     return Promise.resolve({
       ok:true,status:200,
       headers:{get:()=>null},
-      json:()=>Promise.resolve({jsonrpc:'2.0',result:99})
+      text:()=>Promise.resolve('{"jsonrpc":"2.0","result":99}'),
     });
   });
   const pool=new RpcPool(['http://fake.test/']);
@@ -175,7 +175,7 @@ test('RpcPool does not retry permanent JSON-RPC errors (-32602 invalid params)',
   let calls=0;
   const restore=mockFetch(()=>{
     calls++;
-    return Promise.resolve({ok:true,status:200,headers:{get:()=>null},json:()=>Promise.resolve({error:{code:-32602,message:'Invalid params'}})});
+    return Promise.resolve({ok:true,status:200,headers:{get:()=>null},text:()=>Promise.resolve('{"error":{"code":-32602,"message":"Invalid params"}}')});
   });
   const pool=new RpcPool(['http://fake.test/']);
   try{
@@ -188,9 +188,9 @@ test('RpcPool does not retry permanent JSON-RPC errors (-32602 invalid params)',
 test('RpcPool advances round-robin to successful endpoint',async()=>{
   const restore=mockFetch(url=>{
     if(url.includes('ep1')){
-      return Promise.resolve({ok:false,status:503,headers:{get:()=>null},json:()=>Promise.resolve({error:{code:-32000,message:'unavailable'}})});
+      return Promise.resolve({ok:false,status:503,headers:{get:()=>null},text:()=>Promise.resolve('{"error":{"code":-32000,"message":"unavailable"}}')});
     }
-    return Promise.resolve({ok:true,status:200,headers:{get:()=>null},json:()=>Promise.resolve({jsonrpc:'2.0',result:42})});
+    return Promise.resolve({ok:true,status:200,headers:{get:()=>null},text:()=>Promise.resolve('{"jsonrpc":"2.0","result":42}')});
   });
   const pool=new RpcPool(['http://ep1.test/','http://ep2.test/']);
   try{
@@ -198,6 +198,198 @@ test('RpcPool advances round-robin to successful endpoint',async()=>{
     assert.equal(r,42);
     assert.equal(pool.i,1,'round-robin index advanced to ep2');
   }finally{restore()}
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// NON-JSON / PLAIN-TEXT RESPONSE TESTS
+// ─────────────────────────────────────────────────────────────────────────────
+
+test('plain-text HTTP 429 is classified as rate-limited — no SyntaxError', async () => {
+  const restore = mockFetch(() => Promise.resolve({
+    ok: false, status: 429,
+    headers: { get: () => null },
+    text: () => Promise.resolve('Too Many Requests'),
+    json: () => Promise.reject(new SyntaxError('Unexpected token T')),
+  }));
+  const pool = new RpcPool(['http://fake.test/']);
+  try {
+    const err = await pool.callOnce('getSlot', []).catch(e => e);
+    assert.equal(err.status, 429, 'error status is 429');
+    assert.ok(!/SyntaxError|Unexpected token/i.test(err.message), 'no JSON SyntaxError in message');
+    assert.equal(pool.metrics.http429, 1, 'http429 counter incremented');
+    assert.equal(pool.metrics.nonJsonResponses, 1, 'nonJsonResponses incremented');
+    assert.equal(pool.metrics.endpointFailovers, 1, 'endpointFailovers incremented');
+  } finally { restore(); }
+});
+
+test('JSON HTTP 429 is classified as rate-limited', async () => {
+  const restore = mockFetch(() => Promise.resolve({
+    ok: false, status: 429,
+    headers: { get: () => null },
+    text: () => Promise.resolve('{"error":{"code":-32000,"message":"rate limited"}}'),
+    json: () => Promise.resolve({error:{code:-32000,message:'rate limited'}}),
+  }));
+  const pool = new RpcPool(['http://fake.test/']);
+  try {
+    const err = await pool.callOnce('getSlot', []).catch(e => e);
+    assert.ok(err.status === 429 || /rate limited/i.test(err.message), 'rate-limited error');
+    assert.ok(!/SyntaxError|Unexpected token/i.test(err.message), 'no JSON SyntaxError');
+    assert.equal(pool.metrics.http429, 1, 'http429 incremented');
+  } finally { restore(); }
+});
+
+test('plain-text HTTP 503 is handled safely — no SyntaxError', async () => {
+  let calls = 0;
+  const restore = mockFetch(() => {
+    calls++;
+    return Promise.resolve({
+      ok: false, status: 503,
+      headers: { get: () => null },
+      text: () => Promise.resolve('Service Unavailable'),
+      json: () => Promise.reject(new SyntaxError('not JSON')),
+    });
+  });
+  const pool = new RpcPool(['http://fake.test/']);
+  try {
+    const err = await pool.call('getSlot', []).catch(e => e);
+    assert.equal(err.status, 503, 'status preserved as 503');
+    assert.ok(!/SyntaxError|Unexpected token/i.test(err.message), 'no JSON SyntaxError in error');
+    assert.ok(pool.metrics.nonJsonResponses >= 1, 'nonJsonResponses incremented');
+  } finally { restore(); }
+});
+
+test('API key is never exposed in error messages or pool.last.error', async () => {
+  const secretKey = 'super-secret-api-key-12345';
+  const restore = mockFetch(() => Promise.resolve({
+    ok: false, status: 429,
+    headers: { get: () => null },
+    text: () => Promise.resolve('Too Many Requests'),
+    json: () => Promise.reject(new SyntaxError('not JSON')),
+  }));
+  const pool = new RpcPool([`https://mainnet.helius-rpc.com/?api-key=${secretKey}`]);
+  try {
+    const err = await pool.callOnce('getSlot', []).catch(e => e);
+    assert.ok(!JSON.stringify(err.message || '').includes(secretKey), 'secret not in error message');
+    assert.ok(!JSON.stringify(pool.last.error || '').includes(secretKey), 'secret not in pool.last.error');
+    assert.ok(!JSON.stringify(pool.activeHostname || '').includes(secretKey), 'secret not in activeHostname');
+  } finally { restore(); }
+});
+
+test('invalid Token mint is permanent — single attempt, no retry, invalidTokenMint flag set', async () => {
+  let calls = 0;
+  const restore = mockFetch(() => {
+    calls++;
+    return Promise.resolve({
+      ok: true, status: 200,
+      headers: { get: () => null },
+      text: () => Promise.resolve('{"error":{"code":-32602,"message":"Invalid param: not a Token mint"}}'),
+      json: () => Promise.resolve({error:{code:-32602,message:'Invalid param: not a Token mint'}}),
+    });
+  });
+  const pool = new RpcPool(['http://fake.test/']);
+  try {
+    const err = await pool.call('getTokenSupply', []).catch(e => e);
+    assert.equal(calls, 1, 'exactly one call — permanent error must not retry');
+    assert.equal(err.permanent, true, 'error is permanent');
+    assert.equal(err.invalidTokenMint, true, 'invalidTokenMint flag set');
+  } finally { restore(); }
+});
+
+test('account not found is permanent — single attempt, no retry, accountNotFound flag set', async () => {
+  let calls = 0;
+  const restore = mockFetch(() => {
+    calls++;
+    return Promise.resolve({
+      ok: true, status: 200,
+      headers: { get: () => null },
+      text: () => Promise.resolve('{"error":{"code":-32602,"message":"Invalid param: could not find account"}}'),
+      json: () => Promise.resolve({error:{code:-32602,message:'Invalid param: could not find account'}}),
+    });
+  });
+  const pool = new RpcPool(['http://fake.test/']);
+  try {
+    const err = await pool.call('getAccountInfo', []).catch(e => e);
+    assert.equal(calls, 1, 'single call — permanent error must not retry');
+    assert.equal(err.permanent, true, 'error is permanent');
+    assert.equal(err.accountNotFound, true, 'accountNotFound flag set');
+  } finally { restore(); }
+});
+
+test('rpcHttp429 and rpcEndpointFailovers counters are incremented correctly', async () => {
+  let calls = 0;
+  const restore = mockFetch(url => {
+    calls++;
+    if (url.includes('ep1')) {
+      return Promise.resolve({
+        ok: false, status: 429,
+        headers: { get: () => null },
+        text: () => Promise.resolve('Too Many Requests'),
+        json: () => Promise.reject(new SyntaxError('not JSON')),
+      });
+    }
+    return Promise.resolve({
+      ok: true, status: 200,
+      headers: { get: () => null },
+      text: () => Promise.resolve('{"jsonrpc":"2.0","result":77}'),
+      json: () => Promise.resolve({jsonrpc:'2.0',result:77}),
+    });
+  });
+  const pool = new RpcPool(['http://ep1.test/', 'http://ep2.test/']);
+  try {
+    const result = await pool.call('getSlot', []);
+    assert.equal(result, 77, 'succeeds via ep2');
+    assert.ok(pool.metrics.http429 >= 1, 'http429 counter >= 1');
+    assert.ok(pool.metrics.endpointFailovers >= 1, 'endpointFailovers >= 1');
+  } finally { restore(); }
+});
+
+test('Retry-After header is respected for plain-text 429', async () => {
+  let calls = 0;
+  const restore = mockFetch(() => {
+    calls++;
+    if (calls < 3) {
+      return Promise.resolve({
+        ok: false, status: 429,
+        // Retry-After: 0 keeps test fast
+        headers: { get: h => h === 'retry-after' ? '0' : null },
+        text: () => Promise.resolve('Too Many Requests'),
+        json: () => Promise.reject(new SyntaxError('not JSON')),
+      });
+    }
+    return Promise.resolve({
+      ok: true, status: 200,
+      headers: { get: () => null },
+      text: () => Promise.resolve('{"jsonrpc":"2.0","result":55}'),
+      json: () => Promise.resolve({jsonrpc:'2.0',result:55}),
+    });
+  });
+  const pool = new RpcPool(['http://fake.test/']);
+  try {
+    const result = await pool.call('getSlot', []);
+    assert.equal(result, 55, 'succeeds after plain-text 429 retries');
+    assert.equal(calls, 3, '3 total calls');
+    assert.ok(pool.metrics.retries >= 1, 'retries recorded');
+    assert.ok(pool.metrics.http429 >= 2, 'http429 counted for each plain-text 429');
+  } finally { restore(); }
+});
+
+test('isRateLimited in enrich recognises status=429 directly', async () => {
+  // Import isRateLimited indirectly by checking enrichHolders returns rateLimited:true
+  // for a 429 error thrown from rpc.call
+  const { enrichHolders, makeEnrichDiag } = await import('./enrich.mjs');
+  const enrichDiag = makeEnrichDiag();
+  const rpcError = Object.assign(new Error('rate limited'), { status: 429 });
+  const fakeDeps = {
+    rpc: { call: async () => { throw rpcError; } },
+    store: { state: { tokens: {} } },
+    evaluateAll: () => {},
+    publish: () => {},
+    enrichDiag,
+  };
+  const result = await enrichHolders('FakeMint111111111111111111111112', fakeDeps);
+  assert.equal(result.rateLimited, true, 'status=429 recognized as rate-limited by enrichHolders');
+  assert.ok(!/SyntaxError|Unexpected token/i.test(enrichDiag.lastEnrichError || ''),
+    'no JSON syntax error stored in enrichDiag');
 });
 
 // ─────────────────────────────────────────────────────────────────────────────

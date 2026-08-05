@@ -162,14 +162,14 @@ test('endpoint failover: callOnce rotates index on 429', async () => {
       return Promise.resolve({
         ok: false, status: 429,
         headers: { get: () => null },
-        json: () => Promise.resolve({ error: { code: -32000, message: 'rate limited' } })
+        text: () => Promise.resolve('{"error":{"code":-32000,"message":"rate limited"}}'),
       });
     }
     calls.backup++;
     return Promise.resolve({
       ok: true, status: 200,
       headers: { get: () => null },
-      json: () => Promise.resolve({ jsonrpc: '2.0', result: 42 })
+      text: () => Promise.resolve('{"jsonrpc":"2.0","result":42}'),
     });
   };
   try {

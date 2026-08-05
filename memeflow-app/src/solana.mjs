@@ -30,6 +30,20 @@ const _loggedUnknownDiscs = new Set();
 
 function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
 
+// Read response body as text first; parse JSON only when valid.
+// Never propagates a SyntaxError (plain-text 429 body) to callers.
+// Tolerates mocks/proxies that omit .text() — falls back to empty string.
+async function _readBody(r){
+  let text='';
+  try{text=await r.text();}catch{}
+  let json=null,isJson=false;
+  try{json=JSON.parse(text);isJson=true}catch{}
+  return{text,json,isJson};
+}
+
+// Strip full RPC URLs (including embedded API keys) from error messages.
+function _sanitizeMsg(msg){return(msg||'').replace(/https?:\/\/\S+/gi,'[rpc-url]')}
+
 // Retryable: timeout/abort, rate-limit, transient server errors, network failures
 function retryable(e){
   return e.name==='AbortError'||
@@ -46,7 +60,7 @@ export class RpcPool{
     this.i=0;
     this.last={ok:false,latency:null,url:null,error:'not checked'};
     // Exposed for /api/discovery/status metrics
-    this.metrics={retries:0,timeouts:0};
+    this.metrics={retries:0,timeouts:0,http429:0,nonJsonResponses:0,endpointFailovers:0,lastHttpStatus:null};
   }
 
   /** Sanitized hostname of the current endpoint — never exposes credentials or full URL. */
@@ -63,24 +77,38 @@ export class RpcPool{
     try{
       const r=await fetch(url,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:Date.now(),method,params}),signal:ac.signal});
       clearTimeout(t);
-      const j=await r.json();
-      if(j.error){
+      this.metrics.lastHttpStatus=r.status;
+      const{json:j,isJson}=await _readBody(r);
+      const ra=r.headers?.get?.('retry-after');
+      const retryAfterMs=ra&&!isNaN(ra)?Number(ra)*1000:null;
+      // JSON-RPC error body (may arrive with non-ok status from some providers)
+      if(isJson&&j?.error){
         const code=j.error.code;
-        if(code===-32700||code===-32600||code===-32601||code===-32602)throw Object.assign(new Error(j.error.message||`RPC error ${code}`),{permanent:true});
-        const e=Object.assign(new Error(j.error.message||`RPC error ${code}`),{rpcCode:code});
-        if(!r.ok){e.status=r.status;if(r.status===429)this.i=(this.i+1)%this.urls.length;const ra=r.headers?.get?.('retry-after');if(ra&&!isNaN(ra))e.retryAfterMs=Number(ra)*1000}
+        const msg=_sanitizeMsg(j.error.message||`RPC error ${code}`);
+        if(code===-32700||code===-32600||code===-32601||code===-32602)
+          throw Object.assign(new Error(msg),{permanent:true,invalidTokenMint:/not a Token mint/i.test(msg),accountNotFound:/could not find account/i.test(msg)});
+        const e=Object.assign(new Error(msg),{rpcCode:code});
+        if(!r.ok){e.status=r.status;if(r.status===429){this.metrics.http429++;this.i=(this.i+1)%this.urls.length;this.metrics.endpointFailovers++;}if(retryAfterMs)e.retryAfterMs=retryAfterMs}
         throw e;
       }
+      // Non-ok response without parseable JSON-RPC error (includes plain-text 429)
       if(!r.ok){
-        if(r.status===429||r.status>=500)this.i=(this.i+1)%this.urls.length;
-        const ra=r.headers?.get?.('retry-after');const retryAfterMs=ra&&!isNaN(ra)?Number(ra)*1000:null;
+        if(!isJson)this.metrics.nonJsonResponses++;
+        if(r.status===429){
+          this.metrics.http429++;
+          this.i=(this.i+1)%this.urls.length;
+          this.metrics.endpointFailovers++;
+          throw Object.assign(new Error('rate limited'),{status:429,retryAfterMs});
+        }
         throw Object.assign(new Error(`RPC HTTP ${r.status}`),{status:r.status,retryAfterMs});
       }
+      // Ok response with non-JSON body (unexpected)
+      if(!isJson){this.metrics.nonJsonResponses++;throw new Error('RPC returned non-JSON response')}
       this.last={ok:true,latency:Date.now()-start,url,error:null};
       return j.result;
     }catch(e){
       clearTimeout(t);
-      this.last={ok:false,latency:Date.now()-start,url,error:e.message};
+      this.last={ok:false,latency:Date.now()-start,url,error:_sanitizeMsg(e.message)};
       if(e.name==='AbortError'||/abort/i.test(e.message))this.metrics.timeouts++;
       throw e;
     }
@@ -115,26 +143,29 @@ export class RpcPool{
             signal:ac.signal
           });
           clearTimeout(t);
-          const j=await r.json();
-          if(j.error){
+          this.metrics.lastHttpStatus=r.status;
+          const{json:j,isJson}=await _readBody(r);
+          const ra=r.headers?.get?.('retry-after');
+          const retryAfterMs=ra&&!isNaN(ra)?Number(ra)*1000:null;
+          // JSON-RPC error body (may arrive with non-ok status from some providers)
+          if(isJson&&j?.error){
             const code=j.error.code;
-            // Permanent JSON-RPC errors: parse error, invalid request/method/params — no retry
+            const msg=_sanitizeMsg(j.error.message||`RPC error ${code}`);
+            // Permanent JSON-RPC errors — no retry
             if(code===-32700||code===-32600||code===-32601||code===-32602)
-              throw Object.assign(new Error(j.error.message||`RPC error ${code}`),{permanent:true});
-            const e=Object.assign(new Error(j.error.message||`RPC error ${code}`),{rpcCode:code});
-            if(!r.ok){
-              e.status=r.status;
-              // Capture Retry-After for 429 backoff
-              const ra=r.headers?.get?.('retry-after');
-              if(ra&&!isNaN(ra))e.retryAfterMs=Number(ra)*1000;
-            }
+              throw Object.assign(new Error(msg),{permanent:true,invalidTokenMint:/not a Token mint/i.test(msg),accountNotFound:/could not find account/i.test(msg)});
+            const e=Object.assign(new Error(msg),{rpcCode:code});
+            if(!r.ok){e.status=r.status;if(r.status===429)this.metrics.http429++;if(retryAfterMs)e.retryAfterMs=retryAfterMs}
             throw e;
           }
+          // Non-ok response without JSON-RPC error body (includes plain-text 429)
           if(!r.ok){
-            const ra=r.headers?.get?.('retry-after');
-            const retryAfterMs=ra&&!isNaN(ra)?Number(ra)*1000:null;
-            throw Object.assign(new Error(`RPC HTTP ${r.status}`),{status:r.status,retryAfterMs});
+            if(!isJson)this.metrics.nonJsonResponses++;
+            if(r.status===429)this.metrics.http429++;
+            throw Object.assign(new Error(r.status===429?'rate limited':`RPC HTTP ${r.status}`),{status:r.status,retryAfterMs});
           }
+          // Ok but non-JSON body (unexpected)
+          if(!isJson){this.metrics.nonJsonResponses++;throw new Error('RPC returned non-JSON response')}
           // Success — advance round-robin to this working endpoint
           this.i=(this.i+k)%this.urls.length;
           this.last={ok:true,latency:Date.now()-start,url,error:null};
@@ -142,10 +173,11 @@ export class RpcPool{
         }catch(e){
           clearTimeout(t);
           lastError=e;
-          this.last={ok:false,latency:Date.now()-start,url,error:e.message};
-          if(e.permanent)throw e;           // never retry invalid-request errors
+          this.last={ok:false,latency:Date.now()-start,url,error:_sanitizeMsg(e.message)};
+          if(e.permanent)throw e;           // never retry permanent parameter errors
           if(!retryable(e))throw e;         // non-retryable: stop immediately
           if(e.name==='AbortError'||/abort/i.test(e.message))this.metrics.timeouts++;
+          if(k+1<this.urls.length)this.metrics.endpointFailovers++; // about to try next endpoint
           // retryable: continue inner loop to try next endpoint in same attempt
         }
       }
