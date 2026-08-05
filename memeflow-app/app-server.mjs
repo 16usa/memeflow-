@@ -58,7 +58,7 @@ async function handler(req,res){const url=new URL(req.url,'http://x');
  // Gzip/Brotli for text assets when the client supports it
  const ae=req.headers['accept-encoding']||'';
  const stat=fs.statSync(f);
- if(isText&&stat.size>512){
+ if(!isHTML&&isText&&stat.size>512){
    if(ae.includes('br')){
      res.setHeader('content-encoding','br');res.setHeader('vary','Accept-Encoding');
      const br=zlib.createBrotliCompress({params:{[zlib.constants.BROTLI_PARAM_QUALITY]:4}});

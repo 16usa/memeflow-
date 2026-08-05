@@ -1,0 +1,47 @@
+The server starts and prints “MEMEFLOW listening on 3000”, but the real Replit Preview is now a completely blank white page.
+
+This regression appeared after the static-file MIME/cache/compression changes.
+
+Diagnose and fix the blank page before touching navigation again.
+
+Required checks:
+
+1. Test the actual running server:
+   curl -sv http://127.0.0.1:3000/
+   curl -sv -H "Accept-Encoding: identity" http://127.0.0.1:3000/
+   curl -sv -H "Accept-Encoding: gzip" http://127.0.0.1:3000/
+   curl -sv -H "Accept-Encoding: br" http://127.0.0.1:3000/
+
+2. Verify every response:
+   - HTTP 200
+   - Content-Type: text/html; charset=utf-8
+   - non-zero response body
+   - valid HTML begins with <!doctype html> or <html
+   - Content-Length matches the actual transmitted buffer
+   - Content-Encoding is only set when the body is truly compressed
+   - Vary: Accept-Encoding is present when compression is used
+
+3. Temporarily disable compression for index.html.
+   Serve HTML uncompressed first so the real Preview loads reliably.
+
+4. Keep compression only for CSS/JS after proving it works correctly.
+   If the custom Brotli/gzip implementation is unsafe, remove it and restore the previous plain static-file response.
+
+5. Check that app-server.mjs does not:
+   - send an uncompressed buffer with Content-Encoding gzip/br;
+   - reuse the original Content-Length after compression;
+   - end the response before the compressed callback completes;
+   - return an empty body;
+   - compress an already compressed asset.
+
+6. Verify:
+   - / returns the complete index.html
+   - /index.html returns the complete index.html
+   - /router.js returns HTTP 200 and text/javascript
+   - no server exception appears after the browser request
+
+7. Open the REAL Replit Preview and confirm the MEMEFLOW UI renders, not a white page.
+
+8. Do not make any more navigation, CSS, Settings, trading, or API changes.
+9. Do not commit or deploy until the real Preview visibly loads.
+10. Report the exact root cause and exact lines changed.
