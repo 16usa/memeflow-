@@ -1,5 +1,5 @@
 run = "npm start"
-modules = ["nodejs-24"]
+modules = ["nodejs-24", "python-base-3.13"]
 
 [deployment]
 run = ["node", "memeflow-app/app-server.mjs"]
