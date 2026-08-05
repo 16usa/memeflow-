@@ -227,7 +227,86 @@ async function handler(req,res){const url=new URL(req.url,'http://x');
  }
  const u=user(req,res);if(u){store.touchUser(u.id);if(OWNER_USER_IDS.has(u.id)&&!u.isOwner)store.grantOwner(u.id,'owner_user_ids');}
  if(url.pathname==='/api/health')return json(res,200,{ok:true,server:'online',version:'1.0.1-clean',timestamp:new Date().toISOString()});
- if(url.pathname==='/api/market/status')return json(res,200,{ok:true,backend:'online',database:'online',rpc:rpc.last.ok?'online':(rpcUrls.length?'temporarily_unavailable':'not_configured'),discovery:discovery.connected?'online':(wsUrls.length?'connecting':'not_configured'),decisionEngine:'online',billing:billing.configured?'configured':'not_configured',updatedAt:new Date().toISOString()});if(url.pathname==='/api/system/health'){let slot=null,block=null;try{[slot,block]=await Promise.all([Promise.race([rpc.call('getSlot',[{commitment:'confirmed'}]),new Promise(r=>setTimeout(()=>r(null),4000))]),Promise.race([rpc.call('getBlockHeight',[{commitment:'confirmed'}]),new Promise(r=>setTimeout(()=>r(null),4000))])])}catch{}return json(res,200,{status:rpc.last.ok?'HEALTHY':'UNAVAILABLE',components:{primaryRpc:{status:rpc.last.ok?'HEALTHY':'UNAVAILABLE',latencyMs:rpc.last.latency},backupRpc:{status:rpcUrls.length>1?'STANDBY':'NOT CONFIGURED'},pumpDiscovery:{status:discovery.connected?'LIVE':'UNAVAILABLE',lastEventAt:discovery.lastEventAt},marketIndexer:{status:'LIVE',scanned:store.state.metrics.scanned},candleBuilder:{status:'LIVE'},decisionEngine:{status:'LIVE'},authentication:{status:ALLOW_ANON?'ANONYMOUS PAPER':'REQUIRED'},billing:{status:billing.configured?'CONFIGURED':'NOT CONFIGURED'}},slot,blockHeight:block,updatedAt:new Date().toISOString()})}
+ if(url.pathname==='/api/market/status')return json(res,200,{ok:true,backend:'online',database:'online',rpc:rpc.last.ok?'online':(rpcUrls.length?'temporarily_unavailable':'not_configured'),discovery:discovery.connected?'online':(wsUrls.length?'connecting':'not_configured'),decisionEngine:'online',billing:billing.configured?'configured':'not_configured',updatedAt:new Date().toISOString()});/* MEMEFLOW_HEALTH_SECURITY_FIX_V1 */
+if(url.pathname==='/api/system/health'){
+  // Do not make extra RPC probe calls here: polling the health panel
+  // must never increase RPC pressure or create additional 429 responses.
+  const now=Date.now();
+  const rpcConfigured=rpcUrls.length>0;
+  const wsConfigured=wsUrls.length>0;
+  const httpOk=rpc.metrics.lastHttpStatus===200||rpc.last.ok===true;
+  const wsLive=discovery.connected===true;
+  const eventFresh=Boolean(discovery.lastEventAt&&now-discovery.lastEventAt<120000);
+  const rateLimited=Boolean(
+    discMetrics.rpcCircuitOpen ||
+    (enrichDiag.lastEnrichErrorAt&&now-enrichDiag.lastEnrichErrorAt<60000&&/rate limit/i.test(enrichDiag.lastEnrichError||''))
+  );
+  const primaryOk=rpcConfigured&&httpOk;
+  const operational=primaryOk&&wsLive;
+  const overall=!rpcConfigured||!wsConfigured||!operational
+    ? 'unavailable'
+    : rateLimited||!eventFresh
+      ? 'degraded'
+      : 'healthy';
+  const hostname=rpc.activeHostname||null;
+  const primary={
+    role:'primary',
+    ok:primaryOk,
+    hostname,
+    latencyMs:Number.isFinite(rpc.last.latency)?rpc.last.latency:null,
+    lastHttpStatus:rpc.metrics.lastHttpStatus||null,
+    error:primaryOk?null:(rpc.last.error||(!rpcConfigured?'Not configured':'Temporarily unavailable'))
+  };
+  const backups=rpcUrls.slice(1).map((raw,i)=>{
+    let host=null;try{host=new URL(raw).hostname}catch{}
+    return {role:'backup',ok:false,hostname:host,index:i+1,status:'standby'};
+  });
+  return json(res,200,{
+    status:overall,
+    checkedAt:new Date().toISOString(),
+    solana:{
+      ok:operational,
+      commitment:process.env.SOLANA_COMMITMENT||'confirmed',
+      connected:wsLive,
+      lastEventAt:discovery.lastEventAt,
+      circuitOpen:Boolean(discMetrics.rpcCircuitOpen),
+      circuitOpenUntil:discMetrics.rpcCircuitOpenUntil||null,
+      httpStatus:rpc.metrics.lastHttpStatus||null,
+      hostname,
+      nodes:[primary,...backups]
+    },
+    components:{
+      pumpListener:{
+        status:wsLive?(eventFresh?'healthy':'degraded'):'unavailable',
+        source:wsLive?(hostname||'Solana WebSocket'):(wsConfigured?'Connecting':'Not configured'),
+        lastEventAt:discovery.lastEventAt
+      },
+      pumpSwapListener:{
+        status:primaryOk?(rateLimited?'degraded':'healthy'):'unavailable',
+        source:hostname||'Solana RPC'
+      },
+      marketIndexer:{
+        status:primaryOk?(rateLimited?'degraded':'healthy'):'unavailable',
+        activeStreams:[...streams.values()].reduce((n,s)=>n+s.size,0),
+        scanned:store.state.metrics.scanned
+      },
+      candleBuilder:{
+        status:primaryOk?'healthy':'unavailable'
+      },
+      decisionEngine:{
+        status:'healthy',
+        decisionsInMemory:Object.values(store._uidDec).reduce((s,m)=>s+m.size,0)
+      }
+    },
+    protectionActive:overall!=='healthy',
+    rateLimits:{
+      circuitOpen:Boolean(discMetrics.rpcCircuitOpen),
+      http429:rpc.metrics.http429,
+      holderRateLimited:holderMetrics.holderRateLimited,
+      lastEnrichError:/rate limit/i.test(enrichDiag.lastEnrichError||'')?'rate limited':null
+    }
+  });
+}
  if(!u)return json(res,401,{error:'AUTH_REQUIRED'});
  if(url.pathname==='/api/ai/decisions'){const _lim=Math.min(200,Math.max(1,Number(url.searchParams.get('limit')||50)));const _off=Math.max(0,Number(url.searchParams.get('offset')||0));if(!store._uidDec[u.id]?.size)await lazyRecoverUser({store,uid:u.id,metrics:recoveryMetrics,tokenLimit:DECISION_RECOVERY_TOKEN_LIMIT});const _all=store.decisions(u.id);return json(res,200,{decisions:_all.slice(_off,_off+_lim).map(candidateView),total:_all.length,limit:_lim,offset:_off})}
  if(url.pathname==='/api/settings'&&req.method==='GET')return json(res,200,{settings:u.settings,version:u.updatedAt||1,killSwitchActive:u.killSwitch,capabilities:{liveAutomation:hasLiveEntitlement(u)}});
@@ -239,7 +318,35 @@ async function handler(req,res){const url=new URL(req.url,'http://x');
  if(url.pathname==='/api/billing/status')return json(res,200,billingStatus(u));
  if(url.pathname==='/api/billing/checkout'&&req.method==='POST'){if(!billing.configured)return json(res,503,{error:'BILLING_NOT_CONFIGURED',message:'Configure STRIPE_SECRET_KEY, STRIPE_PRICE_ID and STRIPE_WEBHOOK_SECRET.'});try{const session=await billing.createCheckout(u,origin(req));return json(res,200,{url:session.url,id:session.id})}catch(e){return json(res,e.status||502,{error:e.code||'STRIPE_ERROR',message:e.message})}}
  if(url.pathname==='/api/billing/portal'&&req.method==='POST'){if(!billing.configured)return json(res,503,{error:'BILLING_NOT_CONFIGURED'});try{const session=await billing.createPortal(u,origin(req));return json(res,200,{url:session.url})}catch(e){return json(res,e.status||502,{error:e.code||'STRIPE_ERROR',message:e.message})}}
- if(url.pathname==='/api/discovery/status')return json(res,200,{...discovery,...discMetrics,...enrichDiag,...holderMetrics,...recoveryMetrics,...liveEvalMetrics,queueDepth:discMetrics.freshQueueDepth+discMetrics.retryQueueDepth,holderQueueDepth:holderQueue.queueDepth,holderProcessing:holderQueue.processing,rpcRetries:rpc.metrics.retries,rpcTimeouts:rpc.metrics.timeouts,rpcHttp429:rpc.metrics.http429,rpcNonJsonResponses:rpc.metrics.nonJsonResponses,rpcEndpointFailovers:rpc.metrics.endpointFailovers,rpcLastHttpStatus:rpc.metrics.lastHttpStatus,rpcActiveHostname:rpc.activeHostname,processing:discQueue.processing,metrics:store.state.metrics,tokens:store.tokens().length,users:Object.keys(store.state.users).length,decisionsInMemory:Object.values(store._uidDec).reduce((s,m)=>s+m.size,0)});
+ if(url.pathname==='/api/discovery/status'){
+  let wsHostname=null;try{wsHostname=discovery.url?new URL(discovery.url).hostname:null}catch{}
+  return json(res,200,{
+    connected:discovery.connected,
+    url:wsHostname,
+    wsHostname,
+    lastEventAt:discovery.lastEventAt,
+    reconnects:discovery.reconnects,
+    error:discovery.error,
+    lastError:discovery.lastError,
+    startedAt:discovery.startedAt,
+    ...discMetrics,...enrichDiag,...holderMetrics,...recoveryMetrics,...liveEvalMetrics,
+    queueDepth:discMetrics.freshQueueDepth+discMetrics.retryQueueDepth,
+    holderQueueDepth:holderQueue.queueDepth,
+    holderProcessing:holderQueue.processing,
+    rpcRetries:rpc.metrics.retries,
+    rpcTimeouts:rpc.metrics.timeouts,
+    rpcHttp429:rpc.metrics.http429,
+    rpcNonJsonResponses:rpc.metrics.nonJsonResponses,
+    rpcEndpointFailovers:rpc.metrics.endpointFailovers,
+    rpcLastHttpStatus:rpc.metrics.lastHttpStatus,
+    rpcActiveHostname:rpc.activeHostname,
+    processing:discQueue.processing,
+    metrics:store.state.metrics,
+    tokens:store.tokens().length,
+    users:Object.keys(store.state.users).length,
+    decisionsInMemory:Object.values(store._uidDec).reduce((s,m)=>s+m.size,0)
+  });
+}
  if(url.pathname==='/api/chart/config')return json(res,200,{chainId:'solana',tokenAddress:store.decisions(u.id)[0]?.mint||''});
  if(url.pathname==='/api/chart/history'){const mint=url.searchParams.get('tokenAddress'),t=store.state.tokens[mint];const pts=t?.priceSol?[{t:t.updatedAt,price:t.priceSol,source:t.source}]:[];return json(res,200,{points:pts,status:{stale:!pts.length,source:t?.source||null,error:t?.scanError||null},tokenAddress:mint})}
  if(url.pathname==='/api/chart/stream'){const mint=url.searchParams.get('tokenAddress');res.writeHead(200,{'content-type':'text/event-stream','cache-control':'no-cache','connection':'keep-alive'});res.write(`event: snapshot\ndata: ${JSON.stringify({points:[],status:{stale:true,source:'Solana'}})}\n\n`);if(!streams.has(mint))streams.set(mint,new Set());streams.get(mint).add(res);req.on('close',()=>streams.get(mint)?.delete(res));return}
