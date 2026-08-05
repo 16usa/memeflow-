@@ -3,7 +3,6 @@ modules = ["nodejs-24", "python-base-3.13"]
 
 [deployment]
 run = ["node", "memeflow-app/app-server.mjs"]
-router = "application"
 deploymentTarget = "autoscale"
 
 [deployment.postBuild]
@@ -57,3 +56,7 @@ STALE_MS = "20000"
 [[ports]]
 localPort = 3000
 externalPort = 80
+
+[[ports]]
+localPort = 25904
+externalPort = 3000

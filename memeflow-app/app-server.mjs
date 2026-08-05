@@ -104,9 +104,29 @@ function startDiscovery(i=0){
     ws.onclose=()=>{discovery.connected=false;discovery.reconnects++;clearTimeout(wsTimer);wsTimer=setTimeout(()=>startDiscovery(i+1),Math.min(30000,1000*2**Math.min(discovery.reconnects,5)))};
   }catch(e){discovery.error=e.message;wsTimer=setTimeout(()=>startDiscovery(i+1),5000)}
 }
-startDiscovery();
 async function handler(req,res){const url=new URL(req.url,'http://x');
  if(url.pathname==='/api/billing/webhook'&&req.method==='POST'){const raw=await rawBody(req);try{billing.verify(raw,req.headers['stripe-signature']);const result=billing.processEvent(JSON.parse(raw));return json(res,200,{received:true,...result})}catch(e){return json(res,e.code==='BAD_SIGNATURE'?400:500,{error:e.code||'WEBHOOK_ERROR',message:e.message})}}
+ // Health check — no session or store needed; must respond immediately
+ if(url.pathname==='/api/healthz'||url.pathname==='/api/health')return json(res,200,{ok:true,server:'online',version:'1.0.1-clean',timestamp:new Date().toISOString()});
+ // Static files — served before session creation to avoid blocking store.save() on new users
+ if(req.method==='GET'&&!url.pathname.startsWith('/api/')){
+   const p=url.pathname==='/'?'index.html':url.pathname.slice(1);const f=path.resolve(root,p);
+   if(!f.startsWith(root)||!fs.existsSync(f)||fs.statSync(f).isDirectory())return json(res,404,{error:'NOT_FOUND'});
+   const ext=path.extname(f).toLowerCase();
+   const MIME={'':' text/plain','html':'text/html; charset=utf-8','htm':'text/html; charset=utf-8','js':'text/javascript; charset=utf-8','mjs':'text/javascript; charset=utf-8','css':'text/css; charset=utf-8','json':'application/json; charset=utf-8','svg':'image/svg+xml','ico':'image/x-icon','png':'image/png','jpg':'image/jpeg','jpeg':'image/jpeg','webp':'image/webp','woff':'font/woff','woff2':'font/woff2','ttf':'font/ttf'};
+   const mime=MIME[ext.slice(1)]||'application/octet-stream';
+   const isText=mime.startsWith('text/')||mime.includes('javascript')||mime.includes('json')||mime.includes('svg');
+   const isHTML=ext==='.html'||ext==='.htm';
+   res.setHeader('content-type',mime);res.setHeader('cache-control',isHTML?'no-store, no-cache, must-revalidate':'public, max-age=3600, stale-while-revalidate=86400');
+   if(isHTML){res.setHeader('pragma','no-cache');res.setHeader('expires','0')}
+   const ae=req.headers['accept-encoding']||'',stat=fs.statSync(f);
+   if(!isHTML&&isText&&stat.size>512){
+     if(ae.includes('br')){res.setHeader('content-encoding','br');res.setHeader('vary','Accept-Encoding');fs.createReadStream(f).pipe(zlib.createBrotliCompress({params:{[zlib.constants.BROTLI_PARAM_QUALITY]:4}})).pipe(res);}
+     else if(ae.includes('gzip')){res.setHeader('content-encoding','gzip');res.setHeader('vary','Accept-Encoding');fs.createReadStream(f).pipe(zlib.createGzip({level:6})).pipe(res);}
+     else{fs.createReadStream(f).pipe(res);}
+   }else{fs.createReadStream(f).pipe(res);}
+   return;
+ }
  const u=user(req,res);if(u&&OWNER_USER_IDS.has(u.id)&&!u.isOwner)store.grantOwner(u.id,'owner_user_ids');
  if(url.pathname==='/api/health')return json(res,200,{ok:true,server:'online',version:'1.0.1-clean',timestamp:new Date().toISOString()});
  if(url.pathname==='/api/market/status')return json(res,200,{ok:true,backend:'online',database:'online',rpc:rpc.last.ok?'online':(rpcUrls.length?'temporarily_unavailable':'not_configured'),discovery:discovery.connected?'online':(wsUrls.length?'connecting':'not_configured'),decisionEngine:'online',billing:billing.configured?'configured':'not_configured',updatedAt:new Date().toISOString()});if(url.pathname==='/api/system/health'){let slot=null,block=null;try{[slot,block]=await Promise.all([rpc.call('getSlot',[{commitment:'confirmed'}]),rpc.call('getBlockHeight',[{commitment:'confirmed'}])])}catch{}return json(res,200,{status:rpc.last.ok?'HEALTHY':'UNAVAILABLE',components:{primaryRpc:{status:rpc.last.ok?'HEALTHY':'UNAVAILABLE',latencyMs:rpc.last.latency},backupRpc:{status:rpcUrls.length>1?'STANDBY':'NOT CONFIGURED'},pumpDiscovery:{status:discovery.connected?'LIVE':'UNAVAILABLE',lastEventAt:discovery.lastEventAt},marketIndexer:{status:'LIVE',scanned:store.state.metrics.scanned},candleBuilder:{status:'LIVE'},decisionEngine:{status:'LIVE'},authentication:{status:ALLOW_ANON?'ANONYMOUS PAPER':'REQUIRED'},billing:{status:billing.configured?'CONFIGURED':'NOT CONFIGURED'}},slot,blockHeight:block,updatedAt:new Date().toISOString()})}
@@ -125,35 +145,6 @@ async function handler(req,res){const url=new URL(req.url,'http://x');
  if(url.pathname==='/api/chart/config')return json(res,200,{chainId:'solana',tokenAddress:store.decisions(u.id)[0]?.mint||''});
  if(url.pathname==='/api/chart/history'){const mint=url.searchParams.get('tokenAddress'),t=store.state.tokens[mint];const pts=t?.priceSol?[{t:t.updatedAt,price:t.priceSol,source:t.source}]:[];return json(res,200,{points:pts,status:{stale:!pts.length,source:t?.source||null,error:t?.scanError||null},tokenAddress:mint})}
  if(url.pathname==='/api/chart/stream'){const mint=url.searchParams.get('tokenAddress');res.writeHead(200,{'content-type':'text/event-stream','cache-control':'no-cache','connection':'keep-alive'});res.write(`event: snapshot\ndata: ${JSON.stringify({points:[],status:{stale:true,source:'Solana'}})}\n\n`);if(!streams.has(mint))streams.set(mint,new Set());streams.get(mint).add(res);req.on('close',()=>streams.get(mint)?.delete(res));return}
- if(url.pathname==='/api/live/execute'){if(!hasLiveEntitlement(u))return json(res,402,{error:'LIVE_ENTITLEMENT_REQUIRED',message:'An active MEMEFLOW Pro subscription or verified owner entitlement is required.'});return json(res,423,{error:'LIVE_EXECUTION_NOT_READY',message:u.isOwner?'Owner LIVE entitlement is active, but verified wallet and production execution engine are still required.':'Pro is active, but verified wallet and production execution engine are still required.'})}
- const p=url.pathname==='/'?'index.html':url.pathname.slice(1);const f=path.resolve(root,p);if(!f.startsWith(root)||!fs.existsSync(f)||fs.statSync(f).isDirectory())return json(res,404,{error:'NOT_FOUND'});
- const ext=path.extname(f).toLowerCase();
- const MIME={'':' text/plain','html':'text/html; charset=utf-8','htm':'text/html; charset=utf-8','js':'text/javascript; charset=utf-8','mjs':'text/javascript; charset=utf-8','css':'text/css; charset=utf-8','json':'application/json; charset=utf-8','svg':'image/svg+xml','ico':'image/x-icon','png':'image/png','jpg':'image/jpeg','jpeg':'image/jpeg','webp':'image/webp','woff':'font/woff','woff2':'font/woff2','ttf':'font/ttf'};
- const mime=MIME[ext.slice(1)]||'application/octet-stream';
- const isText=mime.startsWith('text/')||mime.includes('javascript')||mime.includes('json')||mime.includes('svg');
- const isHTML=ext==='.html'||ext==='.htm';
- // HTML: no-store (always fresh). Static assets (JS/CSS): 1-hour cache with revalidation.
- const cacheHeader=isHTML?'no-store, no-cache, must-revalidate':'public, max-age=3600, stale-while-revalidate=86400';
- res.setHeader('content-type',mime);
- res.setHeader('cache-control',cacheHeader);
- if(isHTML){res.setHeader('pragma','no-cache');res.setHeader('expires','0')}
- // Gzip/Brotli for text assets when the client supports it
- const ae=req.headers['accept-encoding']||'';
- const stat=fs.statSync(f);
- if(!isHTML&&isText&&stat.size>512){
-   if(ae.includes('br')){
-     res.setHeader('content-encoding','br');res.setHeader('vary','Accept-Encoding');
-     const br=zlib.createBrotliCompress({params:{[zlib.constants.BROTLI_PARAM_QUALITY]:4}});
-     fs.createReadStream(f).pipe(br).pipe(res);
-   } else if(ae.includes('gzip')){
-     res.setHeader('content-encoding','gzip');res.setHeader('vary','Accept-Encoding');
-     const gz=zlib.createGzip({level:6});
-     fs.createReadStream(f).pipe(gz).pipe(res);
-   } else {
-     fs.createReadStream(f).pipe(res);
-   }
- } else {
-   fs.createReadStream(f).pipe(res);
- }
+ if(url.pathname==='/api/live/execute'){if(!hasLiveEntitlement(u))return json(res,402,{error:'LIVE_ENTITLEMENT_REQUIRED',message:'An active MEMEFLOW Pro subscription or verified owner entitlement is required.'});return json(res,423,{error:'LIVE_EXECUTION_NOT_READY',message:u.isOwner?'Owner LIVE entitlement is active, but verified wallet and production execution engine are still required.':'Pro is active, but verified wallet and production execution engine are still required.'});}
 }
-const server=http.createServer((req,res)=>handler(req,res).catch(e=>json(res,500,{error:'SERVER_ERROR',message:e.message})));server.listen(Number(process.env.PORT||3000),'0.0.0.0',()=>console.log(`MEMEFLOW listening on ${process.env.PORT||3000}`));
+const server=http.createServer((req,res)=>handler(req,res).catch(e=>json(res,500,{error:'SERVER_ERROR',message:e.message})));server.listen(Number(process.env.PORT||3000),'0.0.0.0',()=>{console.log(`MEMEFLOW listening on ${process.env.PORT||3000}`);startDiscovery();});
