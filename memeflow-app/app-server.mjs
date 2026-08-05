@@ -1,7 +1,7 @@
 import http from 'node:http';import fs from 'node:fs';import path from 'node:path';import crypto from 'node:crypto';import zlib from 'node:zlib';import {fileURLToPath} from 'node:url';
 import {JsonStore,sessionId,defaults} from './src/store.mjs';import {RpcPool,validPubkey,decodeCurve,decodeCreateData} from './src/solana.mjs';import {evaluate} from './src/evaluate.mjs';import {StripeBilling} from './src/billing.mjs';
 import {enrichToken,enrichHolders,makeEnrichDiag,makeHolderQueue,makeHolderMetrics} from './src/enrich.mjs';
-import {makeRecoveryMetrics,startDecisionRecovery} from './src/recovery.mjs';
+import {makeRecoveryMetrics,startDecisionRecovery,lazyRecoverUser} from './src/recovery.mjs';
 const root=path.dirname(fileURLToPath(import.meta.url)),dataDir=path.resolve(root,process.env.DATA_DIR||'data'),store=new JsonStore(dataDir);
 const billing=new StripeBilling({store,secretKey:process.env.STRIPE_SECRET_KEY,priceId:process.env.STRIPE_PRICE_ID,webhookSecret:process.env.STRIPE_WEBHOOK_SECRET,apiBase:process.env.STRIPE_API_BASE});
 const rpcUrls=(process.env.SOLANA_RPC_URLS||'').split(',').map(x=>x.trim()).filter(Boolean),wsUrls=(process.env.SOLANA_WS_URLS||'').split(',').map(x=>x.trim()).filter(Boolean);const rpc=new RpcPool(rpcUrls,process.env.SOLANA_COMMITMENT||'confirmed');
@@ -22,6 +22,8 @@ const holderQueue=makeHolderQueue({maxConcurrent:HOLDER_MAX_CONCURRENT,queueMax:
 const recoveryMetrics=makeRecoveryMetrics();
 const DECISION_RECOVERY_BATCH_SIZE=Number(process.env.DECISION_RECOVERY_BATCH_SIZE||25);
 const DECISION_RECOVERY_DELAY_MS=Number(process.env.DECISION_RECOVERY_DELAY_MS||25);
+const DECISION_RECOVERY_TOKEN_LIMIT=Number(process.env.DECISION_RECOVERY_TOKEN_LIMIT||200);
+const DECISION_RECOVERY_ACTIVE_USER_HOURS=Number(process.env.DECISION_RECOVERY_ACTIVE_USER_HOURS||24);
 function enqueue(sig){
   // eventsReceived is counted in ws.onmessage before the log filter — not here
   if(queueSet.has(sig)||processing.has(sig)){discMetrics.signaturesDeduplicated++;return}
@@ -132,11 +134,11 @@ async function handler(req,res){const url=new URL(req.url,'http://x');
    }else{fs.createReadStream(f).pipe(res);}
    return;
  }
- const u=user(req,res);if(u&&OWNER_USER_IDS.has(u.id)&&!u.isOwner)store.grantOwner(u.id,'owner_user_ids');
+ const u=user(req,res);if(u){store.touchUser(u.id);if(OWNER_USER_IDS.has(u.id)&&!u.isOwner)store.grantOwner(u.id,'owner_user_ids');}
  if(url.pathname==='/api/health')return json(res,200,{ok:true,server:'online',version:'1.0.1-clean',timestamp:new Date().toISOString()});
  if(url.pathname==='/api/market/status')return json(res,200,{ok:true,backend:'online',database:'online',rpc:rpc.last.ok?'online':(rpcUrls.length?'temporarily_unavailable':'not_configured'),discovery:discovery.connected?'online':(wsUrls.length?'connecting':'not_configured'),decisionEngine:'online',billing:billing.configured?'configured':'not_configured',updatedAt:new Date().toISOString()});if(url.pathname==='/api/system/health'){let slot=null,block=null;try{[slot,block]=await Promise.all([Promise.race([rpc.call('getSlot',[{commitment:'confirmed'}]),new Promise(r=>setTimeout(()=>r(null),4000))]),Promise.race([rpc.call('getBlockHeight',[{commitment:'confirmed'}]),new Promise(r=>setTimeout(()=>r(null),4000))])])}catch{}return json(res,200,{status:rpc.last.ok?'HEALTHY':'UNAVAILABLE',components:{primaryRpc:{status:rpc.last.ok?'HEALTHY':'UNAVAILABLE',latencyMs:rpc.last.latency},backupRpc:{status:rpcUrls.length>1?'STANDBY':'NOT CONFIGURED'},pumpDiscovery:{status:discovery.connected?'LIVE':'UNAVAILABLE',lastEventAt:discovery.lastEventAt},marketIndexer:{status:'LIVE',scanned:store.state.metrics.scanned},candleBuilder:{status:'LIVE'},decisionEngine:{status:'LIVE'},authentication:{status:ALLOW_ANON?'ANONYMOUS PAPER':'REQUIRED'},billing:{status:billing.configured?'CONFIGURED':'NOT CONFIGURED'}},slot,blockHeight:block,updatedAt:new Date().toISOString()})}
  if(!u)return json(res,401,{error:'AUTH_REQUIRED'});
- if(url.pathname==='/api/ai/decisions'){const _lim=Math.min(200,Math.max(1,Number(url.searchParams.get('limit')||50)));const _off=Math.max(0,Number(url.searchParams.get('offset')||0));const _all=store.decisions(u.id);return json(res,200,{decisions:_all.slice(_off,_off+_lim).map(candidateView),total:_all.length,limit:_lim,offset:_off})}
+ if(url.pathname==='/api/ai/decisions'){const _lim=Math.min(200,Math.max(1,Number(url.searchParams.get('limit')||50)));const _off=Math.max(0,Number(url.searchParams.get('offset')||0));if(!store._uidDec[u.id]?.size)await lazyRecoverUser({store,uid:u.id,metrics:recoveryMetrics,tokenLimit:DECISION_RECOVERY_TOKEN_LIMIT});const _all=store.decisions(u.id);return json(res,200,{decisions:_all.slice(_off,_off+_lim).map(candidateView),total:_all.length,limit:_lim,offset:_off})}
  if(url.pathname==='/api/settings'&&req.method==='GET')return json(res,200,{settings:u.settings,version:u.updatedAt||1,killSwitchActive:u.killSwitch,capabilities:{liveAutomation:hasLiveEntitlement(u)}});
  if(url.pathname==='/api/settings'&&req.method==='PUT'){const b=await body(req);return json(res,200,{settings:store.setSettings(u.id,b.settings||{}),version:Date.now()})}
  if(url.pathname==='/api/settings/defaults'&&req.method==='POST')return json(res,200,{settings:store.setSettings(u.id,defaults())});
@@ -146,7 +148,7 @@ async function handler(req,res){const url=new URL(req.url,'http://x');
  if(url.pathname==='/api/billing/status')return json(res,200,billingStatus(u));
  if(url.pathname==='/api/billing/checkout'&&req.method==='POST'){if(!billing.configured)return json(res,503,{error:'BILLING_NOT_CONFIGURED',message:'Configure STRIPE_SECRET_KEY, STRIPE_PRICE_ID and STRIPE_WEBHOOK_SECRET.'});try{const session=await billing.createCheckout(u,origin(req));return json(res,200,{url:session.url,id:session.id})}catch(e){return json(res,e.status||502,{error:e.code||'STRIPE_ERROR',message:e.message})}}
  if(url.pathname==='/api/billing/portal'&&req.method==='POST'){if(!billing.configured)return json(res,503,{error:'BILLING_NOT_CONFIGURED'});try{const session=await billing.createPortal(u,origin(req));return json(res,200,{url:session.url})}catch(e){return json(res,e.status||502,{error:e.code||'STRIPE_ERROR',message:e.message})}}
- if(url.pathname==='/api/discovery/status')return json(res,200,{...discovery,...discMetrics,...enrichDiag,...holderMetrics,...recoveryMetrics,holderQueueDepth:holderQueue.queueDepth,holderProcessing:holderQueue.processing,rpcRetries:rpc.metrics.retries,rpcTimeouts:rpc.metrics.timeouts,processing:processing.size,metrics:store.state.metrics,tokens:store.tokens().length,users:Object.keys(store.state.users).length});
+ if(url.pathname==='/api/discovery/status')return json(res,200,{...discovery,...discMetrics,...enrichDiag,...holderMetrics,...recoveryMetrics,holderQueueDepth:holderQueue.queueDepth,holderProcessing:holderQueue.processing,rpcRetries:rpc.metrics.retries,rpcTimeouts:rpc.metrics.timeouts,processing:processing.size,metrics:store.state.metrics,tokens:store.tokens().length,users:Object.keys(store.state.users).length,decisionsInMemory:Object.values(store._uidDec).reduce((s,m)=>s+m.size,0)});
  if(url.pathname==='/api/chart/config')return json(res,200,{chainId:'solana',tokenAddress:store.decisions(u.id)[0]?.mint||''});
  if(url.pathname==='/api/chart/history'){const mint=url.searchParams.get('tokenAddress'),t=store.state.tokens[mint];const pts=t?.priceSol?[{t:t.updatedAt,price:t.priceSol,source:t.source}]:[];return json(res,200,{points:pts,status:{stale:!pts.length,source:t?.source||null,error:t?.scanError||null},tokenAddress:mint})}
  if(url.pathname==='/api/chart/stream'){const mint=url.searchParams.get('tokenAddress');res.writeHead(200,{'content-type':'text/event-stream','cache-control':'no-cache','connection':'keep-alive'});res.write(`event: snapshot\ndata: ${JSON.stringify({points:[],status:{stale:true,source:'Solana'}})}\n\n`);if(!streams.has(mint))streams.set(mint,new Set());streams.get(mint).add(res);req.on('close',()=>streams.get(mint)?.delete(res));return}
@@ -158,7 +160,7 @@ const server=http.createServer((req,res)=>handler(req,res).catch(e=>json(res,500
   const listenAt=Date.now();
   console.log(`MEMEFLOW listening on ${process.env.PORT||3000}`);
   startDiscovery();
-  startDecisionRecovery({store,evaluateAll,metrics:recoveryMetrics,batchSize:DECISION_RECOVERY_BATCH_SIZE,delayMs:DECISION_RECOVERY_DELAY_MS})
+  startDecisionRecovery({store,metrics:recoveryMetrics,getLiveState:()=>({queueDepth:queueList.length,processing:processing.size}),batchSize:DECISION_RECOVERY_BATCH_SIZE,delayMs:DECISION_RECOVERY_DELAY_MS,tokenLimit:DECISION_RECOVERY_TOKEN_LIMIT,activeUserHoursMs:DECISION_RECOVERY_ACTIVE_USER_HOURS*3600000})
     .then(()=>{const ms=recoveryMetrics.decisionRecoveryCompletedAt-listenAt;console.log(`[RECOVERY] complete in ${ms}ms — ${recoveryMetrics.decisionRecoveryTokensProcessed} tokens, ${recoveryMetrics.decisionRecoveryDecisionsCreated} decisions, ${recoveryMetrics.decisionRecoveryErrors} errors`)})
     .catch(e=>console.error('[RECOVERY] error',e.message));
 });

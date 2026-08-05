@@ -3,6 +3,11 @@ name: Decision recovery job
 description: Bounded startup recovery that re-evaluates persisted tokens for all users after a restart, since decisions are never persisted to disk.
 ---
 
+## Optimized design (v2)
+Startup recovery now evaluates only newest `DECISION_RECOVERY_TOKEN_LIMIT` (default 200) tokens × active users (`lastActiveAt` within `DECISION_RECOVERY_ACTIVE_USER_HOURS=24`). Pauses for live discovery queue. Inactive users get lazy recovery via `lazyRecoverUser()` on first `/api/ai/decisions` call. Recovery time: 35s → 210ms.
+
+`store.touchUser(id)` updates `lastActiveAt` on every authenticated request, enabling active-user detection across restarts.
+
 ## Rule
 After each restart, `startDecisionRecovery()` in `memeflow-app/src/recovery.mjs` re-evaluates all persisted tokens in batches. It is called in `server.listen()` callback in `app-server.mjs` and runs concurrently with live discovery.
 

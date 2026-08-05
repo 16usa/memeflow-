@@ -21,6 +21,7 @@ export class JsonStore {
   revokeOwner(id){Object.assign(this.user(id),{isOwner:false,ownerGrantedAt:null,ownerGrantSource:null});this.save();return this.user(id)}
   hasStripeEvent(id){return Boolean(this.state.stripeEvents?.[id])}
   recordStripeEvent(id,type){this.state.stripeEvents||={};this.state.stripeEvents[id]={type,processedAt:new Date().toISOString()};const ids=Object.keys(this.state.stripeEvents);for(const old of ids.slice(0,Math.max(0,ids.length-5000)))delete this.state.stripeEvents[old];this.save()}
+  touchUser(id){this.user(id).lastActiveAt=Date.now();this.save();return this.user(id)}
   setSettings(id,s){this.user(id).settings={...defaults(),...s};this.save();return this.user(id).settings}
   addToken(t){const old=this.state.tokens[t.mint]||{};this.state.tokens[t.mint]={...old,...t,updatedAt:Date.now()};this.state.metrics.discovered++;this.save();return this.state.tokens[t.mint]}
   setToken(mint,t){this.state.tokens[mint]={...(this.state.tokens[mint]||{}),...t,updatedAt:Date.now()};this.state.metrics.scanned++;this.save();return this.state.tokens[mint]}

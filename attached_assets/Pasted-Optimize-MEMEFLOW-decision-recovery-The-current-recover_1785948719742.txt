@@ -1,0 +1,90 @@
+Optimize MEMEFLOW decision recovery. The current recovery is technically working but is too expensive.
+
+Verified live behavior:
+- decisionRecoveryTokensProcessed grows slowly.
+- 650 of 2619 tokens processed after several minutes.
+- There are 1096 users.
+- decisionRecoveryDecisionsCreated already exceeds 710,000.
+- queueDepth for live create events grows from 20 to 30 during recovery.
+- The current design attempts approximately 2619 × 1096 = 2.8 million decisions after every restart.
+- Live discovery must have priority over historical recovery.
+
+Required redesign:
+
+1. Stop rebuilding every persisted token for every user at startup.
+
+2. Startup recovery scope:
+- recover only the newest persisted tokens;
+- configurable:
+  DECISION_RECOVERY_TOKEN_LIMIT=200
+- sort by discoveredAt or updatedAt descending;
+- do not process all 2619 historical tokens.
+
+3. Active-user recovery:
+- automatically recover only users active within the last 24 hours;
+- configurable:
+  DECISION_RECOVERY_ACTIVE_USER_HOURS=24
+- users without recent activity are recovered lazily when they request /api/ai/decisions.
+
+4. Lazy per-user recovery:
+When a user calls /api/ai/decisions and has no current decisions:
+- start or await a bounded recovery only for that user;
+- evaluate the newest 200 tokens using that user's settings;
+- deduplicate concurrent recovery requests for the same user;
+- return available decisions progressively or return a recovery status response;
+- do not evaluate other users.
+
+5. Live event priority:
+- pause or yield historical recovery whenever:
+  queueDepth > 0
+  or processing > 0
+- new Pump create events must always be processed before historical recovery.
+- recovery must never cause the live signature queue to grow continuously.
+
+6. Decision limits:
+- keep at most 250 decisions per user in memory;
+- newest first;
+- remove older entries when the limit is exceeded.
+- do not count evicted decisions as recovery failures.
+
+7. Recovery metrics:
+Add:
+- decisionRecoveryUsersTotal
+- decisionRecoveryUsersProcessed
+- decisionRecoveryTokensLimit
+- decisionRecoveryPausedForLiveWork
+- lazyRecoveryUsersRunning
+- lazyRecoveryCompleted
+- decisionsInMemory
+
+8. Correct decisionRecoveryDecisionsCreated:
+Report actual retained decisions, not every evaluation attempt.
+Add a separate metric if needed:
+- decisionRecoveryEvaluationsPerformed
+
+9. Expected startup behavior:
+- /api/healthz immediately available
+- site shell immediately available
+- live discovery queue remains near 0
+- startup recovery completes in under 10 seconds
+- active user's Candidate Feed starts filling within 1–2 seconds
+- inactive users do not consume startup CPU or memory
+
+10. Tests:
+- only newest 200 tokens are recovered
+- inactive users are skipped at startup
+- inactive user gets lazy recovery when opening decisions endpoint
+- duplicate lazy recovery requests are deduplicated
+- live queue pauses historical recovery
+- maximum 250 decisions retained per user
+- no decisions persisted to disk
+- server remains responsive during recovery
+
+Do not modify frontend design, Solana filtering, RPC endpoints, billing, authentication, or user settings.
+
+Run all tests, restart the Project workflow, and report:
+- startup recovery duration
+- number of users processed
+- evaluations performed
+- decisions retained in memory
+- maximum live queue depth during recovery
