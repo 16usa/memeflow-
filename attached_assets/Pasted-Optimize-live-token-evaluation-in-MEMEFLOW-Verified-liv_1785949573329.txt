@@ -1,0 +1,93 @@
+Optimize live token evaluation in MEMEFLOW.
+
+Verified live status:
+- Startup recovery is fixed and completes successfully.
+- lazyRecoveryCompleted: 1.
+- There are 1092 users.
+- createsDecoded is about 10.
+- decisionsInMemory is already about 10016.
+- This indicates every new live token is still evaluated for every registered user.
+- queueDepth has grown to 27.
+
+Root cause to verify:
+evaluateAll(token) currently loops through Object.keys(store.state.users), causing every live token to be evaluated for all users, including inactive users.
+
+Required changes:
+
+1. Do not evaluate every new live token for every historical user.
+
+2. Create an active-user registry:
+- Track users active within the last 24 hours using lastActiveAt.
+- Also track users with a recent /api/ai/decisions request.
+- Owner users may always be included.
+- Configurable:
+  LIVE_EVALUATION_ACTIVE_USER_HOURS=24
+
+3. Replace evaluateAll(token) with evaluateForActiveUsers(token):
+- evaluate only active users;
+- do not evaluate inactive users;
+- retain maximum 250 decisions per active user;
+- do not persist decisions to disk.
+
+4. Inactive users:
+- when they later call /api/ai/decisions, lazyRecoverUser() must evaluate the newest token window for that user;
+- after that request, mark them active so future live tokens are evaluated for them.
+
+5. New user behavior:
+- user opens Candidate Feed;
+- lazy recovery fills latest decisions;
+- user is added to active live evaluation;
+- future new token decisions arrive automatically.
+
+6. Live queue priority:
+- token discovery and Phase A enrichment must not wait for evaluating hundreds of users;
+- evaluate active users in bounded batches;
+- yield to the event loop between batches;
+- configurable:
+  LIVE_EVALUATION_BATCH_SIZE=25
+  LIVE_EVALUATION_DELAY_MS=0
+
+7. Metrics in /api/discovery/status:
+- activeEvaluationUsers
+- liveEvaluationsPerformed
+- liveEvaluationTokensProcessed
+- liveEvaluationUsersSkipped
+- liveEvaluationBatchErrors
+- decisionsInMemoryByActiveUsers
+- lastLiveEvaluationAt
+
+8. Memory correctness:
+- decisionsInMemory should not grow by totalRegisteredUsers × newTokens;
+- decisions for inactive users must not remain indefinitely;
+- optionally evict all in-memory decisions for users inactive longer than 24 hours.
+
+9. Tests:
+- live token is evaluated for active users only;
+- inactive users are skipped;
+- owner is included;
+- lazy recovery marks a user active;
+- newly active user receives future live decisions;
+- maximum 250 decisions per user retained;
+- 1000 inactive users do not create 1000 decisions for one new token;
+- live evaluation yields and does not block HTTP routes;
+- decisions remain excluded from disk persistence.
+
+10. Do not modify:
+- frontend design
+- holder filtering rules
+- Solana discovery
+- RPC endpoints
+- billing
+- authentication
+- user settings
+
+Run all tests and restart Project.
+
+Report:
+- registered users
+- active users
+- decisions in memory before and after
+- evaluations performed for one live token
+- maximum live queue depth
+- files changed
+- test results
