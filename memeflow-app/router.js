@@ -37,6 +37,47 @@
     'body.focus-view .live-strip { display: none !important; }',
     '.focus-toggle.active { border-color: rgba(84,221,255,.52) !important;',
     '  color: var(--cyan) !important; background: rgba(84,221,255,.07) !important; }',
+
+    /*
+     * Mobile layout overrides
+     *
+     * The existing CSS at @media(max-width:820px) sets:
+     *   #positions, #wallet { display: none !important; }
+     *
+     * That rule was written for a sheet-only mobile design where those sections
+     * were never shown inline. We override it so the Positions and Wallet buttons
+     * can scroll to the actual in-page sections. Both elements become block
+     * containers on mobile; child grids stack naturally via the existing
+     * minmax(0,1fr) overrides in the later CSS block.
+     */
+    '@media (max-width: 820px) {',
+    '  #positions { display: block !important; }',
+    '  #wallet    { display: block !important; }',
+
+    /*
+     * Reduce mobile nav height and its reserved space so the bar
+     * does not obscure the bottom of any section.
+     * Buttons keep ≥ 40 px for touch targets; safe-area is preserved.
+     */
+    '  .mobile-nav {',
+    '    height: auto    !important;',
+    '    min-height: 0   !important;',
+    '    padding: 3px 4px !important;',
+    '  }',
+    '  .mobile-nav button {',
+    '    min-height: 40px !important;',
+    '    padding: 5px 2px !important;',
+    '  }',
+    /* Main content bottom padding = actual nav height (≈ 48 px) +
+       safe-area + breathing room so last content row is never hidden */
+    '  .main {',
+    '    padding-bottom: calc(56px + env(safe-area-inset-bottom, 0px) + 24px) !important;',
+    '  }',
+    /* Sheets carry their own bottom clearance relative to the smaller nav */
+    '  .mobile-sheet {',
+    '    padding-bottom: calc(56px + env(safe-area-inset-bottom, 0px) + 32px) !important;',
+    '  }',
+    '}',
   ].join('\n');
   document.head.appendChild(style);
 
@@ -66,9 +107,34 @@
     if (!hash || hash === '#') return;
     var id = hash.replace(/^#/, '');
     var target = document.getElementById(id);
-    if (target) {
-      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
+    if (!target) return;
+    /*
+     * Use explicit window.scrollTo instead of scrollIntoView.
+     *
+     * scrollIntoView silently does nothing when:
+     *   (a) the element was display:none at call time (e.g. #positions on mobile
+     *       before our CSS override applies), or
+     *   (b) body/html has overflow-x:hidden, which on iOS Safari also
+     *       blocks programmatic vertical scroll.
+     *
+     * Wrapping in requestAnimationFrame ensures that any style changes
+     * (e.g. our #positions display:block override) have been applied by
+     * the browser before we read getBoundingClientRect().
+     */
+    requestAnimationFrame(function () {
+      var rect    = target.getBoundingClientRect();
+      var scrollY = window.pageYOffset
+                 || document.documentElement.scrollTop
+                 || document.body.scrollTop
+                 || 0;
+      var targetY = Math.max(0, rect.top + scrollY - 8); // 8 px breathing room
+      try {
+        window.scrollTo({ top: targetY, behavior: 'smooth' });
+      } catch (_) {
+        /* Browsers that don't support scroll options */
+        window.scrollTo(0, targetY);
+      }
+    });
   }
 
   /* ─────────────────────────────────────────────
@@ -124,14 +190,19 @@
       this.classList.add('active');
 
       if (sheet === 'home') {
-        closeMobileSheets();
-        window.location.hash = '#mission';
+        /* Navigate to the top section without opening any sheet */
         navigate('#mission', true);
         return;
       }
       if (sheet === 'positions') {
-        closeMobileSheets();
-        window.location.hash = '#positions';
+        /*
+         * Scroll to the actual #positions section in the page.
+         * Do NOT set window.location.hash before navigate() — doing so
+         * tries to jump to the element before the display:block override
+         * has taken effect, so the browser ignores the jump (display:none
+         * elements have no position). navigate() sets the hash via
+         * pushState and then calls scrollTo() inside a rAF.
+         */
         navigate('#positions', true);
         return;
       }
