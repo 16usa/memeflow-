@@ -17,7 +17,7 @@ const streams=new Map(),priceTimers=new Map(),tradeWindows=new Map();
 // ── Extended discovery metrics ────────────────────────────────────────────
 const discMetrics=makeDiscoveryMetrics();
 // ── Bounded concurrency queue ─────────────────────────────────────────────
-const MAX_CONCURRENT=Math.max(6,Number(process.env.DISCOVERY_MAX_CONCURRENT||6)),QUEUE_MAX=Number(process.env.DISCOVERY_QUEUE_MAX||1000);
+const MAX_CONCURRENT=Math.max(2,Number(process.env.DISCOVERY_MAX_CONCURRENT||2)),QUEUE_MAX=Number(process.env.DISCOVERY_QUEUE_MAX||1000);
 const SIG_MAX_AGE_MS=Number(process.env.DISCOVERY_SIGNATURE_MAX_AGE_MS||900000);
 const HOLDER_MAX_CONCURRENT=Number(process.env.HOLDER_RPC_MAX_CONCURRENCY||1),HOLDER_QUEUE_MAX=Number(process.env.HOLDER_QUEUE_MAX||500),HOLDER_INITIAL_DELAY_MS=Number(process.env.HOLDER_INITIAL_DELAY_MS||8000),HOLDER_RETRY_DELAY_MS=Number(process.env.HOLDER_RETRY_DELAY_MS||30000),HOLDER_MAX_RETRIES=Number(process.env.HOLDER_MAX_RETRIES||8);
 // discQueue defined after processSignature below (forward ref via enqueue wrapper)

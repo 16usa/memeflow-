@@ -40,24 +40,8 @@ export class JsonStore {
     const peak=Math.max(Number(old?.peakPriceSol)||0,hasNextPrice?nextPrice:0);
     const pressureChanged=t?.buyPressure!==undefined&&Number(t.buyPressure)!==Number(old?.buyPressure);
     const activityChanged=priceChanged||pressureChanged||Number(t?.buyTransactions||0)!==Number(old?.buyTransactions||0)||Number(t?.sellTransactions||0)!==Number(old?.sellTransactions||0);
-    const prevHist=Array.isArray(old?.antiRugHistory)?old.antiRugHistory:[];
-    const lastHist=prevHist[prevHist.length-1]||null;
-    const snap={
-      at:now,
-      priceSol:hasNextPrice?nextPrice:(Number.isFinite(oldPrice)?oldPrice:null),
-      liquiditySol:Number.isFinite(Number(t?.liquiditySol??t?.liquidity))?Number(t?.liquiditySol??t?.liquidity):null,
-      holderCount:Number.isFinite(Number(t?.holderCount??t?.holders))?Number(t?.holderCount??t?.holders):null,
-      top10Pct:Number.isFinite(Number(t?.top10Pct??t?.top10))?Number(t?.top10Pct??t?.top10):null,
-      developerPct:Number.isFinite(Number(t?.developerPct??t?.creatorPct))?Number(t?.developerPct??t?.creatorPct):null,
-      buyPressure:Number.isFinite(Number(t?.buyPressure??t?.momentum))?Number(t?.buyPressure??t?.momentum):null
-    };
-    const meaningfulSnap=Object.values(snap).slice(1).some(v=>v!==null);
-    const shouldSnap=meaningfulSnap&&(!lastHist||now-Number(lastHist.at||0)>=5000);
-    const antiRugHistory=shouldSnap?[...prevHist,snap].slice(-12):prevHist;
-
     this.state.tokens[mint]={
       ...old,...t,
-      antiRugHistory:antiRugHistory,
       peakPriceSol:peak||old.peakPriceSol||null,
       lastPriceAt:hasNextPrice?now:(old.lastPriceAt||null),
       lastPriceChangeAt:priceChanged?now:(old.lastPriceChangeAt||old.lastPriceAt||null),

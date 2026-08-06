@@ -70,7 +70,7 @@ export class RpcPool{
     this.minIntervalMs=Math.max(0,Number(process.env.RPC_MIN_INTERVAL_MS||200));
     this.methodMinIntervalMs={
       getProgramAccounts:Math.max(750,Number(process.env.RPC_GET_PROGRAM_ACCOUNTS_MIN_INTERVAL_MS||2500)),
-      getTransaction:Math.max(200,Number(process.env.RPC_GET_TRANSACTION_MIN_INTERVAL_MS||250)),
+      getTransaction:Math.max(200,Number(process.env.RPC_GET_TRANSACTION_MIN_INTERVAL_MS||275)),
       getTokenSupply:Math.max(350,Number(process.env.RPC_GET_TOKEN_SUPPLY_MIN_INTERVAL_MS||800)),
       getAccountInfo:Math.max(150,Number(process.env.RPC_GET_ACCOUNT_INFO_MIN_INTERVAL_MS||300)),
       default:this.minIntervalMs
@@ -83,12 +83,6 @@ export class RpcPool{
 
   /** Sanitized hostname of the current endpoint — never exposes credentials or full URL. */
   get activeHostname(){try{return new URL(this.urls[this.i%Math.max(1,this.urls.length)]).hostname}catch{return '[unconfigured]'}}
-
-  methodTimeoutMs(method){
-    if(method==='getTransaction')return Math.max(3000,Number(process.env.RPC_GET_TRANSACTION_TIMEOUT_MS||6000));
-    if(method==='getProgramAccounts')return Math.max(8000,Number(process.env.RPC_GET_PROGRAM_ACCOUNTS_TIMEOUT_MS||20000));
-    return Math.max(5000,Number(process.env.SOLANA_RPC_TIMEOUT_MS||20000));
-  }
 
   async _pace(method='default'){
     // Serialize only calls of the SAME method while they wait for their own
