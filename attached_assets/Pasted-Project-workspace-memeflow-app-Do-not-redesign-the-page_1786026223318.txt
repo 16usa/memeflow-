@@ -1,0 +1,148 @@
+Project:
+~/workspace/memeflow-app
+
+Do not redesign the page. Change only:
+
+1. the collapsed/expanded “AI Analysis & Market Data” control
+2. the vertical spacing around the Market Chart module
+
+====================================================
+A. RESTYLE “AI Analysis & Market Data”
+====================================================
+
+Current problem:
+The accordion row looks like a thin utility strip and does not match the large cards used under “Settings need attention”.
+
+Required result:
+Make the entire “AI Analysis & Market Data” accordion trigger use the same visual language as these settings cards:
+
+- Operating mode
+- Risk & capital
+- Strategy profile
+- Token filters & AI thresholds
+- Exit strategy
+- Permissions & audit
+
+Use those existing settings-card styles as the source of truth.
+
+The accordion trigger must become a proper full-width card with:
+
+- same dark surface
+- same border color and thickness
+- same border radius
+- same internal horizontal and vertical padding
+- same title size and weight
+- same eyebrow/section-label style
+- same right-aligned metadata style
+- same hover/pressed behavior
+- same spacing between cards
+
+Suggested structure:
+
+left:
+AI ANALYSIS
+AI Analysis & Market Data
+
+right:
+80% DATA
+QUEUE · PRIORITY 44
+chevron
+
+Requirements:
+
+- the whole card is clickable
+- chevron remains on the right
+- aria-expanded continues to update
+- collapsed state stays collapsed by default on mobile
+- expanding must reveal the existing content directly underneath
+- do not duplicate title, data percentage, or queue text
+- do not alter any AI data or accordion logic
+- preserve the accordion’s open/closed state during polling
+
+Prefer reusing the same CSS classes or shared design tokens used by the settings cards instead of creating a visually similar but separate style.
+
+====================================================
+B. FIX MARKET CHART TOP SPACING
+====================================================
+
+Current problem:
+The Market Chart module is visually stuck to the bottom of Primary Candidate / AI Analysis.
+
+Required result:
+The vertical gap above Market Chart must equal the normal gap below Market Chart and match the spacing used between other top-level modules.
+
+Inspect the existing module stack and identify the standard panel gap.
+
+Apply that same value above and below Market Chart.
+
+Do not use an arbitrary one-off value if a shared gap variable or existing panel-stack rule already exists.
+
+Expected behavior:
+
+- Primary Candidate ends
+- normal module gap
+- Market Chart begins
+- normal module gap
+- Pre-trade execution checks begins
+
+The gap must remain correct whether AI Analysis is:
+- collapsed
+- expanded
+
+Do not add margin inside the Primary Candidate card.
+Use spacing between top-level modules.
+
+====================================================
+RESPONSIVE SCOPE
+====================================================
+
+Apply consistently to:
+
+- mobile up to 820px
+- tablet 821px–1024px
+- desktop above 1024px
+
+The accordion card may remain collapsed by default only on mobile, but its visual style must match the Settings cards everywhere.
+
+====================================================
+DO NOT CHANGE
+====================================================
+
+Do not change:
+
+- Primary Candidate content
+- Confidence logic
+- AI data
+- Market Chart internals
+- chart height
+- chart intervals
+- bottom navigation
+- header
+- settings behavior
+- PAPER Automate
+- LIVE execution
+- backend
+- APIs
+
+====================================================
+VERIFY
+====================================================
+
+Verify:
+
+1. “AI Analysis & Market Data” now visually matches the Settings cards.
+2. The entire card opens and closes the accordion.
+3. No duplicate title or metadata appears.
+4. Chevron rotates or changes correctly.
+5. Polling does not reset the accordion.
+6. Market Chart has equal top and bottom module spacing.
+7. Expanded AI Analysis does not eliminate the Market Chart top gap.
+8. No horizontal overflow or layout regression occurs.
+
+Final report:
+
+- exact settings-card selector reused
+- exact AI accordion selector changed
+- final module gap value
+- exact Market Chart selector changed
+- confirmation that no logic was modified

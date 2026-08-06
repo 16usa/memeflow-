@@ -1093,18 +1093,20 @@ html[data-theme="light"] .sidebar,html[data-theme="light"] .topbar,html[data-the
 }
 
 /* ─── AI Analysis & Market Data collapsible (inside Primary Candidate) ─────── */
- .ai-analysis-section{border-top:1px solid var(--line)!important;margin-top:12px!important;padding-top:0!important}
- .ai-analysis-toggle{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:8px!important;padding:10px 0!important;cursor:pointer!important;list-style:none!important;font-size:10px!important;font-weight:760!important;letter-spacing:.06em!important;color:var(--muted)!important;user-select:none!important;outline:0!important;width:100%!important}
- .ai-analysis-toggle::-webkit-details-marker,.ai-analysis-toggle::marker{display:none!important}
- .ai-analysis-toggle:hover{color:#fff!important}
- .ai-analysis-toggle::after{content:"▾";font-size:13px;opacity:.55;flex-shrink:0}
- #ai-analysis[open] .ai-analysis-toggle::after{content:"▴"}
- .ai-analysis-chips{display:flex!important;align-items:center!important;gap:6px!important;font-size:9px!important;color:var(--muted)!important;flex:1!important;justify-content:flex-end!important}
- .ai-analysis-chips b{color:var(--cyan)!important}
- .ai-analysis-body{padding-bottom:4px!important}
+ /* ai-analysis-section: settings-group provides border/bg/radius/padding; override only deltas */
+ .ai-analysis-section{margin-top:12px!important;overflow:hidden!important}
+ /* Right-side chips: two stacked em lines, right-aligned (matches settings-group>summary em) */
+ .ai-analysis-chips{display:grid!important;gap:3px!important;text-align:right!important;flex:0 0 auto!important;min-width:0!important;align-items:unset!important;justify-content:unset!important}
+ /* Data percentage value: cyan accent */
+ .ai-data-val{color:var(--cyan)!important;font-weight:900!important}
+ /* Chevron: rotated › character, flips on open */
+ #ai-analysis>summary::after{content:"›"!important;font-size:18px!important;color:var(--muted)!important;opacity:.6!important;flex-shrink:0!important;display:inline-block!important;transform:rotate(90deg)!important;transition:transform .2s ease!important;margin-left:2px!important}
+ #ai-analysis[open]>summary::after{transform:rotate(-90deg)!important}
+ /* Body: settings-group-body handles padding; bleed tab-strip to panel edges */
+ .ai-analysis-body{padding-bottom:8px!important}
  .ai-analysis-meta{font-size:9px!important;color:var(--muted)!important;margin:0 0 10px!important}
  #ai-analysis .decision-tree{margin-top:10px!important}
- #ai-analysis .ai-analysis-tabs{margin:10px -14px 0!important;padding:0 14px!important}
+ #ai-analysis .ai-analysis-tabs{margin:10px -18px 0!important;padding:0 18px!important}
  #ai-analysis .tab-pane.active{padding-top:8px!important}
  #ai-analysis .mission-actions{margin-top:12px!important}
  /* Workspace: only queue-panel remains after AI-Decision-Studio merge */
@@ -1259,7 +1261,7 @@ html[data-theme="light"] .sidebar,html[data-theme="light"] .topbar,html[data-the
 <div class="metric-row"><div class="metric"><small>Confidence</small><b id="primaryConfidence">—</b></div><div class="metric"><small>Risk</small><b id="primaryRisk">—</b></div><div class="metric"><small>Expected RR</small><b id="primaryRR">—</b></div></div>
 <div class="check-strip" id="primaryChecks"><div class="mini-check">TOP 10 —</div><div class="mini-check">LIQUIDITY —</div><div class="mini-check" id="momentumCheck">MOMENTUM —</div><div class="mini-check">DEVELOPER —</div></div>
 <div class="reason" id="primaryReason"><b>No verified candidate.</b><span>Waiting for the live discovery and decision feed.</span></div>
-<details class="ai-analysis-section" id="ai-analysis"><summary class="ai-analysis-toggle" aria-label="AI Analysis and Market Data"><span>AI Analysis &amp; Market Data</span><span class="ai-analysis-chips"><b id="decisionData">—</b><small>data</small><span class="eyebrow" id="decisionLane">WAITING</span></span></summary><div class="ai-analysis-body"><p class="ai-analysis-meta" id="decisionMeta">Awaiting backend data</p><div class="reason" id="decisionReason"><b>Momentum and holder quality are confirmed.</b><span>Final pre-trade validation is required before simulated execution.</span></div><div class="decision-tree" id="decisionTree"><div class="empty-state production-empty">Decision checks will appear after a candidate is evaluated.</div></div><div class="inspector-tabs ai-analysis-tabs"><button class="itab active" data-tab="evidence" type="button">Evidence</button><button class="itab" data-tab="timeline" type="button">Timeline</button><button class="itab" data-tab="memory" type="button">Memory</button></div><div class="tab-pane active" id="pane-evidence"><div class="empty-state production-empty">No evidence available.</div></div><div class="tab-pane" id="pane-timeline"><div class="empty-state production-empty">No decision timeline available.</div></div><div class="tab-pane" id="pane-memory"><div class="empty-state production-empty">No historical decision memory available.</div></div><div class="mission-actions"><button aria-disabled="true" class="btn primary" disabled="disabled" id="validateBtn" type="button">Validate execution</button><button aria-disabled="true" class="btn" disabled="disabled" id="replayBtn" type="button">Decision replay</button><button aria-disabled="true" class="btn" disabled="disabled" id="compareBtn" type="button">Compare</button></div></div></details>
+<details class="settings-group ai-analysis-section" id="ai-analysis"><summary aria-label="AI Analysis and Market Data"><span><small>AI ANALYSIS</small><b>AI Analysis &amp; Market Data</b></span><span class="ai-analysis-chips"><em><span class="ai-data-val" id="decisionData">—</span>&#8201;DATA</em><em id="decisionLane">WAITING</em></span></summary><div class="settings-group-body ai-analysis-body"><p class="ai-analysis-meta" id="decisionMeta">Awaiting backend data</p><div class="reason" id="decisionReason"><b>Momentum and holder quality are confirmed.</b><span>Final pre-trade validation is required before simulated execution.</span></div><div class="decision-tree" id="decisionTree"><div class="empty-state production-empty">Decision checks will appear after a candidate is evaluated.</div></div><div class="inspector-tabs ai-analysis-tabs"><button class="itab active" data-tab="evidence" type="button">Evidence</button><button class="itab" data-tab="timeline" type="button">Timeline</button><button class="itab" data-tab="memory" type="button">Memory</button></div><div class="tab-pane active" id="pane-evidence"><div class="empty-state production-empty">No evidence available.</div></div><div class="tab-pane" id="pane-timeline"><div class="empty-state production-empty">No decision timeline available.</div></div><div class="tab-pane" id="pane-memory"><div class="empty-state production-empty">No historical decision memory available.</div></div><div class="mission-actions"><button aria-disabled="true" class="btn primary" disabled="disabled" id="validateBtn" type="button">Validate execution</button><button aria-disabled="true" class="btn" disabled="disabled" id="replayBtn" type="button">Decision replay</button><button aria-disabled="true" class="btn" disabled="disabled" id="compareBtn" type="button">Compare</button></div></div></details>
 </div>
 </aside>
 </section>
@@ -1452,6 +1454,7 @@ html[data-theme="light"] .sidebar,html[data-theme="light"] .topbar,html[data-the
 /* ===== separate-market-chart-module ===== */
 .market-chart-module{
   margin-top:12px;
+  margin-bottom:12px; /* equal gap below — matches standard module gap */
   overflow:hidden;
   scroll-margin-top:84px;
 }
@@ -1482,6 +1485,7 @@ html[data-theme="light"] .sidebar,html[data-theme="light"] .topbar,html[data-the
 @media(max-width:820px){
   .market-chart-module{
     margin-top:10px;
+    margin-bottom:10px; /* equal gap below on mobile */
   }
   .market-chart-module .chart-shell .chart{
     height:300px;
