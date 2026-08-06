@@ -1,0 +1,194 @@
+Fix only the phone-width alignment of the mobile bottom navigation.
+
+Project:
+~/workspace/memeflow-app
+
+Current state:
+- Tablet alignment is now correct.
+- Phone alignment is still wrong.
+- On phone, the mobile navigation extends farther left and right than the visible cards.
+- Do not change tablet behavior because it is already correct.
+
+Root cause to investigate:
+The mobile navigation is positioned relative to the viewport, while the cards are inside one or more nested containers with additional horizontal padding or margins.
+
+Do not guess new left/right pixel values.
+
+====================================================
+PHONE-ONLY REQUIREMENT
+====================================================
+
+Apply this fix only for widths up to 820px.
+
+The exact left and right edges of .mobile-nav must match the actual rendered left and right edges of the primary content cards.
+
+Use the first visible main card or the main card column as the geometry source.
+
+Preferred implementation:
+
+1. Identify the shared card wrapper or actual card selector, such as:
+- .main
+- .mission-grid
+- .context-banner
+- .panel
+- another current content wrapper
+
+2. Create one shared phone content-width wrapper rule.
+
+For example:
+
+.main {
+  width: 100%;
+}
+
+.main > .context-banner,
+.main > .panel,
+.main > .mission-grid,
+.main > .workspace,
+.main > section {
+  /* preserve current layout */
+}
+
+.mobile-nav {
+  left: 0;
+  right: 0;
+  width: auto;
+}
+
+But place .mobile-nav inside or align it to the same containing block as the cards.
+
+Best solution:
+- move .mobile-nav into the same .main container if this does not break fixed positioning;
+OR
+- set a shared CSS custom property from the exact total card gutter;
+OR
+- use a centered width equal to the card column:
+
+.mobile-nav {
+  left: 50%;
+  right: auto;
+  width: calc(100% - (2 * var(--actual-phone-card-gutter)));
+  transform: translateX(-50%);
+}
+
+The value of --actual-phone-card-gutter must equal the final rendered distance from the viewport edge to the card edge, including all nested padding and margins.
+
+====================================================
+MEASURE, DO NOT ASSUME
+====================================================
+
+Before editing, inspect computed layout rules for:
+
+- .main
+- .context-banner
+- .panel
+- .mission-grid
+- .mobile-nav
+- body
+- any mobile wrapper around the cards
+
+Find every horizontal contribution:
+
+- body margin
+- .main padding-left/right
+- card margin-left/right
+- wrapper padding
+- width or max-width
+- border-box sizing
+- transforms
+- left/right positioning
+
+Report the exact calculation.
+
+Example report:
+
+viewport edge
++ .main padding 14px
++ card margin 12px
+= actual card gutter 26px
+
+Then use that exact final gutter for .mobile-nav.
+
+====================================================
+IMPORTANT OVERRIDES
+====================================================
+
+Search for all phone rules affecting .mobile-nav:
+
+- left
+- right
+- width
+- max-width
+- margin
+- transform
+- inset-inline
+- calc()
+- CSS custom properties
+
+Remove or override any conflicting rules.
+
+Place one final authoritative phone rule at the very end of the stylesheet.
+
+Use !important only if older inline or later rules cannot otherwise be removed.
+
+====================================================
+DO NOT CHANGE TABLET
+====================================================
+
+For widths from 821px to 1024px:
+- preserve the current working tablet width
+- preserve current tablet height
+- preserve current tablet topbar
+
+Do not reuse the phone correction for tablet.
+
+====================================================
+PHONE BREAKPOINTS
+====================================================
+
+Verify at:
+
+- 320px
+- 375px
+- 390px
+- 414px
+- 430px
+- 768px
+- 820px
+
+For every phone/mobile width up to 820px:
+
+- mobile-nav left edge matches card left edge exactly
+- mobile-nav right edge matches card right edge exactly
+- no protruding edges
+- no horizontal scroll
+- no width jump between 430px and 431px
+- bottom remains flush
+- active item styling remains unchanged
+
+====================================================
+DO NOT MODIFY
+====================================================
+
+Do not change:
+
+- tablet navigation rules
+- topbar
+- card widths
+- card design
+- nav height
+- nav labels
+- active state
+- routing
+- More sheet
+- backend
+- PAPER Automate
+- wallet
+- candidate logic
+
+At the end report:
+
+- exact phone card gutter calculation
+- exact conflicting rule found
+- final .mobile-nav phone CSS
+- confirmation that tablet CSS was untouched
