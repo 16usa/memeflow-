@@ -62,8 +62,6 @@ export class PaperEngine {
       runnerPct: Math.max(0, Math.min(100, num(settings.runnerPct ?? settings.runnerSize, 25))),
       maxHoldMinutes: Math.max(1, num(settings.maxHoldMinutes, 1440)),
       exitBuyPressure: Math.max(0, num(settings.exitBuyPressure, 1.0)),
-      exitOnWeakBuyPressure: settings.exitOnWeakBuyPressure !== false,
-      decisionFreshnessSec: Math.max(5, num(settings.decisionFreshnessSec, 60)),
     };
   }
 
@@ -113,8 +111,6 @@ export class PaperEngine {
     const price = num(token?.priceSol, NaN);
     if (!Number.isFinite(price) || price <= 0) return { ok: false, code: 'INVALID_PRICE' };
     if (token?.holderFresh === false) return { ok: false, code: 'STALE_TOKEN_DATA' };
-    const tokenUpdatedAt = Number(token?.updatedAt || token?.lastPriceAt || 0);
-    if (s.decisionFreshnessSec > 0 && tokenUpdatedAt > 0 && this.clock() - tokenUpdatedAt > s.decisionFreshnessSec * 1000) return { ok: false, code: 'STALE_DECISION' };
     if (this.openForMint(userId, token.mint)) return { ok: false, code: 'POSITION_EXISTS' };
     if (this.userPositions(userId, 'OPEN').length >= s.maxOpenPositions) return { ok: false, code: 'MAX_OPEN_POSITIONS' };
     if (this.dailyEntries(userId) >= s.maxDailyEntries) return { ok: false, code: 'MAX_DAILY_ENTRIES' };
@@ -150,7 +146,7 @@ export class PaperEngine {
       return { action: 'OBSERVED' };
     }
 
-    if (settings.operatingMode === 'assist' || (settings.operatingMode === 'automate' && settings.ownerApproval === true)) {
+    if (settings.operatingMode === 'assist') {
       const existing = Object.values(this.store.state.paperProposals).find(p => p.idempotencyKey === key);
       if (existing) return { action: 'PROPOSAL_EXISTS', proposal: existing };
       const proposal = {
@@ -248,17 +244,13 @@ export class PaperEngine {
     if (!proposal || proposal.userId !== userId) return { ok: false, code: 'NOT_FOUND' };
     if (proposal.status !== 'PENDING') return { ok: false, code: 'PROPOSAL_NOT_PENDING' };
     const user = this.store.state.users[userId];
-    const settings = this.settings(user?.settings || {});
-    if (settings.decisionFreshnessSec > 0 && this.clock() - Number(proposal.createdAtMs || 0) > settings.decisionFreshnessSec * 1000) {
-      proposal.status = 'EXPIRED';proposal.resolvedAt = nowIso();this.save();return { ok: false, code: 'STALE_PROPOSAL' };
-    }
     const liveToken = token || this.store.state.tokens[proposal.mint];
     const result = this.openPosition(userId, liveToken, {
       state: 'BUY READY',
       score: proposal.decisionScore,
       confidence: proposal.decisionConfidence,
       primaryReason: proposal.primaryReason,
-    }, settings, proposal.idempotencyKey);
+    }, user?.settings || {}, proposal.idempotencyKey);
     if (!result.ok) return result;
     proposal.status = 'APPROVED';
     proposal.resolvedAt = nowIso();
@@ -335,7 +327,7 @@ export class PaperEngine {
     }
 
     const pressure = Number(token.buyPressure);
-    if (settings.exitOnWeakBuyPressure && Number.isFinite(pressure) && pressure < settings.exitBuyPressure) {
+    if (Number.isFinite(pressure) && pressure < settings.exitBuyPressure) {
       this.closePositionInternal(position, price, 'BUY PRESSURE EXIT');
     }
   }

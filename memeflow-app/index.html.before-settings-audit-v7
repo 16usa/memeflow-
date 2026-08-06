@@ -1514,7 +1514,7 @@ html[data-theme="light"] .sidebar,html[data-theme="light"] .topbar,html[data-the
 </div>
 <form class="settings-body" id="aiSettingsForm">
 <div class="settings-context"><div><b id="settingsSourceTitle">Settings source · server</b><span id="settingsSourceText">Sign in to load and edit your account settings.</span></div><span class="state wait" id="settingsScopeBadge">AUTH REQUIRED</span></div>
-<div class="settings-errors" id="settingsErrors" role="alert"><b>Settings need attention</b><span id="settingsErrorsText"></span></div>
+<div class="settings-error" id="settingsErrors" role="alert"><b>Settings need attention</b><span id="settingsErrorsText"></span></div>
 <div class="settings-accordion">
 <details class="settings-group"><summary><span><small>GENERAL</small><b>Operating mode</b></span><em id="settingsExecutionBadge">LOCKED</em></summary><div class="settings-group-body"><div class="mode-selector"><div class="mode-option"><input id="modeObserve" name="operatingMode" type="radio" value="Observe" disabled/><label for="modeObserve"><b>Observe</b><span>Analyze and explain only.</span></label></div><div class="mode-option"><input id="modeAssist" name="operatingMode" type="radio" value="Assist" disabled/><label for="modeAssist"><b>Assist</b><span>Prepare an action for owner approval.</span></label></div><div class="mode-option"><input id="modeAutomate" name="operatingMode" type="radio" value="Automate" disabled/><label for="modeAutomate"><b>Automate</b><span>Available only after Pro, wallet and LIVE server gates pass.</span></label></div></div></div></details>
 <details class="settings-group"><summary><span><small>OWNER HARD LIMITS</small><b>Risk &amp; capital</b></span><em id="settingsEnforcementBadge">SERVER</em></summary><div class="settings-group-body"><div class="settings-fields">
@@ -2203,7 +2203,7 @@ render();(()=>{const d=document.getElementById('ai-analysis');if(d&&window.inner
  // ── Field name mapping: server keys ↔ HTML element IDs ──────────────────
  // Server uses snake/camel names that differ from HTML input IDs.
  // S2H: server key → HTML id   H2S: HTML id → server key
- const S2H={minScore:'minAiScore',minLiquidityUsd:'minLiquidity',minMarketCapUsd:'minMarketCap',maxMarketCapUsd:'maxMarketCap',minTop10Pct:'minTop10',maxTop10Pct:'maxTop10',minDeveloperPct:'minDeveloper',maxDeveloperPct:'maxDeveloper',minTokenAgeMinutes:'minTokenAge',maxTokenAgeMinutes:'maxTokenAge',hardStopPct:'stopLoss',trailingStopPct:'trailingStop',tp1Pct:'tp1',tp1SellPct:'tp1Sell',tp2Pct:'tp2',tp2SellPct:'tp2Sell',runnerPct:'runnerSize',exitOnWeakBuyPressure:'exitWeakPressure',requireFreshHolderSnapshot:'requireFreshHolders',shadowValidation:'paperBeforeChange',changeLog:'auditSettings',decisionFreshnessSec:'decisionFreshness',profile:'strategyProfile'};
+ const S2H={minScore:'minAiScore',minLiquidityUsd:'minLiquidity',minMarketCapUsd:'minMarketCap',maxMarketCapUsd:'maxMarketCap',minTop10Pct:'minTop10',maxTop10Pct:'maxTop10',minDeveloperPct:'minDeveloper',maxDeveloperPct:'maxDeveloper',minTokenAgeMinutes:'minTokenAge',maxTokenAgeMinutes:'maxTokenAge',hardStopPct:'stopLoss',trailingStopPct:'trailingStop',tp1Pct:'tp1',tp1SellPct:'tp1Sell',tp2Pct:'tp2',tp2SellPct:'tp2Sell',runnerPct:'runnerSize',exitBuyPressure:'exitWeakPressure',requireFreshHolderSnapshot:'requireFreshHolders',requireWebsiteOrX:'requireSocial',shadowValidation:'auditSettings',changeLog:'aiChangePolicy',profile:'strategyProfile'};
  const H2S=Object.fromEntries(Object.entries(S2H).map(([k,v])=>[v,k]));
  // Translate server settings → view (HTML IDs; capitalize radio-group values)
  function serverToView(s){if(!s)return null;const o={};Object.entries(s).forEach(([k,v])=>{const h=S2H[k]??k;o[h]=(h==='operatingMode'||h==='strategyProfile')&&typeof v==='string'?v.charAt(0).toUpperCase()+v.slice(1):v});return o}
@@ -2235,7 +2235,7 @@ render();(()=>{const d=document.getElementById('ai-analysis');if(d&&window.inner
    if(lbl)lbl.textContent=reasons.length?'Waiting: '+reasons.join(' · ')+'.':'Automate live execution. All safety gates are satisfied.';
  }
  // setEnabled never touches modeAutomate — updateAutomateEligibility owns it
- const setEnabled=enabled=>{controls.forEach(el=>{if(el.id==='settingsReload'||el.id==='modeAutomate'||el.id==='adaptiveProfile'||el.id==='aiChangePolicy'||(el.matches?.('[data-platform]')&&el.dataset.platform!=='pump'))return;el.disabled=!enabled});updateAutomateEligibility()};
+ const setEnabled=enabled=>{controls.forEach(el=>{if(el.id==='settingsReload'||el.id==='modeAutomate')return;el.disabled=!enabled});updateAutomateEligibility()};
  const read=()=>{const o={};ids.forEach(id=>{const el=$('#'+id);if(el)o[id]=el.type==='checkbox'?el.checked:el.value});o.launchPlatforms=[...form.querySelectorAll('[data-platform]:checked')].map(x=>x.dataset.platform);o.operatingMode=form.elements.operatingMode?.value||'';o.strategyProfile=form.elements.strategyProfile?.value||'';return o};
  // apply() always receives raw server settings; translates to view internally
  const apply=s=>{loaded=s||null;const view=serverToView(s);ids.forEach(id=>{const el=$('#'+id);if(!el)return;const v=view?.[id];if(el.type==='checkbox')el.checked=Boolean(v);else el.value=v??''});if(view?.operatingMode&&form.elements.operatingMode)form.elements.operatingMode.value=view.operatingMode;if(view?.strategyProfile&&form.elements.strategyProfile)form.elements.strategyProfile.value=view.strategyProfile;form.querySelectorAll('[data-platform]').forEach(x=>x.checked=(s?.launchPlatforms||[]).includes(x.dataset.platform));render(false)};
@@ -2261,7 +2261,7 @@ render();(()=>{const d=document.getElementById('ai-analysis');if(d&&window.inner
  async function load(){setEnabled(false);$('#settingsSaveState').textContent='Loading from server…';try{const _sac=new AbortController();setTimeout(()=>_sac.abort(),8000);const r=await fetch('/api/settings',{credentials:'include',headers:{accept:'application/json'},signal:_sac.signal});const d=await r.json().catch(()=>({}));if(!r.ok)throw Object.assign(new Error(d.message||d.error||'Settings unavailable'),{status:r.status,body:d});capabilities=d.capabilities||{};apply(d.settings||{});setEnabled(true);$('#settingsScopeBadge').textContent='SERVER VERIFIED';$('#settingsScopeBadge').className='state buy';$('#settingsSourceText').textContent='Loaded for the authenticated account. Server validation is authoritative.';$('#settingsSaveState').textContent='Server settings loaded';$('#settingsSaveState').style.color='var(--green)';$('#settingsExecutionBadge').textContent=capabilities.liveAutomation?'LIVE ELIGIBLE':'PAPER / ASSIST';$('#settingsEnforcementBadge').textContent='SERVER ENFORCED';$('#killSwitchStatus').textContent=d.killSwitchActive?'ACTIVE — new entries blocked':'Armed and ready';$('#activateKillSwitch').disabled=Boolean(d.killSwitchActive)}catch(e){loaded=null;apply(null);setEnabled(false);$('#settingsScopeBadge').textContent=e.status===401?'AUTH REQUIRED':'NOT CONFIGURED';$('#settingsScopeBadge').className='state wait';$('#settingsSourceText').textContent=e.status===401?'Sign in to load and edit account settings.':'Settings backend is not mounted yet. Trading remains fail-closed.';$('#settingsSaveState').textContent=e.message;$('#settingsSaveState').style.color='var(--yellow)';$('#settingsExecutionBadge').textContent='LOCKED';$('#settingsEnforcementBadge').textContent='SERVER REQUIRED';}}
  form.addEventListener('input',()=>render(true));form.addEventListener('change',()=>render(true));
  form.addEventListener('submit',async e=>{e.preventDefault();const viewData=read(),errors=validate(viewData);if(errors.length)return render(true);$('#settingsSave').disabled=true;try{const settings=viewToServer(viewData);const r=await fetch('/api/settings',{method:'PUT',credentials:'include',headers:{'content-type':'application/json','accept':'application/json'},body:JSON.stringify({settings,version:loaded?.version||null})});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.message||d.error||'Save failed');apply(d.settings||{});$('#settingsSaveState').textContent='Saved and verified by server';$('#settingsSaveState').style.color='var(--green)';window.MEMEFLOW_CORE?.toast?.('Settings saved')}catch(err){$('#settingsSaveState').textContent=err.message;$('#settingsSaveState').style.color='var(--red)'}finally{render(false)}});
- $('#settingsReload')?.addEventListener('click',load);$('#settingsReset')?.addEventListener('click',async()=>{if(!confirm('Restore server defaults for this account?'))return;try{const r=await fetch('/api/settings/defaults',{method:'POST',credentials:'include'});const d=await r.json();if(!r.ok)throw new Error(d.message||d.error);apply(d.settings);$('#settingsSaveState').textContent='Server defaults restored';$('#settingsSaveState').style.color='var(--green)'}catch(e){window.MEMEFLOW_CORE?.toast?.(e.message)}});$('#settingsSimulate')?.addEventListener('click',()=>{const o=read(),daily=n(o,'dailySpendLimit'),size=Math.max(n(o,'positionSize'),.0001),entryLimit=n(o,'maxDailyEntries');const bySpend=daily>0?Math.floor(daily/size):Infinity;const effective=Math.min(bySpend,entryLimit);window.MEMEFLOW_CORE?.toast?.(`Capital/risk capacity: ${Number.isFinite(effective)?effective:entryLimit} entries/day before market gates`)});$('#activateKillSwitch')?.addEventListener('click',async()=>{if(!confirm('Activate emergency kill switch and block all new entries?'))return;try{const r=await fetch('/api/settings/kill-switch',{method:'POST',credentials:'include'});const d=await r.json();if(!r.ok)throw new Error(d.message||d.error);$('#killSwitchStatus').textContent='ACTIVE — new entries blocked';$('#activateKillSwitch').disabled=true;window.MEMEFLOW_CORE?.toast?.('Emergency kill switch activated')}catch(e){window.MEMEFLOW_CORE?.toast?.(e.message)}});
+ $('#settingsReload')?.addEventListener('click',load);$('#settingsReset')?.addEventListener('click',async()=>{if(!confirm('Restore server defaults for this account?'))return;try{const r=await fetch('/api/settings/defaults',{method:'POST',credentials:'include'});const d=await r.json();if(!r.ok)throw new Error(d.message||d.error);apply(d.settings);$('#settingsSaveState').textContent='Server defaults restored';$('#settingsSaveState').style.color='var(--green)'}catch(e){window.MEMEFLOW_CORE?.toast?.(e.message)}});$('#settingsSimulate')?.addEventListener('click',()=>{const o=read(),effective=Math.min(Math.floor(n(o,'dailySpendLimit')/Math.max(n(o,'positionSize'),.0001)),n(o,'maxDailyEntries'));window.MEMEFLOW_CORE?.toast?.(`Maximum capital capacity: ${effective} entries/day before market gates`)});$('#activateKillSwitch')?.addEventListener('click',async()=>{if(!confirm('Activate emergency kill switch and block all new entries?'))return;try{const r=await fetch('/api/settings/kill-switch',{method:'POST',credentials:'include'});const d=await r.json();if(!r.ok)throw new Error(d.message||d.error);$('#killSwitchStatus').textContent='ACTIVE — new entries blocked';$('#activateKillSwitch').disabled=true;window.MEMEFLOW_CORE?.toast?.('Emergency kill switch activated')}catch(e){window.MEMEFLOW_CORE?.toast?.(e.message)}});
  // React to wallet and billing state changes so Automate gate stays current
  window.addEventListener('memeflow:walletchange',e=>{walletGate={connected:!!e.detail?.connected,verified:!!e.detail?.verified};updateAutomateEligibility()});
  window.addEventListener('mf:billing-change',e=>{billingGate=e.detail||{};updateAutomateEligibility()});
@@ -2751,97 +2751,6 @@ window.MEMEFLOW_UNIFIED_CANDIDATE_SYSTEM={version:1,sync};
   window.addEventListener('pagehide', () => clearInterval(updateTimer), { once: true });
 
   update();
-})();
-</script>
-
-<script id="memeflow-settings-help-v7">
-(()=>{
- const $=s=>document.querySelector(s);
- const help={
-  tradingCapital:'Maximum total SOL this account may deploy. 0 disables this PAPER capital cap; LIVE execution is still protected by separate server gates.',
-  dailySpendLimit:'Maximum SOL allowed for new entries per UTC day. 0 disables the daily spending cap.',
-  positionSize:'Default SOL size used for each new PAPER position or Assist proposal.',
-  maxPositionSize:'Hard ceiling for a single position. The default position size cannot exceed it.',
-  maxOpenPositions:'Maximum simultaneous open positions. 0 blocks all new entries.',
-  maxDailyEntries:'Maximum new entries per UTC day. 0 blocks all new entries.',
-  dailyLossLimit:'Stops new entries after realized losses reach this amount for the day. 0 disables this loss cap.',
-  feeReserve:'SOL kept outside position sizing for fees and execution overhead. PAPER trading does not spend real fees.',
-  minAiScore:'Minimum 0–100 decision score required for BUY READY. Higher values are more selective.',
-  minConfidence:'Minimum 0–100 evidence confidence required for BUY READY. Missing evidence can keep a token in WAITING.',
-  minLiquidity:'Minimum verified USD liquidity. 0 disables this filter. If enabled but USD liquidity is unavailable, the token stays WAITING.',
-  minBuyPressure:'Minimum buying-to-selling pressure ratio. 1.2× means buying pressure must be at least 20% stronger than selling pressure.',
-  includeKeywords:'Optional comma-separated words that must appear in token name, symbol, URI or description. Leave blank to disable.',
-  excludeKeywords:'Comma-separated words that immediately reject matching token metadata. Leave blank to disable.',
-  minBondingCurvePct:'Minimum bonding-curve progress. Leave blank to disable. Missing curve data keeps the token WAITING when this filter is enabled.',
-  maxBondingCurvePct:'Maximum bonding-curve progress. Leave blank to disable.',
-  minMarketCap:'Minimum verified market cap in USD. Leave blank to disable; missing data causes WAITING when enabled.',
-  maxMarketCap:'Maximum verified market cap in USD. Leave blank to disable.',
-  minTotalFeesSol:'Minimum observed protocol fees in SOL. Leave blank to disable; early tokens may not expose this metric.',
-  maxTotalFeesSol:'Maximum observed protocol fees in SOL. Leave blank to disable.',
-  minVolume24hUsd:'Minimum 24-hour USD volume. New launches may not have this metric yet; enabled limits keep them WAITING until data exists.',
-  maxVolume24hUsd:'Maximum 24-hour USD volume. Leave blank to disable.',
-  minBuyTransactions:'Minimum observed buy transaction count. Missing data keeps the token WAITING when enabled.',
-  maxBuyTransactions:'Maximum observed buy transaction count. Leave blank to disable.',
-  minSellTransactions:'Minimum observed sell transaction count. Missing data keeps the token WAITING when enabled.',
-  maxSellTransactions:'Maximum observed sell transaction count. Leave blank to disable.',
-  minTotalTransactions:'Minimum total observed transaction count. Missing data keeps the token WAITING when enabled.',
-  maxTotalTransactions:'Maximum total observed transaction count. Leave blank to disable.',
-  minHolders:'Minimum current holder count. The anti-rug layer also requires fresh holder evidence before a fast entry.',
-  maxHolders:'Optional maximum holder count. Leave blank unless you intentionally want only very early launches.',
-  minBundlePct:'Minimum bundled ownership percentage. Usually leave blank; enabling a limit requires bundle data to exist.',
-  maxBundlePct:'Maximum bundled ownership percentage. Lower values are stricter against concentrated bundled supply.',
-  minTokenAge:'Additional minimum token age in minutes. 0 leaves timing to the built-in anti-rug confirmation (45/90/180 seconds).',
-  maxTokenAge:'Maximum candidate age in minutes. Older tokens become EXPIRED and cannot become Primary Candidate.',
-  minTop10:'Optional minimum share held by the Top-10 holders. Usually leave blank.',
-  maxTop10:'Maximum supply share held by the Top-10 holders. Lower values require broader distribution.',
-  minDeveloper:'Optional minimum developer share. Usually leave blank.',
-  maxDeveloper:'Maximum percentage of supply held by the developer/creator. Lower values are stricter.',
-  minSniperPct:'Optional minimum sniper ownership. Usually leave blank.',
-  maxSniperPct:'Maximum sniper ownership. Enable only when sniper data is available; otherwise candidates remain WAITING.',
-  developerBlacklistWallets:'Creator/developer wallet addresses that must always be rejected. Separate addresses with commas or new lines.',
-  stopLoss:'Hard loss limit from entry. At this drawdown the PAPER position is closed.',
-  trailingStop:'Once price rises, the stop follows the highest price by this percentage. 0 disables trailing stop.',
-  tp1:'First profit target measured from entry price.',
-  tp1Sell:'Percentage of the original position sold when TP1 is reached.',
-  tp2:'Second profit target. It must be above TP1.',
-  tp2Sell:'Percentage of the original position sold when TP2 is reached.',
-  runnerSize:'Percentage intentionally left after TP1/TP2. TP1 sell + TP2 sell + runner must equal 100%.',
-  maxHoldMinutes:'Maximum position lifetime. The PAPER position closes when this time is reached.',
-  decisionFreshness:'Maximum age of an Assist proposal/decision before fresh evaluation is required. Default: 60 seconds.',
-  aiChangePolicy:'AI cannot change owner settings automatically in this build. Propose-only is enforced server-side.',
- };
- for(const [id,msg] of Object.entries(help)){
-  const el=$('#'+id);const field=el?.closest('.setting-field');if(!field||field.querySelector('.mf-setting-help'))continue;
-  const small=document.createElement('small');small.className='mf-setting-help';small.textContent=msg;field.appendChild(small);
- }
- const addToggleHelp=(id,msg)=>{
-  const input=$('#'+id),copy=input?.closest('.toggle-row')?.querySelector('.toggle-copy');if(!copy)return;
-  let span=copy.querySelector('span');if(!span){span=document.createElement('span');copy.appendChild(span)}
-  if(!span.textContent.trim())span.textContent=msg;
- };
- addToggleHelp('requireTwitter','Require a Twitter/X link in token metadata. Missing links block the token when enabled.');
- addToggleHelp('requireWebsite','Require a project website in token metadata.');
- addToggleHelp('requireTelegram','Require a Telegram link in token metadata.');
- addToggleHelp('requireAnySocial','Require at least one of Twitter/X, website or Telegram.');
- addToggleHelp('adaptiveProfile','Not active in the current execution build. Explicit filters and owner hard limits remain authoritative.');
- addToggleHelp('ownerApproval','When enabled, even Automate mode creates a proposal and waits for explicit owner approval before a PAPER entry.');
- addToggleHelp('exitWeakPressure','When enabled, an open PAPER position closes if verified buy pressure drops below the internal 1.0× exit threshold.');
- addToggleHelp('paperBeforeChange','Before saving settings, the server evaluates the proposed policy against recent cached tokens and rejects evaluation errors.');
- addToggleHelp('auditSettings','Append every settings change to a read-only server audit history with timestamp, previous values and new values.');
-
- const protocols=document.querySelector('[data-filter-pane="protocols"] .platform-grid');
- if(protocols&&!protocols.nextElementSibling?.classList?.contains('mf-protocol-note')){
-  const note=document.createElement('small');note.className='mf-protocol-note';
-  note.textContent='Discovery source: Pump.fun. Other launchpads shown below are disabled until a real backend listener is connected; they are not simulated.';
-  protocols.insertAdjacentElement('afterend',note);
- }
- document.querySelectorAll('[data-platform]').forEach(x=>{
-  if(x.dataset.platform==='pump'){x.checked=true;return}
-  x.checked=false;x.disabled=true;
-  const span=x.nextElementSibling;if(span){span.style.opacity='.45';span.title='Discovery backend not connected'}
- });
- const ai=$('#aiChangePolicy');if(ai){ai.innerHTML='<option value="propose">Propose only</option>';ai.value='propose';ai.disabled=true}
- const adapt=$('#adaptiveProfile');if(adapt){adapt.checked=false;adapt.disabled=true}
 })();
 </script>
 </body>
