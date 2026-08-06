@@ -1,0 +1,142 @@
+Merge Primary Candidate and AI Decision Studio into one unified candidate module without losing information or duplicating data.
+
+Project:
+~/workspace/memeflow-app
+
+First inspect the current HTML and render/update JavaScript for:
+
+- Primary Candidate
+- AI Decision Studio
+- primaryName
+- primaryScore
+- primaryConfidence
+- primaryRisk
+- primaryRR
+- primaryChecks
+- primaryReason
+- decisionName
+- decisionScore
+- decisionConfidence
+- decisionData
+- decisionReason
+- decisionTree
+- all detailed market metrics, evidence, timeline and chart elements
+
+Required result:
+
+1. Keep one visible module named:
+
+Primary Candidate
+
+2. Remove the separate visible AI Decision Studio card from the normal page flow.
+
+Do not delete its data sources, rendering logic or useful information.
+
+3. Move unique AI Decision Studio information into Primary Candidate as a collapsible subsection named:
+
+AI Analysis & Market Data
+
+4. The unified Primary Candidate must always show:
+
+- candidate name
+- symbol
+- decision state
+- AI score
+- confidence
+- risk
+- expected RR
+- Top-10
+- liquidity
+- momentum
+- developer
+- primary decision/blocking reason
+
+5. The collapsible AI Analysis & Market Data subsection must contain only information not already shown above, such as:
+
+- data completeness
+- price
+- market cap
+- holders
+- buy pressure
+- detailed AI explanation
+- evidence
+- timeline
+- decision tree
+- chart or additional diagnostics, where currently available
+
+6. Do not duplicate inside the collapsible section:
+
+- candidate name
+- symbol
+- decision state
+- AI score
+- confidence
+- risk
+- expected RR
+- Top-10
+- liquidity
+- momentum
+- developer
+- the same primary reason text
+
+7. Reuse the existing DOM elements and existing render data wherever practical.
+
+Do not create a second independent copy of the same value.
+
+There must be one authoritative rendered value for each metric.
+
+8. Mobile behavior up to 820px:
+
+- AI Analysis & Market Data is collapsed by default
+- clicking its header expands/collapses it
+- use an accessible button with aria-expanded
+- preserve the user’s open/closed state during normal polling/render updates
+- do not automatically reopen or close it whenever data refreshes
+- no excessive animation
+- no layout jump from duplicate cards
+
+9. Tablet and desktop:
+
+- use the same unified module
+- the detailed subsection may be expanded by default above 820px
+- do not restore a separate AI Decision Studio card
+
+10. Preserve all logic:
+
+- AI decisions
+- candidate selection
+- polling
+- PAPER Automate
+- LIVE execution
+- evidence
+- timeline
+- chart updates
+- decision states
+- API calls
+
+This is a UI consolidation only.
+
+11. Ensure render() no longer updates removed duplicate visible fields unnecessarily.
+
+Refactor shared values so one update path renders each metric.
+
+12. Verify:
+
+- all information from both old modules is still accessible
+- no metric is shown twice
+- selecting another candidate updates the unified card correctly
+- polling does not reset the accordion state
+- AI Analysis opens and closes correctly
+- no duplicate element IDs remain
+- no console errors
+- mobile page becomes shorter
+- tablet and desktop remain usable
+
+At the end report:
+
+- exact old modules merged
+- unique data moved into the collapsible area
+- duplicated fields removed
+- DOM IDs retained or replaced
+- render functions changed
+- test results

@@ -797,10 +797,7 @@ h1,h2,h3{letter-spacing:-.035em;text-wrap:balance}
 .mission-card,#mission{background:radial-gradient(circle at 95% 5%,rgba(97,223,255,.10),transparent 38%),linear-gradient(145deg,#0d141b,#090d12)!important}
 #missionTitle{max-width:920px;font-size:clamp(34px,4.2vw,72px)!important;line-height:.98!important}
 #missionText{max-width:850px;font-size:clamp(15px,1.25vw,19px)!important;line-height:1.55}
-#decision-studio{border-color:rgba(97,223,255,.34)!important;background:linear-gradient(180deg,rgba(14,22,30,.98),rgba(8,12,17,.98))!important}
-#decision-studio:before{content:"";position:absolute;inset:0 auto 0 0;width:2px;background:linear-gradient(180deg,var(--cyan),transparent 80%);border-radius:2px}
-#decision-studio{position:relative;overflow:hidden}
-#decisionName{font-size:clamp(38px,4vw,66px)!important;line-height:1!important}
+/* #decision-studio merged into #primary-candidate .ai-analysis-section */
 #decisionTree{min-height:300px!important;border-radius:16px!important;background-color:#091019!important}
 #executionPreview{background:linear-gradient(180deg,#0d1116,#090c10)!important;border-color:rgba(242,198,104,.35)!important}
 #executionPreview .metric,#executionPreview .gate,.execution-metric{background:rgba(255,255,255,.025)!important;border:1px solid rgba(255,255,255,.045)!important}
@@ -825,7 +822,7 @@ button:hover,.btn:hover,a.btn:hover{transform:translateY(-1px)}
  .topbar{margin:0 0 14px!important;padding:10px 12px!important}
  #mission{padding:22px 20px!important}
  #missionTitle{font-size:clamp(31px,9vw,46px)!important}
- #decision-studio,#executionPreview,#positions,#wallet,#system{border-radius:18px!important}
+ #executionPreview,#positions,#wallet,#system{border-radius:18px!important}
  #decisionTree{min-height:230px!important}
  .panel{border-radius:18px!important}
 }
@@ -834,7 +831,6 @@ button:hover,.btn:hover,a.btn:hover{transform:translateY(-1px)}
  #mission{padding:20px 16px!important}
  #missionTitle{font-size:34px!important}
  #missionText{font-size:15px!important}
- #decisionName{font-size:44px!important}
  #decisionTree{min-height:205px!important}
  button,.btn,a.btn{min-height:46px}
 }
@@ -1096,7 +1092,26 @@ html[data-theme="light"] .sidebar,html[data-theme="light"] .topbar,html[data-the
  }
 }
 
-/* ─── Narrow phone ───────────────────────────────────────────────────────── */
+/* ─── AI Analysis & Market Data collapsible (inside Primary Candidate) ─────── */
+ .ai-analysis-section{border-top:1px solid var(--line)!important;margin-top:12px!important;padding-top:0!important}
+ .ai-analysis-toggle{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:8px!important;padding:10px 0!important;cursor:pointer!important;list-style:none!important;font-size:10px!important;font-weight:760!important;letter-spacing:.06em!important;color:var(--muted)!important;user-select:none!important;outline:0!important;width:100%!important}
+ .ai-analysis-toggle::-webkit-details-marker,.ai-analysis-toggle::marker{display:none!important}
+ .ai-analysis-toggle:hover{color:#fff!important}
+ .ai-analysis-toggle::after{content:"▾";font-size:13px;opacity:.55;flex-shrink:0}
+ #ai-analysis[open] .ai-analysis-toggle::after{content:"▴"}
+ .ai-analysis-chips{display:flex!important;align-items:center!important;gap:6px!important;font-size:9px!important;color:var(--muted)!important;flex:1!important;justify-content:flex-end!important}
+ .ai-analysis-chips b{color:var(--cyan)!important}
+ .ai-analysis-body{padding-bottom:4px!important}
+ .ai-analysis-meta{font-size:9px!important;color:var(--muted)!important;margin:0 0 10px!important}
+ #ai-analysis .decision-tree{margin-top:10px!important}
+ #ai-analysis .ai-analysis-tabs{margin:10px -14px 0!important;padding:0 14px!important}
+ #ai-analysis .tab-pane.active{padding-top:8px!important}
+ #ai-analysis .mission-actions{margin-top:12px!important}
+ /* Workspace: only queue-panel remains after AI-Decision-Studio merge */
+ #workspace{grid-template-columns:minmax(0,420px)!important}
+@media(max-width:820px){#workspace{display:none!important}}
+
+ /* ─── Narrow phone ───────────────────────────────────────────────────────── */
 @media(max-width:320px){.mobile-nav button{font-size:9px!important}}
 
 /* ─── Tablet: 821–1024px ────────────────────────────────────────────────── */
@@ -1237,26 +1252,20 @@ html[data-theme="light"] .sidebar,html[data-theme="light"] .topbar,html[data-the
 <div class="mission-actions"><button aria-disabled="true" class="btn primary" disabled="disabled" id="reviewMission" type="button">Review candidate</button><button aria-disabled="true" class="btn" disabled="disabled" id="ignoreMission" type="button">Ignore for now</button></div>
 </div>
 </article>
-<aside class="panel">
+<aside class="panel" id="primary-candidate">
 <div class="panel-head"><h2>Primary Candidate</h2><span class="state wait" id="primaryState">WAITING</span></div>
 <div class="panel-body primary-card">
 <div class="token-head"><div><div class="token-name" id="primaryName">—</div><div class="score-caption" id="primaryMeta">No token selected</div></div><div><div class="big-score" id="primaryScore">—</div><div class="score-caption">AI SCORE</div></div></div>
 <div class="metric-row"><div class="metric"><small>Confidence</small><b id="primaryConfidence">—</b></div><div class="metric"><small>Risk</small><b id="primaryRisk">—</b></div><div class="metric"><small>Expected RR</small><b id="primaryRR">—</b></div></div>
 <div class="check-strip" id="primaryChecks"><div class="mini-check">TOP 10 —</div><div class="mini-check">LIQUIDITY —</div><div class="mini-check" id="momentumCheck">MOMENTUM —</div><div class="mini-check">DEVELOPER —</div></div>
 <div class="reason" id="primaryReason"><b>No verified candidate.</b><span>Waiting for the live discovery and decision feed.</span></div>
+<details class="ai-analysis-section" id="ai-analysis"><summary class="ai-analysis-toggle" aria-label="AI Analysis and Market Data"><span>AI Analysis &amp; Market Data</span><span class="ai-analysis-chips"><b id="decisionData">—</b><small>data</small><span class="eyebrow" id="decisionLane">WAITING</span></span></summary><div class="ai-analysis-body"><p class="ai-analysis-meta" id="decisionMeta">Awaiting backend data</p><div class="reason" id="decisionReason"><b>Momentum and holder quality are confirmed.</b><span>Final pre-trade validation is required before simulated execution.</span></div><div class="decision-tree" id="decisionTree"><div class="empty-state production-empty">Decision checks will appear after a candidate is evaluated.</div></div><div class="inspector-tabs ai-analysis-tabs"><button class="itab active" data-tab="evidence" type="button">Evidence</button><button class="itab" data-tab="timeline" type="button">Timeline</button><button class="itab" data-tab="memory" type="button">Memory</button></div><div class="tab-pane active" id="pane-evidence"><div class="empty-state production-empty">No evidence available.</div></div><div class="tab-pane" id="pane-timeline"><div class="empty-state production-empty">No decision timeline available.</div></div><div class="tab-pane" id="pane-memory"><div class="empty-state production-empty">No historical decision memory available.</div></div><div class="mission-actions"><button aria-disabled="true" class="btn primary" disabled="disabled" id="validateBtn" type="button">Validate execution</button><button aria-disabled="true" class="btn" disabled="disabled" id="replayBtn" type="button">Decision replay</button><button aria-disabled="true" class="btn" disabled="disabled" id="compareBtn" type="button">Compare</button></div></div></details>
 </div>
 </aside>
 </section>
 <section aria-label="Live data freshness" class="live-strip"><div class="live-item"><small>Market stream</small><b id="marketAge">—</b><div class="pulse"><i id="marketPulse" style="width:0%"></i></div></div><div class="live-item"><small>Holder data</small><b id="holderAge">—</b><div class="pulse"><i id="holderPulse" style="width:0%"></i></div></div><div class="live-item"><small>Decision queue</small><b id="queueSpeed">0 / min</b><div class="pulse"><i style="width:0%"></i></div></div><div class="live-item"><small>Strategy sync</small><b id="strategySync">NOT CONFIGURED</b><div class="pulse"><i style="width:0%"></i></div></div></section>
 <section class="grid workspace" id="workspace">
 <article class="panel queue-panel"><div class="panel-head"><h2>Attention Queue</h2><span class="chip" id="queueCount">0 tokens</span></div><div class="panel-body"><div class="queue" id="candidateQueue"><div class="empty-state production-empty">No candidates yet. Waiting for the live discovery and decision feed.</div></div></div></article>
-<article class="panel decision-canvas" id="decision-studio"><div class="decision-rail-label">DECISION CORE</div><div class="panel-head"><h2>AI Decision Studio</h2><span class="state wait" id="decisionState">WAITING</span></div><div class="panel-body">
-<div class="decision-title"><div><div class="eyebrow" id="decisionLane">WAITING</div><h3 id="decisionName">No candidate selected</h3><div class="score-caption" id="decisionMeta">Awaiting backend data</div></div><div class="score-boxes"><div class="score-box"><b id="decisionScore">—</b><small>Score</small></div><div class="score-box"><b id="decisionConfidence">—</b><small>Confidence</small></div><div class="score-box"><b id="decisionData">—</b><small>Data</small></div></div></div>
-<div class="reason green" id="decisionReason"><b>Momentum and holder quality are confirmed.</b><span>Final pre-trade validation is required before simulated execution.</span></div>
-<div class="decision-tree" id="decisionTree"><div class="empty-state production-empty">Decision checks will appear after a candidate is evaluated.</div></div>
-<div class="mission-actions"><button aria-disabled="true" class="btn primary" disabled="disabled" id="validateBtn" type="button">Validate execution</button><button aria-disabled="true" class="btn" disabled="disabled" id="replayBtn" type="button">Decision replay</button><button aria-disabled="true" class="btn" disabled="disabled" id="compareBtn" type="button">Compare</button></div>
-</div></article>
-<aside class="panel inspector" id="inspector"><div class="panel-head"><h2>Inspector</h2><span class="chip">VERIFIABLE</span></div><div class="inspector-tabs"><button class="itab active" data-tab="evidence" type="button">Evidence</button><button class="itab" data-tab="timeline" type="button">Timeline</button><button class="itab" data-tab="memory" type="button">Memory</button></div><div class="panel-body"><div class="tab-pane active" id="pane-evidence"><div class="empty-state production-empty">No evidence available.</div></div><div class="tab-pane" id="pane-timeline"><div class="empty-state production-empty">No decision timeline available.</div></div><div class="tab-pane" id="pane-memory"><div class="empty-state production-empty">No historical decision memory available.</div></div></div></aside>
 </section>
 
 <section aria-labelledby="market-chart-title" class="panel market-chart-module" id="market-chart-module">
@@ -1291,7 +1300,7 @@ html[data-theme="light"] .sidebar,html[data-theme="light"] .topbar,html[data-the
 <div class="execution-grid"><div class="exec-cell"><small>Size</small><b id="executionSize">—</b></div><div class="exec-cell"><small>Quote age</small><b id="quoteAge">—</b></div><div class="exec-cell"><small>Slippage</small><b id="executionSlippage">—</b></div><div class="exec-cell"><small>Risk budget</small><b id="executionRiskGate" style="color:var(--yellow)">PENDING</b></div><div class="exec-cell"><small>Balance</small><b id="walletBalanceGate" style="color:var(--muted)">—</b></div><div class="exec-cell"><small>Wallet</small><b id="walletExecutionGate" style="color:var(--yellow)">NOT CONNECTED</b></div><div class="exec-cell"><small>Route</small><b id="executionRouteGate" style="color:var(--yellow)">PENDING</b></div></div>
 <div aria-live="polite" class="primary-blocker" id="primaryBlocker">
 <div><small>Why locked?</small><b id="primaryBlockerTitle">Waiting for complete market and AI validation</b><span id="primaryBlockerText">Execution parameters remain unavailable until a candidate reaches BUY READY with a fresh quote, route and risk approval.</span></div>
-<a class="btn" href="#decision-studio" id="primaryBlockerAction">View decision</a>
+<a class="btn" href="#primary-candidate" id="primaryBlockerAction">View decision</a>
 </div><div aria-live="polite" class="execution-readiness"><div><small>Pre-trade readiness</small><b id="executionReadinessCount">2 / 9 checks</b></div><div class="readiness-track"><i id="executionReadinessBar"></i></div><div class="readiness-label" id="executionReadinessLabel">Market and AI validation pending</div></div>
 <div class="execution-verdict"><p>Execution remains locked until the selected candidate reaches BUY READY and all server-side checks are current.</p><strong>Execution locked</strong></div>
 </section>
@@ -1648,8 +1657,8 @@ const selected=()=>state.candidates.find(c=>c.id===state.selected)||emptyCandida
 const toast=msg=>{const t=$('#toast');if(!t)return; t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1800)};
 function stateClass(s){return s==='BUY READY'?'buy':s==='WATCH'?'watch':s==='BLOCKED'?'block':'wait'}
 function renderQueue(target='#candidateQueue'){const el=$(target);if(!el)return;if(!state.candidates.length){el.innerHTML='<div class="empty-state production-empty">No candidates yet. Waiting for the live discovery and decision feed.</div>';return}el.innerHTML=state.candidates.map(c=>`<button class="candidate ${c.id===state.selected?'active':''}" data-candidate="${c.id}" type="button"><div class="candidate-top"><span><span class="lane">${c.lane||'QUEUE'}</span> <span class="candidate-name">${c.name||c.symbol||'Unknown'}</span></span><span class="state ${stateClass(c.state)}">${c.state||'WAITING'}</span></div><div class="candidate-meta"><span>Score ${c.score??'—'} · ${c.confidence??'—'}% confidence</span><span>${c.priority!=null?'P'+c.priority:'—'}</span></div></button>`).join('');el.querySelectorAll('[data-candidate]').forEach(b=>b.addEventListener('click',()=>{state.selected=b.dataset.candidate;render();const c=selected();window.dispatchEvent(new CustomEvent('memeflow:candidatechange',{detail:{name:c.name,symbol:c.symbol||c.name,tokenAddress:c.mint||c.tokenAddress||''}}))}))}
-function render(){const c=selected();renderQueue();renderQueue('#mobileQueue'); const has=!!c.id;
- const set=(id,v)=>{const e=$(id);if(e)e.textContent=v}; set('#candidateCount',state.candidates.length);set('#buyReadyCount',state.candidates.filter(x=>x.state==='BUY READY').length);set('#positionCount',state.positions.length);set('#queueCount',`${state.candidates.length} tokens`);set('#primaryName',has?(c.name||c.symbol):'—');set('#primaryScore',has?(c.score??'—'):'—');set('#primaryConfidence',has&&c.confidence!=null?`${c.confidence}%`:'—');set('#primaryRisk',has?(c.risk||'—'):'—');set('#decisionName',has?(c.name||c.symbol):'No candidate selected');set('#decisionScore',has?(c.score??'—'):'—');set('#decisionConfidence',has&&c.confidence!=null?`${c.confidence}%`:'—');set('#decisionData',has&&c.data!=null?`${c.data}%`:'—');set('#decisionLane',has?`${c.lane||'QUEUE'}${c.priority!=null?' · PRIORITY '+c.priority:''}`:'WAITING');set('#decisionMeta',has?(c.meta||'Verified backend data'):'Awaiting backend data');set('#chartSymbol',has?(c.symbol||c.name):'—');
+function render(){const c=selected();renderQueue();renderQueue('#mobileQueue'); const has=!!c.id;const _aiAnalysis=document.getElementById('ai-analysis');const _aiOpen=_aiAnalysis?_aiAnalysis.open:undefined;
+ const set=(id,v)=>{const e=$(id);if(e)e.textContent=v}; set('#candidateCount',state.candidates.length);set('#buyReadyCount',state.candidates.filter(x=>x.state==='BUY READY').length);set('#positionCount',state.positions.length);set('#queueCount',`${state.candidates.length} tokens`);set('#primaryName',has?(c.name||c.symbol):'—');set('#primaryScore',has?(c.score??'—'):'—');set('#primaryConfidence',has&&c.confidence!=null?`${c.confidence}%`:'—');set('#primaryRisk',has?(c.risk||'—'):'—');set('#decisionData',has&&c.data!=null?`${c.data}%`:'—');set('#decisionLane',has?`${c.lane||'QUEUE'}${c.priority!=null?' · PRIORITY '+c.priority:''}`:'WAITING');set('#decisionMeta',has?(c.meta||'Verified backend data'):'Awaiting backend data');set('#chartSymbol',has?(c.symbol||c.name):'—');
  /* MEMEFLOW_PRIMARY_BINDING_V2 */
  const first=(...v)=>v.find(x=>x!==undefined&&x!==null&&x!=='');
  const numberOrNull=(...v)=>{const x=first(...v);if(x===undefined)return null;const n=Number(x);return Number.isFinite(n)?n:null};
@@ -1669,18 +1678,17 @@ function render(){const c=selected();renderQueue();renderQueue('#mobileQueue'); 
  const developer=pct(c.developerPct,c.developerSharePct,c.evidence?.developerPct,c.evidence?.['Developer']);
  const primaryChecks=$('#primaryChecks');if(primaryChecks)primaryChecks.innerHTML=`<div class="mini-check ${top10==='—'?'wait':'pass'}">TOP 10 ${top10}</div><div class="mini-check ${liquidity==='—'?'wait':'pass'}">LIQUIDITY ${liquidity}</div><div class="mini-check ${momentum==='—'?'wait':'pass'}" id="momentumCheck">MOMENTUM ${momentum}</div><div class="mini-check ${developer==='—'?'wait':'pass'}">DEVELOPER ${developer}</div>`;
  const primaryReason=$('#primaryReason');if(primaryReason){const reasons=Array.isArray(c.reasons)?c.reasons.filter(Boolean):[];const headline=first(c.primaryReason,reasons[0],has?'Waiting for complete market and AI evaluation.':'No verified candidate.');const details=reasons.slice(1,4).join(' · ')||first(c.meta,has?'Decision data received from the server.':'Waiting for the live discovery and decision feed.');primaryReason.className='reason '+(c.state==='BLOCKED'?'red':c.state==='BUY READY'?'green':c.state==='WATCH'?'cyan':'');primaryReason.innerHTML=`<b>${headline}</b><span>${details}</span>`}
- const ds=$('#decisionState');if(ds){ds.textContent=has?(c.state||'WAITING'):'WAITING';ds.className='state '+stateClass(has?c.state:'WAITING')}
  const btn=$('#validateBtn');if(btn){btn.disabled=!has||c.state!=='BUY READY';btn.setAttribute('aria-disabled',String(btn.disabled))}
  const cp=$('#contextPrimary'),cs=$('#contextSecondary'); if(cp){const ready=has&&c.state==='BUY READY';cp.setAttribute('aria-disabled',String(!ready));cp.tabIndex=ready?0:-1;cp.href=ready?'#executionPreview':'#';cp.textContent=ready?'Review pre-trade checks':'Waiting for candidate'} if(cs){const available=has&&c.evidence&&Object.keys(c.evidence).length>0;cs.setAttribute('aria-disabled',String(!available));cs.tabIndex=available?0:-1;cs.href=available?'#inspector':'#';cs.textContent=available?'View evidence':'Evidence unavailable'}
  const ev=$('#pane-evidence');if(ev)ev.innerHTML=has&&c.evidence?`<div class="data-list">${Object.entries(c.evidence).map(([k,v])=>`<div class="data-row"><span>${k}</span><b>${v??'—'}</b></div>`).join('')}</div>`:'<div class="empty-state production-empty">No evidence available.</div>';
  const tl=$('#pane-timeline');if(tl)tl.innerHTML=has&&c.timeline?.length?`<div class="timeline">${c.timeline.map(e=>`<div class="event"><time>${e[0]||'—'}</time><div><b>${e[1]||''}</b><p>${e[2]||''}</p></div></div>`).join('')}</div>`:'<div class="empty-state production-empty">No decision timeline available.</div>';
- document.dispatchEvent(new CustomEvent('memeflow:statechange',{detail:{candidate:clone(c),incident:state.incident}}));
+ if(_aiAnalysis&&_aiOpen!==undefined)_aiAnalysis.open=_aiOpen;document.dispatchEvent(new CustomEvent('memeflow:statechange',{detail:{candidate:clone(c),incident:state.incident}}));
 }
 async function refresh(){state.loading=true;try{const _dac=new AbortController();setTimeout(()=>_dac.abort(),8000);const r=await fetch('/api/ai/decisions?limit=50',{credentials:'include',headers:{accept:'application/json'},signal:_dac.signal});if(!r.ok)throw new Error(`Decision feed ${r.status}`);const d=await r.json();const rows=Array.isArray(d)?d:Array.isArray(d.decisions)?d.decisions:[];state.candidates=rows.filter(Boolean).map((row,i)=>{const mint=row.mint||row.tokenMint||row.tokenAddress||row.address||'';return {...row,mint,id:row.id||mint||`decision-${i}`};});if(!state.candidates.some(c=>c.id===state.selected))state.selected=state.candidates[0]?.id||null;}catch(error){state.candidates=[];state.selected=null;console.info('Decision feed unavailable:',error.message)}finally{state.loading=false;render()}}
 $$('.itab').forEach(b=>b.addEventListener('click',()=>{$$('.itab').forEach(x=>x.classList.remove('active'));$$('.tab-pane').forEach(x=>x.classList.remove('active'));b.classList.add('active');$('#pane-'+b.dataset.tab)?.classList.add('active')}));
 $('#validateBtn')?.addEventListener('click',()=>toast('Execution remains server-gated.'));$('#reviewMission')?.addEventListener('click',()=>$('#workspace')?.scrollIntoView({behavior:'smooth'}));
 window.MEMEFLOW_CORE={getState:()=>clone(state),getSelected:()=>clone(selected()),select:id=>{if(!state.candidates.some(c=>c.id===id))return false;state.selected=id;render();return true},render,refresh,toast,setIncident:on=>{state.incident=Boolean(on);document.body.dataset.incident=String(Boolean(on));render()},setStale:on=>document.body.classList.toggle('data-stale',Boolean(on)),openSheet:()=>{},closeSheets:()=>{}};
-render();refresh();setInterval(refresh,10000);
+render();(()=>{const d=document.getElementById('ai-analysis');if(d&&window.innerWidth>820)d.open=true})();refresh();setInterval(refresh,10000);
 })();</script><script id="wallet-integration-script">
 (()=>{
   'use strict';
@@ -1827,7 +1835,7 @@ render();refresh();setInterval(refresh,10000);
       setGate('#walletBalanceGate',w.address?'WAIT':'—',w.address?'var(--yellow)':'var(--muted)');
       setText('#primaryBlockerTitle',hasCandidate?'Waiting for complete market and AI validation':'No executable candidate selected');
       setText('#primaryBlockerText',hasCandidate?'Execution parameters remain unavailable until this candidate reaches BUY READY with a fresh quote, route and risk approval.':'Select a candidate from the authenticated decision feed. Execution parameters will remain unavailable until it reaches BUY READY.');
-      if(blockerAction){blockerAction.textContent='View decision';blockerAction.href='#decision-studio'}
+      if(blockerAction){blockerAction.textContent='View decision';blockerAction.href='#primary-candidate'}
       setText('#executionReadinessCount','2 / 9 checks');setText('#executionReadinessLabel','Market and AI validation pending');
       if(readinessBar)readinessBar.style.width='22%';
     }else{
@@ -2111,7 +2119,7 @@ render();refresh();setInterval(refresh,10000);
  function applySnapshot(d){points=d?.points||points;const st=d?.status||{};pairMeta.textContent=[st.source,st.quote,st.account].filter(Boolean).join(' · ')||pairMeta.textContent;setStatus(st.stale?'stale':'live',st.stale?'STALE':'LIVE',st.source||'Solana on-chain source');render()}
  function connect(){if(es)es.close();if(!tokenAddress)return;const q=new URLSearchParams({chainId,tokenAddress,interval,limit:'600'});es=new EventSource('/api/chart/stream?'+q);es.addEventListener('snapshot',ev=>applySnapshot(JSON.parse(ev.data)));es.addEventListener('update',ev=>{const d=JSON.parse(ev.data);if(d.snapshot){applySnapshot(d.snapshot);return}if(d.point){points.push(d.point);if(points.length>1200)points.splice(0,points.length-1200);setStatus('live','LIVE',d.status?.source||d.point?.source||'Solana realtime stream');render()}else if(d.status){setStatus(d.status.stale?'stale':'error',d.status.stale?'STALE':'ERROR',d.status.error||d.status.source||'Solana source delayed')}});es.onerror=()=>{setStatus('error','RECONNECTING','Solana realtime stream interrupted');es.close();clearTimeout(reconnectTimer);reconnectTimer=setTimeout(connect,2500)}}
  function showUnavailable(reason){if(es)es.close();points=[];empty.classList.remove('hidden');empty.innerHTML=`<b>Chart unavailable</b><span>${reason}</span>`;setStatus('error','UNAVAILABLE',reason);pairMeta.textContent='Solana on-chain data required';render()}
-  function selectToken(detail={}){const next=detail.tokenAddress||detail.mint||'';document.getElementById('chartSymbol').textContent=detail.symbol||detail.name||document.getElementById('decisionName')?.textContent||'TOKEN';if(next===tokenAddress&&points.length)return;tokenAddress=next;points=[];load()}
+  function selectToken(detail={}){const next=detail.tokenAddress||detail.mint||'';document.getElementById('chartSymbol').textContent=detail.symbol||detail.name||document.getElementById('primaryName')?.textContent||'TOKEN';if(next===tokenAddress&&points.length)return;tokenAddress=next;points=[];load()}
  $$('.chart-intervals button').forEach(btn=>btn.addEventListener('click',()=>{$$('.chart-intervals button').forEach(x=>x.classList.toggle('active',x===btn));interval=btn.dataset.chartInterval;points=[];load()}));window.addEventListener('memeflow:candidatechange',e=>selectToken(e.detail||{}));window.addEventListener('memeflow:trade',e=>{events.push(e.detail||{});render()});window.addEventListener('memeflow:settingschange',e=>{const s=e.detail?.settings||{};window.MEMEFLOW_CHART_SETTINGS={tp1:+(s.tp1||25),tp2:+(s.tp2||60),stopLoss:+(s.stopLoss||25)};render()});setInterval(updateAge,1000);config().then(load);window.MEMEFLOW_CHART={setToken:selectToken,addTrade:e=>{events.push(e);render()},refresh:load,getState:()=>({chainId,tokenAddress,interval,points:[...points]})};
 })();
 </script><script src="/router.js" defer></script>
@@ -2181,9 +2189,6 @@ function sync(c){
  const momentum=first(c?.buyPressure,c?.momentum);
  const quoteAge=finite(c?.quoteAgeMs)?Number(c.quoteAgeMs):null;
 
- // AI Decision Studio: same state and reasons as Primary Candidate.
- const badge=$('#decisionState');
- if(badge){badge.textContent=state;badge.className='state '+(state==='BUY READY'?'buy':state==='BLOCKED'?'block':state==='WATCH'?'watch':'wait')}
  const reason=$('#decisionReason');
  if(reason){
    const headline=first(c?.primaryReason,reasons[0],has?'Evaluation in progress':'No candidate selected');
