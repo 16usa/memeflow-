@@ -142,8 +142,12 @@ test('settings default includes operatingMode=observe', async () => {
   assert.equal(r.json.settings.operatingMode, 'observe');
 });
 
-test('Free user can set operatingMode=automate in paper environment', async () => {
+// ── Required spec scenarios ──────────────────────────────────────────────────
+
+// Scenario 1: Free user with no wallet can save PAPER + Automate
+test('[SPEC] Free user (no wallet) can save {paper, automate}', async () => {
   const cookie = await newSession();
+  // No wallet connected or verified — session has none
   const r = await api('PUT', '/api/settings', {
     cookie,
     body: { settings: { operatingMode: 'automate', tradingEnvironment: 'paper' } },
@@ -151,6 +155,82 @@ test('Free user can set operatingMode=automate in paper environment', async () =
   assert.equal(r.status, 200, `Expected 200, got ${r.status}: ${JSON.stringify(r.json)}`);
   assert.equal(r.json.settings.operatingMode, 'automate');
   assert.equal(r.json.settings.tradingEnvironment, 'paper');
+});
+
+// Scenario 2: Free user with no wallet can read back PAPER + Automate settings
+test('[SPEC] Free user (no wallet) can retrieve PAPER Automate settings after save', async () => {
+  const cookie = await newSession();
+  await api('PUT', '/api/settings', {
+    cookie,
+    body: { settings: { operatingMode: 'automate', tradingEnvironment: 'paper' } },
+  });
+  const r = await api('GET', '/api/settings', { cookie });
+  assert.equal(r.status, 200);
+  assert.equal(r.json.settings.operatingMode, 'automate');
+  assert.equal(r.json.settings.tradingEnvironment, 'paper');
+});
+
+// Scenario 3: PAPER Automate does not require Pro, owner, or any entitlement
+test('[SPEC] PAPER Automate settings accepted — no Pro required', async () => {
+  const cookie = await newSession();
+  const r = await api('PUT', '/api/settings', {
+    cookie,
+    body: { settings: { operatingMode: 'automate', tradingEnvironment: 'paper' } },
+  });
+  // Must not return 402 or 403
+  assert.notEqual(r.status, 402, 'Should not require payment for PAPER Automate');
+  assert.notEqual(r.status, 403, 'Should not require entitlement for PAPER Automate');
+  assert.equal(r.status, 200);
+});
+
+// Scenario 4: PAPER never delegates to LIVE execution path
+test('[SPEC] PAPER Automate: positions are simulated (simulated=true), LIVE execute blocked', async () => {
+  const cookie = await newSession();
+  await api('PUT', '/api/settings', {
+    cookie,
+    body: { settings: { operatingMode: 'automate', tradingEnvironment: 'paper' } },
+  });
+  const rStatus = await api('GET', '/api/paper/status', { cookie });
+  assert.equal(rStatus.json.simulated, true, 'PAPER must be simulated');
+  assert.equal(rStatus.json.walletRequired, false);
+  assert.equal(rStatus.json.proRequired, false);
+  // Live execution endpoint remains blocked
+  const rLive = await api('POST', '/api/live/execute', { cookie });
+  assert.equal(rLive.status, 402, 'LIVE execute must still be blocked for free user in PAPER mode');
+});
+
+// Scenario 5: Free user cannot save LIVE + Automate (tradingEnvironment gate)
+test('[SPEC] Free user cannot save {live, automate}', async () => {
+  const cookie = await newSession();
+  const r = await api('PUT', '/api/settings', {
+    cookie,
+    body: { settings: { operatingMode: 'automate', tradingEnvironment: 'live' } },
+  });
+  assert.equal(r.status, 403, `Expected 403 for LIVE+Automate on free user, got ${r.status}: ${JSON.stringify(r.json)}`);
+  assert.equal(r.json.error, 'LIVE_ENTITLEMENT_REQUIRED');
+});
+
+// Scenario 6: Free user cannot save {live, observe} either (env gate is unconditional for LIVE)
+test('[SPEC] Free user cannot save ANY setting with tradingEnvironment=live', async () => {
+  const cookie = await newSession();
+  for (const mode of ['observe', 'assist', 'automate']) {
+    const r = await api('PUT', '/api/settings', {
+      cookie,
+      body: { settings: { operatingMode: mode, tradingEnvironment: 'live' } },
+    });
+    assert.equal(r.status, 403, `Mode=${mode}: expected 403, got ${r.status}`);
+    assert.equal(r.json.error, 'LIVE_ENTITLEMENT_REQUIRED');
+  }
+});
+
+// Scenario 7: capabilities response advertises paperAutomation correctly
+test('[SPEC] capabilities.paperAutomation=true for free user', async () => {
+  const cookie = await newSession();
+  const r = await api('GET', '/api/settings', { cookie });
+  assert.equal(r.status, 200);
+  // paperAutomation must be true for all users; liveAutomation false for free users
+  assert.equal(r.json.capabilities.paperAutomation, true, 'capabilities.paperAutomation must be true');
+  assert.equal(r.json.capabilities.liveAutomation, false, 'capabilities.liveAutomation must be false for free user');
 });
 
 test('Free user cannot set tradingEnvironment=live', async () => {

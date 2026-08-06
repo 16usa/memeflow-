@@ -1,0 +1,131 @@
+Integrate the already extracted PAPER Automate patch into the CURRENT project structure.
+
+Project:
+~/workspace/memeflow-app
+
+Patch files already exist here:
+~/workspace/memeflow-app/paper-automate-patch
+
+Important:
+- The automatic installer aborted because evaluateAll() in the current app-server.mjs differs from the older expected structure.
+- Do not rerun the installer blindly.
+- Inspect the current code first and integrate the patch manually into the current implementation.
+- Preserve all current project changes.
+- Do not revert app-server.mjs, index.html, store.mjs, UI design, wallet, billing, or API changes.
+
+Files to inspect:
+- app-server.mjs
+- src/store.mjs
+- src/evaluate.mjs
+- index.html
+- paper-automate-patch/src/paper-engine.mjs
+- paper-automate-patch/paper-automation-ui.js
+- paper-automate-patch/paper-automation-ui.css
+- paper-automate-patch/self-test.mjs
+
+Tasks:
+
+1. Create backups before changing anything:
+   - app-server.before-paper-automate.mjs
+   - src/store.before-paper-automate.mjs
+   - index.before-paper-automate.html
+
+2. Copy:
+   paper-automate-patch/src/paper-engine.mjs
+   to:
+   src/paper-engine.mjs
+
+3. Integrate PaperEngine into the CURRENT app-server.mjs:
+   - import PaperEngine
+   - initialize it using the existing JsonStore
+   - find the current decision evaluation flow
+   - after each user-specific decision is persisted, call:
+     paper.onDecision(userId, token, savedDecision, userSettings)
+   - do not assume the old evaluateAll() format
+   - integrate with the actual current function structure
+
+4. Find every place where token price or token enrichment is updated.
+   After the updated token is stored, call:
+   paper.onTokenUpdate(mint, updatedToken)
+
+5. Extend the CURRENT JsonStore state safely with:
+   - paperPositions
+   - paperTrades
+   - paperProposals
+   - paperProcessed
+   - paperMetrics
+
+   Preserve all existing state fields and stored data.
+
+6. Ensure defaults include:
+   tradingEnvironment: 'paper'
+
+   Allowed values:
+   tradingEnvironment:
+   - paper
+   - live
+
+   operatingMode:
+   - observe
+   - assist
+   - automate
+
+7. Validate settings server-side:
+   - reject invalid operatingMode
+   - reject invalid tradingEnvironment
+   - PAPER Automate must not require wallet, Pro, or owner access
+   - LIVE must remain locked unless liveEntitled or isOwner is verified by the server
+
+8. Add authenticated and user-isolated routes:
+   - GET /api/paper/positions
+   - GET /api/paper/trades
+   - GET /api/paper/proposals
+   - GET /api/paper/status
+   - POST /api/paper/proposals/:id/approve
+   - POST /api/paper/proposals/:id/reject
+   - POST /api/paper/positions/:id/close
+
+9. Copy and connect:
+   - paper-automation-ui.js
+   - paper-automation-ui.css
+
+   Add them to index.html exactly once.
+   Do not redesign the existing page.
+
+10. Required behavior:
+   - Observe: analysis only
+   - Assist: creates one pending PAPER proposal
+   - Automate in PAPER: automatically opens a simulated position on BUY READY
+   - repeated polling must not create duplicates
+   - PAPER must work without wallet and without Pro
+   - LIVE must remain Pro $49.99/month or Owner only
+   - PAPER must never call a real transaction signing or broadcast function
+
+11. Automatic exits:
+   - hard stop
+   - TP1 once
+   - TP2 once
+   - trailing stop
+   - max holding time
+   - buy-pressure exit only when buy-pressure data exists
+
+12. Run:
+   node paper-automate-patch/self-test.mjs
+
+13. Add integration tests for the current app-server implementation, including:
+   - Free PAPER Automate entry
+   - no duplicate entry
+   - Observe does not trade
+   - Assist creates proposal only
+   - user isolation
+   - Free user cannot use LIVE
+   - no PAPER path reaches LIVE transaction code
+
+14. Do not claim completion based only on the standalone self-test.
+
+15. At the end report:
+   - every changed file
+   - backup files created
+   - standalone test result
+   - integration test result
+   - whether the full BUY READY → PAPER entry → exit → P&L lifecycle passed

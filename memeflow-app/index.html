@@ -1711,6 +1711,10 @@ render();refresh();setInterval(refresh,10000);
  const n=(o,k)=>Number(o?.[k]||0);
  // ── Automate eligibility (computed from all gates, never from capabilities alone) ──
  function automateBlockingReasons(){
+   // PAPER: no wallet, no Pro, no entitlement required.
+   // All LIVE checks apply only when tradingEnvironment is explicitly 'live'.
+   const env=(loaded?.tradingEnvironment||'paper').toLowerCase();
+   if(env!=='live')return [];
    const b=[];
    const effectivePro=Boolean(billingGate.liveEntitled||billingGate.isOwner||billingGate.entitlementSource==='owner');
    if(!effectivePro)b.push('Pro or owner entitlement required');
