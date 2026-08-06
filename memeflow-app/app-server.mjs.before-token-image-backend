@@ -53,12 +53,6 @@ function candidateView(d){
     tokenAddress:d.mint,
     name:t.name||t.symbol||d.mint.slice(0,6),
     symbol:t.symbol||'TOKEN',
-    /* MEMEFLOW_TOKEN_METADATA_IMAGE_V1 */
-    uri:t.uri||null,
-    metadataUri:t.metadataUrl||t.uri||null,
-    imageUrl:t.imageUrl||t.image||t.logoUrl||null,
-    image:t.imageUrl||t.image||t.logoUrl||null,
-    logoUrl:t.logoUrl||t.imageUrl||t.image||null,
     state:d.state,
     score:d.score,
     confidence:d.confidence,

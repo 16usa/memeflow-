@@ -1,0 +1,94 @@
+(() => {
+  'use strict';
+  const VERSION='MEMEFLOW_FINAL_MARKET_CHART_V1';
+  if(window[VERSION]) return;
+  window[VERSION]=true;
+  const INTERVALS={'1s':1000,'1m':60000,'5m':300000,'15m':900000,'1h':3600000,all:0};
+  const PREFIX='mf_final_ohlc_v1:';
+  const state={interval:'1s',tokenKey:'',samples:[],lastPrice:null,lastSampleAt:0,timer:null,raf:0};
+
+  const text=(sels,f='—')=>{for(const s of sels){const v=document.querySelector(s)?.textContent?.trim();if(v&&v!=='—')return v}return f};
+  const parsePrice=raw=>{const m=String(raw||'').replace(/,/g,'').replace(/\$/g,'').match(/-?\d+(?:\.\d+)?(?:e[+-]?\d+)?/i);const v=m?Number(m[0]):NaN;return Number.isFinite(v)&&v>0?v:null};
+  const formatPrice=v=>!Number.isFinite(v)?'—':v>=1e6?'$'+(v/1e6).toFixed(2)+'M':v>=1e3?'$'+(v/1e3).toFixed(2)+'K':v>=1?'$'+v.toFixed(4):v>=.001?'$'+v.toFixed(6):'$'+v.toExponential(5);
+  const tokenName=()=>text(['#decisionName','#chartSymbol','.token-name'],'Token');
+  const tokenMeta=()=>text(['#decisionMeta','#chartPairMeta'],'Solana bonding curve');
+  const tokenKey=()=>text(['[data-token-address-text]','.token-address','#decisionMeta','#chartSymbol'],tokenName()).replace(/\s+/g,'_').slice(0,140);
+  const currentPrice=()=>parsePrice(text(['#chartCurrentPrice'],''));
+  const selectedCandidate=()=>window.MEMEFLOW_CORE?.getSelected?.()||window.currentCandidate||window.selectedCandidate||null;
+  const tokenImage=()=>{
+    const c=selectedCandidate();
+    const candidates=[
+      c?.image,c?.imageUrl,c?.image_url,c?.logo,c?.logoUrl,c?.logo_url,c?.icon,c?.iconUrl,
+      c?.metadata?.image,c?.metadata?.imageUrl,c?.token?.image,c?.token?.logo,
+      c?.market?.image,c?.marketData?.image
+    ];
+    for(const value of candidates){
+      if(typeof value==='string'&&/^https?:\/\//i.test(value.trim())) return value.trim();
+    }
+    for(const s of [
+      '#decision-studio img[src]','.primary-card img[src]','.candidate.active img[src]',
+      '.candidate img[src]','.token-logo img[src]','.token-avatar img[src]',
+      '[data-token-image] img[src]','img[data-token-logo][src]','[data-image-url] img[src]'
+    ]){
+      const i=document.querySelector(s);
+      if(i?.src&&!i.src.startsWith('data:image/svg+xml')) return i.src;
+    }
+    return '';
+  };
+  const load=k=>{try{const x=JSON.parse(localStorage.getItem(PREFIX+k)||'[]');return Array.isArray(x)?x.filter(a=>Number.isFinite(a?.t)&&Number.isFinite(a?.p)):[]}catch{return[]}};
+  const save=()=>{try{localStorage.setItem(PREFIX+state.tokenKey,JSON.stringify(state.samples.slice(-12000)))}catch{}};
+
+  function aggregate(step){
+    if(!state.samples.length)return[];
+    if(!step){const r=state.samples.at(-1).t-state.samples[0].t;step=Math.max(1000,Math.ceil(Math.max(r,1)/70))}
+    const b=new Map();
+    for(const s of state.samples){const k=Math.floor(s.t/step)*step;const c=b.get(k);if(!c)b.set(k,{t:k,open:s.p,high:s.p,low:s.p,close:s.p});else{c.high=Math.max(c.high,s.p);c.low=Math.min(c.low,s.p);c.close=s.p}}
+    return [...b.values()].sort((a,b)=>a.t-b.t).slice(-100);
+  }
+
+  function mount(){
+    const mod=document.getElementById('market-chart-module'); if(!mod)return null;
+    const body=mod.querySelector('.market-chart-module-body')||mod.querySelector('.panel-body')||mod;
+    let host=body.querySelector('#mf-final-chart-host');
+    if(!host){host=document.createElement('div');host.id='mf-final-chart-host';host.style.cssText='display:block;width:100%;max-width:100%;';
+      [...body.children].forEach(c=>{c.style.setProperty('display','none','important');c.setAttribute('aria-hidden','true')});body.appendChild(host)}
+    if(host.shadowRoot)return host;
+    const root=host.attachShadow({mode:'open'});
+    root.innerHTML=`
+<style>
+:host{display:block;width:100%;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#f4f8fb}
+*{box-sizing:border-box}.card{width:100%;overflow:hidden;background:linear-gradient(180deg,#0d141d,#080d13);border-radius:0 0 18px 18px}
+.token{display:grid;grid-template-columns:64px minmax(0,1fr) auto;gap:14px;align-items:center;padding:16px;border-bottom:1px solid #1d2936}
+.avatar{width:64px;height:64px;border-radius:18px;display:grid;place-items:center;overflow:hidden;border:1px solid rgba(255,255,255,.12);background:linear-gradient(145deg,rgba(84,221,255,.16),rgba(81,231,168,.07));font-size:18px;font-weight:900}
+.avatar img{width:100%;height:100%;object-fit:cover;display:block}.copy{min-width:0}.name{margin:0;font-size:24px;line-height:1.05;letter-spacing:-.035em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.meta{margin-top:7px;color:#8290a2;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.quote{text-align:right;min-width:138px}.price{display:block;font-size:30px;line-height:1;font-weight:900;letter-spacing:-.04em;white-space:nowrap}.change{display:block;margin-top:7px;color:#51e7a8;font-size:12px;font-weight:800}.change.down{color:#ff6576}
+.toolbar{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;padding:13px 15px 10px;border-bottom:1px solid #1d2936}.label{display:flex;align-items:baseline;gap:9px;min-width:0}.label small{color:#8290a2;font-size:9px;letter-spacing:.13em}.label b{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}.source{color:#8290a2;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px}
+.intervals{grid-column:1/-1;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:4px}.intervals button{min-height:42px;border:1px solid transparent;border-radius:11px;background:transparent;color:#8290a2;font:inherit;font-size:10px;font-weight:850}.intervals button.active{color:#f4f8fb;border-color:rgba(84,221,255,.28);background:rgba(84,221,255,.08)}
+.stage{position:relative;height:380px;background:#070c12;overflow:hidden;border-bottom:1px solid #1d2936}.stage canvas{display:block;width:100%;height:100%}.badge{position:absolute;right:12px;top:12px;padding:5px 8px;border-radius:9px;background:rgba(81,231,168,.1);color:#51e7a8;font-size:9px;font-weight:900;letter-spacing:.1em}.last{position:absolute;right:12px;top:48px;padding:5px 7px;border-radius:8px;background:rgba(7,12,18,.86);font-size:11px;font-weight:850}.age{position:absolute;right:12px;top:76px;color:#8290a2;font-size:9px}.empty{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:28px;color:#8290a2;font-size:11px;line-height:1.5}.empty b{display:block;color:#f4f8fb;font-size:13px;margin-bottom:5px}
+.footer{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 15px;color:#8290a2;font-size:9px;flex-wrap:wrap}.live{display:flex;align-items:center;gap:7px}.dot{width:8px;height:8px;border-radius:50%;background:#51e7a8;box-shadow:0 0 0 4px rgba(81,231,168,.09)}
+@media(max-width:560px){.token{grid-template-columns:54px minmax(0,1fr);gap:11px;padding:13px}.avatar{width:54px;height:54px;border-radius:16px}.name{font-size:20px}.meta{font-size:9px;margin-top:5px}.quote{grid-column:1/-1;display:flex;align-items:baseline;justify-content:space-between;text-align:left;min-width:0;padding-top:2px}.price{font-size:26px}.change{margin-top:0;font-size:11px}.toolbar{padding:11px 10px 9px}.source{max-width:42%;font-size:9px}.intervals{gap:3px}.intervals button{min-height:44px;padding:6px 1px}.stage{height:350px}.footer{padding:10px;font-size:8px}}
+</style>
+<section class="card"><div class="token"><div class="avatar"></div><div class="copy"><h3 class="name">Token</h3><div class="meta">Solana</div></div><div class="quote"><b class="price">—</b><span class="change">LIVE</span></div></div>
+<div class="toolbar"><div class="label"><small>MARKET CHART</small><b>Token</b></div><span class="source">Fresh Solana price stream</span><div class="intervals">${Object.keys(INTERVALS).map((k,i)=>`<button type="button" data-interval="${k}" class="${i?'':'active'}">${k==='all'?'All':k}</button>`).join('')}</div></div>
+<div class="stage"><canvas></canvas><span class="badge">LIVE</span><span class="last">—</span><span class="age">—</span><div class="empty"><div><b>Waiting for verified price history</b><span>The first candle appears after a valid live price is received.</span></div></div></div>
+<div class="footer"><span class="live"><i class="dot"></i><b>LIVE DATA</b></span><span class="pair">Token · Solana</span><span class="count">0 candles</span></div></section>`;
+    root.querySelectorAll('[data-interval]').forEach(b=>b.addEventListener('click',()=>{state.interval=b.dataset.interval;root.querySelectorAll('[data-interval]').forEach(x=>x.classList.toggle('active',x===b));schedule(host)}));
+    return host;
+  }
+
+  function switchToken(){const k=tokenKey();if(k===state.tokenKey)return;state.tokenKey=k;state.samples=load(k).slice(-12000);state.lastSampleAt=state.samples.at(-1)?.t||0;state.lastPrice=state.samples.at(-1)?.p||null}
+  function sample(){switchToken();const p=currentPrice();if(!p)return;const n=Date.now();if(n-state.lastSampleAt<900&&p===state.lastPrice)return;state.samples.push({t:n,p});if(state.samples.length>12000)state.samples=state.samples.slice(-12000);state.lastSampleAt=n;state.lastPrice=p;save()}
+  function header(host){const r=host.shadowRoot,n=tokenName(),m=tokenMeta(),p=currentPrice();r.querySelector('.name').textContent=n;r.querySelector('.label b').textContent=n;r.querySelector('.meta').textContent=m;r.querySelector('.pair').textContent=n+' · Solana';r.querySelector('.price').textContent=formatPrice(p);r.querySelector('.last').textContent=formatPrice(p);
+    const a=r.querySelector('.avatar'),initials=n.split(/\s+/).filter(Boolean).slice(0,2).map(x=>x[0]).join('').toUpperCase()||'MF',imgurl=tokenImage();a.replaceChildren();if(imgurl){const i=document.createElement('img');i.referrerPolicy='no-referrer';i.loading='eager';i.src=imgurl;i.alt=n;i.onerror=()=>{a.replaceChildren();a.textContent=initials};a.appendChild(i)}else a.textContent=initials;
+    const c=r.querySelector('.change');if(state.samples.length>=2){const ch=((state.samples.at(-1).p-state.samples[0].p)/state.samples[0].p)*100;c.textContent=(ch>=0?'↑ ':'↓ ')+Math.abs(ch).toFixed(2)+'%';c.classList.toggle('down',ch<0)}else{c.textContent='LIVE';c.classList.remove('down')}}
+  function schedule(h){cancelAnimationFrame(state.raf);state.raf=requestAnimationFrame(()=>draw(h))}
+  function draw(host){const r=host.shadowRoot,stage=r.querySelector('.stage'),canvas=r.querySelector('canvas'),rect=stage.getBoundingClientRect();if(!rect.width||!rect.height)return;const d=Math.max(1,Math.min(2,devicePixelRatio||1));canvas.width=Math.round(rect.width*d);canvas.height=Math.round(rect.height*d);const ctx=canvas.getContext('2d');ctx.setTransform(d,0,0,d,0,0);ctx.clearRect(0,0,rect.width,rect.height);
+    const candles=aggregate(INTERVALS[state.interval]);r.querySelector('.count').textContent=candles.length+(candles.length===1?' candle':' candles');r.querySelector('.empty').style.display=candles.length?'none':'grid';if(!candles.length)return;
+    const l=16,t=18,rr=rect.width-92,b=rect.height-34,w=rr-l,h=b-t;ctx.strokeStyle='rgba(145,162,181,.11)';ctx.lineWidth=1;for(let i=0;i<=5;i++){const y=t+h*i/5;ctx.beginPath();ctx.moveTo(l,y);ctx.lineTo(rr,y);ctx.stroke()}for(let i=0;i<=6;i++){const x=l+w*i/6;ctx.beginPath();ctx.moveTo(x,t);ctx.lineTo(x,b);ctx.stroke()}
+    let min=Math.min(...candles.map(c=>c.low)),max=Math.max(...candles.map(c=>c.high));if(min===max){const p=Math.max(min*.01,1e-12);min=Math.max(min-p,Number.MIN_VALUE);max+=p}else{const p=(max-min)*.08;min=Math.max(min-p,Number.MIN_VALUE);max+=p}const step=w/Math.max(candles.length,1),bw=Math.max(3,Math.min(11,step*.52)),yf=p=>t+((max-p)/(max-min))*h;ctx.font='10px system-ui,-apple-system,sans-serif';ctx.fillStyle='#97a4b5';ctx.textBaseline='middle';for(let i=0;i<5;i++){const q=i/4,p=max-(max-min)*q;ctx.fillText(formatPrice(p).replace('$',''),rr+8,t+h*q)}
+    candles.forEach((c,i)=>{const x=l+step*i+step/2,oy=yf(c.open),cy=yf(c.close),hy=yf(c.high),ly=yf(c.low),up=c.close>=c.open,col=up?'#51e7a8':'#ff6576';ctx.strokeStyle=col;ctx.fillStyle=col;ctx.lineWidth=1.25;ctx.beginPath();ctx.moveTo(x,hy);ctx.lineTo(x,ly);ctx.stroke();ctx.fillRect(x-bw/2,Math.min(oy,cy),bw,Math.max(2,Math.abs(cy-oy)))});
+    const last=candles.at(-1),ly=yf(last.close);ctx.save();ctx.strokeStyle='rgba(81,231,168,.72)';ctx.setLineDash([4,4]);ctx.beginPath();ctx.moveTo(l,ly);ctx.lineTo(rr,ly);ctx.stroke();ctx.restore();r.querySelector('.last').textContent=formatPrice(last.close);r.querySelector('.age').textContent=Math.max(0,Math.floor((Date.now()-state.samples.at(-1).t)/1000))+' sec ago'}
+  function tick(){const h=mount();if(!h)return;switchToken();sample();header(h);schedule(h)}
+  function boot(){const h=mount();if(!h)return;tick();state.timer=setInterval(tick,1000);addEventListener('resize',()=>schedule(h),{passive:true});addEventListener('pagehide',()=>clearInterval(state.timer),{once:true})}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
+})();

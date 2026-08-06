@@ -8,75 +8,6 @@
  */
 import {decodeCurve} from './solana.mjs';
 
-/* MEMEFLOW_TOKEN_METADATA_IMAGE_V1 */
-function normalizeMetadataUrl(value) {
-  if (typeof value !== 'string') return null;
-  const url = value.trim();
-  if (!url) return null;
-  if (/^ipfs:\/\//i.test(url)) {
-    return 'https://ipfs.io/ipfs/' + url.replace(/^ipfs:\/\//i, '').replace(/^ipfs\//i, '');
-  }
-  if (/^ar:\/\//i.test(url)) {
-    return 'https://arweave.net/' + url.replace(/^ar:\/\//i, '');
-  }
-  if (/^https?:\/\//i.test(url)) return url;
-  return null;
-}
-
-function firstMetadataImage(metadata) {
-  if (!metadata || typeof metadata !== 'object') return null;
-  const values = [
-    metadata.image,
-    metadata.image_url,
-    metadata.imageUrl,
-    metadata.logo,
-    metadata.logo_url,
-    metadata.logoUrl,
-    metadata.icon,
-    metadata.icon_url,
-    metadata.iconUrl,
-    metadata.properties?.files?.[0]?.uri,
-    metadata.properties?.files?.[0]?.url
-  ];
-  for (const value of values) {
-    const normalized = normalizeMetadataUrl(value);
-    if (normalized) return normalized;
-  }
-  return null;
-}
-
-async function fetchTokenMetadata(uri) {
-  const metadataUrl = normalizeMetadataUrl(uri);
-  if (!metadataUrl) return {metadataUrl:null, imageUrl:null};
-
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 4500);
-  try {
-    const response = await fetch(metadataUrl, {
-      signal: controller.signal,
-      headers: {
-        accept: 'application/json,text/plain;q=0.9,*/*;q=0.5',
-        'user-agent': 'MEMEFLOW/1.0 token-metadata'
-      }
-    });
-    if (!response.ok) throw new Error('metadata HTTP ' + response.status);
-
-    const contentLength = Number(response.headers.get('content-length') || 0);
-    if (contentLength > 1_500_000) throw new Error('metadata response too large');
-
-    const metadata = await response.json();
-    return {
-      metadataUrl,
-      imageUrl:firstMetadataImage(metadata),
-      metadataName:typeof metadata?.name === 'string' ? metadata.name.slice(0,160) : null,
-      metadataSymbol:typeof metadata?.symbol === 'string' ? metadata.symbol.slice(0,40) : null
-    };
-  } finally {
-    clearTimeout(timeout);
-  }
-}
-
-
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 /** Strip RPC URLs and long base58 addresses from error messages. */
@@ -201,37 +132,8 @@ export async function enrichToken(mint, curve, deps) {
     const decimals = supply?.value?.decimals ?? 6;
     const total = Number(supply?.value?.uiAmountString ?? 0);
     const tw = (tradeWindows?.get?.(mint)) || {buy: 0, sell: 0};
-    const existingToken = store.state.tokens[mint] || {};
-    let metadataPatch = {};
-    const shouldFetchMetadata =
-      existingToken.uri &&
-      !existingToken.imageUrl &&
-      (!existingToken.metadataFetchedAt ||
-        Date.now() - Number(existingToken.metadataFetchedAt) > 6 * 60 * 60 * 1000);
-
-    if (shouldFetchMetadata) {
-      try {
-        const metadata = await fetchTokenMetadata(existingToken.uri);
-        metadataPatch = {
-          metadataFetchedAt:Date.now(),
-          metadataUrl:metadata.metadataUrl,
-          imageUrl:metadata.imageUrl,
-          image:metadata.imageUrl,
-          logoUrl:metadata.imageUrl,
-          metadataName:metadata.metadataName,
-          metadataSymbol:metadata.metadataSymbol
-        };
-      } catch (error) {
-        metadataPatch = {
-          metadataFetchedAt:Date.now(),
-          metadataError:sanitize(error?.message || String(error))
-        };
-      }
-    }
-
 
     const update = {
-      ...metadataPatch,
       scanError: null,
       lastScannedAt: Date.now(),
       // Holder data deferred to Phase B

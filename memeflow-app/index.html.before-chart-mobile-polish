@@ -2041,6 +2041,6 @@ window.MEMEFLOW_UNIFIED_CANDIDATE_SYSTEM={version:1,sync};
 <script src="/full-consistency-v6.js" defer></script>
 
 
-<script src="/market-chart-final-v5.js?v=20260805-mobile-polish"></script>
+<script src="/market-chart-final-v4.js?v=20260805-2022"></script>
 </body>
 </html>

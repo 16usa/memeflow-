@@ -1,27 +1,24 @@
-# MEMEFLOW OHLC Layout Cleanup
+# MEMEFLOW Mobile Chart Polish
 
-Apply this after `MEMEFLOW_NATIVE_OHLC_CHART`.
+This cosmetic update:
 
-It fixes the current mobile layout by:
+- reduces mobile chart height from 350px to 320px;
+- makes the current-price label more compact;
+- tightens the LIVE badge and age label;
+- gives slightly more room to the plot;
+- keeps the existing image, OHLC logic and backend unchanged.
 
-- keeping only one chart;
-- hiding the old Market Chart completely;
-- constraining the Canvas height;
-- restoring the token header, toolbar and footer layout;
-- making candle bodies thinner;
-- preventing the bottom navigation from covering chart content.
-
-## Replit
+## Apply
 
 ```bash
-unzip -o MEMEFLOW_OHLC_LAYOUT_CLEANUP.zip
-node scripts/ohlc-layout-cleanup.mjs
+unzip -o MEMEFLOW_CHART_MOBILE_POLISH.zip
+node scripts/install-chart-mobile-polish.mjs
 ```
 
-Then press **Stop → Run**.
+Then **Stop → Run** and refresh Safari.
 
 ## Rollback
 
 ```bash
-cp memeflow-app/index.html.before-ohlc-layout-cleanup memeflow-app/index.html
+cp memeflow-app/index.html.before-chart-mobile-polish memeflow-app/index.html
 ```
