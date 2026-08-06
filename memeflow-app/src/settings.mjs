@@ -10,7 +10,7 @@ const booleans=['requireTwitter','requireWebsite','requireTelegram','requireAnyS
 const finite=(v)=>v!==''&&v!==null&&v!==undefined&&Number.isFinite(Number(v));
 const cleanText=v=>String(v??'').trim();
 export function defaultSettings(){return {
- operatingMode:'observe',profile:'balanced',tradingCapital:0,dailySpendLimit:0,positionSize:0.1,maxPositionSize:0.5,maxOpenPositions:4,maxDailyEntries:10,dailyLossLimit:0,feeReserve:0.05,
+ operatingMode:'observe',tradingEnvironment:'paper',profile:'balanced',tradingCapital:0,dailySpendLimit:0,positionSize:0.1,maxPositionSize:0.5,maxOpenPositions:4,maxDailyEntries:10,dailyLossLimit:0,feeReserve:0.05,
  minScore:72,minConfidence:70,minLiquidityUsd:0,minBuyPressure:1.2,requireFreshHolderSnapshot:true,requireWebsiteOrX:false,
  launchPlatforms:[],includeKeywords:'',excludeKeywords:'',
  minBondingCurvePct:null,maxBondingCurvePct:null,minMarketCapUsd:null,maxMarketCapUsd:null,minTotalFeesSol:null,maxTotalFeesSol:null,
@@ -22,6 +22,9 @@ export function defaultSettings(){return {
 }}
 export function normalizeSettings(raw={}){
  const d=defaultSettings(),o={...d,...raw};
+ // Normalize operating mode and trading environment to lowercase
+ o.operatingMode=String(o.operatingMode||'observe').trim().toLowerCase();
+ o.tradingEnvironment=String(o.tradingEnvironment||'paper').trim().toLowerCase();
  // Backward-compatible migration from the previous settings schema.
  if(raw.maxDeveloperPct!==undefined&&raw.maxDeveloperPct!==null)o.maxDeveloperPct=Number(raw.maxDeveloperPct);
  if(raw.minMarketCapUsd!==undefined&&raw.minMarketCapUsd!==null)o.minMarketCapUsd=Number(raw.minMarketCapUsd);
@@ -46,5 +49,9 @@ export function validateSettings(raw={}){
  if(s.minScore<0||s.minScore>100)errors.push('Minimum AI score must be between 0 and 100.');
  if(s.minConfidence<0||s.minConfidence>100)errors.push('Minimum confidence must be between 0 and 100.');
  if(s.positionSize>s.maxPositionSize)errors.push('Default position cannot exceed maximum position.');
+ const VALID_MODES=['observe','assist','automate'];
+ const VALID_ENVS=['paper','live'];
+ if(!VALID_MODES.includes(s.operatingMode))errors.push(`Invalid operatingMode: must be observe, assist or automate.`);
+ if(!VALID_ENVS.includes(s.tradingEnvironment))errors.push(`Invalid tradingEnvironment: must be paper or live.`);
  return {ok:errors.length===0,errors,settings:s};
 }

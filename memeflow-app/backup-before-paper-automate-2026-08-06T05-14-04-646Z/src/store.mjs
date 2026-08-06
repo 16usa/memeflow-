@@ -6,7 +6,7 @@ import {defaultSettings,normalizeSettings} from './settings.mjs';
 export class JsonStore {
   constructor(dir){
     this.dir=dir;this.file=path.join(dir,'state.json');
-    this.state={users:{},tokens:{},decisions:{},positions:{},stripeEvents:{},metrics:{discovered:0,scanned:0,errors:0},paperPositions:{},paperTrades:{},paperProposals:{},paperProcessed:{},paperMetrics:{entries:0,exits:0,errors:0}};
+    this.state={users:{},tokens:{},decisions:{},positions:{},stripeEvents:{},metrics:{discovered:0,scanned:0,errors:0}};
     this._uidDec={}; // uid → Map<key,updatedAt> — in-memory only, not persisted
     fs.mkdirSync(dir,{recursive:true});
     this.load();

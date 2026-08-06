@@ -37,7 +37,7 @@ export function makeLiveEvalMetrics() {
  * @returns {function(object):Promise<void>}  evaluateForActiveUsers(token)
  */
 export function makeEvaluateForActiveUsers({
-  store, metrics, activeUserHoursMs = 86400000, batchSize = 25, delayMs = 0,
+  store, metrics, activeUserHoursMs = 86400000, batchSize = 25, delayMs = 0, onDecision = null,
 }) {
   let lastEvictAt = 0;
 
@@ -73,7 +73,9 @@ export function makeEvaluateForActiveUsers({
       for (const uid of batch) {
         try {
           const d = evaluate(token, store.settings(uid));
-          store.setDecision(uid, token.mint, { ...d, primaryReason: d.primaryReason });
+          const savedDecision = { ...d, primaryReason: d.primaryReason };
+          store.setDecision(uid, token.mint, savedDecision);
+          if (onDecision) onDecision(uid, token, savedDecision);
           metrics.liveEvaluationsPerformed++;
         } catch (_) {
           metrics.liveEvaluationBatchErrors++;
