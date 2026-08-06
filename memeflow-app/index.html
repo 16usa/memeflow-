@@ -1193,6 +1193,22 @@ html[data-theme="light"] .sidebar,html[data-theme="light"] .topbar,html[data-the
   bottom:calc(var(--mobile-nav-height) + env(safe-area-inset-bottom,0px) + 20px)!important;
  }
 }
+
+/* ─── Module spacing: Market Chart and Pre-trade checks ─────────────────────
+   The separate-market-chart-module block (margin-top: var(--panel-gap)) is
+   inside <noscript><style> and has no effect when JS is enabled.
+   These rules live in a real <style> block and override all earlier rules
+   (margin-top:0 at line 104, margin-top:8px at line 339, margin-top:10px
+   at line 552) via !important and cascade position.
+   --panel-gap is 18px, defined once; no breakpoint override needed. */
+#market-chart-module{
+ margin-top:var(--panel-gap)!important;
+ margin-bottom:var(--panel-gap)!important;
+}
+/* Execution checks — same gap above, matching market chart bottom gap */
+#executionPreview{
+ margin-top:var(--panel-gap)!important;
+}
 </style>
 </head>
 <body data-product-mode="execution">
