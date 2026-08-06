@@ -64,7 +64,6 @@ export function makeDiscoveryMetrics() {
     invalidAccountLayout: 0,
     invalidMint: 0,
     createInstructionDecoded: 0,
-    mayhemCreatesIgnored: 0,
     knownNonCreateIgnored: 0,
     ignoredPumpEventPayloads: 0,
     unknownPumpDiscriminatorsByValue: {},

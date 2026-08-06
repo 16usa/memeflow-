@@ -1,0 +1,97 @@
+/* MEMEFLOW_MARKET_CHART_COMPLETE_FIX */
+#marketChart{
+  position:relative!important;
+  min-height:360px!important;
+  overflow:hidden!important;
+}
+#marketChart > canvas:not(#mf-clean-market-chart),
+#marketChart > svg,
+#marketChart .mf-native-chart,
+#marketChart .chart-stage,
+#marketChart .chart-plot{
+  visibility:hidden!important;
+}
+#mf-clean-market-chart{
+  display:block;
+  width:100%;
+  min-height:360px;
+}
+#mf-clean-market-chart[hidden]{
+  display:none!important;
+}
+#mf-clean-chart-empty{
+  min-height:360px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  color:#8290a2;
+  text-align:center;
+  padding:28px 18px;
+}
+#mf-clean-chart-empty[hidden]{
+  display:none!important;
+}
+#mf-clean-chart-empty b{
+  color:#f4f8fb;
+  font-size:18px;
+}
+#mf-clean-chart-empty span{
+  font-size:13px;
+}
+@media(max-width:560px){
+  #marketChart,
+  #mf-clean-market-chart,
+  #mf-clean-chart-empty{
+    min-height:330px!important;
+  }
+}
+
+/* English decimal price presentation */
+#market-chart-module #chartPrice,
+#market-chart-module .token-price,
+#market-chart-module .chart-price,
+#market-chart-module .current-price,
+#market-chart-module [data-role="price"]{
+  font-variant-numeric:tabular-nums;
+  letter-spacing:-.02em;
+  overflow-wrap:anywhere;
+}
+@media(max-width:560px){
+  #market-chart-module #chartPrice,
+  #market-chart-module .token-price,
+  #market-chart-module .chart-price,
+  #market-chart-module .current-price,
+  #market-chart-module [data-role="price"]{
+    font-size:clamp(24px,7vw,34px)!important;
+    line-height:1.08!important;
+  }
+}
+
+
+/* Price / Market Cap headline toggle */
+#market-chart-module .mf-chart-headline-toggle{
+  cursor:pointer;
+  user-select:none;
+  touch-action:manipulation;
+  transition:opacity .16s ease, transform .16s ease;
+}
+#market-chart-module .mf-chart-headline-toggle:active{
+  opacity:.76;
+  transform:scale(.985);
+}
+#market-chart-module .mf-chart-headline-toggle:focus-visible{
+  outline:2px solid rgba(84,221,255,.8);
+  outline-offset:5px;
+  border-radius:8px;
+}
+#market-chart-module .mf-chart-headline-label{
+  margin-bottom:6px;
+  color:#8290a2;
+  font-size:11px;
+  font-weight:800;
+  letter-spacing:.16em;
+  line-height:1.2;
+  text-transform:uppercase;
+}

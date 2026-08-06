@@ -205,10 +205,6 @@ export function decodeCreateData(data){try{const b=b58decode(data),disc=[...b.su
  * @param {object} ix    instruction object {data?, accounts?[]}
  * @param {string[]} keys  resolved account-key array (for numeric account refs)
  */
-export function shouldExcludeMayhemCreate(result, enabled=true) {
-  return Boolean(enabled && result?.ok && result?.kind==='create_v2' && result?.isMayhemMode===true);
-}
-
 export function decodePumpCreate(ix, keys) {
   if (!ix.data) return {ok:false, reason:'pumpInstructionWithoutData'};
   let b, discBytes, dataLen;
@@ -232,25 +228,12 @@ export function decodePumpCreate(ix, keys) {
     }
     return {ok:false, reason:'unknownPumpDiscriminator', discBytes, dataLen};
   }
-  // Parse official Pump create/create_v2 instruction data.
-  // create_v2: name, symbol, uri, creator Pubkey, is_mayhem_mode bool.
-  let name, symbol, uri, creatorFromData=null, isMayhemMode=false;
+  // Parse string fields
+  let name, symbol, uri;
   try {
     let o = 8;
-    const str = () => {
-      if (o + 4 > b.length) throw new Error('string length missing');
-      const n=b.readUInt32LE(o);o+=4;
-      if (o+n>b.length) throw new Error('string out of range');
-      const s=b.subarray(o,o+n).toString('utf8');o+=n;return s;
-    };
+    const str = () => {const n=b.readUInt32LE(o);o+=4;const s=b.subarray(o,o+n).toString('utf8');o+=n;return s};
     name=str(); symbol=str(); uri=str();
-    if (discKey === DISC_CREATE_V2) {
-      if (o + 33 > b.length) return {ok:false, reason:'invalidAccountLayout', discBytes, dataLen};
-      creatorFromData=b58encode(b.subarray(o,o+32));o+=32;
-      const mayhemByte=b[o];
-      if (mayhemByte!==0 && mayhemByte!==1) return {ok:false, reason:'invalidAccountLayout', discBytes, dataLen};
-      isMayhemMode=mayhemByte===1;
-    }
   } catch {
     return {ok:false, reason:'invalidAccountLayout', discBytes, dataLen};
   }
@@ -259,7 +242,5 @@ export function decodePumpCreate(ix, keys) {
   const mint  = ac[0];
   const curve = ac.length > 2 ? ac[2] : null;
   if (!validPubkey(mint)) return {ok:false, reason:'invalidMint', discBytes, dataLen};
-  const kind=discKey===DISC_CREATE?'create':'create_v2';
-  const creator=creatorFromData || ac[5] || ac[7] || null;
-  return {ok:true,mint,curve,creator,name,symbol,uri,kind,isMayhemMode:kind==='create_v2'&&isMayhemMode,launchMode:kind==='create_v2'&&isMayhemMode?'mayhem':'standard'};
+  return {ok:true, mint, curve, creator:ac[7]||null, name, symbol, uri, kind:discKey===DISC_CREATE?'create':'create_v2'};
 }

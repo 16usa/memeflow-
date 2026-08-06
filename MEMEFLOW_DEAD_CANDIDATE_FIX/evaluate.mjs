@@ -9,14 +9,9 @@ const STALE_PRICE_MS=30_000;
 const STALE_ACTIVITY_MS=90_000;
 const MAX_WAITING_MS=60_000;
 
-export function tokenAgeMinutes(token,now=Date.now()){
- const discovered=Number(token?.discoveredAt||token?.createdAt||0);
- if(Number.isFinite(discovered)&&discovered>0)return Math.max(0,(now-discovered)/60000);
- return num(token,'ageMinutes');
-}
-
 function lifecycle(token,s,now=Date.now()){
- const ageMinutes=tokenAgeMinutes(token,now);
+ const discovered=Number(token?.discoveredAt||token?.createdAt||0);
+ const ageMinutes=num(token,'ageMinutes')??(discovered?Math.max(0,(now-discovered)/60000):null);
  const configuredMax=enabled(s?.maxTokenAgeMinutes)?Number(s.maxTokenAgeMinutes):180;
  const current=num(token,'priceSol');
  const peak=num(token,'peakPriceSol');
@@ -69,7 +64,7 @@ export function evaluate(token,s){
  range(num(token,'totalTransactions','transactions24h','txCount'),s.minTotalTransactions,s.maxTotalTransactions,'Total transactions','',8);
  range(num(token,'holderCount','holders'),s.minHolders,s.maxHolders,'Holders','',15);
  range(num(token,'bundlePct','bundledPct'),s.minBundlePct,s.maxBundlePct,'Bundle','%',15);
- const age=tokenAgeMinutes(token);
+ const age=num(token,'ageMinutes')??(token?.discoveredAt?Math.max(0,(Date.now()-Number(token.discoveredAt))/60000):null);
  range(age,s.minTokenAgeMinutes,s.maxTokenAgeMinutes,'Token age',' min',10);
  range(num(token,'top10Pct','top10'),s.minTop10Pct,s.maxTop10Pct,'Top-10 concentration','%',18);
  range(num(token,'developerPct','creatorPct'),s.minDeveloperPct,s.maxDeveloperPct,'Developer share','%',18);

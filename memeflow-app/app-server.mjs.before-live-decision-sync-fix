@@ -1,5 +1,5 @@
 import http from 'node:http';import fs from 'node:fs';import path from 'node:path';import crypto from 'node:crypto';import zlib from 'node:zlib';import {fileURLToPath} from 'node:url';
-import {JsonStore,sessionId,defaults} from './src/store.mjs';import {RpcPool,validPubkey,decodeCurve,decodeCreateData,decodePumpCreate,shouldExcludeMayhemCreate} from './src/solana.mjs';import {evaluate,tokenAgeMinutes} from './src/evaluate.mjs';import {validateSettings} from './src/settings.mjs';import {StripeBilling} from './src/billing.mjs';import {PaperEngine} from './src/paper-engine.mjs';
+import {JsonStore,sessionId,defaults} from './src/store.mjs';import {RpcPool,validPubkey,decodeCurve,decodeCreateData,decodePumpCreate,shouldExcludeMayhemCreate} from './src/solana.mjs';import {evaluate} from './src/evaluate.mjs';import {validateSettings} from './src/settings.mjs';import {StripeBilling} from './src/billing.mjs';import {PaperEngine} from './src/paper-engine.mjs';
 import {enrichToken,enrichHolders,makeEnrichDiag,makeHolderQueue,makeHolderMetrics} from './src/enrich.mjs';
 import {makeRecoveryMetrics,startDecisionRecovery,lazyRecoverUser} from './src/recovery.mjs';
 import {makeLiveEvalMetrics,makeEvaluateForActiveUsers} from './src/liveeval.mjs';
@@ -88,7 +88,7 @@ function candidateView(d){
     developerSharePct:developerPct,
     buyPressure,
     momentum:buyPressure,
-    ageMinutes:tokenAgeMinutes(t),
+    ageMinutes:finite(t.ageMinutes)??(t.discoveredAt?Math.max(0,(Date.now()-t.discoveredAt)/60000):null),
     evidence:{
       'Mint':d.mint,
       'Price (SOL)':finite(t.priceSol)??'—',
@@ -107,7 +107,7 @@ function candidateView(d){
     routeApproved:t.priceSol!=null,
     holderFresh:t.holderFresh,
     positionSize:null,
-    quoteAgeMs:t.lastPriceAt?Math.max(0,Date.now()-t.lastPriceAt):null,
+    quoteAgeMs:Date.now()-(t.updatedAt||0),
     slippagePct:null
   };
 }
@@ -123,7 +123,7 @@ async function enrich(mint,curve){
   holderQueue.enqueue(mint);
 }
 function publish(mint){const rows=store.tokens();const t=store.state.tokens[mint];for(const res of streams.get(mint)||[]){res.write(`event: update\ndata: ${JSON.stringify({point:t?.priceSol?{t:Date.now(),price:t.priceSol,source:'Solana'}:null,status:{stale:!t?.priceSol,error:t?.scanError||null,source:t?.source}})}\n\n`)}}
-function ensurePriceTimer(mint,curve){if(priceTimers.has(mint)||!curve)return;const timer=setInterval(async()=>{const t=store.state.tokens[mint];if(Date.now()-(t?.updatedAt||0)>600000&&(streams.get(mint)?.size||0)===0){clearInterval(timer);priceTimers.delete(mint);return}try{const info=await rpc.call('getAccountInfo',[curve,{encoding:'base64',commitment:'confirmed'}]);if(info?.value?.data?.[0]){const c=decodeCurve(info.value.data[0],t.decimals||6);/* MEMEFLOW_TIMER_MARKETCAP_V1 */ const liveMarketCap=(c.priceSol&&t.totalSupply)?c.priceSol*t.totalSupply:null;store.setToken(mint,{priceSol:c.priceSol,liquiditySol:c.liquiditySol,marketCapSol:liveMarketCap,marketCap:liveMarketCap,liquidity:c.liquiditySol,momentum:t.buyPressure??null,complete:c.complete,source:'Solana bonding curve'});await evaluateAll(store.state.tokens[mint]);publish(mint);try{paper.onTokenUpdate(mint,store.state.tokens[mint])}catch(_){}}}catch(e){store.setToken(mint,{scanError:e.message});await evaluateAll(store.state.tokens[mint])}},Math.max(1000,Number(process.env.POLL_ACTIVE_MS||2000)));priceTimers.set(mint,timer)}
+function ensurePriceTimer(mint,curve){if(priceTimers.has(mint)||!curve)return;const timer=setInterval(async()=>{const t=store.state.tokens[mint];if(Date.now()-(t?.updatedAt||0)>600000&&(streams.get(mint)?.size||0)===0){clearInterval(timer);priceTimers.delete(mint);return}try{const info=await rpc.call('getAccountInfo',[curve,{encoding:'base64',commitment:'confirmed'}]);if(info?.value?.data?.[0]){const c=decodeCurve(info.value.data[0],t.decimals||6);/* MEMEFLOW_TIMER_MARKETCAP_V1 */ const liveMarketCap=(c.priceSol&&t.totalSupply)?c.priceSol*t.totalSupply:null;store.setToken(mint,{priceSol:c.priceSol,liquiditySol:c.liquiditySol,marketCapSol:liveMarketCap,marketCap:liveMarketCap,liquidity:c.liquiditySol,momentum:t.buyPressure??null,complete:c.complete,source:'Solana bonding curve'});publish(mint);try{paper.onTokenUpdate(mint,store.state.tokens[mint])}catch(_){}}}catch(e){store.setToken(mint,{scanError:e.message})}},Math.max(1000,Number(process.env.POLL_ACTIVE_MS||2000)));priceTimers.set(mint,timer)}
 async function processSignature(sig){
   // Single attempt — discovery queue handles retries with correct policy
   let tx;
