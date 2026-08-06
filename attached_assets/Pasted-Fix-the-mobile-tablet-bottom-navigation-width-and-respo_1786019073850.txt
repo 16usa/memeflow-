@@ -1,0 +1,165 @@
+Fix the mobile/tablet bottom navigation width and responsive behavior.
+
+Project:
+~/workspace/memeflow-app
+
+Problem:
+- On phones, the bottom navigation still does not align perfectly with the content cards.
+- On tablet widths, it becomes much wider and looks like a different component.
+- It must keep the exact same visual style and width relationship as on mobile.
+
+Required behavior:
+
+1. Use the same layout system for phone and tablet
+
+Apply the mobile-style bottom navigation consistently from 320px up to 1024px.
+
+Do not switch to a wider tablet variant.
+
+The bottom navigation must remain:
+- text-only
+- dark matte
+- desktop-sidebar-inspired active state
+- same height
+- same border radius
+- same active left cyan accent
+- same typography
+- same internal spacing
+
+2. Match the actual content container width
+
+Do not size the navigation with fixed viewport-based left/right values alone.
+
+Instead, align it to the same effective width as the visible main content cards.
+
+Preferred implementation:
+
+- define one shared responsive horizontal gutter variable
+- use that variable for both:
+  - .main horizontal padding
+  - .mobile-nav left/right
+
+Example concept:
+
+:root {
+  --content-gutter-mobile: 14px;
+}
+
+@media (max-width: 430px) {
+  :root {
+    --content-gutter-mobile: 10px;
+  }
+}
+
+@media (min-width: 431px) and (max-width: 1024px) {
+  :root {
+    --content-gutter-mobile: 28px;
+  }
+}
+
+Then use:
+
+.main {
+  padding-left: var(--content-gutter-mobile);
+  padding-right: var(--content-gutter-mobile);
+}
+
+.mobile-nav {
+  left: var(--content-gutter-mobile);
+  right: var(--content-gutter-mobile);
+}
+
+Do not hardcode different unrelated values for .main and .mobile-nav.
+
+3. Tablet behavior
+
+For widths from 821px to 1024px:
+
+- keep the mobile bottom navigation visible
+- keep the desktop sidebar hidden
+- keep the navigation centered and aligned with the content cards
+- do not stretch it wider than the card column
+- do not increase label size excessively
+- do not increase item padding
+- do not change the active-state design
+
+If the main content has a max-width on tablet, apply the same max-width to the navigation and center it:
+
+.mobile-nav {
+  width: min(calc(100% - 2 * var(--content-gutter-mobile)), var(--tablet-content-max));
+  left: 50%;
+  right: auto;
+  transform: translateX(-50%);
+}
+
+Use the same max-width as the main content wrapper.
+
+4. Recommended tablet max-width
+
+If the current main card column has no shared max-width, create one:
+
+--tablet-content-max: 920px;
+
+Apply it consistently to:
+- main content wrapper/cards container
+- bottom navigation
+
+Do not apply this max-width to desktop above 1024px.
+
+5. Bottom position
+
+Keep:
+- bottom: 0
+- safe-area inside the nav background
+- no visible gap below
+- no page background visible beneath the nav
+
+6. Main content protection
+
+Update the bottom padding of .main and mobile sheets so content is never hidden behind the fixed navigation on phone or tablet.
+
+7. Breakpoints
+
+Required responsive behavior:
+
+- 320px–430px: narrow phone gutter
+- 431px–820px: normal phone gutter
+- 821px–1024px: tablet, same component style, centered and card-aligned
+- above 1024px: restore desktop sidebar/navigation behavior and hide mobile bottom nav
+
+8. Do not change:
+- nav actions
+- active state logic
+- More sheet
+- routing
+- PAPER Automate
+- wallet logic
+- candidates
+- positions
+- backend
+- desktop sidebar styling
+
+9. Verify at these widths:
+- 320px
+- 390px
+- 430px
+- 768px
+- 820px
+- 834px
+- 1024px
+- 1180px
+
+For every width up to 1024px:
+- left edge of nav matches left edge of cards
+- right edge of nav matches right edge of cards
+- visual style is identical
+- no horizontal overflow
+- no stretched tablet version
+- no gap below the nav
+
+At the end report:
+- shared gutter variable values
+- tablet max-width
+- final breakpoints
+- exact selectors changed
+- confirmation that phone and tablet now use the same bottom-navigation component
