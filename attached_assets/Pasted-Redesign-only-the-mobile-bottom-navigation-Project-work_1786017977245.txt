@@ -1,0 +1,86 @@
+Redesign only the mobile bottom navigation.
+
+Project:
+~/workspace/memeflow-app
+
+Keep the same five navigation actions and all existing click behavior:
+
+- Home
+- Candidates
+- Positions
+- Wallet
+- More
+
+Required design for screens up to 820px:
+
+1. Convert each navigation item into a vertical icon + label layout.
+
+Use simple inline SVG icons:
+- Home: house
+- Candidates: radar, sparkle, or star
+- Positions: briefcase
+- Wallet: wallet
+- More: three horizontal dots
+
+Do not use external icon libraries or network assets.
+
+2. Reduce the overall visual weight:
+
+- navigation height: approximately 68–72px, excluding safe-area inset
+- icon size: approximately 20–22px
+- label size: approximately 11–12px
+- gap between icon and label: 3–5px
+- equal-width items
+- minimum touch target: 44px
+
+3. Remove the large filled rectangular background from the active item.
+
+Active item should use:
+- green or cyan icon
+- brighter label
+- very subtle tinted background
+- a thin 2–3px indicator line at the top of the item
+
+Inactive items:
+- muted gray icons and labels
+- transparent background
+
+4. Keep the navigation floating:
+
+- left and right: approximately 12px
+- bottom: calc(8px + env(safe-area-inset-bottom))
+- border-radius: approximately 18–20px
+- subtle border
+- dark translucent background
+- backdrop blur
+- restrained shadow
+
+5. Do not change:
+- navigation destinations
+- event listeners
+- sheet opening behavior
+- mobile page routing
+- desktop navigation
+- PAPER Automate
+- wallet logic
+- candidates or positions logic
+
+6. Accessibility:
+- preserve button labels
+- add aria-labels if missing
+- keep visible keyboard focus
+- keep at least 44px touch targets
+
+7. Verify:
+- all five items fit on a 320px-wide screen
+- no horizontal scrolling
+- labels do not truncate
+- safe-area is respected on iPhone
+- active state follows the currently selected mobile section
+- More sheet still opens normally
+- content is not covered by the navigation
+
+Report:
+- exact selectors changed
+- icon implementation used
+- final navigation height
