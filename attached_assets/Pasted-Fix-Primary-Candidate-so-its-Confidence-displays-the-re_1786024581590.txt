@@ -1,0 +1,90 @@
+Fix Primary Candidate so its Confidence displays the real AI decision confidence.
+
+Project:
+~/workspace/memeflow-app
+
+Current bug:
+For the same candidate:
+- AI Decision Studio shows AI Confidence, for example 85%
+- Primary Candidate shows a different value, for example 100%
+
+Required behavior:
+
+1. Trace the selected candidate data from the decisions API through the frontend render function.
+
+2. Identify the authoritative AI confidence field returned for the current decision.
+
+Possible field names may include:
+- decision.confidence
+- ai_confidence
+- confidence
+- confidence_pct
+
+Do not assume the field name. Inspect the actual API response and current render code.
+
+3. Create one shared resolver:
+
+function resolveAiConfidence(candidate) {
+  const raw =
+    candidate?.decision?.confidence ??
+    candidate?.ai_confidence ??
+    candidate?.confidence ??
+    candidate?.confidence_pct;
+
+  const value = Number(raw);
+
+  if (!Number.isFinite(value)) return null;
+
+  const percent = value >= 0 && value <= 1
+    ? value * 100
+    : value;
+
+  if (percent < 0 || percent > 100) return null;
+
+  return Math.round(percent);
+}
+
+Adapt the field order to the real response structure found in the project.
+
+4. In Primary Candidate, set:
+
+#primaryConfidence = resolved AI confidence
+
+Examples:
+- 0.85 → 85%
+- 85 → 85%
+- missing or invalid → —
+
+5. Remove every hardcoded or invented fallback for Primary Candidate Confidence, including:
+- 100
+- 100%
+- 85
+- 85%
+
+6. AI Decision Studio and Primary Candidate must use the same resolved value from the same helper.
+
+Do not maintain two separate calculations.
+
+7. If the modules are later merged, render Confidence once in the unified summary and remove it from the duplicated detailed section.
+
+8. Do not change:
+- how AI calculates confidence
+- AI score
+- data completeness
+- decision thresholds
+- backend trading logic
+- PAPER or LIVE execution
+
+9. Add tests for:
+- confidence 0.85 renders 85%
+- confidence 85 renders 85%
+- missing confidence renders —
+- Primary Candidate and AI Decision Studio always match
+- switching candidates updates confidence
+- polling refresh does not replace it with a fallback
+
+10. Report:
+- actual API field used
+- exact hardcoded fallback removed
+- files and functions changed
+- test results
