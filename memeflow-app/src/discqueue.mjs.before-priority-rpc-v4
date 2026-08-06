@@ -107,7 +107,7 @@ export function makeDiscoveryQueue(config, deps) {
     maxSignatureAgeMs = 900000,
     maxRetries = 4,
     circuitBreakerPauseMs = 15000,
-    retryDelays = [500, 1500, 4000, 10000],
+    retryDelays = [1000, 3000, 8000, 15000],
   } = config || {};
   const { processFn, discMetrics, onSignatureProcessed, onSignatureFailed } = deps;
 

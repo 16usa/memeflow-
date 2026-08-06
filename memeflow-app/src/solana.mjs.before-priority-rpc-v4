@@ -67,16 +67,15 @@ export class RpcPool{
     this.last={ok:false,latency:null,url:null,error:'not checked'};
     // Exposed for /api/discovery/status metrics
     this.metrics={retries:0,timeouts:0,http429:0,nonJsonResponses:0,endpointFailovers:0,lastHttpStatus:null};
-    this.minIntervalMs=Math.max(0,Number(process.env.RPC_MIN_INTERVAL_MS||200));
+    this.minIntervalMs=Math.max(0,Number(process.env.RPC_MIN_INTERVAL_MS||300));
     this.methodMinIntervalMs={
       getProgramAccounts:Math.max(750,Number(process.env.RPC_GET_PROGRAM_ACCOUNTS_MIN_INTERVAL_MS||2500)),
-      getTransaction:Math.max(200,Number(process.env.RPC_GET_TRANSACTION_MIN_INTERVAL_MS||275)),
+      getTransaction:Math.max(250,Number(process.env.RPC_GET_TRANSACTION_MIN_INTERVAL_MS||450)),
       getTokenSupply:Math.max(350,Number(process.env.RPC_GET_TOKEN_SUPPLY_MIN_INTERVAL_MS||800)),
       getAccountInfo:Math.max(150,Number(process.env.RPC_GET_ACCOUNT_INFO_MIN_INTERVAL_MS||300)),
       default:this.minIntervalMs
     };
     this._methodNextAllowedAt=new Map();
-    this._methodPaceTails=new Map();
     this._paceTail=Promise.resolve();
     this._nextAllowedAt=0;
   }
@@ -85,36 +84,21 @@ export class RpcPool{
   get activeHostname(){try{return new URL(this.urls[this.i%Math.max(1,this.urls.length)]).hostname}catch{return '[unconfigured]'}}
 
   async _pace(method='default'){
-    // Serialize only calls of the SAME method while they wait for their own
-    // method limit. A slow getProgramAccounts wait must not block getTransaction.
-    const previousMethod=this._methodPaceTails.get(method)||Promise.resolve();
-    let releaseMethod;
-    const methodTurn=new Promise(r=>{releaseMethod=r});
-    this._methodPaceTails.set(method,previousMethod.then(()=>methodTurn));
-    await previousMethod;
-
+    const previous=this._paceTail;
+    let release;
+    this._paceTail=new Promise(r=>{release=r});
+    await previous;
     try{
+      const now=Date.now();
       const methodInterval=this.methodMinIntervalMs?.[method]??this.methodMinIntervalMs?.default??this.minIntervalMs;
       const methodNext=this._methodNextAllowedAt?.get(method)||0;
-      const methodWait=Math.max(0,methodNext-Date.now());
-      if(methodWait)await sleep(methodWait);
-
-      // Global gate protects only the actual request-start spacing.
-      const previousGlobal=this._paceTail;
-      let releaseGlobal;
-      this._paceTail=new Promise(r=>{releaseGlobal=r});
-      await previousGlobal;
-      try{
-        const globalWait=Math.max(0,this._nextAllowedAt-Date.now());
-        if(globalWait)await sleep(globalWait);
-        const started=Date.now();
-        this._nextAllowedAt=started+this.minIntervalMs;
-        this._methodNextAllowedAt.set(method,started+methodInterval);
-      }finally{
-        releaseGlobal();
-      }
+      const wait=Math.max(0,this._nextAllowedAt-now,methodNext-now);
+      if(wait)await sleep(wait);
+      const started=Date.now();
+      this._nextAllowedAt=started+this.minIntervalMs;
+      if(this._methodNextAllowedAt)this._methodNextAllowedAt.set(method,started+methodInterval);
     }finally{
-      releaseMethod();
+      release();
     }
   }
 
