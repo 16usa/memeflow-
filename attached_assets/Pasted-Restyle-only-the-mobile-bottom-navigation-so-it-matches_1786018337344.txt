@@ -1,0 +1,102 @@
+Restyle only the mobile bottom navigation so it matches the existing desktop sidebar design language.
+
+Project:
+~/workspace/memeflow-app
+
+Keep the same five mobile navigation actions and all current behavior:
+
+- Home
+- Candidates
+- Positions
+- Wallet
+- More
+
+Required visual direction:
+
+The mobile bottom navigation must look like a compact horizontal version of the existing desktop sidebar.
+
+Use the desktop sidebar as the design reference:
+- dark matte surface
+- subtle blue-gray border
+- muted inactive text
+- white active text
+- cyan active accent
+- restrained corners
+- no bright mobile-style icons
+- no large glowing effects
+- no playful pill design
+
+Mobile design requirements up to 820px:
+
+1. Keep text-only navigation items.
+Do not add icons.
+
+2. Navigation container:
+- dark matte background matching the desktop sidebar
+- thin border using the existing desktop sidebar border color
+- border-radius approximately 14–16px
+- subtle backdrop blur only if already used by the sidebar
+- very restrained shadow
+- left/right approximately 12px
+- bottom must respect env(safe-area-inset-bottom)
+
+3. Navigation height:
+- approximately 64–68px
+- all five items equal width
+- minimum touch target 44px
+- no excessive vertical padding
+
+4. Active item:
+- use the same appearance as the active desktop sidebar link
+- subtle dark blue/cyan-tinted background
+- thin cyan accent line on the LEFT side of the active item
+- white text
+- subtle border
+- no large filled pill
+- no top indicator
+- no icon
+
+5. Inactive items:
+- transparent background
+- muted gray text matching desktop sidebar inactive links
+- no individual border unless focused or hovered
+
+6. Typography:
+- use the same font weight and letter spacing as the desktop sidebar links
+- approximately 11–12px on mobile
+- labels must fit without truncation on a 320px-wide screen
+
+7. Interaction:
+- keep existing active-state logic
+- keep all current click handlers
+- More sheet must still open
+- Positions, Wallet, Candidates and Home must continue working
+
+8. Do not change:
+- desktop sidebar
+- desktop navigation
+- mobile routing
+- PAPER Automate
+- wallet logic
+- candidate logic
+- positions logic
+- page content
+- any backend code
+
+9. Accessibility:
+- preserve aria-labels
+- preserve keyboard focus
+- preserve 44px minimum touch targets
+
+10. Verify:
+- no horizontal scrolling
+- no clipped labels
+- bottom navigation does not cover page content
+- active item visually matches the desktop sidebar style
+- desktop layout remains unchanged
+
+At the end, report:
+- exact selectors changed
+- final navigation height
+- final active-item CSS
+- confirmation that no icons were added
