@@ -113,6 +113,22 @@ body.focus-view .hero{min-height:300px}
 /* Mobile incident alert — shown when body[data-incident="true"] */
 .mobile-incident-alert{display:none}
 @media(max-width:820px){body[data-incident="true"] .mobile-incident-alert{display:flex;align-items:flex-start;gap:10px;padding:11px 13px;margin:0 0 10px;border:1px solid rgba(255,101,118,.55);border-radius:12px;background:rgba(255,101,118,.07);color:var(--text);font-size:12px;line-height:1.45}body[data-incident="true"] .mobile-incident-alert b{color:#ff7b88;display:block;margin-bottom:3px;font-size:11px;letter-spacing:.06em;text-transform:uppercase}body[data-incident="true"] .mobile-incident-alert a{color:#ff7b88;text-underline-offset:3px}}
+/* Mobile topbar connection row — desktop: hidden; mobile: second row inside topbar */
+.topbar-conn{display:none}
+@media(max-width:820px){
+ #connectionStrip{display:none!important;height:0!important;margin:0!important;padding:0!important;overflow:hidden!important}
+ .topbar{flex-wrap:wrap!important}
+ .topbar .top-left{flex:1 1 auto;min-width:0}
+ .topbar .top-actions{flex:0 0 auto}
+ .topbar-conn{display:flex!important;flex:0 0 100%;gap:0;margin-top:5px;padding-top:5px;border-top:1px solid var(--line)}
+ .topbar-conn-item{flex:1;display:flex;align-items:center;gap:5px;font-size:9px;color:var(--muted);min-width:0;overflow:hidden;padding:0 2px}
+ .topbar-conn-item+.topbar-conn-item{border-left:1px solid var(--line);padding-left:9px;margin-left:4px}
+ .topbar-conn-item i{flex:0 0 6px;width:6px;height:6px;border-radius:50%;background:var(--muted)}
+ .topbar-conn-item.good i{background:var(--green);box-shadow:0 0 6px rgba(81,231,168,.5)}
+ .topbar-conn-item.warn i{background:var(--yellow);box-shadow:0 0 6px rgba(246,199,95,.4)}
+ .topbar-conn-item.bad i{background:var(--red);box-shadow:0 0 6px rgba(255,101,118,.4)}
+ .topbar-conn-item span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1}
+}
 
 
 /* MEMEFLOW Intelligence OS */
@@ -971,6 +987,7 @@ html[data-theme="light"] .sidebar,html[data-theme="light"] .topbar,html[data-the
 <header class="topbar">
 <div class="top-left"><div class="mode-indicator"><i class="dot"></i><b>SYSTEM STARTING</b></div><span class="chip">PAPER MODE</span><span class="top-plan-badge" id="topPlanBadge">FREE PLAN</span></div>
 <div class="top-actions"><span class="chip">Market <strong id="marketRegime">WAITING</strong></span><span class="chip">Risk <strong id="globalRisk">—</strong></span><a class="btn wallet-connect-top" href="#wallet" id="walletConnectTop">Connect Wallet</a><button aria-pressed="false" class="btn focus-toggle" id="focusToggle" type="button">Focus view</button><button aria-hidden="true" class="btn theme-toggle" hidden id="themeToggle" tabindex="-1" type="button">Theme locked</button></div>
+<div class="topbar-conn" id="topbarConn" aria-label="Inline connection status"><div class="topbar-conn-item warn" id="mobileConnWallet"><i></i><span>Wallet offline</span></div><div class="topbar-conn-item warn" id="mobileConnRpc"><i></i><span>RPC unavailable</span></div></div>
 </header>
 <section aria-live="polite" class="context-banner" id="contextBanner">
 <div class="context-icon" id="contextIcon">M</div>
@@ -2054,5 +2071,38 @@ window.MEMEFLOW_UNIFIED_CANDIDATE_SYSTEM={version:1,sync};
 
 <script src="/market-chart-final-v5.js?v=20260805-mobile-polish"></script>
 <script defer src="paper-automation-ui.js"></script>
+<script id="topbar-conn-bridge">(function(){
+ 'use strict';
+ /* Compact mobile topbar Wallet + RPC status bridge.
+    Listens to existing events and DOM — no wallet or RPC logic is changed. */
+ var mw=document.getElementById('mobileConnWallet');
+ var mr=document.getElementById('mobileConnRpc');
+
+ /* ── Wallet: driven by the existing memeflow:walletchange event ── */
+ window.addEventListener('memeflow:walletchange',function(e){
+   if(!mw)return;
+   var connected=!!(e.detail&&e.detail.connected);
+   mw.className='topbar-conn-item '+(connected?'good':'warn');
+   mw.querySelector('span').textContent=connected?'Wallet connected':'Wallet offline';
+ });
+
+ /* ── RPC: mirror #connRpc class + text via MutationObserver ── */
+ var srcRpc=document.getElementById('connRpc');
+ if(srcRpc&&mr){
+   function syncRpc(){
+     var good=srcRpc.classList.contains('good');
+     var bad=srcRpc.classList.contains('bad');
+     var cls=good?'good':bad?'bad':'warn';
+     var b=srcRpc.querySelector('b');
+     var raw=b?b.textContent.trim():'';
+     var label=good?'RPC online':raw.toLowerCase()==='checking'?'RPC checking':'RPC unavailable';
+     mr.className='topbar-conn-item '+cls;
+     mr.querySelector('span').textContent=label;
+   }
+   syncRpc();
+   new MutationObserver(syncRpc).observe(srcRpc,{attributes:true,childList:true,subtree:true});
+ }
+})();
+</script>
 </body>
 </html>
