@@ -1363,7 +1363,7 @@ html[data-theme="light"] .sidebar,html[data-theme="light"] .topbar,html[data-the
 </header>
 <section aria-live="polite" class="context-banner" id="contextBanner">
 <div class="context-icon" id="contextIcon">M</div>
-<div class="context-copy"><small id="contextLabel">Active context · Mission</small><b id="contextTitle">Waiting for live candidates</b><p id="contextText">Only fully qualified candidates appear here. Failed or incomplete tokens stay out of the candidate feed.</p></div>
+<div class="context-copy"><small id="contextLabel">Active context · Mission</small><b id="contextTitle">Waiting for live candidates</b><p id="contextText">Candidates will appear after the backend, decision engine and Solana data stream are connected.</p></div>
 <div class="context-actions"><a aria-disabled="true" class="btn primary" href="#" id="contextPrimary" tabindex="-1">Waiting for candidate</a><a aria-disabled="true" class="btn" href="#" id="contextSecondary" tabindex="-1">Evidence unavailable</a></div>
 </section><section aria-label="Decision timeline" class="operator-timeline" id="operatorTimeline"><div class="operator-step active"><small>NOW</small><b>Waiting for live Solana events</b></div><div class="operator-step locked"><small>NEXT</small><b>Decision review</b></div><div class="operator-step locked"><small>THEN</small><b>Pre-trade validation</b></div></section>
 <section aria-label="Mobile context" class="context-tabs"><button class="active" data-context="mission" type="button">Mission</button><button data-context="position" type="button">Position</button><button data-context="incident" type="button">Incident</button></section>
@@ -1413,7 +1413,7 @@ html[data-theme="light"] .sidebar,html[data-theme="light"] .topbar,html[data-the
 </section>
 <section aria-label="Live data freshness" class="live-strip"><div class="live-item"><small>Market stream</small><b id="marketAge">—</b><div class="pulse"><i id="marketPulse" style="width:0%"></i></div></div><div class="live-item"><small>Holder data</small><b id="holderAge">—</b><div class="pulse"><i id="holderPulse" style="width:0%"></i></div></div><div class="live-item"><small>Decision queue</small><b id="queueSpeed">0 / min</b><div class="pulse"><i style="width:0%"></i></div></div><div class="live-item"><small>Strategy sync</small><b id="strategySync">NOT CONFIGURED</b><div class="pulse"><i style="width:0%"></i></div></div></section>
 <section class="grid workspace" id="workspace">
-<article class="panel queue-panel"><div class="panel-head"><h2>Attention Queue</h2><span class="chip" id="queueCount">0 tokens</span></div><div class="panel-body"><div id="qualifiedCandidatePolicyNote" style="font-size:9px;color:var(--muted);line-height:1.45;margin:0 0 9px">Qualified only · Tokens must pass server Settings, AI score/confidence and anti-rug confirmation before appearing here.</div><div class="queue" id="candidateQueue"><div class="empty-state production-empty">No qualified candidates yet. Tokens appear here only after they pass your Settings, AI thresholds and anti-rug confirmation.</div></div></div></article>
+<article class="panel queue-panel"><div class="panel-head"><h2>Attention Queue</h2><span class="chip" id="queueCount">0 tokens</span></div><div class="panel-body"><div class="queue" id="candidateQueue"><div class="empty-state production-empty">No candidates yet. Waiting for the live discovery and decision feed.</div></div></div></article>
 </section>
 
 <section aria-labelledby="market-chart-title" class="panel market-chart-module" id="market-chart-module">
@@ -1549,7 +1549,7 @@ html[data-theme="light"] .sidebar,html[data-theme="light"] .topbar,html[data-the
 </div>
 </div>
 <nav aria-label="Mobile navigation" class="mobile-nav"><button class="active" data-sheet="home" type="button" aria-label="Home">Home</button><button data-sheet="candidates" type="button" aria-label="Candidates">Candidates</button><button data-sheet="positions" type="button" aria-label="Positions">Positions</button><button data-sheet="wallet" type="button" aria-label="Wallet">Wallet</button><button data-sheet="more" type="button" aria-label="More">More</button></nav>
-<div class="mobile-sheet" id="sheet-candidates"><div class="sheet-top"><h2>Candidates</h2><button class="close-sheet" type="button">×</button></div><div class="queue" id="mobileQueue"><div class="empty-state production-empty">No qualified candidates yet. Tokens appear here only after they pass your Settings, AI thresholds and anti-rug confirmation.</div></div></div>
+<div class="mobile-sheet" id="sheet-candidates"><div class="sheet-top"><h2>Candidates</h2><button class="close-sheet" type="button">×</button></div><div class="queue" id="mobileQueue"><div class="empty-state production-empty">No candidates yet. Waiting for the live discovery and decision feed.</div></div></div>
 <div class="mobile-sheet" id="sheet-positions"><div class="sheet-top"><h2>Positions</h2><button class="close-sheet" type="button">×</button></div><div id="mobilePosition"></div></div>
 <div class="mobile-sheet" id="sheet-inspector"><div class="sheet-top"><h2>Decision Inspector</h2><button class="close-sheet" type="button">×</button></div><div id="mobileInspector"><div class="empty-state production-empty">No candidate selected.</div></div></div>
 <div class="mobile-sheet" id="sheet-wallet"><div class="sheet-top"><h2>Wallet</h2><button class="close-sheet" type="button">×</button></div>
@@ -1833,7 +1833,7 @@ function resolveAiConfidence(candidate){
  return Math.round(percent);
 }
 function stateClass(s){return s==='BUY READY'?'buy':s==='WATCH'?'watch':s==='BLOCKED'?'block':'wait'}
-function renderQueue(target='#candidateQueue'){const el=$(target);if(!el)return;if(!state.candidates.length){el.innerHTML='<div class="empty-state production-empty">No qualified candidates yet. Tokens appear here only after they pass your Settings, AI thresholds and anti-rug confirmation.</div>';return}el.innerHTML=state.candidates.map(c=>`<button class="candidate ${c.id===state.selected?'active':''}" data-candidate="${c.id}" type="button"><div class="candidate-top"><span><span class="lane">${c.lane||'QUEUE'}</span> <span class="candidate-name">${c.name||c.symbol||'Unknown'}</span></span><span class="state ${stateClass(c.state)}">${c.state||'WAITING'}</span></div><div class="candidate-meta"><span>${c.score??'—'} score · ${resolveAiConfidence(c)??'—'}% confidence</span><span>${c.priority!=null?'P'+c.priority:'—'}</span></div></button>`).join('');el.querySelectorAll('[data-candidate]').forEach(b=>b.addEventListener('click',()=>{state.selected=b.dataset.candidate;render();const c=selected();window.dispatchEvent(new CustomEvent('memeflow:candidatechange',{detail:{name:c.name,symbol:c.symbol||c.name,tokenAddress:c.mint||c.tokenAddress||''}}))}))}
+function renderQueue(target='#candidateQueue'){const el=$(target);if(!el)return;if(!state.candidates.length){el.innerHTML='<div class="empty-state production-empty">No candidates yet. Waiting for the live discovery and decision feed.</div>';return}el.innerHTML=state.candidates.map(c=>`<button class="candidate ${c.id===state.selected?'active':''}" data-candidate="${c.id}" type="button"><div class="candidate-top"><span><span class="lane">${c.lane||'QUEUE'}</span> <span class="candidate-name">${c.name||c.symbol||'Unknown'}</span></span><span class="state ${stateClass(c.state)}">${c.state||'WAITING'}</span></div><div class="candidate-meta"><span>${c.score??'—'} score · ${resolveAiConfidence(c)??'—'}% confidence</span><span>${c.priority!=null?'P'+c.priority:'—'}</span></div></button>`).join('');el.querySelectorAll('[data-candidate]').forEach(b=>b.addEventListener('click',()=>{state.selected=b.dataset.candidate;render();const c=selected();window.dispatchEvent(new CustomEvent('memeflow:candidatechange',{detail:{name:c.name,symbol:c.symbol||c.name,tokenAddress:c.mint||c.tokenAddress||''}}))}))}
 function render(){const c=selected();renderQueue();renderQueue('#mobileQueue'); const has=!!c.id;const _aiAnalysis=document.getElementById('ai-analysis');const _aiOpen=_aiAnalysis?_aiAnalysis.open:undefined;
  const set=(id,v)=>{const e=$(id);if(e)e.textContent=v}; set('#candidateCount',state.candidates.length);set('#buyReadyCount',state.candidates.filter(x=>x.state==='BUY READY').length);set('#positionCount',state.positions.length);set('#queueCount',`${state.candidates.length} tokens`);set('#primaryName',has?(c.name||c.symbol):'—');set('#primaryScore',has?(c.score??'—'):'—');const _aiConf=resolveAiConfidence(has?c:null);set('#primaryConfidence',_aiConf!==null?`${_aiConf}%`:'—');set('#primaryRisk',has?(c.risk||'—'):'—');set('#decisionData',has&&c.data!=null?`${c.data}%`:'—');set('#decisionLane',has?`${c.lane||'QUEUE'}${c.priority!=null?' · PRIORITY '+c.priority:''}`:'WAITING');set('#decisionMeta',has?(c.meta||'Verified backend data'):'Awaiting backend data');set('#chartSymbol',has?(c.symbol||c.name):'—');
  /* MEMEFLOW_PRIMARY_BINDING_V2 */
@@ -1901,7 +1901,7 @@ async function refresh(){
  const previousSelected=state.selected;
  try{
   const _dac=new AbortController();setTimeout(()=>_dac.abort(),8000);
-  const r=await fetch('/api/ai/decisions?scope=candidates&limit=50',{credentials:'include',headers:{accept:'application/json'},signal:_dac.signal});
+  const r=await fetch('/api/ai/decisions?limit=50',{credentials:'include',headers:{accept:'application/json'},signal:_dac.signal});
   if(!r.ok)throw new Error(`Decision feed ${r.status}`);
   const d=await r.json();
   const rows=Array.isArray(d)?d:Array.isArray(d.decisions)?d.decisions:[];
@@ -1915,7 +1915,7 @@ async function refresh(){
    })
    .filter(c=>{
     const stateName=String(c.state||'WAITING').toUpperCase();
-    return stateName==='BUY READY'&&c.terminal!==true&&c.lifecycle!=='closed'&&!terminalStates.has(stateName);
+    return c.terminal!==true&&c.lifecycle!=='closed'&&!terminalStates.has(stateName);
    })
    .sort((a,b)=>{
     const stateDiff=(rank[String(b.state||'WAITING').toUpperCase()]||0)-(rank[String(a.state||'WAITING').toUpperCase()]||0);
