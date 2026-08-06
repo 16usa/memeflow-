@@ -1,0 +1,198 @@
+Adjust only the mobile and tablet header/footer geometry.
+
+Project:
+~/workspace/memeflow-app
+
+Required behavior:
+
+====================================================
+BOTTOM NAVIGATION — PHONE AND TABLET
+====================================================
+
+Apply from 320px through 1024px.
+
+1. Make the mobile bottom navigation span the full viewport width.
+
+Use:
+- left: 0
+- right: 0
+- width: 100%
+- max-width: none
+- transform: none
+- margin: 0
+- bottom: 0
+
+2. Remove floating side gaps.
+
+The nav must touch:
+- the left viewport edge
+- the right viewport edge
+- the bottom viewport edge
+
+3. Shape:
+- no outer side margins
+- no visible gap below
+- keep only subtle top-left and top-right rounding if desired
+- bottom corners may be square
+- background must extend behind the iPhone safe area
+
+4. Safe area:
+- keep env(safe-area-inset-bottom) as internal bottom padding
+- do not create an external gap
+- labels must remain above the home indicator
+
+5. Keep the current visual style:
+- text-only
+- same active item
+- same colors
+- same click behavior
+- same five actions
+
+6. Keep the nav compact:
+- content area about 64–68px
+- do not allow tablet version to become oversized
+- buttons minimum 44px high
+
+====================================================
+TOP HEADER — MOBILE ONLY
+====================================================
+
+Apply only up to 820px.
+
+1. Make the top header card span the full viewport width.
+
+The current mobile top section contains:
+- PAPER MODE
+- FREE PLAN or OWNER ACCESS
+- Connect Wallet
+- Wallet status
+- RPC status
+
+2. Remove its side margins and card gap.
+
+Use:
+- width: 100%
+- max-width: none
+- margin-left: 0
+- margin-right: 0
+- border-radius: 0 0 16px 16px
+- top: 0
+
+3. Pin it directly to the top of the application content.
+
+It should sit immediately below the browser chrome with no dark page gap above it.
+
+4. If the header is not currently sticky, make it sticky on mobile:
+
+- position: sticky
+- top: 0
+- z-index high enough to remain above content
+- preserve the existing background and blur
+
+Do not use position: fixed unless necessary, because fixed positioning may cover content.
+
+5. Ensure the next module starts below the header normally.
+
+Do not overlap:
+- Active Context
+- candidate cards
+- page content
+
+6. Internal content:
+- preserve current buttons and statuses
+- allow wrapping on narrow screens
+- keep padding inside the header
+- do not change wallet logic or status behavior
+
+====================================================
+TABLET HEADER
+====================================================
+
+For 821px–1024px:
+- keep the currently correct tablet top header layout
+- do not stretch the tablet header to mobile full-width style if it breaks the layout
+- only the bottom navigation must be full viewport width on tablet
+
+====================================================
+REMOVE CONFLICTING RULES
+====================================================
+
+Search all CSS for rules affecting:
+
+.mobile-nav
+.topbar
+.top-left
+.top-actions
+the mobile top status/header container
+.main
+body
+
+Remove or override conflicts involving:
+
+- left
+- right
+- width
+- max-width
+- margin
+- transform
+- top
+- bottom
+- border-radius
+- safe-area padding
+- sticky/fixed positioning
+
+Place one authoritative responsive block at the very end of the stylesheet.
+
+====================================================
+DO NOT CHANGE
+====================================================
+
+Do not change:
+
+- nav actions
+- active-state behavior
+- wallet connection
+- PAPER Automate
+- LIVE access
+- candidate logic
+- positions
+- backend
+- desktop sidebar
+- desktop header
+- tablet header layout
+- visual design of content cards
+
+====================================================
+VERIFY
+====================================================
+
+Check at:
+
+- 320px
+- 375px
+- 390px
+- 430px
+- 768px
+- 820px
+- 834px
+- 1024px
+
+Confirm:
+
+- bottom nav spans the full viewport width on phone and tablet
+- no side gaps remain
+- no bottom gap remains
+- safe area remains protected
+- mobile top header spans full viewport width
+- mobile top header is flush to the top
+- mobile header does not overlap content
+- tablet top header remains unchanged
+- no horizontal scroll
+- desktop above 1024px remains unchanged
+
+At the end report:
+
+- final .mobile-nav CSS
+- final mobile header selector and CSS
+- safe-area handling
+- confirmation that tablet header was not changed
