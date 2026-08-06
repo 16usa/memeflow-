@@ -212,7 +212,18 @@
       this.classList.add('active');
 
       if (sheet === 'home') {
-        /* Navigate to the top section without opening any sheet */
+        /* Navigate to the top section without opening any sheet.
+           Also reset any context-position / context-incident body class so
+           mission content is always visible when the user returns Home. */
+        document.body.classList.remove('context-position', 'context-incident');
+        document.body.classList.add('context-mission');
+        /* Restore the Mission tab as active (tab is hidden on mobile but
+           keeps the JS state consistent for the router). */
+        var missionTab = document.querySelector('.context-tabs button[data-context="mission"]');
+        if (missionTab) {
+          document.querySelectorAll('.context-tabs button').forEach(function (b) { b.classList.remove('active'); });
+          missionTab.classList.add('active');
+        }
         navigate('#mission', true);
         return;
       }
