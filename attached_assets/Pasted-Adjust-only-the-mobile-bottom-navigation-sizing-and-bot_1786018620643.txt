@@ -1,0 +1,88 @@
+Adjust only the mobile bottom navigation sizing and bottom position.
+
+Project:
+~/workspace/memeflow-app
+
+Required behavior for screens up to 820px:
+
+1. Match module width exactly
+
+The mobile bottom navigation must have the same left and right edges as the main content modules.
+
+Use the same horizontal spacing as the current mobile .main container.
+
+Do not let the navigation protrude beyond the cards.
+
+Expected alignment:
+- left edge of bottom navigation = left edge of modules
+- right edge of bottom navigation = right edge of modules
+
+If .main uses:
+- 14px horizontal padding on normal mobile
+- 10px horizontal padding at <=430px
+
+then the navigation must use the same values.
+
+2. Remove the lower visual gap
+
+The navigation must sit flush against the bottom of the viewport.
+
+Change the current floating bottom offset so there is no visible empty gap below the navigation.
+
+Use:
+- bottom: 0
+
+The safe-area must be included inside the navigation itself as bottom padding, not as an external gap.
+
+3. Safe-area handling
+
+Keep iPhone home-indicator protection by using internal padding:
+
+padding-bottom: env(safe-area-inset-bottom, 0px);
+
+The navigation background and border must continue behind the safe-area area down to the bottom edge.
+
+Do not leave the page background visible between the navigation and the bottom of the screen.
+
+4. Shape
+
+Because it is attached to the bottom:
+- keep the top-left and top-right rounded corners
+- reduce or remove the bottom corner rounding if necessary
+- no floating shadow gap underneath
+
+5. Content spacing
+
+Make sure labels remain vertically centered above the safe-area padding.
+
+The usable navigation content height should remain approximately 64–68px, plus the safe-area inset.
+
+6. Main content
+
+Update the bottom padding of .main or mobile sheets so content is not hidden behind the taller attached navigation.
+
+7. Do not change:
+- navigation actions
+- active item styling
+- desktop sidebar
+- mobile page routing
+- More sheet
+- wallet logic
+- PAPER Automate
+- candidate or position logic
+
+8. Verify:
+- navigation width exactly matches card width
+- navigation does not protrude on either side
+- no visible gap exists below it
+- iPhone home indicator does not overlap labels
+- page content is not covered
+- 320px-wide screens do not scroll horizontally
+- desktop remains unchanged
+
+Report the final values for:
+- left
+- right
+- bottom
+- navigation height
+- safe-area padding
