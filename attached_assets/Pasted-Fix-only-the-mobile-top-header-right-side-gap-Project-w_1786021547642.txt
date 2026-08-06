@@ -1,0 +1,91 @@
+Fix only the mobile top header right-side gap.
+
+Project:
+~/workspace/memeflow-app
+
+Current problem:
+On mobile, the top header still does not span the full viewport width.
+The left edge is correct, but a visible gap remains on the right side.
+
+Do not redesign anything.
+Do not change the bottom navigation.
+Do not change tablet or desktop behavior.
+
+Apply only at widths up to 820px.
+
+1. Identify the exact mobile header container containing:
+- PAPER MODE
+- FREE PLAN or OWNER ACCESS
+- Connect Wallet
+- Wallet status
+- RPC status
+
+2. Inspect all computed width constraints affecting that element and its parents:
+- width
+- max-width
+- right
+- left
+- margin-right
+- padding-right
+- transform
+- box-sizing
+- overflow
+- parent grid/flex width
+
+3. Remove the right-side gap completely.
+
+Final mobile geometry must be:
+
+width: 100vw !important;
+max-width: none !important;
+margin-left: 0 !important;
+margin-right: 0 !important;
+left: 0 !important;
+right: auto !important;
+transform: none !important;
+box-sizing: border-box !important;
+border-radius: 0 !important;
+
+4. If the header is inside a padded .main container, compensate for both sides explicitly:
+
+margin-left: calc(-1 * var(--mobile-content-inline)) !important;
+width: calc(100% + (2 * var(--mobile-content-inline))) !important;
+
+Do not use only width:100%, because that remains constrained by the padded parent.
+
+5. Also inspect for any hidden or stale rule such as:
+- width: calc(100% - ...)
+- max-width
+- right: var(...)
+- margin-inline
+- inset-inline
+- translateX
+- centered width rules
+- tablet wrapper max-width leaking into mobile
+
+Remove or override the exact conflicting rule.
+
+6. Add one final authoritative mobile override block at the very end of the stylesheet.
+
+7. Verify at:
+- 320px
+- 375px
+- 390px
+- 414px
+- 430px
+- 768px
+- 820px
+
+Required result:
+- header touches left screen edge
+- header touches right screen edge
+- no visible strip remains on the right
+- no horizontal scrolling
+- internal content padding remains
+- tablet and desktop unchanged
+
+At the end report:
+- exact header selector
+- exact conflicting rule found
+- final computed width
+- final mobile CSS

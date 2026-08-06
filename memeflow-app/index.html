@@ -1004,21 +1004,23 @@ html[data-theme="light"] .sidebar,html[data-theme="light"] .topbar,html[data-the
   position:sticky!important;
   top:0!important;
   z-index:20!important;
-  /* Break out of #mission side padding to reach viewport edges */
+  /* margin-left shifts the element to the left viewport edge (0px).
+     width:100vw spans the full viewport — viewport-absolute, never
+     constrained by parent content-box width or negative-margin-right quirks.
+     margin-right:0 so no browser miscomputes right overflow. */
   margin-top:0!important;
   margin-left:calc(-1 * var(--mobile-content-inline))!important;
-  margin-right:calc(-1 * var(--mobile-content-inline))!important;
+  margin-right:0!important;
   margin-bottom:14px!important;
+  width:100vw!important;
+  max-width:none!important;
+  box-sizing:border-box!important;
+  border-radius:0!important;
   /* No side or top borders; only a bottom separator */
   border-top:0!important;
   border-left:0!important;
   border-right:0!important;
   border-bottom:1px solid var(--line)!important;
-  /* Explicit width ensures full-viewport span regardless of flex/block context.
-     box-sizing:border-box so padding is included within that width. */
-  width:calc(100% + (2 * var(--mobile-content-inline)))!important;
-  box-sizing:border-box!important;
-  border-radius:0!important;
   /* Safe-area-inset-top absorbed as extra internal top padding
      so content clears the iPhone notch/dynamic island. */
   padding:calc(env(safe-area-inset-top,0px) + 10px) 12px 10px!important;
