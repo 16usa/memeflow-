@@ -421,8 +421,6 @@ if(url.pathname==='/api/system/health'){
     queueDepth:discMetrics.freshQueueDepth+discMetrics.retryQueueDepth,
     holderQueueDepth:holderQueue.queueDepth,
     holderProcessing:holderQueue.processing,
-    holderOldestQueuedAgeMs:holderQueue.oldestAgeMs,
-    holderNextDueInMs:holderQueue.nextDueInMs,
     rpcRetries:rpc.metrics.retries,
     rpcTimeouts:rpc.metrics.timeouts,
     rpcHttp429:rpc.metrics.http429,

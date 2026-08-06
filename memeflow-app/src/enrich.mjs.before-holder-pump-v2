@@ -305,8 +305,6 @@ function decodeHolderSlice(row,decimals){
   const b64=Array.isArray(data)?data[0]:null;
   if(!b64)return null;
   try{
-    // dataSlice is offset 32, length 40:
-    // bytes 0..31 = token-account owner authority, 32..39 = raw amount.
     const b=Buffer.from(b64,'base64');
     if(b.length<40)return null;
     const authority=b58encode(b.subarray(0,32));
@@ -326,33 +324,19 @@ async function mintTokenAccounts(rpc,mint,programId,decimals){
       dataSlice:{offset:32,length:40}
     }
   ]);
-  return (Array.isArray(rows)?rows:[])
-    .map(row=>decodeHolderSlice(row,decimals))
-    .filter(Boolean);
+  return (Array.isArray(rows)?rows:[]).map(r=>decodeHolderSlice(r,decimals)).filter(Boolean);
 }
 
-function aggregateWalletBalances(accounts,protocolAuthorities){
-  const byWallet=new Map();
-  for(const row of accounts){
-    if(!(row.amount>0))continue;
-    if(protocolAuthorities.has(row.authority))continue;
-    byWallet.set(row.authority,(byWallet.get(row.authority)||0)+row.amount);
-  }
-  return byWallet;
-}
-
-export async function enrichHolders(mint,deps){
-  const {rpc,store,evaluateAll,publish,enrichDiag}=deps;
+export async function enrichHolders(mint, deps) {
+  const { rpc, store, evaluateAll, publish, enrichDiag } = deps;
   const token=store.state.tokens[mint]||{};
   const decimals=Number(token.decimals??6);
   const total=Number(token.totalSupply||0);
 
   let accounts=[];
-  let programUsed=TOKEN_PROGRAM;
   try{
     accounts=await mintTokenAccounts(rpc,mint,TOKEN_PROGRAM,decimals);
     if(!accounts.length){
-      programUsed=TOKEN_2022_PROGRAM;
       accounts=await mintTokenAccounts(rpc,mint,TOKEN_2022_PROGRAM,decimals);
     }
   }catch(e){
@@ -367,32 +351,33 @@ export async function enrichHolders(mint,deps){
     throw e;
   }
 
-  const protocolAuthorities=new Set(
-    [token.curve,token.bondingCurve,token.associatedBondingCurve]
-      .filter(x=>typeof x==='string'&&x.length>0)
-  );
+  const positive=accounts.filter(a=>a.amount>0);
+  const holderCount=positive.length;
 
-  const walletBalances=aggregateWalletBalances(accounts,protocolAuthorities);
-  const balances=[...walletBalances.values()].sort((a,b)=>b-a);
-  const holderCount=balances.length;
+  // Pump bonding-curve authority is protocol inventory, not a user holder.
+  const protocolAuthorities=new Set([token.curve].filter(Boolean));
+  const userBalances=positive
+    .filter(a=>!protocolAuthorities.has(a.authority))
+    .map(a=>a.amount)
+    .sort((a,b)=>b-a);
 
-  const top10Pct=total>0
-    ? balances.slice(0,10).reduce((sum,n)=>sum+n,0)/total*100
+  const top10=total>0
+    ? userBalances.slice(0,10).reduce((a,b)=>a+b,0)/total*100
     : null;
 
   const creator=token.creator||null;
-  const creatorAmount=creator?(walletBalances.get(creator)||0):0;
+  const creatorAmount=creator
+    ? positive.filter(a=>a.authority===creator).reduce((s,a)=>s+a.amount,0)
+    : 0;
   const developerPct=creator&&total>0?creatorAmount/total*100:null;
 
   const updated=store.setToken(mint,{
     holderFresh:true,
     holderCount,
-    top10Pct,
+    top10Pct:top10,
     developerPct,
     developerSharePct:developerPct,
-    holderSource:'Solana getProgramAccounts unique-wallet scan',
-    holderTokenProgram:programUsed,
-    holderScannedAt:Date.now(),
+    holderSource:'Solana getProgramAccounts',
     marketCap:token.marketCapSol??token.marketCap??null,
     liquidity:token.liquiditySol??token.liquidity??null,
     momentum:token.buyPressure??token.momentum??null
@@ -402,117 +387,125 @@ export async function enrichHolders(mint,deps){
   publish(mint);
   return {rateLimited:false};
 }
-
 // ── Holder queue ─────────────────────────────────────────────────────────────
 
-export function makeHolderQueue(config,deps){
-  const maxConcurrent=Math.max(1,Number(config?.maxConcurrent??1));
-  const queueMax=Math.max(10,Number(config?.queueMax??500));
-  const initialDelayMs=Math.min(10000,Math.max(1000,Number(config?.initialDelayMs??5000)));
-  const retryDelayMs=Math.max(5000,Number(config?.retryDelayMs??30000));
-  const maxRetries=Math.max(1,Number(config?.maxRetries??8));
-  const {enrichHoldersFn,holderMetrics}=deps;
+/**
+ * Create a bounded, deduplicating holder-enrichment queue.
+ *
+ * @param {object} config
+ *   maxConcurrent   — max simultaneous holder RPC calls (default 1)
+ *   queueMax        — max pending+ready items; oldest dropped when full (default 250)
+ *   initialDelayMs  — delay before first attempt (default 15 000)
+ *   retryDelayMs    — delay before each retry (default 60 000)
+ *   maxRetries      — retries before giving up on a mint (default 5)
+ * @param {object} deps
+ *   enrichHoldersFn — (mint) => Promise<{rateLimited, retryAfter?}>
+ *   holderMetrics   — from makeHolderMetrics()
+ * @returns {{ enqueue(mint), queueDepth, processing }}
+ */
+export function makeHolderQueue(config, deps) {
+  const {
+    maxConcurrent  = 1,
+    queueMax = 500,
+    initialDelayMs = 8000,
+    retryDelayMs = 30000,
+    maxRetries = 8,
+  } = config || {};
+  const {enrichHoldersFn, holderMetrics} = deps;
 
-  const pending=new Map(); // mint -> {mint,retries,enqueuedAt,dueAt}
-  const active=new Set();
-  let wakeTimer=null;
+  // scheduled: mints with a pending timer before entering the ready queue
+  const scheduled    = new Map();  // mint → { retries, timer }
+  // ready: ordered queue of items waiting for a concurrency slot
+  const ready        = [];
+  const readySet     = new Set();
+  // active: mints currently running enrichHoldersFn
+  const active       = new Set();
 
-  function scheduleWake(){
-    if(wakeTimer){clearTimeout(wakeTimer);wakeTimer=null}
-    if(!pending.size)return;
-    const next=Math.min(...[...pending.values()].map(x=>x.dueAt));
-    wakeTimer=setTimeout(drain,Math.max(0,next-Date.now()));
+  function _totalPending() {
+    return scheduled.size + ready.length;
   }
 
-  function dropOldest(){
-    let oldest=null;
-    for(const item of pending.values()){
-      if(!oldest||item.enqueuedAt<oldest.enqueuedAt)oldest=item;
+  function _dropOldest() {
+    // Prefer dropping from ready queue (not yet started)
+    if (ready.length > 0) {
+      const dropped = ready.shift();
+      readySet.delete(dropped.mint);
+    } else {
+      // Drop oldest scheduled entry
+      const oldest = scheduled.keys().next().value;
+      const entry  = scheduled.get(oldest);
+      clearTimeout(entry.timer);
+      scheduled.delete(oldest);
     }
-    if(oldest){
-      pending.delete(oldest.mint);
-      holderMetrics.holderDropped++;
-    }
+    holderMetrics.holderDropped++;
   }
 
-  function reschedule(item,delayMs){
-    pending.set(item.mint,{
-      ...item,
-      retries:item.retries+1,
-      dueAt:Date.now()+Math.max(1000,delayMs)
-    });
+  function _schedule(mint, retries, delayMs) {
+    // Cancel any existing timer for this mint
+    const existing = scheduled.get(mint);
+    if (existing) clearTimeout(existing.timer);
+
+    const timer = setTimeout(() => {
+      scheduled.delete(mint);
+      if (!active.has(mint) && !readySet.has(mint)) {
+        ready.push({mint, retries});
+        readySet.add(mint);
+        _drain();
+      }
+    }, delayMs);
+    scheduled.set(mint, {retries, timer});
   }
 
-  async function run(item){
-    active.add(item.mint);
-    try{
-      const result=await enrichHoldersFn(item.mint);
-      if(result?.rateLimited){
+  async function _run(mint, retries) {
+    try {
+      const result = await enrichHoldersFn(mint);
+      if (result.rateLimited) {
         holderMetrics.holderRateLimited++;
-        if(item.retries<maxRetries){
+        if (retries < maxRetries) {
           holderMetrics.holderRetries++;
-          reschedule(item,result.retryAfter??retryDelayMs);
-        }else{
+          const delay = result.retryAfter ?? retryDelayMs;
+          active.delete(mint);
+          _schedule(mint, retries + 1, delay);
+          _drain();
+          return;
+        } else {
           holderMetrics.holderFailed++;
-          holderMetrics.lastHolderError='max retries exceeded on rate limit';
-          holderMetrics.lastHolderErrorAt=Date.now();
+          holderMetrics.lastHolderError = 'max retries exceeded on rate limit';
+          holderMetrics.lastHolderErrorAt = Date.now();
         }
-      }else{
+      } else {
         holderMetrics.holderSucceeded++;
-        holderMetrics.lastHolderError=null;
       }
-    }catch(e){
-      if(item.retries<maxRetries && isRateLimited(e)){
-        holderMetrics.holderRateLimited++;
-        holderMetrics.holderRetries++;
-        reschedule(item,e?.retryAfterMs??retryDelayMs);
-      }else{
-        holderMetrics.holderFailed++;
-        holderMetrics.lastHolderError=sanitize(e?.message||'unknown');
-        holderMetrics.lastHolderErrorAt=Date.now();
-      }
-    }finally{
-      active.delete(item.mint);
-      drain();
+    } catch(e) {
+      holderMetrics.holderFailed++;
+      holderMetrics.lastHolderError = sanitize(e?.message || 'unknown');
+      holderMetrics.lastHolderErrorAt = Date.now();
+    }
+    active.delete(mint);
+    _drain();
+  }
+
+  function _drain() {
+    while (active.size < maxConcurrent && ready.length > 0) {
+      const {mint, retries} = ready.shift();
+      readySet.delete(mint);
+      active.add(mint);
+      _run(mint, retries);
     }
   }
 
-  function drain(){
-    wakeTimer=null;
-    const now=Date.now();
-    while(active.size<maxConcurrent){
-      let due=null;
-      for(const item of pending.values()){
-        if(item.dueAt<=now && (!due||item.dueAt<due.dueAt))due=item;
-      }
-      if(!due)break;
-      pending.delete(due.mint);
-      void run(due);
-    }
-    scheduleWake();
-  }
-
-  function enqueue(mint){
-    if(!mint||pending.has(mint)||active.has(mint))return false;
-    if(pending.size>=queueMax)dropOldest();
-    const now=Date.now();
-    pending.set(mint,{mint,retries:0,enqueuedAt:now,dueAt:now+initialDelayMs});
+  function enqueue(mint) {
+    // Dedup: already scheduled, active, or in ready queue
+    if (scheduled.has(mint) || active.has(mint) || readySet.has(mint)) return false;
+    if (_totalPending() >= queueMax) _dropOldest();
     holderMetrics.holderQueued++;
-    scheduleWake();
+    _schedule(mint, 0, initialDelayMs);
     return true;
   }
 
   return {
     enqueue,
-    get queueDepth(){return pending.size},
-    get processing(){return active.size},
-    get oldestAgeMs(){
-      if(!pending.size)return null;
-      return Date.now()-Math.min(...[...pending.values()].map(x=>x.enqueuedAt));
-    },
-    get nextDueInMs(){
-      if(!pending.size)return null;
-      return Math.max(0,Math.min(...[...pending.values()].map(x=>x.dueAt))-Date.now());
-    }
+    get queueDepth()  { return _totalPending(); },
+    get processing()  { return active.size; },
   };
 }
