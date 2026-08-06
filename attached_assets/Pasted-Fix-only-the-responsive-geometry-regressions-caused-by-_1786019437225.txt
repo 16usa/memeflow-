@@ -1,0 +1,254 @@
+Fix only the responsive geometry regressions caused by the latest bottom-navigation changes.
+
+Project:
+~/workspace/memeflow-app
+
+There are three current problems:
+
+1. On tablet, the bottom navigation is far too tall.
+2. On tablet, the top header/topbar layout changed and wrapped incorrectly.
+3. On phone, the bottom navigation still does not match the exact width of the content cards.
+
+Do not redesign anything.
+Do not change navigation behavior.
+Do not touch backend or trading logic.
+
+====================================================
+A. RESTORE THE TABLET TOP HEADER
+====================================================
+
+The latest responsive CSS accidentally changed the tablet header layout.
+
+For widths from 821px to 1024px:
+
+- restore the top header/topbar to the layout it had before the latest bottom-navigation width change
+- keep its items in the original horizontal desktop/tablet arrangement
+- do not stack or wrap PAPER MODE, OWNER ACCESS, Market, Risk, Connect Wallet and Focus view into multiple uneven rows
+- do not reuse mobile top-card rules on tablet
+- do not modify desktop above 1024px
+- do not modify phone header rules below 821px
+
+Inspect the latest CSS additions and remove or override only the rules that affected:
+- .topbar
+- .top-left
+- .top-actions
+- header chips/buttons
+- tablet header wrapping, width, or grid behavior
+
+The bottom-navigation fix must not alter the top header.
+
+====================================================
+B. FIX PHONE NAVIGATION WIDTH
+====================================================
+
+For widths up to 820px, the bottom navigation must have exactly the same left and right edges as the visible content cards.
+
+Do not guess based only on viewport gutters.
+
+Inspect the current mobile layout and identify the actual card/content wrapper geometry.
+
+Preferred implementation:
+
+Use a shared wrapper variable:
+
+--mobile-content-inline: 14px;
+
+At <=430px:
+
+--mobile-content-inline: 10px;
+
+Apply the same exact value to:
+- .main horizontal padding
+- .mobile-nav left
+- .mobile-nav right
+
+Example:
+
+@media (max-width:820px) {
+  .main {
+    padding-left: var(--mobile-content-inline) !important;
+    padding-right: var(--mobile-content-inline) !important;
+  }
+
+  .mobile-nav {
+    left: var(--mobile-content-inline) !important;
+    right: var(--mobile-content-inline) !important;
+    width: auto !important;
+    max-width: none !important;
+    transform: none !important;
+  }
+}
+
+Important:
+- remove any tablet max-width, centered transform, width:min(...), left:50%, or translateX rules from the phone breakpoint
+- do not let an older .mobile-nav left/right rule override the final one
+- place the final corrective CSS after all older mobile navigation rules
+
+Verify on:
+- 320px
+- 390px
+- 430px
+- 768px
+- 820px
+
+The navigation and cards must align pixel-for-pixel.
+
+====================================================
+C. FIX TABLET NAVIGATION HEIGHT
+====================================================
+
+For 821px to 1024px, keep the same compact visual style as phone, but do not make the panel taller.
+
+The visible navigation content area must be approximately 64–68px high.
+
+Safe-area must not increase the visible button area excessively.
+
+Use this structure conceptually:
+
+.mobile-nav {
+  height: auto;
+  min-height: 66px;
+  padding-top: 5px;
+  padding-left: 5px;
+  padding-right: 5px;
+  padding-bottom: max(5px, env(safe-area-inset-bottom, 0px));
+}
+
+Do not use:
+
+height: calc(68px + env(safe-area-inset-bottom));
+
+if that creates an oversized tablet bar.
+
+For tablets without a meaningful bottom safe-area:
+- total height should remain approximately 66–72px
+
+For iPhone:
+- safe-area remains protected inside the dark navigation background
+
+Buttons:
+- min-height: 44px
+- no stretched vertical padding
+- labels vertically centered
+
+====================================================
+D. TABLET WIDTH
+====================================================
+
+For 821px to 1024px:
+
+- keep the mobile bottom navigation component visible
+- align it with the main card column
+- use the same left/right content gutter as the tablet main content
+- do not make it full viewport width
+- do not use a separate giant tablet design
+- do not apply a different item height or typography
+
+If the tablet main content uses a centered max-width wrapper, use that exact wrapper width for the navigation.
+
+Do not invent a separate max-width unless needed.
+
+The nav width must come from the same geometry as the cards.
+
+====================================================
+E. BREAKPOINTS
+====================================================
+
+Final behavior:
+
+- <=430px:
+  phone layout
+  narrow content gutter
+  compact nav
+
+- 431px–820px:
+  phone/mobile layout
+  normal content gutter
+  compact nav
+
+- 821px–1024px:
+  tablet content layout
+  original tablet topbar restored
+  compact bottom nav
+  same card-aligned width
+  no oversized height
+
+- >1024px:
+  desktop behavior unchanged
+  desktop sidebar/navigation unchanged
+  mobile bottom nav hidden
+
+====================================================
+F. REMOVE CONFLICTING RULES
+====================================================
+
+Search all CSS for every .mobile-nav rule and identify conflicts involving:
+
+- left
+- right
+- width
+- max-width
+- height
+- min-height
+- bottom
+- padding
+- transform
+- safe-area
+- breakpoints at 820px, 1024px, 1180px
+
+Consolidate the final responsive rules into one authoritative block at the end of the stylesheet.
+
+Do not keep multiple contradictory final overrides.
+
+====================================================
+G. DO NOT CHANGE
+====================================================
+
+Do not change:
+
+- nav labels
+- active-item design
+- click handlers
+- mobile routing
+- More sheet
+- candidate logic
+- positions logic
+- wallet logic
+- PAPER Automate
+- LIVE access
+- backend
+- desktop sidebar
+- card styles
+
+====================================================
+H. VERIFICATION
+====================================================
+
+Verify screenshots at:
+
+- 390 × 844
+- 430 × 932
+- 768 × 1024
+- 820 × 1180
+- 834 × 1194
+- 1024 × 768
+- 1180 × 820
+
+Confirm:
+
+- phone nav edges match card edges exactly
+- tablet nav edges match card edges exactly
+- tablet nav is compact, not oversized
+- tablet topbar is restored
+- no header controls wrap incorrectly
+- no horizontal scrolling
+- no content is hidden behind the nav
+- desktop above 1024px is unchanged
+
+At the end report:
+
+- the conflicting CSS rules removed
+- final phone left/right values
+- final tablet left/right or wrapper rule
+- final nav min-height and padding
+- exact tablet topbar rule restored
