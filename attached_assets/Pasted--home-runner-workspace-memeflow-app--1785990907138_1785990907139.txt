@@ -1,0 +1,92 @@
+В проекте есть папка /home/runner/workspace/memeflow-app.
+
+Нужно изменить мобильную версию сайта, не трогая серверную логику, API, торговую логику, wallet integration, billing и настройки.
+
+Работай только с:
+- /home/runner/workspace/memeflow-app/index.html
+
+Сначала создай резервную копию:
+- /home/runner/workspace/memeflow-app/index.before-mobile-redesign.html
+
+Затем добавь В САМЫЙ КОНЕЦ основного тега <style> в index.html новый финальный мобильный CSS-слой.
+
+Требования для экранов до 820px:
+
+1. Верхняя панель:
+- оставить только FREE PLAN и Connect Wallet;
+- скрыть SYSTEM STARTING, PAPER MODE, Market, Risk, Focus view;
+- сделать высоту панели около 58px;
+- position: sticky;
+- top: 0;
+- не перекрывать контент.
+
+2. Вкладки Mission / Position / Incident:
+- оставить;
+- position: sticky;
+- расположить под верхней панелью;
+- высота около 46px.
+
+3. Главная мобильная страница должна быть компактной:
+- Active Context;
+- компактный статус Wallet и Solana RPC;
+- Primary Candidate;
+- AI Decision Studio;
+- отдельный Market Chart;
+- компактный Pre-trade execution checks.
+
+4. Скрыть с мобильной Home:
+- большой блок Today's Mission;
+- Positions;
+- Wallet;
+- System Health;
+- Plans & Billing;
+- AI & Trading Settings.
+
+Эти разделы не удалять из HTML. Только скрывать на Home через CSS.
+
+5. Primary Candidate:
+- компактная карточка;
+- название максимум две строки;
+- AI Score справа;
+- Confidence / Risk / Expected RR в одной строке;
+- Top-10 / Liquidity / Momentum / Developer в сетке 2×2;
+- причина максимум две строки.
+
+6. AI Decision Studio:
+- убрать огромную высоту;
+- название не должно разрываться по одному слову в строке;
+- Score / Confidence / Data сделать одной компактной строкой;
+- Decision tree ограничить по высоте;
+- Market Chart визуально оформить отдельным модулем.
+
+7. Market Chart:
+- отдельная карточка;
+- интервалы 1s / 1m / 5m / 15m / 1h / All должны помещаться в одну строку;
+- график на мобильном высотой около 200px;
+- не ломать существующий JavaScript графика.
+
+8. Pre-trade execution checks:
+- компактная карточка;
+- показывать первые четыре проверки в сетке 2×2;
+- остальные значения не удалять, только скрыть на мобильной Home;
+- readiness bar оставить.
+
+9. Нижнее меню:
+- высота около 68px;
+- учитывать env(safe-area-inset-bottom);
+- не перекрывать контент;
+- добавить достаточный padding-bottom у main.
+
+10. Обязательные исправления:
+- никакого горизонтального скролла;
+- ширина всех модулей не больше экрана;
+- не использовать отрицательные margin, из-за которых контент заходит под панели;
+- не добавлять второй конфликтующий дизайн;
+- новый мобильный слой должен находиться последним в CSS cascade;
+- desktop от 821px не менять.
+
+После изменения:
+1. Проверь, что index.html остаётся валидным.
+2. Запусти npm test из папки memeflow-app.
+3. Не запускай второй сервер, если порт 3000 уже используется.
+4. Сообщи, какие строки и блоки были изменены.
