@@ -1,0 +1,148 @@
+Fix Primary Candidate Confidence so it dynamically follows the currently selected candidate.
+
+Project:
+~/workspace/memeflow-app
+
+CURRENT BUG
+
+Primary Candidate displays Confidence 100% for different candidate cards.
+
+The confidence must NOT be fixed, hardcoded, cached globally, or shared across candidates.
+
+Each candidate/decision has its own AI confidence percentage, and the visible value must change whenever the selected candidate changes.
+
+REQUIRED BEHAVIOR
+
+1. Inspect the actual candidate/decision object used by the main render function.
+
+The render flow likely uses a currently selected object such as:
+
+const c = candidates[selectedIndex]
+or
+const c = getSelectedCandidate()
+
+Find the exact current implementation.
+
+2. Find the real per-candidate AI confidence field inside that selected object.
+
+Inspect actual objects returned by /api/ai/decisions.
+
+Possible structures include:
+
+c.confidence
+c.ai_confidence
+c.confidence_pct
+c.decision.confidence
+c.decision.ai_confidence
+
+Do not hardcode one field name until the real API structure is inspected.
+
+3. Resolve Confidence fresh inside every render of the selected candidate:
+
+const confidence = resolveAiConfidence(c);
+
+document.querySelector('#primaryConfidence').textContent =
+  confidence == null ? '—' : `${confidence}%`;
+
+4. The resolver must work per candidate:
+
+function resolveAiConfidence(candidate) {
+  const raw =
+    candidate?.decision?.confidence ??
+    candidate?.decision?.ai_confidence ??
+    candidate?.ai_confidence ??
+    candidate?.confidence_pct ??
+    candidate?.confidence;
+
+  const n = Number(raw);
+  if (!Number.isFinite(n)) return null;
+
+  const pct = n >= 0 && n <= 1 ? n * 100 : n;
+  if (pct < 0 || pct > 100) return null;
+
+  return Math.round(pct);
+}
+
+Adjust field priority to match the real API response.
+
+5. Remove all fixed/default values that force every card to show the same percentage:
+
+- hardcoded 100
+- hardcoded 85
+- hardcoded 80
+- global default confidence
+- stale cached confidence from the previous candidate
+- fallback from data completeness
+- fallback from Top-10 percentage
+
+6. Candidate switching:
+
+When the user selects another candidate:
+- name changes
+- score changes
+- confidence must change from that candidate's own decision
+- all other metrics update normally
+
+7. Polling:
+
+When polling refreshes candidate data:
+- keep the currently selected candidate by stable ID/mint
+- re-read its newest confidence
+- update the visible percentage
+- do not keep the old candidate's confidence
+
+8. Do not use:
+
+- Data completeness as Confidence
+- AI Score as Confidence
+- Top-10 concentration as Confidence
+- a static fallback percentage
+
+If the selected candidate does not have confidence, show:
+—
+
+9. Add tests with multiple candidates:
+
+Candidate A:
+confidence: 0.61
+Expected UI: 61%
+
+Candidate B:
+confidence: 84
+Expected UI: 84%
+
+Candidate C:
+confidence missing
+Expected UI: —
+
+Verify switching A → B → C updates:
+61% → 84% → —
+
+10. Also test:
+
+- polling updates Candidate A confidence from 61% to 72%
+- switching back to Candidate A shows 72%
+- no value leaks between candidates
+- no fixed 100% remains in the code
+
+DO NOT CHANGE
+
+- AI confidence calculation
+- candidate scoring
+- data completeness
+- decision engine
+- card design
+- PAPER Automate
+- LIVE execution
+- backend trading logic
+
+FINAL REPORT
+
+Report:
+
+- exact per-candidate confidence field found
+- exact old code that forced the same percentage
+- render function changed
+- candidate-switch handler checked
+- polling behavior checked
+- test results for at least three different candidates

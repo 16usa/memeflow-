@@ -62,7 +62,9 @@ function candidateView(d){
     logoUrl:t.logoUrl||t.imageUrl||t.image||null,
     state:d.state,
     score:d.score,
-    confidence:d.confidence,
+    /* confidence intentionally omitted: d.confidence = dataQuality×100 (data completeness),
+       not an AI confidence score. Use candidate?.decision?.confidence or ai_confidence instead.
+       Data completeness is already exposed as the `data` field below. */
     data:Math.round((t.dataQuality||0)*100),
     lane:d.state==='BUY READY'?'READY':'QUEUE',
     priority:d.score,

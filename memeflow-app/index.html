@@ -1659,7 +1659,15 @@ const toast=msg=>{const t=$('#toast');if(!t)return; t.textContent=msg;t.classLis
    both 0-1 fractional (0.85→85%) and 0-100 integer (85→85%) representations.
    Field priority: decision.confidence > ai_confidence > confidence > confidence_pct */
 function resolveAiConfidence(candidate){
- const raw=candidate?.decision?.confidence??candidate?.ai_confidence??candidate?.confidence??candidate?.confidence_pct;
+ /* Field priority (highest to lowest):
+    1. decision.confidence   — primary AI-model output attached to a decision object
+    2. decision.ai_confidence— alternate AI model field on a decision object
+    3. ai_confidence         — top-level AI confidence (not data completeness)
+    4. confidence_pct        — fractional form of AI confidence
+    5. confidence            — generic last resort (NOT data completeness; candidateView
+                               no longer sends this field to prevent 100%-leakage) */
+ const raw=candidate?.decision?.confidence??candidate?.decision?.ai_confidence??candidate?.ai_confidence??candidate?.confidence_pct??candidate?.confidence;
+ if(raw==null)return null; // Number(null)===0 which is finite — guard before conversion
  const value=Number(raw);
  if(!Number.isFinite(value))return null;
  const percent=value>=0&&value<=1?value*100:value;
