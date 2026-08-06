@@ -15,14 +15,7 @@ export class JsonStore {
   // Debounced async save — decisions excluded (re-evaluated after restart, not needed on disk)
   save(){clearTimeout(this._st);this._st=setTimeout(()=>{this._st=null;const {decisions:_d,...persist}=this.state;const tmp=this.file+'.tmp';fs.promises.writeFile(tmp,JSON.stringify(persist),'utf8').then(()=>fs.promises.rename(tmp,this.file)).catch(()=>{})},200)}
   user(id){if(!this.state.users[id]){this.state.users[id]={id,createdAt:new Date().toISOString(),settings:defaults(),plan:'free',liveEntitled:false,subscriptionStatus:'free',stripeCustomerId:null,stripeSubscriptionId:null,currentPeriodEnd:null,cancelAtPeriodEnd:false,killSwitch:false,isOwner:false,ownerGrantedAt:null,ownerGrantSource:null};this.save()}return this.state.users[id]}
-  settings(id){
-    const u=this.user(id);
-    const current=(u.settings&&typeof u.settings==='object'&&!Array.isArray(u.settings))?u.settings:{};
-    const normalized=normalizeSettings({...defaultSettings(),...current});
-    const before=JSON.stringify(current),after=JSON.stringify(normalized);
-    if(!u.settings||before!==after){u.settings=normalized;this.save()}
-    return u.settings;
-  }
+  settings(id){return this.user(id).settings}
   findUserByStripeCustomer(customerId){return Object.values(this.state.users).find(u=>u.stripeCustomerId===customerId)||null}
   updateBilling(id,patch){Object.assign(this.user(id),patch,{billingUpdatedAt:new Date().toISOString()});this.save();return this.user(id)}
   grantOwner(id,source='owner_access_key'){Object.assign(this.user(id),{isOwner:true,ownerGrantedAt:new Date().toISOString(),ownerGrantSource:source});this.save();return this.user(id)}

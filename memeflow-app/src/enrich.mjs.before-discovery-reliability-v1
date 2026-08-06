@@ -6,7 +6,7 @@
  *
  * Imported by app-server.mjs.
  */
-import {decodeCurve,b58encode} from './solana.mjs';
+import {decodeCurve} from './solana.mjs';
 
 /* MEMEFLOW_TOKEN_METADATA_IMAGE_V1 */
 function normalizeMetadataUrl(value) {
@@ -261,7 +261,7 @@ export async function enrichToken(mint, curve, deps) {
 
     // ── Step 4: evaluate (score the token) ─────────────────────────────────
     try {
-      await evaluateAll(token);
+      evaluateAll(token);
     } catch(e) { fail('evaluate', e); }
 
     publish(mint);
@@ -297,96 +297,76 @@ export async function enrichToken(mint, curve, deps) {
  * @param {string} mint
  * @param {object} deps  { rpc, store, evaluateAll, publish, enrichDiag }
  */
-const TOKEN_PROGRAM='TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA';
-const TOKEN_2022_PROGRAM='TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb';
-
-function decodeHolderSlice(row,decimals){
-  const data=row?.account?.data;
-  const b64=Array.isArray(data)?data[0]:null;
-  if(!b64)return null;
-  try{
-    const b=Buffer.from(b64,'base64');
-    if(b.length<40)return null;
-    const authority=b58encode(b.subarray(0,32));
-    const raw=b.readBigUInt64LE(32);
-    const amount=Number(raw)/(10**Math.max(0,Number(decimals)||0));
-    return Number.isFinite(amount)?{authority,amount}:null;
-  }catch{return null}
-}
-
-async function mintTokenAccounts(rpc,mint,programId,decimals){
-  const rows=await rpc.call('getProgramAccounts',[
-    programId,
-    {
-      commitment:'confirmed',
-      encoding:'base64',
-      filters:[{memcmp:{offset:0,bytes:mint}}],
-      dataSlice:{offset:32,length:40}
-    }
-  ]);
-  return (Array.isArray(rows)?rows:[]).map(r=>decodeHolderSlice(r,decimals)).filter(Boolean);
-}
-
 export async function enrichHolders(mint, deps) {
   const { rpc, store, evaluateAll, publish, enrichDiag } = deps;
-  const token=store.state.tokens[mint]||{};
-  const decimals=Number(token.decimals??6);
-  const total=Number(token.totalSupply||0);
 
-  let accounts=[];
-  try{
-    accounts=await mintTokenAccounts(rpc,mint,TOKEN_PROGRAM,decimals);
-    if(!accounts.length){
-      accounts=await mintTokenAccounts(rpc,mint,TOKEN_2022_PROGRAM,decimals);
-    }
-  }catch(e){
-    if(enrichDiag){
+  let largest;
+  try {
+    largest = await rpc.call('getTokenLargestAccounts', [mint, {commitment: 'confirmed'}]);
+  } catch(e) {
+    if (enrichDiag) {
       enrichDiag.enrichStepFailures.getTokenLargestAccounts++;
-      recordEnrichError(enrichDiag,mint,'getProgramAccounts(holder scan)',e);
+      recordEnrichError(enrichDiag, mint, 'getTokenLargestAccounts', e);
     }
-    if(isRateLimited(e)){
-      const ra=/retry-after[:\s]+(\d+)/i.exec(e.message||'');
-      return {rateLimited:true,retryAfter:ra?Number(ra[1])*1000:undefined};
+    if (isRateLimited(e)) {
+      // Parse Retry-After if encoded in the message (e.g. "Retry-After: 45")
+      const ra = /retry-after[:\s]+(\d+)/i.exec(e.message || '');
+      return { rateLimited: true, retryAfter: ra ? Number(ra[1]) * 1000 : undefined };
     }
-    throw e;
+    throw e; // non-rate-limit error → holderFailed in caller
   }
 
-  const positive=accounts.filter(a=>a.amount>0);
-  const holderCount=positive.length;
-
-  // Pump bonding-curve authority is protocol inventory, not a user holder.
-  const protocolAuthorities=new Set([token.curve].filter(Boolean));
-  const userBalances=positive
-    .filter(a=>!protocolAuthorities.has(a.authority))
-    .map(a=>a.amount)
-    .sort((a,b)=>b-a);
-
-  const top10=total>0
-    ? userBalances.slice(0,10).reduce((a,b)=>a+b,0)/total*100
+  // Compute holder metrics using existing supply data
+  const token = store.state.tokens[mint] || {};
+  const total = token.totalSupply || 0;
+  const vals = (largest?.value ?? []).map(x => Number(x.uiAmountString ?? 0));
+  const top10 = (total && vals.length)
+    ? vals.slice(0, 10).reduce((a, b) => a + b, 0) / total * 100
     : null;
+  const holderCount = vals.length === 20 ? null : vals.filter(v => v > 0).length;
 
-  const creator=token.creator||null;
-  const creatorAmount=creator
-    ? positive.filter(a=>a.authority===creator).reduce((s,a)=>s+a.amount,0)
-    : 0;
-  const developerPct=creator&&total>0?creatorAmount/total*100:null;
+  /* MEMEFLOW_CREATOR_SHARE_ENRICHMENT_V1 */
+  // Direct creator-wallet ownership. This is the creator wallet's current token
+  // balance only; linked wallets are not guessed or silently combined.
+  let developerPct = token.developerPct ?? null;
+  const creator = token.creator;
+  if (creator && total > 0) {
+    try {
+      const owned = await rpc.call('getTokenAccountsByOwner', [
+        creator,
+        {mint},
+        {encoding:'jsonParsed', commitment:'confirmed'}
+      ]);
+      const creatorAmount=(owned?.value??[]).reduce((sum,row)=>{
+        const amount=row?.account?.data?.parsed?.info?.tokenAmount?.uiAmountString
+          ?? row?.account?.data?.parsed?.info?.tokenAmount?.uiAmount
+          ?? 0;
+        return sum+Number(amount||0);
+      },0);
+      developerPct=creatorAmount/total*100;
+    } catch(e) {
+      if (isRateLimited(e)) return {rateLimited:true};
+      // Preserve holder metrics even when creator ownership is temporarily unavailable.
+      developerPct=null;
+    }
+  }
 
-  const updated=store.setToken(mint,{
+  const updated = store.setToken(mint, {
     holderFresh:true,
-    holderCount,
     top10Pct:top10,
+    holderCount,
     developerPct,
     developerSharePct:developerPct,
-    holderSource:'Solana getProgramAccounts',
     marketCap:token.marketCapSol??token.marketCap??null,
     liquidity:token.liquiditySol??token.liquidity??null,
     momentum:token.buyPressure??token.momentum??null
   });
-
-  await evaluateAll(updated);
+  try { evaluateAll(updated); } catch {}
   publish(mint);
-  return {rateLimited:false};
+
+  return {rateLimited: false};
 }
+
 // ── Holder queue ─────────────────────────────────────────────────────────────
 
 /**
@@ -406,10 +386,10 @@ export async function enrichHolders(mint, deps) {
 export function makeHolderQueue(config, deps) {
   const {
     maxConcurrent  = 1,
-    queueMax = 500,
-    initialDelayMs = 8000,
-    retryDelayMs = 30000,
-    maxRetries = 8,
+    queueMax       = 250,
+    initialDelayMs = 15000,
+    retryDelayMs   = 60000,
+    maxRetries     = 5,
   } = config || {};
   const {enrichHoldersFn, holderMetrics} = deps;
 

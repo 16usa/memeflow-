@@ -103,11 +103,11 @@ export function makeDiscoveryMetrics() {
 export function makeDiscoveryQueue(config, deps) {
   const {
     maxConcurrent = 1,
-    queueMax = 1000,
-    maxSignatureAgeMs = 900000,
-    maxRetries = 4,
-    circuitBreakerPauseMs = 15000,
-    retryDelays = [1000, 3000, 8000, 15000],
+    queueMax = 250,
+    maxSignatureAgeMs = 120000,
+    maxRetries = 2,
+    circuitBreakerPauseMs = 10000,
+    retryDelays = [2000, 5000],
   } = config || {};
   const { processFn, discMetrics, onSignatureProcessed, onSignatureFailed } = deps;
 

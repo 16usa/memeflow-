@@ -61,31 +61,16 @@ export class RpcPool{
     this.last={ok:false,latency:null,url:null,error:'not checked'};
     // Exposed for /api/discovery/status metrics
     this.metrics={retries:0,timeouts:0,http429:0,nonJsonResponses:0,endpointFailovers:0,lastHttpStatus:null};
-    this.minIntervalMs=Math.max(0,Number(process.env.RPC_MIN_INTERVAL_MS||200));
-    this._paceTail=Promise.resolve();
-    this._nextAllowedAt=0;
   }
 
   /** Sanitized hostname of the current endpoint — never exposes credentials or full URL. */
   get activeHostname(){try{return new URL(this.urls[this.i%Math.max(1,this.urls.length)]).hostname}catch{return '[unconfigured]'}}
-
-  async _pace(){
-    const previous=this._paceTail;
-    let release;
-    this._paceTail=new Promise(r=>{release=r});
-    await previous;
-    const wait=Math.max(0,this._nextAllowedAt-Date.now());
-    if(wait)await sleep(wait);
-    this._nextAllowedAt=Date.now()+this.minIntervalMs;
-    release();
-  }
 
   /** Single-attempt fetch — no retry loop. Rotates endpoint on 429. Throws on any error. */
   async callOnce(method,params=[]){
     if(!this.urls.length)throw new Error('SOLANA_RPC_URLS is not configured');
     const TIMEOUT=Number(process.env.SOLANA_RPC_TIMEOUT_MS||20000);
     const url=this.urls[this.i%this.urls.length];
-    await this._pace();
     const ac=new AbortController();
     const t=setTimeout(()=>ac.abort(),TIMEOUT);
     const start=Date.now();
@@ -147,7 +132,6 @@ export class RpcPool{
 
       for(let k=0;k<this.urls.length;k++){
         const url=this.urls[(this.i+k)%this.urls.length];
-        await this._pace();
         const ac=new AbortController();
         const t=setTimeout(()=>ac.abort(),TIMEOUT);
         const start=Date.now();

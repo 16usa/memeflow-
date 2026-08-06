@@ -16,7 +16,6 @@ export function tokenAgeMinutes(token,now=Date.now()){
 }
 
 function lifecycle(token,s,now=Date.now()){
- const discovered=Number(token?.discoveredAt||token?.createdAt||0);
  const ageMinutes=tokenAgeMinutes(token,now);
  const configuredMax=enabled(s?.maxTokenAgeMinutes)?Number(s.maxTokenAgeMinutes):180;
  const current=num(token,'priceSol');
