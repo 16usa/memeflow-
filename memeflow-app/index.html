@@ -1014,7 +1014,11 @@ html[data-theme="light"] .sidebar,html[data-theme="light"] .topbar,html[data-the
   border-left:0!important;
   border-right:0!important;
   border-bottom:1px solid var(--line)!important;
-  border-radius:0 0 16px 16px!important;
+  /* Explicit width ensures full-viewport span regardless of flex/block context.
+     box-sizing:border-box so padding is included within that width. */
+  width:calc(100% + (2 * var(--mobile-content-inline)))!important;
+  box-sizing:border-box!important;
+  border-radius:0!important;
   /* Safe-area-inset-top absorbed as extra internal top padding
      so content clears the iPhone notch/dynamic island. */
   padding:calc(env(safe-area-inset-top,0px) + 10px) 12px 10px!important;
@@ -1034,7 +1038,7 @@ html[data-theme="light"] .sidebar,html[data-theme="light"] .topbar,html[data-the
   left:0!important;
   right:0!important;
   bottom:0!important;
-  width:100%!important;
+  width:100vw!important;
   max-width:none!important;
   transform:none!important;
   margin:0!important;
@@ -1042,13 +1046,16 @@ html[data-theme="light"] .sidebar,html[data-theme="light"] .topbar,html[data-the
   height:auto!important;
   min-height:var(--mobile-nav-height)!important;
   z-index:1000!important;
-  padding:5px 5px max(5px,env(safe-area-inset-bottom,0px))!important;
-  /* Top border only — left/right touch viewport edge; bottom touches viewport edge */
+  /* Safe area as internal bottom padding; background extends behind home indicator */
+  padding:5px 5px env(safe-area-inset-bottom,0px)!important;
+  /* Full-width rectangular bar: top border only, no rounding anywhere */
   border-top:1px solid var(--line)!important;
   border-left:0!important;
   border-right:0!important;
   border-bottom:0!important;
-  border-radius:12px 12px 0 0!important;
+  border-radius:0!important;
+  width:100vw!important;
+  box-sizing:border-box!important;
   background:rgba(5,8,11,.92)!important;
   backdrop-filter:blur(22px)!important;
   -webkit-backdrop-filter:blur(22px)!important;
@@ -1111,12 +1118,14 @@ html[data-theme="light"] .sidebar,html[data-theme="light"] .topbar,html[data-the
   height:auto!important;
   min-height:var(--mobile-nav-height)!important;
   z-index:1000!important;
-  padding:5px 5px max(5px,env(safe-area-inset-bottom,0px))!important;
+  padding:5px 5px env(safe-area-inset-bottom,0px)!important;
   border-top:1px solid var(--line)!important;
   border-left:0!important;
   border-right:0!important;
   border-bottom:0!important;
-  border-radius:12px 12px 0 0!important;
+  border-radius:0!important;
+  width:100vw!important;
+  box-sizing:border-box!important;
   background:rgba(5,8,11,.92)!important;
   backdrop-filter:blur(22px)!important;
   -webkit-backdrop-filter:blur(22px)!important;

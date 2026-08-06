@@ -1,0 +1,181 @@
+Fix only the mobile full-width geometry for the top header and bottom navigation.
+
+Project:
+~/workspace/memeflow-app
+
+Current problem:
+- The mobile top header still has visible side gaps and does not span the full viewport.
+- The mobile bottom navigation still has rounded side edges.
+- Both must become edge-to-edge rectangles on mobile.
+
+Apply only up to 820px.
+
+====================================================
+TOP MOBILE HEADER
+====================================================
+
+Identify the exact top mobile header container that contains:
+
+- PAPER MODE
+- FREE PLAN or OWNER ACCESS
+- Connect Wallet
+- Wallet status
+- RPC status
+
+Make that exact container edge-to-edge.
+
+Required final geometry:
+
+- width: 100vw
+- max-width: none
+- margin-left: 0
+- margin-right: 0
+- left: 0
+- right: 0
+- border-radius: 0
+- box-sizing: border-box
+
+Important:
+The header is currently inside .main, which has horizontal padding.
+Neutralize that parent padding only for this header.
+
+Use one of these correct approaches:
+
+Option A:
+margin-left: calc(-1 * var(--mobile-content-inline));
+margin-right: calc(-1 * var(--mobile-content-inline));
+width: calc(100% + (2 * var(--mobile-content-inline)));
+
+Option B:
+move the header outside the padded card wrapper into the full-width mobile container.
+
+Do not leave any dark or blue page strip visible on either side.
+
+The header must touch:
+- left viewport edge
+- right viewport edge
+
+Do not add rounded bottom corners.
+Use:
+- border-radius: 0
+
+Keep its internal padding so the buttons are not touching the physical screen edge.
+
+====================================================
+BOTTOM MOBILE NAVIGATION
+====================================================
+
+Make .mobile-nav a full-width rectangular bar.
+
+Required final CSS:
+
+- left: 0
+- right: 0
+- bottom: 0
+- width: 100vw
+- max-width: none
+- margin: 0
+- transform: none
+- border-radius: 0
+- border-left: 0
+- border-right: 0
+- box-sizing: border-box
+
+Remove:
+- top-left rounding
+- top-right rounding
+- bottom-left rounding
+- bottom-right rounding
+- all side gaps
+- all floating-card styling
+
+The nav background must continue behind the iPhone safe-area.
+
+Use:
+padding-bottom: env(safe-area-inset-bottom, 0px);
+
+Do not create an external bottom gap.
+
+====================================================
+CONFLICT CHECK
+====================================================
+
+Search all CSS for every rule affecting:
+
+- .mobile-nav
+- .topbar
+- the mobile header container
+- .main
+- mobile content gutter variables
+
+Find and remove or override conflicting values for:
+
+- left
+- right
+- width
+- max-width
+- margin
+- transform
+- border-radius
+- padding
+- inset-inline
+
+Place one final authoritative mobile override block at the very end of the stylesheet.
+
+Use !important where necessary so no older rule can reintroduce:
+- side gaps
+- rounded corners
+- max-width
+- centered transforms
+
+====================================================
+DO NOT CHANGE
+====================================================
+
+Do not change:
+
+- header contents
+- wallet logic
+- status logic
+- navigation labels
+- active state
+- nav behavior
+- candidate cards
+- PAPER Automate
+- LIVE access
+- tablet layout above 820px
+- desktop layout
+- backend
+
+====================================================
+VERIFY
+====================================================
+
+Verify at:
+
+- 320px
+- 375px
+- 390px
+- 414px
+- 430px
+- 768px
+- 820px
+
+Confirm:
+
+- top header touches both screen edges
+- top header has no side gaps
+- top header has no side rounding
+- bottom nav touches both screen edges
+- bottom nav has square side corners
+- bottom nav has no floating-card appearance
+- no horizontal scroll
+- content is not hidden
+- tablet above 820px remains unchanged
+
+At the end report:
+
+- exact top header selector
+- exact conflicting parent padding found
+- final top header CSS
+- final .mobile-nav CSS
