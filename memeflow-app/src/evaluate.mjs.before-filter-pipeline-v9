@@ -2,8 +2,6 @@ const has=(v)=>v!==null&&v!==undefined&&v!=='';
 const num=(t,...keys)=>{for(const k of keys)if(has(t?.[k])&&Number.isFinite(Number(t[k])))return Number(t[k]);return null};
 const text=(t,...keys)=>{for(const k of keys)if(has(t?.[k]))return String(t[k]);return ''};
 const enabled=(v)=>v!==null&&v!==undefined&&v!=='';
-// Optional numeric Settings filters: null/blank/0 = disabled.
-const filterEnabled=(v)=>enabled(v)&&(!Number.isFinite(Number(v))||Number(v)!==0);
 const words=v=>String(v||'').toLowerCase().split(',').map(x=>x.trim()).filter(Boolean);
 
 const DEAD_DRAWDOWN_PCT=45;
@@ -20,7 +18,7 @@ export function tokenAgeMinutes(token,now=Date.now()){
 function lifecycle(token,s,now=Date.now()){
  const discovered=Number(token?.discoveredAt||token?.createdAt||0);
  const ageMinutes=tokenAgeMinutes(token,now);
- const configuredMax=filterEnabled(s?.maxTokenAgeMinutes)?Number(s.maxTokenAgeMinutes):180;
+ const configuredMax=enabled(s?.maxTokenAgeMinutes)?Number(s.maxTokenAgeMinutes):180;
  const current=num(token,'priceSol');
  const peak=num(token,'peakPriceSol');
  const drawdown=peak>0&&current!==null?Math.max(0,(peak-current)/peak*100):0;
@@ -71,7 +69,7 @@ function antiRugConfirmation(token,s,now=Date.now()){
   const liqDropPct=liqThen>0&&liqNow!==null?Math.max(0,(liqThen-liqNow)/liqThen*100):0;
 
   const pressure=num(token,'buyPressure','momentum');
-  const requiredPressure=filterEnabled(s?.minBuyPressure)?Number(s.minBuyPressure):1.2;
+  const requiredPressure=enabled(s?.minBuyPressure)?Number(s.minBuyPressure):1.2;
 
   // Immediate deterioration gates. These are intentionally independent of age.
   if(drawdown>=35 && (pressure===null||pressure<1.15))
@@ -90,7 +88,7 @@ function antiRugConfirmation(token,s,now=Date.now()){
   const pressureStrong=pressure!==null&&pressure>=Math.max(1.5,requiredPressure);
   const priceHealthy=drawdown<20;
 
-  const configuredMinHolders=filterEnabled(s?.minHolders)?Number(s.minHolders):0;
+  const configuredMinHolders=enabled(s?.minHolders)?Number(s.minHolders):0;
   const holderStrong=holderNow!==null&&holderNow>=Math.max(20,configuredMinHolders);
 
   const strong=
@@ -146,7 +144,7 @@ export function evaluate(token,s){
  }
  const reasons=[];let waiting=false,blocked=false,score=100;
  const need=(ok,msg,pen=12)=>{if(ok===null||ok===undefined){waiting=true;reasons.push('Waiting: '+msg);score-=pen/2}else if(!ok){blocked=true;reasons.push(msg);score-=pen}};
- const range=(value,min,max,label,unit='',pen=12)=>{const minOn=filterEnabled(min),maxOn=filterEnabled(max);if(!minOn&&!maxOn)return;if(value===null)return need(null,`${label} data pending`,pen);if(minOn)need(value>=Number(min),`${label} ${value}${unit} below minimum ${min}${unit}`,pen);if(maxOn)need(value<=Number(max),`${label} ${value}${unit} above maximum ${max}${unit}`,pen)};
+ const range=(value,min,max,label,unit='',pen=12)=>{if(!enabled(min)&&!enabled(max))return;if(value===null)return need(null,`${label} data pending`,pen);if(enabled(min))need(value>=Number(min),`${label} ${value}${unit} below minimum ${min}${unit}`,pen);if(enabled(max))need(value<=Number(max),`${label} ${value}${unit} above maximum ${max}${unit}`,pen)};
  const platform=text(token,'launchPlatform','protocol','source').toLowerCase();
  if(Array.isArray(s.launchPlatforms)&&s.launchPlatforms.length)need(platform? s.launchPlatforms.some(p=>platform.includes(String(p).replace('_',' '))):null,'Launch platform data pending',8);
  const searchable=[text(token,'name'),text(token,'symbol'),text(token,'uri'),text(token,'description')].join(' ').toLowerCase();
@@ -169,8 +167,8 @@ export function evaluate(token,s){
  if(Array.isArray(s.developerBlacklistWallets)&&s.developerBlacklistWallets.length){const creator=text(token,'creator','developerWallet');need(creator? !s.developerBlacklistWallets.includes(creator):null,'Developer wallet data pending',20)}
  const twitter=Boolean(token?.twitter||token?.x||token?.socials?.twitter),website=Boolean(token?.website||token?.socials?.website),telegram=Boolean(token?.telegram||token?.socials?.telegram);
  if(s.requireTwitter)need(twitter,'Twitter/X required',8);if(s.requireWebsite)need(website,'Website required',8);if(s.requireTelegram)need(telegram,'Telegram required',8);if(s.requireWebsiteOrX)need(twitter||website,'Website or Twitter/X required',8);if(s.requireAnySocial)need(twitter||website||telegram,'At least one social link required',8);
- need(token.holderCount==null&&filterEnabled(s.minHolders)?null:true,'holder data pending',5);
- if(filterEnabled(s.minBuyPressure))need(token.buyPressure==null?null:Number(token.buyPressure)>=Number(s.minBuyPressure),`buy pressure below ${s.minBuyPressure}×`,15);
+ need(token.holderCount==null&&enabled(s.minHolders)?null:true,'holder data pending',5);
+ if(enabled(s.minBuyPressure))need(token.buyPressure==null?null:Number(token.buyPressure)>=Number(s.minBuyPressure),`buy pressure below ${s.minBuyPressure}×`,15);
  need(token.priceSol!=null,'price unavailable',12);
  if(s.requireFreshHolderSnapshot)need(token.holderFresh===true,'holder snapshot unavailable',10);
  const antiRug=antiRugConfirmation(token,s);

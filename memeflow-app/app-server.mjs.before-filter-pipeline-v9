@@ -72,8 +72,6 @@ function candidateView(d){
     priority:d.score,
     meta:t.source||'Solana on-chain',
     source:t.source||'Solana on-chain',
-    launchPlatform:t.launchPlatform||null,
-    protocol:t.protocol||t.launchPlatform||null,
     price:t.priceSol??null,
     priceSol:finite(t.priceSol),
     marketCap:marketCapSol,
@@ -185,8 +183,6 @@ function ensurePriceTimer(mint,curve){
           momentum:pressure??t.buyPressure??null,
           complete:c.complete,
           scanError:null,
-          launchPlatform:t.launchPlatform||'pump',
-          protocol:t.protocol||'pump',
           source:'Solana bonding curve'
         });
         await evaluateAll(updated);
@@ -234,7 +230,7 @@ async function processSignature(sig){
       seenMints.add(result.mint);
       discMetrics.createInstructionDecoded++;
       discMetrics.createsDecoded++;
-      store.addToken({mint:result.mint,curve:result.curve,name:result.name,symbol:result.symbol,uri:result.uri,creator:result.creator,isMayhemMode:false,launchMode:'standard',launchPlatform:'pump',protocol:'pump',discoveredAt:Date.now(),slot:tx.slot,signature:sig,source:'Pump create'});
+      store.addToken({mint:result.mint,curve:result.curve,name:result.name,symbol:result.symbol,uri:result.uri,creator:result.creator,isMayhemMode:false,launchMode:'standard',discoveredAt:Date.now(),slot:tx.slot,signature:sig,source:'Pump create'});
       void enrich(result.mint,result.curve).catch(e=>{discMetrics.lastErrorAt=Date.now();discovery.lastError={message:'enrich: '+String(e?.message||e),at:Date.now()}});
     }else if(result.reason==='knownNonCreate'){
       // Known trade instruction (Buy/Sell/Withdraw/buy_exact_sol_in) — not a decode failure
@@ -294,29 +290,7 @@ function startDiscovery(i=0){
   }catch(e){discovery.error=e.message;wsTimer=setTimeout(()=>startDiscovery(i+1),5000)}
 }
 function shadowValidateSettings(settings,limit=50){const rows=store.tokens().slice(0,Math.max(1,Math.min(200,limit)));const counts={WAITING:0,WATCH:0,'BUY READY':0,BLOCKED:0,EXPIRED:0};const errors=[];for(const token of rows){try{const d=evaluate(token,settings);counts[d.state]=(counts[d.state]||0)+1}catch(e){errors.push({mint:token.mint||null,message:e.message})}}return {tested:rows.length,counts,errors};}
-function reevaluateUser(uid){
-  const settings=store.settings(uid);
-  const tokens=store.tokens();
-  const settingsVersion=store.user(uid)?.settingsVersion||store.user(uid)?.updatedAt||Date.now();
-  let count=0,errors=0;
-  const states={WAITING:0,WATCH:0,BLOCKED:0,'BUY READY':0,EXPIRED:0};
-
-  for(const token of tokens){
-    try{
-      const d=evaluate(token,settings);
-      const saved={...d,primaryReason:d.primaryReason,settingsVersion,reevaluatedAt:Date.now()};
-      store.setDecision(uid,token.mint,saved);
-      states[d.state]=(states[d.state]||0)+1;
-      // PAPER receives only the fresh current decision. It still applies owner approval,
-      // capital and execution gates internally.
-      if(d.state==='BUY READY'){
-        try{paper.onDecision(uid,token,saved,settings)}catch(_){}
-      }
-      count++;
-    }catch(_){errors++}
-  }
-  return {count,errors,states,settingsVersion};
-}
+function reevaluateUser(uid){const s=store.settings(uid);const tokens=store.tokens();let count=0;for(const token of tokens){try{const d=evaluate(token,s);const saved={...d,primaryReason:d.primaryReason};store.setDecision(uid,token.mint,saved);if(d.state==='BUY READY'){try{paper.onDecision(uid,token,saved,s)}catch(_){}}count++}catch(_){}}return count}
 async function handler(req,res){const url=new URL(req.url,'http://x');
  if(url.pathname==='/api/billing/webhook'&&req.method==='POST'){const raw=await rawBody(req);try{billing.verify(raw,req.headers['stripe-signature']);const result=billing.processEvent(JSON.parse(raw));return json(res,200,{received:true,...result})}catch(e){return json(res,e.code==='BAD_SIGNATURE'?400:500,{error:e.code||'WEBHOOK_ERROR',message:e.message})}}
  // Health check — no session or store needed; must respond immediately
@@ -442,20 +416,6 @@ if(url.pathname==='/api/system/health'){
     counts:_counts
   });
 }
- if(url.pathname==='/api/debug/filter-pipeline'){
-    const rows=store.tokens().slice(0,50);
-    const decisions=store.decisions(u.id);
-    const pumpTagged=rows.filter(t=>String(t.launchPlatform||t.protocol||'').toLowerCase()==='pump').length;
-    const byState={};for(const d of decisions.slice(0,200))byState[d.state]=(byState[d.state]||0)+1;
-    return json(res,200,{
-      settingsVersion:store.user(u.id)?.settingsVersion||store.user(u.id)?.updatedAt||null,
-      settings:{minLiquidityUsd:store.settings(u.id).minLiquidityUsd,minHolders:store.settings(u.id).minHolders,launchPlatforms:store.settings(u.id).launchPlatforms},
-      recentTokens:rows.length,
-      recentPumpTagged:pumpTagged,
-      decisionStates:byState,
-      sample:rows.slice(0,10).map(t=>({mint:t.mint,launchPlatform:t.launchPlatform||null,protocol:t.protocol||null,source:t.source||null}))
-    });
-  }
  if(url.pathname==='/api/settings'&&req.method==='GET'){const settings=store.settings(u.id);return json(res,200,{settings,version:u.settingsVersion||1,killSwitchActive:u.killSwitch,capabilities:{liveAutomation:hasLiveEntitlement(u),paperAutomation:true,discoveryPlatforms:['pump'],adaptiveProfile:false}})}
  if(url.pathname==='/api/settings/audit'&&req.method==='GET')return json(res,200,{history:store.settingsHistory(u.id,Number(url.searchParams.get('limit')||100))});
  if(url.pathname==='/api/settings'&&req.method==='PUT'){const b=await body(req);const checked=validateSettings(b.settings||{});if(!checked.ok)return json(res,400,{error:'INVALID_SETTINGS',message:checked.errors.join(' '),errors:checked.errors});if(checked.settings.tradingEnvironment==='live'&&!hasLiveEntitlement(u))return json(res,403,{error:'LIVE_ENTITLEMENT_REQUIRED',message:'LIVE trading environment requires an active Pro subscription or owner entitlement.'});if(b.version!=null&&Number(b.version)!==Number(u.settingsVersion||1))return json(res,409,{error:'SETTINGS_VERSION_CONFLICT',message:'Settings changed on the server. Reload before saving again.',version:u.settingsVersion||1});const before=JSON.parse(JSON.stringify(store.settings(u.id)));const shadow=checked.settings.shadowValidation?shadowValidateSettings(checked.settings,50):null;if(shadow?.errors?.length)return json(res,400,{error:'SHADOW_VALIDATION_FAILED',message:'Proposed settings could not be evaluated safely.',shadowValidation:shadow});const saved=store.setSettings(u.id,checked.settings);if(saved.changeLog!==false)store.recordSettingsChange(u.id,before,saved,{actor:u.id,source:'settings_put'});const decisionsReevaluated=reevaluateUser(u.id);return json(res,200,{settings:saved,version:u.settingsVersion,decisionsReevaluated,shadowValidation:shadow})}
