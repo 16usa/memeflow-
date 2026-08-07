@@ -1,0 +1,21 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+import {spawnSync} from 'node:child_process';
+const cwd=process.cwd(),appDir=fs.existsSync(path.join(cwd,'memeflow-app'))?path.join(cwd,'memeflow-app'):cwd;
+const server=path.join(appDir,'app-server.mjs'),enrich=path.join(appDir,'src','enrich.mjs'),solana=path.join(appDir,'src','solana.mjs');
+const s=fs.readFileSync(server,'utf8'),e=fs.readFileSync(enrich,'utf8'),r=fs.readFileSync(solana,'utf8');
+assert(r.includes("RPC_MIN_INTERVAL_MS||350"));
+assert(r.includes("RPC_GET_ACCOUNT_INFO_MIN_INTERVAL_MS||1000"));
+assert(r.includes("RPC_GET_PROGRAM_ACCOUNTS_MIN_INTERVAL_MS||3500"));
+console.log('PASS: safer RPC pacing installed');
+assert(r.includes('_globalCooldownUntil')&&r.includes('_noteProviderCooldown')&&r.includes('connection rate limits'));
+console.log('PASS: provider cooldown + rate-limit retry installed');
+assert(e.includes('MEMEFLOW_V11_HOLDER_BACKOFF')&&e.includes('Math.pow(2,Math.min(item.retries,3))'));
+console.log('PASS: holder exponential backoff + jitter installed');
+assert(s.includes('MEMEFLOW_V11_PRICE_LOAD_SHED')&&s.includes('holderBacklog')&&s.includes('backgroundEveryMs=12000')&&s.includes('backgroundEveryMs=30000')&&s.includes('backgroundEveryMs=90000'));
+console.log('PASS: adaptive price polling + holder priority installed');
+for(const p of [server,enrich,solana]){const x=spawnSync(process.execPath,['--check',p],{encoding:'utf8'});assert.equal(x.status,0,x.stderr||x.stdout)}
+console.log('PASS: all touched modules syntax-valid');
+console.log('');
+console.log('ALL V11 SELF-TESTS PASSED');

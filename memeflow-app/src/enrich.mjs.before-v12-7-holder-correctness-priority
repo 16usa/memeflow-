@@ -122,11 +122,6 @@ export function makeHolderMetrics() {
     holderRateLimited: 0,
     holderRetries: 0,
     holderDropped: 0,
-    holderAdmissionAllowed: 0,
-    holderAdmissionDeferred: 0,
-    holderAdmissionDropped: 0,
-    holderAdmissionErrors: 0,
-    lastHolderAdmissionReason: null,
     lastHolderError: null,
     lastHolderErrorAt: null,
   };
@@ -239,21 +234,10 @@ export async function enrichToken(mint, curve, deps) {
       ...metadataPatch,
       scanError: null,
       lastScannedAt: Date.now(),
-      // MEMEFLOW_V12_7_HOLDER_CORRECTNESS_AND_PRIORITY
-      // Phase A may finish AFTER Phase B. Never erase a successful holder scan.
-      holderFresh: existingToken.holderFresh === true,
-      holderCount: existingToken.holderFresh === true
-        ? (existingToken.holderCount ?? null)
-        : null,
-      top10Pct: existingToken.holderFresh === true
-        ? (existingToken.top10Pct ?? null)
-        : null,
-      developerPct: existingToken.holderFresh === true
-        ? (existingToken.developerPct ?? existingToken.developerSharePct ?? null)
-        : null,
-      developerSharePct: existingToken.holderFresh === true
-        ? (existingToken.developerPct ?? existingToken.developerSharePct ?? null)
-        : null,
+      // Holder data deferred to Phase B
+      holderFresh: false,
+      holderCount: null,
+      top10Pct: null,
       buyPressure: tw.sell ? tw.buy / tw.sell : (tw.buy ? tw.buy : null),
       dataQuality: [total || null, c.priceSol ?? null].filter(x => x != null).length / 2,
       source: 'Solana RPC',
@@ -427,8 +411,7 @@ export function makeHolderQueue(config,deps){
   const initialDelayMs=Math.min(10000,Math.max(1000,Number(config?.initialDelayMs??5000)));
   const retryDelayMs=Math.max(5000,Number(config?.retryDelayMs??30000));
   const maxRetries=Math.max(1,Number(config?.maxRetries??8));
-  const {enrichHoldersFn,holderMetrics,admissionFn=null}=deps;
-  /* MEMEFLOW_V12_8_HOLDER_ADMISSION_QUEUE */
+  const {enrichHoldersFn,holderMetrics}=deps;
 
   const pending=new Map(); // mint -> {mint,retries,enqueuedAt,dueAt}
   const active=new Set();
@@ -506,32 +489,6 @@ export function makeHolderQueue(config,deps){
   }
 
   async function run(item){
-    if(admissionFn){
-      let gate=null;
-      try{
-        gate=admissionFn(item.mint)||{allow:true};
-      }catch(e){
-        holderMetrics.holderAdmissionErrors=(holderMetrics.holderAdmissionErrors||0)+1;
-        gate={allow:true,reason:'admission_error_fail_open'};
-      }
-
-      if(gate.allow===false){
-        holderMetrics.lastHolderAdmissionReason=gate.reason||'deferred';
-        if(gate.drop===true){
-          holderMetrics.holderAdmissionDropped=(holderMetrics.holderAdmissionDropped||0)+1;
-          return;
-        }
-        holderMetrics.holderAdmissionDeferred=(holderMetrics.holderAdmissionDeferred||0)+1;
-        pending.set(item.mint,{
-          ...item,
-          dueAt:Date.now()+Math.max(1000,Number(gate.retryInMs||3000))
-        });
-        scheduleWake();
-        return;
-      }
-      holderMetrics.holderAdmissionAllowed=(holderMetrics.holderAdmissionAllowed||0)+1;
-    }
-
     active.add(item.mint);
     const _diag=diagRow(item.mint);
     _diag.attempts++;
@@ -553,13 +510,7 @@ export function makeHolderQueue(config,deps){
           holderMetrics.lastHolderErrorAt=Date.now();
         }
       }else{
-        /* MEMEFLOW_V12_7_VERIFY_HOLDER_SUCCESS */
-      // enrichHolders success is valid only if Phase B actually committed fresh data.
-      // A later Phase-A run is now prevented from erasing it by FIX A.
-      if(result && result.rateLimited!==true){
-        // Result accepted; enrichHolders is responsible for setting holderFresh=true.
-      }
-      holderMetrics.holderSucceeded++;
+        holderMetrics.holderSucceeded++;
         holderMetrics.lastHolderError=null;
         _diag.lastSuccessAt=Date.now();
         _diag.lastError=null;
@@ -591,16 +542,7 @@ export function makeHolderQueue(config,deps){
     const now=Date.now();
     while(active.size<maxConcurrent){
       let due=null;
-      /* MEMEFLOW_V12_7_FIRST_ATTEMPT_PRIORITY */
-  const prioritized=[...pending.values()]
-    .filter(item=>Number(item?.dueAt||0)<=now)
-    .sort((a,b)=>{
-      const aa=Number(a?.attempts||0), ba=Number(b?.attempts||0);
-      if((aa===0)!==(ba===0)) return aa===0 ? -1 : 1;
-      if(aa===0 && ba===0) return Number(b?.queuedAt||0)-Number(a?.queuedAt||0);
-      return Number(a?.dueAt||0)-Number(b?.dueAt||0);
-    });
-  for(const item of prioritized){
+      for(const item of pending.values()){
         if(item.dueAt<=now && (!due||item.dueAt<due.dueAt))due=item;
       }
       if(!due)break;

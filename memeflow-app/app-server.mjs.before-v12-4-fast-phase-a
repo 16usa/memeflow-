@@ -36,124 +36,11 @@ const discMetrics=makeDiscoveryMetrics();
 // ── Bounded concurrency queue ─────────────────────────────────────────────
 const MAX_CONCURRENT=Math.max(6,Number(process.env.DISCOVERY_MAX_CONCURRENT||6)),QUEUE_MAX=Number(process.env.DISCOVERY_QUEUE_MAX||1000);
 const SIG_MAX_AGE_MS=Number(process.env.DISCOVERY_SIGNATURE_MAX_AGE_MS||900000);
-const HOLDER_MAX_CONCURRENT=Number(process.env.HOLDER_RPC_MAX_CONCURRENCY||1),HOLDER_QUEUE_MAX=Number(process.env.HOLDER_QUEUE_MAX||500),HOLDER_INITIAL_DELAY_MS=Number(process.env.HOLDER_INITIAL_DELAY_MS||750),HOLDER_RETRY_DELAY_MS=Number(process.env.HOLDER_RETRY_DELAY_MS||30000),HOLDER_MAX_RETRIES=Number(process.env.HOLDER_MAX_RETRIES||8);
+const HOLDER_MAX_CONCURRENT=Number(process.env.HOLDER_RPC_MAX_CONCURRENCY||1),HOLDER_QUEUE_MAX=Number(process.env.HOLDER_QUEUE_MAX||500),HOLDER_INITIAL_DELAY_MS=Number(process.env.HOLDER_INITIAL_DELAY_MS||8000),HOLDER_RETRY_DELAY_MS=Number(process.env.HOLDER_RETRY_DELAY_MS||30000),HOLDER_MAX_RETRIES=Number(process.env.HOLDER_MAX_RETRIES||8);
 // discQueue defined after processSignature below (forward ref via enqueue wrapper)
 const enrichDiag=makeEnrichDiag();
 const holderMetrics=makeHolderMetrics();
-
-// MEMEFLOW_V12_5_1_FIRST_HOLDER_DELAY_FIX
-// Only the FIRST holder-queue delay default is reduced: 8000ms -> 750ms.
-// Retry delay (30000ms), max retries, queue concurrency and rate-limit protections remain unchanged.
-
-/* MEMEFLOW_V12_8_ADMISSION_GATE
-   Expensive holder RPC is admitted only when at least one active user can
-   currently benefit from it. Missing/dynamic cheap data DEFER, never hard-drop.
-   Hard drop is limited to stable platform/age incompatibility for every active
-   user. No user settings are changed. */
-const HOLDER_ADMISSION_RETRY_MS=Math.max(1000,Number(process.env.HOLDER_ADMISSION_RETRY_MS||3000));
-const HOLDER_ADMISSION_ACTIVE_HOURS=Math.max(1,Number(process.env.HOLDER_ADMISSION_ACTIVE_USER_HOURS||24));
-
-function v128Finite(v){
-  return v!==null&&v!==undefined&&v!==''&&Number.isFinite(Number(v))?Number(v):null;
-}
-function v128Enabled(v){
-  return v!==null&&v!==undefined&&v!=='';
-}
-function holderAdmissionForActiveUsers(mint){
-  const token=store.state.tokens[mint];
-  if(!token)return {allow:false,drop:true,reason:'token_missing'};
-
-  const now=Date.now();
-  const cutoff=now-HOLDER_ADMISSION_ACTIVE_HOURS*3600000;
-  const users=Object.keys(store.state.users||{}).filter(uid=>{
-    const u=store.state.users[uid]||{};
-    return u.isOwner || (u.lastActiveAt&&u.lastActiveAt>=cutoff);
-  });
-
-  // No active user context: fail open. Recovery/owner flows must not be broken.
-  if(!users.length)return {allow:true,reason:'no_active_users_fail_open'};
-
-  const platform=String(token.launchPlatform||token.protocol||token.source||'').toLowerCase();
-  const discovered=Number(token.discoveredAt||token.createdAt||0);
-  const ageMinutes=discovered>0?Math.max(0,(now-discovered)/60000):null;
-  const price=v128Finite(token.priceSol);
-  const pressure=v128Finite(token.buyPressure??token.momentum);
-  const marketCapUsd=v128Finite(token.marketCapUsd??token.marketCapUSD);
-  const liquidityUsd=v128Finite(token.liquidityUsd??token.liquidityUSD);
-
-  let anyPotential=false;
-  let anyReady=false;
-  let lastReason='cheap_market_data_pending';
-
-  for(const uid of users){
-    const s=store.settings(uid)||{};
-
-    // Stable hard filters: safe to rule this user out permanently.
-    if(Array.isArray(s.launchPlatforms)&&s.launchPlatforms.length){
-      if(!platform || !s.launchPlatforms.some(p=>platform.includes(String(p).replace('_',' ').toLowerCase()))){
-        lastReason='launch_platform_mismatch';
-        continue;
-      }
-    }
-    if(ageMinutes!==null && v128Enabled(s.maxTokenAgeMinutes) &&
-       ageMinutes>Number(s.maxTokenAgeMinutes)){
-      lastReason='token_age_exceeded';
-      continue;
-    }
-
-    anyPotential=true;
-
-    // Dynamic/cheap gates: DEFER, because these values can improve.
-    if(price===null){
-      lastReason='price_pending';
-      continue;
-    }
-    if(v128Enabled(s.minBuyPressure) && Number(s.minBuyPressure)>0){
-      if(pressure===null){
-        lastReason='buy_pressure_pending';
-        continue;
-      }
-      if(pressure<Number(s.minBuyPressure)){
-        lastReason='buy_pressure_below_user_min';
-        continue;
-      }
-    }
-    if(v128Enabled(s.minMarketCapUsd) && Number(s.minMarketCapUsd)>0){
-      if(marketCapUsd===null){
-        lastReason='market_cap_usd_pending';
-        continue;
-      }
-      if(marketCapUsd<Number(s.minMarketCapUsd)){
-        lastReason='market_cap_below_user_min';
-        continue;
-      }
-    }
-    if(v128Enabled(s.maxMarketCapUsd) && Number(s.maxMarketCapUsd)>0 &&
-       marketCapUsd!==null && marketCapUsd>Number(s.maxMarketCapUsd)){
-      lastReason='market_cap_above_user_max';
-      continue;
-    }
-    if(v128Enabled(s.minLiquidityUsd) && Number(s.minLiquidityUsd)>0){
-      if(liquidityUsd===null){
-        lastReason='liquidity_usd_pending';
-        continue;
-      }
-      if(liquidityUsd<Number(s.minLiquidityUsd)){
-        lastReason='liquidity_below_user_min';
-        continue;
-      }
-    }
-
-    anyReady=true;
-    break;
-  }
-
-  if(anyReady)return {allow:true,reason:'at_least_one_active_user_ready'};
-  if(!anyPotential)return {allow:false,drop:true,reason:lastReason||'no_active_user_hard_match'};
-  return {allow:false,drop:false,retryInMs:HOLDER_ADMISSION_RETRY_MS,reason:lastReason};
-}
-
-const holderQueue=makeHolderQueue({maxConcurrent:1,queueMax:HOLDER_QUEUE_MAX,initialDelayMs:HOLDER_INITIAL_DELAY_MS,retryDelayMs:HOLDER_RETRY_DELAY_MS,maxRetries:HOLDER_MAX_RETRIES},{enrichHoldersFn:(mint)=>enrichHolders(mint,{rpc,store,evaluateAll,publish,enrichDiag}),holderMetrics,admissionFn:holderAdmissionForActiveUsers});
+const holderQueue=makeHolderQueue({maxConcurrent:1,queueMax:HOLDER_QUEUE_MAX,initialDelayMs:HOLDER_INITIAL_DELAY_MS,retryDelayMs:HOLDER_RETRY_DELAY_MS,maxRetries:HOLDER_MAX_RETRIES},{enrichHoldersFn:(mint)=>enrichHolders(mint,{rpc,store,evaluateAll,publish,enrichDiag}),holderMetrics});
 const recoveryMetrics=makeRecoveryMetrics();
 const DECISION_RECOVERY_BATCH_SIZE=Number(process.env.DECISION_RECOVERY_BATCH_SIZE||25);
 const DECISION_RECOVERY_DELAY_MS=Number(process.env.DECISION_RECOVERY_DELAY_MS||25);
@@ -248,95 +135,11 @@ const LIVE_EVAL_HOURS=Number(process.env.LIVE_EVALUATION_ACTIVE_USER_HOURS||24);
 const LIVE_EVAL_BATCH=Number(process.env.LIVE_EVALUATION_BATCH_SIZE||25);
 const LIVE_EVAL_DELAY=Number(process.env.LIVE_EVALUATION_DELAY_MS||0);
 const evaluateAll=makeEvaluateForActiveUsers({store,metrics:liveEvalMetrics,activeUserHoursMs:LIVE_EVAL_HOURS*3600000,batchSize:LIVE_EVAL_BATCH,delayMs:LIVE_EVAL_DELAY,onDecision:(uid,token,decision)=>{try{paper.onDecision(uid,token,decision,store.settings(uid))}catch(_){}}});
-/* MEMEFLOW_V12_4_FAST_PHASE_A_DECOUPLED_ENRICHMENT */
-const fastPhaseMetrics={
-  starts:0,
-  priceTimerStarted:0,
-  holderQueued:0,
-  initialEvaluationStarted:0,
-  initialEvaluationSucceeded:0,
-  initialEvaluationFailed:0,
-  bootstrapErrors:0,
-  fullEnrichBackgroundStarted:0,
-  fullEnrichBackgroundSucceeded:0,
-  fullEnrichBackgroundFailed:0,
-  lastBootstrapAt:null,
-  lastBootstrapMint:null,
-  lastBootstrapError:null,
-  lastFullEnrichError:null
-};
-
-function fastPhaseAStart(mint,curve){
-  const token=store.state.tokens[mint];
-  if(!token)return false;
-
-  fastPhaseMetrics.starts++;
-  fastPhaseMetrics.lastBootstrapAt=Date.now();
-  fastPhaseMetrics.lastBootstrapMint=mint;
-
-  // Critical rule: downstream lifecycles are created BEFORE any slow full enrich.
-  try{
-    const hadPrice=priceTimers.has(mint);
-    ensurePriceTimer(mint,curve||token.curve);
-    if(!hadPrice&&priceTimers.has(mint))fastPhaseMetrics.priceTimerStarted++;
-  }catch(e){
-    fastPhaseMetrics.bootstrapErrors++;
-    fastPhaseMetrics.lastBootstrapError='price timer: '+String(e?.message||e);
-  }
-
-  try{
-    const before=holderQueue.inspect?.(mint)||null;
-
-    // MEMEFLOW_V12_9_PRE_QUEUE_ADMISSION_FAST
-    const admission=holderAdmissionForActiveUsers(mint);
-
-    if(admission?.allow!==false){
-      holderQueue.enqueue(mint);
-
-      const after=holderQueue.inspect?.(mint)||null;
-      if(!before?.pending && (after?.pending||after?.active||Number(after?.attempts||0)>0)){
-        fastPhaseMetrics.holderQueued++;
-      }
-    }
-  }catch(e){
-    fastPhaseMetrics.bootstrapErrors++;
-    fastPhaseMetrics.lastBootstrapError='holder queue: '+String(e?.message||e);
-  }
-
-  // Initial WAITING/BLOCK evaluation must not wait for metadata/holder enrichment.
-  try{
-    fastPhaseMetrics.initialEvaluationStarted++;
-    Promise.resolve(evaluateAll(token)).then(()=>{
-      fastPhaseMetrics.initialEvaluationSucceeded++;
-    }).catch(e=>{
-      fastPhaseMetrics.initialEvaluationFailed++;
-      fastPhaseMetrics.lastBootstrapError='initial evaluation: '+String(e?.message||e);
-    });
-  }catch(e){
-    fastPhaseMetrics.initialEvaluationFailed++;
-    fastPhaseMetrics.lastBootstrapError='initial evaluation: '+String(e?.message||e);
-  }
-
-  try{ publish(mint); }catch(_){}
-  return true;
-}
-
 // Phase A (immediate) then schedules Phase B (delayed holder lookup) via holderQueue.
 async function enrich(mint,curve){
-  // V12.4: start holder + price + initial decision immediately.
-  fastPhaseAStart(mint,curve);
-
-  fastPhaseMetrics.fullEnrichBackgroundStarted++;
-  try{
-    await enrichToken(mint,curve,{rpc,store,tradeWindows,evaluateAll,publish,ensurePriceTimer,discMetrics,enrichDiag});
-    fastPhaseMetrics.fullEnrichBackgroundSucceeded++;
-  }catch(e){
-    fastPhaseMetrics.fullEnrichBackgroundFailed++;
-    fastPhaseMetrics.lastFullEnrichError=String(e?.message||e).slice(0,240);
-    throw e;
-  }
-
+  await enrichToken(mint,curve,{rpc,store,tradeWindows,evaluateAll,publish,ensurePriceTimer,discMetrics,enrichDiag});
   try{paper.onTokenUpdate(mint,store.state.tokens[mint])}catch(_){}
+  holderQueue.enqueue(mint);
 }
 function publish(mint){const rows=store.tokens();const t=store.state.tokens[mint];for(const res of streams.get(mint)||[]){res.write(`event: update\ndata: ${JSON.stringify({point:t?.priceSol?{t:Date.now(),price:t.priceSol,source:'Solana'}:null,status:{stale:!t?.priceSol,error:t?.scanError||null,source:t?.source}})}\n\n`)}}
 function curvePressure(mint,previousLiquidity,nextLiquidity){
@@ -472,9 +275,6 @@ async function processSignature(sig){
       discMetrics.createInstructionDecoded++;
       discMetrics.createsDecoded++;
       store.addToken({mint:result.mint,curve:result.curve,name:result.name,symbol:result.symbol,uri:result.uri,creator:result.creator,isMayhemMode:false,launchMode:'standard',launchPlatform:'pump',protocol:'pump',discoveredAt:Date.now(),slot:tx.slot,signature:sig,source:'Pump create'});
-      // MEMEFLOW V12.4 immediate discovery bootstrap
-      fastPhaseAStart(result.mint,result.curve);
-      
       void enrich(result.mint,result.curve).catch(e=>{discMetrics.lastErrorAt=Date.now();discovery.lastError={message:'enrich: '+String(e?.message||e),at:Date.now()}});
     }else if(result.reason==='knownNonCreate'){
       // Known trade instruction (Buy/Sell/Withdraw/buy_exact_sol_in) — not a decode failure
@@ -648,18 +448,10 @@ async function bridgeRepairToken(token,now=Date.now()){
     const alreadySucceeded=Boolean(hs?.lastSuccessAt);
     if(!busy&&!alreadySucceeded){
       try{
-        // MEMEFLOW_V12_9_PRE_QUEUE_ADMISSION_BRIDGE
-        const admission=holderAdmissionForActiveUsers(mint);
-
-        if(admission?.allow!==false){
-          const queued=holderQueue.enqueue(mint);
-          if(queued!==false){
-            st.holderAt=now;
-            bridgeMetrics.holderRescued++;
-          }
-        }else{
-          // throttle bridge retries while cheap market data is still developing
+        const queued=holderQueue.enqueue(mint);
+        if(queued!==false){
           st.holderAt=now;
+          bridgeMetrics.holderRescued++;
         }
       }catch(e){
         bridgeMetrics.lastError=String(e?.message||e).slice(0,200);
@@ -1039,9 +831,8 @@ if(url.pathname==='/api/system/health'){
     const mint=String(url.searchParams.get('mint')||'').trim();
     if(!mint)return json(res,400,{error:'MINT_REQUIRED',usage:'/api/debug/token-lifecycle?mint=<token-mint>'});
     const token=store.state.tokens[mint]||null;
-    const now=Date.now();
     const decision=
-      store?._uidDec?.[u.id]?.get?.(mint) ??
+      store?._uidDec?.get?.(u.id)?.get?.(mint) ??
       store?.state?.decisions?.[u.id]?.[mint] ??
       null;
     const holder=holderQueue.inspect?.(mint)||null;
@@ -1053,6 +844,7 @@ if(url.pathname==='/api/system/health'){
           ?'READY_BUT_NOT_STARTED_10S'
           :null;
     const price=priceLifecycleDiag.get(mint)||null;
+    const now=Date.now();
     return json(res,200,{
       diagnosticVersion:'V10.1-fast',
       mint,
@@ -1126,7 +918,7 @@ if(url.pathname==='/api/system/health'){
       const holder=holderQueue.inspect?.(mint)||null;
       const price=priceLifecycleDiag.get(mint)||null;
       const decision=
-        store?._uidDec?.[u.id]?.get?.(mint) ??
+        store?._uidDec?.get?.(u.id)?.get?.(mint) ??
         store?.state?.decisions?.[u.id]?.[mint] ??
         null;
       const discovered=Number(token?.discoveredAt||token?.createdAt||0);
@@ -1144,12 +936,6 @@ if(url.pathname==='/api/system/health'){
           (now-discovered)>=FRESH_SLA_ESCALATE_MS ? 'urgent' :
           'pending',
         pipelineStarted:bridgePipelineStarted(token),
-        fastPhaseReady:Boolean(
-          (holderQueue.inspect?.(mint)||null)?.pending ||
-          (holderQueue.inspect?.(mint)||null)?.active ||
-          Number((holderQueue.inspect?.(mint)||null)?.attempts||0)>0 ||
-          priceTimers.has(mint)
-        ),
         launchPlatform:token?.launchPlatform||null,
         protocol:token?.protocol||null,
         source:token?.source||null,
@@ -1188,7 +974,7 @@ if(url.pathname==='/api/system/health'){
     return json(res,200,{
       diagnosticVersion:'V10.2-same-instance',
       now,
-      bridge:bridgeMetrics,fastPhase:fastPhaseMetrics,
+      bridge:bridgeMetrics,
       instance:{
         pid:process.pid,
         hostname:process.env.REPL_SLUG||process.env.HOSTNAME||'unknown'

@@ -56,7 +56,7 @@ function retryable(e){
     /abort|operation was aborted/i.test(e.message)||
     [429,502,503,504].includes(e.status)||
     ['ECONNRESET','ENOTFOUND','ETIMEDOUT','ECONNREFUSED'].includes(e.code)||
-    /network|connection reset|ECONNRESET|rate limit|too many requests|connection rate limits|quota|credits|data allowance/i.test(e.message);
+    /network|connection reset|ECONNRESET/i.test(e.message);
 }
 
 export class RpcPool{
@@ -66,24 +66,20 @@ export class RpcPool{
     this.i=0;
     this.last={ok:false,latency:null,url:null,error:'not checked'};
     // Exposed for /api/discovery/status metrics
-    this.metrics={retries:0,timeouts:0,http429:0,nonJsonResponses:0,endpointFailovers:0,lastHttpStatus:null,cooldownEvents:0,cooldownUntil:null};
-    this.minIntervalMs=Math.max(0,Number(process.env.RPC_MIN_INTERVAL_MS||350));
+    this.metrics={retries:0,timeouts:0,http429:0,nonJsonResponses:0,endpointFailovers:0,lastHttpStatus:null};
+    this.minIntervalMs=Math.max(0,Number(process.env.RPC_MIN_INTERVAL_MS||200));
     this.methodMinIntervalMs={
-      getProgramAccounts:Math.max(1500,Number(process.env.RPC_GET_PROGRAM_ACCOUNTS_MIN_INTERVAL_MS||3500)),
-      getTransaction:Math.max(250,Number(process.env.RPC_GET_TRANSACTION_MIN_INTERVAL_MS||400)),
-      getTokenSupply:Math.max(500,Number(process.env.RPC_GET_TOKEN_SUPPLY_MIN_INTERVAL_MS||1000)),
-      getAccountInfo:Math.max(500,Number(process.env.RPC_GET_ACCOUNT_INFO_MIN_INTERVAL_MS||1000)),
+      getProgramAccounts:Math.max(750,Number(process.env.RPC_GET_PROGRAM_ACCOUNTS_MIN_INTERVAL_MS||2500)),
+      getTransaction:Math.max(200,Number(process.env.RPC_GET_TRANSACTION_MIN_INTERVAL_MS||250)),
+      getTokenSupply:Math.max(350,Number(process.env.RPC_GET_TOKEN_SUPPLY_MIN_INTERVAL_MS||800)),
+      getAccountInfo:Math.max(150,Number(process.env.RPC_GET_ACCOUNT_INFO_MIN_INTERVAL_MS||300)),
       default:this.minIntervalMs
     };
     this._methodNextAllowedAt=new Map();
     this._methodPaceTails=new Map();
     this._paceTail=Promise.resolve();
     this._nextAllowedAt=0;
-    this._globalCooldownUntil=0;
   }
-
-  _isRateLimitError(e){const msg=String(e?.message||'').toLowerCase();return e?.status===429||msg.includes('429')||msg.includes('rate limit')||msg.includes('too many requests')||msg.includes('quota')||msg.includes('credits')||msg.includes('data allowance')}
-  _noteProviderCooldown(e){if(!this._isRateLimitError(e))return;const now=Date.now(),explicit=Number(e?.retryAfterMs||0),base=Math.max(3000,Number(process.env.RPC_RATE_LIMIT_COOLDOWN_MS||8000)),jitter=Math.floor(Math.random()*1500);this._globalCooldownUntil=Math.max(this._globalCooldownUntil,now+(explicit>0?explicit:base)+jitter);this.metrics.cooldownEvents++;this.metrics.cooldownUntil=this._globalCooldownUntil}
 
   /** Sanitized hostname of the current endpoint — never exposes credentials or full URL. */
   get activeHostname(){try{return new URL(this.urls[this.i%Math.max(1,this.urls.length)]).hostname}catch{return '[unconfigured]'}}
@@ -104,8 +100,6 @@ export class RpcPool{
     await previousMethod;
 
     try{
-      const cooldownWait=Math.max(0,(this._globalCooldownUntil||0)-Date.now());
-      if(cooldownWait)await sleep(cooldownWait);
       const methodInterval=this.methodMinIntervalMs?.[method]??this.methodMinIntervalMs?.default??this.minIntervalMs;
       const methodNext=this._methodNextAllowedAt?.get(method)||0;
       const methodWait=Math.max(0,methodNext-Date.now());
@@ -175,7 +169,6 @@ export class RpcPool{
       clearTimeout(t);
       this.last={ok:false,latency:Date.now()-start,url,error:_sanitizeMsg(e.message)};
       if(e.name==='AbortError'||/abort/i.test(e.message))this.metrics.timeouts++;
-      this._noteProviderCooldown(e);
       throw e;
     }
   }
@@ -242,7 +235,6 @@ export class RpcPool{
           lastError=e;
           this.last={ok:false,latency:Date.now()-start,url,error:_sanitizeMsg(e.message)};
           if(e.permanent)throw e;           // never retry permanent parameter errors
-          this._noteProviderCooldown(e);
           if(!retryable(e))throw e;         // non-retryable: stop immediately
           if(e.name==='AbortError'||/abort/i.test(e.message))this.metrics.timeouts++;
           if(k+1<this.urls.length)this.metrics.endpointFailovers++; // about to try next endpoint

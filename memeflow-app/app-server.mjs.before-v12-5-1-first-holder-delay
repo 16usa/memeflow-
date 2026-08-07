@@ -36,124 +36,11 @@ const discMetrics=makeDiscoveryMetrics();
 // ── Bounded concurrency queue ─────────────────────────────────────────────
 const MAX_CONCURRENT=Math.max(6,Number(process.env.DISCOVERY_MAX_CONCURRENT||6)),QUEUE_MAX=Number(process.env.DISCOVERY_QUEUE_MAX||1000);
 const SIG_MAX_AGE_MS=Number(process.env.DISCOVERY_SIGNATURE_MAX_AGE_MS||900000);
-const HOLDER_MAX_CONCURRENT=Number(process.env.HOLDER_RPC_MAX_CONCURRENCY||1),HOLDER_QUEUE_MAX=Number(process.env.HOLDER_QUEUE_MAX||500),HOLDER_INITIAL_DELAY_MS=Number(process.env.HOLDER_INITIAL_DELAY_MS||750),HOLDER_RETRY_DELAY_MS=Number(process.env.HOLDER_RETRY_DELAY_MS||30000),HOLDER_MAX_RETRIES=Number(process.env.HOLDER_MAX_RETRIES||8);
+const HOLDER_MAX_CONCURRENT=Number(process.env.HOLDER_RPC_MAX_CONCURRENCY||1),HOLDER_QUEUE_MAX=Number(process.env.HOLDER_QUEUE_MAX||500),HOLDER_INITIAL_DELAY_MS=Number(process.env.HOLDER_INITIAL_DELAY_MS||8000),HOLDER_RETRY_DELAY_MS=Number(process.env.HOLDER_RETRY_DELAY_MS||30000),HOLDER_MAX_RETRIES=Number(process.env.HOLDER_MAX_RETRIES||8);
 // discQueue defined after processSignature below (forward ref via enqueue wrapper)
 const enrichDiag=makeEnrichDiag();
 const holderMetrics=makeHolderMetrics();
-
-// MEMEFLOW_V12_5_1_FIRST_HOLDER_DELAY_FIX
-// Only the FIRST holder-queue delay default is reduced: 8000ms -> 750ms.
-// Retry delay (30000ms), max retries, queue concurrency and rate-limit protections remain unchanged.
-
-/* MEMEFLOW_V12_8_ADMISSION_GATE
-   Expensive holder RPC is admitted only when at least one active user can
-   currently benefit from it. Missing/dynamic cheap data DEFER, never hard-drop.
-   Hard drop is limited to stable platform/age incompatibility for every active
-   user. No user settings are changed. */
-const HOLDER_ADMISSION_RETRY_MS=Math.max(1000,Number(process.env.HOLDER_ADMISSION_RETRY_MS||3000));
-const HOLDER_ADMISSION_ACTIVE_HOURS=Math.max(1,Number(process.env.HOLDER_ADMISSION_ACTIVE_USER_HOURS||24));
-
-function v128Finite(v){
-  return v!==null&&v!==undefined&&v!==''&&Number.isFinite(Number(v))?Number(v):null;
-}
-function v128Enabled(v){
-  return v!==null&&v!==undefined&&v!=='';
-}
-function holderAdmissionForActiveUsers(mint){
-  const token=store.state.tokens[mint];
-  if(!token)return {allow:false,drop:true,reason:'token_missing'};
-
-  const now=Date.now();
-  const cutoff=now-HOLDER_ADMISSION_ACTIVE_HOURS*3600000;
-  const users=Object.keys(store.state.users||{}).filter(uid=>{
-    const u=store.state.users[uid]||{};
-    return u.isOwner || (u.lastActiveAt&&u.lastActiveAt>=cutoff);
-  });
-
-  // No active user context: fail open. Recovery/owner flows must not be broken.
-  if(!users.length)return {allow:true,reason:'no_active_users_fail_open'};
-
-  const platform=String(token.launchPlatform||token.protocol||token.source||'').toLowerCase();
-  const discovered=Number(token.discoveredAt||token.createdAt||0);
-  const ageMinutes=discovered>0?Math.max(0,(now-discovered)/60000):null;
-  const price=v128Finite(token.priceSol);
-  const pressure=v128Finite(token.buyPressure??token.momentum);
-  const marketCapUsd=v128Finite(token.marketCapUsd??token.marketCapUSD);
-  const liquidityUsd=v128Finite(token.liquidityUsd??token.liquidityUSD);
-
-  let anyPotential=false;
-  let anyReady=false;
-  let lastReason='cheap_market_data_pending';
-
-  for(const uid of users){
-    const s=store.settings(uid)||{};
-
-    // Stable hard filters: safe to rule this user out permanently.
-    if(Array.isArray(s.launchPlatforms)&&s.launchPlatforms.length){
-      if(!platform || !s.launchPlatforms.some(p=>platform.includes(String(p).replace('_',' ').toLowerCase()))){
-        lastReason='launch_platform_mismatch';
-        continue;
-      }
-    }
-    if(ageMinutes!==null && v128Enabled(s.maxTokenAgeMinutes) &&
-       ageMinutes>Number(s.maxTokenAgeMinutes)){
-      lastReason='token_age_exceeded';
-      continue;
-    }
-
-    anyPotential=true;
-
-    // Dynamic/cheap gates: DEFER, because these values can improve.
-    if(price===null){
-      lastReason='price_pending';
-      continue;
-    }
-    if(v128Enabled(s.minBuyPressure) && Number(s.minBuyPressure)>0){
-      if(pressure===null){
-        lastReason='buy_pressure_pending';
-        continue;
-      }
-      if(pressure<Number(s.minBuyPressure)){
-        lastReason='buy_pressure_below_user_min';
-        continue;
-      }
-    }
-    if(v128Enabled(s.minMarketCapUsd) && Number(s.minMarketCapUsd)>0){
-      if(marketCapUsd===null){
-        lastReason='market_cap_usd_pending';
-        continue;
-      }
-      if(marketCapUsd<Number(s.minMarketCapUsd)){
-        lastReason='market_cap_below_user_min';
-        continue;
-      }
-    }
-    if(v128Enabled(s.maxMarketCapUsd) && Number(s.maxMarketCapUsd)>0 &&
-       marketCapUsd!==null && marketCapUsd>Number(s.maxMarketCapUsd)){
-      lastReason='market_cap_above_user_max';
-      continue;
-    }
-    if(v128Enabled(s.minLiquidityUsd) && Number(s.minLiquidityUsd)>0){
-      if(liquidityUsd===null){
-        lastReason='liquidity_usd_pending';
-        continue;
-      }
-      if(liquidityUsd<Number(s.minLiquidityUsd)){
-        lastReason='liquidity_below_user_min';
-        continue;
-      }
-    }
-
-    anyReady=true;
-    break;
-  }
-
-  if(anyReady)return {allow:true,reason:'at_least_one_active_user_ready'};
-  if(!anyPotential)return {allow:false,drop:true,reason:lastReason||'no_active_user_hard_match'};
-  return {allow:false,drop:false,retryInMs:HOLDER_ADMISSION_RETRY_MS,reason:lastReason};
-}
-
-const holderQueue=makeHolderQueue({maxConcurrent:1,queueMax:HOLDER_QUEUE_MAX,initialDelayMs:HOLDER_INITIAL_DELAY_MS,retryDelayMs:HOLDER_RETRY_DELAY_MS,maxRetries:HOLDER_MAX_RETRIES},{enrichHoldersFn:(mint)=>enrichHolders(mint,{rpc,store,evaluateAll,publish,enrichDiag}),holderMetrics,admissionFn:holderAdmissionForActiveUsers});
+const holderQueue=makeHolderQueue({maxConcurrent:1,queueMax:HOLDER_QUEUE_MAX,initialDelayMs:HOLDER_INITIAL_DELAY_MS,retryDelayMs:HOLDER_RETRY_DELAY_MS,maxRetries:HOLDER_MAX_RETRIES},{enrichHoldersFn:(mint)=>enrichHolders(mint,{rpc,store,evaluateAll,publish,enrichDiag}),holderMetrics});
 const recoveryMetrics=makeRecoveryMetrics();
 const DECISION_RECOVERY_BATCH_SIZE=Number(process.env.DECISION_RECOVERY_BATCH_SIZE||25);
 const DECISION_RECOVERY_DELAY_MS=Number(process.env.DECISION_RECOVERY_DELAY_MS||25);
@@ -286,17 +173,10 @@ function fastPhaseAStart(mint,curve){
 
   try{
     const before=holderQueue.inspect?.(mint)||null;
-
-    // MEMEFLOW_V12_9_PRE_QUEUE_ADMISSION_FAST
-    const admission=holderAdmissionForActiveUsers(mint);
-
-    if(admission?.allow!==false){
-      holderQueue.enqueue(mint);
-
-      const after=holderQueue.inspect?.(mint)||null;
-      if(!before?.pending && (after?.pending||after?.active||Number(after?.attempts||0)>0)){
-        fastPhaseMetrics.holderQueued++;
-      }
+    holderQueue.enqueue(mint);
+    const after=holderQueue.inspect?.(mint)||null;
+    if(!before?.pending && (after?.pending||after?.active||Number(after?.attempts||0)>0)){
+      fastPhaseMetrics.holderQueued++;
     }
   }catch(e){
     fastPhaseMetrics.bootstrapErrors++;
@@ -648,18 +528,10 @@ async function bridgeRepairToken(token,now=Date.now()){
     const alreadySucceeded=Boolean(hs?.lastSuccessAt);
     if(!busy&&!alreadySucceeded){
       try{
-        // MEMEFLOW_V12_9_PRE_QUEUE_ADMISSION_BRIDGE
-        const admission=holderAdmissionForActiveUsers(mint);
-
-        if(admission?.allow!==false){
-          const queued=holderQueue.enqueue(mint);
-          if(queued!==false){
-            st.holderAt=now;
-            bridgeMetrics.holderRescued++;
-          }
-        }else{
-          // throttle bridge retries while cheap market data is still developing
+        const queued=holderQueue.enqueue(mint);
+        if(queued!==false){
           st.holderAt=now;
+          bridgeMetrics.holderRescued++;
         }
       }catch(e){
         bridgeMetrics.lastError=String(e?.message||e).slice(0,200);
@@ -1039,9 +911,8 @@ if(url.pathname==='/api/system/health'){
     const mint=String(url.searchParams.get('mint')||'').trim();
     if(!mint)return json(res,400,{error:'MINT_REQUIRED',usage:'/api/debug/token-lifecycle?mint=<token-mint>'});
     const token=store.state.tokens[mint]||null;
-    const now=Date.now();
     const decision=
-      store?._uidDec?.[u.id]?.get?.(mint) ??
+      store?._uidDec?.get?.(u.id)?.get?.(mint) ??
       store?.state?.decisions?.[u.id]?.[mint] ??
       null;
     const holder=holderQueue.inspect?.(mint)||null;
@@ -1053,6 +924,7 @@ if(url.pathname==='/api/system/health'){
           ?'READY_BUT_NOT_STARTED_10S'
           :null;
     const price=priceLifecycleDiag.get(mint)||null;
+    const now=Date.now();
     return json(res,200,{
       diagnosticVersion:'V10.1-fast',
       mint,
@@ -1126,7 +998,7 @@ if(url.pathname==='/api/system/health'){
       const holder=holderQueue.inspect?.(mint)||null;
       const price=priceLifecycleDiag.get(mint)||null;
       const decision=
-        store?._uidDec?.[u.id]?.get?.(mint) ??
+        store?._uidDec?.get?.(u.id)?.get?.(mint) ??
         store?.state?.decisions?.[u.id]?.[mint] ??
         null;
       const discovered=Number(token?.discoveredAt||token?.createdAt||0);

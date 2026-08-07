@@ -36,124 +36,11 @@ const discMetrics=makeDiscoveryMetrics();
 // ── Bounded concurrency queue ─────────────────────────────────────────────
 const MAX_CONCURRENT=Math.max(6,Number(process.env.DISCOVERY_MAX_CONCURRENT||6)),QUEUE_MAX=Number(process.env.DISCOVERY_QUEUE_MAX||1000);
 const SIG_MAX_AGE_MS=Number(process.env.DISCOVERY_SIGNATURE_MAX_AGE_MS||900000);
-const HOLDER_MAX_CONCURRENT=Number(process.env.HOLDER_RPC_MAX_CONCURRENCY||1),HOLDER_QUEUE_MAX=Number(process.env.HOLDER_QUEUE_MAX||500),HOLDER_INITIAL_DELAY_MS=Number(process.env.HOLDER_INITIAL_DELAY_MS||750),HOLDER_RETRY_DELAY_MS=Number(process.env.HOLDER_RETRY_DELAY_MS||30000),HOLDER_MAX_RETRIES=Number(process.env.HOLDER_MAX_RETRIES||8);
+const HOLDER_MAX_CONCURRENT=Number(process.env.HOLDER_RPC_MAX_CONCURRENCY||1),HOLDER_QUEUE_MAX=Number(process.env.HOLDER_QUEUE_MAX||500),HOLDER_INITIAL_DELAY_MS=Number(process.env.HOLDER_INITIAL_DELAY_MS||8000),HOLDER_RETRY_DELAY_MS=Number(process.env.HOLDER_RETRY_DELAY_MS||30000),HOLDER_MAX_RETRIES=Number(process.env.HOLDER_MAX_RETRIES||8);
 // discQueue defined after processSignature below (forward ref via enqueue wrapper)
 const enrichDiag=makeEnrichDiag();
 const holderMetrics=makeHolderMetrics();
-
-// MEMEFLOW_V12_5_1_FIRST_HOLDER_DELAY_FIX
-// Only the FIRST holder-queue delay default is reduced: 8000ms -> 750ms.
-// Retry delay (30000ms), max retries, queue concurrency and rate-limit protections remain unchanged.
-
-/* MEMEFLOW_V12_8_ADMISSION_GATE
-   Expensive holder RPC is admitted only when at least one active user can
-   currently benefit from it. Missing/dynamic cheap data DEFER, never hard-drop.
-   Hard drop is limited to stable platform/age incompatibility for every active
-   user. No user settings are changed. */
-const HOLDER_ADMISSION_RETRY_MS=Math.max(1000,Number(process.env.HOLDER_ADMISSION_RETRY_MS||3000));
-const HOLDER_ADMISSION_ACTIVE_HOURS=Math.max(1,Number(process.env.HOLDER_ADMISSION_ACTIVE_USER_HOURS||24));
-
-function v128Finite(v){
-  return v!==null&&v!==undefined&&v!==''&&Number.isFinite(Number(v))?Number(v):null;
-}
-function v128Enabled(v){
-  return v!==null&&v!==undefined&&v!=='';
-}
-function holderAdmissionForActiveUsers(mint){
-  const token=store.state.tokens[mint];
-  if(!token)return {allow:false,drop:true,reason:'token_missing'};
-
-  const now=Date.now();
-  const cutoff=now-HOLDER_ADMISSION_ACTIVE_HOURS*3600000;
-  const users=Object.keys(store.state.users||{}).filter(uid=>{
-    const u=store.state.users[uid]||{};
-    return u.isOwner || (u.lastActiveAt&&u.lastActiveAt>=cutoff);
-  });
-
-  // No active user context: fail open. Recovery/owner flows must not be broken.
-  if(!users.length)return {allow:true,reason:'no_active_users_fail_open'};
-
-  const platform=String(token.launchPlatform||token.protocol||token.source||'').toLowerCase();
-  const discovered=Number(token.discoveredAt||token.createdAt||0);
-  const ageMinutes=discovered>0?Math.max(0,(now-discovered)/60000):null;
-  const price=v128Finite(token.priceSol);
-  const pressure=v128Finite(token.buyPressure??token.momentum);
-  const marketCapUsd=v128Finite(token.marketCapUsd??token.marketCapUSD);
-  const liquidityUsd=v128Finite(token.liquidityUsd??token.liquidityUSD);
-
-  let anyPotential=false;
-  let anyReady=false;
-  let lastReason='cheap_market_data_pending';
-
-  for(const uid of users){
-    const s=store.settings(uid)||{};
-
-    // Stable hard filters: safe to rule this user out permanently.
-    if(Array.isArray(s.launchPlatforms)&&s.launchPlatforms.length){
-      if(!platform || !s.launchPlatforms.some(p=>platform.includes(String(p).replace('_',' ').toLowerCase()))){
-        lastReason='launch_platform_mismatch';
-        continue;
-      }
-    }
-    if(ageMinutes!==null && v128Enabled(s.maxTokenAgeMinutes) &&
-       ageMinutes>Number(s.maxTokenAgeMinutes)){
-      lastReason='token_age_exceeded';
-      continue;
-    }
-
-    anyPotential=true;
-
-    // Dynamic/cheap gates: DEFER, because these values can improve.
-    if(price===null){
-      lastReason='price_pending';
-      continue;
-    }
-    if(v128Enabled(s.minBuyPressure) && Number(s.minBuyPressure)>0){
-      if(pressure===null){
-        lastReason='buy_pressure_pending';
-        continue;
-      }
-      if(pressure<Number(s.minBuyPressure)){
-        lastReason='buy_pressure_below_user_min';
-        continue;
-      }
-    }
-    if(v128Enabled(s.minMarketCapUsd) && Number(s.minMarketCapUsd)>0){
-      if(marketCapUsd===null){
-        lastReason='market_cap_usd_pending';
-        continue;
-      }
-      if(marketCapUsd<Number(s.minMarketCapUsd)){
-        lastReason='market_cap_below_user_min';
-        continue;
-      }
-    }
-    if(v128Enabled(s.maxMarketCapUsd) && Number(s.maxMarketCapUsd)>0 &&
-       marketCapUsd!==null && marketCapUsd>Number(s.maxMarketCapUsd)){
-      lastReason='market_cap_above_user_max';
-      continue;
-    }
-    if(v128Enabled(s.minLiquidityUsd) && Number(s.minLiquidityUsd)>0){
-      if(liquidityUsd===null){
-        lastReason='liquidity_usd_pending';
-        continue;
-      }
-      if(liquidityUsd<Number(s.minLiquidityUsd)){
-        lastReason='liquidity_below_user_min';
-        continue;
-      }
-    }
-
-    anyReady=true;
-    break;
-  }
-
-  if(anyReady)return {allow:true,reason:'at_least_one_active_user_ready'};
-  if(!anyPotential)return {allow:false,drop:true,reason:lastReason||'no_active_user_hard_match'};
-  return {allow:false,drop:false,retryInMs:HOLDER_ADMISSION_RETRY_MS,reason:lastReason};
-}
-
-const holderQueue=makeHolderQueue({maxConcurrent:1,queueMax:HOLDER_QUEUE_MAX,initialDelayMs:HOLDER_INITIAL_DELAY_MS,retryDelayMs:HOLDER_RETRY_DELAY_MS,maxRetries:HOLDER_MAX_RETRIES},{enrichHoldersFn:(mint)=>enrichHolders(mint,{rpc,store,evaluateAll,publish,enrichDiag}),holderMetrics,admissionFn:holderAdmissionForActiveUsers});
+const holderQueue=makeHolderQueue({maxConcurrent:1,queueMax:HOLDER_QUEUE_MAX,initialDelayMs:HOLDER_INITIAL_DELAY_MS,retryDelayMs:HOLDER_RETRY_DELAY_MS,maxRetries:HOLDER_MAX_RETRIES},{enrichHoldersFn:(mint)=>enrichHolders(mint,{rpc,store,evaluateAll,publish,enrichDiag}),holderMetrics});
 const recoveryMetrics=makeRecoveryMetrics();
 const DECISION_RECOVERY_BATCH_SIZE=Number(process.env.DECISION_RECOVERY_BATCH_SIZE||25);
 const DECISION_RECOVERY_DELAY_MS=Number(process.env.DECISION_RECOVERY_DELAY_MS||25);
@@ -248,95 +135,11 @@ const LIVE_EVAL_HOURS=Number(process.env.LIVE_EVALUATION_ACTIVE_USER_HOURS||24);
 const LIVE_EVAL_BATCH=Number(process.env.LIVE_EVALUATION_BATCH_SIZE||25);
 const LIVE_EVAL_DELAY=Number(process.env.LIVE_EVALUATION_DELAY_MS||0);
 const evaluateAll=makeEvaluateForActiveUsers({store,metrics:liveEvalMetrics,activeUserHoursMs:LIVE_EVAL_HOURS*3600000,batchSize:LIVE_EVAL_BATCH,delayMs:LIVE_EVAL_DELAY,onDecision:(uid,token,decision)=>{try{paper.onDecision(uid,token,decision,store.settings(uid))}catch(_){}}});
-/* MEMEFLOW_V12_4_FAST_PHASE_A_DECOUPLED_ENRICHMENT */
-const fastPhaseMetrics={
-  starts:0,
-  priceTimerStarted:0,
-  holderQueued:0,
-  initialEvaluationStarted:0,
-  initialEvaluationSucceeded:0,
-  initialEvaluationFailed:0,
-  bootstrapErrors:0,
-  fullEnrichBackgroundStarted:0,
-  fullEnrichBackgroundSucceeded:0,
-  fullEnrichBackgroundFailed:0,
-  lastBootstrapAt:null,
-  lastBootstrapMint:null,
-  lastBootstrapError:null,
-  lastFullEnrichError:null
-};
-
-function fastPhaseAStart(mint,curve){
-  const token=store.state.tokens[mint];
-  if(!token)return false;
-
-  fastPhaseMetrics.starts++;
-  fastPhaseMetrics.lastBootstrapAt=Date.now();
-  fastPhaseMetrics.lastBootstrapMint=mint;
-
-  // Critical rule: downstream lifecycles are created BEFORE any slow full enrich.
-  try{
-    const hadPrice=priceTimers.has(mint);
-    ensurePriceTimer(mint,curve||token.curve);
-    if(!hadPrice&&priceTimers.has(mint))fastPhaseMetrics.priceTimerStarted++;
-  }catch(e){
-    fastPhaseMetrics.bootstrapErrors++;
-    fastPhaseMetrics.lastBootstrapError='price timer: '+String(e?.message||e);
-  }
-
-  try{
-    const before=holderQueue.inspect?.(mint)||null;
-
-    // MEMEFLOW_V12_9_PRE_QUEUE_ADMISSION_FAST
-    const admission=holderAdmissionForActiveUsers(mint);
-
-    if(admission?.allow!==false){
-      holderQueue.enqueue(mint);
-
-      const after=holderQueue.inspect?.(mint)||null;
-      if(!before?.pending && (after?.pending||after?.active||Number(after?.attempts||0)>0)){
-        fastPhaseMetrics.holderQueued++;
-      }
-    }
-  }catch(e){
-    fastPhaseMetrics.bootstrapErrors++;
-    fastPhaseMetrics.lastBootstrapError='holder queue: '+String(e?.message||e);
-  }
-
-  // Initial WAITING/BLOCK evaluation must not wait for metadata/holder enrichment.
-  try{
-    fastPhaseMetrics.initialEvaluationStarted++;
-    Promise.resolve(evaluateAll(token)).then(()=>{
-      fastPhaseMetrics.initialEvaluationSucceeded++;
-    }).catch(e=>{
-      fastPhaseMetrics.initialEvaluationFailed++;
-      fastPhaseMetrics.lastBootstrapError='initial evaluation: '+String(e?.message||e);
-    });
-  }catch(e){
-    fastPhaseMetrics.initialEvaluationFailed++;
-    fastPhaseMetrics.lastBootstrapError='initial evaluation: '+String(e?.message||e);
-  }
-
-  try{ publish(mint); }catch(_){}
-  return true;
-}
-
 // Phase A (immediate) then schedules Phase B (delayed holder lookup) via holderQueue.
 async function enrich(mint,curve){
-  // V12.4: start holder + price + initial decision immediately.
-  fastPhaseAStart(mint,curve);
-
-  fastPhaseMetrics.fullEnrichBackgroundStarted++;
-  try{
-    await enrichToken(mint,curve,{rpc,store,tradeWindows,evaluateAll,publish,ensurePriceTimer,discMetrics,enrichDiag});
-    fastPhaseMetrics.fullEnrichBackgroundSucceeded++;
-  }catch(e){
-    fastPhaseMetrics.fullEnrichBackgroundFailed++;
-    fastPhaseMetrics.lastFullEnrichError=String(e?.message||e).slice(0,240);
-    throw e;
-  }
-
+  await enrichToken(mint,curve,{rpc,store,tradeWindows,evaluateAll,publish,ensurePriceTimer,discMetrics,enrichDiag});
   try{paper.onTokenUpdate(mint,store.state.tokens[mint])}catch(_){}
+  holderQueue.enqueue(mint);
 }
 function publish(mint){const rows=store.tokens();const t=store.state.tokens[mint];for(const res of streams.get(mint)||[]){res.write(`event: update\ndata: ${JSON.stringify({point:t?.priceSol?{t:Date.now(),price:t.priceSol,source:'Solana'}:null,status:{stale:!t?.priceSol,error:t?.scanError||null,source:t?.source}})}\n\n`)}}
 function curvePressure(mint,previousLiquidity,nextLiquidity){
@@ -472,9 +275,6 @@ async function processSignature(sig){
       discMetrics.createInstructionDecoded++;
       discMetrics.createsDecoded++;
       store.addToken({mint:result.mint,curve:result.curve,name:result.name,symbol:result.symbol,uri:result.uri,creator:result.creator,isMayhemMode:false,launchMode:'standard',launchPlatform:'pump',protocol:'pump',discoveredAt:Date.now(),slot:tx.slot,signature:sig,source:'Pump create'});
-      // MEMEFLOW V12.4 immediate discovery bootstrap
-      fastPhaseAStart(result.mint,result.curve);
-      
       void enrich(result.mint,result.curve).catch(e=>{discMetrics.lastErrorAt=Date.now();discovery.lastError={message:'enrich: '+String(e?.message||e),at:Date.now()}});
     }else if(result.reason==='knownNonCreate'){
       // Known trade instruction (Buy/Sell/Withdraw/buy_exact_sol_in) — not a decode failure
@@ -501,344 +301,6 @@ const discQueue=makeDiscoveryQueue(
    onSignatureProcessed:()=>{if(discovery.connected&&discovery.error)discovery.error=null;discovery.lastError=null},
    onSignatureFailed:(e)=>{discMetrics.lastErrorAt=Date.now();discovery.lastError={message:e.message,at:Date.now()}}}
 );
-
-/* MEMEFLOW_V12_DISCOVERY_ENRICHMENT_BRIDGE
-   Self-healing bridge for fresh Pump tokens that reached store.tokens but
-   missed Phase A enrichment / holder queue / price lifecycle / evaluation.
-   Idempotent and bounded: it touches only very recent tokens and applies
-   per-mint retry spacing so it cannot create an RPC storm. */
-const bridgeMetrics={
-  scans:0,
-  freshPumpSeen:0,
-  fullEnrichStarted:0,
-  fullEnrichSucceeded:0,
-  fullEnrichFailed:0,
-  holderRescued:0,
-  priceTimerRescued:0,
-  evaluationRescued:0,
-  skippedInflight:0,
-  lastRunAt:null,
-  lastMint:null,
-  lastError:null,
-  lastErrorAt:null
-};
-const bridgeInflight=new Set();
-const bridgeState=new Map(); // mint -> {fullAt,holderAt,evalAt,fullAttempts}
-const BRIDGE_TICK_MS=Math.max(1000,Number(process.env.DISCOVERY_BRIDGE_TICK_MS||2000));
-const BRIDGE_MAX_AGE_MS=Math.max(60000,Number(process.env.DISCOVERY_BRIDGE_MAX_AGE_MS||300000));
-const BRIDGE_FULL_RETRY_MS=Math.max(10000,Number(process.env.DISCOVERY_BRIDGE_FULL_RETRY_MS||20000));
-const BRIDGE_HOLDER_RETRY_MS=Math.max(15000,Number(process.env.DISCOVERY_BRIDGE_HOLDER_RETRY_MS||45000));
-const BRIDGE_MAX_FULL_ATTEMPTS=Math.max(1,Number(process.env.DISCOVERY_BRIDGE_MAX_FULL_ATTEMPTS||3));
-/* MEMEFLOW_V12_1_PIPELINE_STABILITY */
-const BRIDGE_MAX_PER_RUN=Math.max(1,Number(process.env.DISCOVERY_BRIDGE_MAX_PER_RUN||4));
-const BRIDGE_MIN_TOKEN_AGE_MS=Math.max(1500,Number(process.env.DISCOVERY_BRIDGE_MIN_TOKEN_AGE_MS||3000));
-/* MEMEFLOW_V12_2_FRESH_TOKEN_PRIORITY_SCHEDULER */
-const FRESH_PRIORITY_MAX_AGE_MS=Math.max(10000,Number(process.env.FRESH_PRIORITY_MAX_AGE_MS||45000));
-const FRESH_PRIORITY_BATCH=Math.max(1,Number(process.env.FRESH_PRIORITY_BATCH||3));
-const RECOVERY_BATCH=Math.max(1,Number(process.env.RECOVERY_BATCH||2));
-const BRIDGE_ITEM_TIMEOUT_MS=Math.max(3000,Number(process.env.BRIDGE_ITEM_TIMEOUT_MS||12000));
-/* MEMEFLOW_V12_3_SLA_FAIR_SCHEDULER */
-const FRESH_SLA_MS=Math.max(5000,Number(process.env.FRESH_SLA_MS||15000));
-const FRESH_SLA_ESCALATE_MS=Math.max(FRESH_SLA_MS,Number(process.env.FRESH_SLA_ESCALATE_MS||12000));
-bridgeMetrics.slaMs=FRESH_SLA_MS;
-bridgeMetrics.currentFreshBacklog=0;
-bridgeMetrics.currentUrgentFreshBacklog=0;
-bridgeMetrics.oldestFreshUnprocessedAgeMs=0;
-bridgeMetrics.slaMisses15s=bridgeMetrics.slaMisses15s||0;
-bridgeMetrics.slaMissesCurrent=0;
-bridgeMetrics.slaEscalations=bridgeMetrics.slaEscalations||0;
-
-bridgeMetrics.freshPriorityRuns=bridgeMetrics.freshPriorityRuns||0;
-bridgeMetrics.freshPriorityStarted=bridgeMetrics.freshPriorityStarted||0;
-bridgeMetrics.freshPrioritySucceeded=bridgeMetrics.freshPrioritySucceeded||0;
-bridgeMetrics.freshPriorityTimedOut=bridgeMetrics.freshPriorityTimedOut||0;
-bridgeMetrics.recoveryStarted=bridgeMetrics.recoveryStarted||0;
-bridgeMetrics.recoverySucceeded=bridgeMetrics.recoverySucceeded||0;
-bridgeMetrics.itemTimeouts=bridgeMetrics.itemTimeouts||0;
-bridgeMetrics.freshPriorityBatch=FRESH_PRIORITY_BATCH;
-bridgeMetrics.recoveryBatch=RECOVERY_BATCH;
-
-let bridgeRunActive=false;
-let bridgeRunSequence=0;
-bridgeMetrics.runsStarted=bridgeMetrics.runsStarted||0;
-bridgeMetrics.runsCompleted=bridgeMetrics.runsCompleted||0;
-bridgeMetrics.runsSkippedBusy=bridgeMetrics.runsSkippedBusy||0;
-bridgeMetrics.tokensDeferred=bridgeMetrics.tokensDeferred||0;
-bridgeMetrics.maxPerRun=BRIDGE_MAX_PER_RUN;
-
-
-function bridgeMint(token){
-  return String(token?.mint||token?.tokenMint||token?.tokenAddress||'').trim();
-}
-function bridgeIsPump(token){
-  const mint=bridgeMint(token).toLowerCase();
-  const lp=String(token?.launchPlatform||token?.protocol||'').toLowerCase();
-  const src=String(token?.source||'').toLowerCase();
-  return lp==='pump'||mint.endsWith('pump')||src.includes('pump create');
-}
-function bridgeAgeMs(token,now=Date.now()){
-  const t=Number(token?.discoveredAt||token?.createdAt||token?.firstSeenAt||0);
-  return t>0?Math.max(0,now-t):Infinity;
-}
-function bridgeHolderState(mint){
-  try{return holderQueue.inspect?.(mint)||null}catch{return null}
-}
-async function bridgeRepairToken(token,now=Date.now()){
-  const mint=bridgeMint(token);
-  if(!mint||!bridgeIsPump(token)||bridgeAgeMs(token,now)>BRIDGE_MAX_AGE_MS)return;
-  // Give the normal discovery path a short head start. The bridge is recovery,
-  // not the primary pipeline.
-  if(bridgeAgeMs(token,now)<BRIDGE_MIN_TOKEN_AGE_MS)return;
-
-  bridgeMetrics.freshPumpSeen++;
-  bridgeMetrics.lastMint=mint;
-
-  let st=bridgeState.get(mint);
-  if(!st){
-    st={fullAt:0,holderAt:0,evalAt:0,fullAttempts:0};
-    bridgeState.set(mint,st);
-  }
-
-  const curve=token?.curve||token?.bondingCurve||token?.associatedBondingCurve||null;
-  const phaseADone=Boolean(
-    token?.lastScannedAt ||
-    token?.totalSupply!=null ||
-    token?.decimals!=null ||
-    token?.priceSol!=null
-  );
-
-  // A raw Pump-create row in store without Phase A is the exact V12 failure mode.
-  if(!phaseADone && st.fullAttempts<BRIDGE_MAX_FULL_ATTEMPTS && now-st.fullAt>=BRIDGE_FULL_RETRY_MS){
-    if(bridgeInflight.has(mint)){
-      bridgeMetrics.skippedInflight++;
-      return;
-    }
-    st.fullAt=now;
-    st.fullAttempts++;
-    bridgeInflight.add(mint);
-    bridgeMetrics.fullEnrichStarted++;
-    try{
-      await enrich(mint,curve);
-      bridgeMetrics.fullEnrichSucceeded++;
-    }catch(e){
-      bridgeMetrics.fullEnrichFailed++;
-      bridgeMetrics.lastError=String(e?.message||e).slice(0,200);
-      bridgeMetrics.lastErrorAt=Date.now();
-    }finally{
-      bridgeInflight.delete(mint);
-    }
-    return; // enrich() already evaluates, starts price timer and enqueues holders.
-  }
-
-  // Rescue price lifecycle independently when Phase A exists.
-  if(curve && !priceTimers.has(mint)){
-    try{
-      ensurePriceTimer(mint,curve);
-      bridgeMetrics.priceTimerRescued++;
-    }catch(e){
-      bridgeMetrics.lastError=String(e?.message||e).slice(0,200);
-      bridgeMetrics.lastErrorAt=Date.now();
-    }
-  }
-
-  // Rescue missing holder queue. Never requeue a pending/active job.
-  if(!token?.holderFresh && now-st.holderAt>=BRIDGE_HOLDER_RETRY_MS){
-    const hs=bridgeHolderState(mint);
-    const busy=Boolean(hs?.pending||hs?.active);
-    const alreadySucceeded=Boolean(hs?.lastSuccessAt);
-    if(!busy&&!alreadySucceeded){
-      try{
-        // MEMEFLOW_V12_9_PRE_QUEUE_ADMISSION_BRIDGE
-        const admission=holderAdmissionForActiveUsers(mint);
-
-        if(admission?.allow!==false){
-          const queued=holderQueue.enqueue(mint);
-          if(queued!==false){
-            st.holderAt=now;
-            bridgeMetrics.holderRescued++;
-          }
-        }else{
-          // throttle bridge retries while cheap market data is still developing
-          st.holderAt=now;
-        }
-      }catch(e){
-        bridgeMetrics.lastError=String(e?.message||e).slice(0,200);
-        bridgeMetrics.lastErrorAt=Date.now();
-      }
-    }
-  }
-
-  // If token was enriched but somehow has no decision for any active user,
-  // trigger one bounded evaluation pass. evaluateAll itself is user-aware.
-  if(phaseADone && now-st.evalAt>=60000){
-    let hasAnyDecision=false;
-    try{
-      for(const m of Object.values(store?._uidDec||{})){
-        if(m?.has?.(mint)){hasAnyDecision=true;break}
-      }
-    }catch{}
-    if(!hasAnyDecision){
-      st.evalAt=now;
-      try{
-        await evaluateAll(store.state.tokens[mint]||token);
-        bridgeMetrics.evaluationRescued++;
-      }catch(e){
-        bridgeMetrics.lastError=String(e?.message||e).slice(0,200);
-        bridgeMetrics.lastErrorAt=Date.now();
-      }
-    }
-  }
-}
-
-let bridgeTimer=null;
-
-function bridgePhaseAStarted(token){
-  return Boolean(
-    token?.lastScannedAt ||
-    token?.totalSupply!=null ||
-    token?.decimals!=null ||
-    token?.priceSol!=null
-  );
-}
-function bridgePipelineStarted(token){
-  const mint=bridgeMint(token);
-  let holder=null;
-  try{ holder=holderQueue.inspect?.(mint)||null; }catch{}
-  const holderStarted=Boolean(
-    holder?.pending ||
-    holder?.active ||
-    Number(holder?.attempts||0)>0 ||
-    holder?.lastSuccessAt
-  );
-  const priceStarted=Boolean(priceTimers?.has?.(mint) || priceLifecycleDiag?.get?.(mint));
-  return bridgePhaseAStarted(token) || holderStarted || priceStarted;
-}
-function bridgeNeedsFastStart(token){
-  return !bridgePipelineStarted(token);
-}
-async function runDiscoveryBridge(){
-  if(bridgeRunActive){
-    bridgeMetrics.runsSkippedBusy++;
-    return;
-  }
-
-  bridgeRunActive=true;
-  const runId=++bridgeRunSequence;
-  bridgeMetrics.runsStarted++;
-  bridgeMetrics.scans++;
-  bridgeMetrics.lastRunAt=Date.now();
-
-  const now=Date.now();
-
-  async function withItemTimeout(token,label){
-    const mint=bridgeMint(token);
-    let timer=null;
-    try{
-      const timeout=new Promise((_,reject)=>{
-        timer=setTimeout(()=>{
-          const e=new Error('V12.3 '+label+' timeout for '+mint);
-          e.code='BRIDGE_ITEM_TIMEOUT';
-          reject(e);
-        },BRIDGE_ITEM_TIMEOUT_MS);
-        timer.unref?.();
-      });
-      await Promise.race([bridgeRepairToken(token,now),timeout]);
-      return true;
-    }catch(e){
-      if(e?.code==='BRIDGE_ITEM_TIMEOUT'){
-        bridgeMetrics.itemTimeouts++;
-        if(label==='fresh')bridgeMetrics.freshPriorityTimedOut++;
-      }else{
-        bridgeMetrics.lastError=String(e?.message||e).slice(0,200);
-        bridgeMetrics.lastErrorAt=Date.now();
-      }
-      return false;
-    }finally{
-      if(timer)clearTimeout(timer);
-    }
-  }
-
-  try{
-    const all=Object.values(store?.state?.tokens||{})
-      .filter(t=>bridgeIsPump(t)&&bridgeAgeMs(t,now)<=BRIDGE_MAX_AGE_MS&&bridgeAgeMs(t,now)>=BRIDGE_MIN_TOKEN_AGE_MS);
-
-    const freshWindow=all.filter(t=>bridgeAgeMs(t,now)<=FRESH_PRIORITY_MAX_AGE_MS);
-    const freshUnprocessed=freshWindow
-      .filter(bridgeNeedsFastStart)
-      .sort((a,b)=>Number(a?.discoveredAt||0)-Number(b?.discoveredAt||0)); // OLDEST FIRST
-
-    const urgent=freshUnprocessed.filter(t=>bridgeAgeMs(t,now)>=FRESH_SLA_ESCALATE_MS);
-
-    bridgeMetrics.currentFreshBacklog=freshUnprocessed.length;
-    bridgeMetrics.currentUrgentFreshBacklog=urgent.length;
-    bridgeMetrics.oldestFreshUnprocessedAgeMs=freshUnprocessed.length
-      ? Math.max(...freshUnprocessed.map(t=>bridgeAgeMs(t,now)))
-      : 0;
-    bridgeMetrics.slaMissesCurrent=freshUnprocessed.filter(t=>bridgeAgeMs(t,now)>FRESH_SLA_MS).length;
-    if(bridgeMetrics.slaMissesCurrent>0){
-      bridgeMetrics.slaMisses15s+=bridgeMetrics.slaMissesCurrent;
-    }
-
-    // SLA lane:
-    // 1) oldest unprocessed tokens first;
-    // 2) tokens nearing/missing SLA are automatically ahead of newer arrivals.
-    const fresh=freshUnprocessed.slice(0,FRESH_PRIORITY_BATCH);
-    if(fresh.some(t=>bridgeAgeMs(t,now)>=FRESH_SLA_ESCALATE_MS)){
-      bridgeMetrics.slaEscalations++;
-    }
-
-    const freshMints=new Set(fresh.map(bridgeMint));
-
-    // Recovery lane remains old-first, but never steals a slot from an
-    // unprocessed fresh token selected above.
-    const recovery=all
-      .filter(t=>!freshMints.has(bridgeMint(t)))
-      .filter(t=>!freshWindow.includes(t) || !bridgeNeedsFastStart(t))
-      .sort((a,b)=>Number(a?.discoveredAt||0)-Number(b?.discoveredAt||0))
-      .slice(0,RECOVERY_BATCH);
-
-    bridgeMetrics.freshPriorityRuns++;
-    bridgeMetrics.tokensDeferred+=Math.max(0,all.length-fresh.length-recovery.length);
-
-    for(const token of fresh){
-      bridgeMetrics.freshPriorityStarted++;
-      const ok=await withItemTimeout(token,'fresh');
-      if(ok)bridgeMetrics.freshPrioritySucceeded++;
-      await new Promise(resolve=>setTimeout(resolve,15));
-    }
-
-    for(const token of recovery){
-      bridgeMetrics.recoveryStarted++;
-      const ok=await withItemTimeout(token,'recovery');
-      if(ok)bridgeMetrics.recoverySucceeded++;
-      await new Promise(resolve=>setTimeout(resolve,25));
-    }
-
-    if(bridgeState.size>2000){
-      for(const [mint] of bridgeState){
-        const t=store?.state?.tokens?.[mint];
-        if(!t||bridgeAgeMs(t,now)>BRIDGE_MAX_AGE_MS*2)bridgeState.delete(mint);
-        if(bridgeState.size<=1000)break;
-      }
-    }
-  }catch(e){
-    bridgeMetrics.lastError=String(e?.message||e).slice(0,200);
-    bridgeMetrics.lastErrorAt=Date.now();
-  }finally{
-    bridgeRunActive=false;
-    bridgeMetrics.runsCompleted++;
-    bridgeMetrics.lastCompletedRunId=runId;
-    bridgeMetrics.lastCompletedAt=Date.now();
-  }
-}
-function startDiscoveryBridge(){
-  if(bridgeTimer)return;
-  void runDiscoveryBridge();
-  bridgeTimer=setInterval(()=>void runDiscoveryBridge(),BRIDGE_TICK_MS);
-  bridgeTimer.unref?.();
-}
-startDiscoveryBridge();
-
 function startDiscovery(i=0){
   if(process.env.DISCOVERY_ENABLED==='false'||!wsUrls.length){discovery.error='SOLANA_WS_URLS not configured';return}
   const url=wsUrls[i%wsUrls.length];
@@ -990,8 +452,7 @@ if(url.pathname==='/api/system/health'){
       },
       decisionEngine:{
         status:'healthy',
-        decisionsInMemory:Object.values(store._uidDec).reduce((s,m)=>s+m.size,0),
-    bridgeMetrics:bridgeMetrics
+        decisionsInMemory:Object.values(store._uidDec).reduce((s,m)=>s+m.size,0)
       }
     },
     protectionActive:overall!=='healthy',
@@ -1039,20 +500,13 @@ if(url.pathname==='/api/system/health'){
     const mint=String(url.searchParams.get('mint')||'').trim();
     if(!mint)return json(res,400,{error:'MINT_REQUIRED',usage:'/api/debug/token-lifecycle?mint=<token-mint>'});
     const token=store.state.tokens[mint]||null;
-    const now=Date.now();
     const decision=
-      store?._uidDec?.[u.id]?.get?.(mint) ??
+      store?._uidDec?.get?.(u.id)?.get?.(mint) ??
       store?.state?.decisions?.[u.id]?.[mint] ??
       null;
     const holder=holderQueue.inspect?.(mint)||null;
-      const queuedAt=Number(holder?.queuedAt||0);
-      const nextDueAt=Number(holder?.nextDueAt||0);
-      const holderStallReason=
-        holder?.pending&&!holder?.active&&Number(holder?.attempts||0)===0&&
-        nextDueAt>0&&nextDueAt<=now&&queuedAt>0&&now-queuedAt>10000
-          ?'READY_BUT_NOT_STARTED_10S'
-          :null;
     const price=priceLifecycleDiag.get(mint)||null;
+    const now=Date.now();
     return json(res,200,{
       diagnosticVersion:'V10.1-fast',
       mint,
@@ -1079,7 +533,6 @@ if(url.pathname==='/api/system/health'){
         scanError:token.scanError||null
       }:null,
       holderQueue:holder,
-        holderStallReason,
       pricePolling:price?{
         ...price,
         lastSnapshotAgeMs:price.lastSnapshotAt?now-price.lastSnapshotAt:null,
@@ -1126,30 +579,13 @@ if(url.pathname==='/api/system/health'){
       const holder=holderQueue.inspect?.(mint)||null;
       const price=priceLifecycleDiag.get(mint)||null;
       const decision=
-        store?._uidDec?.[u.id]?.get?.(mint) ??
+        store?._uidDec?.get?.(u.id)?.get?.(mint) ??
         store?.state?.decisions?.[u.id]?.[mint] ??
         null;
       const discovered=Number(token?.discoveredAt||token?.createdAt||0);
       return {
         mint,
         ageMinutes:discovered>0?Math.max(0,(now-discovered)/60000):null,
-        schedulerLane:
-          discovered>0 && now-discovered<=FRESH_PRIORITY_MAX_AGE_MS
-            ?'fresh-priority'
-            :'recovery',
-        slaState:
-          discovered<=0 ? 'unknown' :
-          bridgePipelineStarted(token) ? 'started' :
-          (now-discovered)>FRESH_SLA_MS ? 'missed' :
-          (now-discovered)>=FRESH_SLA_ESCALATE_MS ? 'urgent' :
-          'pending',
-        pipelineStarted:bridgePipelineStarted(token),
-        fastPhaseReady:Boolean(
-          (holderQueue.inspect?.(mint)||null)?.pending ||
-          (holderQueue.inspect?.(mint)||null)?.active ||
-          Number((holderQueue.inspect?.(mint)||null)?.attempts||0)>0 ||
-          priceTimers.has(mint)
-        ),
         launchPlatform:token?.launchPlatform||null,
         protocol:token?.protocol||null,
         source:token?.source||null,
@@ -1188,7 +624,6 @@ if(url.pathname==='/api/system/health'){
     return json(res,200,{
       diagnosticVersion:'V10.2-same-instance',
       now,
-      bridge:bridgeMetrics,fastPhase:fastPhaseMetrics,
       instance:{
         pid:process.pid,
         hostname:process.env.REPL_SLUG||process.env.HOSTNAME||'unknown'

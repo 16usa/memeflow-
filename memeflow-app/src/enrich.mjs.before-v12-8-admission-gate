@@ -122,11 +122,6 @@ export function makeHolderMetrics() {
     holderRateLimited: 0,
     holderRetries: 0,
     holderDropped: 0,
-    holderAdmissionAllowed: 0,
-    holderAdmissionDeferred: 0,
-    holderAdmissionDropped: 0,
-    holderAdmissionErrors: 0,
-    lastHolderAdmissionReason: null,
     lastHolderError: null,
     lastHolderErrorAt: null,
   };
@@ -427,8 +422,7 @@ export function makeHolderQueue(config,deps){
   const initialDelayMs=Math.min(10000,Math.max(1000,Number(config?.initialDelayMs??5000)));
   const retryDelayMs=Math.max(5000,Number(config?.retryDelayMs??30000));
   const maxRetries=Math.max(1,Number(config?.maxRetries??8));
-  const {enrichHoldersFn,holderMetrics,admissionFn=null}=deps;
-  /* MEMEFLOW_V12_8_HOLDER_ADMISSION_QUEUE */
+  const {enrichHoldersFn,holderMetrics}=deps;
 
   const pending=new Map(); // mint -> {mint,retries,enqueuedAt,dueAt}
   const active=new Set();
@@ -506,32 +500,6 @@ export function makeHolderQueue(config,deps){
   }
 
   async function run(item){
-    if(admissionFn){
-      let gate=null;
-      try{
-        gate=admissionFn(item.mint)||{allow:true};
-      }catch(e){
-        holderMetrics.holderAdmissionErrors=(holderMetrics.holderAdmissionErrors||0)+1;
-        gate={allow:true,reason:'admission_error_fail_open'};
-      }
-
-      if(gate.allow===false){
-        holderMetrics.lastHolderAdmissionReason=gate.reason||'deferred';
-        if(gate.drop===true){
-          holderMetrics.holderAdmissionDropped=(holderMetrics.holderAdmissionDropped||0)+1;
-          return;
-        }
-        holderMetrics.holderAdmissionDeferred=(holderMetrics.holderAdmissionDeferred||0)+1;
-        pending.set(item.mint,{
-          ...item,
-          dueAt:Date.now()+Math.max(1000,Number(gate.retryInMs||3000))
-        });
-        scheduleWake();
-        return;
-      }
-      holderMetrics.holderAdmissionAllowed=(holderMetrics.holderAdmissionAllowed||0)+1;
-    }
-
     active.add(item.mint);
     const _diag=diagRow(item.mint);
     _diag.attempts++;
