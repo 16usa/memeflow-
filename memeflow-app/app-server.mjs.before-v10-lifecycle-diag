@@ -15,22 +15,6 @@ const OWNER_ACCESS_KEY=process.env.OWNER_ACCESS_KEY||'';
 const OWNER_USER_IDS=new Set((process.env.OWNER_USER_IDS||'').split(',').map(x=>x.trim()).filter(Boolean));
 let discovery={connected:false,url:null,lastEventAt:null,reconnects:0,error:null,lastError:null,startedAt:Date.now()},ws=null,wsTimer=null,wsReconnectAttempt=0;
 const streams=new Map(),priceTimers=new Map(),tradeWindows=new Map();
-const priceLifecycleDiag=new Map(); // V10 read-only lifecycle diagnostics
-function priceDiagRow(mint){
-  let row=priceLifecycleDiag.get(mint);
-  if(!row){
-    row={mint,timerCreatedAt:null,pollAttempts:0,snapshotCount:0,lastPollAt:null,lastSnapshotAt:null,lastPollError:null,lastPollErrorAt:null};
-    priceLifecycleDiag.set(mint,row);
-  }
-  return row;
-}
-function prunePriceDiag(){
-  if(priceLifecycleDiag.size<=2000)return;
-  const rows=[...priceLifecycleDiag.values()].sort((a,b)=>(b.lastPollAt||b.timerCreatedAt||0)-(a.lastPollAt||a.timerCreatedAt||0));
-  priceLifecycleDiag.clear();
-  for(const row of rows.slice(0,1000))priceLifecycleDiag.set(row.mint,row);
-}
-
 // ── Extended discovery metrics ────────────────────────────────────────────
 const discMetrics=makeDiscoveryMetrics();
 // ── Bounded concurrency queue ─────────────────────────────────────────────
@@ -161,9 +145,6 @@ function curvePressure(mint,previousLiquidity,nextLiquidity){
 
 function ensurePriceTimer(mint,curve){
   if(priceTimers.has(mint)||!curve)return;
-  const _priceDiag=priceDiagRow(mint);
-  _priceDiag.timerCreatedAt=Date.now();
-  prunePriceDiag();
   let lastBackgroundPollAt=0;
   const baseTick=Math.max(1000,Number(process.env.POLL_ACTIVE_MS||2000));
   const maxBackgroundAgeMs=Math.max(60000,Number(process.env.BACKGROUND_TOKEN_MAX_AGE_MS||10800000));
@@ -189,19 +170,11 @@ function ensurePriceTimer(mint,curve){
     lastBackgroundPollAt=now;
 
     try{
-      const _pd=priceDiagRow(mint);
-      _pd.pollAttempts++;
-      _pd.lastPollAt=Date.now();
       const info=await rpc.call('getAccountInfo',[curve,{encoding:'base64',commitment:'confirmed'}]);
       if(info?.value?.data?.[0]){
         const c=decodeCurve(info.value.data[0],t.decimals||6);
         const pressure=curvePressure(mint,t.liquiditySol,c.liquiditySol);
         const liveMarketCap=(c.priceSol&&t.totalSupply)?c.priceSol*t.totalSupply:null;
-        const _pd2=priceDiagRow(mint);
-        _pd2.snapshotCount++;
-        _pd2.lastSnapshotAt=Date.now();
-        _pd2.lastPollError=null;
-        _pd2.lastPollErrorAt=null;
         const updated=store.setToken(mint,{
           priceSol:c.priceSol,
           liquiditySol:c.liquiditySol,
@@ -221,9 +194,6 @@ function ensurePriceTimer(mint,curve){
         try{paper.onTokenUpdate(mint,updated)}catch(_){}
       }
     }catch(e){
-      const _pd=priceDiagRow(mint);
-      _pd.lastPollError=String(e?.message||e).slice(0,200);
-      _pd.lastPollErrorAt=Date.now();
       const updated=store.setToken(mint,{scanError:e.message});
       await evaluateAll(updated);
     }
@@ -484,64 +454,6 @@ if(url.pathname==='/api/system/health'){
       recentPumpTagged:pumpTagged,
       decisionStates:byState,
       sample:rows.slice(0,10).map(t=>({mint:t.mint,launchPlatform:t.launchPlatform||null,protocol:t.protocol||null,source:t.source||null}))
-    });
-  }
- if(url.pathname==='/api/debug/token-lifecycle'){
-    const mint=String(url.searchParams.get('mint')||'').trim();
-    if(!mint)return json(res,400,{error:'MINT_REQUIRED',usage:'/api/debug/token-lifecycle?mint=<token-mint>'});
-    const token=store.state.tokens[mint]||null;
-    const decision=store.decisions(u.id).find(d=>d.mint===mint)||null;
-    const holder=holderQueue.inspect?.(mint)||null;
-    const price=priceLifecycleDiag.get(mint)||null;
-    const now=Date.now();
-    return json(res,200,{
-      mint,
-      found:Boolean(token),
-      now,
-      token:token?{
-        ageMinutes:tokenAgeMinutes(token),
-        launchPlatform:token.launchPlatform||null,
-        protocol:token.protocol||null,
-        source:token.source||null,
-        discoveredAt:token.discoveredAt||null,
-        lastScannedAt:token.lastScannedAt||null,
-        holderFresh:Boolean(token.holderFresh),
-        holderCount:token.holderCount??null,
-        top10Pct:token.top10Pct??null,
-        developerPct:token.developerPct??token.developerSharePct??null,
-        holderScannedAt:token.holderScannedAt||null,
-        priceSol:token.priceSol??null,
-        liquiditySol:token.liquiditySol??null,
-        buyPressure:token.buyPressure??token.momentum??null,
-        lastPriceAt:token.lastPriceAt||null,
-        lastPriceChangeAt:token.lastPriceChangeAt||null,
-        lastMarketActivityAt:token.lastMarketActivityAt||null,
-        scanError:token.scanError||null
-      }:null,
-      holderQueue:holder,
-      pricePolling:price?{
-        ...price,
-        lastSnapshotAgeMs:price.lastSnapshotAt?now-price.lastSnapshotAt:null,
-        lastPollAgeMs:price.lastPollAt?now-price.lastPollAt:null
-      }:null,
-      decision:decision?{
-        state:decision.state,
-        score:decision.score,
-        confidence:decision.confidence??null,
-        primaryReason:decision.primaryReason||null,
-        reasons:decision.reasons||[],
-        settingsVersion:decision.settingsVersion??null,
-        reevaluatedAt:decision.reevaluatedAt??null
-      }:null,
-      effectiveSettings:{
-        minHolders:store.settings(u.id).minHolders,
-        maxTop10Pct:store.settings(u.id).maxTop10Pct,
-        maxDeveloperPct:store.settings(u.id).maxDeveloperPct,
-        minBuyPressure:store.settings(u.id).minBuyPressure,
-        minLiquidityUsd:store.settings(u.id).minLiquidityUsd,
-        minMarketCapUsd:store.settings(u.id).minMarketCapUsd,
-        launchPlatforms:store.settings(u.id).launchPlatforms
-      }
     });
   }
  if(url.pathname==='/api/settings'&&req.method==='GET'){const settings=store.settings(u.id);return json(res,200,{settings,version:u.settingsVersion||1,killSwitchActive:u.killSwitch,capabilities:{liveAutomation:hasLiveEntitlement(u),paperAutomation:true,discoveryPlatforms:['pump'],adaptiveProfile:false}})}

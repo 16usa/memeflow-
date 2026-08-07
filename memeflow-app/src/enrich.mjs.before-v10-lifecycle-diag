@@ -415,23 +415,7 @@ export function makeHolderQueue(config,deps){
 
   const pending=new Map(); // mint -> {mint,retries,enqueuedAt,dueAt}
   const active=new Set();
-  const history=new Map(); // V10 holder lifecycle diagnostics
   let wakeTimer=null;
-
-  function diagRow(mint){
-    let row=history.get(mint);
-    if(!row){
-      row={mint,queuedAt:null,nextDueAt:null,attempts:0,lastAttemptAt:null,lastSuccessAt:null,lastError:null,lastErrorAt:null,rateLimited:0,retries:0,status:'unknown'};
-      history.set(mint,row);
-    }
-    return row;
-  }
-  function pruneHistory(){
-    if(history.size<=2000)return;
-    const rows=[...history.values()].sort((a,b)=>(b.lastAttemptAt||b.queuedAt||0)-(a.lastAttemptAt||a.queuedAt||0));
-    history.clear();
-    for(const row of rows.slice(0,1000))history.set(row.mint,row);
-  }
 
   function scheduleWake(){
     if(wakeTimer){clearTimeout(wakeTimer);wakeTimer=null}
@@ -452,10 +436,6 @@ export function makeHolderQueue(config,deps){
   }
 
   function reschedule(item,delayMs){
-    const _diag=diagRow(item.mint);
-    _diag.retries=item.retries+1;
-    _diag.status='retry_wait';
-    _diag.nextDueAt=Date.now()+Math.max(1000,delayMs);
     pending.set(item.mint,{
       ...item,
       retries:item.retries+1,
@@ -465,17 +445,10 @@ export function makeHolderQueue(config,deps){
 
   async function run(item){
     active.add(item.mint);
-    const _diag=diagRow(item.mint);
-    _diag.attempts++;
-    _diag.lastAttemptAt=Date.now();
-    _diag.status='running';
     try{
       const result=await enrichHoldersFn(item.mint);
       if(result?.rateLimited){
         holderMetrics.holderRateLimited++;
-        _diag.rateLimited++;
-        _diag.lastError='rate limited';
-        _diag.lastErrorAt=Date.now();
         if(item.retries<maxRetries){
           holderMetrics.holderRetries++;
           reschedule(item,result.retryAfter??retryDelayMs);
@@ -487,10 +460,6 @@ export function makeHolderQueue(config,deps){
       }else{
         holderMetrics.holderSucceeded++;
         holderMetrics.lastHolderError=null;
-        _diag.lastSuccessAt=Date.now();
-        _diag.lastError=null;
-        _diag.lastErrorAt=null;
-        _diag.status='success';
       }
     }catch(e){
       if(item.retries<maxRetries && isRateLimited(e)){
@@ -501,9 +470,6 @@ export function makeHolderQueue(config,deps){
         holderMetrics.holderFailed++;
         holderMetrics.lastHolderError=sanitize(e?.message||'unknown');
         holderMetrics.lastHolderErrorAt=Date.now();
-        _diag.lastError=sanitize(e?.message||'unknown');
-        _diag.lastErrorAt=Date.now();
-        _diag.status='failed';
       }
     }finally{
       active.delete(item.mint);
@@ -531,12 +497,7 @@ export function makeHolderQueue(config,deps){
     if(pending.size>=queueMax)dropOldest();
     const now=Date.now();
     pending.set(mint,{mint,retries:0,enqueuedAt:now,dueAt:now+initialDelayMs});
-    const _diag=diagRow(mint);
-    _diag.queuedAt=_diag.queuedAt||now;
-    _diag.nextDueAt=now+initialDelayMs;
-    _diag.status='queued';
     holderMetrics.holderQueued++;
-    pruneHistory();
     scheduleWake();
     return true;
   }
@@ -552,18 +513,6 @@ export function makeHolderQueue(config,deps){
     get nextDueInMs(){
       if(!pending.size)return null;
       return Math.max(0,Math.min(...[...pending.values()].map(x=>x.dueAt))-Date.now());
-    },
-    inspect(mint){
-      const row=history.get(mint)||null;
-      const p=pending.get(mint)||null;
-      return {
-        ...(row||{mint,attempts:0,status:active.has(mint)?'running':'unknown'}),
-        pending:Boolean(p),
-        active:active.has(mint),
-        nextDueAt:p?.dueAt??row?.nextDueAt??null,
-        nextDueInMs:p?Math.max(0,p.dueAt-Date.now()):null,
-        queueRetries:p?.retries??row?.retries??0
-      };
     }
   };
 }
