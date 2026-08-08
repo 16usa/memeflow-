@@ -1,0 +1,333 @@
+const ALPH='123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+export function b58decode(s){let n=0n;for(const c of s){const i=ALPH.indexOf(c);if(i<0)throw Error('invalid base58');n=n*58n+BigInt(i)}let h=n.toString(16);if(h.length%2)h='0'+h;let b=Buffer.from(h,'hex');let z=0;while(s[z]==='1')z++;return Buffer.concat([Buffer.alloc(z),b])}
+export function b58encode(buf){let n=BigInt('0x'+buf.toString('hex')||'0');let r='';while(n>0n){const rem=n%58n;r=ALPH[Number(rem)]+r;n=n/58n}for(let i=0;i<buf.length&&buf[i]===0;i++)r=ALPH[0]+r;return r||ALPH[0]}
+export function validPubkey(s){try{return b58decode(s).length===32}catch{return false}}
+
+// ── Pump.fun discriminator constants (sha256("global:<name>")[0:8]) ────────────
+export const PUMP_DISC_CREATE             = [24,30,200,40,5,28,7,119];
+export const PUMP_DISC_CREATE_V2          = [214,144,76,236,95,139,49,180];
+export const PUMP_DISC_BUY                = [102,6,61,18,1,218,235,234];
+export const PUMP_DISC_SELL               = [51,230,133,164,1,127,131,173];
+export const PUMP_DISC_WITHDRAW           = [183,18,70,156,148,109,161,34];
+export const PUMP_DISC_BUY_EXACT_SOL_IN   = [56,252,116,8,158,223,205,95];
+export const PUMP_DISC_EXTEND_ACCOUNT      = [234,102,194,203,150,72,62,229];
+export const PUMP_DISC_BUY_EXACT_QUOTE_V2 = [194,171,28,70,104,77,91,47];
+export const PUMP_DISC_BUY_V2             = [184,23,238,97,103,197,211,61];
+// Inner CPI event/log payloads — not instructions, never decode-failed
+export const PUMP_DISC_EVENT_PAYLOAD      = [228,69,165,46,81,203,154,29];
+// Known non-create trade instructions (string form for fast lookup)
+const KNOWN_NON_CREATE = new Set([
+  PUMP_DISC_BUY.join(','),
+  PUMP_DISC_SELL.join(','),
+  PUMP_DISC_WITHDRAW.join(','),
+  PUMP_DISC_BUY_EXACT_SOL_IN.join(','),
+  PUMP_DISC_EXTEND_ACCOUNT.join(','),
+  PUMP_DISC_BUY_EXACT_QUOTE_V2.join(','),
+  PUMP_DISC_BUY_V2.join(','),
+]);
+// Known inner event/CPI payloads — silently skipped, different counter than knownNonCreate
+const KNOWN_EVENT_PAYLOAD = new Set([
+  PUMP_DISC_EVENT_PAYLOAD.join(','),
+]);
+const DISC_CREATE    = PUMP_DISC_CREATE.join(',');
+const DISC_CREATE_V2 = PUMP_DISC_CREATE_V2.join(',');
+// Rate-limit unknown discriminator logging — log first occurrence per disc key only
+const _loggedUnknownDiscs = new Set();
+
+function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
+
+// Read response body as text first; parse JSON only when valid.
+// Never propagates a SyntaxError (plain-text 429 body) to callers.
+// Tolerates mocks/proxies that omit .text() — falls back to empty string.
+async function _readBody(r){
+  let text='';
+  try{text=await r.text();}catch{}
+  let json=null,isJson=false;
+  try{json=JSON.parse(text);isJson=true}catch{}
+  return{text,json,isJson};
+}
+
+// Strip full RPC URLs (including embedded API keys) from error messages.
+function _sanitizeMsg(msg){return(msg||'').replace(/https?:\/\/\S+/gi,'[rpc-url]')}
+
+// Retryable: timeout/abort, rate-limit, transient server errors, network failures
+function retryable(e){
+  return e.name==='AbortError'||
+    /abort|operation was aborted/i.test(e.message)||
+    [429,502,503,504].includes(e.status)||
+    ['ECONNRESET','ENOTFOUND','ETIMEDOUT','ECONNREFUSED'].includes(e.code)||
+    /network|connection reset|ECONNRESET|rate limit|too many requests|connection rate limits|quota|credits|data allowance/i.test(e.message);
+}
+
+export class RpcPool{
+  constructor(urls,commitment='confirmed'){
+    this.urls=urls.filter(Boolean);
+    this.commitment=commitment;
+    this.i=0;
+    this.last={ok:false,latency:null,url:null,error:'not checked'};
+    // Exposed for /api/discovery/status metrics
+    this.metrics={retries:0,timeouts:0,http429:0,nonJsonResponses:0,endpointFailovers:0,lastHttpStatus:null,cooldownEvents:0,cooldownUntil:null};
+    this.minIntervalMs=Math.max(0,Number(process.env.RPC_MIN_INTERVAL_MS||350));
+    this.methodMinIntervalMs={
+      getProgramAccounts:Math.max(1500,Number(process.env.RPC_GET_PROGRAM_ACCOUNTS_MIN_INTERVAL_MS||3500)),
+      getTransaction:Math.max(250,Number(process.env.RPC_GET_TRANSACTION_MIN_INTERVAL_MS||400)),
+      getTokenSupply:Math.max(500,Number(process.env.RPC_GET_TOKEN_SUPPLY_MIN_INTERVAL_MS||1000)),
+      getAccountInfo:Math.max(500,Number(process.env.RPC_GET_ACCOUNT_INFO_MIN_INTERVAL_MS||1000)),
+      default:this.minIntervalMs
+    };
+    this._methodNextAllowedAt=new Map();
+    this._methodPaceTails=new Map();
+    this._paceTail=Promise.resolve();
+    this._nextAllowedAt=0;
+    this._globalCooldownUntil=0;
+  }
+
+  _isRateLimitError(e){const msg=String(e?.message||'').toLowerCase();return e?.status===429||msg.includes('429')||msg.includes('rate limit')||msg.includes('too many requests')||msg.includes('quota')||msg.includes('credits')||msg.includes('data allowance')}
+  _noteProviderCooldown(e){if(!this._isRateLimitError(e))return;const now=Date.now(),explicit=Number(e?.retryAfterMs||0),base=Math.max(3000,Number(process.env.RPC_RATE_LIMIT_COOLDOWN_MS||8000)),jitter=Math.floor(Math.random()*1500);this._globalCooldownUntil=Math.max(this._globalCooldownUntil,now+(explicit>0?explicit:base)+jitter);this.metrics.cooldownEvents++;this.metrics.cooldownUntil=this._globalCooldownUntil}
+
+  /** Sanitized hostname of the current endpoint — never exposes credentials or full URL. */
+  get activeHostname(){try{return new URL(this.urls[this.i%Math.max(1,this.urls.length)]).hostname}catch{return '[unconfigured]'}}
+
+  methodTimeoutMs(method){
+    if(method==='getTransaction')return Math.max(3000,Number(process.env.RPC_GET_TRANSACTION_TIMEOUT_MS||6000));
+    if(method==='getProgramAccounts')return Math.max(8000,Number(process.env.RPC_GET_PROGRAM_ACCOUNTS_TIMEOUT_MS||20000));
+    return Math.max(5000,Number(process.env.SOLANA_RPC_TIMEOUT_MS||20000));
+  }
+
+  async _pace(method='default'){
+    // Serialize only calls of the SAME method while they wait for their own
+    // method limit. A slow getProgramAccounts wait must not block getTransaction.
+    const previousMethod=this._methodPaceTails.get(method)||Promise.resolve();
+    let releaseMethod;
+    const methodTurn=new Promise(r=>{releaseMethod=r});
+    this._methodPaceTails.set(method,previousMethod.then(()=>methodTurn));
+    await previousMethod;
+
+    try{
+      const cooldownWait=Math.max(0,(this._globalCooldownUntil||0)-Date.now());
+      if(cooldownWait)await sleep(cooldownWait);
+      const methodInterval=this.methodMinIntervalMs?.[method]??this.methodMinIntervalMs?.default??this.minIntervalMs;
+      const methodNext=this._methodNextAllowedAt?.get(method)||0;
+      const methodWait=Math.max(0,methodNext-Date.now());
+      if(methodWait)await sleep(methodWait);
+
+      // Global gate protects only the actual request-start spacing.
+      const previousGlobal=this._paceTail;
+      let releaseGlobal;
+      this._paceTail=new Promise(r=>{releaseGlobal=r});
+      await previousGlobal;
+      try{
+        const globalWait=Math.max(0,this._nextAllowedAt-Date.now());
+        if(globalWait)await sleep(globalWait);
+        const started=Date.now();
+        this._nextAllowedAt=started+this.minIntervalMs;
+        this._methodNextAllowedAt.set(method,started+methodInterval);
+      }finally{
+        releaseGlobal();
+      }
+    }finally{
+      releaseMethod();
+    }
+  }
+
+  /** Single-attempt fetch — no retry loop. Rotates endpoint on 429. Throws on any error. */
+  async callOnce(method,params=[]){
+    if(!this.urls.length)throw new Error('SOLANA_RPC_URLS is not configured');
+    const TIMEOUT=Number(process.env.SOLANA_RPC_TIMEOUT_MS||20000);
+    const url=this.urls[this.i%this.urls.length];
+    await this._pace(method);
+    const ac=new AbortController();
+    const t=setTimeout(()=>ac.abort(),TIMEOUT);
+    const start=Date.now();
+    try{
+      const r=await fetch(url,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:Date.now(),method,params}),signal:ac.signal});
+      clearTimeout(t);
+      this.metrics.lastHttpStatus=r.status;
+      const{json:j,isJson}=await _readBody(r);
+      const ra=r.headers?.get?.('retry-after');
+      const retryAfterMs=ra&&!isNaN(ra)?Number(ra)*1000:null;
+      // JSON-RPC error body (may arrive with non-ok status from some providers)
+      if(isJson&&j?.error){
+        const code=j.error.code;
+        const msg=_sanitizeMsg(j.error.message||`RPC error ${code}`);
+        if(code===-32700||code===-32600||code===-32601||code===-32602)
+          throw Object.assign(new Error(msg),{permanent:true,invalidTokenMint:/not a Token mint/i.test(msg),accountNotFound:/could not find account/i.test(msg)});
+        const e=Object.assign(new Error(msg),{rpcCode:code});
+        if(!r.ok){e.status=r.status;if(r.status===429){this.metrics.http429++;this.i=(this.i+1)%this.urls.length;this.metrics.endpointFailovers++;}if(retryAfterMs)e.retryAfterMs=retryAfterMs}
+        throw e;
+      }
+      // Non-ok response without parseable JSON-RPC error (includes plain-text 429)
+      if(!r.ok){
+        if(!isJson)this.metrics.nonJsonResponses++;
+        if(r.status===429){
+          this.metrics.http429++;
+          this.i=(this.i+1)%this.urls.length;
+          this.metrics.endpointFailovers++;
+          throw Object.assign(new Error('rate limited'),{status:429,retryAfterMs});
+        }
+        throw Object.assign(new Error(`RPC HTTP ${r.status}`),{status:r.status,retryAfterMs});
+      }
+      // Ok response with non-JSON body (unexpected)
+      if(!isJson){this.metrics.nonJsonResponses++;throw new Error('RPC returned non-JSON response')}
+      this.last={ok:true,latency:Date.now()-start,url,error:null};
+      return j.result;
+    }catch(e){
+      clearTimeout(t);
+      this.last={ok:false,latency:Date.now()-start,url,error:_sanitizeMsg(e.message)};
+      if(e.name==='AbortError'||/abort/i.test(e.message))this.metrics.timeouts++;
+      this._noteProviderCooldown(e);
+      throw e;
+    }
+  }
+
+  async call(method,params=[]){
+    if(!this.urls.length)throw new Error('SOLANA_RPC_URLS is not configured');
+    const TIMEOUT=Number(process.env.SOLANA_RPC_TIMEOUT_MS||20000);
+    const MAX_ATTEMPTS=3;
+    let lastError;
+
+    for(let attempt=0;attempt<MAX_ATTEMPTS;attempt++){
+      if(attempt>0){
+        // 429 → respect Retry-After header, else use 2s/5s cooldown; other errors use 500ms/1500ms
+        const is429=lastError?.status===429;
+        const defaultMs=is429?[2000,5000][attempt-1]:[500,1500][attempt-1];
+        const delayMs=lastError?.retryAfterMs??defaultMs;
+        await sleep(delayMs);
+        this.metrics.retries++;
+      }
+
+      for(let k=0;k<this.urls.length;k++){
+        const url=this.urls[(this.i+k)%this.urls.length];
+        await this._pace(method);
+        const ac=new AbortController();
+        const t=setTimeout(()=>ac.abort(),TIMEOUT);
+        const start=Date.now();
+        try{
+          const r=await fetch(url,{
+            method:'POST',
+            headers:{'content-type':'application/json'},
+            body:JSON.stringify({jsonrpc:'2.0',id:Date.now(),method,params}),
+            signal:ac.signal
+          });
+          clearTimeout(t);
+          this.metrics.lastHttpStatus=r.status;
+          const{json:j,isJson}=await _readBody(r);
+          const ra=r.headers?.get?.('retry-after');
+          const retryAfterMs=ra&&!isNaN(ra)?Number(ra)*1000:null;
+          // JSON-RPC error body (may arrive with non-ok status from some providers)
+          if(isJson&&j?.error){
+            const code=j.error.code;
+            const msg=_sanitizeMsg(j.error.message||`RPC error ${code}`);
+            // Permanent JSON-RPC errors — no retry
+            if(code===-32700||code===-32600||code===-32601||code===-32602)
+              throw Object.assign(new Error(msg),{permanent:true,invalidTokenMint:/not a Token mint/i.test(msg),accountNotFound:/could not find account/i.test(msg)});
+            const e=Object.assign(new Error(msg),{rpcCode:code});
+            if(!r.ok){e.status=r.status;if(r.status===429)this.metrics.http429++;if(retryAfterMs)e.retryAfterMs=retryAfterMs}
+            throw e;
+          }
+          // Non-ok response without JSON-RPC error body (includes plain-text 429)
+          if(!r.ok){
+            if(!isJson)this.metrics.nonJsonResponses++;
+            if(r.status===429)this.metrics.http429++;
+            throw Object.assign(new Error(r.status===429?'rate limited':`RPC HTTP ${r.status}`),{status:r.status,retryAfterMs});
+          }
+          // Ok but non-JSON body (unexpected)
+          if(!isJson){this.metrics.nonJsonResponses++;throw new Error('RPC returned non-JSON response')}
+          // Success — advance round-robin to this working endpoint
+          this.i=(this.i+k)%this.urls.length;
+          this.last={ok:true,latency:Date.now()-start,url,error:null};
+          return j.result;
+        }catch(e){
+          clearTimeout(t);
+          lastError=e;
+          this.last={ok:false,latency:Date.now()-start,url,error:_sanitizeMsg(e.message)};
+          if(e.permanent)throw e;           // never retry permanent parameter errors
+          this._noteProviderCooldown(e);
+          if(!retryable(e))throw e;         // non-retryable: stop immediately
+          if(e.name==='AbortError'||/abort/i.test(e.message))this.metrics.timeouts++;
+          if(k+1<this.urls.length)this.metrics.endpointFailovers++; // about to try next endpoint
+          // retryable: continue inner loop to try next endpoint in same attempt
+        }
+      }
+      // All endpoints exhausted for this attempt; outer loop will apply backoff before next attempt
+    }
+    throw lastError||new Error('RPC failed after retries');
+  }
+}
+
+export function u64(buf,o){return Number(buf.readBigUInt64LE(o))}
+export function decodeCurve(base64,decimals=6){const b=Buffer.from(base64,'base64');if(b.length<49)throw Error('Bonding curve account too short');let o=8;const virtualToken=u64(b,o);o+=8;const virtualSol=u64(b,o);o+=8;const realToken=u64(b,o);o+=8;const realSol=u64(b,o);o+=8;const supply=u64(b,o);o+=8;const complete=Boolean(b[o]);const priceSol=virtualToken>0?(virtualSol/1e9)/(virtualToken/10**decimals):null;return {virtualToken,virtualSol,realToken,realSol,supply,complete,priceSol,liquiditySol:realSol/1e9}}
+export function decodeCreateData(data){try{const b=b58decode(data),disc=[...b.subarray(0,8)],create='24,30,200,40,5,28,7,119',create2='214,144,76,236,95,139,49,180';if(disc.join(',')!==create&&disc.join(',')!==create2)return null;let o=8;const str=()=>{const n=b.readUInt32LE(o);o+=4;const s=b.subarray(o,o+n).toString('utf8');o+=n;return s};return {kind:disc.join(',')===create?'create':'create_v2',name:str(),symbol:str(),uri:str()}}catch{return null}}
+
+/**
+ * Decode a single Pump.fun instruction into a create record.
+ * Returns {ok:true, mint, curve, creator, name, symbol, uri, kind}
+ *     or  {ok:false, reason, discBytes?, dataLen?, accountCount?}
+ * reason values:
+ *   'pumpInstructionWithoutData' — ix.data absent or undecodable
+ *   'knownNonCreate'             — recognised Buy/Sell/Withdraw; caller must NOT increment decodeFailed
+ *   'unknownPumpDiscriminator'   — unrecognised discriminator; discBytes+dataLen returned for logging
+ *   'invalidAccountLayout'       — discriminator matched but < 2 accounts
+ *   'invalidMint'                — accounts[0] is not a valid 32-byte pubkey
+ *
+ * @param {object} ix    instruction object {data?, accounts?[]}
+ * @param {string[]} keys  resolved account-key array (for numeric account refs)
+ */
+export function shouldExcludeMayhemCreate(result, enabled=true) {
+  return Boolean(enabled && result?.ok && result?.kind==='create_v2' && result?.isMayhemMode===true);
+}
+
+export function decodePumpCreate(ix, keys) {
+  if (!ix.data) return {ok:false, reason:'pumpInstructionWithoutData'};
+  let b, discBytes, dataLen;
+  try {
+    b = b58decode(ix.data);
+    discBytes = [...b.subarray(0, 8)];
+    dataLen   = b.length;
+  } catch {
+    return {ok:false, reason:'pumpInstructionWithoutData'};
+  }
+  const discKey = discBytes.join(',');
+  // Known non-create trade instructions — caller increments knownNonCreateIgnored, not decodeFailed
+  if (KNOWN_NON_CREATE.has(discKey)) return {ok:false, reason:'knownNonCreate'};
+  // Known inner event/CPI payloads — caller increments ignoredPumpEventPayloads, not decodeFailed
+  if (KNOWN_EVENT_PAYLOAD.has(discKey)) return {ok:false, reason:'ignoredPumpEventPayload'};
+  // Unknown discriminator — log first occurrence only, then aggregate silently
+  if (discKey !== DISC_CREATE && discKey !== DISC_CREATE_V2) {
+    if (!_loggedUnknownDiscs.has(discKey)) {
+      _loggedUnknownDiscs.add(discKey);
+      console.log(`[DECODE] unknown disc=[${discBytes.join(',')}] dataLen=${dataLen} — first occurrence, subsequent hits aggregated silently`);
+    }
+    return {ok:false, reason:'unknownPumpDiscriminator', discBytes, dataLen};
+  }
+  // Parse official Pump create/create_v2 instruction data.
+  // create_v2: name, symbol, uri, creator Pubkey, is_mayhem_mode bool.
+  let name, symbol, uri, creatorFromData=null, isMayhemMode=false;
+  try {
+    let o = 8;
+    const str = () => {
+      if (o + 4 > b.length) throw new Error('string length missing');
+      const n=b.readUInt32LE(o);o+=4;
+      if (o+n>b.length) throw new Error('string out of range');
+      const s=b.subarray(o,o+n).toString('utf8');o+=n;return s;
+    };
+    name=str(); symbol=str(); uri=str();
+    if (discKey === DISC_CREATE_V2) {
+      if (o + 33 > b.length) return {ok:false, reason:'invalidAccountLayout', discBytes, dataLen};
+      creatorFromData=b58encode(b.subarray(o,o+32));o+=32;
+      const mayhemByte=b[o];
+      if (mayhemByte!==0 && mayhemByte!==1) return {ok:false, reason:'invalidAccountLayout', discBytes, dataLen};
+      isMayhemMode=mayhemByte===1;
+    }
+  } catch {
+    return {ok:false, reason:'invalidAccountLayout', discBytes, dataLen};
+  }
+  const ac = (ix.accounts || []).map(a => typeof a === 'number' ? keys[a] : a);
+  if (ac.length < 2) return {ok:false, reason:'invalidAccountLayout', accountCount:ac.length, discBytes, dataLen};
+  const mint  = ac[0];
+  const curve = ac.length > 2 ? ac[2] : null;
+  if (!validPubkey(mint)) return {ok:false, reason:'invalidMint', discBytes, dataLen};
+  const kind=discKey===DISC_CREATE?'create':'create_v2';
+  const creator=creatorFromData || ac[5] || ac[7] || null;
+  return {ok:true,mint,curve,creator,name,symbol,uri,kind,isMayhemMode:kind==='create_v2'&&isMayhemMode,launchMode:kind==='create_v2'&&isMayhemMode?'mayhem':'standard'};
+}

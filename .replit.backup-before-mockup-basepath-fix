@@ -1,0 +1,85 @@
+run = "cd memeflow-app && exec node app-server.mjs"
+modules = ["nodejs-24", "python-base-3.13"]
+
+[deployment]
+run = ["node", "memeflow-app/app-server.mjs"]
+deploymentTarget = "autoscale"
+
+[deployment.postBuild]
+args = ["pnpm", "store", "prune"]
+env = { "CI" = "true" }
+
+[workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "MEMEFLOW"
+mode = "sequential"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd memeflow-app && node app-server.mjs"
+waitForPort = 3000
+
+[workflows.workflow.metadata]
+outputType = "webview"
+
+[[workflows.workflow]]
+name = "memeflow web"
+mode = "sequential"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "pnpm run dev"
+cwd = "./runtime-components/memeflow-old"
+
+[[workflows.workflow]]
+name = "API Server"
+mode = "sequential"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "PORT=8080 pnpm run dev"
+cwd = "./runtime-components/api-server"
+
+[[workflows.workflow]]
+name = "mockup-sandbox"
+mode = "sequential"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "PORT=8081 pnpm run dev"
+cwd = "./runtime-components/mockup-sandbox"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = 62328942
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "MEMEFLOW"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "memeflow web"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "API Server"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "mockup-sandbox"
+
+[[ports]]
+localPort = 3000
+externalPort = 3000
+
+[[ports]]
+localPort = 8080
+externalPort = 80

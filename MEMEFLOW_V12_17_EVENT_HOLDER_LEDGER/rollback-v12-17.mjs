@@ -1,0 +1,2 @@
+#!/usr/bin/env node
+import fs from'node:fs';import path from'node:path';const a=path.join(process.cwd(),'memeflow-app','app-server.mjs'),d=path.dirname(a),p=path.basename(a)+'.before-v12-17-',b=fs.readdirSync(d).filter(x=>x.startsWith(p)).sort();if(!b.length){console.error('ABORT: backup not found');process.exit(1)}fs.copyFileSync(path.join(d,b.at(-1)),a);const m=path.join(process.cwd(),'memeflow-app','src','event-holder-ledger.mjs');if(fs.existsSync(m))fs.rmSync(m);console.log('PASS: rolled back V12.17');

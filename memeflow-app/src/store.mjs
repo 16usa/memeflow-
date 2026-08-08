@@ -48,7 +48,7 @@ export class JsonStore {
       at:now,
       priceSol:hasNextPrice?nextPrice:(Number.isFinite(oldPrice)?oldPrice:null),
       liquiditySol:Number.isFinite(Number(t?.liquiditySol??t?.liquidity))?Number(t?.liquiditySol??t?.liquidity):null,
-      holderCount:Number.isFinite(Number(t?.holderCount??t?.holders))?Number(t?.holderCount??t?.holders):null,
+      holderCount:(t?.holderCount??t?.holders)==null?null:(Number.isFinite(Number(t?.holderCount??t?.holders))?Number(t?.holderCount??t?.holders):null),
       top10Pct:Number.isFinite(Number(t?.top10Pct??t?.top10))?Number(t?.top10Pct??t?.top10):null,
       developerPct:Number.isFinite(Number(t?.developerPct??t?.creatorPct))?Number(t?.developerPct??t?.creatorPct):null,
       buyPressure:Number.isFinite(Number(t?.buyPressure??t?.momentum))?Number(t?.buyPressure??t?.momentum):null

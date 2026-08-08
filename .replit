@@ -1,4 +1,4 @@
-run = "npm start"
+run = "cd memeflow-app && exec node app-server.mjs"
 modules = ["nodejs-24", "python-base-3.13"]
 
 [deployment]
@@ -13,16 +13,8 @@ env = { "CI" = "true" }
 runButton = "Project"
 
 [[workflows.workflow]]
-name = "Project"
-mode = "parallel"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "MEMEFLOW"
-
-[[workflows.workflow]]
 name = "MEMEFLOW"
+mode = "sequential"
 author = "agent"
 
 [[workflows.workflow.tasks]]
@@ -33,25 +25,35 @@ waitForPort = 3000
 [workflows.workflow.metadata]
 outputType = "webview"
 
-[agent]
-stack = "PNPM_WORKSPACE"
-expertMode = true
+[[workflows.workflow]]
+name = "memeflow web"
+mode = "sequential"
+author = "agent"
 
-[postMerge]
-path = "scripts/post-merge.sh"
-timeoutMs = 20000
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "pnpm run replit-internal-dev"
+cwd = "./runtime-components/memeflow-old"
 
-[userenv]
+[[workflows.workflow]]
+name = "API Server"
+mode = "sequential"
+author = "agent"
 
-[userenv.shared]
-ALLOW_ANONYMOUS_PAPER = "true"
-DATA_DIR = "./data"
-DISCOVERY_BACKFILL_LIMIT = "100"
-DISCOVERY_ENABLED = "true"
-DISCOVERY_MAX_TOKENS = "5000"
-POLL_ACTIVE_MS = "2000"
-SOLANA_COMMITMENT = "confirmed"
-STALE_MS = "20000"
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "PORT=8080 pnpm run replit-internal-dev"
+cwd = "./runtime-components/api-server"
+
+[[workflows.workflow]]
+name = "mockup-sandbox"
+mode = "sequential"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "PORT=8081 BASE_PATH=/ pnpm run replit-internal-dev"
+cwd = "./runtime-components/mockup-sandbox"
 
 [[ports]]
 localPort = 3000
@@ -67,12 +69,19 @@ externalPort = 8081
 
 [[ports]]
 localPort = 8082
-externalPort = 3001
-
-[[ports]]
-localPort = 13791
-externalPort = 3002
-
-[[ports]]
-localPort = 25904
 externalPort = 3000
+
+
+
+
+
+
+
+[[workflows.workflow]]
+name = "Project"
+mode = "sequential"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "bash ./run-project.sh"

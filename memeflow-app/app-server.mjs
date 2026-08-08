@@ -5,6 +5,12 @@ import {makeRecoveryMetrics,startDecisionRecovery,lazyRecoverUser} from './src/r
 import {makeLiveEvalMetrics,makeEvaluateForActiveUsers} from './src/liveeval.mjs';
 import {makeDiscoveryMetrics,makeDiscoveryQueue} from './src/discqueue.mjs';
 import {candidateFeed,candidateVisibilityCounts} from './src/candidate-visibility.mjs';
+import { startPumpLiveTradeFeed } from './src/pump-live-trade-feed.mjs'; // MEMEFLOW_V12_21_LIVE_TRADE_STREAM_HOLDER_FEED
+
+import { eventMarketLedger } from './src/event-market-ledger.mjs'; // MEMEFLOW_V12_18_EVENT_MARKET_LEDGER
+
+import { eventHolderLedger } from './src/event-holder-ledger.mjs'; // MEMEFLOW_V12_17_EVENT_HOLDER_LEDGER
+
 const root=path.dirname(fileURLToPath(import.meta.url)),dataDir=path.resolve(root,process.env.DATA_DIR||'data'),store=new JsonStore(dataDir);
 const paper=new PaperEngine(store);
 const billing=new StripeBilling({store,secretKey:process.env.STRIPE_SECRET_KEY,priceId:process.env.STRIPE_PRICE_ID,webhookSecret:process.env.STRIPE_WEBHOOK_SECRET,apiBase:process.env.STRIPE_API_BASE});
@@ -16,6 +22,105 @@ const OWNER_USER_IDS=new Set((process.env.OWNER_USER_IDS||'').split(',').map(x=>
 let discovery={connected:false,url:null,lastEventAt:null,reconnects:0,error:null,lastError:null,startedAt:Date.now()},ws=null,wsTimer=null,wsReconnectAttempt=0;
 const streams=new Map(),priceTimers=new Map(),tradeWindows=new Map();
 const priceLifecycleDiag=new Map(); // V10 read-only lifecycle diagnostics
+
+// MEMEFLOW_V12_24_CREATOR_GATE_RECOVERY
+function __v1224CreatorFromToken(t){
+  if(!t)return null;
+  return t.creator || t.creatorWallet || t.developer || t.developerWallet || t.devWallet || null;
+}
+function __v1224LinkCreator(mint,token){
+  try{
+    const c=__v1224CreatorFromToken(token||__v1223Token(mint));
+    if(c)eventHolderLedger?.setCreator?.(mint,c);
+    return c||null;
+  }catch{return null}
+}
+function __v1224HasEventHolder(mint){
+  try{
+    const s=eventHolderLedger?.inspect?.(mint);
+    return !!(s && s.holderFresh===true && s.eventLedgerVersion);
+  }catch{return false}
+}
+function __v1224GateForMint(mint,settings){
+  try{
+    const t=__v1223Token(mint);
+    return __v1223Gate(t,settings);
+  }catch{
+    return {state:'WAITING',failed:[],waiting:['diagnostic'],checks:{}};
+  }
+}
+// MEMEFLOW_V12_23_FRESH_WARMING_GATE_DIAGNOSTICS
+const __V12_23_FRESH_EVENT_ONLY_MS=Math.max(30000,Number(process.env.FRESH_PUMP_EVENT_ONLY_MS||180000));
+
+function __v1223Token(mint){
+  try{
+    return store?.getToken?.(mint) ||
+      store?.state?.tokens?.[mint] ||
+      (Array.isArray(store?.state?.tokens) ? store.state.tokens.find(x=>x?.mint===mint) : null) ||
+      null;
+  }catch{return null}
+}
+function __v1223Ts(t){
+  for(const k of ['createdAt','discoveredAt','firstSeenAt','seenAt','created_at','discovered_at']){
+    const v=t?.[k];
+    if(v==null)continue;
+    const n=typeof v==='number'?v:Date.parse(v);
+    if(Number.isFinite(n)&&n>0)return n<1e12?n*1000:n;
+  }
+  return null;
+}
+function __v1223IsPump(t){
+  return !!t && (
+    String(t.launchPlatform||'').toLowerCase()==='pump' ||
+    String(t.protocol||'').toLowerCase()==='pump' ||
+    String(t.source||'').toLowerCase().includes('pump')
+  );
+}
+function __v1223FreshPump(mint){
+  const t=__v1223Token(mint);
+  if(!__v1223IsPump(t))return false;
+  const ts=__v1223Ts(t);
+  if(ts==null){
+    // Pump CREATE tokens without a usable timestamp are treated as fresh only
+    // while the fast-phase flag/lane says they are still in the fresh path.
+    return t?.fastPhaseReady===true || t?.schedulerLane==='fresh-priority' || String(t?.source||'').toLowerCase().includes('pump create');
+  }
+  return (Date.now()-ts)<=__V12_23_FRESH_EVENT_ONLY_MS;
+}
+function __v1223Gate(t,settings){
+  const h=Number(t?.holderCount ?? t?.holders ?? t?.holder?.count);
+  const top=Number(t?.top10Pct ?? t?.holder?.top10Pct);
+  const dev=Number(t?.developerPct ?? t?.developerSharePct ?? t?.holder?.developerPct);
+  const bp=Number(t?.buyPressure ?? t?.market?.buyPressure);
+
+  const minH=Number(settings?.minHolders);
+  const maxT=Number(settings?.maxTop10Pct);
+  const maxD=Number(settings?.maxDeveloperPct);
+  const minB=Number(settings?.minBuyPressure);
+
+  const check=(value,limit,op)=>{
+    if(!Number.isFinite(limit))return {state:'N/A',value:Number.isFinite(value)?value:null,limit:null};
+    if(!Number.isFinite(value))return {state:'WAITING',value:null,limit};
+    const pass=op==='min'?value>=limit:value<=limit;
+    return {state:pass?'PASS':'FAIL',value,limit};
+  };
+
+  const holders=check(h,minH,'min');
+  const top10=check(top,maxT,'max');
+  const developer=check(dev,maxD,'max');
+  const buyPressure=check(bp,minB,'min');
+
+  const checks={holders,top10,developer,buyPressure};
+  const failed=Object.entries(checks).filter(([,v])=>v.state==='FAIL').map(([k])=>k);
+  const waiting=Object.entries(checks).filter(([,v])=>v.state==='WAITING').map(([k])=>k);
+  return {
+    state: failed.length?'BLOCKED':(waiting.length?'WAITING':'PASS'),
+    failed,
+    waiting,
+    checks
+  };
+}
+
 function priceDiagRow(mint){
   let row=priceLifecycleDiag.get(mint);
   if(!row){
@@ -60,6 +165,33 @@ function v128Enabled(v){
   return v!==null&&v!==undefined&&v!=='';
 }
 function holderAdmissionForActiveUsers(mint){
+  // MEMEFLOW_V12_24_CREATOR_GATE_RECOVERY: event-holder snapshot remains authoritative even after fresh window.
+  try{
+    if(__v1224HasEventHolder(mint)){
+      __v1224LinkCreator(mint,__v1223Token(mint));
+      return {allow:false,drop:true,reason:'event_holder_authoritative',source:'ws-direct'};
+    }
+  }catch{}
+
+  // MEMEFLOW_V12_23_FRESH_WARMING_GATE_DIAGNOSTICS: WS-direct V12.22 is authoritative for the fresh Pump hot path.
+  // Never send a fresh Pump token to legacy getProgramAccounts holder RPC.
+  try{
+    if(__v1223FreshPump(mint)){
+      const __eventHolder=eventHolderLedger?.inspect?.(mint)||null;
+      if(__eventHolder){
+        const __u=(__v1224LinkCreator(mint,__v1223Token(mint)),eventHolderLedger?.applyToStore?.(store,mint));
+        if(__u){
+          try{Promise.resolve(evaluateAI(__u)).catch(()=>{})}catch{}
+          try{publish(mint)}catch{}
+        }
+        return {allow:false,drop:true,reason:'fresh_pump_event_holder_ready',source:'ws-direct'};
+      }
+      return {allow:false,drop:true,reason:'fresh_pump_holder_warming',source:'ws-direct'};
+    }
+  }catch(__e){}
+
+  try{const __h=eventHolderLedger.inspect(mint);if(__h){const __u=eventHolderLedger.applyToStore(store,mint);if(__u){try{Promise.resolve(evaluateAI(__u)).catch(()=>{})}catch{}try{publish(mint)}catch{}}return {allow:false,drop:true,reason:'event_holder_ledger_ready',source:'event-ledger'}}}catch{}
+
   const token=store.state.tokens[mint];
   if(!token)return {allow:false,drop:true,reason:'token_missing'};
 
@@ -86,7 +218,12 @@ function holderAdmissionForActiveUsers(mint){
   let lastReason='cheap_market_data_pending';
 
   for(const uid of users){
-    const s=store.settings(uid)||{};
+    /* MEMEFLOW_V12_12_HOLDER_ADMISSION_FIX
+ * Admission-only settings view: minBuyPressure must not block holder enrichment.
+ * The stored user setting remains unchanged and evaluateAll() still enforces it.
+ */
+const __holderAdmissionSettings = store.settings(uid) || {};
+const s = {...__holderAdmissionSettings, minBuyPressure: null};
 
     // Stable hard filters: safe to rule this user out permanently.
     if(Array.isArray(s.launchPlatforms)&&s.launchPlatforms.length){
@@ -103,11 +240,12 @@ function holderAdmissionForActiveUsers(mint){
 
     anyPotential=true;
 
-    // Dynamic/cheap gates: DEFER, because these values can improve.
-    if(price===null){
-      lastReason='price_pending';
-      continue;
-    }
+    // MEMEFLOW_V12_13_HOLDER_ADMISSION_PRICE_GATE_FIX
+    // Do NOT require priceSol merely to admit holder enrichment.
+    // Price-dependent user filters below remain authoritative:
+    // market-cap/liquidity gates defer independently when enabled.
+    // evaluateAll() continues to enforce the user's real trading settings.
+    // Dynamic/cheap gates: DEFER only when an ENABLED user filter needs them.
     if(v128Enabled(s.minBuyPressure) && Number(s.minBuyPressure)>0){
       if(pressure===null){
         lastReason='buy_pressure_pending';
@@ -153,7 +291,9 @@ function holderAdmissionForActiveUsers(mint){
   return {allow:false,drop:false,retryInMs:HOLDER_ADMISSION_RETRY_MS,reason:lastReason};
 }
 
-const holderQueue=makeHolderQueue({maxConcurrent:1,queueMax:HOLDER_QUEUE_MAX,initialDelayMs:HOLDER_INITIAL_DELAY_MS,retryDelayMs:HOLDER_RETRY_DELAY_MS,maxRetries:HOLDER_MAX_RETRIES},{enrichHoldersFn:(mint)=>enrichHolders(mint,{rpc,store,evaluateAll,publish,enrichDiag}),holderMetrics,admissionFn:holderAdmissionForActiveUsers});
+const holderQueue=makeHolderQueue({maxConcurrent:Math.max(1,Number(process.env.HOLDER_QUEUE_CONCURRENCY||2)),workerTimeoutMs:Math.max(5000,Number(process.env.HOLDER_WORKER_TIMEOUT_MS||11000)), /* MEMEFLOW_V12_14_HOLDER_CONCURRENCY */ queueMax:HOLDER_QUEUE_MAX,initialDelayMs:HOLDER_INITIAL_DELAY_MS,retryDelayMs:HOLDER_RETRY_DELAY_MS,maxRetries:HOLDER_MAX_RETRIES},{enrichHoldersFn:(mint)=>enrichHolders(mint,{rpc,store,evaluateAll,publish,enrichDiag}),holderMetrics,/* MEMEFLOW_V12_15_2_STALE_HOLDER_RECONCILIATION */
+isHolderFreshFn:(mint)=>Boolean(store.state?.tokens?.[mint]?.holderFresh===true),
+admissionFn:holderAdmissionForActiveUsers});
 const recoveryMetrics=makeRecoveryMetrics();
 const DECISION_RECOVERY_BATCH_SIZE=Number(process.env.DECISION_RECOVERY_BATCH_SIZE||25);
 const DECISION_RECOVERY_DELAY_MS=Number(process.env.DECISION_RECOVERY_DELAY_MS||25);
@@ -338,7 +478,31 @@ async function enrich(mint,curve){
 
   try{paper.onTokenUpdate(mint,store.state.tokens[mint])}catch(_){}
 }
-function publish(mint){const rows=store.tokens();const t=store.state.tokens[mint];for(const res of streams.get(mint)||[]){res.write(`event: update\ndata: ${JSON.stringify({point:t?.priceSol?{t:Date.now(),price:t.priceSol,source:'Solana'}:null,status:{stale:!t?.priceSol,error:t?.scanError||null,source:t?.source}})}\n\n`)}}
+function publish(mint){
+  // Hot path: live Pump events can call publish many times per second.
+  // Do absolutely no work unless this mint has active SSE subscribers.
+  const listeners=streams.get(mint);
+  if(!listeners||listeners.size===0)return;
+
+  const t=store.state.tokens[mint];
+  const payload=`event: update\ndata: ${JSON.stringify({
+    point:t?.priceSol?{
+      t:Date.now(),
+      price:t.priceSol,
+      source:'Solana'
+    }:null,
+    status:{
+      stale:!t?.priceSol,
+      error:t?.scanError||null,
+      source:t?.source
+    }
+  })}\n\n`;
+
+  for(const res of listeners){
+    try{res.write(payload)}catch{}
+  }
+}
+
 function curvePressure(mint,previousLiquidity,nextLiquidity){
   const now=Date.now();
   const old=tradeWindows.get(mint)||{events:[]};
@@ -423,6 +587,39 @@ function ensurePriceTimer(mint,curve){
           protocol:t.protocol||'pump',
           source:'Solana bonding curve'
         });
+  try{__v1224LinkCreator(mint,__v1223Token(mint))}catch{}
+        /* MEMEFLOW_V12_10_MARKET_RECHECK_ADMISSION
+           A token deferred by V12.9 gets another admission check immediately
+           after cheap market data changes. Only ALLOW reaches holder RPC. */
+        try{
+          const holderState=holderQueue.inspect?.(mint)||null;
+          const alreadyHandled=Boolean(
+            holderState?.pending ||
+            holderState?.active ||
+            Number(holderState?.attempts||0)>0 ||
+            updated?.holderFresh===true
+          );
+
+          if(!alreadyHandled){
+            const admission=holderAdmissionForActiveUsers(mint);
+
+            if(admission?.allow===true){
+              const before=holderQueue.inspect?.(mint)||null;
+              holderQueue.enqueue(mint);
+              const after=holderQueue.inspect?.(mint)||null;
+
+              if(!before?.pending &&
+                 (after?.pending || after?.active || Number(after?.attempts||0)>0)){
+                fastPhaseMetrics.holderQueued++;
+              }
+            }
+          }
+        }catch(e){
+          fastPhaseMetrics.bootstrapErrors++;
+          fastPhaseMetrics.lastBootstrapError=
+            'market admission recheck: '+String(e?.message||e);
+        }
+
         await evaluateAll(updated);
         publish(mint);
         try{paper.onTokenUpdate(mint,updated)}catch(_){}
@@ -432,6 +629,7 @@ function ensurePriceTimer(mint,curve){
       _pd.lastPollError=String(e?.message||e).slice(0,200);
       _pd.lastPollErrorAt=Date.now();
       const updated=store.setToken(mint,{scanError:e.message});
+  try{__v1224LinkCreator(mint,__v1223Token(mint))}catch{}
       await evaluateAll(updated);
     }
   },baseTick);
@@ -447,6 +645,8 @@ async function processSignature(sig){
 
   const msg=tx.transaction.message;
   const keys=(msg.accountKeys||[]).map(x=>typeof x==='string'?x:x.pubkey);
+    try{for(const __snap of eventHolderLedger.ingestTransaction(tx)){const __u=eventHolderLedger.applyToStore(store,__snap.mint);if(__u){try{publish(__snap.mint)}catch{}}}}catch{}
+    try{for(const __ms of eventMarketLedger.ingestTransaction(tx)){const __mu=eventMarketLedger.applyToStore(store,__ms.mint);if(__mu){try{if(typeof evaluateAI==='function')Promise.resolve(evaluateAI(__mu)).catch(()=>{});else if(typeof evaluateAll==='function')Promise.resolve(evaluateAll(__mu)).catch(()=>{})}catch{}try{publish(__ms.mint)}catch{}}}}catch{}
   // Include both top-level and inner instructions; mark inner for diagnostic logging
   const topLvl=msg.instructions||[];
   const inner=(tx.meta?.innerInstructions||[]).flatMap(x=>(x.instructions||[]).map(ix=>({...ix,_isInner:true})));
@@ -472,13 +672,112 @@ async function processSignature(sig){
       discMetrics.createInstructionDecoded++;
       discMetrics.createsDecoded++;
       store.addToken({mint:result.mint,curve:result.curve,name:result.name,symbol:result.symbol,uri:result.uri,creator:result.creator,isMayhemMode:false,launchMode:'standard',launchPlatform:'pump',protocol:'pump',discoveredAt:Date.now(),slot:tx.slot,signature:sig,source:'Pump create'});
+  try{__v1224LinkCreator(mint,__v1223Token(mint))}catch{}
+        // MEMEFLOW_V12_20_USER_ONLY_HOLDER_LEDGER: preserve Pump creator separately from trade signers.
+        try{
+          const __created=store.state?.tokens?.[mint];
+          const __creator=__created?.creator||null;
+          if(__creator)eventHolderLedger.setCreator(mint,__creator);
+        }catch{}
       // MEMEFLOW V12.4 immediate discovery bootstrap
       fastPhaseAStart(result.mint,result.curve);
       
       void enrich(result.mint,result.curve).catch(e=>{discMetrics.lastErrorAt=Date.now();discovery.lastError={message:'enrich: '+String(e?.message||e),at:Date.now()}});
     }else if(result.reason==='knownNonCreate'){
-      // Known trade instruction (Buy/Sell/Withdraw/buy_exact_sol_in) — not a decode failure
+      /* MEMEFLOW_V12_11_PUMP_TRADE_PRESSURE
+         Use real Pump Buy/Sell activity as the primary cheap buy-pressure
+         signal. This avoids leaving admission permanently DEFERRED when
+         bonding-curve liquidity snapshots do not move enough. */
       discMetrics.knownNonCreateIgnored++;
+
+      try{
+        const logs=tx.meta?.logMessages||[];
+        const isBuy=logs.some(x=>/Instruction:\s*(Buy|BuyExactSolIn)/i.test(String(x)));
+        const isSell=logs.some(x=>/Instruction:\s*Sell/i.test(String(x)));
+
+        if(isBuy||isSell){
+          // Resolve only a mint already tracked by MEMEFLOW from transaction keys.
+          // Avoid O(all tokens) scanning on every Pump transaction.
+          const tradeMint=keys.find(k=>store.state.tokens[k]);
+
+          if(tradeMint){
+            const nowTrade=Date.now();
+            const oldWindow=tradeWindows.get(tradeMint)||{events:[]};
+            const events=Array.isArray(oldWindow.events)
+              ? oldWindow.events.filter(e=>nowTrade-Number(e.t||0)<=60000)
+              : [];
+
+            if(isBuy)events.push({t:nowTrade,side:'buy'});
+            if(isSell)events.push({t:nowTrade,side:'sell'});
+
+            const buy=events.filter(e=>e.side==='buy').length;
+            const sell=events.filter(e=>e.side==='sell').length;
+
+            // Same semantics already expected by minBuyPressure:
+            // buys=3,sells=1 => 3.0
+            // buys>0,sells=0 => buy count as positive pressure
+            // no buys => 0 when sells exist, otherwise null
+            const pressure=sell>0
+              ? buy/sell
+              : (buy>0 ? buy : null);
+
+            tradeWindows.set(tradeMint,{
+              events,
+              buy,
+              sell,
+              updatedAt:nowTrade,
+              source:'pump_trade_logs'
+            });
+
+            const existing=store.state.tokens[tradeMint];
+            if(existing){
+              const updated=store.setToken(tradeMint,{
+                buyPressure:pressure,
+                momentum:pressure,
+                lastMarketActivityAt:nowTrade
+              });
+
+              // Re-run V12.9/V12.10 admission immediately after real trade data.
+              try{
+                const hs=holderQueue.inspect?.(tradeMint)||null;
+                const alreadyHandled=Boolean(
+                  hs?.pending ||
+                  hs?.active ||
+                  Number(hs?.attempts||0)>0 ||
+                  updated?.holderFresh===true
+                );
+
+                if(!alreadyHandled){
+                  const admission=holderAdmissionForActiveUsers(tradeMint);
+
+                  if(admission?.allow===true){
+                    const before=holderQueue.inspect?.(tradeMint)||null;
+                    holderQueue.enqueue(tradeMint);
+                    const after=holderQueue.inspect?.(tradeMint)||null;
+
+                    if(!before?.pending &&
+                       (after?.pending ||
+                        after?.active ||
+                        Number(after?.attempts||0)>0)){
+                      fastPhaseMetrics.holderQueued++;
+                    }
+                  }
+                }
+              }catch(e){
+                fastPhaseMetrics.bootstrapErrors++;
+                fastPhaseMetrics.lastBootstrapError=
+                  'trade admission recheck: '+String(e?.message||e);
+              }
+
+              Promise.resolve(evaluateAll(updated)).catch(()=>{});
+              try{publish(tradeMint)}catch(_){}
+              try{paper.onTokenUpdate(tradeMint,updated)}catch(_){}
+            }
+          }
+        }
+      }catch(e){
+        discMetrics.lastErrorAt=Date.now();
+      }
     }else if(result.reason==='ignoredPumpEventPayload'){
       // Inner CPI event payload — not a decode failure
       discMetrics.ignoredPumpEventPayloads++;
@@ -601,11 +900,9 @@ async function bridgeRepairToken(token,now=Date.now()){
 
   const curve=token?.curve||token?.bondingCurve||token?.associatedBondingCurve||null;
   const phaseADone=Boolean(
-    token?.lastScannedAt ||
-    token?.totalSupply!=null ||
-    token?.decimals!=null ||
-    token?.priceSol!=null
-  );
+  token?.totalSupply!=null &&
+  token?.decimals!=null
+);
 
   // A raw Pump-create row in store without Phase A is the exact V12 failure mode.
   if(!phaseADone && st.fullAttempts<BRIDGE_MAX_FULL_ATTEMPTS && now-st.fullAt>=BRIDGE_FULL_RETRY_MS){
@@ -694,10 +991,8 @@ let bridgeTimer=null;
 
 function bridgePhaseAStarted(token){
   return Boolean(
-    token?.lastScannedAt ||
-    token?.totalSupply!=null ||
-    token?.decimals!=null ||
-    token?.priceSol!=null
+    token?.totalSupply!=null &&
+    token?.decimals!=null
   );
 }
 function bridgePipelineStarted(token){
@@ -1125,10 +1420,7 @@ if(url.pathname==='/api/system/health'){
       const mint=String(token?.mint||token?.tokenMint||token?.tokenAddress||'');
       const holder=holderQueue.inspect?.(mint)||null;
       const price=priceLifecycleDiag.get(mint)||null;
-      const decision=
-        store?._uidDec?.[u.id]?.get?.(mint) ??
-        store?.state?.decisions?.[u.id]?.[mint] ??
-        null;
+      const decision=store?.state?.decisions?.[u.id+':'+mint]??null;
       const discovered=Number(token?.discoveredAt||token?.createdAt||0);
       return {
         mint,
@@ -1187,6 +1479,79 @@ if(url.pathname==='/api/system/health'){
 
     return json(res,200,{
       diagnosticVersion:'V10.2-same-instance',
+      v12_26:{
+        version:'V12.26',
+        diagnosticsOnly:true,
+        tradingLogicChanged:false,
+        eventReevaluationAlreadyPresent:true,
+        note:'Captures evaluateAI call/result lifecycle from the existing V12.22 holder+market event re-evaluation hot path.'
+      },
+      v12_25:{
+        version:'V12.25.1',
+        diagnosticsOnly:true,
+        tradingLogicChanged:false,
+        note:'Gate sample diagnostics only; evaluator and execution paths are unchanged.'
+      },
+      evaluationLifecycleDiagnostics:sample.map((row)=>{
+        const d=row?.decision||null;
+        const h=row?.holder||{};
+        const m=row?.market||{};
+        return {
+          mint:row?.mint??null,
+          ageMinutes:row?.ageMinutes??null,
+          holderFresh:h.fresh===true,
+          holderKnown:h.count!=null,
+          marketKnown:(m.priceSol!=null||m.buyPressure!=null||m.liquiditySol!=null),
+          decisionAttached:!!d,
+          decisionState:d?.state??null,
+          decisionReason:d?.primaryReason??(Array.isArray(d?.reasons)&&d.reasons.length?d.reasons[0]:null),
+          settingsVersion:d?.settingsVersion??null,
+          reevaluatedAt:d?.reevaluatedAt??null,
+            decisionReasons:Array.isArray(d?.reasons)?d.reasons:[],
+        };
+      }),
+      gateSampleDiagnostics:sample.map((row)=>{
+        const holder=row?.holder||{};
+        const market=row?.market||{};
+        const decision=row?.decision||null;
+        const holdersValue=holder.count??null;
+        const top10Value=holder.top10Pct??null;
+        const developerValue=holder.developerPct??null;
+        const buyPressureValue=market.buyPressure??null;
+        const holdersPass=holdersValue!=null?holdersValue>=settings.minHolders:null;
+        const top10Pass=top10Value!=null?top10Value<=settings.maxTop10Pct:null;
+        const developerPass=developerValue!=null?developerValue<=settings.maxDeveloperPct:null;
+        const buyPressurePass=buyPressureValue!=null?buyPressureValue>=settings.minBuyPressure:null;
+        const failed=[];
+        if(holdersPass===false)failed.push('MIN_HOLDERS');
+        if(top10Pass===false)failed.push('MAX_TOP10');
+        if(developerPass===false)failed.push('MAX_DEVELOPER');
+        if(buyPressurePass===false)failed.push('MIN_BUY_PRESSURE');
+        return {
+          mint:row?.mint??null,
+          ageMinutes:row?.ageMinutes??null,
+          gates:{
+            holders:{value:holdersValue,threshold:settings.minHolders,operator:'>=',pass:holdersPass},
+            top10Pct:{value:top10Value,threshold:settings.maxTop10Pct,operator:'<=',pass:top10Pass},
+            developerPct:{value:developerValue,threshold:settings.maxDeveloperPct,operator:'<=',pass:developerPass},
+            buyPressure:{value:buyPressureValue,threshold:settings.minBuyPressure,operator:'>=',pass:buyPressurePass}
+          },
+          failedGates:failed,
+          decisionState:decision?.state??null,
+          decisionReason:decision?.primaryReason??(Array.isArray(decision?.reasons)&&decision.reasons.length?decision.reasons[0]:null)
+        };
+      }),
+      v12_24:{
+        version:'V12.24',
+        creatorLinkGuaranteed:true,
+        legacyRepairSkipsEventHolder:true
+      },
+      v12_23:{
+        version:'V12.23',
+        freshEventOnlyMs:__V12_23_FRESH_EVENT_ONLY_MS,
+        legacyHolderRpcForFreshPump:false
+      },
+      liveTradeFeed:__pumpLiveTradeFeed?.metrics?.()||null,eventHolderLedger:eventHolderLedger.diagnostics(),eventMarketLedger:eventMarketLedger.diagnostics(),
       now,
       bridge:bridgeMetrics,fastPhase:fastPhaseMetrics,
       instance:{
@@ -1232,6 +1597,7 @@ if(url.pathname==='/api/system/health'){
     lastError:discovery.lastError,
     startedAt:discovery.startedAt,
     ...discMetrics,...enrichDiag,...holderMetrics,...recoveryMetrics,...liveEvalMetrics,
+    liveTradeFeed:__pumpLiveTradeFeed?.metrics?.()||null,
     queueDepth:discMetrics.freshQueueDepth+discMetrics.retryQueueDepth,
     holderQueueDepth:holderQueue.queueDepth,
     holderProcessing:holderQueue.processing,
@@ -1274,3 +1640,23 @@ const server=http.createServer((req,res)=>handler(req,res).catch(e=>json(res,500
     .then(()=>{const ms=recoveryMetrics.decisionRecoveryCompletedAt-listenAt;console.log(`[RECOVERY] complete in ${ms}ms — ${recoveryMetrics.decisionRecoveryTokensProcessed} tokens, ${recoveryMetrics.decisionRecoveryDecisionsCreated} decisions, ${recoveryMetrics.decisionRecoveryErrors} errors`)})
     .catch(e=>console.error('[RECOVERY] error',e.message));
 });
+
+
+// MEMEFLOW_V12_21_LIVE_TRADE_STREAM_HOLDER_FEED
+const __pumpLiveTradeFeed=startPumpLiveTradeFeed({
+  eventHolderLedger: typeof eventHolderLedger!=='undefined'?eventHolderLedger:null,
+  eventMarketLedger: typeof eventMarketLedger!=='undefined'?eventMarketLedger:null,
+  store: typeof store!=='undefined'?store:null,
+  publish: typeof publish==='function'?publish:null,
+  evaluateAI: typeof evaluateAll==='function'?evaluateAll:null
+});
+
+// MEMEFLOW_V12_22_WS_DIRECT_TRADE_EVENT: live feed module now decodes Pump TradeEvent directly from logsSubscribe; no per-signature HTTP getTransaction.
+
+// MEMEFLOW_V12_23_FRESH_WARMING_GATE_DIAGNOSTICS: diagnostic helper available for token-level inspection.
+globalThis.__MEMEFLOW_V12_23_GATE__=(token,settings)=>__v1223Gate(token,settings);
+
+// MEMEFLOW_V12_24_CREATOR_GATE_RECOVERY: deterministic gate endpoint/helper support.
+globalThis.__MEMEFLOW_V12_24_GATE_FOR_MINT__=(mint,settings)=>__v1224GateForMint(mint,settings);
+
+// MEMEFLOW_V12_26_EVALUATION_LIFECYCLE_DIAGNOSTICS

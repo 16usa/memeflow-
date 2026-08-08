@@ -1,0 +1,2 @@
+#!/usr/bin/env node
+import fs from'node:fs';import path from'node:path';const A=path.join(process.cwd(),'memeflow-app','app-server.mjs'),dir=path.dirname(A),base=path.basename(A)+'.before-v12-18-';const xs=fs.readdirSync(dir).filter(x=>x.startsWith(base)).sort();if(!xs.length){console.error('No V12.18 backup found');process.exit(1)}const b=path.join(dir,xs.at(-1));fs.copyFileSync(b,A);console.log('PASS: restored',b);console.log('Optional: rm -f memeflow-app/src/event-market-ledger.mjs');

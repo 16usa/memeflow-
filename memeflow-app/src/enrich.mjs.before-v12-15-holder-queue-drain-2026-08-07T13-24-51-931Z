@@ -1,0 +1,671 @@
+/**
+ * Per-step token enrichment with partial-result preservation.
+ * Phase A (enrichToken)  — immediate: supply, curve, store, evaluate, publish.
+ * Phase B (enrichHolders) — delayed:  getTokenLargestAccounts, update holderFresh.
+ * makeHolderQueue — bounded, deduplicating holder enrichment queue (dep-injected).
+ *
+ * Imported by app-server.mjs.
+ */
+import {decodeCurve,b58encode} from './solana.mjs';
+
+/* MEMEFLOW_TOKEN_METADATA_IMAGE_V1 */
+function normalizeMetadataUrl(value) {
+  if (typeof value !== 'string') return null;
+  const url = value.trim();
+  if (!url) return null;
+  if (/^ipfs:\/\//i.test(url)) {
+    return 'https://ipfs.io/ipfs/' + url.replace(/^ipfs:\/\//i, '').replace(/^ipfs\//i, '');
+  }
+  if (/^ar:\/\//i.test(url)) {
+    return 'https://arweave.net/' + url.replace(/^ar:\/\//i, '');
+  }
+  if (/^https?:\/\//i.test(url)) return url;
+  return null;
+}
+
+function firstMetadataImage(metadata) {
+  if (!metadata || typeof metadata !== 'object') return null;
+  const values = [
+    metadata.image,
+    metadata.image_url,
+    metadata.imageUrl,
+    metadata.logo,
+    metadata.logo_url,
+    metadata.logoUrl,
+    metadata.icon,
+    metadata.icon_url,
+    metadata.iconUrl,
+    metadata.properties?.files?.[0]?.uri,
+    metadata.properties?.files?.[0]?.url
+  ];
+  for (const value of values) {
+    const normalized = normalizeMetadataUrl(value);
+    if (normalized) return normalized;
+  }
+  return null;
+}
+
+async function fetchTokenMetadata(uri) {
+  const metadataUrl = normalizeMetadataUrl(uri);
+  if (!metadataUrl) return {metadataUrl:null, imageUrl:null};
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 4500);
+  try {
+    const response = await fetch(metadataUrl, {
+      signal: controller.signal,
+      headers: {
+        accept: 'application/json,text/plain;q=0.9,*/*;q=0.5',
+        'user-agent': 'MEMEFLOW/1.0 token-metadata'
+      }
+    });
+    if (!response.ok) throw new Error('metadata HTTP ' + response.status);
+
+    const contentLength = Number(response.headers.get('content-length') || 0);
+    if (contentLength > 1_500_000) throw new Error('metadata response too large');
+
+    const metadata = await response.json();
+    return {
+      metadataUrl,
+      imageUrl:firstMetadataImage(metadata),
+      metadataName:typeof metadata?.name === 'string' ? metadata.name.slice(0,160) : null,
+      metadataSymbol:typeof metadata?.symbol === 'string' ? metadata.symbol.slice(0,40) : null
+    };
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+/** Strip RPC URLs and long base58 addresses from error messages. */
+function sanitize(msg) {
+  return (msg || 'unknown error')
+    .replace(/https?:\/\/\S+/gi, '[rpc-url]')
+    .replace(/[1-9A-HJ-NP-Za-km-z]{32,}/g, '[addr]')
+    .slice(0, 200);
+}
+
+export function recordEnrichError(enrichDiag, mint, step, e) {
+  const msg = sanitize(e?.message || String(e));
+  enrichDiag.lastEnrichError = `${step}: ${msg}`;
+  enrichDiag.lastEnrichErrorAt = Date.now();
+  enrichDiag.lastEnrichMint = mint;
+  enrichDiag.enrichFailureReasons[msg] = (enrichDiag.enrichFailureReasons[msg] || 0) + 1;
+}
+
+export function makeEnrichDiag() {
+  return {
+    lastEnrichError: null,
+    lastEnrichErrorAt: null,
+    lastEnrichMint: null,
+    enrichFailureReasons: {},
+    enrichStepFailures: {
+      getTokenSupply: 0,
+      getTokenLargestAccounts: 0,
+      getAccountInfo: 0,
+      decodeCurve: 0,
+      evaluate: 0,
+    },
+    // Permanent Solana parameter errors — do not retry, do not open circuit breaker
+    invalidTokenMint: 0,
+    accountNotFound: 0,
+  };
+}
+
+export function makeHolderMetrics() {
+  return {
+    holderQueued: 0,
+    holderSucceeded: 0,
+    holderFailed: 0,
+    holderRateLimited: 0,
+    holderRetries: 0,
+    holderDropped: 0,
+    holderAdmissionAllowed: 0,
+    holderAdmissionDeferred: 0,
+    holderAdmissionDropped: 0,
+    holderAdmissionErrors: 0,
+    holderWorkerTimeouts: 0,
+    lastHolderWorkerTimeoutAt: null,
+    lastHolderAdmissionReason: null,
+    lastHolderError: null,
+    lastHolderErrorAt: null,
+  };
+}
+
+// ── Rate-limit detection ───────────────────────────────────────────────────────
+
+function isRateLimited(e) {
+  if (e?.status === 429) return true;
+  const msg = (e?.message || '').toLowerCase();
+  return (
+    msg.includes('429') ||
+    msg.includes('too many') ||
+    msg.includes('rate limit') ||
+    msg.includes('rate-limit') ||
+    msg.includes('data allowance') ||
+    msg.includes('credits') ||
+    msg.includes('quota')
+  );
+}
+
+// ── Phase A: immediate enrichment ─────────────────────────────────────────────
+
+/**
+ * Enrich a newly-discovered token with on-chain data (Phase A — no holder lookup).
+ *
+ * Steps: getTokenSupply → getAccountInfo → decodeCurve → store → evaluate → publish.
+ * holderFresh is always false after Phase A; Phase B sets it true.
+ * holderCount and top10Pct are set to null; Phase B fills them in.
+ *
+ * @param {string}      mint   token mint address
+ * @param {string|null} curve  bonding-curve account address (may be null)
+ * @param {object}      deps   { rpc, store, tradeWindows, evaluateAll,
+ *                               publish, ensurePriceTimer, discMetrics, enrichDiag }
+ */
+export async function enrichToken(mint, curve, deps) {
+  const {
+    rpc, store, tradeWindows, evaluateAll,
+    publish, ensurePriceTimer, discMetrics, enrichDiag,
+  } = deps;
+
+  let anyStepFailed = false;
+
+  function fail(step, e) {
+    anyStepFailed = true;
+    // Permanent Solana parameter errors — count separately, skip enrichFailureReasons
+    if (e?.invalidTokenMint) { enrichDiag.invalidTokenMint++; return; }
+    if (e?.accountNotFound)  { enrichDiag.accountNotFound++;  return; }
+    if (step in enrichDiag.enrichStepFailures) enrichDiag.enrichStepFailures[step]++;
+    recordEnrichError(enrichDiag, mint, step, e);
+  }
+
+  try {
+    // ── Step 1: getTokenSupply ──────────────────────────────────────────────
+    let supply = null;
+    try {
+      supply = await rpc.call('getTokenSupply', [mint, {commitment: 'confirmed'}]);
+    } catch(e) { fail('getTokenSupply', e); }
+
+    // ── Step 2: getAccountInfo (bonding curve, optional) ───────────────────
+    let curveInfo = null;
+    if (curve) {
+      try {
+        curveInfo = await rpc.call('getAccountInfo', [curve, {encoding: 'base64', commitment: 'confirmed'}]);
+      } catch(e) { fail('getAccountInfo', e); }
+    }
+
+    // ── Step 3: decodeCurve (optional, depends on curveInfo) ───────────────
+    let c = {};
+    if (curveInfo?.value?.data?.[0]) {
+      try {
+        c = decodeCurve(curveInfo.value.data[0], supply?.value?.decimals ?? 6);
+      } catch(e) { fail('decodeCurve', e); }
+    }
+
+    // ── Build token update from whatever succeeded ─────────────────────────
+    const decimals = supply?.value?.decimals ?? 6;
+    const total = Number(supply?.value?.uiAmountString ?? 0);
+    const tw = (tradeWindows?.get?.(mint)) || {buy: 0, sell: 0};
+    const existingToken = store.state.tokens[mint] || {};
+    let metadataPatch = {};
+    const shouldFetchMetadata =
+      existingToken.uri &&
+      !existingToken.imageUrl &&
+      (!existingToken.metadataFetchedAt ||
+        Date.now() - Number(existingToken.metadataFetchedAt) > 6 * 60 * 60 * 1000);
+
+    if (shouldFetchMetadata) {
+      try {
+        const metadata = await fetchTokenMetadata(existingToken.uri);
+        metadataPatch = {
+          metadataFetchedAt:Date.now(),
+          metadataUrl:metadata.metadataUrl,
+          imageUrl:metadata.imageUrl,
+          image:metadata.imageUrl,
+          logoUrl:metadata.imageUrl,
+          metadataName:metadata.metadataName,
+          metadataSymbol:metadata.metadataSymbol
+        };
+      } catch (error) {
+        metadataPatch = {
+          metadataFetchedAt:Date.now(),
+          metadataError:sanitize(error?.message || String(error))
+        };
+      }
+    }
+
+
+    const update = {
+      ...metadataPatch,
+      scanError: null,
+      lastScannedAt: Date.now(),
+      // MEMEFLOW_V12_7_HOLDER_CORRECTNESS_AND_PRIORITY
+      // Phase A may finish AFTER Phase B. Never erase a successful holder scan.
+      holderFresh: existingToken.holderFresh === true,
+      holderCount: existingToken.holderFresh === true
+        ? (existingToken.holderCount ?? null)
+        : null,
+      top10Pct: existingToken.holderFresh === true
+        ? (existingToken.top10Pct ?? null)
+        : null,
+      developerPct: existingToken.holderFresh === true
+        ? (existingToken.developerPct ?? existingToken.developerSharePct ?? null)
+        : null,
+      developerSharePct: existingToken.holderFresh === true
+        ? (existingToken.developerPct ?? existingToken.developerSharePct ?? null)
+        : null,
+      buyPressure: tw.sell ? tw.buy / tw.sell : (tw.buy ? tw.buy : null),
+      dataQuality: [total || null, c.priceSol ?? null].filter(x => x != null).length / 2,
+      source: 'Solana RPC',
+    };
+    // Supply data
+    if (supply) { update.decimals = decimals; update.totalSupply = total; }
+    // Curve data
+    if (Object.keys(c).length) {
+      update.priceSol       = c.priceSol    ?? null;
+      update.liquiditySol   = c.liquiditySol ?? null;
+      update.marketCapSol   = (c.priceSol && total) ? c.priceSol * total : null;
+      /* MEMEFLOW_CANONICAL_ENRICH_FIELDS_V1 */
+      update.marketCap      = update.marketCapSol;
+      update.liquidity      = update.liquiditySol;
+      update.momentum       = update.buyPressure;
+      update.complete       = c.complete     ?? null;
+    }
+
+    // ── Always store, evaluate, publish ────────────────────────────────────
+    const token = store.setToken(mint, update);
+
+    // ── Step 4: evaluate (score the token) ─────────────────────────────────
+    try {
+      await evaluateAll(token);
+    } catch(e) { fail('evaluate', e); }
+
+    publish(mint);
+    if (ensurePriceTimer) ensurePriceTimer(mint, curve);
+
+    // Success: token stored and published regardless of step failures
+    discMetrics.enrichSucceeded++;
+
+    // Clear stale enrich error only after a fully clean Phase A (no step errors)
+    if (!anyStepFailed) {
+      enrichDiag.lastEnrichError    = null;
+      enrichDiag.lastEnrichErrorAt  = null;
+      enrichDiag.lastEnrichMint     = null;
+    }
+  } catch(e) {
+    // Truly unrecoverable: store.setToken or publish threw (should not happen)
+    if (store.state?.metrics) store.state.metrics.errors++;
+    store.save?.();
+    discMetrics.enrichFailed++;
+    recordEnrichError(enrichDiag, mint, 'store/publish', e);
+  }
+}
+
+// ── Phase B: delayed holder enrichment ────────────────────────────────────────
+
+/**
+ * Fetch holder data for a previously Phase-A-enriched token.
+ *
+ * Returns { rateLimited: false } on success.
+ * Returns { rateLimited: true, retryAfter?: number } when rate-limited.
+ * Throws on unexpected errors.
+ *
+ * @param {string} mint
+ * @param {object} deps  { rpc, store, evaluateAll, publish, enrichDiag }
+ */
+const TOKEN_PROGRAM='TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA';
+const TOKEN_2022_PROGRAM='TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb';
+
+function decodeHolderSlice(row,decimals){
+  const data=row?.account?.data;
+  const b64=Array.isArray(data)?data[0]:null;
+  if(!b64)return null;
+  try{
+    // dataSlice is offset 32, length 40:
+    // bytes 0..31 = token-account owner authority, 32..39 = raw amount.
+    const b=Buffer.from(b64,'base64');
+    if(b.length<40)return null;
+    const authority=b58encode(b.subarray(0,32));
+    const raw=b.readBigUInt64LE(32);
+    const amount=Number(raw)/(10**Math.max(0,Number(decimals)||0));
+    return Number.isFinite(amount)?{authority,amount}:null;
+  }catch{return null}
+}
+
+async function mintTokenAccounts(rpc,mint,programId,decimals){
+  const rows=await rpc.call('getProgramAccounts',[
+    programId,
+    {
+      commitment:'confirmed',
+      encoding:'base64',
+      filters:[{memcmp:{offset:0,bytes:mint}}],
+      dataSlice:{offset:32,length:40}
+    }
+  ]);
+  return (Array.isArray(rows)?rows:[])
+    .map(row=>decodeHolderSlice(row,decimals))
+    .filter(Boolean);
+}
+
+function aggregateWalletBalances(accounts,protocolAuthorities){
+  const byWallet=new Map();
+  for(const row of accounts){
+    if(!(row.amount>0))continue;
+    if(protocolAuthorities.has(row.authority))continue;
+    byWallet.set(row.authority,(byWallet.get(row.authority)||0)+row.amount);
+  }
+  return byWallet;
+}
+
+export async function enrichHolders(mint,deps){
+  const {rpc,store,evaluateAll,publish,enrichDiag}=deps;
+  const token=store.state.tokens[mint]||{};
+  const decimals=Number(token.decimals??6);
+  const total=Number(token.totalSupply||0);
+
+  let accounts=[];
+  let programUsed=TOKEN_PROGRAM;
+  try{
+    accounts=await mintTokenAccounts(rpc,mint,TOKEN_PROGRAM,decimals);
+    if(!accounts.length){
+      programUsed=TOKEN_2022_PROGRAM;
+      accounts=await mintTokenAccounts(rpc,mint,TOKEN_2022_PROGRAM,decimals);
+    }
+  }catch(e){
+    if(enrichDiag){
+      enrichDiag.enrichStepFailures.getTokenLargestAccounts++;
+      recordEnrichError(enrichDiag,mint,'getProgramAccounts(holder scan)',e);
+    }
+    if(isRateLimited(e)){
+      const ra=/retry-after[:\s]+(\d+)/i.exec(e.message||'');
+      return {rateLimited:true,retryAfter:ra?Number(ra[1])*1000:undefined};
+    }
+    throw e;
+  }
+
+  const protocolAuthorities=new Set(
+    [token.curve,token.bondingCurve,token.associatedBondingCurve]
+      .filter(x=>typeof x==='string'&&x.length>0)
+  );
+
+  const walletBalances=aggregateWalletBalances(accounts,protocolAuthorities);
+  const balances=[...walletBalances.values()].sort((a,b)=>b-a);
+  const holderCount=balances.length;
+
+  const top10Pct=total>0
+    ? balances.slice(0,10).reduce((sum,n)=>sum+n,0)/total*100
+    : null;
+
+  const creator=token.creator||null;
+  const creatorAmount=creator?(walletBalances.get(creator)||0):0;
+  const developerPct=creator&&total>0?creatorAmount/total*100:null;
+
+  const updated=store.setToken(mint,{
+    holderFresh:true,
+    holderCount,
+    top10Pct,
+    developerPct,
+    developerSharePct:developerPct,
+    holderSource:'Solana getProgramAccounts unique-wallet scan',
+    holderTokenProgram:programUsed,
+    holderScannedAt:Date.now(),
+    marketCap:token.marketCapSol??token.marketCap??null,
+    liquidity:token.liquiditySol??token.liquidity??null,
+    momentum:token.buyPressure??token.momentum??null
+  });
+
+  await evaluateAll(updated);
+  publish(mint);
+  return {rateLimited:false};
+}
+
+// ── Holder queue ─────────────────────────────────────────────────────────────
+
+export function makeHolderQueue(config,deps){
+  const maxConcurrent=Math.max(1,Number(config?.maxConcurrent??1));
+  const queueMax=Math.max(10,Number(config?.queueMax??500));
+  const initialDelayMs=Math.min(10000,Math.max(1000,Number(config?.initialDelayMs??5000)));
+  const retryDelayMs=Math.max(5000,Number(config?.retryDelayMs??30000));
+  const maxRetries=Math.max(1,Number(config?.maxRetries??8));
+  /* MEMEFLOW_V12_14_HOLDER_WORKER_TIMEOUT */
+  const workerTimeoutMs=Math.max(5000,Number(config?.workerTimeoutMs??process.env.HOLDER_WORKER_TIMEOUT_MS??11000));
+  const {enrichHoldersFn,holderMetrics,admissionFn=null}=deps;
+  /* MEMEFLOW_V12_8_HOLDER_ADMISSION_QUEUE */
+
+  const pending=new Map(); // mint -> {mint,retries,enqueuedAt,dueAt}
+  const active=new Set();
+  const history=new Map(); // V10 holder lifecycle diagnostics
+  let wakeTimer=null;
+  let wakeAt=0; // MEMEFLOW_V12_6_HOLDER_WAKE_STARVATION_FIX
+
+  function diagRow(mint){
+    let row=history.get(mint);
+    if(!row){
+      row={mint,queuedAt:null,nextDueAt:null,attempts:0,lastAttemptAt:null,lastSuccessAt:null,lastError:null,lastErrorAt:null,rateLimited:0,retries:0,status:'unknown'};
+      history.set(mint,row);
+    }
+    return row;
+  }
+  function pruneHistory(){
+    if(history.size<=2000)return;
+    const rows=[...history.values()].sort((a,b)=>(b.lastAttemptAt||b.queuedAt||0)-(a.lastAttemptAt||a.queuedAt||0));
+    history.clear();
+    for(const row of rows.slice(0,1000))history.set(row.mint,row);
+  }
+
+  function scheduleWake(){
+    if(!pending.size){
+      if(wakeTimer){
+        clearTimeout(wakeTimer);
+        wakeTimer=null;
+      }
+      wakeAt=0;
+      return;
+    }
+
+    const now=Date.now();
+    const next=Math.min(...[...pending.values()].map(x=>x.dueAt));
+
+    // Never postpone an already scheduled earlier holder scan.
+    if(wakeTimer && wakeAt && wakeAt<=next){
+      return;
+    }
+
+    if(wakeTimer){
+      clearTimeout(wakeTimer);
+      wakeTimer=null;
+    }
+
+    wakeAt=next;
+    wakeTimer=setTimeout(()=>{
+      wakeTimer=null;
+      wakeAt=0;
+      drain();
+    },Math.max(0,next-now));
+  }
+
+  function dropOldest(){
+    let oldest=null;
+    for(const item of pending.values()){
+      if(!oldest||item.enqueuedAt<oldest.enqueuedAt)oldest=item;
+    }
+    if(oldest){
+      pending.delete(oldest.mint);
+      holderMetrics.holderDropped++;
+    }
+  }
+
+  function reschedule(item,delayMs){
+    /* MEMEFLOW_V11_HOLDER_BACKOFF */
+    const base=Math.max(5000,Number(delayMs)||retryDelayMs);
+    const exponential=Math.min(120000,base*Math.pow(2,Math.min(item.retries,3)));
+    const jitter=Math.floor(Math.random()*2000);
+    pending.set(item.mint,{
+      ...item,
+      retries:item.retries+1,
+      dueAt:Date.now()+exponential+jitter
+    });
+  }
+
+  async function run(item){
+    if(admissionFn){
+      let gate=null;
+      try{
+        gate=admissionFn(item.mint)||{allow:true};
+      }catch(e){
+        holderMetrics.holderAdmissionErrors=(holderMetrics.holderAdmissionErrors||0)+1;
+        gate={allow:true,reason:'admission_error_fail_open'};
+      }
+
+      if(gate.allow===false){
+        holderMetrics.lastHolderAdmissionReason=gate.reason||'deferred';
+        if(gate.drop===true){
+          holderMetrics.holderAdmissionDropped=(holderMetrics.holderAdmissionDropped||0)+1;
+          return;
+        }
+        holderMetrics.holderAdmissionDeferred=(holderMetrics.holderAdmissionDeferred||0)+1;
+        pending.set(item.mint,{
+          ...item,
+          dueAt:Date.now()+Math.max(1000,Number(gate.retryInMs||3000))
+        });
+        scheduleWake();
+        return;
+      }
+      holderMetrics.holderAdmissionAllowed=(holderMetrics.holderAdmissionAllowed||0)+1;
+    }
+
+    active.add(item.mint);
+    const _diag=diagRow(item.mint);
+    _diag.attempts++;
+    _diag.lastAttemptAt=Date.now();
+    _diag.status='running';
+    try{
+      const timeoutError=()=>Object.assign(new Error('holder worker timeout after '+workerTimeoutMs+'ms'),{holderWorkerTimeout:true,retryAfterMs:Math.max(retryDelayMs,15000)});
+      let timeoutId=null;
+      const result=await Promise.race([
+        Promise.resolve(enrichHoldersFn(item.mint)),
+        new Promise((_,reject)=>{timeoutId=setTimeout(()=>reject(timeoutError()),workerTimeoutMs)})
+      ]).finally(()=>{if(timeoutId)clearTimeout(timeoutId)});
+      if(result?.rateLimited){
+        holderMetrics.holderRateLimited++;
+        _diag.rateLimited++;
+        _diag.lastError='rate limited';
+        _diag.lastErrorAt=Date.now();
+        if(item.retries<maxRetries){
+          holderMetrics.holderRetries++;
+          reschedule(item,result.retryAfter??retryDelayMs);
+        }else{
+          holderMetrics.holderFailed++;
+          holderMetrics.lastHolderError='max retries exceeded on rate limit';
+          holderMetrics.lastHolderErrorAt=Date.now();
+        }
+      }else{
+        /* MEMEFLOW_V12_7_VERIFY_HOLDER_SUCCESS */
+      // enrichHolders success is valid only if Phase B actually committed fresh data.
+      // A later Phase-A run is now prevented from erasing it by FIX A.
+      if(result && result.rateLimited!==true){
+        // Result accepted; enrichHolders is responsible for setting holderFresh=true.
+      }
+      holderMetrics.holderSucceeded++;
+        holderMetrics.lastHolderError=null;
+        _diag.lastSuccessAt=Date.now();
+        _diag.lastError=null;
+        _diag.lastErrorAt=null;
+        _diag.status='success';
+      }
+    }catch(e){
+      if(e?.holderWorkerTimeout){
+        holderMetrics.holderWorkerTimeouts=(holderMetrics.holderWorkerTimeouts||0)+1;
+        holderMetrics.lastHolderWorkerTimeoutAt=Date.now();
+        holderMetrics.lastHolderError=sanitize(e.message);
+        holderMetrics.lastHolderErrorAt=Date.now();
+        _diag.lastError=sanitize(e.message);
+        _diag.lastErrorAt=Date.now();
+        _diag.status='timeout';
+        if(item.retries<maxRetries){holderMetrics.holderRetries++;reschedule(item,e.retryAfterMs??retryDelayMs)}else{holderMetrics.holderFailed++}
+      }else if(item.retries<maxRetries && isRateLimited(e)){
+        holderMetrics.holderRateLimited++;
+        holderMetrics.holderRetries++;
+        reschedule(item,e?.retryAfterMs??retryDelayMs);
+      }else{
+        holderMetrics.holderFailed++;
+        holderMetrics.lastHolderError=sanitize(e?.message||'unknown');
+        holderMetrics.lastHolderErrorAt=Date.now();
+        _diag.lastError=sanitize(e?.message||'unknown');
+        _diag.lastErrorAt=Date.now();
+        _diag.status='failed';
+      }
+    }finally{
+      active.delete(item.mint);
+      drain();
+    }
+  }
+
+  function drain(){
+    wakeTimer=null;
+    wakeAt=0;
+    const now=Date.now();
+    while(active.size<maxConcurrent){
+      let due=null;
+      /* MEMEFLOW_V12_7_FIRST_ATTEMPT_PRIORITY */
+  const prioritized=[...pending.values()]
+    .filter(item=>Number(item?.dueAt||0)<=now)
+    .sort((a,b)=>{
+      const aa=Number(a?.attempts||0), ba=Number(b?.attempts||0);
+      if((aa===0)!==(ba===0)) return aa===0 ? -1 : 1;
+      if(aa===0 && ba===0) return Number(b?.queuedAt||0)-Number(a?.queuedAt||0);
+      return Number(a?.dueAt||0)-Number(b?.dueAt||0);
+    });
+  for(const item of prioritized){
+        if(item.dueAt<=now && (!due||item.dueAt<due.dueAt))due=item;
+      }
+      if(!due)break;
+      pending.delete(due.mint);
+      void run(due);
+    }
+    scheduleWake();
+  }
+
+  function enqueue(mint){
+    if(!mint||pending.has(mint)||active.has(mint))return false;
+    if(pending.size>=queueMax)dropOldest();
+    const now=Date.now();
+    pending.set(mint,{mint,retries:0,enqueuedAt:now,dueAt:now+initialDelayMs});
+    const _diag=diagRow(mint);
+    _diag.queuedAt=_diag.queuedAt||now;
+    _diag.nextDueAt=now+initialDelayMs;
+    _diag.status='queued';
+    holderMetrics.holderQueued++;
+    pruneHistory();
+    scheduleWake();
+    return true;
+  }
+
+  return {
+    enqueue,
+    get queueDepth(){return pending.size},
+    get processing(){return active.size},
+    get oldestAgeMs(){
+      if(!pending.size)return null;
+      return Date.now()-Math.min(...[...pending.values()].map(x=>x.enqueuedAt));
+    },
+    get nextDueInMs(){
+      if(!pending.size)return null;
+      return Math.max(0,Math.min(...[...pending.values()].map(x=>x.dueAt))-Date.now());
+    },
+    inspect(mint){
+      const row=history.get(mint)||null;
+      const p=pending.get(mint)||null;
+      return {
+        ...(row||{mint,attempts:0,status:active.has(mint)?'running':'unknown'}),
+        pending:Boolean(p),
+        active:active.has(mint),
+        nextDueAt:p?.dueAt??row?.nextDueAt??null,
+        nextDueInMs:p?Math.max(0,p.dueAt-Date.now()):null,
+        queueRetries:p?.retries??row?.retries??0
+      };
+    }
+  };
+}

@@ -1,0 +1,2 @@
+import fs from 'node:fs';import path from 'node:path';
+for(const rel of ['memeflow-app/src/enrich.mjs','memeflow-app/src/solana.mjs','memeflow-app/app-server.mjs']){const p=path.join(process.cwd(),rel),d=path.dirname(p),b=path.basename(p)+'.before-v12-14-';const xs=fs.readdirSync(d).filter(x=>x.startsWith(b)).sort().reverse();if(!xs.length){console.log('SKIP '+rel);continue}fs.copyFileSync(path.join(d,xs[0]),p);console.log('RESTORED '+rel)}

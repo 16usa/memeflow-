@@ -90,7 +90,7 @@ export class RpcPool{
 
   methodTimeoutMs(method){
     if(method==='getTransaction')return Math.max(3000,Number(process.env.RPC_GET_TRANSACTION_TIMEOUT_MS||6000));
-    if(method==='getProgramAccounts')return Math.max(8000,Number(process.env.RPC_GET_PROGRAM_ACCOUNTS_TIMEOUT_MS||20000));
+    if(method==='getProgramAccounts')return Math.max(5000,Number(process.env.RPC_GET_PROGRAM_ACCOUNTS_TIMEOUT_MS||9000)); // MEMEFLOW_V12_14_METHOD_TIMEOUT
     return Math.max(5000,Number(process.env.SOLANA_RPC_TIMEOUT_MS||20000));
   }
 
@@ -133,7 +133,7 @@ export class RpcPool{
   /** Single-attempt fetch — no retry loop. Rotates endpoint on 429. Throws on any error. */
   async callOnce(method,params=[]){
     if(!this.urls.length)throw new Error('SOLANA_RPC_URLS is not configured');
-    const TIMEOUT=Number(process.env.SOLANA_RPC_TIMEOUT_MS||20000);
+    const TIMEOUT=this.methodTimeoutMs(method); // MEMEFLOW_V12_14_METHOD_TIMEOUT
     const url=this.urls[this.i%this.urls.length];
     await this._pace(method);
     const ac=new AbortController();

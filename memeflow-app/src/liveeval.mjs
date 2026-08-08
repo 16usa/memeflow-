@@ -92,6 +92,7 @@ export function makeEvaluateForActiveUsers({
     metrics.lastLiveEvaluationAt = Date.now();
     metrics.decisionsInMemoryByActiveUsers =
       activeUids.reduce((s, uid) => s + (store._uidDec[uid]?.size || 0), 0);
+    return {decisionLike:true,activeUsers:activeUids.length,evaluationsPerformed:activeUids.length};
   }
 
   return function evaluateForActiveUsers(token) {
