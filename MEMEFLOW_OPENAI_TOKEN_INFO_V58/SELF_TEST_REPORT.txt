@@ -1,0 +1,9 @@
+PASS 30/30 install + verify + exact rollback simulations.
+PASS frontend Analyze capture bypasses only the old broken Analyze handler.
+PASS backend route is read-only and does not write Candidate Feed.
+PASS Solana supply / largest accounts / mint info run in parallel.
+PASS configured RPC endpoints race instead of serial fallback waits.
+PASS Token Program + Token-2022 holder scan supported.
+PASS partial results survive optional-source failures.
+PASS price / market cap / liquidity / holders / Top10 / buy pressure / developer / score / confidence render paths present.
+PASS no CSS file added and no color styling changed.

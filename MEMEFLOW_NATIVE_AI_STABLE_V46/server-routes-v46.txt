@@ -1,0 +1,22 @@
+
+ /* MEMEFLOW_NATIVE_AI_V46_ROUTES_BEGIN */
+ if(url.pathname==='/api/openai/status'&&req.method==='GET')return json(res,200,{ok:true,configured:Boolean(process.env.OPENAI_API_KEY),model:OPENAI_MODEL,mode:'read-only'});
+ if(url.pathname==='/api/openai/analyze'&&req.method==='POST'){
+   if(!u)return json(res,401,{error:'AUTH_REQUIRED'});
+   try{
+     const b=await body(req),ctx=b.context||{},c=ctx.candidate||{};
+     const prompt=`Analyze the current MEMEFLOW candidate ${c.symbol||c.name||c.mint||''}. Explain the decision, strongest evidence, blockers, concentration/holder risk, buy pressure and the next safe action.`;
+     const out=await callMemeflowOpenAI(prompt,ctx,'analyze');
+     return json(res,200,{ok:true,...out});
+   }catch(e){return json(res,e.status||500,{error:'OPENAI_ERROR',message:e.message})}
+ }
+ if(url.pathname==='/api/openai/ask'&&req.method==='POST'){
+   if(!u)return json(res,401,{error:'AUTH_REQUIRED'});
+   try{
+     const b=await body(req),prompt=String(b.prompt||'').trim();
+     if(!prompt)return json(res,400,{error:'PROMPT_REQUIRED',message:'Prompt is required.'});
+     const out=await callMemeflowOpenAI(prompt,b.context||{},'ask');
+     return json(res,200,{ok:true,...out});
+   }catch(e){return json(res,e.status||500,{error:'OPENAI_ERROR',message:e.message})}
+ }
+ /* MEMEFLOW_NATIVE_AI_V46_ROUTES_END */

@@ -1,0 +1,20 @@
+MEMEFLOW GITHUB NATIVE WALLET FIX V33 — SELF TEST
+
+PASS 100 / 100 install + verify scenarios
+
+Tested against:
+- production-style MEMEFLOW index structure with native #walletConnectTop
+- real V30 direct evaluator runtime
+- real V26 responsive layout runtime
+- optional old V27/V31 helper layers
+
+Verified:
+- duplicate wallet creator is removed at source
+- native #walletConnectTop remains
+- native mobile Wallet DOM remains
+- phone hides only bottom Wallet
+- tablet uses 6 slots and restores Wallet
+- desktop sidebar logic is untouched
+- old V27/V31 helper layers are removed
+- changed JavaScript passes node --check
+- repeated installation is idempotent

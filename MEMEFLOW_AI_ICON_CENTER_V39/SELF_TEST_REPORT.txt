@@ -1,0 +1,6 @@
+PASS V39 runtime syntax OK.
+PASS root V30 AI button id/class facts confirmed.
+PASS 100/100 install + verify test scenarios.
+PASS old V36/V37/V38 tags are removed.
+PASS V39 keeps exactly one icon and only adjusts visual centering/sizing.
+PASS no click/API/trading logic changes.

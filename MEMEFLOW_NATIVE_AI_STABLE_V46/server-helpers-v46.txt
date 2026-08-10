@@ -1,0 +1,37 @@
+
+/* MEMEFLOW_NATIVE_AI_V46_BEGIN */
+const OPENAI_RESPONSES_URL='https://api.openai.com/v1/responses';
+const OPENAI_MODEL=process.env.OPENAI_MODEL||'gpt-5-mini';
+function openAiText(data){
+  if(typeof data?.output_text==='string'&&data.output_text.trim())return data.output_text.trim();
+  const parts=[];
+  for(const item of data?.output||[])for(const part of item?.content||[])if(typeof part?.text==='string')parts.push(part.text);
+  return parts.join('\n').trim();
+}
+async function callMemeflowOpenAI(prompt,context,mode='ask'){
+  const key=process.env.OPENAI_API_KEY||'';
+  if(!key){const e=Error('OPENAI_API_KEY is not configured.');e.status=503;throw e}
+  const compact=JSON.stringify(context||{}).slice(0,18000);
+  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),30000);
+  try{
+    const r=await fetch(OPENAI_RESPONSES_URL,{
+      method:'POST',
+      headers:{authorization:`Bearer ${key}`,'content-type':'application/json'},
+      body:JSON.stringify({
+        model:OPENAI_MODEL,
+        instructions:'You are MEMEFLOW OpenAI, a read-only Solana memecoin analysis assistant. Use only the supplied MEMEFLOW context. Never claim to execute trades, change settings, bypass gates or access private keys. Keep answers concise, concrete and risk-aware.',
+        input:`${prompt}\n\nMEMEFLOW CONTEXT:\n${compact}`
+      }),
+      signal:controller.signal
+    });
+    const data=await r.json().catch(()=>({}));
+    if(!r.ok){const e=Error(data?.error?.message||`OpenAI HTTP ${r.status}`);e.status=r.status;throw e}
+    const text=openAiText(data);
+    if(!text){const e=Error('OpenAI returned no text.');e.status=502;throw e}
+    return {text,model:data.model||OPENAI_MODEL,responseId:data.id||null};
+  }catch(e){
+    if(e?.name==='AbortError'){const x=Error('OpenAI request timed out.');x.status=504;throw x}
+    throw e
+  }finally{clearTimeout(timer)}
+}
+/* MEMEFLOW_NATIVE_AI_V46_END */

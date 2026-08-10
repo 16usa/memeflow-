@@ -108,25 +108,149 @@ export class PaperEngine {
     return this.userPositions(userId, 'OPEN').find(p => p.mint === mint) || null;
   }
 
-  canEnter(userId, token, settings) {
+  entryReadiness(userId, token, settings) {
     const s = this.settings(settings);
+    const now = this.clock();
+
     const price = num(token?.priceSol, NaN);
-    if (!Number.isFinite(price) || price <= 0) return { ok: false, code: 'INVALID_PRICE' };
-    if (token?.holderFresh === false) return { ok: false, code: 'STALE_TOKEN_DATA' };
     const tokenUpdatedAt = Number(token?.updatedAt || token?.lastPriceAt || 0);
-    if (s.decisionFreshnessSec > 0 && tokenUpdatedAt > 0 && this.clock() - tokenUpdatedAt > s.decisionFreshnessSec * 1000) return { ok: false, code: 'STALE_DECISION' };
-    if (this.openForMint(userId, token.mint)) return { ok: false, code: 'POSITION_EXISTS' };
-    if (this.userPositions(userId, 'OPEN').length >= s.maxOpenPositions) return { ok: false, code: 'MAX_OPEN_POSITIONS' };
-    if (this.dailyEntries(userId) >= s.maxDailyEntries) return { ok: false, code: 'MAX_DAILY_ENTRIES' };
-    if (s.positionSize <= 0 || s.positionSize > s.maxPositionSize) return { ok: false, code: 'INVALID_POSITION_SIZE' };
-    if (s.dailySpendLimit > 0 && this.dailySpent(userId) + s.positionSize > s.dailySpendLimit) return { ok: false, code: 'DAILY_SPEND_LIMIT' };
-    if (s.tradingCapital > 0) {
-      const deployed = this.userPositions(userId, 'OPEN').reduce((sum, p) => sum + num(p.remainingSizeSol), 0);
-      if (deployed + s.positionSize > s.tradingCapital) return { ok: false, code: 'PAPER_CAPITAL_LIMIT' };
-    }
-    if (s.dailyLossLimit > 0 && this.dailyRealizedPnl(userId) <= -s.dailyLossLimit) return { ok: false, code: 'DAILY_LOSS_LIMIT' };
+
+    const openPositions = this.userPositions(userId, 'OPEN');
+    const existingPosition = this.openForMint(userId, token?.mint);
+    const dailyEntries = this.dailyEntries(userId, now);
+    const dailySpent = this.dailySpent(userId, now);
+    const dailyRealizedPnl = this.dailyRealizedPnl(userId, now);
+    const deployed = openPositions.reduce(
+      (sum, position) => sum + num(position.remainingSizeSol),
+      0
+    );
+
+    const priceReady = Number.isFinite(price) && price > 0;
+
+    const holderFresh = token?.holderFresh === true;
+    const timestampKnown = Number.isFinite(tokenUpdatedAt) && tokenUpdatedAt > 0;
+    const decisionFresh =
+      timestampKnown &&
+      (
+        s.decisionFreshnessSec <= 0 ||
+        now - tokenUpdatedAt <= s.decisionFreshnessSec * 1000
+      );
+
+    const dataFresh = holderFresh && decisionFresh;
+
+    const positionSizeValid =
+      s.positionSize > 0 &&
+      s.positionSize <= s.maxPositionSize;
+
+    const dailySpendAvailable =
+      s.dailySpendLimit <= 0 ||
+      dailySpent + s.positionSize <= s.dailySpendLimit;
+
+    const capitalAvailable =
+      s.tradingCapital <= 0 ||
+      deployed + s.positionSize <= s.tradingCapital;
+
     const user = this.store.state.users?.[userId];
-    if (user?.killSwitch) return { ok: false, code: 'KILL_SWITCH' };
+    const lossLimitClear =
+      s.dailyLossLimit <= 0 ||
+      dailyRealizedPnl > -s.dailyLossLimit;
+
+    const killSwitchClear = user?.killSwitch !== true;
+
+    const checks = [
+      {
+        key: 'validPrice',
+        name: 'Valid price',
+        pass: priceReady,
+        code: 'INVALID_PRICE'
+      },
+      {
+        key: 'freshData',
+        name: 'Fresh token data',
+        pass: dataFresh,
+        code: holderFresh
+          ? 'STALE_DECISION'
+          : 'STALE_TOKEN_DATA'
+      },
+      {
+        key: 'noExistingPosition',
+        name: 'No existing position',
+        pass: !existingPosition,
+        code: 'POSITION_EXISTS'
+      },
+      {
+        key: 'positionCapacity',
+        name: 'Position capacity',
+        pass: openPositions.length < s.maxOpenPositions,
+        code: 'MAX_OPEN_POSITIONS'
+      },
+      {
+        key: 'dailyEntries',
+        name: 'Daily entries available',
+        pass: dailyEntries < s.maxDailyEntries,
+        code: 'MAX_DAILY_ENTRIES'
+      },
+      {
+        key: 'positionSize',
+        name: 'Position size valid',
+        pass: positionSizeValid,
+        code: 'INVALID_POSITION_SIZE'
+      },
+      {
+        key: 'dailySpend',
+        name: 'Daily spend available',
+        pass: dailySpendAvailable,
+        code: 'DAILY_SPEND_LIMIT'
+      },
+      {
+        key: 'paperCapital',
+        name: 'Paper capital available',
+        pass: capitalAvailable,
+        code: 'PAPER_CAPITAL_LIMIT'
+      },
+      {
+        key: 'safetyControls',
+        name: 'Safety controls clear',
+        pass: lossLimitClear && killSwitchClear,
+        code: !killSwitchClear ? 'KILL_SWITCH' : 'DAILY_LOSS_LIMIT'
+      }
+    ];
+
+    return {
+      ok: checks.every(check => check.pass),
+      checks,
+      metrics: {
+        openPositions: openPositions.length,
+        maxOpenPositions: s.maxOpenPositions,
+        dailyEntries,
+        maxDailyEntries: s.maxDailyEntries,
+        dailySpent,
+        dailySpendLimit: s.dailySpendLimit,
+        deployed,
+        tradingCapital: s.tradingCapital,
+        dailyRealizedPnl,
+        dailyLossLimit: s.dailyLossLimit,
+        positionSize: s.positionSize,
+        maxPositionSize: s.maxPositionSize,
+        holderFresh,
+        tokenUpdatedAt: timestampKnown ? tokenUpdatedAt : null,
+        decisionFreshnessSec: s.decisionFreshnessSec,
+        killSwitch: user?.killSwitch === true
+      }
+    };
+  }
+
+  canEnter(userId, token, settings) {
+    const readiness = this.entryReadiness(userId, token, settings);
+    const failed = readiness.checks.find(check => !check.pass);
+
+    if (failed) {
+      return {
+        ok: false,
+        code: failed.code
+      };
+    }
+
     return { ok: true };
   }
 

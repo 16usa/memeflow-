@@ -1,0 +1,10 @@
+PASS 100/100 V52 -> V53 install + verify + exact index rollback simulations.
+PASS V52 one-line layout tag removed.
+PASS no layout CSS in V53.
+PASS no button changes.
+PASS no API/fetch logic.
+PASS no click-handler replacement.
+PASS no placeholder text rewrite.
+PASS placeholder only = 11px.
+PASS typed input text remains 16px for iOS no-zoom.
+PASS no server files touched.

@@ -55,6 +55,21 @@ task = "shell.exec"
 args = "PORT=8081 BASE_PATH=/ pnpm run replit-internal-dev"
 cwd = "./runtime-components/mockup-sandbox"
 
+
+
+
+
+
+
+[[workflows.workflow]]
+name = "Project"
+mode = "sequential"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "bash ./run-project.sh"
+
 [[ports]]
 localPort = 3000
 externalPort = 80
@@ -71,17 +86,6 @@ externalPort = 8081
 localPort = 8082
 externalPort = 3000
 
-
-
-
-
-
-
-[[workflows.workflow]]
-name = "Project"
-mode = "sequential"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "bash ./run-project.sh"
+[[ports]]
+localPort = 8083
+externalPort = 3001

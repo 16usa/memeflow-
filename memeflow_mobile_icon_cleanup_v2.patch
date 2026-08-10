@@ -1,0 +1,106 @@
+diff --git a/memeflow-app/index.html b/memeflow-app/index.html
+--- a/memeflow-app/index.html
++++ b/memeflow-app/index.html
+@@ -7,6 +7,102 @@
+ <meta content="dark only" name="color-scheme"/>
+ <meta content="MEMEFLOW World-Class AI &amp; Trading Settings with decision-first grid, central trading chart, engineering statuses and premium dark/light themes." name="description"/>
+ <title>MEMEFLOW Intelligence OS · World-Class AI &amp; Trading Settings</title>
++<style id="mobile-icon-cleanup-v2">
++/* Mobile header + bottom navigation cleanup */
++@media (max-width:820px){
++  /* Bottom menu: labels only */
++  .mobile-nav button::before,
++  .mobile-nav button::after,
++  .mobile-nav button > svg,
++  .mobile-nav button > img,
++  .mobile-nav button > i,
++  .mobile-nav button > .icon,
++  .mobile-nav button > [class*="icon"]{
++    display:none!important;
++    content:none!important;
++  }
++  .mobile-nav button{
++    background-image:none!important;
++    -webkit-mask-image:none!important;
++    mask-image:none!important;
++    text-indent:0!important;
++    display:flex!important;
++    flex-direction:row!important;
++    align-items:center!important;
++    justify-content:center!important;
++    gap:0!important;
++  }
++
++  /* Keep the first header row vertically aligned */
++  .topbar{align-items:center!important}
++  .topbar .top-left,
++  .topbar .top-actions{
++    align-items:center!important;
++    align-self:center!important;
++  }
++
++  /* Header wallet: icon only, no tile/frame */
++  .topbar #walletConnectTop{
++    width:40px!important;
++    min-width:40px!important;
++    max-width:40px!important;
++    height:40px!important;
++    min-height:40px!important;
++    padding:0!important;
++    margin:0!important;
++    border:0!important;
++    border-radius:0!important;
++    background-color:transparent!important;
++    box-shadow:none!important;
++    outline:none!important;
++    backdrop-filter:none!important;
++    -webkit-backdrop-filter:none!important;
++    font-size:0!important;
++    line-height:0!important;
++    color:transparent!important;
++    display:inline-flex!important;
++    align-items:center!important;
++    justify-content:center!important;
++    align-self:center!important;
++    top:auto!important;
++    transform:none!important;
++    background-position:center!important;
++    background-repeat:no-repeat!important;
++    background-size:28px 28px!important;
++  }
++  .topbar #walletConnectTop:hover,
++  .topbar #walletConnectTop:focus,
++  .topbar #walletConnectTop:focus-visible,
++  .topbar #walletConnectTop:active{
++    border:0!important;
++    background-color:transparent!important;
++    box-shadow:none!important;
++    outline:none!important;
++  }
++
++  /* Preserve/size whichever wallet glyph implementation is currently used */
++  .topbar #walletConnectTop::before,
++  .topbar #walletConnectTop::after{
++    line-height:1!important;
++    font-size:28px!important;
++    color:var(--muted)!important;
++    margin:0!important;
++  }
++  .topbar #walletConnectTop > svg,
++  .topbar #walletConnectTop > img,
++  .topbar #walletConnectTop > i,
++  .topbar #walletConnectTop > .icon,
++  .topbar #walletConnectTop > [class*="icon"]{
++    display:block!important;
++    width:28px!important;
++    height:28px!important;
++    max-width:28px!important;
++    max-height:28px!important;
++    margin:0!important;
++    flex:none!important;
++  }
++}
++</style>
+ <style id="memeflow-consolidated-css">
+ /* ===== consolidated: layer-1 ===== */
+ :root{

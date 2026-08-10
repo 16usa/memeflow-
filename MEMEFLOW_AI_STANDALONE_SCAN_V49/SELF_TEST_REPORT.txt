@@ -1,0 +1,13 @@
+PASS 200/200 install + verify + exact rollback simulations.
+PASS exact evaluate import variant.
+PASS spaced evaluate import variant.
+PASS aliased evaluate import variant.
+PASS NO evaluate import variant.
+PASS single-quote and double-quote /api/ai/decisions route variants.
+PASS V49 checks src/evaluate.mjs directly.
+PASS scanner dynamically imports ./src/evaluate.mjs.
+PASS scanner does not write Candidate Feed/store.
+PASS Candidates / Positions / Wallet / More preserved.
+PASS bottom-nav V44 preserved.
+PASS syntax checks.
+PASS no server start.

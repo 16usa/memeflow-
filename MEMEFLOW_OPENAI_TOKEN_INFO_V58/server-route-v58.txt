@@ -1,0 +1,3 @@
+/* === MEMEFLOW OPENAI TOKEN INFO V58 ROUTE START === */
+if(url.pathname==='/api/openai/token-scan-v58'&&req.method==='POST'){try{const b=await body(req),mint=mfV58ExtractMint(b.mint||b.token||b.address||b.url||'');if(!mint)return json(res,400,{error:'INVALID_MINT',message:'Enter a valid Solana mint address.'});return json(res,200,await mfV58ScanToken(mint,u))}catch(e){return json(res,502,{error:'TOKEN_SCAN_FAILED',message:e?.message||'Token scan failed.'})}}
+/* === MEMEFLOW OPENAI TOKEN INFO V58 ROUTE END === */

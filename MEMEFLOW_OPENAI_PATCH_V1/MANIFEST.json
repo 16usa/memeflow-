@@ -1,0 +1,14 @@
+{
+  "name": "MEMEFLOW_OPENAI_PATCH_V1",
+  "base": "16usa/memeflow- / main / memeflow-app",
+  "per_user_isolation": true,
+  "modes_default_on": [
+    "analyze",
+    "assist",
+    "autoAi",
+    "learning",
+    "strategyCoach",
+    "autoOptimize"
+  ],
+  "real_execution_ready": false
+}

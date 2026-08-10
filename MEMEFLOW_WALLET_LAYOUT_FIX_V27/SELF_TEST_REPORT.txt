@@ -1,0 +1,16 @@
+MEMEFLOW WALLET LAYOUT FIX V27 — SELF TEST
+
+PASS 100 / 100 installation simulations
+
+Verified in every run:
+- V27 adds exactly one runtime tag
+- reinstall is idempotent
+- original HTML is byte-identical after removing the single V27 tag
+- original mobile Wallet node remains
+- original #walletConnectTop remains
+- V26 runtime remains
+- V27 contains no fetch/API/evaluator code
+- tablet uses six bottom-nav slots
+- injected mf-header-wallet-v* controls are hidden and removed at runtime
+
+V27 is intentionally a small layout-only patch.

@@ -1,0 +1,20 @@
+MEMEFLOW CURRENT REPLIT WALLET FIX V34 — SELF TEST
+
+PASS 100 / 100
+
+Tested with the exact condition shown by the user's V33 terminal:
+- #walletConnectTop absent
+- mobile [data-sheet="wallet"] present
+- real V30 direct evaluator
+- real V26 responsive layout
+
+Verified:
+- no dependency on #walletConnectTop
+- red-circled mf-header-wallet-v24 creator neutralized at source
+- phone bottom Wallet hidden
+- tablet Wallet restored as slot 5
+- tablet More restored as slot 6
+- desktop behavior not rewritten
+- V27/V31 wallet-only tags removed
+- JS syntax checks pass
+- reinstall is idempotent

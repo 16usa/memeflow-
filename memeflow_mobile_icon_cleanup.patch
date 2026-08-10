@@ -1,0 +1,92 @@
+*** Begin Patch
+*** Update File: memeflow-app/index.html
+@@
+ </style>
++<style id="mobile-icon-cleanup-v1">
++@media (max-width:1024px){
++  .mobile-nav button::before,
++  .mobile-nav button::after,
++  .mobile-nav button > svg,
++  .mobile-nav button > img,
++  .mobile-nav button > i,
++  .mobile-nav button > .icon,
++  .mobile-nav button > [class*="icon"]{
++    display:none!important;
++    content:none!important;
++  }
++
++  .mobile-nav button{
++    display:flex!important;
++    align-items:center!important;
++    justify-content:center!important;
++    flex-direction:row!important;
++    gap:0!important;
++    line-height:1!important;
++    padding:0 4px!important;
++  }
++
++  .topbar .top-left,
++  .topbar .top-actions{
++    align-items:center!important;
++  }
++
++  .topbar .top-left .chip,
++  .topbar .top-plan-badge,
++  .topbar #walletConnectTop{
++    align-self:center!important;
++  }
++
++  .topbar #walletConnectTop{
++    min-width:0!important;
++    width:40px!important;
++    height:40px!important;
++    min-height:40px!important;
++    padding:0!important;
++    margin:0!important;
++    border:0!important;
++    border-radius:0!important;
++    background:transparent!important;
++    box-shadow:none!important;
++    outline:none!important;
++    backdrop-filter:none!important;
++    -webkit-backdrop-filter:none!important;
++    overflow:visible!important;
++    display:inline-flex!important;
++    align-items:center!important;
++    justify-content:center!important;
++    font-size:0!important;
++    line-height:0!important;
++    color:transparent!important;
++  }
++
++  .topbar #walletConnectTop:hover,
++  .topbar #walletConnectTop:focus,
++  .topbar #walletConnectTop:focus-visible,
++  .topbar #walletConnectTop:active{
++    border:0!important;
++    background:transparent!important;
++    box-shadow:none!important;
++    outline:none!important;
++  }
++
++  .topbar #walletConnectTop::before,
++  .topbar #walletConnectTop::after{
++    font-size:26px!important;
++    line-height:1!important;
++    color:var(--muted)!important;
++  }
++
++  .topbar #walletConnectTop svg,
++  .topbar #walletConnectTop img,
++  .topbar #walletConnectTop i,
++  .topbar #walletConnectTop .icon,
++  .topbar #walletConnectTop [class*="icon"]{
++    display:block!important;
++    width:28px!important;
++    height:28px!important;
++    margin:0!important;
++    color:var(--muted)!important;
++  }
++}
++</style>
+*** End Patch

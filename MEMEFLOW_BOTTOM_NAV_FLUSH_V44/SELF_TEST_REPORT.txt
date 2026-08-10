@@ -1,0 +1,7 @@
+PASS 100/100 isolated install + verify scenarios.
+PASS V43 tag replaced, not stacked.
+PASS phone bottom nav uses bottom:0.
+PASS nav background absorbs iPhone safe-area.
+PASS AI stays centered in the original 76px usable content band.
+PASS V43 Wallet-page routing retained.
+PASS no API/trading logic changes.

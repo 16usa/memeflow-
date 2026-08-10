@@ -1,0 +1,319 @@
+const finite = value => {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : null;
+};
+
+const firstFinite = (...values) => {
+  for (const value of values) {
+    const n = finite(value);
+    if (n !== null) return n;
+  }
+  return null;
+};
+
+async function dexToken(mint) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 7000);
+
+  try {
+    const r = await fetch(
+      `https://api.dexscreener.com/latest/dex/tokens/${encodeURIComponent(mint)}`,
+      {
+        headers: { accept: 'application/json' },
+        signal: controller.signal
+      }
+    );
+
+    if (!r.ok) return null;
+
+    const data = await r.json();
+    const pairs = (Array.isArray(data?.pairs) ? data.pairs : [])
+      .filter(p => String(p?.chainId || '').toLowerCase() === 'solana')
+      .sort(
+        (a, b) =>
+          Number(b?.liquidity?.usd || 0) -
+          Number(a?.liquidity?.usd || 0)
+      );
+
+    return pairs[0] || null;
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+function dexBuyPressure(pair) {
+  if (!pair) return null;
+
+  const windows = ['m5', 'h1', 'h6', 'h24'];
+
+  for (const window of windows) {
+    const buys = finite(pair?.txns?.[window]?.buys);
+    const sells = finite(pair?.txns?.[window]?.sells);
+
+    if (buys === null || sells === null) continue;
+
+    if (sells > 0) return buys / sells;
+    if (buys > 0) return buys;
+    return 0;
+  }
+
+  return null;
+}
+
+function ageMinutes(pair) {
+  const created = finite(pair?.pairCreatedAt);
+
+  if (created === null || created <= 0) return null;
+
+  const ms = created < 1e12 ? created * 1000 : created;
+  return Math.max(0, (Date.now() - ms) / 60000);
+}
+
+export async function manualAnalyze({
+  mint,
+  rpc,
+  existing = {},
+  settings,
+  evaluate
+}) {
+  const startedAt = Date.now();
+
+  let supplyResult = null;
+  let largestResult = null;
+  let rpcError = null;
+
+  try {
+    [supplyResult, largestResult] = await Promise.all([
+      rpc.call('getTokenSupply', [
+        mint,
+        { commitment: 'confirmed' }
+      ]),
+      rpc.call('getTokenLargestAccounts', [
+        mint,
+        { commitment: 'confirmed' }
+      ])
+    ]);
+  } catch (error) {
+    rpcError = error?.message || 'Solana RPC unavailable';
+  }
+
+  const pair = await dexToken(mint);
+
+  const totalSupply = firstFinite(
+    supplyResult?.value?.uiAmountString,
+    existing.totalSupply
+  );
+
+  const largest = Array.isArray(largestResult?.value)
+    ? largestResult.value
+        .map(row => finite(row?.uiAmountString))
+        .filter(Number.isFinite)
+    : [];
+
+  const top10Pct =
+    totalSupply !== null && totalSupply > 0 && largest.length
+      ? (largest.slice(0, 10).reduce((a, b) => a + b, 0) /
+          totalSupply) *
+        100
+      : firstFinite(existing.top10Pct);
+
+  /*
+   * Standard Solana getTokenLargestAccounts does NOT provide the
+   * total holder count. Never fake it as "20 holders".
+   * Keep an already verified MEMEFLOW holder count when available.
+   */
+  const holderCount = firstFinite(existing.holderCount);
+
+  const liquidityUsd = firstFinite(
+    pair?.liquidity?.usd,
+    existing.liquidityUsd
+  );
+
+  const marketCapUsd = firstFinite(
+    pair?.marketCap,
+    pair?.fdv,
+    existing.marketCapUsd
+  );
+
+  const priceUsd = firstFinite(
+    pair?.priceUsd,
+    existing.priceUsd
+  );
+
+  let priceSol = firstFinite(existing.priceSol);
+
+  const quoteSymbol = String(
+    pair?.quoteToken?.symbol || ''
+  ).toUpperCase();
+
+  if (
+    priceSol === null &&
+    (quoteSymbol === 'SOL' || quoteSymbol === 'WSOL')
+  ) {
+    priceSol = firstFinite(pair?.priceNative);
+  }
+
+  const observedBuyPressure = dexBuyPressure(pair);
+
+  const buyPressure = firstFinite(
+    existing.buyPressure,
+    observedBuyPressure
+  );
+
+  const developerPct = firstFinite(
+    existing.developerPct,
+    existing.creatorPct
+  );
+
+  const holderFresh =
+    existing.holderFresh === true
+      ? true
+      : existing.holderFresh === false
+        ? false
+        : largestResult
+          ? true
+          : null;
+
+  const factual = [
+    priceSol !== null || priceUsd !== null,
+    totalSupply !== null,
+    top10Pct !== null,
+    holderCount !== null,
+    developerPct !== null,
+    buyPressure !== null,
+    liquidityUsd !== null,
+    holderFresh === true
+  ];
+
+  const dataQuality =
+    factual.filter(Boolean).length / factual.length;
+
+  const token = {
+    ...existing,
+
+    mint,
+
+    name:
+      pair?.baseToken?.name ||
+      existing.name ||
+      existing.symbol ||
+      mint.slice(0, 8),
+
+    symbol:
+      pair?.baseToken?.symbol ||
+      existing.symbol ||
+      'TOKEN',
+
+    source:
+      existing.source ||
+      (pair ? 'Solana RPC + DexScreener' : 'Solana RPC'),
+
+    totalSupply,
+    top10Pct,
+    holderCount,
+    developerPct,
+    buyPressure,
+    holderFresh,
+
+    priceSol,
+    priceUsd,
+    liquidityUsd,
+    marketCapUsd,
+
+    tokenAgeMinutes:
+      firstFinite(existing.tokenAgeMinutes) ??
+      ageMinutes(pair),
+
+    dataQuality,
+
+    manualScan: true,
+    manualScannedAt: Date.now()
+  };
+
+  /*
+   * CRITICAL:
+   * same evaluator + same authenticated user settings.
+   * No separate Manual AI formula.
+   */
+  const decision = evaluate(token, settings);
+
+  return {
+    ok: true,
+    manual: true,
+    mint,
+
+    token,
+
+    decision,
+
+    evidence: {
+      rpcAvailable: !rpcError,
+      rpcError,
+
+      dexAvailable: Boolean(pair),
+
+      priceAvailable:
+        priceSol !== null || priceUsd !== null,
+
+      supplyAvailable:
+        totalSupply !== null,
+
+      top10Available:
+        top10Pct !== null,
+
+      holderCountAvailable:
+        holderCount !== null,
+
+      developerAvailable:
+        developerPct !== null,
+
+      buyPressureAvailable:
+        buyPressure !== null,
+
+      liquidityAvailable:
+        liquidityUsd !== null,
+
+      holderFresh,
+
+      completeness:
+        Math.round(dataQuality * 100)
+    },
+
+    settingsApplied: {
+      minScore:
+        settings?.minScore ?? null,
+
+      minConfidence:
+        settings?.minConfidence ?? null,
+
+      minHolders:
+        settings?.minHolders ?? null,
+
+      maxTop10Pct:
+        settings?.maxTop10Pct ?? null,
+
+      maxDeveloperPct:
+        settings?.maxDeveloperPct ?? null,
+
+      minBuyPressure:
+        settings?.minBuyPressure ?? null,
+
+      requireFreshHolderSnapshot:
+        settings?.requireFreshHolderSnapshot ?? null
+    },
+
+    external: {
+      pump: `https://pump.fun/coin/${mint}`,
+      dexscreener:
+        pair?.url ||
+        `https://dexscreener.com/solana/${mint}`,
+      bubblemap:
+        `https://app.bubblemaps.io/sol/token/${mint}`
+    },
+
+    durationMs:
+      Date.now() - startedAt
+  };
+}

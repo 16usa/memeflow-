@@ -1,0 +1,200 @@
+
+/* MEMEFLOW_AI_STANDALONE_V48_BEGIN */
+const MF48_KEY_RE=/[1-9A-HJ-NP-Za-km-z]{32,44}/g;
+const MF48_NATIVE_SYMBOLS=new Set(['SOL','WSOL','USDC','USDT']);
+function mf48Num(v){const n=Number(v);return Number.isFinite(n)?n:null}
+function mf48Err(message,status=400,code='STANDALONE_SCAN_ERROR'){const e=Error(message);e.status=status;e.code=code;return e}
+async function mf48FetchJson(url,timeoutMs=8000){
+ const c=new AbortController(),t=setTimeout(()=>c.abort(),timeoutMs);
+ try{
+  const r=await fetch(url,{headers:{accept:'application/json','user-agent':'MEMEFLOW/1.0'},signal:c.signal});
+  const j=await r.json().catch(()=>null);
+  if(!r.ok)throw mf48Err(`Market data HTTP ${r.status}`,502,'MARKET_DATA_ERROR');
+  return j
+ }catch(e){
+  if(e?.name==='AbortError')throw mf48Err('Market data request timed out.',504,'MARKET_DATA_TIMEOUT');
+  throw e
+ }finally{clearTimeout(t)}
+}
+function mf48PairToken(pair,mint=null){
+ const base=pair?.baseToken||{},quote=pair?.quoteToken||{};
+ if(mint&&base.address===mint)return base;
+ if(mint&&quote.address===mint)return quote;
+ const bSym=String(base.symbol||'').toUpperCase(),qSym=String(quote.symbol||'').toUpperCase();
+ if(MF48_NATIVE_SYMBOLS.has(bSym)&&!MF48_NATIVE_SYMBOLS.has(qSym))return quote;
+ return base
+}
+async function mf48ResolveInput(raw){
+ const input=String(raw||'').trim();
+ if(!input)throw mf48Err('Paste a Solana mint, Pump.fun link or DexScreener link.',400,'TOKEN_INPUT_REQUIRED');
+
+ try{
+  const u=new URL(input);
+  if(/(^|\.)dexscreener\.com$/i.test(u.hostname)){
+   const parts=u.pathname.split('/').filter(Boolean);
+   const pairId=(parts.at(-1)||'').match(MF48_KEY_RE)?.[0]||'';
+   if(pairId&&validPubkey(pairId)){
+    const d=await mf48FetchJson(`https://api.dexscreener.com/latest/dex/pairs/solana/${encodeURIComponent(pairId)}`);
+    const pair=(d?.pairs||[]).find(x=>x?.chainId==='solana')||d?.pairs?.[0]||null;
+    if(pair){
+     const side=mf48PairToken(pair);
+     if(side?.address&&validPubkey(side.address))return {mint:side.address,pair,inputKind:'dexscreener-pair'}
+    }
+   }
+  }
+ }catch(e){
+  if(e?.code&&e.code!=='ERR_INVALID_URL')throw e
+ }
+
+ const matches=input.match(MF48_KEY_RE)||[];
+ const mint=matches.find(x=>validPubkey(x));
+ if(!mint)throw mf48Err('A valid Solana mint address was not found in that value.',400,'INVALID_SOLANA_MINT');
+ return {mint,pair:null,inputKind:/pump\.fun/i.test(input)?'pump-fun':'mint'}
+}
+async function mf48DexPairForMint(mint){
+ const rows=await mf48FetchJson(`https://api.dexscreener.com/token-pairs/v1/solana/${encodeURIComponent(mint)}`);
+ const pairs=Array.isArray(rows)?rows:[];
+ const exact=pairs.filter(p=>p?.baseToken?.address===mint||p?.quoteToken?.address===mint);
+ const pool=exact.length?exact:pairs;
+ return pool.sort((a,b)=>(mf48Num(b?.liquidity?.usd)||0)-(mf48Num(a?.liquidity?.usd)||0))[0]||null
+}
+function mf48TxnWindow(pair){
+ const tx=pair?.txns||{};
+ for(const key of ['m5','h1','h6','h24']){
+  const x=tx[key];
+  if(x&&(mf48Num(x.buys)!=null||mf48Num(x.sells)!=null))return {key,buys:mf48Num(x.buys)||0,sells:mf48Num(x.sells)||0}
+ }
+ return {key:null,buys:null,sells:null}
+}
+async function mf48DeveloperPct(creator,mint,total){
+ if(!creator||!validPubkey(creator)||!total)return null;
+ try{
+  const r=await rpc.call('getTokenAccountsByOwner',[creator,{mint},{encoding:'jsonParsed',commitment:'confirmed'}]);
+  let held=0;
+  for(const row of r?.value||[]){
+   const v=row?.account?.data?.parsed?.info?.tokenAmount?.uiAmountString;
+   const n=Number(v);if(Number.isFinite(n))held+=n
+  }
+  return total?held/total*100:null
+ }catch{return null}
+}
+async function mf48StandaloneScan(raw,u){
+ const resolved=await mf48ResolveInput(raw),mint=resolved.mint;
+ const known=store.state.tokens[mint]||{};
+ const warnings=[],sources=new Set();
+
+ let supplyInfo=null,largestInfo=null,mintInfo=null;
+ const rpcJobs=await Promise.allSettled([
+  rpc.call('getTokenSupply',[mint,{commitment:'confirmed'}]),
+  rpc.call('getTokenLargestAccounts',[mint,{commitment:'confirmed'}]),
+  rpc.call('getAccountInfo',[mint,{encoding:'jsonParsed',commitment:'confirmed'}])
+ ]);
+ if(rpcJobs[0].status==='fulfilled'){supplyInfo=rpcJobs[0].value;sources.add('Solana RPC')}else warnings.push(`Supply: ${rpcJobs[0].reason?.message||'unavailable'}`);
+ if(rpcJobs[1].status==='fulfilled'){largestInfo=rpcJobs[1].value;sources.add('Solana RPC')}else warnings.push(`Holders: ${rpcJobs[1].reason?.message||'unavailable'}`);
+ if(rpcJobs[2].status==='fulfilled')mintInfo=rpcJobs[2].value;
+
+ const decimals=supplyInfo?.value?.decimals??known.decimals??null;
+ const total=mf48Num(supplyInfo?.value?.uiAmountString)??mf48Num(known.totalSupply);
+ const vals=(largestInfo?.value||[]).map(x=>mf48Num(x.uiAmountString)).filter(x=>x!=null&&x>0);
+ const top10=total&&vals.length?vals.slice(0,10).reduce((a,b)=>a+b,0)/total*100:(mf48Num(known.top10Pct));
+ const holderFresh=Boolean(largestInfo);
+ const holderCountKnown=mf48Num(known.holderCount);
+ const holderCount=holderCountKnown!=null?holderCountKnown:(vals.length&&vals.length<20?vals.length:null);
+ const holderCountDisplay=holderCount!=null?String(Math.round(holderCount)):(vals.length>=20?'20+':null);
+
+ let pair=resolved.pair||null;
+ if(!pair){
+  try{pair=await mf48DexPairForMint(mint);if(pair)sources.add('DexScreener')}
+  catch(e){warnings.push(`DEX: ${e.message}`)}
+ }else sources.add('DexScreener');
+
+ const side=pair?mf48PairToken(pair,mint):null;
+ const name=side?.name||known.name||null,symbol=side?.symbol||known.symbol||null;
+ const priceUsd=mf48Num(pair?.priceUsd);
+ const liquidityUsd=mf48Num(pair?.liquidity?.usd);
+ const marketCapUsd=mf48Num(pair?.marketCap)??mf48Num(pair?.fdv)??(priceUsd!=null&&total!=null?priceUsd*total:null);
+ const volume5mUsd=mf48Num(pair?.volume?.m5);
+ const tx5=pair?.txns?.m5||null;
+ const buys5m=mf48Num(tx5?.buys),sells5m=mf48Num(tx5?.sells);
+
+ let priceSol=mf48Num(known.priceSol),liquiditySol=mf48Num(known.liquiditySol);
+ if(known.curve&&validPubkey(known.curve)){
+  try{
+   const r=await rpc.call('getAccountInfo',[known.curve,{encoding:'base64',commitment:'confirmed'}]);
+   if(r?.value?.data?.[0]){
+    const c=decodeCurve(r.value.data[0],decimals||6);
+    priceSol=mf48Num(c.priceSol)??priceSol;
+    liquiditySol=mf48Num(c.liquiditySol)??liquiditySol;
+    sources.add('Pump curve')
+   }
+  }catch(e){warnings.push(`Curve: ${e.message}`)}
+ }
+
+ let buyPressure=mf48Num(known.buyPressure);
+ const tw=tradeWindows.get(mint);
+ if(tw&&(tw.buy||tw.sell)){
+  buyPressure=tw.sell?tw.buy/tw.sell:(tw.buy||null);
+  sources.add('Live flow')
+ }else if(buyPressure==null&&pair){
+  const w=mf48TxnWindow(pair);
+  if(w.buys!=null||w.sells!=null){
+   buyPressure=w.sells?w.buys/w.sells:(w.buys||null)
+  }
+ }
+
+ const creator=known.creator||null;
+ let developerPct=mf48Num(known.developerPct);
+ if(developerPct==null&&creator&&total)developerPct=await mf48DeveloperPct(creator,mint,total);
+
+ const mintParsed=mintInfo?.value?.data?.parsed?.info||{};
+ const mintAuthority=mintParsed.mintAuthority??null,freezeAuthority=mintParsed.freezeAuthority??null;
+
+ const priceAvailable=priceSol!=null||priceUsd!=null;
+ const dataQuality=[total,top10,priceAvailable?1:null].filter(x=>x!=null).length/3;
+ const evalToken={
+  holderCount,
+  top10Pct:top10,
+  developerPct,
+  buyPressure,
+  // evaluate() only checks that priceSol is non-null; use a sentinel when a verified USD price exists.
+  priceSol:priceSol!=null?priceSol:(priceUsd!=null?0:null),
+  holderFresh,
+  dataQuality
+ };
+ const evaluation=evaluate(evalToken,u.settings);
+
+ if(holderCount==null&&holderCountDisplay==='20+')warnings.push('Exact holder count is not available from standard Solana RPC; evaluator keeps the holder gate waiting.');
+ if(developerPct==null)warnings.push('Developer holding is unavailable unless the creator is known.');
+ if(!pair&&priceSol==null)warnings.push('No DEX or bonding-curve price was available.');
+
+ return {
+  mint,name,symbol,inputKind:resolved.inputKind,
+  evaluation,
+  market:{
+   priceUsd,priceSol,
+   marketCapUsd,
+   marketCapSol:priceSol!=null&&total!=null?priceSol*total:null,
+   liquidityUsd,liquiditySol,
+   buyPressure,volume5mUsd,buys5m,sells5m,
+   priceChange5mPct:mf48Num(pair?.priceChange?.m5),
+   pairAddress:pair?.pairAddress||null,
+   dexId:pair?.dexId||null,
+   pairUrl:pair?.url||null
+  },
+  onchain:{
+   decimals,totalSupply:total,holderCount,holderCountDisplay,top10Pct:top10,
+   developerPct,creator,mintAuthority,freezeAuthority,holderFresh
+  },
+  settingsApplied:{
+   minScore:u.settings?.minScore,maxTop10Pct:u.settings?.maxTop10Pct,
+   maxDeveloperPct:u.settings?.maxDeveloperPct,minBuyPressure:u.settings?.minBuyPressure,
+   minHolders:u.settings?.minHolders,minConfidence:u.settings?.minConfidence
+  },
+  sources:[...sources],warnings,
+  independent:true,
+  candidateFeedTouched:false,
+  manualAiScanTouched:false,
+  scannedAt:new Date().toISOString()
+ }
+}
+/* MEMEFLOW_AI_STANDALONE_V48_END */

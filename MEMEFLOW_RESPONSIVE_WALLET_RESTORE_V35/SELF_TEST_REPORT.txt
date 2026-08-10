@@ -1,0 +1,6 @@
+MEMEFLOW RESPONSIVE WALLET RESTORE V35 — SELF TEST
+
+PASS 100 / 100 installer/idempotency scenarios
+
+Confirmed installer preserves native Wallet/top/sidebar/sheet fingerprints and adds only one V35 runtime tag.
+Runtime has no API/trading requests.

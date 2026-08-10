@@ -1,0 +1,10 @@
+PASS 100/100 isolated V47 -> V48 install + verify + exact rollback simulations.
+PASS frontend syntax.
+PASS installer / verifier / rollback syntax.
+PASS V48 standalone route uses evaluate(evalToken, u.settings).
+PASS V48 helper contains no setDecision(), evaluateAll(), setToken() or addToken().
+PASS V48 frontend does not call /api/ai/decisions.
+PASS V48 frontend does not query/control MANUAL AI SCAN DOM.
+PASS Candidates / Positions / Wallet / More preserved in install simulation.
+PASS V44 bottom-nav script preserved in install simulation.
+PASS installer does not start the server.

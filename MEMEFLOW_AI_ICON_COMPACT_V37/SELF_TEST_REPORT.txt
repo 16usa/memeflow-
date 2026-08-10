@@ -1,0 +1,5 @@
+PASS 100/100 install/idempotency scenarios.
+PASS V36 tag removed.
+PASS stray ::after star disabled.
+PASS compact 25x23 icon.
+PASS AI button/click/API logic untouched.

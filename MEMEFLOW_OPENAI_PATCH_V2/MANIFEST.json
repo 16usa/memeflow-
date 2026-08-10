@@ -1,0 +1,5 @@
+{
+  "name": "MEMEFLOW_OPENAI_PATCH_V2",
+  "fix": "robust route detection; automatic syntax validation and rollback",
+  "per_user_isolation": true
+}

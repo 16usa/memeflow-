@@ -1,0 +1,36 @@
+/* === MEMEFLOW OPENAI TOKEN INFO V58 START === */
+const MF_V58_TOKEN_PROGRAM='TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA';
+const MF_V58_TOKEN_2022_PROGRAM='TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb';
+function mfV58ExtractMint(input){const s=String(input||'').trim(),m=s.match(/[1-9A-HJ-NP-Za-km-z]{32,44}/g)||[];for(const c of [...m.sort((a,b)=>b.length-a.length),s])if(validPubkey(c))return c;return''}
+async function mfV58FetchJson(url,ms=3500){const c=new AbortController(),t=setTimeout(()=>c.abort(),ms);try{const r=await fetch(url,{headers:{accept:'application/json','user-agent':'MEMEFLOW/1.0'},signal:c.signal});if(!r.ok)throw Error(`HTTP ${r.status}`);return await r.json()}finally{clearTimeout(t)}}
+async function mfV58RpcOn(url,method,params=[],ms=4200){const c=new AbortController(),t=setTimeout(()=>c.abort(),ms);try{const r=await fetch(url,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:`v58-${Date.now()}-${Math.random()}`,method,params}),signal:c.signal});const d=await r.json().catch(()=>({}));if(!r.ok||d.error)throw Error(d.error?.message||`RPC HTTP ${r.status}`);return d.result}finally{clearTimeout(t)}}
+async function mfV58FastRpc(method,params=[],ms=4200){const urls=(rpcUrls||[]).filter(Boolean).slice(0,3);if(!urls.length)throw Error('SOLANA_RPC_URLS is not configured');try{return await Promise.any(urls.map(u=>mfV58RpcOn(u,method,params,ms)))}catch(e){const a=e?.errors?.map(x=>x?.message).filter(Boolean)||[];throw Error(a[0]||e?.message||`${method} failed`)}}
+function mfV58Num(v){const n=Number(v);return Number.isFinite(n)?n:null}
+function mfV58BestPair(rows,mint){const a=(Array.isArray(rows)?rows:rows?.pairs||[]).filter(p=>p&&p.chainId==='solana'),base=a.filter(p=>p.baseToken?.address===mint),pool=base.length?base:a;return pool.sort((x,y)=>Number(y?.liquidity?.usd||0)-Number(x?.liquidity?.usd||0))[0]||null}
+async function mfV58HolderCount(mint,programId){if(programId!==MF_V58_TOKEN_PROGRAM&&programId!==MF_V58_TOKEN_2022_PROGRAM)return null;try{const rows=await mfV58FastRpc('getProgramAccounts',[programId,{commitment:'confirmed',encoding:'base64',filters:[{memcmp:{offset:0,bytes:mint}}],dataSlice:{offset:32,length:40}}],3800),owners=new Set();for(const row of rows||[]){const d=row?.account?.data,b64=Array.isArray(d)?d[0]:null;if(!b64)continue;const b=Buffer.from(b64,'base64');if(b.length<40)continue;if(b.readBigUInt64LE(32)>0n)owners.add(b.subarray(0,32).toString('hex'))}return owners.size}catch{return null}}
+async function mfV58ScanToken(mint,u){
+ const cached=store.state.tokens?.[mint]||null;
+ const supplyP=mfV58FastRpc('getTokenSupply',[mint,{commitment:'confirmed'}],4200).catch(e=>({__error:e.message}));
+ const largestP=mfV58FastRpc('getTokenLargestAccounts',[mint,{commitment:'confirmed'}],4200).catch(e=>({__error:e.message}));
+ const mintInfoP=mfV58FastRpc('getAccountInfo',[mint,{encoding:'jsonParsed',commitment:'confirmed'}],4200).catch(e=>({__error:e.message}));
+ const dexP=mfV58FetchJson(`https://api.dexscreener.com/tokens/v1/solana/${encodeURIComponent(mint)}`,3500).catch(e=>({__error:e.message}));
+ const curveP=cached?.curve?mfV58FastRpc('getAccountInfo',[cached.curve,{encoding:'base64',commitment:'confirmed'}],4200).catch(e=>({__error:e.message})):Promise.resolve(null);
+ const [supply,largest,mintInfo,dexRows,curveInfo]=await Promise.all([supplyP,largestP,mintInfoP,dexP,curveP]);
+ if(supply?.__error&&mintInfo?.__error&&dexRows?.__error&&!cached)throw Error(`Solana token data unavailable: ${supply.__error||mintInfo.__error||dexRows.__error}`);
+ const parsed=mintInfo?.value?.data?.parsed?.info||{},programId=mintInfo?.value?.owner||null;
+ const decimals=mfV58Num(supply?.value?.decimals??parsed.decimals??cached?.decimals);
+ const totalSupply=mfV58Num(supply?.value?.uiAmountString??(parsed.supply!=null&&decimals!=null?Number(parsed.supply)/10**decimals:null)??cached?.totalSupply);
+ const vals=(largest?.value||[]).map(x=>mfV58Num(x.uiAmountString)).filter(x=>x!=null&&x>=0);
+ const top10Pct=totalSupply>0&&vals.length?vals.slice(0,10).reduce((a,b)=>a+b,0)/totalSupply*100:mfV58Num(cached?.top10Pct);
+ const holderCount=await mfV58HolderCount(mint,programId),pair=mfV58BestPair(dexRows,mint);let curve={};if(curveInfo?.value?.data?.[0]&&decimals!=null)try{curve=decodeCurve(curveInfo.value.data[0],decimals)}catch{}
+ const isBase=pair?.baseToken?.address===mint,meta=isBase?pair?.baseToken:(pair?.quoteToken?.address===mint?pair?.quoteToken:null);
+ const priceUsd=mfV58Num(pair?.priceUsd);let priceSol=mfV58Num(curve?.priceSol??cached?.priceSol);if(priceSol==null&&isBase&&/^(SOL|WSOL)$/i.test(pair?.quoteToken?.symbol||''))priceSol=mfV58Num(pair?.priceNative);
+ const marketCapUsd=mfV58Num(pair?.marketCap??pair?.fdv),marketCapSol=mfV58Num(cached?.marketCapSol??(priceSol!=null&&totalSupply!=null?priceSol*totalSupply:null));
+ const liquidityUsd=mfV58Num(pair?.liquidity?.usd),liquiditySol=mfV58Num(curve?.liquiditySol??cached?.liquiditySol);
+ const tx=pair?.txns?.m5||pair?.txns?.h1||null,buys=mfV58Num(tx?.buys),sells=mfV58Num(tx?.sells),buyPressure=buys!=null&&sells!=null?(sells>0?buys/sells:(buys>0?buys:null)):mfV58Num(cached?.buyPressure);
+ const developerPct=mfV58Num(cached?.developerPct),actualHolders=holderCount!=null?holderCount:mfV58Num(cached?.holderCount),q=[totalSupply,top10Pct,actualHolders,(priceUsd??priceSol),(liquidityUsd??liquiditySol)],dataQuality=q.filter(v=>v!=null).length/q.length;
+ const ephemeral={mint,decimals,totalSupply,top10Pct,holderCount:actualHolders,holderFresh:actualHolders!=null,priceSol,liquiditySol,marketCapSol,developerPct,buyPressure,dataQuality};
+ let evaluation;try{evaluation=evaluate(ephemeral,store.settings(u.id))}catch(e){evaluation={state:'ANALYZED',score:null,confidence:Math.round(dataQuality*100),reasons:[e.message],primaryReason:'Token data loaded; evaluator settings unavailable.'}}
+ return {ok:true,token:{mint,name:meta?.name||cached?.name||null,symbol:meta?.symbol||cached?.symbol||null,decimals,totalSupply,holderCount:actualHolders,top10Pct,developerPct,mintAuthority:parsed.mintAuthority??null,freezeAuthority:parsed.freezeAuthority??null,tokenProgram:programId},market:{priceUsd,priceSol,marketCapUsd,marketCapSol,liquidityUsd,liquiditySol,buyPressure,buys,sells,volumeM5:mfV58Num(pair?.volume?.m5),volumeH1:mfV58Num(pair?.volume?.h1),priceChangeM5:mfV58Num(pair?.priceChange?.m5),dex:pair?.dexId||null,pairAddress:pair?.pairAddress||null},evaluation,sources:{solana:!(supply?.__error&&mintInfo?.__error),dexScreener:Boolean(pair),cached:Boolean(cached)},diagnostics:{supplyError:supply?.__error||null,largestAccountsError:largest?.__error||null,mintInfoError:mintInfo?.__error||null,dexError:dexRows?.__error||null,holdersExact:holderCount!=null},scannedAt:new Date().toISOString()};
+}
+/* === MEMEFLOW OPENAI TOKEN INFO V58 END === */

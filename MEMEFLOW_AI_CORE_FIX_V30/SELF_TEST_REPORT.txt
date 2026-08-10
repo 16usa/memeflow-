@@ -1,0 +1,16 @@
+MEMEFLOW AI CORE FIX V30 — SELF TEST
+
+PASS 100 / 100 installer/idempotency scenarios
+
+ROOT-CAUSE CHECKS
+=================
+PASS V28/V29 removed instead of stacked
+PASS V24 runtime replaced by V30
+PASS V24 evaluator config preserved exactly
+PASS V26/V27 tags preserved
+PASS native DOM IDs remain V24-compatible
+PASS overlay parent is never display:none
+PASS any element containing native sheet is protected
+PASS all exact legacy backend copies are suppressed
+PASS legacy duplicate scan stops when native sheet closes
+PASS native AI sheet receives top z-index

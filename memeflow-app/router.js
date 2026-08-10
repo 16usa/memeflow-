@@ -228,54 +228,17 @@
         return;
       }
       if (sheet === 'positions') {
-        /*
-         * One-tap Positions navigation — exact sequence:
-         *
-         *  1. Find the inner "Position" tab (the Mission/Position/Incident
-         *     strip visible on mobile at the top of the page).
-         *  2. Click it — fires our context-tabs handler below, which:
-         *       a. sets the tab active (removes Mission active)
-         *       b. adds body.context-position
-         *       c. CSS then shows #positions:
-         *            .context-position #positions { display:block!important }
-         *          and hides .mission-grid, #workspace.
-         *  3. Wait TWO requestAnimationFrames so layout settles with
-         *     #positions painted and having real height.
-         *  4. Measure #positions and scroll document.scrollingElement.scrollTop
-         *     (window.scrollTo is blocked on iOS Safari by overflow-x:clip).
-         *  5. Update the URL hash via pushState (no native jump).
-         *
-         * We do NOT call navigate() here: navigate() calls scrollTo() which
-         * would measure #positions while it is still display:none (Mission
-         * context), getting rect.top === 0 and scrolling nowhere.
-         */
-        var innerPositionTab = document.querySelector(
-          '.context-tabs button[data-context="position"]'
-        );
-        if (innerPositionTab) {
-          innerPositionTab.click(); /* fires context-tabs handler → body.context-position */
-        } else {
-          /* Fallback: context tabs not in DOM — apply class manually */
-          document.body.classList.remove(
-            'context-mission', 'context-position', 'context-incident'
-          );
-          document.body.classList.add('context-position');
-        }
+      /*
+       * Positions is handled by MEMEFLOW_POSITIONS_SHEET_V1
+       * in index.html.
+       *
+       * Do NOT manipulate context classes, scroll position,
+       * requestAnimationFrame, or URL hash here.
+       */
+      return;
+    }
 
-        /* After the body class is set, CSS has made #positions display:block.
-           Two rAFs ensure the browser has finished layout before we measure. */
-        requestAnimationFrame(function () {
-          requestAnimationFrame(function () {
-            var target = document.getElementById('positions');
-            scrollToElement(target); /* defined above — uses scrollingElement */
-            try {
-              window.history.pushState({ hash: '#positions' }, '', '#positions');
-            } catch (_) {}
-          });
-        });
-        return;
-      }
-      // candidates / wallet / more → open overlay sheet
+    // candidates / wallet / more → open overlay sheet
       openMobileSheet(sheet);
     });
   });

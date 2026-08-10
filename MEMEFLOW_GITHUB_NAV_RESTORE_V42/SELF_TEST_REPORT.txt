@@ -1,0 +1,7 @@
+PASS 100/100 install + verify scenarios.
+PASS scenario explicitly removes #walletConnectTop from Replit HTML.
+PASS old V35/V39/V40/V41 tags are removed.
+PASS V42 keeps bottom Wallet route and functional AI runtime.
+PASS V42 recreates GitHub-native #walletConnectTop at browser runtime if absent.
+PASS phone nav height hard-reset to 76px and AI true center.
+PASS no fetch/API/trading logic in V42.

@@ -1,0 +1,9 @@
+PASS 120/120 install + verify + exact rollback simulations.
+PASS V55 active tag disabled by V56.
+PASS V51 and V53 preserved.
+PASS native state background is sampled before cyan mapping.
+PASS original opacity/filter/transform/transition are not modified.
+PASS disabled/loading attributes are not modified.
+PASS pointer hover/pressed/focus states are re-sampled without click interception.
+PASS no API/fetch/server changes.
+PASS exact pre-V56 index restored by rollback.

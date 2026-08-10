@@ -1,0 +1,8 @@
+PASS 100/100 isolated install + verify scenarios.
+PASS direct app-server route injection.
+PASS package start restored to node app-server.mjs.
+PASS V45 bootstrap removed.
+PASS old V30 runtime script removed.
+PASS V44 responsive/wallet script preserved.
+PASS More preserved.
+PASS no permanent observer or interval in V46 frontend.

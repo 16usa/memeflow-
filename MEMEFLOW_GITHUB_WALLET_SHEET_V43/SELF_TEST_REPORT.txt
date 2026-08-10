@@ -1,0 +1,7 @@
+PASS 100/100 isolated install + verify scenarios.
+PASS replaces V42 tag instead of stacking.
+PASS capture-phase click interception blocks GitHub native direct provider-modal opening on phone.
+PASS opens #sheet-wallet first.
+PASS provider modal remains available to Connect Wallet inside Wallet page.
+PASS AI/nav geometry from V42 retained.
+PASS no API/trading calls changed.

@@ -1,0 +1,8 @@
+PASS 120/120 install + verify + exact rollback simulations.
+PASS V54 active script removed on V55 install.
+PASS V51 and V53 tags preserved.
+PASS primary color applied through inline !important (not a weak single class).
+PASS actual OpenAI button color discovery with #61DFFF fallback.
+PASS disabled/destructive/navigation exclusions.
+PASS no API/fetch/click-handler changes.
+PASS no server changes or server start.

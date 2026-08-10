@@ -1,0 +1,12 @@
+
+ /* MEMEFLOW_AI_STANDALONE_V49_ROUTE_BEGIN */
+ if(url.pathname==='/api/ai/standalone-scan'&&req.method==='POST'){
+  try{
+   const b=await body(req);
+   const scan=await mf49StandaloneScan(b.input,u);
+   return json(res,200,{ok:true,scan})
+  }catch(e){
+   return json(res,e.status||500,{error:e.code||'STANDALONE_SCAN_ERROR',message:e.message||'Token scan failed.'})
+  }
+ }
+ /* MEMEFLOW_AI_STANDALONE_V49_ROUTE_END */

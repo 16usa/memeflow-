@@ -1,0 +1,11 @@
+MEMEFLOW REMOVE DUPLICATE WALLET V31 — SELF TEST
+
+PASS 100 / 100 installer/idempotency simulations
+
+Verified:
+- installer changes only the V31 script tag
+- native #walletConnectTop remains in HTML
+- bottom-nav Wallet is not modified
+- no AI/evaluator/API code is present
+- runtime targets only [id^="mf-header-wallet-v"]
+- repeated installation produces exactly one V31 tag

@@ -1,0 +1,6 @@
+SELF TEST
+- README.txt
+- apply-header-wallet-restore-v41.mjs
+- header-wallet-restore-v41.js
+- rollback-header-wallet-restore-v41.mjs
+- verify-header-wallet-restore-v41.mjs
