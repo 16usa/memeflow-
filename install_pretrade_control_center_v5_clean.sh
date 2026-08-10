@@ -1,0 +1,240 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="${1:-${PROJECT_ROOT:-.}}"
+APP="$ROOT/memeflow-app"
+[[ -f "$APP/index.html" ]] || APP="$ROOT"
+
+INDEX="$APP/index.html"
+PAPER_UI="$APP/paper-automation-ui.js"
+MODULE="$APP/pretrade-control-center-v5.js"
+
+[[ -f "$INDEX" ]] || { echo "ERROR: index.html not found."; exit 1; }
+[[ -f "$PAPER_UI" ]] || { echo "ERROR: paper-automation-ui.js not found."; exit 1; }
+
+if ! grep -q 'data-mf-pretrade-v2="1"' "$INDEX"; then
+  if grep -q 'data-mf-pretrade-v5="1"' "$INDEX"; then
+    echo "PRE-TRADE CONTROL CENTER V5 is already installed."
+    exit 0
+  fi
+  echo "ERROR: current V2 source marker not found. Nothing changed."
+  exit 1
+fi
+
+PATCH_DIR="$APP/.memeflow-patches/pretrade-control-center-v5"
+mkdir -p "$PATCH_DIR"
+STAMP="$(date +%Y%m%d-%H%M%S)"
+
+INDEX_BAK="$PATCH_DIR/index.html.$STAMP.bak"
+PAPER_BAK="$PATCH_DIR/paper-automation-ui.js.$STAMP.bak"
+cp "$INDEX" "$INDEX_BAK"
+cp "$PAPER_UI" "$PAPER_BAK"
+
+MODULE_EXISTED=0
+MODULE_BAK=""
+if [[ -f "$MODULE" ]]; then
+  MODULE_EXISTED=1
+  MODULE_BAK="$PATCH_DIR/pretrade-control-center-v5.js.$STAMP.bak"
+  cp "$MODULE" "$MODULE_BAK"
+fi
+
+WORK_INDEX="$PATCH_DIR/index.html.$STAMP.work"
+WORK_PAPER="$PATCH_DIR/paper-automation-ui.js.$STAMP.work"
+WORK_MODULE="$PATCH_DIR/pretrade-control-center-v5.js.$STAMP.work"
+
+cp "$INDEX" "$WORK_INDEX"
+cp "$PAPER_UI" "$WORK_PAPER"
+printf '%s' 'KCgpID0+IHsKICAndXNlIHN0cmljdCc7CgogIGlmICh3aW5kb3cuX19NRU1FRkxPV19QUkVUUkFERV9DT05UUk9MX0NFTlRFUl9WNV9fKSByZXR1cm47CiAgd2luZG93Ll9fTUVNRUZMT1dfUFJFVFJBREVfQ09OVFJPTF9DRU5URVJfVjVfXyA9IHRydWU7CgogIGNvbnN0IEhBUkRfUEFQRVJfQ09ERVMgPSBuZXcgU2V0KFsKICAgICdQT1NJVElPTl9FWElTVFMnLAogICAgJ01BWF9PUEVOX1BPU0lUSU9OUycsCiAgICAnTUFYX0RBSUxZX0VOVFJJRVMnLAogICAgJ0lOVkFMSURfUE9TSVRJT05fU0laRScsCiAgICAnREFJTFlfU1BFTkRfTElNSVQnLAogICAgJ1BBUEVSX0NBUElUQUxfTElNSVQnLAogICAgJ0tJTExfU1dJVENIJywKICAgICdEQUlMWV9MT1NTX0xJTUlUJwogIF0pOwoKICBsZXQgcmVxdWVzdEdlbmVyYXRpb24gPSAwOwogIGxldCByZWZyZXNoVGltZXIgPSBudWxsOwogIGxldCBsYXN0U3RhdGUgPSBudWxsOwoKICBjb25zdCAkID0gc2VsZWN0b3IgPT4gZG9jdW1lbnQucXVlcnlTZWxlY3RvcihzZWxlY3Rvcik7CgogIGZ1bmN0aW9uIGNhbmRpZGF0ZSgpIHsKICAgIHRyeSB7CiAgICAgIHJldHVybiB3aW5kb3cuTUVNRUZMT1dfQ09SRT8uZ2V0U2VsZWN0ZWQ/LigpIHx8IG51bGw7CiAgICB9IGNhdGNoIHsKICAgICAgcmV0dXJuIG51bGw7CiAgICB9CiAgfQoKICBmdW5jdGlvbiBtaW50T2YodmFsdWUpIHsKICAgIHJldHVybiBTdHJpbmcoCiAgICAgIHZhbHVlPy5taW50IHx8CiAgICAgIHZhbHVlPy50b2tlbk1pbnQgfHwKICAgICAgdmFsdWU/LnRva2VuQWRkcmVzcyB8fAogICAgICB2YWx1ZT8uYWRkcmVzcyB8fAogICAgICAnJwogICAgKS50cmltKCk7CiAgfQoKICBmdW5jdGlvbiBhaVN0YXRlKHZhbHVlKSB7CiAgICByZXR1cm4gU3RyaW5nKAogICAgICB2YWx1ZT8uc3RhdGUgfHwKICAgICAgJCgnI3ByaW1hcnlTdGF0ZScpPy50ZXh0Q29udGVudCB8fAogICAgICAkKCcjbW9iaWxlU2lnbmFsU3RhdGUnKT8udGV4dENvbnRlbnQgfHwKICAgICAgJ1dBSVRJTkcnCiAgICApLnRyaW0oKS50b1VwcGVyQ2FzZSgpOwogIH0KCiAgZnVuY3Rpb24gaXNQYXBlck1vZGUoKSB7CiAgICBjb25zdCB2aXNpYmxlID0gWwogICAgICAuLi5kb2N1bWVudC5xdWVyeVNlbGVjdG9yQWxsKCcudG9wLWxlZnQgLmNoaXAsLm1vZGUtaW5kaWNhdG9yLC50b3BiYXInKQogICAgXS5tYXAobm9kZSA9PiBub2RlLnRleHRDb250ZW50IHx8ICcnKS5qb2luKCcgJykudG9Mb3dlckNhc2UoKTsKCiAgICBpZiAodmlzaWJsZS5pbmNsdWRlcygncGFwZXInKSkgcmV0dXJuIHRydWU7CiAgICBpZiAodmlzaWJsZS5pbmNsdWRlcygnbGl2ZScpKSByZXR1cm4gZmFsc2U7CgogICAgdHJ5IHsKICAgICAgY29uc3QgY29yZSA9IHdpbmRvdy5NRU1FRkxPV19DT1JFPy5nZXRTdGF0ZT8uKCkgfHwge307CiAgICAgIGNvbnN0IG1vZGUgPSBTdHJpbmcoCiAgICAgICAgY29yZT8uc2V0dGluZ3M/LnRyYWRpbmdFbnZpcm9ubWVudCB8fAogICAgICAgIGNvcmU/LnRyYWRpbmdFbnZpcm9ubWVudCB8fAogICAgICAgICdwYXBlcicKICAgICAgKS50b0xvd2VyQ2FzZSgpOwogICAgICByZXR1cm4gbW9kZS5pbmNsdWRlcygncGFwZXInKTsKICAgIH0gY2F0Y2ggewogICAgICByZXR1cm4gdHJ1ZTsKICAgIH0KICB9CgogIGZ1bmN0aW9uIGZpbml0ZSh2YWx1ZSkgewogICAgcmV0dXJuIHZhbHVlICE9PSBudWxsICYmCiAgICAgIHZhbHVlICE9PSB1bmRlZmluZWQgJiYKICAgICAgdmFsdWUgIT09ICcnICYmCiAgICAgIE51bWJlci5pc0Zpbml0ZShOdW1iZXIodmFsdWUpKTsKICB9CgogIGZ1bmN0aW9uIHBhcGVyRmFsbGJhY2soc3RhdGUpIHsKICAgIHJldHVybiBbCiAgICAgIHsgbmFtZTogJ0FJIEJVWSBSRUFEWScsIHBhc3M6IHN0YXRlID09PSAnQlVZIFJFQURZJywgY29kZTogc3RhdGUgPT09ICdCTE9DS0VEJyA/ICdBSV9CTE9DS0VEJyA6IG51bGwgfSwKICAgICAgeyBuYW1lOiAnVmFsaWQgcHJpY2UnLCBwYXNzOiBmYWxzZSwgY29kZTogbnVsbCB9LAogICAgICB7IG5hbWU6ICdGcmVzaCB0b2tlbiBkYXRhJywgcGFzczogZmFsc2UsIGNvZGU6IG51bGwgfSwKICAgICAgeyBuYW1lOiAnTm8gZXhpc3RpbmcgcG9zaXRpb24nLCBwYXNzOiBmYWxzZSwgY29kZTogbnVsbCB9LAogICAgICB7IG5hbWU6ICdQb3NpdGlvbiBjYXBhY2l0eScsIHBhc3M6IGZhbHNlLCBjb2RlOiBudWxsIH0sCiAgICAgIHsgbmFtZTogJ0RhaWx5IGVudHJpZXMgYXZhaWxhYmxlJywgcGFzczogZmFsc2UsIGNvZGU6IG51bGwgfSwKICAgICAgeyBuYW1lOiAnUG9zaXRpb24gc2l6ZSB2YWxpZCcsIHBhc3M6IGZhbHNlLCBjb2RlOiBudWxsIH0sCiAgICAgIHsgbmFtZTogJ0RhaWx5IHNwZW5kIGF2YWlsYWJsZScsIHBhc3M6IGZhbHNlLCBjb2RlOiBudWxsIH0sCiAgICAgIHsgbmFtZTogJ1BhcGVyIGNhcGl0YWwgYXZhaWxhYmxlJywgcGFzczogZmFsc2UsIGNvZGU6IG51bGwgfSwKICAgICAgeyBuYW1lOiAnU2FmZXR5IGNvbnRyb2xzIGNsZWFyJywgcGFzczogZmFsc2UsIGNvZGU6IG51bGwgfQogICAgXTsKICB9CgogIGFzeW5jIGZ1bmN0aW9uIGxvYWRQYXBlckdhdGVzKHZhbHVlLCBzdGF0ZSwgZ2VuZXJhdGlvbikgewogICAgY29uc3QgbWludCA9IG1pbnRPZih2YWx1ZSk7CiAgICBpZiAoIW1pbnQpIHJldHVybiBwYXBlckZhbGxiYWNrKHN0YXRlKTsKCiAgICB0cnkgewogICAgICBjb25zdCByZXNwb25zZSA9IGF3YWl0IGZldGNoKAogICAgICAgICcvYXBpL3BhcGVyL3JlYWRpbmVzcz9taW50PScgKyBlbmNvZGVVUklDb21wb25lbnQobWludCksCiAgICAgICAgewogICAgICAgICAgY3JlZGVudGlhbHM6ICdpbmNsdWRlJywKICAgICAgICAgIGhlYWRlcnM6IHsgYWNjZXB0OiAnYXBwbGljYXRpb24vanNvbicgfSwKICAgICAgICAgIGNhY2hlOiAnbm8tc3RvcmUnCiAgICAgICAgfQogICAgICApOwoKICAgICAgaWYgKGdlbmVyYXRpb24gIT09IHJlcXVlc3RHZW5lcmF0aW9uKSByZXR1cm4gbnVsbDsKICAgICAgaWYgKCFyZXNwb25zZS5vaykgdGhyb3cgbmV3IEVycm9yKCdIVFRQICcgKyByZXNwb25zZS5zdGF0dXMpOwoKICAgICAgY29uc3QgZGF0YSA9IGF3YWl0IHJlc3BvbnNlLmpzb24oKTsKICAgICAgaWYgKGdlbmVyYXRpb24gIT09IHJlcXVlc3RHZW5lcmF0aW9uKSByZXR1cm4gbnVsbDsKCiAgICAgIGNvbnN0IGJhY2tlbmQgPSBBcnJheS5pc0FycmF5KGRhdGE/LmNoZWNrcykgPyBkYXRhLmNoZWNrcyA6IFtdOwogICAgICBpZiAoYmFja2VuZC5sZW5ndGggIT09IDkpIHJldHVybiBwYXBlckZhbGxiYWNrKHN0YXRlKTsKCiAgICAgIHJldHVybiBbCiAgICAgICAgewogICAgICAgICAgbmFtZTogJ0FJIEJVWSBSRUFEWScsCiAgICAgICAgICBwYXNzOiBzdGF0ZSA9PT0gJ0JVWSBSRUFEWScsCiAgICAgICAgICBjb2RlOiBzdGF0ZSA9PT0gJ0JMT0NLRUQnID8gJ0FJX0JMT0NLRUQnIDogbnVsbAogICAgICAgIH0sCiAgICAgICAgLi4uYmFja2VuZC5tYXAoY2hlY2sgPT4gKHsKICAgICAgICAgIG5hbWU6IFN0cmluZyhjaGVjaz8ubmFtZSB8fCAnQ2hlY2snKSwKICAgICAgICAgIHBhc3M6IGNoZWNrPy5wYXNzID09PSB0cnVlLAogICAgICAgICAgY29kZTogY2hlY2s/LmNvZGUgfHwgbnVsbAogICAgICAgIH0pKQogICAgICBdOwogICAgfSBjYXRjaCB7CiAgICAgIHJldHVybiBwYXBlckZhbGxiYWNrKHN0YXRlKTsKICAgIH0KICB9CgogIGZ1bmN0aW9uIGxvYWRMaXZlR2F0ZXModmFsdWUsIHN0YXRlKSB7CiAgICBjb25zdCBxdW90ZUFnZSA9IGZpbml0ZSh2YWx1ZT8ucXVvdGVBZ2VNcykKICAgICAgPyBOdW1iZXIodmFsdWUucXVvdGVBZ2VNcykKICAgICAgOiBudWxsOwoKICAgIGNvbnN0IHNpemUgPSBOdW1iZXIoCiAgICAgIHZhbHVlPy5leGVjdXRpb24/LnNpemVTb2wgPz8KICAgICAgdmFsdWU/LnBvc2l0aW9uU2l6ZSA/PwogICAgICB2YWx1ZT8ucG9zaXRpb25TaXplU29sCiAgICApOwoKICAgIGNvbnN0IHdhbGxldCA9IFN0cmluZygKICAgICAgJCgnI3dhbGxldEV4ZWN1dGlvbkdhdGUnKT8udGV4dENvbnRlbnQgfHwgJycKICAgICkudHJpbSgpLnRvVXBwZXJDYXNlKCk7CgogICAgY29uc3QgYmFsYW5jZSA9IFN0cmluZygKICAgICAgJCgnI3dhbGxldEJhbGFuY2VHYXRlJyk/LnRleHRDb250ZW50IHx8ICcnCiAgICApLnRyaW0oKS50b1VwcGVyQ2FzZSgpOwoKICAgIHJldHVybiBbCiAgICAgIHsgbmFtZTogJ0NhbmRpZGF0ZSBzZWxlY3RlZCcsIHBhc3M6ICEhdmFsdWU/LmlkIHx8ICEhbWludE9mKHZhbHVlKSB9LAogICAgICB7IG5hbWU6ICdBSSBCVVkgUkVBRFknLCBwYXNzOiBzdGF0ZSA9PT0gJ0JVWSBSRUFEWScgfSwKICAgICAgeyBuYW1lOiAnVmVyaWZpZWQgcHJpY2UnLCBwYXNzOiBmaW5pdGUodmFsdWU/LnByaWNlU29sID8/IHZhbHVlPy5wcmljZSkgfSwKICAgICAgeyBuYW1lOiAnRnJlc2ggaG9sZGVyIGV2aWRlbmNlJywgcGFzczogdmFsdWU/LmhvbGRlckZyZXNoID09PSB0cnVlIH0sCiAgICAgIHsKICAgICAgICBuYW1lOiAnUmlzayBhcHByb3ZlZCcsCiAgICAgICAgcGFzczogdmFsdWU/LmV4ZWN1dGlvbj8ucmlza0FwcHJvdmVkID09PSB0cnVlIHx8IHZhbHVlPy5yaXNrQXBwcm92ZWQgPT09IHRydWUKICAgICAgfSwKICAgICAgewogICAgICAgIG5hbWU6ICdSb3V0ZSBhcHByb3ZlZCcsCiAgICAgICAgcGFzczogdmFsdWU/LmV4ZWN1dGlvbj8ucm91dGVBcHByb3ZlZCA9PT0gdHJ1ZSB8fCB2YWx1ZT8ucm91dGVBcHByb3ZlZCA9PT0gdHJ1ZQogICAgICB9LAogICAgICB7IG5hbWU6ICdGcmVzaCBxdW90ZScsIHBhc3M6IHF1b3RlQWdlICE9PSBudWxsICYmIHF1b3RlQWdlIDw9IDE1MDAwIH0sCiAgICAgIHsgbmFtZTogJ1Bvc2l0aW9uIHNpemUgcmVhZHknLCBwYXNzOiBOdW1iZXIuaXNGaW5pdGUoc2l6ZSkgJiYgc2l6ZSA+IDAgfSwKICAgICAgeyBuYW1lOiAnV2FsbGV0IGNvbm5lY3RlZCcsIHBhc3M6IHdhbGxldCA9PT0gJ0NPTk5FQ1RFRCcgfHwgd2FsbGV0ID09PSAnUEFTUycgfSwKICAgICAgeyBuYW1lOiAnQmFsYW5jZSBhcHByb3ZlZCcsIHBhc3M6IGJhbGFuY2UgPT09ICdQQVNTJyB9CiAgICBdOwogIH0KCiAgZnVuY3Rpb24gc3RhdHVzRm9yKGdhdGUsIHBhcGVyTW9kZSwgc3RhdGUpIHsKICAgIGlmIChnYXRlPy5wYXNzID09PSB0cnVlKSB7CiAgICAgIHJldHVybiB7IGxhYmVsOiAnUEFTUycsIGNsYXNzTmFtZTogJ3Bhc3MnIH07CiAgICB9CgogICAgaWYgKAogICAgICBTdHJpbmcoZ2F0ZT8ubmFtZSB8fCAnJykudG9VcHBlckNhc2UoKSA9PT0gJ0FJIEJVWSBSRUFEWScgJiYKICAgICAgc3RhdGUgPT09ICdCTE9DS0VEJwogICAgKSB7CiAgICAgIHJldHVybiB7IGxhYmVsOiAnQkxPQ0tFRCcsIGNsYXNzTmFtZTogJ2Jsb2NrZWQnIH07CiAgICB9CgogICAgaWYgKHBhcGVyTW9kZSAmJiBIQVJEX1BBUEVSX0NPREVTLmhhcyhTdHJpbmcoZ2F0ZT8uY29kZSB8fCAnJykpKSB7CiAgICAgIHJldHVybiB7IGxhYmVsOiAnQkxPQ0tFRCcsIGNsYXNzTmFtZTogJ2Jsb2NrZWQnIH07CiAgICB9CgogICAgcmV0dXJuIHsgbGFiZWw6ICdQRU5ESU5HJywgY2xhc3NOYW1lOiAncGVuZGluZycgfTsKICB9CgogIGZ1bmN0aW9uIGJsb2NrZXJNZXNzYWdlKGdhdGUsIHN0YXRlLCBwYXBlck1vZGUpIHsKICAgIGlmICghZ2F0ZSkgewogICAgICByZXR1cm4gcGFwZXJNb2RlCiAgICAgICAgPyAnQWxsIFBBUEVSIGV4ZWN1dGlvbiBjaGVja3MgcGFzc2VkLicKICAgICAgICA6ICdBbGwgTElWRSBwcmUtdHJhZGUgY2hlY2tzIHBhc3NlZC4nOwogICAgfQoKICAgIGlmIChTdHJpbmcoZ2F0ZS5uYW1lIHx8ICcnKS50b1VwcGVyQ2FzZSgpID09PSAnQUkgQlVZIFJFQURZJykgewogICAgICByZXR1cm4gc3RhdGUgPT09ICdCTE9DS0VEJwogICAgICAgID8gJ1RoZSBjdXJyZW50IEFJIGRlY2lzaW9uIGlzIEJMT0NLRUQgYnkgdGhlIGV2YWx1YXRpb24gZ2F0ZXMuJwogICAgICAgIDogJ1dhaXRpbmcgZm9yIHRoZSBBSSBkZWNpc2lvbiB0byByZWFjaCBCVVkgUkVBRFkuJzsKICAgIH0KCiAgICBjb25zdCBtZXNzYWdlcyA9IHsKICAgICAgSU5WQUxJRF9QUklDRTogJ1dhaXRpbmcgZm9yIGEgdmFsaWQgdmVyaWZpZWQgdG9rZW4gcHJpY2UuJywKICAgICAgU1RBTEVfREVDSVNJT046ICdXYWl0aW5nIGZvciBhIGZyZXNoIGRlY2lzaW9uIHNuYXBzaG90LicsCiAgICAgIFNUQUxFX1RPS0VOX0RBVEE6ICdXYWl0aW5nIGZvciBmcmVzaCBob2xkZXIgYW5kIHRva2VuIGV2aWRlbmNlLicsCiAgICAgIFBPU0lUSU9OX0VYSVNUUzogJ0EgUEFQRVIgcG9zaXRpb24gZm9yIHRoaXMgdG9rZW4gaXMgYWxyZWFkeSBvcGVuLicsCiAgICAgIE1BWF9PUEVOX1BPU0lUSU9OUzogJ1RoZSBjb25maWd1cmVkIG1heGltdW0gbnVtYmVyIG9mIG9wZW4gcG9zaXRpb25zIGhhcyBiZWVuIHJlYWNoZWQuJywKICAgICAgTUFYX0RBSUxZX0VOVFJJRVM6ICdUaGUgY29uZmlndXJlZCBkYWlseSBlbnRyeSBsaW1pdCBoYXMgYmVlbiByZWFjaGVkLicsCiAgICAgIElOVkFMSURfUE9TSVRJT05fU0laRTogJ1Bvc2l0aW9uIHNpemUgaXMgb3V0c2lkZSB0aGUgY29uZmlndXJlZCBsaW1pdHMuJywKICAgICAgREFJTFlfU1BFTkRfTElNSVQ6ICdUaGlzIGVudHJ5IHdvdWxkIGV4Y2VlZCB0aGUgY29uZmlndXJlZCBkYWlseSBzcGVuZCBsaW1pdC4nLAogICAgICBQQVBFUl9DQVBJVEFMX0xJTUlUOiAnQXZhaWxhYmxlIFBBUEVSIGNhcGl0YWwgaXMgaW5zdWZmaWNpZW50IGZvciB0aGlzIGVudHJ5LicsCiAgICAgIEtJTExfU1dJVENIOiAnVGhlIGFjY291bnQga2lsbCBzd2l0Y2ggaXMgYWN0aXZlLicsCiAgICAgIERBSUxZX0xPU1NfTElNSVQ6ICdUaGUgY29uZmlndXJlZCBkYWlseSBsb3NzIGxpbWl0IGlzIGFjdGl2ZS4nCiAgICB9OwoKICAgIHJldHVybiBtZXNzYWdlc1tTdHJpbmcoZ2F0ZS5jb2RlIHx8ICcnKV0gfHwKICAgICAgYCR7Z2F0ZS5uYW1lIHx8ICdUaGlzIGNoZWNrJ30gaGFzIG5vdCBwYXNzZWQgeWV0LmA7CiAgfQoKICBmdW5jdGlvbiBzZXRUZXh0KHNlbGVjdG9yLCB2YWx1ZSkgewogICAgY29uc3Qgbm9kZSA9ICQoc2VsZWN0b3IpOwogICAgaWYgKG5vZGUpIG5vZGUudGV4dENvbnRlbnQgPSB2YWx1ZTsKICB9CgogIGZ1bmN0aW9uIHJlbmRlckdhdGVMaXN0KHJvd3MpIHsKICAgIGNvbnN0IGxpc3QgPSAkKCcjZXhlY3V0aW9uQ2hlY2tMaXN0Jyk7CiAgICBpZiAoIWxpc3QpIHJldHVybjsKCiAgICBjb25zdCBmcmFnbWVudCA9IGRvY3VtZW50LmNyZWF0ZURvY3VtZW50RnJhZ21lbnQoKTsKCiAgICBmb3IgKGNvbnN0IHJvdyBvZiByb3dzKSB7CiAgICAgIGNvbnN0IGl0ZW0gPSBkb2N1bWVudC5jcmVhdGVFbGVtZW50KCdkaXYnKTsKICAgICAgaXRlbS5jbGFzc05hbWUgPSBgZGF0YS1yb3cgZXhlY3V0aW9uLWNoZWNrLXJvdyAke3Jvdy51aS5jbGFzc05hbWV9YDsKICAgICAgaXRlbS5zZXRBdHRyaWJ1dGUoJ3JvbGUnLCAnbGlzdGl0ZW0nKTsKICAgICAgaWYgKHJvdy5jb2RlKSBpdGVtLmRhdGFzZXQuZ2F0ZUNvZGUgPSBTdHJpbmcocm93LmNvZGUpOwoKICAgICAgY29uc3QgbGVmdCA9IGRvY3VtZW50LmNyZWF0ZUVsZW1lbnQoJ3NwYW4nKTsKICAgICAgbGVmdC5jbGFzc05hbWUgPSAnZXhlY3V0aW9uLWNoZWNrLW5hbWUnOwoKICAgICAgY29uc3QgZG90ID0gZG9jdW1lbnQuY3JlYXRlRWxlbWVudCgnaScpOwogICAgICBkb3Quc2V0QXR0cmlidXRlKCdhcmlhLWhpZGRlbicsICd0cnVlJyk7CgogICAgICBjb25zdCBuYW1lID0gZG9jdW1lbnQuY3JlYXRlRWxlbWVudCgnYicpOwogICAgICBuYW1lLnRleHRDb250ZW50ID0gU3RyaW5nKHJvdy5uYW1lIHx8ICdDaGVjaycpOwoKICAgICAgY29uc3Qgc3RhdHVzID0gZG9jdW1lbnQuY3JlYXRlRWxlbWVudCgnZW0nKTsKICAgICAgc3RhdHVzLnRleHRDb250ZW50ID0gcm93LnVpLmxhYmVsOwoKICAgICAgbGVmdC5hcHBlbmQoZG90LCBuYW1lKTsKICAgICAgaXRlbS5hcHBlbmQobGVmdCwgc3RhdHVzKTsKICAgICAgZnJhZ21lbnQuYXBwZW5kQ2hpbGQoaXRlbSk7CiAgICB9CgogICAgbGlzdC5yZXBsYWNlQ2hpbGRyZW4oZnJhZ21lbnQpOwogIH0KCiAgZnVuY3Rpb24gcmVuZGVyKGdhdGVzLCBwYXBlck1vZGUsIHN0YXRlKSB7CiAgICBjb25zdCByb3dzID0gZ2F0ZXMubWFwKGdhdGUgPT4gKHsKICAgICAgLi4uZ2F0ZSwKICAgICAgdWk6IHN0YXR1c0ZvcihnYXRlLCBwYXBlck1vZGUsIHN0YXRlKQogICAgfSkpOwoKICAgIGNvbnN0IHBhc3NlZCA9IHJvd3MuZmlsdGVyKHJvdyA9PiByb3cucGFzcyA9PT0gdHJ1ZSkubGVuZ3RoOwogICAgY29uc3QgdG90YWwgPSByb3dzLmxlbmd0aDsKICAgIGNvbnN0IHNhZmUgPSB0b3RhbCA+IDAgJiYgcGFzc2VkID09PSB0b3RhbDsKICAgIGNvbnN0IGJsb2NrZWQgPSByb3dzLmZpbHRlcihyb3cgPT4gcm93LnVpLmNsYXNzTmFtZSA9PT0gJ2Jsb2NrZWQnKS5sZW5ndGg7CiAgICBjb25zdCBwZW5kaW5nID0gcm93cy5maWx0ZXIocm93ID0+IHJvdy51aS5jbGFzc05hbWUgPT09ICdwZW5kaW5nJykubGVuZ3RoOwogICAgY29uc3QgZmlyc3RGYWlsZWQgPSByb3dzLmZpbmQocm93ID0+IHJvdy5wYXNzICE9PSB0cnVlKSB8fCBudWxsOwoKICAgIHNldFRleHQoJyNleGVjdXRpb25SZWFkaW5lc3NDb3VudCcsIGAke3Bhc3NlZH0gLyAke3RvdGFsfSBjaGVja3NgKTsKICAgIHNldFRleHQoCiAgICAgICcjZXhlY3V0aW9uUmVhZGluZXNzTGFiZWwnLAogICAgICBzYWZlCiAgICAgICAgPyAocGFwZXJNb2RlID8gJ1BhcGVyIGV4ZWN1dGlvbiByZWFkeScgOiAnQWxsIHByZS10cmFkZSBjaGVja3MgcGFzc2VkJykKICAgICAgICA6IGJsb2NrZWQKICAgICAgICAgID8gYCR7YmxvY2tlZH0gYmxvY2tlZCDCtyAke3BlbmRpbmd9IHBlbmRpbmdgCiAgICAgICAgICA6IGAke3BlbmRpbmd9IHBlbmRpbmdgCiAgICApOwoKICAgIGNvbnN0IGJhciA9ICQoJyNleGVjdXRpb25SZWFkaW5lc3NCYXInKTsKICAgIGlmIChiYXIpIGJhci5zdHlsZS53aWR0aCA9IGAke01hdGgucm91bmQoKHBhc3NlZCAvIHRvdGFsKSAqIDEwMCl9JWA7CgogICAgY29uc3QgZXhlY3V0aW9uU3RhdGUgPSAkKCcjZXhlY3V0aW9uU3RhdGUnKTsKICAgIGlmIChleGVjdXRpb25TdGF0ZSkgewogICAgICBleGVjdXRpb25TdGF0ZS50ZXh0Q29udGVudCA9IHNhZmUKICAgICAgICA/IChwYXBlck1vZGUgPyAnUEFQRVIgUkVBRFknIDogJ1NBRkUnKQogICAgICAgIDogJ0xPQ0tFRCc7CiAgICAgIGV4ZWN1dGlvblN0YXRlLmNsYXNzTmFtZSA9IGBzdGF0ZSAke3NhZmUgPyAnYnV5JyA6ICd3YWl0J31gOwogICAgfQoKICAgIGNvbnN0IGV4cGxhaW5lciA9ICQoJyNleGVjdXRpb25TaWduYWxFeHBsYWluZXInKTsKICAgIGlmIChleHBsYWluZXIpIHsKICAgICAgY29uc3QgYWkgPSBkb2N1bWVudC5jcmVhdGVFbGVtZW50KCdiJyk7CiAgICAgIGFpLnRleHRDb250ZW50ID0gJ0FJIHNpZ25hbDonOwogICAgICBjb25zdCBleGVjdXRpb24gPSBkb2N1bWVudC5jcmVhdGVFbGVtZW50KCdiJyk7CiAgICAgIGV4ZWN1dGlvbi50ZXh0Q29udGVudCA9ICdFeGVjdXRpb246JzsKICAgICAgZXhwbGFpbmVyLnJlcGxhY2VDaGlsZHJlbigKICAgICAgICBhaSwKICAgICAgICBkb2N1bWVudC5jcmVhdGVUZXh0Tm9kZShgICR7c3RhdGV9IMK3IGApLAogICAgICAgIGV4ZWN1dGlvbiwKICAgICAgICBkb2N1bWVudC5jcmVhdGVUZXh0Tm9kZSgKICAgICAgICAgIHNhZmUKICAgICAgICAgICAgPyBgICR7cGFwZXJNb2RlID8gJ1BBUEVSIFJFQURZJyA6ICdTQUZFIFRPIFZBTElEQVRFJ31gCiAgICAgICAgICAgIDogJyBMT0NLRUQnCiAgICAgICAgKQogICAgICApOwogICAgfQoKICAgIHNldFRleHQoCiAgICAgICcjcHJpbWFyeUJsb2NrZXJUaXRsZScsCiAgICAgIHNhZmUKICAgICAgICA/IChwYXBlck1vZGUgPyAnUGFwZXIgZXhlY3V0aW9uIHJlYWR5JyA6ICdBbGwgY2hlY2tzIHBhc3NlZCcpCiAgICAgICAgOiBTdHJpbmcoZmlyc3RGYWlsZWQ/Lm5hbWUgfHwgJ1ZhbGlkYXRpb24gcGVuZGluZycpCiAgICApOwogICAgc2V0VGV4dCgKICAgICAgJyNwcmltYXJ5QmxvY2tlclRleHQnLAogICAgICBibG9ja2VyTWVzc2FnZShmaXJzdEZhaWxlZCwgc3RhdGUsIHBhcGVyTW9kZSkKICAgICk7CgogICAgY29uc3QgYWN0aW9uID0gJCgnI3ByaW1hcnlCbG9ja2VyQWN0aW9uJyk7CiAgICBpZiAoYWN0aW9uKSB7CiAgICAgIGFjdGlvbi50ZXh0Q29udGVudCA9IHNhZmUKICAgICAgICA/IChwYXBlck1vZGUgPyAnVmlldyBwb3NpdGlvbnMnIDogJ1ZhbGlkYXRlIGV4ZWN1dGlvbicpCiAgICAgICAgOiAnVmlldyBkZWNpc2lvbic7CiAgICAgIGFjdGlvbi5ocmVmID0gc2FmZQogICAgICAgID8gKHBhcGVyTW9kZSA/ICcjcG9zaXRpb25zJyA6ICcjZXhlY3V0aW9uUHJldmlldycpCiAgICAgICAgOiAnI3ByaW1hcnktY2FuZGlkYXRlJzsKICAgIH0KCiAgICBzZXRUZXh0KAogICAgICAnI2V4ZWN1dGlvblBlbmRpbmdDb3VudCcsCiAgICAgIHNhZmUKICAgICAgICA/ICdBbGwgcGFzc2VkJwogICAgICAgIDogYmxvY2tlZAogICAgICAgICAgPyBgJHtibG9ja2VkfSBibG9ja2VkIMK3ICR7cGVuZGluZ30gcGVuZGluZ2AKICAgICAgICAgIDogYCR7cGVuZGluZ30gcGVuZGluZ2AKICAgICk7CgogICAgcmVuZGVyR2F0ZUxpc3Qocm93cyk7CgogICAgY29uc3QgcHJldmlldyA9ICQoJyNleGVjdXRpb25QcmV2aWV3Jyk7CiAgICBpZiAocHJldmlldykgewogICAgICBwcmV2aWV3LmNsYXNzTGlzdC50b2dnbGUoJ2xvY2tlZCcsICFzYWZlKTsKICAgICAgcHJldmlldy5kYXRhc2V0LmV4ZWN1dGlvbk1vZGUgPSBwYXBlck1vZGUgPyAncGFwZXInIDogJ2xpdmUnOwogICAgfQoKICAgIGxhc3RTdGF0ZSA9IHsKICAgICAgcGFwZXJNb2RlLAogICAgICBzdGF0ZSwKICAgICAgc2FmZSwKICAgICAgZ2F0ZXM6IHJvd3MubWFwKCh7IHVpLCAuLi5nYXRlIH0pID0+IGdhdGUpCiAgICB9OwogIH0KCiAgZnVuY3Rpb24gYmluZFRvZ2dsZSgpIHsKICAgIGNvbnN0IGhvc3QgPSAkKCcjZXhlY3V0aW9uUHJldmlldycpOwogICAgY29uc3QgYnV0dG9uID0gJCgnI2V4ZWN1dGlvbkNoZWNrc1RvZ2dsZScpOwogICAgY29uc3QgbGlzdCA9ICQoJyNleGVjdXRpb25DaGVja0xpc3QnKTsKICAgIGNvbnN0IGxhYmVsID0gJCgnI2V4ZWN1dGlvbkNoZWNrc1RvZ2dsZUxhYmVsJyk7CgogICAgaWYgKCFob3N0IHx8ICFidXR0b24gfHwgIWxpc3QpIHJldHVybjsKICAgIGlmIChidXR0b24uZGF0YXNldC5tZlByZXRyYWRlVjVCb3VuZCA9PT0gJzEnKSByZXR1cm47CgogICAgYnV0dG9uLmRhdGFzZXQubWZQcmV0cmFkZVY1Qm91bmQgPSAnMSc7CiAgICBidXR0b24uYWRkRXZlbnRMaXN0ZW5lcignY2xpY2snLCAoKSA9PiB7CiAgICAgIGNvbnN0IG9wZW4gPSBidXR0b24uZ2V0QXR0cmlidXRlKCdhcmlhLWV4cGFuZGVkJykgIT09ICd0cnVlJzsKICAgICAgYnV0dG9uLnNldEF0dHJpYnV0ZSgnYXJpYS1leHBhbmRlZCcsIFN0cmluZyhvcGVuKSk7CiAgICAgIGhvc3QuY2xhc3NMaXN0LnRvZ2dsZSgnbWYtcG0tY2hlY2tzLW9wZW4nLCBvcGVuKTsKICAgICAgbGlzdC5oaWRkZW4gPSAhb3BlbjsKICAgICAgaWYgKGxhYmVsKSBsYWJlbC50ZXh0Q29udGVudCA9IG9wZW4gPyAnSGlkZSBjaGVja3MnIDogJ0FsbCBjaGVja3MnOwogICAgfSk7CiAgfQoKICBhc3luYyBmdW5jdGlvbiByZWZyZXNoKCkgewogICAgYmluZFRvZ2dsZSgpOwoKICAgIGNvbnN0IGdlbmVyYXRpb24gPSArK3JlcXVlc3RHZW5lcmF0aW9uOwogICAgY29uc3QgdmFsdWUgPSBjYW5kaWRhdGUoKTsKICAgIGNvbnN0IHN0YXRlID0gYWlTdGF0ZSh2YWx1ZSk7CiAgICBjb25zdCBwYXBlck1vZGUgPSBpc1BhcGVyTW9kZSgpOwoKICAgIGNvbnN0IGdhdGVzID0gcGFwZXJNb2RlCiAgICAgID8gYXdhaXQgbG9hZFBhcGVyR2F0ZXModmFsdWUsIHN0YXRlLCBnZW5lcmF0aW9uKQogICAgICA6IGxvYWRMaXZlR2F0ZXModmFsdWUsIHN0YXRlKTsKCiAgICBpZiAoZ2VuZXJhdGlvbiAhPT0gcmVxdWVzdEdlbmVyYXRpb24gfHwgIWdhdGVzKSByZXR1cm47CiAgICByZW5kZXIoZ2F0ZXMsIHBhcGVyTW9kZSwgc3RhdGUpOwogIH0KCiAgZnVuY3Rpb24gc2NoZWR1bGVSZWZyZXNoKCkgewogICAgcXVldWVNaWNyb3Rhc2soKCkgPT4gewogICAgICByZWZyZXNoKCkuY2F0Y2goKCkgPT4ge30pOwogICAgfSk7CiAgfQoKICBkb2N1bWVudC5hZGRFdmVudExpc3RlbmVyKCdtZW1lZmxvdzpzdGF0ZWNoYW5nZScsIHNjaGVkdWxlUmVmcmVzaCk7CiAgd2luZG93LmFkZEV2ZW50TGlzdGVuZXIoJ21lbWVmbG93OmNhbmRpZGF0ZWNoYW5nZScsIHNjaGVkdWxlUmVmcmVzaCk7CiAgd2luZG93LmFkZEV2ZW50TGlzdGVuZXIoJ21mOndhbGxldC1jaGFuZ2UnLCBzY2hlZHVsZVJlZnJlc2gpOwoKICBmdW5jdGlvbiBib290KCkgewogICAgYmluZFRvZ2dsZSgpOwogICAgcmVmcmVzaCgpLmNhdGNoKCgpID0+IHt9KTsKICAgIHJlZnJlc2hUaW1lciA9IHdpbmRvdy5zZXRJbnRlcnZhbCgoKSA9PiB7CiAgICAgIHJlZnJlc2goKS5jYXRjaCgoKSA9PiB7fSk7CiAgICB9LCA1MDAwKTsKICB9CgogIGlmIChkb2N1bWVudC5yZWFkeVN0YXRlID09PSAnbG9hZGluZycpIHsKICAgIGRvY3VtZW50LmFkZEV2ZW50TGlzdGVuZXIoJ0RPTUNvbnRlbnRMb2FkZWQnLCBib290LCB7IG9uY2U6IHRydWUgfSk7CiAgfSBlbHNlIHsKICAgIGJvb3QoKTsKICB9CgogIHdpbmRvdy5hZGRFdmVudExpc3RlbmVyKCdwYWdlaGlkZScsICgpID0+IHsKICAgIGlmIChyZWZyZXNoVGltZXIpIHsKICAgICAgY2xlYXJJbnRlcnZhbChyZWZyZXNoVGltZXIpOwogICAgICByZWZyZXNoVGltZXIgPSBudWxsOwogICAgfQogIH0sIHsgb25jZTogdHJ1ZSB9KTsKCiAgd2luZG93Lk1FTUVGTE9XX1BSRVRSQURFX1VJID0gewogICAgdmVyc2lvbjogNSwKICAgIHJlZnJlc2gsCiAgICBnZXRTdGF0ZTogKCkgPT4gbGFzdFN0YXRlCiAgICAgID8gSlNPTi5wYXJzZShKU09OLnN0cmluZ2lmeShsYXN0U3RhdGUpKQogICAgICA6IG51bGwKICB9Owp9KSgpOwo=' | base64 -d > "$WORK_MODULE"
+
+rollback(){
+  cp "$INDEX_BAK" "$INDEX" 2>/dev/null || true
+  cp "$PAPER_BAK" "$PAPER_UI" 2>/dev/null || true
+  if [[ "$MODULE_EXISTED" == "1" && -n "$MODULE_BAK" ]]; then
+    cp "$MODULE_BAK" "$MODULE" 2>/dev/null || true
+  else
+    rm -f "$MODULE"
+  fi
+  rm -f "$WORK_INDEX" "$WORK_PAPER" "$WORK_MODULE"
+}
+trap 'echo "ERROR: V5 install failed; restoring exact pre-install files."; rollback' ERR
+
+python3 - "$WORK_INDEX" "$WORK_PAPER" <<'PY'
+from pathlib import Path
+import re, sys
+
+index_path = Path(sys.argv[1])
+paper_path = Path(sys.argv[2])
+index = index_path.read_text(encoding='utf-8')
+paper = paper_path.read_text(encoding='utf-8')
+
+start = index.find(" const gates=paperMode?paperGates:liveGates;")
+if start < 0:
+    raise SystemExit('V2 readiness block start not found.')
+
+hard = index.find(" const hardPaperCodes=new Set([", start)
+if hard < 0:
+    raise SystemExit('V2 readiness block signature not found.')
+
+end_marker = "\n // Mission/top context follows the same selected candidate."
+end = index.find(end_marker, hard)
+if end < 0:
+    raise SystemExit('V2 readiness block end not found.')
+
+old_section = index[start:end]
+required = [
+    "#executionReadinessCount",
+    "#executionReadinessLabel",
+    "#executionCheckList",
+    "#primaryBlockerTitle",
+    "#primaryBlockerText",
+    "#executionPendingCount"
+]
+missing = [value for value in required if value not in old_section]
+if missing:
+    raise SystemExit('V2 readiness block is not expected version: ' + ', '.join(missing))
+
+neutral = ''' const gates=paperMode?paperGates:liveGates;
+ const passed=gates.filter(g=>g.pass).length;
+ const safe=passed===gates.length;
+
+ // PRE-TRADE V5: visible presentation is owned only by
+ // pretrade-control-center-v5.js. Keep execution validation safety here.
+ const validate=$('#validateBtn');
+ if(validate){
+   validate.disabled=!safe;
+   validate.setAttribute('aria-disabled',String(!safe));
+ }
+
+ const preview=$('#executionPreview');
+ if(preview){
+   preview.dataset.executionMode=paperMode?'paper':'live';
+ }'''
+
+index = index[:start] + neutral + index[end:]
+
+toggle_re = re.compile(
+    r'\n  function bindChecksToggle\(\)\{.*?\n  \}\n\n  function init\(\)\{',
+    re.S
+)
+index, toggle_count = toggle_re.subn('\n  function init(){', index, count=1)
+if toggle_count != 1:
+    raise SystemExit(f'Expected one V2 bindChecksToggle() function; found {toggle_count}.')
+
+index, toggle_call_count = re.subn(
+    r'\n\s*bindChecksToggle\(\);',
+    '',
+    index,
+    count=1
+)
+if toggle_call_count != 1:
+    raise SystemExit(f'Expected one V2 bindChecksToggle() call; found {toggle_call_count}.')
+
+legacy_re = re.compile(
+    r'\n  function technicalExecutionReasons\(\) \{.*?'
+    r'\n  let queued = false;',
+    re.S
+)
+paper, legacy_count = legacy_re.subn('\n  let queued = false;', paper, count=1)
+if legacy_count != 1:
+    raise SystemExit(f'Expected one legacy blocker ownership block; found {legacy_count}.')
+
+paper, legacy_call_count = re.subn(
+    r'\n\s*isolateExecutionBlocker\(\);',
+    '',
+    paper,
+    count=1
+)
+if legacy_call_count != 1:
+    raise SystemExit(f'Expected one isolateExecutionBlocker() call; found {legacy_call_count}.')
+
+if index.count('data-mf-pretrade-v2="1"') != 1:
+    raise SystemExit('Expected exactly one V2 source marker.')
+index = index.replace('data-mf-pretrade-v2="1"', 'data-mf-pretrade-v5="1"', 1)
+
+script_tag = '<script src="./pretrade-control-center-v5.js?v=5.0.0" defer></script>'
+anchor = '<script defer src="paper-automation-ui.js"></script>'
+if script_tag not in index:
+    if index.count(anchor) != 1:
+        raise SystemExit('Expected exactly one paper-automation-ui.js script tag.')
+    index = index.replace(anchor, anchor + '\n' + script_tag, 1)
+
+index = re.sub(
+    r'\s*<script src="\./pretrade-control-center-v[34]\.js[^>]*></script>',
+    '',
+    index
+)
+
+checks = {
+    'V5 marker': index.count('data-mf-pretrade-v5="1"') == 1,
+    'V2 marker removed': 'data-mf-pretrade-v2="1"' not in index,
+    'V2 toggle owner removed': 'function bindChecksToggle()' not in index,
+    'legacy blocker function removed': 'function isolateExecutionBlocker()' not in paper,
+    'legacy technical reasons removed': 'function technicalExecutionReasons()' not in paper,
+    'one V5 script reference': index.count('pretrade-control-center-v5.js?v=5.0.0') == 1,
+}
+failed = [name for name, ok in checks.items() if not ok]
+if failed:
+    raise SystemExit('Ownership verification failed: ' + ', '.join(failed))
+
+index_path.write_text(index, encoding='utf-8')
+paper_path.write_text(paper, encoding='utf-8')
+print('V5 source ownership rewrite prepared.')
+PY
+
+node --check < "$WORK_PAPER"
+node --check < "$WORK_MODULE"
+
+grep -q 'data-mf-pretrade-v5="1"' "$WORK_INDEX"
+grep -q 'pretrade-control-center-v5.js?v=5.0.0' "$WORK_INDEX"
+! grep -q 'function bindChecksToggle()' "$WORK_INDEX"
+
+if grep -q 'MutationObserver' "$WORK_MODULE"; then
+  echo "ERROR: V5 controller unexpectedly contains MutationObserver."
+  exit 1
+fi
+if grep -q '<style\|style.textContent' "$WORK_MODULE"; then
+  echo "ERROR: V5 controller unexpectedly contains CSS/style injection."
+  exit 1
+fi
+
+cp "$WORK_INDEX" "$INDEX"
+cp "$WORK_PAPER" "$PAPER_UI"
+cp "$WORK_MODULE" "$MODULE"
+
+rm -f "$APP/pretrade-control-center-v3.js" "$APP/pretrade-control-center-v4.js"
+
+node --check "$PAPER_UI"
+node --check "$MODULE"
+
+grep -q 'data-mf-pretrade-v5="1"' "$INDEX"
+! grep -q 'function isolateExecutionBlocker()' "$PAPER_UI"
+
+cat > "$PATCH_DIR/latest-manifest.txt" <<EOF
+INDEX=$INDEX
+INDEX_BAK=$INDEX_BAK
+PAPER_UI=$PAPER_UI
+PAPER_BAK=$PAPER_BAK
+MODULE=$MODULE
+MODULE_EXISTED=$MODULE_EXISTED
+MODULE_BAK=$MODULE_BAK
+EOF
+
+rm -f "$WORK_INDEX" "$WORK_PAPER" "$WORK_MODULE"
+trap - ERR
+
+echo
+echo "OK: PRE-TRADE CONTROL CENTER V5 installed cleanly."
+echo
+echo "Current V2 source used directly: YES"
+echo "Old V2 visible writer: REMOVED"
+echo "Old V2 toggle owner: REMOVED"
+echo "paper-automation blocker owner: REMOVED"
+echo "Single visible UI owner: pretrade-control-center-v5.js"
+echo "New CSS layers: NONE"
+echo "Existing V2 CSS changed: NO"
+echo "New MutationObserver: NONE"
+echo "Overlay/cloned UI: NONE"
+echo "PaperEngine/server readiness gates: UNCHANGED"
+echo "Standalone changed JS syntax checks: PASS"
+echo
+echo "Send me this Shell result before Stop -> Run."

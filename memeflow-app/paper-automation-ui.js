@@ -161,58 +161,6 @@
     pane.dataset.evidenceRole = 'sources-only';
   }
 
-  function technicalExecutionReasons() {
-    const checks = [
-      ['Wallet', '#walletExecutionGate'],
-      ['Balance', '#walletBalanceGate'],
-      ['Route', '#executionRouteGate'],
-      ['Risk budget', '#executionRiskGate'],
-      ['Quote age', '#quoteAge'],
-      ['Slippage', '#executionSlippage'],
-      ['Size', '#executionSize']
-    ];
-
-    const unresolved = checks.flatMap(([label, selector]) => {
-      const value = text(selector);
-      const ok = /^(pass|connected|ready|safe)$/i.test(value);
-      const empty = !value || value === '—';
-      return ok ? [] : [
-        `${label}: ${empty ? 'pending' : value.toLowerCase()}`
-      ];
-    });
-
-    const candidateState =
-      text('#mobileSignalState') ||
-      text('#executionState');
-
-    if (!/buy ready/i.test(candidateState) && !/safe/i.test(candidateState)) {
-      unresolved.unshift('AI decision: not executable yet');
-    }
-
-    return [...new Set(unresolved)].slice(0, 5);
-  }
-
-  function isolateExecutionBlocker() {
-    const title = document.querySelector('#primaryBlockerTitle');
-    const detail = document.querySelector('#primaryBlockerText');
-    if (!title || !detail) return;
-
-    const reasons = technicalExecutionReasons();
-    const safe = /safe|all checks passed/i.test(text('#executionState'));
-
-    if (safe) {
-      title.textContent = 'All execution checks passed';
-      detail.textContent =
-        'The trade is ready for final explicit validation.';
-    } else {
-      title.textContent =
-        `Execution locked: ${reasons[0] || 'technical validation pending'}`;
-      detail.textContent =
-        reasons.slice(1).join(' · ') ||
-        'Complete the remaining execution checks.';
-    }
-  }
-
   let queued = false;
 
   function applyResponsibilityPass() {
@@ -224,7 +172,6 @@
       keepOnlyMomentumSummary();
       simplifyPrimaryReason();
       filterEvidenceDuplicates();
-      isolateExecutionBlocker();
     });
   }
 

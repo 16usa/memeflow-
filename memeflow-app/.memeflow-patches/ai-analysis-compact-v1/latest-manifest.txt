@@ -1,0 +1,5 @@
+INDEX=./memeflow-app/index.html
+INDEX_BAK=./memeflow-app/.memeflow-patches/ai-analysis-compact-v1/index.html.20260810-183404.bak
+MODULE=./memeflow-app/ai-analysis-state-clean-v1.js
+MODULE_EXISTED=0
+MODULE_BAK=

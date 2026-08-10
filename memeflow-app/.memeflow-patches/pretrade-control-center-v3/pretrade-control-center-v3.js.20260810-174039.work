@@ -1,0 +1,497 @@
+(() => {
+  'use strict';
+
+  if (window.__MEMEFLOW_PRETRADE_CONTROL_CENTER_V3__) return;
+  window.__MEMEFLOW_PRETRADE_CONTROL_CENTER_V3__ = true;
+
+  const $ = selector => document.querySelector(selector);
+  const HARD_PAPER_CODES = new Set([
+    'POSITION_EXISTS',
+    'MAX_OPEN_POSITIONS',
+    'MAX_DAILY_ENTRIES',
+    'INVALID_POSITION_SIZE',
+    'DAILY_SPEND_LIMIT',
+    'PAPER_CAPITAL_LIMIT',
+    'KILL_SWITCH',
+    'DAILY_LOSS_LIMIT'
+  ]);
+
+  let refreshGeneration = 0;
+  let refreshTimer = null;
+  let lastPayload = null;
+
+  function candidate() {
+    try {
+      return window.MEMEFLOW_CORE?.getSelected?.() || null;
+    } catch {
+      return null;
+    }
+  }
+
+  function candidateState(c = candidate()) {
+    return String(
+      c?.state ||
+      document.querySelector('#primaryState')?.textContent ||
+      document.querySelector('#mobileSignalState')?.textContent ||
+      'WAITING'
+    ).trim().toUpperCase();
+  }
+
+  function modeFromCore() {
+    try {
+      const core = window.MEMEFLOW_CORE?.getState?.() || {};
+      const value =
+        core?.settings?.tradingEnvironment ||
+        core?.tradingEnvironment ||
+        '';
+      if (value) return String(value).toLowerCase();
+    } catch {}
+    return 'paper';
+  }
+
+  function mintOf(c) {
+    return String(
+      c?.mint ||
+      c?.tokenMint ||
+      c?.tokenAddress ||
+      c?.address ||
+      c?.id ||
+      ''
+    ).trim();
+  }
+
+  function finite(value) {
+    return value !== null &&
+      value !== undefined &&
+      value !== '' &&
+      Number.isFinite(Number(value));
+  }
+
+  function buildLiveGates(c, state) {
+    const quoteAge = finite(c?.quoteAgeMs) ? Number(c.quoteAgeMs) : null;
+    const positionSize = Number(
+      c?.execution?.sizeSol ??
+      c?.positionSize ??
+      c?.positionSizeSol
+    );
+
+    const riskReady =
+      c?.execution?.riskApproved === true ||
+      c?.riskApproved === true;
+
+    const routeReady =
+      c?.execution?.routeApproved === true ||
+      c?.routeApproved === true;
+
+    const walletText = String(
+      document.querySelector('#walletExecutionGate')?.textContent || ''
+    ).trim().toUpperCase();
+
+    const balanceText = String(
+      document.querySelector('#walletBalanceGate')?.textContent || ''
+    ).trim().toUpperCase();
+
+    return [
+      { name: 'Candidate selected', pass: !!c?.id || !!mintOf(c) },
+      { name: 'AI BUY READY', pass: state === 'BUY READY' },
+      { name: 'Verified price', pass: finite(c?.priceSol ?? c?.price) },
+      { name: 'Fresh holder evidence', pass: c?.holderFresh === true },
+      { name: 'Risk approved', pass: riskReady },
+      { name: 'Route approved', pass: routeReady },
+      { name: 'Fresh quote', pass: quoteAge !== null && quoteAge <= 15000 },
+      {
+        name: 'Position size ready',
+        pass: Number.isFinite(positionSize) && positionSize > 0
+      },
+      {
+        name: 'Wallet connected',
+        pass: walletText === 'CONNECTED' || walletText === 'PASS'
+      },
+      {
+        name: 'Balance approved',
+        pass: balanceText === 'PASS'
+      }
+    ];
+  }
+
+  function fallbackPaperGates(state) {
+    const gates = [
+      {
+        name: 'AI BUY READY',
+        pass: state === 'BUY READY',
+        code: state === 'BLOCKED' ? 'AI_BLOCKED' : null
+      }
+    ];
+
+    while (gates.length < 10) {
+      gates.push({
+        name: 'Backend readiness pending',
+        pass: false,
+        code: null
+      });
+    }
+    return gates;
+  }
+
+  async function fetchPaperPayload(c, state, generation) {
+    const mint = mintOf(c);
+
+    if (!mint) {
+      return {
+        paperMode: true,
+        state,
+        gates: fallbackPaperGates(state)
+      };
+    }
+
+    try {
+      const response = await fetch(
+        '/api/paper/readiness?mint=' + encodeURIComponent(mint),
+        {
+          credentials: 'include',
+          headers: { accept: 'application/json' },
+          cache: 'no-store'
+        }
+      );
+
+      if (generation !== refreshGeneration) return null;
+      if (!response.ok) throw new Error('HTTP ' + response.status);
+
+      const data = await response.json();
+      if (generation !== refreshGeneration) return null;
+
+      const backend = Array.isArray(data?.checks) ? data.checks : [];
+      const gates = [
+        {
+          name: 'AI BUY READY',
+          pass: state === 'BUY READY',
+          code: state === 'BLOCKED' ? 'AI_BLOCKED' : null
+        },
+        ...backend.map(check => ({
+          name: String(check?.name || 'Check'),
+          pass: check?.pass === true,
+          code: check?.code || null
+        }))
+      ];
+
+      while (gates.length < 10) {
+        gates.push({
+          name: 'Backend readiness pending',
+          pass: false,
+          code: null
+        });
+      }
+
+      return { paperMode: true, state, gates };
+    } catch {
+      return {
+        paperMode: true,
+        state,
+        gates: fallbackPaperGates(state)
+      };
+    }
+  }
+
+  function classify(gate, paperMode, state) {
+    if (gate?.pass === true) {
+      return { label: 'PASS', className: 'pass' };
+    }
+
+    if (
+      String(gate?.name || '').toUpperCase() === 'AI BUY READY' &&
+      state === 'BLOCKED'
+    ) {
+      return { label: 'BLOCKED', className: 'blocked' };
+    }
+
+    if (
+      paperMode &&
+      HARD_PAPER_CODES.has(String(gate?.code || ''))
+    ) {
+      return { label: 'BLOCKED', className: 'blocked' };
+    }
+
+    return { label: 'PENDING', className: 'pending' };
+  }
+
+  function blockerText(gate, state, paperMode) {
+    if (!gate) {
+      return paperMode
+        ? 'All PAPER execution checks passed.'
+        : 'All LIVE pre-trade checks passed.';
+    }
+
+    if (String(gate.name || '').toUpperCase() === 'AI BUY READY') {
+      return state === 'BLOCKED'
+        ? 'The current AI decision is BLOCKED by the evaluation gates.'
+        : 'Waiting for the AI decision to reach BUY READY.';
+    }
+
+    const messages = {
+      INVALID_PRICE: 'Waiting for a valid verified token price.',
+      STALE_DECISION: 'Waiting for a fresh decision snapshot.',
+      STALE_TOKEN_DATA: 'Waiting for fresh holder and token evidence.',
+      POSITION_EXISTS: 'A PAPER position for this token is already open.',
+      MAX_OPEN_POSITIONS: 'The configured maximum number of open positions has been reached.',
+      MAX_DAILY_ENTRIES: 'The configured daily entry limit has been reached.',
+      INVALID_POSITION_SIZE: 'Position size is outside the configured limits.',
+      DAILY_SPEND_LIMIT: 'This entry would exceed the configured daily spend limit.',
+      PAPER_CAPITAL_LIMIT: 'Available PAPER capital is insufficient for this entry.',
+      KILL_SWITCH: 'The account kill switch is active.',
+      DAILY_LOSS_LIMIT: 'The configured daily loss limit is active.'
+    };
+
+    return messages[String(gate.code || '')] ||
+      `${gate.name || 'This check'} has not passed yet.`;
+  }
+
+  function setText(selector, value) {
+    const el = document.querySelector(selector);
+    if (el) el.textContent = value;
+  }
+
+  function renderList(rows) {
+    const list = document.querySelector('#executionCheckList');
+    if (!list) return;
+
+    const fragment = document.createDocumentFragment();
+
+    for (const row of rows) {
+      const item = document.createElement('div');
+      item.className = `data-row execution-check-row ${row.ui.className}`;
+      item.setAttribute('role', 'listitem');
+      if (row.code) item.dataset.gateCode = String(row.code);
+
+      const name = document.createElement('span');
+      name.className = 'execution-check-name';
+
+      const dot = document.createElement('i');
+      dot.setAttribute('aria-hidden', 'true');
+
+      const label = document.createElement('b');
+      label.textContent = String(row.name || 'Check');
+
+      const status = document.createElement('em');
+      status.textContent = row.ui.label;
+
+      name.append(dot, label);
+      item.append(name, status);
+      fragment.appendChild(item);
+    }
+
+    list.replaceChildren(fragment);
+  }
+
+  function render(payload) {
+    if (!payload || !Array.isArray(payload.gates)) return;
+
+    const state = String(payload.state || 'WAITING').toUpperCase();
+    const paperMode = payload.paperMode !== false;
+    const rows = payload.gates.map(gate => ({
+      ...gate,
+      ui: classify(gate, paperMode, state)
+    }));
+
+    const passed = rows.filter(row => row.pass === true).length;
+    const total = rows.length;
+    const safe = total > 0 && passed === total;
+    const blocked = rows.filter(row => row.ui.className === 'blocked').length;
+    const pending = rows.filter(row => row.ui.className === 'pending').length;
+    const firstFailed = rows.find(row => row.pass !== true) || null;
+
+    setText('#executionReadinessCount', `${passed} / ${total} checks`);
+
+    setText(
+      '#executionReadinessLabel',
+      safe
+        ? (paperMode ? 'Paper execution ready' : 'All pre-trade checks passed')
+        : blocked
+          ? `${blocked} blocked · ${pending} pending`
+          : `${pending} pending`
+    );
+
+    const bar = document.querySelector('#executionReadinessBar');
+    if (bar) {
+      bar.style.width = `${total ? Math.round((passed / total) * 100) : 0}%`;
+    }
+
+    const stateEl = document.querySelector('#executionState');
+    if (stateEl) {
+      stateEl.textContent = safe
+        ? (paperMode ? 'PAPER READY' : 'SAFE')
+        : 'LOCKED';
+      stateEl.className = `state ${safe ? 'buy' : 'wait'}`;
+    }
+
+    const explainer = document.querySelector('#executionSignalExplainer');
+    if (explainer) {
+      explainer.replaceChildren();
+
+      const aiStrong = document.createElement('b');
+      aiStrong.textContent = 'AI signal:';
+
+      const execStrong = document.createElement('b');
+      execStrong.textContent = 'Execution:';
+
+      explainer.append(
+        aiStrong,
+        document.createTextNode(` ${state} · `),
+        execStrong,
+        document.createTextNode(
+          safe
+            ? ` ${paperMode ? 'PAPER READY' : 'SAFE TO VALIDATE'}`
+            : ' LOCKED'
+        )
+      );
+    }
+
+    setText(
+      '#primaryBlockerTitle',
+      safe
+        ? (paperMode ? 'Paper execution ready' : 'All checks passed')
+        : String(firstFailed?.name || 'Validation pending')
+    );
+
+    setText(
+      '#primaryBlockerText',
+      blockerText(firstFailed, state, paperMode)
+    );
+
+    const action = document.querySelector('#primaryBlockerAction');
+    if (action) {
+      action.textContent = safe
+        ? (paperMode ? 'View positions' : 'Validate execution')
+        : 'View decision';
+
+      action.href = safe
+        ? (paperMode ? '#positions' : '#executionPreview')
+        : '#primary-candidate';
+    }
+
+    setText(
+      '#executionPendingCount',
+      safe
+        ? 'All passed'
+        : blocked
+          ? `${blocked} blocked · ${pending} pending`
+          : `${pending} pending`
+    );
+
+    renderList(rows);
+
+    const preview = document.querySelector('#executionPreview');
+    if (preview) {
+      preview.classList.toggle('locked', !safe);
+      preview.dataset.executionMode = paperMode ? 'paper' : 'live';
+    }
+
+    lastPayload = {
+      paperMode,
+      state,
+      safe,
+      gates: rows.map(({ ui, ...gate }) => gate)
+    };
+  }
+
+  function bindToggle() {
+    const host = document.querySelector('#executionPreview');
+    const button = document.querySelector('#executionChecksToggle');
+    const list = document.querySelector('#executionCheckList');
+    const label = document.querySelector('#executionChecksToggleLabel');
+
+    if (!host || !button || !list) return;
+    if (button.dataset.mfPretradeV3Bound === '1') return;
+
+    button.dataset.mfPretradeV3Bound = '1';
+
+    button.addEventListener('click', () => {
+      const open = button.getAttribute('aria-expanded') !== 'true';
+
+      button.setAttribute('aria-expanded', String(open));
+      host.classList.toggle('mf-pm-checks-open', open);
+      list.hidden = !open;
+
+      if (label) label.textContent = open ? 'Hide checks' : 'All checks';
+    });
+  }
+
+  async function refresh() {
+    bindToggle();
+
+    const generation = ++refreshGeneration;
+    const c = candidate();
+    const state = candidateState(c);
+    const published = window.__MEMEFLOW_PRETRADE_STATE__;
+
+    if (
+      published &&
+      Array.isArray(published.gates) &&
+      published.gates.length
+    ) {
+      render(published);
+    }
+
+    const mode = published
+      ? (published.paperMode ? 'paper' : 'live')
+      : modeFromCore();
+
+    if (mode.includes('paper')) {
+      const payload = await fetchPaperPayload(c, state, generation);
+      if (payload && generation === refreshGeneration) render(payload);
+      return;
+    }
+
+    if (generation !== refreshGeneration) return;
+
+    render({
+      paperMode: false,
+      state,
+      gates: buildLiveGates(c, state)
+    });
+  }
+
+  function scheduleRefresh() {
+    queueMicrotask(() => {
+      refresh().catch(() => {});
+    });
+  }
+
+  window.addEventListener('memeflow:pretrade-readiness', event => {
+    if (event?.detail) render(event.detail);
+  });
+
+  document.addEventListener('memeflow:statechange', scheduleRefresh);
+  window.addEventListener('memeflow:candidatechange', scheduleRefresh);
+  window.addEventListener('mf:wallet-change', scheduleRefresh);
+
+  function boot() {
+    bindToggle();
+    refresh().catch(() => {});
+
+    refreshTimer = window.setInterval(() => {
+      refresh().catch(() => {});
+    }, 5000);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', boot, { once: true });
+  } else {
+    boot();
+  }
+
+  window.addEventListener('pagehide', () => {
+    if (refreshTimer) {
+      clearInterval(refreshTimer);
+      refreshTimer = null;
+    }
+  }, { once: true });
+
+  window.MEMEFLOW_PRETRADE_UI = {
+    version: 3,
+    refresh,
+    render,
+    getState: () => lastPayload
+      ? JSON.parse(JSON.stringify(lastPayload))
+      : null
+  };
+})();

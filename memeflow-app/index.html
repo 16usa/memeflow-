@@ -1189,22 +1189,245 @@ html[data-theme="light"] .sidebar,html[data-theme="light"] .topbar,html[data-the
 }
 
 /* ─── AI Analysis & Market Data collapsible (inside Primary Candidate) ─────── */
- /* ai-analysis-section: settings-group provides border/bg/radius/padding; override only deltas */
+
+ /* MF_AI_BUTTON_ALL_CHECKS_V1
+    Mobile mirrors the compact "All checks" control.
+ */
  .ai-analysis-section{margin-top:12px!important;overflow:hidden!important}
- /* Right-side chips: two stacked em lines, right-aligned (matches settings-group>summary em) */
- .ai-analysis-chips{display:grid!important;gap:3px!important;text-align:right!important;flex:0 0 auto!important;min-width:0!important;align-items:unset!important;justify-content:unset!important}
- /* Data percentage value: cyan accent */
+ .ai-analysis-chips{
+  display:grid!important;
+  gap:3px!important;
+  text-align:right!important;
+  flex:0 0 auto!important;
+  min-width:0!important;
+  align-items:unset!important;
+  justify-content:unset!important
+ }
  .ai-data-val{color:var(--cyan)!important;font-weight:900!important}
- /* Chevron: rotated › character, flips on open */
- #ai-analysis>summary::after{content:"›"!important;font-size:18px!important;color:var(--muted)!important;opacity:.6!important;flex-shrink:0!important;display:inline-block!important;transform:rotate(90deg)!important;transition:transform .2s ease!important;margin-left:2px!important}
- #ai-analysis[open]>summary::after{transform:rotate(-90deg)!important}
+
+ /* Desktop/default behavior retained. */
+ #ai-analysis>summary::after{
+  content:"›"!important;
+  font-size:18px!important;
+  color:var(--muted)!important;
+  opacity:.6!important;
+  flex-shrink:0!important;
+  display:inline-block!important;
+  transform:rotate(90deg)!important;
+  transition:transform .16s ease!important;
+  margin-left:2px!important
+ }
+ #ai-analysis[open]>summary::after{
+  transform:rotate(-90deg)!important
+ }
+
+ @media(max-width:820px){
+  #ai-analysis.ai-analysis-section{
+   width:100%!important;
+   min-width:0!important;
+   margin:10px 0 0!important;
+   border:1px solid var(--mf-pm-line-strong,var(--line2))!important;
+   border-radius:10px!important;
+   background:transparent!important;
+   box-shadow:none!important;
+   overflow:hidden!important
+  }
+
+  #ai-analysis>summary{
+   width:100%!important;
+   min-width:0!important;
+   min-height:40px!important;
+   margin:0!important;
+   padding:0 12px!important;
+   border:0!important;
+   border-radius:0!important;
+   background:transparent!important;
+   box-shadow:none!important;
+   display:flex!important;
+   align-items:center!important;
+   justify-content:flex-start!important;
+   gap:10px!important;
+   cursor:pointer!important;
+   list-style:none!important;
+   color:#dce5ee!important;
+   -webkit-tap-highlight-color:transparent!important
+  }
+
+  #ai-analysis>summary::-webkit-details-marker{
+   display:none!important
+  }
+
+  #ai-analysis>summary>span:first-child{
+   min-width:0!important;
+   flex:1 1 auto!important;
+   display:block!important;
+   text-align:left!important
+  }
+  #ai-analysis>summary>span:first-child small{
+   display:none!important
+  }
+  #ai-analysis>summary>span:first-child b{
+   display:block!important;
+   min-width:0!important;
+   margin:0!important;
+   color:#dce5ee!important;
+   font-size:10px!important;
+   line-height:1.2!important;
+   font-weight:760!important;
+   letter-spacing:0!important;
+   white-space:nowrap!important;
+   overflow:hidden!important;
+   text-overflow:ellipsis!important
+  }
+
+  #ai-analysis .ai-analysis-chips{
+   flex:0 0 auto!important;
+   display:flex!important;
+   align-items:center!important;
+   justify-content:flex-end!important;
+   gap:0!important;
+   margin:0!important;
+   text-align:right!important
+  }
+  #ai-analysis .ai-analysis-chips>em:first-child{
+   display:none!important
+  }
+  #ai-analysis #decisionLane{
+   display:block!important;
+   max-width:82px!important;
+   margin:0!important;
+   color:var(--muted)!important;
+   font-size:9px!important;
+   line-height:1!important;
+   font-weight:700!important;
+   letter-spacing:.04em!important;
+   white-space:nowrap!important;
+   overflow:hidden!important;
+   text-overflow:ellipsis!important
+  }
+
+  #ai-analysis>summary::after{
+   content:"›"!important;
+   width:16px!important;
+   height:20px!important;
+   margin:0 0 0 2px!important;
+   display:inline-flex!important;
+   align-items:center!important;
+   justify-content:center!important;
+   flex:0 0 16px!important;
+   color:var(--muted)!important;
+   opacity:1!important;
+   font-size:20px!important;
+   line-height:1!important;
+   font-weight:400!important;
+   transform:rotate(0deg)!important;
+   transform-origin:center!important;
+   transition:transform .16s ease!important
+  }
+  #ai-analysis[open]>summary::after{
+   transform:rotate(90deg)!important
+  }
+
+  #ai-analysis[open]>summary{
+   border-bottom:1px solid var(--line)!important
+  }
+
+  #ai-analysis>summary:focus-visible{
+   outline:2px solid var(--cyan)!important;
+   outline-offset:-2px!important
+  }
+ }
+
  /* Body: settings-group-body handles padding; bleed tab-strip to panel edges */
+
+ /* MF_AI_ANALYSIS_COMPACT_BODY_V1 — canonical AI body rules */
  .ai-analysis-body{padding-bottom:8px!important}
  .ai-analysis-meta{font-size:9px!important;color:var(--muted)!important;margin:0 0 10px!important}
  #ai-analysis .decision-tree{margin-top:10px!important}
  #ai-analysis .ai-analysis-tabs{margin:10px -18px 0!important;padding:0 18px!important}
  #ai-analysis .tab-pane.active{padding-top:8px!important}
  #ai-analysis .mission-actions{margin-top:12px!important}
+
+ .mf-ai-compact-waiting{
+  display:none;
+  padding:16px 0 10px;
+ }
+ .mf-ai-compact-copy small{
+  display:block;
+  margin:0 0 7px;
+  color:var(--cyan);
+  font-size:8px;
+  line-height:1;
+  font-weight:900;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+ }
+ .mf-ai-compact-copy strong{
+  display:block;
+  color:var(--text);
+  font-size:15px;
+  line-height:1.28;
+  letter-spacing:-.02em;
+ }
+ .mf-ai-compact-copy p{
+  margin:7px 0 14px;
+  max-width:620px;
+  color:var(--muted);
+  font-size:10px;
+  line-height:1.5;
+ }
+ .mf-ai-compact-status{
+  border-top:1px solid var(--line);
+ }
+ .mf-ai-compact-status>div{
+  min-height:42px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  border-bottom:1px solid var(--line);
+ }
+ .mf-ai-compact-status span{
+  min-width:0;
+  color:var(--muted);
+  font-size:10px;
+ }
+ .mf-ai-compact-status b{
+  flex:0 0 auto;
+  color:var(--yellow);
+  font-size:9px;
+  font-weight:850;
+  letter-spacing:.06em;
+ }
+ #ai-analysis[data-ai-ui-state="waiting"] .mf-ai-compact-waiting,
+ #ai-analysis[data-ai-ui-state="collecting"] .mf-ai-compact-waiting{
+  display:block!important;
+ }
+ #ai-analysis[data-ai-ui-state="waiting"] .ai-analysis-body>:not(.mf-ai-compact-waiting),
+ #ai-analysis[data-ai-ui-state="collecting"] .ai-analysis-body>:not(.mf-ai-compact-waiting){
+  display:none!important;
+ }
+ #ai-analysis[data-ai-ui-state="ready"] .mf-ai-compact-waiting,
+ #ai-analysis[data-ai-ui-state="blocked"] .mf-ai-compact-waiting{
+  display:none!important;
+ }
+
+ @media(max-width:820px){
+  .mf-ai-compact-waiting{padding:14px 0 6px}
+  .mf-ai-compact-copy strong{font-size:14px}
+  .mf-ai-compact-copy p{margin-bottom:11px;font-size:10px}
+  .mf-ai-compact-status>div{min-height:38px}
+  #ai-analysis[data-ai-ui-state="ready"] .decision-tree,
+  #ai-analysis[data-ai-ui-state="blocked"] .decision-tree{
+   min-height:0!important;
+   height:auto!important;
+  }
+  #ai-analysis[data-ai-ui-state="ready"] .ai-analysis-tabs,
+  #ai-analysis[data-ai-ui-state="blocked"] .ai-analysis-tabs{
+   margin-top:12px!important;
+  }
+ }
+
  /* Workspace: only queue-panel remains after AI-Decision-Studio merge */
  #workspace{grid-template-columns:minmax(0,420px)!important}
 @media(max-width:820px){#workspace{display:none!important}}
@@ -1877,61 +2100,269 @@ html[data-theme="light"] .sidebar,html[data-theme="light"] .topbar,html[data-the
   #primary-candidate.mf-pm-empty .primary-card{gap:8px!important}
   #primary-candidate.mf-pm-empty .reason{margin:8px 0!important;padding:10px 11px!important}
 
-  /* 6) Pre-trade: summary first, detailed seven-check grid on demand. */
+  /* 6) Pre-trade Control Center V2.
+     UI reads the exact gate array already produced by the existing
+     PAPER/LIVE readiness logic. No trading/business rules live here. */
   #executionPreview{
     margin:10px 0!important;
-    padding:11px 12px!important;
+    padding:0!important;
     border-radius:16px!important;
+    border-color:var(--mf-pm-line-strong)!important;
+    background:rgba(8,12,17,.88)!important;
     box-shadow:none!important;
+    overflow:hidden!important;
   }
   #executionPreview .execution-head{
-    padding:0 2px 9px!important;
+    display:flex!important;
+    align-items:center!important;
+    justify-content:space-between!important;
+    gap:12px!important;
+    padding:12px 13px 10px!important;
     margin:0!important;
     border-bottom:1px solid var(--mf-pm-line)!important;
   }
-  #executionPreview .signal-explainer{
-    margin:8px 0!important;
-    padding:9px 10px!important;
-    border-radius:10px!important;
-    font-size:10px!important;
-    line-height:1.4!important;
+  #executionPreview .execution-head h2{
+    margin:0!important;
+    font-size:16px!important;
+    line-height:1.15!important;
+    letter-spacing:-.025em!important;
   }
-  #executionPreview .primary-blocker{
-    margin:8px 0!important;
-    padding:10px 11px!important;
-    border-color:rgba(242,198,104,.18)!important;
-    background:rgba(242,198,104,.025)!important;
+  #executionPreview .execution-head .state{
+    flex:0 0 auto!important;
+    margin:0!important;
   }
-  #executionPreview .primary-blocker span{font-size:9.5px!important;line-height:1.38!important}
-  #executionPreview .execution-readiness{margin:8px 0 0!important;padding:9px 10px!important}
-  #executionPreview .execution-grid{
-    display:none!important;
-    grid-template-columns:1fr 1fr!important;
-    gap:6px!important;
-    padding:7px 0 2px!important;
+  #executionPreview .execution-readiness{
+    margin:0!important;
+    padding:11px 13px 10px!important;
+    border:0!important;
+    border-radius:0!important;
     background:transparent!important;
   }
-  #executionPreview.mf-pm-checks-open .execution-grid{display:grid!important}
-  #executionPreview .exec-cell{
-    min-height:54px!important;
-    padding:8px 9px!important;
-    border:0!important;
-    border-radius:10px!important;
-    background:var(--mf-pm-soft-2)!important;
+  #executionPreview .execution-readiness-main{
+    display:flex!important;
+    align-items:flex-end!important;
+    justify-content:space-between!important;
+    gap:12px!important;
+    min-width:0!important;
   }
-  #executionPreview .exec-cell:nth-child(7){grid-column:1/-1!important;min-height:50px!important}
-  .mf-pm-check-toggle{
-    width:100%;
-    min-height:40px;
-    margin:2px 0 4px;
-    border:1px solid var(--mf-pm-line-strong);
-    border-radius:10px;
-    background:transparent;
-    color:#dce5ee;
-    font:inherit;
-    font-size:10px;
-    font-weight:760;
-    cursor:pointer;
+  #executionPreview .execution-readiness-main>div:first-child{
+    min-width:max-content!important;
+  }
+  #executionPreview .execution-readiness small{
+    display:block!important;
+    margin:0 0 4px!important;
+    color:#7e8c9d!important;
+    font-size:8px!important;
+    line-height:1!important;
+    font-weight:760!important;
+    letter-spacing:.14em!important;
+    text-transform:uppercase!important;
+  }
+  #executionPreview #executionReadinessCount{
+    display:block!important;
+    font-size:17px!important;
+    line-height:1.1!important;
+    letter-spacing:-.03em!important;
+    font-variant-numeric:tabular-nums!important;
+  }
+  #executionPreview .readiness-label{
+    min-width:0!important;
+    max-width:55%!important;
+    color:#8593a4!important;
+    font-size:9px!important;
+    line-height:1.28!important;
+    text-align:right!important;
+  }
+  #executionPreview .readiness-track{
+    width:100%!important;
+    height:5px!important;
+    margin-top:9px!important;
+    overflow:hidden!important;
+    border:0!important;
+    border-radius:999px!important;
+    background:rgba(255,255,255,.055)!important;
+  }
+  #executionPreview .readiness-track i{
+    display:block!important;
+    width:0;
+    height:100%!important;
+    border-radius:inherit!important;
+    background:linear-gradient(90deg,var(--cyan),var(--green))!important;
+    transition:width .2s ease!important;
+  }
+  #executionPreview .signal-explainer{
+    margin:0 13px 9px!important;
+    padding:9px 10px!important;
+    border:1px solid rgba(84,221,255,.16)!important;
+    border-radius:10px!important;
+    background:rgba(84,221,255,.025)!important;
+    color:#aab6c4!important;
+    font-size:10px!important;
+    line-height:1.38!important;
+  }
+  #executionPreview .signal-explainer b{
+    color:#e6edf4!important;
+    font-weight:780!important;
+  }
+  #executionPreview .primary-blocker{
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr) auto!important;
+    gap:10px!important;
+    align-items:center!important;
+    margin:0 13px 9px!important;
+    padding:10px 10px 10px 11px!important;
+    border:1px solid rgba(242,198,104,.16)!important;
+    border-radius:11px!important;
+    background:rgba(242,198,104,.025)!important;
+  }
+  #executionPreview .primary-blocker>div{
+    min-width:0!important;
+  }
+  #executionPreview .primary-blocker small{
+    display:block!important;
+    margin:0 0 4px!important;
+    color:var(--yellow)!important;
+    font-size:8px!important;
+    line-height:1!important;
+    font-weight:850!important;
+    letter-spacing:.13em!important;
+    text-transform:uppercase!important;
+  }
+  #executionPreview .primary-blocker b{
+    display:block!important;
+    margin:0!important;
+    color:#f0f4f8!important;
+    font-size:11.5px!important;
+    line-height:1.25!important;
+  }
+  #executionPreview .primary-blocker span{
+    display:block!important;
+    margin-top:4px!important;
+    color:#8795a6!important;
+    font-size:9.5px!important;
+    line-height:1.34!important;
+  }
+  #executionPreview .execution-decision-link{
+    min-height:36px!important;
+    height:36px!important;
+    margin:0!important;
+    padding:0 10px!important;
+    display:inline-flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+    border-radius:9px!important;
+    white-space:nowrap!important;
+    font-size:9.5px!important;
+    font-weight:760!important;
+  }
+  #executionPreview .mf-pm-check-toggle{
+    width:calc(100% - 26px)!important;
+    min-height:44px!important;
+    height:44px!important;
+    margin:0 13px 12px!important;
+    padding:0 11px 0 12px!important;
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr) auto 18px!important;
+    align-items:center!important;
+    gap:8px!important;
+    border:1px solid var(--mf-pm-line-strong)!important;
+    border-radius:10px!important;
+    background:rgba(255,255,255,.012)!important;
+    color:#dce5ee!important;
+    box-shadow:none!important;
+    text-align:left!important;
+    font-size:10px!important;
+    font-weight:760!important;
+    cursor:pointer!important;
+    touch-action:manipulation!important;
+    -webkit-tap-highlight-color:transparent!important;
+  }
+  #executionPreview .mf-pm-check-toggle:hover,
+  #executionPreview .mf-pm-check-toggle:focus-visible{
+    border-color:rgba(84,221,255,.26)!important;
+    background:rgba(84,221,255,.025)!important;
+  }
+  #executionPreview .mf-pm-check-count{
+    color:#8391a2!important;
+    font-size:9px!important;
+    font-weight:650!important;
+    white-space:nowrap!important;
+  }
+  #executionPreview .mf-pm-check-chevron{
+    width:17px!important;
+    height:17px!important;
+    display:block!important;
+    color:#93a1b1!important;
+    transform:rotate(0deg)!important;
+    transition:transform .16s ease!important;
+  }
+  #executionPreview.mf-pm-checks-open .mf-pm-check-chevron{
+    transform:rotate(90deg)!important;
+  }
+  #executionPreview .execution-check-list[hidden]{
+    display:none!important;
+  }
+  #executionPreview .execution-check-list{
+    margin:-2px 13px 12px!important;
+    padding:0!important;
+    overflow:hidden!important;
+    border:1px solid var(--mf-pm-line)!important;
+    border-radius:10px!important;
+    background:rgba(255,255,255,.009)!important;
+  }
+  #executionPreview .execution-check-row{
+    min-height:42px!important;
+    padding:0 10px!important;
+    display:flex!important;
+    align-items:center!important;
+    justify-content:space-between!important;
+    gap:12px!important;
+    border:0!important;
+    border-radius:0!important;
+    background:transparent!important;
+  }
+  #executionPreview .execution-check-row+.execution-check-row{
+    border-top:1px solid var(--mf-pm-line)!important;
+  }
+  #executionPreview .execution-check-name{
+    min-width:0!important;
+    display:flex!important;
+    align-items:center!important;
+    gap:8px!important;
+  }
+  #executionPreview .execution-check-name i{
+    width:7px!important;
+    height:7px!important;
+    flex:0 0 7px!important;
+    display:block!important;
+    border-radius:50%!important;
+    background:#7c8998!important;
+    box-shadow:none!important;
+  }
+  #executionPreview .execution-check-name b{
+    min-width:0!important;
+    overflow:hidden!important;
+    text-overflow:ellipsis!important;
+    white-space:nowrap!important;
+    color:#cbd5df!important;
+    font-size:10px!important;
+    font-weight:640!important;
+  }
+  #executionPreview .execution-check-row em{
+    flex:0 0 auto!important;
+    font-style:normal!important;
+    font-size:8.5px!important;
+    font-weight:850!important;
+    letter-spacing:.08em!important;
+  }
+  #executionPreview .execution-check-row.pass .execution-check-name i{background:var(--green)!important}
+  #executionPreview .execution-check-row.pass em{color:var(--green)!important}
+  #executionPreview .execution-check-row.pending .execution-check-name i{background:var(--yellow)!important}
+  #executionPreview .execution-check-row.pending em{color:var(--yellow)!important}
+  #executionPreview .execution-check-row.blocked .execution-check-name i{background:var(--red)!important}
+  #executionPreview .execution-check-row.blocked em{color:var(--red)!important}
+  #executionPreview .execution-state-anchors{
+    display:none!important;
   }
 
   /* 7) Billing: application pricing, not a landing page. */
@@ -2061,7 +2492,7 @@ html[data-theme="light"] .sidebar,html[data-theme="light"] .topbar,html[data-the
 
   /* 12) Yellow is semantic only, not decorative. */
   #executionPreview,#billing{box-shadow:none!important}
-  #executionPreview{border-color:rgba(242,198,104,.25)!important}
+  #executionPreview{border-color:var(--mf-pm-line-strong)!important}
 
   /* Safe compact spacing between main sections. */
   #positions,#billing,#settings,.decision-intelligence,.advanced-intelligence{scroll-margin-top:10px!important}
@@ -2611,75 +3042,6 @@ button.primary.mf-has-icon .mf-btn-icon{
   }
 }
 </style>
-<!-- MF_AI_SINGLE_CHEVRON_PATCH:START -->
-
-<style id="mf-ai-single-chevron-style">
-@media (max-width: 820px) {
-  /*
-    The selected AI Analysis control keeps its ORIGINAL click behavior.
-    We only replace the visible contents with one row:
-    [same chevron as View all checks] [AI Analysis & Market Data]
-  */
-  .mf-ai-single-chevron-target {
-    position: relative !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    min-width: 0 !important;
-    overflow: hidden !important;
-    cursor: pointer !important;
-    touch-action: manipulation;
-    -webkit-tap-highlight-color: transparent;
-  }
-
-  .mf-ai-single-chevron-target > :not(.mf-ai-single-chevron-row) {
-    display: none !important;
-  }
-
-  .mf-ai-single-chevron-row {
-    width: 100%;
-    min-height: inherit;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    gap: 14px !important;
-    box-sizing: border-box;
-    user-select: none;
-    pointer-events: auto;
-  }
-
-  .mf-ai-single-chevron-icon {
-    flex: 0 0 auto;
-    width: 18px;
-    height: 18px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .mf-ai-single-chevron-icon svg {
-    display: block !important;
-    width: 18px !important;
-    height: 18px !important;
-    max-width: none !important;
-    max-height: none !important;
-  }
-
-  .mf-ai-single-chevron-label {
-    min-width: 0;
-    display: inline-block;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .mf-ai-single-chevron-target:focus-visible {
-    outline: 2px solid var(--cyan, #61dfff) !important;
-    outline-offset: 2px !important;
-  }
-}
-</style>
-
-<!-- MF_AI_SINGLE_CHEVRON_PATCH:END -->
 </head>
 <body data-product-mode="execution">
 <a class="skip" href="#mission">Skip to mission</a>
@@ -2759,7 +3121,19 @@ button.primary.mf-has-icon .mf-btn-icon{
 <div class="metric-row"><div class="metric"><small>Confidence</small><b id="primaryConfidence">—</b></div><div class="metric"><small>Risk</small><b id="primaryRisk">—</b></div><div class="metric"><small>Expected RR</small><b id="primaryRR">—</b></div></div>
 <div class="check-strip" id="primaryChecks"><div class="mini-check">TOP 10 —</div><div class="mini-check">LIQUIDITY —</div><div class="mini-check" id="momentumCheck">MOMENTUM —</div><div class="mini-check">DEVELOPER —</div></div>
 <div class="reason" id="primaryReason"><b>No verified candidate.</b><span>Waiting for the live discovery and decision feed.</span></div>
-<details class="settings-group ai-analysis-section" id="ai-analysis"><summary aria-label="AI Analysis and Market Data"><span><small>AI ANALYSIS</small><b>AI Analysis &amp; Market Data</b></span><span class="ai-analysis-chips"><em><span class="ai-data-val" id="decisionData">—</span>&#8201;DATA</em><em id="decisionLane">WAITING</em></span></summary><div class="settings-group-body ai-analysis-body"><p class="ai-analysis-meta" id="decisionMeta">Awaiting backend data</p><div class="reason" id="decisionReason"><b>Momentum and holder quality are confirmed.</b><span>Final pre-trade validation is required before simulated execution.</span></div><div class="decision-tree" id="decisionTree"><div class="empty-state production-empty">Decision checks will appear after a candidate is evaluated.</div></div><div class="inspector-tabs ai-analysis-tabs"><button class="itab active" data-tab="evidence" type="button">Evidence</button><button class="itab" data-tab="timeline" type="button">Timeline</button><button class="itab" data-tab="memory" type="button">Memory</button></div><div class="tab-pane active" id="pane-evidence"><div class="empty-state production-empty">No evidence available.</div></div><div class="tab-pane" id="pane-timeline"><div class="empty-state production-empty">No decision timeline available.</div></div><div class="tab-pane" id="pane-memory"><div class="empty-state production-empty">No historical decision memory available.</div></div><div class="mission-actions"><button aria-disabled="true" class="btn primary" disabled="disabled" id="validateBtn" type="button">Validate execution</button><button aria-disabled="true" class="btn" disabled="disabled" id="replayBtn" type="button">Decision replay</button><button aria-disabled="true" class="btn" disabled="disabled" id="compareBtn" type="button">Compare</button></div></div></details>
+<details class="settings-group ai-analysis-section" id="ai-analysis" data-ai-ui-state="waiting"><summary aria-label="AI Analysis and Market Data"><span class="mf-btn-icon mf-icon-chevron ai-analysis-chevron" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg></span><span class="ai-analysis-title"><small>AI ANALYSIS</small><b>AI Analysis &amp; Market Data</b></span><span class="ai-analysis-chips"><em><span class="ai-data-val" id="decisionData">—</span>&#8201;DATA</em><em id="decisionLane">WAITING</em></span></summary><div class="settings-group-body ai-analysis-body">
+<div class="mf-ai-compact-waiting" data-mf-ai-compact-v1="1" role="status" aria-live="polite">
+  <div class="mf-ai-compact-copy">
+    <small id="mfAiCompactKicker">WAITING FOR MARKET EVIDENCE</small>
+    <strong id="mfAiCompactTitle">Waiting for verified market data</strong>
+    <p id="mfAiCompactText">AI analysis will appear when the candidate has enough verified market and holder evidence.</p>
+  </div>
+  <div class="mf-ai-compact-status" role="list">
+    <div role="listitem"><span>Data completeness</span><b id="mfAiCompactCompleteness">—</b></div>
+    <div role="listitem"><span>Market data</span><b id="mfAiCompactMarket">Pending</b></div>
+    <div role="listitem"><span>Holder evidence</span><b id="mfAiCompactHolders">Pending</b></div>
+  </div>
+</div><p class="ai-analysis-meta" id="decisionMeta">Awaiting backend data</p><div class="reason" id="decisionReason"><b>Momentum and holder quality are confirmed.</b><span>Final pre-trade validation is required before simulated execution.</span></div><div class="decision-tree" id="decisionTree"><div class="empty-state production-empty">Decision checks will appear after a candidate is evaluated.</div></div><div class="inspector-tabs ai-analysis-tabs"><button class="itab active" data-tab="evidence" type="button">Evidence</button><button class="itab" data-tab="timeline" type="button">Timeline</button><button class="itab" data-tab="memory" type="button">Memory</button></div><div class="tab-pane active" id="pane-evidence"><div class="empty-state production-empty">No evidence available.</div></div><div class="tab-pane" id="pane-timeline"><div class="empty-state production-empty">No decision timeline available.</div></div><div class="tab-pane" id="pane-memory"><div class="empty-state production-empty">No historical decision memory available.</div></div><div class="mission-actions"><button aria-disabled="true" class="btn primary" disabled="disabled" id="validateBtn" type="button">Validate execution</button><button aria-disabled="true" class="btn" disabled="disabled" id="replayBtn" type="button">Decision replay</button><button aria-disabled="true" class="btn" disabled="disabled" id="compareBtn" type="button">Compare</button></div></div></details>
 </div>
 </aside>
 </section>
@@ -2795,14 +3169,47 @@ button.primary.mf-has-icon .mf-btn-icon{
   </div>
 </section>
 
-<noscript><section aria-label="JavaScript required" class="panel nojs-evidence"><div class="panel-head"><h2>Server application required</h2><span class="state wait">OFFLINE</span></div><div class="panel-body"><div class="empty-state production-empty">Open MEMEFLOW through its Replit HTTP/HTTPS URL. The local file viewer cannot load authenticated data, wallet connections, charts or server settings.</div></div></section></noscript><section class="execution-preview active locked" id="executionPreview">
-<div class="execution-head"><h2>Pre-trade execution checks</h2><span class="state wait" id="executionState">LOCKED</span></div><div class="signal-explainer" id="executionSignalExplainer"><b>AI signal:</b> WAITING  ·  <b>Execution:</b> LOCKED until complete market and AI validation.</div>
-<div class="execution-grid"><div class="exec-cell"><small>Size</small><b id="executionSize">—</b></div><div class="exec-cell"><small>Quote age</small><b id="quoteAge">—</b></div><div class="exec-cell"><small>Slippage</small><b id="executionSlippage">—</b></div><div class="exec-cell"><small>Risk budget</small><b id="executionRiskGate" style="color:var(--yellow)">PENDING</b></div><div class="exec-cell"><small>Balance</small><b id="walletBalanceGate" style="color:var(--muted)">—</b></div><div class="exec-cell"><small>Wallet</small><b id="walletExecutionGate" style="color:var(--yellow)">NOT CONNECTED</b></div><div class="exec-cell"><small>Route</small><b id="executionRouteGate" style="color:var(--yellow)">PENDING</b></div></div>
+<noscript><section aria-label="JavaScript required" class="panel nojs-evidence"><div class="panel-head"><h2>Server application required</h2><span class="state wait">OFFLINE</span></div><div class="panel-body"><div class="empty-state production-empty">Open MEMEFLOW through its Replit HTTP/HTTPS URL. The local file viewer cannot load authenticated data, wallet connections, charts or server settings.</div></div></section></noscript><section class="execution-preview active locked" id="executionPreview" data-mf-pretrade-v5="1">
+<div class="execution-head"><h2>Pre-trade checks</h2><span class="state wait" id="executionState">LOCKED</span></div>
+
+<div aria-live="polite" class="execution-readiness">
+  <div class="execution-readiness-main">
+    <div><small>Pre-trade readiness</small><b id="executionReadinessCount">0 / 10 checks</b></div>
+    <div class="readiness-label" id="executionReadinessLabel">Market and AI validation pending</div>
+  </div>
+  <div class="readiness-track"><i id="executionReadinessBar"></i></div>
+</div>
+
+<div class="signal-explainer" id="executionSignalExplainer"><b>AI signal:</b> WAITING &nbsp;·&nbsp; <b>Execution:</b> LOCKED</div>
+
 <div aria-live="polite" class="primary-blocker" id="primaryBlocker">
-<div><small>Why locked?</small><b id="primaryBlockerTitle">Waiting for complete market and AI validation</b><span id="primaryBlockerText">Execution parameters remain unavailable until a candidate reaches BUY READY with a fresh quote, route and risk approval.</span></div>
-<a class="btn" href="#primary-candidate" id="primaryBlockerAction">View decision</a>
-</div><div aria-live="polite" class="execution-readiness"><div><small>Pre-trade readiness</small><b id="executionReadinessCount">0 / 10 checks</b></div><div class="readiness-track"><i id="executionReadinessBar"></i></div><div class="readiness-label" id="executionReadinessLabel">Market and AI validation pending</div></div>
-<div class="execution-verdict"><p>Execution remains locked until the selected candidate reaches BUY READY and all server-side checks are current.</p><strong>Execution locked</strong></div>
+  <div>
+    <small>Primary blocker</small>
+    <b id="primaryBlockerTitle">AI BUY READY</b>
+    <span id="primaryBlockerText">Waiting for the AI decision to reach BUY READY.</span>
+  </div>
+  <a class="btn execution-decision-link" data-mf-button-icon-v1="pretrade-decision" href="#primary-candidate" id="primaryBlockerAction">View decision</a>
+</div>
+
+<button class="btn mf-pm-check-toggle" data-mf-button-icon-v1="pretrade-toggle" id="executionChecksToggle" type="button" aria-expanded="false" aria-controls="executionCheckList">
+  <span id="executionChecksToggleLabel">All checks</span>
+  <span class="mf-pm-check-count" id="executionPendingCount">10 pending</span>
+  <svg class="mf-pm-check-chevron" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m9 6 6 6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+</button>
+
+<div class="data-list execution-check-list" id="executionCheckList" role="list" hidden></div>
+
+<!-- Compatibility state anchors used by the existing LIVE/wallet bridges.
+     They preserve existing state ownership without rendering duplicate UI. -->
+<div class="execution-state-anchors" hidden aria-hidden="true">
+  <span id="executionSize">—</span>
+  <span id="quoteAge">—</span>
+  <span id="executionSlippage">—</span>
+  <span id="executionRiskGate">PENDING</span>
+  <span id="walletBalanceGate">—</span>
+  <span id="walletExecutionGate">NOT CONNECTED</span>
+  <span id="executionRouteGate">PENDING</span>
+</div>
 </section>
 <section class="grid" id="positions" style="grid-template-columns:1fr 1fr;margin-top:12px">
 <article class="panel"><div class="panel-head"><h2>Position Manager</h2><span class="state buy">NO POSITION</span></div><div class="panel-body"><div class="empty-state production-empty">No open positions. PAPER and LIVE positions will appear here after confirmed execution.</div></div></article>
@@ -4087,97 +4494,8 @@ async function sync(c){
  const passed=gates.filter(g=>g.pass).length;
  const safe=passed===gates.length;
 
- text('#executionReadinessCount',passed+' / '+gates.length+' checks');
-
- const pendingNames=gates
-   .filter(g=>!g.pass)
-   .map(g=>g.name);
-
- text(
-   '#executionReadinessLabel',
-   safe
-     ? (paperMode?'Paper execution ready':'All pre-trade checks passed')
-     : pendingNames.slice(0,3).join(' · ')+' pending'
- );
-
- const bar=$('#executionReadinessBar');
- if(bar){
-   bar.style.width=Math.round(passed/gates.length*100)+'%';
- }
-
- const execState=$('#executionState');
- if(execState){
-   execState.textContent=safe
-     ? (paperMode?'PAPER READY':'SAFE')
-     : 'LOCKED';
-   execState.className='state '+(safe?'buy':'wait');
- }
-
- const explainer=$('#executionSignalExplainer');
- if(explainer){
-   explainer.innerHTML=
-     '<b>AI signal:</b> '+state+
-     ' &nbsp;·&nbsp; <b>Execution:</b> '+
-     (safe
-       ? (paperMode?'PAPER READY':'SAFE TO VALIDATE')
-       : 'LOCKED');
- }
-
- text('#executionSize',Number.isFinite(positionSize)?positionSize+' SOL':'—');
- text('#quoteAge',paperMode?'NOT REQUIRED':fmt.age(quoteAge));
- text('#executionSlippage',paperMode?'NOT REQUIRED':(finite(c?.slippagePct)?fmt.pct(c.slippagePct):'—'));
-
- const risk=$('#executionRiskGate');
- if(risk){
-   risk.textContent=riskReady?'PASS':'PENDING';
-   risk.style.color=riskReady?'var(--green)':'var(--yellow)';
- }
-
- const route=$('#executionRouteGate');
- if(route){
-   route.textContent=routeReady?'PASS':'PENDING';
-   route.style.color=routeReady?'var(--green)':'var(--yellow)';
- }
-
- const walletGate=$('#walletExecutionGate');
- if(walletGate && paperMode){
-   walletGate.textContent='NOT REQUIRED';
-   walletGate.style.color='var(--green)';
- }
-
- const balanceGate=$('#walletBalanceGate');
- if(balanceGate && paperMode){
-   balanceGate.textContent='PAPER';
-   balanceGate.style.color='var(--green)';
- }
-
- text(
-   '#primaryBlockerTitle',
-   safe
-     ? (paperMode?'Paper execution ready':'All checks passed')
-     : 'Execution locked: '+(pendingNames[0]||reasons[0]||'validation pending')
- );
-
- text(
-   '#primaryBlockerText',
-   safe
-     ? (paperMode
-         ? 'All paper execution checks passed.'
-         : 'The selected candidate is eligible for final validation.')
-     : pendingNames.slice(0,4).join(' · ')+' pending'
- );
-
- const blockerAction=$('#primaryBlockerAction');
- if(blockerAction){
-   blockerAction.textContent=safe
-     ? (paperMode?'Paper execution ready':'Validate execution')
-     : 'View decision';
-
-   blockerAction.href=safe
-     ? (paperMode?'#positions':'#executionPreview')
-     : '#primary-candidate';
- }
-
+ // PRE-TRADE V5: visible presentation is owned only by
+ // pretrade-control-center-v5.js. Keep execution validation safety here.
  const validate=$('#validateBtn');
  if(validate){
    validate.disabled=!safe;
@@ -4185,8 +4503,9 @@ async function sync(c){
  }
 
  const preview=$('#executionPreview');
- if(preview)preview.classList.toggle('locked',!safe);
-
+ if(preview){
+   preview.dataset.executionMode=paperMode?'paper':'live';
+ }
  // Mission/top context follows the same selected candidate.
  text('#opMission',has?(c.name||c.symbol||'Selected candidate'):'No active candidate');
  text('#mobileSignalText',has?(c.primaryReason||reasons[0]||state):'Waiting for verified data');
@@ -4235,6 +4554,8 @@ window.MEMEFLOW_UNIFIED_CANDIDATE_SYSTEM={
 
 <script src="/market-chart-final-v5.js?v=20260805-mobile-polish"></script>
 <script defer src="paper-automation-ui.js"></script>
+<script src="./ai-analysis-state-clean-v1.js?v=1.0.0" defer></script>
+<script src="./pretrade-control-center-v5.js?v=5.0.0" defer></script>
 <script id="topbar-conn-bridge">(function(){
  'use strict';
  /* Compact mobile topbar Wallet + RPC status bridge.
@@ -6869,27 +7190,9 @@ panel.addEventListener('click',async e=>{const action=e.target?.dataset?.mfai;if
     host.classList.toggle('mf-pm-empty',empty);
   }
 
-  function installChecksToggle(){
-    const host=q('#executionPreview');
-    const grid=q('.execution-grid',host||document);
-    if(!host||!grid||q('.mf-pm-check-toggle',host))return;
-    const btn=document.createElement('button');
-    btn.type='button';
-    btn.className='mf-pm-check-toggle';
-    btn.setAttribute('aria-expanded','false');
-    btn.textContent='View all checks';
-    btn.addEventListener('click',()=>{
-      const open=host.classList.toggle('mf-pm-checks-open');
-      btn.setAttribute('aria-expanded',String(open));
-      btn.textContent=open?'Hide detailed checks':'View all checks';
-    });
-    grid.parentNode.insertBefore(btn,grid);
-  }
-
   function init(){
     tagManualScan();
     syncPrimaryEmpty();
-    installChecksToggle();
   }
 
   init();
@@ -7138,279 +7441,5 @@ panel.addEventListener('click',async e=>{const action=e.target?.dataset?.mfai;if
 })();
  /* MF_BUTTON_ICONS_V1_SCRIPT_END */
 </script>
-<!-- MF_AI_SINGLE_CHEVRON_PATCH:START -->
-
-<script id="mf-ai-single-chevron-script">
-(() => {
-  'use strict';
-
-  const MOBILE = window.matchMedia('(max-width: 820px)');
-  const TARGET_CLASS = 'mf-ai-single-chevron-target';
-  const ROW_CLASS = 'mf-ai-single-chevron-row';
-  let rafPending = false;
-
-  const norm = v => String(v || '').replace(/\s+/g, ' ').trim().toLowerCase();
-
-  function visible(el) {
-    if (!el || !(el instanceof Element)) return false;
-    const cs = getComputedStyle(el);
-    if (cs.display === 'none' || cs.visibility === 'hidden') return false;
-    const r = el.getBoundingClientRect();
-    return r.width > 80 && r.height > 20;
-  }
-
-  function allCandidates() {
-    return [...document.querySelectorAll(
-      'button,a,summary,[role="button"],div,section,article,span,strong,b,h1,h2,h3,h4'
-    )].filter(visible);
-  }
-
-  function exactText(text) {
-    const wanted = norm(text);
-    return allCandidates()
-      .filter(el => norm(el.innerText || el.textContent) === wanted)
-      .sort((a, b) => {
-        const ar = a.getBoundingClientRect(), br = b.getBoundingClientRect();
-        return (ar.width * ar.height) - (br.width * br.height);
-      })[0] || null;
-  }
-
-  function findViewAllChecksControl() {
-    let textNode = exactText('View all checks');
-    if (!textNode) {
-      textNode = allCandidates()
-        .filter(el => norm(el.innerText || el.textContent).includes('view all checks'))
-        .sort((a, b) => a.getBoundingClientRect().height - b.getBoundingClientRect().height)[0] || null;
-    }
-    if (!textNode) return null;
-
-    const interactive = textNode.closest('button,a,summary,[role="button"]');
-    if (interactive && visible(interactive)) return interactive;
-
-    let cur = textNode;
-    const options = [];
-    while (cur && cur !== document.body) {
-      const r = cur.getBoundingClientRect();
-      const t = norm(cur.innerText || cur.textContent);
-      if (t.includes('view all checks') && r.height >= 42 && r.height <= 120 && r.width > 160) {
-        options.push(cur);
-      }
-      cur = cur.parentElement;
-    }
-    return options.sort((a,b)=>a.getBoundingClientRect().height-b.getBoundingClientRect().height)[0] || textNode;
-  }
-
-  function findAiTitleNode() {
-    const nodes = allCandidates().filter(el => {
-      const t = norm(el.innerText || el.textContent);
-      return t === 'ai analysis & market data' ||
-             t === 'ai analysis and market data' ||
-             (t.includes('ai analysis') && t.includes('market data') && t.length < 80);
-    });
-
-    return nodes.sort((a,b)=>{
-      const ar=a.getBoundingClientRect(), br=b.getBoundingClientRect();
-      return (ar.width*ar.height)-(br.width*br.height);
-    })[0] || null;
-  }
-
-  function findAiControl() {
-    const title = findAiTitleNode();
-    if (!title) return null;
-
-    // Best case: the title is already inside the actual clickable control.
-    const interactive = title.closest('button,a,summary,[role="button"]');
-    if (interactive && visible(interactive)) return interactive;
-
-    // Otherwise choose the smallest practical ancestor that contains the WHOLE
-    // AI Analysis row, including the old right-side chevron.
-    const options = [];
-    let cur = title;
-    while (cur && cur !== document.body) {
-      const r = cur.getBoundingClientRect();
-      const t = norm(cur.innerText || cur.textContent);
-      const hasIcon = !!cur.querySelector('svg,[class*="chevron"],[class*="arrow"],[class*="caret"]');
-      const hasInteractiveChild = !!cur.querySelector('button,a,summary,[role="button"]');
-
-      if (
-        t.includes('ai analysis') &&
-        t.includes('market data') &&
-        r.width > 180 &&
-        r.height >= 48 &&
-        r.height <= 145
-      ) {
-        options.push({
-          el: cur,
-          score:
-            (hasIcon ? -40 : 0) +
-            (hasInteractiveChild ? -25 : 0) +
-            Math.abs(r.height - 72)
-        });
-      }
-      cur = cur.parentElement;
-    }
-
-    options.sort((a,b)=>a.score-b.score);
-    return options[0]?.el || title;
-  }
-
-  function findSourceChevron(source) {
-    if (!source) return null;
-
-    // Prefer the icon to the LEFT of "View all checks", because that is the
-    // exact visual the user wants to reuse.
-    const sr = source.getBoundingClientRect();
-    const svgs = [...source.querySelectorAll('svg')].filter(svg => {
-      const r = svg.getBoundingClientRect();
-      return r.width > 4 && r.height > 4 && r.left < sr.left + sr.width * 0.5;
-    });
-
-    if (svgs[0]) return svgs[0].cloneNode(true);
-
-    // Fallback for icon libraries that draw with CSS / text rather than SVG.
-    const iconLike = [...source.querySelectorAll('*')].find(el => {
-      const r = el.getBoundingClientRect();
-      if (r.width < 6 || r.width > 40 || r.height < 6 || r.height > 40) return false;
-      const t = norm(el.textContent);
-      return r.left < sr.left + sr.width * 0.5 &&
-             (t === '›' || t === '>' || t === '→' || t === '❯');
-    });
-    if (iconLike) return iconLike.cloneNode(true);
-
-    return null;
-  }
-
-  function copyComputedVisual(source, target, row, label, iconWrap) {
-    const cs = getComputedStyle(source);
-    const rect = source.getBoundingClientRect();
-
-    const props = [
-      'background',
-      'background-color',
-      'background-image',
-      'border-top',
-      'border-right',
-      'border-bottom',
-      'border-left',
-      'border-radius',
-      'box-shadow',
-      'color'
-    ];
-    props.forEach(prop => {
-      const value = cs.getPropertyValue(prop);
-      if (value) target.style.setProperty(prop, value, 'important');
-    });
-
-    const targetHeight = (rect.height >= 42 && rect.height <= 120) ? Math.round(rect.height) : 68;
-    target.style.setProperty('min-height', `${targetHeight}px`, 'important');
-    target.style.setProperty('height', `${targetHeight}px`, 'important');
-    target.style.setProperty('padding', '0', 'important');
-
-    row.style.padding = cs.padding || '0 18px';
-
-    [
-      'font-family','font-size','font-style','font-weight',
-      'letter-spacing','line-height','text-transform'
-    ].forEach(prop => {
-      const value = cs.getPropertyValue(prop);
-      if (value) label.style.setProperty(prop, value);
-    });
-
-    label.style.color = cs.color;
-    iconWrap.style.color = cs.color;
-  }
-
-  function installVisual(source, target) {
-    target.classList.add(TARGET_CLASS);
-
-    let row = target.querySelector(`:scope > .${ROW_CLASS}`);
-    if (!row) {
-      // Save original interactive child before hiding it.
-      const originalInteractive =
-        target.matches('button,a,summary,[role="button"]')
-          ? null
-          : target.querySelector('button,a,summary,[role="button"]');
-
-      row = document.createElement('span');
-      row.className = ROW_CLASS;
-
-      const iconWrap = document.createElement('span');
-      iconWrap.className = 'mf-ai-single-chevron-icon';
-      iconWrap.setAttribute('aria-hidden', 'true');
-
-      const cloned = findSourceChevron(source);
-      if (cloned) {
-        iconWrap.appendChild(cloned);
-      } else {
-        // Clean fallback: one single chevron. Never show a second arrow.
-        iconWrap.innerHTML =
-          '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true">' +
-          '<path d="M9 5l7 7-7 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>' +
-          '</svg>';
-      }
-
-      const label = document.createElement('span');
-      label.className = 'mf-ai-single-chevron-label';
-      label.textContent = 'AI Analysis & Market Data';
-
-      row.append(iconWrap, label);
-      target.appendChild(row);
-
-      // If click behavior lives on a hidden child, forward the new visible row
-      // to that EXISTING control. This preserves application logic.
-      if (originalInteractive) {
-        row.addEventListener('click', event => {
-          event.preventDefault();
-          event.stopPropagation();
-          originalInteractive.click();
-        });
-      }
-
-      if (!target.hasAttribute('aria-label')) {
-        target.setAttribute('aria-label', 'AI Analysis & Market Data');
-      }
-    }
-
-    const label = row.querySelector('.mf-ai-single-chevron-label');
-    const iconWrap = row.querySelector('.mf-ai-single-chevron-icon');
-    copyComputedVisual(source, target, row, label, iconWrap);
-  }
-
-  function apply() {
-    rafPending = false;
-    if (!MOBILE.matches) return;
-
-    const source = findViewAllChecksControl();
-    const target = findAiControl();
-    if (!source || !target || source === target) return;
-
-    installVisual(source, target);
-  }
-
-  function schedule() {
-    if (rafPending) return;
-    rafPending = true;
-    requestAnimationFrame(apply);
-  }
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', schedule, { once: true });
-  } else {
-    schedule();
-  }
-
-  const observer = new MutationObserver(schedule);
-  observer.observe(document.documentElement, {
-    childList: true,
-    subtree: true,
-    characterData: true
-  });
-
-  MOBILE.addEventListener?.('change', schedule);
-  window.addEventListener('resize', schedule, { passive: true });
-})();
-</script>
-
-<!-- MF_AI_SINGLE_CHEVRON_PATCH:END -->
 </body>
 </html>
