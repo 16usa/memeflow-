@@ -1,0 +1,9 @@
+const fs=require('fs'),vm=require('vm');
+const file=process.argv[2];let rafId=0;const callbacks=new Map();
+global.navigator={connection:{saveData:false},deviceMemory:8,hardwareConcurrency:8};global.devicePixelRatio=2;global.performance={now:()=>Date.now()};
+global.requestAnimationFrame=fn=>{const id=++rafId;callbacks.set(id,fn);return id};global.cancelAnimationFrame=id=>callbacks.delete(id);global.addEventListener=()=>{};global.removeEventListener=()=>{};
+global.ResizeObserver=class{observe(){}disconnect(){}};
+const style={setProperty(){}};const classList={add(){},remove(){}};const root={dataset:{},classList,offsetWidth:1};const world={style};
+const ctx={setTransform(){},clearRect(){},fillRect(){},beginPath(){},arc(){},fill(){},set globalAlpha(v){},get globalAlpha(){return 1},set fillStyle(v){},get fillStyle(){return '#fff'}};
+const canvas={width:0,height:0,getContext(){return ctx},getBoundingClientRect(){return{left:0,top:0,width:390,height:520}}};const rocket={getBoundingClientRect(){return{left:140,top:250,width:110,height:180}}};
+vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});if(!global.PepeSceneDirector?.create)throw new Error('director missing');const d=global.PepeSceneDirector.create({root,world,canvas,rocket,reducedMotion:()=>false});if(!d)throw new Error('director create failed');d.setMode('searching');d.update({stage:'clouds',multiplier:1.12,velocity:.02,acceleration:.003,thrust:48,flightState:'cruise'});d.resume();for(let i=0;i<4;i++){const entries=[...callbacks.entries()];callbacks.clear();for(const [,fn] of entries)fn(Date.now()+i*17)}d.setMode('live');d.update({stage:'orbit',multiplier:1.8,velocity:.06,acceleration:.01,thrust:86,flightState:'boost'});for(let i=0;i<5;i++){const entries=[...callbacks.entries()];callbacks.clear();for(const [,fn] of entries)fn(Date.now()+100+i*17)}d.pause();d.stop();console.log('SCENE MODULE SMOKE PASS');

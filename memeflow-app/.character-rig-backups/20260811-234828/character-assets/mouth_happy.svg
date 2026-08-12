@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 280">
+<defs>
+ <radialGradient id="m" cx=".5" cy=".8">
+  <stop offset="0" stop-color="#ee5860"/>
+  <stop offset=".6" stop-color="#651319"/>
+  <stop offset="1" stop-color="#24070a"/>
+ </radialGradient>
+</defs>
+<path d="M65 55Q250 98 435 55Q418 244 250 246Q82 244 65 55Z"
+ fill="url(#m)" stroke="#164825" stroke-width="9"/>
+<path d="M150 205Q250 132 350 205Q315 246 250 248Q185 246 150 205Z"
+ fill="#ff7475"/>
+<ellipse cx="250" cy="218" rx="70" ry="20" fill="#ffa09a" opacity=".65"/>
+</svg>

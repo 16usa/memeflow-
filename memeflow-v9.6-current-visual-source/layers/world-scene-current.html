@@ -1,0 +1,76 @@
+<div class="world" id="world" aria-hidden="true">
+        
+        <div class="moon-beacon" id="moonBeacon" aria-hidden="true"><i></i></div>
+        <div class="story-route" aria-hidden="true"><i></i><b></b></div>
+        <div class="shockwave" id="shockwave"></div><div class="emergency-flash" id="emergencyFlash"></div><div class="secure-flash" id="secureFlash"></div>
+        
+        <div class="target-reticle" id="targetReticle"><i></i><b></b><span></span></div>
+        
+        <svg class="trace" viewBox="0 0 1000 640" preserveAspectRatio="none">
+          <defs><linearGradient id="lineGradient" x1="0" y1="1" x2="1" y2="0"><stop stop-color="#55e9a5"/><stop offset=".55" stop-color="#bafc86"/><stop offset="1" stop-color="#f3ffb7"/></linearGradient><filter id="lineGlow"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+          <path id="tracePath" d="M0 580 L1000 580" fill="none" stroke="url(#lineGradient)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" filter="url(#lineGlow)"/><circle id="traceDot" cx="1000" cy="580" r="7" fill="#e8ff9e" filter="url(#lineGlow)"/>
+        </svg>
+        <div class="levels" id="levels"><span data-level="10">10.0×</span><span data-level="5">5.00×</span><span data-level="3">3.00×</span><span data-level="2">2.00×</span><span data-level="1.5">1.50×</span><span data-level="1.2">1.20×</span><span data-level="1">1.00×</span></div>
+        
+        
+        <div class="flight-position-hud" id="flightPositionHud" aria-hidden="true"><small>FLIGHT POSITION</small><div><span>ENTRY</span><b>1.00×</b></div><div><span>CURRENT</span><b id="flightPositionCurrent">1.00×</b></div><div><span>PEAK</span><b id="flightPositionPeak">1.00×</b></div></div>
+        <div class="flight-progress" id="flightProgress" aria-hidden="true"><span data-flight-stage="ground"><i></i><b>PAD</b></span><span data-flight-stage="clouds"><i></i><b>SKY</b></span><span data-flight-stage="strato"><i></i><b>ATMOS</b></span><span data-flight-stage="orbit"><i></i><b>ORBIT</b></span><span data-flight-stage="moon"><i></i><b>MOON</b></span><span data-flight-stage="deep"><i></i><b>DEEP</b></span><span data-flight-stage="hyper"><i></i><b>HYPER</b></span></div>
+        
+        <div class="rocket story-hero" id="rocket" data-mood="ready">
+          <div class="rocket-halo"></div>
+          <div class="rocket-body">
+            <svg class="pepe-v6" viewBox="0 0 440 330" aria-hidden="true">
+              <defs>
+                <linearGradient id="v6Silver" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f8fbfd"/><stop offset=".18" stop-color="#bdc9cf"/><stop offset=".48" stop-color="#5b6971"/><stop offset=".72" stop-color="#c9d3d7"/><stop offset="1" stop-color="#eef5f7"/></linearGradient>
+                <linearGradient id="v6Red" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff6a5d"/><stop offset=".52" stop-color="#db2934"/><stop offset="1" stop-color="#7c0e1a"/></linearGradient>
+                <linearGradient id="v6Frog" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#93ed70"/><stop offset=".48" stop-color="#4db957"/><stop offset="1" stop-color="#216c39"/></linearGradient>
+                <linearGradient id="v6Suit" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1d2930"/><stop offset=".5" stop-color="#070c10"/><stop offset="1" stop-color="#18272f"/></linearGradient>
+                <filter id="v6Shadow" x="-50%" y="-50%" width="220%" height="220%"><feDropShadow dx="0" dy="16" stdDeviation="12" flood-color="#000" flood-opacity=".45"/></filter>
+              </defs>
+
+              <!-- Side-view rocket -->
+              <g class="v6-rocket" filter="url(#v6Shadow)">
+                <path d="M79 218 C112 189 177 177 276 184 C311 186 339 194 361 207 C338 223 309 233 272 237 C177 247 112 242 79 218 Z" fill="url(#v6Silver)" stroke="#d9e6eb" stroke-opacity=".55" stroke-width="2.5"/>
+                <path class="v6-nose" d="M356 205 C383 199 411 204 429 216 C407 229 381 232 355 226 C363 219 363 212 356 205 Z" fill="url(#v6Red)" stroke="#ff8b7c" stroke-opacity=".55" stroke-width="2"/>
+                <path class="v6-fin v6-fin-top" d="M199 186 C216 155 244 144 268 151 L249 188 Z" fill="url(#v6Red)" stroke="#ff796d" stroke-opacity=".5" stroke-width="2"/>
+                <path class="v6-fin v6-fin-bottom" d="M207 238 C222 267 247 279 271 270 L251 235 Z" fill="url(#v6Red)" stroke="#ff796d" stroke-opacity=".5" stroke-width="2"/>
+                <path d="M91 205 C107 196 124 191 143 187 L143 244 C123 240 105 235 90 226 Z" fill="#19272f" stroke="#a8bbc3" stroke-opacity=".35" stroke-width="2"/>
+                <path d="M103 202 L69 190 L79 216 L68 244 L105 232 Z" fill="#101c22" stroke="#556b75" stroke-width="2"/>
+                <g class="v6-porthole"><circle cx="296" cy="211" r="31" fill="#09131a" stroke="#d6e3e8" stroke-width="5"/><circle cx="296" cy="211" r="23" fill="#0a3645" stroke="#6ce6d3" stroke-opacity=".7" stroke-width="2"/><circle cx="296" cy="211" r="14" fill="#5fda79" opacity=".85"/><path d="M286 214 Q296 204 306 214 Q296 222 286 214 Z" fill="#164d30"/></g>
+                <path d="M135 199 C189 188 267 187 326 199" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="4" stroke-linecap="round"/>
+                <path d="M153 230 C211 239 279 233 331 220" fill="none" stroke="#1f333c" stroke-opacity=".5" stroke-width="3" stroke-linecap="round"/>
+              </g>
+
+              <!-- Pepe riding the rocket -->
+              <g class="v6-pepe">
+                <g class="v6-leg v6-leg-back"><path d="M218 185 C208 203 209 220 229 229" fill="none" stroke="url(#v6Frog)" stroke-width="22" stroke-linecap="round"/><ellipse cx="231" cy="230" rx="16" ry="10" fill="#48b653" transform="rotate(10 231 230)"/></g>
+                <g class="v6-leg v6-leg-front"><path d="M176 185 C166 204 171 222 190 231" fill="none" stroke="url(#v6Frog)" stroke-width="22" stroke-linecap="round"/><ellipse cx="191" cy="232" rx="16" ry="10" fill="#51c35b" transform="rotate(-8 191 232)"/></g>
+                <g class="v6-torso"><path d="M157 128 C179 112 216 114 236 134 C247 147 249 176 238 194 C220 210 178 209 157 193 C145 177 144 144 157 128 Z" fill="url(#v6Suit)" stroke="#2b424d" stroke-width="3"/><path d="M164 137 C180 129 214 129 230 139" fill="none" stroke="#5be6bd" stroke-opacity=".32" stroke-width="3"/><path d="M195 125 V202" stroke="#30444c" stroke-width="3"/></g>
+
+                <g class="v6-arm v6-arm-left"><path d="M165 143 C142 145 131 157 126 176" fill="none" stroke="url(#v6Frog)" stroke-width="18" stroke-linecap="round"/><g class="v6-hand" transform="translate(126 177)"><circle r="10" fill="#50c35a"/><path d="M-5 -3 L-15 -9 M-4 2 L-15 3 M1 5 L-3 15" stroke="#50c35a" stroke-width="5" stroke-linecap="round"/></g></g>
+                <g class="v6-arm v6-arm-right"><path d="M226 139 C249 125 259 107 263 86" fill="none" stroke="url(#v6Frog)" stroke-width="18" stroke-linecap="round"/><g class="v6-hand v6-wave-hand" transform="translate(264 86)"><circle r="10" fill="#55c95d"/><path d="M1 -5 L4 -20 M6 -3 L17 -14 M-4 -4 L-8 -17" stroke="#55c95d" stroke-width="5.5" stroke-linecap="round"/></g></g>
+
+                <g class="v6-head">
+                  <ellipse cx="196" cy="91" rx="62" ry="49" fill="url(#v6Frog)" stroke="#2e7b43" stroke-width="3"/>
+                  <!-- eyes behind sunglasses for expression motion -->
+                  <ellipse cx="168" cy="67" rx="24" ry="21" fill="#e8f0eb" opacity=".9"/><ellipse cx="220" cy="67" rx="24" ry="21" fill="#e8f0eb" opacity=".9"/>
+                  <g class="v6-pupils"><ellipse cx="172" cy="69" rx="7" ry="9" fill="#07110d"/><ellipse cx="216" cy="69" rx="7" ry="9" fill="#07110d"/></g>
+                  <!-- premium black sunglasses -->
+                  <g class="v6-shades"><path d="M139 55 C154 48 177 49 190 56 L187 75 C181 87 154 88 145 77 Z" fill="#05080a" stroke="#26363d" stroke-width="3"/><path d="M202 56 C216 48 239 49 252 57 L246 78 C237 88 212 87 205 75 Z" fill="#05080a" stroke="#26363d" stroke-width="3"/><path d="M188 61 C193 58 199 58 204 61" fill="none" stroke="#17252b" stroke-width="5" stroke-linecap="round"/><path d="M148 57 L176 53" stroke="#bcecff" stroke-opacity=".22" stroke-width="3" stroke-linecap="round"/><path d="M211 57 L238 53" stroke="#bcecff" stroke-opacity=".22" stroke-width="3" stroke-linecap="round"/></g>
+                  <ellipse cx="196" cy="101" rx="43" ry="25" fill="#a8d676" opacity=".28"/>
+                  <g class="v6-mouth v6-smile"><path d="M158 99 Q196 132 235 99 Q222 143 196 144 Q171 143 158 99 Z" fill="#6f2c2a"/><path d="M167 106 Q196 124 227 106 Q221 117 196 120 Q174 118 167 106 Z" fill="#fff2dc"/><path d="M182 136 Q196 128 210 136" fill="none" stroke="#e58c86" stroke-width="4" stroke-linecap="round"/></g>
+                  <g class="v6-mouth v6-sad"><path d="M168 127 Q196 105 225 127" fill="none" stroke="#522a28" stroke-width="7" stroke-linecap="round"/></g>
+                  <g class="v6-mouth v6-panic"><ellipse cx="196" cy="119" rx="20" ry="17" fill="#4a2526"/><ellipse cx="196" cy="126" rx="10" ry="6" fill="#e58c86"/></g>
+                </g>
+              </g>
+            </svg>
+          </div>
+          <div class="plasma-tail"></div>
+          <div class="exhaust"><i></i><b></b><span></span></div>
+        </div>
+        <div class="center-state" id="centerState" hidden><small id="centerKicker">TARGET LOCKED</small><b id="centerValue">3</b><span id="centerLabel">LAUNCH</span></div>
+        <div class="milestone" id="milestone" hidden><small>MILESTONE</small><b id="milestoneValue">2.00×</b><span id="milestoneText">Orbit reached</span></div>
+        <div class="stale-cover" id="staleCover" hidden><i></i><b>WAITING FOR FRESH MARKET DATA</b><span>The round remains live on the server.</span></div>
+      </div>
+
+      

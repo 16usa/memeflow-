@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#030507">
+  <meta name="color-scheme" content="dark">
+  <meta name="description" content="MEMEFLOW Pepe Rocket V6.5 — cinematic launch, deep-space progression and server-authoritative paper game powered by fresh MEMEFLOW market data.">
+  <title>MEMEFLOW · Pepe Rocket</title>
+  <link rel="stylesheet" href="/game.css?v=65">
+</head>
+<body>
+<div class="game" id="game" data-state="idle" data-stage="ground" data-feed="idle" data-direction="flat" data-focus="normal" data-danger="none" data-launch="idle" data-outcome="none" data-selector="idle" data-bank="neutral" data-cashzone="idle" data-cashpulse="idle" data-flight="idle" data-lifecycle="active" data-clientfeed="fresh">
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="Back to MEMEFLOW">
+      <span class="brand-glyph" aria-hidden="true"><i></i><b></b></span>
+      <span><strong>MEMEFLOW</strong><small>PEPE ROCKET</small></span>
+    </a>
+    <div class="mode"><i></i><b>PAPER</b><span>REAL MARKET</span></div>
+    <div class="top-right">
+      <button class="sound" id="soundBtn" type="button" aria-pressed="true"><span aria-hidden="true">◖</span><b>SOUND</b></button>
+      <div class="balance"><small>VIRTUAL BALANCE</small><b id="balanceTop">$10,000.00</b></div>
+    </div>
+  </header>
+
+  <div class="network-strip" id="networkStrip" role="status" aria-live="polite" aria-atomic="true" hidden><i></i><span id="networkText">Reconnecting to the server-authoritative game stream…</span></div>
+
+  <main class="layout">
+    <section class="stage-card">
+      <div class="stage-head">
+        <div class="round-state" role="status" aria-live="polite" aria-atomic="true"><span class="state-dot"></span><b id="stateLabel">READY</b><small id="stateMessage">Set a paper stake and launch when ready.</small></div>
+        <div class="round-meta">
+          <span><small>ROUND</small><b id="roundId">—</b></span>
+          <span><small>FEED</small><b id="feedAge">—</b></span>
+          <span><small>TIME</small><b id="roundTime">00:00</b></span>
+        </div>
+      </div>
+
+      <div class="multiplier-hud">
+        <div class="multiplier" id="multiplier">1.00<span>×</span></div>
+        <div class="hud-sub"><i></i><span>LIVE PAPER MULTIPLIER</span></div>
+        <div class="hud-mini"><span>PEAK <b id="peakHud">1.00×</b></span><span>DRAWDOWN <b id="drawdownHud">0.0%</b></span><span>THRUST <b id="thrustHud">20%</b></span><span>AUTO DIST <b id="autoDistance">—</b></span><span>STOP DIST <b id="stopDistance">—</b></span></div>
+      </div>
+      <div class="flight-assist" id="flightAssist" data-tone="neutral"><i></i><div><small>FLIGHT TELEMETRY</small><b id="flightAssistState">STANDBY</b></div><span id="flightAssistText">Waiting for a server-locked launch.</span></div>
+
+      <div class="cashout-telemetry" id="cashoutTelemetry" data-state="idle">
+        <div class="cashout-telemetry-head"><span>LIVE POSITION</span><b id="cashoutWindow">WAITING</b></div>
+        <div class="cashout-telemetry-grid">
+          <div><small>PAPER VALUE</small><b id="cashoutValue">$100.00</b></div>
+          <div><small>LIVE P&amp;L</small><b id="cashoutProfit">$0.00</b></div>
+          <div><small>PEAK CAPTURE</small><b id="cashoutCapture">100%</b></div>
+          <div><small>TO AUTO / STOP</small><b id="cashoutDistance">— / —</b></div>
+        </div>
+        <div class="cashout-meter" aria-hidden="true"><i id="cashoutMeterFill"></i><b id="cashoutMeterPeak"></b></div>
+        <small class="cashout-telemetry-note">Display only · settlement remains server-authoritative.</small>
+      </div>
+
+      <div class="world" id="world" aria-hidden="true">
+        <canvas id="fxCanvas"></canvas>
+        <div class="world-gradient"></div>
+        <div class="atmosphere-haze"></div>
+        <div class="parallax-field parallax-far"></div><div class="parallax-field parallax-mid"></div><div class="parallax-field parallax-near"></div>
+        <div class="aurora-band"></div><div class="orbital-grid"></div><div class="plasma-wake"></div><div class="orbit-satellite" aria-hidden="true"><i></i><b></b></div><div class="meteor-shower" aria-hidden="true"><i></i><b></b><span></span></div><div class="lens-flare" aria-hidden="true"></div>
+        <div class="stars stars-a"></div><div class="stars stars-b"></div>
+        <div class="nebula nebula-a"></div><div class="nebula nebula-b"></div>
+        <div class="stratosphere-ring"></div><div class="moon"></div><div class="planet"></div><div class="deep-orbit"></div>
+        <div class="clouds clouds-a"></div><div class="clouds clouds-b"></div>
+        <div class="earth"></div>
+        <div class="flight-dust"></div><div class="speed-lines"></div><div class="danger-glow"></div><div class="boost-glow"></div><div class="screen-vignette"></div>
+        <div class="warp-tunnel"></div><div class="comets"></div><div class="shockwave" id="shockwave"></div><div class="emergency-flash" id="emergencyFlash"></div><div class="secure-flash" id="secureFlash"></div><div class="stage-transition" id="stageTransition" aria-hidden="true"><small>FLIGHT LEVEL</small><b id="stageTransitionLabel">LAUNCHPAD</b><span id="stageTransitionMeta">1.00×</span></div><div class="target-reticle" id="targetReticle"><i></i><b></b><span></span></div>
+
+        <svg class="trace" viewBox="0 0 1000 640" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="lineGradient" x1="0" y1="1" x2="1" y2="0"><stop stop-color="#55e9a5"/><stop offset=".55" stop-color="#bafc86"/><stop offset="1" stop-color="#f3ffb7"/></linearGradient>
+            <filter id="lineGlow"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+          </defs>
+          <path id="tracePath" d="M0 580 L1000 580" fill="none" stroke="url(#lineGradient)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" filter="url(#lineGlow)"/>
+          <circle id="traceDot" cx="1000" cy="580" r="7" fill="#e8ff9e" filter="url(#lineGlow)"/>
+        </svg>
+
+        <div class="levels" id="levels">
+          <span data-level="10">10.0×</span><span data-level="5">5.00×</span><span data-level="3">3.00×</span><span data-level="2">2.00×</span><span data-level="1.5">1.50×</span><span data-level="1.2">1.20×</span><span data-level="1">1.00×</span>
+          <div class="trigger auto-trigger" id="autoTrigger" hidden><b id="autoTriggerLabel">AUTO 1.50×</b></div>
+          <div class="trigger stop-trigger" id="stopTrigger" hidden><b id="stopTriggerLabel">STOP 0.75×</b></div>
+        </div>
+
+        <div class="flight-altimeter" id="altimeter" aria-hidden="true">
+          <small>FLIGHT LEVEL</small>
+          <div class="altimeter-track"><i id="altimeterPeak"></i><b id="altimeterMarker"></b></div>
+          <span id="altimeterValue">1.00× · LAUNCHPAD</span>
+        </div>
+
+        <div class="flight-director" id="flightDirector" aria-hidden="true">
+          <small>FLIGHT VECTOR</small>
+          <div class="director-scope"><div class="director-horizon"><i></i><b></b></div><span></span></div>
+          <b id="flightDirectorState">STANDBY</b>
+        </div>
+
+        <div class="flight-progress" id="flightProgress" aria-hidden="true">
+          <span data-flight-stage="ground"><i></i><b>PAD</b></span><span data-flight-stage="clouds"><i></i><b>SKY</b></span><span data-flight-stage="strato"><i></i><b>ATMOS</b></span><span data-flight-stage="orbit"><i></i><b>ORBIT</b></span><span data-flight-stage="moon"><i></i><b>MOON</b></span><span data-flight-stage="deep"><i></i><b>DEEP</b></span><span data-flight-stage="hyper"><i></i><b>HYPER</b></span>
+        </div>
+
+        <div class="rocket" id="rocket">
+          <div class="rocket-halo"></div>
+          <div class="rocket-glint"></div><div class="engine-ring engine-ring-a"></div><div class="engine-ring engine-ring-b"></div>
+          <div class="flight-state-ring"><i></i><b></b></div>
+          <div class="rocket-body"><img src="/game-assets/pepe-rocket.svg?v=51" alt="" draggable="false"></div>
+          <div class="plasma-tail"></div>
+          <div class="exhaust"><i></i><b></b><span></span></div>
+          <div class="heat-shimmer"></div><div class="engine-smoke"><i></i><b></b><span></span></div>
+        </div>
+
+        <div class="launchpad"><i></i><b></b><span></span></div>
+
+        <div class="center-state" id="centerState" hidden>
+          <small id="centerKicker">TARGET LOCKED</small>
+          <b id="centerValue">3</b>
+          <span id="centerLabel">LAUNCH</span>
+        </div>
+        <div class="milestone" id="milestone" hidden><small>MILESTONE</small><b id="milestoneValue">2.00×</b><span id="milestoneText">Orbit reached</span></div>
+        <div class="stale-cover" id="staleCover" hidden><i></i><b>WAITING FOR FRESH MARKET DATA</b><span>The round remains live on the server. Cash out unlocks on a fresh quote.</span></div>
+      </div>
+
+      <div class="position-strip">
+        <div><small>STAKE</small><b id="stakeValue">$100.00</b></div>
+        <div><small>PAPER VALUE</small><b id="paperValue">$100.00</b></div>
+        <div><small>P&amp;L</small><b id="profitValue">$0.00</b></div>
+        <div><small>STAGE</small><b id="stageLabel">LAUNCHPAD</b></div>
+        <div><small>PRICE AGE</small><b id="priceAgeStrip">—</b></div>
+      </div>
+    </section>
+
+    <aside class="cockpit">
+      <section class="panel launch-panel">
+        <div class="panel-title"><div><small>LAUNCH CONTROL</small><h1>One button.<br>One real market move.</h1></div><span class="paper-badge">PAPER ONLY</span></div>
+        <p class="lead">MEMEFLOW chooses a fresh <b>BUY READY</b> candidate. The server owns entry, triggers, balance and final result.</p>
+
+        <label class="field-title" for="betInput">Paper stake</label>
+        <div class="stake-input"><span>$</span><input id="betInput" inputmode="decimal" type="number" min="1" step="1" value="100"></div>
+        <div class="quick-bets"><button data-bet="25" type="button">$25</button><button data-bet="50" type="button">$50</button><button data-bet="100" class="active" type="button">$100</button><button data-bet="250" type="button">$250</button></div>
+
+        <div class="select-grid">
+          <label><span>Auto cash out</span><select id="autoCashout"><option value="0">Manual</option><option value="1.2">1.20×</option><option value="1.5" selected>1.50×</option><option value="2">2.00×</option><option value="2.5">2.50×</option><option value="3">3.00×</option><option value="5">5.00×</option></select></label>
+          <label><span>Stop loss</span><select id="stopLoss"><option value="0">Off</option><option value="0.9">0.90×</option><option value="0.85">0.85×</option><option value="0.8">0.80×</option><option value="0.75" selected>0.75×</option><option value="0.6">0.60×</option></select></label>
+        </div>
+
+        <div class="target-presets" id="targetPresets" aria-label="Auto cash out presets">
+          <button type="button" data-auto="0"><b>MANUAL</b><small>Ride it yourself</small></button>
+          <button type="button" data-auto="1.2"><b>1.20×</b><small>Conservative</small></button>
+          <button type="button" data-auto="1.5" class="active"><b>1.50×</b><small>Balanced</small></button>
+          <button type="button" data-auto="2"><b>2.00×</b><small>Aggressive</small></button>
+          <button type="button" data-auto="5"><b>5.00×</b><small>Moonshot</small></button>
+        </div>
+
+        <div class="risk-deck" id="riskDeck" data-profile="balanced">
+          <div class="risk-head"><span>FLIGHT PLAN</span><b id="riskProfile">BALANCED</b></div>
+          <div class="risk-metrics">
+            <div><small>PROJECTED PAYOUT</small><b id="projectedPayout">$150.00</b></div>
+            <div><small>TARGET PROFIT</small><b id="projectedProfit">+$50.00</b></div>
+            <div><small>STOP DOWNSIDE</small><b id="projectedLoss">-$25.00</b></div>
+            <div><small>REWARD / RISK</small><b id="rewardRisk">2.00 : 1</b></div>
+          </div>
+          <div class="risk-track" aria-hidden="true"><span><i id="rewardBar"></i></span><span><b id="lossBar"></b></span></div>
+          <p id="riskCopy">Balanced auto target with a defined PAPER stop. These numbers are projections; settlement uses the server-observed market price.</p>
+        </div>
+
+        <div class="selector-status" id="selectorStatus" data-phase="idle" data-step="decision">
+          <span class="radar" aria-hidden="true"><i></i><b></b><em></em></span>
+          <div class="selector-copy"><b id="selectorTitle">Selector ready</b><small id="selectorText">Uses your MEMEFLOW BUY READY decisions · no extra Game filters</small><div class="selector-checks" aria-hidden="true"><span>DECISION</span><span>SETTINGS</span><span>PRICE</span><span>LOCK</span></div></div>
+          <strong class="selector-phase" id="selectorPhase">READY</strong>
+        </div>
+
+        <button class="start-button" id="startBtn" type="button"><span>▶</span><div><b>START</b><small id="startHint">Target 1.50× · projected $150.00</small></div></button>
+        <button class="cash-button" id="cashoutBtn" type="button" disabled><span>■</span><div><b>CASH OUT</b><small id="cashoutHint">Waiting for launch</small></div></button>
+      </section>
+
+      <section class="panel token-panel">
+        <div class="panel-row"><span>SELECTED LAUNCH</span><b id="tokenState">WAITING</b></div>
+        <div class="token-head"><div class="token-avatar" id="tokenAvatar">?</div><div><b id="tokenName">No launch selected</b><small id="tokenMint">The Game waits for a BUY READY decision from your MEMEFLOW settings.</small></div></div>
+        <div class="quality-line"><i></i><span id="qualityText">Trading eligibility comes from MEMEFLOW settings</span></div>
+        <div class="token-metrics"><div><small>AI SCORE</small><b id="tokenScore">—</b></div><div><small>HOLDERS</small><b id="tokenHolders">—</b></div><div><small>TOP 10</small><b id="tokenTop10">—</b></div><div><small>BUY PRESSURE</small><b id="tokenPressure">—</b></div></div>
+        <div class="telemetry"><span>FEED <b id="feedQuality">IDLE</b></span><span>VELOCITY <b id="velocity">0.00×/s</b></span><span>SELECTOR <b id="selectorScore">—</b></span><span>DECISION <b id="decisionAge">—</b></span><span>HOLDERS <b id="holderAge">—</b></span></div>
+      </section>
+
+      <section class="panel stats-panel">
+        <div class="panel-row"><span>FLIGHT RECORD</span><b id="statsRounds">0 ROUNDS</b></div>
+        <div class="stats-grid">
+          <div><small>WIN RATE</small><b id="statsWinRate">—</b></div>
+          <div><small>NET P&amp;L</small><b id="statsNet">$0.00</b></div>
+          <div><small>BEST</small><b id="statsBest">—</b></div>
+          <div><small>VOIDED</small><b id="statsVoided">0</b></div>
+        </div>
+        <div class="safety-note"><i></i><span>If the live price feed disappears for too long, the server voids the PAPER round and returns the reserved stake. Game launch follows your current per-user MEMEFLOW BUY READY decision and does not add hidden trading filters.</span></div>
+      </section>
+
+      <details class="panel history-panel">
+        <summary><span>ROUND HISTORY</span><b id="historyCount">0</b></summary>
+        <div class="history-toolbar"><span>Server-settled paper rounds</span><button id="clearHistory" type="button">Clear</button></div>
+        <div class="history" id="history"><div class="history-empty">No completed rounds yet.</div></div>
+      </details>
+    </aside>
+  </main>
+
+  <footer class="footer"><span><i></i><b id="streamState">Game stream connecting</b></span><span id="sourceState">MEMEFLOW server · PAPER only</span><a href="/">Trading terminal</a></footer>
+
+  <div class="mobile-dock">
+    <button id="mobileStart" class="mobile-start" type="button"><span>▶</span><div><b>START</b><small id="mobileStartHint">Target 1.50× · $150.00</small></div></button>
+    <button id="mobileCashout" class="mobile-cashout" type="button" disabled><span>■</span><div><b>CASH OUT</b><small id="mobileCashoutHint">Waiting</small></div></button>
+  </div>
+</div>
+
+<div class="result" id="result" role="dialog" aria-modal="true" aria-labelledby="resultTitle" aria-describedby="resultCopy" hidden>
+  <canvas id="resultCanvas"></canvas>
+  <article class="result-card" id="resultCard">
+    <small id="resultReason">ROUND COMPLETE</small>
+    <div class="result-badge" id="resultBadge">SERVER SETTLED</div>
+    <div class="result-x" id="resultMultiplier">1.00×</div>
+    <h2 id="resultTitle">Paper round complete</h2>
+    <p id="resultCopy">Server-settled result.</p>
+    <div class="result-metrics"><div><small>STAKE</small><b id="resultStake">$0.00</b></div><div><small>PAYOUT</small><b id="resultPayout">$0.00</b></div><div><small>P&amp;L</small><b id="resultProfit">$0.00</b></div></div>
+    <div class="result-extra"><span>Peak <b id="resultPeak">1.00×</b></span><span>Max drawdown <b id="resultDrawdown">0.0%</b></span><span>Max adverse <b id="resultAdverse">0.0%</b></span><span>Time to peak <b id="resultPeakTime">—</b></span><span>Flight <b id="resultDuration">0s</b></span><span>Settlement <b id="resultSettlement">MARKET</b></span><span>Peak captured <b id="resultCapture">—</b></span></div>
+    <div class="result-receipt"><div><small>ENTRY QUALITY</small><b id="resultQuality">—</b></div><div><small>PRICE UPDATES</small><b id="resultUpdates">—</b></div><div><small>ENTRY</small><b id="resultEntryPrice">—</b></div><div><small>EXIT</small><b id="resultExitPrice">—</b></div><div><small>FLIGHT PLAN</small><b id="resultPlan">—</b></div></div><div class="result-flight-strip"><span>PEAK CAPTURE <b id="resultCaptureHero">—</b></span><span>BEST MULTIPLIER <b id="resultPeakHero">1.00×</b></span><span>FLIGHT TIME <b id="resultTimeHero">0s</b></span></div><div class="result-route" id="resultRoute" aria-label="Flight path reached"><span data-route-stage="ground">LAUNCH</span><span data-route-stage="clouds">SKY</span><span data-route-stage="strato">ATMOS</span><span data-route-stage="orbit">ORBIT</span><span data-route-stage="moon">MOON</span><span data-route-stage="deep">DEEP</span><span data-route-stage="hyper">HYPER</span></div><div class="result-trace" id="resultTrace" data-state="empty"><div class="result-trace-head"><span>OBSERVED FLIGHT PATH</span><b id="resultTraceMeta">Live path unavailable after reload</b></div><svg viewBox="0 0 1000 160" preserveAspectRatio="none" aria-hidden="true"><path class="result-trace-grid" d="M24 132 H976 M24 80 H976 M24 28 H976"/><line id="resultTraceEntry" x1="24" x2="976" y1="118" y2="118"/><path id="resultTraceArea" d="M 24 132 L 24 118 L 976 118 L 976 132 Z"/><path id="resultTracePath" d="M 24 118 L 976 118" fill="none"/><circle id="resultTracePeak" cx="24" cy="118" r="7"/><circle id="resultTraceExit" cx="976" cy="118" r="7"/></svg></div>
+    <button id="playAgain" type="button">PLAY AGAIN</button>
+  </article>
+</div>
+
+<script src="/game.js?v=65" defer></script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+{
+  "version": "5.2.0",
+  "createdAt": "2026-08-11T08:16:35.716Z",
+  "files": [
+    "game.html",
+    "game.js",
+    "game-engine.mjs"
+  ]
+}

@@ -1,0 +1,18 @@
+import fs from 'node:fs';import path from 'node:path';import crypto from 'node:crypto';import {spawnSync} from 'node:child_process';
+const root='/home/runner/workspace',app=path.join(root,'memeflow-app'),pkg=path.join(root,'pepe-game-v7.11.1-visible-layered-flight'),expected={"game.html": "d338d48ddb62d030ae5038c813529dafd695b72980898398912eb260e9c9e053", "game.css": "f0228a1c9dc2102dc9c0dd3681da1d3eaeb6d4eff5e9983f4b3a1b51d74f9396", "game.js": "821c2051d212ee70e1c99ec8574b066485a4f82c33e83ee6e0b2c1b0283cedd9", "game-scene.js": "6ee9f0ce6ef5e06333ec85dc4b809892737f697f2b6ed566006df2ec93c3cac2"};
+const sha=p=>crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex');let n=0;
+const pass=(x,o)=>{if(!o)throw new Error('FAIL '+x);n++;console.log('PASS',x)};
+for(const [f,h] of Object.entries(expected))pass('hash '+f,fs.existsSync(path.join(app,f))&&sha(path.join(app,f))===h);
+const h=fs.readFileSync(path.join(app,'game.html'),'utf8'),c=fs.readFileSync(path.join(app,'game.css'),'utf8'),s=fs.readFileSync(path.join(app,'game-scene.js'),'utf8');
+pass('scene cache V7.11.1',h.includes('/game-scene.js?v=7111'));
+pass('cinematic vars no longer shadowed',!c.includes('.cinema-stack{inset:0;z-index:-8;pointer-events:none;overflow:hidden;--cinema-back-y'));
+pass('world owns cinematic defaults',c.includes('--cinema-back-y:0px'));
+pass('cloud parallax present',c.includes('@keyframes cinemaCloudDriftA'));
+pass('strong ready particles',s.includes("mode==='searching'?.46:.26"));
+pass('game JS syntax',spawnSync(process.execPath,['--check',path.join(app,'game.js')]).status===0);
+pass('scene JS syntax',spawnSync(process.execPath,['--check',path.join(app,'game-scene.js')]).status===0);
+pass('runtime smoke',spawnSync(process.execPath,[path.join(pkg,'runtime-smoke-v7111.cjs'),app],{stdio:'inherit'}).status===0);
+pass('scene smoke',spawnSync(process.execPath,[path.join(pkg,'scene-smoke-v7111.cjs'),path.join(app,'game-scene.js')],{stdio:'inherit'}).status===0);
+pass('protected engine',fs.existsSync(path.join(app,'src','game-engine.mjs')));
+pass('protected server',fs.existsSync(path.join(app,'app-server.mjs')));
+console.log(`PEPE GAME V7.11.1 VERIFY: PASS (${n} checks)`);

@@ -1,0 +1,18 @@
+import fs from 'node:fs';import path from 'node:path';import crypto from 'node:crypto';import {spawnSync} from 'node:child_process';
+const app='/home/runner/workspace/memeflow-app',expected={"game.html": "5c2bbbd8eea6d62d282838f6254eafe40dd5037cdc9d71a2625d1b64f447d712", "game.css": "88d64b7ed762f405fe53592170346e78236c582f4f7e65dd5b186771e015636a", "game.js": "2eac283b76c4bb0552d786b56d267ec28c3618b7b54f5d5232c2f8d6fa0a56b8", "game-webgl-v9.js": "1e4eba5e07431f1ce7a805a210d962453957307577bf95b070dc5c9251dead1d"};const sha=p=>crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex');let n=0;const pass=(x,o)=>{if(!o)throw new Error('FAIL '+x);n++;console.log('PASS',x)};
+for(const [f,h] of Object.entries(expected))pass('hash '+f,fs.existsSync(path.join(app,f))&&sha(path.join(app,f))===h);
+const H=fs.readFileSync(path.join(app,'game.html'),'utf8'),C=fs.readFileSync(path.join(app,'game.css'),'utf8');
+pass('old Pepe asset removed',!H.includes('/game-assets/pepe-rocket.svg'));
+pass('new vector hero present',H.includes('class="pepe-v3"'));
+pass('old preflight text removed',!H.includes('Pepe is on the launchpad'));
+pass('visible preflight overlay removed',!H.includes('class="preflight-state"'));
+pass('visible stage overlay removed',!H.includes('class="stage-transition"'));
+pass('MOON scene label removed',!H.includes('<span>MOON</span>'));
+pass('emoji/text mood chip removed',!H.includes('pepe-emote'));
+pass('fresh cache key',H.includes('/game.css?v=930hero')&&H.includes('/game.js?v=930hero'));
+pass('arm animation present',C.includes('@keyframes v3VictoryArm'));
+pass('eye animation present',C.includes('@keyframes v3ScanEyes'));
+pass('sad face present',C.includes('.frog-mouth-sad'));
+pass('game JS syntax',spawnSync(process.execPath,['--check',path.join(app,'game.js')]).status===0);
+pass('WebGL JS syntax',spawnSync(process.execPath,['--check',path.join(app,'game-webgl-v9.js')]).status===0);
+console.log(`PEPE GAME V9.3 VERIFY: PASS (${n} checks)`);

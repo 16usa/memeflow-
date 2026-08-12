@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="color-scheme" content="dark">
+  <meta name="description" content="MEMEFLOW Rocket — paper game driven by live MEMEFLOW market data.">
+  <title>MEMEFLOW Rocket · Paper Game</title>
+  <link rel="stylesheet" href="/game.css">
+</head>
+<body>
+<div class="game-shell" id="gameShell" data-stage="ground" data-state="idle" data-direction="flat">
+  <header class="game-topbar">
+    <a class="brand" href="/" aria-label="Back to MEMEFLOW">
+      <span class="brand-rocket">↗</span>
+      <span class="brand-copy"><b>MEMEFLOW</b><small>PEPE ROCKET</small></span>
+    </a>
+    <div class="paper-badge"><i></i><span>PAPER · LIVE MARKET</span></div>
+    <div class="top-actions">
+      <button class="sound-btn" id="soundBtn" type="button" aria-pressed="true" title="Toggle game sounds">SOUND ON</button>
+      <div class="top-balance"><small>Virtual balance</small><b id="gameBalance">$10,000.00</b></div>
+    </div>
+  </header>
+
+  <main class="game-layout">
+    <aside class="control-panel glass">
+      <div class="panel-kicker">LAUNCH CONTROL</div>
+      <h1>Ride the move.<br><span>Cash out in time.</span></h1>
+      <p class="panel-copy">MEMEFLOW waits for a current <b>BUY READY</b> candidate. When the round starts, Pepe follows that token's real live price.</p>
+
+      <div class="balance-mini"><span>Available paper balance</span><b id="balanceMini">$10,000.00</b></div>
+
+      <label class="field-label" for="betInput">Paper stake</label>
+      <div class="money-input"><span>$</span><input id="betInput" inputmode="decimal" min="1" step="1" type="number" value="100" aria-label="Paper stake"></div>
+      <div class="quick-row" aria-label="Quick stake amounts">
+        <button type="button" data-bet="25">$25</button><button type="button" data-bet="50">$50</button><button type="button" data-bet="100" class="active">$100</button><button type="button" data-bet="250">$250</button>
+      </div>
+
+      <div class="control-grid">
+        <label><span>Auto cash out</span><select id="autoCashout"><option value="0">Manual</option><option value="1.2">1.20×</option><option value="1.5" selected>1.50×</option><option value="2">2.00×</option><option value="2.5">2.50×</option><option value="5">5.00×</option></select></label>
+        <label><span>Stop loss</span><select id="stopLoss"><option value="0">Off</option><option value="0.9">0.90×</option><option value="0.8">0.80×</option><option value="0.75" selected>0.75×</option><option value="0.6">0.60×</option></select></label>
+      </div>
+
+      <div class="scan-card" id="scanCard">
+        <div class="scan-radar"><i></i><span></span></div>
+        <div><b id="scanTitle">AI launch selector ready</b><small id="scanText">Holders · concentration · momentum · market data</small></div>
+      </div>
+
+      <button class="launch-btn" id="startBtn" type="button"><span class="launch-icon">▶</span><span><b>START</b><small>Find a filtered launch</small></span></button>
+      <button class="cashout-btn" id="cashoutBtn" type="button" disabled><span class="stop-icon">■</span><span><b>CASH OUT</b><small id="cashoutButtonValue">Waiting for launch</small></span></button>
+
+      <div class="paper-note"><i>✓</i><div><b>PAPER ONLY</b><span>No real buy or sell is executed in this version. Server-side virtual balance and results remain authoritative.</span></div></div>
+    </aside>
+
+    <section class="flight-card glass" id="flightCard" aria-live="polite">
+      <div class="flight-head">
+        <div>
+          <div class="status-pill" id="roundStatus"><i></i><span>READY</span></div>
+          <div class="status-message" id="statusMessage">Set a paper stake and start the round.</div>
+        </div>
+        <div class="round-id"><small>ROUND</small><b id="roundId">—</b></div>
+      </div>
+
+      <div class="multiplier-wrap">
+        <div class="multiplier" id="multiplier">1.00<span>×</span></div>
+        <div class="multiplier-caption"><span class="signal-dot"></span> LIVE POSITION MULTIPLIER</div>
+      </div>
+
+      <div class="sky" id="sky" aria-hidden="true">
+        <canvas id="fxCanvas"></canvas>
+        <div class="nebula nebula-a"></div><div class="nebula nebula-b"></div>
+        <div class="planet planet-a"></div><div class="planet planet-b"></div>
+        <div class="cloud-bank cloud-bank-a"></div><div class="cloud-bank cloud-bank-b"></div>
+        <div class="speed-vignette"></div><div class="danger-vignette"></div>
+
+        <svg class="flight-trace" id="flightTrace" viewBox="0 0 1000 600" preserveAspectRatio="none"><defs><linearGradient id="traceGrad" x1="0" y1="1" x2="1" y2="0"><stop stop-color="#51e7a8"/><stop offset="1" stop-color="#c9ff6b"/></linearGradient><filter id="traceGlow"><feGaussianBlur stdDeviation="5" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs><path id="tracePath" d="M 0 545 L 1000 545" fill="none" stroke="url(#traceGrad)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" filter="url(#traceGlow)"/><circle id="traceDot" cx="1000" cy="545" r="8" fill="#c9ff6b" filter="url(#traceGlow)"/></svg>
+
+        <div class="altitude-scale"><div data-level="5">5.00×</div><div data-level="2">2.00×</div><div data-level="1.5">1.50×</div><div data-level="1.2">1.20×</div><div data-level="1">1.00×</div></div>
+
+        <div class="rocket-wrap" id="rocketWrap"><div class="rocket-aura"></div><img src="/game-assets/pepe-rocket.svg" alt="" draggable="false"><div class="thruster-core"></div></div>
+        <div class="launch-platform"><span class="tower"></span><span class="deck"></span><span class="lamp l1"></span><span class="lamp l2"></span></div>
+        <div class="earth-horizon"></div>
+
+        <div class="countdown" id="countdown" hidden><small id="countdownSmall">TARGET LOCKED</small><b id="countdownValue">3</b><span id="countdownLabel">LAUNCH</span></div>
+        <div class="milestone" id="milestone" hidden><small>MILESTONE</small><b id="milestoneValue">2.00×</b><span id="milestoneText">Orbit reached</span></div>
+      </div>
+
+      <div class="position-bar">
+        <div><small>Stake</small><b id="stakeValue">$100.00</b></div><div><small>Paper value</small><b id="positionValue">$100.00</b></div><div><small>P&amp;L</small><b id="profitValue">$0.00</b></div><div><small>Peak</small><b id="peakValue">1.00×</b></div>
+      </div>
+    </section>
+
+    <aside class="intel-panel">
+      <section class="glass intel-card target-card">
+        <div class="intel-head"><span>SELECTED TOKEN</span><b id="targetBadge">WAITING</b></div>
+        <div class="token-line"><div class="token-orb" id="tokenOrb">?</div><div><b id="tokenName">Waiting for launch</b><small id="tokenMint">MEMEFLOW will choose a BUY READY candidate.</small></div></div>
+        <div class="risk-chip"><i></i><span id="selectionStatus">Filtered candidate required</span></div>
+        <div class="screening-grid"><div><small>AI score</small><b id="tokenScore">—</b></div><div><small>Holders</small><b id="tokenHolders">—</b></div><div><small>Top 10</small><b id="tokenTop10">—</b></div><div><small>Buy pressure</small><b id="tokenPressure">—</b></div></div>
+        <div class="telemetry"><div><small>Flight</small><b id="flightMode">STANDBY</b></div><div><small>Velocity</small><b id="velocityValue">0.00×/s</b></div><div><small>Market feed</small><b id="feedQuality">IDLE</b></div></div>
+      </section>
+
+      <section class="glass intel-card history-card">
+        <div class="intel-head"><span>ROUND HISTORY</span><button id="clearHistory" type="button">Clear</button></div>
+        <div class="history-list" id="historyList"><div class="empty-history">No completed rounds yet.</div></div>
+      </section>
+    </aside>
+  </main>
+
+  <footer class="game-footer"><span><i class="live-dot"></i><b id="feedState">Market feed idle</b></span><span id="sourceState">Source: MEMEFLOW candidate + chart stream</span><a href="/">Back to trading terminal</a></footer>
+</div>
+
+<div class="result-overlay" id="resultOverlay" hidden>
+  <canvas id="resultCanvas"></canvas>
+  <div class="result-card glass" id="resultCard">
+    <div class="result-eyebrow" id="resultEyebrow">ROUND COMPLETE</div>
+    <div class="result-multiplier" id="resultMultiplier">1.00×</div>
+    <h2 id="resultTitle">Cashed out</h2>
+    <p id="resultCopy">Server-settled paper result.</p>
+    <div class="result-grid"><div><small>Stake</small><b id="resultStake">$0.00</b></div><div><small>Paper payout</small><b id="resultPayout">$0.00</b></div><div><small>P&amp;L</small><b id="resultProfit">$0.00</b></div></div>
+    <button id="playAgainBtn" type="button">PLAY AGAIN</button>
+  </div>
+</div>
+<script src="/game.js" defer></script>
+</body>
+</html>

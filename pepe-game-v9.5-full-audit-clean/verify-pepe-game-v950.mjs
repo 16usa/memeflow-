@@ -1,0 +1,14 @@
+import fs from 'node:fs';import path from 'node:path';import crypto from 'node:crypto';import {spawnSync} from 'node:child_process';
+const app='/home/runner/workspace/memeflow-app',expected={"game.html": "d71709aecb981662644d65b989f30e11cb511f3dc41cd451c782a36010632f87", "game.css": "24957033dcb3aa2dbe5abfbc3e0f1bc531ac67ead2b92f90d2e4f758699eac98", "game.js": "5e589c8ba222838e96b477b2218b88595aca34027bce7d62ce5c079773989513", "game-webgl-v9.js": "4adca13095be31433268dd553ba732ca240bc684d4873a84b80020b586cc85b2"};const sha=p=>crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex');let n=0;const pass=(x,o)=>{if(!o)throw new Error('FAIL '+x);n++;console.log('PASS',x)};
+for(const [f,h] of Object.entries(expected))pass('hash '+f,fs.existsSync(path.join(app,f))&&sha(path.join(app,f))===h);
+const H=fs.readFileSync(path.join(app,'game.html'),'utf8'),C=fs.readFileSync(path.join(app,'game.css'),'utf8');
+pass('fresh cache keys',H.includes('/game.css?v=950audit')&&H.includes('/game-webgl-v9.js?v=950audit')&&H.includes('/game.js?v=950audit'));
+pass('legacy FX DOM removed',!H.includes('id="fxCanvas"'));
+pass('removed visual blocks absent',!H.includes('id="altimeter"')&&!H.includes('id="flightDirector"')&&!H.includes('id="preflightState"')&&!H.includes('id="stageTransition"')&&!H.includes('id="pepeEmote"'));
+pass('trigger guide DOM removed',!H.includes('id="autoTrigger"')&&!H.includes('id="stopTrigger"'));
+pass('selector visual removed',!H.includes('class="selector-status"')&&H.includes('id="selectorStatus" hidden'));
+pass('history collision fix',C.includes('grid-template-columns:minmax(0,1fr) auto')&&C.includes('position:absolute;left:1px;right:1px;top:49px;bottom:1px;height:auto!important;min-height:0'));
+pass('desktop scene stretch',C.includes('.stage-card>.world{height:auto!important;min-height:0!important;align-self:stretch}'));
+pass('landscape result fit',C.includes('@media(max-height:430px) and (orientation:landscape)'));
+pass('game JS syntax',spawnSync(process.execPath,['--check',path.join(app,'game.js')]).status===0);pass('WebGL JS syntax',spawnSync(process.execPath,['--check',path.join(app,'game-webgl-v9.js')]).status===0);
+console.log(`PEPE GAME V9.5 VERIFY: PASS (${n} checks)`);

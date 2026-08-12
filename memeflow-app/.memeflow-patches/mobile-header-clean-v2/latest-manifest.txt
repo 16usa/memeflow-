@@ -1,0 +1,2 @@
+INDEX=./memeflow-app/index.html
+BACKUP=./memeflow-app/.memeflow-patches/mobile-header-clean-v2/index.html.20260811-000542.bak

@@ -1,0 +1,2 @@
+INDEX=./memeflow-app/index.html
+BACKUP=./memeflow-app/.memeflow-patches/settings-control-center-clean-v1/index.html.20260811-020830.bak

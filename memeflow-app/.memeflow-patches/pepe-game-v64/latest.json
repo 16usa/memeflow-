@@ -1,0 +1,19 @@
+{
+  "backup": "/home/runner/workspace/memeflow-app/.memeflow-patches/pepe-game-v64/2026-08-11T10-14-11-101Z",
+  "installedAt": 1786443251136,
+  "oldHashes": {
+    "game.html": "8a09f72b2d2c93abaeb00cd55b9323bfa621d7c1bdda4b43c5e3413aa1d346a8",
+    "game.css": "10c5313021dba5fb04c45dfff84a5bbbd1d1d11035ec2d876cca707fd9463362",
+    "game.js": "106bd3bb646467271fce539d6f4d18d09dc2fba33026c4ebe7cdd5f88c496837"
+  },
+  "newHashes": {
+    "game.html": "a144d830140cf45229864ce6c2d8653adfebaa236dd239ac70168e2ab57144aa",
+    "game.css": "a67ae47ad0f927212d51addfc3c05fb5252b734f31201b0836983241c8581a1a",
+    "game.js": "1d5d67e2823f3faf614e60a59e0f62fec93897da0aeca222d9707c584debd4d3"
+  },
+  "protectedBefore": {
+    "src/game-engine.mjs": "316745a891c1280cb13574fb0a8c9cb69a7e637aa812e98e3330ba723974469e",
+    "app-server.mjs": "b8d677c6b899d9a29b1b17a2822a5280c10b08f12829f20d83f283bde28be0c5",
+    "index.html": "f137e9227dcab97e94e346ece99b30a4f8bf09380727c7ef7668c3605aa5ff12"
+  }
+}

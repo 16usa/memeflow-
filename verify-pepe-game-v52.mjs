@@ -1,0 +1,35 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import {execFileSync} from 'node:child_process';
+import {fileURLToPath} from 'node:url';
+const here=path.dirname(fileURLToPath(import.meta.url));
+const workspace=process.cwd();let app=path.join(workspace,'memeflow-app');if(!fs.existsSync(path.join(app,'game.html')))app=workspace;
+const files={html:path.join(app,'game.html'),js:path.join(app,'game.js'),css:path.join(app,'game.css'),engine:path.join(app,'src','game-engine.mjs'),server:path.join(app,'app-server.mjs')};
+let checks=0;const pass=(name,cond)=>{if(!cond)throw new Error('VERIFY FAIL: '+name);checks++;console.log('PASS',name);};
+for(const [k,f] of Object.entries(files))pass(`${k} exists`,fs.existsSync(f));
+const html=fs.readFileSync(files.html,'utf8'),js=fs.readFileSync(files.js,'utf8'),css=fs.readFileSync(files.css,'utf8'),engine=fs.readFileSync(files.engine,'utf8'),server=fs.readFileSync(files.server,'utf8');
+execFileSync(process.execPath,['--check',files.js],{stdio:'pipe'});pass('game.js syntax',true);execFileSync(process.execPath,['--check',files.engine],{stdio:'pipe'});pass('game-engine syntax',true);execFileSync(process.execPath,['--check',files.server],{stdio:'pipe'});pass('app-server syntax',true);
+pass('V5.2 engine version',engine.includes("const GAME_VERSION = '5.2.0';"));
+pass('single game.js script', (html.match(/<script\s+src=["']\/game\.js\?v=52["']/g)||[]).length===1 && (html.match(/\/game\.js/g)||[]).length===1);
+pass('single game.css stylesheet',(html.match(/\/game\.css/g)||[]).length===1);
+pass('no V5.2 CSS layer',!html.includes('game-v52.css')&&!html.includes('game-fix'));
+pass('safe storage wrapper',js.includes('storageGet=')&&js.includes('storageSet='));
+pass('cancellable countdown',js.includes('countdownSeq')&&js.includes("ENTRY LOCKED"));
+pass('stream recovery from fallback',js.includes("'EventSource' in window&&(!game.stream||game.stream.readyState===EventSource.CLOSED)"));
+pass('result FX cancellation',js.includes('resultFxSeq'));
+pass('result background inert',js.includes('ui.game.inert=true')&&js.includes('ui.game.inert=false'));
+pass('history clear confirmation',js.includes('historyClearArmed'));
+pass('launch set bounded',js.includes('game.launchSeen.size>24'));
+pass('market-shape ranking',engine.includes('recentMarketShape(token)')&&engine.includes('marketShapeBonus'));
+pass('crowding ranking only',engine.includes('crowdingPenalty')&&engine.includes('diag.eligible++'));
+pass('live token telemetry',engine.includes('liveTokenView')&&engine.includes('holderCount: finite(liveToken'));
+pass('selector quality diagnostics',engine.includes('selectedQuality')&&engine.includes('selectedCrowding'));
+pass('existing GameEngine integration unchanged',(server.match(/MF_PEPE_ROCKET_GAME_IMPORT/g)||[]).length===1&&(server.match(/MF_PEPE_ROCKET_GAME_INSTANCE/g)||[]).length===1&&(server.match(/MF_PEPE_ROCKET_GAME_API_ROUTES/g)||[]).length===1);
+pass('existing game stream unchanged',(server.match(/\/api\/game\/stream/g)||[]).length===1);
+pass('no extra linked scripts',(html.match(/<script\s+src=/g)||[]).length===1);
+pass('CSS remains one file',!css.includes('V5.2 patch layer'));
+// DOM id references
+const ids=new Set([...html.matchAll(/id="([^"]+)"/g)].map(m=>m[1]));const refs=new Set([...js.matchAll(/\$\('#([^']+)'\)/g)].map(m=>m[1]));pass('all game.js DOM ids exist',[...refs].every(id=>ids.has(id)));
+// behavioral engine tests from package
+execFileSync(process.execPath,[path.join(here,'source','test-game-engine-v52.mjs')],{stdio:'inherit'});pass('V5.2 engine behavior tests',true);
+console.log(`PEPE GAME V5.2 VERIFY: PASS (${checks} checks)`);

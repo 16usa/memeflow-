@@ -1,0 +1,12 @@
+{
+  "version": "6.0",
+  "createdAt": "2026-08-11T09:28:48.559Z",
+  "files": [
+    "game.html",
+    "game.css",
+    "game.js"
+  ],
+  "engineHashBefore": "316745a891c1280cb13574fb0a8c9cb69a7e637aa812e98e3330ba723974469e",
+  "appServerHashBefore": "b8d677c6b899d9a29b1b17a2822a5280c10b08f12829f20d83f283bde28be0c5",
+  "indexHashBefore": "f137e9227dcab97e94e346ece99b30a4f8bf09380727c7ef7668c3605aa5ff12"
+}

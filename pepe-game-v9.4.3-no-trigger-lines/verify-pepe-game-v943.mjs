@@ -1,0 +1,14 @@
+import fs from 'node:fs';import path from 'node:path';import crypto from 'node:crypto';import {spawnSync} from 'node:child_process';
+const app='/home/runner/workspace/memeflow-app',expected={"game.html": "42e04bfd65b904c2b022469b4c405c87f8fb6fbb42fb57e6f7a6b7a82712ab30", "game.css": "f11669d73d26055f92404f444fb4e6038fe076074261e90520b5a2dce338852f", "game.js": "52bc0d5236f48646cc30cce7db6841a92b5556ad197a605f50ca0afeeb31a3df", "game-webgl-v9.js": "4adca13095be31433268dd553ba732ca240bc684d4873a84b80020b586cc85b2"};
+const sha=p=>crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex');
+let n=0;
+const pass=(name,ok)=>{if(!ok)throw new Error('FAIL '+name);n++;console.log('PASS',name)};
+for(const [f,h] of Object.entries(expected))pass('hash '+f,fs.existsSync(path.join(app,f))&&sha(path.join(app,f))===h);
+const H=fs.readFileSync(path.join(app,'game.html'),'utf8');
+const C=fs.readFileSync(path.join(app,'game.css'),'utf8');
+pass('fresh cache keys',H.includes('/game.css?v=943lines')&&H.includes('/game-webgl-v9.js?v=943lines')&&H.includes('/game.js?v=943lines'));
+pass('auto line hidden',/\.auto-trigger,[\s\S]*?display:none!important/.test(C));
+pass('stop line hidden',/\.stop-trigger[\s\S]*?display:none!important/.test(C));
+pass('game JS syntax',spawnSync(process.execPath,['--check',path.join(app,'game.js')]).status===0);
+pass('WebGL JS syntax',spawnSync(process.execPath,['--check',path.join(app,'game-webgl-v9.js')]).status===0);
+console.log(`PEPE GAME V9.4.3 VERIFY: PASS (${n} checks)`);

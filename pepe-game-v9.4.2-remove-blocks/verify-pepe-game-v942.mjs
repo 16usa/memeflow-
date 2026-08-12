@@ -1,0 +1,11 @@
+import fs from 'node:fs';import path from 'node:path';import crypto from 'node:crypto';import {spawnSync} from 'node:child_process';
+const app='/home/runner/workspace/memeflow-app',expected={"game.html": "b99a3798122bc98f7cb91f8cc902b47abc0ce0e683c3763fe60c9559e85dfc00", "game.css": "1e05ca35a8d4eaa93feda58e2c4aec1bbadf23540fbb07651990b9fd3f79854e", "game.js": "52bc0d5236f48646cc30cce7db6841a92b5556ad197a605f50ca0afeeb31a3df", "game-webgl-v9.js": "4adca13095be31433268dd553ba732ca240bc684d4873a84b80020b586cc85b2"};const sha=p=>crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex');let n=0;const pass=(x,o)=>{if(!o)throw new Error('FAIL '+x);n++;console.log('PASS',x)};
+for(const [f,h] of Object.entries(expected))pass('hash '+f,fs.existsSync(path.join(app,f))&&sha(path.join(app,f))===h);
+const H=fs.readFileSync(path.join(app,'game.html'),'utf8'),C=fs.readFileSync(path.join(app,'game.css'),'utf8');
+pass('fresh cache keys',H.includes('/game.css?v=942trim')&&H.includes('/game-webgl-v9.js?v=942trim')&&H.includes('/game.js?v=942trim'));
+pass('selector block removed',C.includes('.selector-status,')&&C.includes('display:none!important;'));
+pass('flight vector removed',C.includes('.flight-director'));
+pass('launchpad side block removed',C.includes('.flight-altimeter'));
+pass('game JS syntax',spawnSync(process.execPath,['--check',path.join(app,'game.js')]).status===0);
+pass('WebGL JS syntax',spawnSync(process.execPath,['--check',path.join(app,'game-webgl-v9.js')]).status===0);
+console.log(`PEPE GAME V9.4.2 VERIFY: PASS (${n} checks)`);

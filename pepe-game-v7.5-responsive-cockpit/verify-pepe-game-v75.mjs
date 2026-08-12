@@ -1,0 +1,16 @@
+import fs from 'node:fs';import path from 'node:path';import crypto from 'node:crypto';import {spawnSync} from 'node:child_process';
+const root='/home/runner/workspace',app=path.join(root,'memeflow-app'),pkg=path.join(root,'pepe-game-v7.5-responsive-cockpit'),expected={"game.html": "479abd5c4246924b113548fb6d5833a5ac484a591b72bfc8a66895d8071e7ec7", "game.css": "dcd068d94a3e399cf7815840e030771325c41847df98b2b78a34621aa4b37923", "game.js": "04c03223736d197f1d89a2b8749fa9222e9ceac46c27c9415171fb01ea8a3509"};
+const sha=p=>crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex');let n=0;const pass=(x,o)=>{if(!o)throw new Error('FAIL '+x);n++;console.log('PASS',x)};
+for(const [f,h] of Object.entries(expected))pass('V7.5 hash '+f,sha(path.join(app,f))===h);
+const h=fs.readFileSync(path.join(app,'game.html'),'utf8'),c=fs.readFileSync(path.join(app,'game.css'),'utf8');
+pass('cache V7.5',h.includes('/game.css?v=75cockpit'));pass('history visible',h.includes('<details class="panel history-panel" open>'));
+pass('desktop cockpit',c.includes('grid-template-columns:300px minmax(0,1fr) 340px'));
+pass('portrait full-width stage',c.includes('.stage-card{grid-column:1/3;grid-row:1'));
+pass('portrait lower split',c.includes('grid-template-columns:minmax(0,56fr) minmax(0,44fr)'));
+pass('landscape cockpit',c.includes('grid-template-columns:minmax(210px,30fr) minmax(0,44fr) minmax(190px,26fr)'));
+pass('no page scroll',c.includes('overflow:hidden!important;overscroll-behavior:none'));
+pass('JS syntax',spawnSync(process.execPath,['--check',path.join(app,'game.js')]).status===0);
+pass('runtime smoke',spawnSync(process.execPath,[path.join(pkg,'runtime-smoke-v75.cjs'),app],{stdio:'inherit'}).status===0);
+pass('protected engine',fs.existsSync(path.join(app,'src','game-engine.mjs')));pass('protected server',fs.existsSync(path.join(app,'app-server.mjs')));pass('protected index',fs.existsSync(path.join(app,'index.html')));
+pass('payload client-only',fs.readdirSync(path.join(pkg,'payload')).sort().join(',')==='game.css,game.html,game.js');
+console.log(`PEPE GAME V7.5 VERIFY: PASS (${n} checks)`);

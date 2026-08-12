@@ -1,0 +1,17 @@
+import fs from 'node:fs';import path from 'node:path';import crypto from 'node:crypto';import {spawnSync} from 'node:child_process';
+const app='/home/runner/workspace/memeflow-app',pkg='/home/runner/workspace/pepe-game-v9.4.1-stable-new-hero',expected={"game.html": "3f75fc1713434c088f2f2236c731cd9cbf5418bdc81dd1abba040575c5068095", "game.css": "c408efc7b3fbd96e3a2d37faba86e8119f9398b3db46445fb9e176fbfceb4520", "game.js": "52bc0d5236f48646cc30cce7db6841a92b5556ad197a605f50ca0afeeb31a3df", "game-webgl-v9.js": "4adca13095be31433268dd553ba732ca240bc684d4873a84b80020b586cc85b2"};const sha=p=>crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex');let n=0;const pass=(x,o)=>{if(!o)throw new Error('FAIL '+x);n++;console.log('PASS',x)};
+for(const [f,h] of Object.entries(expected))pass('hash '+f,fs.existsSync(path.join(app,f))&&sha(path.join(app,f))===h);
+const H=fs.readFileSync(path.join(app,'game.html'),'utf8'),C=fs.readFileSync(path.join(app,'game.css'),'utf8'),W=fs.readFileSync(path.join(app,'game-webgl-v9.js'),'utf8');
+pass('old Pepe asset removed',!H.includes('/game-assets/pepe-rocket.svg'));
+pass('new Pepe V4 present',H.includes('class="pepe-v4"'));
+pass('V9.2 runtime restored',fs.readFileSync(path.join(app,'game.js')).equals(fs.readFileSync(path.join(pkg,'payload','game.js'))));
+pass('WebGL renderer present',W.includes("renderer:'WebGL 2.5D'"));
+pass('WebGL canvas creation present',W.includes("canvas.id='webglScene'"));
+pass('non-black fallback background',C.includes('radial-gradient(ellipse at 50% 112%'));
+pass('preflight overlay hidden',C.includes('.preflight-state{display:none!important'));
+pass('stage overlay hidden',C.includes('.stage-transition{display:none!important'));
+pass('text emotion chip hidden',C.includes('.pepe-emote{display:none!important'));
+pass('fresh Safari cache keys',H.includes('/game.css?v=940stable')&&H.includes('/game-webgl-v9.js?v=940stable')&&H.includes('/game.js?v=940stable'));
+pass('game JS syntax',spawnSync(process.execPath,['--check',path.join(app,'game.js')]).status===0);
+pass('WebGL JS syntax',spawnSync(process.execPath,['--check',path.join(app,'game-webgl-v9.js')]).status===0);
+console.log(`PEPE GAME V9.4.1 VERIFY: PASS (${n} checks)`);

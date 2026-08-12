@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+viewBox="0 0 1000 1000">
+
+<defs>
+  <radialGradient id="frog" cx="34%" cy="24%" r="78%">
+    <stop offset="0" stop-color="#b5ff8a"/>
+    <stop offset=".28" stop-color="#63ed62"/>
+    <stop offset=".66" stop-color="#28c84b"/>
+    <stop offset="1" stop-color="#08762e"/>
+  </radialGradient>
+
+  <linearGradient id="frogSide" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#7af56c"/>
+    <stop offset=".55" stop-color="#2bd14d"/>
+    <stop offset="1" stop-color="#08702d"/>
+  </linearGradient>
+
+  <linearGradient id="suit" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#183b38"/>
+    <stop offset=".45" stop-color="#092421"/>
+    <stop offset="1" stop-color="#020a0b"/>
+  </linearGradient>
+
+  <radialGradient id="eye" cx="34%" cy="24%" r="78%">
+    <stop offset="0" stop-color="#ffffff"/>
+    <stop offset=".72" stop-color="#f0fff1"/>
+    <stop offset="1" stop-color="#b1d9bd"/>
+  </radialGradient>
+
+  <radialGradient id="mouth" cx="50%" cy="78%" r="78%">
+    <stop offset="0" stop-color="#f3636b"/>
+    <stop offset=".48" stop-color="#741820"/>
+    <stop offset="1" stop-color="#250609"/>
+  </radialGradient>
+
+  <filter id="softShadow" x="-50%" y="-50%" width="200%" height="200%">
+    <feDropShadow dx="0" dy="12" stdDeviation="14"
+                  flood-color="#000" flood-opacity=".35"/>
+  </filter>
+</defs>
+
+
+<g filter="url(#softShadow)">
+  <path d="
+    M606 483
+    C667 477 713 520 724 581
+    C734 638 701 693 653 735
+    C626 758 591 744 586 711
+    C582 685 609 650 618 615
+    C629 575 613 548 584 520
+    C562 499 574 486 606 483Z"
+    fill="url(#frogSide)"
+    stroke="#087d31"
+    stroke-width="8"/>
+</g>
+
+</svg>

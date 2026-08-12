@@ -1,0 +1,7 @@
+import fs from 'node:fs';import path from 'node:path';
+const root='/home/runner/workspace',app=path.join(root,'memeflow-app'),b=path.join(root,'pepe-game-v7.9-compact-result','backup-v77');
+for(const f of ['game.html','game.css','game.js']){
+  const s=path.join(b,f);if(!fs.existsSync(s))throw new Error('Missing '+s);
+  fs.copyFileSync(s,path.join(app,f));console.log('RESTORED',f);
+}
+console.log('V7.9 rollback complete.');

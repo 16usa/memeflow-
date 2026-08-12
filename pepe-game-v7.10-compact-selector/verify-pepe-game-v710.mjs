@@ -1,0 +1,17 @@
+import fs from 'node:fs';import path from 'node:path';import crypto from 'node:crypto';import {spawnSync} from 'node:child_process';
+const root='/home/runner/workspace',app=path.join(root,'memeflow-app'),pkg=path.join(root,'pepe-game-v7.10-compact-selector'),expected={"game.html": "ecfbfe1095555b5958cbd060536250dce0ac27a50788404722d9c899c1feae8f", "game.css": "b149c818e5aa2233c59c14f0c01179e5a86cd26faf07534fe053b54813404420", "game.js": "04c03223736d197f1d89a2b8749fa9222e9ceac46c27c9415171fb01ea8a3509"};
+const sha=p=>crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex');let n=0;const pass=(x,o)=>{if(!o)throw new Error('FAIL '+x);n++;console.log('PASS',x)};
+for(const [f,h] of Object.entries(expected))pass('V7.10 hash '+f,sha(path.join(app,f))===h);
+const h=fs.readFileSync(path.join(app,'game.html'),'utf8'),c=fs.readFileSync(path.join(app,'game.css'),'utf8');
+pass('cache V7.10',h.includes('/game.css?v=710selector'));
+pass('radar DOM removed',!h.includes('class="radar"'));
+pass('compact information-only selector',c.includes('V7.10 COMPACT SELECTOR — INFORMATION ONLY'));
+pass('no radar keyframes',!c.includes('@keyframes radar')&&!c.includes('@keyframes radarPips'));
+pass('no selector sweep keyframe',!c.includes('@keyframes selectorSweep'));
+pass('JS syntax',spawnSync(process.execPath,['--check',path.join(app,'game.js')]).status===0);
+pass('runtime smoke',spawnSync(process.execPath,[path.join(pkg,'runtime-smoke-v710.cjs'),app],{stdio:'inherit'}).status===0);
+pass('protected engine',fs.existsSync(path.join(app,'src','game-engine.mjs')));
+pass('protected server',fs.existsSync(path.join(app,'app-server.mjs')));
+pass('protected index',fs.existsSync(path.join(app,'index.html')));
+pass('payload client-only',fs.readdirSync(path.join(pkg,'payload')).sort().join(',')==='game.css,game.html,game.js');
+console.log(`PEPE GAME V7.10 VERIFY: PASS (${n} checks)`);

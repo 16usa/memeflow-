@@ -1,0 +1,15 @@
+import fs from 'node:fs';import path from 'node:path';import crypto from 'node:crypto';import {spawnSync} from 'node:child_process';
+const root='/home/runner/workspace',app=path.join(root,'memeflow-app'),pkg=path.join(root,'pepe-game-v7.11-layered-flight'),expected={"game.html": "559a5f2ce3cb25583a1f19a97cd728a6ce1f5660498e774b1c6729691dd20076", "game.css": "a921cea8b027d50768157f8ab758778187f5646415e60f3c4c9e51e78b4b4561", "game.js": "821c2051d212ee70e1c99ec8574b066485a4f82c33e83ee6e0b2c1b0283cedd9", "game-scene.js": "5a35a5f0e3d76209a5b1fb8278ae07dc6307761a3a6c1ad188cd806f7e4dc204"};const sha=p=>crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex');let n=0;const pass=(x,o)=>{if(!o)throw new Error('FAIL '+x);n++;console.log('PASS',x)};
+for(const [f,h] of Object.entries(expected))pass('V7.11 hash '+f,fs.existsSync(path.join(app,f))&&sha(path.join(app,f))===h);
+const h=fs.readFileSync(path.join(app,'game.html'),'utf8'),c=fs.readFileSync(path.join(app,'game.css'),'utf8'),j=fs.readFileSync(path.join(app,'game.js'),'utf8');
+pass('scene module loaded before game',h.indexOf('/game-scene.js?v=711')>=0&&h.indexOf('/game-scene.js?v=711')<h.indexOf('/game.js?v=711scene'));
+pass('five visual layers present',h.includes('cinema-stack')&&h.includes('cinema-back')&&h.includes('cinema-mid')&&h.includes('cinema-front')&&h.includes('cinema-speed-film'));
+pass('canvas fills world',c.includes('#fxCanvas{inset:0;width:100%;height:100%;z-index:5'));
+pass('director integration',j.includes('PepeSceneDirector')&&j.includes('game.fx?.update?.({mode:game.mode'));
+pass('idle/search scene loop enabled',j.includes("['idle','searching','live','settling'].includes(game.mode)"));
+pass('game JS syntax',spawnSync(process.execPath,['--check',path.join(app,'game.js')]).status===0);
+pass('scene JS syntax',spawnSync(process.execPath,['--check',path.join(app,'game-scene.js')]).status===0);
+pass('game runtime smoke',spawnSync(process.execPath,[path.join(pkg,'runtime-smoke-v711.cjs'),app],{stdio:'inherit'}).status===0);
+pass('scene module smoke',spawnSync(process.execPath,[path.join(pkg,'scene-smoke-v711.cjs'),path.join(app,'game-scene.js')],{stdio:'inherit'}).status===0);
+pass('protected engine',fs.existsSync(path.join(app,'src','game-engine.mjs')));pass('protected server',fs.existsSync(path.join(app,'app-server.mjs')));pass('protected index',fs.existsSync(path.join(app,'index.html')));
+console.log(`PEPE GAME V7.11 VERIFY: PASS (${n} checks)`);

@@ -1,0 +1,10 @@
+MOBILE MODULE SPACING V1: PASS
+Module gap: 10px
+Existing mobile owner edited in place: PASS
+New style layer added: NO
+Manual Scan custom 12px spacing overridden: PASS
+Market Chart / Pre-Trade 18px spacing overridden on mobile: PASS
+Billing / Settings spacing normalized: PASS
+Positions full-screen sheet geometry preserved: PASS
+JavaScript byte-identical: PASS
+Trading / AI / Settings / Billing logic touched: NO

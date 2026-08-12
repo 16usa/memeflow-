@@ -1,0 +1,13 @@
+{
+  "version": "5.1.0",
+  "installedAt": "2026-08-11T07:59:57.172Z",
+  "mode": "clean-replacement",
+  "backupDir": "/home/runner/workspace/memeflow-app/.memeflow-patches/pepe-game-v51/2026-08-11T07-59-56-798Z",
+  "sourceHashes": {
+    "game.html": "e886ce214332a0ee593cd9877ad1d75f7c2d82572a1d42da03c0523547cec4a0",
+    "game.css": "3c8b41b42cd4c8ec3b2eb612b0409062b4e1cb4e204727fdaad2bfc448fb24ff",
+    "game.js": "ba66f5903f3145d04e601e6f070709ea89cbceca2c1f8e81ca6ee58e1e387054",
+    "src/game-engine.mjs": "f74ccb00c7c013d5105958261401b54279b24707800a15164df31b085fe53412",
+    "game-assets/pepe-rocket.svg": "3f170f34c97acc47e7c90f396afbc8631f1bc7672227fd7ce626fe82a56f7f80"
+  }
+}

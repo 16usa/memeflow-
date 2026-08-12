@@ -1,0 +1,11 @@
+FLOATING AI STEP 1 CLEAN V1: PASS
+Home visible in compact bottom nav: NO
+Phone bottom nav: Candidates / Positions / More
+Tablet bottom nav: Candidates / Positions / Wallet / More
+AI control cloned: NO
+AI control ID changed: NO
+OpenAI V51 runtime replaced: NO
+AI DOM owner: document.body
+V44 no longer returns AI to nav: PASS
+New CSS <style> layer added: NO
+Trading / evaluator / settings logic touched: NO

@@ -1,0 +1,3 @@
+INDEX=./memeflow-app/index.html
+BACKUP=./memeflow-app/.memeflow-patches/mobile-alignment-fix-v1/index.html.20260811-030559.bak
+REPORT=./memeflow-app/.memeflow-patches/mobile-alignment-fix-v1/report.20260811-030559.txt

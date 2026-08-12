@@ -1,0 +1,4 @@
+import fs from 'node:fs';import path from 'node:path';import crypto from 'node:crypto';
+const app='/home/runner/workspace/memeflow-app';const expected={"game.html": "4c3e9825c58a1859d8f92f6ef5c1868bc707f353f35eea9602cc05ec3b2e0106", "game.css": "798c01a602840004562bba6cd4723418c7adb7c58c80b5af395493026554c340", "game.js": "3eab7d7bf28f4aa0c7fd2b639f5321b11dadcf0345fe9016c2d307ab8e92f50b", "game-webgl-v9.js": "5070117e2862558761ee63d43b4ca9d75799eb08f42d37171fbcdbb369f676ab"};const sha=p=>crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex');let ok=true;
+for(const f of Object.keys(expected)){const p=path.join(app,f);const actual=fs.existsSync(p)?sha(p):'MISSING';const pass=actual===expected[f];console.log(f,pass?'OK':'FAIL',actual);if(!pass)ok=false;}
+if(!ok)process.exit(1);console.log('VERIFY OK: Pepe Game V9.1 story-flight');

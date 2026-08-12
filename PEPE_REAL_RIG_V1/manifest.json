@@ -1,0 +1,120 @@
+{
+  "version": "pepe-real-rig-v1",
+  "source": "single generated master atlas",
+  "coreParts": [
+    "body.png",
+    "head.png",
+    "arm_left.png",
+    "arm_right.png",
+    "hand_left.png",
+    "hand_right.png",
+    "leg_left.png",
+    "leg_right.png"
+  ],
+  "facePartsForNextStage": [
+    "eye_left.png",
+    "eye_right.png",
+    "eyelid_left.png",
+    "eyelid_right.png",
+    "mouth_happy.png",
+    "mouth_sad.png"
+  ],
+  "assemblyCanvas": [
+    1000,
+    1000
+  ],
+  "assembly": {
+    "body": {
+      "center": [
+        500,
+        560
+      ],
+      "scale": 0.85,
+      "rotation": 0
+    },
+    "head": {
+      "center": [
+        500,
+        315
+      ],
+      "scale": 0.85,
+      "rotation": 0,
+      "pivot": [
+        500,
+        450
+      ]
+    },
+    "armLeft": {
+      "center": [
+        365,
+        540
+      ],
+      "scale": 0.72,
+      "rotation": 10,
+      "pivot": [
+        420,
+        475
+      ]
+    },
+    "armRight": {
+      "center": [
+        635,
+        540
+      ],
+      "scale": 0.72,
+      "rotation": -10,
+      "pivot": [
+        580,
+        475
+      ]
+    },
+    "handLeft": {
+      "center": [
+        340,
+        650
+      ],
+      "scale": 0.52,
+      "rotation": 0,
+      "pivot": [
+        365,
+        605
+      ]
+    },
+    "handRight": {
+      "center": [
+        660,
+        650
+      ],
+      "scale": 0.52,
+      "rotation": 0,
+      "pivot": [
+        635,
+        605
+      ]
+    },
+    "legLeft": {
+      "center": [
+        430,
+        720
+      ],
+      "scale": 0.75,
+      "rotation": -10,
+      "pivot": [
+        450,
+        630
+      ]
+    },
+    "legRight": {
+      "center": [
+        570,
+        720
+      ],
+      "scale": 0.75,
+      "rotation": 10,
+      "pivot": [
+        550,
+        630
+      ]
+    }
+  }
+}

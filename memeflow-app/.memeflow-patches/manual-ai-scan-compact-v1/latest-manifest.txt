@@ -1,0 +1,2 @@
+INDEX=./memeflow-app/index.html
+BACKUP=./memeflow-app/.memeflow-patches/manual-ai-scan-compact-v1/index.html.20260810-195702.bak

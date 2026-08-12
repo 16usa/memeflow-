@@ -1,0 +1,19 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import {fileURLToPath} from 'node:url';
+import {execFileSync} from 'node:child_process';
+const here=path.dirname(fileURLToPath(import.meta.url));const payload=path.join(here,'payload');const app=path.resolve(process.cwd(),'memeflow-app');
+const expected={"game.html": "704b16a5b49d252e845c24ec11f21ce006aa3f9088da044c174d7a3a2667156e", "game.css": "266943e34cc119fde7e11a260e8d968317743bacbf1339abed95855d605211ec", "game.js": "b9b5ae8f3663fac8382c88d614328fdbd2b32d736edb69aa76a4149224958ead"};let checks=0;const pass=(name,ok)=>{if(!ok)throw new Error('FAIL '+name);checks++;console.log('PASS',name)};const sha=p=>crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex');
+const files=['game.html','game.css','game.js'];pass('namespaced V6.2 package directory',path.basename(here)==='pepe-game-v6.2');pass('package payload contains visual files only',JSON.stringify(fs.readdirSync(payload).sort())===JSON.stringify([...files].sort()));
+for(const f of files){pass('payload hash '+f,sha(path.join(payload,f))===expected[f]);pass('installed hash '+f,sha(path.join(app,f))===expected[f]);}
+const html=fs.readFileSync(path.join(app,'game.html'),'utf8'),css=fs.readFileSync(path.join(app,'game.css'),'utf8'),js=fs.readFileSync(path.join(app,'game.js'),'utf8');
+pass('V6.2 client version',js.includes("CLIENT_VERSION='6.2'"));pass('V6.2 cache bust',html.includes('/game.js?v=62')&&html.includes('/game.css?v=62'));pass('flight altimeter visual',html.includes('id="altimeter"')&&html.includes('id="altimeterMarker"')&&html.includes('id="altimeterPeak"'));pass('altimeter runtime update',js.includes('ui.altimeterMarker.style.bottom=lineBottom(m)'));
+pass('rapid START cancel guard',js.includes('Date.now()<game.startCancelArmedAt'));pass('SSE waits for snapshot before healthy',js.includes('Stream connected · awaiting server snapshot'));pass('fallback request de-duplication',js.includes('game.fallbackInFlight'));pass('central resync de-duplication',js.includes('if(game.resyncPromise)return game.resyncPromise'));pass('pagehide cancels countdown visual',js.includes('game.countdownSeq++;ui.center.hidden=true'));pass('background clock pause',js.includes('stopClock();syncVisualActivity()'));pass('play-again request lock',js.includes('if(game.resetInFlight)return'));pass('history clear request lock',js.includes('if(game.clearHistoryInFlight)return'));
+pass('no client feedFresh mutation',!js.includes('session.feedFresh =')&&!js.includes('session.feedFresh='));pass('no client canCashout mutation',!js.includes('session.canCashout =')&&!js.includes('session.canCashout='));pass('no Game settings mutation endpoint',!js.includes('/api/settings'));pass('no Game BUY endpoint',!js.includes('/api/buy'));pass('no Game SELL endpoint',!js.includes('/api/sell'));
+const ids=[...html.matchAll(/\bid="([^"]+)"/g)].map(m=>m[1]);pass('unique HTML ids',new Set(ids).size===ids.length);const refs=[...js.matchAll(/\$\('#([^']+)'\)/g)].map(m=>m[1]);pass('all JS ids resolve',refs.every(id=>ids.includes(id)));
+let depth=0,min=0;for(const ch of css){if(ch===')depth++;else if(ch===')depth--;min=Math.min(min,depth)}pass('CSS braces balanced',depth===0&&min===0);pass('no literal escaped newline bug',!css.includes('\\n.'));
+for(const f of ['game.js','src/game-engine.mjs','app-server.mjs']){execFileSync(process.execPath,['--check',path.join(f==='game.js'?app:app,f)],{stdio:'ignore'});pass('syntax '+f,true)}
+pass('protected game engine not packaged',!fs.existsSync(path.join(payload,'game-engine.mjs')));pass('protected app server not packaged',!fs.existsSync(path.join(payload,'app-server.mjs')));pass('protected index not packaged',!fs.existsSync(path.join(payload,'index.html')));
+execFileSync(process.execPath,[path.join(here,'runtime-smoke-v62.cjs'),app],{stdio:'inherit'});pass('runtime smoke',true);
+console.log(`PEPE GAME V6.2 VERIFY: PASS (${checks} checks)`);

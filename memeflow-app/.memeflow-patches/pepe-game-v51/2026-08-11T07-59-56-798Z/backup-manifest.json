@@ -1,0 +1,27 @@
+{
+  "version": "5.1.0",
+  "createdAt": "2026-08-11T07:59:56.807Z",
+  "files": {
+    "index.html": {
+      "existed": true
+    },
+    "app-server.mjs": {
+      "existed": true
+    },
+    "game.html": {
+      "existed": true
+    },
+    "game.css": {
+      "existed": true
+    },
+    "game.js": {
+      "existed": true
+    },
+    "src/game-engine.mjs": {
+      "existed": true
+    },
+    "game-assets": {
+      "existed": true
+    }
+  }
+}

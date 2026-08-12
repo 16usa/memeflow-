@@ -1,0 +1,2 @@
+INDEX=./memeflow-app/index.html
+BACKUP=./memeflow-app/.memeflow-patches/ai-analysis-workspace-v4/index.html.20260810-213910.bak

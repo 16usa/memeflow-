@@ -1,6 +1,7 @@
 import http from 'node:http';import fs from 'node:fs';import path from 'node:path';import crypto from 'node:crypto';import zlib from 'node:zlib';import {fileURLToPath} from 'node:url';
 import {JsonStore,sessionId,defaults} from './src/store.mjs';import {RpcPool,validPubkey,decodeCurve,decodeCreateData,decodePumpCreate,shouldExcludeMayhemCreate} from './src/solana.mjs';import {evaluate,tokenAgeMinutes} from './src/evaluate.mjs';import {validateSettings} from './src/settings.mjs';import {StripeBilling} from './src/billing.mjs';
 import {OpenAIIntelligence} from './src/openai-intelligence.mjs';import {PaperEngine} from './src/paper-engine.mjs';
+import {GameEngine} from './src/game-engine.mjs'; // MF_PEPE_ROCKET_GAME_IMPORT
 import {enrichToken,enrichHolders,makeEnrichDiag,makeHolderQueue,makeHolderMetrics} from './src/enrich.mjs';
 import {makeRecoveryMetrics,startDecisionRecovery,lazyRecoverUser} from './src/recovery.mjs';
 import {makeLiveEvalMetrics,makeEvaluateForActiveUsers} from './src/liveeval.mjs';
@@ -16,6 +17,7 @@ import {manualAnalyze} from './src/manual-scan.mjs';
 // MEMEFLOW AI ASSISTANT HARD OFF: import disabled
 const root=path.dirname(fileURLToPath(import.meta.url)),dataDir=path.resolve(root,process.env.DATA_DIR||'data'),store=new JsonStore(dataDir);
 const paper=new PaperEngine(store);
+const pepeGame=new GameEngine(store); // MF_PEPE_ROCKET_GAME_INSTANCE
 const billing=new StripeBilling({store,secretKey:process.env.STRIPE_SECRET_KEY,priceId:process.env.STRIPE_PRICE_ID,webhookSecret:process.env.STRIPE_WEBHOOK_SECRET,apiBase:process.env.STRIPE_API_BASE});
 const rpcUrls=(process.env.SOLANA_RPC_URLS||'').split(',').map(x=>x.trim()).filter(Boolean),wsUrls=(process.env.SOLANA_WS_URLS||'').split(',').map(x=>x.trim()).filter(Boolean);const rpc=new RpcPool(rpcUrls,process.env.SOLANA_COMMITMENT||'confirmed');
 const PUMP='6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P',ALLOW_ANON=process.env.ALLOW_ANONYMOUS_PAPER!=='false';
@@ -491,6 +493,8 @@ async function enrich(mint,curve){
   try{paper.onTokenUpdate(mint,store.state.tokens[mint])}catch(_){}
 }
 function publish(mint){
+  // MF_PEPE_ROCKET_GAME_PUBLISH_HOOK: one clean server-authoritative GameEngine receives the same accepted token updates.
+  try{pepeGame.onTokenUpdate(mint,store.state.tokens[mint])}catch(_){}
   // Hot path: live Pump events can call publish many times per second.
   // Do absolutely no work unless this mint has active SSE subscribers.
   const listeners=streams.get(mint);
@@ -1450,7 +1454,7 @@ async function handler(req,res){const url=new URL(req.url,'http://x');
  if(url.pathname==='/api/healthz'||url.pathname==='/api/health')return json(res,200,{ok:true,server:'online',version:'1.0.1-clean',timestamp:new Date().toISOString()});
  // Static files — served before session creation to avoid blocking store.save() on new users
  if(req.method==='GET'&&!url.pathname.startsWith('/api/')){
-   const p=url.pathname==='/'?'index.html':url.pathname.slice(1);const f=path.resolve(root,p);
+   const p=url.pathname==='/'?'index.html':(url.pathname==='/game'||url.pathname==='/game/')?'game.html':url.pathname.slice(1);const f=path.resolve(root,p); // MF_PEPE_ROCKET_GAME_ROUTE_ALIAS
    if(!f.startsWith(root)||!fs.existsSync(f)||fs.statSync(f).isDirectory()){console.log('[STATIC] 404',url.pathname);return json(res,404,{error:'NOT_FOUND'})}
     const _stt=url.pathname==='/'?Date.now():0;if(_stt)res.on('finish',()=>console.log('[STATIC] GET / '+res.statusCode+' in '+(Date.now()-_stt)+'ms'));
    const ext=path.extname(f).toLowerCase();
@@ -1964,6 +1968,27 @@ if(false && url.pathname==='/api/ai/assistant' &&req.method==='POST'){
       sample
     });
   }
+
+
+ // MF_PEPE_ROCKET_GAME_API_ROUTES
+ if(url.pathname==='/api/game/health'&&req.method==='GET')return json(res,200,pepeGame.health());
+ if(url.pathname==='/api/game/status'&&req.method==='GET')return json(res,200,pepeGame.status(u.id));
+ if(url.pathname==='/api/game/start'&&req.method==='POST'){const r=pepeGame.start(u.id,await body(req));const code=r.ok?200:(r.code==='KILL_SWITCH'?423:(r.code==='NO_CANDIDATE'||r.code==='ACTIVE_ROUND_EXISTS'||r.code==='ROUND_RESULT_PENDING'?409:400));return json(res,code,r);}
+ if(url.pathname==='/api/game/cashout'&&req.method==='POST'){const r=pepeGame.cashout(u.id);return json(res,r.ok?200:409,r);}
+ if(url.pathname==='/api/game/reset'&&req.method==='POST'){const r=pepeGame.reset(u.id);return json(res,r.ok?200:409,r);}
+ if(url.pathname==='/api/game/history/clear'&&req.method==='POST')return json(res,200,pepeGame.clearHistory(u.id));
+ if(url.pathname==='/api/game/stream'&&req.method==='GET'){
+  res.writeHead(200,{'content-type':'text/event-stream; charset=utf-8','cache-control':'no-cache, no-store, no-transform','connection':'keep-alive','x-accel-buffering':'no'});
+  res.flushHeaders?.();
+  try{res.write('retry: 2500\n\n')}catch{}
+  const send=(payload)=>{try{const event=String(payload?.type||'state').replace(/[^a-z0-9_-]/gi,'');res.write('event: '+event+'\ndata: '+JSON.stringify(payload)+'\n\n')}catch{}};
+  const unsubscribe=pepeGame.subscribe(u.id,send);
+  send({type:'snapshot',...pepeGame.status(u.id)});
+  const heartbeat=setInterval(()=>{try{res.write(': ping\n\n')}catch{}},12000);heartbeat.unref?.();
+  let closed=false;const close=()=>{if(closed)return;closed=true;clearInterval(heartbeat);unsubscribe();};req.once('close',close);req.once('aborted',close);res.once('close',close);
+  return;
+ }
+
  if(url.pathname==='/api/settings'&&req.method==='GET'){const settings=store.settings(u.id);return json(res,200,{settings,version:u.settingsVersion||1,killSwitchActive:u.killSwitch,capabilities:{liveAutomation:hasLiveEntitlement(u),paperAutomation:true,discoveryPlatforms:['pump'],adaptiveProfile:false}})}
  if(url.pathname==='/api/settings/audit'&&req.method==='GET')return json(res,200,{history:store.settingsHistory(u.id,Number(url.searchParams.get('limit')||100))});
  if(url.pathname==='/api/settings'&&req.method==='PUT'){const b=await body(req);const checked=validateSettings(b.settings||{});if(!checked.ok)return json(res,400,{error:'INVALID_SETTINGS',message:checked.errors.join(' '),errors:checked.errors});if(checked.settings.tradingEnvironment==='live'&&!hasLiveEntitlement(u))return json(res,403,{error:'LIVE_ENTITLEMENT_REQUIRED',message:'LIVE trading environment requires an active Pro subscription or owner entitlement.'});if(b.version!=null&&Number(b.version)!==Number(u.settingsVersion||1))return json(res,409,{error:'SETTINGS_VERSION_CONFLICT',message:'Settings changed on the server. Reload before saving again.',version:u.settingsVersion||1});const before=JSON.parse(JSON.stringify(store.settings(u.id)));const shadow=checked.settings.shadowValidation?shadowValidateSettings(checked.settings,50):null;if(shadow?.errors?.length)return json(res,400,{error:'SHADOW_VALIDATION_FAILED',message:'Proposed settings could not be evaluated safely.',shadowValidation:shadow});const saved=store.setSettings(u.id,checked.settings);if(saved.changeLog!==false)store.recordSettingsChange(u.id,before,saved,{actor:u.id,source:'settings_put'});const decisionsReevaluated=reevaluateUser(u.id);return json(res,200,{settings:saved,version:u.settingsVersion,decisionsReevaluated,shadowValidation:shadow})}

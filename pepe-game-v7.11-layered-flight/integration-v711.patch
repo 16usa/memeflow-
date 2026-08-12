@@ -1,0 +1,135 @@
+--- game.html@v7.10
++++ game.html@v7.11
+@@ -8,9 +8,9 @@
+   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+   <meta name="theme-color" content="#030507">
+   <meta name="color-scheme" content="dark">
+-  <meta name="description" content="MEMEFLOW Pepe Rocket V7.10 — fullscreen responsive game UI with realtime server-authoritative PAPER visualization.">
++  <meta name="description" content="MEMEFLOW Pepe Rocket V7.11 — fullscreen responsive game UI with realtime server-authoritative PAPER visualization.">
+   <title>MEMEFLOW · Pepe Rocket</title>
+-  <link rel="stylesheet" href="/game.css?v=710selector">
++  <link rel="stylesheet" href="/game.css?v=711scene">
+ </head>
+ <body>
+ <div class="game" id="game" data-state="idle" data-stage="ground" data-feed="idle" data-direction="flat" data-danger="none" data-launch="idle" data-outcome="none" data-selector="idle" data-bank="neutral" data-cashzone="idle" data-cashpulse="idle" data-flight="idle" data-lifecycle="active" data-clientfeed="fresh">
+@@ -49,6 +49,13 @@
+ 
+       <div class="world" id="world" aria-hidden="true">
+         <canvas id="fxCanvas"></canvas>
++        <div class="cinema-stack" aria-hidden="true">
++          <div class="cinema-layer cinema-back"></div>
++          <div class="cinema-layer cinema-mid"></div>
++          <div class="cinema-layer cinema-front"></div>
++          <div class="cinema-layer cinema-bloom"></div>
++        </div>
++        <div class="cinema-speed-film" aria-hidden="true"></div>
+         <div class="world-gradient"></div>
+         <div class="atmosphere-haze"></div>
+         <div class="parallax-field parallax-far"></div><div class="parallax-field parallax-mid"></div><div class="parallax-field parallax-near"></div>
+@@ -232,6 +239,7 @@
+   </article>
+ </div>
+ 
+-<script src="/game.js?v=74cockpit" defer></script>
++<script src="/game-scene.js?v=711" defer></script>
++<script src="/game.js?v=711scene" defer></script>
+ </body>
+ </html>
+--- game.css@v7.10
++++ game.css@v7.11
+@@ -884,3 +884,31 @@
+   .selector-phase{font-size:5px}
+ }
+ 
++
++
++/* ===== V7.11 LAYERED FLIGHT SCENE ===== */
++#fxCanvas{inset:0;width:100%;height:100%;z-index:5;pointer-events:none;mix-blend-mode:screen}
++.cinema-stack{inset:0;z-index:-8;pointer-events:none;overflow:hidden;--cinema-back-y:0px;--cinema-mid-y:0px;--cinema-front-y:0px;--cinema-drift-x:0px;--cinema-energy:0;--cinema-streak:0;--cinema-bloom:.12}
++.cinema-layer{position:absolute;inset:-18%;pointer-events:none;will-change:transform,opacity;transform:translate3d(var(--cinema-drift-x),0,0)}
++.cinema-back{opacity:.34;background-image:radial-gradient(circle,rgba(221,244,255,.60) 0 1px,transparent 1.3px),radial-gradient(circle,rgba(168,216,255,.30) 0 .7px,transparent 1px);background-size:91px 91px,137px 137px;background-position:13px 22px,57px 71px;transform:translate3d(calc(var(--cinema-drift-x)*.14),var(--cinema-back-y),0)}
++.cinema-mid{opacity:.18;background-image:radial-gradient(ellipse,rgba(138,225,255,.35) 0 1px,transparent 1.5px);background-size:54px 76px;filter:blur(.15px);transform:translate3d(calc(var(--cinema-drift-x)*.42),var(--cinema-mid-y),0)}
++.cinema-front{opacity:.12;background:repeating-linear-gradient(105deg,transparent 0 56px,rgba(205,245,255,.10) 58px,transparent 61px);filter:blur(1.2px);transform:translate3d(calc(var(--cinema-drift-x)*.85),var(--cinema-front-y),0)}
++.cinema-bloom{inset:-8%;opacity:var(--cinema-bloom);background:radial-gradient(circle at 50% 74%,rgba(87,230,255,.22),transparent 28%),radial-gradient(circle at 54% 64%,rgba(217,255,134,.10),transparent 19%);filter:blur(18px);mix-blend-mode:screen;transform:none;transition:opacity .18s linear}
++.cinema-speed-film{inset:-12%;z-index:6;pointer-events:none;opacity:var(--cinema-streak,0);background:repeating-linear-gradient(103deg,transparent 0 38px,rgba(221,247,255,.09) 39px,transparent 42px);background-size:160% 100%;mix-blend-mode:screen;filter:blur(.5px);animation:cinemaSpeedFilm .54s linear infinite;transition:opacity .12s linear}
++.game[data-cinematic="idle"] .cinema-front{opacity:.045}.game[data-cinematic="searching"] .cinema-mid{opacity:.28}.game[data-cinematic="searching"] .cinema-bloom{animation:cinemaSearchPulse 1.4s ease-in-out infinite}
++.game[data-stage="orbit"] .cinema-back,.game[data-stage="moon"] .cinema-back,.game[data-stage="deep"] .cinema-back,.game[data-stage="hyper"] .cinema-back{opacity:.72}.game[data-stage="deep"] .cinema-mid,.game[data-stage="hyper"] .cinema-mid{opacity:.38}.game[data-stage="hyper"] .cinema-speed-film{filter:blur(.8px) brightness(1.25);animation-duration:.28s}
++.game[data-cinematic-flight="boost"] .cinema-bloom{filter:blur(14px) brightness(1.24)}.game[data-danger="high"] .cinema-bloom{background:radial-gradient(circle at 50% 72%,rgba(255,80,105,.17),transparent 32%),radial-gradient(circle at 50% 60%,rgba(255,162,90,.09),transparent 20%)}
++.game[data-cinematic="idle"] .rocket-body{animation:cinemaCharacterIdle 2.8s ease-in-out infinite;transform-origin:50% 78%}.game[data-cinematic="searching"] .rocket-body{animation:cinemaCharacterSearch 1.1s ease-in-out infinite;transform-origin:50% 78%}.game[data-cinematic="live"] .rocket-body{animation:cinemaCharacterFlight 1.6s ease-in-out infinite;transform-origin:50% 75%}
++.game.cinema-launch-kick .rocket-body{animation:cinemaLaunchKick .82s cubic-bezier(.16,.84,.22,1) both}.game.cinema-launch-kick .rocket-halo{animation:cinemaHaloKick .82s ease-out both}.game.cinema-settle-kick .cinema-speed-film{animation:cinemaBrakeFlash .64s ease-out both}
++.game[data-cinematic="live"] .exhaust{filter:brightness(calc(1 + var(--cinema-energy)*.45)) saturate(calc(1 + var(--cinema-energy)*.38))}.game[data-cinematic-flight="boost"] .rocket-halo{opacity:.94;filter:blur(7px) brightness(1.4)}.game[data-cinematic-flight="boost"] .engine-ring-a,.game[data-cinematic-flight="boost"] .engine-ring-b{filter:brightness(1.35)}
++@keyframes cinemaSpeedFilm{from{background-position:0 0}to{background-position:-190px 0}}
++@keyframes cinemaSearchPulse{0%,100%{opacity:.12;transform:scale(.96)}50%{opacity:.32;transform:scale(1.04)}}
++@keyframes cinemaCharacterIdle{0%,100%{transform:translateY(0) rotate(.25deg) scale(1)}50%{transform:translateY(-2.2px) rotate(-.35deg) scale(1.006)}}
++@keyframes cinemaCharacterSearch{0%,100%{transform:translateY(0) rotate(-.5deg)}50%{transform:translateY(-2.8px) rotate(.7deg)}}
++@keyframes cinemaCharacterFlight{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-1.6px) scale(1.004)}}
++@keyframes cinemaLaunchKick{0%{transform:translateY(7px) scale(.975,1.025)}20%{transform:translateY(10px) scale(.965,1.04)}56%{transform:translateY(-7px) scale(1.015,.985)}100%{transform:translateY(0) scale(1)}}
++@keyframes cinemaHaloKick{0%{opacity:.3;transform:translate(-50%,-50%) scale(.78)}55%{opacity:1;transform:translate(-50%,-50%) scale(1.22)}100%{opacity:.7;transform:translate(-50%,-50%) scale(1)}}
++@keyframes cinemaBrakeFlash{0%{opacity:.82;filter:blur(.8px) brightness(1.35)}100%{opacity:.08;filter:blur(2px) brightness(.9)}}
++@media(max-width:860px){.cinema-back{background-size:74px 74px,113px 113px}.cinema-mid{background-size:48px 66px}.cinema-front{opacity:.08}.cinema-speed-film{background-size:190% 100%}.game[data-cinematic="idle"] .rocket-body{animation-duration:3.1s}}
++@media(prefers-reduced-motion:reduce){.cinema-speed-film{display:none!important}.cinema-layer,.cinema-bloom,.rocket-body{animation:none!important}.cinema-stack{opacity:.55}#fxCanvas{opacity:.35}}
++
+--- game.js@v7.10
++++ game.js@v7.11
+@@ -1,6 +1,6 @@
+ (()=>{
+   'use strict';
+-  const CLIENT_VERSION='7.0';
++  const CLIENT_VERSION='7.11';
+   const $=(s)=>document.querySelector(s), $$=(s)=>[...document.querySelectorAll(s)];
+   const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
+   const num=(...values)=>{for(const value of values){if(value===null||value===undefined||value==='')continue;const n=Number(value);if(Number.isFinite(n))return n;}return null;};
+@@ -110,8 +110,10 @@
+   function startVisualLoop(){if(game.raf!==null||game.lifecyclePaused)return;game.raf=requestAnimationFrame(animate);}
+   function stopVisualLoop(){if(game.raf!==null){cancelAnimationFrame(game.raf);game.raf=null;}}
+   function syncVisualActivity(){
+-    const active=game.pageVisible&&!game.lifecyclePaused&&['live','settling'].includes(game.mode);
+-    if(active&&!reducedMotion){game.fx?.resume?.();startVisualLoop();}else{game.fx?.pause?.();stopVisualLoop();}
++    const sceneActive=game.pageVisible&&!game.lifecyclePaused&&['idle','searching','live','settling'].includes(game.mode);
++    const liveVisual=game.pageVisible&&!game.lifecyclePaused&&['live','settling'].includes(game.mode);
++    if(sceneActive&&!reducedMotion)game.fx?.resume?.();else game.fx?.pause?.();
++    if(liveVisual&&!reducedMotion)startVisualLoop();else stopVisualLoop();
+   }
+   function syncClockActivity(){
+     const needed=game.pageVisible&&!game.lifecyclePaused&&['searching','live','settling'].includes(game.mode);
+@@ -159,7 +161,7 @@
+   }
+ 
+   function setMode(mode,message){
+-    game.mode=mode;ui.game.dataset.state=mode;
++    game.mode=mode;ui.game.dataset.state=mode;game.fx?.setMode?.(mode);
+     const labels={idle:'READY',searching:'SCANNING MARKET',live:'LIVE',settling:'CASHING OUT',complete:'COMPLETE'};ui.stateLabel.textContent=labels[mode]||mode.toUpperCase();if(message)ui.stateMessage.textContent=message;syncPreflight(mode);setFlightState(resolveFlightState());syncButtons();syncVisualActivity();syncClockActivity();void syncWakeLock();
+   }
+   function syncButtons(){
+@@ -339,6 +341,7 @@
+     const cameraScale=1+clamp(Math.abs(v)*.08+Math.max(0,m-1)*.0018,0,.038),cameraY=clamp(-Math.max(0,v)*85+fall*22,-14,7),cameraX=clamp(-v*14,-4,4),engineScale=clamp(.92+thrust/120,.95,1.72);
+     game.cameraScale=cameraScale;game.cameraY=cameraY;game.cameraX=cameraX;game.engineScale=engineScale;
+     ui.world.style.setProperty('--camera-scale',cameraScale.toFixed(4));ui.world.style.setProperty('--camera-y',`${cameraY.toFixed(2)}px`);ui.world.style.setProperty('--camera-x',`${cameraX.toFixed(2)}px`);ui.world.style.setProperty('--engine-scale',engineScale.toFixed(3));if(ui.flightDirector){ui.flightDirector.style.setProperty('--director-roll',`${clamp(game.visualTilt,-18,18).toFixed(2)}deg`);ui.flightDirector.style.setProperty('--director-pitch',`${clamp(-v*120,-10,10).toFixed(2)}px`);}ui.world.style.setProperty('--speed-opacity',(0.12+speed*.62).toFixed(3));ui.world.style.setProperty('--danger-opacity',clamp(dangerScore*.72,0,.86).toFixed(3));ui.world.style.setProperty('--boost-opacity',clamp(boost*.74,0,.78).toFixed(3));const sceneEnergy=clamp(Math.abs(v)*6.5+Math.max(0,m-1)*.028+(stage==='hyper'?.32:stage==='deep'?.14:0),0,1);const px=clamp(game.visualTilt*.42+v*54,-11,11),py=clamp(-v*38+fall*15,-8,8);ui.world.style.setProperty('--scene-energy',sceneEnergy.toFixed(3));ui.world.style.setProperty('--pf-x',`${(-px*.28).toFixed(2)}px`);ui.world.style.setProperty('--pf-y',`${(-py*.22).toFixed(2)}px`);ui.world.style.setProperty('--pm-x',`${(-px*.62).toFixed(2)}px`);ui.world.style.setProperty('--pm-y',`${(-py*.48).toFixed(2)}px`);ui.world.style.setProperty('--pn-x',`${(-px*1.1).toFixed(2)}px`);ui.world.style.setProperty('--pn-y',`${(-py*.82).toFixed(2)}px`);ui.world.style.setProperty('--smoke-opacity',(stage==='ground'||stage==='clouds'?clamp(.18+sceneEnergy*.42,.12,.66):.03).toFixed(3));ui.world.style.setProperty('--vignette-opacity',clamp(.16+speed*.16+dangerScore*.15,.14,.58).toFixed(3));
++    game.fx?.update?.({mode:game.mode,stage,multiplier:m,peak,velocity:v,acceleration:game.acceleration,danger,thrust,flightState:game.flightState});
+     updateFlightAssist(live.m);updateFlightProgress(m);
+     if(ui.flightPositionHud)ui.flightPositionHud.dataset.tone=danger==='high'?'danger':game.flightState==='boost'?'boost':'normal';
+     ui.rocket.style.setProperty('--ghost-opacity',clamp(Math.abs(v)*6+Math.max(0,m-1)*.02,0,.62).toFixed(3));
+@@ -484,7 +487,7 @@
+   function renderHistory(rows){rows=Array.isArray(rows)?rows:[];ui.historyCount.textContent=String(rows.length);if(!rows.length){ui.history.innerHTML='<div class="history-empty">No completed rounds yet.</div>';return;}ui.history.innerHTML=rows.map(row=>{const p=num(row.profit)||0,m=num(row.multiplier)||0,when=new Date(row.at||Date.now()).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});return `<div class="history-row"><div><b>${escapeHtml(row.symbol||'TOKEN')} · ${escapeHtml(String(row.reason||'CASH OUT').replaceAll('_',' '))}</b><small>${when} · ${money(row.stake)} · ${row.voided?'stake returned':`${p>=0?'+':''}${money(p)}`}</small></div><div class="history-mult ${row.voided?'':p<0?'negative':'positive'}">${row.voided?'VOID':`${m.toFixed(2)}×`}</div></div>`;}).join('');}
+   async function clearHistory(){if(game.clearHistoryInFlight)return;if(!game.historyClearArmed){game.historyClearArmed=true;ui.clearHistory.textContent='Confirm';clearTimeout(game.historyClearTimer);game.historyClearTimer=setTimeout(()=>{game.historyClearArmed=false;ui.clearHistory.textContent='Clear';game.historyClearTimer=null;},3000);return;}game.historyClearArmed=false;clearTimeout(game.historyClearTimer);game.historyClearTimer=null;ui.clearHistory.textContent='Clear';game.clearHistoryInFlight=true;ui.clearHistory.disabled=true;try{apply(await api('/api/game/history/clear',{method:'POST',body:'{}'}),{allowResult:false});}catch(e){ui.stateMessage.textContent=e.message;}finally{game.clearHistoryInFlight=false;ui.clearHistory.disabled=false;}}
+ 
+-  function createFx(){
++  function createLegacyFx(){
+     const canvas=ui.fx,ctx=canvas.getContext('2d');if(!ctx)return null;let w=1,h=1,dpr=1,running=false,raf=null,lastFrame=0;const stars=[];const saveData=navigator.connection?.saveData===true;const desiredCount=()=>saveData?24:w<430?34:w<700?44:w<1100?64:82;
+     function resize(){const r=canvas.getBoundingClientRect();w=Math.max(1,r.width);h=Math.max(1,r.height);dpr=Math.min(1.5,devicePixelRatio||1);canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);const count=desiredCount();while(stars.length<count)stars.push({x:Math.random()*w,y:Math.random()*h,s:.4+Math.random()*1.2,a:.18+Math.random()*.55,z:.4+Math.random()});if(stars.length>count)stars.splice(count);for(const s of stars){s.x=clamp(s.x,0,w);s.y=clamp(s.y,-18,h);}}
+     function frame(ts=performance.now()){raf=null;if(!running)return;if(ts-lastFrame<32){raf=requestAnimationFrame(frame);return;}lastFrame=ts;if(game.pageVisible&&!reducedMotion){ctx.clearRect(0,0,w,h);const stage=ui.game.dataset.stage,intensity=clamp(Math.abs(game.velocity)*7+(stage==='hyper'?.65:stage==='deep'?.30:stage==='moon'?.16:0),0,1);for(const s of stars){const base=stage==='ground'?.02:stage==='clouds'?.045:stage==='strato'?.075:stage==='hyper'?.22:.13;s.y+=(base+Math.abs(game.velocity)*3.4)*s.z;if(s.y>h){s.y=-18;s.x=Math.random()*w;}ctx.globalAlpha=s.a*(stage==='ground'?.3:1);ctx.fillStyle='#e7f7ff';const trail=1+intensity*18*s.z;ctx.fillRect(s.x,s.y,s.s,Math.max(s.s,trail));}ctx.globalAlpha=1;}raf=requestAnimationFrame(frame);}
+@@ -492,6 +495,14 @@
+     function pause(){running=false;if(raf!==null){cancelAnimationFrame(raf);raf=null;}}
+     const ro=globalThis.ResizeObserver?new ResizeObserver(resize):null;ro?.observe(canvas);if(!ro)addEventListener('resize',resize,{passive:true});resize();
+     return{pause,resume,stop(){pause();ro?.disconnect();if(!ro)removeEventListener('resize',resize);ctx.clearRect(0,0,w,h);}};
++  }
++
++  function createFx(){
++    try{
++      const director=globalThis.PepeSceneDirector?.create?.({root:ui.game,world:ui.world,canvas:ui.fx,rocket:ui.rocket,reducedMotion:()=>reducedMotion});
++      if(director)return director;
++    }catch(error){console.warn('PepeSceneDirector unavailable, using safe legacy FX',error);}
++    return createLegacyFx();
+   }
+ 
+   function bind(){

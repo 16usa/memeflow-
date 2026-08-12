@@ -1,0 +1,53 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import {fileURLToPath} from 'node:url';
+import {execFileSync} from 'node:child_process';
+const here=path.dirname(fileURLToPath(import.meta.url)),payload=path.join(here,'payload'),app=path.resolve(process.cwd(),'memeflow-app');
+const expected={"game.html":"6dd95bd83f8c4a6142e96aa1fb2b37fa55fa0b2d863f340cb0d6ed3c509388b6","game.css":"837d6972fdde1abf0fcab28312ba699ae8f0e4c85157781df0c55f6538da89fc","game.js":"066c9f750703df79a6be91fec9869819d51afe12a6a6d975eebf626b1068cc40"};
+const files=['game.html','game.css','game.js'];let checks=0;const pass=(n,ok)=>{if(!ok)throw new Error('FAIL '+n);checks++;console.log('PASS',n)};const sha=p=>crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex');
+function braces(s){let d=0,q=null,c=false,e=false;for(let i=0;i<s.length;i++){const x=s[i],n=s[i+1];if(c){if(x==='*'&&n==='/'){c=false;i++;}continue}if(q){if(e){e=false;continue}if(x==='\\'){e=true;continue}if(x===q)q=null;continue}if(x==='/'&&n==='*'){c=true;i++;continue}if(x==='"'||x==="'"){q=x;continue}if(x==='{')d++;else if(x==='}'){if(--d<0)return false}}return d===0&&!q&&!c}
+function duplicates(source){source=source.replace(/\/\*[\s\S]*?\*\//g,'');const out=[];function walk(start,end,ctx){const seen=new Map();let i=start;while(i<end){while(i<end&&/\s/.test(source[i]))i++;if(i>=end)break;let q=null,p=0,j=i,open=-1,semi=-1;for(;j<end;j++){const c=source[j];if(q){if(c==='\\')j++;else if(c===q)q=null;continue}if(c==='"'||c==="'"){q=c;continue}if(c==='('){p++;continue}if(c===')'){p=Math.max(0,p-1);continue}if(!p&&c==='{'){open=j;break}if(!p&&c===';'){semi=j;break}}if(semi>=0&&(open<0||semi<open)){i=semi+1;continue}if(open<0)break;const head=source.slice(i,open).trim().replace(/\s+/g,' ');let d=1,k=open+1,r=null;for(;k<end&&d>0;k++){const c=source[k];if(r){if(c==='\\')k++;else if(c===r)r=null;continue}if(c==='"'||c==="'"){r=c;continue}if(c==='{')d++;else if(c==='}')d--}const close=k-1;if(head.startsWith('@'))walk(open+1,close,ctx+' > '+head);else{const n=(seen.get(head)||0)+1;seen.set(head,n);if(n>1)out.push(ctx+' :: '+head)}i=k}}walk(0,source.length,'root');return out}
+pass('namespaced V6.8 package directory',path.basename(here)==='pepe-game-v6.8');
+pass('payload contains visual files only',JSON.stringify(fs.readdirSync(payload).sort())===JSON.stringify([...files].sort()));
+for(const f of files){pass('payload hash '+f,sha(path.join(payload,f))===expected[f]);pass('installed hash '+f,sha(path.join(app,f))===expected[f]);}
+const html=fs.readFileSync(path.join(app,'game.html'),'utf8'),css=fs.readFileSync(path.join(app,'game.css'),'utf8'),js=fs.readFileSync(path.join(app,'game.js'),'utf8');
+pass('V6.8 client version',js.includes("CLIENT_VERSION='6.8'"));
+pass('V6.8 cache bust',html.includes('/game.js?v=68')&&html.includes('/game.css?v=68'));
+pass('round presentation reset helper',js.includes('function resetRoundPresentation({pulse=false}={})'));
+pass('search resets previous round visuals',js.includes('resetRoundPresentation({pulse:true});game.searchSeq++'));
+pass('server no-session resets visual state',js.includes("resetRoundPresentation({pulse:game.mode==='searching'});"));
+pass('multiplier reset target 1.00',js.includes('game.targetMultiplier=1;game.displayMultiplier=1;game.lastServerMultiplier=1'));
+pass('peak/drawdown/thrust reset',js.includes("ui.peakHud.textContent='1.00×';ui.drawdownHud.textContent='0.0%';ui.thrustHud.textContent='0%'"));
+pass('idle cash capture no stale 100 percent',js.includes("ui.cashoutCapture.textContent='—'"));
+pass('trigger distances require live session',js.includes("if(!game.session||game.session.state!=='LIVE'){ui.autoDistance.textContent='—';ui.stopDistance.textContent='—';return;}"));
+pass('thrust derives from server session live state',js.includes("const flightActive=game.session?.state==='LIVE';"));
+pass('balance renderer added',js.includes('function renderBalance(value,{pulse=true}={})'));
+pass('post-round read-only summary refresh',js.includes("const summary=await api('/api/game/status')")&&js.includes('scheduleRoundSummaryRefresh();'));
+pass('summary refresh only renders balance history stats',js.includes('if(summary?.balance!==undefined)renderBalance(summary.balance);if(summary?.history)renderHistory(summary.history);if(summary?.stats)renderStats(summary.stats)'));
+pass('play again clears session before reset render',js.includes('game.launchSeen.clear();game.session=null;resetRoundPresentation();'));
+pass('balance settled pulse visual',css.includes('.balance b.is-updated')&&css.includes('@keyframes v68BalanceSettled'));
+pass('round reset pulse visual',css.includes('.game[data-roundreset="true"] .multiplier')&&css.includes('@keyframes v68RoundReset'));
+pass('dynamic visualViewport JS remains removed',!js.includes('visualViewport')&&!js.includes("'--vvh'")&&!js.includes('scheduleViewportHeight')&&!js.includes('syncViewportHeight'));
+pass('stable small viewport height preserved',css.includes('--stable-vh:100svh')&&css.includes('min-height:var(--stable-vh)'));
+pass('mobile dock blur remains disabled',css.includes('-webkit-backdrop-filter:none;backdrop-filter:none'));
+pass('wake lock request remains serialized',js.includes('game.wakeRequestPending')&&js.includes('const seq=++game.wakeRequestSeq'));
+pass('stream hidden/offline guard preserved',js.includes("if(!game.pageVisible||game.lifecyclePaused||navigator.onLine===false)return;"));
+pass('search background wait remains event based',js.includes('function waitForSearchResume(seq)')&&!js.includes('await wait(500);'));
+pass('trace rejects backward timestamps',js.includes('if(last&&serverTime<last.t)return;'));
+pass('trace first point preserved',js.includes("const first=game.points[0];game.points=[first,...game.points.slice(-118)]"));
+pass('no client feedFresh mutation',!js.includes('session.feedFresh =')&&!js.includes('session.feedFresh='));
+pass('no client canCashout mutation',!js.includes('session.canCashout =')&&!js.includes('session.canCashout='));
+pass('no settings mutation endpoint',!js.includes('/api/settings'));
+pass('no BUY endpoint',!js.includes('/api/buy'));
+pass('no SELL endpoint',!js.includes('/api/sell'));
+pass('no old Game entry filters',!js.includes('decisionMaxAge')&&!js.includes('holderMaxAge')&&!js.includes('coherence gate'));
+const ids=[...html.matchAll(/\bid="([^"]+)"/g)].map(m=>m[1]),refs=[...js.matchAll(/\$\('#([^']+)'\)/g)].map(m=>m[1]);
+pass('unique HTML ids',new Set(ids).size===ids.length);pass('all JS ids resolve',refs.every(id=>ids.includes(id)));
+pass('CSS braces balanced',braces(css));pass('no exact duplicate CSS selectors',duplicates(css).length===0);pass('no literal escaped newline bug',!css.includes('\\n.'));
+pass('single Game stylesheet',([...html.matchAll(/<link\b[^>]*rel="stylesheet"/g)].length)===1);pass('single Game script',([...html.matchAll(/<script\b[^>]*src=/g)].length)===1);
+execFileSync(process.execPath,['--check',path.join(app,'game.js')],{stdio:'ignore'});pass('syntax game.js',true);
+pass('game engine not packaged',!fs.existsSync(path.join(payload,'game-engine.mjs')));pass('app server not packaged',!fs.existsSync(path.join(payload,'app-server.mjs')));pass('index not packaged',!fs.existsSync(path.join(payload,'index.html')));
+const latest=path.join(app,'.memeflow-patches','pepe-game-v68','latest.json');pass('V6.8 protection metadata exists',fs.existsSync(latest));if(fs.existsSync(latest)){const meta=JSON.parse(fs.readFileSync(latest,'utf8'));for(const f of ['src/game-engine.mjs','app-server.mjs','index.html'])pass('protected unchanged '+f,sha(path.join(app,f))===meta.protectedBefore[f]);}
+execFileSync(process.execPath,[path.join(here,'runtime-smoke-v68.cjs'),app],{stdio:'inherit'});pass('runtime smoke reset + summary refresh',true);
+console.log(`PEPE GAME V6.8 VERIFY: PASS (${checks} checks)`);

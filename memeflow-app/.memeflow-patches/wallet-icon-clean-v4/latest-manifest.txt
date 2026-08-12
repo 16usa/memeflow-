@@ -1,0 +1,2 @@
+INDEX=./memeflow-app/index.html
+BACKUP=./memeflow-app/.memeflow-patches/wallet-icon-clean-v4/index.html.20260811-003323.bak

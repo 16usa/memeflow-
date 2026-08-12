@@ -1,0 +1,7 @@
+import fs from 'node:fs';import path from 'node:path';import crypto from 'node:crypto';
+const root='/home/runner/workspace',app=path.join(root,'memeflow-app'),pkg=path.join(root,'pepe-game-v7.7-adaptive-typography'),backup=path.join(pkg,'backup-v76');
+const baseline={"game.html": "2d8406514cd753563f8b1435278b72735506e828572ac313094015b3c79f6473", "game.css": "760b959e96a3b707952a98622892f007efe3b4e625572ed5a02c43e345ca1eb3", "game.js": "04c03223736d197f1d89a2b8749fa9222e9ceac46c27c9415171fb01ea8a3509"},next={"game.html": "4b618f377f0563a68e1e1a095cdf2180a049bc1be72daaa2869a6b768102db86", "game.css": "6b4a6b10d4378c52d7739078e3a346c46d7bc8f4d03046ebaebe62a120505459", "game.js": "04c03223736d197f1d89a2b8749fa9222e9ceac46c27c9415171fb01ea8a3509"};const sha=p=>crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex');
+for(const f of Object.keys(baseline)){const p=path.join(app,f);if(!fs.existsSync(p))throw new Error('Missing '+p);const h=sha(p);if(h!==baseline[f]&&h!==next[f])throw new Error('REFUSING '+f+': not exact V7.6/V7.7');}
+fs.mkdirSync(backup,{recursive:true});
+for(const f of Object.keys(baseline)){const p=path.join(app,f),b=path.join(backup,f),h=sha(p);if(!fs.existsSync(b)){if(h!==baseline[f])throw new Error('Cannot create V7.6 backup for '+f);fs.copyFileSync(p,b);console.log('BACKUP',f);}if(h===next[f]){console.log('UNCHANGED',f);continue;}fs.copyFileSync(path.join(pkg,'payload',f),p);console.log('UPDATED',f);}
+console.log('PEPE GAME V7.7 Adaptive Typography installed. Trading/server untouched.');

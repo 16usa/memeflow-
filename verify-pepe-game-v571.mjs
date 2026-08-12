@@ -1,0 +1,26 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import {fileURLToPath} from 'node:url';
+import {execFileSync} from 'node:child_process';
+const here=path.dirname(fileURLToPath(import.meta.url));const source=path.join(here,'source');const workspace=process.cwd();let app=path.join(workspace,'memeflow-app');if(!fs.existsSync(path.join(app,'game.html')))app=workspace;
+const files={html:path.join(app,'game.html'),css:path.join(app,'game.css'),js:path.join(app,'game.js'),engine:path.join(app,'src','game-engine.mjs'),server:path.join(app,'app-server.mjs'),index:path.join(app,'index.html')};
+let checks=0;function ok(cond,msg){checks++;if(!cond)throw new Error('VERIFY FAIL: '+msg);console.log('PASS',msg)}
+const read=p=>fs.readFileSync(p,'utf8');const sha=p=>crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex');
+for(const [k,p] of Object.entries(files))ok(fs.existsSync(p),`${k} exists`);
+ok(sha(files.html)===sha(path.join(source,'game.html')),'game.html matches V5.7.1 source');
+ok(sha(files.css)===sha(path.join(source,'game.css')),'game.css matches V5.7.1 source');
+ok(sha(files.js)===sha(path.join(source,'game.js')),'game.js matches V5.7.1 source');
+ok(sha(files.engine)===sha(path.join(source,'game-engine.mjs')),'game-engine matches V5.7.1 source');
+const html=read(files.html),css=read(files.css),js=read(files.js),engine=read(files.engine),server=read(files.server);
+ok(js.includes("const CLIENT_VERSION='5.7.1';"),'client version 5.7.1');ok(engine.includes("const GAME_VERSION = '5.7.1';"),'engine version 5.7.1');ok(engine.includes("policy: 'MEMEFLOW_SETTINGS_ONLY'"),'selector policy is MEMEFLOW_SETTINGS_ONLY');
+ok(engine.includes("String(decision?.state || '').toUpperCase() !== 'BUY READY'"),'Game consumes MEMEFLOW BUY READY');ok(engine.includes('selectorScore: score'),'selector score equals MEMEFLOW score');
+for(const forbidden of ['if (pAge === null || pAge > this.startPriceMaxAgeMs)','if (dAge === null || dAge > this.decisionMaxAgeMs)','decisionBehindPrice++; continue','decisionBehindHolder++; continue','- crowdingPenalty']) ok(!engine.includes(forbidden),`old Game-only selector gate removed: ${forbidden}`);
+ok(engine.includes("account.killSwitch === true"),'MEMEFLOW kill switch remains authoritative');ok(engine.includes("session.autoCashout > 0"),'Auto Cash Out remains server-side');ok(engine.includes("session.stopLoss > 0"),'Stop Loss remains server-side');ok(engine.includes("code: 'PRICE_STALE'"),'stale quote cashout protection remains');
+ok(html.includes('DECISION</span><span>SETTINGS</span><span>PRICE</span><span>LOCK'),'selector UI explains site-settings authority');ok(js.includes('no extra Game filters'),'client explains no extra Game filters');
+ok((html.match(/\/game\.js/g)||[]).length===1,'one Game JS link');ok((html.match(/\/game\.css/g)||[]).length===1,'one Game CSS link');ok((css.match(/{/g)||[]).length===(css.match(/}/g)||[]).length,'CSS blocks balanced');
+const ids=[...html.matchAll(/id="([^"]+)"/g)].map(m=>m[1]);ok(new Set(ids).size===ids.length,'HTML ids unique');const refs=new Set([...js.matchAll(/\$\('#([^']+)'\)/g)].map(m=>m[1])),idSet=new Set(ids);ok([...refs].every(id=>idSet.has(id)),'all game.js DOM refs resolve');
+for(const marker of ['MF_PEPE_ROCKET_GAME_IMPORT','MF_PEPE_ROCKET_GAME_INSTANCE','MF_PEPE_ROCKET_GAME_API_ROUTES','/api/game/stream'])ok(server.includes(marker),`server integration ${marker}`);
+execFileSync(process.execPath,['--check',files.js],{stdio:'pipe'});ok(true,'game.js syntax');execFileSync(process.execPath,['--check',files.engine],{stdio:'pipe'});ok(true,'game-engine syntax');execFileSync(process.execPath,['--check',files.server],{stdio:'pipe'});ok(true,'app-server syntax');
+execFileSync(process.execPath,[path.join(source,'test-game-engine-v571.mjs'),files.engine],{stdio:'inherit'});ok(true,'site-engine authority behavior tests');
+console.log(`PEPE GAME V5.7.1 VERIFY: PASS (${checks} checks)`);

@@ -1,0 +1,31 @@
+PEPE GAME V9.5 — FULL AUDIT CLEAN
+
+STATIC AUDIT
+CSS parse errors: 0
+Exact duplicate selector/media contexts: 0
+Duplicate HTML ids: 0
+Missing JS DOM references: 0
+game.js syntax: PASS
+game-webgl-v9.js syntax: PASS
+
+CLEANUP
+- Removed legacy fxCanvas and its dead renderer.
+- Removed obsolete preflight/stage overlays, trigger lines, Flight Vector, Flight Altimeter and Pepe text chip.
+- Replaced visible Selector block with hidden runtime state only.
+- Removed dead CSS rules and empty media blocks.
+- Normalized accumulated root declarations.
+
+RESPONSIVE FIXES
+- Round History rows no longer overlap.
+- Desktop/tablet scene fills its allocated stage area.
+- Landscape controls keep the action button on-screen.
+- Landscape result fits without clipping PLAY AGAIN.
+
+PROTECTED BEHAVIOR FUNCTIONS BYTE-IDENTICAL TO V9.4.3:
+- async function api( SHA256 35eb2afbfd8f46a72c2c99333fa18f1f060152364d5006844c8292323b3d7bb7
+- async function startRound( SHA256 69be7f275ca5044ce914d5c055b26ff334c67a274c8d1e694874540bbf735987
+- async function cashOut( SHA256 61b325f3477c05a2f68a4d2fe94f847952bdefdf189b78f74705a9c9b401e59b
+- function applySession( SHA256 000bfc81d65f5a8de56bda4d990cb7e24db36f2245dd6200a738332ef925ec80
+- function apply(payload SHA256 1616e6908fb8bbefd1051c45d8e40fe5e16ef7f61263473e6b646f435ca3ccbc
+
+No server/engine files are included in this package.

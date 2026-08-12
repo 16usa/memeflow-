@@ -1,0 +1,855 @@
+/* MEMEFLOW Header Burger Drawer V44
+   MF_HEADER_BURGER_DRAWER_CLEAN_V1
+
+   ONE compact-navigation owner.
+   Existing .mobile-nav is REUSED as the drawer.
+   No cloned navigation, no bottom bar.
+*/
+(() => {
+  'use strict';
+  if (window.__MEMEFLOW_BOTTOM_NAV_FLUSH_V44__) return;
+  window.__MEMEFLOW_BOTTOM_NAV_FLUSH_V44__ = true;
+
+  const STYLE_ID = 'mf-bottom-nav-flush-v44-style';
+  const AI_ID = 'mf-ai-center-nav-v24';
+  const MENU_ID = 'mf-mobile-drawer-v1';
+  const TRIGGER_ID = 'mf-menu-trigger-v1';
+  const CLOSE_ID = 'mf-menu-close-v1';
+  const BACKDROP_ID = 'mf-menu-backdrop-v1';
+  const MODE_CLASSES = ['mf-v44-phone','mf-v44-tablet','mf-v44-desktop'];
+
+  const aiIcon = "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='28' viewBox='0 0 30 26'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='2' y1='1' x2='28' y2='24' gradientUnits='userSpaceOnUse'%3E%3Cstop stop-color='%23F0FDFF'/%3E%3Cstop offset='.40' stop-color='%2386ECFF'/%3E%3Cstop offset='1' stop-color='%2338CBEA'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cg fill='url(%23g)'%3E%3Cpath d='M15 2.4c.73 4.33 3.47 7.07 7.8 7.8-4.33.73-7.07 3.47-7.8 7.8-.73-4.33-3.47-7.07-7.8-7.8 4.33-.73 7.07-3.47 7.8-7.8Z'/%3E%3Cpath d='M5.2 2.3c.29 1.7 1.36 2.77 3.06 3.06-1.7.29-2.77 1.36-3.06 3.06-.29-1.7-1.36-2.77-3.06-3.06 1.7-.29 2.77-1.36 3.06-3.06Z' opacity='.90'/%3E%3Cpath d='M24.2 16.2c.34 2.02 1.62 3.30 3.64 3.64-2.02.34-3.30 1.62-3.64 3.64-.34-2.02-1.62-3.30-3.64-3.64 2.02-.34 3.30-1.62 3.64-3.64Z' opacity='.82'/%3E%3C/g%3E%3C/svg%3E\")";
+
+  const walletIcon = "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='26' height='26' viewBox='0 0 24 24' fill='none'%3E%3Cpath d='M4.5 7.25h14A1.75 1.75 0 0 1 20.25 9v8A1.75 1.75 0 0 1 18.5 18.75h-14A1.75 1.75 0 0 1 2.75 17V6.5A1.75 1.75 0 0 1 4.5 4.75h11.25' stroke='%238D99A8' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M16.25 11h4v4h-4a2 2 0 1 1 0-4Z' stroke='%238D99A8' stroke-width='1.7' stroke-linejoin='round'/%3E%3Ccircle cx='16.5' cy='13' r='.7' fill='%238D99A8'/%3E%3C/svg%3E\")";
+
+  const css = `
+    /* =============================================================
+       V44 = sole PHONE/TABLET navigation-layout owner.
+       ============================================================= */
+
+    [id^="mf-header-wallet-v"]{
+      display:none!important;
+      visibility:hidden!important;
+      pointer-events:none!important;
+    }
+
+    body.mf-v44-phone .topbar,
+    body.mf-v44-tablet .topbar{
+      align-items:center!important;
+    }
+
+    body.mf-v44-phone .topbar .top-actions,
+    body.mf-v44-tablet .topbar .top-actions{
+      display:flex!important;
+      align-items:center!important;
+      justify-content:flex-end!important;
+      flex:0 0 auto!important;
+      width:auto!important;
+      min-width:88px!important;
+      gap:8px!important;
+    }
+
+    body.mf-v44-phone .topbar .top-actions>:not(#walletConnectTop):not(#${TRIGGER_ID}),
+    body.mf-v44-tablet .topbar .top-actions>:not(#walletConnectTop):not(#${TRIGGER_ID}){
+      display:none!important;
+    }
+
+    body.mf-v44-phone #walletConnectTop,
+    body.mf-v44-tablet #walletConnectTop,
+    body.mf-v44-phone #${TRIGGER_ID},
+    body.mf-v44-tablet #${TRIGGER_ID}{
+      display:grid!important;
+      place-items:center!important;
+      visibility:visible!important;
+      pointer-events:auto!important;
+      flex:0 0 40px!important;
+      width:40px!important;
+      height:40px!important;
+      min-width:40px!important;
+      min-height:40px!important;
+      max-width:40px!important;
+      max-height:40px!important;
+      margin:0!important;
+      padding:0!important;
+      border:0!important;
+      border-radius:0!important;
+      background:transparent!important;
+      box-shadow:none!important;
+      outline:0!important;
+      color:var(--muted,#8d99a8)!important;
+      text-decoration:none!important;
+      -webkit-tap-highlight-color:transparent!important;
+    }
+
+    body.mf-v44-phone #walletConnectTop,
+    body.mf-v44-tablet #walletConnectTop{
+      font-size:0!important;
+      line-height:0!important;
+      color:transparent!important;
+      background-image:none!important;
+    }
+    body.mf-v44-phone #walletConnectTop>*,
+    body.mf-v44-tablet #walletConnectTop>*{
+      display:none!important;
+    }
+    body.mf-v44-phone #walletConnectTop::after,
+    body.mf-v44-tablet #walletConnectTop::after{
+      content:none!important;
+      display:none!important;
+    }
+    body.mf-v44-phone #walletConnectTop::before,
+    body.mf-v44-tablet #walletConnectTop::before{
+      content:""!important;
+      display:block!important;
+      width:26px!important;
+      height:26px!important;
+      margin:0!important;
+      padding:0!important;
+      background:${walletIcon} center/26px 26px no-repeat!important;
+      -webkit-mask:none!important;
+      mask:none!important;
+      box-shadow:none!important;
+      opacity:1!important;
+      transform:none!important;
+    }
+
+    #${TRIGGER_ID} .mf-menu-lines{
+      width:21px!important;
+      height:14px!important;
+      display:flex!important;
+      flex-direction:column!important;
+      align-items:flex-end!important;
+      justify-content:space-between!important;
+      pointer-events:none!important;
+    }
+    #${TRIGGER_ID} .mf-menu-line{
+      display:block!important;
+      height:2px!important;
+      margin:0!important;
+      padding:0!important;
+      border:0!important;
+      border-radius:999px!important;
+      background:currentColor!important;
+      box-shadow:none!important;
+      pointer-events:none!important;
+    }
+    #${TRIGGER_ID} .mf-menu-line:first-child{width:21px!important}
+    #${TRIGGER_ID} .mf-menu-line:last-child{width:14px!important}
+
+    body.mf-v44-phone #${TRIGGER_ID}:focus-visible,
+    body.mf-v44-tablet #${TRIGGER_ID}:focus-visible{
+      outline:1px solid rgba(84,221,255,.52)!important;
+      outline-offset:4px!important;
+      border-radius:8px!important;
+    }
+
+    /* Bottom navigation reserve is gone. */
+    body.mf-v44-phone,
+    body.mf-v44-tablet{
+      padding-bottom:0!important;
+    }
+    body.mf-v44-phone .main,
+    body.mf-v44-tablet .main{
+      padding-bottom:calc(24px + env(safe-area-inset-bottom,0px))!important;
+    }
+
+    /* The ORIGINAL .mobile-nav is now the drawer. */
+    body.mf-v44-phone .mobile-nav,
+    body.mf-v44-tablet .mobile-nav{
+      display:flex!important;
+      flex-direction:column!important;
+      align-items:stretch!important;
+      justify-content:flex-start!important;
+      gap:10px!important;
+
+      position:fixed!important;
+      top:0!important;
+      right:0!important;
+      bottom:0!important;
+      left:auto!important;
+
+      height:100dvh!important;
+      max-height:none!important;
+      margin:0!important;
+      padding:
+        calc(18px + env(safe-area-inset-top,0px))
+        18px
+        calc(20px + env(safe-area-inset-bottom,0px))!important;
+
+      box-sizing:border-box!important;
+      overflow-x:hidden!important;
+      overflow-y:auto!important;
+      overscroll-behavior:contain!important;
+      -webkit-overflow-scrolling:touch;
+
+      grid-template-columns:none!important;
+      grid-template-rows:none!important;
+
+      background:
+        radial-gradient(circle at 88% 4%,rgba(84,221,255,.055),transparent 28%),
+        linear-gradient(180deg,#0b1118 0%,#070b10 100%)!important;
+      border:0!important;
+      border-radius:0!important;
+
+      transform:translate3d(102%,0,0)!important;
+      visibility:hidden!important;
+      pointer-events:none!important;
+      transition:
+        transform .28s cubic-bezier(.2,.82,.2,1),
+        visibility 0s linear .28s!important;
+
+      z-index:1400!important;
+    }
+
+    body.mf-v44-phone .mobile-nav{
+      width:100vw!important;
+      min-width:100vw!important;
+      max-width:100vw!important;
+      box-shadow:none!important;
+    }
+
+    body.mf-v44-tablet .mobile-nav{
+      width:min(420px,100vw)!important;
+      min-width:min(420px,100vw)!important;
+      max-width:100vw!important;
+      border-left:1px solid rgba(41,57,74,.82)!important;
+      box-shadow:-28px 0 70px rgba(0,0,0,.38)!important;
+    }
+
+    body.mf-v44-phone.mf-menu-open .mobile-nav,
+    body.mf-v44-tablet.mf-menu-open .mobile-nav{
+      transform:translate3d(0,0,0)!important;
+      visibility:visible!important;
+      pointer-events:auto!important;
+      transition:
+        transform .28s cubic-bezier(.2,.82,.2,1),
+        visibility 0s linear 0s!important;
+    }
+
+    body.mf-v44-phone .mobile-nav>.mf-menu-drawer-head,
+    body.mf-v44-tablet .mobile-nav>.mf-menu-drawer-head{
+      display:flex!important;
+      align-items:center!important;
+      justify-content:space-between!important;
+      gap:16px!important;
+      flex:0 0 auto!important;
+      width:100%!important;
+      min-height:62px!important;
+      padding:2px 0 15px!important;
+      margin:0 0 4px!important;
+      border:0!important;
+      border-bottom:1px solid rgba(41,57,74,.74)!important;
+      background:transparent!important;
+    }
+
+    .mf-menu-drawer-copy{
+      min-width:0!important;
+      display:flex!important;
+      flex-direction:column!important;
+      align-items:flex-start!important;
+      gap:4px!important;
+    }
+    .mf-menu-drawer-copy small{
+      color:var(--cyan,#54ddff)!important;
+      font-size:9px!important;
+      line-height:1.2!important;
+      font-weight:900!important;
+      letter-spacing:.16em!important;
+      text-transform:uppercase!important;
+    }
+    .mf-menu-drawer-copy b{
+      color:var(--text,#f4f8fb)!important;
+      font-size:22px!important;
+      line-height:1.1!important;
+      font-weight:900!important;
+      letter-spacing:-.035em!important;
+    }
+
+    body.mf-v44-phone #${CLOSE_ID},
+    body.mf-v44-tablet #${CLOSE_ID}{
+      display:grid!important;
+      place-items:center!important;
+      flex:0 0 42px!important;
+      width:42px!important;
+      height:42px!important;
+      min-width:42px!important;
+      min-height:42px!important;
+      margin:0!important;
+      padding:0!important;
+      border:1px solid rgba(41,57,74,.82)!important;
+      border-radius:13px!important;
+      background:rgba(255,255,255,.018)!important;
+      color:#b7c2cf!important;
+      box-shadow:none!important;
+      font:inherit!important;
+      cursor:pointer!important;
+    }
+    #${CLOSE_ID} .mf-menu-close-glyph{
+      font-size:24px!important;
+      line-height:1!important;
+      font-weight:300!important;
+      transform:translateY(-1px)!important;
+      pointer-events:none!important;
+    }
+
+    body.mf-v44-phone .mobile-nav>[data-sheet],
+    body.mf-v44-tablet .mobile-nav>[data-sheet]{
+      position:relative!important;
+      inset:auto!important;
+      grid-column:auto!important;
+      grid-row:auto!important;
+      transform:none!important;
+
+      display:flex!important;
+      align-items:center!important;
+      justify-content:space-between!important;
+
+      flex:0 0 auto!important;
+      width:100%!important;
+      height:auto!important;
+      min-width:0!important;
+      min-height:58px!important;
+      max-width:none!important;
+
+      margin:0!important;
+      padding:15px 17px!important;
+
+      border:1px solid rgba(41,57,74,.78)!important;
+      border-radius:14px!important;
+      background:rgba(255,255,255,.016)!important;
+      box-shadow:none!important;
+
+      color:#aeb9c7!important;
+      font:inherit!important;
+      font-size:14px!important;
+      line-height:1.2!important;
+      font-weight:760!important;
+      letter-spacing:.01em!important;
+      text-align:left!important;
+      opacity:1!important;
+      overflow:hidden!important;
+      cursor:pointer!important;
+    }
+
+    body.mf-v44-phone .mobile-nav>[data-sheet]:focus-visible,
+    body.mf-v44-tablet .mobile-nav>[data-sheet]:focus-visible{
+      border-color:rgba(84,221,255,.42)!important;
+      color:#eef6fb!important;
+      outline:none!important;
+    }
+    body.mf-v44-phone .mobile-nav>[data-sheet].active,
+    body.mf-v44-tablet .mobile-nav>[data-sheet].active{
+      border-color:rgba(84,221,255,.45)!important;
+      background:rgba(84,221,255,.055)!important;
+      color:#f4fbff!important;
+    }
+
+    body.mf-v44-phone .mobile-nav>[data-sheet="home"],
+    body.mf-v44-tablet .mobile-nav>[data-sheet="home"],
+    body.mf-v44-phone .mobile-nav>[data-sheet="wallet"],
+    body.mf-v44-tablet .mobile-nav>[data-sheet="wallet"]{
+      display:none!important;
+      visibility:hidden!important;
+      pointer-events:none!important;
+    }
+
+    /* Tablet only: dim the page behind the drawer. */
+    #${BACKDROP_ID}{display:none}
+    body.mf-v44-tablet #${BACKDROP_ID}{
+      display:block;
+      position:fixed;
+      inset:0;
+      background:rgba(1,4,8,.58);
+      backdrop-filter:blur(3px);
+      -webkit-backdrop-filter:blur(3px);
+      opacity:0;
+      visibility:hidden;
+      pointer-events:none;
+      transition:opacity .22s ease,visibility 0s linear .22s;
+      z-index:1390;
+    }
+    body.mf-v44-tablet.mf-menu-open #${BACKDROP_ID}{
+      opacity:1;
+      visibility:visible;
+      pointer-events:auto;
+      transition:opacity .22s ease,visibility 0s linear 0s;
+    }
+
+    /* The SAME OpenAI control remains floating outside navigation. */
+    body.mf-v44-phone #${AI_ID},
+    body.mf-v44-tablet #${AI_ID}{
+      position:fixed!important;
+      inset:auto!important;
+      right:16px!important;
+      top:auto!important;
+      bottom:calc(18px + env(safe-area-inset-bottom,0px))!important;
+
+      display:grid!important;
+      place-items:center!important;
+      width:56px!important;
+      height:56px!important;
+      min-width:56px!important;
+      min-height:56px!important;
+      max-width:56px!important;
+      max-height:56px!important;
+      margin:0!important;
+      padding:0!important;
+
+      border:1px solid rgba(84,221,255,.20)!important;
+      border-radius:18px!important;
+      background:linear-gradient(180deg,rgba(18,29,40,.96),rgba(7,12,18,.985))!important;
+      box-shadow:0 16px 42px rgba(0,0,0,.34),inset 0 1px 0 rgba(255,255,255,.035)!important;
+
+      color:transparent!important;
+      font-size:0!important;
+      line-height:0!important;
+      transform:none!important;
+      overflow:visible!important;
+      pointer-events:auto!important;
+      visibility:visible!important;
+      opacity:1!important;
+      z-index:900!important;
+      -webkit-tap-highlight-color:transparent!important;
+    }
+
+    body.mf-v44-phone #${AI_ID} .mf-ai-center-star,
+    body.mf-v44-phone #${AI_ID} .mf-ai-center-label,
+    body.mf-v44-tablet #${AI_ID} .mf-ai-center-star,
+    body.mf-v44-tablet #${AI_ID} .mf-ai-center-label{
+      display:none!important;
+    }
+    body.mf-v44-phone #${AI_ID}::after,
+    body.mf-v44-tablet #${AI_ID}::after{
+      content:none!important;
+      display:none!important;
+    }
+    body.mf-v44-phone #${AI_ID}::before,
+    body.mf-v44-tablet #${AI_ID}::before{
+      content:""!important;
+      display:block!important;
+      width:32px!important;
+      height:28px!important;
+      background:${aiIcon} center/32px 28px no-repeat!important;
+      filter:drop-shadow(0 0 5px rgba(83,221,255,.18))!important;
+      pointer-events:none!important;
+    }
+    body.mf-v44-phone #${AI_ID}:active,
+    body.mf-v44-tablet #${AI_ID}:active{
+      transform:scale(.94)!important;
+    }
+    body.mf-v44-phone.mf-menu-open #${AI_ID},
+    body.mf-v44-tablet.mf-menu-open #${AI_ID}{
+      opacity:0!important;
+      visibility:hidden!important;
+      pointer-events:none!important;
+    }
+
+    /* No compact sheet reserves room for a bottom nav anymore. */
+    body.mf-v44-phone .mobile-sheet,
+    body.mf-v44-tablet .mobile-sheet{
+      padding-bottom:calc(20px + env(safe-area-inset-bottom,0px))!important;
+    }
+
+    /* Desktop stays sidebar-native. */
+    body.mf-v44-desktop #walletConnectTop,
+    body.mf-v44-desktop #${TRIGGER_ID},
+    body.mf-v44-desktop #${BACKDROP_ID},
+    body.mf-v44-desktop #${AI_ID}{
+      display:none!important;
+      visibility:hidden!important;
+      pointer-events:none!important;
+    }
+    body.mf-v44-desktop .mobile-nav{display:none!important}
+    body.mf-v44-desktop .sidebar{display:block!important}
+    body.mf-v44-desktop .sidebar .nav a[href="#wallet"]{
+      display:block!important;
+      visibility:visible!important;
+      pointer-events:auto!important;
+    }
+  `;
+
+  let previousOverflow = '';
+  let keyHandlerBound = false;
+
+  function ensureStyle() {
+    let style = document.getElementById(STYLE_ID);
+    if (!style) {
+      style = document.createElement('style');
+      style.id = STYLE_ID;
+      document.head.appendChild(style);
+    }
+    style.textContent = css;
+  }
+
+  function coarseTouch() {
+    return !!(
+      navigator.maxTouchPoints > 0 ||
+      window.matchMedia?.('(pointer:coarse)').matches
+    );
+  }
+
+  function currentMode() {
+    const width = window.innerWidth || document.documentElement.clientWidth || 0;
+    if (width <= 820) return 'phone';
+    if (width <= 1024) return 'tablet';
+    if (width <= 1366 && coarseTouch()) return 'tablet';
+    return 'desktop';
+  }
+
+  function setMode(mode) {
+    if (!document.body) return;
+    document.body.classList.remove(...MODE_CLASSES);
+    document.body.classList.add(`mf-v44-${mode}`);
+  }
+
+  function ensureTopActions() {
+    let host = document.querySelector('.topbar .top-actions');
+    if (host) return host;
+    const topbar = document.querySelector('.topbar');
+    if (!topbar) return null;
+    host = document.createElement('div');
+    host.className = 'top-actions';
+    topbar.appendChild(host);
+    return host;
+  }
+
+  function ensureNativeHeaderWallet() {
+    let wallet = document.getElementById('walletConnectTop');
+    if (wallet) return wallet;
+
+    const host = ensureTopActions();
+    if (!host) return null;
+
+    wallet = document.createElement('a');
+    wallet.id = 'walletConnectTop';
+    wallet.className = 'btn wallet-connect-top mf-v44-created-wallet';
+    wallet.href = '#wallet';
+    wallet.setAttribute('aria-label', 'Wallet');
+    wallet.title = 'Wallet';
+    wallet.textContent = 'Connect Wallet';
+    wallet.dataset.mfV44Created = '1';
+    host.appendChild(wallet);
+    return wallet;
+  }
+
+  function ensureBurger() {
+    let trigger = document.getElementById(TRIGGER_ID);
+    if (trigger) return trigger;
+
+    const host = ensureTopActions();
+    if (!host) return null;
+
+    trigger = document.createElement('button');
+    trigger.id = TRIGGER_ID;
+    trigger.type = 'button';
+    trigger.setAttribute('aria-label', 'Open navigation');
+    trigger.setAttribute('aria-controls', MENU_ID);
+    trigger.setAttribute('aria-expanded', 'false');
+    trigger.innerHTML =
+      '<span class="mf-menu-lines" aria-hidden="true">' +
+        '<span class="mf-menu-line"></span>' +
+        '<span class="mf-menu-line"></span>' +
+      '</span>';
+
+    host.appendChild(trigger);
+    return trigger;
+  }
+
+  function ensureBackdrop() {
+    let backdrop = document.getElementById(BACKDROP_ID);
+    if (backdrop) return backdrop;
+    backdrop = document.createElement('div');
+    backdrop.id = BACKDROP_ID;
+    backdrop.setAttribute('aria-hidden', 'true');
+    document.body.appendChild(backdrop);
+    return backdrop;
+  }
+
+  function getNav() {
+    return document.querySelector('.mobile-nav');
+  }
+
+  function ensureDrawerChrome() {
+    const nav = getNav();
+    if (!nav) return null;
+
+    nav.id = MENU_ID;
+    nav.dataset.mfNavigationOwner = 'header-burger-v1';
+
+    /* Home is physically removed. */
+    nav.querySelector('[data-sheet="home"]')?.remove();
+
+    let head = nav.querySelector('.mf-menu-drawer-head');
+    if (!head) {
+      head = document.createElement('div');
+      head.className = 'mf-menu-drawer-head';
+      head.innerHTML =
+        '<div class="mf-menu-drawer-copy">' +
+          '<small>NAVIGATION</small>' +
+          '<b>MEMEFLOW</b>' +
+        '</div>' +
+        `<button id="${CLOSE_ID}" type="button" aria-label="Close navigation">` +
+          '<span class="mf-menu-close-glyph" aria-hidden="true">×</span>' +
+        '</button>';
+      nav.prepend(head);
+    }
+    return nav;
+  }
+
+  function cleanInjectedWallets() {
+    document.querySelectorAll('[id^="mf-header-wallet-v"]').forEach(el => el.remove());
+  }
+
+  function normalizeAiButton() {
+    const ai = document.getElementById(AI_ID);
+    if (!ai) return null;
+
+    if (ai.parentElement !== document.body) {
+      document.body.appendChild(ai);
+    }
+
+    ai.removeAttribute('data-sheet');
+    ai.dataset.mfAiFloating = '1';
+    ai.setAttribute('aria-label', 'Open MEMEFLOW OpenAI');
+    ai.classList.remove(
+      'mf-ai-sparkles-v36',
+      'mf-ai-icon-compact-v37',
+      'mf-ai-icon-final-v38',
+      'mf-ai-icon-center-v39',
+      'mf-ai-icon-true-center-v40'
+    );
+    return ai;
+  }
+
+  function setDrawerTabOrder(open) {
+    const nav = getNav();
+    if (!nav) return;
+
+    const close = document.getElementById(CLOSE_ID);
+    if (close) close.tabIndex = open ? 0 : -1;
+
+    nav.querySelectorAll('[data-sheet]').forEach(button => {
+      const key = String(button.dataset.sheet || '').toLowerCase();
+      const allowed = ['candidates','positions','more'].includes(key);
+      button.tabIndex = open && allowed ? 0 : -1;
+    });
+  }
+
+  function openMenu() {
+    if (currentMode() === 'desktop') return false;
+
+    const nav = ensureDrawerChrome();
+    const trigger = ensureBurger();
+    if (!nav || !trigger) return false;
+
+    previousOverflow = document.body.style.overflow || '';
+    document.body.classList.add('mf-menu-open');
+    document.body.style.overflow = 'hidden';
+
+    nav.hidden = false;
+    nav.setAttribute('aria-hidden', 'false');
+    trigger.setAttribute('aria-expanded', 'true');
+    setDrawerTabOrder(true);
+
+    requestAnimationFrame(() => {
+      document.getElementById(CLOSE_ID)?.focus({ preventScroll:true });
+    });
+    return true;
+  }
+
+  function closeMenu({ focusTrigger = true, preserveScrollLock = false } = {}) {
+    const nav = getNav();
+    const trigger = document.getElementById(TRIGGER_ID);
+
+    document.body.classList.remove('mf-menu-open');
+    if (!preserveScrollLock) document.body.style.overflow = previousOverflow;
+
+    if (nav) nav.setAttribute('aria-hidden', 'true');
+    if (trigger) trigger.setAttribute('aria-expanded', 'false');
+
+    setDrawerTabOrder(false);
+
+    if (focusTrigger && trigger && currentMode() !== 'desktop') {
+      trigger.focus({ preventScroll:true });
+    }
+  }
+
+  function visibleDrawerFocusables() {
+    const nav = getNav();
+    if (!nav) return [];
+    return [
+      document.getElementById(CLOSE_ID),
+      ...nav.querySelectorAll(
+        '[data-sheet="candidates"],[data-sheet="positions"],[data-sheet="more"]'
+      )
+    ].filter(Boolean);
+  }
+
+  function bindMenu() {
+    const trigger = ensureBurger();
+    const nav = ensureDrawerChrome();
+    const backdrop = ensureBackdrop();
+    if (!trigger || !nav || !backdrop) return;
+
+    if (trigger.dataset.mfMenuBound !== '1') {
+      trigger.dataset.mfMenuBound = '1';
+      trigger.addEventListener('click', event => {
+        event.preventDefault();
+        event.stopPropagation();
+        if (document.body.classList.contains('mf-menu-open')) closeMenu();
+        else openMenu();
+      });
+    }
+
+    const close = document.getElementById(CLOSE_ID);
+    if (close && close.dataset.mfMenuBound !== '1') {
+      close.dataset.mfMenuBound = '1';
+      close.addEventListener('click', event => {
+        event.preventDefault();
+        event.stopPropagation();
+        closeMenu();
+      });
+    }
+
+    if (backdrop.dataset.mfMenuBound !== '1') {
+      backdrop.dataset.mfMenuBound = '1';
+      backdrop.addEventListener('click', () => closeMenu());
+    }
+
+    if (nav.dataset.mfDestinationBound !== '1') {
+      nav.dataset.mfDestinationBound = '1';
+
+      /* Native data-sheet handlers are NOT replaced or prevented. */
+      nav.addEventListener('click', event => {
+        const destination = event.target instanceof Element
+          ? event.target.closest('[data-sheet]')
+          : null;
+        if (!destination) return;
+
+        const key = String(destination.dataset.sheet || '').toLowerCase();
+        if (!['candidates','positions','more'].includes(key)) return;
+
+        setTimeout(() => {
+          const sheetOpened = Boolean(document.querySelector('.mobile-sheet.open'));
+          closeMenu({ focusTrigger:false, preserveScrollLock:sheetOpened });
+        }, 0);
+      }, true);
+    }
+
+    if (!keyHandlerBound) {
+      keyHandlerBound = true;
+      document.addEventListener('keydown', event => {
+        if (!document.body.classList.contains('mf-menu-open')) return;
+
+        if (event.key === 'Escape') {
+          event.preventDefault();
+          closeMenu();
+          return;
+        }
+        if (event.key !== 'Tab') return;
+
+        const items = visibleDrawerFocusables();
+        if (!items.length) return;
+
+        const first = items[0];
+        const last = items[items.length - 1];
+
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first.focus();
+        }
+      });
+    }
+  }
+
+  function openWalletSheet() {
+    const sheet = document.getElementById('sheet-wallet');
+    if (!sheet) return false;
+
+    document.getElementById('walletModal')?.classList.remove('open');
+    document.querySelectorAll('.mobile-sheet.open').forEach(el => {
+      if (el !== sheet) el.classList.remove('open');
+    });
+
+    sheet.classList.add('open');
+    sheet.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+
+    try { sheet.scrollTo({ top:0, left:0, behavior:'instant' }); }
+    catch (_) { sheet.scrollTop = 0; }
+
+    return true;
+  }
+
+  function captureHeaderWallet(event) {
+    if (currentMode() === 'desktop') return;
+    const target = event.target instanceof Element
+      ? event.target.closest('#walletConnectTop')
+      : null;
+    if (!target) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation();
+    openWalletSheet();
+  }
+
+  function apply() {
+    const mode = currentMode();
+    setMode(mode);
+    cleanInjectedWallets();
+
+    const nav = ensureDrawerChrome();
+
+    if (mode === 'desktop') {
+      closeMenu({ focusTrigger:false });
+      if (nav) {
+        nav.hidden = true;
+        nav.setAttribute('aria-hidden', 'true');
+      }
+      return;
+    }
+
+    ensureNativeHeaderWallet();
+    ensureBurger();
+    ensureBackdrop();
+    bindMenu();
+    normalizeAiButton();
+
+    if (nav) {
+      nav.hidden = false;
+      nav.setAttribute(
+        'aria-hidden',
+        document.body.classList.contains('mf-menu-open') ? 'false' : 'true'
+      );
+    }
+    setDrawerTabOrder(document.body.classList.contains('mf-menu-open'));
+  }
+
+  function install() {
+    ensureStyle();
+    apply();
+    document.addEventListener('click', captureHeaderWallet, true);
+
+    /* Bounded retries cover V51 mounting AI after V44. */
+    [50,160,420,900,1800,3500,6500,10000].forEach(ms => setTimeout(apply, ms));
+
+    let timer = 0;
+    addEventListener('resize', () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        if (currentMode() === 'desktop') closeMenu({ focusTrigger:false });
+        apply();
+      }, 120);
+    }, { passive:true });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', install, { once:true });
+  } else {
+    install();
+  }
+})();

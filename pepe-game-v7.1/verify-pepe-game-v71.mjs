@@ -1,0 +1,15 @@
+import fs from 'node:fs';import path from 'node:path';import crypto from 'node:crypto';import {spawnSync} from 'node:child_process';
+const root='/home/runner/workspace',app=path.join(root,'memeflow-app'),pkg=path.join(root,'pepe-game-v7.1'),expected={"game.html": "a4587438b2cf58738fb82f9383d2f9f7171b1c858d126cc05c2bb5728fa16b76", "game.css": "11a94aed0125a5a8e7b1f38ac74eb57251c25a8887658d80bb3acad3c378245d", "game.js": "5c7e2f1f8a04b038b97e0c489f5e172124d06b21db300a5d5ee6af294b2e40e6"};
+const sha=p=>crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex');let n=0;
+const pass=(name,ok)=>{if(!ok)throw new Error('FAIL '+name);n++;console.log('PASS',name)};
+for(const [f,h] of Object.entries(expected))pass(`V7.1 hash ${f}`,fs.existsSync(path.join(app,f))&&sha(path.join(app,f))===h);
+const html=fs.readFileSync(path.join(app,'game.html'),'utf8'),css=fs.readFileSync(path.join(app,'game.css'),'utf8'),js=fs.readFileSync(path.join(app,'game.js'),'utf8');
+pass('V7.1 cache bust',html.includes('/game.css?v=71')&&html.includes('/game.js?v=71'));
+pass('no visualViewport jitter code',!js.includes('visualViewport'));
+pass('CSS braces balanced',(css.match(/\{/g)||[]).length===(css.match(/\}/g)||[]).length);
+pass('no literal escaped newline bug',!css.includes('\\n'));
+pass('JS syntax',spawnSync(process.execPath,['--check',path.join(app,'game.js')]).status===0);
+pass('runtime smoke',spawnSync(process.execPath,[path.join(pkg,'runtime-smoke-v71.cjs'),app],{stdio:'inherit'}).status===0);
+for(const f of ['game-engine.mjs','app-server.mjs'])pass(`protected ${f} exists`,fs.existsSync(path.join(app,f)));
+pass('no trading files in payload',fs.readdirSync(path.join(pkg,'payload')).sort().join(',')==='game.css,game.html,game.js');
+console.log(`PEPE GAME V7.1 VERIFY: PASS (${n} checks)`);

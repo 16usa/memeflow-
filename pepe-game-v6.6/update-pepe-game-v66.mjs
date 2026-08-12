@@ -1,0 +1,40 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import {fileURLToPath} from 'node:url';
+import {execFileSync} from 'node:child_process';
+
+const here=path.dirname(fileURLToPath(import.meta.url));
+const payload=path.join(here,'payload');
+const app=path.resolve(process.cwd(),'memeflow-app');
+const files=['game.html','game.css','game.js'];
+const oldHashes={"game.html":"60812460eda508dd3ef470429684f4148e62799d4c41a0c58fe6c8693c9324d5","game.css":"00f13bbb45d0c3d055899f8817954242878b8679cfe78618647438a980d95e0c","game.js":"fa4d91d2d06e6631ee176921d58f73621ca6985c44974dd30f306c57b210b87a"};
+const newHashes={"game.html":"5a2c52c9bec7aa38b95b2cb67243e8a221402663e5bb5254c9a6d21256171f4f","game.css":"6be28741de5a08329835163fb42508170f688fcdb81b5969327bb489c925ffec","game.js":"36e48d2ac3382bbe19fad418ebfbba88d0825258d69035040de9182a0413026f"};
+const protectedFiles=['src/game-engine.mjs','app-server.mjs','index.html'];
+const sha=p=>crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex');
+const fail=m=>{console.error('PEPE GAME V6.6 UPDATE: FAIL · '+m);process.exit(1)};
+
+if(!fs.existsSync(app))fail('run from /home/runner/workspace; memeflow-app not found');
+if(path.basename(here)!=='pepe-game-v6.6')fail('package folder must be pepe-game-v6.6');
+for(const f of files)if(!fs.existsSync(path.join(payload,f)))fail('package payload missing '+f);
+const payloadNames=fs.readdirSync(payload).sort();
+if(JSON.stringify(payloadNames)!==JSON.stringify([...files].sort()))fail('payload must contain visual files only');
+for(const f of files)if(sha(path.join(payload,f))!==newHashes[f])fail('package hash mismatch for '+f);
+for(const f of protectedFiles)if(!fs.existsSync(path.join(app,f)))fail('protected MEMEFLOW file missing: '+f);
+const protectedBefore=Object.fromEntries(protectedFiles.map(f=>[f,sha(path.join(app,f))]));
+execFileSync(process.execPath,['--check',path.join(payload,'game.js')],{stdio:'inherit'});
+const current=Object.fromEntries(files.map(f=>[f,fs.existsSync(path.join(app,f))?sha(path.join(app,f)):null]));
+if(files.every(f=>current[f]===newHashes[f])){console.log('Pepe Rocket V6.6 already installed; no files rewritten.');console.log('Trading/server files were not touched.');process.exit(0);}
+for(const f of files)if(current[f]!==oldHashes[f])fail('unexpected current '+f+'; expected V6.5. Refusing to stack/conflict visual layers.');
+const stamp=new Date().toISOString().replace(/[:.]/g,'-');
+const backup=path.join(app,'.memeflow-patches','pepe-game-v66',stamp);fs.mkdirSync(backup,{recursive:true});
+for(const f of files)fs.copyFileSync(path.join(app,f),path.join(backup,f));
+fs.writeFileSync(path.join(backup,'protected-hashes.json'),JSON.stringify(protectedBefore,null,2));
+for(const f of files)fs.copyFileSync(path.join(payload,f),path.join(app,f));
+for(const f of files)if(sha(path.join(app,f))!==newHashes[f])fail('post-write hash mismatch '+f);
+for(const f of protectedFiles)if(sha(path.join(app,f))!==protectedBefore[f])fail('protected MEMEFLOW file changed unexpectedly: '+f);
+const latest=path.join(app,'.memeflow-patches','pepe-game-v66','latest.json');fs.writeFileSync(latest,JSON.stringify({backup,installedAt:Date.now(),oldHashes,newHashes,protectedBefore},null,2));
+console.log('Pepe Rocket V6.6 installed in place.');
+console.log('Changed: game.html, game.css, game.js only');
+console.log('Protected trading/server files: unchanged');
+console.log('Backup:',backup);

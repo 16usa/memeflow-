@@ -1,0 +1,235 @@
+(() => {
+  'use strict';
+
+  const $ = (selector) => document.querySelector(selector);
+  const $$ = (selector) => [...document.querySelectorAll(selector)];
+
+  const ui = {
+    shell: $('#gameShell'), balance: $('#gameBalance'), bet: $('#betInput'), auto: $('#autoCashout'), stop: $('#stopLoss'),
+    start: $('#startBtn'), cashout: $('#cashoutBtn'), cashoutValue: $('#cashoutButtonValue'), status: $('#roundStatus span'),
+    statusMessage: $('#statusMessage'), roundId: $('#roundId'), multiplier: $('#multiplier'), stake: $('#stakeValue'),
+    position: $('#positionValue'), profit: $('#profitValue'), peak: $('#peakValue'), rocket: $('#rocketWrap'),
+    targetBadge: $('#targetBadge'), tokenOrb: $('#tokenOrb'), tokenName: $('#tokenName'), tokenMint: $('#tokenMint'),
+    tokenScore: $('#tokenScore'), tokenHolders: $('#tokenHolders'), tokenTop10: $('#tokenTop10'), tokenPressure: $('#tokenPressure'),
+    selectionStatus: $('#selectionStatus'), history: $('#historyList'), clearHistory: $('#clearHistory'), feed: $('#feedState'),
+    source: $('#sourceState'), overlay: $('#resultOverlay'), resultEyebrow: $('#resultEyebrow'), resultMultiplier: $('#resultMultiplier'),
+    resultTitle: $('#resultTitle'), resultStake: $('#resultStake'), resultPayout: $('#resultPayout'), resultProfit: $('#resultProfit'),
+    playAgain: $('#playAgainBtn')
+  };
+
+  const game = {
+    state: 'idle', status: null, session: null, eventSource: null, statusTimer: null, searchToken: 0, requestId: null,
+    lastFeedAt: 0, showingResultId: null
+  };
+
+  const money = (value) => Number.isFinite(Number(value))
+    ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 }).format(Number(value))
+    : '—';
+  const num = (...values) => { for (const value of values) { if (value === null || value === undefined || value === '') continue; const n = Number(value); if (Number.isFinite(n)) return n; } return null; };
+  const text = (...values) => { for (const value of values) { if (value !== null && value !== undefined && String(value).trim()) return String(value).trim(); } return ''; };
+  const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+  const shortMint = (mint) => !mint ? 'No mint available' : mint.length > 17 ? `${mint.slice(0, 7)}…${mint.slice(-6)}` : mint;
+  const fmtPct = (value) => { const n = num(value); return n === null ? '—' : `${n.toFixed(n >= 10 ? 1 : 2)}%`; };
+  const fmtRatio = (value) => { const n = num(value); return n === null ? '—' : `${n.toFixed(2)}×`; };
+  const requestId = () => (crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`);
+
+  async function apiJson(url, options = {}) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 8000);
+    try {
+      const response = await fetch(url, {
+        credentials: 'include', headers: { accept: 'application/json', ...(options.body ? { 'content-type': 'application/json' } : {}), ...(options.headers || {}) },
+        ...options, signal: controller.signal
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        const error = new Error(data?.message || data?.error || `HTTP ${response.status}`);
+        error.status = response.status; error.code = data?.code || data?.error; error.data = data; throw error;
+      }
+      return data;
+    } finally { clearTimeout(timer); }
+  }
+
+  function setState(state, message) {
+    game.state = state; ui.shell.dataset.state = state;
+    ui.status.textContent = state === 'idle' ? 'READY' : state === 'complete' ? 'COMPLETE' : state.toUpperCase();
+    if (message) ui.statusMessage.textContent = message;
+    const searching = state === 'searching', live = state === 'live';
+    ui.start.classList.toggle('searching', searching);
+    ui.start.querySelector('b').textContent = searching ? 'CANCEL' : 'START';
+    ui.start.querySelector('small').textContent = searching ? 'Searching BUY READY feed…' : 'Find a filtered launch';
+    ui.start.querySelector('.launch-icon').textContent = searching ? '×' : '▶';
+    ui.start.disabled = live || state === 'settling';
+    ui.cashout.disabled = !live;
+    ui.bet.disabled = searching || live; ui.auto.disabled = searching || live; ui.stop.disabled = searching || live;
+  }
+
+  function currentBet() { return Math.round((Number(ui.bet.value) || 0) * 100) / 100; }
+  function updateStakePreview() {
+    if (game.state === 'live') return;
+    const bet = currentBet(); ui.stake.textContent = money(bet); ui.position.textContent = money(bet); ui.profit.textContent = money(0);
+  }
+
+  function applyStatus(status, { allowResult = true } = {}) {
+    if (!status) return;
+    game.status = status; ui.balance.textContent = money(status.balance);
+    renderHistory(status.history || []);
+    const s = status.session;
+    if (!s) { if (game.state !== 'searching') setState('idle', 'Set a paper stake and start the round.'); return; }
+    game.session = s;
+    if (s.state === 'LIVE') resumeLive(s);
+    else if (s.state === 'COMPLETE') { renderServerSession(s); if (allowResult) showResult(s); }
+  }
+
+  function fillToken(s) {
+    const token = s?.token || {};
+    const symbol = text(token.symbol, token.name, 'TOKEN'), name = text(token.name, token.symbol, 'Filtered candidate');
+    ui.tokenOrb.textContent = symbol.slice(0, 2).toUpperCase(); ui.tokenName.textContent = symbol === name ? name : `${symbol} · ${name}`;
+    ui.tokenMint.textContent = shortMint(s.mint); ui.tokenMint.title = s.mint || '';
+    ui.tokenScore.textContent = num(token.score) === null ? '—' : Math.round(Number(token.score));
+    ui.tokenHolders.textContent = num(token.holderCount) === null ? '—' : Math.round(Number(token.holderCount)).toLocaleString('en-US');
+    ui.tokenTop10.textContent = fmtPct(token.top10Pct); ui.tokenPressure.textContent = fmtRatio(token.buyPressure);
+    ui.targetBadge.textContent = 'BUY READY'; ui.selectionStatus.textContent = 'Server-selected from active MEMEFLOW filters';
+  }
+
+  function renderServerSession(s) {
+    fillToken(s); ui.roundId.textContent = s.id || '—';
+    ui.stake.textContent = money(s.bet); ui.position.textContent = money(s.state === 'COMPLETE' ? s.payout : s.bet * (num(s.multiplier) || 1));
+    const profit = s.state === 'COMPLETE' ? num(s.profit) || 0 : s.bet * ((num(s.multiplier) || 1) - 1);
+    ui.profit.textContent = `${profit >= 0 ? '+' : ''}${money(profit)}`; ui.profit.className = profit > .005 ? 'positive' : profit < -.005 ? 'negative' : '';
+    ui.peak.textContent = `${(num(s.peak) || 1).toFixed(2)}×`; renderMultiplier(num(s.multiplier) || 1); updateFlight(num(s.multiplier) || 1);
+  }
+
+  function resumeLive(s) {
+    const changed = !game.session || game.session.id !== s.id;
+    game.session = s; renderServerSession(s);
+    const auto = num(s.autoCashout) || 0;
+    setState('live', auto ? `Launched. Server auto cash out armed at ${auto.toFixed(2)}×.` : 'Launched. Cash out whenever you choose.');
+    ui.cashoutValue.textContent = `Paper value ${money(s.bet * (num(s.multiplier) || 1))}`; ui.feed.textContent = 'Server round live';
+    ui.source.textContent = s.priceAgeMs != null ? `Source: MEMEFLOW live price · age ${Math.round(s.priceAgeMs / 1000)}s` : 'Source: MEMEFLOW live price';
+    if (changed || !game.eventSource) subscribeToPrice(s.mint, s.entryPrice);
+    ensureStatusPolling();
+  }
+
+  function renderMultiplier(multiplier) {
+    ui.multiplier.innerHTML = `${multiplier.toFixed(2)}<span>×</span>`; ui.multiplier.classList.toggle('negative', multiplier < 1);
+  }
+
+  function previewPrice(price, entryPrice) {
+    if (game.state !== 'live' || !(price > 0) || !(entryPrice > 0) || !game.session) return;
+    const multiplier = Math.max(0, price / entryPrice), payout = game.session.bet * multiplier, profit = payout - game.session.bet;
+    renderMultiplier(multiplier); ui.position.textContent = money(payout); ui.profit.textContent = `${profit >= 0 ? '+' : ''}${money(profit)}`;
+    ui.profit.className = profit > .005 ? 'positive' : profit < -.005 ? 'negative' : ''; ui.peak.textContent = `${Math.max(num(game.session.peak) || 1, multiplier).toFixed(2)}×`;
+    ui.cashoutValue.textContent = `Paper value ${money(payout)}`; updateFlight(multiplier); game.lastFeedAt = Date.now();
+  }
+
+  function updateFlight(multiplier) {
+    const m = Math.max(.4, Math.min(8, multiplier)); let normalized;
+    if (m <= 1) normalized = (m - .4) / .6 * .10; else normalized = .10 + Math.min(.90, Math.log(m) / Math.log(5) * .82);
+    const lift = Math.round(normalized * 410), wobble = multiplier < .94 ? -4 : multiplier > 1.01 ? 2 : 0;
+    ui.rocket.style.transform = `translate3d(-50%, -${lift}px, 0) rotate(${wobble}deg)`;
+    ui.shell.dataset.stage = multiplier >= 5 ? 'deep' : multiplier >= 1.8 ? 'space' : multiplier >= 1.1 ? 'sky' : 'ground';
+  }
+
+  function resetFlightVisual() {
+    ui.rocket.style.transform = 'translate3d(-50%, 0, 0) rotate(0deg)'; ui.shell.dataset.stage = 'ground'; renderMultiplier(1);
+    ui.peak.textContent = '1.00×'; ui.profit.textContent = money(0); ui.profit.className = ''; updateStakePreview();
+  }
+
+  function subscribeToPrice(mint, entryPrice) {
+    closeFeed(); game.lastFeedAt = Date.now();
+    if (!('EventSource' in window)) return;
+    const es = new EventSource(`/api/chart/stream?tokenAddress=${encodeURIComponent(mint)}`, { withCredentials: true }); game.eventSource = es;
+    es.addEventListener('update', (event) => { try { const payload = JSON.parse(event.data || '{}'), price = num(payload?.point?.price); if (price && price > 0) { previewPrice(price, entryPrice); ui.feed.textContent = 'Live market feed connected'; } } catch {} });
+    es.onopen = () => { if (game.state === 'live') ui.feed.textContent = 'Live market feed connected'; };
+    es.onerror = () => { if (game.state === 'live') ui.feed.textContent = 'Live stream reconnecting · server state remains authoritative'; };
+  }
+
+  function closeFeed() { if (game.eventSource) { try { game.eventSource.close(); } catch {} game.eventSource = null; } }
+
+  function ensureStatusPolling() {
+    if (game.statusTimer) return;
+    game.statusTimer = setInterval(async () => {
+      if (game.state !== 'live') return;
+      try { const status = await apiJson('/api/game/status'); applyStatus(status); }
+      catch (error) { ui.feed.textContent = `Server state retrying · ${error.message}`; }
+    }, 900);
+  }
+
+  async function startRound() {
+    if (game.state === 'searching') { cancelSearch(); return; }
+    if (!['idle', 'complete'].includes(game.state)) return;
+    const bet = currentBet(); if (!(bet >= 1)) { ui.statusMessage.textContent = 'Enter a paper stake of at least $1.'; ui.bet.focus(); return; }
+    if (game.status && bet > Number(game.status.balance || 0)) { ui.statusMessage.textContent = 'Paper stake is larger than the server virtual balance.'; ui.bet.focus(); return; }
+    ui.overlay.hidden = true; game.showingResultId = null; resetFlightVisual(); game.searchToken += 1; const search = game.searchToken;
+    game.requestId = requestId(); ui.roundId.textContent = 'SEARCH'; ui.targetBadge.textContent = 'SCANNING'; ui.selectionStatus.textContent = 'Waiting for a server-selected candidate';
+    ui.feed.textContent = 'Candidate search active'; setState('searching', 'Scanning MEMEFLOW for a BUY READY launch…');
+    while (game.state === 'searching' && search === game.searchToken) {
+      try {
+        const result = await apiJson('/api/game/start', { method: 'POST', body: JSON.stringify({ bet, autoCashout: Number(ui.auto.value) || 0, stopLoss: Number(ui.stop.value) || 0, requestId: game.requestId }) });
+        if (game.state !== 'searching' || search !== game.searchToken) return;
+        applyStatus(result); return;
+      } catch (error) {
+        if (error.code === 'NO_CANDIDATE') { ui.statusMessage.textContent = 'No BUY READY launch yet — still scanning…'; await delay(1400); continue; }
+        if (error.code === 'ROUND_RESULT_PENDING' && error.data?.status) { applyStatus(error.data.status); return; }
+        if (error.code === 'ACTIVE_ROUND_EXISTS' && error.data?.status) { applyStatus(error.data.status); return; }
+        setState('idle', error.status === 401 ? 'Open the main MEMEFLOW page first so your session can be created.' : (error.message || 'Could not start this round.'));
+        ui.targetBadge.textContent = 'WAITING'; ui.feed.textContent = 'Market feed idle'; return;
+      }
+    }
+  }
+
+  function cancelSearch() { game.searchToken += 1; game.requestId = null; ui.targetBadge.textContent = 'WAITING'; ui.selectionStatus.textContent = 'Search cancelled'; ui.feed.textContent = 'Market feed idle'; setState('idle', 'Search cancelled.'); }
+
+  async function cashOut() {
+    if (game.state !== 'live') return;
+    setState('settling', 'Server is locking the paper result at the latest MEMEFLOW price…');
+    try { const result = await apiJson('/api/game/cashout', { method: 'POST', body: '{}' }); applyStatus(result); }
+    catch (error) { setState('live', error.message || 'Cash out failed; round is still live.'); }
+  }
+
+  function showResult(s) {
+    if (!s || s.state !== 'COMPLETE' || game.showingResultId === s.id) { if (s?.state === 'COMPLETE') setState('complete', `${String(s.reason || 'ROUND COMPLETE').replaceAll('_', ' ')} · server settled.`); return; }
+    closeFeed(); game.showingResultId = s.id; setState('complete', `${String(s.reason || 'ROUND COMPLETE').replaceAll('_', ' ')} · server settled.`);
+    ui.feed.textContent = 'Round feed closed'; ui.cashoutValue.textContent = 'Round complete'; ui.resultEyebrow.textContent = String(s.reason || 'ROUND COMPLETE').replaceAll('_', ' ');
+    ui.resultMultiplier.textContent = `${(num(s.multiplier) || 0).toFixed(2)}×`; ui.resultMultiplier.className = `result-multiplier ${(num(s.profit) || 0) < 0 ? 'negative' : 'positive'}`;
+    ui.resultTitle.textContent = (num(s.profit) || 0) >= 0 ? 'Paper profit secured' : 'Paper loss closed'; ui.resultStake.textContent = money(s.bet); ui.resultPayout.textContent = money(s.payout);
+    ui.resultProfit.textContent = `${(num(s.profit) || 0) >= 0 ? '+' : ''}${money(s.profit)}`; ui.resultProfit.className = (num(s.profit) || 0) > .005 ? 'positive' : (num(s.profit) || 0) < -.005 ? 'negative' : '';
+    ui.overlay.hidden = false;
+  }
+
+  async function playAgain() {
+    try { const status = await apiJson('/api/game/reset', { method: 'POST', body: '{}' }); ui.overlay.hidden = true; game.showingResultId = null; game.session = null; applyStatus(status, { allowResult: false }); resetToken(); resetFlightVisual(); setState('idle', 'Set a paper stake and start the next round.'); }
+    catch (error) { ui.statusMessage.textContent = error.message; }
+  }
+
+  function resetToken() {
+    ui.roundId.textContent = '—'; ui.targetBadge.textContent = 'WAITING'; ui.tokenOrb.textContent = '?'; ui.tokenName.textContent = 'Waiting for launch';
+    ui.tokenMint.textContent = 'MEMEFLOW will choose a BUY READY candidate.'; ui.tokenScore.textContent = '—'; ui.tokenHolders.textContent = '—'; ui.tokenTop10.textContent = '—'; ui.tokenPressure.textContent = '—';
+    ui.selectionStatus.textContent = 'Filtered candidate required'; ui.feed.textContent = 'Market feed idle'; ui.source.textContent = 'Source: MEMEFLOW candidate + chart stream';
+  }
+
+  function escapeHtml(value) { return String(value).replace(/[&<>'"]/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[char])); }
+  function renderHistory(history) {
+    if (!history.length) { ui.history.innerHTML = '<div class="empty-history">No completed rounds yet.</div>'; return; }
+    ui.history.innerHTML = history.map((row) => { const profit = num(row.profit) || 0, mult = num(row.multiplier) || 0, when = new Date(row.at || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      return `<div class="history-row"><div><b>${escapeHtml(row.symbol || 'TOKEN')} · ${escapeHtml(String(row.reason || 'CASH OUT').replaceAll('_', ' '))}</b><small>${when} · ${money(row.stake)} stake · ${profit >= 0 ? '+' : ''}${money(profit)}</small></div><div class="history-mult ${profit < 0 ? 'negative' : 'positive'}">${mult.toFixed(2)}×</div></div>`; }).join('');
+  }
+
+  async function clearHistory() { try { const status = await apiJson('/api/game/history/clear', { method: 'POST', body: '{}' }); applyStatus(status, { allowResult: false }); } catch (error) { ui.statusMessage.textContent = error.message; } }
+
+  function bind() {
+    ui.start.addEventListener('click', startRound); ui.cashout.addEventListener('click', cashOut); ui.playAgain.addEventListener('click', playAgain); ui.clearHistory.addEventListener('click', clearHistory);
+    ui.bet.addEventListener('input', () => { $$('.quick-row button').forEach((button) => button.classList.toggle('active', Number(button.dataset.bet) === currentBet())); updateStakePreview(); });
+    $$('.quick-row button').forEach((button) => button.addEventListener('click', () => { if (['live', 'searching'].includes(game.state)) return; ui.bet.value = button.dataset.bet; $$('.quick-row button').forEach((item) => item.classList.toggle('active', item === button)); updateStakePreview(); }));
+    window.addEventListener('beforeunload', closeFeed);
+  }
+
+  async function boot() {
+    bind(); updateStakePreview(); setState('idle', 'Loading server paper-game state…');
+    try { const status = await apiJson('/api/game/status'); applyStatus(status); }
+    catch (error) { setState('idle', error.status === 404 ? 'Game API is not installed yet. Run the included installer.' : (error.message || 'Game API unavailable.')); ui.feed.textContent = 'Game API unavailable'; }
+  }
+
+  boot();
+})();

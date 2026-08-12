@@ -1,0 +1,17 @@
+import fs from 'node:fs';import path from 'node:path';import crypto from 'node:crypto';import {spawnSync} from 'node:child_process';
+const root='/home/runner/workspace',app=path.join(root,'memeflow-app'),pkg=path.join(root,'pepe-game-v7.9-compact-result'),expected={"game.html": "ec2a2219a464ad3edd1b9069087a0598379f46c427670cc250fb8cfcc29f7df6", "game.css": "3a53bae506799f5907a2e8add268456a837570ed06bc70db671cf498c9b61d97", "game.js": "04c03223736d197f1d89a2b8749fa9222e9ceac46c27c9415171fb01ea8a3509"};
+const sha=p=>crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex');let n=0;const pass=(x,o)=>{if(!o)throw new Error('FAIL '+x);n++;console.log('PASS',x)};
+for(const [f,h] of Object.entries(expected))pass('V7.9 hash '+f,sha(path.join(app,f))===h);
+const h=fs.readFileSync(path.join(app,'game.html'),'utf8'),c=fs.readFileSync(path.join(app,'game.css'),'utf8');
+pass('cache V7.9',h.includes('/game.css?v=79result'));
+pass('single compact result system',c.includes('V7.9 COMPACT RESULT — SINGLE RESULT STYLE SYSTEM'));
+pass('result fits viewport',c.includes('max-height:calc(100dvh - 8px)'));
+pass('compact receipt grid',c.includes('grid-template-columns:repeat(3,1fr)'));
+pass('compact trace',c.includes('height:clamp(52px,10vw,72px)'));
+pass('JS syntax',spawnSync(process.execPath,['--check',path.join(app,'game.js')]).status===0);
+pass('runtime smoke',spawnSync(process.execPath,[path.join(pkg,'runtime-smoke-v79.cjs'),app],{stdio:'inherit'}).status===0);
+pass('protected engine',fs.existsSync(path.join(app,'src','game-engine.mjs')));
+pass('protected server',fs.existsSync(path.join(app,'app-server.mjs')));
+pass('protected index',fs.existsSync(path.join(app,'index.html')));
+pass('payload client-only',fs.readdirSync(path.join(pkg,'payload')).sort().join(',')==='game.css,game.html,game.js');
+console.log(`PEPE GAME V7.9 VERIFY: PASS (${n} checks)`);
