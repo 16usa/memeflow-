@@ -1,5 +1,5 @@
 import * as THREE from '/vendor/three.module.js';
-import { createPepeRealRigV16 } from '/character-real-rig-v16.js?v=21500';
+import { createPepeRealRigV16 } from '/character-real-rig-v16.js?v=32800';
 
 const stage = document.getElementById('stage');
 const label = document.getElementById('state');
@@ -149,7 +149,7 @@ pepe.ready.then(()=>{
     frame();
   });
 }).catch(err=>{
-  console.error('[PEPE V16.2]',err);
+  console.error('[PEPE V32]',err);
   label.textContent = 'LOAD ERROR';
   document.body.dataset.error = '1';
 });

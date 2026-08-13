@@ -1,7 +1,7 @@
 import * as THREE from '/vendor/three.module.js';
 
 export function createPepeRealRigV16({ parent, baseUrl='/game-assets/character-v16/' }={}) {
-  if (!parent) throw new Error('[PEPE V19.2] AUTHORED HAND PIVOTS');
+  if (!parent) throw new Error('[PEPE V32] CLEAN WRIST PIVOTS READY');
 
   const root = new THREE.Group();
   root.name = 'PepeRealRigV16';
@@ -194,83 +194,159 @@ export function createPepeRealRigV16({ parent, baseUrl='/game-assets/character-v
 
     if (!hand || !arm || !cfg) {
       throw new Error(
-        `[PEPE V21] missing ${handName}/${armName}`
+        `[PEPE V32] missing ${handName}/${armName}`
       );
     }
 
     if (cfg.armName !== armName) {
       throw new Error(
-        `[PEPE V21] arm mapping mismatch for ${handName}`
+        `[PEPE V32] arm mapping mismatch for ${handName}`
       );
     }
 
     /*
-      Resolve the real wrist socket from the arm PNG.
+      1. Exact center of the sleeve opening.
     */
-    const wristLocal = sourcePixelToLocal(
-      arm,
-      cfg.armWrist[0],
-      cfg.armWrist[1]
-    );
+
+    const wristLocal =
+      sourcePixelToLocal(
+        arm,
+        cfg.armWrist[0],
+        cfg.armWrist[1]
+      );
 
     /*
-      Resolve the authored cuff anchor from the hand PNG.
+      2. Exact authored cuff point inside the hand PNG.
     */
-    const cuffLocal = sourcePixelToLocal(
-      hand,
-      cfg.handCuff[0],
-      cfg.handCuff[1]
-    );
 
-    const wristJoint = new THREE.Group();
+    const cuffLocal =
+      sourcePixelToLocal(
+        hand,
+        cfg.handCuff[0],
+        cfg.handCuff[1]
+      );
+
+    /*
+      3. Real wrist pivot.
+    */
+
+    const wristJoint =
+      new THREE.Group();
 
     wristJoint.name =
       handName === 'handLeft'
         ? 'wristJointScreenLeft'
         : 'wristJointScreenRight';
 
-    wristJoint.position.copy(wristLocal);
-    wristJoint.rotation.set(0, 0, 0);
-    wristJoint.scale.set(1, 1, 1);
+    wristJoint.position.copy(
+      wristLocal
+    );
 
-    arm.pivot.add(wristJoint);
+    wristJoint.rotation.set(
+      0,
+      0,
+      0
+    );
+
+    wristJoint.scale.set(
+      1,
+      1,
+      1
+    );
+
+    arm.pivot.add(
+      wristJoint
+    );
 
     /*
-      Move the artwork so the hand cuff itself becomes
-      the local origin of the hand pivot.
-    */
-    hand.mesh.position.x -= cuffLocal.x;
-    hand.mesh.position.y -= cuffLocal.y;
+      4. Move the PNG artwork inside handPivot so
+         the cuff pixel becomes local origin 0,0.
 
-    if (hand.pivot.parent) {
-      hand.pivot.parent.remove(hand.pivot);
+         From this point on, rotation cannot pull
+         the cuff away from the sleeve.
+    */
+
+    hand.mesh.position.x -=
+      cuffLocal.x;
+
+    hand.mesh.position.y -=
+      cuffLocal.y;
+
+    /*
+      V32.7
+      Extend the visible hand away from its cuff
+      along the hand artwork own longitudinal axis.
+      The wristJoint itself never moves.
+    */
+    const handExtendDirection =
+      hand.mesh.position.clone();
+
+    handExtendDirection.z = 0;
+
+    if (handExtendDirection.lengthSq() > 1e-8) {
+      handExtendDirection.normalize();
+
+      hand.mesh.position.addScaledVector(handExtendDirection, 0.06);
     }
 
-    wristJoint.add(hand.pivot);
+    if (hand.pivot.parent) {
+      hand.pivot.parent.remove(
+        hand.pivot
+      );
+    }
 
-    hand.pivot.position.set(0, 0, 0);
-    hand.pivot.scale.set(1, 1, 1);
+    wristJoint.add(
+      hand.pivot
+    );
+
+    hand.pivot.position.set(
+      0,
+      0,
+      0
+    );
+
+    hand.pivot.scale.set(
+      1.00,
+      1.00,
+      1.00
+    );
 
     /*
-      Mirror the palm direction across the forearm axis.
+      5. Fingers UP, but keep each hand on its
+         own side.
 
-      Screen-left arm:
-          arm world angle = +28 deg
-          hand world angle = -28 deg
-          hand local angle = -56 deg
+         V30 used approximately +/-152 deg world
+         angle, which drove both hands toward the
+         center.
 
-      Screen-right arm:
-          arm world angle = -28 deg
-          hand world angle = +28 deg
-          hand local angle = +56 deg
-
-      This rotates the hands outward while the cuff
-      remains locked at the wrist socket.
+         V32 uses +/-170 deg:
+         almost vertical upward, with much less
+         inward crossing.
     */
+
+    const targetWorldDeg =
+      handName === 'handLeft'
+        ? 110
+        : -110;
+
+    const targetWorldAngle =
+      THREE.MathUtils.degToRad(
+        targetWorldDeg
+      );
+
+    /*
+      wristJoint inherits arm.pivot rotation.
+      Convert WORLD target angle into LOCAL hand angle.
+    */
+
+    const localHandAngle =
+      targetWorldAngle -
+      arm.baseRot;
+
     hand.pivot.rotation.set(
       0,
       0,
-      -2 * arm.baseRot
+      localHandAngle
     );
 
     hand.basePosition =
@@ -283,8 +359,9 @@ export function createPepeRealRigV16({ parent, baseUrl='/game-assets/character-v
       wristJoint;
 
     /*
-      Hands render behind sleeves.
+      6. Real sleeves hide the wrist seam.
     */
+
     if (handName === 'handLeft') {
       hand.mesh.renderOrder = 38;
       arm.mesh.renderOrder = 40;
@@ -294,67 +371,66 @@ export function createPepeRealRigV16({ parent, baseUrl='/game-assets/character-v
     }
 
     if (hand.mesh.material) {
-      hand.mesh.material.depthTest = false;
-      hand.mesh.material.depthWrite = false;
-      hand.mesh.material.needsUpdate = true;
+      hand.mesh.material.depthTest =
+        false;
+
+      hand.mesh.material.depthWrite =
+        false;
+
+      hand.mesh.material.needsUpdate =
+        true;
     }
 
     if (arm.mesh.material) {
-      arm.mesh.material.depthTest = false;
-      arm.mesh.material.depthWrite = false;
-      arm.mesh.material.needsUpdate = true;
+      arm.mesh.material.depthTest =
+        false;
+
+      arm.mesh.material.depthWrite =
+        false;
+
+      arm.mesh.material.needsUpdate =
+        true;
     }
 
     /*
-      Final exact cuff lock after parenting and rotation.
+      7. Verification only.
+         Absolutely NO correction offsets.
     */
+
     hand.pivot.updateMatrixWorld(true);
     wristJoint.updateMatrixWorld(true);
 
-    const actualCuff = sourcePixelToLocal(
-      hand,
-      cfg.handCuff[0],
-      cfg.handCuff[1]
+    const actualCuffLocal =
+      sourcePixelToLocal(
+        hand,
+        cfg.handCuff[0],
+        cfg.handCuff[1]
+      );
+
+    const actualCuffWorld =
+      actualCuffLocal.clone();
+
+    hand.pivot.localToWorld(
+      actualCuffWorld
     );
 
-    hand.pivot.localToWorld(actualCuff);
-    wristJoint.worldToLocal(actualCuff);
+    const socketWorld =
+      new THREE.Vector3();
 
-    hand.pivot.position.sub(actualCuff);
+    wristJoint.getWorldPosition(
+      socketWorld
+    );
 
-    hand.pivot.updateMatrixWorld(true);
-    wristJoint.updateMatrixWorld(true);
-  
+    const wristError =
+      actualCuffWorld.distanceTo(
+        socketWorld
+      );
 
-    /*
-      V21_5_LEFT_HAND_ONLY
-
-      Final visual seating of each hand inside its own
-      sleeve. The wrist hierarchy remains unchanged.
-    */
-
-    const handSeat =
-      handName === 'handLeft'
-        ? { x: -0.12, y: 0.23 }
-        : { x:  0.12, y: 0.17 };
-
-    hand.pivot.position.x += handSeat.x;
-    hand.pivot.position.y += handSeat.y;
-
-    /*
-      Keep the hand behind the sleeve so the sleeve
-      covers the wrist seam.
-    */
-    hand.mesh.renderOrder =
-      handName === 'handLeft' ? 38 : 39;
-
-    arm.mesh.renderOrder =
-      handName === 'handLeft' ? 40 : 41;
-
-    hand.pivot.updateMatrixWorld(true);
-    wristJoint.updateMatrixWorld(true);
-
-}
+    console.log(
+      `[PEPE V32] ${handName} wrist error`,
+      wristError
+    );
+  }
 
 
 
@@ -365,7 +441,7 @@ export function createPepeRealRigV16({ parent, baseUrl='/game-assets/character-v
     attachHandToArm('handLeft', 'armLeft');
     attachHandToArm('handRight', 'armRight');
 
-    console.log('[PEPE V19.2] AUTHORED HAND PIVOTS');
+    console.log('[PEPE V32] CLEAN WRIST PIVOTS READY');
     return true;
   });
 
