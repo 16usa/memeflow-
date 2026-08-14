@@ -1,6 +1,6 @@
 import * as THREE from '/vendor/three.module.js';
-import { createMotionController } from '/motion-controller.js?v=34204';
-import { createRocketRideV34 } from '/rocket-ride-v34.js?v=34204';
+import { createMotionController } from '/motion-controller.js?v=34205';
+import { createRocketRideV34 } from '/rocket-ride-v34.js?v=34205';
 const stage=document.getElementById('stage'),label=document.getElementById('state'),debug=document.getElementById('debug');
 const scene=new THREE.Scene(),camera=new THREE.OrthographicCamera(-2,2,2,-2,.1,100);camera.position.set(0,0,10);
 const renderer=new THREE.WebGLRenderer({alpha:true,antialias:true,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));renderer.setClearColor(0x000000,0);

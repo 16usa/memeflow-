@@ -1,5 +1,5 @@
 import * as THREE from '/vendor/three.module.js';
-import { createPepeHeadController } from '/pepe-head-controller.js?v=34204';
+import { createPepeHeadController } from '/pepe-head-controller.js?v=34205';
 const clamp01=v=>Math.min(1,Math.max(0,Number(v)||0));
 function loadTexture(loader,url,{repeat=false}={}){return new Promise((resolve,reject)=>loader.load(url,tex=>{tex.colorSpace=THREE.SRGBColorSpace;tex.minFilter=THREE.LinearFilter;tex.magFilter=THREE.LinearFilter;if(repeat){tex.wrapS=THREE.RepeatWrapping;tex.wrapT=THREE.RepeatWrapping;}resolve(tex);},undefined,reject));}
 function material(tex,{transparent=true,opacity=1,blending=THREE.NormalBlending}={}){return new THREE.MeshBasicMaterial({map:tex,transparent,opacity,depthWrite:false,depthTest:false,side:THREE.DoubleSide,blending});}
@@ -62,16 +62,18 @@ export function createRocketRideV34({scene,parent,baseUrl='/game-assets/rocket-v
     glassMesh.position.set(0.655,0.305,0.22);
     glassMesh.renderOrder=50;
     rocketRoot.add(glassMesh);
-    flameRoot.position.set(-0.59,-0.645,0.12);
+    // Anchor flame exactly at the engine nozzle center.
+    flameRoot.position.set(-0.505,-0.565,0.12);
     flameRoot.rotation.z=THREE.MathUtils.degToRad(45);
 
-    const outerGeo=new THREE.PlaneGeometry(2.20,1.02),
-      coreGeo=new THREE.PlaneGeometry(1.86,0.66),
-      glowGeo=new THREE.PlaneGeometry(3.05,1.46);
+    const outerGeo=new THREE.PlaneGeometry(1.95,0.92),
+      coreGeo=new THREE.PlaneGeometry(1.58,0.54),
+      glowGeo=new THREE.PlaneGeometry(2.60,1.24);
 
-    outerGeo.translate(-1.10,0,0);
-    coreGeo.translate(-0.93,0,0);
-    glowGeo.translate(-1.52,0,0);
+    // Pull flame origin closer to nozzle so it starts inside the pipe.
+    outerGeo.translate(-0.97,0,0);
+    coreGeo.translate(-0.79,0,0);
+    glowGeo.translate(-1.30,0,0);
 
     const outerMat=material(outerTex,{opacity:0.88,blending:THREE.AdditiveBlending}),
       coreMat=material(coreTex,{opacity:0.96,blending:THREE.AdditiveBlending}),
@@ -100,72 +102,74 @@ export function createRocketRideV34({scene,parent,baseUrl='/game-assets/rocket-v
     const d=Math.min(1,Math.max(-1,Number(state.direction)||0)),speed=clamp01(state.speed),thrust=clamp01(state.thrust),vol=clamp01(state.volatility),boost=clamp01(state.boost),power=clamp01(thrust*0.72+speed*0.18+boost*0.35);
     const bob=Math.sin(t*(1.25+speed*0.55))*(0.025+power*0.025),turb=Math.sin(t*12.5)*vol*0.014;
     rideRoot.position.x=d*0.06+turb;rideRoot.position.y=0.05+d*0.07+bob;rideRoot.rotation.z=-d*0.050+Math.sin(t*1.1)*0.008+turb*0.22;
-    const boostColor=new THREE.Color(0xc8f7ff),
-      hotCore=new THREE.Color(0xfff4c6),
-      warmOuter=new THREE.Color(0xff9d64),
-      downTint=new THREE.Color(0xff6f8a);
+    const boostColor=new THREE.Color(0xd6f7ff),
+      hotCore=new THREE.Color(0xfff7d8),
+      warmOuter=new THREE.Color(0xff9960),
+      warmIdle=new THREE.Color(0xffb47a),
+      downTint=new THREE.Color(0xff7b9a);
 
     const modeUp=Math.max(0,d);
     const modeDown=Math.max(0,-d);
 
-    const flickerA=Math.sin(t*(11+thrust*11))*0.09;
-    const flickerB=Math.sin(t*23.0)*0.06;
-    const flickerC=Math.sin(t*31.0+0.8)*0.035;
+    const flickerA=Math.sin(t*(11+thrust*11))*0.08;
+    const flickerB=Math.sin(t*23.0)*0.045;
+    const flickerC=Math.sin(t*31.0+0.8)*0.028;
 
-    // Long powerful flame on UP / BOOST, weaker unstable flame on DOWN.
+    // Exhaust should feel attached to the engine, not like a laser beam.
     const lenBase=
-      0.86 +
-      thrust*0.96 +
-      speed*0.24 +
-      boost*1.10 +
-      modeUp*0.34 -
-      modeDown*0.26;
+      0.72 +
+      thrust*0.74 +
+      speed*0.14 +
+      boost*0.88 +
+      modeUp*0.22 -
+      modeDown*0.18;
 
     const widthBase=
-      0.98 +
-      power*0.34 +
-      modeUp*0.08 -
-      modeDown*0.12 +
+      0.90 +
+      power*0.26 +
+      modeUp*0.06 -
+      modeDown*0.10 +
       flickerB;
 
     flameRoot.scale.x=lenBase*(1+flickerA+flickerC);
     flameRoot.scale.y=widthBase;
 
-    flameRoot.position.x=-0.59 + Math.sin(t*22.0)*vol*0.010 - modeDown*0.015;
-    flameRoot.position.y=-0.645 + Math.cos(t*19.0)*vol*0.008 + modeUp*0.006;
+    flameRoot.position.x=-0.505 + Math.sin(t*20.0)*vol*0.006 - modeDown*0.008;
+    flameRoot.position.y=-0.565 + Math.cos(t*17.0)*vol*0.006 + modeUp*0.004;
 
     flameOuter.material.opacity=
-      0.42 +
-      power*0.34 +
+      0.46 +
+      power*0.24 +
       boost*0.10 -
       modeDown*0.10;
 
     flameCore.material.opacity=
-      0.66 +
-      power*0.24 +
-      modeUp*0.05 -
-      modeDown*0.08;
+      0.72 +
+      power*0.18 +
+      modeUp*0.04 -
+      modeDown*0.10;
 
     if(flameGlow){
       flameGlow.material.opacity=
-        0.14 +
-        power*0.26 +
-        boost*0.20 -
-        modeDown*0.06;
+        0.10 +
+        power*0.18 +
+        boost*0.14 -
+        modeDown*0.05;
 
       flameGlow.scale.set(
-        1.26 + power*0.56 + boost*0.28,
-        1.02 + power*0.18,
+        1.10 + power*0.28 + boost*0.14,
+        0.96 + power*0.12,
         1
       );
     }
 
-    flameCore.material.color.copy(hotCore).lerp(boostColor,boost*0.94);
+    flameCore.material.color.copy(hotCore).lerp(boostColor,boost*0.86);
 
     flameOuter.material.color
-      .copy(warmOuter)
-      .lerp(downTint,modeDown*0.35)
-      .lerp(boostColor,boost*0.46);
+      .copy(warmIdle)
+      .lerp(warmOuter,modeUp*0.55)
+      .lerp(downTint,modeDown*0.28)
+      .lerp(boostColor,boost*0.34);
     if(ringMesh){ringMesh.material.opacity=boost*0.72;const rs=0.65+boost*0.85+0.07*Math.sin(t*9);ringMesh.scale.setScalar(rs);ringMesh.rotation.z=-t*0.55;}
     const travel=0.010+speed*0.035+thrust*0.025+boost*0.08;
     if(farMesh?.material.map)farMesh.material.map.offset.y=(t*travel*0.08)%1;
