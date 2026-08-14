@@ -35,7 +35,6 @@
         'SETTINGS FRAME ERROR',
         'error'
       );
-
       return;
     }
 
@@ -45,16 +44,11 @@
       doc.querySelector('#settings');
 
     if(!settings){
-      /*
-        Do not leave the user with a blank screen if the
-        main page structure changes in a future build.
-        The full main page remains usable inside the frame.
-      */
       loading.hidden=true;
 
       setState(
-        'FULL SITE SETTINGS',
-        'ready'
+        'SETTINGS NOT FOUND',
+        'error'
       );
 
       return;
@@ -62,59 +56,31 @@
 
     try{
       /*
-        Isolate the SAME #settings subtree that is used on
-        the normal MEMEFLOW site.
+        IMPORTANT:
 
-        We do not clone its form or its save logic.
+        Keep the REAL settings DOM node.
+
+        Do not clone it:
+        cloning would lose event listeners.
+
+        Moving the existing node preserves:
+          - GET /api/settings
+          - PUT /api/settings
+          - Save
+          - Reset
+          - validation
+          - kill switch
+          - server version handling
       */
-      let current=settings;
 
-      while(
-        current?.parentElement &&
-        current.parentElement!==doc.body
-      ){
-        const parent=
-          current.parentElement;
+      doc.body.replaceChildren(settings);
 
-        for(
-          const child
-          of [...parent.children]
-        ){
-          if(child!==current){
-            child.style.setProperty(
-              'display',
-              'none',
-              'important'
-            );
-          }
-        }
+      doc.documentElement.classList.add(
+        'mf-game-settings-only'
+      );
 
-        parent.style.setProperty(
-          'display',
-          'block',
-          'important'
-        );
-
-        parent.style.setProperty(
-          'width',
-          '100%',
-          'important'
-        );
-
-        parent.style.setProperty(
-          'max-width',
-          'none',
-          'important'
-        );
-
-        parent.style.setProperty(
-          'min-height',
-          '0',
-          'important'
-        );
-
-        current=parent;
-      }
+      doc.body.className=
+        'mf-game-settings-only-body';
 
       const injected=
         doc.createElement('style');
@@ -123,17 +89,8 @@
         'mf-game-settings-embed-style';
 
       injected.textContent=`
-        html{
-          background:#05080b!important;
-          min-height:100%!important;
-          overflow:auto!important;
-          scroll-behavior:auto!important;
-        }
-
+        html,
         body{
-          position:static!important;
-          inset:auto!important;
-
           width:100%!important;
           min-width:0!important;
 
@@ -142,63 +99,76 @@
           margin:0!important;
           padding:0!important;
 
+          background:#05080b!important;
+
           overflow-x:hidden!important;
           overflow-y:auto!important;
 
-          background:#05080b!important;
+          scroll-behavior:auto!important;
 
           overscroll-behavior:contain!important;
 
           -webkit-overflow-scrolling:touch!important;
         }
 
-        #marketCanvas,
-        .aurora,
-        .sidebar,
-        .topbar,
-        .mobile-nav,
-        .presentation-overlay{
-          display:none!important;
+        body{
+          position:static!important;
+          inset:auto!important;
+
+          display:block!important;
         }
 
-        .app,
-        .main{
+        body > #settings{
           display:block!important;
 
-          width:100%!important;
-          min-width:0!important;
+          position:relative!important;
+          inset:auto!important;
+
+          width:calc(100% - 12px)!important;
           max-width:none!important;
 
           min-height:0!important;
 
-          margin:0!important;
-        }
-
-        .main{
-          padding:10px!important;
-        }
-
-        #settings{
-          display:block!important;
-
-          width:100%!important;
-          max-width:none!important;
-
-          margin:0!important;
+          margin:6px!important;
 
           box-shadow:none!important;
         }
 
+        #settings{
+          scroll-margin:0!important;
+        }
+
+        /*
+          The outer Game overlay already has its own title.
+          Keep the original settings summary because it
+          contains Profile / Mode / Daily Limit / Position.
+        */
+
         #settings .mfs-hero{
-          scroll-margin-top:0!important;
+          margin-top:0!important;
+        }
+
+        /*
+          Absolutely no AI assistant / floating page tools
+          are allowed inside the Game settings window.
+        */
+
+        [id*="assistant" i],
+        [class*="assistant" i],
+        [id*="openai" i],
+        [class*="openai" i],
+        [class*="floating-ai" i],
+        [class*="ai-fab" i]{
+          display:none!important;
         }
 
         @media(max-width:700px){
-          .main{
-            padding:6px!important;
-          }
 
-          #settings{
+          body > #settings{
+            width:calc(100% - 8px)!important;
+
+            margin:4px!important;
+
             border-radius:12px!important;
           }
         }
@@ -207,12 +177,12 @@
           (max-height:500px)
           and (orientation:landscape){
 
-          .main{
-            padding:4px!important;
-          }
+          body > #settings{
+            width:calc(100% - 6px)!important;
 
-          #settings{
-            border-radius:10px!important;
+            margin:3px!important;
+
+            border-radius:9px!important;
           }
         }
       `;
@@ -222,21 +192,39 @@
       );
 
       /*
-        The actual site settings script still owns:
-          GET  /api/settings
-          PUT  /api/settings
-          defaults
-          validation
-          kill switch
-          version checking
-          server persistence
+        Some main-site modules can append floating elements
+        AFTER window.load.
 
-        This frame only changes presentation.
+        Remove anything subsequently attached directly to
+        BODY except the real settings panel.
       */
-      settings.scrollIntoView({
-        block:'start',
-        behavior:'instant'
-      });
+
+      const observer=
+        new frame.contentWindow.MutationObserver(
+          ()=>{
+            for(
+              const node
+              of [...doc.body.children]
+            ){
+              if(node!==settings){
+                node.remove();
+              }
+            }
+          }
+        );
+
+      observer.observe(
+        doc.body,
+        {
+          childList:true
+        }
+      );
+
+      frame.__mfSettingsObserver?.disconnect?.();
+      frame.__mfSettingsObserver=observer;
+
+      doc.documentElement.scrollTop=0;
+      doc.body.scrollTop=0;
 
       loading.hidden=true;
 
@@ -255,8 +243,8 @@
       loading.hidden=true;
 
       setState(
-        'SETTINGS LOADED',
-        'ready'
+        'SETTINGS ERROR',
+        'error'
       );
     }
   }
