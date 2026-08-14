@@ -1,65 +1,100 @@
 (()=>{
   'use strict';
+  // MF_V99_PHYSICAL_STANDALONE_VIEWPORT
+  function syncStandaloneViewportV99(){
+    const portrait=
+      globalThis.matchMedia?.(
+        '(orientation: portrait)'
+      )?.matches!==false;
 
-  // MF_V98_STANDALONE_VIEWPORT
-  function syncStandaloneViewportV98(){
-    const vv=window.visualViewport;
+    const sw=Number(
+      globalThis.screen?.width
+    )||0;
 
-    const innerH=
-      Number(window.innerHeight)||0;
+    const sh=Number(
+      globalThis.screen?.height
+    )||0;
 
-    const visualH=
-      Number(vv?.height)||0;
+    const longSide=Math.max(sw,sh);
+    const shortSide=Math.min(sw,sh);
 
     /*
-      In iPhone Home Screen mode CSS viewport units can
-      report a smaller working height than the actual app
-      surface. Use the larger live measurement.
-    */
-    const h=Math.max(
-      innerH,
-      visualH,
-      document.documentElement.clientHeight||0
-    );
+      screen.width / screen.height give us the complete
+      iPhone application surface, including the regions
+      surrounding the safe areas.
 
-    const w=Math.max(
+      This avoids the V9.8 bug where innerHeight was
+      already reduced by iOS and then safe-area padding
+      reduced the layout a second time.
+    */
+    let screenW=
+      portrait
+        ? shortSide
+        : longSide;
+
+    let screenH=
+      portrait
+        ? longSide
+        : shortSide;
+
+    const vv=window.visualViewport;
+
+    const fallbackW=Math.max(
       Number(window.innerWidth)||0,
       Number(vv?.width)||0,
-      document.documentElement.clientWidth||0
+      Number(document.documentElement.clientWidth)||0
     );
 
-    if(h>0){
-      document.documentElement.style.setProperty(
-        '--mf-app-h',
-        `${Math.round(h)}px`
-      );
+    const fallbackH=Math.max(
+      Number(window.innerHeight)||0,
+      Number(vv?.height)||0,
+      Number(document.documentElement.clientHeight)||0
+    );
+
+    if(!(screenW>0)){
+      screenW=fallbackW;
     }
 
-    if(w>0){
-      document.documentElement.style.setProperty(
-        '--mf-app-w',
-        `${Math.round(w)}px`
-      );
+    if(!(screenH>0)){
+      screenH=fallbackH;
     }
+
+    /*
+      Never allow the calculated full surface to become
+      smaller than the currently visible viewport.
+    */
+    screenW=Math.max(
+      screenW,
+      fallbackW
+    );
+
+    screenH=Math.max(
+      screenH,
+      fallbackH
+    );
+
+    document.documentElement.style.setProperty(
+      '--mf-app-w',
+      `${Math.round(screenW)}px`
+    );
+
+    document.documentElement.style.setProperty(
+      '--mf-app-h',
+      `${Math.round(screenH)}px`
+    );
   }
 
-  syncStandaloneViewportV98();
+  syncStandaloneViewportV99();
 
   window.addEventListener(
     'resize',
-    syncStandaloneViewportV98,
+    syncStandaloneViewportV99,
     {passive:true}
   );
 
   window.visualViewport?.addEventListener(
     'resize',
-    syncStandaloneViewportV98,
-    {passive:true}
-  );
-
-  window.visualViewport?.addEventListener(
-    'scroll',
-    syncStandaloneViewportV98,
+    syncStandaloneViewportV99,
     {passive:true}
   );
 
@@ -67,13 +102,13 @@
     'orientationchange',
     ()=>{
       setTimeout(
-        syncStandaloneViewportV98,
+        syncStandaloneViewportV99,
         80
       );
 
       setTimeout(
-        syncStandaloneViewportV98,
-        320
+        syncStandaloneViewportV99,
+        350
       );
     },
     {passive:true}
@@ -84,13 +119,14 @@
     ()=>{
       if(!document.hidden){
         requestAnimationFrame(
-          syncStandaloneViewportV98
+          syncStandaloneViewportV99
         );
       }
     }
   );
 
-  const CLIENT_VERSION='9.8';
+  const CLIENT_VERSION='9.9';
+
   const $=(s)=>document.querySelector(s), $$=(s)=>[...document.querySelectorAll(s)];
   const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
   const num=(...values)=>{for(const value of values){if(value===null||value===undefined||value==='')continue;const n=Number(value);if(Number.isFinite(n))return n;}return null;};
@@ -421,10 +457,20 @@
          Toggle our game-only immersive layout.
     */
     if(isStandalone()){
-      setManualImmersive(
-        !manualImmersive
-      );
+      /*
+        Home Screen mode is already genuine iPhone
+        standalone fullscreen.
 
+        Do NOT enable manualImmersive here because it
+        uses visualViewport dimensions and would shrink
+        the app back to the old V9.8 height.
+      */
+      if(manualImmersive){
+        setManualImmersive(false);
+      }
+
+      syncStandaloneViewportV99();
+      syncFullscreenUi();
       return;
     }
 

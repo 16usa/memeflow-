@@ -1163,133 +1163,44 @@ body.mf-game-immersive
 /* === V9.6 IOS REAL FULLSCREEN END === */
 
 
-/* === V9.7 IPHONE SAFE AREA START === */
+
+
+
+
+
+
+/* === V9.9 PHYSICAL SCREEN FIT START === */
 
 :root{
-  --mf-safe-top: env(safe-area-inset-top, 0px);
-  --mf-safe-right: env(safe-area-inset-right, 0px);
-  --mf-safe-bottom: env(safe-area-inset-bottom, 0px);
-  --mf-safe-left: env(safe-area-inset-left, 0px);
-}
+  --mf-safe-top:
+    env(safe-area-inset-top,0px);
 
-/*
-  Home Screen / standalone iPhone mode.
+  --mf-safe-right:
+    env(safe-area-inset-right,0px);
 
-  Keep edge-to-edge background, but move interactive
-  game content below Dynamic Island / status area.
-*/
-@media (display-mode: standalone){
+  --mf-safe-bottom:
+    env(safe-area-inset-bottom,0px);
 
-  html,
-  body{
-    width:100%;
-    height:100%;
-    min-height:100%;
-    background:#030507;
-  }
+  --mf-safe-left:
+    env(safe-area-inset-left,0px);
 
-  .game{
-    width:100vw!important;
-    height:100dvh!important;
-    min-height:100dvh!important;
-    overflow:hidden!important;
-    background:#030507!important;
-  }
-
-  .layout{
-    width:100%!important;
-    height:100dvh!important;
-    min-height:0!important;
-
-    /*
-      Original layout = 14px.
-      Top receives iPhone safe area + breathing room.
-    */
-    padding-top:
-      calc(var(--mf-safe-top) + 8px)!important;
-
-    padding-right:
-      max(8px, calc(var(--mf-safe-right) + 6px))!important;
-
-    padding-bottom:
-      max(8px, calc(var(--mf-safe-bottom) + 8px))!important;
-
-    padding-left:
-      max(8px, calc(var(--mf-safe-left) + 6px))!important;
-
-    box-sizing:border-box!important;
-  }
-
-  /*
-    Network/error banner must also stay below
-    Dynamic Island if it appears.
-  */
-  .network-strip{
-    top:var(--mf-safe-top)!important;
-  }
-}
-
-/*
-  Also cover iOS standalone detection used by JS.
-*/
-.game[data-fullscreen-mode="standalone"] .layout{
-  padding-top:
-    calc(var(--mf-safe-top) + 8px)!important;
-
-  padding-bottom:
-    max(8px, calc(var(--mf-safe-bottom) + 8px))!important;
-}
-
-/*
-  If the user toggles our internal immersive layout
-  while already running from Home Screen, preserve
-  all four safe areas.
-*/
-html.mf-game-immersive
-.game[data-immersive="true"] .layout{
-  padding-top:
-    calc(var(--mf-safe-top) + 8px)!important;
-
-  padding-right:
-    max(8px, calc(var(--mf-safe-right) + 6px))!important;
-
-  padding-bottom:
-    max(8px, calc(var(--mf-safe-bottom) + 8px))!important;
-
-  padding-left:
-    max(8px, calc(var(--mf-safe-left) + 6px))!important;
-}
-
-/* === V9.7 IPHONE SAFE AREA END === */
-
-
-/* === V9.8 STANDALONE VIEWPORT FIT START === */
-
-:root{
-  --mf-app-h:100dvh;
   --mf-app-w:100vw;
+  --mf-app-h:100vh;
 }
 
 /*
-  iPhone Home Screen mode:
-  use the live JS-measured viewport instead of relying
-  only on dvh/svh.
+  The outer application occupies the COMPLETE iPhone
+  standalone surface.
+
+  Safe areas are handled INSIDE the layout rather than
+  by reducing the application height itself.
 */
 @media (display-mode:standalone){
 
   html{
-    width:100%!important;
-    height:var(--mf-app-h)!important;
-    min-height:var(--mf-app-h)!important;
-    overflow:hidden!important;
-  }
-
-  body{
-    position:fixed!important;
-    inset:0!important;
-
     width:var(--mf-app-w)!important;
     height:var(--mf-app-h)!important;
+    min-width:var(--mf-app-w)!important;
     min-height:var(--mf-app-h)!important;
 
     margin:0!important;
@@ -1299,32 +1210,115 @@ html.mf-game-immersive
     background:#030507!important;
   }
 
-  .game{
-    position:absolute!important;
-    inset:0!important;
+  body{
+    position:fixed!important;
 
-    width:100%!important;
+    top:0!important;
+    right:auto!important;
+    bottom:auto!important;
+    left:0!important;
+
+    width:var(--mf-app-w)!important;
     height:var(--mf-app-h)!important;
-    min-height:var(--mf-app-h)!important;
+
+    min-width:0!important;
+    min-height:0!important;
 
     margin:0!important;
+    padding:0!important;
+
     overflow:hidden!important;
+    overscroll-behavior:none!important;
+
+    background:#030507!important;
   }
 
-  /*
-    Previous V9.7 used safe-top + 8px.
-    Keep the real Apple safe area, but remove that
-    additional empty space.
-  */
+  .game{
+    position:fixed!important;
+
+    top:0!important;
+    left:0!important;
+
+    width:var(--mf-app-w)!important;
+    height:var(--mf-app-h)!important;
+
+    min-width:0!important;
+    min-height:0!important;
+    max-width:none!important;
+    max-height:none!important;
+
+    margin:0!important;
+    padding:0!important;
+
+    overflow:hidden!important;
+    background:#030507!important;
+  }
+
   .layout{
     width:100%!important;
-    height:var(--mf-app-h)!important;
+    height:100%!important;
+
+    min-width:0!important;
     min-height:0!important;
 
     margin:0!important;
 
+    box-sizing:border-box!important;
+
+    align-content:stretch!important;
+    overflow:hidden!important;
+  }
+
+  .network-strip{
+    top:var(--mf-safe-top)!important;
+  }
+}
+
+/*
+  PORTRAIT
+
+  Dynamic Island:
+  keep almost the entire Apple safe area, but remove
+  the unnecessary extra air visible in the screenshot.
+
+  Bottom:
+  panel backgrounds are allowed to continue down toward
+  the Home Indicator. There are no critical controls in
+  that extreme bottom strip.
+*/
+@media
+  (display-mode:standalone)
+  and (orientation:portrait){
+
+  .layout{
     padding-top:
-      var(--mf-safe-top)!important;
+      max(
+        0px,
+        calc(var(--mf-safe-top) - 5px)
+      )!important;
+
+    padding-right:3px!important;
+
+    padding-bottom:18px!important;
+
+    padding-left:3px!important;
+  }
+}
+
+/*
+  LANDSCAPE
+
+  Keep the left/right iPhone safe zones because the
+  Dynamic Island / system areas move to the sides.
+  Your landscape screenshot is already close to correct,
+  so we preserve those insets.
+*/
+@media
+  (display-mode:standalone)
+  and (orientation:landscape){
+
+  .layout{
+    padding-top:3px!important;
 
     padding-right:
       max(
@@ -1343,66 +1337,26 @@ html.mf-game-immersive
         3px,
         var(--mf-safe-left)
       )!important;
-
-    box-sizing:border-box!important;
-
-    /*
-      Existing portrait rows are already
-      40 / 31 / 11 / 18 = 100%.
-      Force those rows to consume the complete
-      measured application height.
-    */
-    align-content:stretch!important;
-  }
-
-  .network-strip{
-    top:var(--mf-safe-top)!important;
   }
 }
 
 /*
-  Same correction when JS identifies standalone mode.
+  Do not allow an old manual immersive class to shrink
+  an already-standalone application.
 */
-.game[data-fullscreen-mode="standalone"]{
-  height:var(--mf-app-h)!important;
+@media (display-mode:standalone){
+
+  html.mf-game-immersive,
+  body.mf-game-immersive{
+    width:var(--mf-app-w)!important;
+    height:var(--mf-app-h)!important;
+  }
+
+  html.mf-game-immersive
+  .game[data-immersive="true"]{
+    width:var(--mf-app-w)!important;
+    height:var(--mf-app-h)!important;
+  }
 }
 
-.game[data-fullscreen-mode="standalone"] .layout{
-  height:var(--mf-app-h)!important;
-
-  padding-top:
-    var(--mf-safe-top)!important;
-
-  padding-bottom:
-    max(
-      3px,
-      var(--mf-safe-bottom)
-    )!important;
-
-  align-content:stretch!important;
-}
-
-/*
-  Internal immersive toggle while already launched
-  from Home Screen.
-*/
-html.mf-game-immersive
-.game[data-immersive="true"]{
-  height:var(--mf-app-h)!important;
-}
-
-html.mf-game-immersive
-.game[data-immersive="true"] .layout{
-  height:var(--mf-app-h)!important;
-
-  padding-top:
-    var(--mf-safe-top)!important;
-
-  padding-bottom:
-    max(
-      3px,
-      var(--mf-safe-bottom)
-    )!important;
-}
-
-/* === V9.8 STANDALONE VIEWPORT FIT END === */
+/* === V9.9 PHYSICAL SCREEN FIT END === */
