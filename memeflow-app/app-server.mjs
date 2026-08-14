@@ -35,6 +35,9 @@ const openaiAI=new OpenAIIntelligence({
 });
 let discovery={connected:false,url:null,lastEventAt:null,reconnects:0,error:null,lastError:null,startedAt:Date.now()},ws=null,wsTimer=null,wsReconnectAttempt=0;
 const streams=new Map(),priceTimers=new Map(),tradeWindows=new Map();
+
+// MF_GAME_AUTO_FRESH_RESCAN_V10_6
+const gameAutoFreshScanByUser=new Map();
 const priceLifecycleDiag=new Map(); // V10 read-only lifecycle diagnostics
 
 // MEMEFLOW_V12_24_CREATOR_GATE_RECOVERY
@@ -1973,7 +1976,112 @@ if(false && url.pathname==='/api/ai/assistant' &&req.method==='POST'){
  // MF_PEPE_ROCKET_GAME_API_ROUTES
  if(url.pathname==='/api/game/health'&&req.method==='GET')return json(res,200,pepeGame.health());
  if(url.pathname==='/api/game/status'&&req.method==='GET')return json(res,200,pepeGame.status(u.id));
- if(url.pathname==='/api/game/start'&&req.method==='POST'){const r=pepeGame.start(u.id,await body(req));const code=r.ok?200:(r.code==='KILL_SWITCH'?423:(r.code==='NO_CANDIDATE'||r.code==='ACTIVE_ROUND_EXISTS'||r.code==='ROUND_RESULT_PENDING'?409:400));return json(res,code,r);}
+ if(url.pathname==='/api/game/start'&&req.method==='POST'){
+  const input=await body(req);
+
+  /*
+    V10.6 AUTO FRESH RESCAN
+
+    Manual START:
+      unchanged.
+
+    AUTO START:
+      reevaluate the user's current MEMEFLOW candidates
+      against the user's CURRENT saved settings before
+      GameEngine selects a BUY READY target.
+
+    IMPORTANT:
+      - no mint blacklist
+      - no forced token rotation
+      - no "previous token" exclusion
+      - same mint may be selected again if the fresh
+        reevaluation still says BUY READY
+  */
+  if(input?.freshAutoScan===true){
+    const requestId=
+      String(input.requestId||'')
+        .trim()
+        .slice(0,100);
+
+    const at=Date.now();
+
+    const previous=
+      gameAutoFreshScanByUser.get(u.id);
+
+    const newSearch=
+      !previous ||
+      previous.requestId!==requestId;
+
+    const periodicRefresh=
+      !previous ||
+      at-Number(previous.at||0)>=4000;
+
+    if(newSearch||periodicRefresh){
+      try{
+        const decisionsReevaluated=
+          reevaluateUser(u.id);
+
+        gameAutoFreshScanByUser.set(
+          u.id,
+          {
+            requestId,
+            at,
+            decisionsReevaluated:
+              Number(decisionsReevaluated)||0
+          }
+        );
+
+      }catch(error){
+        console.error(
+          '[GAME AUTO FRESH RESCAN]',
+          u.id,
+          error
+        );
+
+        /*
+          Treat temporary reevaluation failure like
+          NO_CANDIDATE so AUTO keeps scanning instead
+          of falling back to an old cached signal.
+        */
+        return json(
+          res,
+          409,
+          {
+            ok:false,
+            code:'NO_CANDIDATE',
+            message:
+              'Fresh MEMEFLOW reevaluation is temporarily unavailable. AUTO scanning continues.',
+            selector:
+              pepeGame.selectorDiagnostics(u.id)
+          }
+        );
+      }
+    }
+  }
+
+  const r=
+    pepeGame.start(
+      u.id,
+      input
+    );
+
+  const code=
+    r.ok
+      ?200
+      :r.code==='KILL_SWITCH'
+        ?423
+        :(r.code==='NO_CANDIDATE'||
+          r.code==='ACTIVE_ROUND_EXISTS'||
+          r.code==='ROUND_RESULT_PENDING')
+          ?409
+          :400;
+
+  return json(
+    res,
+    code,
+    r
+  );
+ }
  if(url.pathname==='/api/game/cashout'&&req.method==='POST'){const r=pepeGame.cashout(u.id);return json(res,r.ok?200:409,r);}
  if(url.pathname==='/api/game/reset'&&req.method==='POST'){const r=pepeGame.reset(u.id);return json(res,r.ok?200:409,r);}
  if(url.pathname==='/api/game/history/clear'&&req.method==='POST')return json(res,200,pepeGame.clearHistory(u.id));

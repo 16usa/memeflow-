@@ -125,7 +125,7 @@
     }
   );
 
-  const CLIENT_VERSION='10.4';
+  const CLIENT_VERSION='10.6';
 
   const $=(s)=>document.querySelector(s), $$=(s)=>[...document.querySelectorAll(s)];
   const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
@@ -967,7 +967,21 @@
       ui.stateMessage.textContent='Waiting for a BUY READY launch from your MEMEFLOW trading settings…';
       game.searchAbort=new AbortController();
       try{
-        const result=await api('/api/game/start',{method:'POST',body:JSON.stringify({bet,autoCashout:Number(ui.auto.value)||0,stopLoss:Number(ui.stop.value)||0,requestId:game.requestId}),signal:game.searchAbort.signal});
+        const result=await api('/api/game/start',{method:'POST',body:JSON.stringify({
+          bet,
+          autoCashout:Number(ui.auto.value)||0,
+          stopLoss:Number(ui.stop.value)||0,
+          requestId:game.requestId,
+
+          /*
+            AUTO V10.6:
+            ask server for a fresh settings reevaluation
+            before candidate selection.
+
+            Manual START returns {} here.
+          */
+          ...(globalThis.memeflowAutoPlay?.getStartOptions?.()||{})
+        }),signal:game.searchAbort.signal});
         if(result?.session?.state==='LIVE'||result?.status?.session?.state==='LIVE'){apply(result.status||result);return;}if(seq!==game.searchSeq)return;apply(result);return;
       }catch(error){
         if(seq!==game.searchSeq||game.searchAbort?.signal?.aborted)return;

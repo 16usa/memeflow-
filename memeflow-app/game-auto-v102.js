@@ -1,7 +1,7 @@
 (()=>{
   'use strict';
 
-  const AUTO_VERSION='10.4';
+  const AUTO_VERSION='10.6';
 
   function bootAuto(){
     if(globalThis.__memeflowAutoPlayV104)return;
@@ -2309,6 +2309,36 @@
     syncButton();
 
     // ========================================================
+    // V10.6 FRESH MEMEFLOW RESCAN
+    // ========================================================
+
+    function getStartOptions(){
+
+      /*
+        Every AUTO START asks the server to reevaluate
+        CURRENT token data through the normal MEMEFLOW
+        decision engine and CURRENT user settings.
+
+        This does NOT care whether the mint is new or old.
+
+        Therefore:
+          A -> A is allowed if A is fresh BUY READY again.
+          A -> B is allowed if B is now the best candidate.
+          A -> B -> A is allowed.
+
+        What is forbidden is entering simply because an
+        OLD cached BUY READY signal survived the last round.
+      */
+      if(!enabled){
+        return {};
+      }
+
+      return {
+        freshAutoScan:true
+      };
+    }
+
+    // ========================================================
     // PUBLIC BRIDGE USED BY game.js
     // ========================================================
 
@@ -2323,6 +2353,8 @@
 
       showSummary,
 
+      getStartOptions,
+
       get enabled(){
         return enabled;
       },
@@ -2335,7 +2367,7 @@
     console.info(
       '[MEMEFLOW AUTO]',
       AUTO_VERSION,
-      'SESSION SUMMARY READY'
+      'SESSION SUMMARY + FRESH MEMEFLOW RESCAN READY'
     );
   }
 
