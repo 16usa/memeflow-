@@ -127,7 +127,7 @@ export function createPepeRealRigV16({ parent, baseUrl='/game-assets/character-v
     correct Three.js local coordinate system first.
   */
 
-  const seatDepth = 0.080;
+  const seatDepth = 0.140;
 
   const wristSockets = {
     handLeft: {
@@ -649,20 +649,6 @@ export function createPepeRealRigV16({ parent, baseUrl='/game-assets/character-v
       arm.mesh.material.needsUpdate =
         true;
     }
-
-    if (handName === 'handLeft') {
-      hand.pivot.position.x -= 0.012;
-    } else {
-      hand.pivot.position.x += 0.012;
-    }
-    hand.pivot.position.y += 0.010;
-
-    if (handName === 'handLeft') {
-      hand.pivot.position.x -= 0.012;
-    } else {
-      hand.pivot.position.x += 0.012;
-    }
-    hand.pivot.position.y += 0.010;
 
     hand.basePosition =
       hand.pivot.position.clone();
