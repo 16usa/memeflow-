@@ -16,11 +16,11 @@ export function createPepeHeadController({parent,baseUrl='/game-assets/rocket-v3
       tex.minFilter=THREE.LinearFilter;
       tex.magFilter=THREE.LinearFilter;
 
-      // Fill the porthole with the whole head instead of showing a tiny head far away.
+      // Keep the whole head visible, but slightly tucked behind the frame.
       tex.wrapS=THREE.ClampToEdgeWrapping;
       tex.wrapT=THREE.ClampToEdgeWrapping;
-      tex.repeat.set(0.84,0.84);
-      tex.offset.set(0.08,0.08);
+      tex.repeat.set(0.85,0.85);
+      tex.offset.set(0.075,0.075);
 
       textures[name]=tex;
       resolve();
@@ -46,22 +46,23 @@ export function createPepeHeadController({parent,baseUrl='/game-assets/rocket-v3
     if(nextBlink<=0&&boost<0.25&&Math.abs(d)<0.75){blinkLeft=0.10+Math.random()*0.05;nextBlink=2.0+Math.random()*3.0;}
     blinkLeft=Math.max(0,blinkLeft-dt);
     setHead(blinkLeft>0?'blink':chooseBase(state));
-    // Head gently floats inside the cabin and periodically approaches the glass.
-    const floatY=Math.sin(t*1.05)*(0.008+thrust*0.004);
-    const floatX=Math.sin(t*0.71)*0.005;
+    // Head floats inside the cabin and visibly approaches / recedes from the glass.
+    const floatY=Math.sin(t*1.05)*(0.010+thrust*0.006);
+    const floatX=Math.sin(t*0.71)*0.007;
+    const depthPulse=Math.sin(t*0.82)*0.045;
 
-    // Scale is our fake Z-depth in the orthographic 2D scene:
-    // smaller = deeper in cabin, larger = closer to glass.
+    // In this 2D setup, scale is our fake Z-depth.
+    // Slightly smaller = deeper in cabin, slightly larger = closer to the glass.
     const approach=
-      0.985 +
-      Math.sin(t*0.82)*0.027 +
-      thrust*0.012 +
-      boost*0.018;
+      0.955 +
+      depthPulse +
+      thrust*0.010 +
+      boost*0.016;
 
     root.position.set(
       floatX,
       -0.006 + floatY,
-      -0.020
+      -0.040
     );
 
     root.rotation.z=
