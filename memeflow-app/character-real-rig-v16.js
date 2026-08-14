@@ -622,6 +622,15 @@ export function createPepeRealRigV16({ parent, baseUrl='/game-assets/character-v
       0
     );
 
+    const cuffDropY = -0.095;
+    const cuffSpreadX =
+      handName === 'handLeft'
+        ? -0.020
+        : 0.020;
+
+    hand.pivot.position.x += cuffSpreadX;
+    hand.pivot.position.y += cuffDropY;
+
     /*
       STEP 7
       Sleeve stays above the hand and hides the seam.
