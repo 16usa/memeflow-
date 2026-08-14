@@ -3,7 +3,7 @@ import * as THREE from '/vendor/three.module.js';
 import { createMotionController } from '/motion-controller.js?v=35001';
 import { createRocketRideV34 } from '/rocket-ride-v34.js?v=35001';
 import { createMarketBridgeV35 } from '/market-bridge-v35.js?v=35001';
-import { createRealPriceSourceV36 } from '/market-source-v36.js?v=36001';
+import { createRealPriceSourceV36 } from '/market-source-v36.js?v=36002';
 
 const stage=document.getElementById('stage');
 const label=document.getElementById('state');
@@ -192,7 +192,7 @@ function resizeCanvas(){
   fitModel();
 
   debug.textContent=
-    `V35 AUTO · ${w}×${h}`;
+    `V36 REAL · ${w}×${h}`;
 }
 
 new ResizeObserver(
@@ -240,16 +240,31 @@ function frame(){
   if(t-lastHud>.25){
     lastHud=t;
 
-    const x=
-      market.getTelemetry();
+    const x=market.getTelemetry();
+    const src=realPrice.getStatus();
 
-    const pct=
-      x.shortReturn*100;
+    const pct=(Number(x.shortReturn)||0)*100;
 
-    label.textContent=
-      `AUTO ${x.source.toUpperCase()} · `+
-      `${pct>=0?'+':''}${pct.toFixed(2)}% · `+
-      `DIR ${x.direction.toFixed(2)}`;
+    const priceText=
+      src.price==null
+        ? '—'
+        : Number(src.price).toPrecision(7);
+
+    if(src.state==='LIVE'){
+      label.textContent=
+        `REAL PRICE ${priceText} · `+
+        `${pct>=0?'+':''}${pct.toFixed(2)}% · `+
+        `DIR ${(Number(x.direction)||0).toFixed(2)}`;
+
+      debug.textContent=
+        `V36 LIVE · ${src.path}`;
+    }else{
+      label.textContent=
+        `V36 ${src.state} · PRICE ${priceText}`;
+
+      debug.textContent=
+        `V36 ${src.state} · CAND ${src.candidates||0}`;
+    }
   }
 }
 
