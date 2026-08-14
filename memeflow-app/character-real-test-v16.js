@@ -3,6 +3,7 @@ import * as THREE from '/vendor/three.module.js';
 import { createMotionController } from '/motion-controller.js?v=35001';
 import { createRocketRideV34 } from '/rocket-ride-v34.js?v=35001';
 import { createMarketBridgeV35 } from '/market-bridge-v35.js?v=35001';
+import { createRealPriceSourceV36 } from '/market-source-v36.js?v=36001';
 
 const stage=document.getElementById('stage');
 const label=document.getElementById('state');
@@ -56,10 +57,16 @@ const ride=createRocketRideV34({
 const market=createMarketBridgeV35({
   motion
 }).start({
-  stateUrl:'/data/state.json',
-  demoFallback:true,
+  stateUrl:null,
+  demoFallback:false,
   eventName:'memeflow:price'
 });
+
+const realPrice=createRealPriceSourceV36({
+  market,
+  url:'/data/state.json',
+  intervalMs:350
+}).start();
 
 let manualTimer=0;
 
@@ -270,3 +277,4 @@ ride.ready
 
 // Later the real game can also feed price directly:
 window.pepeMarketV35=market;
+window.pepeRealPriceV36=realPrice;
