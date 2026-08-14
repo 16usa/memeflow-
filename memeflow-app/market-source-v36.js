@@ -1,322 +1,663 @@
 
-const GOOD_KEYS = new Set([
-  'price',
-  'currentprice',
-  'tokenprice',
-  'lastprice',
-  'markprice',
-  'liveprice',
-  'tradeprice',
-  'solprice'
-]);
-
-const BAD_WORDS = [
-  'change',
-  'percent',
-  'pct',
-  'marketcap',
-  'market_cap',
-  'liquidity',
-  'volume',
-  'amount',
-  'balance',
-  'supply',
-  'holder',
-  'score',
-  'ratio',
-  'high',
-  'low'
-];
-
-function cleanKey(v=''){
-  return String(v)
-    .toLowerCase()
-    .replace(/[^a-z0-9_]/g,'');
-}
-
-function isBadPath(path){
-  const p=path.toLowerCase();
-  return BAD_WORDS.some(x=>p.includes(x));
-}
-
-function collectCandidates(
-  value,
-  path='root',
-  out=[],
-  depth=0
-){
-  if(depth>10)return out;
-
-  if(Array.isArray(value)){
-    value.slice(0,40).forEach((v,i)=>{
-      collectCandidates(
-        v,
-        `${path}[${i}]`,
-        out,
-        depth+1
-      );
-    });
-    return out;
-  }
-
-  if(!value || typeof value!=='object'){
-    return out;
-  }
-
-  for(const [key,val] of Object.entries(value)){
-    const nextPath=`${path}.${key}`;
-    const ck=cleanKey(key);
-
-    if(
-      typeof val==='number' &&
-      Number.isFinite(val) &&
-      val>0 &&
-      !isBadPath(nextPath)
-    ){
-      let score=0;
-
-      if(GOOD_KEYS.has(ck))score+=100;
-
-      if(ck==='price')score+=50;
-      if(ck.includes('token') && ck.includes('price'))score+=45;
-      if(ck.includes('current') && ck.includes('price'))score+=40;
-      if(ck.includes('last') && ck.includes('price'))score+=35;
-
-      if(nextPath.toLowerCase().includes('token'))score+=12;
-      if(nextPath.toLowerCase().includes('market'))score+=5;
-
-      if(score>0){
-        out.push({
-          path:nextPath,
-          key,
-          value:val,
-          score
-        });
-      }
-    }
-
-    if(
-      typeof val==='string' &&
-      val.trim()!=='' &&
-      !isBadPath(nextPath)
-    ){
-      const num=Number(val);
-
-      if(
-        Number.isFinite(num) &&
-        num>0 &&
-        (
-          GOOD_KEYS.has(ck) ||
-          ck.includes('price')
-        )
-      ){
-        out.push({
-          path:nextPath,
-          key,
-          value:num,
-          score:
-            (GOOD_KEYS.has(ck)?90:40)
-        });
-      }
-    }
-
-    if(val && typeof val==='object'){
-      collectCandidates(
-        val,
-        nextPath,
-        out,
-        depth+1
-      );
-    }
-  }
-
-  return out;
-}
-
 export function createRealPriceSourceV36({
   market,
-  url='/data/state.json',
-  intervalMs=350
+  chainId='solana'
 }={}){
   if(
     !market ||
     typeof market.pushPrice!=='function'
   ){
     throw new Error(
-      '[V36] market.pushPrice required'
+      '[V36.3] market.pushPrice required'
     );
   }
 
-  let timer=0;
-  let lockedPath='';
+  let currentChain=chainId;
+  let tokenAddress='';
+
+  let es=null;
+  let reconnectTimer=0;
+  let destroyed=false;
+  let generation=0;
+
   let lastPrice=null;
   let lastSeen=0;
-  let successfulReads=0;
+  let reads=0;
   let failures=0;
 
+  let eventHandler=null;
+
   let status={
-    state:'SEARCHING',
+    state:'STARTING',
     path:'',
     price:null,
     ageMs:null,
     candidates:0,
     reads:0,
-    failures:0
+    failures:0,
+    tokenAddress:'',
+    chainId:currentChain
   };
 
-  function findBest(data){
-    const candidates=
-      collectCandidates(data)
-        .sort((a,b)=>b.score-a.score);
-
-    if(!candidates.length){
-      return {
-        best:null,
-        candidates
-      };
-    }
-
-    if(lockedPath){
-      const locked=
-        candidates.find(
-          x=>x.path===lockedPath
-        );
-
-      if(locked){
-        return {
-          best:locked,
-          candidates
-        };
-      }
-    }
-
-    return {
-      best:candidates[0],
-      candidates
+  function setStatus(
+    state,
+    extra={}
+  ){
+    status={
+      ...status,
+      state,
+      ...extra,
+      reads,
+      failures,
+      tokenAddress,
+      chainId:currentChain
     };
   }
 
-  async function poll(){
-    try{
-      const res=await fetch(
-        `${url}?v=${Date.now()}`,
-        {
-          cache:'no-store',
-          headers:{
-            'Cache-Control':'no-cache'
-          }
-        }
+  function shortMint(){
+    if(!tokenAddress)return '';
+    return (
+      tokenAddress.slice(0,6)+
+      '…'+
+      tokenAddress.slice(-4)
+    );
+  }
+
+  function pushLivePrice(
+    raw,
+    source='SSE'
+  ){
+    const price=Number(raw);
+
+    if(
+      !Number.isFinite(price) ||
+      price<=0
+    ){
+      return false;
+    }
+
+    lastPrice=price;
+    lastSeen=Date.now();
+    reads++;
+
+    market.pushPrice(
+      price,
+      performance.now(),
+      'REAL'
+    );
+
+    setStatus('LIVE',{
+      price,
+      candidates:1,
+      path:
+        `${source} ${shortMint()}`
+    });
+
+    return true;
+  }
+
+  function seedPoints(points){
+    if(
+      !Array.isArray(points) ||
+      !points.length
+    ){
+      return 0;
+    }
+
+    const clean=points
+      .map(x=>({
+        t:Number(x?.t),
+        p:Number(x?.p)
+      }))
+      .filter(x=>
+        Number.isFinite(x.t) &&
+        Number.isFinite(x.p) &&
+        x.p>0
+      )
+      .sort((a,b)=>a.t-b.t);
+
+    if(!clean.length)return 0;
+
+    const latest=
+      clean[clean.length-1].t;
+
+    // Market Bridge currently needs only a short window.
+    const recent=
+      clean.filter(
+        x=>latest-x.t<=8000
       );
 
-      if(!res.ok){
-        throw new Error(
-          `HTTP ${res.status}`
+    const selected=
+      recent.length>=3
+        ? recent
+        : clean.slice(-12);
+
+    const perfNow=
+      performance.now();
+
+    let pushed=0;
+
+    for(const point of selected){
+      const age=
+        Math.max(
+          0,
+          latest-point.t
         );
-      }
 
-      const data=await res.json();
-
-      const {
-        best,
-        candidates
-      }=findBest(data);
-
-      successfulReads++;
-
-      if(!best){
-        status={
-          state:'NO PRICE FOUND',
-          path:'',
-          price:null,
-          ageMs:null,
-          candidates:0,
-          reads:successfulReads,
-          failures
-        };
-        return;
-      }
-
-      if(!lockedPath){
-        lockedPath=best.path;
-      }
-
-      const now=Date.now();
-
-      lastPrice=best.value;
-      lastSeen=now;
+      const perfT=
+        perfNow-age;
 
       market.pushPrice(
-        best.value,
-        performance.now(),
+        point.p,
+        perfT,
         'REAL'
       );
 
-      status={
-        state:'LIVE',
-        path:best.path,
-        price:best.value,
-        ageMs:0,
-        candidates:candidates.length,
-        reads:successfulReads,
-        failures
-      };
+      lastPrice=point.p;
+      pushed++;
+    }
+
+    if(pushed){
+      lastSeen=Date.now();
+      reads+=pushed;
+
+      setStatus('LIVE',{
+        price:lastPrice,
+        candidates:1,
+        path:
+          `HISTORY ${shortMint()}`
+      });
+    }
+
+    return pushed;
+  }
+
+  async function loadHistory(
+    localGeneration
+  ){
+    if(!tokenAddress)return;
+
+    try{
+      setStatus('LOADING HISTORY',{
+        candidates:1,
+        path:shortMint()
+      });
+
+      const q=
+        new URLSearchParams({
+          chainId:currentChain,
+          tokenAddress,
+          interval:'1s',
+          limit:'120'
+        });
+
+      const res=
+        await fetch(
+          '/api/chart/history?'+q,
+          {
+            credentials:'include',
+            cache:'no-store'
+          }
+        );
+
+      const data=
+        await res.json()
+          .catch(()=>({}));
+
+      if(
+        destroyed ||
+        localGeneration!==generation
+      ){
+        return;
+      }
+
+      if(!res.ok){
+        throw new Error(
+          data?.error ||
+          `history HTTP ${res.status}`
+        );
+      }
+
+      seedPoints(
+        data?.points || []
+      );
 
     }catch(err){
       failures++;
 
-      status={
-        ...status,
-        state:'ERROR',
-        failures,
+      setStatus('HISTORY ERROR',{
+        candidates:tokenAddress?1:0,
         error:String(
           err?.message || err
         )
-      };
+      });
     }
   }
 
-  function start(){
-    if(timer)return api;
+  function closeStream(){
+    if(es){
+      try{
+        es.close();
+      }catch{}
+      es=null;
+    }
 
-    poll();
+    if(reconnectTimer){
+      clearTimeout(
+        reconnectTimer
+      );
+      reconnectTimer=0;
+    }
+  }
 
-    timer=setInterval(
-      poll,
-      intervalMs
+  function applySnapshot(data){
+    if(
+      Array.isArray(data?.points)
+    ){
+      seedPoints(data.points);
+      return;
+    }
+
+    if(
+      Array.isArray(
+        data?.snapshot?.points
+      )
+    ){
+      seedPoints(
+        data.snapshot.points
+      );
+    }
+  }
+
+  function connectStream(
+    localGeneration
+  ){
+    if(
+      destroyed ||
+      !tokenAddress ||
+      localGeneration!==generation
+    ){
+      return;
+    }
+
+    closeStream();
+
+    setStatus('CONNECTING',{
+      candidates:1,
+      path:shortMint()
+    });
+
+    const q=
+      new URLSearchParams({
+        chainId:currentChain,
+        tokenAddress,
+        interval:'1s',
+        limit:'600'
+      });
+
+    const streamUrl=
+      '/api/chart/stream?'+q;
+
+    es=
+      new EventSource(
+        streamUrl
+      );
+
+    es.addEventListener(
+      'snapshot',
+      event=>{
+        if(
+          destroyed ||
+          localGeneration!==generation
+        ){
+          return;
+        }
+
+        try{
+          const data=
+            JSON.parse(
+              event.data
+            );
+
+          applySnapshot(data);
+
+        }catch(err){
+          console.warn(
+            '[V36.3 snapshot]',
+            err
+          );
+        }
+      }
     );
+
+    es.addEventListener(
+      'update',
+      event=>{
+        if(
+          destroyed ||
+          localGeneration!==generation
+        ){
+          return;
+        }
+
+        try{
+          const data=
+            JSON.parse(
+              event.data
+            );
+
+          if(data?.snapshot){
+            applySnapshot(
+              data.snapshot
+            );
+          }
+
+          if(data?.point){
+            pushLivePrice(
+              data.point.p,
+              'SSE'
+            );
+          }
+
+          if(
+            data?.status?.stale &&
+            Date.now()-lastSeen>5000
+          ){
+            setStatus('STALE',{
+              price:lastPrice,
+              candidates:1,
+              path:shortMint()
+            });
+          }
+
+        }catch(err){
+          console.warn(
+            '[V36.3 update]',
+            err
+          );
+        }
+      }
+    );
+
+    es.onopen=()=>{
+      if(
+        destroyed ||
+        localGeneration!==generation
+      ){
+        return;
+      }
+
+      setStatus(
+        lastPrice
+          ? 'LIVE'
+          : 'CONNECTED',
+        {
+          price:lastPrice,
+          candidates:1,
+          path:
+            `SSE ${shortMint()}`
+        }
+      );
+    };
+
+    es.onerror=()=>{
+      if(
+        destroyed ||
+        localGeneration!==generation
+      ){
+        return;
+      }
+
+      failures++;
+
+      setStatus('RECONNECTING',{
+        price:lastPrice,
+        candidates:1,
+        path:shortMint()
+      });
+
+      closeStream();
+
+      reconnectTimer=
+        setTimeout(()=>{
+          connectStream(
+            localGeneration
+          );
+        },2500);
+    };
+  }
+
+  async function selectToken(
+    detail={}
+  ){
+    const next=
+      String(
+        detail.tokenAddress ||
+        detail.mint ||
+        ''
+      ).trim();
+
+    const nextChain=
+      String(
+        detail.chainId ||
+        detail.chain ||
+        currentChain ||
+        'solana'
+      );
+
+    if(!next){
+      return false;
+    }
+
+    if(
+      next===tokenAddress &&
+      nextChain===currentChain &&
+      es
+    ){
+      return true;
+    }
+
+    generation++;
+    const localGeneration=
+      generation;
+
+    tokenAddress=next;
+    currentChain=nextChain;
+
+    lastPrice=null;
+    lastSeen=0;
+
+    closeStream();
+
+    setStatus('TOKEN SELECTED',{
+      price:null,
+      candidates:1,
+      path:shortMint()
+    });
+
+    await loadHistory(
+      localGeneration
+    );
+
+    if(
+      destroyed ||
+      localGeneration!==generation
+    ){
+      return false;
+    }
+
+    connectStream(
+      localGeneration
+    );
+
+    return true;
+  }
+
+  async function loadConfig(){
+    try{
+      setStatus('CONFIG',{
+        path:'/api/chart/config'
+      });
+
+      const res=
+        await fetch(
+          '/api/chart/config',
+          {
+            credentials:'include',
+            cache:'no-store'
+          }
+        );
+
+      if(!res.ok){
+        throw new Error(
+          `config HTTP ${res.status}`
+        );
+      }
+
+      const config=
+        await res.json();
+
+      const nextChain=
+        config?.chainId ||
+        currentChain ||
+        'solana';
+
+      const nextToken=
+        config?.tokenAddress ||
+        config?.mint ||
+        '';
+
+      currentChain=
+        nextChain;
+
+      if(nextToken){
+        await selectToken({
+          tokenAddress:nextToken,
+          chainId:nextChain
+        });
+      }else{
+        setStatus(
+          'WAITING CANDIDATE',
+          {
+            price:null,
+            candidates:0,
+            path:
+              'memeflow:candidatechange'
+          }
+        );
+      }
+
+    }catch(err){
+      failures++;
+
+      setStatus(
+        'CONFIG ERROR',
+        {
+          price:null,
+          candidates:0,
+          error:String(
+            err?.message || err
+          )
+        }
+      );
+    }
+  }
+
+  function bindCandidateEvent(){
+    eventHandler=
+      event=>{
+        const detail=
+          event?.detail || {};
+
+        selectToken(detail);
+      };
+
+    window.addEventListener(
+      'memeflow:candidatechange',
+      eventHandler
+    );
+  }
+
+  function start(){
+    destroyed=false;
+
+    bindCandidateEvent();
+    loadConfig();
 
     return api;
   }
 
-  function destroy(){
-    if(timer){
-      clearInterval(timer);
-      timer=0;
-    }
+  // Kept for compatibility with older V36 test code.
+  function poll(){
+    return loadConfig();
   }
 
   function unlock(){
-    lockedPath='';
+    tokenAddress='';
+    lastPrice=null;
+    lastSeen=0;
+
+    generation++;
+    closeStream();
+
+    setStatus(
+      'WAITING CANDIDATE',
+      {
+        price:null,
+        candidates:0,
+        path:
+          'memeflow:candidatechange'
+      }
+    );
+  }
+
+  function destroy(){
+    destroyed=true;
+    generation++;
+
+    closeStream();
+
+    if(eventHandler){
+      window.removeEventListener(
+        'memeflow:candidatechange',
+        eventHandler
+      );
+      eventHandler=null;
+    }
   }
 
   function getStatus(){
-    const now=Date.now();
-
     return {
       ...status,
+
       ageMs:
         lastSeen
-          ? now-lastSeen
+          ? Date.now()-lastSeen
           : null,
-      lastPrice
+
+      lastPrice,
+      price:
+        status.price ??
+        lastPrice,
+
+      candidates:
+        tokenAddress
+          ? 1
+          : 0,
+
+      reads,
+      failures,
+      tokenAddress,
+      chainId:currentChain
     };
   }
 
   const api={
     start,
-    destroy,
-    unlock,
     poll,
+    unlock,
+    destroy,
+    selectToken,
     getStatus
   };
 
