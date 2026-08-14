@@ -1,5 +1,5 @@
 import * as THREE from '/vendor/three.module.js';
-import { createPepeRealRigV16 } from '/character-real-rig-v16.js?v=44013';
+import { createPepeRealRigV16 } from '/character-real-rig-v16.js?v=44014';
 
 const stage = document.getElementById('stage');
 const label = document.getElementById('state');
