@@ -1430,7 +1430,7 @@ export function createPepeRealRigV16({ parent, baseUrl='/game-assets/character-v
     /*
       Final hand placement relative to each own cuff.
     */
-    refineHandIntoOwnCuffV6();
+    // V45 disabled bad center refinement
 
     console.log(
       '[PEPE V6] CLEAN CUFF ASSEMBLY READY'
@@ -1447,8 +1447,8 @@ export function createPepeRealRigV16({ parent, baseUrl='/game-assets/character-v
     /*
       Apply final values from mobile calibration.
     */
-    applyFinalHandCalibration('handLeft');
-    applyFinalHandCalibration('handRight');
+    // V45 disabled bad center calibration left
+    // V45 disabled bad center calibration right
 
     /*
       Final clean assembly:
