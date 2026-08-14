@@ -127,7 +127,7 @@ export function createPepeRealRigV16({ parent, baseUrl='/game-assets/character-v
     correct Three.js local coordinate system first.
   */
 
-  const seatDepth = 0.020;
+  const seatDepth = 0.060;
 
   const wristSockets = {
     handLeft: {
@@ -621,10 +621,10 @@ export function createPepeRealRigV16({ parent, baseUrl='/game-assets/character-v
       Sleeve stays above the hand and hides the seam.
     */
     if (handName === 'handLeft') {
-      hand.mesh.renderOrder = 38;
+      hand.mesh.renderOrder = 63;
       arm.mesh.renderOrder = 40;
     } else {
-      hand.mesh.renderOrder = 39;
+      hand.mesh.renderOrder = 62;
       arm.mesh.renderOrder = 41;
     }
 
