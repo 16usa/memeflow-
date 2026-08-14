@@ -1,5 +1,5 @@
 import * as THREE from '/vendor/three.module.js';
-import { createPepeFaceController } from '/pepe-face-controller.js?v=34020';
+import { createPepeFaceController } from '/pepe-face-controller.js?v=34021';
 const clamp01=v=>Math.min(1,Math.max(0,Number(v)||0));
 function loadTexture(loader,url,{repeat=false}={}){return new Promise((resolve,reject)=>loader.load(url,tex=>{tex.colorSpace=THREE.SRGBColorSpace;tex.minFilter=THREE.LinearFilter;tex.magFilter=THREE.LinearFilter;if(repeat){tex.wrapS=THREE.RepeatWrapping;tex.wrapT=THREE.RepeatWrapping;}resolve(tex);},undefined,reject));}
 function material(tex,{transparent=true,opacity=1,blending=THREE.NormalBlending}={}){return new THREE.MeshBasicMaterial({map:tex,transparent,opacity,depthWrite:false,depthTest:false,side:THREE.DoubleSide,blending});}
@@ -24,8 +24,8 @@ export function createRocketRideV34({scene,parent,baseUrl='/game-assets/rocket-v
     face=createPepeFaceController({parent:faceAnchor,radius:0.292});
     const glassGeo=new THREE.PlaneGeometry(0.70,0.70),glassMat=material(glassTex,{opacity:0.72});geos.push(glassGeo);mats.push(glassMat);
     glassMesh=new THREE.Mesh(glassGeo,glassMat);glassMesh.position.set(0.655,0.318,0.22);glassMesh.renderOrder=50;rocketRoot.add(glassMesh);
-    flameRoot.position.set(-0.58,-0.64,0.12);flameRoot.rotation.z=THREE.MathUtils.degToRad(45);
-    const outerGeo=new THREE.PlaneGeometry(1.65,0.82),coreGeo=new THREE.PlaneGeometry(1.38,0.58);outerGeo.translate(-0.825,0,0);coreGeo.translate(-0.69,0,0);
+    flameRoot.position.set(-0.64,-0.79,0.12);flameRoot.rotation.z=THREE.MathUtils.degToRad(45);
+    const outerGeo=new THREE.PlaneGeometry(2.10,0.98),coreGeo=new THREE.PlaneGeometry(1.78,0.66);outerGeo.translate(-1.05,0,0);coreGeo.translate(-0.89,0,0);
     const outerMat=material(outerTex,{opacity:0.88,blending:THREE.AdditiveBlending}),coreMat=material(coreTex,{opacity:0.94,blending:THREE.AdditiveBlending});
     geos.push(outerGeo,coreGeo);mats.push(outerMat,coreMat);flameOuter=new THREE.Mesh(outerGeo,outerMat);flameCore=new THREE.Mesh(coreGeo,coreMat);
     flameOuter.renderOrder=8;flameCore.renderOrder=9;flameRoot.add(flameOuter,flameCore);
@@ -40,12 +40,37 @@ export function createRocketRideV34({scene,parent,baseUrl='/game-assets/rocket-v
     const d=Math.min(1,Math.max(-1,Number(state.direction)||0)),speed=clamp01(state.speed),thrust=clamp01(state.thrust),vol=clamp01(state.volatility),boost=clamp01(state.boost),power=clamp01(thrust*0.72+speed*0.18+boost*0.35);
     const bob=Math.sin(t*(1.25+speed*0.55))*(0.025+power*0.025),turb=Math.sin(t*12.5)*vol*0.014;
     rideRoot.position.x=d*0.06+turb;rideRoot.position.y=0.05+d*0.07+bob;rideRoot.rotation.z=-d*0.050+Math.sin(t*1.1)*0.008+turb*0.22;
-    const pulse=1+Math.sin(t*(9+thrust*9))*0.055;flameRoot.scale.x=(0.54+thrust*0.82+speed*0.18+boost*0.78)*pulse;flameRoot.scale.y=0.82+power*0.20+vol*0.06*Math.sin(t*17);
-    flameOuter.material.opacity=0.40+power*0.55;flameCore.material.opacity=0.55+power*0.43;
+    const pulse=1+Math.sin(t*(9+thrust*9))*0.065;
+
+    // Engine never disappears completely.
+    // DOWN = short flame, UP = long flame, BOOST = huge exhaust.
+    flameRoot.scale.x=
+      (0.70+thrust*0.65+speed*0.18+boost*0.45)*pulse;
+
+    flameRoot.scale.y=
+      0.90+power*0.18+vol*0.08*Math.sin(t*17);
+
+    flameOuter.material.opacity=0.70+power*0.28;
+    flameCore.material.opacity=0.82+power*0.17;
     const boostColor=new THREE.Color(0xc8f7ff),warmColor=new THREE.Color(0xfff0b0);flameCore.material.color.copy(warmColor).lerp(boostColor,boost);flameOuter.material.color.setRGB(1,0.72+boost*0.18,0.68+boost*0.25);
     if(ringMesh){ringMesh.material.opacity=boost*0.72;const rs=0.65+boost*0.85+0.07*Math.sin(t*9);ringMesh.scale.setScalar(rs);ringMesh.rotation.z=-t*0.55;}
     const travel=0.010+speed*0.035+thrust*0.025+boost*0.08;
-    if(farMesh?.material.map)farMesh.material.map.offset.y=(t*travel*0.08)%1;if(midMesh?.material.map)midMesh.material.map.offset.y=(t*travel*0.22)%1;if(nearMesh?.material.map)nearMesh.material.map.offset.y=(t*travel*0.50)%1;if(speedMesh?.material.map)speedMesh.material.map.offset.y=(t*travel*1.05)%1;
+    if(farMesh?.material.map){
+      farMesh.material.map.offset.x=(t*travel*0.045)%1;
+      farMesh.material.map.offset.y=(t*travel*0.080)%1;
+    }
+    if(midMesh?.material.map){
+      midMesh.material.map.offset.x=(t*travel*0.120)%1;
+      midMesh.material.map.offset.y=(t*travel*0.220)%1;
+    }
+    if(nearMesh?.material.map){
+      nearMesh.material.map.offset.x=(t*travel*0.280)%1;
+      nearMesh.material.map.offset.y=(t*travel*0.500)%1;
+    }
+    if(speedMesh?.material.map){
+      speedMesh.material.map.offset.x=(t*travel*0.620)%1;
+      speedMesh.material.map.offset.y=(t*travel*1.050)%1;
+    }
     if(speedMesh)speedMesh.material.opacity=clamp01(speed*0.22+thrust*0.18+boost*0.86);if(nearMesh)nearMesh.material.opacity=0.48+speed*0.36;if(midMesh)midMesh.material.opacity=0.56+speed*0.24;
     face.update(t,dt,state);
   }
