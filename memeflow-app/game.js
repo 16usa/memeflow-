@@ -1,6 +1,6 @@
 (()=>{
   'use strict';
-  const CLIENT_VERSION='9.6';
+  const CLIENT_VERSION='9.7';
   const $=(s)=>document.querySelector(s), $$=(s)=>[...document.querySelectorAll(s)];
   const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
   const num=(...values)=>{for(const value of values){if(value===null||value===undefined||value==='')continue;const n=Number(value);if(Number.isFinite(n))return n;}return null;};

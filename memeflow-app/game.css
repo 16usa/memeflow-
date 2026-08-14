@@ -1161,3 +1161,103 @@ body.mf-game-immersive
 }
 
 /* === V9.6 IOS REAL FULLSCREEN END === */
+
+
+/* === V9.7 IPHONE SAFE AREA START === */
+
+:root{
+  --mf-safe-top: env(safe-area-inset-top, 0px);
+  --mf-safe-right: env(safe-area-inset-right, 0px);
+  --mf-safe-bottom: env(safe-area-inset-bottom, 0px);
+  --mf-safe-left: env(safe-area-inset-left, 0px);
+}
+
+/*
+  Home Screen / standalone iPhone mode.
+
+  Keep edge-to-edge background, but move interactive
+  game content below Dynamic Island / status area.
+*/
+@media (display-mode: standalone){
+
+  html,
+  body{
+    width:100%;
+    height:100%;
+    min-height:100%;
+    background:#030507;
+  }
+
+  .game{
+    width:100vw!important;
+    height:100dvh!important;
+    min-height:100dvh!important;
+    overflow:hidden!important;
+    background:#030507!important;
+  }
+
+  .layout{
+    width:100%!important;
+    height:100dvh!important;
+    min-height:0!important;
+
+    /*
+      Original layout = 14px.
+      Top receives iPhone safe area + breathing room.
+    */
+    padding-top:
+      calc(var(--mf-safe-top) + 8px)!important;
+
+    padding-right:
+      max(8px, calc(var(--mf-safe-right) + 6px))!important;
+
+    padding-bottom:
+      max(8px, calc(var(--mf-safe-bottom) + 8px))!important;
+
+    padding-left:
+      max(8px, calc(var(--mf-safe-left) + 6px))!important;
+
+    box-sizing:border-box!important;
+  }
+
+  /*
+    Network/error banner must also stay below
+    Dynamic Island if it appears.
+  */
+  .network-strip{
+    top:var(--mf-safe-top)!important;
+  }
+}
+
+/*
+  Also cover iOS standalone detection used by JS.
+*/
+.game[data-fullscreen-mode="standalone"] .layout{
+  padding-top:
+    calc(var(--mf-safe-top) + 8px)!important;
+
+  padding-bottom:
+    max(8px, calc(var(--mf-safe-bottom) + 8px))!important;
+}
+
+/*
+  If the user toggles our internal immersive layout
+  while already running from Home Screen, preserve
+  all four safe areas.
+*/
+html.mf-game-immersive
+.game[data-immersive="true"] .layout{
+  padding-top:
+    calc(var(--mf-safe-top) + 8px)!important;
+
+  padding-right:
+    max(8px, calc(var(--mf-safe-right) + 6px))!important;
+
+  padding-bottom:
+    max(8px, calc(var(--mf-safe-bottom) + 8px))!important;
+
+  padding-left:
+    max(8px, calc(var(--mf-safe-left) + 6px))!important;
+}
+
+/* === V9.7 IPHONE SAFE AREA END === */
