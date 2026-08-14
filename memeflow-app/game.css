@@ -924,3 +924,74 @@
 }
 
 /* === PEPE ROCKET V36 REAL GAME END === */
+
+
+/* === V9.5 FULLSCREEN FIX START === */
+
+/*
+  Native Fullscreen API is used where available.
+  mf-game-immersive is the fallback mode.
+*/
+html.mf-game-immersive,
+body.mf-game-immersive{
+  margin:0!important;
+  padding:0!important;
+  overflow:hidden!important;
+  overscroll-behavior:none!important;
+  background:#030507!important;
+}
+
+body.mf-game-immersive{
+  position:fixed!important;
+  left:0!important;
+  top:0!important;
+  width:var(--mf-immersive-w,100vw)!important;
+  height:var(--mf-immersive-h,100dvh)!important;
+  max-width:none!important;
+  max-height:none!important;
+}
+
+body.mf-game-immersive
+.game[data-immersive="true"]{
+  position:fixed!important;
+  inset:0 auto auto 0!important;
+
+  width:var(--mf-immersive-w,100vw)!important;
+  height:var(--mf-immersive-h,100dvh)!important;
+
+  min-width:0!important;
+  min-height:0!important;
+  max-width:none!important;
+  max-height:none!important;
+
+  margin:0!important;
+  padding:0!important;
+
+  overflow:hidden!important;
+  z-index:2147483000!important;
+
+  background:#030507!important;
+}
+
+body.mf-game-immersive
+.game[data-immersive="true"]
+.layout{
+  width:100%!important;
+  height:100%!important;
+  min-height:0!important;
+  max-width:none!important;
+  margin:0!important;
+}
+
+/* Make the button clearly show that fullscreen is active. */
+.game[data-immersive="true"]
+.fullscreen-btn{
+  border-color:rgba(109,220,255,.55)!important;
+  background:rgba(109,220,255,.10)!important;
+  color:#eaffff!important;
+  box-shadow:
+    0 0 0 1px rgba(109,220,255,.08),
+    0 0 20px rgba(109,220,255,.08);
+}
+
+/* === V9.5 FULLSCREEN FIX END === */

@@ -1,6 +1,6 @@
 (()=>{
   'use strict';
-  const CLIENT_VERSION='9.4';
+  const CLIENT_VERSION='9.5';
   const $=(s)=>document.querySelector(s), $$=(s)=>[...document.querySelectorAll(s)];
   const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
   const num=(...values)=>{for(const value of values){if(value===null||value===undefined||value==='')continue;const n=Number(value);if(Number.isFinite(n))return n;}return null;};
@@ -41,34 +41,204 @@
     lastBalance:null,balancePulseTimer:null,summaryRefreshTimer:null,summaryRefreshInFlight:false,roundResetTimer:null,lastTitleAt:0,lastHudMultiplier:null,lastFlightProgressKey:null,lastTriggerKey:null,traceRaf:null
   };
 
-  const fullscreenElement=()=>document.fullscreenElement||document.webkitFullscreenElement||null;
-  const isStandalone=()=>matchMedia?.('(display-mode: standalone)')?.matches===true||navigator.standalone===true;
-  function syncFullscreenUi(){
-    const active=Boolean(fullscreenElement())||isStandalone();
-    ui.game.dataset.immersive=active?'true':'false';
-    ui.fullscreen?.classList.toggle('is-active',active);
-    ui.fullscreen?.setAttribute('aria-pressed',active?'true':'false');
-    setText(ui.fullscreenLabel,active?'FULL SCREEN ON':'FULL SCREEN');
+  let manualImmersive=false;
+  let immersiveScrollY=0;
+
+  const fullscreenElement=()=>
+    document.fullscreenElement||
+    document.webkitFullscreenElement||
+    null;
+
+  const isStandalone=()=>
+    matchMedia?.('(display-mode: standalone)')?.matches===true||
+    navigator.standalone===true;
+
+  function syncImmersiveViewport(){
+    if(!manualImmersive)return;
+
+    const vv=window.visualViewport;
+    const height=Math.max(
+      1,
+      Math.round(vv?.height||window.innerHeight||document.documentElement.clientHeight)
+    );
+
+    const width=Math.max(
+      1,
+      Math.round(vv?.width||window.innerWidth||document.documentElement.clientWidth)
+    );
+
+    document.documentElement.style.setProperty(
+      '--mf-immersive-h',
+      `${height}px`
+    );
+
+    document.documentElement.style.setProperty(
+      '--mf-immersive-w',
+      `${width}px`
+    );
   }
+
+  function setManualImmersive(active){
+    active=Boolean(active);
+
+    if(active===manualImmersive){
+      syncFullscreenUi();
+      return;
+    }
+
+    if(active){
+      immersiveScrollY=
+        window.scrollY||
+        document.documentElement.scrollTop||
+        0;
+
+      manualImmersive=true;
+
+      document.documentElement.classList.add(
+        'mf-game-immersive'
+      );
+
+      document.body.classList.add(
+        'mf-game-immersive'
+      );
+
+      syncImmersiveViewport();
+
+      requestAnimationFrame(()=>{
+        window.scrollTo(0,0);
+      });
+
+    }else{
+      manualImmersive=false;
+
+      document.documentElement.classList.remove(
+        'mf-game-immersive'
+      );
+
+      document.body.classList.remove(
+        'mf-game-immersive'
+      );
+
+      document.documentElement.style.removeProperty(
+        '--mf-immersive-h'
+      );
+
+      document.documentElement.style.removeProperty(
+        '--mf-immersive-w'
+      );
+
+      requestAnimationFrame(()=>{
+        window.scrollTo(0,immersiveScrollY);
+      });
+    }
+
+    syncFullscreenUi();
+  }
+
+  function syncFullscreenUi(){
+    const nativeActive=Boolean(fullscreenElement());
+
+    const active=
+      nativeActive||
+      isStandalone()||
+      manualImmersive;
+
+    ui.game.dataset.immersive=
+      active?'true':'false';
+
+    ui.game.dataset.fullscreenMode=
+      nativeActive
+        ?'native'
+        :isStandalone()
+          ?'standalone'
+          :manualImmersive
+            ?'manual'
+            :'off';
+
+    ui.fullscreen?.classList.toggle(
+      'is-active',
+      active
+    );
+
+    ui.fullscreen?.setAttribute(
+      'aria-pressed',
+      active?'true':'false'
+    );
+
+    setText(
+      ui.fullscreenLabel,
+      active?'FULL SCREEN ON':'FULL SCREEN'
+    );
+
+    if(manualImmersive){
+      syncImmersiveViewport();
+    }
+  }
+
   async function toggleFullscreen(){
     haptic(10);
-    try{
-      if(fullscreenElement()){
-        const exit=document.exitFullscreen||document.webkitExitFullscreen;
-        if(exit)await exit.call(document);
-      }else{
-        const target=document.documentElement;
-        const request=target.requestFullscreen||target.webkitRequestFullscreen;
-        if(request)await request.call(target,{navigationUI:'hide'});
-        else{
-          // iPhone Safari does not expose arbitrary-page Fullscreen API. The page is already edge-to-edge;
-          // apple-mobile-web-app-capable enables true browser-chrome-free launch when saved to Home Screen.
-          ui.game.dataset.immersive='true';
-          window.scrollTo(0,1);
+
+    // Native fullscreen is already active -> exit it.
+    if(fullscreenElement()){
+      try{
+        const exit=
+          document.exitFullscreen||
+          document.webkitExitFullscreen;
+
+        if(exit){
+          await exit.call(document);
         }
+      }catch(e){
+        console.warn(
+          '[GAME FULLSCREEN EXIT]',
+          e
+        );
       }
-    }catch{}
-    syncFullscreenUi();
+
+      syncFullscreenUi();
+      return;
+    }
+
+    // Our iPhone/manual fullscreen is active -> close it.
+    if(manualImmersive){
+      setManualImmersive(false);
+      return;
+    }
+
+    const target=document.documentElement;
+
+    const request=
+      target.requestFullscreen||
+      target.webkitRequestFullscreen;
+
+    // Try real browser fullscreen first.
+    if(request){
+      try{
+        try{
+          await request.call(
+            target,
+            {navigationUI:'hide'}
+          );
+        }catch(firstError){
+          // Some implementations reject the options object
+          // but still support requestFullscreen().
+          await request.call(target);
+        }
+
+        syncFullscreenUi();
+        return;
+
+      }catch(error){
+        console.info(
+          '[GAME FULLSCREEN] native unavailable, using immersive mode',
+          error
+        );
+      }
+    }
+
+    // Reliable fallback for browsers that do not expose
+    // arbitrary-page fullscreen.
+    setManualImmersive(true);
   }
 
   function resetOrderingForEngineEpoch(nextEpoch){
@@ -536,7 +706,17 @@
 
   function bind(){
     // V6.7: mobile height is CSS 100svh. Do not rewrite layout height while iOS browser chrome scrolls.
-    ui.start.addEventListener('click',startRound);ui.mobileStart.addEventListener('click',startRound);ui.cash.addEventListener('click',cashOut);ui.mobileCash.addEventListener('click',cashOut);ui.fullscreen?.addEventListener('click',toggleFullscreen);document.addEventListener('fullscreenchange',syncFullscreenUi);document.addEventListener('webkitfullscreenchange',syncFullscreenUi);screen.orientation?.addEventListener?.('change',()=>requestAnimationFrame(syncFullscreenUi));visualViewport?.addEventListener?.('resize',()=>requestAnimationFrame(syncFullscreenUi),{passive:true});[ui.mobileStart,ui.mobileCash].forEach(button=>button?.addEventListener?.('pointerup',()=>button.blur(),{passive:true}));ui.playAgain.addEventListener('click',playAgain);ui.clearHistory.addEventListener('click',clearHistory);
+    ui.start.addEventListener('click',startRound);ui.mobileStart.addEventListener('click',startRound);ui.cash.addEventListener('click',cashOut);ui.mobileCash.addEventListener('click',cashOut);ui.fullscreen?.addEventListener('click',toggleFullscreen);document.addEventListener('fullscreenchange',syncFullscreenUi);document.addEventListener('webkitfullscreenchange',syncFullscreenUi);screen.orientation?.addEventListener?.('change',()=>{
+      requestAnimationFrame(()=>{
+        syncImmersiveViewport();
+        syncFullscreenUi();
+      });
+    });visualViewport?.addEventListener?.('resize',()=>{
+      requestAnimationFrame(()=>{
+        syncImmersiveViewport();
+        syncFullscreenUi();
+      });
+    },{passive:true});[ui.mobileStart,ui.mobileCash].forEach(button=>button?.addEventListener?.('pointerup',()=>button.blur(),{passive:true}));ui.playAgain.addEventListener('click',playAgain);ui.clearHistory.addEventListener('click',clearHistory);
     ui.bet.addEventListener('input',()=>{$$('.quick-bets button').forEach(b=>b.classList.toggle('active',Number(b.dataset.bet)===currentBet()));previewStake();});$$('.quick-bets button').forEach(b=>b.addEventListener('click',()=>{if(['live','searching','settling'].includes(game.mode))return;ensureAudio();sfx('click');ui.bet.value=b.dataset.bet;$$('.quick-bets button').forEach(x=>x.classList.toggle('active',x===b));previewStake();}));
     ui.auto.addEventListener('change',updateTriggerLines);ui.stop.addEventListener('change',updateTriggerLines);$$('.target-presets button').forEach(b=>b.addEventListener('click',()=>{if(['live','searching','settling'].includes(game.mode))return;ensureAudio();sfx('click');ui.auto.value=b.dataset.auto;updateTriggerLines();}));ui.sound.addEventListener('click',()=>{game.sound=!game.sound;storageSet('memeflow.game.sound',game.sound?'on':'off');updateSound();if(game.sound){ensureAudio();sfx('click');}});
     document.addEventListener('visibilitychange',()=>{game.pageVisible=!document.hidden;void syncWakeLock();if(game.pageVisible){game.lifecyclePaused=false;ui.game.dataset.lifecycle='active';syncClockActivity();syncVisualActivity();void resyncStatus().catch(()=>startFallback());}else{game.countdownSeq++;game.resultFxSeq++;ui.center.hidden=true;if(game.session?.state==='LIVE')ui.game.dataset.launch='live';game.streamHealthy=false;try{game.stream?.close?.();}catch{}game.stream=null;ui.streamState.textContent='Game stream paused in background';stopFallback();syncClockActivity();syncVisualActivity();}});
