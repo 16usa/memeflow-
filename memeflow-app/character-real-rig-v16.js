@@ -1,7 +1,7 @@
 import * as THREE from '/vendor/three.module.js';
 
 export function createPepeRealRigV16({ parent, baseUrl='/game-assets/character-v16/' }={}) {
-  if (!parent) throw new Error('[PEPE V32] CLEAN WRIST PIVOTS READY');
+  if (!parent) throw new Error('[PEPE V19.2] AUTHORED HAND PIVOTS');
 
   const root = new THREE.Group();
   root.name = 'PepeRealRigV16';
@@ -117,36 +117,36 @@ export function createPepeRealRigV16({ parent, baseUrl='/game-assets/character-v
     );
   }
 
-  /*
-    V41 EXACT WRIST SEAT
-
-    These are PIXEL coordinates in each original PNG.
-    They are NEVER subtracted from each other directly.
-
-    sourcePixelToLocal() converts each point into the
-    correct Three.js local coordinate system first.
-  */
-
-  const seatDepth = 0.020;
-
   const wristSockets = {
     handLeft: {
       armName: 'armLeft',
 
-      // measured independently from arm_left.png
-      armWrist: [141.6607, 240.4957],
+      /*
+        Screen-left arm source image.
+        True center of the open wrist socket.
+      */
+      armWrist: [141.8945, 241.8896],
 
-      // authored cuff anchor in hand_right.png
+      /*
+        Screen-left hand uses hand_right.png.
+        True center of the hand cuff opening.
+      */
       handCuff: [89.1538, 63.4231]
     },
 
     handRight: {
       armName: 'armRight',
 
-      // measured independently from arm_right.png
-      armWrist: [47.9139, 240.0915],
+      /*
+        Mirrored point of the screen-left arm.
+        Source arm width is 208 px.
+      */
+      armWrist: [66.1055, 241.8896],
 
-      // authored cuff anchor in hand_left.png
+      /*
+        Mirrored point of the screen-left hand.
+        Source hand width is 236 px.
+      */
       handCuff: [146.8462, 63.4231]
     }
   };
@@ -187,468 +187,91 @@ export function createPepeRealRigV16({ parent, baseUrl='/game-assets/character-v
     return new THREE.Vector3(x, y, 0);
   }
 
-  /*
-    Detect the actual direction cuff -> fingers from
-    the alpha silhouette of each hand PNG.
-
-    No authored 110 / 170 / 205 degree values.
-    No normalization of hand.mesh.position.
-  */
-  function detectFingerAxis(part, cuffPixel) {
-    const texture = part.mesh.material.map;
-    const image = texture && texture.image;
-
-    if (!image || !image.width || !image.height) {
-      throw new Error(
-        '[PEPE V42] hand image unavailable'
-      );
-    }
-
-    const canvas =
-      document.createElement('canvas');
-
-    canvas.width = image.width;
-    canvas.height = image.height;
-
-    const ctx =
-      canvas.getContext(
-        '2d',
-        { willReadFrequently: true }
-      );
-
-    if (!ctx) {
-      throw new Error(
-        '[PEPE V42] canvas context unavailable'
-      );
-    }
-
-    ctx.clearRect(
-      0,
-      0,
-      canvas.width,
-      canvas.height
-    );
-
-    ctx.drawImage(
-      image,
-      0,
-      0,
-      canvas.width,
-      canvas.height
-    );
-
-    const frame =
-      ctx.getImageData(
-        0,
-        0,
-        canvas.width,
-        canvas.height
-      );
-
-    const data = frame.data;
-    const points = [];
-
-    const cuffX = cuffPixel[0];
-    const cuffY = cuffPixel[1];
-
-    let maxDistanceSq = 0;
-
-    for (let y = 0; y < canvas.height; y++) {
-      for (let x = 0; x < canvas.width; x++) {
-        const i =
-          (y * canvas.width + x) * 4;
-
-        const alpha = data[i + 3];
-
-        if (alpha < 64) {
-          continue;
-        }
-
-        const dx = x - cuffX;
-        const dy = y - cuffY;
-
-        const distanceSq =
-          dx * dx + dy * dy;
-
-        /*
-          Ignore pixels immediately surrounding
-          the cuff itself.
-        */
-        if (distanceSq < 100) {
-          continue;
-        }
-
-        maxDistanceSq =
-          Math.max(
-            maxDistanceSq,
-            distanceSq
-          );
-
-        points.push({
-          x,
-          y,
-          alpha,
-          distanceSq
-        });
-      }
-    }
-
-    if (points.length < 50) {
-      throw new Error(
-        '[PEPE V42] hand silhouette unavailable'
-      );
-    }
-
-    /*
-      The farthest opaque region from the cuff is
-      the finger end of the hand.
-
-      Use the farthest 6% rather than one pixel,
-      so antialiasing cannot change the direction.
-    */
-    points.sort(
-      (a, b) =>
-        b.distanceSq -
-        a.distanceSq
-    );
-
-    const sampleCount =
-      Math.max(
-        30,
-        Math.floor(
-          points.length * 0.06
-        )
-      );
-
-    let totalWeight = 0;
-    let sumX = 0;
-    let sumY = 0;
-
-    for (
-      let i = 0;
-      i < sampleCount;
-      i++
-    ) {
-      const p = points[i];
-
-      const distanceWeight =
-        p.distanceSq /
-        maxDistanceSq;
-
-      const weight =
-        (p.alpha / 255) *
-        (0.5 + distanceWeight);
-
-      totalWeight += weight;
-      sumX += p.x * weight;
-      sumY += p.y * weight;
-    }
-
-    const fingerX =
-      sumX / totalWeight;
-
-    const fingerY =
-      sumY / totalWeight;
-
-    /*
-      Convert PNG vector into the exact local
-      coordinate scale of this particular hand.
-
-      PNG Y points DOWN.
-      Three.js local Y points UP.
-    */
-    const geometryWidth =
-      part.mesh.geometry.parameters.width;
-
-    const geometryHeight =
-      part.mesh.geometry.parameters.height;
-
-    const axis =
-      new THREE.Vector2(
-        (fingerX - cuffX) *
-          geometryWidth /
-          image.width,
-
-        -(fingerY - cuffY) *
-          geometryHeight /
-          image.height
-      );
-
-    if (axis.lengthSq() < 1e-8) {
-      throw new Error(
-        '[PEPE V42] invalid finger axis'
-      );
-    }
-
-    return axis.normalize();
-  }
-
-
-  function attachHandToArm(
-    handName,
-    armName
-  ) {
+  function attachHandToArm(handName, armName) {
     const hand = parts[handName];
     const arm = parts[armName];
     const cfg = wristSockets[handName];
 
     if (!hand || !arm || !cfg) {
       throw new Error(
-        `[PEPE V41] missing ${handName}/${armName}`
+        `[PEPE V21] missing ${handName}/${armName}`
       );
     }
 
     if (cfg.armName !== armName) {
       throw new Error(
-        `[PEPE V41] arm mapping mismatch for ${handName}`
+        `[PEPE V21] arm mapping mismatch for ${handName}`
       );
     }
 
     /*
-      STEP 1
-      Convert BOTH PNG points independently.
-
-      We never do:
-        armPixel - handPixel
+      Resolve the real wrist socket from the arm PNG.
     */
-    const wristLocal =
-      sourcePixelToLocal(
-        arm,
-        cfg.armWrist[0],
-        cfg.armWrist[1]
-      );
-
-    const cuffLocal =
-      sourcePixelToLocal(
-        hand,
-        cfg.handCuff[0],
-        cfg.handCuff[1]
-      );
+    const wristLocal = sourcePixelToLocal(
+      arm,
+      cfg.armWrist[0],
+      cfg.armWrist[1]
+    );
 
     /*
-      STEP 2
-      Create the physical wrist joint at the exact
-      center of the real sleeve opening.
+      Resolve the authored cuff anchor from the hand PNG.
     */
-    const wristJoint =
-      new THREE.Group();
+    const cuffLocal = sourcePixelToLocal(
+      hand,
+      cfg.handCuff[0],
+      cfg.handCuff[1]
+    );
+
+    const wristJoint = new THREE.Group();
 
     wristJoint.name =
       handName === 'handLeft'
         ? 'wristJointScreenLeft'
         : 'wristJointScreenRight';
 
-    wristJoint.position.copy(
-      wristLocal
-    );
+    wristJoint.position.copy(wristLocal);
+    wristJoint.rotation.set(0, 0, 0);
+    wristJoint.scale.set(1, 1, 1);
 
-    wristJoint.rotation.set(
-      0,
-      0,
-      0
-    );
-
-    wristJoint.scale.set(
-      1,
-      1,
-      1
-    );
-
-    arm.pivot.add(
-      wristJoint
-    );
+    arm.pivot.add(wristJoint);
 
     /*
-      STEP 3
-      Move the PNG INSIDE hand.pivot so that the
-      exact cuff pixel becomes local origin 0,0.
-
-      After this, rotating hand.pivot can no longer
-      tear the cuff away from wristJoint.
+      Move the artwork so the hand cuff itself becomes
+      the local origin of the hand pivot.
     */
-    hand.mesh.position.x -=
-      cuffLocal.x;
+    hand.mesh.position.x -= cuffLocal.x;
+    hand.mesh.position.y -= cuffLocal.y;
 
-    hand.mesh.position.y -=
-      cuffLocal.y;
-
-    /*
-      Keep original layer depth.
-      Do NOT use mesh.position normalization.
-    */
-    const handLayerZ =
-      hand.mesh.position.z;
-
-    hand.mesh.position.z =
-      handLayerZ;
-
-    /*
-      STEP 4
-      Re-parent the hand onto the wrist joint.
-    */
     if (hand.pivot.parent) {
-      hand.pivot.parent.remove(
-        hand.pivot
-      );
+      hand.pivot.parent.remove(hand.pivot);
     }
 
-    wristJoint.add(
-      hand.pivot
-    );
+    wristJoint.add(hand.pivot);
 
-    hand.pivot.position.set(
-      0,
-      0,
-      0
-    );
-
-    hand.pivot.scale.set(
-      1,
-      1,
-      1
-    );
+    hand.pivot.position.set(0, 0, 0);
+    hand.pivot.scale.set(1, 1, 1);
 
     /*
-      STEP 5
-      Determine cuff -> fingers FROM THE ACTUAL PNG.
-      There is no manually selected hand angle.
+      Mirror the palm direction across the forearm axis.
+
+      Screen-left arm:
+          arm world angle = +28 deg
+          hand world angle = -28 deg
+          hand local angle = -56 deg
+
+      Screen-right arm:
+          arm world angle = -28 deg
+          hand world angle = +28 deg
+          hand local angle = +56 deg
+
+      This rotates the hands outward while the cuff
+      remains locked at the wrist socket.
     */
-    const sourceFingerAxis =
-      detectFingerAxis(
-        hand,
-        cfg.handCuff
-      );
-
-    /*
-      Desired direction is exact WORLD UP.
-
-      Because wristJoint inherits arm.pivot rotation,
-      WORLD UP must be converted into arm-local space.
-    */
-    /*
-      V42 — exact LOCAL wrist geometry.
-
-      wristLocal is already expressed in arm.pivot space.
-
-      arm pivot -> sleeve opening:
-          wristLocal
-
-      sleeve opening -> inside the arm:
-          -wristLocal
-
-      This direction automatically follows every
-      rotation.z of the arm because wristJoint is
-      a child of arm.pivot.
-
-      No WORLD UP.
-      No manual angle.
-    */
-    /*
-      V43 — exact directed wrist geometry.
-
-      arm pivot -> wrist socket = OUTWARD
-      wrist socket -> arm pivot = INWARD
-
-      Fingers must point OUT of the sleeve.
-      Seating depth must move IN to the sleeve.
-    */
-    const sleeveOutwardAxis =
-      new THREE.Vector2(
-        wristLocal.x,
-        wristLocal.y
-      ).normalize();
-
-    const sleeveInwardAxis =
-      sleeveOutwardAxis
-        .clone()
-        .multiplyScalar(-1);
-
-    const targetLocalAxis =
-      sleeveOutwardAxis.clone();
-
-    const sourceAngle =
-      Math.atan2(
-        sourceFingerAxis.y,
-        sourceFingerAxis.x
-      );
-
-    const targetAngle =
-      Math.atan2(
-        targetLocalAxis.y,
-        targetLocalAxis.x
-      );
-
-    const localRotation =
-      targetAngle -
-      sourceAngle;
-
     hand.pivot.rotation.set(
       0,
       0,
-      localRotation
+      -2 * arm.baseRot
     );
-
-    /*
-      STEP 6
-      Seat the cuff deeper INTO the sleeve.
-
-      The outward direction is the hand's exact
-      target longitudinal axis.
-
-      Therefore inward is exactly its opposite.
-      This is local wristJoint / hand.pivot space,
-      so arm rotation cannot break the seat.
-    */
-    /*
-      Exact seating INSIDE the sleeve.
-
-      The translation is performed in wristJoint /
-      arm-local coordinates, therefore it remains
-      stable under every arm rotation.
-    */
-    hand.pivot.position.set(
-      sleeveInwardAxis.x *
-        seatDepth,
-
-      sleeveInwardAxis.y *
-        seatDepth,
-
-      0
-    );
-
-    /*
-      STEP 7
-      Sleeve stays above the hand and hides the seam.
-    */
-    if (handName === 'handLeft') {
-      hand.mesh.renderOrder = 38;
-      arm.mesh.renderOrder = 40;
-    } else {
-      hand.mesh.renderOrder = 39;
-      arm.mesh.renderOrder = 41;
-    }
-
-    if (hand.mesh.material) {
-      hand.mesh.material.depthTest =
-        false;
-
-      hand.mesh.material.depthWrite =
-        false;
-
-      hand.mesh.material.needsUpdate =
-        true;
-    }
-
-    if (arm.mesh.material) {
-      arm.mesh.material.depthTest =
-        false;
-
-      arm.mesh.material.depthWrite =
-        false;
-
-      arm.mesh.material.needsUpdate =
-        true;
-    }
 
     hand.basePosition =
       hand.pivot.position.clone();
@@ -659,811 +282,90 @@ export function createPepeRealRigV16({ parent, baseUrl='/game-assets/character-v
     hand.wristJoint =
       wristJoint;
 
-    console.log(
-      `[PEPE V42] ${handName} seated`,
-      {
-        armWrist:
-          cfg.armWrist,
-
-        handCuff:
-          cfg.handCuff,
-
-        fingerAxis: [
-          sourceFingerAxis.x,
-          sourceFingerAxis.y
-        ],
-
-        seatDepth
-      }
-    );
-  }
-
-
-
-  /* === PEPE HAND CALIBRATION V1 START === */
-
-  /*
-    FINAL VALUES FROM MOBILE CALIBRATOR V8.
-
-    These values are applied AFTER the authored
-    wristJoint / cuff attachment has been completed.
-
-    This preserves the existing wrist rig and applies
-    only the final visual calibration chosen by hand.
-  */
-
-  const handCalibration = {
-
-    handLeft: {
-      x: 0.545,
-      y: -0.075,
-      z: 0,
-
-      inOut: -0.5,
-
-      rotationDeg: 92,
-
-      finalRenderOrder: 68,
-
-      scale: 1,
-      width: 1
-    },
-
-    handRight: {
-      x: -0.545,
-      y: -0.075,
-      z: 0,
-
-      inOut: -0.5,
-
-      rotationDeg: -96,
-
-      finalRenderOrder: 39,
-
-      scale: 1,
-      width: 1
+    /*
+      Hands render behind sleeves.
+    */
+    if (handName === 'handLeft') {
+      hand.mesh.renderOrder = 38;
+      arm.mesh.renderOrder = 40;
+    } else {
+      hand.mesh.renderOrder = 39;
+      arm.mesh.renderOrder = 41;
     }
-
-  };
-
-
-  function applyFinalHandCalibration(handName) {
-
-    const hand =
-      parts[handName];
-
-    const cfg =
-      handCalibration[handName];
-
-
-    if (!hand || !cfg) {
-      throw new Error(
-        `[PEPE CALIBRATION] missing ${handName}`
-      );
-    }
-
-
-    /*
-      1. POSITION
-
-      hand.pivot already lives inside wristJoint,
-      therefore these are local wrist offsets.
-    */
-
-    hand.pivot.position.set(
-
-      cfg.x,
-
-      cfg.y,
-
-      cfg.z
-
-    );
-
-
-    /*
-      2. ROTATION
-
-      Calibration rotation is relative to the
-      authored hand angle produced by attachHandToArm().
-    */
-
-    hand.pivot.rotation.z =
-
-      hand.baseLocalRot +
-
-      THREE.MathUtils.degToRad(
-        cfg.rotationDeg
-      );
-
-
-    /*
-      3. SCALE / WIDTH
-    */
-
-    hand.pivot.scale.set(
-
-      cfg.scale * cfg.width,
-
-      cfg.scale,
-
-      cfg.scale
-
-    );
-
-
-    /*
-      4. IN / OUT
-
-      Use exactly the same direction calculation
-      used by the mobile calibrator.
-    */
-
-    const seatDirection =
-      hand.mesh.position.clone();
-
-
-    seatDirection.z = 0;
-
-
-    if (
-      seatDirection.lengthSq() >
-      1e-8
-    ) {
-
-      seatDirection.normalize();
-
-
-      hand.mesh.position
-        .addScaledVector(
-
-          seatDirection,
-
-          cfg.inOut
-
-        );
-
-    }
-
-
-    /*
-      5. FINAL DRAW LAYER
-
-      Exact values copied from calibration output.
-    */
-
-    hand.mesh.renderOrder =
-      cfg.finalRenderOrder;
-
 
     if (hand.mesh.material) {
-
-      hand.mesh.material.depthTest =
-        false;
-
-      hand.mesh.material.depthWrite =
-        false;
-
-      hand.mesh.material.needsUpdate =
-        true;
-
+      hand.mesh.material.depthTest = false;
+      hand.mesh.material.depthWrite = false;
+      hand.mesh.material.needsUpdate = true;
     }
 
+    if (arm.mesh.material) {
+      arm.mesh.material.depthTest = false;
+      arm.mesh.material.depthWrite = false;
+      arm.mesh.material.needsUpdate = true;
+    }
 
     /*
-      6. Store calibrated values as new base values.
+      Final exact cuff lock after parenting and rotation.
     */
+    hand.pivot.updateMatrixWorld(true);
+    wristJoint.updateMatrixWorld(true);
 
-    hand.basePosition =
-      hand.pivot.position.clone();
-
-    hand.baseLocalRot =
-      hand.pivot.rotation.z;
-
-
-    hand.pivot.updateMatrixWorld(
-      true
+    const actualCuff = sourcePixelToLocal(
+      hand,
+      cfg.handCuff[0],
+      cfg.handCuff[1]
     );
 
+    hand.pivot.localToWorld(actualCuff);
+    wristJoint.worldToLocal(actualCuff);
 
-    console.log(
-      `[PEPE CALIBRATION] ${handName}`,
-      {
-        position:
-          hand.pivot.position.toArray(),
+    hand.pivot.position.sub(actualCuff);
 
-        rotationDeg:
-          THREE.MathUtils.radToDeg(
-            hand.pivot.rotation.z
-          ),
-
-        renderOrder:
-          hand.mesh.renderOrder
-      }
-    );
-
-  }
-
-  /* === PEPE HAND CALIBRATION V1 END === */
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  /* === PEPE CLEAN CUFF ASSEMBLY V6 START === */
-
-  /*
-    GOALS:
-
-    1. left hand must sit in left cuff
-    2. right hand must sit in right cuff
-    3. reduce smearing / seam artifacts
-    4. keep shoulders under torso
-    5. keep visible arms in front of torso
-    6. keep cuff rim in front of hand base
-  */
-
-
-
-  function addSeatAlongCurrentHandDirection(
-    hand,
-    amount
-  ) {
-
-    const dir =
-      hand.mesh.position.clone();
-
-    dir.z = 0;
-
-    if (
-      dir.lengthSq() > 1e-8
-    ) {
-
-      dir.normalize();
-
-      hand.mesh.position.addScaledVector(
-        dir,
-        amount
-      );
-
-    }
-
-  }
-
-
-
-  function refineHandIntoOwnCuffV6() {
-
-    const handLeft =
-      parts.handLeft;
-
-    const handRight =
-      parts.handRight;
-
-    if (
-      !handLeft ||
-      !handRight
-    ) {
-
-      throw new Error(
-        '[PEPE V6] missing hands'
-      );
-
-    }
-
+    hand.pivot.updateMatrixWorld(true);
+    wristJoint.updateMatrixWorld(true);
+  
 
     /*
-      IMPORTANT:
+      V21_5_LEFT_HAND_ONLY
 
-      We refine AFTER final mobile calibration.
-
-      handLeft  = screen-right hand
-      handRight = screen-left hand
-
-      We move each slightly OUTWARD from center
-      and slightly DEEPER into its own cuff.
+      Final visual seating of each hand inside its own
+      sleeve. The wrist hierarchy remains unchanged.
     */
 
+    const handSeat =
+      handName === 'handLeft'
+        ? { x: -0.12, y: 0.23 }
+        : { x:  0.12, y: 0.17 };
+
+    hand.pivot.position.x += handSeat.x;
+    hand.pivot.position.y += handSeat.y;
 
     /*
-      LEFT HAND
-      (screen-right)
+      Keep the hand behind the sleeve so the sleeve
+      covers the wrist seam.
     */
-    handLeft.pivot.position.x += 0.035;
-    handLeft.pivot.position.y -= 0.010;
-    handLeft.pivot.rotation.z +=
-      THREE.MathUtils.degToRad(-2);
+    hand.mesh.renderOrder =
+      handName === 'handLeft' ? 38 : 39;
 
-    addSeatAlongCurrentHandDirection(
-      handLeft,
-      -0.060
-    );
+    arm.mesh.renderOrder =
+      handName === 'handLeft' ? 40 : 41;
 
+    hand.pivot.updateMatrixWorld(true);
+    wristJoint.updateMatrixWorld(true);
 
-    /*
-      RIGHT HAND
-      (screen-left)
-    */
-    handRight.pivot.position.x -= 0.035;
-    handRight.pivot.position.y -= 0.010;
-    handRight.pivot.rotation.z +=
-      THREE.MathUtils.degToRad(6);
+}
 
-    addSeatAlongCurrentHandDirection(
-      handRight,
-      -0.060
-    );
 
 
-    /*
-      Hands should stay above visible arm segment,
-      but below cuff rim segment.
-    */
-    handRight.mesh.renderOrder =
-      50;
 
-    handLeft.mesh.renderOrder =
-      51;
-
-
-    for (
-      const hand of [
-        handLeft,
-        handRight
-      ]
-    ) {
-
-      if (
-        hand.mesh.material
-      ) {
-
-        hand.mesh.material.depthTest =
-          false;
-
-        hand.mesh.material.depthWrite =
-          false;
-
-        hand.mesh.material.needsUpdate =
-          true;
-
-      }
-
-      hand.pivot.updateMatrixWorld(
-        true
-      );
-    }
-
-
-    console.log(
-      '[PEPE V6] hands refined into cuffs'
-    );
-
-  }
-
-
-
-  function createArmSegmentGeometryV6(
-    fullWidth,
-    fullHeight,
-    imageTop,
-    imageBottom
-  ) {
-
-    const segmentHeight =
-      fullHeight *
-      (imageBottom - imageTop);
-
-    const geometry =
-      new THREE.PlaneGeometry(
-        fullWidth,
-        segmentHeight
-      );
-
-    const uv =
-      geometry.attributes.uv;
-
-    const textureTop =
-      1 - imageTop;
-
-    const textureBottom =
-      1 - imageBottom;
-
-    for (
-      let i = 0;
-      i < uv.count;
-      i++
-    ) {
-
-      const originalV =
-        uv.getY(i);
-
-      const croppedV =
-        textureBottom +
-        originalV *
-        (
-          textureTop -
-          textureBottom
-        );
-
-      uv.setY(
-        i,
-        croppedV
-      );
-
-    }
-
-    uv.needsUpdate = true;
-
-    return geometry;
-  }
-
-
-
-  function splitArmVisualV6(
-    armName,
-    {
-      shoulderEnd = 0.245,
-      cuffStart = 0.775,
-      overlap = 0.010,
-
-      shoulderOrder = 20,
-      mainOrder = 40,
-      cuffOrder = 60
-    } = {}
-  ) {
-
-    const arm =
-      parts[armName];
-
-    if (
-      !arm ||
-      !arm.mesh
-    ) {
-
-      throw new Error(
-        `[PEPE V6] missing ${armName}`
-      );
-
-    }
-
-    const originalMesh =
-      arm.mesh;
-
-    const geometry =
-      originalMesh.geometry;
-
-    const fullWidth =
-      geometry.parameters?.width;
-
-    const fullHeight =
-      geometry.parameters?.height;
-
-    if (
-      !fullWidth ||
-      !fullHeight
-    ) {
-
-      throw new Error(
-        `[PEPE V6] invalid geometry ${armName}`
-      );
-
-    }
-
-
-    const holder =
-      new THREE.Group();
-
-    holder.name =
-      armName + 'SplitVisualV6';
-
-    holder.position.copy(
-      originalMesh.position
-    );
-
-    holder.rotation.copy(
-      originalMesh.rotation
-    );
-
-    holder.scale.copy(
-      originalMesh.scale
-    );
-
-    arm.pivot.add(
-      holder
-    );
-
-    originalMesh.visible =
-      false;
-
-
-    function addSegment(
-      name,
-      top,
-      bottom,
-      renderOrder
-    ) {
-
-      const geo =
-        createArmSegmentGeometryV6(
-          fullWidth,
-          fullHeight,
-          top,
-          bottom
-        );
-
-      const material =
-        originalMesh.material.clone();
-
-      material.map =
-        originalMesh.material.map;
-
-      material.transparent =
-        true;
-
-      material.depthTest =
-        false;
-
-      material.depthWrite =
-        false;
-
-      material.alphaTest =
-        0.035;
-
-      material.needsUpdate =
-        true;
-
-      const mesh =
-        new THREE.Mesh(
-          geo,
-          material
-        );
-
-      mesh.name =
-        armName + '_' + name;
-
-      const centerY =
-        fullHeight *
-        (
-          0.5 -
-          (
-            top + bottom
-          ) / 2
-        );
-
-      mesh.position.set(
-        0,
-        centerY,
-        0
-      );
-
-      mesh.renderOrder =
-        renderOrder;
-
-      holder.add(
-        mesh
-      );
-
-      disposables.push(
-        geo,
-        material
-      );
-
-      return mesh;
-    }
-
-
-    /*
-      Small overlap removes visible seam / blur line
-      between segments.
-    */
-
-    const shoulder =
-      addSegment(
-        'shoulder',
-        0,
-        shoulderEnd + overlap,
-        shoulderOrder
-      );
-
-    const main =
-      addSegment(
-        'main',
-        shoulderEnd - overlap,
-        cuffStart + overlap,
-        mainOrder
-      );
-
-    const cuff =
-      addSegment(
-        'cuff',
-        cuffStart - overlap,
-        1,
-        cuffOrder
-      );
-
-    arm.splitVisual = {
-      holder,
-      shoulder,
-      main,
-      cuff
-    };
-
-    console.log(
-      `[PEPE V6] ${armName} split cleanly`,
-      {
-        shoulderEnd,
-        cuffStart,
-        overlap
-      }
-    );
-  }
-
-
-
-  function applyCleanCuffAssemblyV6() {
-
-    const body =
-      parts.body;
-
-    const head =
-      parts.head;
-
-    const handLeft =
-      parts.handLeft;
-
-    const handRight =
-      parts.handRight;
-
-    const armLeft =
-      parts.armLeft;
-
-    const armRight =
-      parts.armRight;
-
-    if (
-      !body ||
-      !head ||
-      !handLeft ||
-      !handRight ||
-      !armLeft ||
-      !armRight
-    ) {
-
-      throw new Error(
-        '[PEPE V6] missing body/head/arms/hands'
-      );
-
-    }
-
-
-    /*
-      Global stack:
-
-        shoulder segments
-          < body
-          < main arm segments
-          < hands
-          < cuff segments
-          < head
-    */
-
-    body.mesh.renderOrder =
-      30;
-
-    head.mesh.renderOrder =
-      90;
-
-    for (
-      const part of [
-        body,
-        head,
-        handLeft,
-        handRight,
-        armLeft,
-        armRight
-      ]
-    ) {
-
-      if (
-        part.mesh.material
-      ) {
-
-        part.mesh.material.depthTest =
-          false;
-
-        part.mesh.material.depthWrite =
-          false;
-
-        part.mesh.material.needsUpdate =
-          true;
-
-      }
-
-    }
-
-
-    splitArmVisualV6(
-      'armLeft',
-      {
-        shoulderEnd: 0.245,
-        cuffStart: 0.780,
-        overlap: 0.010,
-
-        shoulderOrder: 20,
-        mainOrder: 41,
-        cuffOrder: 61
-      }
-    );
-
-    splitArmVisualV6(
-      'armRight',
-      {
-        shoulderEnd: 0.245,
-        cuffStart: 0.780,
-        overlap: 0.010,
-
-        shoulderOrder: 21,
-        mainOrder: 40,
-        cuffOrder: 60
-      }
-    );
-
-
-    /*
-      Final hand placement relative to each own cuff.
-    */
-    refineHandIntoOwnCuffV6();
-
-    console.log(
-      '[PEPE V6] CLEAN CUFF ASSEMBLY READY'
-    );
-  }
-
-  /* === PEPE CLEAN CUFF ASSEMBLY V6 END === */
 
 
   const ready = Promise.all(defs.map(addPart)).then(() => {
     attachHandToArm('handLeft', 'armLeft');
     attachHandToArm('handRight', 'armRight');
 
-    /*
-      Apply final values from mobile calibration.
-    */
-    applyFinalHandCalibration('handLeft');
-    applyFinalHandCalibration('handRight');
-
-    /*
-      Final clean assembly:
-      own cuffs + cleaner seams.
-    */
-    applyCleanCuffAssemblyV6();
-
-
-
-    /*
-      Final structural assembly:
-      body -> arms -> wrists -> hands.
-    */
-
-    console.log('[PEPE V32] CLEAN WRIST PIVOTS READY');
+    console.log('[PEPE V19.2] AUTHORED HAND PIVOTS');
     return true;
   });
 
