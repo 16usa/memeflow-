@@ -1,7 +1,7 @@
 (()=>{
   'use strict';
 
-  const AUTO_VERSION='10.2';
+  const AUTO_VERSION='10.3';
 
   function bootAuto(){
     if(globalThis.__memeflowAutoPlayV102)return;
@@ -171,6 +171,7 @@
     let resetPending=false;
     let resetAttempts=0;
     let stoppingSearch=false;
+    let searchRetryAttempts=0;
 
     const state=()=>game.dataset.state||'idle';
 
@@ -476,18 +477,57 @@
         }
 
         /*
-          SEARCHING -> IDLE without a completed round is
-          treated as cancel/error, not an endless restart.
+          AUTO MODE:
+          SEARCHING -> IDLE is NOT a reason to turn AUTO off.
+
+          The normal Game selector may return to IDLE after a
+          temporary server / selector / price-feed interruption.
+          Keep AUTO armed and start a fresh search automatically.
+
+          Only the user pressing STOP AUTO disables the loop.
         */
         if(
           old==='searching' &&
           !stoppingSearch
         ){
-          disable({
-            cancelSearch:false,
-            reason:
-              'AUTO stopped · search ended before a round started.'
-          });
+          const idleReason=
+            String(stateMessage?.textContent||'');
+
+          /*
+            Authentication/session problems cannot be repaired
+            by hammering START forever. Stop only for those.
+          */
+          const fatalSessionProblem=
+            /open the main memeflow|unauthori[sz]ed|sign.?in|session can be created/i
+              .test(idleReason);
+
+          if(fatalSessionProblem){
+            disable({
+              cancelSearch:false,
+              reason:
+                'AUTO stopped · MEMEFLOW session needs attention.'
+            });
+            return;
+          }
+
+          searchRetryAttempts++;
+
+          const retryDelay=
+            Math.min(
+              7000,
+              700 + searchRetryAttempts*650
+            );
+
+          message(
+            'AUTO active · restarting market search…'
+          );
+
+          schedule(
+            requestStart,
+            retryDelay
+          );
+
+          return;
         }
 
         return;
@@ -496,6 +536,7 @@
       if(current==='live'){
         resetPending=false;
         resetAttempts=0;
+        searchRetryAttempts=0;
       }
     }
 
