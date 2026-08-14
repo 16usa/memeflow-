@@ -1,6 +1,6 @@
 (()=>{
   'use strict';
-  const CLIENT_VERSION='9.3';
+  const CLIENT_VERSION='9.4';
   const $=(s)=>document.querySelector(s), $$=(s)=>[...document.querySelectorAll(s)];
   const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
   const num=(...values)=>{for(const value of values){if(value===null||value===undefined||value==='')continue;const n=Number(value);if(Number.isFinite(n))return n;}return null;};
@@ -331,6 +331,38 @@
     game.cameraScale=cameraScale;game.cameraY=cameraY;game.cameraX=cameraX;game.engineScale=engineScale;
     ui.world.style.setProperty('--camera-scale',cameraScale.toFixed(4));ui.world.style.setProperty('--camera-y',`${cameraY.toFixed(2)}px`);ui.world.style.setProperty('--camera-x',`${cameraX.toFixed(2)}px`);ui.world.style.setProperty('--engine-scale',engineScale.toFixed(3));ui.world.style.setProperty('--speed-opacity',(0.12+speed*.62).toFixed(3));ui.world.style.setProperty('--danger-opacity',clamp(dangerScore*.72,0,.86).toFixed(3));ui.world.style.setProperty('--boost-opacity',clamp(boost*.74,0,.78).toFixed(3));const sceneEnergy=clamp(Math.abs(v)*6.5+Math.max(0,m-1)*.028+(stage==='hyper'?.32:stage==='deep'?.14:0),0,1);const px=clamp(game.visualTilt*.42+v*54,-11,11),py=clamp(-v*38+fall*15,-8,8);ui.world.style.setProperty('--scene-energy',sceneEnergy.toFixed(3));ui.world.style.setProperty('--pf-x',`${(-px*.28).toFixed(2)}px`);ui.world.style.setProperty('--pf-y',`${(-py*.22).toFixed(2)}px`);ui.world.style.setProperty('--pm-x',`${(-px*.62).toFixed(2)}px`);ui.world.style.setProperty('--pm-y',`${(-py*.48).toFixed(2)}px`);ui.world.style.setProperty('--pn-x',`${(-px*1.1).toFixed(2)}px`);ui.world.style.setProperty('--pn-y',`${(-py*.82).toFixed(2)}px`);ui.world.style.setProperty('--smoke-opacity',(stage==='ground'||stage==='clouds'?clamp(.18+sceneEnergy*.42,.12,.66):.03).toFixed(3));ui.world.style.setProperty('--vignette-opacity',clamp(.16+speed*.16+dangerScore*.15,.14,.58).toFixed(3));
     game.fx?.update?.({mode:game.mode,stage,multiplier:m,peak,velocity:v,acceleration:game.acceleration,danger,thrust,flightState:game.flightState});
+
+    // V36: server-authoritative Game state -> visual rocket only.
+    // No market fetch, no second price source and no trading changes.
+    globalThis.pepeRocketGameV36?.setState?.({
+      mode:game.mode,
+      stage,
+      multiplier:m,
+      peak,
+
+      // velocity is already calculated from server multiplier changes
+      direction:clamp(v*14,-1,1),
+
+      speed,
+      thrust:clamp(thrust/100,0,1),
+
+      volatility:clamp(
+        Math.abs(game.acceleration)*3.2+
+        dd/24,
+        0,
+        1
+      ),
+
+      boost,
+
+      progress:clamp(
+        (levelNorm(m)-.08)/.84,
+        0,
+        1
+      ),
+
+      danger
+    });
     updateFlightAssist(live.m);updateFlightProgress(m);
     if(ui.flightPositionHud)ui.flightPositionHud.dataset.tone=danger==='high'?'danger':game.flightState==='boost'?'boost':'normal';
     ui.rocket?.style?.setProperty('--ghost-opacity',clamp(Math.abs(v)*6+Math.max(0,m-1)*.02,0,.62).toFixed(3));

@@ -865,3 +865,62 @@
   .flight-assist{left:5px;top:42px;width:19%;padding:3px 4px}.flight-position-hud{right:5px;top:15%;width:64px;padding:3px 4px}.game[data-state="live"] .cashout-telemetry,.game[data-state="settling"] .cashout-telemetry{left:5px;bottom:20px;width:22%;padding:3px 4px}.cashout-telemetry-head span,.cashout-telemetry-head b{font-size:3.8px}.cashout-telemetry-grid small{display:none}.cashout-telemetry-grid b{font-size:4.8px}.story-hero{left:50%;width:clamp(180px,27vw,250px);bottom:4%}
 }
 @media(prefers-reduced-motion:reduce){.story-hero,.pepe-v6 *,.exhaust i,.exhaust b{animation:none!important;transition:none!important}}
+
+
+/* === PEPE ROCKET V36 REAL GAME START === */
+
+/*
+  This is only the visual layer.
+  Existing trace / multiplier / controls remain the authoritative Game UI.
+*/
+.world{
+  position:relative!important;
+  overflow:hidden!important;
+  isolation:isolate;
+  background:#01040b!important;
+}
+
+#pepeRocketCanvasV36{
+  position:absolute!important;
+  inset:0!important;
+  width:100%!important;
+  height:100%!important;
+  display:block!important;
+  pointer-events:none!important;
+  z-index:0!important;
+  opacity:1;
+  filter:saturate(1.04) contrast(1.025);
+}
+
+/*
+  Existing Game instrumentation stays above WebGL.
+*/
+.world .trace,
+.world .levels,
+.world .flight-position-hud,
+.world .flight-progress,
+.world .story-route,
+.world .target-reticle,
+.world .shockwave,
+.world .emergency-flash,
+.world .secure-flash,
+.world .center-state,
+.world .milestone,
+.world .stale-cover{
+  z-index:4;
+}
+
+.game[data-state="idle"] #pepeRocketCanvasV36{
+  opacity:.96;
+}
+
+.game[data-state="searching"] #pepeRocketCanvasV36{
+  opacity:1;
+}
+
+.game[data-state="live"] #pepeRocketCanvasV36,
+.game[data-state="settling"] #pepeRocketCanvasV36{
+  opacity:1;
+}
+
+/* === PEPE ROCKET V36 REAL GAME END === */

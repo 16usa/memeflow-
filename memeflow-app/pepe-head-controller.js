@@ -2,7 +2,7 @@ import * as THREE from '/vendor/three.module.js';
 
 const HEAD_NAMES=['idle','cruise','up','pump','boost','down','shocked','recover','blink'];
 
-export function createPepeHeadController({parent,baseUrl='/game-assets/rocket-v34/head/',radius=0.238}={}){
+export function createPepeHeadController({parent,baseUrl='/game-assets/rocket-v34/face/',radius=0.238}={}){
   if(!parent) throw new Error('[PEPE HEAD V34.2] parent required');
   const root=new THREE.Group(); root.name='PepeHeadV34_2'; parent.add(root);
   const geometry=new THREE.CircleGeometry(radius,64);
@@ -11,7 +11,7 @@ export function createPepeHeadController({parent,baseUrl='/game-assets/rocket-v3
   const loader=new THREE.TextureLoader(),textures={};
   let current='idle',nextBlink=2.0+Math.random()*2.8,blinkLeft=0,recoverLeft=0,lastDirection=0;
   const ready=Promise.all(HEAD_NAMES.map(name=>new Promise((resolve,reject)=>{
-    loader.load(`${baseUrl}head-${name}.png`,tex=>{
+    loader.load(`${baseUrl}face-${name}.png`,tex=>{
       tex.colorSpace=THREE.SRGBColorSpace;
       tex.minFilter=THREE.LinearFilter;
       tex.magFilter=THREE.LinearFilter;
