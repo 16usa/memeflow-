@@ -1535,3 +1535,78 @@ body.mf-game-immersive
 }
 
 /* === V10.0 LANDSCAPE LAUNCH FIT END === */
+
+
+/* === V10.1 LAUNCH BOTTOM ANCHOR START === */
+
+/*
+  Launch Control fills its grid cell already.
+  The problem was only that all children stayed packed
+  at the top, leaving a large dead area below START.
+*/
+.launch-panel{
+  display:flex!important;
+  flex-direction:column!important;
+  min-height:0!important;
+}
+
+/*
+  Push the active action area to the bottom.
+*/
+.launch-panel > .start-button,
+.launch-panel > .cash-button{
+  flex-shrink:0!important;
+}
+
+/*
+  START is the normal idle/search action.
+  Give it the remaining vertical space above as margin.
+*/
+.launch-panel > .start-button:not([hidden]){
+  margin-top:auto!important;
+  margin-bottom:0!important;
+}
+
+/*
+  During a live round CASH OUT replaces the role of START,
+  so it must sit in exactly the same bottom position.
+*/
+.launch-panel > .cash-button:not([hidden]){
+  margin-top:auto!important;
+  margin-bottom:0!important;
+}
+
+/*
+  Keep the risk block directly above the bottom action.
+*/
+.launch-panel .risk-deck{
+  flex-shrink:0!important;
+}
+
+/*
+  Portrait: leave a small premium breathing space above
+  the Home Indicator, but no huge empty bottom area.
+*/
+@media (orientation:portrait){
+  .launch-panel > .start-button:not([hidden]),
+  .launch-panel > .cash-button:not([hidden]){
+    margin-bottom:8px!important;
+  }
+}
+
+/*
+  Landscape:
+  same principle, but tighter because vertical height
+  is much smaller.
+*/
+@media
+  (max-width:1000px)
+  and (orientation:landscape){
+
+  .launch-panel > .start-button:not([hidden]),
+  .launch-panel > .cash-button:not([hidden]){
+    margin-bottom:4px!important;
+  }
+}
+
+/* === V10.1 LAUNCH BOTTOM ANCHOR END === */

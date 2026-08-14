@@ -125,7 +125,7 @@
     }
   );
 
-  const CLIENT_VERSION='10.0';
+  const CLIENT_VERSION='10.1';
 
   const $=(s)=>document.querySelector(s), $$=(s)=>[...document.querySelectorAll(s)];
   const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
