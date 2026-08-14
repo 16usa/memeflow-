@@ -1,0 +1,135 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>PEPE Wrist Calibrator</title>
+
+<style>
+*{box-sizing:border-box}
+
+html,body{
+  margin:0;
+  width:100%;
+  min-height:100%;
+  background:#05090b;
+  color:#fff;
+  font-family:-apple-system,BlinkMacSystemFont,sans-serif;
+}
+
+body{
+  padding:
+    max(10px,env(safe-area-inset-top))
+    10px
+    max(20px,env(safe-area-inset-bottom));
+}
+
+h1{
+  font-size:16px;
+  margin:0 0 8px;
+}
+
+#stage{
+  width:100%;
+  height:46vh;
+  min-height:320px;
+  border:1px solid #24453d;
+  border-radius:16px;
+  overflow:hidden;
+  background:
+    radial-gradient(circle at 50% 45%,#16342e,#06100e 65%);
+}
+
+#stage canvas{
+  display:block;
+  width:100%;
+  height:100%;
+}
+
+.panel{
+  margin-top:10px;
+  padding:12px;
+  border:1px solid #24453d;
+  border-radius:14px;
+  background:#0a1212;
+}
+
+.panel h2{
+  margin:0 0 10px;
+  font-size:14px;
+  color:#7fffc8;
+}
+
+.row{
+  display:grid;
+  grid-template-columns:78px 1fr 64px;
+  gap:8px;
+  align-items:center;
+  margin:9px 0;
+}
+
+.row label{
+  font-size:12px;
+}
+
+.row output{
+  text-align:right;
+  font:700 11px monospace;
+}
+
+input[type=range]{
+  width:100%;
+  height:34px;
+}
+
+.buttons{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+  margin-top:12px;
+}
+
+button{
+  min-height:54px;
+  border-radius:13px;
+  border:1px solid #2c6656;
+  background:#0d201b;
+  color:white;
+  font-weight:800;
+  font-size:14px;
+}
+
+#result{
+  margin-top:10px;
+  padding:10px;
+  min-height:70px;
+  border-radius:10px;
+  background:#030706;
+  border:1px solid #18362f;
+  color:#88ffd0;
+  font:11px/1.45 monospace;
+  white-space:pre-wrap;
+  word-break:break-word;
+}
+</style>
+</head>
+
+<body>
+
+<h1>PEPE · WRIST / HAND CALIBRATOR</h1>
+
+<div id="stage"></div>
+
+<div id="controls"></div>
+
+<div class="buttons">
+  <button id="reset">RESET</button>
+  <button id="copy">COPY VALUES</button>
+</div>
+
+<div id="result">Move sliders until both hands sit correctly inside the sleeves.</div>
+
+<script type="module" src="/character-rig-calibrator.js?v=1786670143"></script>
+
+</body>
+</html>

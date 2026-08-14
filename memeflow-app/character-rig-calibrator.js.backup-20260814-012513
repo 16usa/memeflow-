@@ -1,0 +1,1123 @@
+import * as THREE from '/vendor/three.module.js';
+
+import {
+  createPepeRealRigV16
+} from '/character-real-rig-v16.js?v=32800';
+
+
+const stage =
+  document.getElementById('stage');
+
+const controls =
+  document.getElementById('controls');
+
+const status =
+  document.getElementById('status');
+
+const result =
+  document.getElementById('result');
+
+
+/* ==========================================================
+   THREE
+   ========================================================== */
+
+const scene =
+  new THREE.Scene();
+
+const camera =
+  new THREE.OrthographicCamera(
+    -2,
+    2,
+    2,
+    -2,
+    0.1,
+    100
+  );
+
+camera.position.set(
+  0,
+  0,
+  10
+);
+
+
+const renderer =
+  new THREE.WebGLRenderer({
+    alpha:true,
+    antialias:true,
+    powerPreference:'high-performance'
+  });
+
+renderer.setPixelRatio(
+  Math.min(
+    window.devicePixelRatio || 1,
+    2
+  )
+);
+
+renderer.setClearColor(
+  0x000000,
+  0
+);
+
+stage.appendChild(
+  renderer.domElement
+);
+
+
+const fitGroup =
+  new THREE.Group();
+
+scene.add(
+  fitGroup
+);
+
+
+const pepe =
+  createPepeRealRigV16({
+    parent:fitGroup
+  });
+
+
+
+/* ==========================================================
+   CONTROL STATE
+   ========================================================== */
+
+const makeDefault = () => ({
+  x:0,
+  y:0,
+  rotation:0,
+  seat:0,
+  layer:0,
+  scale:1
+});
+
+
+const values = {
+
+  handLeft:
+    makeDefault(),
+
+  handRight:
+    makeDefault()
+
+};
+
+
+const base = {};
+
+
+let selectedHand =
+  'handLeft';
+
+
+/* ==========================================================
+   CONTROL DEFINITIONS
+   ========================================================== */
+
+const definitions = [
+
+  {
+    key:'x',
+    label:'X · LEFT / RIGHT',
+    min:-0.50,
+    max:0.50,
+    step:0.005,
+    digits:3
+  },
+
+  {
+    key:'y',
+    label:'Y · UP / DOWN',
+    min:-0.50,
+    max:0.50,
+    step:0.005,
+    digits:3
+  },
+
+  {
+    key:'rotation',
+    label:'ROTATE',
+    min:-180,
+    max:180,
+    step:1,
+    digits:0
+  },
+
+  {
+    key:'seat',
+    label:'IN / OUT',
+    min:-0.40,
+    max:0.40,
+    step:0.005,
+    digits:3
+  },
+
+  {
+    key:'layer',
+    label:'LAYER · BACK / FRONT',
+    min:-30,
+    max:30,
+    step:1,
+    digits:0
+  },
+
+  {
+    key:'scale',
+    label:'SCALE',
+    min:0.40,
+    max:1.60,
+    step:0.01,
+    digits:2
+  }
+
+];
+
+
+/* ==========================================================
+   FORMAT
+   ========================================================== */
+
+function formatValue(
+  value,
+  def
+){
+  return Number(value)
+    .toFixed(def.digits);
+}
+
+
+/* ==========================================================
+   BUILD COMPACT UI
+   ========================================================== */
+
+function buildControls(){
+
+  controls.innerHTML = '';
+
+  const v =
+    values[selectedHand];
+
+  for(
+    const def
+    of definitions
+  ){
+
+    const box =
+      document.createElement(
+        'div'
+      );
+
+    box.className =
+      'control';
+
+
+    const top =
+      document.createElement(
+        'div'
+      );
+
+    top.className =
+      'control-top';
+
+
+    const name =
+      document.createElement(
+        'div'
+      );
+
+    name.className =
+      'control-name';
+
+    name.textContent =
+      def.label;
+
+
+    const value =
+      document.createElement(
+        'div'
+      );
+
+    value.className =
+      'control-value';
+
+    value.textContent =
+      formatValue(
+        v[def.key],
+        def
+      );
+
+
+    top.append(
+      name,
+      value
+    );
+
+
+    const main =
+      document.createElement(
+        'div'
+      );
+
+    main.className =
+      'control-main';
+
+
+    const minus =
+      document.createElement(
+        'button'
+      );
+
+    minus.className =
+      'nudge';
+
+    minus.textContent =
+      '−';
+
+
+    const slider =
+      document.createElement(
+        'input'
+      );
+
+    slider.type =
+      'range';
+
+    slider.min =
+      def.min;
+
+    slider.max =
+      def.max;
+
+    slider.step =
+      def.step;
+
+    slider.value =
+      v[def.key];
+
+
+    const plus =
+      document.createElement(
+        'button'
+      );
+
+    plus.className =
+      'nudge';
+
+    plus.textContent =
+      '+';
+
+
+    function setValue(
+      next
+    ){
+
+      next =
+        THREE.MathUtils.clamp(
+          Number(next),
+          Number(def.min),
+          Number(def.max)
+        );
+
+      values[selectedHand][def.key] =
+        next;
+
+      slider.value =
+        next;
+
+      value.textContent =
+        formatValue(
+          next,
+          def
+        );
+
+      applyHand(
+        selectedHand
+      );
+    }
+
+
+    slider.addEventListener(
+      'input',
+      () => {
+
+        setValue(
+          slider.value
+        );
+
+      }
+    );
+
+
+    minus.addEventListener(
+      'click',
+      () => {
+
+        setValue(
+          values[selectedHand][def.key] -
+          Number(def.step)
+        );
+
+      }
+    );
+
+
+    plus.addEventListener(
+      'click',
+      () => {
+
+        setValue(
+          values[selectedHand][def.key] +
+          Number(def.step)
+        );
+
+      }
+    );
+
+
+    main.append(
+      minus,
+      slider,
+      plus
+    );
+
+
+    box.append(
+      top,
+      main
+    );
+
+
+    controls.appendChild(
+      box
+    );
+
+  }
+
+}
+
+
+
+/* ==========================================================
+   APPLY HAND
+   ========================================================== */
+
+function applyHand(
+  name
+){
+
+  const part =
+    pepe.parts[name];
+
+  const b =
+    base[name];
+
+  const v =
+    values[name];
+
+
+  if(
+    !part ||
+    !b
+  ){
+    return;
+  }
+
+
+  /* --------------------------------------------------------
+     X + Y
+     -------------------------------------------------------- */
+
+  part.pivot.position.set(
+    b.pivotPosition.x + v.x,
+    b.pivotPosition.y + v.y,
+    b.pivotPosition.z
+  );
+
+
+  /* --------------------------------------------------------
+     ROTATION
+     -------------------------------------------------------- */
+
+  part.pivot.rotation.set(
+    0,
+    0,
+    b.rotation +
+    THREE.MathUtils.degToRad(
+      v.rotation
+    )
+  );
+
+
+  /* --------------------------------------------------------
+     SCALE
+     -------------------------------------------------------- */
+
+  part.pivot.scale.set(
+    v.scale,
+    v.scale,
+    v.scale
+  );
+
+
+  /* --------------------------------------------------------
+     RESTORE ORIGINAL PNG POSITION
+     -------------------------------------------------------- */
+
+  part.mesh.position.copy(
+    b.meshPosition
+  );
+
+
+  /* --------------------------------------------------------
+     IN / OUT OF SLEEVE
+
+     + = farther outward
+     - = deeper toward cuff
+     -------------------------------------------------------- */
+
+  part.mesh.position
+    .addScaledVector(
+      b.seatDirection,
+      v.seat
+    );
+
+
+  /* --------------------------------------------------------
+     TRUE DRAW LAYER
+
+     Negative = BACK
+     Positive = FRONT
+     -------------------------------------------------------- */
+
+  part.mesh.renderOrder =
+    b.renderOrder +
+    Math.round(
+      v.layer
+    );
+
+
+  if(
+    part.mesh.material
+  ){
+
+    part.mesh.material.depthTest =
+      false;
+
+    part.mesh.material.depthWrite =
+      false;
+
+    part.mesh.material.needsUpdate =
+      true;
+
+  }
+
+
+  part.pivot.updateMatrixWorld(
+    true
+  );
+
+}
+
+
+
+/* ==========================================================
+   SAVE ORIGINAL HAND STATE
+   ========================================================== */
+
+function saveBase(
+  name
+){
+
+  const part =
+    pepe.parts[name];
+
+
+  const dir =
+    part.mesh.position.clone();
+
+
+  dir.z = 0;
+
+
+  if(
+    dir.lengthSq() >
+    1e-8
+  ){
+
+    dir.normalize();
+
+  }else{
+
+    dir.set(
+      0,
+      -1,
+      0
+    );
+
+  }
+
+
+  base[name] = {
+
+    pivotPosition:
+      part.pivot.position.clone(),
+
+    rotation:
+      part.pivot.rotation.z,
+
+    meshPosition:
+      part.mesh.position.clone(),
+
+    renderOrder:
+      part.mesh.renderOrder,
+
+    seatDirection:
+      dir
+
+  };
+
+}
+
+
+
+/* ==========================================================
+   TABS
+   ========================================================== */
+
+const tabLeft =
+  document.getElementById(
+    'tabLeft'
+  );
+
+const tabRight =
+  document.getElementById(
+    'tabRight'
+  );
+
+
+function selectHand(
+  name
+){
+
+  selectedHand =
+    name;
+
+
+  const left =
+    name ===
+    'handLeft';
+
+
+  tabLeft.classList.toggle(
+    'active',
+    left
+  );
+
+  tabRight.classList.toggle(
+    'active',
+    !left
+  );
+
+
+  buildControls();
+
+}
+
+
+tabLeft.onclick =
+  () =>
+    selectHand(
+      'handLeft'
+    );
+
+
+tabRight.onclick =
+  () =>
+    selectHand(
+      'handRight'
+    );
+
+
+
+/* ==========================================================
+   RESET
+   ========================================================== */
+
+function restoreOne(
+  name
+){
+
+  values[name] =
+    makeDefault();
+
+
+  applyHand(
+    name
+  );
+
+}
+
+
+document
+  .getElementById(
+    'resetHand'
+  )
+  .onclick =
+  () => {
+
+    restoreOne(
+      selectedHand
+    );
+
+    buildControls();
+
+  };
+
+
+document
+  .getElementById(
+    'resetAll'
+  )
+  .onclick =
+  () => {
+
+    restoreOne(
+      'handLeft'
+    );
+
+    restoreOne(
+      'handRight'
+    );
+
+    buildControls();
+
+  };
+
+
+
+/* ==========================================================
+   EXPORT
+   ========================================================== */
+
+function getExport(){
+
+  return {
+
+    handLeft:{
+
+      x:
+        values.handLeft.x,
+
+      y:
+        values.handLeft.y,
+
+      rotationDeg:
+        values.handLeft.rotation,
+
+      inOut:
+        values.handLeft.seat,
+
+      layer:
+        values.handLeft.layer,
+
+      finalRenderOrder:
+        base.handLeft
+          ? base.handLeft.renderOrder +
+            Math.round(
+              values.handLeft.layer
+            )
+          : null,
+
+      scale:
+        values.handLeft.scale
+
+    },
+
+
+    handRight:{
+
+      x:
+        values.handRight.x,
+
+      y:
+        values.handRight.y,
+
+      rotationDeg:
+        values.handRight.rotation,
+
+      inOut:
+        values.handRight.seat,
+
+      layer:
+        values.handRight.layer,
+
+      finalRenderOrder:
+        base.handRight
+          ? base.handRight.renderOrder +
+            Math.round(
+              values.handRight.layer
+            )
+          : null,
+
+      scale:
+        values.handRight.scale
+
+    }
+
+  };
+
+}
+
+
+
+async function copyValues(){
+
+  const text =
+    JSON.stringify(
+      getExport(),
+      null,
+      2
+    );
+
+
+  result.classList.add(
+    'open'
+  );
+
+  result.textContent =
+    text;
+
+
+  try{
+
+    await navigator.clipboard
+      .writeText(
+        text
+      );
+
+    status.textContent =
+      'COPIED';
+
+  }catch{
+
+    const ta =
+      document.createElement(
+        'textarea'
+      );
+
+    ta.value =
+      text;
+
+    document.body.appendChild(
+      ta
+    );
+
+    ta.select();
+
+    document.execCommand(
+      'copy'
+    );
+
+    ta.remove();
+
+    status.textContent =
+      'VALUES READY';
+
+  }
+
+}
+
+
+document
+  .getElementById(
+    'copy'
+  )
+  .onclick =
+  copyValues;
+
+
+
+/* ==========================================================
+   FIT MODEL
+   ========================================================== */
+
+function fitModel(){
+
+  fitGroup.position.set(
+    0,
+    0,
+    0
+  );
+
+  fitGroup.scale.setScalar(
+    1
+  );
+
+
+  pepe.root.position.set(
+    0,
+    0,
+    0
+  );
+
+  pepe.root.rotation.set(
+    0,
+    0,
+    0
+  );
+
+
+  pepe.root.updateMatrixWorld(
+    true
+  );
+
+
+  const box =
+    new THREE.Box3()
+      .setFromObject(
+        fitGroup
+      );
+
+
+  if(
+    box.isEmpty()
+  ){
+    return;
+  }
+
+
+  const size =
+    new THREE.Vector3();
+
+  const center =
+    new THREE.Vector3();
+
+
+  box.getSize(
+    size
+  );
+
+  box.getCenter(
+    center
+  );
+
+
+  const worldW =
+    camera.right -
+    camera.left;
+
+  const worldH =
+    camera.top -
+    camera.bottom;
+
+
+  let s =
+    Math.min(
+
+      worldW * 0.70 /
+      Math.max(
+        size.x,
+        0.001
+      ),
+
+      worldH * 0.88 /
+      Math.max(
+        size.y,
+        0.001
+      )
+
+    );
+
+
+  s =
+    THREE.MathUtils.clamp(
+      s,
+      0.20,
+      1.20
+    );
+
+
+  fitGroup.scale.setScalar(
+    s
+  );
+
+
+  fitGroup.position.x =
+    -center.x * s;
+
+  fitGroup.position.y =
+    -center.y * s;
+
+}
+
+
+
+/* ==========================================================
+   RESIZE
+   ========================================================== */
+
+function resize(){
+
+  const rect =
+    stage.getBoundingClientRect();
+
+
+  const w =
+    Math.max(
+      1,
+      Math.round(
+        rect.width
+      )
+    );
+
+
+  const h =
+    Math.max(
+      1,
+      Math.round(
+        rect.height
+      )
+    );
+
+
+  renderer.setSize(
+    w,
+    h,
+    false
+  );
+
+
+  const aspect =
+    w / h;
+
+
+  const halfH =
+    2.2;
+
+
+  camera.left =
+    -halfH * aspect;
+
+  camera.right =
+    halfH * aspect;
+
+  camera.top =
+    halfH;
+
+  camera.bottom =
+    -halfH;
+
+
+  camera.updateProjectionMatrix();
+
+
+  fitModel();
+
+}
+
+
+
+/* ==========================================================
+   RENDER
+   ========================================================== */
+
+function render(){
+
+  requestAnimationFrame(
+    render
+  );
+
+  renderer.render(
+    scene,
+    camera
+  );
+
+}
+
+
+
+/* ==========================================================
+   READY
+   ========================================================== */
+
+pepe.ready
+.then(
+  () => {
+
+    saveBase(
+      'handLeft'
+    );
+
+    saveBase(
+      'handRight'
+    );
+
+
+    /*
+      Freeze motion while calibrating.
+    */
+
+    pepe.setMarket({
+      direction:0,
+      speed:0,
+      thrust:0
+    });
+
+
+    selectHand(
+      'handLeft'
+    );
+
+
+    resize();
+
+
+    status.textContent =
+      'READY';
+
+
+    render();
+
+  }
+)
+.catch(
+  err => {
+
+    console.error(
+      err
+    );
+
+    status.textContent =
+      'ERROR';
+
+    result.classList.add(
+      'open'
+    );
+
+    result.textContent =
+      String(
+        err.stack ||
+        err.message ||
+        err
+      );
+
+  }
+);
+
+
+
+new ResizeObserver(
+  resize
+).observe(
+  stage
+);
+
+
+window.addEventListener(
+  'resize',
+  resize
+);
+

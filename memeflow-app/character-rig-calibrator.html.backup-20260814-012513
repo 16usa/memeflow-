@@ -1,0 +1,403 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+
+<meta
+  name="viewport"
+  content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"
+>
+
+<meta http-equiv="Cache-Control" content="no-store,no-cache,must-revalidate,max-age=0">
+<meta http-equiv="Pragma" content="no-cache">
+
+<title>PEPE Rig Calibrator V5</title>
+
+<style>
+:root{
+  --bg:#030708;
+  --panel:#07100f;
+  --panel2:#091513;
+  --line:#245246;
+  --accent:#7fffc8;
+  --text:#f5f7f6;
+  --muted:#93aaa3;
+}
+
+*{
+  box-sizing:border-box;
+  -webkit-tap-highlight-color:transparent;
+}
+
+html,
+body{
+  margin:0;
+  width:100%;
+  min-height:100%;
+  background:var(--bg);
+  color:var(--text);
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    "SF Pro Display",
+    sans-serif;
+}
+
+body{
+  padding:
+    max(6px,env(safe-area-inset-top))
+    8px
+    max(8px,env(safe-area-inset-bottom));
+}
+
+
+/* ==========================================================
+   HEADER
+   ========================================================== */
+
+.header{
+  height:34px;
+
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+
+  padding:0 4px;
+}
+
+.title{
+  font-size:13px;
+  font-weight:900;
+  letter-spacing:.02em;
+}
+
+.status{
+  font-size:10px;
+  font-weight:800;
+  color:var(--accent);
+}
+
+
+/* ==========================================================
+   CHARACTER VIEW
+   ========================================================== */
+
+#stage{
+  position:relative;
+
+  width:100%;
+  height:42svh;
+  min-height:285px;
+  max-height:440px;
+
+  overflow:hidden;
+
+  border:1px solid var(--line);
+  border-radius:15px;
+
+  background:
+    radial-gradient(
+      circle at 50% 42%,
+      #15312b 0%,
+      #071310 52%,
+      #020605 100%
+    );
+}
+
+#stage canvas{
+  position:absolute;
+  inset:0;
+
+  width:100% !important;
+  height:100% !important;
+
+  display:block;
+}
+
+
+/* ==========================================================
+   HAND SELECTOR
+   ========================================================== */
+
+.hand-tabs{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+
+  gap:5px;
+  margin-top:6px;
+}
+
+.hand-tab{
+  height:38px;
+
+  border:1px solid var(--line);
+  border-radius:10px;
+
+  background:var(--panel);
+  color:var(--muted);
+
+  font-size:12px;
+  font-weight:900;
+}
+
+.hand-tab.active{
+  color:#00100b;
+  background:var(--accent);
+  border-color:var(--accent);
+}
+
+
+/* ==========================================================
+   COMPACT CONTROL GRID
+   ========================================================== */
+
+#controls{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+
+  gap:5px;
+
+  margin-top:5px;
+}
+
+.control{
+  min-width:0;
+
+  padding:6px 7px;
+
+  border:1px solid #173a31;
+  border-radius:10px;
+
+  background:var(--panel);
+}
+
+.control-top{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+
+  margin-bottom:2px;
+}
+
+.control-name{
+  font-size:10px;
+  font-weight:900;
+  color:var(--accent);
+}
+
+.control-value{
+  min-width:44px;
+
+  text-align:right;
+
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+  font-size:10px;
+  font-weight:800;
+}
+
+.control-main{
+  display:grid;
+  grid-template-columns:28px 1fr 28px;
+
+  align-items:center;
+  gap:4px;
+}
+
+.nudge{
+  width:28px;
+  height:28px;
+
+  padding:0;
+
+  border:1px solid #255044;
+  border-radius:7px;
+
+  background:#0b1b17;
+  color:white;
+
+  font-size:16px;
+  font-weight:700;
+}
+
+input[type=range]{
+  width:100%;
+  height:28px;
+
+  margin:0;
+
+  accent-color:#28d990;
+}
+
+
+/* ==========================================================
+   BOTTOM BUTTONS
+   ========================================================== */
+
+.actions{
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr;
+
+  gap:5px;
+  margin-top:5px;
+}
+
+.action{
+  height:40px;
+
+  border:1px solid var(--line);
+  border-radius:10px;
+
+  background:var(--panel2);
+  color:white;
+
+  font-size:11px;
+  font-weight:900;
+}
+
+.action.primary{
+  color:#00100b;
+  background:var(--accent);
+  border-color:var(--accent);
+}
+
+
+/* ==========================================================
+   OUTPUT
+   ========================================================== */
+
+#result{
+  display:none;
+
+  margin-top:5px;
+  padding:8px;
+
+  max-height:150px;
+  overflow:auto;
+
+  border:1px solid var(--line);
+  border-radius:9px;
+
+  background:#010403;
+  color:var(--accent);
+
+  font:10px/1.35 ui-monospace,SFMono-Regular,Menlo,monospace;
+
+  white-space:pre-wrap;
+  word-break:break-word;
+}
+
+#result.open{
+  display:block;
+}
+
+
+/* Smaller phones */
+
+@media(max-height:760px){
+
+  #stage{
+    height:38svh;
+    min-height:240px;
+  }
+
+  .header{
+    height:29px;
+  }
+
+  .hand-tab{
+    height:34px;
+  }
+
+  .control{
+    padding:4px 6px;
+  }
+
+  .nudge{
+    height:25px;
+  }
+
+  input[type=range]{
+    height:25px;
+  }
+
+  .action{
+    height:36px;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div class="header">
+  <div class="title">
+    PEPE RIG CALIBRATOR V5
+  </div>
+
+  <div id="status" class="status">
+    LOADING
+  </div>
+</div>
+
+
+<div id="stage"></div>
+
+
+<div class="hand-tabs">
+
+  <button
+    id="tabLeft"
+    class="hand-tab active"
+  >
+    LEFT HAND
+  </button>
+
+  <button
+    id="tabRight"
+    class="hand-tab"
+  >
+    RIGHT HAND
+  </button>
+
+</div>
+
+
+<div id="controls"></div>
+
+
+<div class="actions">
+
+  <button
+    id="resetHand"
+    class="action"
+  >
+    RESET HAND
+  </button>
+
+  <button
+    id="resetAll"
+    class="action"
+  >
+    RESET ALL
+  </button>
+
+  <button
+    id="copy"
+    class="action primary"
+  >
+    COPY VALUES
+  </button>
+
+</div>
+
+
+<div id="result"></div>
+
+
+<script
+  type="module"
+  src="/character-rig-calibrator.js?v=1786670510"
+></script>
+
+</body>
+</html>

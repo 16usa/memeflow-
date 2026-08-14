@@ -1,0 +1,620 @@
+import * as THREE from '/vendor/three.module.js';
+import { createPepeRealRigV16 } from '/character-real-rig-v16.js?v=32800';
+
+const stage = document.getElementById('stage');
+const controls = document.getElementById('controls');
+const result = document.getElementById('result');
+
+const scene = new THREE.Scene();
+
+const camera = new THREE.OrthographicCamera(
+  -2, 2, 2, -2, 0.1, 100
+);
+
+camera.position.z = 10;
+
+const renderer = new THREE.WebGLRenderer({
+  alpha:true,
+  antialias:true
+});
+
+renderer.setPixelRatio(
+  Math.min(window.devicePixelRatio || 1, 2)
+);
+
+renderer.setClearColor(0x000000,0);
+
+stage.appendChild(renderer.domElement);
+
+const fitGroup = new THREE.Group();
+scene.add(fitGroup);
+
+const pepe = createPepeRealRigV16({
+  parent:fitGroup
+});
+
+const values = {
+  handLeft:{
+    x:0,
+    y:0,
+    rotation:0,
+    seat:0,
+    layer:0,
+    nearFar:0,
+    scale:1
+  },
+
+  handRight:{
+    x:0,
+    y:0,
+    rotation:0,
+    seat:0,
+    layer:0,
+    nearFar:0,
+    scale:1
+  }
+};
+
+const base = {};
+
+function makeSlider(
+  hand,
+  key,
+  label,
+  min,
+  max,
+  step
+){
+  const row = document.createElement('div');
+  row.className = 'row';
+
+  const name = document.createElement('label');
+  name.textContent = label;
+
+  const input = document.createElement('input');
+  input.type = 'range';
+  input.min = min;
+  input.max = max;
+  input.step = step;
+  input.value = values[hand][key];
+
+  const out = document.createElement('output');
+  out.textContent = input.value;
+
+  input.addEventListener('input',()=>{
+    values[hand][key] =
+      Number(input.value);
+
+    out.textContent =
+      Number(input.value).toFixed(
+        key === 'rotation' ? 1 : 3
+      );
+
+    applyHand(hand);
+  });
+
+  row.append(
+    name,
+    input,
+    out
+  );
+
+  return row;
+}
+
+function buildPanel(hand,title){
+
+  const panel =
+    document.createElement('div');
+
+  panel.className = 'panel';
+
+  const h =
+    document.createElement('h2');
+
+  h.textContent = title;
+
+  panel.appendChild(h);
+
+  panel.appendChild(
+    makeSlider(
+      hand,
+      'x',
+      'X',
+      -0.30,
+      0.30,
+      0.005
+    )
+  );
+
+  panel.appendChild(
+    makeSlider(
+      hand,
+      'y',
+      'Y',
+      -0.30,
+      0.30,
+      0.005
+    )
+  );
+
+  panel.appendChild(
+    makeSlider(
+      hand,
+      'rotation',
+      'ANGLE',
+      -90,
+      90,
+      1
+    )
+  );
+
+  panel.appendChild(
+    makeSlider(
+      hand,
+      'seat',
+      'DEPTH',
+      -0.20,
+      0.20,
+      0.005
+    )
+  );
+
+  panel.appendChild(
+    makeSlider(
+      hand,
+      'nearFar',
+      'NEAR/FAR',
+      -1.00,
+      1.00,
+      0.01
+    )
+  );
+
+  panel.appendChild(
+    makeSlider(
+      hand,
+      'layer',
+      'LAYER',
+      -20,
+      20,
+      1
+    )
+  );
+
+  panel.appendChild(
+    makeSlider(
+      hand,
+      'scale',
+      'SCALE',
+      0.60,
+      1.40,
+      0.01
+    )
+  );
+
+  controls.appendChild(panel);
+}
+
+buildPanel(
+  'handLeft',
+  'LEFT HAND'
+);
+
+buildPanel(
+  'handRight',
+  'RIGHT HAND'
+);
+
+
+function applyHand(name){
+
+  const part =
+    pepe.parts[name];
+
+  const b =
+    base[name];
+
+  if(!part || !b)
+    return;
+
+  const v =
+    values[name];
+
+  /*
+    Move wrist/pivot.
+  */
+  part.pivot.position.set(
+    b.pivotPosition.x + v.x,
+    b.pivotPosition.y + v.y,
+    b.pivotPosition.z
+  );
+
+  /*
+    Rotate hand relative to
+    current authored wrist angle.
+  */
+  part.pivot.rotation.z =
+    b.rotation +
+    THREE.MathUtils.degToRad(
+      v.rotation
+    );
+
+  /*
+    Scale.
+  */
+  /*
+    NEAR / FAR
+
+    This rig uses OrthographicCamera, so changing Z alone
+    does not make the hand look closer or farther.
+
+    nearFar therefore adds a visual depth factor:
+      +1.0 = closer / larger
+       0.0 = authored distance
+      -1.0 = farther / smaller
+  */
+
+  const depthScale =
+    THREE.MathUtils.lerp(
+      0.70,
+      1.35,
+      (v.nearFar + 1) * 0.5
+    );
+
+  part.pivot.scale.setScalar(
+    v.scale * depthScale
+  );
+
+  /*
+    Keep a real Z value too, so the calibration data
+    also contains front/back depth for future use.
+  */
+
+  part.pivot.position.z =
+    b.pivotPosition.z +
+    v.nearFar * 0.30;
+
+  /*
+    Reset PNG artwork to its
+    original attached position.
+  */
+  part.mesh.position.copy(
+    b.meshPosition
+  );
+
+  /*
+    Seat hand deeper / shallower
+    along its own wrist direction.
+  */
+  part.mesh.position.addScaledVector(
+    b.seatDirection,
+    v.seat
+  );
+
+  /*
+    LAYER / DRAW ORDER
+
+    Positive value = move hand toward FRONT.
+    Negative value = move hand toward BACK.
+
+    This changes actual Three.js renderOrder,
+    not camera distance.
+  */
+
+  part.mesh.renderOrder =
+    b.renderOrder +
+    Math.round(v.layer);
+
+  part.pivot.updateMatrixWorld(true);
+}
+
+
+function fitModel(){
+
+  fitGroup.position.set(0,0,0);
+  fitGroup.scale.setScalar(1);
+
+  pepe.root.position.set(0,0,0);
+  pepe.root.rotation.set(0,0,0);
+
+  pepe.root.updateMatrixWorld(true);
+
+  const box =
+    new THREE.Box3()
+      .setFromObject(fitGroup);
+
+  if(box.isEmpty())
+    return;
+
+  const size =
+    new THREE.Vector3();
+
+  const center =
+    new THREE.Vector3();
+
+  box.getSize(size);
+  box.getCenter(center);
+
+  const worldW =
+    camera.right -
+    camera.left;
+
+  const worldH =
+    camera.top -
+    camera.bottom;
+
+  let s = Math.min(
+    worldW * 0.72 /
+      Math.max(size.x,0.001),
+
+    worldH * 0.90 /
+      Math.max(size.y,0.001)
+  );
+
+  s =
+    THREE.MathUtils.clamp(
+      s,
+      0.20,
+      1.2
+    );
+
+  fitGroup.scale.setScalar(s);
+
+  fitGroup.position.x =
+    -center.x * s;
+
+  fitGroup.position.y =
+    -center.y * s;
+}
+
+
+function resize(){
+
+  const rect =
+    stage.getBoundingClientRect();
+
+  const w =
+    Math.max(
+      1,
+      Math.round(rect.width)
+    );
+
+  const h =
+    Math.max(
+      1,
+      Math.round(rect.height)
+    );
+
+  renderer.setSize(
+    w,
+    h,
+    false
+  );
+
+  const aspect =
+    w / h;
+
+  const halfH =
+    2.2;
+
+  camera.left =
+    -halfH * aspect;
+
+  camera.right =
+    halfH * aspect;
+
+  camera.top =
+    halfH;
+
+  camera.bottom =
+    -halfH;
+
+  camera.updateProjectionMatrix();
+
+  fitModel();
+}
+
+
+function render(){
+
+  requestAnimationFrame(render);
+
+  renderer.render(
+    scene,
+    camera
+  );
+}
+
+
+function saveBase(name){
+
+  const part =
+    pepe.parts[name];
+
+  const dir =
+    part.mesh.position.clone();
+
+  dir.z = 0;
+
+  if(dir.lengthSq() > 1e-8){
+    dir.normalize();
+  }else{
+    dir.set(0,-1,0);
+  }
+
+  base[name] = {
+
+    pivotPosition:
+      part.pivot.position.clone(),
+
+    rotation:
+      part.pivot.rotation.z,
+
+    meshPosition:
+      part.mesh.position.clone(),
+
+    renderOrder:
+      part.mesh.renderOrder,
+
+    seatDirection:
+      dir
+  };
+}
+
+
+function resetValues(){
+
+  for(const name of [
+    'handLeft',
+    'handRight'
+  ]){
+
+    values[name].x = 0;
+    values[name].y = 0;
+    values[name].rotation = 0;
+    values[name].seat = 0;
+    values[name].layer = 0;
+    values[name].nearFar = 0;
+    values[name].scale = 1;
+  }
+
+  location.reload();
+}
+
+
+function exportValues(){
+
+  const data = {
+
+    handLeft:{
+      x:values.handLeft.x,
+      y:values.handLeft.y,
+      rotationDeg:
+        values.handLeft.rotation,
+      seat:
+        values.handLeft.seat,
+      layer:
+        values.handLeft.layer,
+      nearFar:
+        values.handLeft.nearFar,
+      scale:
+        values.handLeft.scale
+    },
+
+    handRight:{
+      x:values.handRight.x,
+      y:values.handRight.y,
+      rotationDeg:
+        values.handRight.rotation,
+      seat:
+        values.handRight.seat,
+      layer:
+        values.handRight.layer,
+      nearFar:
+        values.handRight.nearFar,
+      scale:
+        values.handRight.scale
+    }
+  };
+
+  const text =
+    JSON.stringify(
+      data,
+      null,
+      2
+    );
+
+  result.textContent =
+    text;
+
+  return text;
+}
+
+
+async function copyValues(){
+
+  const text =
+    exportValues();
+
+  try{
+
+    await navigator.clipboard.writeText(
+      text
+    );
+
+    result.textContent =
+      'COPIED:\n\n' +
+      text;
+
+  }catch{
+
+    const ta =
+      document.createElement(
+        'textarea'
+      );
+
+    ta.value = text;
+
+    document.body.appendChild(
+      ta
+    );
+
+    ta.select();
+
+    document.execCommand(
+      'copy'
+    );
+
+    ta.remove();
+
+    result.textContent =
+      'COPIED:\n\n' +
+      text;
+  }
+}
+
+
+document
+  .getElementById('reset')
+  .onclick =
+  resetValues;
+
+document
+  .getElementById('copy')
+  .onclick =
+  copyValues;
+
+
+pepe.ready.then(()=>{
+
+  saveBase(
+    'handLeft'
+  );
+
+  saveBase(
+    'handRight'
+  );
+
+  resize();
+
+  render();
+
+}).catch(err=>{
+
+  console.error(err);
+
+  result.textContent =
+    'LOAD ERROR: ' +
+    err.message;
+});
+
+
+new ResizeObserver(
+  resize
+).observe(stage);
+
+window.addEventListener(
+  'resize',
+  resize
+);
