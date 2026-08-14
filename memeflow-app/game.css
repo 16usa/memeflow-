@@ -1360,3 +1360,175 @@ body.mf-game-immersive
 }
 
 /* === V9.9 PHYSICAL SCREEN FIT END === */
+
+
+/* === V10.0 LANDSCAPE LAUNCH FIT START === */
+
+/*
+  IMPORTANT:
+  LANDSCAPE ONLY.
+  Portrait V9.9 remains untouched.
+*/
+@media
+  (max-width:1000px)
+  and (orientation:landscape){
+
+  /*
+    LEFT COLUMN ONLY.
+
+    Move Launch Control slightly down so its rounded
+    top edge and utility controls are not touching /
+    clipping against the iPhone screen boundary.
+  */
+  .launch-panel{
+    align-self:start!important;
+
+    margin-top:6px!important;
+    margin-bottom:4px!important;
+
+    height:calc(100% - 10px)!important;
+
+    padding:
+      3px
+      4px
+      4px!important;
+
+    gap:2px!important;
+
+    overflow:hidden!important;
+  }
+
+  /*
+    Compact the top utility row slightly.
+    Keeps PAPER BALANCE / SOUND / FULLSCREEN fully
+    inside the panel instead of pressing against top.
+  */
+  .launch-panel .game-utility{
+    flex:0 0 31px!important;
+
+    min-height:31px!important;
+
+    margin:0!important;
+
+    padding:
+      2px
+      4px!important;
+
+    gap:4px!important;
+
+    border-radius:9px!important;
+  }
+
+  .launch-panel .game-balance{
+    min-width:0!important;
+  }
+
+  .launch-panel .game-balance small{
+    font-size:5px!important;
+  }
+
+  .launch-panel .game-balance b{
+    margin-top:1px!important;
+    font-size:8px!important;
+  }
+
+  .launch-panel .stream-utility{
+    gap:4px!important;
+    min-width:0!important;
+  }
+
+  .launch-panel .stream-utility>i{
+    width:5px!important;
+    height:5px!important;
+  }
+
+  .launch-panel .stream-utility b{
+    font-size:5px!important;
+  }
+
+  .launch-panel .stream-utility small{
+    display:none!important;
+  }
+
+  /*
+    Preserve both buttons, but make them fit cleanly.
+  */
+  .launch-panel .utility-actions{
+    gap:3px!important;
+    flex:none!important;
+  }
+
+  .launch-panel .sound,
+  .launch-panel .fullscreen-btn{
+    height:27px!important;
+    min-height:27px!important;
+
+    padding:
+      0
+      7px!important;
+
+    gap:4px!important;
+
+    border-radius:8px!important;
+  }
+
+  .launch-panel .sound b,
+  .launch-panel .fullscreen-btn b{
+    font-size:5px!important;
+    letter-spacing:.06em!important;
+  }
+
+  /*
+    Prevent the lower controls from being pushed outside
+    the panel if iOS reports a slightly shorter landscape
+    viewport after rotation.
+  */
+  .launch-panel .stake-input{
+    flex-shrink:1!important;
+  }
+
+  .launch-panel .risk-deck{
+    min-height:0!important;
+    overflow:hidden!important;
+  }
+
+  .launch-panel .desktop-actions{
+    margin-top:2px!important;
+  }
+
+  /*
+    Keep START / CASH OUT visible above the bottom edge.
+  */
+  .launch-panel .start-button,
+  .launch-panel .cash-button{
+    flex-shrink:0!important;
+  }
+}
+
+/*
+  In standalone iPhone landscape preserve the left/right
+  physical safe zones from V9.9 while adding a small
+  vertical breathing space.
+*/
+@media
+  (display-mode:standalone)
+  and (max-width:1000px)
+  and (orientation:landscape){
+
+  .layout{
+    padding-top:3px!important;
+
+    padding-bottom:
+      max(
+        3px,
+        var(--mf-safe-bottom)
+      )!important;
+  }
+
+  .launch-panel{
+    margin-top:5px!important;
+    height:calc(100% - 9px)!important;
+  }
+}
+
+/* === V10.0 LANDSCAPE LAUNCH FIT END === */
