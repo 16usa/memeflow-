@@ -1,14 +1,191 @@
 import * as THREE from '/vendor/three.module.js';
-import { createPepeHeadController } from '/pepe-head-controller.js?v=34205';
+import { createPepeHeadController } from '/pepe-head-controller.js?v=34206';
 const clamp01=v=>Math.min(1,Math.max(0,Number(v)||0));
 function loadTexture(loader,url,{repeat=false}={}){return new Promise((resolve,reject)=>loader.load(url,tex=>{tex.colorSpace=THREE.SRGBColorSpace;tex.minFilter=THREE.LinearFilter;tex.magFilter=THREE.LinearFilter;if(repeat){tex.wrapS=THREE.RepeatWrapping;tex.wrapT=THREE.RepeatWrapping;}resolve(tex);},undefined,reject));}
 function material(tex,{transparent=true,opacity=1,blending=THREE.NormalBlending}={}){return new THREE.MeshBasicMaterial({map:tex,transparent,opacity,depthWrite:false,depthTest:false,side:THREE.DoubleSide,blending});}
+
+function makeExhaustTexture(kind='outer'){
+  const c=document.createElement('canvas');
+  c.width=512; c.height=256;
+  const ctx=c.getContext('2d');
+  const cy=128;
+
+  ctx.clearRect(0,0,c.width,c.height);
+  ctx.globalCompositeOperation='lighter';
+
+  if(kind==='outer'){
+    const g=ctx.createLinearGradient(20,0,505,0);
+    g.addColorStop(0.00,'rgba(255,60,160,0)');
+    g.addColorStop(0.16,'rgba(255,70,170,0.26)');
+    g.addColorStop(0.43,'rgba(255,105,125,0.68)');
+    g.addColorStop(0.72,'rgba(255,155,80,0.90)');
+    g.addColorStop(0.91,'rgba(255,220,130,0.98)');
+    g.addColorStop(1.00,'rgba(255,250,225,1)');
+
+    ctx.shadowColor='rgba(255,80,170,0.62)';
+    ctx.shadowBlur=24;
+    ctx.fillStyle=g;
+
+    ctx.beginPath();
+    ctx.moveTo(505,78);
+    ctx.bezierCurveTo(430,82,325,94,145,113);
+    ctx.bezierCurveTo(90,119,50,123,18,128);
+    ctx.bezierCurveTo(50,133,90,138,145,144);
+    ctx.bezierCurveTo(325,163,430,174,505,178);
+    ctx.closePath();
+    ctx.fill();
+  }else{
+    const g=ctx.createLinearGradient(70,0,505,0);
+    g.addColorStop(0.00,'rgba(190,225,255,0)');
+    g.addColorStop(0.22,'rgba(210,235,255,0.30)');
+    g.addColorStop(0.55,'rgba(255,240,190,0.88)');
+    g.addColorStop(0.83,'rgba(255,250,220,1)');
+    g.addColorStop(1.00,'rgba(255,255,255,1)');
+
+    ctx.shadowColor='rgba(255,235,180,0.72)';
+    ctx.shadowBlur=14;
+    ctx.fillStyle=g;
+
+    ctx.beginPath();
+    ctx.moveTo(505,102);
+    ctx.bezierCurveTo(400,105,270,113,92,125);
+    ctx.bezierCurveTo(70,127,58,128,48,128);
+    ctx.bezierCurveTo(58,129,70,131,92,133);
+    ctx.bezierCurveTo(270,145,400,151,505,154);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  const tex=new THREE.CanvasTexture(c);
+  tex.colorSpace=THREE.SRGBColorSpace;
+  tex.minFilter=THREE.LinearFilter;
+  tex.magFilter=THREE.LinearFilter;
+  return tex;
+}
+
+function makeNozzleGlowTexture(){
+  const c=document.createElement('canvas');
+  c.width=256; c.height=256;
+  const ctx=c.getContext('2d');
+
+  const g=ctx.createRadialGradient(128,128,4,128,128,120);
+  g.addColorStop(0.00,'rgba(255,255,245,1)');
+  g.addColorStop(0.13,'rgba(255,235,170,0.98)');
+  g.addColorStop(0.32,'rgba(255,135,70,0.75)');
+  g.addColorStop(0.58,'rgba(255,70,155,0.30)');
+  g.addColorStop(1.00,'rgba(255,40,150,0)');
+
+  ctx.fillStyle=g;
+  ctx.fillRect(0,0,256,256);
+
+  const tex=new THREE.CanvasTexture(c);
+  tex.colorSpace=THREE.SRGBColorSpace;
+  return tex;
+}
+
+function makeSpaceTexture(kind='far'){
+  const c=document.createElement('canvas');
+  c.width=1024; c.height=1536;
+  const ctx=c.getContext('2d');
+
+  let seed=kind==='far'?617:kind==='mid'?911:kind==='near'?1427:1999;
+  const rand=()=>{
+    seed=(seed*1664525+1013904223)>>>0;
+    return seed/4294967296;
+  };
+
+  if(kind==='far'){
+    const bg=ctx.createLinearGradient(0,0,0,c.height);
+    bg.addColorStop(0.00,'#02040d');
+    bg.addColorStop(0.32,'#071128');
+    bg.addColorStop(0.62,'#091833');
+    bg.addColorStop(1.00,'#01040b');
+    ctx.fillStyle=bg;
+    ctx.fillRect(0,0,c.width,c.height);
+
+    const nebula=(x,y,r,color)=>{
+      const g=ctx.createRadialGradient(x,y,0,x,y,r);
+      g.addColorStop(0,color);
+      g.addColorStop(0.48,color.replace(/[\d.]+\)$/,'0.035)'));
+      g.addColorStop(1,'rgba(0,0,0,0)');
+      ctx.fillStyle=g;
+      ctx.fillRect(x-r,y-r,r*2,r*2);
+    };
+
+    nebula(230,360,500,'rgba(55,80,190,0.12)');
+    nebula(790,760,610,'rgba(18,115,155,0.10)');
+    nebula(560,1270,620,'rgba(80,35,125,0.08)');
+
+    for(let i=0;i<220;i++){
+      const x=rand()*c.width;
+      const y=rand()*c.height;
+      const r=rand()<0.90?rand()*1.15+0.25:rand()*2.0+1;
+      ctx.fillStyle=`rgba(${190+Math.floor(rand()*65)},${205+Math.floor(rand()*50)},255,${0.20+rand()*0.50})`;
+      ctx.beginPath();
+      ctx.arc(x,y,r,0,Math.PI*2);
+      ctx.fill();
+    }
+  }else if(kind==='speed'){
+    ctx.clearRect(0,0,c.width,c.height);
+    for(let i=0;i<80;i++){
+      const x=rand()*c.width;
+      const y=rand()*c.height;
+      const len=35+rand()*100;
+      ctx.strokeStyle=`rgba(170,220,255,${0.08+rand()*0.18})`;
+      ctx.lineWidth=0.7+rand()*1.4;
+      ctx.beginPath();
+      ctx.moveTo(x,y);
+      ctx.lineTo(x-len,y+len);
+      ctx.stroke();
+    }
+  }else{
+    ctx.clearRect(0,0,c.width,c.height);
+
+    const count=kind==='near'?115:270;
+    for(let i=0;i<count;i++){
+      const x=rand()*c.width;
+      const y=rand()*c.height;
+      const big=kind==='near' && rand()>0.87;
+      const r=big?1.7+rand()*2.2:0.45+rand()*1.35;
+      const a=kind==='near'?0.48+rand()*0.42:0.28+rand()*0.42;
+
+      ctx.fillStyle=`rgba(${200+Math.floor(rand()*55)},${215+Math.floor(rand()*40)},255,${a})`;
+      ctx.beginPath();
+      ctx.arc(x,y,r,0,Math.PI*2);
+      ctx.fill();
+
+      if(big){
+        ctx.strokeStyle=`rgba(210,235,255,${a*0.55})`;
+        ctx.lineWidth=0.8;
+        ctx.beginPath();
+        ctx.moveTo(x-r*4,y);
+        ctx.lineTo(x+r*4,y);
+        ctx.moveTo(x,y-r*4);
+        ctx.lineTo(x,y+r*4);
+        ctx.stroke();
+      }
+    }
+  }
+
+  const tex=new THREE.CanvasTexture(c);
+  tex.colorSpace=THREE.SRGBColorSpace;
+  tex.minFilter=THREE.LinearFilter;
+  tex.magFilter=THREE.LinearFilter;
+
+  if(kind!=='far'){
+    tex.wrapS=THREE.RepeatWrapping;
+    tex.wrapT=THREE.RepeatWrapping;
+  }
+
+  return tex;
+}
+
 export function createRocketRideV34({scene,parent,baseUrl='/game-assets/rocket-v34/'}={}){
   if(!scene||!parent)throw new Error('[ROCKET V34.2] scene and parent required');
   const loader=new THREE.TextureLoader(),rideRoot=new THREE.Group(),rocketRoot=new THREE.Group(),backdrop=new THREE.Group(),flameRoot=new THREE.Group();
   rideRoot.name='RocketRideV34_2';rocketRoot.name='RocketBodyRootV34_2';backdrop.name='SpaceBackdropV34_2';flameRoot.name='FlameRootV34_2';
   parent.add(rideRoot);rideRoot.add(rocketRoot);rocketRoot.add(flameRoot);scene.add(backdrop);
-  let head=null,farMesh,midMesh,nearMesh,speedMesh,rocketMesh,glassMesh,cockpitShadow,flameOuter,flameCore,flameGlow,ringMesh;
+  let head=null,farMesh,midMesh,nearMesh,speedMesh,rocketMesh,glassMesh,cockpitShadow,flameOuter,flameCore,flameGlow,nozzleGlow,ringMesh;
   const mats=[],geos=[],textures=[];
   const ready=Promise.all([
     loadTexture(loader,`${baseUrl}rocket/rocket-body.png`),loadTexture(loader,`${baseUrl}rocket/rocket-glass.png`),
@@ -18,6 +195,21 @@ export function createRocketRideV34({scene,parent,baseUrl='/game-assets/rocket-v
     loadTexture(loader,`${baseUrl}fx/boost-ring.png`)
   ]).then(([rocketTex,glassTex,outerTex,coreTex,farTex,midTex,nearTex,speedTex,ringTex])=>{
     textures.push(rocketTex,glassTex,outerTex,coreTex,farTex,midTex,nearTex,speedTex,ringTex);
+
+    // V34.6: use purpose-built live textures instead of the old flat PNG flame/space art.
+    const liveOuterTex=makeExhaustTexture('outer');
+    const liveCoreTex=makeExhaustTexture('core');
+    const liveGlowTex=makeNozzleGlowTexture();
+
+    const deepFarTex=makeSpaceTexture('far');
+    const deepMidTex=makeSpaceTexture('mid');
+    const deepNearTex=makeSpaceTexture('near');
+    const deepSpeedTex=makeSpaceTexture('speed');
+
+    textures.push(
+      liveOuterTex,liveCoreTex,liveGlowTex,
+      deepFarTex,deepMidTex,deepNearTex,deepSpeedTex
+    );
     const rocketGeo=new THREE.PlaneGeometry(3.25,3.25),rocketMat=material(rocketTex);geos.push(rocketGeo);mats.push(rocketMat);
     rocketMesh=new THREE.Mesh(rocketGeo,rocketMat);rocketMesh.renderOrder=20;rocketRoot.add(rocketMesh);
     // Dark cockpit backing so the head feels inside the rocket, not pasted on top.
@@ -63,21 +255,21 @@ export function createRocketRideV34({scene,parent,baseUrl='/game-assets/rocket-v
     glassMesh.renderOrder=50;
     rocketRoot.add(glassMesh);
     // Anchor flame exactly at the engine nozzle center.
-    flameRoot.position.set(-0.505,-0.565,0.12);
+    flameRoot.position.set(-0.498,-0.558,0.12);
     flameRoot.rotation.z=THREE.MathUtils.degToRad(45);
 
-    const outerGeo=new THREE.PlaneGeometry(1.95,0.92),
-      coreGeo=new THREE.PlaneGeometry(1.58,0.54),
-      glowGeo=new THREE.PlaneGeometry(2.60,1.24);
+    const outerGeo=new THREE.PlaneGeometry(1.72,0.88),
+      coreGeo=new THREE.PlaneGeometry(1.38,0.50),
+      glowGeo=new THREE.PlaneGeometry(2.15,1.16);
 
     // Pull flame origin closer to nozzle so it starts inside the pipe.
-    outerGeo.translate(-0.97,0,0);
-    coreGeo.translate(-0.79,0,0);
-    glowGeo.translate(-1.30,0,0);
+    outerGeo.translate(-0.86,0,0);
+    coreGeo.translate(-0.69,0,0);
+    glowGeo.translate(-1.075,0,0);
 
-    const outerMat=material(outerTex,{opacity:0.88,blending:THREE.AdditiveBlending}),
-      coreMat=material(coreTex,{opacity:0.96,blending:THREE.AdditiveBlending}),
-      glowMat=material(outerTex,{opacity:0.18,blending:THREE.AdditiveBlending});
+    const outerMat=material(liveOuterTex,{opacity:0.88,blending:THREE.AdditiveBlending}),
+      coreMat=material(liveCoreTex,{opacity:0.96,blending:THREE.AdditiveBlending}),
+      glowMat=material(liveOuterTex,{opacity:0.16,blending:THREE.AdditiveBlending});
 
     geos.push(outerGeo,coreGeo,glowGeo);
     mats.push(outerMat,coreMat,glowMat);
@@ -91,10 +283,29 @@ export function createRocketRideV34({scene,parent,baseUrl='/game-assets/rocket-v
     flameCore.renderOrder=9;
 
     flameRoot.add(flameGlow,flameOuter,flameCore);
+
+    const nozzleMat=new THREE.SpriteMaterial({
+      map:liveGlowTex,
+      transparent:true,
+      opacity:0.72,
+      depthWrite:false,
+      depthTest:false,
+      blending:THREE.AdditiveBlending
+    });
+    mats.push(nozzleMat);
+
+    nozzleGlow=new THREE.Sprite(nozzleMat);
+    nozzleGlow.position.set(0,0,0.01);
+    nozzleGlow.scale.set(0.31,0.31,1);
+    nozzleGlow.renderOrder=10;
+    flameRoot.add(nozzleGlow);
     const ringGeo=new THREE.PlaneGeometry(1.05,1.05),ringMat=material(ringTex,{opacity:0,blending:THREE.AdditiveBlending});geos.push(ringGeo);mats.push(ringMat);
     ringMesh=new THREE.Mesh(ringGeo,ringMat);ringMesh.position.set(-0.56,-0.61,0.10);ringMesh.renderOrder=7;rocketRoot.add(ringMesh);
     function bgPlane(tex,order,opacity=1){const geo=new THREE.PlaneGeometry(8.8,13.2),mat=material(tex,{opacity});geos.push(geo);mats.push(mat);const mesh=new THREE.Mesh(geo,mat);mesh.position.z=-8+order*0.01;mesh.renderOrder=-100+order;backdrop.add(mesh);return mesh;}
-    farMesh=bgPlane(farTex,0,1);midMesh=bgPlane(midTex,1,0.80);nearMesh=bgPlane(nearTex,2,0.76);speedMesh=bgPlane(speedTex,3,0);
+    farMesh=bgPlane(deepFarTex,0,1);
+    midMesh=bgPlane(deepMidTex,1,0.78);
+    nearMesh=bgPlane(deepNearTex,2,0.74);
+    speedMesh=bgPlane(deepSpeedTex,3,0);
     return head.ready;
   });
   function update(t,dt,state={}){
@@ -117,25 +328,25 @@ export function createRocketRideV34({scene,parent,baseUrl='/game-assets/rocket-v
 
     // Exhaust should feel attached to the engine, not like a laser beam.
     const lenBase=
-      0.72 +
-      thrust*0.74 +
-      speed*0.14 +
-      boost*0.88 +
-      modeUp*0.22 -
-      modeDown*0.18;
+      0.58 +
+      thrust*0.58 +
+      speed*0.10 +
+      boost*0.62 +
+      modeUp*0.18 -
+      modeDown*0.12;
 
     const widthBase=
-      0.90 +
-      power*0.26 +
-      modeUp*0.06 -
-      modeDown*0.10 +
+      1.03 +
+      power*0.22 +
+      modeUp*0.05 -
+      modeDown*0.08 +
       flickerB;
 
     flameRoot.scale.x=lenBase*(1+flickerA+flickerC);
     flameRoot.scale.y=widthBase;
 
-    flameRoot.position.x=-0.505 + Math.sin(t*20.0)*vol*0.006 - modeDown*0.008;
-    flameRoot.position.y=-0.565 + Math.cos(t*17.0)*vol*0.006 + modeUp*0.004;
+    flameRoot.position.x=-0.498 + Math.sin(t*20.0)*vol*0.005 - modeDown*0.006;
+    flameRoot.position.y=-0.558 + Math.cos(t*17.0)*vol*0.005 + modeUp*0.003;
 
     flameOuter.material.opacity=
       0.46 +
@@ -152,15 +363,30 @@ export function createRocketRideV34({scene,parent,baseUrl='/game-assets/rocket-v
     if(flameGlow){
       flameGlow.material.opacity=
         0.10 +
-        power*0.18 +
-        boost*0.14 -
+        power*0.16 +
+        boost*0.12 -
         modeDown*0.05;
 
       flameGlow.scale.set(
-        1.10 + power*0.28 + boost*0.14,
-        0.96 + power*0.12,
+        1.02 + power*0.18 + boost*0.10,
+        1.04 + power*0.14,
         1
       );
+    }
+
+    if(nozzleGlow){
+      const nozzlePulse=
+        0.28 +
+        power*0.11 +
+        boost*0.07 +
+        Math.sin(t*27.0)*0.012;
+
+      nozzleGlow.scale.set(nozzlePulse,nozzlePulse,1);
+      nozzleGlow.material.opacity=
+        0.52 +
+        power*0.30 +
+        boost*0.10 -
+        modeDown*0.10;
     }
 
     flameCore.material.color.copy(hotCore).lerp(boostColor,boost*0.86);
@@ -172,10 +398,20 @@ export function createRocketRideV34({scene,parent,baseUrl='/game-assets/rocket-v
       .lerp(boostColor,boost*0.34);
     if(ringMesh){ringMesh.material.opacity=boost*0.72;const rs=0.65+boost*0.85+0.07*Math.sin(t*9);ringMesh.scale.setScalar(rs);ringMesh.rotation.z=-t*0.55;}
     const travel=0.010+speed*0.035+thrust*0.025+boost*0.08;
-    if(farMesh?.material.map)farMesh.material.map.offset.y=(t*travel*0.08)%1;
-    if(midMesh?.material.map)midMesh.material.map.offset.y=(t*travel*0.22)%1;
-    if(nearMesh?.material.map)nearMesh.material.map.offset.y=(t*travel*0.50)%1;
-    if(speedMesh?.material.map)speedMesh.material.map.offset.y=(t*travel*1.05)%1;
+    if(midMesh?.material.map){
+      midMesh.material.map.offset.x=(t*travel*0.055)%1;
+      midMesh.material.map.offset.y=(t*travel*0.095)%1;
+    }
+
+    if(nearMesh?.material.map){
+      nearMesh.material.map.offset.x=(t*travel*0.14)%1;
+      nearMesh.material.map.offset.y=(t*travel*0.24)%1;
+    }
+
+    if(speedMesh?.material.map){
+      speedMesh.material.map.offset.x=(t*travel*0.40)%1;
+      speedMesh.material.map.offset.y=(t*travel*0.70)%1;
+    }
     if(speedMesh)speedMesh.material.opacity=clamp01(speed*0.22+thrust*0.18+boost*0.86);
     if(nearMesh)nearMesh.material.opacity=0.48+speed*0.36;
     if(midMesh)midMesh.material.opacity=0.56+speed*0.24;
