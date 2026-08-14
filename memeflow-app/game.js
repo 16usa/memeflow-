@@ -1,6 +1,96 @@
 (()=>{
   'use strict';
-  const CLIENT_VERSION='9.7';
+
+  // MF_V98_STANDALONE_VIEWPORT
+  function syncStandaloneViewportV98(){
+    const vv=window.visualViewport;
+
+    const innerH=
+      Number(window.innerHeight)||0;
+
+    const visualH=
+      Number(vv?.height)||0;
+
+    /*
+      In iPhone Home Screen mode CSS viewport units can
+      report a smaller working height than the actual app
+      surface. Use the larger live measurement.
+    */
+    const h=Math.max(
+      innerH,
+      visualH,
+      document.documentElement.clientHeight||0
+    );
+
+    const w=Math.max(
+      Number(window.innerWidth)||0,
+      Number(vv?.width)||0,
+      document.documentElement.clientWidth||0
+    );
+
+    if(h>0){
+      document.documentElement.style.setProperty(
+        '--mf-app-h',
+        `${Math.round(h)}px`
+      );
+    }
+
+    if(w>0){
+      document.documentElement.style.setProperty(
+        '--mf-app-w',
+        `${Math.round(w)}px`
+      );
+    }
+  }
+
+  syncStandaloneViewportV98();
+
+  window.addEventListener(
+    'resize',
+    syncStandaloneViewportV98,
+    {passive:true}
+  );
+
+  window.visualViewport?.addEventListener(
+    'resize',
+    syncStandaloneViewportV98,
+    {passive:true}
+  );
+
+  window.visualViewport?.addEventListener(
+    'scroll',
+    syncStandaloneViewportV98,
+    {passive:true}
+  );
+
+  window.addEventListener(
+    'orientationchange',
+    ()=>{
+      setTimeout(
+        syncStandaloneViewportV98,
+        80
+      );
+
+      setTimeout(
+        syncStandaloneViewportV98,
+        320
+      );
+    },
+    {passive:true}
+  );
+
+  document.addEventListener(
+    'visibilitychange',
+    ()=>{
+      if(!document.hidden){
+        requestAnimationFrame(
+          syncStandaloneViewportV98
+        );
+      }
+    }
+  );
+
+  const CLIENT_VERSION='9.8';
   const $=(s)=>document.querySelector(s), $$=(s)=>[...document.querySelectorAll(s)];
   const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
   const num=(...values)=>{for(const value of values){if(value===null||value===undefined||value==='')continue;const n=Number(value);if(Number.isFinite(n))return n;}return null;};

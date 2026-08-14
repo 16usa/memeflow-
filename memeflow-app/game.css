@@ -1261,3 +1261,148 @@ html.mf-game-immersive
 }
 
 /* === V9.7 IPHONE SAFE AREA END === */
+
+
+/* === V9.8 STANDALONE VIEWPORT FIT START === */
+
+:root{
+  --mf-app-h:100dvh;
+  --mf-app-w:100vw;
+}
+
+/*
+  iPhone Home Screen mode:
+  use the live JS-measured viewport instead of relying
+  only on dvh/svh.
+*/
+@media (display-mode:standalone){
+
+  html{
+    width:100%!important;
+    height:var(--mf-app-h)!important;
+    min-height:var(--mf-app-h)!important;
+    overflow:hidden!important;
+  }
+
+  body{
+    position:fixed!important;
+    inset:0!important;
+
+    width:var(--mf-app-w)!important;
+    height:var(--mf-app-h)!important;
+    min-height:var(--mf-app-h)!important;
+
+    margin:0!important;
+    padding:0!important;
+
+    overflow:hidden!important;
+    background:#030507!important;
+  }
+
+  .game{
+    position:absolute!important;
+    inset:0!important;
+
+    width:100%!important;
+    height:var(--mf-app-h)!important;
+    min-height:var(--mf-app-h)!important;
+
+    margin:0!important;
+    overflow:hidden!important;
+  }
+
+  /*
+    Previous V9.7 used safe-top + 8px.
+    Keep the real Apple safe area, but remove that
+    additional empty space.
+  */
+  .layout{
+    width:100%!important;
+    height:var(--mf-app-h)!important;
+    min-height:0!important;
+
+    margin:0!important;
+
+    padding-top:
+      var(--mf-safe-top)!important;
+
+    padding-right:
+      max(
+        3px,
+        var(--mf-safe-right)
+      )!important;
+
+    padding-bottom:
+      max(
+        3px,
+        var(--mf-safe-bottom)
+      )!important;
+
+    padding-left:
+      max(
+        3px,
+        var(--mf-safe-left)
+      )!important;
+
+    box-sizing:border-box!important;
+
+    /*
+      Existing portrait rows are already
+      40 / 31 / 11 / 18 = 100%.
+      Force those rows to consume the complete
+      measured application height.
+    */
+    align-content:stretch!important;
+  }
+
+  .network-strip{
+    top:var(--mf-safe-top)!important;
+  }
+}
+
+/*
+  Same correction when JS identifies standalone mode.
+*/
+.game[data-fullscreen-mode="standalone"]{
+  height:var(--mf-app-h)!important;
+}
+
+.game[data-fullscreen-mode="standalone"] .layout{
+  height:var(--mf-app-h)!important;
+
+  padding-top:
+    var(--mf-safe-top)!important;
+
+  padding-bottom:
+    max(
+      3px,
+      var(--mf-safe-bottom)
+    )!important;
+
+  align-content:stretch!important;
+}
+
+/*
+  Internal immersive toggle while already launched
+  from Home Screen.
+*/
+html.mf-game-immersive
+.game[data-immersive="true"]{
+  height:var(--mf-app-h)!important;
+}
+
+html.mf-game-immersive
+.game[data-immersive="true"] .layout{
+  height:var(--mf-app-h)!important;
+
+  padding-top:
+    var(--mf-safe-top)!important;
+
+  padding-bottom:
+    max(
+      3px,
+      var(--mf-safe-bottom)
+    )!important;
+}
+
+/* === V9.8 STANDALONE VIEWPORT FIT END === */
