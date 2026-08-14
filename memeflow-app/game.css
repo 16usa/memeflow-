@@ -1610,3 +1610,46 @@ body.mf-game-immersive
 }
 
 /* === V10.1 LAUNCH BOTTOM ANCHOR END === */
+
+
+/* === ROUND HISTORY TOUCH SCROLL START === */
+
+/*
+  SCROLL ONLY.
+  Do not change panel height, row height or layout.
+*/
+.history{
+  overflow-x:hidden!important;
+  overflow-y:auto!important;
+
+  -webkit-overflow-scrolling:touch;
+
+  touch-action:pan-y!important;
+  overscroll-behavior-y:contain;
+
+  scrollbar-width:thin;
+}
+
+.history-panel{
+  min-height:0;
+}
+
+.history-panel[open] .history{
+  pointer-events:auto;
+}
+
+/* subtle desktop scrollbar */
+.history::-webkit-scrollbar{
+  width:5px;
+}
+
+.history::-webkit-scrollbar-track{
+  background:transparent;
+}
+
+.history::-webkit-scrollbar-thumb{
+  background:rgba(160,181,200,.20);
+  border-radius:999px;
+}
+
+/* === ROUND HISTORY TOUCH SCROLL END === */
