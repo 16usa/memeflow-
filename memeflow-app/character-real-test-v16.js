@@ -1,5 +1,5 @@
 import * as THREE from '/vendor/three.module.js';
-import { createPepeRealRigV16 } from '/character-real-rig-v16.js?v=21544';
+import { createPepeRealRigV16 } from '/character-real-rig-v16.js?v=32901';
 
 const stage = document.getElementById('stage');
 const label = document.getElementById('state');
@@ -139,8 +139,143 @@ function frame(){
   renderer.render(scene,camera);
 }
 
+
+/* === PEPE FINAL REMOVE DEBUG VISUALS START === */
+
+/*
+  V42 contained diagnostic joint / axis markers.
+
+  Character artwork consists of PlaneGeometry meshes.
+  Diagnostic circles use Ring/Circle/Torus/etc geometry.
+
+  Remove diagnostics only.
+*/
+
+function removeRigDebugVisuals(){
+
+  const legitimateMeshes =
+    new Set();
+
+
+  for (
+    const part of
+    Object.values(pepe.parts || {})
+  ) {
+
+    if (
+      part?.mesh
+    ) {
+
+      legitimateMeshes.add(
+        part.mesh
+      );
+
+    }
+
+  }
+
+
+  const remove = [];
+
+
+  scene.traverse(
+    object => {
+
+      if (
+        legitimateMeshes.has(object)
+      ) {
+
+        return;
+
+      }
+
+
+      const geometryType =
+        object.geometry?.type || '';
+
+
+      const name =
+        String(
+          object.name || ''
+        ).toLowerCase();
+
+
+      const diagnosticGeometry =
+
+        geometryType === 'RingGeometry' ||
+
+        geometryType === 'CircleGeometry' ||
+
+        geometryType === 'TorusGeometry' ||
+
+        geometryType === 'EdgesGeometry';
+
+
+      const diagnosticName =
+
+        name.includes('debug') ||
+
+        name.includes('marker') ||
+
+        name.includes('diagnostic') ||
+
+        name.includes('axishelper') ||
+
+        name.includes('jointdot') ||
+
+        name.includes('pivotdot');
+
+
+      const diagnosticPrimitive =
+
+        object.isLine ||
+
+        object.isLineLoop ||
+
+        object.isPoints;
+
+
+      if (
+        diagnosticGeometry ||
+        diagnosticName ||
+        diagnosticPrimitive
+      ) {
+
+        remove.push(
+          object
+        );
+
+      }
+
+    }
+  );
+
+
+  for (
+    const object of remove
+  ) {
+
+    object.parent?.remove(
+      object
+    );
+
+  }
+
+
+  console.log(
+    '[PEPE FINAL] removed debug visuals:',
+    remove.length
+  );
+
+}
+
+/* === PEPE FINAL REMOVE DEBUG VISUALS END === */
+
+
 pepe.ready.then(()=>{
   ready = true;
+
+  removeRigDebugVisuals();
   set('idle');
 
   requestAnimationFrame(()=>{
@@ -149,7 +284,7 @@ pepe.ready.then(()=>{
     frame();
   });
 }).catch(err=>{
-  console.error('[PEPE V16.2]',err);
+  console.error('[PEPE V32]',err);
   label.textContent = 'LOAD ERROR';
   document.body.dataset.error = '1';
 });
