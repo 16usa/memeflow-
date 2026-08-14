@@ -127,7 +127,7 @@ export function createPepeRealRigV16({ parent, baseUrl='/game-assets/character-v
     correct Three.js local coordinate system first.
   */
 
-  const seatDepth = 0.220;
+  const seatDepth = 0.300;
 
   const wristSockets = {
     handLeft: {
