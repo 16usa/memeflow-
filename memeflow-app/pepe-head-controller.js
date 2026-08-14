@@ -2,18 +2,28 @@ import * as THREE from '/vendor/three.module.js';
 
 const HEAD_NAMES=['idle','cruise','up','pump','boost','down','shocked','recover','blink'];
 
-export function createPepeHeadController({parent,baseUrl='/game-assets/rocket-v34/head/',size=0.48}={}){
+export function createPepeHeadController({parent,baseUrl='/game-assets/rocket-v34/head/',radius=0.238}={}){
   if(!parent) throw new Error('[PEPE HEAD V34.2] parent required');
   const root=new THREE.Group(); root.name='PepeHeadV34_2'; parent.add(root);
-  const geometry=new THREE.PlaneGeometry(size,size);
+  const geometry=new THREE.CircleGeometry(radius,64);
   const material=new THREE.MeshBasicMaterial({transparent:true,depthWrite:false,depthTest:false,side:THREE.DoubleSide});
   const mesh=new THREE.Mesh(geometry,material); mesh.renderOrder=40; root.add(mesh);
   const loader=new THREE.TextureLoader(),textures={};
   let current='idle',nextBlink=2.0+Math.random()*2.8,blinkLeft=0,recoverLeft=0,lastDirection=0;
   const ready=Promise.all(HEAD_NAMES.map(name=>new Promise((resolve,reject)=>{
     loader.load(`${baseUrl}head-${name}.png`,tex=>{
-      tex.colorSpace=THREE.SRGBColorSpace; tex.minFilter=THREE.LinearFilter; tex.magFilter=THREE.LinearFilter;
-      textures[name]=tex; resolve();
+      tex.colorSpace=THREE.SRGBColorSpace;
+      tex.minFilter=THREE.LinearFilter;
+      tex.magFilter=THREE.LinearFilter;
+
+      // Fill the porthole with the whole head instead of showing a tiny head far away.
+      tex.wrapS=THREE.ClampToEdgeWrapping;
+      tex.wrapT=THREE.ClampToEdgeWrapping;
+      tex.repeat.set(0.84,0.84);
+      tex.offset.set(0.08,0.08);
+
+      textures[name]=tex;
+      resolve();
     },undefined,reject);
   }))).then(()=>{material.map=textures.idle;material.needsUpdate=true;});
   function setHead(name){if(!textures[name]||current===name)return;current=name;material.map=textures[name];material.needsUpdate=true;}
@@ -23,7 +33,7 @@ export function createPepeHeadController({parent,baseUrl='/game-assets/rocket-v3
     if(boost>0.34)return 'boost';
     if(d>0.64&&thrust>0.72)return 'pump';
     if(d>0.18)return 'up';
-    if(d<-0.62||(d<-0.30&&vol>0.62))return 'shocked';
+    if(d<-0.90&&vol>0.76)return 'shocked';
     if(d<-0.16)return 'down';
     if(speed<0.18)return 'cruise';
     return 'idle';
@@ -36,21 +46,30 @@ export function createPepeHeadController({parent,baseUrl='/game-assets/rocket-v3
     if(nextBlink<=0&&boost<0.25&&Math.abs(d)<0.75){blinkLeft=0.10+Math.random()*0.05;nextBlink=2.0+Math.random()*3.0;}
     blinkLeft=Math.max(0,blinkLeft-dt);
     setHead(blinkLeft>0?'blink':chooseBase(state));
-    const bob=Math.sin(t*(1.45+thrust*0.55))*(0.004+thrust*0.006);
-    const driftX=Math.sin(t*0.72)*0.006;
-    const driftY=Math.cos(t*0.95)*0.004;
+    // Head gently floats inside the cabin and periodically approaches the glass.
+    const floatY=Math.sin(t*1.05)*(0.008+thrust*0.004);
+    const floatX=Math.sin(t*0.71)*0.005;
 
-    // Put the whole head deeper inside the cockpit.
-    root.position.set(driftX, -0.020 + bob + driftY, -0.035);
+    // Scale is our fake Z-depth in the orthographic 2D scene:
+    // smaller = deeper in cabin, larger = closer to glass.
+    const approach=
+      0.985 +
+      Math.sin(t*0.82)*0.027 +
+      thrust*0.012 +
+      boost*0.018;
+
+    root.position.set(
+      floatX,
+      -0.006 + floatY,
+      -0.020
+    );
 
     root.rotation.z=
-      Math.sin(t*0.95)*0.010 +
-      Math.sin(t*8.5)*vol*0.006 -
-      d*0.012;
+      Math.sin(t*0.90)*0.009 +
+      Math.sin(t*8.5)*vol*0.005 -
+      d*0.010;
 
-    const squash=1+Math.sin(t*4.5)*0.006+boost*0.020;
-    const baseScale=0.86;
-    root.scale.set(baseScale*squash, baseScale*(2-squash), 1);
+    root.scale.set(approach,approach,1);
   }
   function destroy(){root.removeFromParent();geometry.dispose();material.dispose();Object.values(textures).forEach(t=>t.dispose());}
   return{root,mesh,material,textures,ready,update,setHead,getHead:()=>current,destroy};

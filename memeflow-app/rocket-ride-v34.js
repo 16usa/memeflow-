@@ -1,5 +1,5 @@
 import * as THREE from '/vendor/three.module.js';
-import { createPepeHeadController } from '/pepe-head-controller.js?v=34201';
+import { createPepeHeadController } from '/pepe-head-controller.js?v=34202';
 const clamp01=v=>Math.min(1,Math.max(0,Number(v)||0));
 function loadTexture(loader,url,{repeat=false}={}){return new Promise((resolve,reject)=>loader.load(url,tex=>{tex.colorSpace=THREE.SRGBColorSpace;tex.minFilter=THREE.LinearFilter;tex.magFilter=THREE.LinearFilter;if(repeat){tex.wrapS=THREE.RepeatWrapping;tex.wrapT=THREE.RepeatWrapping;}resolve(tex);},undefined,reject));}
 function material(tex,{transparent=true,opacity=1,blending=THREE.NormalBlending}={}){return new THREE.MeshBasicMaterial({map:tex,transparent,opacity,depthWrite:false,depthTest:false,side:THREE.DoubleSide,blending});}
@@ -40,7 +40,7 @@ export function createRocketRideV34({scene,parent,baseUrl='/game-assets/rocket-v
     headAnchor.position.set(0.655,0.305,0.06);
     rocketRoot.add(headAnchor);
 
-    head=createPepeHeadController({parent:headAnchor,size:0.48});
+    head=createPepeHeadController({parent:headAnchor,radius:0.238});
 
     const glassGeo=new THREE.PlaneGeometry(0.72,0.72),glassMat=material(glassTex,{opacity:0.82});geos.push(glassGeo);mats.push(glassMat);
     glassMesh=new THREE.Mesh(glassGeo,glassMat);
