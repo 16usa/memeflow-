@@ -1,30 +1,6 @@
-ROCKET
-- rocket/rocket-body-back.png
-- rocket/rocket-window-frame.png
-- rocket/rocket-glass.png
-- rocket/rocket-front-overlay.png
-
-FLAME
-- flame/flame-core.png
-- flame/flame-outer.png
-
-SPACE
-- space/space-far.png
-- space/stars-mid.png
-- space/stars-near.png
-- space/speed-lines.png
-
-FACE
-- face/face-idle.png
-- face/face-cruise.png
-- face/face-up.png
-- face/face-pump.png
-- face/face-boost.png
-- face/face-down.png
-- face/face-shocked.png
-- face/face-blink.png
-
-FX
-- fx/spark-1.png
-- fx/spark-2.png
-- fx/boost-ring.png
+PEPE ROCKET RIDE V34 STAGE 2
+clean rocket, no sticker
+9 face states: idle cruise up pump boost down shocked recover blink
+separate flame core / outer
+separate space far / mid / near / speed lines
+separate boost ring and sparks
