@@ -33,8 +33,8 @@ export function createPepeRealRigV16({ parent, baseUrl='/game-assets/character-v
     {n:'handLeft',  f:'hand_right.png', c:[425,650], s:.52, r:-10, p:[410,625], z:.32, order:38},
     {n:'handRight', f:'hand_left.png',  c:[575,650], s:.52, r: 10, p:[590,625], z:.33, order:39},
 
-    {n:'armLeft',   f:'arm_left.png',   c:[385,535], s:.72, r: 28, p:[420,475], z:.35, order:40},
-    {n:'armRight',  f:'arm_right.png',  c:[615,535], s:.72, r:-28, p:[580,475], z:.36, order:41},
+    {n:'armLeft',   f:'arm_left.png',   c:[385,535], s:.72, r: 14, p:[420,475], z:.35, order:40},
+    {n:'armRight',  f:'arm_right.png',  c:[615,535], s:.72, r:-14, p:[580,475], z:.36, order:41},
 
     {n:'head',      f:'head.png',       c:[500,315], s:.85, r:  0, p:[500,450], z:.60, order:60}
   ];
