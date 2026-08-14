@@ -657,6 +657,13 @@ export function createPepeRealRigV16({ parent, baseUrl='/game-assets/character-v
     }
     hand.pivot.position.y += 0.010;
 
+    if (handName === 'handLeft') {
+      hand.pivot.position.x -= 0.012;
+    } else {
+      hand.pivot.position.x += 0.012;
+    }
+    hand.pivot.position.y += 0.010;
+
     hand.basePosition =
       hand.pivot.position.clone();
 
