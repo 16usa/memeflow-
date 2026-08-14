@@ -578,9 +578,15 @@ export function createPepeRealRigV16({ parent, baseUrl='/game-assets/character-v
         targetLocalAxis.x
       );
 
+    const wristTurn =
+      handName === 'handLeft'
+        ? THREE.MathUtils.degToRad(92)
+        : THREE.MathUtils.degToRad(-96);
+
     const localRotation =
       targetAngle -
-      sourceAngle;
+      sourceAngle +
+      wristTurn;
 
     hand.pivot.rotation.set(
       0,
