@@ -995,3 +995,169 @@ body.mf-game-immersive
 }
 
 /* === V9.5 FULLSCREEN FIX END === */
+
+
+/* === V9.6 IOS REAL FULLSCREEN START === */
+
+.ios-fullscreen-guide{
+  position:fixed;
+  inset:0;
+  z-index:2147483646;
+  display:flex;
+  align-items:flex-end;
+  justify-content:center;
+  padding:
+    18px
+    14px
+    calc(18px + env(safe-area-inset-bottom));
+}
+
+.ios-fullscreen-guide[hidden]{
+  display:none!important;
+}
+
+.ios-fullscreen-backdrop{
+  position:absolute;
+  inset:0;
+  background:rgba(0,0,0,.72);
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+  opacity:0;
+  transition:opacity .18s ease;
+}
+
+.ios-fullscreen-sheet{
+  position:relative;
+  width:min(100%,430px);
+  padding:22px 18px 18px;
+  border:
+    1px solid
+    rgba(109,220,255,.22);
+  border-radius:22px;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(15,21,28,.99),
+      rgba(5,8,12,.995)
+    );
+  box-shadow:
+    0 30px 100px rgba(0,0,0,.7);
+  transform:translateY(24px);
+  opacity:0;
+  transition:
+    transform .2s ease,
+    opacity .18s ease;
+}
+
+.ios-fullscreen-guide.is-open
+.ios-fullscreen-backdrop{
+  opacity:1;
+}
+
+.ios-fullscreen-guide.is-open
+.ios-fullscreen-sheet{
+  transform:translateY(0);
+  opacity:1;
+}
+
+.ios-fullscreen-icon{
+  width:48px;
+  height:48px;
+  display:grid;
+  place-items:center;
+  margin-bottom:14px;
+  border:
+    1px solid
+    rgba(109,220,255,.25);
+  border-radius:14px;
+  background:rgba(109,220,255,.07);
+  color:#dffaff;
+  font-size:25px;
+}
+
+.ios-fullscreen-sheet>small{
+  display:block;
+  color:#6ddcff;
+  font-size:8px;
+  font-weight:800;
+  letter-spacing:.16em;
+}
+
+.ios-fullscreen-sheet h2{
+  margin:7px 0 8px;
+  font-size:22px;
+  line-height:1.08;
+  letter-spacing:-.035em;
+}
+
+.ios-fullscreen-sheet p{
+  margin:0;
+  color:#8997a3;
+  font-size:12px;
+  line-height:1.55;
+}
+
+.ios-fullscreen-steps{
+  display:grid;
+  gap:8px;
+  margin:17px 0 14px;
+}
+
+.ios-fullscreen-steps>div{
+  display:grid;
+  grid-template-columns:28px 1fr;
+  gap:10px;
+  align-items:center;
+  min-height:46px;
+  padding:8px 10px;
+  border:
+    1px solid
+    rgba(255,255,255,.075);
+  border-radius:12px;
+  background:rgba(255,255,255,.025);
+}
+
+.ios-fullscreen-steps b{
+  width:28px;
+  height:28px;
+  display:grid;
+  place-items:center;
+  border-radius:9px;
+  background:rgba(109,220,255,.10);
+  color:#9eeaff;
+  font-size:11px;
+}
+
+.ios-fullscreen-steps span{
+  color:#9ba8b2;
+  font-size:11px;
+  line-height:1.35;
+}
+
+.ios-fullscreen-steps strong{
+  color:#f0f7fa;
+}
+
+.ios-fullscreen-note{
+  color:#b5c0c7!important;
+}
+
+.ios-fullscreen-ok{
+  width:100%;
+  height:50px;
+  margin-top:17px;
+  border:0;
+  border-radius:13px;
+  background:
+    linear-gradient(
+      180deg,
+      #eafff1,
+      #acf3c6
+    );
+  color:#07120c;
+  font-size:11px;
+  font-weight:850;
+  letter-spacing:.12em;
+}
+
+/* === V9.6 IOS REAL FULLSCREEN END === */

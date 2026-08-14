@@ -1,6 +1,6 @@
 (()=>{
   'use strict';
-  const CLIENT_VERSION='9.5';
+  const CLIENT_VERSION='9.6';
   const $=(s)=>document.querySelector(s), $$=(s)=>[...document.querySelectorAll(s)];
   const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
   const num=(...values)=>{for(const value of values){if(value===null||value===undefined||value==='')continue;const n=Number(value);if(Number.isFinite(n))return n;}return null;};
@@ -175,10 +175,136 @@
     }
   }
 
+  const isIPhoneBrowser=()=>
+    /iPhone|iPod/i.test(
+      navigator.userAgent||''
+    );
+
+  function closeIOSFullscreenGuide(){
+    const guide=
+      document.getElementById(
+        'iosFullscreenGuide'
+      );
+
+    if(!guide)return;
+
+    guide.classList.remove('is-open');
+
+    setTimeout(()=>{
+      guide.hidden=true;
+    },180);
+  }
+
+  function showIOSFullscreenGuide(){
+    let guide=
+      document.getElementById(
+        'iosFullscreenGuide'
+      );
+
+    if(!guide){
+      guide=document.createElement('div');
+
+      guide.id='iosFullscreenGuide';
+      guide.className='ios-fullscreen-guide';
+      guide.hidden=true;
+
+      guide.innerHTML=`
+        <div
+          class="ios-fullscreen-backdrop"
+          data-ios-fullscreen-close
+        ></div>
+
+        <section
+          class="ios-fullscreen-sheet"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="iosFullscreenTitle"
+        >
+          <div class="ios-fullscreen-icon">⛶</div>
+
+          <small>IPHONE FULL SCREEN</small>
+
+          <h2 id="iosFullscreenTitle">
+            Open MEMEFLOW as an app
+          </h2>
+
+          <p>
+            Safari cannot hide its top and bottom
+            browser bars for this game inside a
+            normal iPhone tab.
+          </p>
+
+          <div class="ios-fullscreen-steps">
+            <div>
+              <b>1</b>
+              <span>
+                Tap the Safari
+                <strong>Share ↑</strong> button.
+              </span>
+            </div>
+
+            <div>
+              <b>2</b>
+              <span>
+                Choose
+                <strong>Add to Home Screen</strong>.
+              </span>
+            </div>
+
+            <div>
+              <b>3</b>
+              <span>
+                Open
+                <strong>MEMEFLOW</strong>
+                from the new Home Screen icon.
+              </span>
+            </div>
+          </div>
+
+          <p class="ios-fullscreen-note">
+            The game will then open without
+            Safari's address and bottom tool bars.
+          </p>
+
+          <button
+            type="button"
+            class="ios-fullscreen-ok"
+            data-ios-fullscreen-close
+          >
+            GOT IT
+          </button>
+        </section>
+      `;
+
+      document.body.appendChild(guide);
+
+      guide.addEventListener(
+        'click',
+        event=>{
+          if(
+            event.target.closest(
+              '[data-ios-fullscreen-close]'
+            )
+          ){
+            closeIOSFullscreenGuide();
+          }
+        }
+      );
+    }
+
+    guide.hidden=false;
+
+    requestAnimationFrame(()=>{
+      guide.classList.add('is-open');
+    });
+  }
+
   async function toggleFullscreen(){
     haptic(10);
 
-    // Native fullscreen is already active -> exit it.
+    /*
+      1. Already inside native Fullscreen API.
+    */
     if(fullscreenElement()){
       try{
         const exit=
@@ -199,19 +325,38 @@
       return;
     }
 
-    // Our iPhone/manual fullscreen is active -> close it.
+    /*
+      2. Home Screen / standalone:
+         Safari chrome is already gone.
+         Toggle our game-only immersive layout.
+    */
+    if(isStandalone()){
+      setManualImmersive(
+        !manualImmersive
+      );
+
+      return;
+    }
+
+    /*
+      3. Existing manual mode on desktop/etc.
+    */
     if(manualImmersive){
       setManualImmersive(false);
       return;
     }
 
-    const target=document.documentElement;
+    /*
+      4. Browsers which genuinely support
+         requestFullscreen().
+    */
+    const target=
+      document.documentElement;
 
     const request=
       target.requestFullscreen||
       target.webkitRequestFullscreen;
 
-    // Try real browser fullscreen first.
     if(request){
       try{
         try{
@@ -220,24 +365,36 @@
             {navigationUI:'hide'}
           );
         }catch(firstError){
-          // Some implementations reject the options object
-          // but still support requestFullscreen().
           await request.call(target);
         }
 
-        syncFullscreenUi();
-        return;
+        if(fullscreenElement()){
+          syncFullscreenUi();
+          return;
+        }
 
       }catch(error){
         console.info(
-          '[GAME FULLSCREEN] native unavailable, using immersive mode',
+          '[GAME FULLSCREEN]',
+          'native fullscreen unavailable',
           error
         );
       }
     }
 
-    // Reliable fallback for browsers that do not expose
-    // arbitrary-page fullscreen.
+    /*
+      5. iPhone Safari tab:
+         there is no arbitrary-page Fullscreen API.
+         Use the real Apple standalone path instead.
+    */
+    if(isIPhoneBrowser()){
+      showIOSFullscreenGuide();
+      return;
+    }
+
+    /*
+      6. Other browsers without native fullscreen.
+    */
     setManualImmersive(true);
   }
 
