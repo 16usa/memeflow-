@@ -1,6 +1,6 @@
 (()=>{
   'use strict';
-  const CLIENT_VERSION='9.2';
+  const CLIENT_VERSION='9.3';
   const $=(s)=>document.querySelector(s), $$=(s)=>[...document.querySelectorAll(s)];
   const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
   const num=(...values)=>{for(const value of values){if(value===null||value===undefined||value==='')continue;const n=Number(value);if(Number.isFinite(n))return n;}return null;};
@@ -333,7 +333,7 @@
     game.fx?.update?.({mode:game.mode,stage,multiplier:m,peak,velocity:v,acceleration:game.acceleration,danger,thrust,flightState:game.flightState});
     updateFlightAssist(live.m);updateFlightProgress(m);
     if(ui.flightPositionHud)ui.flightPositionHud.dataset.tone=danger==='high'?'danger':game.flightState==='boost'?'boost':'normal';
-    ui.rocket.style.setProperty('--ghost-opacity',clamp(Math.abs(v)*6+Math.max(0,m-1)*.02,0,.62).toFixed(3));
+    ui.rocket?.style?.setProperty('--ghost-opacity',clamp(Math.abs(v)*6+Math.max(0,m-1)*.02,0,.62).toFixed(3));
   }
 
   function updateStoryFlight(multiplier,direction,danger,stage,velocity){
@@ -520,6 +520,74 @@
   function startClock(){if(game.clock||!game.pageVisible)return;clockTick();game.clock=setInterval(clockTick,1000);}
   function stopClock(){if(game.clock){clearInterval(game.clock);game.clock=null;}}
 
-  async function boot(){bind();syncFullscreenUi();updateSound();updateTriggerLines();previewStake();renderCashoutTelemetry(null);game.fx=createFx();game.fx?.pause?.();setMode('idle','Loading server-authoritative paper game…');try{const status=await api('/api/game/status');apply(status);connectStream();ui.source.textContent=`MEMEFLOW server · Engine ${status.version||'5.2'} · Flight UI ${CLIENT_VERSION} · PAPER only`;}catch(e){setMode('idle',e.status===404?'Game API is not installed. Install or update the current Game module.':(e.message||'Game API unavailable.'));ui.network.hidden=false;ui.networkText.textContent='Game API unavailable. The main MEMEFLOW terminal is not modified.';startFallback();}}
+  async function boot(){
+    bind();
+    syncFullscreenUi();
+    updateSound();
+    updateTriggerLines();
+    previewStake();
+    renderCashoutTelemetry(null);
+
+    game.fx=createFx();
+    game.fx?.pause?.();
+
+    setMode('idle','Loading server-authoritative paper game…');
+
+    let status;
+
+    // First: test ONLY the backend/API.
+    try{
+      status=await api('/api/game/status');
+    }catch(e){
+      console.error('[PEPE GAME API BOOT]',e);
+
+      setMode(
+        'idle',
+        e.status===404
+          ? 'Game API is not installed. Install or update the current Game module.'
+          : (e.message||'Game API unavailable.')
+      );
+
+      ui.network.hidden=false;
+      ui.networkText.textContent=
+        `Game API unavailable${e?.status?' · HTTP '+e.status:''}.`;
+
+      startFallback();
+      return;
+    }
+
+    // API is alive. From this point an exception is a UI problem,
+    // NOT an API problem.
+    try{
+      apply(status);
+
+      ui.network.hidden=true;
+
+      connectStream();
+
+      ui.source.textContent=
+        `MEMEFLOW server · Engine ${status.version||'5.2'} · Flight UI ${CLIENT_VERSION} · PAPER only`;
+
+      console.info(
+        '[PEPE GAME]',
+        'API READY',
+        status.version,
+        'session',
+        status.session?.id||'none'
+      );
+
+    }catch(e){
+      console.error('[PEPE GAME UI BOOT]',e);
+
+      ui.network.hidden=false;
+      ui.networkText.textContent=
+        `Game UI initialization error · ${e?.message||e}`;
+
+      setMode(
+        'idle',
+        'Server connected. Game visual initialization needs repair.'
+      );
+    }
+  }
   boot();
 })();
