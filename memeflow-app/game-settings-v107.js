@@ -602,3 +602,133 @@
   }
 
 })();
+
+/* === GAME WALLET V10.8.1 BOOTSTRAP START === */
+;(()=>{
+  'use strict';
+
+  const VERSION='10.8.1';
+
+  function loadWallet(){
+
+    /*
+      game-settings-v107.js уже гарантированно загружается
+      живой Game-страницей — шестерёнка это подтверждает.
+
+      Поэтому Wallet подключаем отсюда и больше не зависим
+      от неизвестного/генерируемого game.html.
+    */
+
+    if(!document.getElementById('mfGameWalletV108Css')){
+      const css=document.createElement('link');
+
+      css.id='mfGameWalletV108Css';
+      css.rel='stylesheet';
+      css.href='/game-wallet-v108.css?v=1786754748';
+
+      document.head.appendChild(css);
+    }
+
+    if(
+      !document.getElementById('mfGameWalletV108Js') &&
+      !globalThis.__mfGameWalletV108
+    ){
+      const js=document.createElement('script');
+
+      js.id='mfGameWalletV108Js';
+      js.src='/game-wallet-v108.js?v=1786754748';
+      js.async=false;
+
+      js.onload=()=>{
+        console.info(
+          '[GAME WALLET BOOTSTRAP]',
+          VERSION,
+          'WALLET MODULE LOADED'
+        );
+      };
+
+      js.onerror=()=>{
+        console.error(
+          '[GAME WALLET BOOTSTRAP]',
+          VERSION,
+          'FAILED TO LOAD WALLET MODULE'
+        );
+      };
+
+      document.head.appendChild(js);
+    }
+  }
+
+  /*
+    Settings boot и Wallet используют один и тот же
+    Launch Control. Wallet сам дождётся .utility-actions,
+    если DOM ещё не готов.
+  */
+  if(document.readyState==='loading'){
+    document.addEventListener(
+      'DOMContentLoaded',
+      loadWallet,
+      {once:true}
+    );
+  }else{
+    loadWallet();
+  }
+
+})();
+/* === GAME WALLET V10.8.1 BOOTSTRAP END === */
+
+/* === GAME FLIGHT MODE V10.9 BOOTSTRAP START === */
+;(()=>{
+  const VERSION='10.9';
+
+  function loadFlightMode(){
+
+    if(!document.getElementById('mfGameFlightV109Css')){
+      const css=document.createElement('link');
+      css.id='mfGameFlightV109Css';
+      css.rel='stylesheet';
+      css.href='/game-flight-mode-v109.css?v=1786760892';
+      document.head.appendChild(css);
+    }
+
+    if(
+      !document.getElementById('mfGameFlightV109Js') &&
+      !globalThis.MEMEFLOW_FLIGHT_MODE
+    ){
+      const js=document.createElement('script');
+      js.id='mfGameFlightV109Js';
+      js.src='/game-flight-mode-v109.js?v=1786760892';
+      js.async=false;
+
+      js.onload=()=>{
+        console.info(
+          '[FLIGHT MODE BOOTSTRAP]',
+          VERSION,
+          'LOADED'
+        );
+      };
+
+      js.onerror=()=>{
+        console.error(
+          '[FLIGHT MODE BOOTSTRAP]',
+          VERSION,
+          'LOAD FAILED'
+        );
+      };
+
+      document.head.appendChild(js);
+    }
+  }
+
+  if(document.readyState==='loading'){
+    document.addEventListener(
+      'DOMContentLoaded',
+      loadFlightMode,
+      {once:true}
+    );
+  }else{
+    loadFlightMode();
+  }
+
+})();
+/* === GAME FLIGHT MODE V10.9 BOOTSTRAP END === */

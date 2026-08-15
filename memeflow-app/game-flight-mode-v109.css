@@ -1,0 +1,245 @@
+/* ==========================================================
+   MEMEFLOW GAME — CINEMATIC FLIGHT MODE V10.9
+   ========================================================== */
+
+body.mf-flight-mode{
+  overflow:hidden!important;
+  background:#010408!important;
+}
+
+body.mf-flight-mode .mf-flight-stage{
+  position:fixed!important;
+  inset:0!important;
+  z-index:100!important;
+  width:100vw!important;
+  max-width:none!important;
+  height:100dvh!important;
+  min-height:100dvh!important;
+  max-height:none!important;
+  margin:0!important;
+  border:0!important;
+  border-radius:0!important;
+  overflow:hidden!important;
+  background:#020812!important;
+  box-shadow:none!important;
+  box-sizing:border-box!important;
+}
+
+body.mf-flight-mode .mf-flight-stage canvas,
+body.mf-flight-mode .mf-flight-stage .stage,
+body.mf-flight-mode .mf-flight-stage .stage-canvas,
+body.mf-flight-mode .mf-flight-stage .flight-stage,
+body.mf-flight-mode .mf-flight-stage .chart-stage,
+body.mf-flight-mode .mf-flight-stage .space-stage{
+  max-width:none!important;
+}
+
+body.mf-flight-mode .mf-flight-hud{
+  position:fixed!important;
+  z-index:160!important;
+  margin:0!important;
+  overflow:hidden;
+  background:linear-gradient(180deg,rgba(7,13,18,.84),rgba(4,8,12,.76))!important;
+  border:1px solid rgba(132,177,196,.23)!important;
+  box-shadow:0 12px 40px rgba(0,0,0,.30)!important;
+  backdrop-filter:blur(15px) saturate(1.15);
+  -webkit-backdrop-filter:blur(15px) saturate(1.15);
+  pointer-events:auto!important;
+}
+
+body.mf-flight-mode .mf-hud-launch{
+  left:max(10px,env(safe-area-inset-left))!important;
+  bottom:max(12px,env(safe-area-inset-bottom))!important;
+  width:min(39vw,390px)!important;
+  max-height:calc(100dvh - 90px)!important;
+  border-radius:18px!important;
+}
+
+body.mf-flight-mode .mf-hud-selected{
+  right:max(10px,env(safe-area-inset-right))!important;
+  top:max(72px,calc(env(safe-area-inset-top) + 52px))!important;
+  width:min(35vw,330px)!important;
+  max-height:40dvh!important;
+  border-radius:17px!important;
+}
+
+body.mf-flight-mode .mf-hud-record{
+  right:max(10px,env(safe-area-inset-right))!important;
+  top:48dvh!important;
+  width:min(35vw,330px)!important;
+  border-radius:17px!important;
+}
+
+body.mf-flight-mode .mf-hud-history{
+  right:max(10px,env(safe-area-inset-right))!important;
+  bottom:max(12px,env(safe-area-inset-bottom))!important;
+  width:min(35vw,330px)!important;
+  max-height:31dvh!important;
+  border-radius:17px!important;
+}
+
+body.mf-flight-mode .mf-hud-history .history,
+body.mf-flight-mode .mf-hud-history [class*="history-list"]{
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+  max-height:25dvh!important;
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
+}
+
+body.mf-flight-mode .mf-flight-stage{
+  pointer-events:none!important;
+}
+
+body.mf-flight-mode .mf-flight-stage button,
+body.mf-flight-mode .mf-flight-stage input,
+body.mf-flight-mode .mf-flight-stage select,
+body.mf-flight-mode .mf-flight-stage a{
+  pointer-events:auto!important;
+}
+
+#mfFlightModeExit{
+  position:fixed;
+  z-index:220;
+  top:max(10px,env(safe-area-inset-top));
+  right:max(10px,env(safe-area-inset-right));
+  min-width:42px;
+  height:38px;
+  padding:0 12px;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+  border:1px solid rgba(109,220,255,.36);
+  border-radius:12px;
+  background:rgba(5,13,18,.74);
+  color:#dffaff;
+  font:800 9px/1 system-ui,-apple-system,BlinkMacSystemFont,sans-serif;
+  letter-spacing:.08em;
+  backdrop-filter:blur(14px);
+  -webkit-backdrop-filter:blur(14px);
+  cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+}
+
+body.mf-flight-mode #mfFlightModeExit{
+  display:flex;
+}
+
+.mf-game-settings-overlay,
+.mf-game-wallet-overlay{
+  z-index:10000!important;
+}
+
+@media (max-width:700px) and (orientation:portrait){
+  body.mf-flight-mode .mf-hud-launch{
+    left:7px!important;
+    bottom:max(8px,env(safe-area-inset-bottom))!important;
+    width:53vw!important;
+    max-height:58dvh!important;
+  }
+
+  body.mf-flight-mode .mf-hud-selected{
+    right:7px!important;
+    top:max(82px,calc(env(safe-area-inset-top) + 65px))!important;
+    width:42vw!important;
+    max-height:34dvh!important;
+  }
+
+  body.mf-flight-mode .mf-hud-record{
+    right:7px!important;
+    top:48dvh!important;
+    width:42vw!important;
+  }
+
+  body.mf-flight-mode .mf-hud-history{
+    right:7px!important;
+    bottom:max(8px,env(safe-area-inset-bottom))!important;
+    width:42vw!important;
+    max-height:31dvh!important;
+  }
+
+  body.mf-flight-mode .mf-hud-history .history,
+  body.mf-flight-mode .mf-hud-history [class*="history-list"]{
+    max-height:23dvh!important;
+  }
+
+  body.mf-flight-mode .mf-flight-hud{
+    font-size:.90em;
+  }
+}
+
+@media (orientation:landscape){
+  body.mf-flight-mode .mf-hud-launch{
+    left:max(12px,env(safe-area-inset-left))!important;
+    top:max(12px,env(safe-area-inset-top))!important;
+    bottom:max(12px,env(safe-area-inset-bottom))!important;
+    width:min(27vw,390px)!important;
+    max-height:none!important;
+  }
+
+  body.mf-flight-mode .mf-hud-selected{
+    right:max(12px,env(safe-area-inset-right))!important;
+    top:max(12px,env(safe-area-inset-top))!important;
+    width:min(23vw,330px)!important;
+    max-height:39dvh!important;
+  }
+
+  body.mf-flight-mode .mf-hud-record{
+    right:max(12px,env(safe-area-inset-right))!important;
+    top:43dvh!important;
+    width:min(23vw,330px)!important;
+  }
+
+  body.mf-flight-mode .mf-hud-history{
+    right:max(12px,env(safe-area-inset-right))!important;
+    bottom:max(12px,env(safe-area-inset-bottom))!important;
+    width:min(23vw,330px)!important;
+    max-height:34dvh!important;
+  }
+
+  body.mf-flight-mode .mf-flight-stage{
+    padding-left:min(27vw,390px)!important;
+    padding-right:min(23vw,330px)!important;
+  }
+
+  #mfFlightModeExit{
+    right:calc(max(12px,env(safe-area-inset-right)) + min(23vw,330px) + 10px);
+  }
+}
+
+@media (max-height:500px) and (orientation:landscape){
+  body.mf-flight-mode .mf-hud-launch{
+    width:25vw!important;
+    font-size:.76em!important;
+    overflow-y:auto!important;
+    -webkit-overflow-scrolling:touch;
+  }
+
+  body.mf-flight-mode .mf-hud-selected,
+  body.mf-flight-mode .mf-hud-record,
+  body.mf-flight-mode .mf-hud-history{
+    width:21vw!important;
+    font-size:.74em!important;
+  }
+
+  body.mf-flight-mode .mf-flight-stage{
+    padding-left:25vw!important;
+    padding-right:21vw!important;
+  }
+
+  body.mf-flight-mode .mf-hud-history{
+    max-height:38dvh!important;
+  }
+
+  body.mf-flight-mode .mf-hud-history .history,
+  body.mf-flight-mode .mf-hud-history [class*="history-list"]{
+    max-height:29dvh!important;
+  }
+
+  #mfFlightModeExit{
+    height:30px;
+    padding:0 8px;
+    font-size:7px;
+  }
+}
