@@ -5601,3 +5601,47 @@ body.flight-v12::after{
 }
 
 /* === MEMEFLOW V20.3 RAISE SELECTED HISTORY TOP END === */
+
+/* === MEMEFLOW V20.4 RAISE LAUNCH CONTROL START === */
+
+@media (orientation:portrait){
+
+  body.flight-v12{
+    /*
+      Raise ONLY Launch Control / PAPER ONLY.
+      Everything below stays exactly where it is.
+    */
+    --v204-launch-raise:3.2dvh;
+  }
+
+  body.flight-v12 .launch-panel{
+    bottom:
+      calc(
+        var(--v20-base)
+        + var(--v20-bottom-h)
+        + var(--v20-middle-h)
+        + (var(--v20-gap) * 2)
+        + var(--v204-launch-raise)
+      )!important;
+  }
+
+  /*
+    DO NOT MOVE:
+    .token-panel
+    .history-panel
+    .stats-panel
+    #v12ActionDock
+    .position-strip
+    #rocket
+    #world
+    .stage-head
+  */
+
+  @media (max-width:390px){
+    body.flight-v12{
+      --v204-launch-raise:3.5dvh;
+    }
+  }
+}
+
+/* === MEMEFLOW V20.4 RAISE LAUNCH CONTROL END === */
