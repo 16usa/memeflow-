@@ -1,0 +1,600 @@
+/* ==========================================================
+   MEMEFLOW GAME WALLET V10.8
+   Uses the REAL wallet system from the main MEMEFLOW site.
+   ========================================================== */
+
+.game-wallet-launcher{
+  position:relative;
+
+  width:38px;
+  height:38px;
+
+  flex:none;
+
+  padding:0;
+
+  display:grid;
+  place-items:center;
+
+  border:1px solid var(--line);
+  border-radius:11px;
+
+  background:transparent;
+  color:#8997a3;
+
+  cursor:pointer;
+
+  -webkit-tap-highlight-color:transparent;
+}
+
+.game-wallet-launcher svg{
+  width:17px;
+  height:17px;
+
+  fill:none;
+  stroke:currentColor;
+
+  stroke-width:1.8;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}
+
+.game-wallet-launcher:hover,
+.game-wallet-launcher:focus-visible{
+  outline:none;
+
+  color:#e7fbff;
+
+  border-color:
+    rgba(109,220,255,.38);
+
+  background:
+    rgba(109,220,255,.055);
+}
+
+.game-wallet-launcher.is-open{
+  color:#bff3ff;
+
+  border-color:
+    rgba(109,220,255,.40);
+
+  background:
+    rgba(109,220,255,.08);
+}
+
+/* connected indicator */
+
+.game-wallet-launcher::after{
+  content:"";
+
+  position:absolute;
+
+  right:4px;
+  top:4px;
+
+  width:5px;
+  height:5px;
+
+  border-radius:50%;
+
+  background:#64727d;
+
+  box-shadow:
+    0 0 0 2px #080c10;
+}
+
+.game-wallet-launcher.is-connected::after{
+  background:#64eca9;
+
+  box-shadow:
+    0 0 0 2px #080c10,
+    0 0 8px rgba(100,236,169,.7);
+}
+
+
+/* ==========================================================
+   WALLET OVERLAY
+   ========================================================== */
+
+.mf-game-wallet-overlay{
+  position:fixed;
+  inset:0;
+
+  z-index:2147483635;
+
+  box-sizing:border-box;
+
+  padding:
+    max(10px,env(safe-area-inset-top))
+    max(10px,env(safe-area-inset-right))
+    max(10px,env(safe-area-inset-bottom))
+    max(10px,env(safe-area-inset-left));
+
+  display:grid;
+  place-items:center;
+
+  background:
+    radial-gradient(
+      circle at 50% 0%,
+      rgba(109,220,255,.10),
+      transparent 36%
+    ),
+    rgba(1,4,7,.95);
+
+  backdrop-filter:blur(18px);
+  -webkit-backdrop-filter:blur(18px);
+}
+
+.mf-game-wallet-overlay[hidden]{
+  display:none!important;
+}
+
+.mf-game-wallet-shell{
+  width:min(900px,100%);
+  height:min(760px,100%);
+
+  min-width:0;
+  min-height:0;
+
+  display:grid;
+
+  grid-template-rows:
+    auto
+    auto
+    minmax(0,1fr);
+
+  overflow:hidden;
+
+  border:
+    1px solid
+    rgba(128,163,178,.25);
+
+  border-radius:22px;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(11,17,23,.995),
+      rgba(4,8,12,.998)
+    );
+
+  box-shadow:
+    0 40px 120px
+    rgba(0,0,0,.72);
+}
+
+
+/* ==========================================================
+   HEADER
+   ========================================================== */
+
+.mf-game-wallet-head{
+  min-height:64px;
+
+  padding:
+    10px
+    14px
+    10px
+    16px;
+
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+
+  gap:12px;
+
+  border-bottom:
+    1px solid
+    rgba(160,181,200,.13);
+}
+
+.mf-game-wallet-title{
+  min-width:0;
+}
+
+.mf-game-wallet-title small{
+  display:block;
+
+  color:#6ddcff;
+
+  font-size:7px;
+  font-weight:850;
+
+  letter-spacing:.17em;
+}
+
+.mf-game-wallet-title b{
+  display:block;
+
+  margin-top:3px;
+
+  color:#eff6f8;
+
+  font-size:18px;
+  line-height:1;
+
+  letter-spacing:-.025em;
+}
+
+.mf-game-wallet-actions{
+  display:flex;
+  align-items:center;
+
+  gap:8px;
+
+  flex:none;
+}
+
+.mf-game-wallet-state{
+  max-width:220px;
+
+  overflow:hidden;
+  white-space:nowrap;
+  text-overflow:ellipsis;
+
+  padding:
+    6px
+    9px;
+
+  border:
+    1px solid
+    rgba(109,220,255,.20);
+
+  border-radius:999px;
+
+  color:#91dff2;
+
+  font-size:7px;
+  font-weight:800;
+
+  letter-spacing:.09em;
+}
+
+.mf-game-wallet-state[data-state="connected"]{
+  color:#8eeab5;
+
+  border-color:
+    rgba(100,236,169,.28);
+}
+
+.mf-game-wallet-state[data-state="error"]{
+  color:#ff8c9a;
+
+  border-color:
+    rgba(255,101,120,.28);
+}
+
+.mf-game-wallet-close{
+  width:38px;
+  height:38px;
+
+  padding:0;
+
+  display:grid;
+  place-items:center;
+
+  border:
+    1px solid
+    rgba(160,181,200,.17);
+
+  border-radius:11px;
+
+  background:
+    rgba(255,255,255,.025);
+
+  color:#a9b5bd;
+
+  cursor:pointer;
+
+  font-size:18px;
+  line-height:1;
+}
+
+.mf-game-wallet-close:hover,
+.mf-game-wallet-close:focus-visible{
+  outline:none;
+
+  color:#fff;
+
+  border-color:
+    rgba(255,255,255,.30);
+}
+
+
+/* ==========================================================
+   INFO
+   ========================================================== */
+
+.mf-game-wallet-info{
+  min-height:40px;
+
+  padding:
+    8px
+    16px;
+
+  display:flex;
+  align-items:center;
+
+  gap:8px;
+
+  border-bottom:
+    1px solid
+    rgba(160,181,200,.10);
+
+  background:
+    rgba(109,220,255,.025);
+
+  color:#82909b;
+
+  font-size:8px;
+  line-height:1.35;
+}
+
+.mf-game-wallet-info i{
+  width:6px;
+  height:6px;
+
+  flex:none;
+
+  border-radius:50%;
+
+  background:#64eca9;
+
+  box-shadow:
+    0 0 10px
+    rgba(100,236,169,.55);
+}
+
+.mf-game-wallet-info b{
+  color:#c7d3d7;
+}
+
+
+/* ==========================================================
+   SAME-SITE FRAME
+   ========================================================== */
+
+.mf-game-wallet-frame-wrap{
+  position:relative;
+
+  min-width:0;
+  min-height:0;
+
+  overflow:hidden;
+
+  background:#05080b;
+}
+
+.mf-game-wallet-frame{
+  width:100%;
+  height:100%;
+
+  min-width:0;
+  min-height:0;
+
+  display:block;
+
+  border:0;
+
+  background:#05080b;
+}
+
+.mf-game-wallet-loading{
+  position:absolute;
+  inset:0;
+
+  z-index:2;
+
+  display:grid;
+  place-items:center;
+
+  pointer-events:none;
+
+  background:
+    radial-gradient(
+      circle at center,
+      rgba(109,220,255,.055),
+      transparent 36%
+    ),
+    #05080b;
+
+  color:#778791;
+
+  font-size:9px;
+  letter-spacing:.11em;
+}
+
+.mf-game-wallet-loading[hidden]{
+  display:none!important;
+}
+
+.mf-game-wallet-loader{
+  display:grid;
+  justify-items:center;
+
+  gap:10px;
+}
+
+.mf-game-wallet-loader i{
+  width:24px;
+  height:24px;
+
+  border-radius:50%;
+
+  border:
+    2px solid
+    rgba(109,220,255,.13);
+
+  border-top-color:#6ddcff;
+
+  animation:
+    mfGameWalletSpin
+    .8s
+    linear
+    infinite;
+}
+
+@keyframes mfGameWalletSpin{
+  to{
+    transform:rotate(360deg);
+  }
+}
+
+
+/* ==========================================================
+   PHONE
+   ========================================================== */
+
+@media(max-width:700px){
+
+  .mf-game-wallet-overlay{
+    padding:
+      env(safe-area-inset-top)
+      0
+      env(safe-area-inset-bottom)
+      0;
+  }
+
+  .mf-game-wallet-shell{
+    width:100%;
+    height:100%;
+
+    border-left:0;
+    border-right:0;
+
+    border-radius:0;
+  }
+
+  .mf-game-wallet-head{
+    min-height:56px;
+
+    padding:
+      8px
+      9px
+      8px
+      12px;
+  }
+
+  .mf-game-wallet-title b{
+    font-size:16px;
+  }
+
+  .mf-game-wallet-state{
+    max-width:110px;
+    font-size:6px;
+  }
+
+  .mf-game-wallet-close{
+    width:34px;
+    height:34px;
+  }
+
+  .mf-game-wallet-info{
+    min-height:36px;
+
+    padding:
+      7px
+      11px;
+
+    font-size:7px;
+  }
+}
+
+
+/* ==========================================================
+   IPHONE LANDSCAPE
+   ========================================================== */
+
+@media
+  (max-width:1000px)
+  and (orientation:landscape){
+
+  .game-wallet-launcher{
+    width:27px!important;
+    height:27px!important;
+
+    border-radius:8px!important;
+  }
+
+  .game-wallet-launcher svg{
+    width:13px!important;
+    height:13px!important;
+  }
+
+  .game-wallet-launcher::after{
+    right:2px;
+    top:2px;
+
+    width:4px;
+    height:4px;
+  }
+
+  .mf-game-wallet-overlay{
+    padding:
+      max(2px,env(safe-area-inset-top))
+      max(3px,env(safe-area-inset-right))
+      max(2px,env(safe-area-inset-bottom))
+      max(3px,env(safe-area-inset-left));
+  }
+
+  .mf-game-wallet-shell{
+    width:100%;
+    height:100%;
+
+    border-radius:14px;
+  }
+
+  .mf-game-wallet-head{
+    min-height:42px;
+
+    padding:
+      5px
+      7px
+      5px
+      10px;
+  }
+
+  .mf-game-wallet-title small{
+    font-size:5px;
+  }
+
+  .mf-game-wallet-title b{
+    margin-top:1px;
+
+    font-size:13px;
+  }
+
+  .mf-game-wallet-state{
+    padding:
+      4px
+      7px;
+
+    font-size:5px;
+  }
+
+  .mf-game-wallet-close{
+    width:29px;
+    height:29px;
+
+    border-radius:8px;
+
+    font-size:15px;
+  }
+
+  .mf-game-wallet-info{
+    min-height:27px;
+
+    padding:
+      4px
+      9px;
+
+    font-size:5.5px;
+  }
+}
+
+
+@media(prefers-reduced-motion:reduce){
+  .mf-game-wallet-loader i{
+    animation:none;
+  }
+}
