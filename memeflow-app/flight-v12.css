@@ -1248,3 +1248,53 @@ body.flight-v12::after{
 
 
 /* === MEMEFLOW FLIGHT V12.9 FULL BLEED BOTTOM END === */
+
+/* === MEMEFLOW FLIGHT V12.10 MATCH IPHONE CHROME START === */
+
+/*
+  The GAME remains exactly where it is.
+  Only the iPhone area outside the game viewport uses the same
+  dark background as the top status-bar zone.
+*/
+
+html{
+  background:#02060b!important;
+}
+
+body.flight-v12{
+  background:#02060b!important;
+}
+
+/*
+  stage-card itself remains blue space.
+*/
+body.flight-v12 .game,
+body.flight-v12 .layout,
+body.flight-v12 .stage-card{
+  background:#06152a!important;
+}
+
+/*
+  iOS bottom safe-area / Home Indicator zone:
+  same visual tone as the top status area.
+*/
+body.flight-v12::after{
+  content:""!important;
+
+  display:block!important;
+
+  position:fixed!important;
+  z-index:1000000!important;
+
+  left:0!important;
+  right:0!important;
+  bottom:0!important;
+
+  height:env(safe-area-inset-bottom,0px)!important;
+
+  background:#02060b!important;
+
+  pointer-events:none!important;
+}
+
+/* === MEMEFLOW FLIGHT V12.10 MATCH IPHONE CHROME END === */
