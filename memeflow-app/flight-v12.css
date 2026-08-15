@@ -1848,3 +1848,411 @@ body.flight-v12::after{
 
 
 /* === MEMEFLOW FLIGHT V14 BOTTOM COCKPIT END === */
+
+/* === MEMEFLOW FLIGHT V15 FINAL BOTTOM GRID START === */
+
+@media (orientation:portrait){
+
+  body.flight-v12{
+    /*
+      Equal outer margins and equal gaps everywhere.
+    */
+    --v15-edge:7px;
+    --v15-gap:7px;
+
+    /*
+      Existing bottom position-strip remains untouched.
+    */
+    --v15-base:
+      calc(
+        var(--v12-bottom) +
+        36px
+      );
+
+    /*
+      Main HUD widths.
+      Left and center/right rows fill the screen exactly.
+    */
+    --v15-left-w:
+      calc(
+        (100vw - (var(--v15-edge) * 2) - (var(--v15-gap) * 2))
+        * .36
+      );
+
+    --v15-mid-w:
+      calc(
+        (100vw - (var(--v15-edge) * 2) - (var(--v15-gap) * 2))
+        * .32
+      );
+
+    --v15-right-w:
+      calc(
+        100vw
+        - (var(--v15-edge) * 2)
+        - (var(--v15-gap) * 2)
+        - var(--v15-left-w)
+        - var(--v15-mid-w)
+      );
+
+    /*
+      Row heights:
+      middle row = Selected Launch + Round History
+      bottom row = Flight Record + START/AUTO
+    */
+    --v15-row2-h:23dvh;
+    --v15-row3-h:12.5dvh;
+  }
+
+
+  /* ========================================================
+     COMMON HUD LOOK
+     ======================================================== */
+
+  body.flight-v12 .launch-panel,
+  body.flight-v12 .token-panel,
+  body.flight-v12 .stats-panel,
+  body.flight-v12 .history-panel,
+  body.flight-v12 #v12ActionDock{
+    box-sizing:border-box!important;
+    margin:0!important;
+  }
+
+
+  /* ========================================================
+     LAUNCH CONTROL
+     TOP HUD ROW — FULL WIDTH STRUCTURE PRESERVED
+     ======================================================== */
+
+  body.flight-v12 .launch-panel{
+    /*
+      Keep existing V14 vertical placement.
+      Only normalize horizontal edge/width.
+    */
+    left:var(--v15-edge)!important;
+    right:auto!important;
+
+    width:var(--v15-left-w)!important;
+    max-width:var(--v15-left-w)!important;
+
+    overflow:visible!important;
+  }
+
+
+  /* ========================================================
+     ROW 2
+     SELECTED LAUNCH | ROUND HISTORY
+     SAME TOP / SAME HEIGHT
+     ======================================================== */
+
+  body.flight-v12 .token-panel{
+    position:fixed!important;
+
+    left:
+      calc(
+        var(--v15-edge)
+        + var(--v15-left-w)
+        + var(--v15-gap)
+      )!important;
+
+    right:auto!important;
+    top:auto!important;
+
+    bottom:
+      calc(
+        var(--v15-base)
+        + var(--v15-row3-h)
+        + var(--v15-gap)
+      )!important;
+
+    width:var(--v15-mid-w)!important;
+    max-width:var(--v15-mid-w)!important;
+
+    height:var(--v15-row2-h)!important;
+    min-height:var(--v15-row2-h)!important;
+    max-height:var(--v15-row2-h)!important;
+
+    padding:7px!important;
+
+    overflow:hidden!important;
+  }
+
+
+  body.flight-v12 .history-panel{
+    position:fixed!important;
+
+    left:auto!important;
+    right:var(--v15-edge)!important;
+    top:auto!important;
+
+    bottom:
+      calc(
+        var(--v15-base)
+        + var(--v15-row3-h)
+        + var(--v15-gap)
+      )!important;
+
+    width:var(--v15-right-w)!important;
+    max-width:var(--v15-right-w)!important;
+
+    height:var(--v15-row2-h)!important;
+    min-height:var(--v15-row2-h)!important;
+    max-height:var(--v15-row2-h)!important;
+
+    padding:0!important;
+
+    display:grid!important;
+    grid-template-rows:
+      25px
+      19px
+      minmax(0,1fr)!important;
+
+    overflow:hidden!important;
+  }
+
+
+  /*
+    Round History only: vertical touch scroll.
+  */
+  body.flight-v12 .history-panel .history{
+    position:static!important;
+
+    width:100%!important;
+    height:100%!important;
+
+    min-height:0!important;
+    max-height:none!important;
+
+    overflow-x:hidden!important;
+    overflow-y:auto!important;
+
+    overscroll-behavior:contain!important;
+
+    -webkit-overflow-scrolling:touch!important;
+  }
+
+
+  body.flight-v12 .history-panel .history-row,
+  body.flight-v12 .history-panel .history-row:nth-child(n){
+    display:grid!important;
+  }
+
+
+  /* ========================================================
+     ROW 3 LEFT
+     FLIGHT RECORD
+     ======================================================== */
+
+  body.flight-v12 .stats-panel{
+    position:fixed!important;
+
+    left:
+      calc(
+        var(--v15-edge)
+        + var(--v15-left-w)
+        + var(--v15-gap)
+      )!important;
+
+    right:auto!important;
+    top:auto!important;
+
+    bottom:var(--v15-base)!important;
+
+    width:var(--v15-mid-w)!important;
+    max-width:var(--v15-mid-w)!important;
+
+    height:var(--v15-row3-h)!important;
+    min-height:var(--v15-row3-h)!important;
+    max-height:var(--v15-row3-h)!important;
+
+    padding:7px!important;
+
+    overflow:hidden!important;
+  }
+
+
+  /* ========================================================
+     ROW 3 RIGHT
+     START / CASH OUT + AUTO / STOP AUTO
+     EXACT SAME HEIGHT AS FLIGHT RECORD
+     ======================================================== */
+
+  body.flight-v12 #v12ActionDock{
+    position:fixed!important;
+
+    z-index:72!important;
+
+    left:auto!important;
+    right:var(--v15-edge)!important;
+    top:auto!important;
+
+    bottom:var(--v15-base)!important;
+
+    width:var(--v15-right-w)!important;
+    max-width:var(--v15-right-w)!important;
+
+    height:var(--v15-row3-h)!important;
+    min-height:var(--v15-row3-h)!important;
+    max-height:var(--v15-row3-h)!important;
+
+    padding:0!important;
+
+    display:grid!important;
+    grid-template-columns:1fr!important;
+    grid-template-rows:
+      repeat(2,minmax(0,1fr))!important;
+
+    gap:var(--v15-gap)!important;
+
+    overflow:hidden!important;
+
+    background:none!important;
+  }
+
+
+  body.flight-v12 #v12ActionDock > #startBtn,
+  body.flight-v12 #v12ActionDock > #cashoutBtn,
+  body.flight-v12 #v12ActionDock > #mfAutoLoopBtn{
+    width:100%!important;
+    min-width:0!important;
+
+    height:100%!important;
+    min-height:0!important;
+    max-height:none!important;
+
+    margin:0!important;
+
+    border-radius:12px!important;
+
+    box-sizing:border-box!important;
+  }
+
+
+  /*
+    START and CASH OUT occupy the same first slot depending
+    on current game state.
+  */
+  body.flight-v12 #v12ActionDock > #startBtn,
+  body.flight-v12 #v12ActionDock > #cashoutBtn{
+    grid-row:1!important;
+  }
+
+  body.flight-v12 #v12ActionDock > #mfAutoLoopBtn{
+    grid-row:2!important;
+  }
+
+
+  body.flight-v12 #v12ActionDock button b{
+    font-size:11px!important;
+    letter-spacing:.13em!important;
+  }
+
+  body.flight-v12 #v12ActionDock button small{
+    font-size:6px!important;
+    line-height:1.15!important;
+  }
+
+
+  /* ========================================================
+     FLIGHT POSITION
+     KEEP INSIDE LOWER HUD, NOT OVER ROCKET
+     ======================================================== */
+
+  body.flight-v12 #flightPositionHud{
+    /*
+      Keep it attached visually to Selected Launch.
+      Do not move rocket.
+    */
+    position:fixed!important;
+
+    left:
+      calc(
+        var(--v15-edge)
+        + var(--v15-left-w)
+        + var(--v15-gap)
+        + 6px
+      )!important;
+
+    right:auto!important;
+
+    bottom:
+      calc(
+        var(--v15-base)
+        + var(--v15-row3-h)
+        + var(--v15-gap)
+        + 6px
+      )!important;
+
+    top:auto!important;
+
+    width:
+      calc(
+        var(--v15-mid-w)
+        - 12px
+      )!important;
+
+    max-width:none!important;
+
+    transform:none!important;
+  }
+
+
+  /* ========================================================
+     NO SCROLL EXCEPT HISTORY
+     ======================================================== */
+
+  body.flight-v12 .launch-panel,
+  body.flight-v12 .token-panel,
+  body.flight-v12 .stats-panel{
+    overflow-x:hidden!important;
+    overflow-y:hidden!important;
+
+    overscroll-behavior:none!important;
+  }
+
+
+  /* ========================================================
+     EQUAL EDGES / GAP SAFETY
+     ======================================================== */
+
+  body.flight-v12 .launch-panel *,
+  body.flight-v12 .token-panel *,
+  body.flight-v12 .stats-panel *,
+  body.flight-v12 .history-panel *,
+  body.flight-v12 #v12ActionDock *{
+    box-sizing:border-box!important;
+    min-width:0;
+  }
+
+
+  /* ========================================================
+     SMALL iPHONE
+     SAME GEOMETRY, SLIGHTLY TIGHTER CONTENT
+     ======================================================== */
+
+  @media (max-width:390px){
+
+    body.flight-v12{
+      --v15-edge:6px;
+      --v15-gap:6px;
+
+      --v15-row2-h:22.5dvh;
+      --v15-row3-h:12dvh;
+    }
+
+    body.flight-v12 .token-panel,
+    body.flight-v12 .stats-panel,
+    body.flight-v12 .history-panel{
+      font-size:.78em!important;
+    }
+
+    body.flight-v12 #v12ActionDock button b{
+      font-size:10px!important;
+    }
+
+    body.flight-v12 #v12ActionDock button small{
+      font-size:5.5px!important;
+    }
+  }
+}
+
+/* === MEMEFLOW FLIGHT V15 FINAL BOTTOM GRID END === */
