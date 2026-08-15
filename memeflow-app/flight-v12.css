@@ -1,0 +1,386 @@
+:root{
+  --v12-safe-top:env(safe-area-inset-top,0px);
+  --v12-safe-right:env(safe-area-inset-right,0px);
+  --v12-safe-bottom:env(safe-area-inset-bottom,0px);
+  --v12-safe-left:env(safe-area-inset-left,0px);
+}
+
+body.flight-v12{
+  background:#01050a;
+}
+
+/*
+  Fail-safe: the cinematic layout starts only after V12 has found
+  the real scene and Launch Control. Until then the normal cloned
+  Game remains visible and usable.
+*/
+body.flight-v12.v12-ready{
+  width:100vw!important;
+  height:100dvh!important;
+  min-height:100dvh!important;
+  margin:0!important;
+  padding:0!important;
+  overflow:hidden!important;
+  overscroll-behavior:none!important;
+  background:#01050a!important;
+}
+
+body.flight-v12.v12-ready .game-topbar,
+body.flight-v12.v12-ready .game-footer{
+  display:none!important;
+}
+
+body.flight-v12.v12-ready .game-shell{
+  position:fixed!important;
+  inset:0!important;
+  width:100vw!important;
+  max-width:none!important;
+  height:100dvh!important;
+  min-height:100dvh!important;
+  margin:0!important;
+  padding:0!important;
+  overflow:hidden!important;
+  background:#01050a!important;
+}
+
+body.flight-v12.v12-ready .game-layout{
+  position:static!important;
+  display:block!important;
+  width:100%!important;
+  max-width:none!important;
+  height:100%!important;
+  min-height:0!important;
+  margin:0!important;
+  padding:0!important;
+  gap:0!important;
+}
+
+/* ==========================================================
+   FULL-VIEWPORT ROCKET SCENE
+   ========================================================== */
+
+body.flight-v12.v12-ready .v12-stage{
+  position:fixed!important;
+  inset:0!important;
+  z-index:10!important;
+  display:block!important;
+  width:100vw!important;
+  max-width:none!important;
+  height:100dvh!important;
+  min-height:100dvh!important;
+  max-height:none!important;
+  margin:0!important;
+  padding:0!important;
+  overflow:hidden!important;
+  border:0!important;
+  border-radius:0!important;
+  background:#06152a!important;
+  box-shadow:none!important;
+  box-sizing:border-box!important;
+  isolation:isolate!important;
+}
+
+/*
+  The visual layer fills the entire stage. Existing rocket animation
+  and Three.js/CSS renderer remain untouched.
+*/
+body.flight-v12.v12-ready .v12-stage .v12-visual{
+  position:absolute!important;
+  inset:0!important;
+  z-index:0!important;
+  width:100%!important;
+  max-width:none!important;
+  height:100%!important;
+  min-height:100%!important;
+  max-height:none!important;
+  margin:0!important;
+  border-radius:0!important;
+  overflow:hidden!important;
+}
+
+body.flight-v12.v12-ready .v12-stage .v12-visual canvas,
+body.flight-v12.v12-ready .v12-stage .v12-visual video,
+body.flight-v12.v12-ready .v12-stage canvas,
+body.flight-v12.v12-ready .v12-stage video{
+  display:block!important;
+  width:100%!important;
+  max-width:none!important;
+  height:100%!important;
+  max-height:none!important;
+}
+
+body.flight-v12.v12-ready .v12-stage #threeStage,
+body.flight-v12.v12-ready .v12-stage .three-stage,
+body.flight-v12.v12-ready .v12-stage #sky,
+body.flight-v12.v12-ready .v12-stage .sky,
+body.flight-v12.v12-ready .v12-stage [class*="rocket-scene"],
+body.flight-v12.v12-ready .v12-stage [class*="space-scene"],
+body.flight-v12.v12-ready .v12-stage [class*="game-scene"],
+body.flight-v12.v12-ready .v12-stage [class*="flight-scene"]{
+  border-radius:0!important;
+}
+
+/*
+  Keep the current scene HUD — READY/LIVE, multiplier, telemetry,
+  feed/time and existing flight-position overlays — above the sky.
+*/
+body.flight-v12.v12-ready .v12-stage > *:not(.v12-visual){
+  position:relative;
+  z-index:8;
+}
+
+body.flight-v12.v12-ready .v12-stage .flight-head,
+body.flight-v12.v12-ready .v12-stage [class*="flight-head"],
+body.flight-v12.v12-ready .v12-stage [class*="scene-head"],
+body.flight-v12.v12-ready .v12-stage [class*="status-head"]{
+  z-index:30!important;
+}
+
+body.flight-v12.v12-ready .v12-stage .position-bar,
+body.flight-v12.v12-ready .v12-stage [class*="position-bar"],
+body.flight-v12.v12-ready .v12-stage .v12-metrics{
+  position:absolute!important;
+  left:0!important;
+  right:0!important;
+  bottom:0!important;
+  z-index:35!important;
+  margin:0!important;
+  background:rgba(2,7,12,.72)!important;
+  backdrop-filter:blur(12px)!important;
+  -webkit-backdrop-filter:blur(12px)!important;
+}
+
+/* ==========================================================
+   GLASS HUD PANELS
+   ========================================================== */
+
+body.flight-v12.v12-ready .v12-hud{
+  position:fixed!important;
+  z-index:60!important;
+  min-width:0!important;
+  margin:0!important;
+  border:1px solid rgba(123,183,204,.22)!important;
+  border-radius:18px!important;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(6,14,20,.84),
+      rgba(3,8,13,.75)
+    )!important;
+  box-shadow:0 18px 54px rgba(0,0,0,.28)!important;
+  backdrop-filter:blur(16px) saturate(1.10)!important;
+  -webkit-backdrop-filter:blur(16px) saturate(1.10)!important;
+  box-sizing:border-box!important;
+}
+
+body.flight-v12.v12-ready .v12-hud,
+body.flight-v12.v12-ready .v12-hud *{
+  box-sizing:border-box!important;
+}
+
+body.flight-v12.v12-ready .v12-hud > *,
+body.flight-v12.v12-ready .v12-hud input,
+body.flight-v12.v12-ready .v12-hud select,
+body.flight-v12.v12-ready .v12-hud button,
+body.flight-v12.v12-ready .v12-hud a{
+  min-width:0!important;
+  max-width:100%;
+}
+
+/* Portrait iPhone */
+body.flight-v12.v12-ready .v12-launch{
+  left:max(7px,var(--v12-safe-left))!important;
+  bottom:max(9px,var(--v12-safe-bottom))!important;
+  width:min(52vw,410px)!important;
+  max-width:min(52vw,410px)!important;
+  max-height:56dvh!important;
+  overflow:auto!important;
+  overscroll-behavior:contain!important;
+  -webkit-overflow-scrolling:touch!important;
+}
+
+body.flight-v12.v12-ready .v12-selected{
+  right:max(7px,var(--v12-safe-right))!important;
+  top:max(74px,calc(var(--v12-safe-top) + 58px))!important;
+  width:min(43vw,350px)!important;
+  max-width:min(43vw,350px)!important;
+  max-height:29dvh!important;
+  overflow:auto!important;
+  overscroll-behavior:contain!important;
+  -webkit-overflow-scrolling:touch!important;
+}
+
+body.flight-v12.v12-ready .v12-record{
+  right:max(7px,var(--v12-safe-right))!important;
+  top:43dvh!important;
+  width:min(43vw,350px)!important;
+  max-width:min(43vw,350px)!important;
+  max-height:16dvh!important;
+  overflow:auto!important;
+}
+
+body.flight-v12.v12-ready .v12-history{
+  right:max(7px,var(--v12-safe-right))!important;
+  bottom:max(9px,var(--v12-safe-bottom))!important;
+  width:min(43vw,350px)!important;
+  max-width:min(43vw,350px)!important;
+  max-height:29dvh!important;
+  overflow:auto!important;
+  overscroll-behavior:contain!important;
+  -webkit-overflow-scrolling:touch!important;
+}
+
+body.flight-v12.v12-ready .v12-history .history-list,
+body.flight-v12.v12-ready .v12-history [class*="history-list"]{
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+  overscroll-behavior:contain!important;
+  -webkit-overflow-scrolling:touch!important;
+}
+
+/* Settings / Wallet must open over everything. */
+body.flight-v12 .mf-game-settings-overlay,
+body.flight-v12 .mf-game-wallet-overlay,
+body.flight-v12 [class*="settings-overlay"],
+body.flight-v12 [class*="wallet-overlay"]{
+  z-index:100000!important;
+}
+
+/* Existing fullscreen button is unnecessary inside Flight V12. */
+body.flight-v12 .v12-old-fullscreen{
+  display:none!important;
+}
+
+/* ==========================================================
+   V12 EXIT
+   ========================================================== */
+
+#v12Exit{
+  position:fixed;
+  z-index:90000;
+  top:max(9px,var(--v12-safe-top));
+  right:max(9px,var(--v12-safe-right));
+  min-width:42px;
+  height:38px;
+  padding:0 12px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+  border:1px solid rgba(132,191,213,.28);
+  border-radius:13px;
+  background:rgba(4,11,16,.66);
+  color:#e8f9ff;
+  box-shadow:0 10px 30px rgba(0,0,0,.22);
+  backdrop-filter:blur(14px);
+  -webkit-backdrop-filter:blur(14px);
+  text-decoration:none;
+  font:800 9px/1 system-ui,-apple-system,BlinkMacSystemFont,sans-serif;
+  letter-spacing:.10em;
+  -webkit-tap-highlight-color:transparent;
+}
+
+#v12Exit::before{
+  content:"←";
+  font-size:15px;
+  line-height:1;
+}
+
+@media (max-width:430px){
+  body.flight-v12.v12-ready .v12-hud{
+    font-size:.90em!important;
+  }
+
+  #v12Exit{
+    width:38px;
+    min-width:38px;
+    padding:0;
+    font-size:0;
+  }
+}
+
+/* ==========================================================
+   LANDSCAPE / TABLET / DESKTOP
+   ========================================================== */
+
+@media (orientation:landscape){
+  body.flight-v12.v12-ready .v12-launch{
+    left:max(10px,var(--v12-safe-left))!important;
+    top:max(10px,var(--v12-safe-top))!important;
+    bottom:max(10px,var(--v12-safe-bottom))!important;
+    width:min(27vw,410px)!important;
+    max-width:min(27vw,410px)!important;
+    max-height:none!important;
+  }
+
+  body.flight-v12.v12-ready .v12-selected{
+    right:max(10px,var(--v12-safe-right))!important;
+    top:max(10px,var(--v12-safe-top))!important;
+    width:min(23vw,350px)!important;
+    max-width:min(23vw,350px)!important;
+    max-height:38dvh!important;
+  }
+
+  body.flight-v12.v12-ready .v12-record{
+    right:max(10px,var(--v12-safe-right))!important;
+    top:42dvh!important;
+    width:min(23vw,350px)!important;
+    max-width:min(23vw,350px)!important;
+    max-height:18dvh!important;
+  }
+
+  body.flight-v12.v12-ready .v12-history{
+    right:max(10px,var(--v12-safe-right))!important;
+    bottom:max(10px,var(--v12-safe-bottom))!important;
+    width:min(23vw,350px)!important;
+    max-width:min(23vw,350px)!important;
+    max-height:35dvh!important;
+  }
+
+  #v12Exit{
+    right:
+      calc(
+        max(10px,var(--v12-safe-right))
+        + min(23vw,350px)
+        + 10px
+      );
+  }
+}
+
+@media (max-height:520px) and (orientation:landscape){
+  body.flight-v12.v12-ready .v12-hud{
+    font-size:.75em!important;
+  }
+
+  body.flight-v12.v12-ready .v12-launch{
+    width:25vw!important;
+    max-width:25vw!important;
+  }
+
+  body.flight-v12.v12-ready .v12-selected,
+  body.flight-v12.v12-ready .v12-record,
+  body.flight-v12.v12-ready .v12-history{
+    width:21vw!important;
+    max-width:21vw!important;
+  }
+
+  #v12Exit{
+    right:
+      calc(
+        max(8px,var(--v12-safe-right))
+        + 21vw
+        + 8px
+      );
+    height:30px;
+  }
+}
+
+/*
+  Round result / final AUTO-session summary remains above the HUD
+  when the existing current Game logic chooses to show it.
+*/
+body.flight-v12 .result-overlay,
+body.flight-v12 [class*="result-overlay"],
+body.flight-v12 [class*="session-summary"]{
+  z-index:120000!important;
+}
