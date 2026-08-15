@@ -697,7 +697,7 @@
       'mfGameFullscreenV11Launcher';
 
     script.src=
-      '/game-fullscreen-v11-launcher.js?v=1786762843';
+      '/game-fullscreen-v11-launcher.js?v=1786764628';
 
     script.async=false;
 

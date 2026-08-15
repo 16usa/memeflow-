@@ -1,17 +1,21 @@
 (()=>{
   'use strict';
 
-  const VERSION='11.1';
+  const VERSION='11.2';
+
   const params=new URLSearchParams(location.search);
 
+  /*
+    When the normal Game is loaded inside Flight View,
+    do not install another launcher.
+  */
   if(params.get('mf_embedded')==='1'){
-    console.info('[MEMEFLOW FULLSCREEN V11.1] embedded Game — launcher disabled');
     return;
   }
 
   let opening=false;
 
-  function cleanupOldFlight(){
+  function cleanupLegacyHud(){
     try{
       globalThis.MEMEFLOW_FLIGHT_MODE?.disable?.();
     }catch(_){}
@@ -40,104 +44,216 @@
       });
   }
 
-  function utility(){
-    return document.querySelector('.launch-panel .utility-actions');
+  function utilityRow(){
+    return document.querySelector(
+      '.launch-panel .utility-actions'
+    );
   }
 
-  function existingFullscreenButton(){
-    const row=utility();
+  function fullscreenButton(){
+    const row=utilityRow();
     if(!row)return null;
 
-    const buttons=[...row.querySelectorAll('button,[role="button"]')];
+    const buttons=[
+      ...row.querySelectorAll(
+        'button,[role="button"]'
+      )
+    ];
+
     if(!buttons.length)return null;
 
-    const already=buttons.find(b=>b.dataset.mfV11Launcher==='true');
-    if(already)return already;
-
-    const labeled=buttons.find(button=>{
-      const s=(
-        String(button.innerText||'')+' '+
-        String(button.getAttribute('aria-label')||'')+' '+
-        String(button.getAttribute('title')||'')
-      ).toUpperCase();
-
-      return (
-        s.includes('FULL SCREEN') ||
-        s.includes('FULLSCREEN') ||
-        s.includes('FLIGHT VIEW')
+    const owned=
+      buttons.find(
+        b=>b.dataset.mfV11Launcher==='true'
       );
-    });
 
-    return labeled || buttons[buttons.length-1] || null;
+    if(owned)return owned;
+
+    const labeled=
+      buttons.find(button=>{
+        const label=(
+          String(button.innerText||'')+' '+
+          String(button.getAttribute('aria-label')||'')+' '+
+          String(button.getAttribute('title')||'')
+        ).toUpperCase();
+
+        return (
+          label.includes('FULL SCREEN') ||
+          label.includes('FULLSCREEN') ||
+          label.includes('FLIGHT VIEW')
+        );
+      });
+
+    if(labeled)return labeled;
+
+    /*
+      Current utility order:
+      Settings / Wallet / Sound / Fullscreen.
+    */
+    return buttons[buttons.length-1] || null;
   }
 
-  function targetUrl(){
-    const current=location.pathname+location.search+location.hash;
+  function flightUrl(){
+    const current=
+      location.pathname+
+      location.search+
+      location.hash;
 
-    sessionStorage.setItem('mfGameFullscreenReturn',current);
+    sessionStorage.setItem(
+      'mfGameFullscreenReturn',
+      current
+    );
 
     return (
-      '/game-fullscreen-v11.html?mf_v11=1&src='+
+      '/game-fullscreen-v11.html'+
+      '?mf_v11=1'+
+      '&src='+
       encodeURIComponent(current)
     );
   }
 
-  function openV11(){
+  function openFlightWindow(){
     if(opening)return;
     opening=true;
 
-    cleanupOldFlight();
-    location.assign(targetUrl());
+    cleanupLegacyHud();
+
+    const url=flightUrl();
+
+    /*
+      IMPORTANT:
+      Open a genuinely separate Safari tab/window.
+      The normal Game remains exactly where it is.
+      Because this runs directly from the user gesture,
+      iOS Safari is allowed to open it.
+    */
+    const popup=window.open(
+      url,
+      '_blank',
+      'noopener'
+    );
+
+    setTimeout(()=>{
+      opening=false;
+    },500);
+
+    if(!popup){
+      /*
+        Do NOT replace the current Game.
+        If Safari blocks the new tab, leave Game untouched.
+      */
+      console.warn(
+        '[MEMEFLOW FULLSCREEN V11.2]',
+        'New window was blocked by the browser.'
+      );
+    }
   }
 
   function ownButton(){
-    cleanupOldFlight();
+    cleanupLegacyHud();
 
-    const old=existingFullscreenButton();
+    const old=fullscreenButton();
     if(!old)return false;
 
-    if(old.dataset.mfV11Launcher==='true')return true;
+    if(old.dataset.mfV11Launcher==='true'){
+      return true;
+    }
 
+    /*
+      Clone removes old click listeners attached directly
+      to the previous fullscreen button.
+    */
     const button=old.cloneNode(true);
 
     button.dataset.mfV11Launcher='true';
-    button.setAttribute('aria-label','Open Flight View');
-    button.setAttribute('title','Open Flight View');
+
+    /*
+      Avoid FULLSCREEN wording so legacy V10.9 text-based
+      handlers do not recognize this control.
+    */
+    button.setAttribute(
+      'aria-label',
+      'Open Flight View'
+    );
+
+    button.setAttribute(
+      'title',
+      'Open Flight View'
+    );
 
     old.replaceWith(button);
 
-    console.info('[MEMEFLOW FULLSCREEN V11.1] four-corners button owned by V11');
     return true;
   }
 
-  function isOurButton(target){
-    return !!target?.closest?.('[data-mf-v11-launcher="true"]');
+  function isFlightButton(target){
+    return !!target?.closest?.(
+      '[data-mf-v11-launcher="true"]'
+    );
   }
 
-  /* Window capture fires before the old V10.9 document click listener. */
   function capture(event){
-    if(!isOurButton(event.target))return;
+    if(!isFlightButton(event.target))return;
 
     event.preventDefault();
     event.stopPropagation();
     event.stopImmediatePropagation();
-    openV11();
+
+    openFlightWindow();
   }
 
-  window.addEventListener('pointerdown',capture,true);
-  window.addEventListener('touchstart',capture,{capture:true,passive:false});
-  window.addEventListener('click',capture,true);
+  /*
+    Window capture fires before document capture,
+    so the retired V10.9 HUD cannot intercept the tap.
+  */
+  window.addEventListener(
+    'pointerdown',
+    capture,
+    true
+  );
 
-  cleanupOldFlight();
+  window.addEventListener(
+    'touchstart',
+    capture,
+    {
+      capture:true,
+      passive:false
+    }
+  );
+
+  window.addEventListener(
+    'click',
+    capture,
+    true
+  );
+
+  cleanupLegacyHud();
 
   let attempts=0;
+
   const timer=setInterval(()=>{
     attempts+=1;
-    if(ownButton() || attempts>80)clearInterval(timer);
+
+    if(ownButton() || attempts>80){
+      clearInterval(timer);
+    }
   },100);
 
-  const observer=new MutationObserver(()=>ownButton());
-  observer.observe(document.documentElement,{childList:true,subtree:true});
+  const observer=
+    new MutationObserver(()=>{
+      ownButton();
+    });
 
-  console.info('[MEMEFLOW FULLSCREEN V11.1]',VERSION,'READY');
+  observer.observe(
+    document.documentElement,
+    {
+      childList:true,
+      subtree:true
+    }
+  );
+
+  console.info(
+    '[MEMEFLOW FULLSCREEN V11.2]',
+    'READY · NEW WINDOW MODE'
+  );
 })();
