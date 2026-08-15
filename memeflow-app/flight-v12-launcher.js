@@ -1,13 +1,9 @@
 (()=>{
   'use strict';
 
-  const VERSION='12.1';
+  const VERSION='12.4';
 
-  if(
-    location.pathname.includes(
-      'flight-v12'
-    )
-  ){
+  if(location.pathname.includes('flight-v12')){
     return;
   }
 
@@ -16,12 +12,8 @@
   function standalone(){
     return (
       navigator.standalone===true ||
-      matchMedia?.(
-        '(display-mode: standalone)'
-      )?.matches===true ||
-      matchMedia?.(
-        '(display-mode: fullscreen)'
-      )?.matches===true
+      window.matchMedia?.('(display-mode: standalone)')?.matches===true ||
+      window.matchMedia?.('(display-mode: fullscreen)')?.matches===true
     );
   }
 
@@ -38,93 +30,57 @@
       return false;
     }
 
-    if(
-      old.dataset
-        .flightV121===
-      'true'
-    ){
+    if(old.dataset.flightV124==='true'){
       return true;
     }
 
     /*
-      Replace the old button after game.js has bound it.
-      This removes its old toggleFullscreen click listener.
+      Keep the existing visual button exactly as-is.
+      Replace only its old fullscreen/new-tab behavior.
     */
-    const link=
-      document.createElement('a');
+    const button=old.cloneNode(true);
 
-    for(
-      const attr of
-      [...old.attributes]
-    ){
-      const name=
-        attr.name.toLowerCase();
+    button.dataset.flightV124='true';
 
-      if(
-        [
-          'id',
-          'type',
-          'role',
-          'aria-pressed',
-          'aria-label',
-          'title'
-        ].includes(name)
-      ){
-        continue;
-      }
-
-      link.setAttribute(
-        attr.name,
-        attr.value
-      );
-    }
-
-    link.id='fullscreenBtn';
-    link.className=
-      old.className;
-
-    link.innerHTML=
-      old.innerHTML;
-
-    /*
-      No window.open() and no popup permission.
-      In the installed Home Screen web app this remains
-      inside the app window. In Safari it is only a preview;
-      Safari itself cannot be programmatically hidden.
-    */
-    link.href=
-      '/flight-v12.html';
-
-    link.target='_self';
-
-    link.dataset.flightV121=
-      'true';
-
-    link.setAttribute(
+    button.setAttribute(
       'aria-label',
-      standalone()
-        ?'Open Flight App'
-        :'Open Flight View'
+      'Open Flight View'
     );
 
-    link.setAttribute(
+    button.setAttribute(
       'title',
-      standalone()
-        ?'Open Flight App'
-        :'Open Flight View'
+      'Open Flight View'
     );
 
-    link.style.textDecoration=
-      'none';
+    old.replaceWith(button);
 
-    old.replaceWith(link);
+    button.addEventListener(
+      'click',
+      (event)=>{
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+
+        /*
+          CRITICAL V12.4:
+          NEVER _blank
+          NEVER window.open()
+          NEVER popup
+
+          If MEMEFLOW is already running as an installed iPhone web app,
+          this keeps navigation inside that same chrome-free app window.
+        */
+        location.assign('/flight-v12.html');
+      },
+      true
+    );
 
     console.info(
-      '[MEMEFLOW FLIGHT V12.1 LAUNCHER]',
-      VERSION,
+      '[MEMEFLOW FLIGHT V12.4]',
       standalone()
-        ?'APP MODE'
-        :'SAFARI PREVIEW MODE'
+        ?'APP WINDOW MODE'
+        :'SAME TAB MODE',
+      VERSION
     );
 
     return true;
@@ -132,30 +88,21 @@
 
   let attempts=0;
 
-  const timer=
-    setInterval(()=>{
-      attempts+=1;
+  const timer=setInterval(()=>{
+    attempts+=1;
 
-      if(
-        install() ||
-        attempts>50
-      ){
-        clearInterval(timer);
-      }
-    },100);
+    if(install() || attempts>=60){
+      clearInterval(timer);
+    }
+  },100);
 
-  const observer=
-    new MutationObserver(()=>{
-      removeOldGuide();
+  const observer=new MutationObserver(()=>{
+    removeOldGuide();
 
-      if(
-        !document.querySelector(
-          '[data-flight-v121="true"]'
-        )
-      ){
-        install();
-      }
-    });
+    if(!document.querySelector('[data-flight-v124="true"]')){
+      install();
+    }
+  });
 
   observer.observe(
     document.documentElement,
