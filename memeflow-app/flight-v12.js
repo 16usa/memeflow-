@@ -185,3 +185,45 @@
     boot();
   }
 })();
+
+/* === V12.6 EXACT IPHONE HEIGHT START === */
+
+(()=>{
+  const syncV12ScreenHeight = () => {
+    const h = Math.round(
+      window.visualViewport?.height ||
+      window.innerHeight ||
+      document.documentElement.clientHeight
+    );
+
+    document.documentElement.style.setProperty(
+      '--v12-screen-h',
+      `${h}px`
+    );
+  };
+
+  syncV12ScreenHeight();
+
+  window.addEventListener(
+    'resize',
+    syncV12ScreenHeight,
+    {passive:true}
+  );
+
+  window.addEventListener(
+    'orientationchange',
+    ()=>{
+      setTimeout(syncV12ScreenHeight,80);
+      setTimeout(syncV12ScreenHeight,300);
+    },
+    {passive:true}
+  );
+
+  window.visualViewport?.addEventListener(
+    'resize',
+    syncV12ScreenHeight,
+    {passive:true}
+  );
+})();
+
+/* === V12.6 EXACT IPHONE HEIGHT END === */

@@ -1057,3 +1057,84 @@ body.flight-v12 [class*="session-summary"]{
 }
 
 /* === MEMEFLOW FLIGHT V12.3 CINEMATIC PORTRAIT END === */
+
+/* === MEMEFLOW FLIGHT V12.6 PHYSICAL BOTTOM FILL START === */
+
+/*
+  Use the exact runtime viewport height supplied by flight-v12.js.
+  This fixes the iPhone standalone/PWA bottom gap.
+*/
+html,
+body.flight-v12,
+body.flight-v12 .game,
+body.flight-v12 .layout,
+body.flight-v12 .stage-card{
+  height:var(--v12-screen-h,100dvh)!important;
+  min-height:var(--v12-screen-h,100dvh)!important;
+  max-height:var(--v12-screen-h,100dvh)!important;
+}
+
+body.flight-v12{
+  position:fixed!important;
+  inset:0!important;
+  width:100%!important;
+  overflow:hidden!important;
+}
+
+body.flight-v12 .game{
+  position:fixed!important;
+  inset:0!important;
+  width:100%!important;
+  margin:0!important;
+  padding:0!important;
+}
+
+body.flight-v12 .layout{
+  position:fixed!important;
+  inset:0!important;
+  width:100%!important;
+  margin:0!important;
+  padding:0!important;
+}
+
+body.flight-v12 .stage-card{
+  position:fixed!important;
+  top:0!important;
+  right:0!important;
+  bottom:0!important;
+  left:0!important;
+
+  width:100%!important;
+
+  margin:0!important;
+  padding:0!important;
+
+  background:#06152a!important;
+}
+
+/*
+  Make the actual space scene consume every available pixel
+  between the top status strip and bottom metrics strip.
+*/
+body.flight-v12 .stage-card>#world,
+body.flight-v12 .stage-card>.world{
+  width:100%!important;
+  height:100%!important;
+  min-height:0!important;
+  align-self:stretch!important;
+}
+
+/*
+  Paint through the Home Indicator safe area instead of allowing
+  the page's black background to show underneath the game.
+*/
+body.flight-v12 .stage-card>.position-strip{
+  padding-bottom:max(
+    var(--v12-bottom),
+    env(safe-area-inset-bottom,0px)
+  )!important;
+
+  background:rgba(2,7,12,.88)!important;
+}
+
+/* === MEMEFLOW FLIGHT V12.6 PHYSICAL BOTTOM FILL END === */
