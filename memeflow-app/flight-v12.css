@@ -5476,3 +5476,128 @@ body.flight-v12::after{
 }
 
 /* === MEMEFLOW V20.1 SELECTED LAUNCH FIT END === */
+
+/* === MEMEFLOW V20.3 RAISE SELECTED HISTORY TOP START === */
+
+@media (orientation:portrait){
+
+  /*
+    IMPORTANT:
+    Launch Control / PAPER ONLY stays exactly where it is.
+    Flight Record stays exactly where it is.
+    START / AUTO stays exactly where it is.
+    Bottom metrics strip stays exactly where it is.
+
+    ONLY:
+    Selected Launch + Round History become taller UPWARD.
+
+    Their bottom edge does NOT move.
+  */
+
+
+  body.flight-v12 .token-panel,
+  body.flight-v12 .history-panel{
+
+    /*
+      Make both cards the same height as Launch Control.
+      Because their bottom remains unchanged,
+      only their TOP edge moves upward.
+    */
+    height:var(--v20-launch-h)!important;
+    min-height:var(--v20-launch-h)!important;
+    max-height:var(--v20-launch-h)!important;
+  }
+
+
+  /* SELECTED LAUNCH:
+     use the extra vertical space instead of stretching text */
+
+  body.flight-v12 .token-panel{
+    grid-template-rows:
+      14px
+      32px
+      16px
+      minmax(0,1fr)
+      20px!important;
+
+    gap:3px!important;
+    padding:5px!important;
+  }
+
+  body.flight-v12 .token-panel .panel-row{
+    height:14px!important;
+    min-height:14px!important;
+  }
+
+  body.flight-v12 .token-panel .token-head{
+    height:32px!important;
+    min-height:32px!important;
+  }
+
+  body.flight-v12 .token-panel .quality-line{
+    height:16px!important;
+    min-height:16px!important;
+  }
+
+  body.flight-v12 .token-panel .telemetry{
+    height:20px!important;
+    min-height:20px!important;
+  }
+
+
+  /* Give metrics proper readable room */
+
+  body.flight-v12 .token-panel .token-metrics{
+    min-height:0!important;
+    height:100%!important;
+  }
+
+  body.flight-v12 .token-panel .token-metrics > div{
+    display:flex!important;
+    flex-direction:column!important;
+    justify-content:center!important;
+  }
+
+  body.flight-v12 .token-panel .token-metrics small{
+    font-size:4px!important;
+  }
+
+  body.flight-v12 .token-panel .token-metrics b{
+    font-size:6.5px!important;
+  }
+
+
+  /* ROUND HISTORY:
+     taller body, header stays compact */
+
+  body.flight-v12 .history-panel{
+    grid-template-rows:
+      18px
+      14px
+      minmax(0,1fr)!important;
+  }
+
+  body.flight-v12 .history-panel .history{
+    min-height:0!important;
+    height:100%!important;
+
+    overflow-y:auto!important;
+    overflow-x:hidden!important;
+
+    -webkit-overflow-scrolling:touch!important;
+  }
+
+
+  /*
+    DO NOT TOUCH:
+    .launch-panel
+    .stats-panel
+    #v12ActionDock
+    #rocket
+    #world
+    .stage-head
+    .position-strip
+  */
+}
+
+/* === MEMEFLOW V20.3 RAISE SELECTED HISTORY TOP END === */
