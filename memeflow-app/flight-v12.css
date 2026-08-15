@@ -3566,3 +3566,759 @@ body.flight-v12::after{
 }
 
 /* === MEMEFLOW FLIGHT V17 APPROVED COMPACT LAYOUT END === */
+
+/* === MEMEFLOW V17.2 ADAPT ALL INNER PANELS START === */
+
+@media (orientation:portrait){
+
+  /* =========================================================
+     GLOBAL RESET FOR COMPACT HUD CONTENT
+     ========================================================= */
+
+  body.flight-v12 .launch-panel,
+  body.flight-v12 .token-panel,
+  body.flight-v12 .stats-panel,
+  body.flight-v12 .history-panel,
+  body.flight-v12 #v12ActionDock{
+    box-sizing:border-box!important;
+  }
+
+  body.flight-v12 .launch-panel *,
+  body.flight-v12 .token-panel *,
+  body.flight-v12 .stats-panel *,
+  body.flight-v12 .history-panel *,
+  body.flight-v12 #v12ActionDock *{
+    box-sizing:border-box!important;
+    min-width:0!important;
+    max-width:100%;
+  }
+
+  /* remove previous proportional zoom hacks */
+  body.flight-v12 .launch-panel > *,
+  body.flight-v12 .token-panel > *,
+  body.flight-v12 .stats-panel > *{
+    zoom:1!important;
+    transform:none!important;
+  }
+
+
+  /* =========================================================
+     1 — LAUNCH CONTROL
+     ========================================================= */
+
+  body.flight-v12 .launch-panel{
+    padding:5px!important;
+
+    display:grid!important;
+    grid-template-columns:
+      1.25fr
+      1.05fr
+      1.08fr
+      1.20fr!important;
+
+    grid-template-rows:
+      14px
+      minmax(0,1fr)
+      24px
+      36px!important;
+
+    gap:4px!important;
+
+    overflow:hidden!important;
+
+    font-size:6px!important;
+    line-height:1.05!important;
+  }
+
+
+  /* header */
+
+  body.flight-v12 .launch-panel .panel-title{
+    grid-column:1/-1!important;
+    grid-row:1!important;
+
+    height:14px!important;
+    min-height:14px!important;
+
+    margin:0!important;
+    padding:0 2px!important;
+
+    display:flex!important;
+    align-items:center!important;
+    justify-content:space-between!important;
+  }
+
+  body.flight-v12 .launch-panel .panel-title h1{
+    display:none!important;
+  }
+
+  body.flight-v12 .launch-panel .panel-title small{
+    font-size:6px!important;
+    line-height:1!important;
+  }
+
+  body.flight-v12 .launch-panel .paper-badge{
+    height:13px!important;
+    min-height:13px!important;
+
+    padding:0 5px!important;
+
+    display:flex!important;
+    align-items:center!important;
+
+    font-size:5px!important;
+    line-height:1!important;
+  }
+
+
+  /* balance / utility */
+
+  body.flight-v12 .launch-panel .game-utility{
+    grid-column:1!important;
+    grid-row:2/4!important;
+
+    margin:0!important;
+    padding:4px!important;
+
+    height:100%!important;
+    min-height:0!important;
+
+    overflow:hidden!important;
+
+    display:grid!important;
+    grid-template-rows:auto 1fr auto!important;
+    gap:2px!important;
+  }
+
+  body.flight-v12 .launch-panel .game-balance small{
+    font-size:4.5px!important;
+  }
+
+  body.flight-v12 .launch-panel .game-balance b{
+    margin-top:1px!important;
+    font-size:10px!important;
+    line-height:1!important;
+  }
+
+  body.flight-v12 .launch-panel .stream-utility{
+    font-size:4.5px!important;
+    line-height:1!important;
+    overflow:hidden!important;
+  }
+
+  body.flight-v12 .launch-panel .stream-utility small{
+    display:none!important;
+  }
+
+  body.flight-v12 .launch-panel .utility-actions{
+    display:flex!important;
+    gap:3px!important;
+
+    margin:0!important;
+  }
+
+  body.flight-v12 .launch-panel .utility-actions button{
+    width:23px!important;
+    height:23px!important;
+
+    min-width:23px!important;
+    min-height:23px!important;
+
+    padding:0!important;
+  }
+
+  body.flight-v12 .launch-panel .utility-actions button b{
+    display:none!important;
+  }
+
+
+  /* hide verbose description only */
+
+  body.flight-v12 .launch-panel > .lead,
+  body.flight-v12 .launch-panel > .field-title{
+    display:none!important;
+  }
+
+
+  /* stake */
+
+  body.flight-v12 .launch-panel .stake-input{
+    grid-column:2!important;
+    grid-row:2!important;
+
+    width:100%!important;
+    height:34px!important;
+    min-height:34px!important;
+
+    padding:2px 5px!important;
+    margin:0!important;
+
+    align-self:start!important;
+  }
+
+  body.flight-v12 .launch-panel .stake-input span{
+    font-size:9px!important;
+  }
+
+  body.flight-v12 .launch-panel .stake-input input{
+    width:100%!important;
+    height:28px!important;
+
+    padding:0!important;
+
+    font-size:14px!important;
+    line-height:1!important;
+  }
+
+
+  /* quick bets */
+
+  body.flight-v12 .launch-panel .quick-bets{
+    grid-column:2!important;
+    grid-row:3!important;
+
+    display:grid!important;
+    grid-template-columns:repeat(4,1fr)!important;
+
+    width:100%!important;
+    height:24px!important;
+
+    gap:2px!important;
+    margin:0!important;
+  }
+
+  body.flight-v12 .launch-panel .quick-bets button{
+    width:100%!important;
+    height:24px!important;
+
+    min-width:0!important;
+    min-height:24px!important;
+
+    padding:0!important;
+
+    font-size:5px!important;
+    line-height:1!important;
+  }
+
+
+  /* Auto / Stop */
+
+  body.flight-v12 .launch-panel .select-grid{
+    grid-column:3!important;
+    grid-row:2/4!important;
+
+    display:grid!important;
+    grid-template-columns:1fr!important;
+    grid-template-rows:1fr 1fr!important;
+
+    width:100%!important;
+    height:100%!important;
+
+    gap:3px!important;
+    margin:0!important;
+  }
+
+  body.flight-v12 .launch-panel .select-grid label{
+    display:grid!important;
+    grid-template-rows:9px minmax(0,1fr)!important;
+
+    gap:1px!important;
+
+    min-height:0!important;
+  }
+
+  body.flight-v12 .launch-panel .select-grid label > span{
+    font-size:4.5px!important;
+    line-height:1!important;
+  }
+
+  body.flight-v12 .launch-panel .select-grid select{
+    width:100%!important;
+    height:25px!important;
+    min-height:25px!important;
+
+    padding:0 4px!important;
+
+    font-size:6.5px!important;
+    line-height:1!important;
+  }
+
+
+  /* Flight plan */
+
+  body.flight-v12 .launch-panel .risk-deck{
+    grid-column:4!important;
+    grid-row:2/5!important;
+
+    width:100%!important;
+    height:100%!important;
+
+    min-height:0!important;
+
+    padding:4px!important;
+    margin:0!important;
+
+    overflow:hidden!important;
+  }
+
+  body.flight-v12 .launch-panel .risk-head{
+    height:10px!important;
+    min-height:10px!important;
+  }
+
+  body.flight-v12 .launch-panel .risk-head span,
+  body.flight-v12 .launch-panel .risk-head b{
+    font-size:4.5px!important;
+    line-height:1!important;
+  }
+
+  body.flight-v12 .launch-panel .risk-metrics{
+    margin-top:2px!important;
+
+    display:grid!important;
+    grid-template-columns:1fr 1fr!important;
+    grid-template-rows:1fr 1fr!important;
+  }
+
+  body.flight-v12 .launch-panel .risk-metrics > div{
+    padding:2px 3px!important;
+  }
+
+  body.flight-v12 .launch-panel .risk-metrics small{
+    font-size:4px!important;
+    line-height:1!important;
+  }
+
+  body.flight-v12 .launch-panel .risk-metrics b{
+    margin-top:1px!important;
+
+    font-size:6.5px!important;
+    line-height:1!important;
+  }
+
+  body.flight-v12 .launch-panel .risk-track{
+    height:3px!important;
+    margin-top:2px!important;
+  }
+
+  body.flight-v12 .launch-panel .risk-deck > p{
+    display:none!important;
+  }
+
+
+  /* presets bottom */
+
+  body.flight-v12 .launch-panel .target-presets{
+    grid-column:1/4!important;
+    grid-row:4!important;
+
+    display:grid!important;
+    grid-template-columns:repeat(5,1fr)!important;
+
+    width:100%!important;
+    height:36px!important;
+
+    gap:3px!important;
+    margin:0!important;
+  }
+
+  body.flight-v12 .launch-panel .target-presets button{
+    width:100%!important;
+    height:36px!important;
+
+    min-height:36px!important;
+
+    padding:2px!important;
+  }
+
+  body.flight-v12 .launch-panel .target-presets button b{
+    font-size:6px!important;
+    line-height:1!important;
+  }
+
+  body.flight-v12 .launch-panel .target-presets button small{
+    margin-top:2px!important;
+
+    font-size:3.8px!important;
+    line-height:1!important;
+  }
+
+
+  /* =========================================================
+     2 — SELECTED LAUNCH
+     ========================================================= */
+
+  body.flight-v12 .token-panel{
+    padding:5px!important;
+
+    display:grid!important;
+    grid-template-rows:
+      14px
+      32px
+      17px
+      minmax(38px,1fr)
+      20px!important;
+
+    gap:2px!important;
+
+    overflow:hidden!important;
+
+    font-size:6px!important;
+    line-height:1.05!important;
+  }
+
+  body.flight-v12 .token-panel .panel-row{
+    height:14px!important;
+    min-height:14px!important;
+
+    margin:0!important;
+
+    font-size:5.5px!important;
+  }
+
+  body.flight-v12 .token-panel .token-head{
+    height:32px!important;
+    min-height:32px!important;
+
+    margin:0!important;
+
+    display:grid!important;
+    grid-template-columns:28px 1fr!important;
+
+    gap:5px!important;
+    align-items:center!important;
+  }
+
+  body.flight-v12 .token-panel .token-avatar{
+    width:27px!important;
+    height:27px!important;
+
+    min-width:27px!important;
+
+    font-size:9px!important;
+  }
+
+  body.flight-v12 .token-panel .token-head b{
+    display:block!important;
+
+    font-size:7.5px!important;
+    line-height:1.05!important;
+
+    white-space:nowrap!important;
+    overflow:hidden!important;
+    text-overflow:ellipsis!important;
+  }
+
+  body.flight-v12 .token-panel .token-head small{
+    display:block!important;
+
+    margin-top:2px!important;
+
+    font-size:4px!important;
+    line-height:1.05!important;
+
+    white-space:nowrap!important;
+    overflow:hidden!important;
+    text-overflow:ellipsis!important;
+  }
+
+  body.flight-v12 .token-panel .quality-line{
+    height:17px!important;
+
+    margin:0!important;
+
+    display:flex!important;
+    align-items:center!important;
+
+    font-size:4.2px!important;
+    line-height:1.05!important;
+  }
+
+  body.flight-v12 .token-panel .token-metrics{
+    min-height:38px!important;
+    height:100%!important;
+
+    margin:0!important;
+
+    display:grid!important;
+    grid-template-columns:1fr 1fr!important;
+    grid-template-rows:1fr 1fr!important;
+  }
+
+  body.flight-v12 .token-panel .token-metrics > div{
+    padding:2px 4px!important;
+  }
+
+  body.flight-v12 .token-panel .token-metrics small{
+    font-size:4px!important;
+    line-height:1!important;
+  }
+
+  body.flight-v12 .token-panel .token-metrics b{
+    margin-top:1px!important;
+
+    font-size:6.5px!important;
+    line-height:1!important;
+  }
+
+  body.flight-v12 .token-panel .telemetry{
+    height:20px!important;
+
+    margin:0!important;
+    padding-top:2px!important;
+
+    display:grid!important;
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+
+    gap:1px 4px!important;
+
+    overflow:hidden!important;
+
+    font-size:3.8px!important;
+    line-height:1!important;
+  }
+
+
+  /* =========================================================
+     3 — ROUND HISTORY
+     ========================================================= */
+
+  body.flight-v12 .history-panel{
+    display:grid!important;
+    grid-template-rows:
+      18px
+      14px
+      minmax(0,1fr)!important;
+
+    padding:0!important;
+
+    overflow:hidden!important;
+  }
+
+  body.flight-v12 .history-panel > summary{
+    height:18px!important;
+    min-height:18px!important;
+
+    padding:0 6px!important;
+
+    font-size:5.5px!important;
+    line-height:1!important;
+  }
+
+  body.flight-v12 .history-panel > summary b{
+    width:17px!important;
+    height:17px!important;
+
+    min-width:17px!important;
+
+    font-size:5px!important;
+  }
+
+  body.flight-v12 .history-toolbar{
+    height:14px!important;
+    min-height:14px!important;
+
+    padding:0 5px!important;
+
+    font-size:4px!important;
+    line-height:1!important;
+  }
+
+  body.flight-v12 .history-toolbar button{
+    font-size:4px!important;
+  }
+
+  body.flight-v12 .history-panel .history{
+    width:100%!important;
+    height:100%!important;
+
+    min-height:0!important;
+
+    padding:1px 3px!important;
+
+    overflow-y:auto!important;
+    overflow-x:hidden!important;
+
+    -webkit-overflow-scrolling:touch!important;
+  }
+
+  body.flight-v12 .history-panel .history-row{
+    min-height:19px!important;
+
+    padding:2px 3px!important;
+    margin:0!important;
+
+    font-size:5px!important;
+    line-height:1.05!important;
+  }
+
+
+  /* =========================================================
+     4 — FLIGHT RECORD
+     ========================================================= */
+
+  body.flight-v12 .stats-panel{
+    padding:5px!important;
+
+    display:grid!important;
+    grid-template-rows:13px minmax(0,1fr)!important;
+
+    gap:2px!important;
+
+    overflow:hidden!important;
+
+    font-size:6px!important;
+  }
+
+  body.flight-v12 .stats-panel .panel-row{
+    height:13px!important;
+    min-height:13px!important;
+
+    margin:0!important;
+
+    font-size:5.5px!important;
+    line-height:1!important;
+  }
+
+  body.flight-v12 .stats-panel .stats-grid{
+    width:100%!important;
+    height:100%!important;
+
+    min-height:0!important;
+
+    margin:0!important;
+
+    display:grid!important;
+    grid-template-columns:1fr 1fr!important;
+    grid-template-rows:1fr 1fr!important;
+
+    overflow:hidden!important;
+  }
+
+  body.flight-v12 .stats-panel .stats-grid > div{
+    min-height:0!important;
+
+    padding:2px 4px!important;
+  }
+
+  body.flight-v12 .stats-panel .stats-grid small{
+    font-size:4px!important;
+    line-height:1!important;
+  }
+
+  body.flight-v12 .stats-panel .stats-grid b{
+    margin-top:1px!important;
+
+    font-size:6.5px!important;
+    line-height:1!important;
+  }
+
+
+  /* =========================================================
+     START / CASH OUT / AUTO
+     ========================================================= */
+
+  body.flight-v12 #v12ActionDock{
+    display:grid!important;
+
+    grid-template-columns:1fr!important;
+    grid-template-rows:1fr 1fr!important;
+
+    gap:4px!important;
+
+    overflow:hidden!important;
+  }
+
+  body.flight-v12 #v12ActionDock > #startBtn,
+  body.flight-v12 #v12ActionDock > #cashoutBtn,
+  body.flight-v12 #v12ActionDock > #mfAutoLoopBtn{
+    width:100%!important;
+    height:100%!important;
+
+    min-height:0!important;
+
+    margin:0!important;
+    padding:2px 5px!important;
+  }
+
+  body.flight-v12 #v12ActionDock > #startBtn,
+  body.flight-v12 #v12ActionDock > #cashoutBtn{
+    grid-row:1!important;
+  }
+
+  body.flight-v12 #v12ActionDock > #mfAutoLoopBtn{
+    grid-row:2!important;
+  }
+
+  body.flight-v12 #v12ActionDock button b{
+    font-size:8px!important;
+    line-height:1!important;
+  }
+
+  body.flight-v12 #v12ActionDock button small{
+    margin-top:1px!important;
+
+    font-size:4.5px!important;
+    line-height:1!important;
+  }
+
+
+  /* Never show START and CASH OUT together */
+
+  body.flight-v12
+  .game:not([data-state="live"]):not([data-state="settling"])
+  #cashoutBtn{
+    display:none!important;
+  }
+
+  body.flight-v12
+  .game[data-state="live"]
+  #startBtn,
+  body.flight-v12
+  .game[data-state="settling"]
+  #startBtn{
+    display:none!important;
+  }
+
+  body.flight-v12 #v12ActionDock > [hidden]{
+    display:none!important;
+  }
+
+
+  /* =========================================================
+     FLIGHT POSITION
+     ========================================================= */
+
+  body.flight-v12 #flightPositionHud{
+    padding:2px 3px!important;
+
+    font-size:4.5px!important;
+    line-height:1!important;
+
+    overflow:hidden!important;
+  }
+
+  body.flight-v12 #flightPositionHud > small{
+    margin-bottom:2px!important;
+
+    font-size:4px!important;
+  }
+
+  body.flight-v12 #flightPositionHud > div{
+    min-height:7px!important;
+
+    gap:2px!important;
+  }
+
+
+  /*
+   * NOT TOUCHED:
+   * stage-head
+   * world
+   * rocket
+   * multiplier
+   * position-strip
+   */
+}
+
+/* === MEMEFLOW V17.2 ADAPT ALL INNER PANELS END === */
