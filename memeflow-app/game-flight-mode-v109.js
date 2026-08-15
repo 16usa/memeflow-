@@ -152,17 +152,153 @@
     active ? disable() : enable();
   }
 
+  function fullscreenControl(){
+
+    const utility=
+      document.querySelector(
+        '.launch-panel .utility-actions'
+      );
+
+    if(!utility)return null;
+
+    const buttons=[
+      ...utility.querySelectorAll(
+        'button,[role="button"]'
+      )
+    ].filter(button=>
+      button.id!=='gameSettingsBtn' &&
+      button.id!=='gameWalletBtn'
+    );
+
+
+    /*
+      First try labels/text if they exist.
+    */
+
+    const labeled=
+      buttons.find(button=>{
+
+        const label=(
+          String(button.innerText||'')+
+          ' '+
+          String(
+            button.getAttribute(
+              'aria-label'
+            )||''
+          )+
+          ' '+
+          String(
+            button.getAttribute(
+              'title'
+            )||''
+          )
+        ).toUpperCase();
+
+        return (
+          label.includes('FULL SCREEN') ||
+          label.includes('FULLSCREEN')
+        );
+      });
+
+
+    /*
+      Current Game utility order:
+        Settings
+        Wallet
+        Sound
+        Fullscreen
+
+      Settings + Wallet are filtered above,
+      therefore the last original utility button
+      is the existing four-corners fullscreen icon.
+    */
+
+    const button=
+      labeled ||
+      buttons[
+        buttons.length-1
+      ] ||
+      null;
+
+
+    if(button){
+
+      /*
+        Give the existing icon a proper accessible
+        name too. We are NOT creating another
+        fullscreen button.
+      */
+
+      button.setAttribute(
+        'aria-label',
+        'Full Screen / Flight Mode'
+      );
+
+      button.setAttribute(
+        'title',
+        'Full Screen / Flight Mode'
+      );
+
+      button.dataset.mfFlightTrigger=
+        'true';
+    }
+
+
+    return button;
+  }
+
+
   function isFullscreenControl(el){
+
     if(!el)return false;
 
-    const s=(
-      String(el.innerText||'')+' '+
-      String(el.getAttribute('aria-label')||'')+' '+
-      String(el.getAttribute('title')||'')
+    const fullscreen=
+      fullscreenControl();
+
+
+    /*
+      This is the important V10.9.1 fix:
+      bind directly to the REAL existing icon button.
+    */
+
+    if(
+      fullscreen &&
+      (
+        el===fullscreen ||
+        fullscreen.contains(el)
+      )
+    ){
+      return true;
+    }
+
+
+    /*
+      Text/ARIA fallback for desktop or future builds.
+    */
+
+    const label=(
+      String(el.innerText||'')+
+      ' '+
+      String(
+        el.getAttribute(
+          'aria-label'
+        )||''
+      )+
+      ' '+
+      String(
+        el.getAttribute(
+          'title'
+        )||''
+      )
     ).toUpperCase();
 
-    return s.includes('FULL SCREEN') || s.includes('FULLSCREEN');
+
+    return (
+      label.includes('FULL SCREEN') ||
+      label.includes('FULLSCREEN')
+    );
   }
+
 
   document.addEventListener(
     'click',
