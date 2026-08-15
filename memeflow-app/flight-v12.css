@@ -1339,3 +1339,379 @@ body.flight-v12::after{
 }
 
 /* === MEMEFLOW FLIGHT V12.11 IOS LARGE VIEWPORT END === */
+
+/* === MEMEFLOW FLIGHT V13 INNER HUD LAYOUT START === */
+
+/*
+  IMPORTANT:
+  This layer changes ONLY:
+    .launch-panel
+    .token-panel
+    .stats-panel
+    .history-panel
+
+  NOT TOUCHED:
+    stage-head / LIVE top row
+    multiplier HUD
+    telemetry
+    rocket/world
+    position-strip / bottom row
+*/
+
+/* ==========================================================
+   PORTRAIT PHONE
+   ========================================================== */
+
+@media (orientation:portrait){
+
+  /*
+    Common visual system.
+    Same border radius, opacity, border and shadow for all 4 cards.
+  */
+  body.flight-v12 .launch-panel,
+  body.flight-v12 .token-panel,
+  body.flight-v12 .stats-panel,
+  body.flight-v12 .history-panel{
+    position:fixed!important;
+    z-index:60!important;
+
+    margin:0!important;
+
+    border:
+      1px solid
+      rgba(118,190,211,.23)!important;
+
+    border-radius:16px!important;
+
+    background:
+      linear-gradient(
+        180deg,
+        rgba(5,14,20,.82),
+        rgba(3,9,14,.76)
+      )!important;
+
+    box-shadow:
+      0 16px 42px
+      rgba(0,0,0,.27)!important;
+
+    backdrop-filter:
+      blur(15px)
+      saturate(1.08)!important;
+
+    -webkit-backdrop-filter:
+      blur(15px)
+      saturate(1.08)!important;
+
+    box-sizing:border-box!important;
+  }
+
+
+  /* ========================================================
+     LEFT — LAUNCH CONTROL
+     Fully open. NO scrolling.
+     ======================================================== */
+
+  body.flight-v12 .launch-panel{
+    left:max(12px,var(--v12-left))!important;
+
+    /*
+      Starts below the existing top LIVE/multiplier/telemetry area.
+      This DOES NOT change that top area.
+    */
+    top:26dvh!important;
+
+    /*
+      Ends above the existing bottom position strip.
+      Bottom row itself is untouched.
+    */
+    bottom:calc(
+      max(12px,var(--v12-bottom)) + 38px
+    )!important;
+
+    width:39vw!important;
+    max-width:310px!important;
+
+    height:auto!important;
+    min-height:0!important;
+    max-height:none!important;
+
+    padding:8px!important;
+
+    overflow:visible!important;
+    overscroll-behavior:auto!important;
+
+    display:flex!important;
+    flex-direction:column!important;
+  }
+
+
+  /*
+    Action dock participates in the natural panel layout.
+    It is NOT sticky anymore, so Launch Control is one complete card.
+  */
+  body.flight-v12 .launch-panel #v12ActionDock{
+    position:relative!important;
+
+    left:auto!important;
+    right:auto!important;
+    bottom:auto!important;
+
+    margin-top:auto!important;
+    padding:
+      8px
+      0
+      0!important;
+
+    flex:0 0 auto!important;
+
+    background:none!important;
+  }
+
+
+  /* ========================================================
+     RIGHT COLUMN
+     Same X, same width, same 10px vertical gap.
+     ======================================================== */
+
+  body.flight-v12 .token-panel,
+  body.flight-v12 .stats-panel,
+  body.flight-v12 .history-panel{
+    right:max(12px,var(--v12-right))!important;
+
+    width:32vw!important;
+    max-width:250px!important;
+
+    min-height:0!important;
+
+    padding:8px!important;
+  }
+
+
+  /* ---------------- MARKET STATUS / SELECTED LAUNCH ---------------- */
+
+  body.flight-v12 .token-panel{
+    top:26dvh!important;
+
+    height:auto!important;
+    min-height:max-content!important;
+    max-height:none!important;
+
+    overflow:visible!important;
+    overscroll-behavior:auto!important;
+  }
+
+
+  /* ---------------- FLIGHT RECORD ---------------- */
+
+  body.flight-v12 .stats-panel{
+    /*
+      We use a clean fixed lane rather than letting it overlap
+      Market Status.
+    */
+    top:45.5dvh!important;
+
+    height:auto!important;
+    min-height:max-content!important;
+    max-height:none!important;
+
+    overflow:visible!important;
+    overscroll-behavior:auto!important;
+  }
+
+
+  /* ---------------- ROUND HISTORY ---------------- */
+
+  body.flight-v12 .history-panel{
+    top:57.5dvh!important;
+
+    bottom:calc(
+      max(12px,var(--v12-bottom)) + 38px
+    )!important;
+
+    height:auto!important;
+    min-height:0!important;
+    max-height:none!important;
+
+    padding:0!important;
+
+    display:grid!important;
+
+    grid-template-rows:
+      25px
+      19px
+      minmax(0,1fr)!important;
+
+    overflow:hidden!important;
+  }
+
+
+  /* ========================================================
+     ONLY ROUND HISTORY SCROLLS
+     ======================================================== */
+
+  body.flight-v12 .history-panel .history{
+    position:static!important;
+
+    width:100%!important;
+    height:100%!important;
+
+    min-height:0!important;
+    max-height:none!important;
+
+    overflow-x:hidden!important;
+    overflow-y:auto!important;
+
+    overscroll-behavior:contain!important;
+
+    -webkit-overflow-scrolling:touch!important;
+
+    scrollbar-width:thin!important;
+  }
+
+
+  /*
+    Show every history row.
+    The list itself scrolls instead of hiding rows.
+  */
+  body.flight-v12 .history-panel .history-row,
+  body.flight-v12 .history-panel .history-row:nth-child(n){
+    display:grid!important;
+  }
+
+
+  /* ========================================================
+     REMOVE INTERNAL SCROLL FROM THE OTHER THREE
+     ======================================================== */
+
+  body.flight-v12 .launch-panel *,
+  body.flight-v12 .token-panel *,
+  body.flight-v12 .stats-panel *{
+    overscroll-behavior:auto;
+  }
+
+
+  /* ========================================================
+     CLEAN CONSISTENT CARD HEADERS
+     ======================================================== */
+
+  body.flight-v12 .launch-panel .panel-title,
+  body.flight-v12 .token-panel .panel-row,
+  body.flight-v12 .stats-panel .panel-row{
+    min-height:22px!important;
+  }
+
+  body.flight-v12 .token-panel .panel-row,
+  body.flight-v12 .stats-panel .panel-row{
+    padding-bottom:5px!important;
+  }
+
+
+  /* ========================================================
+     MARKET STATUS — FULL CONTENT, NO CLIPPING
+     ======================================================== */
+
+  body.flight-v12 .token-panel .token-head{
+    margin-top:6px!important;
+  }
+
+  body.flight-v12 .token-panel .token-metrics{
+    margin-top:7px!important;
+  }
+
+  body.flight-v12 .token-panel .telemetry{
+    display:grid!important;
+
+    grid-template-columns:
+      repeat(2,minmax(0,1fr))!important;
+
+    gap:4px 10px!important;
+
+    margin-top:6px!important;
+    padding-top:6px!important;
+  }
+
+
+  /* ========================================================
+     FLIGHT RECORD — FULL CONTENT
+     ======================================================== */
+
+  body.flight-v12 .stats-panel .stats-grid{
+    margin-top:5px!important;
+  }
+
+
+  /* ========================================================
+     ROUND HISTORY HEADER
+     ======================================================== */
+
+  body.flight-v12 .history-panel>summary{
+    height:25px!important;
+    min-height:25px!important;
+
+    padding:
+      0
+      9px!important;
+  }
+
+  body.flight-v12 .history-toolbar{
+    height:19px!important;
+    min-height:19px!important;
+
+    padding:
+      2px
+      9px!important;
+  }
+
+  body.flight-v12 .history-panel .history{
+    padding:2px 5px 7px!important;
+  }
+
+
+  /* ========================================================
+     SPACING SAFETY
+     Nothing inside a card can horizontally escape.
+     ======================================================== */
+
+  body.flight-v12 .launch-panel *,
+  body.flight-v12 .token-panel *,
+  body.flight-v12 .stats-panel *,
+  body.flight-v12 .history-panel *{
+    box-sizing:border-box!important;
+    min-width:0;
+  }
+
+
+  /* ========================================================
+     SMALLER IPHONES
+     Same composition, slightly tighter.
+     ======================================================== */
+
+  @media (max-width:390px){
+
+    body.flight-v12 .launch-panel{
+      left:max(8px,var(--v12-left))!important;
+
+      width:39vw!important;
+
+      padding:6px!important;
+    }
+
+    body.flight-v12 .token-panel,
+    body.flight-v12 .stats-panel,
+    body.flight-v12 .history-panel{
+      right:max(8px,var(--v12-right))!important;
+
+      width:32vw!important;
+    }
+  }
+}
+
+
+/* ==========================================================
+   LANDSCAPE
+   Keep the existing landscape system.
+   V13 is portrait arrangement only.
+   ========================================================== */
+
+
+/* === MEMEFLOW FLIGHT V13 INNER HUD LAYOUT END === */
