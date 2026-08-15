@@ -186,44 +186,57 @@
   }
 })();
 
-/* === V12.6 EXACT IPHONE HEIGHT START === */
+/* === V12.7 PHYSICAL SCREEN HEIGHT START === */
 
 (()=>{
-  const syncV12ScreenHeight = () => {
+  const syncPhysicalScreen = () => {
+
+    const candidates = [
+      window.innerHeight || 0,
+      document.documentElement.clientHeight || 0,
+      window.screen?.height || 0,
+      window.screen?.availHeight || 0
+    ];
+
+    /*
+      On iPhone standalone/PWA the largest value is the one that
+      corresponds to the physical CSS-pixel screen.
+    */
     const h = Math.round(
-      window.visualViewport?.height ||
-      window.innerHeight ||
-      document.documentElement.clientHeight
+      Math.max(...candidates)
     );
 
-    document.documentElement.style.setProperty(
-      '--v12-screen-h',
-      `${h}px`
-    );
+    if(h > 0){
+      document.documentElement.style.setProperty(
+        '--v12-physical-h',
+        `${h}px`
+      );
+    }
   };
 
-  syncV12ScreenHeight();
+  syncPhysicalScreen();
 
   window.addEventListener(
     'resize',
-    syncV12ScreenHeight,
+    syncPhysicalScreen,
     {passive:true}
   );
 
   window.addEventListener(
     'orientationchange',
     ()=>{
-      setTimeout(syncV12ScreenHeight,80);
-      setTimeout(syncV12ScreenHeight,300);
+      setTimeout(syncPhysicalScreen,50);
+      setTimeout(syncPhysicalScreen,250);
+      setTimeout(syncPhysicalScreen,700);
     },
     {passive:true}
   );
 
-  window.visualViewport?.addEventListener(
-    'resize',
-    syncV12ScreenHeight,
+  window.addEventListener(
+    'pageshow',
+    syncPhysicalScreen,
     {passive:true}
   );
 })();
 
-/* === V12.6 EXACT IPHONE HEIGHT END === */
+/* === V12.7 PHYSICAL SCREEN HEIGHT END === */
