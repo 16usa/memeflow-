@@ -677,58 +677,43 @@
 })();
 /* === GAME WALLET V10.8.1 BOOTSTRAP END === */
 
-/* === GAME FLIGHT MODE V10.9 BOOTSTRAP START === */
+/* === GAME FULLSCREEN V11 LAUNCHER START === */
 ;(()=>{
-  const VERSION='10.9';
-
-  function loadFlightMode(){
-
-    if(!document.getElementById('mfGameFlightV109Css')){
-      const css=document.createElement('link');
-      css.id='mfGameFlightV109Css';
-      css.rel='stylesheet';
-      css.href='/game-flight-mode-v109.css?v=1786760892';
-      document.head.appendChild(css);
-    }
-
+  function loadGameFullscreenV11(){
     if(
-      !document.getElementById('mfGameFlightV109Js') &&
-      !globalThis.MEMEFLOW_FLIGHT_MODE
+      document.getElementById(
+        'mfGameFullscreenV11Launcher'
+      )
     ){
-      const js=document.createElement('script');
-      js.id='mfGameFlightV109Js';
-      js.src='/game-flight-mode-v109.js?v=1786760892';
-      js.async=false;
-
-      js.onload=()=>{
-        console.info(
-          '[FLIGHT MODE BOOTSTRAP]',
-          VERSION,
-          'LOADED'
-        );
-      };
-
-      js.onerror=()=>{
-        console.error(
-          '[FLIGHT MODE BOOTSTRAP]',
-          VERSION,
-          'LOAD FAILED'
-        );
-      };
-
-      document.head.appendChild(js);
+      return;
     }
+
+    const script=
+      document.createElement(
+        'script'
+      );
+
+    script.id=
+      'mfGameFullscreenV11Launcher';
+
+    script.src=
+      '/game-fullscreen-v11-launcher.js?v=1786762843';
+
+    script.async=false;
+
+    document.head.appendChild(
+      script
+    );
   }
 
   if(document.readyState==='loading'){
     document.addEventListener(
       'DOMContentLoaded',
-      loadFlightMode,
+      loadGameFullscreenV11,
       {once:true}
     );
   }else{
-    loadFlightMode();
+    loadGameFullscreenV11();
   }
-
 })();
-/* === GAME FLIGHT MODE V10.9 BOOTSTRAP END === */
+/* === GAME FULLSCREEN V11 LAUNCHER END === */

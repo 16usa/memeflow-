@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta
+    name="viewport"
+    content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"
+  >
+  <meta name="theme-color" content="#010408">
+  <title>MEMEFLOW · Flight View</title>
+  <link rel="stylesheet" href="/game-fullscreen-v11.css?v=11001">
+</head>
+<body>
+  <main id="mfV11Root">
+    <iframe
+      id="mfV11Frame"
+      title="MEMEFLOW Game Fullscreen"
+      allow="fullscreen"
+    ></iframe>
+
+    <div id="mfV11Loading" class="mf-v11-loading" role="status">
+      <span class="mf-v11-dot"></span>
+      <div>
+        <strong>MEMEFLOW FLIGHT VIEW</strong>
+        <small>Connecting to the current Game…</small>
+      </div>
+    </div>
+
+    <div id="mfV11Toast" class="mf-v11-toast" hidden></div>
+
+    <nav class="mf-v11-top-actions" aria-label="Flight view controls">
+      <button
+        id="mfV11NativeFullscreen"
+        type="button"
+        title="Browser fullscreen"
+      >
+        <span aria-hidden="true">⛶</span>
+        <span>FULL SCREEN</span>
+      </button>
+
+      <button
+        id="mfV11Exit"
+        type="button"
+        title="Return to Game"
+      >
+        <span aria-hidden="true">×</span>
+        <span>EXIT</span>
+      </button>
+    </nav>
+  </main>
+
+  <script src="/game-fullscreen-v11.js?v=11001" defer></script>
+</body>
+</html>
