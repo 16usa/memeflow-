@@ -1340,198 +1340,380 @@ body.flight-v12::after{
 
 /* === MEMEFLOW FLIGHT V12.11 IOS LARGE VIEWPORT END === */
 
-/* === MEMEFLOW FLIGHT V13 INNER HUD LAYOUT START === */
+/* === MEMEFLOW FLIGHT V14 BOTTOM COCKPIT START === */
 
 /*
-  IMPORTANT:
-  This layer changes ONLY:
-    .launch-panel
-    .token-panel
-    .stats-panel
-    .history-panel
+  V14 PORTRAIT LAYOUT
 
-  NOT TOUCHED:
-    stage-head / LIVE top row
-    multiplier HUD
-    telemetry
-    rocket/world
-    position-strip / bottom row
+  UNTOUCHED:
+    - stage-head
+    - LIVE multiplier
+    - telemetry
+    - world / rocket renderer
+    - bottom position-strip
+
+  MOVED TO LOWER COCKPIT:
+    - Launch Control
+    - Selected Launch
+    - Flight Record
+    - Round History
+    - Flight Position
+    - REAL action buttons
 */
-
-/* ==========================================================
-   PORTRAIT PHONE
-   ========================================================== */
 
 @media (orientation:portrait){
 
-  /*
-    Common visual system.
-    Same border radius, opacity, border and shadow for all 4 cards.
-  */
+  body.flight-v12{
+    --v14-gap:6px;
+    --v14-edge:7px;
+
+    /*
+      Existing position-strip stays exactly where it is.
+      HUD starts immediately ABOVE it.
+    */
+    --v14-bottom:
+      calc(
+        var(--v12-bottom) +
+        36px
+      );
+  }
+
+
+  /* ========================================================
+     SHARED GLASS
+     ======================================================== */
+
   body.flight-v12 .launch-panel,
   body.flight-v12 .token-panel,
   body.flight-v12 .stats-panel,
-  body.flight-v12 .history-panel{
-    position:fixed!important;
-    z-index:60!important;
-
-    margin:0!important;
+  body.flight-v12 .history-panel,
+  body.flight-v12 #flightPositionHud{
+    z-index:64!important;
 
     border:
       1px solid
-      rgba(118,190,211,.23)!important;
+      rgba(117,188,208,.20)!important;
 
-    border-radius:16px!important;
+    border-radius:15px!important;
 
     background:
       linear-gradient(
         180deg,
-        rgba(5,14,20,.82),
+        rgba(5,14,20,.84),
         rgba(3,9,14,.76)
       )!important;
 
     box-shadow:
-      0 16px 42px
-      rgba(0,0,0,.27)!important;
+      0 14px 36px
+      rgba(0,0,0,.26)!important;
 
     backdrop-filter:
-      blur(15px)
-      saturate(1.08)!important;
+      blur(14px)
+      saturate(1.06)!important;
 
     -webkit-backdrop-filter:
-      blur(15px)
-      saturate(1.08)!important;
+      blur(14px)
+      saturate(1.06)!important;
 
     box-sizing:border-box!important;
   }
 
 
   /* ========================================================
-     LEFT — LAUNCH CONTROL
-     Fully open. NO scrolling.
+     LEFT COLUMN — LAUNCH CONTROL
      ======================================================== */
 
   body.flight-v12 .launch-panel{
-    left:max(12px,var(--v12-left))!important;
+    position:fixed!important;
 
-    /*
-      Starts below the existing top LIVE/multiplier/telemetry area.
-      This DOES NOT change that top area.
-    */
-    top:26dvh!important;
+    left:1vw!important;
+    right:auto!important;
+    top:auto!important;
 
-    /*
-      Ends above the existing bottom position strip.
-      Bottom row itself is untouched.
-    */
-    bottom:calc(
-      max(12px,var(--v12-bottom)) + 38px
-    )!important;
+    bottom:var(--v14-bottom)!important;
 
-    width:39vw!important;
-    max-width:310px!important;
+    width:37vw!important;
+    max-width:37vw!important;
 
     height:auto!important;
     min-height:0!important;
     max-height:none!important;
 
-    padding:8px!important;
+    margin:0!important;
+    padding:7px!important;
 
     overflow:visible!important;
     overscroll-behavior:auto!important;
 
     display:flex!important;
     flex-direction:column!important;
+
+    font-size:.86em!important;
   }
 
 
   /*
-    Action dock participates in the natural panel layout.
-    It is NOT sticky anymore, so Launch Control is one complete card.
+    Buttons no longer live visually inside Launch Control.
+    JS moves the REAL nodes into the global V14 dock.
   */
   body.flight-v12 .launch-panel #v12ActionDock{
-    position:relative!important;
+    display:none!important;
+  }
 
-    left:auto!important;
-    right:auto!important;
-    bottom:auto!important;
 
-    margin-top:auto!important;
-    padding:
-      8px
-      0
-      0!important;
+  /* Compact without deleting information. */
 
-    flex:0 0 auto!important;
+  body.flight-v12 .launch-panel .panel-title{
+    margin-bottom:4px!important;
+  }
 
-    background:none!important;
+  body.flight-v12 .launch-panel .panel-title h1{
+    display:none!important;
+  }
+
+  body.flight-v12 .launch-panel .lead{
+    display:none!important;
+  }
+
+  body.flight-v12 .launch-panel .game-utility{
+    margin-bottom:5px!important;
+  }
+
+  body.flight-v12 .launch-panel .field-title{
+    margin-top:4px!important;
+  }
+
+  body.flight-v12 .launch-panel .stake-input{
+    min-height:37px!important;
+  }
+
+  body.flight-v12 .launch-panel .quick-bets{
+    gap:4px!important;
+    margin-top:4px!important;
+  }
+
+  body.flight-v12 .launch-panel .select-grid{
+    gap:5px!important;
+    margin-top:6px!important;
+  }
+
+  body.flight-v12 .launch-panel .target-presets{
+    gap:4px!important;
+    margin-top:6px!important;
+  }
+
+  body.flight-v12 .launch-panel .target-presets button{
+    min-height:42px!important;
+    padding:4px 2px!important;
+  }
+
+  body.flight-v12 .launch-panel .risk-deck{
+    margin-top:6px!important;
+    padding:6px!important;
+  }
+
+  body.flight-v12 .launch-panel .risk-deck p{
+    display:none!important;
   }
 
 
   /* ========================================================
-     RIGHT COLUMN
-     Same X, same width, same 10px vertical gap.
+     CENTER COLUMN — SELECTED LAUNCH
      ======================================================== */
 
-  body.flight-v12 .token-panel,
-  body.flight-v12 .stats-panel,
-  body.flight-v12 .history-panel{
-    right:max(12px,var(--v12-right))!important;
-
-    width:32vw!important;
-    max-width:250px!important;
-
-    min-height:0!important;
-
-    padding:8px!important;
-  }
-
-
-  /* ---------------- MARKET STATUS / SELECTED LAUNCH ---------------- */
-
   body.flight-v12 .token-panel{
-    top:26dvh!important;
+    position:fixed!important;
 
-    height:auto!important;
-    min-height:max-content!important;
-    max-height:none!important;
+    left:38.5vw!important;
+    right:auto!important;
+    top:auto!important;
 
-    overflow:visible!important;
-    overscroll-behavior:auto!important;
-  }
-
-
-  /* ---------------- FLIGHT RECORD ---------------- */
-
-  body.flight-v12 .stats-panel{
     /*
-      We use a clean fixed lane rather than letting it overlap
-      Market Status.
+      Two action buttons sit directly below this card.
     */
-    top:45.5dvh!important;
+    bottom:
+      calc(
+        var(--v14-bottom) +
+        92px
+      )!important;
 
-    height:auto!important;
-    min-height:max-content!important;
-    max-height:none!important;
+    width:30vw!important;
+    max-width:30vw!important;
 
-    overflow:visible!important;
-    overscroll-behavior:auto!important;
+    height:20dvh!important;
+    min-height:20dvh!important;
+    max-height:20dvh!important;
+
+    margin:0!important;
+    padding:7px!important;
+
+    overflow:hidden!important;
+
+    font-size:.84em!important;
+  }
+
+  body.flight-v12 .token-panel .token-head{
+    margin-top:5px!important;
+  }
+
+  body.flight-v12 .token-panel .quality-line{
+    margin-top:5px!important;
+  }
+
+  body.flight-v12 .token-panel .token-metrics{
+    margin-top:5px!important;
+  }
+
+  body.flight-v12 .token-panel .telemetry{
+    margin-top:5px!important;
+    padding-top:5px!important;
+
+    display:grid!important;
+    grid-template-columns:
+      repeat(2,minmax(0,1fr))!important;
+
+    gap:3px 6px!important;
   }
 
 
-  /* ---------------- ROUND HISTORY ---------------- */
+  /* ========================================================
+     REAL START/CASH OUT + AUTO/STOP AUTO
+     Directly under Selected Launch.
+     ======================================================== */
+
+  body.flight-v12 #v12ActionDock{
+    position:fixed!important;
+
+    z-index:72!important;
+
+    left:38.5vw!important;
+    right:auto!important;
+    top:auto!important;
+
+    bottom:var(--v14-bottom)!important;
+
+    width:30vw!important;
+    max-width:30vw!important;
+
+    height:86px!important;
+
+    margin:0!important;
+    padding:0!important;
+
+    display:grid!important;
+    grid-template-columns:1fr!important;
+    grid-auto-rows:40px!important;
+    gap:6px!important;
+
+    overflow:visible!important;
+
+    background:none!important;
+
+    box-sizing:border-box!important;
+  }
+
+  body.flight-v12 #v12ActionDock > #startBtn,
+  body.flight-v12 #v12ActionDock > #cashoutBtn,
+  body.flight-v12 #v12ActionDock > #mfAutoLoopBtn{
+    width:100%!important;
+    min-width:0!important;
+
+    height:40px!important;
+    min-height:40px!important;
+
+    margin:0!important;
+
+    border-radius:11px!important;
+
+    box-sizing:border-box!important;
+  }
+
+  body.flight-v12 #v12ActionDock > #startBtn[hidden],
+  body.flight-v12 #v12ActionDock > #cashoutBtn[hidden],
+  body.flight-v12 #v12ActionDock > #mfAutoLoopBtn[hidden]{
+    display:none!important;
+  }
+
+  body.flight-v12 #v12ActionDock button b{
+    font-size:10px!important;
+    letter-spacing:.14em!important;
+  }
+
+  body.flight-v12 #v12ActionDock button small{
+    font-size:6px!important;
+    margin-top:1px!important;
+  }
+
+
+  /* ========================================================
+     FLIGHT POSITION — LOWER HUD, NOT OVER ROCKET
+     ======================================================== */
+
+  body.flight-v12 #flightPositionHud{
+    position:fixed!important;
+
+    z-index:66!important;
+
+    left:38.5vw!important;
+    right:auto!important;
+    top:auto!important;
+
+    bottom:
+      calc(
+        var(--v14-bottom) +
+        92px +
+        20dvh +
+        var(--v14-gap)
+      )!important;
+
+    width:30vw!important;
+    max-width:30vw!important;
+
+    min-height:42px!important;
+    height:auto!important;
+
+    padding:5px 7px!important;
+
+    transform:none!important;
+
+    font-size:.73em!important;
+
+    opacity:.94!important;
+  }
+
+  body.flight-v12 #flightPositionHud > small{
+    display:block!important;
+    margin-bottom:3px!important;
+  }
+
+  body.flight-v12 #flightPositionHud > div{
+    display:flex!important;
+    justify-content:space-between!important;
+    gap:5px!important;
+  }
+
+
+  /* ========================================================
+     RIGHT COLUMN — RECORD + HISTORY
+     ======================================================== */
 
   body.flight-v12 .history-panel{
-    top:57.5dvh!important;
+    position:fixed!important;
 
-    bottom:calc(
-      max(12px,var(--v12-bottom)) + 38px
-    )!important;
+    left:auto!important;
+    right:1vw!important;
+    top:auto!important;
 
-    height:auto!important;
-    min-height:0!important;
-    max-height:none!important;
+    bottom:var(--v14-bottom)!important;
 
+    width:29.5vw!important;
+    max-width:29.5vw!important;
+
+    height:27dvh!important;
+    min-height:27dvh!important;
+    max-height:27dvh!important;
+
+    margin:0!important;
     padding:0!important;
 
     display:grid!important;
@@ -1542,6 +1724,38 @@ body.flight-v12::after{
       minmax(0,1fr)!important;
 
     overflow:hidden!important;
+
+    font-size:.84em!important;
+  }
+
+
+  body.flight-v12 .stats-panel{
+    position:fixed!important;
+
+    left:auto!important;
+    right:1vw!important;
+    top:auto!important;
+
+    bottom:
+      calc(
+        var(--v14-bottom) +
+        27dvh +
+        var(--v14-gap)
+      )!important;
+
+    width:29.5vw!important;
+    max-width:29.5vw!important;
+
+    height:auto!important;
+    min-height:0!important;
+    max-height:none!important;
+
+    margin:0!important;
+    padding:7px!important;
+
+    overflow:visible!important;
+
+    font-size:.84em!important;
   }
 
 
@@ -1558,160 +1772,79 @@ body.flight-v12::after{
     min-height:0!important;
     max-height:none!important;
 
+    padding:3px 5px 6px!important;
+
     overflow-x:hidden!important;
     overflow-y:auto!important;
 
     overscroll-behavior:contain!important;
 
     -webkit-overflow-scrolling:touch!important;
-
-    scrollbar-width:thin!important;
   }
 
-
-  /*
-    Show every history row.
-    The list itself scrolls instead of hiding rows.
-  */
   body.flight-v12 .history-panel .history-row,
   body.flight-v12 .history-panel .history-row:nth-child(n){
     display:grid!important;
   }
 
 
-  /* ========================================================
-     REMOVE INTERNAL SCROLL FROM THE OTHER THREE
-     ======================================================== */
+  /* NO scrolling in the other three cards. */
 
-  body.flight-v12 .launch-panel *,
-  body.flight-v12 .token-panel *,
-  body.flight-v12 .stats-panel *{
-    overscroll-behavior:auto;
+  body.flight-v12 .launch-panel,
+  body.flight-v12 .token-panel,
+  body.flight-v12 .stats-panel{
+    overflow-x:visible!important;
+    overflow-y:visible!important;
   }
 
 
   /* ========================================================
-     CLEAN CONSISTENT CARD HEADERS
-     ======================================================== */
-
-  body.flight-v12 .launch-panel .panel-title,
-  body.flight-v12 .token-panel .panel-row,
-  body.flight-v12 .stats-panel .panel-row{
-    min-height:22px!important;
-  }
-
-  body.flight-v12 .token-panel .panel-row,
-  body.flight-v12 .stats-panel .panel-row{
-    padding-bottom:5px!important;
-  }
-
-
-  /* ========================================================
-     MARKET STATUS — FULL CONTENT, NO CLIPPING
-     ======================================================== */
-
-  body.flight-v12 .token-panel .token-head{
-    margin-top:6px!important;
-  }
-
-  body.flight-v12 .token-panel .token-metrics{
-    margin-top:7px!important;
-  }
-
-  body.flight-v12 .token-panel .telemetry{
-    display:grid!important;
-
-    grid-template-columns:
-      repeat(2,minmax(0,1fr))!important;
-
-    gap:4px 10px!important;
-
-    margin-top:6px!important;
-    padding-top:6px!important;
-  }
-
-
-  /* ========================================================
-     FLIGHT RECORD — FULL CONTENT
-     ======================================================== */
-
-  body.flight-v12 .stats-panel .stats-grid{
-    margin-top:5px!important;
-  }
-
-
-  /* ========================================================
-     ROUND HISTORY HEADER
-     ======================================================== */
-
-  body.flight-v12 .history-panel>summary{
-    height:25px!important;
-    min-height:25px!important;
-
-    padding:
-      0
-      9px!important;
-  }
-
-  body.flight-v12 .history-toolbar{
-    height:19px!important;
-    min-height:19px!important;
-
-    padding:
-      2px
-      9px!important;
-  }
-
-  body.flight-v12 .history-panel .history{
-    padding:2px 5px 7px!important;
-  }
-
-
-  /* ========================================================
-     SPACING SAFETY
-     Nothing inside a card can horizontally escape.
+     CONTENT SAFETY
      ======================================================== */
 
   body.flight-v12 .launch-panel *,
   body.flight-v12 .token-panel *,
   body.flight-v12 .stats-panel *,
-  body.flight-v12 .history-panel *{
+  body.flight-v12 .history-panel *,
+  body.flight-v12 #v12ActionDock *{
     box-sizing:border-box!important;
     min-width:0;
   }
 
 
   /* ========================================================
-     SMALLER IPHONES
-     Same composition, slightly tighter.
+     SMALL iPHONES
      ======================================================== */
 
   @media (max-width:390px){
 
     body.flight-v12 .launch-panel{
-      left:max(8px,var(--v12-left))!important;
-
-      width:39vw!important;
-
+      font-size:.80em!important;
       padding:6px!important;
     }
 
     body.flight-v12 .token-panel,
     body.flight-v12 .stats-panel,
     body.flight-v12 .history-panel{
-      right:max(8px,var(--v12-right))!important;
+      font-size:.78em!important;
+    }
 
-      width:32vw!important;
+    body.flight-v12 #v12ActionDock{
+      height:82px!important;
+      grid-auto-rows:38px!important;
+    }
+
+    body.flight-v12 #v12ActionDock > #startBtn,
+    body.flight-v12 #v12ActionDock > #cashoutBtn,
+    body.flight-v12 #v12ActionDock > #mfAutoLoopBtn{
+      height:38px!important;
+      min-height:38px!important;
     }
   }
 }
 
 
-/* ==========================================================
-   LANDSCAPE
-   Keep the existing landscape system.
-   V13 is portrait arrangement only.
-   ========================================================== */
+/* Landscape remains exactly on the existing layout. */
 
 
-/* === MEMEFLOW FLIGHT V13 INNER HUD LAYOUT END === */
+/* === MEMEFLOW FLIGHT V14 BOTTOM COCKPIT END === */

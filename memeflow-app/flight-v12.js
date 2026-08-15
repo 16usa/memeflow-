@@ -1,7 +1,7 @@
 (()=>{
   'use strict';
 
-  const VERSION='12.3';
+  const VERSION='14.0';
 
   const $=(s,root=document)=>
     root.querySelector(s);
@@ -13,8 +13,18 @@
   function ensureActionDock(launch){
     if(!launch)return null;
 
+    const host=
+      $('.cockpit') ||
+      document.body;
+
+    /*
+      V14:
+      the real action controls live in the lower-center HUD,
+      outside Launch Control.
+      Existing button DOM nodes are moved, never cloned.
+    */
     let dock=
-      $('#v12ActionDock',launch);
+      document.getElementById('v12ActionDock');
 
     if(!dock){
       dock=
@@ -25,8 +35,13 @@
         'aria-label',
         'Flight actions'
       );
+    }
 
-      launch.appendChild(dock);
+    if(
+      host &&
+      dock.parentElement!==host
+    ){
+      host.appendChild(dock);
     }
 
     /*
@@ -75,7 +90,7 @@
       !history
     ){
       console.error(
-        '[MEMEFLOW FLIGHT V12.3]',
+        '[MEMEFLOW FLIGHT V14]',
         'Required current Game structure missing',
         {
           game,
@@ -167,7 +182,7 @@
     );
 
     console.info(
-      '[MEMEFLOW FLIGHT V12.3]',
+      '[MEMEFLOW FLIGHT V14]',
       VERSION,
       'READY · CINEMATIC HUD · REAL ACTION DOCK'
     );
