@@ -3169,3 +3169,400 @@ body.flight-v12::after{
 }
 
 /* === MEMEFLOW V16.3 ADAPTIVE PANEL CONTENT END === */
+
+/* === MEMEFLOW FLIGHT V17 APPROVED COMPACT LAYOUT START === */
+
+@media (orientation:portrait){
+
+  body.flight-v12{
+    --v17-edge:7px;
+    --v17-gap:6px;
+
+    /*
+      Bottom metrics strip stays exactly where it is.
+    */
+    --v17-base:calc(var(--v12-bottom) + 32px);
+
+    /*
+      Entire control stack occupies about lower third.
+    */
+    --v17-launch-h:14.5dvh;
+    --v17-middle-h:11.5dvh;
+    --v17-bottom-h:8.5dvh;
+  }
+
+
+  /* =====================================================
+     LAUNCH CONTROL
+     ===================================================== */
+
+  body.flight-v12 .launch-panel{
+    position:fixed!important;
+
+    left:var(--v17-edge)!important;
+    right:var(--v17-edge)!important;
+    top:auto!important;
+
+    bottom:calc(
+      var(--v17-base)
+      + var(--v17-bottom-h)
+      + var(--v17-middle-h)
+      + (var(--v17-gap) * 2)
+    )!important;
+
+    width:auto!important;
+    max-width:none!important;
+
+    height:var(--v17-launch-h)!important;
+    min-height:var(--v17-launch-h)!important;
+    max-height:var(--v17-launch-h)!important;
+
+    margin:0!important;
+    padding:5px!important;
+
+    overflow:hidden!important;
+  }
+
+  /*
+    Scale all children together so text, borders,
+    buttons, inputs and spacing shrink proportionally.
+  */
+  body.flight-v12 .launch-panel > *{
+    zoom:.64;
+    width:156.25%!important;
+    max-width:156.25%!important;
+  }
+
+  body.flight-v12 .launch-panel input,
+  body.flight-v12 .launch-panel select,
+  body.flight-v12 .launch-panel button{
+    min-height:0!important;
+  }
+
+
+  /* =====================================================
+     SELECTED LAUNCH
+     ===================================================== */
+
+  body.flight-v12 .token-panel{
+    position:fixed!important;
+
+    left:var(--v17-edge)!important;
+    right:auto!important;
+    top:auto!important;
+
+    bottom:calc(
+      var(--v17-base)
+      + var(--v17-bottom-h)
+      + var(--v17-gap)
+    )!important;
+
+    width:47.5vw!important;
+    max-width:47.5vw!important;
+
+    height:var(--v17-middle-h)!important;
+    min-height:var(--v17-middle-h)!important;
+    max-height:var(--v17-middle-h)!important;
+
+    margin:0!important;
+    padding:4px!important;
+
+    overflow:hidden!important;
+  }
+
+  body.flight-v12 .token-panel > *{
+    zoom:.73;
+    width:136.986%!important;
+    max-width:136.986%!important;
+  }
+
+
+  /* =====================================================
+     ROUND HISTORY
+     Same height as Selected Launch.
+     ===================================================== */
+
+  body.flight-v12 .history-panel{
+    position:fixed!important;
+
+    left:auto!important;
+    right:var(--v17-edge)!important;
+    top:auto!important;
+
+    bottom:calc(
+      var(--v17-base)
+      + var(--v17-bottom-h)
+      + var(--v17-gap)
+    )!important;
+
+    width:calc(
+      100vw
+      - 47.5vw
+      - (var(--v17-edge) * 2)
+      - var(--v17-gap)
+    )!important;
+
+    max-width:none!important;
+
+    height:var(--v17-middle-h)!important;
+    min-height:var(--v17-middle-h)!important;
+    max-height:var(--v17-middle-h)!important;
+
+    margin:0!important;
+    padding:0!important;
+
+    display:grid!important;
+    grid-template-rows:
+      20px
+      16px
+      minmax(0,1fr)!important;
+
+    overflow:hidden!important;
+  }
+
+  body.flight-v12 .history-panel > summary{
+    height:20px!important;
+    min-height:20px!important;
+    padding:0 6px!important;
+    font-size:6px!important;
+  }
+
+  body.flight-v12 .history-toolbar{
+    height:16px!important;
+    min-height:16px!important;
+    padding:1px 5px!important;
+    font-size:5px!important;
+  }
+
+  body.flight-v12 .history-panel .history{
+    height:100%!important;
+    min-height:0!important;
+
+    padding:2px!important;
+
+    overflow-y:auto!important;
+    overflow-x:hidden!important;
+
+    -webkit-overflow-scrolling:touch!important;
+  }
+
+  body.flight-v12 .history-panel .history-row{
+    min-height:20px!important;
+    margin:0!important;
+    padding:2px 3px!important;
+
+    font-size:6px!important;
+    line-height:1.05!important;
+  }
+
+
+  /* =====================================================
+     FLIGHT RECORD
+     ===================================================== */
+
+  body.flight-v12 .stats-panel{
+    position:fixed!important;
+
+    left:var(--v17-edge)!important;
+    right:auto!important;
+    top:auto!important;
+
+    bottom:var(--v17-base)!important;
+
+    width:47.5vw!important;
+    max-width:47.5vw!important;
+
+    height:var(--v17-bottom-h)!important;
+    min-height:var(--v17-bottom-h)!important;
+    max-height:var(--v17-bottom-h)!important;
+
+    margin:0!important;
+    padding:4px!important;
+
+    overflow:hidden!important;
+  }
+
+  body.flight-v12 .stats-panel > *{
+    zoom:.76;
+    width:131.579%!important;
+    max-width:131.579%!important;
+  }
+
+
+  /* =====================================================
+     START / CASH OUT + AUTO / STOP AUTO
+     ===================================================== */
+
+  body.flight-v12 #v12ActionDock{
+    position:fixed!important;
+
+    z-index:72!important;
+
+    left:auto!important;
+    right:var(--v17-edge)!important;
+    top:auto!important;
+
+    bottom:var(--v17-base)!important;
+
+    width:calc(
+      100vw
+      - 47.5vw
+      - (var(--v17-edge) * 2)
+      - var(--v17-gap)
+    )!important;
+
+    max-width:none!important;
+
+    height:var(--v17-bottom-h)!important;
+    min-height:var(--v17-bottom-h)!important;
+    max-height:var(--v17-bottom-h)!important;
+
+    margin:0!important;
+    padding:0!important;
+
+    display:grid!important;
+    grid-template-columns:1fr!important;
+    grid-template-rows:1fr 1fr!important;
+
+    gap:4px!important;
+
+    overflow:hidden!important;
+    background:none!important;
+  }
+
+  body.flight-v12 #v12ActionDock > #startBtn,
+  body.flight-v12 #v12ActionDock > #cashoutBtn,
+  body.flight-v12 #v12ActionDock > #mfAutoLoopBtn{
+    width:100%!important;
+    height:100%!important;
+    min-width:0!important;
+    min-height:0!important;
+
+    margin:0!important;
+    padding:2px 6px!important;
+
+    border-radius:9px!important;
+
+    display:flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+  }
+
+  body.flight-v12 #v12ActionDock > #startBtn,
+  body.flight-v12 #v12ActionDock > #cashoutBtn{
+    grid-row:1!important;
+  }
+
+  body.flight-v12 #v12ActionDock > #mfAutoLoopBtn{
+    grid-row:2!important;
+  }
+
+  body.flight-v12 #v12ActionDock button b{
+    font-size:9px!important;
+    line-height:1!important;
+    letter-spacing:.11em!important;
+  }
+
+  body.flight-v12 #v12ActionDock button small{
+    font-size:5.5px!important;
+    line-height:1!important;
+    margin-top:1px!important;
+  }
+
+
+  /* =====================================================
+     FLIGHT POSITION
+     compact inside Selected Launch area
+     ===================================================== */
+
+  body.flight-v12 #flightPositionHud{
+    position:fixed!important;
+
+    left:25.5vw!important;
+    right:auto!important;
+    top:auto!important;
+
+    bottom:calc(
+      var(--v17-base)
+      + var(--v17-bottom-h)
+      + var(--v17-gap)
+      + 4px
+    )!important;
+
+    width:21vw!important;
+    max-width:21vw!important;
+
+    padding:2px 3px!important;
+
+    font-size:5.7px!important;
+    line-height:1.05!important;
+
+    transform:none!important;
+  }
+
+
+  /* =====================================================
+     Internal compact safety
+     ===================================================== */
+
+  body.flight-v12 .launch-panel *,
+  body.flight-v12 .token-panel *,
+  body.flight-v12 .stats-panel *,
+  body.flight-v12 .history-panel *,
+  body.flight-v12 #v12ActionDock *{
+    box-sizing:border-box!important;
+    min-width:0;
+  }
+
+  body.flight-v12 .launch-panel,
+  body.flight-v12 .token-panel,
+  body.flight-v12 .stats-panel{
+    overflow:hidden!important;
+    overscroll-behavior:none!important;
+  }
+
+
+  /* =====================================================
+     DO NOT TOUCH
+     ===================================================== */
+
+  /*
+    .stage-head
+    #world
+    #rocket
+    .multiplier-hud
+    .position-strip
+  */
+
+
+  @media (max-width:390px){
+    body.flight-v12{
+      --v17-edge:6px;
+      --v17-gap:5px;
+
+      --v17-launch-h:14dvh;
+      --v17-middle-h:11dvh;
+      --v17-bottom-h:8dvh;
+    }
+
+    body.flight-v12 .launch-panel > *{
+      zoom:.60;
+      width:166.667%!important;
+      max-width:166.667%!important;
+    }
+
+    body.flight-v12 .token-panel > *{
+      zoom:.69;
+      width:144.928%!important;
+      max-width:144.928%!important;
+    }
+
+    body.flight-v12 .stats-panel > *{
+      zoom:.72;
+      width:138.889%!important;
+      max-width:138.889%!important;
+    }
+  }
+}
+
+/* === MEMEFLOW FLIGHT V17 APPROVED COMPACT LAYOUT END === */
