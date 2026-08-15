@@ -1,5 +1,0 @@
-V44=./memeflow-app/bottom-nav-flush-v44.js
-V51=./memeflow-app/native-ai-sheet-v51.js
-V44_BACKUP=./memeflow-app/.memeflow-patches/floating-ai-step1-clean-v2/bottom-nav-flush-v44.js.20260811-035356.bak
-V51_BACKUP=./memeflow-app/.memeflow-patches/floating-ai-step1-clean-v2/native-ai-sheet-v51.js.20260811-035356.bak
-REPORT=./memeflow-app/.memeflow-patches/floating-ai-step1-clean-v2/report.20260811-035356.txt

@@ -1,9 +1,0 @@
-INDEX=./memeflow-app/index.html
-V26=./memeflow-app/ai-nav-layout-v26.js
-V44=./memeflow-app/bottom-nav-flush-v44.js
-V51=./memeflow-app/native-ai-sheet-v51.js
-INDEX_BACKUP=./memeflow-app/.memeflow-patches/header-burger-drawer-clean-v1/index.html.20260811-044331.bak
-V26_BACKUP=./memeflow-app/.memeflow-patches/header-burger-drawer-clean-v1/ai-nav-layout-v26.js.20260811-044331.bak
-V44_BACKUP=./memeflow-app/.memeflow-patches/header-burger-drawer-clean-v1/bottom-nav-flush-v44.js.20260811-044331.bak
-V51_BACKUP=./memeflow-app/.memeflow-patches/header-burger-drawer-clean-v1/native-ai-sheet-v51.js.20260811-044331.bak
-REPORT=./memeflow-app/.memeflow-patches/header-burger-drawer-clean-v1/report.20260811-044331.txt

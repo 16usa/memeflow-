@@ -1,3 +1,0 @@
-INDEX=./memeflow-app/index.html
-BACKUP=./memeflow-app/.memeflow-patches/mobile-clean-canonical-v1/index.html.20260811-025004.bak
-REPORT=./memeflow-app/.memeflow-patches/mobile-clean-canonical-v1/report.20260811-025004.txt

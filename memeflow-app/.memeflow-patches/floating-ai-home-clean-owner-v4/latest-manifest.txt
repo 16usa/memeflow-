@@ -1,9 +1,0 @@
-INDEX=./memeflow-app/index.html
-V26=./memeflow-app/ai-nav-layout-v26.js
-V44=./memeflow-app/bottom-nav-flush-v44.js
-V51=./memeflow-app/native-ai-sheet-v51.js
-INDEX_BACKUP=./memeflow-app/.memeflow-patches/floating-ai-home-clean-owner-v4/index.html.20260811-041555.bak
-V26_BACKUP=./memeflow-app/.memeflow-patches/floating-ai-home-clean-owner-v4/ai-nav-layout-v26.js.20260811-041555.bak
-V44_BACKUP=./memeflow-app/.memeflow-patches/floating-ai-home-clean-owner-v4/bottom-nav-flush-v44.js.20260811-041555.bak
-V51_BACKUP=./memeflow-app/.memeflow-patches/floating-ai-home-clean-owner-v4/native-ai-sheet-v51.js.20260811-041555.bak
-REPORT=./memeflow-app/.memeflow-patches/floating-ai-home-clean-owner-v4/report.20260811-041555.txt

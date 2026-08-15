@@ -1,7 +1,0 @@
-INDEX=./memeflow-app/index.html
-INDEX_BAK=./memeflow-app/.memeflow-patches/pretrade-control-center-v5/index.html.20260810-181539.bak
-PAPER_UI=./memeflow-app/paper-automation-ui.js
-PAPER_BAK=./memeflow-app/.memeflow-patches/pretrade-control-center-v5/paper-automation-ui.js.20260810-181539.bak
-MODULE=./memeflow-app/pretrade-control-center-v5.js
-MODULE_EXISTED=0
-MODULE_BAK=
