@@ -1,7 +1,7 @@
 (()=>{
   'use strict';
 
-  const VERSION='11.0';
+  const VERSION='11.1';
 
   const frame=document.getElementById('mfV11Frame');
   const loading=document.getElementById('mfV11Loading');
@@ -458,6 +458,35 @@
     doc.head.appendChild(style);
   }
 
+  function neutralizeLegacyFlight(doc){
+    try{
+      frame.contentWindow.MEMEFLOW_FLIGHT_MODE?.disable?.();
+    }catch(_){}
+
+    doc.body?.classList.remove('mf-flight-mode');
+    doc.getElementById('mfFlightModeExit')?.remove();
+
+    doc
+      .querySelectorAll(
+        '.mf-flight-stage,'+
+        '.mf-flight-hud,'+
+        '.mf-hud-launch,'+
+        '.mf-hud-selected,'+
+        '.mf-hud-record,'+
+        '.mf-hud-history'
+      )
+      .forEach(el=>{
+        el.classList.remove(
+          'mf-flight-stage',
+          'mf-flight-hud',
+          'mf-hud-launch',
+          'mf-hud-selected',
+          'mf-hud-record',
+          'mf-hud-history'
+        );
+      });
+  }
+
   function applyV11(){
     let doc;
 
@@ -475,6 +504,7 @@
       return;
     }
 
+    neutralizeLegacyFlight(doc);
     installStyle(doc);
 
     const result=tag(doc);
