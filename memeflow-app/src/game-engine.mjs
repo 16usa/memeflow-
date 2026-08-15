@@ -113,11 +113,137 @@ function recentMarketShape(token) {
   };
 }
 
+
+/* === MF_GAME_TOKEN_IMAGE_V1 START === */
+
+function gameTokenImageUrl(...sources) {
+  const IMAGE_KEYS = [
+    'imageUrl',
+    'imageURL',
+    'image_url',
+    'imageUri',
+    'imageURI',
+    'image_uri',
+    'image',
+    'logoUrl',
+    'logoURL',
+    'logo_url',
+    'logoUri',
+    'logoURI',
+    'logo_uri',
+    'logo',
+    'iconUrl',
+    'iconURL',
+    'icon_url',
+    'icon'
+  ];
+
+  const normalize = value => {
+    if (typeof value !== 'string') return null;
+
+    let url = value.trim();
+    if (!url) return null;
+
+    if (url.startsWith('ipfs://')) {
+      url = 'https://ipfs.io/ipfs/' + url.slice(7);
+    }
+
+    if (
+      /^https?:\/\//i.test(url) ||
+      /^data:image\//i.test(url)
+    ) {
+      return url;
+    }
+
+    return null;
+  };
+
+  const search = (value, depth = 0, seen = new Set()) => {
+    if (value == null || depth > 4) return null;
+
+    const direct = normalize(value);
+    if (direct) return direct;
+
+    if (typeof value !== 'object') return null;
+    if (seen.has(value)) return null;
+    seen.add(value);
+
+    /*
+      First inspect known image fields.
+    */
+    for (const key of IMAGE_KEYS) {
+      const found = normalize(value?.[key]);
+      if (found) return found;
+    }
+
+    /*
+      Common metadata / pair containers.
+    */
+    const preferred = [
+      value?.metadata,
+      value?.meta,
+      value?.info,
+      value?.token,
+      value?.pair?.info,
+      value?.pair,
+      value?.pairs?.[0]?.info,
+      value?.pairs?.[0],
+      value?.dex,
+      value?.market
+    ];
+
+    for (const child of preferred) {
+      const found = search(child, depth + 1, seen);
+      if (found) return found;
+    }
+
+    /*
+      Final bounded deep scan. This matches the fact that
+      MEMEFLOW already receives image fields in different
+      provider-specific shapes.
+    */
+    if (Array.isArray(value)) {
+      for (const child of value.slice(0, 8)) {
+        const found = search(child, depth + 1, seen);
+        if (found) return found;
+      }
+    } else {
+      for (const [key, child] of Object.entries(value)) {
+        if (
+          /image|logo|icon|metadata|info/i.test(key)
+        ) {
+          const found = search(child, depth + 1, seen);
+          if (found) return found;
+        }
+      }
+    }
+
+    return null;
+  };
+
+  for (const source of sources) {
+    const found = search(source);
+    if (found) return found;
+  }
+
+  return null;
+}
+
+/* === MF_GAME_TOKEN_IMAGE_V1 END === */
+
+
 function safeTokenView(token, decision, selection = null) {
   return {
     mint: token?.mint || decision?.mint || '',
     name: token?.name || decision?.name || null,
     symbol: token?.symbol || decision?.symbol || null,
+    imageUrl: gameTokenImageUrl(
+      token,
+      decision,
+      selection,
+      selection?.token,
+      selection?.decision
+    ),
     score: finite(decision?.score ?? decision?.aiScore),
     confidence: finite(decision?.confidence),
     holderCount: finite(token?.holderCount ?? token?.holders ?? decision?.holderCount),

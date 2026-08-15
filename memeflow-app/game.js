@@ -854,7 +854,154 @@
 
   function animate(ts=performance.now()){game.raf=null;if(game.lifecyclePaused)return;const active=['live','settling'].includes(game.mode),delta=game.targetMultiplier-game.displayMultiplier;const dt=game.lastVisualAt>0?clamp(ts-game.lastVisualAt,1,50):16.7;game.lastVisualAt=ts;if(game.pageVisible&&!reducedMotion){const alpha=clamp(1-Math.exp(-dt/42),.12,.72);game.displayMultiplier+=delta*alpha;if(Math.abs(delta)<.00035)game.displayMultiplier=game.targetMultiplier;renderVisual(game.displayMultiplier);}else{game.displayMultiplier=game.targetMultiplier;renderVisual(game.displayMultiplier);}if(active||Math.abs(game.targetMultiplier-game.displayMultiplier)>.00035)startVisualLoop();}
 
-  function fillToken(s){const t=s?.token||{};const symbol=text(t.symbol,t.name,'?').slice(0,8);ui.tokenAvatar.textContent=symbol?symbol[0].toUpperCase():'?';ui.tokenName.textContent=text(t.name,t.symbol,'Filtered launch');ui.tokenMint.textContent=shortMint(s?.mint||t.mint||'');ui.tokenScore.textContent=num(t.score)===null?'—':Math.round(num(t.score));ui.tokenHolders.textContent=num(t.holderCount)===null?'—':Math.round(num(t.holderCount)).toLocaleString();ui.tokenTop10.textContent=num(t.top10Pct)===null?'—':`${num(t.top10Pct).toFixed(1)}%`;ui.tokenPressure.textContent=num(t.buyPressure)===null?'—':`${num(t.buyPressure).toFixed(2)}×`;ui.tokenState.textContent=s?.state==='LIVE'?'LOCKED':'SETTLED';const q=num(t.launchQuality,s?.marketShapeAtEntry?.quality),vol=num(t.volatilityPct,s?.marketShapeAtEntry?.volatilityPct),dd=num(t.recentDrawdownPct,s?.marketShapeAtEntry?.drawdownPct);ui.quality.textContent=q===null?text(t.primaryReason,'Passed active MEMEFLOW filters'):`Launch quality ${Math.round(q)}/100${vol===null?'':` · vol ${vol.toFixed(1)}%`}${dd===null?'':` · recent DD ${dd.toFixed(1)}%`}`;}
+  
+/* === MF SELECTED TOKEN IMAGE DIRECT START === */
+
+function tokenImageUrl(s,t){
+  const candidates = [
+    t?.imageUrl,
+    t?.imageURL,
+    t?.imageUri,
+    t?.imageURI,
+    t?.image_uri,
+    t?.image_url,
+    t?.image,
+    t?.logoUrl,
+    t?.logoURL,
+    t?.logoUri,
+    t?.logoURI,
+    t?.logo_uri,
+    t?.logo_url,
+    t?.logo,
+    t?.iconUrl,
+    t?.icon,
+
+    t?.metadata?.imageUrl,
+    t?.metadata?.image_url,
+    t?.metadata?.image,
+    t?.metadata?.logoUrl,
+    t?.metadata?.logo,
+
+    s?.imageUrl,
+    s?.imageURL,
+    s?.imageUri,
+    s?.imageURI,
+    s?.image_uri,
+    s?.image_url,
+    s?.image,
+    s?.logoUrl,
+    s?.logoURL,
+    s?.logoUri,
+    s?.logoURI,
+    s?.logo_uri,
+    s?.logo_url,
+    s?.logo,
+    s?.iconUrl,
+    s?.icon,
+
+    s?.metadata?.imageUrl,
+    s?.metadata?.image_url,
+    s?.metadata?.image,
+    s?.metadata?.logoUrl,
+    s?.metadata?.logo,
+
+    s?.pair?.info?.imageUrl,
+    s?.pair?.info?.image,
+    s?.pairs?.[0]?.info?.imageUrl,
+    s?.pairs?.[0]?.info?.image,
+
+    t?.pair?.info?.imageUrl,
+    t?.pair?.info?.image,
+    t?.pairs?.[0]?.info?.imageUrl,
+    t?.pairs?.[0]?.info?.image
+  ];
+
+  for(const raw of candidates){
+    if(typeof raw !== 'string') continue;
+
+    let url = raw.trim();
+    if(!url) continue;
+
+    /*
+      Pump/Solana metadata often uses IPFS.
+    */
+    if(url.startsWith('ipfs://')){
+      url =
+        'https://ipfs.io/ipfs/' +
+        url.slice(7);
+    }
+
+    if(
+      /^https?:\/\//i.test(url) ||
+      /^data:image\//i.test(url) ||
+      /^blob:/i.test(url)
+    ){
+      return url;
+    }
+  }
+
+  return '';
+}
+
+
+function renderTokenAvatar(s,t,symbol){
+  const box = ui.tokenAvatar;
+  if(!box) return;
+
+  const fallback =
+    symbol
+      ? symbol[0].toUpperCase()
+      : '?';
+
+  const imageUrl =
+    tokenImageUrl(s,t);
+
+  /*
+    Every render starts clean.
+    The existing avatar BOX itself is never replaced.
+  */
+  box.replaceChildren();
+
+  if(!imageUrl){
+    box.textContent = fallback;
+    return;
+  }
+
+  const img =
+    document.createElement('img');
+
+  img.alt = '';
+  img.src = imageUrl;
+  img.decoding = 'async';
+  img.loading = 'eager';
+
+  /*
+    IMPORTANT:
+    No frame geometry/style changes.
+    Image simply fills the existing tokenAvatar box.
+  */
+  img.style.width = '100%';
+  img.style.height = '100%';
+  img.style.display = 'block';
+  img.style.objectFit = 'cover';
+  img.style.borderRadius = 'inherit';
+
+  img.onerror = () => {
+    /*
+      Broken/missing image = original fallback behavior.
+    */
+    if(img.parentNode === box){
+      box.replaceChildren();
+      box.textContent = fallback;
+    }
+  };
+
+  box.appendChild(img);
+}
+
+/* === MF SELECTED TOKEN IMAGE DIRECT END === */
+
+function fillToken(s){const t=s?.token||{};const symbol=text(t.symbol,t.name,'?').slice(0,8);renderTokenAvatar(s,t,symbol);ui.tokenName.textContent=text(t.name,t.symbol,'Filtered launch');ui.tokenMint.textContent=shortMint(s?.mint||t.mint||'');ui.tokenScore.textContent=num(t.score)===null?'—':Math.round(num(t.score));ui.tokenHolders.textContent=num(t.holderCount)===null?'—':Math.round(num(t.holderCount)).toLocaleString();ui.tokenTop10.textContent=num(t.top10Pct)===null?'—':`${num(t.top10Pct).toFixed(1)}%`;ui.tokenPressure.textContent=num(t.buyPressure)===null?'—':`${num(t.buyPressure).toFixed(2)}×`;ui.tokenState.textContent=s?.state==='LIVE'?'LOCKED':'SETTLED';const q=num(t.launchQuality,s?.marketShapeAtEntry?.quality),vol=num(t.volatilityPct,s?.marketShapeAtEntry?.volatilityPct),dd=num(t.recentDrawdownPct,s?.marketShapeAtEntry?.drawdownPct);ui.quality.textContent=q===null?text(t.primaryReason,'Passed active MEMEFLOW filters'):`Launch quality ${Math.round(q)}/100${vol===null?'':` · vol ${vol.toFixed(1)}%`}${dd===null?'':` · recent DD ${dd.toFixed(1)}%`}`;}
   function resetToken(){ui.roundId.textContent='—';ui.tokenState.textContent='WAITING';ui.tokenAvatar.textContent='?';ui.tokenName.textContent='No launch selected';ui.tokenMint.textContent='The Game waits for a BUY READY decision from your MEMEFLOW settings.';ui.quality.textContent='Trading eligibility comes from MEMEFLOW settings';ui.tokenScore.textContent='—';ui.tokenHolders.textContent='—';ui.tokenTop10.textContent='—';ui.tokenPressure.textContent='—';ui.feedQuality.textContent='IDLE';ui.feedAge.textContent='—';ui.priceAgeStrip.textContent='—';ui.selectorScore.textContent='—';ui.decisionAge.textContent='—';ui.holderAge.textContent='—';ui.autoDistance.textContent='—';ui.stopDistance.textContent='—';if(ui.flightAssist){ui.flightAssist.dataset.tone='neutral';ui.flightAssistState.textContent='STANDBY';ui.flightAssistText.textContent='Waiting for a server-locked launch.';}if(game.mode!=='searching'){setSelectorState('idle');ui.selectorStatus.dataset.step='decision';ui.selectorTitle.textContent='Selector ready';ui.selectorText.textContent='Uses your MEMEFLOW BUY READY decisions · no extra Game filters';}}
 
   function updateFeed(s){const age=num(s?.priceAgeMs);const ageText=age===null?'—':age<1000?'<1s':`${Math.round(age/1000)}s`;ui.feedAge.textContent=ageText;ui.priceAgeStrip.textContent=ageText;const fresh=s?.feedFresh!==false;ui.game.dataset.feed=fresh?'live':'stale';ui.stale.hidden=fresh||s?.state!=='LIVE';ui.feedQuality.textContent=fresh?'LIVE':'STALE';if(s?.timeoutPending)setText(ui.stateMessage,'Round time limit reached — waiting for a fresh quote to settle safely.');}
