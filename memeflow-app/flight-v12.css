@@ -2927,3 +2927,245 @@ body.flight-v12::after{
 }
 
 /* === MEMEFLOW V16.2 LOWER THIRD ONLY END === */
+
+/* === MEMEFLOW V16.3 ADAPTIVE PANEL CONTENT START === */
+
+@media (orientation:portrait){
+
+  /*
+   * IMPORTANT
+   * V16.2 geometry remains unchanged.
+   *
+   * We now scale the CONTENT to match the reduced cards.
+   * iOS Safari supports CSS zoom, which scales:
+   * text / borders / inputs / icons / spacing / controls
+   * together instead of merely clipping them.
+   */
+
+
+  /* =====================================================
+     LAUNCH CONTROL
+     ===================================================== */
+
+  body.flight-v12 .launch-panel{
+    font-size:1em!important;
+  }
+
+  body.flight-v12 .launch-panel > *{
+    zoom:.61;
+  }
+
+  /*
+   * Because zoom also reduces width,
+   * compensate so every row still fills the card.
+   */
+  body.flight-v12 .launch-panel > *{
+    width:163.934%!important;
+    max-width:163.934%!important;
+  }
+
+
+  /* remove oversized minimums inherited from normal Game UI */
+
+  body.flight-v12 .launch-panel input,
+  body.flight-v12 .launch-panel select,
+  body.flight-v12 .launch-panel button{
+    min-height:0!important;
+    max-height:none!important;
+  }
+
+  body.flight-v12 .launch-panel input,
+  body.flight-v12 .launch-panel select{
+    line-height:1.1!important;
+  }
+
+  body.flight-v12 .launch-panel button{
+    line-height:1.05!important;
+  }
+
+
+  /* =====================================================
+     SELECTED LAUNCH
+     ===================================================== */
+
+  body.flight-v12 .token-panel{
+    font-size:1em!important;
+    padding:3px!important;
+  }
+
+  body.flight-v12 .token-panel > *{
+    zoom:.70;
+
+    width:142.857%!important;
+    max-width:142.857%!important;
+  }
+
+  body.flight-v12 .token-panel .token-metrics{
+    gap:1px!important;
+  }
+
+  body.flight-v12 .token-panel .telemetry{
+    gap:1px 3px!important;
+  }
+
+
+  /* =====================================================
+     ROUND HISTORY
+     Keep scrolling on the actual history viewport.
+     Header + toolbar become compact independently.
+     ===================================================== */
+
+  body.flight-v12 .history-panel{
+    font-size:1em!important;
+  }
+
+  body.flight-v12 .history-panel > summary,
+  body.flight-v12 .history-panel > .history-toolbar{
+    zoom:.72;
+
+    width:138.889%!important;
+    max-width:138.889%!important;
+  }
+
+  body.flight-v12 .history-panel .history{
+    font-size:7px!important;
+    line-height:1.05!important;
+
+    padding:2px 3px!important;
+
+    overflow-y:auto!important;
+    overflow-x:hidden!important;
+  }
+
+  body.flight-v12 .history-panel .history-row{
+    min-height:19px!important;
+    height:auto!important;
+
+    padding:2px 3px!important;
+    margin:0!important;
+
+    font-size:7px!important;
+    line-height:1.05!important;
+  }
+
+
+  /* =====================================================
+     FLIGHT RECORD
+     ===================================================== */
+
+  body.flight-v12 .stats-panel{
+    font-size:1em!important;
+    padding:2px!important;
+  }
+
+  body.flight-v12 .stats-panel > *{
+    zoom:.68;
+
+    width:147.059%!important;
+    max-width:147.059%!important;
+  }
+
+
+  /* =====================================================
+     START / CASH OUT / AUTO / STOP AUTO
+     ===================================================== */
+
+  body.flight-v12 #v12ActionDock{
+    padding:0!important;
+  }
+
+  body.flight-v12 #v12ActionDock > button{
+    padding:1px 4px!important;
+    min-height:0!important;
+
+    display:flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+
+    gap:4px!important;
+  }
+
+  body.flight-v12 #v12ActionDock button b{
+    font-size:8px!important;
+    line-height:1!important;
+    letter-spacing:.10em!important;
+  }
+
+  body.flight-v12 #v12ActionDock button small{
+    font-size:4.8px!important;
+    line-height:1!important;
+    margin:0!important;
+  }
+
+  body.flight-v12 #v12ActionDock button svg,
+  body.flight-v12 #v12ActionDock button .icon{
+    width:13px!important;
+    height:13px!important;
+    flex:0 0 13px!important;
+  }
+
+
+  /* =====================================================
+     FLIGHT POSITION
+     compact all labels + values proportionally
+     ===================================================== */
+
+  body.flight-v12 #flightPositionHud{
+    padding:2px 3px!important;
+    font-size:6px!important;
+    line-height:1.08!important;
+  }
+
+  body.flight-v12 #flightPositionHud small{
+    font-size:5px!important;
+    margin:0 0 1px!important;
+  }
+
+  body.flight-v12 #flightPositionHud > div{
+    gap:1px!important;
+    line-height:1.05!important;
+  }
+
+
+  /* =====================================================
+     GLOBAL COMPACT RULES ONLY FOR THESE HUD PANELS
+     ===================================================== */
+
+  body.flight-v12 .launch-panel,
+  body.flight-v12 .token-panel,
+  body.flight-v12 .stats-panel,
+  body.flight-v12 .history-panel{
+    container-type:size;
+  }
+
+  body.flight-v12 .launch-panel *,
+  body.flight-v12 .token-panel *,
+  body.flight-v12 .stats-panel *,
+  body.flight-v12 .history-panel *,
+  body.flight-v12 #v12ActionDock *{
+    box-sizing:border-box!important;
+  }
+
+  body.flight-v12 .launch-panel p,
+  body.flight-v12 .launch-panel small,
+  body.flight-v12 .token-panel p,
+  body.flight-v12 .token-panel small,
+  body.flight-v12 .stats-panel p,
+  body.flight-v12 .stats-panel small{
+    margin-block:0!important;
+  }
+
+
+  /*
+   * IMPORTANT:
+   * DO NOT MODIFY
+   *
+   * .stage-head
+   * #world
+   * #rocket
+   * .multiplier-hud
+   * .position-strip
+   */
+}
+
+/* === MEMEFLOW V16.3 ADAPTIVE PANEL CONTENT END === */
