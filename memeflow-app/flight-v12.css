@@ -2627,3 +2627,303 @@ body.flight-v12::after{
 }
 
 /* === MEMEFLOW FLIGHT V16 REFERENCE HUD END === */
+
+/* === MEMEFLOW V16.2 LOWER THIRD ONLY START === */
+
+@media (orientation:portrait){
+
+  body.flight-v12{
+    --hud-edge:6px;
+    --hud-gap:5px;
+
+    /* Вся зона модулей ≈ нижняя треть экрана */
+    --hud-launch-h:16dvh;
+    --hud-middle-h:9.5dvh;
+    --hud-bottom-h:5.5dvh;
+
+    /* НИЖНИЙ position-strip НЕ ТРОГАЕМ */
+    --hud-base:calc(var(--v12-bottom) + 36px);
+  }
+
+
+  /* =====================================================
+     1. LAUNCH CONTROL — верхний блок внутри нижней трети
+     ===================================================== */
+
+  body.flight-v12 .launch-panel{
+    position:fixed!important;
+
+    left:var(--hud-edge)!important;
+    right:var(--hud-edge)!important;
+    top:auto!important;
+
+    bottom:calc(
+      var(--hud-base)
+      + var(--hud-bottom-h)
+      + var(--hud-middle-h)
+      + (var(--hud-gap) * 2)
+    )!important;
+
+    width:auto!important;
+    max-width:none!important;
+
+    height:var(--hud-launch-h)!important;
+    min-height:var(--hud-launch-h)!important;
+    max-height:var(--hud-launch-h)!important;
+
+    padding:4px!important;
+    overflow:hidden!important;
+
+    font-size:.67em!important;
+  }
+
+  /* Ужимаем внутренности Launch Control, но ничего не удаляем */
+
+  body.flight-v12 .launch-panel .game-utility{
+    padding:3px!important;
+    margin:0 0 2px!important;
+  }
+
+  body.flight-v12 .launch-panel .stake-input{
+    height:25px!important;
+    min-height:25px!important;
+  }
+
+  body.flight-v12 .launch-panel .quick-bets{
+    gap:3px!important;
+    margin-top:2px!important;
+  }
+
+  body.flight-v12 .launch-panel .quick-bets button{
+    height:21px!important;
+    min-height:21px!important;
+    padding:1px!important;
+  }
+
+  body.flight-v12 .launch-panel .select-grid{
+    gap:3px!important;
+    margin-top:2px!important;
+  }
+
+  body.flight-v12 .launch-panel select{
+    height:25px!important;
+    min-height:25px!important;
+  }
+
+  body.flight-v12 .launch-panel .target-presets{
+    gap:3px!important;
+    margin-top:3px!important;
+  }
+
+  body.flight-v12 .launch-panel .target-presets button{
+    height:31px!important;
+    min-height:31px!important;
+    padding:2px!important;
+  }
+
+  body.flight-v12 .launch-panel .risk-deck{
+    padding:3px!important;
+    margin-top:3px!important;
+  }
+
+  body.flight-v12 .launch-panel .field-title{
+    margin:1px 0!important;
+  }
+
+
+  /* =====================================================
+     2. SELECTED LAUNCH | ROUND HISTORY
+     ===================================================== */
+
+  body.flight-v12 .token-panel{
+    position:fixed!important;
+
+    left:var(--hud-edge)!important;
+    right:auto!important;
+    top:auto!important;
+
+    bottom:calc(
+      var(--hud-base)
+      + var(--hud-bottom-h)
+      + var(--hud-gap)
+    )!important;
+
+    width:58vw!important;
+    max-width:58vw!important;
+
+    height:var(--hud-middle-h)!important;
+    min-height:var(--hud-middle-h)!important;
+    max-height:var(--hud-middle-h)!important;
+
+    padding:4px!important;
+    overflow:hidden!important;
+
+    font-size:.64em!important;
+  }
+
+
+  body.flight-v12 .history-panel{
+    position:fixed!important;
+
+    left:auto!important;
+    right:var(--hud-edge)!important;
+    top:auto!important;
+
+    bottom:calc(
+      var(--hud-base)
+      + var(--hud-bottom-h)
+      + var(--hud-gap)
+    )!important;
+
+    width:calc(
+      100vw - 58vw - (var(--hud-edge) * 2) - var(--hud-gap)
+    )!important;
+
+    max-width:none!important;
+
+    height:var(--hud-middle-h)!important;
+    min-height:var(--hud-middle-h)!important;
+    max-height:var(--hud-middle-h)!important;
+
+    font-size:.64em!important;
+
+    grid-template-rows:
+      18px
+      14px
+      minmax(0,1fr)!important;
+
+    overflow:hidden!important;
+  }
+
+  body.flight-v12 .history-panel > summary{
+    height:18px!important;
+    min-height:18px!important;
+  }
+
+  body.flight-v12 .history-toolbar{
+    height:14px!important;
+    min-height:14px!important;
+  }
+
+  /* Только здесь оставляем scroll */
+
+  body.flight-v12 .history-panel .history{
+    overflow-y:auto!important;
+    overflow-x:hidden!important;
+    -webkit-overflow-scrolling:touch!important;
+  }
+
+
+  /* =====================================================
+     3. FLIGHT RECORD | START / AUTO
+     ===================================================== */
+
+  body.flight-v12 .stats-panel{
+    position:fixed!important;
+
+    left:var(--hud-edge)!important;
+    right:auto!important;
+    top:auto!important;
+
+    bottom:var(--hud-base)!important;
+
+    width:43vw!important;
+    max-width:43vw!important;
+
+    height:var(--hud-bottom-h)!important;
+    min-height:var(--hud-bottom-h)!important;
+    max-height:var(--hud-bottom-h)!important;
+
+    padding:4px!important;
+    overflow:hidden!important;
+
+    font-size:.63em!important;
+  }
+
+
+  body.flight-v12 #v12ActionDock{
+    position:fixed!important;
+
+    left:auto!important;
+    right:var(--hud-edge)!important;
+    top:auto!important;
+
+    bottom:var(--hud-base)!important;
+
+    width:calc(
+      100vw - 43vw - (var(--hud-edge) * 2) - var(--hud-gap)
+    )!important;
+
+    max-width:none!important;
+
+    height:var(--hud-bottom-h)!important;
+    min-height:var(--hud-bottom-h)!important;
+    max-height:var(--hud-bottom-h)!important;
+
+    padding:0!important;
+
+    display:grid!important;
+    grid-template-rows:1fr 1fr!important;
+    gap:3px!important;
+
+    overflow:hidden!important;
+  }
+
+  body.flight-v12 #v12ActionDock > #startBtn,
+  body.flight-v12 #v12ActionDock > #cashoutBtn,
+  body.flight-v12 #v12ActionDock > #mfAutoLoopBtn{
+    width:100%!important;
+    height:100%!important;
+    min-height:0!important;
+
+    margin:0!important;
+    padding:2px 5px!important;
+
+    border-radius:8px!important;
+  }
+
+  body.flight-v12 #v12ActionDock button b{
+    font-size:9px!important;
+  }
+
+  body.flight-v12 #v12ActionDock button small{
+    font-size:5px!important;
+    line-height:1!important;
+  }
+
+
+  /* =====================================================
+     FLIGHT POSITION остаётся внутри Selected Launch
+     ===================================================== */
+
+  body.flight-v12 #flightPositionHud{
+    font-size:.60em!important;
+
+    left:30vw!important;
+    right:auto!important;
+    top:auto!important;
+
+    bottom:calc(
+      var(--hud-base)
+      + var(--hud-bottom-h)
+      + var(--hud-gap)
+      + 3px
+    )!important;
+
+    width:27vw!important;
+    max-width:27vw!important;
+
+    transform:none!important;
+  }
+
+
+  /* =====================================================
+     НЕ ТРОГАТЬ:
+     stage-head
+     rocket/world
+     position-strip
+     ===================================================== */
+
+}
+
+/* === MEMEFLOW V16.2 LOWER THIRD ONLY END === */
