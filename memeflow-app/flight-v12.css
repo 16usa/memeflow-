@@ -350,47 +350,6 @@ body.flight-v12 [class*="session-summary"]{
 
 /* ===== EXIT BACK TO NORMAL GAME ===== */
 
-#v12Exit{
-  position:fixed!important;
-  z-index:90000!important;
-
-  top:calc(var(--v12-top) + 7px)!important;
-  right:max(7px,var(--v12-right))!important;
-
-  width:40px!important;
-  height:40px!important;
-
-  display:grid!important;
-  place-items:center!important;
-
-  border:
-    1px solid
-    rgba(125,185,207,.27)!important;
-
-  border-radius:13px!important;
-
-  background:
-    rgba(4,11,16,.68)!important;
-
-  color:#eafaff!important;
-
-  box-shadow:
-    0 10px 30px
-    rgba(0,0,0,.22)!important;
-
-  backdrop-filter:blur(14px)!important;
-  -webkit-backdrop-filter:blur(14px)!important;
-
-  text-decoration:none!important;
-
-  font:
-    800 20px/1
-    system-ui,
-    -apple-system,
-    sans-serif!important;
-
-  -webkit-tap-highlight-color:transparent;
-}
 
 /* ===== LANDSCAPE: the originally requested 3-column cockpit ===== */
 
@@ -466,14 +425,6 @@ body.flight-v12 [class*="session-summary"]{
     max-height:36dvh!important;
   }
 
-  #v12Exit{
-    right:
-      calc(
-        max(9px,var(--v12-right))
-        + min(22vw,330px)
-        + 9px
-      )!important;
-  }
 }
 
 /* Very short landscape iPhones */
@@ -492,16 +443,6 @@ body.flight-v12 [class*="session-summary"]{
     font-size:.82em!important;
   }
 
-  #v12Exit{
-    width:32px!important;
-    height:32px!important;
-    right:
-      calc(
-        max(8px,var(--v12-right))
-        + 21vw
-        + 8px
-      )!important;
-  }
 }
 
 /* === MEMEFLOW FLIGHT V12.3 CINEMATIC PORTRAIT START === */
@@ -1100,17 +1041,7 @@ body.flight-v12 [class*="session-summary"]{
   }
 
   /* Back button: small and out of the Selected Launch box. */
-  body.flight-v12 #v12Exit{
-    top:calc(var(--v12-top) + 4px)!important;
-    right:max(4px,var(--v12-right))!important;
 
-    width:31px!important;
-    height:31px!important;
-
-    border-radius:10px!important;
-
-    font-size:15px!important;
-  }
 }
 
 /*

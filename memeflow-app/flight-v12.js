@@ -55,23 +55,6 @@
     return dock;
   }
 
-  function installExit(){
-    if($('#v12Exit'))return;
-
-    const exit=
-      document.createElement('a');
-
-    exit.id='v12Exit';
-    exit.href='/game';
-    exit.textContent='←';
-
-    exit.setAttribute(
-      'aria-label',
-      'Back to normal Game'
-    );
-
-    document.body.appendChild(exit);
-  }
 
   function boot(){
     const game=$('#game');
@@ -124,8 +107,8 @@
       );
 
     removeOldGuide();
+    document.getElementById('v12Exit')?.remove();
     ensureActionDock(launch);
-    installExit();
 
     /*
       AUTO is injected by game-auto-v102.js. It may exist before or
