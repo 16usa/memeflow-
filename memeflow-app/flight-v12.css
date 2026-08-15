@@ -504,18 +504,28 @@ body.flight-v12 [class*="session-summary"]{
   }
 }
 
-/* === MEMEFLOW FLIGHT V12.2 COMPACT PORTRAIT START === */
+/* === MEMEFLOW FLIGHT V12.3 CINEMATIC PORTRAIT START === */
 
 /*
-  Portrait-only visual tuning.
-  #rocket is animated by the existing Game JavaScript.
-  The independent CSS scale property keeps the Game's own
-  transform / translate / rotate animation untouched.
+  V12.3 goals:
+  - leave a real open corridor through the center of the rocket scene
+  - shrink the LIVE rocket without overwriting game.js transform
+  - keep every Launch Control function
+  - keep START / CASH OUT / AUTO always reachable in a sticky dock
+  - make the right side one coherent compact column
 */
+
 @media (orientation:portrait){
 
+  /* ---------------------------------------------------------
+     ROCKET / SCENE
+     game.js owns transform. We only use independent scale and
+     translate properties, so JS translate/rotate remains intact.
+     --------------------------------------------------------- */
+
   body.flight-v12 #rocket{
-    scale:.70!important;
+    scale:.46!important;
+    translate:2vw -1.5vh!important;
     transform-origin:50% 50%!important;
   }
 
@@ -523,88 +533,86 @@ body.flight-v12 [class*="session-summary"]{
     overflow:hidden!important;
   }
 
+  body.flight-v12 .multiplier-hud,
+  body.flight-v12 .game[data-state="live"] .multiplier-hud,
+  body.flight-v12 .game[data-state="settling"] .multiplier-hud{
+    top:calc(var(--v12-top) + 29px)!important;
+  }
+
+  body.flight-v12 .multiplier{
+    font-size:clamp(44px,11.5vw,64px)!important;
+  }
+
+  body.flight-v12 .flight-assist,
+  body.flight-v12 .cashout-telemetry{
+    max-width:33vw!important;
+    font-size:.78em!important;
+  }
+
+  /* ---------------------------------------------------------
+     SHARED HUD GLASS
+     --------------------------------------------------------- */
+
   body.flight-v12 .launch-panel,
   body.flight-v12 .token-panel,
   body.flight-v12 .stats-panel,
   body.flight-v12 .history-panel{
-    border-radius:15px!important;
-    border-color:rgba(126,185,205,.18)!important;
+    border-radius:14px!important;
+
+    border:
+      1px solid
+      rgba(126,185,205,.16)!important;
 
     background:
       linear-gradient(
         180deg,
-        rgba(6,14,20,.74),
-        rgba(3,8,13,.67)
+        rgba(5,13,19,.72),
+        rgba(2,8,12,.63)
       )!important;
 
     box-shadow:
-      0 14px 38px
-      rgba(0,0,0,.24)!important;
+      0 12px 34px
+      rgba(0,0,0,.22)!important;
 
     backdrop-filter:
-      blur(13px)
-      saturate(1.06)!important;
+      blur(12px)
+      saturate(1.05)!important;
 
     -webkit-backdrop-filter:
-      blur(13px)
-      saturate(1.06)!important;
+      blur(12px)
+      saturate(1.05)!important;
   }
+
+  /* ---------------------------------------------------------
+     LEFT COCKPIT
+     38vw leaves substantially more open scene than V12.2 43vw.
+     --------------------------------------------------------- */
 
   body.flight-v12 .launch-panel{
     left:max(6px,var(--v12-left))!important;
     bottom:max(6px,var(--v12-bottom))!important;
 
-    width:min(43vw,320px)!important;
-    max-width:min(43vw,320px)!important;
+    width:min(38vw,292px)!important;
+    max-width:min(38vw,292px)!important;
 
-    max-height:51dvh!important;
-
-    padding:4px!important;
-
-    font-size:.82em!important;
-  }
-
-  body.flight-v12 .token-panel,
-  body.flight-v12 .stats-panel,
-  body.flight-v12 .history-panel{
-    right:max(6px,var(--v12-right))!important;
-
-    width:min(37vw,285px)!important;
-    max-width:min(37vw,285px)!important;
-
-    font-size:.82em!important;
-  }
-
-  body.flight-v12 .token-panel{
-    top:calc(var(--v12-top) + 48px)!important;
-
-    max-height:23dvh!important;
+    height:auto!important;
+    max-height:47dvh!important;
 
     padding:4px!important;
-  }
 
-  body.flight-v12 .stats-panel{
-    top:39dvh!important;
+    overflow-x:hidden!important;
+    overflow-y:auto!important;
 
-    max-height:12dvh!important;
+    overscroll-behavior:contain!important;
+    -webkit-overflow-scrolling:touch!important;
 
-    padding:4px!important;
-  }
-
-  body.flight-v12 .history-panel{
-    bottom:max(6px,var(--v12-bottom))!important;
-
-    height:24dvh!important;
-    max-height:24dvh!important;
-
-    grid-template-rows:
-      22px
-      17px
-      minmax(0,1fr)!important;
+    font-size:.76em!important;
   }
 
   body.flight-v12 .launch-panel .panel-title{
-    min-height:22px!important;
+    min-height:20px!important;
+    height:20px!important;
+    padding:0 2px!important;
     align-items:center!important;
   }
 
@@ -614,367 +622,507 @@ body.flight-v12 [class*="session-summary"]{
   }
 
   body.flight-v12 .launch-panel .panel-title small{
-    font-size:7px!important;
+    font-size:6.5px!important;
   }
 
   body.flight-v12 .launch-panel .paper-badge{
-    padding:4px 6px!important;
-    font-size:6px!important;
+    padding:3px 5px!important;
+    font-size:5.5px!important;
   }
 
   body.flight-v12 .launch-panel .game-utility{
-    margin-top:5px!important;
-    padding:5px 6px!important;
-    gap:5px!important;
-    border-radius:10px!important;
+    margin-top:4px!important;
+    padding:4px 5px!important;
+    gap:4px!important;
+    border-radius:9px!important;
   }
 
   body.flight-v12 .launch-panel .game-balance{
-    min-width:74px!important;
+    min-width:68px!important;
   }
 
   body.flight-v12 .launch-panel .game-balance small{
-    font-size:5.5px!important;
+    font-size:5px!important;
   }
 
   body.flight-v12 .launch-panel .game-balance b{
     margin-top:1px!important;
-    font-size:11px!important;
+    font-size:10px!important;
   }
 
   body.flight-v12 .launch-panel .stream-utility{
-    gap:4px!important;
+    gap:3px!important;
   }
 
   body.flight-v12 .launch-panel .stream-utility b{
-    font-size:5.5px!important;
+    font-size:5px!important;
   }
 
   body.flight-v12 .launch-panel .stream-utility small{
     display:none!important;
   }
 
-  body.flight-v12 .launch-panel .sound,
-  body.flight-v12 .launch-panel .fullscreen-btn,
+  body.flight-v12 .launch-panel .utility-actions{
+    gap:3px!important;
+  }
+
   body.flight-v12 .launch-panel .utility-actions>a,
-  body.flight-v12 .launch-panel .utility-actions>button{
-    height:31px!important;
-    min-height:31px!important;
+  body.flight-v12 .launch-panel .utility-actions>button,
+  body.flight-v12 .launch-panel .sound,
+  body.flight-v12 .launch-panel .fullscreen-btn{
+    width:28px!important;
+    min-width:28px!important;
+    height:28px!important;
+    min-height:28px!important;
+    padding:0!important;
+    border-radius:8px!important;
+  }
+
+  body.flight-v12 .launch-panel .field-title{
+    margin:4px 0 2px!important;
+    font-size:5.5px!important;
+  }
+
+  body.flight-v12 .launch-panel .stake-input{
+    height:36px!important;
     padding:0 7px!important;
     border-radius:9px!important;
   }
 
-  body.flight-v12 .launch-panel .field-title{
-    margin:5px 0 3px!important;
-    font-size:6px!important;
-  }
-
-  body.flight-v12 .launch-panel .stake-input{
-    height:42px!important;
-    padding:0 9px!important;
-    border-radius:11px!important;
-  }
-
   body.flight-v12 .launch-panel .stake-input>span{
-    font-size:14px!important;
+    font-size:12px!important;
   }
 
   body.flight-v12 .launch-panel .stake-input input{
-    font-size:23px!important;
-    padding:0 6px!important;
+    font-size:19px!important;
+    padding:0 5px!important;
   }
 
   body.flight-v12 .launch-panel .quick-bets{
-    gap:4px!important;
-    margin-top:4px!important;
+    gap:3px!important;
+    margin-top:3px!important;
   }
 
   body.flight-v12 .launch-panel .quick-bets button{
-    height:26px!important;
-    border-radius:7px!important;
-    font-size:7px!important;
-  }
-
-  body.flight-v12 .launch-panel .select-grid{
-    gap:5px!important;
-    margin-top:7px!important;
-  }
-
-  body.flight-v12 .launch-panel .select-grid label{
-    gap:3px!important;
-  }
-
-  body.flight-v12 .launch-panel .select-grid span{
+    height:22px!important;
+    min-height:22px!important;
+    border-radius:6px!important;
     font-size:6px!important;
   }
 
+  body.flight-v12 .launch-panel .select-grid{
+    gap:4px!important;
+    margin-top:5px!important;
+  }
+
+  body.flight-v12 .launch-panel .select-grid label{
+    gap:2px!important;
+  }
+
+  body.flight-v12 .launch-panel .select-grid span{
+    font-size:5.5px!important;
+  }
+
   body.flight-v12 .launch-panel .select-grid select{
-    height:33px!important;
-    padding:0 6px!important;
-    border-radius:8px!important;
-    font-size:9px!important;
+    height:29px!important;
+    padding:0 5px!important;
+    border-radius:7px!important;
+    font-size:8px!important;
   }
 
   body.flight-v12 .launch-panel .target-presets{
-    margin-top:6px!important;
-    gap:3px!important;
+    margin-top:5px!important;
+    gap:2px!important;
   }
 
   body.flight-v12 .launch-panel .target-presets button{
-    min-height:40px!important;
-    padding:4px 2px!important;
-    border-radius:10px!important;
+    min-height:34px!important;
+    padding:3px 1px!important;
+    border-radius:8px!important;
   }
 
   body.flight-v12 .launch-panel .target-presets b{
-    font-size:7px!important;
+    font-size:6px!important;
   }
 
   body.flight-v12 .launch-panel .target-presets small{
-    font-size:5px!important;
+    font-size:4.5px!important;
   }
 
   body.flight-v12 .launch-panel .risk-deck{
-    margin-top:6px!important;
-    border-radius:10px!important;
+    margin-top:5px!important;
+    border-radius:9px!important;
   }
 
   body.flight-v12 .launch-panel .risk-head{
-    min-height:20px!important;
-    padding:0 7px!important;
+    min-height:18px!important;
+    padding:0 6px!important;
   }
 
   body.flight-v12 .launch-panel .risk-head span,
   body.flight-v12 .launch-panel .risk-head b{
-    font-size:6px!important;
-  }
-
-  body.flight-v12 .launch-panel .risk-metrics>div{
-    padding:5px 7px!important;
-  }
-
-  body.flight-v12 .launch-panel .risk-metrics small{
     font-size:5.5px!important;
   }
 
+  body.flight-v12 .launch-panel .risk-metrics>div{
+    padding:4px 6px!important;
+  }
+
+  body.flight-v12 .launch-panel .risk-metrics small{
+    font-size:5px!important;
+  }
+
   body.flight-v12 .launch-panel .risk-metrics b{
-    margin-top:2px!important;
-    font-size:8px!important;
+    margin-top:1px!important;
+    font-size:7px!important;
   }
 
   body.flight-v12 .launch-panel .risk-track{
-    margin:5px 6px!important;
+    margin:4px 5px!important;
   }
 
+  /*
+    The explanatory paragraph remains in the DOM and accessible when
+    scrolling/desktop, but it does not consume the tiny portrait cockpit.
+    No setting, value, or control is removed.
+  */
   body.flight-v12 .launch-panel .risk-deck p{
     display:none!important;
   }
 
-  body.flight-v12 .launch-panel .start-button,
-  body.flight-v12 .launch-panel .cash-button{
-    min-height:48px!important;
-    margin-top:6px!important;
-    border-radius:11px!important;
-    gap:8px!important;
+  body.flight-v12 .launch-panel #selectorStatus{
+    margin-top:4px!important;
+    min-height:0!important;
+    font-size:.82em!important;
   }
 
-  body.flight-v12 .launch-panel .start-button>span,
-  body.flight-v12 .launch-panel .cash-button>span{
-    font-size:11px!important;
+  /* ---------------------------------------------------------
+     STICKY ACTION DOCK
+     Actual existing nodes are moved here by flight-v12.js.
+     Their original click handlers/state are preserved.
+     --------------------------------------------------------- */
+
+  body.flight-v12 .launch-panel #v12ActionDock{
+    position:sticky!important;
+    left:0!important;
+    right:0!important;
+    bottom:-4px!important;
+    z-index:40!important;
+
+    display:grid!important;
+    grid-template-columns:1fr!important;
+    gap:4px!important;
+
+    margin:5px -1px -1px!important;
+    padding:8px 1px 1px!important;
+
+    background:
+      linear-gradient(
+        180deg,
+        rgba(3,9,14,0),
+        rgba(3,9,14,.96) 32%,
+        rgba(3,9,14,.99)
+      )!important;
   }
 
-  body.flight-v12 .launch-panel .start-button b,
-  body.flight-v12 .launch-panel .cash-button b{
-    font-size:11px!important;
-  }
+  body.flight-v12 .launch-panel #v12ActionDock>#startBtn,
+  body.flight-v12 .launch-panel #v12ActionDock>#cashoutBtn,
+  body.flight-v12 .launch-panel #v12ActionDock>#mfAutoLoopBtn{
+    width:100%!important;
+    min-width:0!important;
 
-  body.flight-v12 .launch-panel .start-button small,
-  body.flight-v12 .launch-panel .cash-button small{
-    font-size:6px!important;
-  }
+    min-height:38px!important;
+    height:38px!important;
+    flex:0 0 38px!important;
 
-  body.flight-v12 .launch-panel [id*="auto"][role="button"],
-  body.flight-v12 .launch-panel button[id*="auto"],
-  body.flight-v12 .launch-panel .auto-button,
-  body.flight-v12 .launch-panel [class*="auto-mode"]{
-    min-height:44px!important;
-    margin-top:6px!important;
-    border-radius:11px!important;
-  }
+    margin:0!important;
 
-  body.flight-v12 .token-panel .panel-row{
-    font-size:6.5px!important;
-  }
-
-  body.flight-v12 .token-panel .token-head{
-    gap:6px!important;
-    margin-top:6px!important;
-  }
-
-  body.flight-v12 .token-panel .token-avatar{
-    width:32px!important;
-    height:32px!important;
-    border-radius:9px!important;
-    font-size:13px!important;
-  }
-
-  body.flight-v12 .token-panel .token-head b{
-    font-size:10px!important;
-  }
-
-  body.flight-v12 .token-panel .token-head small{
-    margin-top:2px!important;
-    font-size:6px!important;
-  }
-
-  body.flight-v12 .token-panel .quality-line{
-    gap:5px!important;
-    margin-top:5px!important;
-    font-size:6px!important;
-  }
-
-  body.flight-v12 .token-panel .token-metrics{
-    margin-top:6px!important;
     border-radius:9px!important;
   }
 
-  body.flight-v12 .token-panel .token-metrics>div{
-    padding:5px 6px!important;
+  body.flight-v12 .launch-panel #v12ActionDock>#startBtn>span,
+  body.flight-v12 .launch-panel #v12ActionDock>#cashoutBtn>span,
+  body.flight-v12 .launch-panel #v12ActionDock>#mfAutoLoopBtn>span{
+    font-size:12px!important;
   }
 
-  body.flight-v12 .token-panel .token-metrics small{
-    font-size:5.5px!important;
-  }
-
-  body.flight-v12 .token-panel .token-metrics b{
-    margin-top:2px!important;
-    font-size:8.5px!important;
-  }
-
-  body.flight-v12 .token-panel .telemetry{
-    gap:4px 7px!important;
-    margin-top:5px!important;
-    padding-top:5px!important;
-    font-size:5.5px!important;
-  }
-
-  body.flight-v12 .stats-panel .panel-row{
-    font-size:6.5px!important;
-  }
-
-  body.flight-v12 .stats-panel .stats-grid{
-    margin-top:5px!important;
-    border-radius:9px!important;
-  }
-
-  body.flight-v12 .stats-panel .stats-grid>div{
-    padding:5px 6px!important;
-  }
-
-  body.flight-v12 .stats-panel .stats-grid small{
-    font-size:5.5px!important;
-  }
-
-  body.flight-v12 .stats-panel .stats-grid b{
-    margin-top:2px!important;
-    font-size:8.5px!important;
-  }
-
-  body.flight-v12 .history-panel>summary{
-    min-height:22px!important;
-    height:22px!important;
-    padding:0 8px!important;
-    font-size:7px!important;
-  }
-
-  body.flight-v12 .history-panel>summary b{
-    width:20px!important;
-    min-width:20px!important;
-    height:20px!important;
-    font-size:7px!important;
-  }
-
-  body.flight-v12 .history-toolbar{
-    min-height:17px!important;
-    height:17px!important;
-    padding:2px 7px!important;
-    font-size:6px!important;
-  }
-
-  body.flight-v12 .history-toolbar button{
-    font-size:6px!important;
-  }
-
-  body.flight-v12 .history-panel .history{
-    padding:1px!important;
-  }
-
-  body.flight-v12 .history-panel .history-row{
-    min-height:30px!important;
-    margin-bottom:1px!important;
-    font-size:.88em!important;
-  }
-
-  body.flight-v12 .stage-card>.stage-head{
-    min-height:calc(27px + var(--v12-top))!important;
-    height:calc(27px + var(--v12-top))!important;
-  }
-
-  body.flight-v12 .stage-card{
-    grid-template-rows:
-      calc(27px + var(--v12-top))
-      minmax(0,1fr)
-      calc(27px + var(--v12-bottom))!important;
-  }
-
-  body.flight-v12 .stage-card>.position-strip{
-    min-height:calc(27px + var(--v12-bottom))!important;
-    height:calc(27px + var(--v12-bottom))!important;
-  }
-
-  body.flight-v12 .stage-card>.position-strip>div{
-    min-height:27px!important;
-    height:27px!important;
-    padding:4px 7px!important;
-  }
-
-  body.flight-v12 .stage-card>.position-strip small{
-    font-size:5.5px!important;
-  }
-
-  body.flight-v12 .stage-card>.position-strip b{
-    margin-top:2px!important;
+  body.flight-v12 .launch-panel #v12ActionDock b{
     font-size:8px!important;
   }
 
-  body.flight-v12 .multiplier-hud,
-  body.flight-v12 .game[data-state="live"] .multiplier-hud,
-  body.flight-v12 .game[data-state="settling"] .multiplier-hud{
-    top:calc(var(--v12-top) + 31px)!important;
+  body.flight-v12 .launch-panel #v12ActionDock small{
+    margin-top:1px!important;
+    font-size:5.5px!important;
   }
 
-  body.flight-v12 .multiplier{
-    font-size:clamp(48px,13vw,72px)!important;
+  /*
+    Existing game state decides which START/CASH OUT button is visible.
+    V12 does not override hidden/disabled/state selectors.
+  */
+
+  /* ---------------------------------------------------------
+     RIGHT COLUMN
+     One narrow lane, leaving the center visible.
+     --------------------------------------------------------- */
+
+  body.flight-v12 .token-panel,
+  body.flight-v12 .stats-panel,
+  body.flight-v12 .history-panel{
+    right:max(6px,var(--v12-right))!important;
+
+    width:min(32vw,246px)!important;
+    max-width:min(32vw,246px)!important;
+
+    font-size:.75em!important;
   }
 
+  body.flight-v12 .token-panel{
+    top:calc(var(--v12-top) + 45px)!important;
+
+    height:auto!important;
+    max-height:20dvh!important;
+
+    padding:4px!important;
+
+    overflow:auto!important;
+  }
+
+  body.flight-v12 .stats-panel{
+    top:31.5dvh!important;
+
+    height:auto!important;
+    max-height:10.5dvh!important;
+
+    padding:4px!important;
+
+    overflow:auto!important;
+  }
+
+  body.flight-v12 .history-panel{
+    bottom:max(6px,var(--v12-bottom))!important;
+
+    height:21dvh!important;
+    min-height:0!important;
+    max-height:21dvh!important;
+
+    padding:0!important;
+
+    grid-template-rows:
+      20px
+      16px
+      minmax(0,1fr)!important;
+
+    overflow:hidden!important;
+  }
+
+  /* Selected Launch compact */
+  body.flight-v12 .token-panel .panel-row{
+    min-height:16px!important;
+    font-size:5.8px!important;
+  }
+
+  body.flight-v12 .token-panel .token-head{
+    gap:5px!important;
+    margin-top:4px!important;
+  }
+
+  body.flight-v12 .token-panel .token-avatar{
+    width:28px!important;
+    height:28px!important;
+    border-radius:8px!important;
+    font-size:11px!important;
+  }
+
+  body.flight-v12 .token-panel .token-head b{
+    font-size:8.5px!important;
+  }
+
+  body.flight-v12 .token-panel .token-head small{
+    margin-top:1px!important;
+    font-size:5px!important;
+  }
+
+  body.flight-v12 .token-panel .quality-line{
+    gap:4px!important;
+    margin-top:4px!important;
+    font-size:5px!important;
+  }
+
+  body.flight-v12 .token-panel .token-metrics{
+    margin-top:4px!important;
+    border-radius:8px!important;
+  }
+
+  body.flight-v12 .token-panel .token-metrics>div{
+    padding:4px 5px!important;
+  }
+
+  body.flight-v12 .token-panel .token-metrics small{
+    font-size:4.8px!important;
+  }
+
+  body.flight-v12 .token-panel .token-metrics b{
+    margin-top:1px!important;
+    font-size:7.5px!important;
+  }
+
+  body.flight-v12 .token-panel .telemetry{
+    gap:3px 6px!important;
+    margin-top:4px!important;
+    padding-top:4px!important;
+    font-size:4.8px!important;
+  }
+
+  /* Flight Record compact */
+  body.flight-v12 .stats-panel .panel-row{
+    min-height:15px!important;
+    font-size:5.8px!important;
+  }
+
+  body.flight-v12 .stats-panel .stats-grid{
+    margin-top:3px!important;
+    border-radius:8px!important;
+  }
+
+  body.flight-v12 .stats-panel .stats-grid>div{
+    padding:4px 5px!important;
+  }
+
+  body.flight-v12 .stats-panel .stats-grid small{
+    font-size:4.8px!important;
+  }
+
+  body.flight-v12 .stats-panel .stats-grid b{
+    margin-top:1px!important;
+    font-size:7.5px!important;
+  }
+
+  /*
+    Keep safety information in the DOM. The panel itself scrolls if
+    the user needs content below the metrics.
+  */
+
+  /* Round History compact + fully scrollable */
+  body.flight-v12 .history-panel>summary{
+    min-height:20px!important;
+    height:20px!important;
+    padding:0 7px!important;
+    font-size:6px!important;
+  }
+
+  body.flight-v12 .history-panel>summary b{
+    width:18px!important;
+    min-width:18px!important;
+    height:18px!important;
+    font-size:6px!important;
+  }
+
+  body.flight-v12 .history-toolbar{
+    min-height:16px!important;
+    height:16px!important;
+    padding:1px 6px!important;
+    font-size:5px!important;
+  }
+
+  body.flight-v12 .history-toolbar button{
+    font-size:5px!important;
+  }
+
+  body.flight-v12 .history-panel .history{
+    min-height:0!important;
+    height:100%!important;
+    max-height:none!important;
+
+    padding:1px!important;
+
+    overflow-y:auto!important;
+    overflow-x:hidden!important;
+
+    overscroll-behavior:contain!important;
+    -webkit-overflow-scrolling:touch!important;
+  }
+
+  body.flight-v12 .history-panel .history-row{
+    display:grid!important;
+
+    min-height:27px!important;
+
+    margin:0 0 1px!important;
+
+    font-size:.80em!important;
+  }
+
+  body.flight-v12 .history-panel .history-row:nth-child(n){
+    display:grid!important;
+  }
+
+  /* ---------------------------------------------------------
+     SCENE HEADER / BOTTOM STRIP
+     --------------------------------------------------------- */
+
+  body.flight-v12 .stage-card{
+    grid-template-rows:
+      calc(25px + var(--v12-top))
+      minmax(0,1fr)
+      calc(25px + var(--v12-bottom))!important;
+  }
+
+  body.flight-v12 .stage-card>.stage-head{
+    min-height:calc(25px + var(--v12-top))!important;
+    height:calc(25px + var(--v12-top))!important;
+
+    padding:
+      var(--v12-top)
+      max(5px,var(--v12-right))
+      0
+      max(5px,var(--v12-left))!important;
+  }
+
+  body.flight-v12 .stage-card>.position-strip{
+    min-height:calc(25px + var(--v12-bottom))!important;
+    height:calc(25px + var(--v12-bottom))!important;
+  }
+
+  body.flight-v12 .stage-card>.position-strip>div{
+    min-height:25px!important;
+    height:25px!important;
+
+    padding:3px 6px!important;
+  }
+
+  body.flight-v12 .stage-card>.position-strip small{
+    font-size:5px!important;
+  }
+
+  body.flight-v12 .stage-card>.position-strip b{
+    margin-top:1px!important;
+    font-size:7px!important;
+  }
+
+  /* Back button: small and out of the Selected Launch box. */
   body.flight-v12 #v12Exit{
-    top:calc(var(--v12-top) + 5px)!important;
-    right:max(5px,var(--v12-right))!important;
+    top:calc(var(--v12-top) + 4px)!important;
+    right:max(4px,var(--v12-right))!important;
 
-    width:34px!important;
-    height:34px!important;
+    width:31px!important;
+    height:31px!important;
 
-    border-radius:11px!important;
+    border-radius:10px!important;
 
-    font-size:17px!important;
+    font-size:15px!important;
   }
 }
 
+/*
+  Landscape keeps the proven V12.1 three-column layout.
+  Only reduce the rocket moderately there.
+*/
 @media (orientation:landscape){
   body.flight-v12 #rocket{
-    scale:.84!important;
+    scale:.78!important;
+    translate:0 0!important;
     transform-origin:50% 50%!important;
   }
 }
 
-/* === MEMEFLOW FLIGHT V12.2 COMPACT PORTRAIT END === */
+/* === MEMEFLOW FLIGHT V12.3 CINEMATIC PORTRAIT END === */
