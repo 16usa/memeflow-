@@ -1058,18 +1058,19 @@ body.flight-v12 [class*="session-summary"]{
 
 /* === MEMEFLOW FLIGHT V12.3 CINEMATIC PORTRAIT END === */
 
-/* === MEMEFLOW FLIGHT V12.8 SYMMETRIC SAFE FRAME START === */
+/* === MEMEFLOW FLIGHT V12.9 FULL BLEED BOTTOM START === */
 
 /*
-  iPhone app frame:
-  TOP and BOTTOM are treated symmetrically.
-  No physical-screen stretching.
-  No fake blue footer.
+  IMPORTANT:
+  The scene itself fills the complete PWA viewport.
+
+  We DO NOT subtract safe-area-inset-bottom from the stage.
+  HUD controls already have their own safe-area bottom offsets.
 */
 
 html,
 body.flight-v12{
-  width:100%!important;
+  width:100vw!important;
   height:100dvh!important;
   min-height:100dvh!important;
 
@@ -1078,7 +1079,7 @@ body.flight-v12{
 
   overflow:hidden!important;
 
-  background:#02060b!important;
+  background:#06152a!important;
 }
 
 body.flight-v12{
@@ -1086,10 +1087,11 @@ body.flight-v12{
   inset:0!important;
 }
 
-/*
-  Real game viewport ends ABOVE the Home Indicator
-  exactly like the top content starts BELOW the status area.
-*/
+
+/* =========================================================
+   FULL GAME CANVAS
+   ========================================================= */
+
 body.flight-v12 .game,
 body.flight-v12 .layout,
 body.flight-v12 .stage-card{
@@ -1097,12 +1099,12 @@ body.flight-v12 .stage-card{
 
   top:0!important;
   right:0!important;
-  bottom:env(safe-area-inset-bottom,0px)!important;
+  bottom:0!important;
   left:0!important;
 
-  width:100%!important;
+  width:100vw!important;
+  height:100dvh!important;
 
-  height:auto!important;
   min-height:0!important;
   max-height:none!important;
 
@@ -1110,54 +1112,139 @@ body.flight-v12 .stage-card{
   padding:0!important;
 }
 
-/*
-  Stage itself supplies the entire visible game background.
-*/
+
+/* =========================================================
+   STAGE
+   ========================================================= */
+
 body.flight-v12 .stage-card{
+  display:grid!important;
+
+  grid-template-columns:1fr!important;
+
+  /*
+    Top:
+      iPhone top safe area + header.
+
+    Center:
+      all remaining rocket space.
+
+    Bottom:
+      metrics + iPhone bottom safe area.
+
+    Crucially: the CARD itself still reaches bottom:0.
+  */
+  grid-template-rows:
+    calc(25px + var(--v12-top))
+    minmax(0,1fr)
+    calc(25px + var(--v12-bottom))!important;
+
   overflow:hidden!important;
+
+  background:#06152a!important;
+
+  border:0!important;
+  border-radius:0!important;
+}
+
+
+/* =========================================================
+   SPACE / ROCKET WORLD
+   ========================================================= */
+
+body.flight-v12 .stage-card>#world,
+body.flight-v12 .stage-card>.world{
+  grid-row:2!important;
+
+  width:100%!important;
+
+  height:auto!important;
+  min-height:0!important;
+  max-height:none!important;
+
+  align-self:stretch!important;
+
+  margin:0!important;
+
+  overflow:hidden!important;
+
   background:#06152a!important;
 }
 
-/*
-  Keep the actual space world stretched to the bottom metrics,
-  rather than ending early and exposing a plain blue block.
-*/
-body.flight-v12 .stage-card>#world,
-body.flight-v12 .stage-card>.world{
-  min-height:0!important;
-  height:auto!important;
-  align-self:stretch!important;
-  overflow:hidden!important;
-}
 
-/*
-  Bottom metrics sit immediately at the bottom of the GAME area.
-  Safe area is outside it, same concept as the top system area.
-*/
+/* =========================================================
+   BOTTOM METRICS
+   ========================================================= */
+
 body.flight-v12 .stage-card>.position-strip{
-  padding-bottom:0!important;
-  margin-bottom:0!important;
+  grid-row:3!important;
+
+  position:relative!important;
+
+  width:100%!important;
+
+  height:calc(
+    25px + var(--v12-bottom)
+  )!important;
+
+  min-height:calc(
+    25px + var(--v12-bottom)
+  )!important;
+
+  margin:0!important;
+
+  /*
+    Safe area becomes PART of the game bottom strip.
+    No external black footer is created.
+  */
+  padding:
+    0
+    0
+    var(--v12-bottom)
+    0!important;
+
+  background:
+    rgba(2,7,12,.90)!important;
+
+  box-sizing:border-box!important;
 }
+
+
+/* Actual metric cells remain 25px high. */
+
+body.flight-v12 .stage-card>.position-strip>div{
+  height:25px!important;
+  min-height:25px!important;
+}
+
+
+/* =========================================================
+   HUD PANELS
+   ========================================================= */
 
 /*
-  The iPhone Home Indicator zone is neutral app chrome,
-  not an extension of the game scene.
+  DO NOT move them.
+  Their existing safe-area rules remain authoritative.
 */
-body.flight-v12::after{
-  content:"";
 
-  position:fixed;
-  z-index:999999;
-
-  left:0;
-  right:0;
-  bottom:0;
-
-  height:env(safe-area-inset-bottom,0px);
-
-  background:#02060b;
-
-  pointer-events:none;
+body.flight-v12 .launch-panel,
+body.flight-v12 .history-panel{
+  bottom:
+    max(
+      6px,
+      var(--v12-bottom)
+    )!important;
 }
 
-/* === MEMEFLOW FLIGHT V12.8 SYMMETRIC SAFE FRAME END === */
+
+/*
+  Absolutely no fake footer / pseudo-element.
+*/
+
+body.flight-v12::after{
+  content:none!important;
+  display:none!important;
+}
+
+
+/* === MEMEFLOW FLIGHT V12.9 FULL BLEED BOTTOM END === */
