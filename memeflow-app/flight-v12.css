@@ -5225,6 +5225,106 @@ body.flight-v12::after{
 
 /* === MEMEFLOW FLIGHT V20 FINAL RESPONSIVE GRID END === */
 
+
+
+/* === MEMEFLOW V20.2 LOWER ALL PANELS START === */
+
+@media (orientation:portrait){
+
+  body.flight-v12{
+    /*
+      Move the complete cockpit group LOWER.
+      Rocket, stage header and bottom position strip stay untouched.
+    */
+    --v202-shift-down:4.2dvh;
+  }
+
+
+  /* LAUNCH CONTROL */
+
+  body.flight-v12 .launch-panel{
+    bottom:
+      calc(
+        var(--v20-base)
+        + var(--v20-bottom-h)
+        + var(--v20-middle-h)
+        + (var(--v20-gap) * 2)
+        - var(--v202-shift-down)
+      )!important;
+  }
+
+
+  /* SELECTED LAUNCH */
+
+  body.flight-v12 .token-panel{
+    bottom:
+      calc(
+        var(--v20-base)
+        + var(--v20-bottom-h)
+        + var(--v20-gap)
+        - var(--v202-shift-down)
+      )!important;
+  }
+
+
+  /* ROUND HISTORY */
+
+  body.flight-v12 .history-panel{
+    bottom:
+      calc(
+        var(--v20-base)
+        + var(--v20-bottom-h)
+        + var(--v20-gap)
+        - var(--v202-shift-down)
+      )!important;
+  }
+
+
+  /* FLIGHT RECORD */
+
+  body.flight-v12 .stats-panel{
+    bottom:
+      calc(
+        var(--v20-base)
+        - var(--v202-shift-down)
+      )!important;
+  }
+
+
+  /* START / AUTO */
+
+  body.flight-v12 #v12ActionDock{
+    bottom:
+      calc(
+        var(--v20-base)
+        - var(--v202-shift-down)
+      )!important;
+  }
+
+
+  /*
+    Important:
+    do not move these
+  */
+
+  /*
+    .stage-head
+    #world
+    #rocket
+    .multiplier-hud
+    .position-strip
+  */
+
+
+  @media (max-width:390px){
+    body.flight-v12{
+      --v202-shift-down:4.6dvh;
+    }
+  }
+}
+
+/* === MEMEFLOW V20.2 LOWER ALL PANELS END === */
+
 /* === MEMEFLOW V20.1 SELECTED LAUNCH FIT START === */
 
 @media (orientation:portrait){
@@ -5472,101 +5572,3 @@ body.flight-v12::after{
 }
 
 /* === MEMEFLOW V20.1 SELECTED LAUNCH FIT END === */
-
-/* === MEMEFLOW V20.2 LOWER ALL PANELS START === */
-
-@media (orientation:portrait){
-
-  body.flight-v12{
-    /*
-      Move the complete cockpit group LOWER.
-      Rocket, stage header and bottom position strip stay untouched.
-    */
-    --v202-shift-down:4.2dvh;
-  }
-
-
-  /* LAUNCH CONTROL */
-
-  body.flight-v12 .launch-panel{
-    bottom:
-      calc(
-        var(--v20-base)
-        + var(--v20-bottom-h)
-        + var(--v20-middle-h)
-        + (var(--v20-gap) * 2)
-        - var(--v202-shift-down)
-      )!important;
-  }
-
-
-  /* SELECTED LAUNCH */
-
-  body.flight-v12 .token-panel{
-    bottom:
-      calc(
-        var(--v20-base)
-        + var(--v20-bottom-h)
-        + var(--v20-gap)
-        - var(--v202-shift-down)
-      )!important;
-  }
-
-
-  /* ROUND HISTORY */
-
-  body.flight-v12 .history-panel{
-    bottom:
-      calc(
-        var(--v20-base)
-        + var(--v20-bottom-h)
-        + var(--v20-gap)
-        - var(--v202-shift-down)
-      )!important;
-  }
-
-
-  /* FLIGHT RECORD */
-
-  body.flight-v12 .stats-panel{
-    bottom:
-      calc(
-        var(--v20-base)
-        - var(--v202-shift-down)
-      )!important;
-  }
-
-
-  /* START / AUTO */
-
-  body.flight-v12 #v12ActionDock{
-    bottom:
-      calc(
-        var(--v20-base)
-        - var(--v202-shift-down)
-      )!important;
-  }
-
-
-  /*
-    Important:
-    do not move these
-  */
-
-  /*
-    .stage-head
-    #world
-    #rocket
-    .multiplier-hud
-    .position-strip
-  */
-
-
-  @media (max-width:390px){
-    body.flight-v12{
-      --v202-shift-down:4.6dvh;
-    }
-  }
-}
-
-/* === MEMEFLOW V20.2 LOWER ALL PANELS END === */
