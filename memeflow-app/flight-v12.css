@@ -1,244 +1,340 @@
+/* ==========================================================
+   MEMEFLOW FLIGHT V12.1
+   REAL CURRENT GAME STRUCTURE
+   stage-card = full scene
+   world      = rocket / space
+   launch-panel / token-panel / stats-panel / history-panel = HUD
+   ========================================================== */
+
 :root{
-  --v12-safe-top:env(safe-area-inset-top,0px);
-  --v12-safe-right:env(safe-area-inset-right,0px);
-  --v12-safe-bottom:env(safe-area-inset-bottom,0px);
-  --v12-safe-left:env(safe-area-inset-left,0px);
+  --v12-top:env(safe-area-inset-top,0px);
+  --v12-right:env(safe-area-inset-right,0px);
+  --v12-bottom:env(safe-area-inset-bottom,0px);
+  --v12-left:env(safe-area-inset-left,0px);
 }
 
-body.flight-v12{
-  background:#01050a;
-}
-
-/*
-  Fail-safe: the cinematic layout starts only after V12 has found
-  the real scene and Launch Control. Until then the normal cloned
-  Game remains visible and usable.
-*/
-body.flight-v12.v12-ready{
+html,
+body.flight-v12,
+body.flight-v12 .game{
   width:100vw!important;
   height:100dvh!important;
   min-height:100dvh!important;
+  max-width:none!important;
   margin:0!important;
   padding:0!important;
   overflow:hidden!important;
-  overscroll-behavior:none!important;
-  background:#01050a!important;
+  background:#02060b!important;
 }
 
-body.flight-v12.v12-ready .game-topbar,
-body.flight-v12.v12-ready .game-footer{
-  display:none!important;
-}
-
-body.flight-v12.v12-ready .game-shell{
+body.flight-v12 .layout{
   position:fixed!important;
   inset:0!important;
+  z-index:1!important;
+
+  display:block!important;
+
   width:100vw!important;
   max-width:none!important;
   height:100dvh!important;
-  min-height:100dvh!important;
-  margin:0!important;
-  padding:0!important;
-  overflow:hidden!important;
-  background:#01050a!important;
-}
-
-body.flight-v12.v12-ready .game-layout{
-  position:static!important;
-  display:block!important;
-  width:100%!important;
-  max-width:none!important;
-  height:100%!important;
   min-height:0!important;
+
   margin:0!important;
   padding:0!important;
   gap:0!important;
+
+  overflow:hidden!important;
 }
 
-/* ==========================================================
-   FULL-VIEWPORT ROCKET SCENE
-   ========================================================== */
+/* ===== REAL ROCKET SCENE ===== */
 
-body.flight-v12.v12-ready .v12-stage{
+body.flight-v12 .stage-card{
   position:fixed!important;
   inset:0!important;
-  z-index:10!important;
-  display:block!important;
+  z-index:2!important;
+
+  display:grid!important;
+  grid-template-columns:1fr!important;
+  grid-template-rows:
+    calc(30px + var(--v12-top))
+    minmax(0,1fr)
+    calc(30px + var(--v12-bottom))!important;
+
   width:100vw!important;
   max-width:none!important;
   height:100dvh!important;
   min-height:100dvh!important;
   max-height:none!important;
+
   margin:0!important;
   padding:0!important;
-  overflow:hidden!important;
+
   border:0!important;
   border-radius:0!important;
-  background:#06152a!important;
-  box-shadow:none!important;
-  box-sizing:border-box!important;
-  isolation:isolate!important;
-}
 
-/*
-  The visual layer fills the entire stage. Existing rocket animation
-  and Three.js/CSS renderer remain untouched.
-*/
-body.flight-v12.v12-ready .v12-stage .v12-visual{
-  position:absolute!important;
-  inset:0!important;
-  z-index:0!important;
-  width:100%!important;
-  max-width:none!important;
-  height:100%!important;
-  min-height:100%!important;
-  max-height:none!important;
-  margin:0!important;
-  border-radius:0!important;
   overflow:hidden!important;
+  box-shadow:none!important;
+
+  background:#06152a!important;
 }
 
-body.flight-v12.v12-ready .v12-stage .v12-visual canvas,
-body.flight-v12.v12-ready .v12-stage .v12-visual video,
-body.flight-v12.v12-ready .v12-stage canvas,
-body.flight-v12.v12-ready .v12-stage video{
-  display:block!important;
+body.flight-v12 .stage-card>.stage-head{
+  grid-row:1!important;
+
   width:100%!important;
-  max-width:none!important;
-  height:100%!important;
-  max-height:none!important;
-}
+  height:calc(30px + var(--v12-top))!important;
+  min-height:calc(30px + var(--v12-top))!important;
 
-body.flight-v12.v12-ready .v12-stage #threeStage,
-body.flight-v12.v12-ready .v12-stage .three-stage,
-body.flight-v12.v12-ready .v12-stage #sky,
-body.flight-v12.v12-ready .v12-stage .sky,
-body.flight-v12.v12-ready .v12-stage [class*="rocket-scene"],
-body.flight-v12.v12-ready .v12-stage [class*="space-scene"],
-body.flight-v12.v12-ready .v12-stage [class*="game-scene"],
-body.flight-v12.v12-ready .v12-stage [class*="flight-scene"]{
+  padding:
+    var(--v12-top)
+    max(7px,var(--v12-right))
+    0
+    max(7px,var(--v12-left))!important;
+
   border-radius:0!important;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(2,7,12,.90),
+      rgba(2,7,12,.48)
+    )!important;
+
+  position:relative!important;
+  z-index:20!important;
 }
 
 /*
-  Keep the current scene HUD — READY/LIVE, multiplier, telemetry,
-  feed/time and existing flight-position overlays — above the sky.
+  THIS is the real current rocket/space container.
 */
-body.flight-v12.v12-ready .v12-stage > *:not(.v12-visual){
-  position:relative;
-  z-index:8;
-}
+body.flight-v12 .stage-card>#world,
+body.flight-v12 .stage-card>.world{
+  grid-row:2!important;
 
-body.flight-v12.v12-ready .v12-stage .flight-head,
-body.flight-v12.v12-ready .v12-stage [class*="flight-head"],
-body.flight-v12.v12-ready .v12-stage [class*="scene-head"],
-body.flight-v12.v12-ready .v12-stage [class*="status-head"]{
-  z-index:30!important;
-}
+  position:relative!important;
 
-body.flight-v12.v12-ready .v12-stage .position-bar,
-body.flight-v12.v12-ready .v12-stage [class*="position-bar"],
-body.flight-v12.v12-ready .v12-stage .v12-metrics{
-  position:absolute!important;
-  left:0!important;
-  right:0!important;
-  bottom:0!important;
-  z-index:35!important;
+  width:100%!important;
+  height:auto!important;
+  min-height:0!important;
+  max-height:none!important;
+
+  align-self:stretch!important;
+
   margin:0!important;
-  background:rgba(2,7,12,.72)!important;
+
+  overflow:hidden!important;
+
+  border-radius:0!important;
+}
+
+/* Current rocket renderer is allowed to use the whole world. */
+body.flight-v12 #world canvas,
+body.flight-v12 #world video{
+  max-width:none!important;
+}
+
+/* Bottom live metrics remain part of the scene. */
+body.flight-v12 .stage-card>.position-strip{
+  grid-row:3!important;
+
+  position:relative!important;
+  z-index:20!important;
+
+  width:100%!important;
+  height:calc(30px + var(--v12-bottom))!important;
+  min-height:calc(30px + var(--v12-bottom))!important;
+
+  padding-bottom:var(--v12-bottom)!important;
+
+  background:rgba(2,7,12,.82)!important;
+
   backdrop-filter:blur(12px)!important;
   -webkit-backdrop-filter:blur(12px)!important;
 }
 
-/* ==========================================================
-   GLASS HUD PANELS
-   ========================================================== */
+body.flight-v12 .stage-card>.position-strip>div{
+  height:30px!important;
+  min-height:30px!important;
+}
 
-body.flight-v12.v12-ready .v12-hud{
+/* Existing multiplier / telemetry stays above the actual world. */
+body.flight-v12 .multiplier-hud,
+body.flight-v12 .flight-assist,
+body.flight-v12 .cashout-telemetry{
+  z-index:28!important;
+}
+
+body.flight-v12 .multiplier-hud,
+body.flight-v12 .game[data-state="live"] .multiplier-hud,
+body.flight-v12 .game[data-state="settling"] .multiplier-hud{
+  top:calc(var(--v12-top) + 36px)!important;
+}
+
+/* ===== REAL GAME PANELS AS HUD ===== */
+
+body.flight-v12 .launch-panel,
+body.flight-v12 .token-panel,
+body.flight-v12 .stats-panel,
+body.flight-v12 .history-panel{
   position:fixed!important;
   z-index:60!important;
-  min-width:0!important;
+
+  grid-column:auto!important;
+  grid-row:auto!important;
+
   margin:0!important;
-  border:1px solid rgba(123,183,204,.22)!important;
-  border-radius:18px!important;
+
+  min-width:0!important;
+
+  border:
+    1px solid
+    rgba(126,185,205,.22)!important;
+
   background:
     linear-gradient(
       180deg,
-      rgba(6,14,20,.84),
-      rgba(3,8,13,.75)
+      rgba(7,15,21,.84),
+      rgba(3,9,14,.76)
     )!important;
-  box-shadow:0 18px 54px rgba(0,0,0,.28)!important;
-  backdrop-filter:blur(16px) saturate(1.10)!important;
-  -webkit-backdrop-filter:blur(16px) saturate(1.10)!important;
-  box-sizing:border-box!important;
+
+  box-shadow:
+    0 18px 52px
+    rgba(0,0,0,.30)!important;
+
+  backdrop-filter:
+    blur(16px)
+    saturate(1.08)!important;
+
+  -webkit-backdrop-filter:
+    blur(16px)
+    saturate(1.08)!important;
 }
 
-body.flight-v12.v12-ready .v12-hud,
-body.flight-v12.v12-ready .v12-hud *{
-  box-sizing:border-box!important;
-}
+/* Left cockpit */
+body.flight-v12 .launch-panel{
+  left:max(7px,var(--v12-left))!important;
+  bottom:max(8px,var(--v12-bottom))!important;
 
-body.flight-v12.v12-ready .v12-hud > *,
-body.flight-v12.v12-ready .v12-hud input,
-body.flight-v12.v12-ready .v12-hud select,
-body.flight-v12.v12-ready .v12-hud button,
-body.flight-v12.v12-ready .v12-hud a{
-  min-width:0!important;
-  max-width:100%;
-}
+  width:min(49vw,390px)!important;
+  max-width:min(49vw,390px)!important;
 
-/* Portrait iPhone */
-body.flight-v12.v12-ready .v12-launch{
-  left:max(7px,var(--v12-safe-left))!important;
-  bottom:max(9px,var(--v12-safe-bottom))!important;
-  width:min(52vw,410px)!important;
-  max-width:min(52vw,410px)!important;
-  max-height:56dvh!important;
+  height:auto!important;
+  max-height:59dvh!important;
+
+  padding:5px!important;
+
+  display:flex!important;
+  flex-direction:column!important;
+
   overflow:auto!important;
+
   overscroll-behavior:contain!important;
   -webkit-overflow-scrolling:touch!important;
 }
 
-body.flight-v12.v12-ready .v12-selected{
-  right:max(7px,var(--v12-safe-right))!important;
-  top:max(74px,calc(var(--v12-safe-top) + 58px))!important;
-  width:min(43vw,350px)!important;
-  max-width:min(43vw,350px)!important;
-  max-height:29dvh!important;
+/* Right upper target */
+body.flight-v12 .token-panel{
+  right:max(7px,var(--v12-right))!important;
+  top:calc(var(--v12-top) + 54px)!important;
+
+  width:min(42vw,330px)!important;
+  max-width:min(42vw,330px)!important;
+
+  height:auto!important;
+  max-height:30dvh!important;
+
+  padding:5px!important;
+
   overflow:auto!important;
-  overscroll-behavior:contain!important;
-  -webkit-overflow-scrolling:touch!important;
 }
 
-body.flight-v12.v12-ready .v12-record{
-  right:max(7px,var(--v12-safe-right))!important;
+/* Right middle record */
+body.flight-v12 .stats-panel{
+  right:max(7px,var(--v12-right))!important;
   top:43dvh!important;
-  width:min(43vw,350px)!important;
-  max-width:min(43vw,350px)!important;
-  max-height:16dvh!important;
+
+  width:min(42vw,330px)!important;
+  max-width:min(42vw,330px)!important;
+
+  height:auto!important;
+  max-height:15dvh!important;
+
+  padding:5px!important;
+
   overflow:auto!important;
 }
 
-body.flight-v12.v12-ready .v12-history{
-  right:max(7px,var(--v12-safe-right))!important;
-  bottom:max(9px,var(--v12-safe-bottom))!important;
-  width:min(43vw,350px)!important;
-  max-width:min(43vw,350px)!important;
-  max-height:29dvh!important;
-  overflow:auto!important;
-  overscroll-behavior:contain!important;
-  -webkit-overflow-scrolling:touch!important;
+/* Right lower scrollable session history */
+body.flight-v12 .history-panel{
+  right:max(7px,var(--v12-right))!important;
+  bottom:max(8px,var(--v12-bottom))!important;
+
+  width:min(42vw,330px)!important;
+  max-width:min(42vw,330px)!important;
+
+  height:28dvh!important;
+  min-height:0!important;
+  max-height:28dvh!important;
+
+  padding:0!important;
+
+  display:grid!important;
+  grid-template-rows:
+    24px
+    18px
+    minmax(0,1fr)!important;
+
+  overflow:hidden!important;
 }
 
-body.flight-v12.v12-ready .v12-history .history-list,
-body.flight-v12.v12-ready .v12-history [class*="history-list"]{
-  overflow-y:auto!important;
+body.flight-v12 .history-panel>summary{
+  height:24px!important;
+  min-height:24px!important;
+}
+
+body.flight-v12 .history-toolbar{
+  height:18px!important;
+  min-height:18px!important;
+}
+
+/*
+  Previous phone CSS intentionally showed only 3 rows.
+  Flight V12 shows the whole current-session history with touch scroll.
+*/
+body.flight-v12 .history-panel .history{
+  position:static!important;
+
+  width:100%!important;
+  height:100%!important;
+  min-height:0!important;
+  max-height:none!important;
+
+  padding:2px!important;
+
+  display:block!important;
+
   overflow-x:hidden!important;
+  overflow-y:auto!important;
+
   overscroll-behavior:contain!important;
   -webkit-overflow-scrolling:touch!important;
 }
 
-/* Settings / Wallet must open over everything. */
+body.flight-v12 .history-panel .history-row{
+  display:grid!important;
+  min-height:34px!important;
+  margin:0 0 2px!important;
+}
+
+body.flight-v12 .history-panel .history-row:nth-child(n){
+  display:grid!important;
+}
+
+/* Utility controls stay available, except old fullscreen recursion. */
+body.flight-v12 #fullscreenBtn{
+  display:none!important;
+}
+
+/* Settings + wallet overlays must cover Flight HUD. */
 body.flight-v12 .mf-game-settings-overlay,
 body.flight-v12 .mf-game-wallet-overlay,
 body.flight-v12 [class*="settings-overlay"],
@@ -246,141 +342,164 @@ body.flight-v12 [class*="wallet-overlay"]{
   z-index:100000!important;
 }
 
-/* Existing fullscreen button is unnecessary inside Flight V12. */
-body.flight-v12 .v12-old-fullscreen{
-  display:none!important;
+/* Result / final AUTO summary remains above the cockpit. */
+body.flight-v12 .result,
+body.flight-v12 [class*="session-summary"]{
+  z-index:120000!important;
 }
 
-/* ==========================================================
-   V12 EXIT
-   ========================================================== */
+/* ===== EXIT BACK TO NORMAL GAME ===== */
 
 #v12Exit{
-  position:fixed;
-  z-index:90000;
-  top:max(9px,var(--v12-safe-top));
-  right:max(9px,var(--v12-safe-right));
-  min-width:42px;
-  height:38px;
-  padding:0 12px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  gap:7px;
-  border:1px solid rgba(132,191,213,.28);
-  border-radius:13px;
-  background:rgba(4,11,16,.66);
-  color:#e8f9ff;
-  box-shadow:0 10px 30px rgba(0,0,0,.22);
-  backdrop-filter:blur(14px);
-  -webkit-backdrop-filter:blur(14px);
-  text-decoration:none;
-  font:800 9px/1 system-ui,-apple-system,BlinkMacSystemFont,sans-serif;
-  letter-spacing:.10em;
+  position:fixed!important;
+  z-index:90000!important;
+
+  top:calc(var(--v12-top) + 7px)!important;
+  right:max(7px,var(--v12-right))!important;
+
+  width:40px!important;
+  height:40px!important;
+
+  display:grid!important;
+  place-items:center!important;
+
+  border:
+    1px solid
+    rgba(125,185,207,.27)!important;
+
+  border-radius:13px!important;
+
+  background:
+    rgba(4,11,16,.68)!important;
+
+  color:#eafaff!important;
+
+  box-shadow:
+    0 10px 30px
+    rgba(0,0,0,.22)!important;
+
+  backdrop-filter:blur(14px)!important;
+  -webkit-backdrop-filter:blur(14px)!important;
+
+  text-decoration:none!important;
+
+  font:
+    800 20px/1
+    system-ui,
+    -apple-system,
+    sans-serif!important;
+
   -webkit-tap-highlight-color:transparent;
 }
 
-#v12Exit::before{
-  content:"←";
-  font-size:15px;
-  line-height:1;
-}
-
-@media (max-width:430px){
-  body.flight-v12.v12-ready .v12-hud{
-    font-size:.90em!important;
-  }
-
-  #v12Exit{
-    width:38px;
-    min-width:38px;
-    padding:0;
-    font-size:0;
-  }
-}
-
-/* ==========================================================
-   LANDSCAPE / TABLET / DESKTOP
-   ========================================================== */
+/* ===== LANDSCAPE: the originally requested 3-column cockpit ===== */
 
 @media (orientation:landscape){
-  body.flight-v12.v12-ready .v12-launch{
-    left:max(10px,var(--v12-safe-left))!important;
-    top:max(10px,var(--v12-safe-top))!important;
-    bottom:max(10px,var(--v12-safe-bottom))!important;
-    width:min(27vw,410px)!important;
-    max-width:min(27vw,410px)!important;
+  body.flight-v12 .stage-card{
+    grid-template-rows:
+      calc(26px + var(--v12-top))
+      minmax(0,1fr)
+      calc(25px + var(--v12-bottom))!important;
+  }
+
+  body.flight-v12 .stage-card>.stage-head{
+    height:calc(26px + var(--v12-top))!important;
+    min-height:calc(26px + var(--v12-top))!important;
+  }
+
+  body.flight-v12 .stage-card>.position-strip{
+    height:calc(25px + var(--v12-bottom))!important;
+    min-height:calc(25px + var(--v12-bottom))!important;
+  }
+
+  body.flight-v12 .stage-card>.position-strip>div{
+    height:25px!important;
+    min-height:25px!important;
+  }
+
+  body.flight-v12 .multiplier-hud,
+  body.flight-v12 .game[data-state="live"] .multiplier-hud,
+  body.flight-v12 .game[data-state="settling"] .multiplier-hud{
+    top:calc(var(--v12-top) + 31px)!important;
+  }
+
+  body.flight-v12 .launch-panel{
+    left:max(9px,var(--v12-left))!important;
+    top:max(9px,var(--v12-top))!important;
+    bottom:max(9px,var(--v12-bottom))!important;
+
+    width:min(26vw,390px)!important;
+    max-width:min(26vw,390px)!important;
+
+    height:auto!important;
     max-height:none!important;
   }
 
-  body.flight-v12.v12-ready .v12-selected{
-    right:max(10px,var(--v12-safe-right))!important;
-    top:max(10px,var(--v12-safe-top))!important;
-    width:min(23vw,350px)!important;
-    max-width:min(23vw,350px)!important;
-    max-height:38dvh!important;
+  body.flight-v12 .token-panel{
+    right:max(9px,var(--v12-right))!important;
+    top:max(9px,var(--v12-top))!important;
+
+    width:min(22vw,330px)!important;
+    max-width:min(22vw,330px)!important;
+
+    max-height:37dvh!important;
   }
 
-  body.flight-v12.v12-ready .v12-record{
-    right:max(10px,var(--v12-safe-right))!important;
-    top:42dvh!important;
-    width:min(23vw,350px)!important;
-    max-width:min(23vw,350px)!important;
-    max-height:18dvh!important;
+  body.flight-v12 .stats-panel{
+    right:max(9px,var(--v12-right))!important;
+    top:41dvh!important;
+
+    width:min(22vw,330px)!important;
+    max-width:min(22vw,330px)!important;
+
+    max-height:17dvh!important;
   }
 
-  body.flight-v12.v12-ready .v12-history{
-    right:max(10px,var(--v12-safe-right))!important;
-    bottom:max(10px,var(--v12-safe-bottom))!important;
-    width:min(23vw,350px)!important;
-    max-width:min(23vw,350px)!important;
-    max-height:35dvh!important;
+  body.flight-v12 .history-panel{
+    right:max(9px,var(--v12-right))!important;
+    bottom:max(9px,var(--v12-bottom))!important;
+
+    width:min(22vw,330px)!important;
+    max-width:min(22vw,330px)!important;
+
+    height:36dvh!important;
+    max-height:36dvh!important;
   }
 
   #v12Exit{
     right:
       calc(
-        max(10px,var(--v12-safe-right))
-        + min(23vw,350px)
-        + 10px
-      );
+        max(9px,var(--v12-right))
+        + min(22vw,330px)
+        + 9px
+      )!important;
   }
 }
 
-@media (max-height:520px) and (orientation:landscape){
-  body.flight-v12.v12-ready .v12-hud{
-    font-size:.75em!important;
-  }
-
-  body.flight-v12.v12-ready .v12-launch{
+/* Very short landscape iPhones */
+@media (max-height:500px) and (orientation:landscape){
+  body.flight-v12 .launch-panel{
     width:25vw!important;
     max-width:25vw!important;
+    font-size:.82em!important;
   }
 
-  body.flight-v12.v12-ready .v12-selected,
-  body.flight-v12.v12-ready .v12-record,
-  body.flight-v12.v12-ready .v12-history{
+  body.flight-v12 .token-panel,
+  body.flight-v12 .stats-panel,
+  body.flight-v12 .history-panel{
     width:21vw!important;
     max-width:21vw!important;
+    font-size:.82em!important;
   }
 
   #v12Exit{
+    width:32px!important;
+    height:32px!important;
     right:
       calc(
-        max(8px,var(--v12-safe-right))
+        max(8px,var(--v12-right))
         + 21vw
         + 8px
-      );
-    height:30px;
+      )!important;
   }
-}
-
-/*
-  Round result / final AUTO-session summary remains above the HUD
-  when the existing current Game logic chooses to show it.
-*/
-body.flight-v12 .result-overlay,
-body.flight-v12 [class*="result-overlay"],
-body.flight-v12 [class*="session-summary"]{
-  z-index:120000!important;
 }

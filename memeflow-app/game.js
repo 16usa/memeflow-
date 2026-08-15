@@ -524,7 +524,7 @@
          Use the real Apple standalone path instead.
     */
     if(isIPhoneBrowser()){
-      showIOSFullscreenGuide();
+      location.assign('/flight-v12.html');
       return;
     }
 

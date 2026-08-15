@@ -1,11 +1,15 @@
 {
-  "id": "/game",
-  "name": "MEMEFLOW Pepe Rocket",
+  "id": "/flight-v12.html",
+  "name": "MEMEFLOW Flight",
   "short_name": "MEMEFLOW",
-  "description": "MEMEFLOW Pepe Rocket paper trading game",
-  "start_url": "/game",
+  "description": "MEMEFLOW cinematic Flight View",
+  "start_url": "/flight-v12.html",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#030507",
-  "theme_color": "#030507"
+  "background_color": "#02060b",
+  "theme_color": "#02060b",
+  "display_override": [
+    "fullscreen",
+    "standalone"
+  ]
 }
