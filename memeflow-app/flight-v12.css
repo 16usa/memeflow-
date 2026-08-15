@@ -1058,26 +1058,27 @@ body.flight-v12 [class*="session-summary"]{
 
 /* === MEMEFLOW FLIGHT V12.3 CINEMATIC PORTRAIT END === */
 
-/* === MEMEFLOW FLIGHT V12.7 REAL SCREEN HEIGHT START === */
+/* === MEMEFLOW FLIGHT V12.8 SYMMETRIC SAFE FRAME START === */
 
 /*
-  Full physical iPhone screen.
-  Do NOT use visualViewport.height here — in standalone iOS
-  that value excludes part of the physical display.
+  iPhone app frame:
+  TOP and BOTTOM are treated symmetrically.
+  No physical-screen stretching.
+  No fake blue footer.
 */
 
 html,
 body.flight-v12{
   width:100%!important;
-  height:var(--v12-physical-h,100dvh)!important;
-  min-height:var(--v12-physical-h,100dvh)!important;
+  height:100dvh!important;
+  min-height:100dvh!important;
 
   margin:0!important;
   padding:0!important;
 
   overflow:hidden!important;
 
-  background:#06152a!important;
+  background:#02060b!important;
 }
 
 body.flight-v12{
@@ -1085,6 +1086,10 @@ body.flight-v12{
   inset:0!important;
 }
 
+/*
+  Real game viewport ends ABOVE the Home Indicator
+  exactly like the top content starts BELOW the status area.
+*/
 body.flight-v12 .game,
 body.flight-v12 .layout,
 body.flight-v12 .stage-card{
@@ -1092,65 +1097,67 @@ body.flight-v12 .stage-card{
 
   top:0!important;
   right:0!important;
-  bottom:auto!important;
+  bottom:env(safe-area-inset-bottom,0px)!important;
   left:0!important;
 
-  width:100vw!important;
+  width:100%!important;
 
-  height:var(--v12-physical-h,100dvh)!important;
-  min-height:var(--v12-physical-h,100dvh)!important;
+  height:auto!important;
+  min-height:0!important;
   max-height:none!important;
 
   margin:0!important;
   padding:0!important;
 }
 
+/*
+  Stage itself supplies the entire visible game background.
+*/
 body.flight-v12 .stage-card{
-  background:#06152a!important;
   overflow:hidden!important;
+  background:#06152a!important;
 }
 
-/* Real rocket scene */
+/*
+  Keep the actual space world stretched to the bottom metrics,
+  rather than ending early and exposing a plain blue block.
+*/
 body.flight-v12 .stage-card>#world,
 body.flight-v12 .stage-card>.world{
   min-height:0!important;
   height:auto!important;
   align-self:stretch!important;
+  overflow:hidden!important;
 }
 
 /*
-  Paint the bottom safe area with the game itself,
-  not the page's black background.
+  Bottom metrics sit immediately at the bottom of the GAME area.
+  Safe area is outside it, same concept as the top system area.
 */
 body.flight-v12 .stage-card>.position-strip{
-  padding-bottom:
-    env(safe-area-inset-bottom,0px)!important;
-
-  background:
-    rgba(2,7,12,.90)!important;
+  padding-bottom:0!important;
+  margin-bottom:0!important;
 }
 
-/* Absolute emergency paint behind the Home Indicator. */
+/*
+  The iPhone Home Indicator zone is neutral app chrome,
+  not an extension of the game scene.
+*/
 body.flight-v12::after{
   content:"";
 
   position:fixed;
-
-  z-index:0;
+  z-index:999999;
 
   left:0;
   right:0;
   bottom:0;
 
-  height:
-    max(
-      env(safe-area-inset-bottom,0px),
-      44px
-    );
+  height:env(safe-area-inset-bottom,0px);
 
-  background:#06152a;
+  background:#02060b;
 
   pointer-events:none;
 }
 
-/* === MEMEFLOW FLIGHT V12.7 REAL SCREEN HEIGHT END === */
+/* === MEMEFLOW FLIGHT V12.8 SYMMETRIC SAFE FRAME END === */
