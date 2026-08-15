@@ -1,7 +1,7 @@
 (()=>{
   'use strict';
 
-  const VERSION='11.1';
+  const VERSION='11.3';
 
   const frame=document.getElementById('mfV11Frame');
   const loading=document.getElementById('mfV11Loading');
@@ -12,7 +12,8 @@
   const params=new URLSearchParams(location.search);
 
   function safeGameSource(){
-    let raw=params.get('src') ||
+    let raw=
+      params.get('src') ||
       sessionStorage.getItem('mfGameFullscreenReturn') ||
       '/game.html';
 
@@ -20,11 +21,11 @@
       const u=new URL(raw,location.origin);
 
       if(u.origin!==location.origin){
-        return '/game.html';
+        return '/game.html?mf_embedded=1';
       }
 
       if(u.pathname.includes('game-fullscreen-v11')){
-        return '/game.html';
+        return '/game.html?mf_embedded=1';
       }
 
       u.searchParams.set('mf_embedded','1');
@@ -37,7 +38,8 @@
   }
 
   function returnSource(){
-    const raw=params.get('src') ||
+    const raw=
+      params.get('src') ||
       sessionStorage.getItem('mfGameFullscreenReturn') ||
       '/game.html';
 
@@ -54,7 +56,7 @@
   const source=safeGameSource();
   const back=returnSource();
 
-  function showToast(message,ms=4200){
+  function showToast(message,ms=4500){
     toast.textContent=message;
     toast.hidden=false;
 
@@ -67,404 +69,74 @@
     }
   }
 
-  function txt(el){
-    return String(el?.innerText || el?.textContent || '')
-      .replace(/\s+/g,' ')
-      .trim()
-      .toUpperCase();
+  function text(el){
+    return String(
+      el?.innerText ||
+      el?.textContent ||
+      ''
+    )
+    .replace(/\s+/g,' ')
+    .trim()
+    .toUpperCase();
   }
 
-  function smallest(doc,words,scope){
-    const root=scope || doc;
-    const wanted=words.map(v=>v.toUpperCase());
+  function smallest(doc,words){
+    const wanted=
+      words.map(v=>v.toUpperCase());
 
-    return [...root.querySelectorAll('section,article,div')]
-      .filter(el=>{
-        const r=el.getBoundingClientRect();
-        if(r.width<120 || r.height<30)return false;
-
-        const t=txt(el);
-        return wanted.every(word=>t.includes(word));
-      })
-      .sort((a,b)=>{
-        const ar=a.getBoundingClientRect();
-        const br=b.getBoundingClientRect();
-        return ar.width*ar.height - br.width*br.height;
-      })[0] || null;
-  }
-
-  function findStage(doc){
-    const metric=smallest(
-      doc,
-      ['STAKE','PAPER VALUE','P&L','STAGE','PRICE AGE']
-    );
-
-    if(!metric)return null;
-
-    const metricRect=metric.getBoundingClientRect();
-    let el=metric.parentElement;
-    let candidate=null;
-
-    while(el && el!==doc.body && el!==doc.documentElement){
-      const r=el.getBoundingClientRect();
-      const t=txt(el);
+    return [
+      ...doc.querySelectorAll(
+        'section,article,aside,div'
+      )
+    ]
+    .filter(el=>{
+      const r=
+        el.getBoundingClientRect();
 
       if(
-        t.includes('LAUNCH CONTROL') ||
-        t.includes('SELECTED LAUNCH') ||
-        t.includes('ROUND HISTORY')
+        r.width<110 ||
+        r.height<28
       ){
-        break;
+        return false;
       }
 
-      if(
-        r.width>=Math.min(300,innerWidth*.70) &&
-        r.height>=Math.max(240,metricRect.height*3)
-      ){
-        candidate=el;
-        break;
-      }
+      const value=text(el);
 
-      el=el.parentElement;
-    }
-
-    return candidate || metric.parentElement || null;
-  }
-
-  function tag(doc){
-    const stage=findStage(doc);
-
-    const launch=
-      doc.querySelector('.launch-panel') ||
-      smallest(doc,['LAUNCH CONTROL','PAPER BALANCE']);
-
-    const selected=
-      smallest(doc,['SELECTED LAUNCH','AI SCORE','BUY PRESSURE']);
-
-    const record=
-      smallest(doc,['FLIGHT RECORD','NET P&L']);
-
-    const history=
-      smallest(doc,['ROUND HISTORY']);
-
-    const header=
-      stage
-        ? smallest(doc,['FEED','TIME'],stage)
-        : null;
-
-    const metrics=
-      stage
-        ? smallest(doc,['STAKE','PAPER VALUE','P&L','STAGE','PRICE AGE'],stage)
-        : null;
-
-    if(!stage){
-      return {
-        ok:false,
-        reason:'Rocket scene was not detected'
-      };
-    }
-
-    stage.classList.add('mf-v11-stage');
-
-    if(header && header!==stage){
-      header.classList.add('mf-v11-stage-header');
-    }
-
-    if(metrics && metrics!==stage){
-      metrics.classList.add('mf-v11-stage-metrics');
-    }
-
-    [
-      [launch,'mf-v11-launch'],
-      [selected,'mf-v11-selected'],
-      [record,'mf-v11-record'],
-      [history,'mf-v11-history']
-    ].forEach(([el,cls])=>{
-      if(!el)return;
-      el.classList.add('mf-v11-hud',cls);
-    });
-
-    const utility=
-      doc.querySelector('.launch-panel .utility-actions');
-
-    if(utility){
-      const buttons=[...utility.querySelectorAll('button,[role="button"]')];
-      const nonApp=buttons.filter(button=>
-        button.id!=='gameSettingsBtn' &&
-        button.id!=='gameWalletBtn'
+      return wanted.every(
+        word=>value.includes(word)
       );
+    })
+    .sort((a,b)=>{
+      const ar=
+        a.getBoundingClientRect();
 
-      if(nonApp.length){
-        const oldFs=nonApp[nonApp.length-1];
+      const br=
+        b.getBoundingClientRect();
 
-        if(oldFs){
-          oldFs.classList.add('mf-v11-hide-old-fullscreen');
-        }
-      }
-    }
-
-    return {
-      ok:true,
-      stage,
-      launch,
-      selected,
-      record,
-      history
-    };
+      return (
+        ar.width*ar.height -
+        br.width*br.height
+      );
+    })[0] || null;
   }
 
-  function installStyle(doc){
-    if(doc.getElementById('mfV11InjectedStyle')){
-      return;
-    }
-
-    const style=doc.createElement('style');
-    style.id='mfV11InjectedStyle';
-
-    style.textContent=`
-      :root{
-        color-scheme:dark!important;
-        background:#010408!important;
-      }
-
-      html,
-      body{
-        width:100%!important;
-        height:100%!important;
-        min-height:100dvh!important;
-        margin:0!important;
-        overflow:hidden!important;
-        background:#010408!important;
-      }
-
-      body{
-        position:relative!important;
-      }
-
-      .mf-v11-stage{
-        position:fixed!important;
-        inset:0!important;
-        z-index:1000!important;
-
-        width:100vw!important;
-        max-width:none!important;
-
-        height:100dvh!important;
-        min-height:100dvh!important;
-        max-height:none!important;
-
-        margin:0!important;
-        padding:0!important;
-
-        border:0!important;
-        border-radius:0!important;
-
-        overflow:hidden!important;
-        box-sizing:border-box!important;
-
-        background:#06162b!important;
-        box-shadow:none!important;
-      }
-
-      .mf-v11-stage canvas,
-      .mf-v11-stage video{
-        max-width:none!important;
-      }
-
-      .mf-v11-stage-header{
-        position:absolute!important;
-        z-index:8!important;
-        top:0!important;
-        left:0!important;
-        right:0!important;
-      }
-
-      .mf-v11-stage-metrics{
-        position:absolute!important;
-        z-index:8!important;
-        left:0!important;
-        right:0!important;
-        bottom:0!important;
-      }
-
-      .mf-v11-hud{
-        position:fixed!important;
-        z-index:1400!important;
-
-        min-width:0!important;
-
-        margin:0!important;
-
-        overflow:hidden!important;
-
-        border:1px solid rgba(135,182,199,.20)!important;
-        border-radius:17px!important;
-
-        background:
-          linear-gradient(
-            180deg,
-            rgba(6,13,18,.82),
-            rgba(3,8,12,.73)
-          )!important;
-
-        box-shadow:
-          0 16px 44px
-          rgba(0,0,0,.28)!important;
-
-        backdrop-filter:
-          blur(14px)
-          saturate(1.10)!important;
-
-        -webkit-backdrop-filter:
-          blur(14px)
-          saturate(1.10)!important;
-
-        box-sizing:border-box!important;
-        pointer-events:auto!important;
-      }
-
-      .mf-v11-hud,
-      .mf-v11-hud *{
-        box-sizing:border-box!important;
-      }
-
-      .mf-v11-hud > *,
-      .mf-v11-hud input,
-      .mf-v11-hud select,
-      .mf-v11-hud button{
-        min-width:0!important;
-        max-width:100%;
-      }
-
-      .mf-v11-launch{
-        left:max(8px,env(safe-area-inset-left))!important;
-        bottom:max(8px,env(safe-area-inset-bottom))!important;
-
-        width:min(51vw,390px)!important;
-        max-width:min(51vw,390px)!important;
-
-        max-height:60dvh!important;
-
-        overflow:auto!important;
-        overscroll-behavior:contain!important;
-        -webkit-overflow-scrolling:touch!important;
-      }
-
-      .mf-v11-selected{
-        right:max(7px,env(safe-area-inset-right))!important;
-        top:max(56px,calc(env(safe-area-inset-top) + 44px))!important;
-
-        width:min(43vw,330px)!important;
-        max-width:min(43vw,330px)!important;
-
-        max-height:34dvh!important;
-      }
-
-      .mf-v11-record{
-        right:max(7px,env(safe-area-inset-right))!important;
-        top:47dvh!important;
-
-        width:min(43vw,330px)!important;
-        max-width:min(43vw,330px)!important;
-
-        max-height:16dvh!important;
-      }
-
-      .mf-v11-history{
-        right:max(7px,env(safe-area-inset-right))!important;
-        bottom:max(8px,env(safe-area-inset-bottom))!important;
-
-        width:min(43vw,330px)!important;
-        max-width:min(43vw,330px)!important;
-
-        max-height:30dvh!important;
-
-        overflow:auto!important;
-        overscroll-behavior:contain!important;
-        -webkit-overflow-scrolling:touch!important;
-      }
-
-      .mf-v11-hide-old-fullscreen{
-        display:none!important;
-      }
-
-      .mf-game-settings-overlay,
-      .mf-game-wallet-overlay{
-        z-index:100000!important;
-      }
-
-      @media (orientation:landscape){
-        .mf-v11-launch{
-          left:max(10px,env(safe-area-inset-left))!important;
-          top:max(10px,env(safe-area-inset-top))!important;
-          bottom:max(10px,env(safe-area-inset-bottom))!important;
-
-          width:min(27vw,390px)!important;
-          max-width:min(27vw,390px)!important;
-
-          max-height:none!important;
-        }
-
-        .mf-v11-selected{
-          right:max(10px,env(safe-area-inset-right))!important;
-          top:max(10px,env(safe-area-inset-top))!important;
-
-          width:min(23vw,330px)!important;
-          max-width:min(23vw,330px)!important;
-
-          max-height:39dvh!important;
-        }
-
-        .mf-v11-record{
-          right:max(10px,env(safe-area-inset-right))!important;
-          top:43dvh!important;
-
-          width:min(23vw,330px)!important;
-          max-width:min(23vw,330px)!important;
-
-          max-height:19dvh!important;
-        }
-
-        .mf-v11-history{
-          right:max(10px,env(safe-area-inset-right))!important;
-          bottom:max(10px,env(safe-area-inset-bottom))!important;
-
-          width:min(23vw,330px)!important;
-          max-width:min(23vw,330px)!important;
-
-          max-height:34dvh!important;
-        }
-      }
-
-      @media (max-height:500px) and (orientation:landscape){
-        .mf-v11-hud{
-          font-size:.76em!important;
-        }
-
-        .mf-v11-launch{
-          width:25vw!important;
-          max-width:25vw!important;
-        }
-
-        .mf-v11-selected,
-        .mf-v11-record,
-        .mf-v11-history{
-          width:21vw!important;
-          max-width:21vw!important;
-        }
-      }
-    `;
-
-    doc.head.appendChild(style);
-  }
-
-  function neutralizeLegacyFlight(doc){
+  function clearLegacy(doc){
     try{
-      frame.contentWindow.MEMEFLOW_FLIGHT_MODE?.disable?.();
+      frame
+        .contentWindow
+        .MEMEFLOW_FLIGHT_MODE
+        ?.disable?.();
     }catch(_){}
 
-    doc.body?.classList.remove('mf-flight-mode');
-    doc.getElementById('mfFlightModeExit')?.remove();
+    doc.body
+      ?.classList
+      .remove('mf-flight-mode');
+
+    doc
+      .getElementById(
+        'mfFlightModeExit'
+      )
+      ?.remove();
 
     doc
       .querySelectorAll(
@@ -487,105 +159,848 @@
       });
   }
 
-  function applyV11(){
+  function clearV11Marks(doc){
+    doc
+      .querySelectorAll(
+        '.mf-v11-stage,'+
+        '.mf-v11-hud,'+
+        '.mf-v11-launch,'+
+        '.mf-v11-selected,'+
+        '.mf-v11-record,'+
+        '.mf-v11-history'
+      )
+      .forEach(el=>{
+        el.classList.remove(
+          'mf-v11-stage',
+          'mf-v11-hud',
+          'mf-v11-launch',
+          'mf-v11-selected',
+          'mf-v11-record',
+          'mf-v11-history'
+        );
+      });
+  }
+
+  function detect(doc){
+    /*
+      IMPORTANT V11.3:
+      Game already exposes a stable semantic scene:
+        .flight-card = complete rocket card
+        .sky         = actual space/rocket layer
+
+      No more guessing by STAKE/P&L text.
+    */
+
+    const stage=
+      doc.querySelector(
+        '.flight-card'
+      ) ||
+      doc.getElementById('sky')
+        ?.closest(
+          '.flight-card,section,article,div'
+        ) ||
+      doc.querySelector(
+        '[class*="flight-card"]'
+      );
+
+    const sky=
+      stage?.querySelector(
+        '#sky,.sky'
+      ) ||
+      doc.querySelector(
+        '#sky,.sky'
+      );
+
+    const launch=
+      doc.querySelector(
+        '.launch-panel,.control-panel'
+      ) ||
+      smallest(
+        doc,
+        [
+          'LAUNCH CONTROL',
+          'PAPER BALANCE'
+        ]
+      );
+
+    const selected=
+      doc.querySelector(
+        '.selected-launch,'+
+        '.target-card'
+      ) ||
+      smallest(
+        doc,
+        [
+          'SELECTED LAUNCH',
+          'AI SCORE',
+          'BUY PRESSURE'
+        ]
+      );
+
+    const record=
+      doc.querySelector(
+        '.flight-record,'+
+        '[class*="flight-record"]'
+      ) ||
+      smallest(
+        doc,
+        [
+          'FLIGHT RECORD',
+          'NET P&L'
+        ]
+      );
+
+    const history=
+      doc.querySelector(
+        '.history-card,'+
+        '[class*="history-card"]'
+      ) ||
+      smallest(
+        doc,
+        [
+          'ROUND HISTORY'
+        ]
+      );
+
+    return {
+      stage,
+      sky,
+      launch,
+      selected,
+      record,
+      history
+    };
+  }
+
+  function installStyle(doc){
+    let style=
+      doc.getElementById(
+        'mfV11InjectedStyle'
+      );
+
+    if(!style){
+      style=
+        doc.createElement(
+          'style'
+        );
+
+      style.id=
+        'mfV11InjectedStyle';
+
+      doc.head.appendChild(
+        style
+      );
+    }
+
+    style.textContent=`
+      :root{
+        color-scheme:dark!important;
+        background:#010408!important;
+      }
+
+      html,
+      body{
+        width:100%!important;
+        height:100%!important;
+        min-height:100dvh!important;
+
+        margin:0!important;
+        padding:0!important;
+
+        overflow:hidden!important;
+
+        background:#010408!important;
+      }
+
+      body{
+        position:relative!important;
+      }
+
+      /*
+        The original responsive page layout is NOT the layout of V11.
+      */
+      .game-topbar,
+      .game-footer{
+        display:none!important;
+      }
+
+      .game-shell{
+        position:fixed!important;
+        inset:0!important;
+
+        width:100vw!important;
+        height:100dvh!important;
+        min-height:100dvh!important;
+
+        margin:0!important;
+        padding:0!important;
+
+        overflow:hidden!important;
+      }
+
+      .game-layout{
+        position:static!important;
+
+        display:block!important;
+
+        width:100%!important;
+        max-width:none!important;
+        height:100%!important;
+
+        margin:0!important;
+        padding:0!important;
+      }
+
+      /*
+        REAL ROCKET SCENE.
+      */
+      .mf-v11-stage{
+        position:fixed!important;
+        inset:0!important;
+
+        z-index:1000!important;
+
+        display:flex!important;
+        flex-direction:column!important;
+
+        width:100vw!important;
+        max-width:none!important;
+
+        height:100dvh!important;
+        min-height:100dvh!important;
+        max-height:none!important;
+
+        margin:0!important;
+        padding:0!important;
+
+        overflow:hidden!important;
+
+        border:0!important;
+        border-radius:0!important;
+
+        background:#06162b!important;
+
+        box-shadow:none!important;
+
+        box-sizing:border-box!important;
+      }
+
+      /*
+        The sky itself becomes edge-to-edge.
+        Header, multiplier and bottom metrics remain above it.
+      */
+      .mf-v11-stage #sky,
+      .mf-v11-stage .sky{
+        position:absolute!important;
+        inset:0!important;
+
+        width:100%!important;
+        height:100%!important;
+
+        min-height:100%!important;
+
+        border-radius:0!important;
+      }
+
+      .mf-v11-stage .flight-head{
+        position:absolute!important;
+
+        z-index:30!important;
+
+        top:0!important;
+        left:0!important;
+        right:0!important;
+
+        padding-top:
+          max(
+            12px,
+            env(safe-area-inset-top)
+          )!important;
+
+        background:
+          linear-gradient(
+            180deg,
+            rgba(2,6,11,.74),
+            transparent
+          )!important;
+
+        pointer-events:none!important;
+      }
+
+      .mf-v11-stage .multiplier-wrap{
+        z-index:31!important;
+      }
+
+      .mf-v11-stage .position-bar{
+        position:absolute!important;
+
+        z-index:32!important;
+
+        left:0!important;
+        right:0!important;
+        bottom:0!important;
+
+        margin:0!important;
+
+        background:
+          rgba(3,8,12,.78)!important;
+
+        backdrop-filter:
+          blur(12px)!important;
+
+        -webkit-backdrop-filter:
+          blur(12px)!important;
+      }
+
+      /*
+        HUD PANELS
+      */
+      .mf-v11-hud{
+        position:fixed!important;
+
+        z-index:1500!important;
+
+        min-width:0!important;
+
+        margin:0!important;
+
+        box-sizing:border-box!important;
+
+        border:
+          1px solid
+          rgba(130,181,199,.21)!important;
+
+        border-radius:17px!important;
+
+        background:
+          linear-gradient(
+            180deg,
+            rgba(6,13,18,.82),
+            rgba(3,8,12,.72)
+          )!important;
+
+        box-shadow:
+          0 16px 44px
+          rgba(0,0,0,.30)!important;
+
+        backdrop-filter:
+          blur(14px)
+          saturate(1.08)!important;
+
+        -webkit-backdrop-filter:
+          blur(14px)
+          saturate(1.08)!important;
+
+        pointer-events:auto!important;
+      }
+
+      .mf-v11-hud,
+      .mf-v11-hud *{
+        box-sizing:border-box!important;
+      }
+
+      .mf-v11-hud > *,
+      .mf-v11-hud input,
+      .mf-v11-hud select,
+      .mf-v11-hud button{
+        min-width:0!important;
+        max-width:100%;
+      }
+
+      /*
+        PORTRAIT PHONE
+      */
+      .mf-v11-launch{
+        left:
+          max(
+            7px,
+            env(safe-area-inset-left)
+          )!important;
+
+        bottom:
+          max(
+            74px,
+            calc(
+              env(safe-area-inset-bottom)
+              + 62px
+            )
+          )!important;
+
+        width:min(48vw,390px)!important;
+        max-width:min(48vw,390px)!important;
+
+        max-height:55dvh!important;
+
+        overflow:auto!important;
+
+        overscroll-behavior:contain!important;
+
+        -webkit-overflow-scrolling:touch!important;
+      }
+
+      .mf-v11-selected{
+        right:
+          max(
+            7px,
+            env(safe-area-inset-right)
+          )!important;
+
+        top:
+          max(
+            78px,
+            calc(
+              env(safe-area-inset-top)
+              + 64px
+            )
+          )!important;
+
+        width:min(45vw,340px)!important;
+        max-width:min(45vw,340px)!important;
+
+        max-height:29dvh!important;
+
+        overflow:auto!important;
+
+        -webkit-overflow-scrolling:touch!important;
+      }
+
+      .mf-v11-record{
+        right:
+          max(
+            7px,
+            env(safe-area-inset-right)
+          )!important;
+
+        top:42dvh!important;
+
+        width:min(45vw,340px)!important;
+        max-width:min(45vw,340px)!important;
+
+        max-height:16dvh!important;
+
+        overflow:auto!important;
+      }
+
+      .mf-v11-history{
+        right:
+          max(
+            7px,
+            env(safe-area-inset-right)
+          )!important;
+
+        bottom:
+          max(
+            74px,
+            calc(
+              env(safe-area-inset-bottom)
+              + 62px
+            )
+          )!important;
+
+        width:min(45vw,340px)!important;
+        max-width:min(45vw,340px)!important;
+
+        max-height:28dvh!important;
+
+        overflow:auto!important;
+
+        overscroll-behavior:contain!important;
+
+        -webkit-overflow-scrolling:touch!important;
+      }
+
+      /*
+        Settings + wallet are allowed to cover everything.
+      */
+      .mf-game-settings-overlay,
+      .mf-game-wallet-overlay{
+        z-index:100000!important;
+      }
+
+      /*
+        LANDSCAPE
+      */
+      @media (orientation:landscape){
+        .mf-v11-launch{
+          left:
+            max(
+              10px,
+              env(safe-area-inset-left)
+            )!important;
+
+          top:
+            max(
+              10px,
+              env(safe-area-inset-top)
+            )!important;
+
+          bottom:
+            max(
+              10px,
+              env(safe-area-inset-bottom)
+            )!important;
+
+          width:min(27vw,390px)!important;
+          max-width:min(27vw,390px)!important;
+
+          max-height:none!important;
+        }
+
+        .mf-v11-selected{
+          right:
+            max(
+              10px,
+              env(safe-area-inset-right)
+            )!important;
+
+          top:
+            max(
+              10px,
+              env(safe-area-inset-top)
+            )!important;
+
+          width:min(23vw,340px)!important;
+          max-width:min(23vw,340px)!important;
+
+          max-height:39dvh!important;
+        }
+
+        .mf-v11-record{
+          right:
+            max(
+              10px,
+              env(safe-area-inset-right)
+            )!important;
+
+          top:43dvh!important;
+
+          width:min(23vw,340px)!important;
+          max-width:min(23vw,340px)!important;
+
+          max-height:18dvh!important;
+        }
+
+        .mf-v11-history{
+          right:
+            max(
+              10px,
+              env(safe-area-inset-right)
+            )!important;
+
+          bottom:
+            max(
+              10px,
+              env(safe-area-inset-bottom)
+            )!important;
+
+          width:min(23vw,340px)!important;
+          max-width:min(23vw,340px)!important;
+
+          max-height:34dvh!important;
+        }
+      }
+
+      @media
+      (max-height:500px)
+      and
+      (orientation:landscape){
+
+        .mf-v11-hud{
+          font-size:.76em!important;
+        }
+
+        .mf-v11-launch{
+          width:25vw!important;
+          max-width:25vw!important;
+        }
+
+        .mf-v11-selected,
+        .mf-v11-record,
+        .mf-v11-history{
+          width:21vw!important;
+          max-width:21vw!important;
+        }
+      }
+    `;
+  }
+
+  function apply(){
     let doc;
 
     try{
-      doc=frame.contentDocument;
+      doc=
+        frame.contentDocument;
     }catch(error){
-      console.error('[V11]',error);
-      showToast('Same-origin access failed. Showing the normal Game view.');
-      loading.classList.add('is-ready');
+      console.error(
+        '[MEMEFLOW FULLSCREEN V11.3]',
+        error
+      );
+
+      showToast(
+        'Could not access the Game frame.'
+      );
+
+      loading
+        .classList
+        .add('is-ready');
+
       return;
     }
 
-    if(!doc || !doc.body){
-      setTimeout(applyV11,160);
+    if(
+      !doc ||
+      !doc.body
+    ){
+      setTimeout(
+        apply,
+        150
+      );
+
       return;
     }
 
-    neutralizeLegacyFlight(doc);
+    clearLegacy(doc);
+    clearV11Marks(doc);
+
+    const parts=
+      detect(doc);
+
+    if(!parts.stage){
+      /*
+        Safe fallback: do not black out or hide the Game.
+      */
+      console.warn(
+        '[MEMEFLOW FULLSCREEN V11.3]',
+        'flight-card not found'
+      );
+
+      showToast(
+        'Rocket scene is still loading. Retrying…',
+        2500
+      );
+
+      loading
+        .classList
+        .add('is-ready');
+
+      return;
+    }
+
     installStyle(doc);
 
-    const result=tag(doc);
+    parts.stage
+      .classList
+      .add('mf-v11-stage');
 
-    if(!result.ok){
-      console.warn('[MEMEFLOW FULLSCREEN V11] HUD fallback:',result.reason);
-      showToast(
-        'Flight HUD could not identify the Rocket Scene. Normal Game remains available.',
-        5500
-      );
-    }else{
-      console.info(
-        '[MEMEFLOW FULLSCREEN V11]',
-        VERSION,
-        'HUD READY',
-        result
+    [
+      [
+        parts.launch,
+        'mf-v11-launch'
+      ],
+      [
+        parts.selected,
+        'mf-v11-selected'
+      ],
+      [
+        parts.record,
+        'mf-v11-record'
+      ],
+      [
+        parts.history,
+        'mf-v11-history'
+      ]
+    ]
+    .forEach(
+      ([el,cls])=>{
+        if(!el)return;
+
+        el.classList.add(
+          'mf-v11-hud',
+          cls
+        );
+      }
+    );
+
+    /*
+      Hide only the old in-frame fullscreen control.
+      Settings / wallet / sound remain usable.
+    */
+    const utility=
+      doc.querySelector(
+        '.launch-panel .utility-actions,'+
+        '.control-panel .utility-actions'
       );
 
-      try{
-        frame.contentWindow.dispatchEvent(new Event('resize'));
-      }catch(_){}
+    if(utility){
+      const buttons=[
+        ...utility.querySelectorAll(
+          'button,[role="button"]'
+        )
+      ];
+
+      if(buttons.length){
+        const oldFullscreen=
+          buttons[
+            buttons.length-1
+          ];
+
+        const label=(
+          String(
+            oldFullscreen
+              ?.getAttribute(
+                'aria-label'
+              )||''
+          )+
+          ' '+
+          String(
+            oldFullscreen
+              ?.getAttribute(
+                'title'
+              )||''
+          )
+        )
+        .toUpperCase();
+
+        if(
+          oldFullscreen &&
+          (
+            label.includes('FLIGHT') ||
+            label.includes('FULL') ||
+            buttons.length>=3
+          )
+        ){
+          oldFullscreen.style.display=
+            'none';
+        }
+      }
     }
 
-    loading.classList.add('is-ready');
+    try{
+      frame
+        .contentWindow
+        .dispatchEvent(
+          new Event('resize')
+        );
+    }catch(_){}
+
+    loading
+      .classList
+      .add('is-ready');
+
+    toast.hidden=true;
+
+    console.info(
+      '[MEMEFLOW FULLSCREEN V11.3]',
+      'READY',
+      parts
+    );
   }
 
-  frame.addEventListener('load',()=>{
-    setTimeout(applyV11,120);
-    setTimeout(applyV11,650);
-  });
+  frame.addEventListener(
+    'load',
+    ()=>{
+      setTimeout(apply,120);
+      setTimeout(apply,650);
+      setTimeout(apply,1400);
+    }
+  );
 
   frame.src=source;
 
-  exitBtn.addEventListener('click',async()=>{
-    try{
-      if(document.fullscreenElement){
-        await document.exitFullscreen();
-      }
-    }catch(_){}
+  exitBtn.addEventListener(
+    'click',
+    async()=>{
+      try{
+        if(
+          document.fullscreenElement
+        ){
+          await document
+            .exitFullscreen();
+        }
+      }catch(_){}
 
-    location.href=back;
-  });
+      /*
+        This window is separate.
+        Close it first; if browser refuses, go back to Game URL.
+      */
+      window.close();
 
-  fsBtn.addEventListener('click',async()=>{
-    try{
-      if(document.fullscreenElement){
-        await document.exitFullscreen();
-        return;
-      }
+      setTimeout(()=>{
+        if(!window.closed){
+          location.href=back;
+        }
+      },120);
+    }
+  );
 
-      const target=document.documentElement;
+  fsBtn.addEventListener(
+    'click',
+    async()=>{
+      try{
+        if(
+          document.fullscreenElement
+        ){
+          await document
+            .exitFullscreen();
 
-      if(target.requestFullscreen){
-        await target.requestFullscreen({navigationUI:'hide'});
-      }else if(target.webkitRequestFullscreen){
-        target.webkitRequestFullscreen();
-      }else{
+          return;
+        }
+
+        if(
+          document
+            .documentElement
+            .requestFullscreen
+        ){
+          await document
+            .documentElement
+            .requestFullscreen({
+              navigationUI:'hide'
+            });
+
+          return;
+        }
+
+        if(
+          document
+            .documentElement
+            .webkitRequestFullscreen
+        ){
+          document
+            .documentElement
+            .webkitRequestFullscreen();
+
+          return;
+        }
+
         showToast(
-          'Browser fullscreen is not available here. Flight View still fills the page.',
-          4200
+          'Safari browser fullscreen is unavailable here. Flight View already fills this page.'
+        );
+      }catch(error){
+        console.warn(
+          '[MEMEFLOW FULLSCREEN V11.3]',
+          'native fullscreen:',
+          error
+        );
+
+        showToast(
+          'Safari kept its browser controls visible. Flight View itself is still active.'
         );
       }
-    }catch(error){
-      console.warn('[MEMEFLOW FULLSCREEN V11] requestFullscreen:',error);
-      showToast(
-        'Safari did not enter native fullscreen. Flight View is still active.',
-        4200
+    }
+  );
+
+  window.addEventListener(
+    'orientationchange',
+    ()=>{
+      setTimeout(
+        apply,
+        220
       );
     }
-  });
-
-  document.addEventListener('fullscreenchange',()=>{
-    fsBtn.classList.toggle(
-      'is-active',
-      !!document.fullscreenElement
-    );
-  });
+  );
 
   console.info(
-    '[MEMEFLOW FULLSCREEN V11]',
-    VERSION,
+    '[MEMEFLOW FULLSCREEN V11.3]',
     'SOURCE',
     source
   );
