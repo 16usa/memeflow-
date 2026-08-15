@@ -2256,3 +2256,374 @@ body.flight-v12::after{
 }
 
 /* === MEMEFLOW FLIGHT V15 FINAL BOTTOM GRID END === */
+
+/* === MEMEFLOW FLIGHT V16 REFERENCE HUD START === */
+
+@media (orientation:portrait){
+
+  body.flight-v12{
+    --v16-edge:7px;
+    --v16-gap:7px;
+
+    /*
+      Existing bottom position strip remains untouched.
+      Everything sits just above it.
+    */
+    --v16-bottom:
+      calc(
+        var(--v12-bottom) +
+        36px
+      );
+
+    /*
+      Reference layout:
+      LEFT = Selected/Flight Record column
+      RIGHT = History/Action column
+    */
+    --v16-left:60%;
+    --v16-right:
+      calc(
+        100% - var(--v16-left) - var(--v16-gap)
+      );
+
+    --v16-row2:22dvh;
+    --v16-row3:11.5dvh;
+  }
+
+
+  /* =====================================================
+     LAUNCH CONTROL
+     Keep current content, only make it full-width exactly
+     as in the approved reference.
+     ===================================================== */
+
+  body.flight-v12 .launch-panel{
+    position:fixed!important;
+
+    left:var(--v16-edge)!important;
+    right:var(--v16-edge)!important;
+    top:auto!important;
+
+    bottom:
+      calc(
+        var(--v16-bottom)
+        + var(--v16-row2)
+        + var(--v16-row3)
+        + (var(--v16-gap) * 2)
+      )!important;
+
+    width:auto!important;
+    max-width:none!important;
+
+    height:auto!important;
+    max-height:none!important;
+
+    margin:0!important;
+
+    overflow:hidden!important;
+  }
+
+
+  /* =====================================================
+     ROW 2 LEFT
+     SELECTED LAUNCH
+     ===================================================== */
+
+  body.flight-v12 .token-panel{
+    position:fixed!important;
+
+    left:var(--v16-edge)!important;
+    right:auto!important;
+    top:auto!important;
+
+    bottom:
+      calc(
+        var(--v16-bottom)
+        + var(--v16-row3)
+        + var(--v16-gap)
+      )!important;
+
+    width:
+      calc(
+        (100vw - (var(--v16-edge) * 2) - var(--v16-gap))
+        * .60
+      )!important;
+
+    max-width:none!important;
+
+    height:var(--v16-row2)!important;
+    min-height:var(--v16-row2)!important;
+    max-height:var(--v16-row2)!important;
+
+    margin:0!important;
+    padding:7px!important;
+
+    overflow:hidden!important;
+  }
+
+
+  /* =====================================================
+     ROW 2 RIGHT
+     ROUND HISTORY
+     Same top and same height as Selected Launch.
+     ===================================================== */
+
+  body.flight-v12 .history-panel{
+    position:fixed!important;
+
+    left:auto!important;
+    right:var(--v16-edge)!important;
+    top:auto!important;
+
+    bottom:
+      calc(
+        var(--v16-bottom)
+        + var(--v16-row3)
+        + var(--v16-gap)
+      )!important;
+
+    width:
+      calc(
+        (100vw - (var(--v16-edge) * 2) - var(--v16-gap))
+        * .40
+      )!important;
+
+    max-width:none!important;
+
+    height:var(--v16-row2)!important;
+    min-height:var(--v16-row2)!important;
+    max-height:var(--v16-row2)!important;
+
+    margin:0!important;
+    padding:0!important;
+
+    display:grid!important;
+    grid-template-rows:
+      25px
+      19px
+      minmax(0,1fr)!important;
+
+    overflow:hidden!important;
+  }
+
+
+  /* Only Round History scrolls */
+
+  body.flight-v12 .history-panel .history{
+    width:100%!important;
+    height:100%!important;
+
+    min-height:0!important;
+
+    overflow-x:hidden!important;
+    overflow-y:auto!important;
+
+    -webkit-overflow-scrolling:touch!important;
+    overscroll-behavior:contain!important;
+  }
+
+
+  /* =====================================================
+     ROW 3 LEFT
+     FLIGHT RECORD
+     ===================================================== */
+
+  body.flight-v12 .stats-panel{
+    position:fixed!important;
+
+    left:var(--v16-edge)!important;
+    right:auto!important;
+    top:auto!important;
+
+    bottom:var(--v16-bottom)!important;
+
+    width:
+      calc(
+        (100vw - (var(--v16-edge) * 2) - var(--v16-gap))
+        * .44
+      )!important;
+
+    max-width:none!important;
+
+    height:var(--v16-row3)!important;
+    min-height:var(--v16-row3)!important;
+    max-height:var(--v16-row3)!important;
+
+    margin:0!important;
+    padding:7px!important;
+
+    overflow:hidden!important;
+  }
+
+
+  /* =====================================================
+     ROW 3 RIGHT
+     START / CASH OUT + AUTO / STOP AUTO
+     Same total height as Flight Record.
+     ===================================================== */
+
+  body.flight-v12 #v12ActionDock{
+    position:fixed!important;
+
+    z-index:72!important;
+
+    left:auto!important;
+    right:var(--v16-edge)!important;
+    top:auto!important;
+
+    bottom:var(--v16-bottom)!important;
+
+    width:
+      calc(
+        (100vw - (var(--v16-edge) * 2) - var(--v16-gap))
+        * .56
+      )!important;
+
+    max-width:none!important;
+
+    height:var(--v16-row3)!important;
+    min-height:var(--v16-row3)!important;
+    max-height:var(--v16-row3)!important;
+
+    margin:0!important;
+    padding:0!important;
+
+    display:grid!important;
+    grid-template-columns:1fr!important;
+    grid-template-rows:
+      repeat(2,minmax(0,1fr))!important;
+
+    gap:var(--v16-gap)!important;
+
+    background:none!important;
+
+    overflow:hidden!important;
+  }
+
+
+  body.flight-v12 #v12ActionDock > #startBtn,
+  body.flight-v12 #v12ActionDock > #cashoutBtn,
+  body.flight-v12 #v12ActionDock > #mfAutoLoopBtn{
+    width:100%!important;
+    height:100%!important;
+
+    min-width:0!important;
+    min-height:0!important;
+
+    margin:0!important;
+
+    border-radius:11px!important;
+  }
+
+
+  body.flight-v12 #v12ActionDock > #startBtn,
+  body.flight-v12 #v12ActionDock > #cashoutBtn{
+    grid-row:1!important;
+  }
+
+  body.flight-v12 #v12ActionDock > #mfAutoLoopBtn{
+    grid-row:2!important;
+  }
+
+
+  /* =====================================================
+     FLIGHT POSITION
+     Keep inside Selected Launch area.
+     Does not touch rocket.
+     ===================================================== */
+
+  body.flight-v12 #flightPositionHud{
+    position:fixed!important;
+
+    left:
+      calc(
+        var(--v16-edge) +
+        (
+          (100vw - (var(--v16-edge) * 2) - var(--v16-gap))
+          * .30
+        )
+      )!important;
+
+    right:auto!important;
+
+    top:auto!important;
+
+    bottom:
+      calc(
+        var(--v16-bottom)
+        + var(--v16-row3)
+        + var(--v16-gap)
+        + 5px
+      )!important;
+
+    width:
+      calc(
+        (
+          (100vw - (var(--v16-edge) * 2) - var(--v16-gap))
+          * .30
+        )
+        - 5px
+      )!important;
+
+    max-width:none!important;
+
+    transform:none!important;
+  }
+
+
+  /* =====================================================
+     IMPORTANT:
+     Do NOT touch scene / top / bottom strip.
+     ===================================================== */
+
+  body.flight-v12 .stage-card>.stage-head{
+    /* intentionally unchanged */
+  }
+
+  body.flight-v12 #world,
+  body.flight-v12 #rocket{
+    /* intentionally unchanged */
+  }
+
+  body.flight-v12 .stage-card>.position-strip{
+    /* intentionally unchanged */
+  }
+
+
+  /* no internal scrolling outside history */
+
+  body.flight-v12 .launch-panel,
+  body.flight-v12 .token-panel,
+  body.flight-v12 .stats-panel{
+    overflow:hidden!important;
+    overscroll-behavior:none!important;
+  }
+
+
+  body.flight-v12 .launch-panel *,
+  body.flight-v12 .token-panel *,
+  body.flight-v12 .stats-panel *,
+  body.flight-v12 .history-panel *,
+  body.flight-v12 #v12ActionDock *{
+    box-sizing:border-box!important;
+    min-width:0;
+  }
+
+
+  @media (max-width:390px){
+    body.flight-v12{
+      --v16-edge:6px;
+      --v16-gap:6px;
+      --v16-row2:21.5dvh;
+      --v16-row3:11dvh;
+    }
+
+    body.flight-v12 .token-panel,
+    body.flight-v12 .stats-panel,
+    body.flight-v12 .history-panel{
+      font-size:.80em!important;
+    }
+  }
+}
+
+/* === MEMEFLOW FLIGHT V16 REFERENCE HUD END === */
