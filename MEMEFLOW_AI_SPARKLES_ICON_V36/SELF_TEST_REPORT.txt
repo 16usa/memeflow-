@@ -1,5 +1,0 @@
-PASS 100/100 installer/idempotency scenarios.
-PASS runtime syntax.
-PASS existing AI button is not replaced.
-PASS click handling untouched.
-PASS no API/trading/wallet logic.
