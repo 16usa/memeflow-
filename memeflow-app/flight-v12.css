@@ -1249,52 +1249,93 @@ body.flight-v12::after{
 
 /* === MEMEFLOW FLIGHT V12.9 FULL BLEED BOTTOM END === */
 
-/* === MEMEFLOW FLIGHT V12.10 MATCH IPHONE CHROME START === */
+/* === MEMEFLOW FLIGHT V12.11 IOS LARGE VIEWPORT START === */
 
 /*
-  The GAME remains exactly where it is.
-  Only the iPhone area outside the game viewport uses the same
-  dark background as the top status-bar zone.
+  iOS standalone:
+  100dvh can resolve shorter than the full installed-app window.
+  Use the large viewport for the actual game canvas.
 */
 
-html{
+html,
+body.flight-v12{
+  width:100vw!important;
+
+  height:100vh!important;
+  min-height:100vh!important;
+
+  height:100lvh!important;
+  min-height:100lvh!important;
+
+  margin:0!important;
+  padding:0!important;
+
+  overflow:hidden!important;
+
   background:#02060b!important;
 }
 
 body.flight-v12{
-  background:#02060b!important;
+  position:fixed!important;
+  inset:0!important;
 }
 
 /*
-  stage-card itself remains blue space.
+  ONLY extend the main Game canvas.
+  HUD dimensions/positions are untouched.
 */
 body.flight-v12 .game,
 body.flight-v12 .layout,
 body.flight-v12 .stage-card{
+  position:fixed!important;
+
+  top:0!important;
+  right:0!important;
+  bottom:0!important;
+  left:0!important;
+
+  width:100vw!important;
+
+  height:100vh!important;
+  min-height:100vh!important;
+
+  height:100lvh!important;
+  min-height:100lvh!important;
+
+  max-height:none!important;
+
+  margin:0!important;
+  padding:0!important;
+}
+
+body.flight-v12 .stage-card{
   background:#06152a!important;
+  overflow:hidden!important;
 }
 
 /*
-  iOS bottom safe-area / Home Indicator zone:
-  same visual tone as the top status area.
+  Space expands through the remaining center row.
 */
-body.flight-v12::after{
-  content:""!important;
-
-  display:block!important;
-
-  position:fixed!important;
-  z-index:1000000!important;
-
-  left:0!important;
-  right:0!important;
-  bottom:0!important;
-
-  height:env(safe-area-inset-bottom,0px)!important;
-
-  background:#02060b!important;
-
-  pointer-events:none!important;
+body.flight-v12 .stage-card>#world,
+body.flight-v12 .stage-card>.world{
+  min-height:0!important;
+  height:auto!important;
+  align-self:stretch!important;
 }
 
-/* === MEMEFLOW FLIGHT V12.10 MATCH IPHONE CHROME END === */
+/*
+  Bottom metrics remain the existing 25px + safe area row.
+*/
+body.flight-v12 .stage-card>.position-strip{
+  margin:0!important;
+}
+
+/*
+  No artificial footer over the full-screen stage.
+*/
+body.flight-v12::after{
+  content:none!important;
+  display:none!important;
+}
+
+/* === MEMEFLOW FLIGHT V12.11 IOS LARGE VIEWPORT END === */
