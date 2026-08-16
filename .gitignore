@@ -54,3 +54,13 @@ memeflow-app/data/state.json
 # runtime data - do not commit
 memeflow-app/data/*.json
 memeflow-app/data/*.tmp
+
+# MEMEFLOW local backups / rollback artifacts
+memeflow-app/.memeflow-*-backup*/
+memeflow-app/.memeflow-v*-backup/
+memeflow-app/_backup/
+memeflow-app/**/*.before-*
+memeflow-app/**/*.bak
+.replit.backup-*
+.replit.before-*
+.old-replit-components/
