@@ -74,4 +74,8 @@ args = "bash ./run-project.sh"
 localPort = 3000
 externalPort = 80
 
+[[ports]]
+localPort = 13791
+externalPort = 3000
+
 [nix]
