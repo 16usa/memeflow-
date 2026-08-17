@@ -12,7 +12,7 @@
   <meta name="description" content="MEMEFLOW Pepe Rocket V9.6 — fullscreen responsive game UI with realtime server-authoritative PAPER visualization.">
   <title>MEMEFLOW · Pepe Rocket</title>
   <link rel="manifest" href="/game.webmanifest?v=1786767229">
-  <link rel="stylesheet" href="/game.css?v=40">
+  <link rel="stylesheet" href="/game.css?v=41">
   <link rel="stylesheet" href="/game-settings-v107.css?v=40">
 </head>
 <body>
@@ -117,6 +117,52 @@
         <div><small>P&amp;L</small><b id="profitValue">$0.00</b></div>
         <div><small>STAGE</small><b id="stageLabel">LAUNCHPAD</b></div>
         <div><small>PRICE AGE</small><b id="priceAgeStrip">—</b></div>
+
+        <div class="currency-cell" id="currencyCell">
+          <div
+            class="currency-toggle"
+            role="group"
+            aria-label="Display currency"
+          >
+            <button
+              type="button"
+              data-currency="SOL"
+              aria-pressed="false"
+            >SOL</button>
+
+            <button
+              type="button"
+              data-currency="USD"
+              class="active"
+              aria-pressed="true"
+            >USD</button>
+          </div>
+
+          <div class="currency-rate">
+            <span id="solUsdRate">1 SOL ≈ —</span>
+
+            <button
+              type="button"
+              class="currency-info-btn"
+              id="currencyInfoBtn"
+              aria-label="Currency information"
+              aria-expanded="false"
+            >i</button>
+          </div>
+
+          <div
+            class="currency-info-pop"
+            id="currencyInfoPop"
+            hidden
+          >
+            <b>DISPLAY CURRENCY</b>
+            <span>
+              USD remains the server settlement currency.
+              SOL mode converts displayed monetary values
+              using the current SOL/USD market quote.
+            </span>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -130,7 +176,7 @@
         <p class="lead">MEMEFLOW chooses a fresh <b>BUY READY</b> candidate. The server owns entry, triggers, balance and final result.</p>
 
         <label class="field-title" for="betInput">Paper stake</label>
-        <div class="stake-input"><span>$</span><input id="betInput" inputmode="decimal" type="number" min="1" step="1" value="100"></div>
+        <div class="stake-input"><span id="stakeCurrencyPrefix">$</span><input id="betInput" inputmode="decimal" type="number" min="1" step="1" value="100"></div>
         <div class="quick-bets"><button data-bet="25" type="button">$25</button><button data-bet="50" type="button">$50</button><button data-bet="100" class="active" type="button">$100</button><button data-bet="250" type="button">$250</button></div>
 
         <div class="select-grid">
@@ -214,6 +260,7 @@
 </div>
 <script type="module" src="/game-rocket-v36.js?v=1786996001"></script>
 <script src="/game.js?v=1786993001" defer></script>
+<script src="/game-currency-v41.js?v=41" defer></script>
 <script src="/game-auto-v102.js?v=1786749590" defer></script>
 
 <script src="/game-settings-v107.js?v=40" defer></script>

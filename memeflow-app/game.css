@@ -3582,7 +3582,7 @@ body.mf-game-immersive
 
 /* === ROUND HISTORY TOUCH SCROLL END === */
 
-/* === V40 RECORD + SYSTEM ICONS START === */
+/* === V41 FULL INFO + SOL USD START === */
 
 /*
   One physical viewport = one layout budget.
@@ -3614,6 +3614,224 @@ body{
 
   overflow:hidden!important;
 }
+
+
+/* =========================================================
+   DISPLAY CURRENCY
+========================================================= */
+
+.position-strip{
+  grid-template-columns:
+    minmax(0,.90fr)
+    minmax(0,1fr)
+    minmax(0,.82fr)
+    minmax(0,1.08fr)
+    minmax(0,.82fr)
+    minmax(0,1.45fr)!important;
+}
+
+.position-strip > .currency-cell{
+  position:relative!important;
+
+  min-width:0!important;
+
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:stretch!important;
+  justify-content:center!important;
+
+  gap:clamp(2px,.25vmin,4px)!important;
+
+  padding:
+    clamp(3px,.42vmin,6px)
+    clamp(4px,.55vmin,8px)!important;
+}
+
+.currency-toggle{
+  width:100%;
+
+  display:grid;
+  grid-template-columns:1fr 1fr;
+
+  border:1px solid rgba(160,181,200,.18);
+  border-radius:clamp(5px,.62vmin,8px);
+
+  overflow:hidden;
+
+  background:rgba(255,255,255,.018);
+}
+
+.currency-toggle button{
+  appearance:none;
+
+  min-width:0;
+  min-height:clamp(17px,2.1vmin,24px);
+
+  padding:0 clamp(3px,.42vmin,6px);
+
+  border:0;
+  border-right:1px solid rgba(160,181,200,.13);
+
+  background:transparent;
+
+  color:#7d8891;
+
+  font:800 clamp(6px,.72vmin,9px)/1 inherit;
+  letter-spacing:.08em;
+
+  cursor:pointer;
+}
+
+.currency-toggle button:last-child{
+  border-right:0;
+}
+
+.currency-toggle button.active{
+  color:#eafff2;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(83,224,146,.13),
+      rgba(83,224,146,.045)
+    );
+
+  box-shadow:
+    inset 0 0 0 1px rgba(83,224,146,.30);
+}
+
+.currency-rate{
+  min-width:0;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  gap:clamp(2px,.28vmin,4px);
+}
+
+.currency-rate > span{
+  min-width:0;
+
+  color:#929ca4;
+
+  font-size:clamp(5.5px,.65vmin,8px);
+  font-weight:650;
+  line-height:1;
+
+  white-space:nowrap;
+}
+
+.currency-info-btn{
+  appearance:none;
+
+  width:clamp(12px,1.45vmin,17px);
+  height:clamp(12px,1.45vmin,17px);
+
+  flex:none;
+
+  padding:0;
+
+  display:grid;
+  place-items:center;
+
+  border:1px solid rgba(160,181,200,.28);
+  border-radius:50%;
+
+  background:transparent;
+  color:#929ca4;
+
+  font:800 clamp(7px,.78vmin,9px)/1 inherit;
+
+  cursor:pointer;
+}
+
+.currency-info-btn:active,
+.currency-info-btn[aria-expanded="true"]{
+  color:#fff;
+  border-color:rgba(255,255,255,.52);
+}
+
+.currency-info-pop{
+  position:absolute;
+
+  right:0;
+  bottom:calc(100% + 6px);
+
+  z-index:60;
+
+  width:min(230px,72vw);
+
+  padding:8px 9px;
+
+  border:1px solid rgba(160,181,200,.22);
+  border-radius:10px;
+
+  background:rgba(6,10,14,.98);
+
+  box-shadow:0 12px 34px rgba(0,0,0,.45);
+
+  text-align:left;
+}
+
+.currency-info-pop[hidden]{
+  display:none!important;
+}
+
+.currency-info-pop b{
+  display:block;
+
+  color:#eef3f6;
+
+  font-size:7px;
+  letter-spacing:.12em;
+}
+
+.currency-info-pop span{
+  display:block;
+
+  margin-top:4px;
+
+  color:#89949c;
+
+  font-size:8px;
+  line-height:1.35;
+}
+
+/*
+  Real USD input remains authoritative for Game logic.
+  The visible currency input mirrors it.
+*/
+.currency-source-input{
+  position:absolute!important;
+
+  width:1px!important;
+  height:1px!important;
+
+  opacity:0!important;
+
+  pointer-events:none!important;
+}
+
+#betInputDisplay{
+  width:100%!important;
+  height:100%!important;
+
+  min-width:0!important;
+
+  padding:0 var(--mf-gap-1)!important;
+
+  border:0!important;
+  outline:0!important;
+
+  background:transparent!important;
+
+  color:inherit;
+
+  font:inherit;
+}
+
+/* ========================================================= */
 
 /* =========================================================
    PHONE PORTRAIT
@@ -3708,8 +3926,8 @@ body{
     grid-template-rows:
       minmax(0,40fr)
       minmax(0,21fr)
-      minmax(0,17fr)
-      minmax(0,22fr)!important;
+      minmax(0,18fr)
+      minmax(0,21fr)!important;
 
     gap:var(--mf-gap-3)!important;
   }
@@ -4424,6 +4642,184 @@ body{
     text-overflow:clip!important;
   }
 
+
+  /* =======================================================
+     FULL INFORMATION POLICY
+  ======================================================= */
+
+  /*
+    Fixed information modules must show their content.
+    Only the unbounded Round History list may scroll.
+  */
+
+  .lead,
+  #riskCopy,
+  .token-head small,
+  .quality-line span,
+  .stats-panel .safety-note,
+  .stats-panel .safety-note span{
+    max-height:none!important;
+
+    overflow:visible!important;
+
+    white-space:normal!important;
+
+    text-overflow:clip!important;
+
+    -webkit-line-clamp:unset!important;
+  }
+
+  #riskCopy{
+    line-height:1.18!important;
+  }
+
+  .token-panel{
+    display:grid!important;
+
+    grid-template-rows:
+      auto
+      auto
+      auto
+      auto
+      auto!important;
+
+    align-content:start!important;
+  }
+
+  .token-head{
+    min-height:0!important;
+
+    align-items:start!important;
+  }
+
+  .token-head small{
+    margin-top:var(--mf-gap-1)!important;
+
+    line-height:1.18!important;
+  }
+
+  .quality-line{
+    min-height:0!important;
+
+    align-items:flex-start!important;
+  }
+
+  .quality-line span{
+    line-height:1.16!important;
+  }
+
+  /*
+    Five telemetry values in a compact 3-column grid.
+    This exposes FEED, VELOCITY, SELECTOR, DECISION
+    and HOLDERS instead of clipping the lower row.
+  */
+  .telemetry{
+    display:grid!important;
+
+    grid-template-columns:
+      repeat(3,minmax(0,1fr))!important;
+
+    gap:
+      var(--mf-gap-1)
+      var(--mf-gap-2)!important;
+
+    align-items:start!important;
+
+    overflow:visible!important;
+  }
+
+  .telemetry > span{
+    min-width:0!important;
+
+    display:flex!important;
+    flex-direction:column!important;
+    align-items:flex-start!important;
+
+    gap:1px!important;
+
+    white-space:nowrap!important;
+
+    overflow:visible!important;
+  }
+
+  .telemetry > span b{
+    margin:0!important;
+
+    font-size:var(--mf-f-label)!important;
+    line-height:1!important;
+  }
+
+  /*
+    Flight Record keeps the full explanatory note visible.
+  */
+  .stats-panel{
+    grid-template-rows:
+      auto
+      auto
+      auto!important;
+
+    align-content:start!important;
+  }
+
+  .stats-panel .safety-note{
+    height:auto!important;
+    min-height:0!important;
+    max-height:none!important;
+
+    overflow:visible!important;
+
+    padding:
+      var(--mf-cell-py)
+      var(--mf-cell-px)!important;
+
+    font-size:clamp(
+      6.3px,
+      min(1.72vw,.80dvh),
+      8.2px
+    )!important;
+
+    line-height:1.20!important;
+  }
+
+  /*
+    Utility icons: final neutral system treatment.
+  */
+  .stage-head .top-utility-actions > button,
+  .stage-head .top-utility-actions > button.fullscreen-btn,
+  .stage-head .top-utility-actions > button.sound{
+    width:clamp(14px,1.9vmin,18px)!important;
+    height:clamp(14px,1.9vmin,18px)!important;
+
+    padding:0!important;
+
+    border:0!important;
+    border-radius:0!important;
+
+    background:transparent!important;
+
+    color:#717a82!important;
+
+    box-shadow:none!important;
+  }
+
+  .stage-head .top-utility-actions > button svg{
+    width:clamp(9px,1.3vmin,12px)!important;
+    height:clamp(9px,1.3vmin,12px)!important;
+  }
+
+  .stage-head .top-utility-actions > button:active,
+  .stage-head .top-utility-actions > button.is-open,
+  .stage-head .top-utility-actions > button.is-active,
+  .stage-head .top-utility-actions > button[aria-pressed="true"]{
+    border:0!important;
+
+    background:transparent!important;
+
+    color:#ffffff!important;
+
+    box-shadow:none!important;
+  }
+
 }
 
 /* =========================================================
@@ -4469,8 +4865,8 @@ body{
     grid-template-rows:
       minmax(0,42fr)
       minmax(0,20fr)
-      minmax(0,17fr)
-      minmax(0,21fr)!important;
+      minmax(0,18fr)
+      minmax(0,20fr)!important;
   }
 }
 
@@ -4559,4 +4955,4 @@ body{
   }
 }
 
-/* === V40 RECORD + SYSTEM ICONS END === */
+/* === V41 FULL INFO + SOL USD END === */
