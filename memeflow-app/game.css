@@ -3582,7 +3582,7 @@ body.mf-game-immersive
 
 /* === ROUND HISTORY TOUCH SCROLL END === */
 
-/* === V54 STAGE FIRST START === */
+/* === V60 FLIGHT RECORD SAFE FIT START === */
 
 /*
   One physical viewport = one layout budget.
@@ -4810,14 +4810,19 @@ body{
     color:var(--mf-ui-muted)!important;
 
     background:rgba(255,255,255,.009)!important;
-  }
+  
+    padding:clamp(4px,1vw,7px) clamp(5px,1.2vw,8px)!important;
+    gap:clamp(4px,1vw,7px)!important;}
 
   .stats-panel .safety-note span{
     color:var(--mf-ui-muted)!important;
 
-    font-size:var(--mf-f-body)!important;
-    line-height:1.18!important;
-  }
+    font-size:clamp(5px,min(1.42vw,.68dvh),7.5px)!important;
+    line-height:1.08!important;
+  
+    letter-spacing:0!important;
+    white-space:normal!important;
+    overflow-wrap:anywhere!important;}
 
   .stats-panel .safety-note i{
     background:#bdc5ca!important;
@@ -5139,16 +5144,28 @@ body{
   .quality-line span,
   .stats-panel .safety-note,
   .stats-panel .safety-note span{
-    max-height:none!important;
+  min-width:0!important;
+  width:100%!important;
 
-    overflow:visible!important;
+  margin:0!important;
+  padding:0!important;
 
-    white-space:normal!important;
+  white-space:normal!important;
+  overflow-wrap:anywhere!important;
+  word-break:normal!important;
 
-    text-overflow:clip!important;
+  font-size:clamp(
+    5.5px,
+    min(1.55vw,.76dvh),
+    8px
+  )!important;
 
-    -webkit-line-clamp:unset!important;
-  }
+  font-weight:450!important;
+  line-height:1.14!important;
+  letter-spacing:.005em!important;
+
+  overflow:visible!important;
+}
 
   #riskCopy{
     line-height:1.18!important;
@@ -5484,7 +5501,95 @@ body{
 
 
 
+  
   /* =======================================================
+     V56 SOFT BORDER SYSTEM
+  ======================================================= */
+
+  :root{
+    --mf-border-card:rgba(160,181,200,.065);
+    --mf-border-inner:rgba(160,181,200,.032);
+    --mf-border-divider:rgba(160,181,200,.024);
+    --mf-border-active:rgba(210,220,228,.20);
+  }
+
+  /*
+    Main cards stay defined, but much quieter.
+  */
+  .stage-card,
+  .panel{
+    border-color:var(--mf-border-card)!important;
+
+    box-shadow:
+      0 8px 24px rgba(0,0,0,.10)!important;
+  }
+
+  /*
+    Internal boxes should not compete with the card outline.
+  */
+  .game-utility,
+  .stake-input,
+  .risk-deck,
+  .risk-metrics,
+  .token-metrics,
+  .stats-grid,
+  .safety-note,
+  .currency-toggle,
+  .select-grid select,
+  .quick-bets button{
+    border-color:var(--mf-border-inner)!important;
+  }
+
+  /*
+    Dividers become very subtle.
+  */
+  .stage-head,
+  .position-strip,
+  .telemetry,
+  .history-panel summary,
+  .history-row{
+    border-color:var(--mf-border-divider)!important;
+  }
+
+  .position-strip > div + div,
+  .token-metrics > div:nth-child(even),
+  .token-metrics > div:nth-child(n+3),
+  .stats-grid > div:nth-child(even),
+  .stats-grid > div:nth-child(n+3){
+    border-color:var(--mf-border-divider)!important;
+  }
+
+  /*
+    Inputs/selects still need enough definition to read as controls.
+  */
+  .stake-input:focus-within,
+  .select-grid select:focus{
+    border-color:var(--mf-border-active)!important;
+  }
+
+  /*
+    Selected presets remain visible.
+  */
+  .quick-bets button.active{
+    border-color:rgba(215,225,232,.26)!important;
+    box-shadow:none!important;
+  }
+
+  .currency-toggle button.active{
+    box-shadow:
+      inset 0 0 0 1px
+      rgba(120,220,160,.18)!important;
+  }
+
+  /*
+    Preserve semantic action borders.
+  */
+  .game[data-state="searching"] .start-button,
+  .cash-button:disabled{
+    border-color:rgba(160,181,200,.12)!important;
+  }
+
+/* =======================================================
      V54 MOBILE STAGE FIRST
   ======================================================= */
 
@@ -5496,29 +5601,29 @@ body{
     */
     html,
     body{
-      height:auto!important;
-      min-height:100%!important;
+      width:100%!important;
+      height:100%!important;
+      min-height:0!important;
+
+      overflow:hidden!important;
     }
 
     body{
-      position:static!important;
-      inset:auto!important;
+      position:fixed!important;
+      inset:0!important;
 
-      overflow-x:hidden!important;
-      overflow-y:auto!important;
-
-      -webkit-overflow-scrolling:touch!important;
-      overscroll-behavior-y:auto!important;
+      overflow:hidden!important;
+      overscroll-behavior:none!important;
     }
 
     .game{
       width:100%!important;
 
-      height:auto!important;
-      min-height:100dvh!important;
-      max-height:none!important;
+      height:100dvh!important;
+      min-height:0!important;
+      max-height:100dvh!important;
 
-      overflow:visible!important;
+      overflow:hidden!important;
     }
 
     /*
@@ -5527,9 +5632,9 @@ body{
     .layout{
       width:100%!important;
 
-      height:auto!important;
+      height:100%!important;
       min-height:0!important;
-      max-height:none!important;
+      max-height:100%!important;
 
       display:grid!important;
 
@@ -5538,10 +5643,10 @@ body{
         minmax(0,1fr)!important;
 
       grid-template-rows:
-        auto
-        auto
-        auto
-        auto!important;
+        minmax(0,48fr)
+        minmax(0,20fr)
+        minmax(0,14fr)
+        minmax(0,18fr)!important;
 
       gap:clamp(5px,1.2vw,8px)!important;
 
@@ -5563,14 +5668,10 @@ body{
 
       width:100%!important;
 
-      height:clamp(
-        430px,
-        72dvh,
-        620px
-      )!important;
+      height:100%!important;
 
-      min-height:430px!important;
-      max-height:none!important;
+      min-height:0!important;
+      max-height:100%!important;
 
       display:grid!important;
 
@@ -5626,13 +5727,13 @@ body{
       grid-column:1!important;
       grid-row:2 / span 3!important;
 
-      height:auto!important;
+      height:100%!important;
       min-height:0!important;
-      max-height:none!important;
+      max-height:100%!important;
 
-      align-self:start!important;
+      align-self:stretch!important;
 
-      overflow:visible!important;
+      overflow:hidden!important;
     }
 
     .token-panel{
@@ -5641,9 +5742,18 @@ body{
     }
 
     .stats-panel{
-      grid-column:2!important;
-      grid-row:3!important;
-    }
+  min-width:0!important;
+  min-height:0!important;
+  overflow:hidden!important;
+
+  display:grid!important;
+  grid-template-rows:
+    auto
+    auto
+    minmax(0,1fr)!important;
+
+  align-content:stretch!important;
+}
 
     .history-panel{
       grid-column:2!important;
@@ -5655,11 +5765,13 @@ body{
     .history-panel{
       width:100%!important;
 
-      height:auto!important;
+      height:100%!important;
       min-height:0!important;
-      max-height:none!important;
+      max-height:100%!important;
 
-      align-self:start!important;
+      align-self:stretch!important;
+
+      overflow:hidden!important;
     }
 
     /*
@@ -5670,11 +5782,30 @@ body{
     .quality-line,
     #riskCopy,
     .stats-panel .safety-note{
-      max-height:none!important;
+  width:100%!important;
+  height:100%!important;
+  min-height:0!important;
+  max-height:100%!important;
 
-      white-space:normal!important;
-      text-overflow:clip!important;
-    }
+  display:grid!important;
+  grid-template-columns:
+    auto
+    minmax(0,1fr)!important;
+
+  align-items:start!important;
+
+  gap:clamp(5px,1.2vw,8px)!important;
+
+  margin-top:var(--mf-gap-2)!important;
+
+  padding:
+    clamp(5px,1.25vw,8px)
+    clamp(6px,1.45vw,10px)!important;
+
+  overflow:hidden!important;
+
+  border-radius:var(--mf-r-sm)!important;
+}
   }
 
   /*
@@ -5687,11 +5818,517 @@ body{
     and (max-height:720px){
 
     .stage-card{
-      height:68dvh!important;
-      min-height:390px!important;
+      height:100%!important;
+      min-height:0!important;
+      max-height:100%!important;
     }
   }
 
   /* ======================================================= */
 
-/* === V54 STAGE FIRST END === */
+
+
+/* === V63 CLEAN SECTIONS START === */
+
+@media (max-width:860px) and (orientation:portrait){
+
+  /*
+    Keep the entire app inside one viewport.
+  */
+  html,
+  body,
+  .game{
+    overflow:hidden!important;
+  }
+
+  /*
+    Launch Control:
+    every section owns its normal horizontal width.
+  */
+  .launch-panel{
+    min-width:0!important;
+    min-height:0!important;
+
+    overflow:hidden!important;
+
+    row-gap:var(--mf-gap-1)!important;
+  }
+
+  .launch-panel > *{
+    min-width:0!important;
+    max-width:100%!important;
+  }
+
+  /*
+    Intro copy must never produce vertical words.
+  */
+  .launch-panel > .lead{
+    display:block!important;
+
+    width:100%!important;
+
+    white-space:normal!important;
+
+    word-break:normal!important;
+    overflow-wrap:normal!important;
+
+    writing-mode:horizontal-tb!important;
+
+    line-height:1.16!important;
+  }
+
+  .launch-panel > .lead b,
+  .launch-panel .lead b{
+    display:inline!important;
+
+    width:auto!important;
+    max-width:none!important;
+
+    white-space:normal!important;
+
+    word-break:keep-all!important;
+    overflow-wrap:normal!important;
+
+    writing-mode:horizontal-tb!important;
+    text-orientation:mixed!important;
+  }
+
+  /*
+    Flight Plan remains above both action buttons.
+  */
+  .launch-panel > .risk-deck{
+    position:relative!important;
+
+    width:100%!important;
+    height:auto!important;
+
+    min-height:0!important;
+    max-height:none!important;
+
+    align-self:start!important;
+
+    overflow:hidden!important;
+  }
+
+  #riskCopy{
+    width:100%!important;
+
+    max-height:none!important;
+
+    white-space:normal!important;
+
+    overflow:hidden!important;
+
+    line-height:1.13!important;
+  }
+
+  /*
+    Actions stay in their own rows.
+    Never float over Flight Plan text.
+  */
+  .launch-panel > .start-button,
+  .launch-panel > .cash-button,
+  .launch-panel .auto-button,
+  .launch-panel #mfAutoLoopBtn{
+    position:relative!important;
+
+    inset:auto!important;
+    top:auto!important;
+    right:auto!important;
+    bottom:auto!important;
+    left:auto!important;
+
+    transform:none!important;
+
+    width:100%!important;
+
+    flex:none!important;
+
+    margin:0!important;
+
+    align-self:end!important;
+  }
+
+  /*
+    SELECTED LAUNCH:
+    reveal all diagnostic information cleanly.
+  */
+  .token-panel{
+    display:grid!important;
+
+    grid-template-rows:
+      auto
+      auto
+      auto
+      auto
+      minmax(0,1fr)!important;
+
+    align-content:start!important;
+  }
+
+  .token-head small,
+  .quality-line{
+    max-height:none!important;
+
+    white-space:normal!important;
+
+    overflow:visible!important;
+    text-overflow:clip!important;
+
+    line-height:1.12!important;
+  }
+
+  .telemetry{
+    width:100%!important;
+
+    display:grid!important;
+    grid-template-columns:
+      minmax(0,1fr)
+      minmax(0,1fr)!important;
+
+    gap:
+      var(--mf-gap-1)
+      var(--mf-gap-2)!important;
+
+    align-items:center!important;
+  }
+
+  .telemetry > span{
+    min-width:0!important;
+
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr) auto!important;
+
+    gap:var(--mf-gap-1)!important;
+
+    white-space:nowrap!important;
+  }
+
+  /*
+    FLIGHT RECORD:
+    metrics get fixed natural space;
+    the information note receives the remaining height.
+  */
+  .stats-panel{
+    display:grid!important;
+
+    grid-template-rows:
+      auto
+      auto
+      minmax(0,1fr)!important;
+
+    align-content:stretch!important;
+
+    overflow:hidden!important;
+  }
+
+  .stats-grid{
+    flex:none!important;
+  }
+
+  .stats-panel .safety-note{
+    width:100%!important;
+    height:100%!important;
+
+    min-width:0!important;
+    min-height:0!important;
+
+    max-height:100%!important;
+
+    margin-top:var(--mf-gap-1)!important;
+
+    padding:
+      clamp(3px,.8vw,6px)
+      clamp(5px,1.1vw,8px)!important;
+
+    gap:clamp(4px,.9vw,6px)!important;
+
+    overflow:hidden!important;
+
+    align-items:flex-start!important;
+  }
+
+  .stats-panel .safety-note span{
+    min-width:0!important;
+
+    white-space:normal!important;
+
+    word-break:normal!important;
+    overflow-wrap:anywhere!important;
+
+    font-size:
+      clamp(
+        5.3px,
+        min(1.48vw,.70dvh),
+        7.5px
+      )!important;
+
+    line-height:1.08!important;
+    letter-spacing:0!important;
+  }
+
+  /*
+    Round History keeps all available rows.
+    Only this list may scroll internally when necessary.
+  */
+  .history-panel{
+    min-height:0!important;
+
+    display:grid!important;
+
+    grid-template-rows:
+      auto
+      auto
+      minmax(0,1fr)!important;
+
+    overflow:hidden!important;
+  }
+
+  .history-panel .history{
+    min-height:0!important;
+    height:100%!important;
+
+    overflow-x:hidden!important;
+    overflow-y:auto!important;
+
+    -webkit-overflow-scrolling:touch!important;
+    touch-action:pan-y!important;
+  }
+
+  /*
+    Compact spacing rather than hiding text.
+  */
+  .token-head,
+  .quality-line,
+  .token-metrics,
+  .telemetry,
+  .stats-grid,
+  .safety-note{
+    margin-top:var(--mf-gap-1)!important;
+  }
+}
+
+/* === V63 CLEAN SECTIONS END === */
+
+/* === V60 FLIGHT RECORD SAFE FIT END === */
+
+
+
+
+
+/* === V62 PHONE READABILITY FLOOR START === */
+
+@media (max-width:620px) and (orientation:portrait){
+
+  :root{
+    --mf-f-micro:clamp(6.25px,1.65vw,7.5px);
+    --mf-f-label:clamp(6.75px,1.82vw,8px);
+    --mf-f-body:clamp(7.5px,2vw,9px);
+    --mf-f-value:clamp(8.5px,2.3vw,10.5px);
+    --mf-f-control:clamp(9.5px,2.65vw,13px);
+
+    --mf-heading-size:clamp(7px,1.9vw,8.5px);
+    --mf-heading-sub-size:clamp(6px,1.55vw,7px);
+  }
+
+  .lead,
+  #riskCopy,
+  .quality-line,
+  .safety-note,
+  .history-toolbar,
+  .history-empty{
+    font-size:var(--mf-f-body)!important;
+    line-height:1.14!important;
+    letter-spacing:.005em!important;
+  }
+
+  .field-title,
+  .position-strip small,
+  .risk-metrics small,
+  .token-metrics small,
+  .stats-grid small,
+  .history-row small,
+  .telemetry{
+    font-size:var(--mf-f-label)!important;
+    line-height:1.08!important;
+    letter-spacing:.035em!important;
+  }
+
+  .position-strip b,
+  .risk-metrics b,
+  .token-metrics b,
+  .stats-grid b{
+    font-size:var(--mf-f-value)!important;
+    line-height:1!important;
+  }
+
+  .quick-bets button{
+    font-size:var(--mf-f-label)!important;
+  }
+
+  .select-grid select{
+    font-size:var(--mf-f-control)!important;
+  }
+
+  .history-row small{
+    font-size:var(--mf-f-micro)!important;
+  }
+
+  .stats-panel .safety-note span{
+    font-size:var(--mf-f-body)!important;
+    line-height:1.1!important;
+  }
+}
+
+/* === V62 PHONE READABILITY FLOOR END === */
+
+
+
+/* === V63 CLEAN LAUNCH STACK START === */
+
+@media (max-width:860px) and (orientation:portrait){
+
+  /*
+    Launch Control owns a fixed viewport area.
+    Explicit rows prevent START/AUTO from sharing
+    space with Flight Plan content.
+  */
+  .launch-panel{
+    display:grid!important;
+
+    grid-template-rows:
+      auto
+      auto
+      auto
+      auto
+      auto
+      auto
+      auto
+      minmax(0,1fr)
+      auto
+      auto!important;
+
+    grid-auto-rows:auto!important;
+
+    align-content:stretch!important;
+
+    row-gap:var(--mf-gap-1)!important;
+
+    overflow:hidden!important;
+  }
+
+  /*
+    BUY READY is allowed to wrap normally.
+    Never force the phrase into a tiny remaining
+    fragment of the current line.
+  */
+  .launch-panel > .lead,
+  .launch-panel > .lead b{
+    writing-mode:horizontal-tb!important;
+    text-orientation:mixed!important;
+
+    white-space:normal!important;
+    overflow-wrap:normal!important;
+    word-break:normal!important;
+
+    max-width:100%!important;
+  }
+
+  .launch-panel > .lead b{
+    display:inline!important;
+    width:auto!important;
+  }
+
+  /*
+    Flight Plan receives the flexible row.
+  */
+  .launch-panel > .risk-deck{
+    position:relative!important;
+
+    width:100%!important;
+
+    height:100%!important;
+    min-height:0!important;
+    max-height:100%!important;
+
+    margin:0!important;
+
+    align-self:stretch!important;
+
+    overflow:hidden!important;
+
+    z-index:auto!important;
+  }
+
+  /*
+    Keep explanatory Flight Plan text inside
+    its own card, never underneath action buttons.
+  */
+  .launch-panel #riskCopy{
+    margin:0!important;
+
+    max-width:100%!important;
+
+    white-space:normal!important;
+    overflow-wrap:normal!important;
+    word-break:normal!important;
+
+    line-height:1.12!important;
+  }
+
+  /*
+    START / CASH are independent rows.
+  */
+  .launch-panel > .start-button,
+  .launch-panel > .cash-button{
+    position:static!important;
+
+    inset:auto!important;
+    transform:none!important;
+
+    width:100%!important;
+
+    margin:0!important;
+
+    align-self:stretch!important;
+
+    z-index:auto!important;
+  }
+
+  /*
+    AUTO is always the final row.
+  */
+  .launch-panel .auto-button,
+  .launch-panel #mfAutoLoopBtn{
+    position:static!important;
+
+    inset:auto!important;
+    transform:none!important;
+
+    width:100%!important;
+
+    margin:0!important;
+
+    align-self:stretch!important;
+
+    z-index:auto!important;
+  }
+
+  /*
+    Remove old margins that consume the limited
+    phone viewport budget.
+  */
+  .launch-panel > .panel-title,
+  .launch-panel > .game-utility,
+  .launch-panel > .lead,
+  .launch-panel > .field-title,
+  .launch-panel > .stake-input,
+  .launch-panel > .quick-bets,
+  .launch-panel > .select-grid{
+    margin-top:0!important;
+    margin-bottom:0!important;
+  }
+}
+
+/* === V63 CLEAN LAUNCH STACK END === */
+
