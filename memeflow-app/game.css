@@ -3582,7 +3582,7 @@ body.mf-game-immersive
 
 /* === ROUND HISTORY TOUCH SCROLL END === */
 
-/* === V39 TOP UTILITIES + RECORD FIT START === */
+/* === V40 RECORD + SYSTEM ICONS START === */
 
 /*
   One physical viewport = one layout budget.
@@ -3707,8 +3707,8 @@ body{
     */
     grid-template-rows:
       minmax(0,40fr)
-      minmax(0,23fr)
-      minmax(0,15fr)
+      minmax(0,21fr)
+      minmax(0,17fr)
       minmax(0,22fr)!important;
 
     gap:var(--mf-gap-3)!important;
@@ -4256,19 +4256,28 @@ body{
     align-items:center;
     justify-content:flex-end;
 
-    gap:clamp(3px,.65vw,6px);
+    gap:clamp(4px,.72vw,7px);
 
-    margin-left:clamp(1px,.35vw,4px);
+    margin-left:clamp(2px,.42vw,5px);
   }
 
+  /*
+    One quiet system icon language.
+    No boxes, no cyan, no decorative glow.
+  */
   .top-utility-actions > button{
-    width:clamp(18px,2.7vmin,25px)!important;
-    height:clamp(18px,2.7vmin,25px)!important;
+    position:relative!important;
+
+    width:clamp(15px,2.05vmin,19px)!important;
+    height:clamp(15px,2.05vmin,19px)!important;
 
     min-width:0!important;
     min-height:0!important;
 
+    flex:0 0 auto!important;
+
     padding:0!important;
+    margin:0!important;
 
     display:grid!important;
     place-items:center!important;
@@ -4277,31 +4286,55 @@ body{
     border-radius:0!important;
 
     background:transparent!important;
-    color:#77848f!important;
+    color:#747d85!important;
+
+    opacity:.9;
 
     box-shadow:none!important;
+    outline:0!important;
+
+    transition:
+      color .14s ease,
+      opacity .14s ease,
+      transform .12s ease!important;
   }
 
   .top-utility-actions > button:hover,
-  .top-utility-actions > button:focus-visible,
+  .top-utility-actions > button:focus-visible{
+    color:#cfd5d8!important;
+    opacity:1!important;
+  }
+
+  .top-utility-actions > button:active{
+    color:#ffffff!important;
+    opacity:1!important;
+    transform:scale(.9);
+  }
+
+  /*
+    Persistent active states are bright neutral white.
+  */
   .top-utility-actions > button.is-active,
-  .top-utility-actions > button.is-open{
-    color:#8fe8ff!important;
-    background:transparent!important;
-    border:0!important;
-    box-shadow:none!important;
+  .top-utility-actions > button.is-open,
+  .top-utility-actions > button[aria-pressed="true"]{
+    color:#f4f6f7!important;
+    opacity:1!important;
   }
 
   .top-utility-actions svg{
-    width:clamp(12px,1.75vmin,16px)!important;
-    height:clamp(12px,1.75vmin,16px)!important;
+    width:clamp(10px,1.42vmin,13px)!important;
+    height:clamp(10px,1.42vmin,13px)!important;
 
-    fill:none;
-    stroke:currentColor;
+    display:block!important;
 
-    stroke-width:1.7;
-    stroke-linecap:round;
-    stroke-linejoin:round;
+    fill:none!important;
+    stroke:currentColor!important;
+
+    stroke-width:1.55!important;
+    stroke-linecap:round!important;
+    stroke-linejoin:round!important;
+
+    vector-effect:non-scaling-stroke;
   }
 
   /* Text remains accessible but does not consume the header */
@@ -4355,13 +4388,30 @@ body{
     margin-top:var(--mf-gap-2)!important;
 
     padding:
-      var(--mf-cell-py)
-      var(--mf-cell-px)!important;
+      clamp(4px,.48dvh,6px)
+      clamp(6px,.68dvh,9px)!important;
 
     overflow:hidden!important;
 
-    font-size:var(--mf-f-micro)!important;
-    line-height:1.22!important;
+    color:var(--mf-text-muted)!important;
+
+    font-size:clamp(
+      6.2px,
+      min(1.7vw,.78dvh),
+      8px
+    )!important;
+
+    line-height:1.24!important;
+  }
+
+  .stats-panel .safety-note i{
+    width:clamp(5px,.72vmin,7px)!important;
+    height:clamp(5px,.72vmin,7px)!important;
+
+    flex:0 0 auto!important;
+
+    background:#c9d0d4!important;
+    box-shadow:none!important;
   }
 
   .stats-panel .safety-note span{
@@ -4418,8 +4468,8 @@ body{
   .layout{
     grid-template-rows:
       minmax(0,42fr)
-      minmax(0,22fr)
-      minmax(0,15fr)
+      minmax(0,20fr)
+      minmax(0,17fr)
       minmax(0,21fr)!important;
   }
 }
@@ -4509,4 +4559,4 @@ body{
   }
 }
 
-/* === V39 TOP UTILITIES + RECORD FIT END === */
+/* === V40 RECORD + SYSTEM ICONS END === */

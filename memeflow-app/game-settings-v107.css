@@ -21,7 +21,7 @@
   border-radius:0;
 
   background:transparent;
-  color:#77848f;
+  color:#747d85;
 
   cursor:pointer;
 
@@ -37,7 +37,7 @@
   fill:none;
   stroke:currentColor;
 
-  stroke-width:1.7;
+  stroke-width:1.55;
   stroke-linecap:round;
   stroke-linejoin:round;
 }
@@ -47,7 +47,7 @@
 .game-settings-launcher.is-open{
   border:0;
   background:transparent;
-  color:#8fe8ff;
+  color:#f4f6f7;
   outline:none;
   box-shadow:none;
 }
