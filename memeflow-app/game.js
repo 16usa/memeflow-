@@ -125,7 +125,7 @@
     }
   );
 
-  const CLIENT_VERSION='10.7';
+  const CLIENT_VERSION='10.8';
 
   const $=(s)=>document.querySelector(s), $$=(s)=>[...document.querySelectorAll(s)];
   const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
@@ -708,7 +708,47 @@ const game={
     const live=game.mode==='live',searching=game.mode==='searching',settling=game.mode==='settling',complete=game.mode==='complete';const can=live&&navigator.onLine!==false&&game.session?.canCashout!==false&&game.session?.feedFresh!==false;
     const cancelArmed=searching&&Date.now()>=game.startCancelArmedAt;ui.start.disabled=live||settling||complete;ui.mobileStart.disabled=live||settling||complete;ui.start.querySelector('b').textContent=searching?(cancelArmed?'CANCEL SEARCH':'SEARCHING…'):'START';ui.mobileStart.querySelector('b').textContent=searching?(cancelArmed?'CANCEL SEARCH':'SEARCHING…'):'START';
     ui.cash.disabled=!can||settling;ui.mobileCash.disabled=!can||settling;const value=live?`${(num(game.session?.multiplier)||1).toFixed(2)}× · ${money((num(game.session?.bet)||0)*(num(game.session?.multiplier)||1))}`:'Waiting for launch';ui.cashHint.textContent=value;ui.mobileCashHint.textContent=live?value:'Waiting';renderCashoutTelemetry();
-    ui.bet.disabled=live||searching||settling;ui.auto.disabled=live||searching||settling;ui.stop.disabled=live||searching||settling;$$('.target-presets button').forEach(b=>b.disabled=live||searching||settling);
+    const controlsLocked=live||searching||settling;
+
+    ui.bet.disabled=controlsLocked;
+    ui.auto.disabled=controlsLocked;
+    ui.stop.disabled=controlsLocked;
+
+    /*
+      The USD/SOL controller renders a visible mirror input.
+      Lock it together with the authoritative USD input.
+    */
+    const displayBet=document.getElementById('betInputDisplay');
+    if(displayBet){
+      displayBet.disabled=controlsLocked;
+      displayBet.readOnly=controlsLocked;
+      displayBet.setAttribute(
+        'aria-disabled',
+        controlsLocked?'true':'false'
+      );
+    }
+
+    /*
+      Percentage stake presets are also pre-launch controls.
+      Once search begins, the stake is frozen.
+    */
+    $('.quick-bets button').forEach(button=>{
+      button.disabled=controlsLocked;
+      button.setAttribute(
+        'aria-disabled',
+        controlsLocked?'true':'false'
+      );
+    });
+
+    $('.target-presets button').forEach(button=>{
+      button.disabled=controlsLocked;
+    });
+
+    const launchPanel=document.querySelector('.launch-panel');
+    if(launchPanel){
+      launchPanel.dataset.controlsLocked=
+        controlsLocked?'true':'false';
+    }
   }
 
   function setSelectorState(state='idle',phase=null){
