@@ -157,7 +157,93 @@
     result:$('#result'),resultCanvas:$('#resultCanvas'),resultCard:$('#resultCard'),resultReason:$('#resultReason'),resultBadge:$('#resultBadge'),resultMultiplier:$('#resultMultiplier'),resultTitle:$('#resultTitle'),resultCopy:$('#resultCopy'),resultStake:$('#resultStake'),resultPayout:$('#resultPayout'),resultProfit:$('#resultProfit'),resultPeak:$('#resultPeak'),resultDrawdown:$('#resultDrawdown'),resultAdverse:$('#resultAdverse'),resultPeakTime:$('#resultPeakTime'),resultDuration:$('#resultDuration'),resultSettlement:$('#resultSettlement'),resultCapture:$('#resultCapture'),resultQuality:$('#resultQuality'),resultUpdates:$('#resultUpdates'),resultEntryPrice:$('#resultEntryPrice'),resultExitPrice:$('#resultExitPrice'),resultPlan:$('#resultPlan'),resultCaptureHero:$('#resultCaptureHero'),resultPeakHero:$('#resultPeakHero'),resultTimeHero:$('#resultTimeHero'),resultRoute:$('#resultRoute'),resultTrace:$('#resultTrace'),resultTraceArea:$('#resultTraceArea'),resultTraceEntry:$('#resultTraceEntry'),resultTracePath:$('#resultTracePath'),resultTracePeak:$('#resultTracePeak'),resultTraceExit:$('#resultTraceExit'),resultTraceMeta:$('#resultTraceMeta'),playAgain:$('#playAgain'),flightProgress:$('#flightProgress'),flightPositionHud:$('#flightPositionHud'),flightPositionCurrent:$('#flightPositionCurrent'),flightPositionPeak:$('#flightPositionPeak'),flightStageNodes:$$('[data-flight-stage]')
   };
 
-  const game={
+  
+// MF_STAKE_CURRENCY_INPUT_FIX_V1
+function syncStakeCurrencyInput(displayCurrency, solUsd){
+  const input = document.getElementById('betInput');
+  const prefix = document.getElementById('stakeCurrencyPrefix');
+
+  if(!input) return;
+
+  const mode =
+    String(displayCurrency || 'USD').toUpperCase() === 'SOL'
+      ? 'SOL'
+      : 'USD';
+
+  const rate = Number(solUsd);
+
+  /*
+    Keep type=number strictly numeric.
+    Currency text belongs to the separate prefix element.
+  */
+  if(prefix){
+    prefix.textContent = mode === 'SOL' ? 'SOL' : '$';
+  }
+
+  input.dataset.displayCurrency = mode;
+
+  if(!input.dataset.usdStake){
+    const initial = Number(input.value);
+    if(Number.isFinite(initial)){
+      input.dataset.usdStake = String(initial);
+    }
+  }
+
+  const usd = Number(input.dataset.usdStake);
+
+  if(!Number.isFinite(usd)){
+    return;
+  }
+
+  if(mode === 'SOL'){
+    if(Number.isFinite(rate) && rate > 0){
+      const sol = usd / rate;
+      input.value = String(
+        Math.round(sol * 10000) / 10000
+      );
+      input.step = '0.0001';
+    }
+  }else{
+    input.value = String(
+      Math.round(usd * 100) / 100
+    );
+    input.step = '1';
+  }
+}
+
+document.addEventListener('input', (event)=>{
+  const input = event.target;
+
+  if(!(input instanceof HTMLInputElement)) return;
+  if(input.id !== 'betInput') return;
+
+  const value = Number(input.value);
+  if(!Number.isFinite(value)) return;
+
+  const mode =
+    String(input.dataset.displayCurrency || 'USD')
+      .toUpperCase();
+
+  const rateNode =
+    document.getElementById('solUsdRate');
+
+  const rateMatch =
+    rateNode?.textContent?.match(
+      /(?:\\$)?([0-9]+(?:\\.[0-9]+)?)/
+    );
+
+  const rate = Number(rateMatch?.[1]);
+
+  if(mode === 'SOL' && Number.isFinite(rate) && rate > 0){
+    input.dataset.usdStake =
+      String(value * rate);
+  }else{
+    input.dataset.usdStake =
+      String(value);
+  }
+});
+
+const game={
     mode:'idle',status:null,session:null,stream:null,fallback:null,clock:null,searchSeq:0,searchAbort:null,requestId:null,
     sound:storageGet('memeflow.game.sound','on')!=='off',audio:null,displayMultiplier:1,targetMultiplier:1,lastServerMultiplier:1,lastServerAt:0,
     velocity:0,points:[],milestones:new Set(),launchSeen:new Set(),showingResult:null,pageVisible:!document.hidden,fx:null,lastEventAt:0,streamHealthy:false,
