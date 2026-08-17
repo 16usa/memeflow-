@@ -3582,7 +3582,7 @@ body.mf-game-immersive
 
 /* === ROUND HISTORY TOUCH SCROLL END === */
 
-/* === V42 COMPACT SOL USD START === */
+/* === V47 CLEAN TELEMETRY START === */
 
 /*
   One physical viewport = one layout budget.
@@ -4756,32 +4756,56 @@ body{
     and HOLDERS instead of clipping the lower row.
   */
   .telemetry{
+    width:100%!important;
+
     display:grid!important;
-
     grid-template-columns:
-      repeat(3,minmax(0,1fr))!important;
+      repeat(2,minmax(0,1fr))!important;
 
-    gap:
-      var(--mf-gap-1)
-      var(--mf-gap-2)!important;
+    grid-auto-rows:minmax(0,1fr)!important;
+
+    column-gap:var(--mf-gap-3)!important;
+    row-gap:var(--mf-gap-2)!important;
 
     align-items:start!important;
+
+    margin-top:var(--mf-gap-2)!important;
+    padding-top:var(--mf-gap-2)!important;
+
+    border-top:
+      1px solid
+      var(--mf-border-soft)!important;
 
     overflow:visible!important;
   }
 
   .telemetry > span{
     min-width:0!important;
+    min-height:0!important;
 
-    display:flex!important;
-    flex-direction:column!important;
-    align-items:flex-start!important;
+    display:grid!important;
+    grid-template-columns:
+      minmax(0,1fr)
+      auto!important;
 
-    gap:1px!important;
+    align-items:center!important;
+
+    gap:var(--mf-gap-1)!important;
+
+    margin:0!important;
+    padding:0!important;
+
+    color:var(--mf-text-muted)!important;
+
+    font-size:var(--mf-f-label)!important;
+    font-weight:600!important;
+    line-height:1.05!important;
+
+    letter-spacing:.08em!important;
 
     white-space:nowrap!important;
 
-    overflow:visible!important;
+    overflow:hidden!important;
   }
 
   .telemetry > span b{
@@ -4863,6 +4887,28 @@ body{
   }
 
 }
+
+
+  .telemetry > span > b{
+    min-width:0!important;
+
+    margin:0!important;
+
+    color:var(--mf-text-label)!important;
+
+    font-size:var(--mf-f-label)!important;
+    font-weight:750!important;
+    line-height:1!important;
+
+    letter-spacing:.025em!important;
+
+    text-align:right!important;
+
+    white-space:nowrap!important;
+
+    overflow:hidden!important;
+    text-overflow:ellipsis!important;
+  }
 
 /* =========================================================
    VERY SHORT PHONE PORTRAIT
@@ -4997,4 +5043,4 @@ body{
   }
 }
 
-/* === V42 COMPACT SOL USD END === */
+/* === V47 CLEAN TELEMETRY END === */
