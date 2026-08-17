@@ -12,7 +12,7 @@
   <meta name="description" content="MEMEFLOW Pepe Rocket V9.6 — fullscreen responsive game UI with realtime server-authoritative PAPER visualization.">
   <title>MEMEFLOW · Pepe Rocket</title>
   <link rel="manifest" href="/game.webmanifest?v=1786767229">
-  <link rel="stylesheet" href="/game.css?v=63">
+  <link rel="stylesheet" href="/game.css?v=56">
   <link rel="stylesheet" href="/game-settings-v107.css?v=40">
 </head>
 <body>
@@ -200,14 +200,14 @@
 
       <section class="panel token-panel">
         <div class="panel-row"><span>SELECTED LAUNCH</span><b id="tokenState">WAITING</b></div>
-        <div class="token-head"><div class="token-avatar" id="tokenAvatar">?</div><div><b id="tokenName">No launch selected</b><small id="tokenMint">The Game waits for a BUY READY decision from your MEMEFLOW settings.</small></div></div>
-        <div class="quality-line"><i></i><span id="qualityText">Trading eligibility comes from MEMEFLOW settings</span></div>
+        <div class="token-head"><div class="token-avatar" id="tokenAvatar">?</div><div><b id="tokenName">Ready for next launch</b><small id="tokenMint">Press START to scan your current BUY READY decisions.</small></div></div>
+        <div class="quality-line"><i></i><span id="qualityText">MEMEFLOW settings control launch eligibility</span></div>
         <div class="token-metrics"><div><small>AI SCORE</small><b id="tokenScore">—</b></div><div><small>HOLDERS</small><b id="tokenHolders">—</b></div><div><small>TOP 10</small><b id="tokenTop10">—</b></div><div><small>BUY PRESSURE</small><b id="tokenPressure">—</b></div></div>
         <div class="telemetry"><span>FEED <b id="feedQuality">IDLE</b></span><span>VELOCITY <b id="velocity">0.00×/s</b></span><span>SELECTOR <b id="selectorScore">—</b></span><span>DECISION <b id="decisionAge">—</b></span></div>
       </section>
 
       <section class="panel stats-panel">
-        <div class="panel-row"><span>FLIGHT RECORD</span><b id="statsRounds">0 ROUNDS</b></div>
+        <div class="panel-row"><span>SESSION</span><b id="statsRounds">0 ROUNDS</b></div>
         <div class="stats-grid">
           <div><small>WIN RATE</small><b id="statsWinRate">—</b></div>
           <div><small>NET P&amp;L</small><b id="statsNet">$0.00</b></div>
@@ -218,7 +218,7 @@
       </section>
 
       <details class="panel history-panel" open>
-        <summary><span>ROUND HISTORY</span><b id="historyCount">0</b></summary>
+        <summary><span>RECENT ROUNDS</span><b id="historyCount">0</b></summary>
         <div class="history-toolbar"><span>Server-settled paper rounds</span><button id="clearHistory" type="button">Clear</button></div>
         <div class="history" id="history"><div class="history-empty">No completed rounds yet.</div></div>
       </details>
@@ -247,7 +247,7 @@
   </article>
 </div>
 <script type="module" src="/game-rocket-v36.js?v=1786996001"></script>
-<script src="/game.js?v=51" defer></script>
+<script src="/game.js?v=52" defer></script>
 <script src="/game-currency-v41.js?v=44" defer></script>
 <script src="/game-stake-percent-v48.js?v=48" defer></script>
 <script src="/game-auto-v102.js?v=1786749590" defer></script>

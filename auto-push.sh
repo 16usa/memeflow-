@@ -1,22 +1,36 @@
 #!/usr/bin/env bash
 
-BRANCH="main"
-INTERVAL=10
+INTERVAL=8
 
-echo "AUTO PUSH STARTED → branch: $BRANCH"
+cd "$(git rev-parse --show-toplevel)" || exit 1
+
+echo "AUTO PUSH STARTED"
 
 while true; do
+
+  BRANCH="$(git branch --show-current)"
+
+  if [ -z "$BRANCH" ]; then
+    echo "No active branch"
+    sleep "$INTERVAL"
+    continue
+  fi
+
   if [ -n "$(git status --porcelain)" ]; then
-    echo "Changes detected..."
 
     git add -A
 
-    git commit -m "Auto update $(date '+%Y-%m-%d %H:%M:%S')" || true
+    if ! git diff --cached --quiet; then
 
-    if git push origin "$BRANCH"; then
-      echo "✓ PUSHED $(date '+%H:%M:%S')"
-    else
-      echo "✗ PUSH FAILED — will retry on next change"
+      git commit \
+        -m "Auto update $(date '+%Y-%m-%d %H:%M:%S')" \
+        >> auto-push.log 2>&1
+
+      git push origin "$BRANCH" \
+        >> auto-push.log 2>&1
+
+      echo "PUSHED → $BRANCH $(date '+%H:%M:%S')" \
+        >> auto-push.log
     fi
   fi
 
