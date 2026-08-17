@@ -1,0 +1,77 @@
+{
+  "version": "classic-pepe-curated-v4",
+  "notes": [
+    "Curated from v3 after visual inspection.",
+    "Removed contaminated target label frame.",
+    "Removed contaminated hover BOOST TRAILS label frame.",
+    "All remaining game frames are normalized 512x512 transparent PNGs."
+  ],
+  "states": {
+    "fly": [
+      "game512/fly/fly_01.png",
+      "game512/fly/fly_02.png",
+      "game512/fly/fly_03.png",
+      "game512/fly/fly_04.png",
+      "game512/fly/fly_05.png",
+      "game512/fly/fly_06.png",
+      "game512/fly/fly_07.png",
+      "game512/fly/fly_08.png",
+      "game512/fly/fly_09.png",
+      "game512/fly/fly_10.png"
+    ],
+    "boost": [
+      "game512/boost/boost_01.png",
+      "game512/boost/boost_02.png",
+      "game512/boost/boost_03.png",
+      "game512/boost/boost_04.png",
+      "game512/boost/boost_05.png"
+    ],
+    "target": [
+      "game512/target/target_01.png",
+      "game512/target/target_02.png",
+      "game512/target/target_03.png",
+      "game512/target/target_04.png",
+      "game512/target/target_05.png"
+    ],
+    "cashout": [
+      "game512/cashout/cashout_01.png",
+      "game512/cashout/cashout_02.png",
+      "game512/cashout/cashout_03.png",
+      "game512/cashout/cashout_04.png",
+      "game512/cashout/cashout_05.png",
+      "game512/cashout/cashout_06.png"
+    ],
+    "parachute": [
+      "game512/parachute/parachute_01.png",
+      "game512/parachute/parachute_02.png",
+      "game512/parachute/parachute_03.png",
+      "game512/parachute/parachute_04.png",
+      "game512/parachute/parachute_05.png",
+      "game512/parachute/parachute_06.png",
+      "game512/parachute/parachute_07.png"
+    ],
+    "crash": [
+      "game512/crash/crash_01.png",
+      "game512/crash/crash_02.png",
+      "game512/crash/crash_03.png",
+      "game512/crash/crash_04.png"
+    ],
+    "hover": [
+      "game512/hover/hover_01.png",
+      "game512/hover/hover_02.png",
+      "game512/hover/hover_03.png",
+      "game512/hover/hover_04.png",
+      "game512/hover/hover_05.png",
+      "game512/hover/hover_06.png",
+      "game512/hover/hover_07.png",
+      "game512/hover/hover_08.png",
+      "game512/hover/hover_09.png",
+      "game512/hover/hover_10.png",
+      "game512/hover/hover_11.png",
+      "game512/hover/hover_12.png",
+      "game512/hover/hover_13.png",
+      "game512/hover/hover_14.png",
+      "game512/hover/hover_15.png"
+    ]
+  }
+}

@@ -1,0 +1,80 @@
+{
+  "fly": [
+    "fly/fly_01.png",
+    "fly/fly_02.png",
+    "fly/fly_03.png",
+    "fly/fly_04.png",
+    "fly/fly_05.png",
+    "fly/fly_06.png",
+    "fly/fly_07.png",
+    "fly/fly_08.png",
+    "fly/fly_09.png",
+    "fly/fly_10.png"
+  ],
+  "boost": [
+    "boost/boost_01.png",
+    "boost/boost_02.png",
+    "boost/boost_03.png",
+    "boost/boost_04.png",
+    "boost/boost_05.png",
+    "boost/boost_06.png",
+    "boost/boost_07.png",
+    "boost/boost_08.png",
+    "boost/boost_09.png"
+  ],
+  "target": [
+    "target/target_01.png",
+    "target/target_02.png",
+    "target/target_03.png",
+    "target/target_04.png",
+    "target/target_05.png",
+    "target/target_06.png"
+  ],
+  "cashout": [
+    "cashout/cashout_01.png",
+    "cashout/cashout_02.png",
+    "cashout/cashout_03.png",
+    "cashout/cashout_04.png",
+    "cashout/cashout_05.png",
+    "cashout/cashout_06.png",
+    "cashout/cashout_07.png",
+    "cashout/cashout_08.png"
+  ],
+  "parachute": [
+    "parachute/parachute_01.png",
+    "parachute/parachute_02.png",
+    "parachute/parachute_03.png",
+    "parachute/parachute_04.png",
+    "parachute/parachute_05.png",
+    "parachute/parachute_06.png",
+    "parachute/parachute_07.png"
+  ],
+  "crash": [
+    "crash/crash_01.png",
+    "crash/crash_02.png",
+    "crash/crash_03.png",
+    "crash/crash_04.png",
+    "crash/crash_05.png",
+    "crash/crash_06.png"
+  ],
+  "hover": [
+    "hover/hover_01.png",
+    "hover/hover_02.png",
+    "hover/hover_03.png",
+    "hover/hover_04.png",
+    "hover/hover_05.png",
+    "hover/hover_06.png",
+    "hover/hover_07.png",
+    "hover/hover_08.png",
+    "hover/hover_09.png",
+    "hover/hover_10.png",
+    "hover/hover_11.png",
+    "hover/hover_12.png",
+    "hover/hover_13.png",
+    "hover/hover_14.png",
+    "hover/hover_15.png",
+    "hover/hover_16.png",
+    "hover/hover_17.png",
+    "hover/hover_18.png"
+  ]
+}

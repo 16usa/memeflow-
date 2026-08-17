@@ -1,0 +1,13 @@
+CLASSIC PEPE + JETPACK FIXED v2
+
+Upload this ZIP to ~/workspace in Replit, then run:
+
+cd ~/workspace
+rm -rf memeflow-app/game-assets/classic-pepe-jetpack
+unzip -o classic-pepe-jetpack-fixed.zip
+mkdir -p memeflow-app/game-assets
+cp -R classic-pepe-jetpack-fixed/game-assets/classic-pepe-jetpack memeflow-app/game-assets/
+
+Then refresh the game page.
+
+This package fixes the duplicated/cropped sprite problem.

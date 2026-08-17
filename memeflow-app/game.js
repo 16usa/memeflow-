@@ -824,6 +824,12 @@
         1
       ),
 
+      flightState: game.flightState,
+
+      outcome: ui.game?.dataset?.outcome || 'none',
+
+      reason: String(game.session?.reason || ''),
+
       danger
     });
     updateFlightAssist(live.m);updateFlightProgress(m);
@@ -1297,3 +1303,6 @@ function fillToken(s){const t=s?.token||{};const symbol=text(t.symbol,t.name,'?'
   }
   boot();
 })();
+
+/* MF_CLASSIC_PEPE_HIDE_LEGACY_ROCKET */
+document.getElementById("rocket")?.style.setProperty("display","none","important");

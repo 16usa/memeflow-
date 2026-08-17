@@ -1,6 +1,6 @@
 
 import * as THREE from '/vendor/three.module.js';
-import { createRocketRideV34 } from '/rocket-ride-v34.js?v=36101';
+import { createClassicPepeSpriteV1 } from '/classic-pepe-sprite-v1.js?v=14';
 
 const stage = document.getElementById('world');
 
@@ -50,11 +50,93 @@ if(!stage){
   const fitGroup=new THREE.Group();
   scene.add(fitGroup);
 
-  const ride=createRocketRideV34({
-    scene,
-    parent:fitGroup,
-    baseUrl:'/game-assets/rocket-v34/'
-  });
+  
+const classicPepe = createClassicPepeSpriteV1({
+  parent: fitGroup,
+  baseUrl: '/game-assets/classic-pepe-jetpack-v4/'
+});
+
+/*
+ * Compatibility adapter.
+ * The existing flight controller continues to drive "ride",
+ * but the rendered character is Classic Pepe V4.
+ */
+const legacyFlameRoot = new THREE.Group();
+legacyFlameRoot.visible = false;
+fitGroup.add(legacyFlameRoot);
+
+const ride = {
+  rocketRoot: classicPepe.group,
+  flameRoot: legacyFlameRoot,
+
+  ready: Promise.resolve(),
+
+  resetPoseForFit() {
+    classicPepe.group.position.set(0, 0, 0);
+    classicPepe.group.rotation.set(0, 0, 0);
+    classicPepe.group.scale.setScalar(1);
+    classicPepe.setVisible(true);
+  },
+
+  update(t, dt, state = {}) {
+    const mode = String(state.mode || '').toLowerCase();
+    const stage = String(state.stage || '').toLowerCase();
+    const danger = String(state.danger || '').toLowerCase();
+
+    let next = 'fly';
+
+    if (
+      mode.includes('reconnect') ||
+      stage.includes('reconnect')
+    ) {
+      next = 'hover';
+    } else if (
+      mode.includes('parachute') ||
+      stage.includes('parachute') ||
+      mode.includes('stop') ||
+      stage.includes('stop')
+    ) {
+      next = 'parachute';
+    } else if (
+      mode.includes('crash') ||
+      stage.includes('crash') ||
+      danger.includes('crash')
+    ) {
+      next = 'crash';
+    } else if (
+      mode.includes('cash') ||
+      stage.includes('cash')
+    ) {
+      next = 'cashout';
+    } else if (
+      mode.includes('target') ||
+      stage.includes('target') ||
+      mode.includes('victory') ||
+      stage.includes('victory')
+    ) {
+      next = 'target';
+    } else if (
+      Number(state.boost || 0) > 0.45 ||
+      Number(state.thrust || 0) > 0.8
+    ) {
+      next = 'boost';
+    } else if (
+      mode === 'idle' ||
+      stage === 'ground'
+    ) {
+      next = 'hover';
+    }
+
+    classicPepe.setState(next);
+    classicPepe.setVisible(true);
+    classicPepe.update(dt);
+  },
+
+  destroy() {
+    classicPepe.destroy();
+  }
+};
+
 
   const target={
     mode:'idle',
@@ -148,7 +230,7 @@ if(!stage){
       1.08
     );
 
-    baseScale=scale;
+    scale=THREE.MathUtils.clamp(scale*1.7,.62,1.45);baseScale=scale;
 
     baseX=-center.x*scale;
     baseY=-center.y*scale-.06;
@@ -210,6 +292,15 @@ if(!stage){
 
     if(next.danger!=null)
       target.danger=String(next.danger);
+
+  if(next.flightState!=null)
+    target.flightState=String(next.flightState);
+
+  if(next.outcome!=null)
+    target.outcome=String(next.outcome);
+
+  if(next.reason!=null)
+    target.reason=String(next.reason);
 
     for(const key of [
       'multiplier',
@@ -305,64 +396,177 @@ if(!stage){
 
     current.danger=
       target.danger;
+
+  current.flightState=
+    target.flightState || '';
+
+  current.outcome=
+    target.outcome || 'none';
+
+  current.reason=
+    target.reason || '';
   }
 
-  function placeRocket(){
-    /*
-      Real multiplier controls the overall flight.
+  let pepeTerminalKey='';
+let pepeTerminalAt=0;
+let pepeTerminalStartX=0;
+let pepeTerminalStartY=0;
 
-      1x  : around center/lower area
-      pump: drifts up/right
-      dip : falls slightly back/down
+function placeRocket(){
+  const p=clamp(Number(current.progress)||0,0,1);
+  const mode=String(current.mode||'idle').toLowerCase();
+  const flightState=String(current.flightState||'').toLowerCase();
+  const outcome=String(current.outcome||'none').toLowerCase();
+  const reason=String(current.reason||'').toUpperCase();
 
-      The smaller rideRoot bob/turbulence still comes
-      from rocket-ride-v34.js.
-    */
-    const p=current.progress;
+  const live=
+    mode==='live' ||
+    mode==='settling';
 
-    const live=
-      current.mode==='live' ||
-      current.mode==='settling';
+  const searching=
+    mode==='searching';
 
-    const searching=
-      current.mode==='searching';
+  let terminal='';
 
-    const xTravel=
-      live
-        ? p*.42
-        : searching
-          ? Math.sin(t*.48)*.025
-          : 0;
+  if(reason.includes('AUTO_CASH_OUT')){
+    terminal='target';
+  }else if(reason.includes('STOP_LOSS')){
+    terminal='stop';
+  }else if(reason.includes('MANUAL_CASH_OUT')){
+    terminal='cashout';
+  }else if(outcome==='crash' || flightState==='crash'){
+    terminal='crash';
+  }else if(outcome==='secure' || flightState==='secured'){
+    terminal='cashout';
+  }
 
-    const yTravel=
-      live
-        ? p*.30
-        : Math.sin(t*.72)*.018;
+  const key=terminal
+    ? terminal+':'+(reason||outcome||flightState)
+    : '';
 
-    const dip=
-      Math.max(
-        0,
-        -current.direction
-      )*.085;
+  if(key && key!==pepeTerminalKey){
+    pepeTerminalKey=key;
+    pepeTerminalAt=t;
+    pepeTerminalStartX=fitGroup.position.x;
+    pepeTerminalStartY=fitGroup.position.y;
+  }
+
+  if(!key){
+    pepeTerminalKey='';
+  }
+
+  if(terminal){
+    const age=Math.max(0,t-pepeTerminalAt);
+
+    const duration=
+      terminal==='target' ? .55 :
+      terminal==='cashout' ? .62 :
+      terminal==='stop' ? .85 :
+      .72;
+
+    const q=clamp(age/duration,0,1);
+    const e=q*q;
+
+    if(terminal==='target'){
+      fitGroup.position.x=
+        pepeTerminalStartX+1.65*e;
+
+      fitGroup.position.y=
+        pepeTerminalStartY+1.05*e;
+
+      fitGroup.rotation.z=
+        THREE.MathUtils.degToRad(-24*e);
+
+      fitGroup.scale.setScalar(
+        baseScale*(1+.08*e)
+      );
+      return;
+    }
+
+    if(terminal==='cashout'){
+      fitGroup.position.x=
+        pepeTerminalStartX+1.35*e;
+
+      fitGroup.position.y=
+        pepeTerminalStartY+.62*e;
+
+      fitGroup.rotation.z=
+        THREE.MathUtils.degToRad(-12*e);
+
+      fitGroup.scale.setScalar(baseScale);
+      return;
+    }
+
+    if(terminal==='stop'){
+      fitGroup.position.x=
+        pepeTerminalStartX+1.15*e;
+
+      fitGroup.position.y=
+        pepeTerminalStartY-1.05*e;
+
+      fitGroup.rotation.z=
+        THREE.MathUtils.degToRad(8*e);
+
+      fitGroup.scale.setScalar(baseScale);
+      return;
+    }
 
     fitGroup.position.x=
-      baseX+xTravel+
-      current.direction*.025;
+      pepeTerminalStartX+1.05*e;
 
     fitGroup.position.y=
-      baseY+yTravel-dip;
+      pepeTerminalStartY-1.28*e;
 
-    const scaleBoost=
-      1+
-      current.boost*.022+
-      Math.max(0,current.direction)*.010;
+    fitGroup.rotation.z=
+      age*(2.2+age*2.4);
 
-    fitGroup.scale.setScalar(
-      baseScale*scaleBoost
-    );
+    fitGroup.scale.setScalar(baseScale);
+    return;
   }
 
-  function frame(){
+  const xTravel=
+    live
+      ? .08+p*.52
+      : searching
+        ? Math.sin(t*.48)*.025
+        : 0;
+
+  const yTravel=
+    live
+      ? p*.30
+      : Math.sin(t*.72)*.018;
+
+  const dip=
+    Math.max(0,-current.direction)*.085;
+
+  fitGroup.position.x=
+    baseX+
+    xTravel+
+    current.direction*.025;
+
+  fitGroup.position.y=
+    baseY+
+    yTravel-
+    dip;
+
+  fitGroup.rotation.z=
+    live
+      ? THREE.MathUtils.degToRad(
+          -current.direction*6
+        )
+      : 0;
+
+  const scaleBoost=
+    1+
+    current.boost*.022+
+    Math.max(0,current.direction)*.010;
+
+  fitGroup.scale.setScalar(
+    baseScale*scaleBoost
+  );
+}
+
+function frame(){
     if(destroyed)return;
 
     requestAnimationFrame(frame);

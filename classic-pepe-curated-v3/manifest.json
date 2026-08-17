@@ -1,0 +1,563 @@
+{
+  "source": "a_high_resolution_game_asset_sprite_sheet_on_a_tra.png",
+  "source_size": [
+    1536,
+    1024
+  ],
+  "states": {
+    "fly": [
+      {
+        "file": "game512/fly/fly_01.png",
+        "native": "native/fly/fly_01.png",
+        "source_bbox": [
+          3,
+          86,
+          90,
+          177
+        ]
+      },
+      {
+        "file": "game512/fly/fly_02.png",
+        "native": "native/fly/fly_02.png",
+        "source_bbox": [
+          80,
+          88,
+          165,
+          177
+        ]
+      },
+      {
+        "file": "game512/fly/fly_03.png",
+        "native": "native/fly/fly_03.png",
+        "source_bbox": [
+          153,
+          89,
+          236,
+          178
+        ]
+      },
+      {
+        "file": "game512/fly/fly_04.png",
+        "native": "native/fly/fly_04.png",
+        "source_bbox": [
+          226,
+          86,
+          310,
+          176
+        ]
+      },
+      {
+        "file": "game512/fly/fly_05.png",
+        "native": "native/fly/fly_05.png",
+        "source_bbox": [
+          302,
+          85,
+          384,
+          174
+        ]
+      },
+      {
+        "file": "game512/fly/fly_06.png",
+        "native": "native/fly/fly_06.png",
+        "source_bbox": [
+          378,
+          81,
+          456,
+          172
+        ]
+      },
+      {
+        "file": "game512/fly/fly_07.png",
+        "native": "native/fly/fly_07.png",
+        "source_bbox": [
+          450,
+          81,
+          529,
+          175
+        ]
+      },
+      {
+        "file": "game512/fly/fly_08.png",
+        "native": "native/fly/fly_08.png",
+        "source_bbox": [
+          527,
+          79,
+          608,
+          175
+        ]
+      },
+      {
+        "file": "game512/fly/fly_09.png",
+        "native": "native/fly/fly_09.png",
+        "source_bbox": [
+          600,
+          79,
+          685,
+          173
+        ]
+      },
+      {
+        "file": "game512/fly/fly_10.png",
+        "native": "native/fly/fly_10.png",
+        "source_bbox": [
+          666,
+          77,
+          762,
+          174
+        ]
+      }
+    ],
+    "boost": [
+      {
+        "file": "game512/boost/boost_01.png",
+        "native": "native/boost/boost_01.png",
+        "source_bbox": [
+          1002,
+          69,
+          1149,
+          179
+        ]
+      },
+      {
+        "file": "game512/boost/boost_02.png",
+        "native": "native/boost/boost_02.png",
+        "source_bbox": [
+          1114,
+          69,
+          1254,
+          176
+        ]
+      },
+      {
+        "file": "game512/boost/boost_03.png",
+        "native": "native/boost/boost_03.png",
+        "source_bbox": [
+          1214,
+          66,
+          1345,
+          175
+        ]
+      },
+      {
+        "file": "game512/boost/boost_04.png",
+        "native": "native/boost/boost_04.png",
+        "source_bbox": [
+          1317,
+          67,
+          1438,
+          175
+        ]
+      },
+      {
+        "file": "game512/boost/boost_05.png",
+        "native": "native/boost/boost_05.png",
+        "source_bbox": [
+          1408,
+          67,
+          1533,
+          170
+        ]
+      }
+    ],
+    "target": [
+      {
+        "file": "game512/target/target_01.png",
+        "native": "native/target/target_01.png",
+        "source_bbox": [
+          1,
+          176,
+          206,
+          306
+        ]
+      },
+      {
+        "file": "game512/target/target_02.png",
+        "native": "native/target/target_02.png",
+        "source_bbox": [
+          100,
+          206,
+          238,
+          308
+        ]
+      },
+      {
+        "file": "game512/target/target_03.png",
+        "native": "native/target/target_03.png",
+        "source_bbox": [
+          202,
+          196,
+          353,
+          309
+        ]
+      },
+      {
+        "file": "game512/target/target_04.png",
+        "native": "native/target/target_04.png",
+        "source_bbox": [
+          303,
+          197,
+          497,
+          311
+        ]
+      },
+      {
+        "file": "game512/target/target_05.png",
+        "native": "native/target/target_05.png",
+        "source_bbox": [
+          457,
+          198,
+          603,
+          302
+        ]
+      },
+      {
+        "file": "game512/target/target_06.png",
+        "native": "native/target/target_06.png",
+        "source_bbox": [
+          562,
+          190,
+          720,
+          310
+        ]
+      }
+    ],
+    "cashout": [
+      {
+        "file": "game512/cashout/cashout_01.png",
+        "native": "native/cashout/cashout_01.png",
+        "source_bbox": [
+          853,
+          202,
+          973,
+          299
+        ]
+      },
+      {
+        "file": "game512/cashout/cashout_02.png",
+        "native": "native/cashout/cashout_02.png",
+        "source_bbox": [
+          963,
+          197,
+          1079,
+          297
+        ]
+      },
+      {
+        "file": "game512/cashout/cashout_03.png",
+        "native": "native/cashout/cashout_03.png",
+        "source_bbox": [
+          1066,
+          194,
+          1191,
+          295
+        ]
+      },
+      {
+        "file": "game512/cashout/cashout_04.png",
+        "native": "native/cashout/cashout_04.png",
+        "source_bbox": [
+          1166,
+          199,
+          1294,
+          302
+        ]
+      },
+      {
+        "file": "game512/cashout/cashout_05.png",
+        "native": "native/cashout/cashout_05.png",
+        "source_bbox": [
+          1265,
+          189,
+          1408,
+          306
+        ]
+      },
+      {
+        "file": "game512/cashout/cashout_06.png",
+        "native": "native/cashout/cashout_06.png",
+        "source_bbox": [
+          1393,
+          194,
+          1517,
+          308
+        ]
+      }
+    ],
+    "parachute": [
+      {
+        "file": "game512/parachute/parachute_01.png",
+        "native": "native/parachute/parachute_01.png",
+        "source_bbox": [
+          7,
+          339,
+          99,
+          475
+        ]
+      },
+      {
+        "file": "game512/parachute/parachute_02.png",
+        "native": "native/parachute/parachute_02.png",
+        "source_bbox": [
+          96,
+          333,
+          190,
+          478
+        ]
+      },
+      {
+        "file": "game512/parachute/parachute_03.png",
+        "native": "native/parachute/parachute_03.png",
+        "source_bbox": [
+          183,
+          321,
+          287,
+          477
+        ]
+      },
+      {
+        "file": "game512/parachute/parachute_04.png",
+        "native": "native/parachute/parachute_04.png",
+        "source_bbox": [
+          286,
+          306,
+          399,
+          478
+        ]
+      },
+      {
+        "file": "game512/parachute/parachute_05.png",
+        "native": "native/parachute/parachute_05.png",
+        "source_bbox": [
+          396,
+          311,
+          516,
+          481
+        ]
+      },
+      {
+        "file": "game512/parachute/parachute_06.png",
+        "native": "native/parachute/parachute_06.png",
+        "source_bbox": [
+          514,
+          346,
+          603,
+          482
+        ]
+      },
+      {
+        "file": "game512/parachute/parachute_07.png",
+        "native": "native/parachute/parachute_07.png",
+        "source_bbox": [
+          614,
+          307,
+          735,
+          483
+        ]
+      }
+    ],
+    "crash": [
+      {
+        "file": "game512/crash/crash_01.png",
+        "native": "native/crash/crash_01.png",
+        "source_bbox": [
+          906,
+          360,
+          1038,
+          464
+        ]
+      },
+      {
+        "file": "game512/crash/crash_02.png",
+        "native": "native/crash/crash_02.png",
+        "source_bbox": [
+          1030,
+          320,
+          1268,
+          485
+        ]
+      },
+      {
+        "file": "game512/crash/crash_03.png",
+        "native": "native/crash/crash_03.png",
+        "source_bbox": [
+          1286,
+          360,
+          1414,
+          471
+        ]
+      },
+      {
+        "file": "game512/crash/crash_04.png",
+        "native": "native/crash/crash_04.png",
+        "source_bbox": [
+          1423,
+          336,
+          1511,
+          480
+        ]
+      }
+    ],
+    "hover": [
+      {
+        "file": "game512/hover/hover_01.png",
+        "native": "native/hover/hover_01.png",
+        "source_bbox": [
+          117,
+          504,
+          208,
+          606
+        ]
+      },
+      {
+        "file": "game512/hover/hover_02.png",
+        "native": "native/hover/hover_02.png",
+        "source_bbox": [
+          212,
+          502,
+          298,
+          602
+        ]
+      },
+      {
+        "file": "game512/hover/hover_03.png",
+        "native": "native/hover/hover_03.png",
+        "source_bbox": [
+          299,
+          603,
+          412,
+          638
+        ]
+      },
+      {
+        "file": "game512/hover/hover_04.png",
+        "native": "native/hover/hover_04.png",
+        "source_bbox": [
+          300,
+          496,
+          396,
+          600
+        ]
+      },
+      {
+        "file": "game512/hover/hover_05.png",
+        "native": "native/hover/hover_05.png",
+        "source_bbox": [
+          400,
+          501,
+          492,
+          602
+        ]
+      },
+      {
+        "file": "game512/hover/hover_06.png",
+        "native": "native/hover/hover_06.png",
+        "source_bbox": [
+          510,
+          504,
+          597,
+          603
+        ]
+      },
+      {
+        "file": "game512/hover/hover_07.png",
+        "native": "native/hover/hover_07.png",
+        "source_bbox": [
+          609,
+          505,
+          706,
+          603
+        ]
+      },
+      {
+        "file": "game512/hover/hover_08.png",
+        "native": "native/hover/hover_08.png",
+        "source_bbox": [
+          714,
+          507,
+          801,
+          605
+        ]
+      },
+      {
+        "file": "game512/hover/hover_09.png",
+        "native": "native/hover/hover_09.png",
+        "source_bbox": [
+          812,
+          505,
+          905,
+          603
+        ]
+      },
+      {
+        "file": "game512/hover/hover_10.png",
+        "native": "native/hover/hover_10.png",
+        "source_bbox": [
+          913,
+          505,
+          998,
+          615
+        ]
+      },
+      {
+        "file": "game512/hover/hover_11.png",
+        "native": "native/hover/hover_11.png",
+        "source_bbox": [
+          1006,
+          505,
+          1086,
+          612
+        ]
+      },
+      {
+        "file": "game512/hover/hover_12.png",
+        "native": "native/hover/hover_12.png",
+        "source_bbox": [
+          1097,
+          503,
+          1175,
+          613
+        ]
+      },
+      {
+        "file": "game512/hover/hover_13.png",
+        "native": "native/hover/hover_13.png",
+        "source_bbox": [
+          1188,
+          504,
+          1267,
+          614
+        ]
+      },
+      {
+        "file": "game512/hover/hover_14.png",
+        "native": "native/hover/hover_14.png",
+        "source_bbox": [
+          1277,
+          502,
+          1356,
+          622
+        ]
+      },
+      {
+        "file": "game512/hover/hover_15.png",
+        "native": "native/hover/hover_15.png",
+        "source_bbox": [
+          1366,
+          495,
+          1445,
+          622
+        ]
+      },
+      {
+        "file": "game512/hover/hover_16.png",
+        "native": "native/hover/hover_16.png",
+        "source_bbox": [
+          1446,
+          502,
+          1518,
+          623
+        ]
+      }
+    ]
+  }
+}

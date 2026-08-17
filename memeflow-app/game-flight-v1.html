@@ -1,0 +1,722 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta
+  name="viewport"
+  content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"
+>
+<meta
+  http-equiv="Cache-Control"
+  content="no-store, no-cache, must-revalidate, max-age=0"
+>
+
+<title>MEMEFLOW · Game Flight</title>
+
+<style>
+:root {
+  --safe-top: max(10px, env(safe-area-inset-top));
+  --safe-right: max(8px, env(safe-area-inset-right));
+  --safe-bottom: max(10px, env(safe-area-inset-bottom));
+  --safe-left: max(8px, env(safe-area-inset-left));
+
+  --panel: #071017e8;
+  --line: #1d3442;
+  --text: #f5f8fb;
+  --muted: #8495a6;
+  --good: #68e5ad;
+  --bad: #ff7183;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  overflow: hidden;
+  background: #03070c;
+  color: var(--text);
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    "SF Pro Display",
+    "Segoe UI",
+    sans-serif;
+}
+
+body {
+  background:
+    radial-gradient(
+      circle at 70% 26%,
+      #142333 0%,
+      #071018 36%,
+      #02060a 76%
+    );
+}
+
+button,
+input {
+  font: inherit;
+}
+
+button {
+  min-width: 0;
+}
+
+#game {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  overflow: hidden;
+  touch-action: none;
+}
+
+#stage {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+#stage canvas {
+  position: absolute !important;
+  inset: 0 !important;
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+}
+
+#hud {
+  position: absolute;
+  z-index: 10;
+  top: calc(var(--safe-top) + 3px);
+  left: var(--safe-left);
+  right: var(--safe-right);
+
+  display: flex;
+  align-items: stretch;
+  gap: 7px;
+
+  min-width: 0;
+  pointer-events: none;
+}
+
+.hud-card {
+  min-width: 0;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  backdrop-filter: blur(14px);
+  box-shadow: 0 14px 40px #0008;
+}
+
+.status {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 10px 12px;
+}
+
+.status strong {
+  display: block;
+  font-size: 11px;
+  letter-spacing: .08em;
+}
+
+.status span {
+  display: block;
+  margin-top: 4px;
+
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.mult {
+  flex: 0 0 auto;
+  min-width: 92px;
+  padding: 10px 11px;
+  text-align: right;
+}
+
+.mult b {
+  display: block;
+  font: 800 14px ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.mult small {
+  color: var(--muted);
+  font-size: 9px;
+}
+
+#targetLine,
+#stopLine {
+  position: absolute;
+  z-index: 4;
+  left: 5%;
+  right: 5%;
+  height: 1px;
+  pointer-events: none;
+}
+
+#targetLine {
+  top: 15%;
+  background:
+    linear-gradient(
+      90deg,
+      transparent,
+      #63e5ad66 12%,
+      #63e5ad66 88%,
+      transparent
+    );
+}
+
+#stopLine {
+  top: 82%;
+  background:
+    linear-gradient(
+      90deg,
+      transparent,
+      #ff718355 12%,
+      #ff718355 88%,
+      transparent
+    );
+}
+
+.line-label {
+  position: absolute;
+  right: 0;
+  bottom: 6px;
+
+  max-width: 45vw;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+
+  font: 700 8px ui-monospace, monospace;
+  letter-spacing: .06em;
+}
+
+#targetLine .line-label {
+  color: #72e6b4;
+}
+
+#stopLine .line-label {
+  color: #ff8291;
+}
+
+/* ---------- DEMO CONTROLS ---------- */
+
+#demo {
+  position: absolute;
+  z-index: 11;
+
+  left: var(--safe-left);
+  right: var(--safe-right);
+  bottom: calc(var(--safe-bottom) + 70px);
+
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 5px;
+
+  min-width: 0;
+}
+
+.demoBtn {
+  display: block;
+
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  height: 28px;
+  padding: 0 3px;
+
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #071017d9;
+  color: #9baaba;
+
+  font-size: 7px;
+  line-height: 1;
+  font-weight: 800;
+}
+
+.demoBtn:active {
+  background: #10202c;
+}
+
+/* ---------- ROUND CONTROLS ---------- */
+
+#controls {
+  position: absolute;
+  z-index: 12;
+
+  left: var(--safe-left);
+  right: var(--safe-right);
+  bottom: calc(var(--safe-bottom) + 3px);
+
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1fr)
+    minmax(0, 1fr)
+    minmax(0, 1.15fr);
+
+  gap: 6px;
+  padding: 6px;
+
+  min-width: 0;
+
+  overflow: hidden;
+
+  background: #050b11df;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  backdrop-filter: blur(16px);
+}
+
+.field {
+  width: 100%;
+  min-width: 0;
+  height: 52px;
+  padding: 6px 8px;
+
+  overflow: hidden;
+
+  border: 1px solid #203442;
+  border-radius: 10px;
+  background: #08121a;
+}
+
+.field label {
+  display: block;
+  margin-bottom: 3px;
+
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+
+  color: var(--muted);
+  font-size: 8px;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+
+.field input {
+  display: block;
+
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #fff;
+
+  font: 800 14px ui-monospace, monospace;
+}
+
+.field small {
+  display: block;
+
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+
+  color: #647687;
+  font-size: 7px;
+}
+
+.start {
+  display: block;
+
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  height: 52px;
+  padding: 0 5px;
+
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+
+  border: 1px solid #25664e;
+  border-radius: 10px;
+
+  background:
+    linear-gradient(
+      180deg,
+      #123b2d,
+      #0a241c
+    );
+
+  color: #b9ffdc;
+
+  font-size: 10px;
+  line-height: 1;
+  font-weight: 900;
+  letter-spacing: .03em;
+}
+
+.start:active {
+  transform: translateY(1px);
+}
+
+/* ---------- RESULT ---------- */
+
+#result {
+  position: absolute;
+  z-index: 20;
+  inset: 0;
+
+  display: none;
+  place-items: center;
+
+  background: #02060a88;
+  backdrop-filter: blur(4px);
+}
+
+#result.show {
+  display: grid;
+}
+
+.result-card {
+  width: min(360px, 82vw);
+  padding: 24px;
+
+  text-align: center;
+
+  border: 1px solid #233a49;
+  border-radius: 22px;
+  background: #071017f2;
+  box-shadow: 0 22px 70px #000c;
+}
+
+.result-card h2 {
+  margin: 0 0 8px;
+  font-size: 22px;
+}
+
+.result-card p {
+  margin: 0;
+  color: #8495a6;
+  font-size: 12px;
+}
+
+.result-card button {
+  height: 42px;
+  margin-top: 16px;
+  padding: 0 18px;
+
+  border: 1px solid #2b5366;
+  border-radius: 11px;
+  background: #0b1a24;
+  color: #eaf5fc;
+
+  font-weight: 800;
+}
+
+/* =========================================================
+   PORTRAIT PHONE
+   ========================================================= */
+
+@media
+  (max-width: 600px)
+  and (orientation: portrait) {
+
+  #hud {
+    left: 8px;
+    right: 8px;
+  }
+
+  .status {
+    padding: 8px 9px;
+  }
+
+  .status strong {
+    font-size: 9px;
+  }
+
+  .status span {
+    font-size: 8px;
+  }
+
+  .mult {
+    min-width: 78px;
+    padding: 8px;
+  }
+
+  .mult b {
+    font-size: 12px;
+  }
+
+  #demo {
+    left: 4px;
+    right: 4px;
+
+    bottom: calc(var(--safe-bottom) + 111px);
+
+    grid-template-columns:
+      repeat(3, minmax(0, 1fr));
+
+    gap: 4px;
+  }
+
+  .demoBtn {
+    height: 27px;
+    font-size: 7px;
+    padding: 0 2px;
+  }
+
+  #controls {
+    left: 4px;
+    right: 4px;
+
+    grid-template-columns:
+      minmax(0, 1fr)
+      minmax(0, 1fr);
+
+    gap: 5px;
+    padding: 5px;
+  }
+
+  .field {
+    height: 44px;
+    padding: 5px 7px;
+  }
+
+  .field input {
+    font-size: 13px;
+  }
+
+  .start {
+    grid-column: 1 / -1;
+
+    height: 42px;
+
+    font-size: 10px;
+  }
+}
+
+/* =========================================================
+   LANDSCAPE PHONE
+   ========================================================= */
+
+@media
+  (orientation: landscape)
+  and (max-height: 500px) {
+
+  #hud {
+    top: calc(var(--safe-top) + 1px);
+    left: calc(var(--safe-left) + 2px);
+    right: calc(var(--safe-right) + 2px);
+  }
+
+  .status {
+    max-width: 45vw;
+    padding: 7px 9px;
+  }
+
+  .status strong {
+    font-size: 9px;
+  }
+
+  .status span {
+    font-size: 8px;
+  }
+
+  .mult {
+    min-width: 76px;
+    padding: 7px 8px;
+  }
+
+  .mult b {
+    font-size: 11px;
+  }
+
+  #demo {
+    left: calc(var(--safe-left) + 2px);
+    right: calc(var(--safe-right) + 2px);
+
+    bottom: calc(var(--safe-bottom) + 59px);
+
+    grid-template-columns:
+      repeat(5, minmax(0, 1fr));
+
+    gap: 4px;
+  }
+
+  .demoBtn {
+    height: 25px;
+    font-size: 7px;
+    padding: 0 2px;
+  }
+
+  #controls {
+    left: calc(var(--safe-left) + 2px);
+    right: calc(var(--safe-right) + 2px);
+
+    grid-template-columns:
+      minmax(0, 1fr)
+      minmax(0, 1fr)
+      minmax(0, .82fr);
+
+    gap: 5px;
+    padding: 5px;
+  }
+
+  .field,
+  .start {
+    height: 45px;
+  }
+
+  .field {
+    padding: 4px 7px;
+  }
+
+  .field input {
+    font-size: 12px;
+  }
+
+  .start {
+    font-size: 9px;
+    padding: 0 3px;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div id="game">
+
+  <div id="stage"></div>
+
+  <div id="targetLine">
+    <span
+      class="line-label"
+      id="targetLabel"
+    >TARGET 5.00x</span>
+  </div>
+
+  <div id="stopLine">
+    <span
+      class="line-label"
+      id="stopLabel"
+    >NO STOP-LOSS</span>
+  </div>
+
+  <div id="hud">
+
+    <div class="hud-card status">
+      <strong id="state">READY</strong>
+      <span id="subState">
+        Choose target and press START
+      </span>
+    </div>
+
+    <div class="hud-card mult">
+      <b id="multiplier">1.00x</b>
+      <small id="pnl">+0.0%</small>
+    </div>
+
+  </div>
+
+  <div id="demo">
+    <button class="demoBtn" data-demo="flight">
+      FLIGHT
+    </button>
+
+    <button class="demoBtn" data-demo="stop">
+      STOP
+    </button>
+
+    <button class="demoBtn" data-demo="crash">
+      NO-STOP CRASH
+    </button>
+
+    <button class="demoBtn" data-demo="cash">
+      CASH OUT
+    </button>
+
+    <button class="demoBtn" data-demo="win">
+      TARGET
+    </button>
+  </div>
+
+  <div id="controls">
+
+    <div class="field">
+      <label>Target</label>
+      <input
+        id="target"
+        type="number"
+        value="5"
+        min="1.05"
+        max="100"
+        step="0.05"
+      >
+      <small>multiplier</small>
+    </div>
+
+    <div class="field">
+      <label>Stop-loss</label>
+      <input
+        id="stop"
+        type="number"
+        placeholder="OFF"
+        min="0.1"
+        max="99"
+        step="0.5"
+      >
+      <small>% · blank = off</small>
+    </div>
+
+    <button
+      id="start"
+      class="start"
+    >
+      START ROUND
+    </button>
+
+  </div>
+
+  <div id="result">
+    <div class="result-card">
+      <h2 id="resultTitle">
+        ROUND COMPLETE
+      </h2>
+
+      <p id="resultText"></p>
+
+      <button id="again">
+        PLAY AGAIN
+      </button>
+    </div>
+  </div>
+
+</div>
+
+<script
+  type="module"
+  src="/game-flight-v1.js?v=21"
+></script>
+
+  <script src="/game-live-feed-v1.js?v=1"></script>
+</body>
+</html>

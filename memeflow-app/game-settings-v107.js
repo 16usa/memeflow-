@@ -89,107 +89,703 @@
         'mf-game-settings-embed-style';
 
       injected.textContent=`
-        html,
-        body{
-          width:100%!important;
-          min-width:0!important;
+:root{
+  color-scheme:dark;
+}
 
-          min-height:100%!important;
+html,
+body{
+  width:100%!important;
+  height:100%!important;
+  min-width:0!important;
+  min-height:0!important;
+  margin:0!important;
+  padding:0!important;
+  overflow:hidden!important;
+  background:#05090d!important;
+}
 
-          margin:0!important;
-          padding:0!important;
+body{
+  position:static!important;
+  inset:auto!important;
+  display:block!important;
+}
 
-          background:#05080b!important;
+/* ONE Game settings surface */
+body > #settings{
+  width:100%!important;
+  max-width:none!important;
+  height:100%!important;
+  min-height:0!important;
+  margin:0!important;
+  padding:0!important;
 
-          overflow-x:hidden!important;
-          overflow-y:auto!important;
+  display:flex!important;
+  flex-direction:column!important;
 
-          scroll-behavior:auto!important;
+  border:0!important;
+  border-radius:0!important;
+  box-shadow:none!important;
 
-          overscroll-behavior:contain!important;
+  background:
+    radial-gradient(circle at 50% -20%,rgba(32,213,255,.07),transparent 38%),
+    #05090d!important;
 
-          -webkit-overflow-scrolling:touch!important;
-        }
+  overflow:hidden!important;
+}
 
-        body{
-          position:static!important;
-          inset:auto!important;
+/* Main-site header/summary is duplicated by Game shell */
+#settings .mfs-hero,
+#settings .settings-hero,
+#settings .mfs-context,
+#settings .settings-context{
+  display:none!important;
+}
 
-          display:block!important;
-        }
+/* Game workspace */
+#settings .mfs-body,
+#settings .settings-body{
+  flex:1 1 auto!important;
+  min-height:0!important;
 
-        body > #settings{
-          display:block!important;
+  display:flex!important;
+  flex-direction:column!important;
 
-          position:relative!important;
-          inset:auto!important;
+  gap:6px!important;
+  margin:0!important;
+  padding:6px!important;
 
-          width:calc(100% - 12px)!important;
-          max-width:none!important;
+  overflow:hidden!important;
+  background:transparent!important;
+}
 
-          min-height:0!important;
+/* HUD tabs */
+#mf-game-policy-tabs{
+  flex:0 0 auto!important;
 
-          margin:6px!important;
+  display:grid!important;
+  grid-template-columns:.85fr .85fr 1.18fr 1fr!important;
 
-          box-shadow:none!important;
-        }
+  gap:4px!important;
+  margin:0!important;
+  padding:3px!important;
 
-        #settings{
-          scroll-margin:0!important;
-        }
+  border:1px solid #16242e!important;
+  border-radius:12px!important;
 
-        /*
-          The outer Game overlay already has its own title.
-          Keep the original settings summary because it
-          contains Profile / Mode / Daily Limit / Position.
-        */
+  background:#070c11!important;
+}
 
-        #settings .mfs-hero{
-          margin-top:0!important;
-        }
+.mf-game-policy-tab{
+  appearance:none!important;
 
-        /*
-          Absolutely no AI assistant / floating page tools
-          are allowed inside the Game settings window.
-        */
+  min-width:0!important;
+  min-height:36px!important;
 
-        [id*="assistant" i],
-        [class*="assistant" i],
-        [id*="openai" i],
-        [class*="openai" i],
-        [class*="floating-ai" i],
-        [class*="ai-fab" i]{
-          display:none!important;
-        }
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
 
-        @media(max-width:700px){
+  padding:0 4px!important;
 
-          body > #settings{
-            width:calc(100% - 8px)!important;
+  border:1px solid transparent!important;
+  border-radius:9px!important;
 
-            margin:4px!important;
+  background:transparent!important;
+  color:#72838e!important;
 
-            border-radius:12px!important;
-          }
-        }
+  font:800 10px/1 inherit!important;
+  letter-spacing:.055em!important;
+  text-transform:uppercase!important;
 
-        @media
-          (max-height:500px)
-          and (orientation:landscape){
+  white-space:nowrap!important;
+  overflow:hidden!important;
 
-          body > #settings{
-            width:calc(100% - 6px)!important;
+  box-shadow:none!important;
+}
 
-            margin:3px!important;
+.mf-game-policy-tab::before,
+.mf-game-policy-tab::after{
+  content:none!important;
+  display:none!important;
+}
 
-            border-radius:9px!important;
-          }
-        }
-      `;
+.mf-game-policy-tab.active{
+  color:#e5fbff!important;
+
+  border-color:#168aa5!important;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(35,211,255,.13),
+      rgba(35,211,255,.055)
+    )!important;
+
+  box-shadow:
+    inset 0 0 0 1px rgba(50,218,255,.08),
+    0 0 18px rgba(21,190,225,.05)!important;
+}
+
+/* One accordion container */
+#settings .mfs-accordion,
+#settings .settings-accordion{
+  flex:1 1 auto!important;
+  min-height:0!important;
+
+  display:flex!important;
+  flex-direction:column!important;
+
+  margin:0!important;
+  padding:0!important;
+
+  border:0!important;
+  border-radius:0!important;
+
+  background:transparent!important;
+  box-shadow:none!important;
+
+  overflow:hidden!important;
+}
+
+/* Only selected Game section exists visually */
+#settings .mfs-group,
+#settings .settings-group{
+  display:none!important;
+}
+
+#settings .mfs-group.mf-game-active-policy,
+#settings .settings-group.mf-game-active-policy{
+  flex:1 1 auto!important;
+  min-height:0!important;
+
+  display:flex!important;
+  flex-direction:column!important;
+
+  margin:0!important;
+
+  border:1px solid #17313c!important;
+  border-radius:13px!important;
+
+  background:#071016!important;
+
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.025),
+    0 0 0 1px rgba(27,200,235,.025)!important;
+
+  overflow:hidden!important;
+}
+
+/* HUD section title */
+#settings .mfs-group.mf-game-active-policy > :first-child,
+#settings .settings-group.mf-game-active-policy > :first-child{
+  flex:0 0 auto!important;
+
+  min-height:50px!important;
+
+  display:flex!important;
+  align-items:center!important;
+
+  margin:0!important;
+  padding:8px 12px!important;
+
+  border:0!important;
+  border-bottom:1px solid #13242d!important;
+
+  background:
+    linear-gradient(
+      90deg,
+      rgba(25,202,238,.055),
+      transparent 58%
+    )!important;
+
+  cursor:default!important;
+  pointer-events:none!important;
+}
+
+/* Active content = only scrollable region */
+#settings .mfs-group.mf-game-active-policy .mfs-group-body,
+#settings .settings-group.mf-game-active-policy .settings-group-body{
+  flex:1 1 auto!important;
+  min-height:0!important;
+
+  display:block!important;
+
+  margin:0!important;
+  padding:8px!important;
+
+  overflow-x:hidden!important;
+  overflow-y:auto!important;
+
+  overscroll-behavior:contain!important;
+  -webkit-overflow-scrolling:touch!important;
+}
+
+/* Field grid */
+#settings .mfs-fields,
+#settings .settings-fields{
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+
+  gap:6px!important;
+
+  margin:0!important;
+}
+
+/* HUD field cards */
+#settings .mfs-field{
+  min-width:0!important;
+
+  margin:0!important;
+  padding:7px!important;
+
+  border:1px solid #13232c!important;
+  border-radius:10px!important;
+
+  background:#080e13!important;
+
+  box-shadow:none!important;
+}
+
+#settings .mfs-field:hover{
+  border-color:#1a3440!important;
+}
+
+#settings label,
+#settings .mfs-field label{
+  color:#758995!important;
+
+  font-size:10px!important;
+  font-weight:750!important;
+  line-height:1.15!important;
+  letter-spacing:.01em!important;
+}
+
+/* Inputs */
+#settings input,
+#settings select,
+#settings textarea{
+  box-sizing:border-box!important;
+
+  width:100%!important;
+  min-height:34px!important;
+
+  margin-top:5px!important;
+  padding:6px 9px!important;
+
+  border:1px solid #263744!important;
+  border-radius:8px!important;
+
+  outline:none!important;
+
+  background:#080f15!important;
+  color:#eff8fb!important;
+
+  font-size:14px!important;
+
+  box-shadow:
+    inset 0 1px 2px rgba(0,0,0,.22)!important;
+}
+
+#settings input:focus,
+#settings select:focus,
+#settings textarea:focus{
+  border-color:#22c9e9!important;
+
+  box-shadow:
+    0 0 0 2px rgba(34,201,233,.08)!important;
+}
+
+/* Toggle / option cards */
+#settings .mfs-toggle-row{
+  min-height:42px!important;
+
+  margin:0 0 5px!important;
+  padding:7px 9px!important;
+
+  border:1px solid #142630!important;
+  border-radius:9px!important;
+
+  background:#080f14!important;
+}
+
+#settings .mfs-profile-selector,
+#settings .mfs-mode-selector{
+  display:grid!important;
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+
+  gap:6px!important;
+}
+
+#settings .mfs-profile-option,
+#settings .mfs-mode-option{
+  min-width:0!important;
+  min-height:52px!important;
+
+  padding:8px!important;
+
+  border:1px solid #1c2c36!important;
+  border-radius:10px!important;
+
+  background:#090f14!important;
+  color:#dce8ed!important;
+
+  box-shadow:none!important;
+}
+
+#settings .mfs-profile-option.active,
+#settings .mfs-mode-option.active{
+  border-color:#24c9e7!important;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(35,205,235,.10),
+      rgba(35,205,235,.035)
+    )!important;
+
+  box-shadow:
+    inset 3px 0 0 #4ce5ff!important;
+}
+
+/* Secondary filter controls */
+#settings .mfs-filter-tabs{
+  display:flex!important;
+
+  gap:4px!important;
+  margin:0 0 6px!important;
+  padding:3px!important;
+
+  border:1px solid #14242d!important;
+  border-radius:9px!important;
+
+  background:#060b0f!important;
+
+  overflow-x:auto!important;
+}
+
+#settings .mfs-filter-tab{
+  flex:1 0 auto!important;
+
+  min-height:30px!important;
+
+  padding:0 8px!important;
+
+  border:1px solid transparent!important;
+  border-radius:7px!important;
+
+  background:transparent!important;
+  color:#72838e!important;
+
+  font-size:9px!important;
+  font-weight:800!important;
+}
+
+#settings .mfs-filter-tab.active{
+  border-color:#225f70!important;
+  background:#0b2028!important;
+  color:#d9f8ff!important;
+}
+
+#settings .mfs-filter-pane{
+  padding-top:4px!important;
+}
+
+/* Launchpad / chips */
+#settings button:not(.btn):not(.mf-game-policy-tab){
+  border-radius:9px!important;
+}
+
+/* Kill giant explanatory blocks */
+#settings .mfs-sync-copy{
+  margin:5px 0!important;
+
+  color:#758792!important;
+
+  font-size:10px!important;
+  line-height:1.35!important;
+}
+
+/* Remove redundant status copy above footer */
+#settings .mfs-save-state,
+#settings .settings-save-state,
+#settingsSourceTitle,
+#settingsSourceText,
+#settingsScopeBadge,
+#settingsEnforcementBadge,
+#settingsExecutionBadge{
+  display:none!important;
+}
+
+/* Game command bar */
+#settings .mfs-footer,
+#settings .settings-footer{
+  flex:0 0 auto!important;
+
+  position:relative!important;
+  inset:auto!important;
+
+  margin:0!important;
+  padding:
+    5px
+    6px
+    calc(5px + env(safe-area-inset-bottom))!important;
+
+  border:0!important;
+  border-top:1px solid #14232b!important;
+
+  background:#050a0e!important;
+
+  box-shadow:none!important;
+}
+
+#settings .mfs-footer > p,
+#settings .settings-footer > p,
+#settings .mfs-footer > div:not(.mfs-footer-actions),
+#settings .settings-footer > div:not(.settings-footer-actions){
+  display:none!important;
+}
+
+#settings .mfs-footer-actions,
+#settings .settings-footer-actions{
+  display:grid!important;
+  grid-template-columns:.9fr .9fr 1.25fr!important;
+
+  gap:5px!important;
+}
+
+#settings .btn{
+  min-width:0!important;
+  min-height:34px!important;
+
+  padding:0 7px!important;
+
+  border:1px solid #273945!important;
+  border-radius:8px!important;
+
+  background:#081017!important;
+  color:#9dadb6!important;
+
+  font-size:9px!important;
+  font-weight:800!important;
+
+  white-space:nowrap!important;
+
+  box-shadow:none!important;
+}
+
+#settings .mfs-impact{
+  color:#bdeffc!important;
+}
+
+#settings .mfs-save,
+#settings #settingsSave{
+  border-color:#20a7c2!important;
+
+  background:
+    linear-gradient(
+      180deg,
+      #123845,
+      #0b2731
+    )!important;
+
+  color:#e5fbff!important;
+
+  box-shadow:
+    inset 0 0 0 1px rgba(72,224,255,.08)!important;
+}
+
+#settings .mfs-save::before,
+#settings #settingsSave::before{
+  color:#55e7ff!important;
+}
+
+/* Never show floating main-site utilities */
+[id*="assistant" i],
+[class*="assistant" i],
+[id*="openai" i],
+[class*="openai" i],
+[class*="floating-ai" i],
+[class*="ai-fab" i]{
+  display:none!important;
+}
+
+/* iPhone portrait */
+@media(max-width:700px){
+  #settings .mfs-body,
+  #settings .settings-body{
+    gap:5px!important;
+    padding:5px!important;
+  }
+
+  #mf-game-policy-tabs{
+    gap:3px!important;
+  }
+
+  .mf-game-policy-tab{
+    min-height:34px!important;
+    padding:0 2px!important;
+    font-size:9px!important;
+  }
+
+  #settings .mfs-group.mf-game-active-policy > :first-child,
+  #settings .settings-group.mf-game-active-policy > :first-child{
+    min-height:47px!important;
+    padding:7px 9px!important;
+  }
+
+  #settings .mfs-group.mf-game-active-policy .mfs-group-body,
+  #settings .settings-group.mf-game-active-policy .settings-group-body{
+    padding:7px!important;
+  }
+
+  #settings .mfs-fields,
+  #settings .settings-fields{
+    gap:5px!important;
+  }
+
+  #settings .mfs-field{
+    padding:6px!important;
+  }
+
+  #settings .mfs-profile-selector,
+  #settings .mfs-mode-selector{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  }
+}
+
+/* Landscape Game HUD */
+@media(max-height:520px) and (orientation:landscape){
+  #settings .mfs-body,
+  #settings .settings-body{
+    display:grid!important;
+    grid-template-columns:120px minmax(0,1fr)!important;
+    grid-template-rows:minmax(0,1fr)!important;
+    gap:5px!important;
+  }
+
+  #mf-game-policy-tabs{
+    grid-template-columns:1fr!important;
+    grid-template-rows:repeat(4,1fr)!important;
+    align-self:stretch!important;
+  }
+
+  .mf-game-policy-tab{
+    min-height:0!important;
+  }
+
+  #settings .mfs-accordion,
+  #settings .settings-accordion{
+    min-width:0!important;
+  }
+
+  #settings .mfs-footer,
+  #settings .settings-footer{
+    position:absolute!important;
+    right:8px!important;
+    bottom:6px!important;
+    left:134px!important;
+    z-index:20!important;
+  }
+}
+`;
 
       doc.head.appendChild(
         injected
       );
+
+        function mfGamePolicyTabsV3(){
+          const root=doc.querySelector('#settings');
+          if(!root)return;
+
+          const body=
+            root.querySelector('.mfs-body, .settings-body');
+
+          if(!body)return;
+
+          const accordion=
+            root.querySelector(
+              '.mfs-accordion, .settings-accordion'
+            );
+
+          if(!accordion)return;
+
+          const sections=[
+            ...accordion.querySelectorAll(
+              ':scope > .mfs-group, :scope > .settings-group'
+            )
+          ];
+
+          if(sections.length<2)return;
+
+          let tabs=doc.querySelector('#mf-game-policy-tabs');
+
+          if(!tabs){
+            tabs=doc.createElement('div');
+            tabs.id='mf-game-policy-tabs';
+            body.prepend(tabs);
+          }
+
+          const labels=['Mode','Risk','Strategy','Filters'];
+
+          const activate=(index)=>{
+            sections.forEach((section,i)=>{
+              section.classList.toggle(
+                'mf-game-active-policy',
+                i===index
+              );
+
+              if(i===index){
+                section.setAttribute('open','');
+                if(section.tagName==='DETAILS')section.open=true;
+              }
+
+              if(i===index){
+                section.setAttribute('open','');
+
+                if(section.tagName==='DETAILS'){
+                  section.open=true;
+                }
+
+                section
+                  .querySelectorAll('details')
+                  .forEach(node=>{
+                    node.open=true;
+                  });
+
+                section
+                  .querySelectorAll(
+                    '.mfs-group-body, .settings-group-body'
+                  )
+                  .forEach(node=>{
+                    node.style.display='block';
+                  });
+              }
+            });
+
+            [...tabs.children].forEach((button,i)=>{
+              button.classList.toggle('active',i===index);
+            });
+          };
+
+          if(!tabs.children.length){
+            sections.slice(0,4).forEach((section,index)=>{
+              const button=doc.createElement('button');
+              button.type='button';
+              button.className='mf-game-policy-tab';
+              button.textContent=labels[index] || String(index+1);
+              button.addEventListener('click',()=>activate(index));
+              tabs.appendChild(button);
+            });
+          }
+
+          activate(0);
+        }
+
+        mfGamePolicyTabsV3();
+        frame.contentWindow.setTimeout(mfGamePolicyTabsV3,250);
+        frame.contentWindow.setTimeout(mfGamePolicyTabsV3,800);
+
 
       /*
         Some main-site modules can append floating elements
