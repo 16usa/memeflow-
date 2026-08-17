@@ -3582,7 +3582,7 @@ body.mf-game-immersive
 
 /* === ROUND HISTORY TOUCH SCROLL END === */
 
-/* === V37 ORIGINAL PROPORTIONS OWNER START === */
+/* === V38 PRECISION VISUAL SYSTEM START === */
 
 /*
   One physical viewport = one layout budget.
@@ -3626,30 +3626,47 @@ body{
     Short phones therefore shrink vertically even when wide.
   */
   :root{
-    --mf-gap-1:clamp(1px,min(.40vw,.20dvh),3px);
-    --mf-gap-2:clamp(2px,min(.65vw,.30dvh),4px);
-    --mf-gap-3:clamp(3px,min(.85vw,.40dvh),5px);
+    /*
+      Precision rhythm.
+      Every visual distance derives from the same scale.
+    */
+    --mf-gap-1:clamp(2px,min(.48vw,.24dvh),3px);
+    --mf-gap-2:clamp(3px,min(.72vw,.34dvh),4px);
+    --mf-gap-3:clamp(4px,min(.92vw,.44dvh),5px);
 
-    --mf-card-py:clamp(3px,min(.95vw,.40dvh),6px);
-    --mf-card-px:clamp(4px,min(1.20vw,.60dvh),8px);
+    --mf-card-py:clamp(5px,min(1.12vw,.52dvh),7px);
+    --mf-card-px:clamp(6px,min(1.38vw,.66dvh),9px);
 
-    --mf-control-py:clamp(2px,min(.70vw,.30dvh),4px);
-    --mf-control-px:clamp(4px,min(1.10vw,.55dvh),7px);
+    --mf-control-py:clamp(3px,min(.82vw,.36dvh),5px);
+    --mf-control-px:clamp(5px,min(1.18vw,.56dvh),8px);
 
-    --mf-cell-py:clamp(2px,min(.70vw,.30dvh),4px);
-    --mf-cell-px:clamp(4px,min(1.05vw,.50dvh),7px);
+    --mf-cell-py:clamp(3px,min(.76vw,.34dvh),5px);
+    --mf-cell-px:clamp(5px,min(1.08vw,.52dvh),8px);
+
+    --mf-r-card:clamp(9px,min(2.5vw,1.25dvh),14px);
+    --mf-r-sm:clamp(7px,min(1.9vw,.95dvh),11px);
+    --mf-r-xs:clamp(5px,min(1.45vw,.72dvh),8px);
+
+    --mf-border-soft:rgba(160,181,200,.14);
+    --mf-border-mid:rgba(160,181,200,.22);
+
+    --mf-text-main:#eef3f6;
+    --mf-text-value:#f6f8fa;
+    --mf-text-label:#a1adb7;
+    --mf-text-muted:#75818c;
+    --mf-text-dim:#5e6974;
 
     --mf-h-xs:clamp(18px,min(5.3vw,2.55dvh),26px);
     --mf-h-sm:clamp(21px,min(6.2vw,3.05dvh),30px);
     --mf-h-md:clamp(24px,min(7.1vw,3.55dvh),34px);
     --mf-h-lg:clamp(28px,min(8.3vw,4.25dvh),40px);
 
-    --mf-f-micro:clamp(5px,min(1.45vw,.62dvh),7px);
-    --mf-f-label:clamp(5.5px,min(1.65vw,.72dvh),8px);
-    --mf-f-body:clamp(6px,min(1.85vw,.82dvh),9px);
-    --mf-f-value:clamp(7px,min(2.10vw,.98dvh),11px);
-    --mf-f-control:clamp(8.5px,min(2.65vw,1.25dvh),14px);
-    --mf-f-hero:clamp(13px,min(4.2vw,1.95dvh),21px);
+    --mf-f-micro:clamp(5.2px,min(1.48vw,.64dvh),7px);
+    --mf-f-label:clamp(5.8px,min(1.68vw,.74dvh),8px);
+    --mf-f-body:clamp(6.3px,min(1.88vw,.84dvh),9px);
+    --mf-f-value:clamp(7.4px,min(2.14vw,1.00dvh),11px);
+    --mf-f-control:clamp(8.8px,min(2.68vw,1.26dvh),14px);
+    --mf-f-hero:clamp(13px,min(4.15vw,1.92dvh),21px);
   }
 
   .layout{
@@ -3963,6 +3980,261 @@ body{
       var(--mf-cell-py)
       var(--mf-cell-px)!important;
   }
+
+
+  /* =======================================================
+     PRECISION VISUAL POLISH
+  ======================================================= */
+
+  /*
+    Primary card treatment:
+    identical radius, border strength and background depth.
+  */
+  .stage-card,
+  .launch-panel,
+  .token-panel,
+  .stats-panel,
+  .history-panel{
+    border:1px solid var(--mf-border-soft)!important;
+    border-radius:var(--mf-r-card)!important;
+
+    background:
+      linear-gradient(
+        180deg,
+        rgba(12,17,22,.96),
+        rgba(7,10,14,.985)
+      )!important;
+
+    box-shadow:
+      0 8px 24px rgba(0,0,0,.16)!important;
+  }
+
+  /*
+    Main titles:
+    same visual weight in every card.
+  */
+  .panel-title,
+  .token-panel > .panel-row:first-child,
+  .stats-panel > .panel-row:first-child,
+  .history-panel summary{
+    color:var(--mf-text-main)!important;
+  }
+
+  .panel-title small,
+  .panel-title b,
+  .token-panel .panel-row,
+  .stats-panel .panel-row,
+  .history-panel summary{
+    letter-spacing:.11em!important;
+  }
+
+  /*
+    Secondary copy uses one muted hierarchy.
+  */
+  .lead,
+  .token-head small,
+  .quality-line,
+  .telemetry,
+  .safety-note,
+  .history-panel .history-empty,
+  .history-panel .history-toolbar{
+    color:var(--mf-text-muted)!important;
+  }
+
+  .field-title,
+  .position-strip small,
+  .risk-metrics small,
+  .token-metrics small,
+  .stats-grid small,
+  .history-row small{
+    color:var(--mf-text-dim)!important;
+  }
+
+  /*
+    Important numeric values use the same brightness.
+  */
+  .stake-input input,
+  .position-strip b,
+  .risk-metrics b,
+  .token-metrics b,
+  .stats-grid b,
+  .history-row b{
+    color:var(--mf-text-value);
+  }
+
+  /*
+    Internal framed elements:
+    same radius + same border opacity.
+  */
+  .game-utility,
+  .stake-input,
+  .quick-bets button,
+  .select-grid select,
+  .target-presets button,
+  .risk-deck,
+  .risk-metrics,
+  .token-metrics,
+  .stats-grid,
+  .safety-note{
+    border-color:var(--mf-border-soft)!important;
+  }
+
+  .game-utility,
+  .stake-input,
+  .risk-deck,
+  .token-metrics,
+  .stats-grid,
+  .safety-note{
+    border-radius:var(--mf-r-sm)!important;
+  }
+
+  .quick-bets button,
+  .select-grid select,
+  .target-presets button{
+    border-radius:var(--mf-r-xs)!important;
+  }
+
+  /*
+    Selected/active controls get one cyan treatment.
+  */
+  .quick-bets button.active,
+  .target-presets button.active{
+    border-color:rgba(109,220,255,.34)!important;
+    background:rgba(109,220,255,.055)!important;
+    color:#edfaff!important;
+  }
+
+  /*
+    Standard group spacing.
+  */
+  .game-utility,
+  .quick-bets,
+  .select-grid,
+  .target-presets,
+  .risk-metrics{
+    gap:var(--mf-gap-1)!important;
+  }
+
+  .token-head,
+  .quality-line,
+  .token-metrics,
+  .telemetry,
+  .stats-grid,
+  .safety-note{
+    margin-top:var(--mf-gap-2)!important;
+  }
+
+  /*
+    Metric cells share identical inset.
+  */
+  .risk-metrics > div,
+  .token-metrics > div,
+  .stats-grid > div{
+    padding:
+      var(--mf-cell-py)
+      var(--mf-cell-px)!important;
+  }
+
+  /*
+    Same label/value rhythm in every metric cell.
+  */
+  .risk-metrics small,
+  .token-metrics small,
+  .stats-grid small{
+    display:block;
+    margin:0!important;
+    line-height:1.08!important;
+  }
+
+  .risk-metrics b,
+  .token-metrics b,
+  .stats-grid b{
+    display:block;
+    margin-top:var(--mf-gap-1)!important;
+    line-height:1.02!important;
+  }
+
+  /*
+    Position strip follows the exact same numeric rhythm.
+  */
+  .position-strip > div{
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+  }
+
+  .position-strip small{
+    margin:0!important;
+    line-height:1!important;
+  }
+
+  .position-strip b{
+    margin-top:var(--mf-gap-1)!important;
+    line-height:1!important;
+  }
+
+  /*
+    Launch Control sections should visually lock
+    to the same left/right edges.
+  */
+  .launch-panel > .game-utility,
+  .launch-panel > .stake-input,
+  .launch-panel > .quick-bets,
+  .launch-panel > .select-grid,
+  .launch-panel > .target-presets,
+  .launch-panel > .risk-deck,
+  .launch-panel > .start-button,
+  .launch-panel > .cash-button{
+    width:100%!important;
+  }
+
+  /*
+    Primary buttons use equal corner geometry and
+    consistent typography positioning.
+  */
+  .start-button,
+  .cash-button,
+  .auto-button{
+    border-radius:var(--mf-r-sm)!important;
+  }
+
+  .start-button,
+  .cash-button{
+    gap:var(--mf-gap-2)!important;
+  }
+
+  /*
+    Round History separators match all other borders.
+  */
+  .history-row{
+    border-color:var(--mf-border-soft)!important;
+  }
+
+  /*
+    Avoid overly dim disabled-looking copy when it is
+    informational rather than actually disabled.
+  */
+  .telemetry b,
+  .panel-row b,
+  .quality-line b{
+    color:var(--mf-text-label)!important;
+  }
+
+  /*
+    Keep positive / negative semantic colors untouched.
+  */
+  .positive,
+  .stats-grid b.positive,
+  .history-row b.positive{
+    color:var(--green)!important;
+  }
+
+  .negative,
+  .stats-grid b.negative,
+  .history-row b.negative{
+    color:var(--red)!important;
+  }
+
 }
 
 /* =========================================================
@@ -4098,4 +4370,4 @@ body{
   }
 }
 
-/* === V37 ORIGINAL PROPORTIONS OWNER END === */
+/* === V38 PRECISION VISUAL SYSTEM END === */
