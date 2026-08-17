@@ -1,7 +1,7 @@
 (()=>{
   'use strict';
 
-  const VERSION='1.0';
+  const VERSION='1.1';
 
   const USD_KEY='memeflow.game.displayCurrency';
   const SOL_PRICE_KEY='memeflow.game.solUsd';
@@ -397,12 +397,27 @@
     displayBet=
       sourceBet.cloneNode(false);
 
+    /*
+      cloneNode copies the hidden source class too.
+      The display input must remain visible and interactive.
+    */
+    displayBet.classList.remove(
+      'currency-source-input'
+    );
+
     displayBet.id=
       'betInputDisplay';
 
     displayBet.removeAttribute(
       'name'
     );
+
+    displayBet.removeAttribute(
+      'min'
+    );
+
+    displayBet.step=
+      'any';
 
     displayBet.removeAttribute(
       'aria-describedby'
