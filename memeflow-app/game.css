@@ -3582,7 +3582,7 @@ body.mf-game-immersive
 
 /* === ROUND HISTORY TOUCH SCROLL END === */
 
-/* === V36 STAGE BALANCE OWNER START === */
+/* === V37 ORIGINAL PROPORTIONS OWNER START === */
 
 /*
   One physical viewport = one layout budget.
@@ -3639,10 +3639,10 @@ body{
     --mf-cell-py:clamp(2px,min(.70vw,.30dvh),4px);
     --mf-cell-px:clamp(4px,min(1.05vw,.50dvh),7px);
 
-    --mf-h-xs:clamp(18px,min(5.5vw,2.8dvh),27px);
-    --mf-h-sm:clamp(21px,min(6.5vw,3.3dvh),31px);
-    --mf-h-md:clamp(24px,min(7.4vw,3.9dvh),36px);
-    --mf-h-lg:clamp(28px,min(8.7vw,4.7dvh),42px);
+    --mf-h-xs:clamp(18px,min(5.3vw,2.55dvh),26px);
+    --mf-h-sm:clamp(21px,min(6.2vw,3.05dvh),30px);
+    --mf-h-md:clamp(24px,min(7.1vw,3.55dvh),34px);
+    --mf-h-lg:clamp(28px,min(8.3vw,4.25dvh),40px);
 
     --mf-f-micro:clamp(5px,min(1.45vw,.62dvh),7px);
     --mf-f-label:clamp(5.5px,min(1.65vw,.72dvh),8px);
@@ -3689,10 +3689,10 @@ body{
       Launch Control spans all three rows.
     */
     grid-template-rows:
-      minmax(0,36fr)
-      minmax(0,28fr)
-      minmax(0,13fr)
-      minmax(0,23fr)!important;
+      minmax(0,40fr)
+      minmax(0,26fr)
+      minmax(0,12fr)
+      minmax(0,22fr)!important;
 
     gap:var(--mf-gap-3)!important;
   }
@@ -3738,6 +3738,7 @@ body{
   .stage-head{
     min-height:0!important;
     height:auto!important;
+    flex:none!important;
 
     padding:
       var(--mf-cell-py)
@@ -3747,6 +3748,7 @@ body{
   .position-strip{
     min-height:0!important;
     height:auto!important;
+    flex:none!important;
   }
 
   .position-strip > div{
@@ -4004,10 +4006,10 @@ body{
 
   .layout{
     grid-template-rows:
-      minmax(0,38fr)
-      minmax(0,27fr)
-      minmax(0,12fr)
-      minmax(0,23fr)!important;
+      minmax(0,42fr)
+      minmax(0,25fr)
+      minmax(0,11fr)
+      minmax(0,22fr)!important;
   }
 }
 
@@ -4096,4 +4098,4 @@ body{
   }
 }
 
-/* === V36 STAGE BALANCE OWNER END === */
+/* === V37 ORIGINAL PROPORTIONS OWNER END === */
