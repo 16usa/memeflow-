@@ -3582,7 +3582,7 @@ body.mf-game-immersive
 
 /* === ROUND HISTORY TOUCH SCROLL END === */
 
-/* === V52 CLEAN VISUAL HIERARCHY START === */
+/* === V54 STAGE FIRST START === */
 
 /*
   One physical viewport = one layout budget.
@@ -5482,4 +5482,216 @@ body{
   }
 }
 
-/* === V52 CLEAN VISUAL HIERARCHY END === */
+
+
+  /* =======================================================
+     V54 MOBILE STAGE FIRST
+  ======================================================= */
+
+  @media (max-width:860px) and (orientation:portrait){
+
+    /*
+      The page may grow vertically.
+      Do not force every information card into one viewport.
+    */
+    html,
+    body{
+      height:auto!important;
+      min-height:100%!important;
+    }
+
+    body{
+      position:static!important;
+      inset:auto!important;
+
+      overflow-x:hidden!important;
+      overflow-y:auto!important;
+
+      -webkit-overflow-scrolling:touch!important;
+      overscroll-behavior-y:auto!important;
+    }
+
+    .game{
+      width:100%!important;
+
+      height:auto!important;
+      min-height:100dvh!important;
+      max-height:none!important;
+
+      overflow:visible!important;
+    }
+
+    /*
+      Stage first, existing two-column dashboard below.
+    */
+    .layout{
+      width:100%!important;
+
+      height:auto!important;
+      min-height:0!important;
+      max-height:none!important;
+
+      display:grid!important;
+
+      grid-template-columns:
+        minmax(0,1fr)
+        minmax(0,1fr)!important;
+
+      grid-template-rows:
+        auto
+        auto
+        auto
+        auto!important;
+
+      gap:clamp(5px,1.2vw,8px)!important;
+
+      padding:
+        clamp(5px,1.2vw,8px)!important;
+
+      align-items:start!important;
+
+      overflow:visible!important;
+    }
+
+    /*
+      Main game area.
+      Much larger than the previous compressed Stage.
+    */
+    .stage-card{
+      grid-column:1 / -1!important;
+      grid-row:1!important;
+
+      width:100%!important;
+
+      height:clamp(
+        430px,
+        72dvh,
+        620px
+      )!important;
+
+      min-height:430px!important;
+      max-height:none!important;
+
+      display:grid!important;
+
+      grid-template-rows:
+        clamp(28px,4dvh,36px)
+        minmax(0,1fr)
+        clamp(42px,6dvh,54px)!important;
+
+      overflow:hidden!important;
+    }
+
+    .stage-card > .world,
+    #world{
+      width:100%!important;
+      height:auto!important;
+
+      min-width:0!important;
+      min-height:0!important;
+
+      align-self:stretch!important;
+    }
+
+    /*
+      Keep Stage chrome compact.
+      Extra height goes to the actual flight area.
+    */
+    .stage-head{
+      min-height:0!important;
+      height:auto!important;
+
+      padding:
+        var(--mf-cell-py)
+        var(--mf-card-px)!important;
+    }
+
+    .position-strip{
+      min-height:0!important;
+      height:auto!important;
+    }
+
+    .position-strip > div{
+      min-height:0!important;
+
+      display:flex!important;
+      flex-direction:column!important;
+      justify-content:center!important;
+    }
+
+    /*
+      Existing dashboard remains two columns.
+    */
+    .launch-panel{
+      grid-column:1!important;
+      grid-row:2 / span 3!important;
+
+      height:auto!important;
+      min-height:0!important;
+      max-height:none!important;
+
+      align-self:start!important;
+
+      overflow:visible!important;
+    }
+
+    .token-panel{
+      grid-column:2!important;
+      grid-row:2!important;
+    }
+
+    .stats-panel{
+      grid-column:2!important;
+      grid-row:3!important;
+    }
+
+    .history-panel{
+      grid-column:2!important;
+      grid-row:4!important;
+    }
+
+    .token-panel,
+    .stats-panel,
+    .history-panel{
+      width:100%!important;
+
+      height:auto!important;
+      min-height:0!important;
+      max-height:none!important;
+
+      align-self:start!important;
+    }
+
+    /*
+      Information must stay readable.
+    */
+    .launch-panel .lead,
+    .token-head small,
+    .quality-line,
+    #riskCopy,
+    .stats-panel .safety-note{
+      max-height:none!important;
+
+      white-space:normal!important;
+      text-overflow:clip!important;
+    }
+  }
+
+  /*
+    Smaller phones get a large Stage too,
+    but avoid an unnecessarily huge fixed minimum.
+  */
+  @media
+    (max-width:620px)
+    and (orientation:portrait)
+    and (max-height:720px){
+
+    .stage-card{
+      height:68dvh!important;
+      min-height:390px!important;
+    }
+  }
+
+  /* ======================================================= */
+
+/* === V54 STAGE FIRST END === */
