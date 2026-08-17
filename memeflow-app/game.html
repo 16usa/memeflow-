@@ -166,7 +166,12 @@
 
         <label class="field-title" for="betInput">Paper stake</label>
         <div class="stake-input"><span id="stakeCurrencyPrefix">$</span><input id="betInput" inputmode="decimal" type="number" min="1" step="1" value="100"></div>
-        <div class="quick-bets"><button data-bet="25" type="button">$25</button><button data-bet="50" type="button">$50</button><button data-bet="100" class="active" type="button">$100</button><button data-bet="250" type="button">$250</button></div>
+        <div class="quick-bets">
+          <button data-stake-pct="0.25" type="button">25%</button>
+          <button data-stake-pct="0.50" type="button">50%</button>
+          <button data-stake-pct="0.75" type="button">75%</button>
+          <button data-stake-pct="1" type="button">MAX</button>
+        </div>
 
         <div class="select-grid">
           <label><span>Auto cash out</span><select id="autoCashout"><option value="0">Manual</option><option value="1.2">1.20×</option><option value="1.5" selected>1.50×</option><option value="2">2.00×</option><option value="2.5">2.50×</option><option value="3">3.00×</option><option value="5">5.00×</option></select></label>
@@ -242,8 +247,9 @@
   </article>
 </div>
 <script type="module" src="/game-rocket-v36.js?v=1786996001"></script>
-<script src="/game.js?v=stake-fix-1" defer></script>
+<script src="/game.js?v=48" defer></script>
 <script src="/game-currency-v41.js?v=44" defer></script>
+<script src="/game-stake-percent-v48.js?v=48" defer></script>
 <script src="/game-auto-v102.js?v=1786749590" defer></script>
 
 <script src="/game-settings-v107.js?v=40" defer></script>

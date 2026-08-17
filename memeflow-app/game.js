@@ -631,7 +631,7 @@ const game={
   }
 
   function renderBalance(value,{pulse=true}={}){
-    const next=num(value);if(next===null)return;const prev=game.lastBalance;game.lastBalance=next;if(game.status)game.status.balance=next;ui.balance.textContent=money(next);
+    const next=num(value);if(next===null)return;const prev=game.lastBalance;game.lastBalance=next;if(game.status)game.status.balance=next;ui.balance.dataset.usdBalance=String(next);ui.balance.textContent=money(next);
     if(!pulse||prev===null||Math.abs(next-prev)<.005)return;
     ui.balance.classList.remove('is-updated');void ui.balance.offsetWidth;ui.balance.classList.add('is-updated');clearTimeout(game.balancePulseTimer);game.balancePulseTimer=setTimeout(()=>{game.balancePulseTimer=null;ui.balance.classList.remove('is-updated');},850);
   }
