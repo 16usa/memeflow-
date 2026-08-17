@@ -1,7 +1,7 @@
 (()=>{
   'use strict';
 
-  const VERSION='10.7';
+  const VERSION='10.9';
 
   let opened=false;
   let overlay=null;
@@ -12,7 +12,7 @@
 
   function findUtility(){
     return document.querySelector(
-      '.launch-panel .utility-actions'
+      '.stage-head .top-utility-actions'
     );
   }
 
@@ -1111,8 +1111,15 @@ body > #settings{
 
     launcher.type='button';
 
-    launcher.innerHTML=
-      '<span aria-hidden="true">⚙</span>';
+    launcher.innerHTML=`
+      <svg
+        viewBox="0 0 24 24"
+        aria-hidden="true"
+      >
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M19 13.5v-3l-2.1-.7a6.7 6.7 0 0 0-.7-1.6l1-2-2.1-2.1-2 1a6.7 6.7 0 0 0-1.6-.7L10.5 2h-3l-.7 2.1a6.7 6.7 0 0 0-1.6.7l-2-1L1.1 5.9l1 2a6.7 6.7 0 0 0-.7 1.6L0 10.5v3l2.1.7c.2.6.4 1.1.7 1.6l-1 2 2.1 2.1 2-1c.5.3 1 .5 1.6.7l1 2.4h3l.7-2.1c.6-.2 1.1-.4 1.6-.7l2 1 2.1-2.1-1-2c.3-.5.5-1 .7-1.6Z"/>
+      </svg>
+    `;
 
     launcher.title=
       'MEMEFLOW Settings';
@@ -1220,7 +1227,7 @@ body > #settings{
 
       css.id='mfGameWalletV108Css';
       css.rel='stylesheet';
-      css.href='/game-wallet-v108.css?v=1786754748';
+      css.href='/game-wallet-v108.css?v=39';
 
       document.head.appendChild(css);
     }
@@ -1232,7 +1239,7 @@ body > #settings{
       const js=document.createElement('script');
 
       js.id='mfGameWalletV108Js';
-      js.src='/game-wallet-v108.js?v=1786754748';
+      js.src='/game-wallet-v108.js?v=39';
       js.async=false;
 
       js.onload=()=>{

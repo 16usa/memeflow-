@@ -1,7 +1,7 @@
 (()=>{
   'use strict';
 
-  const VERSION='10.8';
+  const VERSION='10.9';
 
   let opened=false;
 
@@ -17,7 +17,7 @@
 
   function findUtility(){
     return document.querySelector(
-      '.launch-panel .utility-actions'
+      '.stage-head .top-utility-actions'
     );
   }
 

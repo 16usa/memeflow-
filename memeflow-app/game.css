@@ -3582,7 +3582,7 @@ body.mf-game-immersive
 
 /* === ROUND HISTORY TOUCH SCROLL END === */
 
-/* === V38 PRECISION VISUAL SYSTEM START === */
+/* === V39 TOP UTILITIES + RECORD FIT START === */
 
 /*
   One physical viewport = one layout budget.
@@ -3707,8 +3707,8 @@ body{
     */
     grid-template-rows:
       minmax(0,40fr)
-      minmax(0,26fr)
-      minmax(0,12fr)
+      minmax(0,23fr)
+      minmax(0,15fr)
       minmax(0,22fr)!important;
 
     gap:var(--mf-gap-3)!important;
@@ -4235,6 +4235,145 @@ body{
     color:var(--red)!important;
   }
 
+
+
+  /* =======================================================
+     TOP STAGE UTILITIES
+  ======================================================= */
+
+  .round-meta{
+    gap:clamp(5px,1.05vw,10px)!important;
+  }
+
+  .round-meta > span{
+    min-width:0!important;
+  }
+
+  .top-utility-actions{
+    min-width:0;
+
+    display:flex;
+    align-items:center;
+    justify-content:flex-end;
+
+    gap:clamp(3px,.65vw,6px);
+
+    margin-left:clamp(1px,.35vw,4px);
+  }
+
+  .top-utility-actions > button{
+    width:clamp(18px,2.7vmin,25px)!important;
+    height:clamp(18px,2.7vmin,25px)!important;
+
+    min-width:0!important;
+    min-height:0!important;
+
+    padding:0!important;
+
+    display:grid!important;
+    place-items:center!important;
+
+    border:0!important;
+    border-radius:0!important;
+
+    background:transparent!important;
+    color:#77848f!important;
+
+    box-shadow:none!important;
+  }
+
+  .top-utility-actions > button:hover,
+  .top-utility-actions > button:focus-visible,
+  .top-utility-actions > button.is-active,
+  .top-utility-actions > button.is-open{
+    color:#8fe8ff!important;
+    background:transparent!important;
+    border:0!important;
+    box-shadow:none!important;
+  }
+
+  .top-utility-actions svg{
+    width:clamp(12px,1.75vmin,16px)!important;
+    height:clamp(12px,1.75vmin,16px)!important;
+
+    fill:none;
+    stroke:currentColor;
+
+    stroke-width:1.7;
+    stroke-linecap:round;
+    stroke-linejoin:round;
+  }
+
+  /* Text remains accessible but does not consume the header */
+  .top-utility-actions > button > b{
+    position:absolute!important;
+
+    width:1px!important;
+    height:1px!important;
+
+    margin:-1px!important;
+    padding:0!important;
+
+    overflow:hidden!important;
+
+    clip:rect(0,0,0,0)!important;
+    clip-path:inset(50%)!important;
+
+    white-space:nowrap!important;
+
+    border:0!important;
+  }
+
+  /*
+    Launch status row now contains balance + stream only.
+  */
+  .launch-panel .game-utility{
+    grid-template-columns:
+      minmax(0,.92fr)
+      minmax(0,1.08fr)!important;
+  }
+
+  /*
+    Flight Record: show the complete safety note instead
+    of visually clipping the last lines.
+  */
+  .stats-panel{
+    display:grid!important;
+
+    grid-template-rows:
+      auto
+      auto
+      minmax(0,1fr)!important;
+
+    align-content:start!important;
+  }
+
+  .stats-panel .safety-note{
+    min-height:0!important;
+    max-height:none!important;
+
+    margin-top:var(--mf-gap-2)!important;
+
+    padding:
+      var(--mf-cell-py)
+      var(--mf-cell-px)!important;
+
+    overflow:hidden!important;
+
+    font-size:var(--mf-f-micro)!important;
+    line-height:1.22!important;
+  }
+
+  .stats-panel .safety-note span{
+    display:block!important;
+
+    overflow:visible!important;
+
+    white-space:normal!important;
+
+    text-overflow:clip!important;
+  }
+
 }
 
 /* =========================================================
@@ -4279,9 +4418,9 @@ body{
   .layout{
     grid-template-rows:
       minmax(0,42fr)
-      minmax(0,25fr)
-      minmax(0,11fr)
-      minmax(0,22fr)!important;
+      minmax(0,22fr)
+      minmax(0,15fr)
+      minmax(0,21fr)!important;
   }
 }
 
@@ -4370,4 +4509,4 @@ body{
   }
 }
 
-/* === V38 PRECISION VISUAL SYSTEM END === */
+/* === V39 TOP UTILITIES + RECORD FIT END === */

@@ -12,8 +12,8 @@
   <meta name="description" content="MEMEFLOW Pepe Rocket V9.6 — fullscreen responsive game UI with realtime server-authoritative PAPER visualization.">
   <title>MEMEFLOW · Pepe Rocket</title>
   <link rel="manifest" href="/game.webmanifest?v=1786767229">
-  <link rel="stylesheet" href="/game.css?v=38">
-  <link rel="stylesheet" href="/game-settings-v107.css?v=1786751539">
+  <link rel="stylesheet" href="/game.css?v=39">
+  <link rel="stylesheet" href="/game-settings-v107.css?v=39">
 </head>
 <body>
 <div class="game" id="game" data-state="idle" data-stage="ground" data-feed="idle" data-direction="flat" data-danger="none" data-launch="idle" data-outcome="none" data-selector="idle" data-bank="neutral" data-cashzone="idle" data-cashpulse="idle" data-flight="idle" data-lifecycle="active" data-clientfeed="fresh">
@@ -28,6 +28,43 @@
           <span><small>ROUND</small><b id="roundId">—</b></span>
           <span><small>FEED</small><b id="feedAge">—</b></span>
           <span><small>TIME</small><b id="roundTime">00:00</b></span>
+
+          <div class="top-utility-actions" aria-label="Game utilities">
+
+            <button
+              class="sound"
+              id="soundBtn"
+              type="button"
+              aria-pressed="true"
+              aria-label="Sound"
+              title="Sound"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M11 5 6 9H3v6h3l5 4Z"/>
+                <path d="M15 9.5a4 4 0 0 1 0 5"/>
+                <path d="M18 7a8 8 0 0 1 0 10"/>
+              </svg>
+              <b>SOUND</b>
+            </button>
+
+            <button
+              class="fullscreen-btn"
+              id="fullscreenBtn"
+              type="button"
+              aria-pressed="false"
+              aria-label="Full screen"
+              title="Full screen"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M8 3H3v5"/>
+                <path d="M16 3h5v5"/>
+                <path d="M21 16v5h-5"/>
+                <path d="M8 21H3v-5"/>
+              </svg>
+              <b id="fullscreenLabel">FULL SCREEN</b>
+            </button>
+
+          </div>
         </div>
       </div>
 
@@ -89,10 +126,6 @@
         <div class="game-utility" aria-label="Game status and controls">
           <div class="balance game-balance"><small>PAPER BALANCE</small><b id="balanceTop">$10,000.00</b></div>
           <div class="stream-utility"><i aria-hidden="true"></i><span><b id="streamState">Game stream connecting</b><small id="sourceState">MEMEFLOW server · PAPER only</small></span></div>
-          <div class="utility-actions">
-            <button class="sound" id="soundBtn" type="button" aria-pressed="true"><span aria-hidden="true">◖</span><b>SOUND</b></button>
-            <button class="fullscreen-btn" id="fullscreenBtn" type="button" aria-pressed="false"><span aria-hidden="true">⛶</span><b id="fullscreenLabel">FULL SCREEN</b></button>
-          </div>
         </div>
         <p class="lead">MEMEFLOW chooses a fresh <b>BUY READY</b> candidate. The server owns entry, triggers, balance and final result.</p>
 
@@ -183,7 +216,7 @@
 <script src="/game.js?v=1786993001" defer></script>
 <script src="/game-auto-v102.js?v=1786749590" defer></script>
 
-<script src="/game-settings-v107.js?v=6" defer></script>
+<script src="/game-settings-v107.js?v=39" defer></script>
 
 
 <script src="/flight-v12-launcher.js?v=1786768796" defer></script>
