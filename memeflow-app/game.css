@@ -3582,7 +3582,7 @@ body.mf-game-immersive
 
 /* === ROUND HISTORY TOUCH SCROLL END === */
 
-/* === V47 CLEAN TELEMETRY START === */
+/* === V49 READABILITY SYSTEM START === */
 
 /*
   One physical viewport = one layout budget.
@@ -3910,23 +3910,27 @@ body{
     --mf-border-soft:rgba(160,181,200,.14);
     --mf-border-mid:rgba(160,181,200,.22);
 
-    --mf-text-main:#eef3f6;
-    --mf-text-value:#f6f8fa;
-    --mf-text-label:#a1adb7;
-    --mf-text-muted:#75818c;
-    --mf-text-dim:#5e6974;
+    /*
+      Readability hierarchy:
+      bright values, clear labels, readable explanatory copy.
+    */
+    --mf-text-main:#f1f4f6;
+    --mf-text-value:#f7f9fa;
+    --mf-text-label:#b3bdc5;
+    --mf-text-muted:#909ba4;
+    --mf-text-dim:#78838c;
 
-    --mf-h-xs:clamp(18px,min(5.3vw,2.55dvh),26px);
-    --mf-h-sm:clamp(21px,min(6.2vw,3.05dvh),30px);
-    --mf-h-md:clamp(24px,min(7.1vw,3.55dvh),34px);
-    --mf-h-lg:clamp(28px,min(8.3vw,4.25dvh),40px);
+    --mf-h-xs:clamp(19px,min(5.45vw,2.65dvh),27px);
+    --mf-h-sm:clamp(22px,min(6.35vw,3.15dvh),31px);
+    --mf-h-md:clamp(25px,min(7.2vw,3.65dvh),35px);
+    --mf-h-lg:clamp(29px,min(8.35vw,4.3dvh),41px);
 
-    --mf-f-micro:clamp(5.2px,min(1.48vw,.64dvh),7px);
-    --mf-f-label:clamp(5.8px,min(1.68vw,.74dvh),8px);
-    --mf-f-body:clamp(6.3px,min(1.88vw,.84dvh),9px);
-    --mf-f-value:clamp(7.4px,min(2.14vw,1.00dvh),11px);
-    --mf-f-control:clamp(8.8px,min(2.68vw,1.26dvh),14px);
-    --mf-f-hero:clamp(13px,min(4.15vw,1.92dvh),21px);
+    --mf-f-micro:clamp(5.8px,min(1.58vw,.70dvh),7.6px);
+    --mf-f-label:clamp(6.4px,min(1.78vw,.80dvh),8.6px);
+    --mf-f-body:clamp(7px,min(1.98vw,.91dvh),9.8px);
+    --mf-f-value:clamp(8px,min(2.22vw,1.04dvh),11.5px);
+    --mf-f-control:clamp(9.2px,min(2.72vw,1.30dvh),14.5px);
+    --mf-f-hero:clamp(13.5px,min(4.12vw,1.94dvh),21.5px);
   }
 
   .layout{
@@ -4285,7 +4289,7 @@ body{
   .token-panel .panel-row,
   .stats-panel .panel-row,
   .history-panel summary{
-    letter-spacing:.11em!important;
+    letter-spacing:.075em!important;
   }
 
   /*
@@ -4495,6 +4499,196 @@ body{
     color:var(--red)!important;
   }
 
+
+
+  /* =======================================================
+     READABILITY POLISH
+  ======================================================= */
+
+  /*
+    Main section headings.
+  */
+  .panel-title,
+  .token-panel > .panel-row:first-child,
+  .stats-panel > .panel-row:first-child,
+  .history-panel summary{
+    font-size:var(--mf-f-body)!important;
+    font-weight:750!important;
+    line-height:1.08!important;
+  }
+
+  /*
+    Descriptive copy.
+  */
+  .lead,
+  #riskCopy,
+  .token-head small,
+  .quality-line span,
+  .safety-note span,
+  .history-toolbar,
+  .history-empty{
+    font-size:var(--mf-f-body)!important;
+    line-height:1.24!important;
+    letter-spacing:.01em!important;
+  }
+
+  /*
+    Labels use one consistent size and contrast.
+  */
+  .field-title,
+  .position-strip small,
+  .risk-metrics small,
+  .token-metrics small,
+  .stats-grid small,
+  .history-row small,
+  .select-grid label > span,
+  .risk-head > span,
+  .telemetry > span{
+    font-size:var(--mf-f-label)!important;
+    font-weight:600!important;
+    line-height:1.08!important;
+    letter-spacing:.055em!important;
+    color:var(--mf-text-dim)!important;
+  }
+
+  /*
+    Primary numeric/value hierarchy.
+  */
+  .position-strip b,
+  .risk-metrics b,
+  .token-metrics b,
+  .stats-grid b{
+    font-size:var(--mf-f-value)!important;
+    font-weight:750!important;
+    line-height:1.04!important;
+  }
+
+  /*
+    Paper stake input must read as the main editable control.
+  */
+  .stake-input,
+  .stake-input input,
+  #betInputDisplay{
+    font-size:var(--mf-f-hero)!important;
+    font-weight:500!important;
+    line-height:1!important;
+  }
+
+  #stakeCurrencyPrefix{
+    color:var(--mf-text-muted)!important;
+  }
+
+  /*
+    Percentage presets.
+  */
+  .quick-bets button{
+    font-size:var(--mf-f-label)!important;
+    font-weight:650!important;
+    letter-spacing:.025em!important;
+    color:var(--mf-text-muted)!important;
+  }
+
+  .quick-bets button.active{
+    color:var(--mf-text-main)!important;
+  }
+
+  /*
+    Select controls.
+  */
+  .select-grid select{
+    font-size:var(--mf-f-control)!important;
+    font-weight:500!important;
+    color:var(--mf-text-main)!important;
+  }
+
+  /*
+    Selected Launch identity.
+  */
+  .token-head > div:last-child > b{
+    color:var(--mf-text-main)!important;
+    font-size:var(--mf-f-body)!important;
+    font-weight:750!important;
+    line-height:1.08!important;
+  }
+
+  .quality-line span{
+    color:var(--mf-text-muted)!important;
+  }
+
+  /*
+    Telemetry:
+    labels quieter, values brighter.
+  */
+  .telemetry > span{
+    color:var(--mf-text-dim)!important;
+  }
+
+  .telemetry > span > b{
+    color:var(--mf-text-label)!important;
+    font-size:var(--mf-f-label)!important;
+    font-weight:700!important;
+    letter-spacing:.015em!important;
+  }
+
+  /*
+    Flight Plan profile should stand out,
+    but remain in the established design language.
+  */
+  .risk-head > b{
+    font-size:var(--mf-f-body)!important;
+    font-weight:800!important;
+    letter-spacing:.08em!important;
+  }
+
+  /*
+    History hierarchy.
+  */
+  .history-row > b,
+  .history-row strong,
+  .history-row .history-title{
+    color:var(--mf-text-main)!important;
+  }
+
+  .history-row small{
+    line-height:1.12!important;
+  }
+
+  /*
+    Start / Auto controls.
+  */
+  .start-button b,
+  .cash-button b,
+  .auto-button b{
+    font-size:var(--mf-f-control)!important;
+    font-weight:800!important;
+    letter-spacing:.09em!important;
+  }
+
+  .start-button small,
+  .cash-button small,
+  .auto-button small{
+    font-size:var(--mf-f-micro)!important;
+    line-height:1.08!important;
+    letter-spacing:.015em!important;
+  }
+
+  /*
+    Improve informational contrast without turning
+    secondary copy into primary content.
+  */
+  .stream-utility b,
+  .stream-utility small{
+    color:var(--mf-text-muted)!important;
+  }
+
+  .game-balance small{
+    color:var(--mf-text-dim)!important;
+  }
+
+  .game-balance b{
+    color:var(--mf-text-value)!important;
+    font-size:var(--mf-f-value)!important;
+  }
 
 
   /* =======================================================
@@ -5043,4 +5237,4 @@ body{
   }
 }
 
-/* === V47 CLEAN TELEMETRY END === */
+/* === V49 READABILITY SYSTEM END === */
