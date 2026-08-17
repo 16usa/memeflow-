@@ -3582,7 +3582,7 @@ body.mf-game-immersive
 
 /* === ROUND HISTORY TOUCH SCROLL END === */
 
-/* === V35 SAFE VIEWPORT OWNER START === */
+/* === V36 STAGE BALANCE OWNER START === */
 
 /*
   One physical viewport = one layout budget.
@@ -3689,10 +3689,10 @@ body{
       Launch Control spans all three rows.
     */
     grid-template-rows:
-      minmax(0,30fr)
-      minmax(0,31fr)
-      minmax(0,15fr)
-      minmax(0,24fr)!important;
+      minmax(0,36fr)
+      minmax(0,28fr)
+      minmax(0,13fr)
+      minmax(0,23fr)!important;
 
     gap:var(--mf-gap-3)!important;
   }
@@ -3783,7 +3783,7 @@ body{
 
     align-content:stretch!important;
 
-    row-gap:var(--mf-gap-2)!important;
+    row-gap:var(--mf-gap-1)!important;
   }
 
   /* Right lower column */
@@ -4004,10 +4004,10 @@ body{
 
   .layout{
     grid-template-rows:
-      minmax(0,32fr)
-      minmax(0,30fr)
-      minmax(0,14fr)
-      minmax(0,24fr)!important;
+      minmax(0,38fr)
+      minmax(0,27fr)
+      minmax(0,12fr)
+      minmax(0,23fr)!important;
   }
 }
 
@@ -4096,4 +4096,4 @@ body{
   }
 }
 
-/* === V35 SAFE VIEWPORT OWNER END === */
+/* === V36 STAGE BALANCE OWNER END === */
