@@ -3582,7 +3582,7 @@ body.mf-game-immersive
 
 /* === ROUND HISTORY TOUCH SCROLL END === */
 
-/* === V33 FINAL VIEWPORT OWNER START === */
+/* === V34 FULL HEIGHT OWNER START === */
 
 /*
   One physical viewport = one layout budget.
@@ -3605,9 +3605,15 @@ body{
 
 .game{
   width:100%!important;
-  height:100dvh!important;
+
+  height:100vh!important;
+  height:100lvh!important;
+
   min-height:0!important;
-  max-height:100dvh!important;
+
+  max-height:100vh!important;
+  max-height:100lvh!important;
+
   overflow:hidden!important;
 }
 
@@ -3659,7 +3665,10 @@ body{
     padding:
       var(--mf-gap-3)
       var(--mf-gap-3)
-      max(var(--mf-gap-3),env(safe-area-inset-bottom))
+      max(
+        var(--mf-gap-3),
+        env(safe-area-inset-bottom)
+      )
       var(--mf-gap-3)!important;
 
     overflow:hidden!important;
@@ -3679,10 +3688,10 @@ body{
       Launch Control spans all three rows.
     */
     grid-template-rows:
-      minmax(0,32fr)
       minmax(0,30fr)
+      minmax(0,31fr)
       minmax(0,15fr)
-      minmax(0,23fr)!important;
+      minmax(0,24fr)!important;
 
     gap:var(--mf-gap-3)!important;
   }
@@ -3765,6 +3774,14 @@ body{
       var(--mf-card-px)!important;
 
     overflow:hidden!important;
+
+    display:grid!important;
+
+    grid-auto-flow:row;
+
+    align-content:stretch!important;
+
+    row-gap:var(--mf-gap-2)!important;
   }
 
   /* Right lower column */
@@ -3839,6 +3856,26 @@ body{
   .stats-grid,
   .safety-note{
     margin-top:var(--mf-gap-2)!important;
+  }
+
+  /*
+    Launch Control vertical rhythm:
+    content sizes itself, action zone stays anchored low.
+  */
+
+  .launch-panel > .risk-deck{
+    height:auto!important;
+    min-height:0!important;
+    align-self:start!important;
+  }
+
+  .launch-panel > .start-button,
+  .launch-panel > .cash-button{
+    align-self:end!important;
+  }
+
+  .launch-panel .auto-button{
+    align-self:end!important;
   }
 
   /* Controls */
@@ -3965,10 +4002,10 @@ body{
 
   .layout{
     grid-template-rows:
-      minmax(0,35fr)
-      minmax(0,28fr)
+      minmax(0,32fr)
+      minmax(0,30fr)
       minmax(0,14fr)
-      minmax(0,23fr)!important;
+      minmax(0,24fr)!important;
   }
 }
 
@@ -4057,4 +4094,4 @@ body{
   }
 }
 
-/* === V33 FINAL VIEWPORT OWNER END === */
+/* === V34 FULL HEIGHT OWNER END === */
