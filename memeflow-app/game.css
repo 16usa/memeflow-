@@ -3582,7 +3582,7 @@ body.mf-game-immersive
 
 /* === ROUND HISTORY TOUCH SCROLL END === */
 
-/* === V49 READABILITY SYSTEM START === */
+/* === V52 CLEAN VISUAL HIERARCHY START === */
 
 /*
   One physical viewport = one layout budget.
@@ -4502,38 +4502,47 @@ body{
 
 
   /* =======================================================
-     READABILITY POLISH
+     CLEAN VISUAL HIERARCHY
   ======================================================= */
 
   /*
-    Main section headings.
+    One restrained text hierarchy.
+  */
+  :root{
+    --mf-ui-primary:#f3f6f7;
+    --mf-ui-value:#f7f9fa;
+    --mf-ui-body:#aab4bc;
+    --mf-ui-muted:#838e97;
+    --mf-ui-label:#707b84;
+    --mf-ui-faint:#5d6871;
+
+    --mf-ui-border:rgba(154,175,191,.15);
+    --mf-ui-border-strong:rgba(154,175,191,.22);
+  }
+
+  /*
+    Card titles:
+    same scale, same tracking, same weight.
   */
   .panel-title,
   .token-panel > .panel-row:first-child,
   .stats-panel > .panel-row:first-child,
   .history-panel summary{
+    color:var(--mf-ui-primary)!important;
+
     font-size:var(--mf-f-body)!important;
-    font-weight:750!important;
-    line-height:1.08!important;
+    font-weight:760!important;
+    line-height:1!important;
+
+    letter-spacing:.075em!important;
+  }
+
+  .launch-panel .panel-title{
+    color:#8bdff4!important;
   }
 
   /*
-    Descriptive copy.
-  */
-  .lead,
-  #riskCopy,
-  .token-head small,
-  .quality-line span,
-  .safety-note span,
-  .history-toolbar,
-  .history-empty{
-    font-size:var(--mf-f-body)!important;
-    line-height:1.24!important;
-    letter-spacing:.01em!important;
-  }
-
-  /*
-    Labels use one consistent size and contrast.
+    Labels are deliberately quieter.
   */
   .field-title,
   .position-strip small,
@@ -4541,155 +4550,391 @@ body{
   .token-metrics small,
   .stats-grid small,
   .history-row small,
-  .select-grid label > span,
-  .risk-head > span,
-  .telemetry > span{
+  .telemetry > span,
+  .select-grid label > span{
+    color:var(--mf-ui-label)!important;
+
     font-size:var(--mf-f-label)!important;
     font-weight:600!important;
     line-height:1.08!important;
+
     letter-spacing:.055em!important;
-    color:var(--mf-text-dim)!important;
   }
 
   /*
-    Primary numeric/value hierarchy.
+    Primary numeric information.
   */
   .position-strip b,
   .risk-metrics b,
   .token-metrics b,
   .stats-grid b{
+    color:var(--mf-ui-value)!important;
+
     font-size:var(--mf-f-value)!important;
-    font-weight:750!important;
-    line-height:1.04!important;
+    font-weight:760!important;
+    line-height:1.02!important;
   }
 
   /*
-    Paper stake input must read as the main editable control.
+    Normal explanatory copy.
   */
-  .stake-input,
+  .lead,
+  #riskCopy,
+  .quality-line span,
+  .token-head small,
+  .safety-note span,
+  .history-toolbar,
+  .history-empty{
+    color:var(--mf-ui-muted)!important;
+
+    font-size:var(--mf-f-body)!important;
+    font-weight:450!important;
+    line-height:1.20!important;
+
+    letter-spacing:.005em!important;
+  }
+
+  /*
+    Launch Control intro:
+    slightly quieter than real controls.
+  */
+  .launch-panel > .lead{
+    color:#89949d!important;
+  }
+
+  /*
+    Balance strip:
+    important amount left, diagnostics quiet right.
+  */
+  .game-utility{
+    border-color:var(--mf-ui-border)!important;
+  }
+
+  .game-balance small{
+    color:var(--mf-ui-label)!important;
+  }
+
+  .game-balance b{
+    color:var(--mf-ui-value)!important;
+
+    font-size:var(--mf-f-value)!important;
+    font-weight:760!important;
+  }
+
+  .stream-utility,
+  .stream-utility b,
+  .stream-utility small{
+    color:var(--mf-ui-faint)!important;
+
+    font-size:var(--mf-f-micro)!important;
+    line-height:1.10!important;
+  }
+
+  /*
+    Paper stake is the main editable value.
+  */
+  .stake-input{
+    border-color:var(--mf-ui-border-strong)!important;
+  }
+
   .stake-input input,
   #betInputDisplay{
+    color:var(--mf-ui-value)!important;
+
     font-size:var(--mf-f-hero)!important;
     font-weight:500!important;
     line-height:1!important;
   }
 
   #stakeCurrencyPrefix{
-    color:var(--mf-text-muted)!important;
+    color:#8d98a1!important;
+
+    font-weight:450!important;
   }
 
   /*
-    Percentage presets.
+    25 / 50 / 75 / MAX:
+    secondary preset buttons, not primary CTA.
   */
+  .quick-bets{
+    gap:var(--mf-gap-2)!important;
+  }
+
   .quick-bets button{
+    border-color:var(--mf-ui-border)!important;
+
+    color:#7f8a93!important;
+    background:rgba(255,255,255,.008)!important;
+
     font-size:var(--mf-f-label)!important;
     font-weight:650!important;
+    line-height:1!important;
+
     letter-spacing:.025em!important;
-    color:var(--mf-text-muted)!important;
   }
 
   .quick-bets button.active{
-    color:var(--mf-text-main)!important;
+    color:#edf2f4!important;
+
+    border-color:rgba(132,199,218,.34)!important;
+    background:rgba(109,220,255,.045)!important;
+
+    box-shadow:none!important;
+  }
+
+  .quick-bets button:disabled{
+    opacity:.42!important;
   }
 
   /*
-    Select controls.
+    Auto cash out / Stop loss:
+    identical typography and geometry.
   */
+  .select-grid{
+    gap:var(--mf-gap-2)!important;
+  }
+
   .select-grid select{
+    color:#e8edef!important;
+
+    border-color:var(--mf-ui-border-strong)!important;
+    background-color:rgba(255,255,255,.012)!important;
+
     font-size:var(--mf-f-control)!important;
     font-weight:500!important;
-    color:var(--mf-text-main)!important;
+  }
+
+  .select-grid select:disabled{
+    color:#77818a!important;
+    opacity:.62!important;
   }
 
   /*
-    Selected Launch identity.
+    Flight Plan.
   */
-  .token-head > div:last-child > b{
-    color:var(--mf-text-main)!important;
-    font-size:var(--mf-f-body)!important;
-    font-weight:750!important;
-    line-height:1.08!important;
+  .risk-deck{
+    border-color:var(--mf-ui-border)!important;
   }
 
-  .quality-line span{
-    color:var(--mf-text-muted)!important;
+  .risk-head{
+    padding-bottom:var(--mf-gap-1)!important;
   }
 
-  /*
-    Telemetry:
-    labels quieter, values brighter.
-  */
-  .telemetry > span{
-    color:var(--mf-text-dim)!important;
-  }
+  .risk-head > span{
+    color:var(--mf-ui-label)!important;
 
-  .telemetry > span > b{
-    color:var(--mf-text-label)!important;
     font-size:var(--mf-f-label)!important;
-    font-weight:700!important;
-    letter-spacing:.015em!important;
+    letter-spacing:.07em!important;
   }
 
-  /*
-    Flight Plan profile should stand out,
-    but remain in the established design language.
-  */
   .risk-head > b{
     font-size:var(--mf-f-body)!important;
     font-weight:800!important;
     letter-spacing:.08em!important;
   }
 
+  .risk-metrics{
+    border-color:var(--mf-ui-border)!important;
+  }
+
+  .risk-metrics > div{
+    padding:
+      var(--mf-cell-py)
+      var(--mf-cell-px)!important;
+  }
+
   /*
-    History hierarchy.
+    Selected Launch:
+    identity first, diagnostics second.
   */
+  .token-head > div:last-child > b{
+    color:var(--mf-ui-primary)!important;
+
+    font-size:var(--mf-f-body)!important;
+    font-weight:760!important;
+    line-height:1.08!important;
+  }
+
+  .token-head small{
+    color:var(--mf-ui-muted)!important;
+  }
+
+  .quality-line{
+    color:var(--mf-ui-muted)!important;
+  }
+
+  .token-metrics{
+    border-color:var(--mf-ui-border)!important;
+  }
+
+  /*
+    Bottom telemetry:
+    clean 2x2 diagnostic matrix.
+  */
+  .telemetry{
+    padding-top:var(--mf-gap-2)!important;
+
+    border-top:
+      1px solid
+      var(--mf-ui-border)!important;
+
+    column-gap:var(--mf-gap-3)!important;
+    row-gap:var(--mf-gap-2)!important;
+  }
+
+  .telemetry > span{
+    color:var(--mf-ui-label)!important;
+  }
+
+  .telemetry > span > b{
+    color:#a9b3ba!important;
+
+    font-size:var(--mf-f-label)!important;
+    font-weight:700!important;
+
+    letter-spacing:.01em!important;
+  }
+
+  /*
+    Flight Record:
+    four metrics are primary.
+    Safety text stays fully readable but visually secondary.
+  */
+  .stats-grid{
+    border-color:var(--mf-ui-border)!important;
+  }
+
+  .stats-panel .safety-note{
+    border-color:var(--mf-ui-border)!important;
+
+    color:var(--mf-ui-muted)!important;
+
+    background:rgba(255,255,255,.009)!important;
+  }
+
+  .stats-panel .safety-note span{
+    color:var(--mf-ui-muted)!important;
+
+    font-size:var(--mf-f-body)!important;
+    line-height:1.18!important;
+  }
+
+  .stats-panel .safety-note i{
+    background:#bdc5ca!important;
+  }
+
+  /*
+    Round History:
+    title/result strong, metadata quiet.
+  */
+  .history-panel summary{
+    border-bottom-color:var(--mf-ui-border)!important;
+  }
+
+  .history-row{
+    border-color:var(--mf-ui-border)!important;
+  }
+
   .history-row > b,
   .history-row strong,
   .history-row .history-title{
-    color:var(--mf-text-main)!important;
+    color:var(--mf-ui-primary)!important;
+
+    font-weight:730!important;
   }
 
   .history-row small{
-    line-height:1.12!important;
+    color:var(--mf-ui-faint)!important;
+
+    font-size:var(--mf-f-micro)!important;
+    line-height:1.10!important;
   }
 
   /*
-    Start / Auto controls.
+    Stage bottom strip:
+    same vertical rhythm in every cell.
+  */
+  .position-strip > div{
+    padding:
+      var(--mf-cell-py)
+      var(--mf-cell-px)!important;
+
+    border-color:var(--mf-ui-border)!important;
+  }
+
+  .position-strip small{
+    color:var(--mf-ui-label)!important;
+  }
+
+  .position-strip b{
+    margin-top:var(--mf-gap-1)!important;
+  }
+
+  /*
+    Currency selector belongs to the same strip,
+    not a separate visual component.
+  */
+  .currency-toggle{
+    border-color:var(--mf-ui-border)!important;
+
+    background:rgba(255,255,255,.008)!important;
+  }
+
+  .currency-toggle button{
+    color:#79848c!important;
+  }
+
+  .currency-toggle button.active{
+    color:#eff3f1!important;
+
+    background:rgba(92,219,151,.055)!important;
+
+    box-shadow:
+      inset 0 0 0 1px
+      rgba(92,219,151,.22)!important;
+  }
+
+  .currency-rate > span{
+    color:var(--mf-ui-faint)!important;
+  }
+
+  /*
+    Main actions.
   */
   .start-button b,
   .cash-button b,
-  .auto-button b{
+  .auto-button b,
+  #mfAutoLoopBtn b{
     font-size:var(--mf-f-control)!important;
     font-weight:800!important;
-    letter-spacing:.09em!important;
+
+    letter-spacing:.085em!important;
   }
 
   .start-button small,
   .cash-button small,
-  .auto-button small{
+  .auto-button small,
+  #mfAutoLoopBtn small{
     font-size:var(--mf-f-micro)!important;
     line-height:1.08!important;
-    letter-spacing:.015em!important;
+
+    letter-spacing:.01em!important;
   }
 
   /*
-    Improve informational contrast without turning
-    secondary copy into primary content.
+    Disabled launch controls:
+    obvious locked state without disappearing.
   */
-  .stream-utility b,
-  .stream-utility small{
-    color:var(--mf-text-muted)!important;
-  }
+  .launch-panel[data-controls-locked="true"]
+  .stake-input,
 
-  .game-balance small{
-    color:var(--mf-text-dim)!important;
-  }
+  .launch-panel[data-controls-locked="true"]
+  .quick-bets,
 
-  .game-balance b{
-    color:var(--mf-text-value)!important;
-    font-size:var(--mf-f-value)!important;
+  .launch-panel[data-controls-locked="true"]
+  .select-grid{
+    opacity:.64!important;
   }
-
 
   /* =======================================================
      TOP STAGE UTILITIES
@@ -5237,4 +5482,4 @@ body{
   }
 }
 
-/* === V49 READABILITY SYSTEM END === */
+/* === V52 CLEAN VISUAL HIERARCHY END === */
