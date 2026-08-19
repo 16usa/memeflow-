@@ -336,6 +336,64 @@ function avatarFallback(row) {
   );
 }
 
+
+function safeExternalUrl(value) {
+  const raw = String(value || '').trim();
+  if (!raw) return '';
+  try {
+    const url = new URL(raw, window.location.origin);
+    if (url.protocol !== 'https:' && url.protocol !== 'http:') return '';
+    return url.href;
+  } catch {
+    return '';
+  }
+}
+
+function tokenExternalLinks(row) {
+  const mint = String(row?.mint || '').trim();
+  const dex = safeExternalUrl(row?.dexUrl ?? row?.market?.dexUrl);
+  let pump = safeExternalUrl(row?.pumpUrl);
+
+  if (!pump && mint) {
+    const launch = String(row?.launchPlatform || '').toLowerCase();
+    const source = String(row?.source || '').toLowerCase();
+    const isPump = launch === 'pump' || source.includes('pump create') || mint.toLowerCase().endsWith('pump');
+    if (isPump) pump = `https://pump.fun/coin/${encodeURIComponent(mint)}`;
+  }
+  return { dex, pump };
+}
+
+function tokenSourceLinksTemplate(row) {
+  const links = tokenExternalLinks(row);
+  const out = [];
+
+  if (links.dex) {
+    out.push(`
+      <a class="token-source-link dex" href="${escapeHtml(links.dex)}" target="_blank"
+         rel="noopener noreferrer" aria-label="Open on DexScreener" title="DexScreener">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="10" cy="10" r="5.1"></circle>
+          <path d="M13.8 13.8L19 19"></path>
+          <path d="M7.2 11.2L9.2 9.1L10.8 10.2L13 7.5"></path>
+        </svg>
+      </a>`);
+  }
+
+  if (links.pump) {
+    out.push(`
+      <a class="token-source-link pump" href="${escapeHtml(links.pump)}" target="_blank"
+         rel="noopener noreferrer" aria-label="Open on Pump.fun" title="Pump.fun">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M6 16V8h7.2a3.8 3.8 0 010 7.6H9.7"></path>
+          <path d="M16.8 8.7H20v3.2"></path>
+          <path d="M19.7 9l-3.8 3.8"></path>
+        </svg>
+      </a>`);
+  }
+
+  return out.length ? `<span class="token-source-links">${out.join('')}</span>` : '';
+}
+
 function tokenTemplate(row, index) {
   const key =
     stateKey(row?.decision?.state);
@@ -397,14 +455,7 @@ function tokenTemplate(row, index) {
               <strong class="token-mint token-name">
                 ${escapeHtml(row?.name || row?.metadataName || row?.symbol || row?.metadataSymbol || shortMint(row?.mint))}
               </strong>
-
-              <a
-                class="token-pump-link"
-                href="https://pump.fun/coin/${encodeURIComponent(row?.mint || '')}"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Open token on Pump.fun"
-              >↗</a>
+              ${tokenSourceLinksTemplate(row)}
 
               <span class="token-state ${key}">
                 ${label}
@@ -593,7 +644,41 @@ function render() {
     );
 }
 
+
+async function loadDiscoveryStatus() {
+  const label = document.getElementById('discoveryLiveLabel');
+  if (!label) return;
+  try {
+    const response = await fetch('/api/discovery-source', {cache:'no-store',credentials:'same-origin'});
+    if (!response.ok) return;
+    const payload = await response.json();
+    const mode = String(payload?.source?.mode || 'unknown').toUpperCase();
+    const dex = payload?.dex?.metrics || payload?.dex || {};
+    const pump = payload?.pump || {};
+
+    let connected = false;
+    if (mode === 'DEX') connected = Boolean(payload?.dex?.connected ?? dex?.connected);
+    else if (mode === 'PUMP') connected = Boolean(pump?.connected);
+    else if (mode === 'HYBRID') connected = Boolean(pump?.connected || payload?.dex?.connected || dex?.connected);
+
+    label.textContent = `${mode} ${connected ? 'LIVE' : 'IDLE'}`;
+
+    const confirmed = Number(dex?.pairsConfirmed ?? dex?.discovered);
+    const rejected = Number(dex?.pairsRejected);
+    const pending = Number(dex?.pendingConfirms ?? dex?.pending);
+    const info = [];
+    if (Number.isFinite(confirmed)) info.push(`confirmed ${confirmed}`);
+    if (Number.isFinite(rejected)) info.push(`rejected ${rejected}`);
+    if (Number.isFinite(pending)) info.push(`pending ${pending}`);
+    if ((mode === 'DEX' || mode === 'HYBRID') && info.length) {
+      label.title = `DEX scanner | ${info.join(' | ')}`;
+    }
+  } catch {}
+}
+
 async function loadTokens() {
+  void loadDiscoveryStatus();
+
   if (state.loading) {
     return;
   }
@@ -1506,3 +1591,4 @@ setTimeout(
   350
 );
 
+// MEMEFLOW_DEX_TOKEN_FLOW_V26

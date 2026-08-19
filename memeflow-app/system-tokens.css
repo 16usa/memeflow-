@@ -2168,3 +2168,14 @@ button {
 
 }
 
+
+
+/* ===== MEMEFLOW DEX TOKEN FLOW V26 ===== */
+.token-source-links{flex:none;display:inline-flex;align-items:center;gap:4px}
+.token-source-link{width:23px;height:23px;min-width:23px;display:inline-grid;place-items:center;border:1px solid rgba(117,156,176,.24);border-radius:6px;background:rgba(5,13,18,.76);color:#8da6b3;text-decoration:none;-webkit-tap-highlight-color:transparent;transition:border-color .14s ease,background .14s ease,color .14s ease,transform .10s ease}
+.token-source-link svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.token-source-link.dex{color:#62dff5;border-color:rgba(98,223,245,.28);background:rgba(98,223,245,.045)}
+.token-source-link.pump{color:#57e4a8;border-color:rgba(87,228,168,.27);background:rgba(87,228,168,.045)}
+.token-source-link:visited{color:inherit}.token-source-link:active{transform:scale(.94)}
+@media(hover:hover){.token-source-link:hover{border-color:currentColor;background:rgba(255,255,255,.055)}}
+@media(max-width:760px){.token-source-links{gap:3px}.token-source-link{width:21px;height:21px;min-width:21px;border-radius:6px}.token-source-link svg{width:12px;height:12px}}

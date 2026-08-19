@@ -136,7 +136,12 @@ export class JsonStore {
     const m=this._uidDec[uid];
     m.set(key,now);
     if(m.size>250){let ok=null,ot=Infinity;for(const[k,t]of m)if(t<ot){ot=t;ok=k};if(ok){m.delete(ok);delete this.state.decisions[ok]}}
-    this.save()
+    // MF_V302_DECISIONS_MEMORY_ONLY: decisions are memory-only; no state.json save here.
+  }
+  deleteDecision(uid,mint){
+    const key=uid+':'+mint;
+    if(this._uidDec?.[uid])this._uidDec[uid].delete(key);
+    delete this.state.decisions[key];
   }
   decisions(uid){
     const m=this._uidDec[uid];

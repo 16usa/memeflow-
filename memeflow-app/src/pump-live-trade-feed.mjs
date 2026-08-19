@@ -4,7 +4,7 @@
 
 import crypto from 'node:crypto';
 
-const VERSION='V12.22';
+const VERSION='V12.22+V30.2';
 const PUMP_PROGRAM='6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P';
 const DISC=crypto.createHash('sha256').update('event:TradeEvent').digest().subarray(0,8);
 const B58='123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
@@ -83,7 +83,7 @@ function tokenFromStore(store,mint){
 }
 
 export function startPumpLiveTradeFeed(opts={}){
-  const {eventHolderLedger,store,publish,evaluateAI}=opts;
+  const {eventHolderLedger,store,publish,evaluateAI,onTokenUpdate}=opts;
   let urls=envList('SOLANA_WS_URLS');
   if(!urls.length)urls=envList('SOLANA_RPC_URLS').map(wsFromHttp).filter(Boolean);
 
@@ -153,20 +153,20 @@ export function startPumpLiveTradeFeed(opts={}){
   }
 
   function applyEvent(e){
+    // MF_V302_SINGLE_EVAL_PER_TRADE_EVENT
     metrics.tradeEventsDecoded++;
     metrics.lastMint=e.mint;
     metrics.lastUser=e.user;
-    users.add(e.user); metrics.distinctUsers=users.size;
-
+    users.add(e.user);metrics.distinctUsers=users.size;
     const prev=mintCounts.get(e.mint)||0;
     mintCounts.set(e.mint,prev+1);
     if(prev>0)metrics.repeatTradeEvents++;
     metrics.distinctMints=mintCounts.size;
+    let updatedForEval=null;
 
-    // Preserve creator from Pump CREATE token state.
     try{
-      const t=tokenFromStore(store,e.mint);
-      const creator=t?.creator||t?.developer||t?.creatorWallet||null;
+      const token=tokenFromStore(store,e.mint);
+      const creator=token?.creator||token?.developer||token?.creatorWallet||null;
       if(creator)eventHolderLedger?.setCreator?.(e.mint,creator);
     }catch{}
 
@@ -175,34 +175,23 @@ export function startPumpLiveTradeFeed(opts={}){
       if(snap){
         metrics.holderSnapshots++;
         const updated=eventHolderLedger?.applyToStore?.(store,e.mint);
-        if(updated){
-          try{__v1226Evaluate(updated,e.mint,'holder-event')}catch{}
-          try{publish?.(e.mint)}catch{}
-        }
+        if(updated)updatedForEval=updated;
       }
-    }catch(err){
-      metrics.lastError='holder:'+String(err?.message||err);
-    }
+    }catch(err){metrics.lastError='holder:'+String(err?.message||err)}
 
-    // Market update directly from the same TradeEvent; no HTTP RPC.
     try{
-      const m=marketFromEvent(e);
-      const buyPressure=updatePressure(e);
-      const patch={
-        marketSource:'ws-direct-trade-event',
-        buyPressure,
-        lastPriceAt:Date.now()
-      };
+      const m=marketFromEvent(e),buyPressure=updatePressure(e);
+      const patch={marketSource:'ws-direct-trade-event',buyPressure,lastPriceAt:Date.now()};
       if(Number.isFinite(m.priceSol)&&m.priceSol>0)patch.priceSol=m.priceSol;
       if(Number.isFinite(m.liquiditySol)&&m.liquiditySol>=0)patch.liquiditySol=m.liquiditySol;
       const updated=store?.setToken?.(e.mint,patch);
-      if(updated){
-        metrics.marketSnapshots++;
-        try{__v1226Evaluate(updated,e.mint,'market-event')}catch{}
-        try{publish?.(e.mint)}catch{}
-      }
-    }catch(err){
-      metrics.lastError='market:'+String(err?.message||err);
+      if(updated){metrics.marketSnapshots++;updatedForEval=updated}
+    }catch(err){metrics.lastError='market:'+String(err?.message||err)}
+
+    if(updatedForEval){
+      try{__v1226Evaluate(updatedForEval,e.mint,'trade-event')}catch{}
+      try{onTokenUpdate?.(e.mint,updatedForEval)}catch{}
+      try{publish?.(e.mint)}catch{}
     }
   }
 

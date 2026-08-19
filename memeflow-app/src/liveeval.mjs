@@ -4,6 +4,7 @@
  * per-user failures are observable instead of silently swallowed.
  */
 import {evaluate} from './evaluate.mjs';
+import {tokenAllowedForSettings} from './discovery-eligibility.mjs';
 
 function safeError(e){
   return String(e?.message||e||'unknown error')
@@ -72,6 +73,13 @@ export function makeEvaluateForActiveUsers({
         try {
           const settings = store.settings(uid);
           if (!settings || typeof settings !== 'object') throw new Error('user settings unavailable after normalization');
+
+          if (!tokenAllowedForSettings(settings, token)) {
+            store.deleteDecision?.(uid, token.mint);
+            metrics.liveEvaluationUsersSkipped++;
+            continue;
+          }
+
           const d = evaluate(token, settings);
           const savedDecision = { ...d, primaryReason: d.primaryReason };
           store.setDecision(uid, token.mint, savedDecision);

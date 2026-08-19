@@ -210,6 +210,7 @@ export async function enrichToken(mint, curve, deps) {
     const total = Number(supply?.value?.uiAmountString ?? 0);
     const tw = (tradeWindows?.get?.(mint)) || {buy: 0, sell: 0};
     const existingToken = store.state.tokens[mint] || {};
+    const dexMarketLocked = existingToken.dexConfirmed === true;
     let metadataPatch = {};
     const shouldFetchMetadata =
       existingToken.uri &&
@@ -257,22 +258,24 @@ export async function enrichToken(mint, curve, deps) {
       developerSharePct: existingToken.holderFresh === true
         ? (existingToken.developerPct ?? existingToken.developerSharePct ?? null)
         : null,
-      buyPressure: tw.sell ? tw.buy / tw.sell : (tw.buy ? tw.buy : null),
-      dataQuality: [total || null, c.priceSol ?? null].filter(x => x != null).length / 2,
-      source: 'Solana RPC',
+      buyPressure: dexMarketLocked ? (existingToken.buyPressure ?? null) : (tw.sell ? tw.buy / tw.sell : (tw.buy ? tw.buy : null)),
+      dataQuality: Math.max(Number(existingToken.dataQuality) || 0, [total || null, dexMarketLocked ? (existingToken.priceSol ?? null) : (c.priceSol ?? null)].filter(x => x != null).length / 2),
+      source: dexMarketLocked ? (existingToken.source || 'Pump create') : 'Solana RPC',
     };
     // Supply data
     if (supply) { update.decimals = decimals; update.totalSupply = total; }
     // Curve data
     if (Object.keys(c).length) {
-      update.priceSol       = c.priceSol    ?? null;
-      update.liquiditySol   = c.liquiditySol ?? null;
-      update.marketCapSol   = (c.priceSol && total) ? c.priceSol * total : null;
-      /* MEMEFLOW_CANONICAL_ENRICH_FIELDS_V1 */
-      update.marketCap      = update.marketCapSol;
-      update.liquidity      = update.liquiditySol;
-      update.momentum       = update.buyPressure;
-      update.complete       = c.complete     ?? null;
+      update.complete = c.complete ?? null;
+      if (!dexMarketLocked) {
+        update.priceSol       = c.priceSol    ?? null;
+        update.liquiditySol   = c.liquiditySol ?? null;
+        update.marketCapSol   = (c.priceSol && total) ? c.priceSol * total : null;
+        /* MEMEFLOW_CANONICAL_ENRICH_FIELDS_V1 */
+        update.marketCap      = update.marketCapSol;
+        update.liquidity      = update.liquiditySol;
+        update.momentum       = update.buyPressure;
+      }
     }
 
     // ── Always store, evaluate, publish ────────────────────────────────────
@@ -284,7 +287,7 @@ export async function enrichToken(mint, curve, deps) {
     } catch(e) { fail('evaluate', e); }
 
     publish(mint);
-    if (ensurePriceTimer) ensurePriceTimer(mint, curve);
+    if (ensurePriceTimer && token?.dexConfirmed !== true) ensurePriceTimer(mint, curve);
 
     // Success: token stored and published regardless of step failures
     discMetrics.enrichSucceeded++;

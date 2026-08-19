@@ -1,4 +1,4 @@
-const PLATFORMS=['pump'];
+const PLATFORMS=['pump','dex'];
 const nullableNumbers=[
 'minBondingCurvePct','maxBondingCurvePct','minMarketCapUsd','maxMarketCapUsd','minTotalFeesSol','maxTotalFeesSol',
 'minVolume24hUsd','maxVolume24hUsd','minBuyTransactions','maxBuyTransactions','minSellTransactions','maxSellTransactions',
@@ -25,7 +25,7 @@ export function defaultSettings(){return {
  operatingMode:'observe',tradingEnvironment:'paper',profile:'balanced',
  tradingCapital:0,dailySpendLimit:0,positionSize:0.1,maxPositionSize:0.5,maxOpenPositions:4,maxDailyEntries:10,dailyLossLimit:0,feeReserve:0.05,
  minScore:72,minConfidence:70,minLiquidityUsd:0,minBuyPressure:1.2,requireFreshHolderSnapshot:true,requireWebsiteOrX:false,
- launchPlatforms:['pump'],includeKeywords:'',excludeKeywords:'',
+ launchPlatforms:['pump','dex'],includeKeywords:'',excludeKeywords:'',
  minBondingCurvePct:null,maxBondingCurvePct:null,minMarketCapUsd:null,maxMarketCapUsd:null,minTotalFeesSol:null,maxTotalFeesSol:null,
  minVolume24hUsd:null,maxVolume24hUsd:null,minBuyTransactions:null,maxBuyTransactions:null,minSellTransactions:null,maxSellTransactions:null,minTotalTransactions:null,maxTotalTransactions:null,
  minHolders:30,maxHolders:null,minBundlePct:null,maxBundlePct:null,minTokenAgeMinutes:0,maxTokenAgeMinutes:180,minTop10Pct:null,maxTop10Pct:25,minDeveloperPct:null,maxDeveloperPct:20,minSniperPct:null,maxSniperPct:null,
@@ -33,7 +33,7 @@ export function defaultSettings(){return {
  hardStopPct:25,trailingStopPct:15,tp1Pct:100,tp1SellPct:50,tp2Pct:200,tp2SellPct:25,runnerPct:25,maxHoldMinutes:1440,
  exitBuyPressure:1.0,exitOnWeakBuyPressure:true,
  adaptiveProfile:false,ownerApproval:true,shadowValidation:true,changeLog:true,
- aiChangePolicy:'propose',decisionFreshnessSec:60
+ aiChangePolicy:'propose',decisionFreshnessSec:60,discoverySourceMode:'pump'
 }}
 export function normalizeSettings(raw={}){
  const d=defaultSettings(),o={...d,...raw};
@@ -47,6 +47,7 @@ export function normalizeSettings(raw={}){
  o.operatingMode=String(o.operatingMode||d.operatingMode).trim().toLowerCase();
  o.tradingEnvironment=String(o.tradingEnvironment||d.tradingEnvironment).trim().toLowerCase();
  o.profile=String(o.profile||d.profile).trim().toLowerCase();
+ o.discoverySourceMode=String(o.discoverySourceMode||d.discoverySourceMode).trim().toLowerCase();
  o.aiChangePolicy='propose'; // AI may propose/explain; it cannot mutate owner policy automatically in this build.
 
  for(const k of nullableNumbers)o[k]=Object.prototype.hasOwnProperty.call(raw,k)&&!finite(raw[k])?null:(finite(o[k])?Number(o[k]):null);
@@ -55,8 +56,9 @@ export function normalizeSettings(raw={}){
  const requestedPlatforms=Array.isArray(o.launchPlatforms)
    ? [...new Set(o.launchPlatforms.map(x=>cleanText(x).toLowerCase()).filter(Boolean))]
    : [];
- // Current discovery backend is Pump.fun only. Do not expose a pretend multi-launchpad filter.
- o.launchPlatforms=['pump'];
+ // Discovery source is server-global (PUMP / DEX / HYBRID).
+ // Keep both normalized here so the selected engine source is not discarded downstream.
+ o.launchPlatforms=['pump','dex'];
 
  o.includeKeywords=cleanText(o.includeKeywords);o.excludeKeywords=cleanText(o.excludeKeywords);
  o.developerBlacklistWallets=Array.isArray(o.developerBlacklistWallets)
@@ -90,7 +92,7 @@ export function validateSettings(raw={}){
    if(s[k]!==null&&s[k]>100)errors.push(`${k} cannot exceed 100%.`);
 
  if(s.minScore<0||s.minScore>100)errors.push('Minimum AI score must be between 0 and 100.');
- if(s.minConfidence<0||s.minConfidence>100)errors.push('Minimum confidence must be between 0 and 100.');
+ if(s.minConfidence<0||s.minConfidence>100)errors.push('Minimum data confidence must be between 0 and 100.');
  if(s.minLiquidityUsd<0)errors.push('Minimum liquidity cannot be negative.');
  if(s.minBuyPressure<0)errors.push('Minimum buy pressure cannot be negative.');
 
@@ -120,8 +122,9 @@ export function validateSettings(raw={}){
  if(!VALID_MODES.includes(s.operatingMode))errors.push('Invalid operatingMode: must be observe, assist or automate.');
  if(!VALID_ENVS.includes(s.tradingEnvironment))errors.push('Invalid tradingEnvironment: must be paper or live.');
  if(!VALID_PROFILES.includes(s.profile))errors.push('Invalid profile: must be conservative, balanced or aggressive.');
+ if(!['pump','dex','hybrid'].includes(s.discoverySourceMode))errors.push('Invalid discoverySourceMode: must be pump, dex or hybrid.');
  if(s.aiChangePolicy!=='propose')errors.push('AI change policy is currently restricted to propose-only.');
- if(!Array.isArray(s.launchPlatforms)||s.launchPlatforms.length!==1||s.launchPlatforms[0]!=='pump')errors.push('Current discovery supports Pump.fun only.');
+ if(!Array.isArray(s.launchPlatforms)||s.launchPlatforms.some(x=>!PLATFORMS.includes(String(x).toLowerCase())))errors.push('Invalid launch platform. Supported discovery platforms are pump and dex.');
 
  return {ok:errors.length===0,errors,settings:s};
 }

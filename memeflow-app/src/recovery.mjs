@@ -14,6 +14,7 @@
  */
 
 import {evaluate} from './evaluate.mjs';
+import {tokenAllowedForSettings} from './discovery-eligibility.mjs';
 
 export function makeRecoveryMetrics() {
   return {
@@ -85,7 +86,14 @@ export async function startDecisionRecovery({
     for (const token of batch) {
       for (const uid of activeUids) {
         try {
-          const d = evaluate(token, store.settings(uid));
+          const settings = store.settings(uid);
+
+          if (!tokenAllowedForSettings(settings, token)) {
+            store.deleteDecision?.(uid, token.mint);
+            continue;
+          }
+
+          const d = evaluate(token, settings);
           store.setDecision(uid, token.mint, { ...d, primaryReason: d.primaryReason });
           metrics.decisionRecoveryEvaluationsPerformed++;
         } catch (_) {
@@ -127,9 +135,16 @@ export function lazyRecoverUser({ store, uid, metrics, tokenLimit = 200 }) {
 
   const p = Promise.resolve().then(() => {
     const tokens = store.tokens().slice(0, tokenLimit);
+    const settings = store.settings(uid);
+
     for (const token of tokens) {
       try {
-        const d = evaluate(token, store.settings(uid));
+        if (!tokenAllowedForSettings(settings, token)) {
+          store.deleteDecision?.(uid, token.mint);
+          continue;
+        }
+
+        const d = evaluate(token, settings);
         store.setDecision(uid, token.mint, { ...d, primaryReason: d.primaryReason });
       } catch (_) { /* skip individual failures */ }
     }
