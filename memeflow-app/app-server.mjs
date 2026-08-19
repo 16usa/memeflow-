@@ -8,6 +8,8 @@ import {makeLiveEvalMetrics,makeEvaluateForActiveUsers} from './src/liveeval.mjs
 import {makeDiscoveryMetrics,makeDiscoveryQueue} from './src/discqueue.mjs';
 import {candidateFeed,candidateVisibilityCounts} from './src/candidate-visibility.mjs';
 import { startPumpLiveTradeFeed } from './src/pump-live-trade-feed.mjs'; // MEMEFLOW_V12_21_LIVE_TRADE_STREAM_HOLDER_FEED
+import { DiscoverySourceController } from './src/discovery-source.mjs'; // MEMEFLOW_DISCOVERY_ROUTER_V1_1
+import { startDexDiscoveryFeed } from './src/dex-discovery-feed.mjs'; // MEMEFLOW_DISCOVERY_ROUTER_V1_1
 
 import { eventMarketLedger } from './src/event-market-ledger.mjs'; // MEMEFLOW_V12_18_EVENT_MARKET_LEDGER
 
@@ -16,6 +18,8 @@ import { eventHolderLedger } from './src/event-holder-ledger.mjs'; // MEMEFLOW_V
 import {manualAnalyze} from './src/manual-scan.mjs';
 // MEMEFLOW AI ASSISTANT HARD OFF: import disabled
 const root=path.dirname(fileURLToPath(import.meta.url)),dataDir=path.resolve(root,process.env.DATA_DIR||'data'),store=new JsonStore(dataDir);
+const __discoverySource=new DiscoverySourceController({dataDir,defaultMode:process.env.DISCOVERY_SOURCE_MODE||'dex'});
+const __discoverySourceAllows=source=>__discoverySource.allows(source);
 const paper=new PaperEngine(store);
 const pepeGame=new GameEngine(store); // MF_PEPE_ROCKET_GAME_INSTANCE
 const billing=new StripeBilling({store,secretKey:process.env.STRIPE_SECRET_KEY,priceId:process.env.STRIPE_PRICE_ID,webhookSecret:process.env.STRIPE_WEBHOOK_SECRET,apiBase:process.env.STRIPE_API_BASE});
@@ -35,6 +39,50 @@ const openaiAI=new OpenAIIntelligence({
 });
 let discovery={connected:false,url:null,lastEventAt:null,reconnects:0,error:null,lastError:null,startedAt:Date.now()},ws=null,wsTimer=null,wsReconnectAttempt=0;
 const streams=new Map(),priceTimers=new Map(),tradeWindows=new Map();
+// MEMEFLOW_V31_REAL_EVENT_WEB
+// MEMEFLOW_V31_REAL_EVENT_WEB — read-only System View event stream.
+// No work is done on the hot path unless at least one System View is connected.
+const __systemViewStreamsV31 = new Set();
+let __systemViewSeqV31 = 0;
+const __systemViewLastMintV31 = new Map();
+
+function __systemViewEmitV31(type, payload = {}) {
+  if (!__systemViewStreamsV31.size) return;
+
+  const now = Date.now();
+
+  if (type === 'token' && payload?.mint) {
+    const key = String(payload.mint);
+    const previous = __systemViewLastMintV31.get(key) || 0;
+    if ((now - previous) < 18) return;
+    __systemViewLastMintV31.set(key, now);
+
+    if (__systemViewLastMintV31.size > 1000) {
+      for (const [mint, ts] of __systemViewLastMintV31) {
+        if ((now - ts) > 30000) __systemViewLastMintV31.delete(mint);
+      }
+    }
+  }
+
+  const eventType = String(type || 'system').replace(/[^a-z0-9_-]/gi, '');
+  const body = JSON.stringify({
+    type: eventType,
+    seq: ++__systemViewSeqV31,
+    ts: now,
+    ...payload
+  });
+
+  const frame = `event: ${eventType}\ndata: ${body}\n\n`;
+
+  for (const res of [...__systemViewStreamsV31]) {
+    try {
+      res.write(frame);
+    } catch {
+      __systemViewStreamsV31.delete(res);
+    }
+  }
+}
+
 
 // MF_GAME_AUTO_FRESH_RESCAN_V10_6
 const gameAutoFreshScanByUser=new Map();
@@ -173,7 +221,7 @@ const holderMetrics=makeHolderMetrics();
    Hard drop is limited to stable platform/age incompatibility for every active
    user. No user settings are changed. */
 const HOLDER_ADMISSION_RETRY_MS=Math.max(1000,Number(process.env.HOLDER_ADMISSION_RETRY_MS||3000));
-const HOLDER_ADMISSION_ACTIVE_HOURS=Math.max(1,Number(process.env.HOLDER_ADMISSION_ACTIVE_USER_HOURS||24));
+const HOLDER_ADMISSION_ACTIVE_HOURS=Math.max(1,Number(process.env.HOLDER_ADMISSION_ACTIVE_USER_HOURS||2));
 
 function v128Finite(v){
   return v!==null&&v!==undefined&&v!==''&&Number.isFinite(Number(v))?Number(v):null;
@@ -198,7 +246,7 @@ function holderAdmissionForActiveUsers(mint){
       if(__eventHolder){
         const __u=(__v1224LinkCreator(mint,__v1223Token(mint)),eventHolderLedger?.applyToStore?.(store,mint));
         if(__u){
-          try{Promise.resolve(evaluateAI(__u)).catch(()=>{})}catch{}
+          try{Promise.resolve(evaluateAll(__u)).catch(()=>{})}catch{}
           try{publish(mint)}catch{}
         }
         return {allow:false,drop:true,reason:'fresh_pump_event_holder_ready',source:'ws-direct'};
@@ -207,7 +255,7 @@ function holderAdmissionForActiveUsers(mint){
     }
   }catch(__e){}
 
-  try{const __h=eventHolderLedger.inspect(mint);if(__h){const __u=eventHolderLedger.applyToStore(store,mint);if(__u){try{Promise.resolve(evaluateAI(__u)).catch(()=>{})}catch{}try{publish(mint)}catch{}}return {allow:false,drop:true,reason:'event_holder_ledger_ready',source:'event-ledger'}}}catch{}
+  try{const __h=eventHolderLedger.inspect(mint);if(__h){const __u=eventHolderLedger.applyToStore(store,mint);if(__u){try{Promise.resolve(evaluateAll(__u)).catch(()=>{})}catch{}try{publish(mint)}catch{}}return {allow:false,drop:true,reason:'event_holder_ledger_ready',source:'event-ledger'}}}catch{}
 
   const token=store.state.tokens[mint];
   if(!token)return {allow:false,drop:true,reason:'token_missing'};
@@ -401,7 +449,7 @@ function candidateView(d){
   };
 }
 const liveEvalMetrics=makeLiveEvalMetrics();
-const LIVE_EVAL_HOURS=Number(process.env.LIVE_EVALUATION_ACTIVE_USER_HOURS||24);
+const LIVE_EVAL_HOURS=Number(process.env.LIVE_EVALUATION_ACTIVE_USER_HOURS||2);
 const LIVE_EVAL_BATCH=Number(process.env.LIVE_EVALUATION_BATCH_SIZE||25);
 const LIVE_EVAL_DELAY=Number(process.env.LIVE_EVALUATION_DELAY_MS||0);
 const evaluateAll=makeEvaluateForActiveUsers({store,metrics:liveEvalMetrics,activeUserHoursMs:LIVE_EVAL_HOURS*3600000,batchSize:LIVE_EVAL_BATCH,delayMs:LIVE_EVAL_DELAY,onDecision:(uid,token,decision)=>{try{paper.onDecision(uid,token,decision,store.settings(uid))}catch(_){}}});
@@ -496,6 +544,15 @@ async function enrich(mint,curve){
   try{paper.onTokenUpdate(mint,store.state.tokens[mint])}catch(_){}
 }
 function publish(mint){
+  // V31 System View: actual server publish cadence drives the 3D impulse.
+  try{
+    const __v31t=store?.state?.tokens?.[mint]||{};
+    __systemViewEmitV31('token',{
+      mint:String(mint||''),
+      updatedAt:Number(__v31t?.updatedAt||Date.now())
+    });
+  }catch{}
+
   // MF_PEPE_ROCKET_GAME_PUBLISH_HOOK: one clean server-authoritative GameEngine receives the same accepted token updates.
   try{pepeGame.onTokenUpdate(mint,store.state.tokens[mint])}catch(_){}
   // Hot path: live Pump events can call publish many times per second.
@@ -1175,6 +1232,7 @@ function startDiscovery(i=0){
         // Accept only Pump.fun token creation instructions; drop Buy/Sell/Withdraw/Migrate/etc.
         const isCreate=logs.some(l=>/Instruction:\s*Create(?:V2|\s+V2|\s*$)/i.test(l));
         if(!isCreate){discMetrics.nonCreateEventsIgnored++;discMetrics.eventsFiltered++;return}
+        try{__systemViewEmitV31('create',{signature:String(sig||'')})}catch{}
         discMetrics.createEventsAccepted++;
         discovery.lastEventAt=Date.now();
         enqueue(sig);
@@ -1188,7 +1246,7 @@ function startDiscovery(i=0){
 function shadowValidateSettings(settings,limit=50){const rows=store.tokens().slice(0,Math.max(1,Math.min(200,limit)));const counts={WAITING:0,WATCH:0,'BUY READY':0,BLOCKED:0,EXPIRED:0};const errors=[];for(const token of rows){try{const d=evaluate(token,settings);counts[d.state]=(counts[d.state]||0)+1}catch(e){errors.push({mint:token.mint||null,message:e.message})}}return {tested:rows.length,counts,errors};}
 function reevaluateUser(uid){
   const settings=store.settings(uid);
-  const tokens=store.tokens();
+  const tokens=store.tokens().slice(0,Math.max(50,Math.min(500,Number(process.env.SETTINGS_REEVALUATE_LIMIT||250))));
   const settingsVersion=store.user(uid)?.settingsVersion||store.user(uid)?.updatedAt||Date.now();
   let count=0,errors=0;
   const states={WAITING:0,WATCH:0,BLOCKED:0,'BUY READY':0,EXPIRED:0};
@@ -1972,7 +2030,7 @@ if(false && url.pathname==='/api/ai/assistant' &&req.method==='POST'){
         freshEventOnlyMs:__V12_23_FRESH_EVENT_ONLY_MS,
         legacyHolderRpcForFreshPump:false
       },
-      liveTradeFeed:__pumpLiveTradeFeed?.metrics?.()||null,eventHolderLedger:eventHolderLedger.diagnostics(),eventMarketLedger:eventMarketLedger.diagnostics(),
+      liveTradeFeed:__pumpLiveTradeFeed?.metrics?.()||null,dexDiscovery:__dexDiscoveryFeed?.metrics?.()||null,discoverySource:__discoverySource.snapshot(),eventHolderLedger:eventHolderLedger.diagnostics(),eventMarketLedger:eventMarketLedger.diagnostics(),
       now,
       bridge:bridgeMetrics,fastPhase:fastPhaseMetrics,
       instance:{
@@ -2123,7 +2181,21 @@ if(false && url.pathname==='/api/ai/assistant' &&req.method==='POST'){
   return;
  }
 
- if(url.pathname==='/api/settings'&&req.method==='GET'){const settings=store.settings(u.id);return json(res,200,{settings,version:u.settingsVersion||1,killSwitchActive:u.killSwitch,capabilities:{liveAutomation:hasLiveEntitlement(u),paperAutomation:true,discoveryPlatforms:['pump'],adaptiveProfile:false}})}
+ if(url.pathname==='/api/discovery-source'&&req.method==='GET')return json(res,200,__discoverySourceStatus());
+
+ if(url.pathname==='/api/discovery-source'&&req.method==='POST'){
+
+   if(!u.isOwner)return json(res,403,{error:'OWNER_REQUIRED',message:'Only the owner can switch the global discovery source.'});
+
+   const b=await body(req);
+
+   try{__discoverySource.set(b?.mode);__applyDiscoverySourceMode();return json(res,200,__discoverySourceStatus())}
+
+   catch(e){return json(res,400,{error:e.code||'INVALID_DISCOVERY_SOURCE',message:e.message})}
+
+ }
+
+ if(url.pathname==='/api/settings'&&req.method==='GET'){const settings=store.settings(u.id);return json(res,200,{settings,version:u.settingsVersion||1,killSwitchActive:u.killSwitch,capabilities:{liveAutomation:hasLiveEntitlement(u),paperAutomation:true,discoveryPlatforms:['pump','dex'],discoverySourceMode:__discoverySource.mode,adaptiveProfile:false}})}
  if(url.pathname==='/api/settings/audit'&&req.method==='GET')return json(res,200,{history:store.settingsHistory(u.id,Number(url.searchParams.get('limit')||100))});
  if(url.pathname==='/api/settings'&&req.method==='PUT'){const b=await body(req);const checked=validateSettings(b.settings||{});if(!checked.ok)return json(res,400,{error:'INVALID_SETTINGS',message:checked.errors.join(' '),errors:checked.errors});if(checked.settings.tradingEnvironment==='live'&&!hasLiveEntitlement(u))return json(res,403,{error:'LIVE_ENTITLEMENT_REQUIRED',message:'LIVE trading environment requires an active Pro subscription or owner entitlement.'});if(b.version!=null&&Number(b.version)!==Number(u.settingsVersion||1))return json(res,409,{error:'SETTINGS_VERSION_CONFLICT',message:'Settings changed on the server. Reload before saving again.',version:u.settingsVersion||1});const before=JSON.parse(JSON.stringify(store.settings(u.id)));const shadow=checked.settings.shadowValidation?shadowValidateSettings(checked.settings,50):null;if(shadow?.errors?.length)return json(res,400,{error:'SHADOW_VALIDATION_FAILED',message:'Proposed settings could not be evaluated safely.',shadowValidation:shadow});const saved=store.setSettings(u.id,checked.settings);if(saved.changeLog!==false)store.recordSettingsChange(u.id,before,saved,{actor:u.id,source:'settings_put'});const decisionsReevaluated=reevaluateUser(u.id);return json(res,200,{settings:saved,version:u.settingsVersion,decisionsReevaluated,shadowValidation:shadow})}
  if(url.pathname==='/api/settings/defaults'&&req.method==='POST'){const before=JSON.parse(JSON.stringify(store.settings(u.id)));const saved=store.setSettings(u.id,defaults());if(saved.changeLog!==false)store.recordSettingsChange(u.id,before,saved,{actor:u.id,source:'restore_defaults'});const decisionsReevaluated=reevaluateUser(u.id);return json(res,200,{settings:saved,version:u.settingsVersion,decisionsReevaluated})}
@@ -2167,6 +2239,33 @@ if(false && url.pathname==='/api/ai/assistant' &&req.method==='POST'){
 }
  if(url.pathname==='/api/chart/config'){const qualified=candidateFeed(store.decisions(u.id),'candidates');return json(res,200,{chainId:'solana',tokenAddress:qualified[0]?.mint||''});}
  if(url.pathname==='/api/chart/history'){const mint=url.searchParams.get('tokenAddress'),t=store.state.tokens[mint];const pts=t?.priceSol?[{t:t.updatedAt,price:t.priceSol,source:t.source}]:[];return json(res,200,{points:pts,status:{stale:!pts.length,source:t?.source||null,error:t?.scanError||null},tokenAddress:mint})}
+  // MEMEFLOW_V31_REAL_EVENT_WEB
+ if(url.pathname==='/api/system/stream'&&req.method==='GET'){
+  res.writeHead(200,{
+   'content-type':'text/event-stream; charset=utf-8',
+   'cache-control':'no-cache, no-store, no-transform',
+   'connection':'keep-alive',
+   'x-accel-buffering':'no'
+  });
+  res.flushHeaders?.();
+  __systemViewStreamsV31.add(res);
+
+  try{
+   res.write(`retry: 1000\nevent: hello\ndata: ${JSON.stringify({type:'hello',seq:__systemViewSeqV31,ts:Date.now()})}\n\n`);
+  }catch{}
+
+  const heartbeat=setInterval(()=>{
+   try{res.write(`: v31 ${Date.now()}\n\n`)}catch{}
+  },15000);
+  heartbeat.unref?.();
+
+  req.on('close',()=>{
+   clearInterval(heartbeat);
+   __systemViewStreamsV31.delete(res);
+  });
+  return;
+ }
+
  if(url.pathname==='/api/chart/stream'){const mint=url.searchParams.get('tokenAddress');res.writeHead(200,{'content-type':'text/event-stream','cache-control':'no-cache','connection':'keep-alive'});res.write(`event: snapshot\ndata: ${JSON.stringify({points:[],status:{stale:true,source:'Solana'}})}\n\n`);if(!streams.has(mint))streams.set(mint,new Set());streams.get(mint).add(res);req.on('close',()=>streams.get(mint)?.delete(res));return}
  if(url.pathname==='/api/live/execute'){if(!hasLiveEntitlement(u))return json(res,402,{error:'LIVE_ENTITLEMENT_REQUIRED',message:'An active MEMEFLOW Pro subscription or verified owner entitlement is required.'});return json(res,423,{error:'LIVE_EXECUTION_NOT_READY',message:u.isOwner?'Owner LIVE entitlement is active, but verified wallet and production execution engine are still required.':'Pro is active, but verified wallet and production execution engine are still required.'});}
  // ── PAPER API routes ──────────────────────────────────────────────────────
@@ -2202,7 +2301,7 @@ process.on('unhandledRejection',r=>{console.error('[MEMEFLOW] unhandledRejection
 const server=http.createServer((req,res)=>handler(req,res).catch(e=>json(res,500,{error:'SERVER_ERROR',message:e.message})));server.listen(Number(process.env.PORT||3000),'0.0.0.0',()=>{
   const listenAt=Date.now();
   console.log(`MEMEFLOW listening on ${process.env.PORT||3000}`);
-  startDiscovery();
+  __applyDiscoverySourceMode();
   startDecisionRecovery({store,metrics:recoveryMetrics,getLiveState:()=>({queueDepth:discQueue.freshQueueDepth+discQueue.retryQueueDepth,processing:discQueue.processing}),batchSize:DECISION_RECOVERY_BATCH_SIZE,delayMs:DECISION_RECOVERY_DELAY_MS,tokenLimit:DECISION_RECOVERY_TOKEN_LIMIT,activeUserHoursMs:DECISION_RECOVERY_ACTIVE_USER_HOURS*3600000})
     .then(()=>{const ms=recoveryMetrics.decisionRecoveryCompletedAt-listenAt;console.log(`[RECOVERY] complete in ${ms}ms — ${recoveryMetrics.decisionRecoveryTokensProcessed} tokens, ${recoveryMetrics.decisionRecoveryDecisionsCreated} decisions, ${recoveryMetrics.decisionRecoveryErrors} errors`)})
     .catch(e=>console.error('[RECOVERY] error',e.message));
@@ -2210,13 +2309,156 @@ const server=http.createServer((req,res)=>handler(req,res).catch(e=>json(res,500
 
 
 // MEMEFLOW_V12_21_LIVE_TRADE_STREAM_HOLDER_FEED
-const __pumpLiveTradeFeed=startPumpLiveTradeFeed({
+// MEMEFLOW_DISCOVERY_ROUTER_V1_1: discovery feeds are owned by the source router.
+const __pumpLiveTradeFeedOpts={
+
   eventHolderLedger: typeof eventHolderLedger!=='undefined'?eventHolderLedger:null,
   eventMarketLedger: typeof eventMarketLedger!=='undefined'?eventMarketLedger:null,
   store: typeof store!=='undefined'?store:null,
   publish: typeof publish==='function'?publish:null,
-  evaluateAI: typeof evaluateAll==='function'?evaluateAll:null
-});
+  evaluateAI: typeof evaluateAll==='function'?evaluateAll:null,
+  // MF_V302_PAPER_WS_DIRECT
+  onTokenUpdate:(mint,updated)=>{try{paper.onTokenUpdate(mint,updated||store.state.tokens[mint])}catch{}}
+};
+let __pumpLiveTradeFeed=null;
+let __dexDiscoveryFeed=null;
+
+function __queueDexHolderSnapshot(mint){
+  try{
+    const admission=holderAdmissionForActiveUsers(mint);
+    if(admission?.allow!==false){
+      holderQueue.enqueue(mint);
+      return true;
+    }
+  }catch(e){
+    console.error('[DEX DISCOVERY] holder queue',mint,e?.message||e);
+  }
+  return false;
+}
+
+async function __applyDexDiscovery(info){
+  const mint=info?.mint;
+  if(!mint)return;
+
+  const existing=store.state?.tokens?.[mint]||null;
+  const identity={...(info.identity||{})};
+
+  if(existing){
+    store.setToken(mint,{
+      ...identity,
+      creator:existing.creator||identity.creator||null,
+      creatorStatus:existing.creator?'known':identity.creatorStatus,
+      discoveredAt:existing.discoveredAt||identity.discoveredAt,
+      launchPlatform:'dex',
+      protocol:identity.protocol||existing.protocol||'dex',
+      source:identity.source||existing.source||'DEX pool stream',
+      dexListedAt:Date.now()
+    });
+  }else{
+    store.addToken({
+      ...identity,
+      launchPlatform:'dex',
+      dexListedAt:Date.now()
+    });
+  }
+
+  const current=store.state?.tokens?.[mint]||{};
+  const updated=store.setToken(mint,{
+    ...(info.market||{}),
+    dataQuality:Math.max(Number(current.dataQuality)||0,0.78),
+    dexConfirmed:true,
+    dexConfirmedAt:Date.now()
+  });
+
+  // DEX path intentionally skips Pump bonding-curve enrichment and Pump price timers.
+  // Only the shared holder queue is requested.
+  __queueDexHolderSnapshot(mint);
+
+  try{await evaluateAll(updated)}catch(e){
+    console.error('[DEX DISCOVERY] evaluate',mint,e?.message||e);
+  }
+  try{publish(mint)}catch{}
+}
+
+async function __applyDexMarket(mint,patch){
+  const current=store.state?.tokens?.[mint];
+  if(!current)return;
+
+  const updated=store.setToken(mint,{
+    ...(patch||{}),
+    dataQuality:Math.max(
+      Number(current.dataQuality)||0,
+      current.holderFresh===true?0.94:0.78
+    ),
+    dexConfirmed:true
+  });
+
+  try{await evaluateAll(updated)}catch{}
+  try{publish(mint)}catch{}
+}
+
+function __startPumpLiveFeed(){
+  if(!__pumpLiveTradeFeed)
+    __pumpLiveTradeFeed=startPumpLiveTradeFeed(__pumpLiveTradeFeedOpts);
+}
+function __stopPumpLiveFeed(){
+  if(__pumpLiveTradeFeed){
+    try{__pumpLiveTradeFeed.stop?.()}catch{}
+    __pumpLiveTradeFeed=null;
+  }
+}
+function __startDexFeed(){
+  if(!__dexDiscoveryFeed)
+    __dexDiscoveryFeed=startDexDiscoveryFeed({
+      rpc,wsUrls,
+      onDiscover:__applyDexDiscovery,
+      onMarket:__applyDexMarket
+    });
+}
+function __stopDexFeed(){
+  if(__dexDiscoveryFeed){
+    try{__dexDiscoveryFeed.stop?.()}catch{}
+    __dexDiscoveryFeed=null;
+  }
+}
+function __stopPumpCreateDiscovery(){
+  clearTimeout(wsTimer);
+  wsTimer=null;
+  try{if(ws)ws.onclose=null}catch{}
+  try{ws?.close?.()}catch{}
+  ws=null;
+  discovery.connected=false;
+  discovery.error=null;
+}
+function __applyDiscoverySourceMode(){
+  if(__discoverySourceAllows('pump')){
+    __startPumpLiveFeed();
+    if(!ws)startDiscovery();
+  }else{
+    __stopPumpLiveFeed();
+    __stopPumpCreateDiscovery();
+  }
+
+  if(__discoverySourceAllows('dex'))__startDexFeed();
+  else __stopDexFeed();
+
+  console.log('[DISCOVERY SOURCE]',__discoverySource.mode);
+  return __discoverySource.mode;
+}
+function __discoverySourceStatus(){
+  const pumpTrade=__pumpLiveTradeFeed?.metrics?.()||null;
+  const dex=__dexDiscoveryFeed?.metrics?.()||null;
+
+  return {
+    source:__discoverySource.snapshot(),
+    pump:{
+      connected:Boolean(discovery.connected||pumpTrade?.connected),
+      createConnected:Boolean(discovery.connected),
+      trade:pumpTrade
+    },
+    dex
+  };
+}
 
 // MEMEFLOW_V12_22_WS_DIRECT_TRADE_EVENT: live feed module now decodes Pump TradeEvent directly from logsSubscribe; no per-signature HTTP getTransaction.
 

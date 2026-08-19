@@ -63,6 +63,7 @@ export class PaperEngine {
       maxHoldMinutes: Math.max(1, num(settings.maxHoldMinutes, 1440)),
       exitBuyPressure: Math.max(0, num(settings.exitBuyPressure, 1.0)),
       exitOnWeakBuyPressure: settings.exitOnWeakBuyPressure !== false,
+      requireFreshHolderSnapshot: settings.requireFreshHolderSnapshot !== false,
       decisionFreshnessSec: Math.max(5, num(settings.decisionFreshnessSec, 60)),
     };
   }
@@ -136,7 +137,8 @@ export class PaperEngine {
         now - tokenUpdatedAt <= s.decisionFreshnessSec * 1000
       );
 
-    const dataFresh = holderFresh && decisionFresh;
+    const holderRequirementSatisfied = !s.requireFreshHolderSnapshot || holderFresh;
+    const dataFresh = holderRequirementSatisfied && decisionFresh;
 
     const positionSizeValid =
       s.positionSize > 0 &&
@@ -168,7 +170,7 @@ export class PaperEngine {
         key: 'freshData',
         name: 'Fresh token data',
         pass: dataFresh,
-        code: holderFresh
+        code: !decisionFresh
           ? 'STALE_DECISION'
           : 'STALE_TOKEN_DATA'
       },
@@ -413,7 +415,9 @@ export class PaperEngine {
 
   updatePosition(position, token) {
     const price = num(token.priceSol);
-    const settings = this.settings(position.settingsSnapshot || {});
+    // MF_V302_LIVE_EXIT_SETTINGS
+    const currentUserSettings=this.store.state.users?.[position.userId]?.settings||{};
+    const settings=this.settings({...position.settingsSnapshot,...currentUserSettings});
     position.currentPriceSol = price;
     position.highestPriceSol = Math.max(num(position.highestPriceSol, price), price);
     position.unrealizedPnlSol = position.remainingTokenQuantity * (price - position.entryPriceSol);

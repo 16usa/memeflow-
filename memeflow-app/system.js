@@ -1,6 +1,38 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
+/* MEMEFLOW_V30_3_1_3D_LIGHTWEIGHT
+   Performance scheduler only. */
+const MF3D_MOBILE_V3031 = window.matchMedia('(max-width: 900px)');
+const MF3D_LAST_FRAME_V3031 = new Map();
+
+function mf3dMobileV3031() {
+  return MF3D_MOBILE_V3031.matches;
+}
+
+function mf3dFrameAllowedV3031(key, mobileFps = 30, desktopFps = 45) {
+  if (document.hidden) return false;
+
+  const now = performance.now();
+  const fps = mf3dMobileV3031() ? mobileFps : desktopFps;
+  const interval = 1000 / Math.max(1, fps);
+  const previous = MF3D_LAST_FRAME_V3031.get(key) || 0;
+
+  if ((now - previous) < interval) {
+    return false;
+  }
+
+  MF3D_LAST_FRAME_V3031.set(key, now);
+  return true;
+}
+
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) {
+    MF3D_LAST_FRAME_V3031.clear();
+  }
+});
+
+
 const $ = (id) => document.getElementById(id);
 const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
 const finite = (v) => v !== null && v !== undefined && Number.isFinite(Number(v));
@@ -278,7 +310,7 @@ function buildScene() {
     powerPreference: 'high-performance'
   });
 
-  app.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.8));
+  app.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, mf3dMobileV3031() ? 1.5 : 1.8));
   app.renderer.setSize(canvas.clientWidth, canvas.clientHeight, false);
   app.renderer.outputColorSpace = THREE.SRGBColorSpace;
   app.renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -300,9 +332,9 @@ function buildScene() {
 
   buildBackground();
   Object.entries(LAYOUT).forEach(([id, cfg]) => createModule(id, cfg));
-  EDGES.forEach(createFlowLine);
+  /* Legacy flow geometry is disabled by CLEAN V29. */
 
-  canvas.addEventListener('pointerup', pick);
+  /* CLEAN V29 owns module picking. */
   window.addEventListener('resize', resize);
   animate();
 }
@@ -471,6 +503,7 @@ function renderTokenInspector(row) {
 
 function select(data) {
   app.selected = data;
+  window.__mf29SyncSelection?.();
 
   document.querySelectorAll('.token-card').forEach((x) => {
     x.classList.toggle('active', data.kind === 'token' && x.dataset.mint === data.mint);
@@ -726,7 +759,7 @@ async function refreshTelemetry() {
   $('lastSync').textContent = `updated ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`;
 
   const ranked = rankSample(diag?.sample || []);
-  syncTokenMeshes(ranked);
+  /* CLEAN V29 keeps token telemetry in the rail only. */
   renderRail(ranked);
 
   $('telemetryMode').classList.toggle('offline', !(diag || discovery));
@@ -744,7 +777,11 @@ async function refreshTelemetry() {
 }
 
 function animate() {
+  // MF_V3031_GATE_animate
   requestAnimationFrame(animate);
+  if (!mf3dFrameAllowedV3031('animate', 30, 45)) return;
+
+  
 
   const dt = Math.min(app.clock.getDelta(), 0.05);
   const t = performance.now() * 0.001;
@@ -818,2842 +855,12 @@ try {
   app.selected = { kind: 'module', id: 'core' };
   renderModuleInspector('core');
   refreshTelemetry().finally(() => setTimeout(() => $('boot').classList.add('hidden'), 420));
-  setInterval(refreshTelemetry, 2500);
+  setInterval(refreshTelemetry, 4000);
 } catch (err) {
   console.error('[MEMEFLOW SYSTEM VIEW]', err);
   $('fatal').hidden = false;
   $('boot').classList.add('hidden');
 }
-
-/* ===== MOBILE PORTRAIT DIGITAL TWIN V7 ===== */
-
-const PORTRAIT_LAYOUT_V7 = {
-  discovery: {
-    pos: [-4.6, 4.0, 0.3],
-    scale: 0.72
-  },
-
-  bootstrap: {
-    pos: [0.0, 4.0, -0.25],
-    scale: 0.72
-  },
-
-  core: {
-    pos: [4.6, 4.0, 0.2],
-    scale: 0.76
-  },
-
-  holders: {
-    pos: [4.6, 1.1, 0.8],
-    scale: 0.70
-  },
-
-  market: {
-    pos: [0.0, 1.1, -0.25],
-    scale: 0.70
-  },
-
-  risk: {
-    pos: [-4.6, 1.1, 0.15],
-    scale: 0.70
-  },
-
-  openai: {
-    pos: [-4.6, -2.0, -0.9],
-    scale: 0.67
-  },
-
-  decision: {
-    pos: [0.0, -2.0, 0.0],
-    scale: 0.72
-  },
-
-  paper: {
-    pos: [4.6, -2.0, 0.15],
-    scale: 0.70
-  },
-
-  execution: {
-    pos: [4.6, -4.7, -1.0],
-    scale: 0.65
-  }
-};
-
-const PORTRAIT_EDGES_V7 = [
-  {
-    from: 'discovery',
-    to: 'bootstrap',
-    color: COLORS.cyan,
-    via: [-2.3, 4.25, 0.0],
-    pulses: 3,
-    speed: 0.26
-  },
-
-  {
-    from: 'bootstrap',
-    to: 'core',
-    color: COLORS.blue,
-    via: [2.3, 4.25, 0.0],
-    pulses: 3,
-    speed: 0.25
-  },
-
-  {
-    from: 'core',
-    to: 'holders',
-    color: COLORS.cyan,
-    via: [4.8, 2.55, 0.55],
-    pulses: 2,
-    speed: 0.21
-  },
-
-  {
-    from: 'core',
-    to: 'market',
-    color: COLORS.blue,
-    via: [2.25, 2.45, -0.30],
-    pulses: 2,
-    speed: 0.20
-  },
-
-  {
-    from: 'holders',
-    to: 'risk',
-    color: COLORS.cyan,
-    via: [0.0, 1.55, 0.65],
-    pulses: 3,
-    speed: 0.20
-  },
-
-  {
-    from: 'market',
-    to: 'risk',
-    color: COLORS.blue,
-    via: [-2.35, 1.15, -0.10],
-    pulses: 2,
-    speed: 0.20
-  },
-
-  {
-    from: 'openai',
-    to: 'risk',
-    color: COLORS.purple,
-    via: [-4.75, -0.45, -0.55],
-    pulses: 1,
-    speed: 0.12
-  },
-
-  {
-    from: 'risk',
-    to: 'decision',
-    color: COLORS.green,
-    via: [-2.25, -0.80, 0.05],
-    pulses: 3,
-    speed: 0.26
-  },
-
-  {
-    from: 'decision',
-    to: 'paper',
-    color: COLORS.purple,
-    via: [2.25, -1.75, 0.05],
-    pulses: 2,
-    speed: 0.19
-  },
-
-  {
-    from: 'paper',
-    to: 'execution',
-    color: COLORS.yellow,
-    via: [4.75, -3.40, -0.50],
-    pulses: 1,
-    speed: 0.13
-  }
-];
-
-function clearFlowLinesV7() {
-  const remove = [];
-
-  app.scene.traverse((object) => {
-    if (
-      object.isLine === true &&
-      object.isLineSegments !== true
-    ) {
-      remove.push(object);
-    }
-  });
-
-  for (const object of remove) {
-    app.scene.remove(object);
-
-    if (object.geometry) {
-      object.geometry.dispose();
-    }
-
-    if (object.material) {
-      object.material.dispose();
-    }
-  }
-
-  for (const pulse of app.edgePulses) {
-    app.scene.remove(pulse);
-
-    if (pulse.geometry) {
-      pulse.geometry.dispose();
-    }
-
-    if (pulse.material) {
-      pulse.material.dispose();
-    }
-  }
-
-  app.edgePulses.length = 0;
-}
-
-function applyPortraitTopologyV7() {
-  const mobile =
-    window.matchMedia('(max-width: 900px)').matches;
-
-  if (!mobile) {
-    return;
-  }
-
-  for (
-    const [id, config]
-    of Object.entries(PORTRAIT_LAYOUT_V7)
-  ) {
-    const node = app.nodes.get(id);
-
-    if (!node) {
-      continue;
-    }
-
-    node.group.position.set(
-      config.pos[0],
-      config.pos[1],
-      config.pos[2]
-    );
-
-    node.group.scale.setScalar(
-      config.scale
-    );
-  }
-
-  SPECIAL_POINTS.watchHold.set(
-    0.0,
-    -3.65,
-    1.15
-  );
-
-  SPECIAL_POINTS.blockedExit.set(
-    -3.3,
-    -3.75,
-    1.75
-  );
-
-  clearFlowLinesV7();
-
-  for (
-    const edge
-    of PORTRAIT_EDGES_V7
-  ) {
-    createFlowLine(edge);
-  }
-
-  app.cameraHome.set(
-    0.0,
-    6.5,
-    24.0
-  );
-
-  app.targetHome.set(
-    0.0,
-    0.0,
-    0.0
-  );
-
-  app.camera.position.copy(
-    app.cameraHome
-  );
-
-  app.controls.target.copy(
-    app.targetHome
-  );
-
-  app.controls.enablePan = false;
-
-  app.controls.minDistance = 20;
-  app.controls.maxDistance = 27;
-
-  app.controls.minAzimuthAngle = -0.28;
-  app.controls.maxAzimuthAngle = 0.28;
-
-  app.controls.minPolarAngle =
-    Math.PI * 0.30;
-
-  app.controls.maxPolarAngle =
-    Math.PI * 0.43;
-
-  app.autoRotate = false;
-  app.controls.autoRotate = false;
-
-  const autoButton =
-    document.getElementById('autoRotateBtn');
-
-  if (autoButton) {
-    autoButton.classList.remove('active');
-  }
-
-  for (
-    const label
-    of app.labels
-  ) {
-    label.el.dataset.node =
-      label.id;
-  }
-
-  app.controls.update();
-  resize();
-
-  app.__portraitTopologyV7 = true;
-}
-
-let portraitResizeTimerV7 = null;
-
-window.addEventListener(
-  'resize',
-  () => {
-    clearTimeout(
-      portraitResizeTimerV7
-    );
-
-    portraitResizeTimerV7 =
-      setTimeout(
-        () => {
-          applyPortraitTopologyV7();
-        },
-        160
-      );
-  }
-);
-
-setTimeout(
-  () => {
-    applyPortraitTopologyV7();
-  },
-  80
-);
-
-
-/* ===== LIVE FLOW REALITY V8 ===== */
-
-const FLOW_REALITY_V8 = {
-  previousSnapshot: null,
-  lines: [],
-  lastTopologyKey: '',
-  timer: null
-};
-
-function topologyKeyV8() {
-  const mobile =
-    window.matchMedia('(max-width: 900px)').matches &&
-    typeof PORTRAIT_EDGES_V7 !== 'undefined';
-
-  return mobile ? 'portrait-v7' : 'desktop-v6';
-}
-
-function activeEdgesV8() {
-  const mobile =
-    window.matchMedia('(max-width: 900px)').matches &&
-    typeof PORTRAIT_EDGES_V7 !== 'undefined';
-
-  return mobile ? PORTRAIT_EDGES_V7 : EDGES;
-}
-
-function edgeKeyV8(edge) {
-  return `${edge.from}:${edge.to}`;
-}
-
-function lineOpacityV8(level) {
-  return 0.10 + level * 0.36;
-}
-
-function pulseOpacityV8(level) {
-  return 0.28 + level * 0.68;
-}
-
-function speedFromLevelV8(minSpeed, maxSpeed, level) {
-  return minSpeed + (maxSpeed - minSpeed) * level;
-}
-
-function clampRateV8(value) {
-  return clamp(value, 0, 1);
-}
-
-function normalizeRateV8(rate, expectedPeak) {
-  const safe = Math.max(0, Number(rate) || 0);
-  const peak = Math.max(1, Number(expectedPeak) || 1);
-
-  return clampRateV8(
-    Math.log10(1 + safe) / Math.log10(1 + peak)
-  );
-}
-
-function safeCounterV8(value) {
-  return Math.max(0, Number(value) || 0);
-}
-
-function counterDeltaV8(next, prev) {
-  const a = safeCounterV8(next);
-  const b = safeCounterV8(prev);
-
-  return a >= b ? a - b : 0;
-}
-
-function ratePerSecondV8(next, prev, dtSeconds) {
-  if (!dtSeconds || dtSeconds <= 0) {
-    return 0;
-  }
-
-  return counterDeltaV8(next, prev) / dtSeconds;
-}
-
-function stateCountsV8(sample) {
-  const counts = {
-    total: 0,
-    waiting: 0,
-    watch: 0,
-    blocked: 0,
-    ready: 0
-  };
-
-  for (const row of sample || []) {
-    counts.total += 1;
-    counts[stateKey(row?.decision?.state)] += 1;
-  }
-
-  return counts;
-}
-
-function captureRealitySnapshotV8() {
-  const diag = app.telemetry?.diag || {};
-  const discovery = app.telemetry?.discovery || {};
-  const live = diag.liveTradeFeed || {};
-  const sample = Array.isArray(diag.sample) ? diag.sample : [];
-
-  return {
-    ts: Date.now(),
-    eventsReceived: safeCounterV8(discovery.eventsReceived),
-    tradeEventsDecoded: safeCounterV8(
-      live.tradeEventsDecoded ??
-      diag.liveTradeFeed?.tradeEventsDecoded
-    ),
-    holderSnapshots: safeCounterV8(live.holderSnapshots),
-    marketSnapshots: safeCounterV8(live.marketSnapshots),
-    evaluationCalls: safeCounterV8(live.evaluationCalls),
-    freshBacklog: safeCounterV8(diag.bridge?.currentFreshBacklog),
-    holderQueueDepth: safeCounterV8(discovery.holderQueueDepth),
-    activeEvaluationUsers: safeCounterV8(discovery.activeEvaluationUsers),
-    openaiConfigured: !!app.telemetry?.openai?.configured,
-    sample,
-    counts: stateCountsV8(sample)
-  };
-}
-
-function rebuildRealityLinesV8() {
-  if (!app.scene) {
-    return;
-  }
-
-  if (typeof clearFlowLinesV7 === 'function') {
-    clearFlowLinesV7();
-  } else {
-    for (const pulse of app.edgePulses || []) {
-      app.scene.remove(pulse);
-
-      if (pulse.geometry) {
-        pulse.geometry.dispose();
-      }
-
-      if (pulse.material) {
-        pulse.material.dispose();
-      }
-    }
-
-    app.edgePulses.length = 0;
-  }
-
-  for (const lineEntry of FLOW_REALITY_V8.lines) {
-    app.scene.remove(lineEntry.line);
-
-    if (lineEntry.line.geometry) {
-      lineEntry.line.geometry.dispose();
-    }
-
-    if (lineEntry.line.material) {
-      lineEntry.line.material.dispose();
-    }
-  }
-
-  FLOW_REALITY_V8.lines.length = 0;
-
-  for (const edge of activeEdgesV8()) {
-    const start = pointFor(edge.from);
-    const end = pointFor(edge.to);
-    const via = new THREE.Vector3(...edge.via);
-
-    const curve = curveFromPoints([start, via, end]);
-    const pts = curve.getPoints(80);
-    const positions = [];
-
-    for (const p of pts) {
-      positions.push(p.x, p.y, p.z);
-    }
-
-    const geo = new THREE.BufferGeometry();
-    geo.setAttribute(
-      'position',
-      new THREE.Float32BufferAttribute(positions, 3)
-    );
-
-    const line = new THREE.Line(
-      geo,
-      new THREE.LineBasicMaterial({
-        color: edge.color,
-        transparent: true,
-        opacity: 0.18
-      })
-    );
-
-    line.userData = {
-      edgeKey: edgeKeyV8(edge)
-    };
-
-    app.scene.add(line);
-    FLOW_REALITY_V8.lines.push({
-      line,
-      edgeKey: edgeKeyV8(edge)
-    });
-
-    for (let i = 0; i < edge.pulses; i++) {
-      const pulse = new THREE.Mesh(
-        new THREE.SphereGeometry(0.09, 12, 12),
-        new THREE.MeshBasicMaterial({
-          color: edge.color,
-          transparent: true,
-          opacity: 0.55
-        })
-      );
-
-      pulse.userData = {
-        curve,
-        t: Math.random(),
-        speed: edge.speed || 0.18,
-        baseSpeed: edge.speed || 0.18,
-        edgeKey: edgeKeyV8(edge),
-        edgeColor: edge.color
-      };
-
-      app.edgePulses.push(pulse);
-      app.scene.add(pulse);
-    }
-  }
-
-  FLOW_REALITY_V8.lastTopologyKey = topologyKeyV8();
-}
-
-function computeRealityMapV8(current, previous) {
-  const dtSeconds = Math.max(
-    0.001,
-    (current.ts - previous.ts) / 1000
-  );
-
-  const eventsRate =
-    ratePerSecondV8(
-      current.eventsReceived,
-      previous.eventsReceived,
-      dtSeconds
-    );
-
-  const tradesRate =
-    ratePerSecondV8(
-      current.tradeEventsDecoded,
-      previous.tradeEventsDecoded,
-      dtSeconds
-    );
-
-  const holderRate =
-    ratePerSecondV8(
-      current.holderSnapshots,
-      previous.holderSnapshots,
-      dtSeconds
-    );
-
-  const marketRate =
-    ratePerSecondV8(
-      current.marketSnapshots,
-      previous.marketSnapshots,
-      dtSeconds
-    );
-
-  const evalRate =
-    ratePerSecondV8(
-      current.evaluationCalls,
-      previous.evaluationCalls,
-      dtSeconds
-    );
-
-  const total = Math.max(1, current.counts.total);
-  const readyRatio = current.counts.ready / total;
-  const blockedRatio = current.counts.blocked / total;
-  const watchRatio = current.counts.watch / total;
-
-  const backlogPenalty =
-    clampRateV8(current.freshBacklog / 12);
-
-  const holderQueuePenalty =
-    clampRateV8(current.holderQueueDepth / 20);
-
-  const eventLevel =
-    normalizeRateV8(eventsRate, 180);
-
-  const tradeLevel =
-    normalizeRateV8(tradesRate, 160);
-
-  const holderLevel =
-    normalizeRateV8(holderRate, 24);
-
-  const marketLevel =
-    normalizeRateV8(marketRate, 40);
-
-  const evalLevel =
-    normalizeRateV8(evalRate, 70);
-
-  const advisoryLevel =
-    current.openaiConfigured
-      ? 0.28 + evalLevel * 0.35
-      : 0.10;
-
-  const riskLevel =
-    clampRateV8(
-      (holderLevel * 0.42) +
-      (marketLevel * 0.34) +
-      (evalLevel * 0.24) -
-      (backlogPenalty * 0.14)
-    );
-
-  return {
-    'discovery:bootstrap': {
-      level: eventLevel,
-      speed: speedFromLevelV8(0.10, 0.70, eventLevel),
-      pulseOpacity: pulseOpacityV8(eventLevel),
-      lineOpacity: lineOpacityV8(eventLevel)
-    },
-
-    'bootstrap:core': {
-      level: clampRateV8((eventLevel * 0.55) + (tradeLevel * 0.45)),
-      speed: speedFromLevelV8(
-        0.10,
-        0.66,
-        clampRateV8((eventLevel * 0.55) + (tradeLevel * 0.45))
-      ),
-      pulseOpacity: pulseOpacityV8(
-        clampRateV8((eventLevel * 0.55) + (tradeLevel * 0.45))
-      ),
-      lineOpacity: lineOpacityV8(
-        clampRateV8((eventLevel * 0.55) + (tradeLevel * 0.45))
-      )
-    },
-
-    'core:holders': {
-      level: clampRateV8(holderLevel - holderQueuePenalty * 0.12),
-      speed: speedFromLevelV8(
-        0.08,
-        0.48,
-        clampRateV8(holderLevel - holderQueuePenalty * 0.12)
-      ),
-      pulseOpacity: pulseOpacityV8(
-        clampRateV8(holderLevel - holderQueuePenalty * 0.12)
-      ),
-      lineOpacity: lineOpacityV8(
-        clampRateV8(holderLevel - holderQueuePenalty * 0.12)
-      )
-    },
-
-    'core:market': {
-      level: clampRateV8((tradeLevel * 0.58) + (marketLevel * 0.42)),
-      speed: speedFromLevelV8(
-        0.08,
-        0.56,
-        clampRateV8((tradeLevel * 0.58) + (marketLevel * 0.42))
-      ),
-      pulseOpacity: pulseOpacityV8(
-        clampRateV8((tradeLevel * 0.58) + (marketLevel * 0.42))
-      ),
-      lineOpacity: lineOpacityV8(
-        clampRateV8((tradeLevel * 0.58) + (marketLevel * 0.42))
-      )
-    },
-
-    'holders:risk': {
-      level: riskLevel,
-      speed: speedFromLevelV8(0.08, 0.44, riskLevel),
-      pulseOpacity: pulseOpacityV8(riskLevel),
-      lineOpacity: lineOpacityV8(riskLevel)
-    },
-
-    'market:risk': {
-      level: riskLevel,
-      speed: speedFromLevelV8(0.08, 0.46, riskLevel),
-      pulseOpacity: pulseOpacityV8(riskLevel),
-      lineOpacity: lineOpacityV8(riskLevel)
-    },
-
-    'openai:risk': {
-      level: advisoryLevel,
-      speed: speedFromLevelV8(0.04, 0.18, advisoryLevel),
-      pulseOpacity: pulseOpacityV8(advisoryLevel * 0.75),
-      lineOpacity: lineOpacityV8(advisoryLevel * 0.70)
-    },
-
-    'risk:decision': {
-      level: clampRateV8(
-        (evalLevel * 0.72) +
-        (watchRatio * 0.12) +
-        (readyRatio * 0.16) -
-        (backlogPenalty * 0.12)
-      ),
-      speed: speedFromLevelV8(
-        0.10,
-        0.78,
-        clampRateV8(
-          (evalLevel * 0.72) +
-          (watchRatio * 0.12) +
-          (readyRatio * 0.16) -
-          (backlogPenalty * 0.12)
-        )
-      ),
-      pulseOpacity: pulseOpacityV8(
-        clampRateV8(
-          (evalLevel * 0.72) +
-          (watchRatio * 0.12) +
-          (readyRatio * 0.16) -
-          (backlogPenalty * 0.12)
-        )
-      ),
-      lineOpacity: lineOpacityV8(
-        clampRateV8(
-          (evalLevel * 0.72) +
-          (watchRatio * 0.12) +
-          (readyRatio * 0.16) -
-          (backlogPenalty * 0.12)
-        )
-      )
-    },
-
-    'decision:paper': {
-      level: clampRateV8(
-        (readyRatio * 0.64) +
-        (evalLevel * 0.26) +
-        (watchRatio * 0.10)
-      ),
-      speed: speedFromLevelV8(
-        0.05,
-        0.42,
-        clampRateV8(
-          (readyRatio * 0.64) +
-          (evalLevel * 0.26) +
-          (watchRatio * 0.10)
-        )
-      ),
-      pulseOpacity: pulseOpacityV8(
-        clampRateV8(
-          (readyRatio * 0.64) +
-          (evalLevel * 0.26) +
-          (watchRatio * 0.10)
-        )
-      ),
-      lineOpacity: lineOpacityV8(
-        clampRateV8(
-          (readyRatio * 0.64) +
-          (evalLevel * 0.26) +
-          (watchRatio * 0.10)
-        )
-      )
-    },
-
-    'paper:execution': {
-      level: clampRateV8(readyRatio * 0.30),
-      speed: speedFromLevelV8(
-        0.02,
-        0.10,
-        clampRateV8(readyRatio * 0.30)
-      ),
-      pulseOpacity: pulseOpacityV8(
-        clampRateV8(readyRatio * 0.30) * 0.7
-      ),
-      lineOpacity: lineOpacityV8(
-        clampRateV8(readyRatio * 0.30) * 0.7
-      )
-    }
-  };
-}
-
-function applyRealityMapV8(map) {
-  for (const pulse of app.edgePulses) {
-    const cfg = map[pulse.userData.edgeKey];
-
-    if (!cfg) {
-      continue;
-    }
-
-    pulse.userData.speed = cfg.speed;
-    pulse.material.opacity = cfg.pulseOpacity;
-  }
-
-  for (const entry of FLOW_REALITY_V8.lines) {
-    const cfg = map[entry.edgeKey];
-
-    if (!cfg) {
-      continue;
-    }
-
-    entry.line.material.opacity = cfg.lineOpacity;
-  }
-}
-
-function syncRealitySpeedsV8(force = false) {
-  if (!app.scene || !app.telemetry) {
-    return;
-  }
-
-  const nextKey = topologyKeyV8();
-
-  if (
-    force ||
-    nextKey !== FLOW_REALITY_V8.lastTopologyKey ||
-    FLOW_REALITY_V8.lines.length === 0
-  ) {
-    rebuildRealityLinesV8();
-  }
-
-  const current = captureRealitySnapshotV8();
-
-  if (!FLOW_REALITY_V8.previousSnapshot) {
-    FLOW_REALITY_V8.previousSnapshot = current;
-    return;
-  }
-
-  const dtMs =
-    current.ts - FLOW_REALITY_V8.previousSnapshot.ts;
-
-  if (!force && dtMs < 900) {
-    return;
-  }
-
-  const map = computeRealityMapV8(
-    current,
-    FLOW_REALITY_V8.previousSnapshot
-  );
-
-  applyRealityMapV8(map);
-
-  FLOW_REALITY_V8.previousSnapshot = current;
-}
-
-function scheduleRealityRebuildV8() {
-  clearTimeout(FLOW_REALITY_V8.timer);
-
-  FLOW_REALITY_V8.timer = setTimeout(
-    () => {
-      syncRealitySpeedsV8(true);
-    },
-    180
-  );
-}
-
-window.addEventListener(
-  'resize',
-  scheduleRealityRebuildV8
-);
-
-setTimeout(
-  () => {
-    syncRealitySpeedsV8(true);
-  },
-  220
-);
-
-setInterval(
-  () => {
-    syncRealitySpeedsV8(false);
-  },
-  900
-);
-
-
-/* ===== CENTERED MOBILE SCENE + VISUAL POLISH V9 ===== */
-
-function applyCenteredPortraitV9() {
-  if (
-    typeof PORTRAIT_LAYOUT_V7 === 'undefined' ||
-    typeof PORTRAIT_EDGES_V7 === 'undefined' ||
-    !app.scene ||
-    !app.controls
-  ) {
-    return;
-  }
-
-  const mobile =
-    window.matchMedia('(max-width: 900px)').matches;
-
-  if (!mobile) {
-    return;
-  }
-
-  const nextLayout = {
-    discovery: { pos: [-4.7, 3.15, 0.20], scale: 0.69 },
-    bootstrap: { pos: [ 0.0, 3.15,-0.15], scale: 0.69 },
-    core:      { pos: [ 4.7, 3.15, 0.15], scale: 0.74 },
-
-    risk:      { pos: [-4.7, 0.45, 0.10], scale: 0.68 },
-    market:    { pos: [ 0.0, 0.45,-0.15], scale: 0.68 },
-    holders:   { pos: [ 4.7, 0.45, 0.65], scale: 0.68 },
-
-    openai:    { pos: [-4.7,-2.35,-0.75], scale: 0.64 },
-    decision:  { pos: [ 0.0,-2.35, 0.00], scale: 0.70 },
-    paper:     { pos: [ 4.7,-2.35, 0.10], scale: 0.67 },
-
-    execution: { pos: [ 4.7,-4.65,-0.90], scale: 0.62 }
-  };
-
-  for (const [id, cfg] of Object.entries(nextLayout)) {
-    if (!PORTRAIT_LAYOUT_V7[id]) {
-      continue;
-    }
-
-    PORTRAIT_LAYOUT_V7[id].pos = cfg.pos;
-    PORTRAIT_LAYOUT_V7[id].scale = cfg.scale;
-  }
-
-  const edgeByKey = new Map(
-    PORTRAIT_EDGES_V7.map((edge) => [`${edge.from}:${edge.to}`, edge])
-  );
-
-  const patchEdge = (key, via, speed, pulses) => {
-    const edge = edgeByKey.get(key);
-    if (!edge) return;
-    edge.via = via;
-    if (typeof speed === 'number') edge.speed = speed;
-    if (typeof pulses === 'number') edge.pulses = pulses;
-  };
-
-  patchEdge('discovery:bootstrap', [-2.35, 3.35, 0.00], 0.28, 3);
-  patchEdge('bootstrap:core',      [ 2.35, 3.35, 0.00], 0.27, 3);
-
-  patchEdge('core:holders',        [ 4.75, 1.85, 0.55], 0.22, 2);
-  patchEdge('core:market',         [ 2.25, 1.55,-0.20], 0.22, 2);
-
-  patchEdge('holders:risk',        [ 0.00, 0.95, 0.55], 0.20, 3);
-  patchEdge('market:risk',         [-2.35, 0.55,-0.05], 0.20, 2);
-
-  patchEdge('openai:risk',         [-4.75,-0.95,-0.45], 0.13, 1);
-  patchEdge('risk:decision',       [-2.35,-1.05, 0.05], 0.28, 3);
-  patchEdge('decision:paper',      [ 2.35,-2.05, 0.05], 0.20, 2);
-  patchEdge('paper:execution',     [ 4.75,-3.55,-0.40], 0.14, 1);
-
-  SPECIAL_POINTS.watchHold.set(
-    0.15,
-    -3.95,
-    1.00
-  );
-
-  SPECIAL_POINTS.blockedExit.set(
-    -3.55,
-    -3.95,
-    1.60
-  );
-
-  if (typeof applyPortraitTopologyV7 === 'function') {
-    applyPortraitTopologyV7();
-  }
-
-  app.cameraHome.set(
-    0.1,
-    5.55,
-    21.8
-  );
-
-  app.targetHome.set(
-    0.0,
-    -0.15,
-    0.0
-  );
-
-  app.camera.position.copy(
-    app.cameraHome
-  );
-
-  app.controls.target.copy(
-    app.targetHome
-  );
-
-  app.controls.enablePan = false;
-
-  app.controls.minDistance = 13.5;
-  app.controls.maxDistance = 31.0;
-
-  app.controls.minAzimuthAngle = -0.42;
-  app.controls.maxAzimuthAngle = 0.42;
-
-  app.controls.minPolarAngle = Math.PI * 0.27;
-  app.controls.maxPolarAngle = Math.PI * 0.47;
-
-  app.controls.enableZoom = true;
-  app.controls.zoomSpeed = 1.05;
-  app.controls.rotateSpeed = 0.72;
-
-  if (app.controls.touches) {
-    app.controls.touches.ONE = THREE.TOUCH.ROTATE;
-    app.controls.touches.TWO = THREE.TOUCH.DOLLY_ROTATE;
-  }
-
-  for (const label of app.labels) {
-    label.offsetY = label.id === 'openai' ? 34 : 30;
-  }
-
-  const coreNode = app.nodes.get('core');
-  if (coreNode) {
-    coreNode.beacon.intensity = 1.45;
-
-    if (!coreNode.group.userData.heroGlowV9) {
-      const heroDisk = new THREE.Mesh(
-        new THREE.CircleGeometry(1.9, 48),
-        new THREE.MeshBasicMaterial({
-          color: COLORS.green,
-          transparent: true,
-          opacity: 0.11
-        })
-      );
-
-      heroDisk.rotation.x = -Math.PI / 2;
-      heroDisk.position.set(0, -0.62, 0);
-      coreNode.group.add(heroDisk);
-
-      const heroRing = new THREE.Mesh(
-        new THREE.TorusGeometry(1.65, 0.03, 12, 72),
-        new THREE.MeshBasicMaterial({
-          color: COLORS.cyan,
-          transparent: true,
-          opacity: 0.32
-        })
-      );
-
-      heroRing.rotation.x = Math.PI / 2;
-      heroRing.position.set(0, 0.92, 0);
-      coreNode.group.add(heroRing);
-
-      coreNode.group.userData.heroGlowV9 = {
-        heroDisk,
-        heroRing
-      };
-    }
-  }
-
-  if (!app.scene.userData.v9Atmosphere) {
-    const glowPlane = new THREE.Mesh(
-      new THREE.PlaneGeometry(18, 12),
-      new THREE.MeshBasicMaterial({
-        color: 0x103442,
-        transparent: true,
-        opacity: 0.09,
-        depthWrite: false
-      })
-    );
-
-    glowPlane.position.set(0, 0.6, -5.5);
-    app.scene.add(glowPlane);
-
-    const glowPlane2 = new THREE.Mesh(
-      new THREE.PlaneGeometry(11, 8),
-      new THREE.MeshBasicMaterial({
-        color: 0x0c2f3a,
-        transparent: true,
-        opacity: 0.08,
-        depthWrite: false
-      })
-    );
-
-    glowPlane2.position.set(0, -1.6, -4.4);
-    app.scene.add(glowPlane2);
-
-    app.scene.userData.v9Atmosphere = {
-      glowPlane,
-      glowPlane2
-    };
-  }
-
-  if (app.scene.userData.v9Atmosphere) {
-    const a = app.scene.userData.v9Atmosphere;
-    a.glowPlane.position.set(0, 0.6, -5.5);
-    a.glowPlane2.position.set(0, -1.6, -4.4);
-  }
-
-  for (const pulse of app.edgePulses) {
-    pulse.scale.setScalar(1.10);
-
-    if (pulse.material) {
-      pulse.material.opacity =
-        Math.max(
-          0.48,
-          Number(pulse.material.opacity) || 0
-        );
-    }
-  }
-
-  app.__centeredV9 = true;
-  app.controls.update();
-  resize();
-
-  if (typeof syncRealitySpeedsV8 === 'function') {
-    syncRealitySpeedsV8(true);
-  }
-}
-
-let centeredV9ResizeTimer = null;
-
-window.addEventListener(
-  'resize',
-  () => {
-    clearTimeout(centeredV9ResizeTimer);
-
-    centeredV9ResizeTimer = setTimeout(
-      () => {
-        applyCenteredPortraitV9();
-      },
-      180
-    );
-  }
-);
-
-setTimeout(
-  () => {
-    applyCenteredPortraitV9();
-  },
-  140
-);
-
-
-/* ===== PREMIUM DIGITAL TWIN V11 ===== */
-
-const PREMIUM_V11 = {
-  selectedRoute: null,
-  selectedRouteGlow: null,
-  selectedKey: '',
-  stage: null,
-  orbitals: [],
-  pads: [],
-  running: false
-};
-
-function premiumColorForStateV11(state) {
-  const key = stateKey(state);
-
-  return COLORS[key] || COLORS.cyan;
-}
-
-function createStageV11() {
-  if (!app.scene || PREMIUM_V11.stage) {
-    return;
-  }
-
-  const stage = new THREE.Group();
-  stage.name = 'PremiumDigitalTwinStageV11';
-
-  const deck = new THREE.Mesh(
-    new THREE.PlaneGeometry(17.8, 11.4),
-    new THREE.MeshStandardMaterial({
-      color: 0x02080c,
-      roughness: 0.58,
-      metalness: 0.62,
-      transparent: true,
-      opacity: 0.56
-    })
-  );
-
-  deck.rotation.x = -Math.PI / 2;
-  deck.position.y = -1.47;
-  stage.add(deck);
-
-  const glow = new THREE.Mesh(
-    new THREE.PlaneGeometry(15.5, 9.3),
-    new THREE.MeshBasicMaterial({
-      color: 0x123b46,
-      transparent: true,
-      opacity: 0.055,
-      depthWrite: false
-    })
-  );
-
-  glow.rotation.x = -Math.PI / 2;
-  glow.position.y = -1.44;
-  stage.add(glow);
-
-  const framePoints = [
-    new THREE.Vector3(-8.8, -1.40, -5.5),
-    new THREE.Vector3( 8.8, -1.40, -5.5),
-    new THREE.Vector3( 8.8, -1.40,  5.5),
-    new THREE.Vector3(-8.8, -1.40,  5.5),
-    new THREE.Vector3(-8.8, -1.40, -5.5)
-  ];
-
-  const frameGeometry =
-    new THREE.BufferGeometry()
-      .setFromPoints(framePoints);
-
-  const frame =
-    new THREE.Line(
-      frameGeometry,
-      new THREE.LineBasicMaterial({
-        color: COLORS.cyan,
-        transparent: true,
-        opacity: 0.10
-      })
-    );
-
-  stage.add(frame);
-
-  for (let i = 0; i < 5; i++) {
-    const ring =
-      new THREE.Mesh(
-        new THREE.RingGeometry(
-          1.0 + i * 0.72,
-          1.015 + i * 0.72,
-          96
-        ),
-        new THREE.MeshBasicMaterial({
-          color:
-            i % 2 === 0
-              ? COLORS.cyan
-              : COLORS.green,
-          transparent: true,
-          opacity: 0.035,
-          side: THREE.DoubleSide,
-          depthWrite: false
-        })
-      );
-
-    ring.rotation.x =
-      -Math.PI / 2;
-
-    ring.position.set(
-      0,
-      -1.39,
-      0
-    );
-
-    stage.add(ring);
-  }
-
-  app.scene.add(stage);
-
-  PREMIUM_V11.stage =
-    stage;
-}
-
-function addNodeHardwareV11() {
-  for (
-    const [id, node]
-    of app.nodes
-  ) {
-    if (
-      !node ||
-      node.group.userData.premiumV11
-    ) {
-      continue;
-    }
-
-    const cfg =
-      node.cfg || {};
-
-    const width =
-      cfg.size?.[0] || 3;
-
-    const depth =
-      cfg.size?.[2] || 1.8;
-
-    const pad =
-      new THREE.Mesh(
-        new THREE.PlaneGeometry(
-          width * 1.22,
-          depth * 1.36
-        ),
-        new THREE.MeshBasicMaterial({
-          color: cfg.color || COLORS.cyan,
-          transparent: true,
-          opacity:
-            id === 'core'
-              ? 0.075
-              : 0.035,
-          depthWrite: false,
-          side: THREE.DoubleSide
-        })
-      );
-
-    pad.rotation.x =
-      -Math.PI / 2;
-
-    pad.position.y =
-      -0.56;
-
-    node.group.add(pad);
-
-    PREMIUM_V11.pads.push({
-      id,
-      mesh: pad,
-      baseOpacity:
-        id === 'core'
-          ? 0.075
-          : 0.035
-    });
-
-    const railMaterial =
-      new THREE.MeshBasicMaterial({
-        color: cfg.color || COLORS.cyan,
-        transparent: true,
-        opacity: 0.24
-      });
-
-    const railLeft =
-      new THREE.Mesh(
-        new THREE.BoxGeometry(
-          0.028,
-          0.035,
-          depth * 0.94
-        ),
-        railMaterial.clone()
-      );
-
-    railLeft.position.set(
-      -width * 0.49,
-      -0.49,
-      0
-    );
-
-    const railRight =
-      railLeft.clone();
-
-    railRight.position.x =
-      width * 0.49;
-
-    node.group.add(
-      railLeft,
-      railRight
-    );
-
-    const statusLight =
-      new THREE.PointLight(
-        cfg.color || COLORS.cyan,
-        id === 'core' ? 0.85 : 0.18,
-        id === 'core' ? 5.5 : 2.8,
-        2
-      );
-
-    statusLight.position.set(
-      0,
-      0.85,
-      0
-    );
-
-    node.group.add(
-      statusLight
-    );
-
-    node.group.userData.premiumV11 = {
-      pad,
-      railLeft,
-      railRight,
-      statusLight
-    };
-  }
-}
-
-function addCoreOrbitalsV11() {
-  const core =
-    app.nodes.get('core');
-
-  if (
-    !core ||
-    core.group.userData.orbitalsV11
-  ) {
-    return;
-  }
-
-  const orbitalA =
-    new THREE.Mesh(
-      new THREE.TorusGeometry(
-        2.05,
-        0.018,
-        8,
-        120
-      ),
-      new THREE.MeshBasicMaterial({
-        color: COLORS.cyan,
-        transparent: true,
-        opacity: 0.19
-      })
-    );
-
-  orbitalA.rotation.set(
-    Math.PI / 2,
-    0.18,
-    0.10
-  );
-
-  orbitalA.position.y =
-    0.05;
-
-  const orbitalB =
-    new THREE.Mesh(
-      new THREE.TorusGeometry(
-        2.45,
-        0.014,
-        8,
-        120
-      ),
-      new THREE.MeshBasicMaterial({
-        color: COLORS.green,
-        transparent: true,
-        opacity: 0.11
-      })
-    );
-
-  orbitalB.rotation.set(
-    Math.PI / 2,
-    -0.20,
-    0.28
-  );
-
-  orbitalB.position.y =
-    0.02;
-
-  core.group.add(
-    orbitalA,
-    orbitalB
-  );
-
-  PREMIUM_V11.orbitals.push(
-    orbitalA,
-    orbitalB
-  );
-
-  core.group.userData.orbitalsV11 = true;
-}
-
-function removeSelectedRouteV11() {
-  if (PREMIUM_V11.selectedRoute) {
-    app.scene.remove(
-      PREMIUM_V11.selectedRoute
-    );
-
-    PREMIUM_V11.selectedRoute.geometry?.dispose();
-    PREMIUM_V11.selectedRoute.material?.dispose();
-
-    PREMIUM_V11.selectedRoute =
-      null;
-  }
-
-  if (PREMIUM_V11.selectedRouteGlow) {
-    app.scene.remove(
-      PREMIUM_V11.selectedRouteGlow
-    );
-
-    PREMIUM_V11.selectedRouteGlow.geometry?.dispose();
-    PREMIUM_V11.selectedRouteGlow.material?.dispose();
-
-    PREMIUM_V11.selectedRouteGlow =
-      null;
-  }
-}
-
-function updateSelectedRouteV11() {
-  const selected =
-    app.selected;
-
-  const key =
-    selected?.kind === 'token'
-      ? `token:${selected.mint}`
-      : `module:${selected?.id || 'core'}`;
-
-  if (
-    key === PREMIUM_V11.selectedKey
-  ) {
-    return;
-  }
-
-  PREMIUM_V11.selectedKey =
-    key;
-
-  removeSelectedRouteV11();
-
-  if (
-    selected?.kind !== 'token'
-  ) {
-    return;
-  }
-
-  const item =
-    app.tokenMeshes.get(
-      selected.mint
-    );
-
-  if (
-    !item ||
-    !item.curve
-  ) {
-    return;
-  }
-
-  const points =
-    item.curve.getPoints(110);
-
-  const color =
-    premiumColorForStateV11(
-      selected.row?.decision?.state
-    );
-
-  const geometry =
-    new THREE.BufferGeometry()
-      .setFromPoints(points);
-
-  PREMIUM_V11.selectedRoute =
-    new THREE.Line(
-      geometry,
-      new THREE.LineBasicMaterial({
-        color,
-        transparent: true,
-        opacity: 0.88
-      })
-    );
-
-  const glowGeometry =
-    new THREE.BufferGeometry()
-      .setFromPoints(points);
-
-  PREMIUM_V11.selectedRouteGlow =
-    new THREE.Line(
-      glowGeometry,
-      new THREE.LineBasicMaterial({
-        color,
-        transparent: true,
-        opacity: 0.18
-      })
-    );
-
-  PREMIUM_V11.selectedRouteGlow.scale.set(
-    1.003,
-    1.003,
-    1.003
-  );
-
-  app.scene.add(
-    PREMIUM_V11.selectedRouteGlow,
-    PREMIUM_V11.selectedRoute
-  );
-}
-
-function premiumCameraV11() {
-  if (
-    !app.camera ||
-    !app.controls
-  ) {
-    return;
-  }
-
-  const mobile =
-    window.matchMedia(
-      '(max-width: 900px)'
-    ).matches;
-
-  if (!mobile) {
-    return;
-  }
-
-  app.cameraHome.set(
-    0.15,
-    5.2,
-    21.2
-  );
-
-  app.targetHome.set(
-    0,
-    -0.15,
-    0
-  );
-
-  app.camera.position.copy(
-    app.cameraHome
-  );
-
-  app.controls.target.copy(
-    app.targetHome
-  );
-
-  app.controls.minDistance =
-    12.5;
-
-  app.controls.maxDistance =
-    31;
-
-  app.controls.enableZoom =
-    true;
-
-  app.controls.zoomSpeed =
-    1.15;
-
-  app.controls.rotateSpeed =
-    0.68;
-
-  app.controls.minAzimuthAngle =
-    -0.46;
-
-  app.controls.maxAzimuthAngle =
-    0.46;
-
-  app.controls.minPolarAngle =
-    Math.PI * 0.27;
-
-  app.controls.maxPolarAngle =
-    Math.PI * 0.48;
-
-  app.controls.autoRotate =
-    false;
-
-  app.autoRotate =
-    false;
-
-  app.controls.update();
-}
-
-function premiumAnimationV11() {
-  requestAnimationFrame(
-    premiumAnimationV11
-  );
-
-  if (!app.scene) {
-    return;
-  }
-
-  const t =
-    performance.now() * 0.001;
-
-  updateSelectedRouteV11();
-
-  for (
-    let i = 0;
-    i < PREMIUM_V11.orbitals.length;
-    i++
-  ) {
-    const ring =
-      PREMIUM_V11.orbitals[i];
-
-    ring.rotation.z +=
-      i === 0
-        ? 0.0016
-        : -0.0011;
-  }
-
-  for (
-    const entry
-    of PREMIUM_V11.pads
-  ) {
-    const selected =
-      app.selected?.kind === 'module' &&
-      app.selected?.id === entry.id;
-
-    const targetOpacity =
-      selected
-        ? entry.baseOpacity * 3.1
-        : entry.baseOpacity;
-
-    entry.mesh.material.opacity +=
-      (
-        targetOpacity -
-        entry.mesh.material.opacity
-      ) * 0.08;
-  }
-
-  for (
-    const [id, node]
-    of app.nodes
-  ) {
-    const premium =
-      node.group.userData.premiumV11;
-
-    if (!premium) {
-      continue;
-    }
-
-    const selected =
-      app.selected?.kind === 'module' &&
-      app.selected?.id === id;
-
-    const base =
-      id === 'core'
-        ? 0.72
-        : 0.16;
-
-    const pulse =
-      0.5 +
-      0.5 *
-      Math.sin(
-        t * 2.2 +
-        node.group.position.x * 0.25
-      );
-
-    premium.statusLight.intensity =
-      selected
-        ? base * 3.6
-        : base + pulse * 0.10;
-
-    if (
-      node.topPlate?.material &&
-      'emissiveIntensity'
-        in node.topPlate.material
-    ) {
-      node.topPlate.material.emissiveIntensity =
-        selected
-          ? 1.18
-          : id === 'core'
-            ? 0.82
-            : 0.56;
-    }
-  }
-
-  for (
-    const pulse
-    of app.edgePulses || []
-  ) {
-    const curve =
-      pulse.userData?.curve;
-
-    const u =
-      Number(
-        pulse.userData?.t
-      );
-
-    if (
-      !curve ||
-      !Number.isFinite(u)
-    ) {
-      continue;
-    }
-
-    const ahead =
-      curve.getPointAt(
-        Math.min(
-          1,
-          u + 0.012
-        )
-      );
-
-    pulse.lookAt(
-      ahead
-    );
-
-    pulse.scale.set(
-      0.62,
-      0.62,
-      2.8
-    );
-  }
-
-  if (
-    PREMIUM_V11.selectedRoute
-  ) {
-    const pulse =
-      0.72 +
-      Math.sin(t * 4.4) *
-      0.18;
-
-    PREMIUM_V11.selectedRoute.material.opacity =
-      pulse;
-  }
-}
-
-function installPremiumDigitalTwinV11() {
-  if (
-    PREMIUM_V11.running ||
-    !app.scene
-  ) {
-    return;
-  }
-
-  PREMIUM_V11.running =
-    true;
-
-  createStageV11();
-  addNodeHardwareV11();
-  addCoreOrbitalsV11();
-  premiumCameraV11();
-
-  premiumAnimationV11();
-
-  resize();
-}
-
-setTimeout(
-  installPremiumDigitalTwinV11,
-  260
-);
-
-window.addEventListener(
-  'resize',
-  () => {
-    setTimeout(
-      premiumCameraV11,
-      160
-    );
-  }
-);
-
-
-/* ===== CINEMATIC SYSTEM SCALE V12 ===== */
-
-const CINEMATIC_V12 = {
-  installed: false,
-  basePositions: new Map(),
-  baseScales: new Map()
-};
-
-function installCinematicSystemV12() {
-  if (
-    !app.scene ||
-    !app.camera ||
-    !app.controls ||
-    CINEMATIC_V12.installed
-  ) {
-    return;
-  }
-
-  const mobile =
-    window.matchMedia(
-      '(max-width: 900px)'
-    ).matches;
-
-  if (!mobile) {
-    return;
-  }
-
-  CINEMATIC_V12.installed = true;
-
-  const scaleX = 1.08;
-  const scaleY = 1.18;
-  const scaleZ = 1.04;
-
-  for (const [id, node] of app.nodes) {
-    if (!node?.group) {
-      continue;
-    }
-
-    CINEMATIC_V12.basePositions.set(
-      id,
-      node.group.position.clone()
-    );
-
-    CINEMATIC_V12.baseScales.set(
-      id,
-      node.group.scale.clone()
-    );
-
-    const p =
-      node.group.position;
-
-    p.x *= scaleX;
-    p.y =
-      (p.y * scaleY) - 0.35;
-    p.z *= scaleZ;
-
-    node.group.scale.multiplyScalar(
-      id === 'core'
-        ? 1.18
-        : 1.10
-    );
-  }
-
-  const core =
-    app.nodes.get('core');
-
-  if (core?.group) {
-    core.group.position.y += 0.08;
-
-    const coreGlow =
-      new THREE.PointLight(
-        COLORS.green,
-        1.55,
-        7.5,
-        2
-      );
-
-    coreGlow.position.set(
-      0,
-      1.25,
-      0
-    );
-
-    core.group.add(
-      coreGlow
-    );
-
-    core.group.userData.cinematicGlowV12 =
-      coreGlow;
-  }
-
-  app.cameraHome.set(
-    0.1,
-    4.65,
-    17.8
-  );
-
-  app.targetHome.set(
-    0,
-    -0.35,
-    0
-  );
-
-  app.camera.position.copy(
-    app.cameraHome
-  );
-
-  app.controls.target.copy(
-    app.targetHome
-  );
-
-  app.controls.minDistance =
-    9.8;
-
-  app.controls.maxDistance =
-    27;
-
-  app.controls.zoomSpeed =
-    1.20;
-
-  app.controls.rotateSpeed =
-    0.66;
-
-  app.controls.minAzimuthAngle =
-    -0.42;
-
-  app.controls.maxAzimuthAngle =
-    0.42;
-
-  app.controls.minPolarAngle =
-    Math.PI * 0.26;
-
-  app.controls.maxPolarAngle =
-    Math.PI * 0.47;
-
-  app.controls.enableZoom =
-    true;
-
-  app.controls.enablePan =
-    false;
-
-  for (const label of app.labels) {
-    label.offsetY =
-      label.id === 'core'
-        ? 35
-        : 29;
-  }
-
-  for (const pulse of app.edgePulses || []) {
-    if (!pulse?.geometry) {
-      continue;
-    }
-
-    pulse.scale.set(
-      0.45,
-      0.45,
-      3.8
-    );
-
-    if (pulse.material) {
-      pulse.material.opacity =
-        Math.max(
-          0.68,
-          Number(
-            pulse.material.opacity
-          ) || 0
-        );
-    }
-  }
-
-  for (
-    const entry
-    of FLOW_REALITY_V8?.lines || []
-  ) {
-    if (!entry?.line?.material) {
-      continue;
-    }
-
-    entry.line.material.opacity =
-      Math.max(
-        0.24,
-        Number(
-          entry.line.material.opacity
-        ) || 0
-      );
-  }
-
-  app.controls.update();
-  resize();
-
-  if (
-    typeof syncRealitySpeedsV8 ===
-    'function'
-  ) {
-    syncRealitySpeedsV8(true);
-  }
-}
-
-function reinforceCinematicPulseV12() {
-  if (!CINEMATIC_V12.installed) {
-    return;
-  }
-
-  const t =
-    performance.now() * 0.001;
-
-  for (const pulse of app.edgePulses || []) {
-    if (!pulse?.material) {
-      continue;
-    }
-
-    const activity =
-      0.78 +
-      Math.sin(
-        t * 5 +
-        (
-          Number(
-            pulse.userData?.t
-          ) || 0
-        ) * 8
-      ) * 0.18;
-
-    pulse.material.opacity =
-      Math.max(
-        0.42,
-        Math.min(
-          1,
-          pulse.material.opacity *
-          activity
-        )
-      );
-
-    pulse.scale.x = 0.42;
-    pulse.scale.y = 0.42;
-    pulse.scale.z = 3.6;
-  }
-
-  requestAnimationFrame(
-    reinforceCinematicPulseV12
-  );
-}
-
-setTimeout(
-  () => {
-    installCinematicSystemV12();
-    reinforceCinematicPulseV12();
-  },
-  620
-);
-
-
-/* ===== CONTROL ROOM DIGITAL TWIN V14 ===== */
-
-const CONTROL_ROOM_V14 = {
-  installed: false,
-  selectedId: null,
-  selectionRing: null,
-  routeLine: null,
-  routeGlow: null,
-  stage: null,
-  nodePads: new Map(),
-  pulseTrailsInstalled: new WeakSet()
-};
-
-const CONTROL_ROOM_LAYOUT_V14 = {
-  discovery: [-4.9, 2.65, 0.35],
-  bootstrap: [-1.75, 2.65, -0.15],
-  core: [1.75, 1.65, 0.20],
-
-  holders: [4.8, 0.70, 0.55],
-  market: [-0.10, 0.05, -0.15],
-  risk: [-4.55, 0.05, 0.20],
-
-  openai: [-4.35, -2.35, -0.65],
-  decision: [0.15, -2.15, 0.05],
-  paper: [3.75, -2.25, 0.15],
-
-  execution: [4.35, -4.45, -0.85]
-};
-
-const CONTROL_ROOM_SCALE_V14 = {
-  discovery: 0.78,
-  bootstrap: 0.78,
-  core: 0.94,
-
-  holders: 0.78,
-  market: 0.78,
-  risk: 0.78,
-
-  openai: 0.70,
-  decision: 0.80,
-  paper: 0.75,
-
-  execution: 0.66
-};
-
-function disposeObjectV14(object) {
-  if (!object) {
-    return;
-  }
-
-  if (object.parent) {
-    object.parent.remove(object);
-  }
-
-  object.geometry?.dispose?.();
-
-  if (Array.isArray(object.material)) {
-    for (const material of object.material) {
-      material?.dispose?.();
-    }
-  } else {
-    object.material?.dispose?.();
-  }
-}
-
-function installStageV14() {
-  if (!app.scene || CONTROL_ROOM_V14.stage) {
-    return;
-  }
-
-  const stage = new THREE.Group();
-  stage.name = 'ControlRoomStageV14';
-
-  const platform = new THREE.Mesh(
-    new THREE.PlaneGeometry(17.2, 11.6),
-    new THREE.MeshStandardMaterial({
-      color: 0x02080c,
-      metalness: 0.48,
-      roughness: 0.72,
-      transparent: true,
-      opacity: 0.52,
-      depthWrite: false
-    })
-  );
-
-  platform.rotation.x = -Math.PI / 2;
-  platform.position.y = -1.48;
-
-  stage.add(platform);
-
-  const centerGlow = new THREE.Mesh(
-    new THREE.CircleGeometry(4.7, 96),
-    new THREE.MeshBasicMaterial({
-      color: 0x1b6f73,
-      transparent: true,
-      opacity: 0.035,
-      depthWrite: false,
-      side: THREE.DoubleSide
-    })
-  );
-
-  centerGlow.rotation.x = -Math.PI / 2;
-  centerGlow.position.set(0.5, -1.43, 0.1);
-
-  stage.add(centerGlow);
-
-  const rings = [
-    { radius: 2.1, color: COLORS.green, opacity: 0.055 },
-    { radius: 3.4, color: COLORS.cyan, opacity: 0.035 },
-    { radius: 4.8, color: COLORS.blue, opacity: 0.020 }
-  ];
-
-  for (const entry of rings) {
-    const ring = new THREE.Mesh(
-      new THREE.RingGeometry(
-        entry.radius,
-        entry.radius + 0.018,
-        128
-      ),
-      new THREE.MeshBasicMaterial({
-        color: entry.color,
-        transparent: true,
-        opacity: entry.opacity,
-        side: THREE.DoubleSide,
-        depthWrite: false
-      })
-    );
-
-    ring.rotation.x = -Math.PI / 2;
-    ring.position.set(0.5, -1.40, 0.1);
-
-    stage.add(ring);
-  }
-
-  app.scene.add(stage);
-
-  CONTROL_ROOM_V14.stage = stage;
-}
-
-function applyNodeLayoutV14() {
-  for (const [id, position] of Object.entries(CONTROL_ROOM_LAYOUT_V14)) {
-    const node = app.nodes.get(id);
-
-    if (!node?.group) {
-      continue;
-    }
-
-    node.group.position.set(
-      position[0],
-      position[1],
-      position[2]
-    );
-
-    const scale =
-      CONTROL_ROOM_SCALE_V14[id] ?? 0.76;
-
-    node.group.scale.setScalar(scale);
-  }
-}
-
-function installNodePadsV14() {
-  for (const [id, node] of app.nodes) {
-    if (!node?.group || CONTROL_ROOM_V14.nodePads.has(id)) {
-      continue;
-    }
-
-    const width =
-      Number(node.cfg?.size?.[0]) || 3.1;
-
-    const depth =
-      Number(node.cfg?.size?.[2]) || 1.8;
-
-    const color =
-      Number(node.cfg?.color) || COLORS.cyan;
-
-    const group = new THREE.Group();
-    group.name = `NodePadV14_${id}`;
-
-    const glow = new THREE.Mesh(
-      new THREE.PlaneGeometry(
-        width * 1.28,
-        depth * 1.42
-      ),
-      new THREE.MeshBasicMaterial({
-        color,
-        transparent: true,
-        opacity: id === 'core' ? 0.085 : 0.030,
-        depthWrite: false,
-        side: THREE.DoubleSide
-      })
-    );
-
-    glow.rotation.x = -Math.PI / 2;
-    glow.position.y = -0.58;
-
-    group.add(glow);
-
-    const frameGeometry = new THREE.EdgesGeometry(
-      new THREE.BoxGeometry(
-        width * 1.14,
-        0.035,
-        depth * 1.22
-      )
-    );
-
-    const frame = new THREE.LineSegments(
-      frameGeometry,
-      new THREE.LineBasicMaterial({
-        color,
-        transparent: true,
-        opacity: id === 'core' ? 0.28 : 0.11
-      })
-    );
-
-    frame.position.y = -0.54;
-
-    group.add(frame);
-
-    node.group.add(group);
-
-    CONTROL_ROOM_V14.nodePads.set(id, {
-      group,
-      glow,
-      frame,
-      baseOpacity: id === 'core' ? 0.085 : 0.030
-    });
-  }
-}
-
-function installCoreVisualV14() {
-  const core = app.nodes.get('core');
-
-  if (!core?.group || core.group.userData.controlRoomCoreV14) {
-    return;
-  }
-
-  const outerRing = new THREE.Mesh(
-    new THREE.TorusGeometry(
-      1.75,
-      0.024,
-      10,
-      128
-    ),
-    new THREE.MeshBasicMaterial({
-      color: COLORS.green,
-      transparent: true,
-      opacity: 0.30
-    })
-  );
-
-  outerRing.rotation.x = Math.PI / 2;
-  outerRing.position.y = 0.83;
-
-  const innerRing = new THREE.Mesh(
-    new THREE.TorusGeometry(
-      1.28,
-      0.018,
-      10,
-      128
-    ),
-    new THREE.MeshBasicMaterial({
-      color: COLORS.cyan,
-      transparent: true,
-      opacity: 0.25
-    })
-  );
-
-  innerRing.rotation.x = Math.PI / 2;
-  innerRing.rotation.z = 0.34;
-  innerRing.position.y = 0.85;
-
-  const verticalLight = new THREE.PointLight(
-    COLORS.green,
-    1.15,
-    7,
-    2
-  );
-
-  verticalLight.position.set(0, 1.4, 0);
-
-  core.group.add(
-    outerRing,
-    innerRing,
-    verticalLight
-  );
-
-  core.group.userData.controlRoomCoreV14 = {
-    outerRing,
-    innerRing,
-    verticalLight
-  };
-}
-
-function installSelectionRingV14() {
-  if (CONTROL_ROOM_V14.selectionRing) {
-    return;
-  }
-
-  const ring = new THREE.Mesh(
-    new THREE.RingGeometry(
-      0.82,
-      0.86,
-      96
-    ),
-    new THREE.MeshBasicMaterial({
-      color: COLORS.cyan,
-      transparent: true,
-      opacity: 0,
-      side: THREE.DoubleSide,
-      depthWrite: false
-    })
-  );
-
-  ring.rotation.x = -Math.PI / 2;
-  ring.position.y = -0.52;
-
-  app.scene.add(ring);
-
-  CONTROL_ROOM_V14.selectionRing = ring;
-}
-
-function updateSelectionV14(time) {
-  const ring =
-    CONTROL_ROOM_V14.selectionRing;
-
-  if (!ring) {
-    return;
-  }
-
-  const selected =
-    app.selected;
-
-  if (selected?.kind === 'module') {
-    const node =
-      app.nodes.get(selected.id);
-
-    if (!node?.group) {
-      ring.material.opacity = 0;
-      return;
-    }
-
-    const position =
-      new THREE.Vector3();
-
-    node.group.getWorldPosition(position);
-
-    ring.position.set(
-      position.x,
-      -1.37,
-      position.z
-    );
-
-    const scale =
-      selected.id === 'core'
-        ? 2.15
-        : 1.60;
-
-    ring.scale.setScalar(
-      scale *
-      (
-        1 +
-        Math.sin(time * 3.2) * 0.035
-      )
-    );
-
-    ring.material.color.setHex(
-      selected.id === 'core'
-        ? COLORS.green
-        : COLORS.cyan
-    );
-
-    ring.material.opacity =
-      0.18 +
-      Math.sin(time * 3.2) * 0.04;
-
-    return;
-  }
-
-  ring.material.opacity = 0;
-}
-
-function removeRouteV14() {
-  disposeObjectV14(
-    CONTROL_ROOM_V14.routeLine
-  );
-
-  disposeObjectV14(
-    CONTROL_ROOM_V14.routeGlow
-  );
-
-  CONTROL_ROOM_V14.routeLine = null;
-  CONTROL_ROOM_V14.routeGlow = null;
-}
-
-function updateTokenRouteV14() {
-  const selected =
-    app.selected;
-
-  const selectedId =
-    selected?.kind === 'token'
-      ? selected.mint
-      : null;
-
-  if (
-    selectedId ===
-    CONTROL_ROOM_V14.selectedId
-  ) {
-    return;
-  }
-
-  CONTROL_ROOM_V14.selectedId =
-    selectedId;
-
-  removeRouteV14();
-
-  if (!selectedId) {
-    return;
-  }
-
-  const token =
-    app.tokenMeshes.get(selectedId);
-
-  if (!token?.curve) {
-    return;
-  }
-
-  const points =
-    token.curve.getPoints(120);
-
-  const color =
-    COLORS[
-      stateKey(
-        selected?.row?.decision?.state
-      )
-    ] || COLORS.cyan;
-
-  const glowGeometry =
-    new THREE.BufferGeometry()
-      .setFromPoints(points);
-
-  const lineGeometry =
-    new THREE.BufferGeometry()
-      .setFromPoints(points);
-
-  const glow = new THREE.Line(
-    glowGeometry,
-    new THREE.LineBasicMaterial({
-      color,
-      transparent: true,
-      opacity: 0.15
-    })
-  );
-
-  const line = new THREE.Line(
-    lineGeometry,
-    new THREE.LineBasicMaterial({
-      color,
-      transparent: true,
-      opacity: 0.88
-    })
-  );
-
-  app.scene.add(
-    glow,
-    line
-  );
-
-  CONTROL_ROOM_V14.routeGlow = glow;
-  CONTROL_ROOM_V14.routeLine = line;
-}
-
-function installPulseTrailsV14() {
-  for (const pulse of app.edgePulses || []) {
-    if (
-      !pulse ||
-      CONTROL_ROOM_V14.pulseTrailsInstalled.has(pulse)
-    ) {
-      continue;
-    }
-
-    CONTROL_ROOM_V14.pulseTrailsInstalled.add(pulse);
-
-    const color =
-      pulse.material?.color?.getHex?.() ||
-      COLORS.cyan;
-
-    const trail = new THREE.Mesh(
-      new THREE.CylinderGeometry(
-        0.025,
-        0.070,
-        0.72,
-        10,
-        1,
-        true
-      ),
-      new THREE.MeshBasicMaterial({
-        color,
-        transparent: true,
-        opacity: 0.42,
-        depthWrite: false
-      })
-    );
-
-    trail.rotation.x =
-      Math.PI / 2;
-
-    trail.position.z =
-      -0.34;
-
-    pulse.add(trail);
-
-    pulse.userData.trailV14 =
-      trail;
-  }
-}
-
-function updatePulseTrailsV14(time) {
-  installPulseTrailsV14();
-
-  for (const pulse of app.edgePulses || []) {
-    const curve =
-      pulse.userData?.curve;
-
-    const progress =
-      Number(
-        pulse.userData?.t
-      );
-
-    if (
-      !curve ||
-      !Number.isFinite(progress)
-    ) {
-      continue;
-    }
-
-    const current =
-      curve.getPointAt(
-        clamp(progress, 0, 1)
-      );
-
-    const next =
-      curve.getPointAt(
-        clamp(
-          progress + 0.008,
-          0,
-          1
-        )
-      );
-
-    pulse.position.copy(current);
-    pulse.lookAt(next);
-
-    const activity =
-      0.82 +
-      Math.sin(
-        time * 7 +
-        progress * 16
-      ) * 0.18;
-
-    pulse.scale.set(
-      0.60 * activity,
-      0.60 * activity,
-      1.0
-    );
-
-    if (pulse.material) {
-      pulse.material.opacity =
-        Math.max(
-          0.42,
-          Number(
-            pulse.material.opacity
-          ) || 0.42
-        );
-    }
-  }
-}
-
-function updateNodeActivityV14(time) {
-  for (const [id, node] of app.nodes) {
-    const pad =
-      CONTROL_ROOM_V14.nodePads.get(id);
-
-    if (!pad) {
-      continue;
-    }
-
-    const selected =
-      app.selected?.kind === 'module' &&
-      app.selected?.id === id;
-
-    const targetOpacity =
-      selected
-        ? pad.baseOpacity * 3.2
-        : pad.baseOpacity;
-
-    pad.glow.material.opacity +=
-      (
-        targetOpacity -
-        pad.glow.material.opacity
-      ) * 0.07;
-
-    if (node.topPlate?.material) {
-      const selectedBoost =
-        selected ? 0.40 : 0;
-
-      const coreBoost =
-        id === 'core'
-          ? 0.24
-          : 0;
-
-      const pulse =
-        Math.sin(
-          time * 2.1 +
-          node.group.position.x
-        ) * 0.08;
-
-      if (
-        'emissiveIntensity'
-        in node.topPlate.material
-      ) {
-        node.topPlate.material.emissiveIntensity =
-          0.48 +
-          selectedBoost +
-          coreBoost +
-          pulse;
-      }
-    }
-  }
-
-  const core =
-    app.nodes.get('core');
-
-  const visuals =
-    core?.group?.userData
-      ?.controlRoomCoreV14;
-
-  if (visuals) {
-    visuals.outerRing.rotation.z += 0.0020;
-    visuals.innerRing.rotation.z -= 0.0013;
-
-    visuals.outerRing.material.opacity =
-      0.24 +
-      Math.sin(time * 1.8) * 0.045;
-
-    visuals.verticalLight.intensity =
-      1.05 +
-      Math.sin(time * 2.0) * 0.14;
-  }
-}
-
-function applyCameraV14() {
-  if (
-    !app.camera ||
-    !app.controls
-  ) {
-    return;
-  }
-
-  const mobile =
-    window.matchMedia(
-      '(max-width: 900px)'
-    ).matches;
-
-  if (!mobile) {
-    return;
-  }
-
-  app.cameraHome.set(
-    0.3,
-    5.15,
-    19.2
-  );
-
-  app.targetHome.set(
-    0.15,
-    -0.25,
-    0
-  );
-
-  app.camera.position.copy(
-    app.cameraHome
-  );
-
-  app.controls.target.copy(
-    app.targetHome
-  );
-
-  app.controls.enablePan = false;
-  app.controls.enableZoom = true;
-
-  app.controls.minDistance = 10.5;
-  app.controls.maxDistance = 28;
-
-  app.controls.zoomSpeed = 1.10;
-  app.controls.rotateSpeed = 0.62;
-
-  app.controls.minAzimuthAngle = -0.42;
-  app.controls.maxAzimuthAngle = 0.42;
-
-  app.controls.minPolarAngle =
-    Math.PI * 0.27;
-
-  app.controls.maxPolarAngle =
-    Math.PI * 0.47;
-
-  app.controls.autoRotate = false;
-  app.autoRotate = false;
-
-  app.controls.update();
-}
-
-function controlRoomLoopV14() {
-  requestAnimationFrame(
-    controlRoomLoopV14
-  );
-
-  if (
-    !CONTROL_ROOM_V14.installed
-  ) {
-    return;
-  }
-
-  const time =
-    performance.now() * 0.001;
-
-  updateSelectionV14(time);
-  updateTokenRouteV14();
-  updatePulseTrailsV14(time);
-  updateNodeActivityV14(time);
-
-  if (CONTROL_ROOM_V14.routeLine) {
-    CONTROL_ROOM_V14.routeLine.material.opacity =
-      0.74 +
-      Math.sin(time * 4.2) * 0.14;
-  }
-}
-
-function installControlRoomV14() {
-  if (
-    CONTROL_ROOM_V14.installed ||
-    !app.scene ||
-    !app.nodes?.size
-  ) {
-    return;
-  }
-
-  CONTROL_ROOM_V14.installed = true;
-
-  installStageV14();
-  applyNodeLayoutV14();
-  installNodePadsV14();
-  installCoreVisualV14();
-  installSelectionRingV14();
-  applyCameraV14();
-
-  if (
-    typeof syncRealitySpeedsV8 ===
-    'function'
-  ) {
-    syncRealitySpeedsV8(true);
-  }
-
-  resize();
-
-  controlRoomLoopV14();
-}
-
-setTimeout(
-  installControlRoomV14,
-  850
-);
-
-window.addEventListener(
-  'resize',
-  () => {
-    setTimeout(
-      () => {
-        applyCameraV14();
-        resize();
-      },
-      180
-    );
-  }
-);
-
 
 /* ===== MEMEFLOW CLEAN HARDWARE V20 ===== */
 
@@ -4428,13 +1635,13 @@ function mf20CreatePipe(
 
   for (
     let index = 0;
-    index < 3;
+    index < 2;
     index++
   ) {
     const packet =
       new THREE.Mesh(
         new THREE.SphereGeometry(
-          0.055,
+          0.028,
           10,
           8
         ),
@@ -4774,9 +1981,11 @@ function mf20Camera(
 }
 
 function mf20Animate(now) {
-  requestAnimationFrame(
-    mf20Animate
-  );
+  // MF_V3031_GATE_mf20Animate
+  requestAnimationFrame(mf20Animate);
+  if (!mf3dFrameAllowedV3031('mf20Animate', 18, 24)) return;
+
+  
 
   if (!MF20.installed) {
     return;
@@ -4814,8 +2023,8 @@ function mf20Animate(now) {
     data.progress +=
       delta *
       (
-        0.26 +
-        speed * 0.34
+        0.95 +
+        speed * 0.65
       );
 
     if (
@@ -4853,10 +2062,10 @@ function mf20Animate(now) {
 
     const target =
       selected
-        ? 0.11
+        ? 0.14
         : id === 'core'
-          ? 0.075
-          : 0.025;
+          ? 0.04
+          : 0.012;
 
     hw.underside.material.opacity +=
       (
@@ -4947,10 +2156,7 @@ function mf20Install() {
   );
 }
 
-setTimeout(
-  mf20Install,
-  1250
-);
+mf20Install();
 
 window.addEventListener(
   'resize',
@@ -4968,1061 +2174,42 @@ window.addEventListener(
     );
   }
 );
+/* ===== MEMEFLOW CLEAN SYSTEM V29 ===== */
 
-
-/* ===== MEMEFLOW CLEANUP V21 ===== */
-
-const MF21 = {
-  installed: false
-};
-
-function mf21HideLegacyGeometry() {
-  for (const [id, node] of app.nodes) {
-    if (!node?.group) {
-      continue;
-    }
-
-    node.group.traverse(object => {
-      if (
-        object.name?.startsWith('MF20_') ||
-        object.parent?.name?.startsWith('MF20_')
-      ) {
-        return;
-      }
-
-      if (
-        object.isLine ||
-        object.isLineSegments ||
-        object.isPoints
-      ) {
-        object.visible = false;
-      }
-
-      if (
-        object.isMesh &&
-        !object.parent?.name?.startsWith('MF20_')
-      ) {
-        if (object.material) {
-          const materials =
-            Array.isArray(object.material)
-              ? object.material
-              : [object.material];
-
-          for (const material of materials) {
-            material.transparent = true;
-            material.opacity = 0;
-            material.depthWrite = false;
-          }
-        }
-      }
-    });
-  }
-}
-
-function mf21RefineHardware() {
-  if (
-    typeof MF20 === 'undefined' ||
-    !MF20.hardware
-  ) {
-    return;
-  }
-
-  for (const [id, hardware] of MF20.hardware) {
-    if (!hardware?.group) {
-      continue;
-    }
-
-    const core = id === 'core';
-
-    hardware.group.scale.setScalar(
-      core ? 1.09 : 1.05
-    );
-
-    if (hardware.underside?.material) {
-      hardware.underside.material.opacity =
-        core ? 0.055 : 0.018;
-    }
-  }
-}
-
-function mf21RefineCamera(reset = true) {
-  if (
-    !app.camera ||
-    !app.controls
-  ) {
-    return;
-  }
-
-  const mobile =
-    window.matchMedia(
-      '(max-width: 900px)'
-    ).matches;
-
-  app.camera.fov =
-    mobile ? 39 : 37;
-
-  app.camera.updateProjectionMatrix();
-
-  app.cameraHome.set(
-    0,
-    mobile ? 7.35 : 6.85,
-    mobile ? 15.9 : 15.0
-  );
-
-  app.targetHome.set(
-    -0.35,
-    -0.35,
-    0.85
-  );
-
-  if (reset) {
-    app.camera.position.copy(
-      app.cameraHome
-    );
-
-    app.controls.target.copy(
-      app.targetHome
-    );
-  }
-
-  app.controls.minDistance = 9.2;
-  app.controls.maxDistance = 25;
-
-  app.controls.update();
-}
-
-function mf21CleanLabels() {
-  const labels =
-    document.querySelectorAll(
-      '.node-label'
-    );
-
-  labels.forEach(label => {
-    label.classList.add(
-      'mf21-label'
-    );
-  });
-}
-
-function mf21Install() {
-  if (
-    MF21.installed ||
-    typeof MF20 === 'undefined' ||
-    !MF20.installed
-  ) {
-    return;
-  }
-
-  MF21.installed = true;
-
-  mf21HideLegacyGeometry();
-  mf21RefineHardware();
-  mf21RefineCamera(true);
-  mf21CleanLabels();
-
-  resize();
-}
-
-setTimeout(
-  mf21Install,
-  1900
-);
-
-window.addEventListener(
-  'resize',
-  () => {
-    if (!MF21.installed) {
-      return;
-    }
-
-    setTimeout(
-      () => {
-        mf21HideLegacyGeometry();
-        mf21RefineCamera(false);
-        resize();
-      },
-      180
-    );
-  }
-);
-
-
-/* ===== MEMEFLOW FINAL POLISH V22 ===== */
-
-const MF22 = {
+const MF29 = {
   installed: false,
-  lastFrame: performance.now()
+  raycaster: new THREE.Raycaster(),
+  pointer: new THREE.Vector2(),
+  hitTargets: [],
+  pointerDown: null,
+  pressedId: null,
+  lights: new Map(),
+  materialState: new Map()
 };
 
-const MF22_HEIGHT = {
+const MF29_HEIGHT = {
   discovery: 0.16,
   bootstrap: 0.16,
   core: 0.32,
-
   risk: 0.08,
   market: 0.08,
   holders: 0.08,
-
   openai: 0.00,
   decision: 0.00,
   paper: 0.00,
-
   execution: 0.02
 };
 
-function mf22RefineModules() {
-  if (
-    typeof MF20 === 'undefined' ||
-    !MF20.hardware
-  ) {
-    return;
-  }
-
-  for (
-    const [id, hardware]
-    of MF20.hardware
-  ) {
-    const node =
-      app.nodes.get(id);
-
-    if (!node?.group) {
-      continue;
-    }
-
-    const position =
-      MF20_LAYOUT[id];
-
-    if (position) {
-      node.group.position.set(
-        position[0],
-        MF22_HEIGHT[id] ?? 0,
-        position[2]
-      );
-    }
-
-    if (hardware?.group) {
-      hardware.group.scale.setScalar(
-        id === 'core'
-          ? 1.14
-          : 1.03
-      );
-    }
-
-    if (
-      hardware?.underside?.material
-    ) {
-      hardware.underside.material.opacity =
-        id === 'core'
-          ? 0.040
-          : 0.012;
-    }
-
-    if (
-      hardware?.display?.material
-    ) {
-      hardware.display.material.opacity =
-        id === 'core'
-          ? 1.0
-          : 0.94;
-    }
-  }
-}
-
-function mf22RefinePipes() {
-  if (
-    typeof MF20 === 'undefined'
-  ) {
-    return;
-  }
-
-  for (
-    const route
-    of MF20.pipes || []
-  ) {
-    if (
-      route?.pipe &&
-      route?.curve
-    ) {
-      route.pipe.geometry?.dispose?.();
-
-      route.pipe.geometry =
-        new THREE.TubeGeometry(
-          route.curve,
-          72,
-          0.026,
-          8,
-          false
-        );
-
-      if (route.pipe.material) {
-        route.pipe.material.opacity =
-          0.78;
-
-        route.pipe.material.emissiveIntensity =
-          0.82;
-
-        route.pipe.material.roughness =
-          0.24;
-      }
-    }
-
-    if (
-      route?.halo &&
-      route?.curve
-    ) {
-      route.halo.geometry?.dispose?.();
-
-      route.halo.geometry =
-        new THREE.TubeGeometry(
-          route.curve,
-          72,
-          0.047,
-          8,
-          false
-        );
-
-      if (route.halo.material) {
-        route.halo.material.opacity =
-          0.018;
-      }
-    }
-  }
-}
-
-function mf22RefinePackets() {
-  if (
-    typeof MF20 === 'undefined'
-  ) {
-    return;
-  }
-
-  const packets =
-    MF20.packets || [];
-
-  packets.forEach(
-    (packet, index) => {
-      const slot =
-        index % 3;
-
-      packet.visible =
-        slot !== 2;
-
-      if (
-        packet.material
-      ) {
-        packet.material.opacity =
-          0.76;
-      }
-    }
-  );
-}
-
-function mf22RefineCore() {
-  if (
-    typeof MF20 === 'undefined' ||
-    !MF20.coreFx
-  ) {
-    return;
-  }
-
-  const fx =
-    MF20.coreFx;
-
-  if (fx.orb) {
-    fx.orb.scale.setScalar(
-      0.78
-    );
-
-    if (fx.orb.material) {
-      fx.orb.material.opacity =
-        0.22;
-    }
-  }
-
-  if (
-    Array.isArray(fx.rings)
-  ) {
-    const radii =
-      [1.04, 1.34, 1.62];
-
-    fx.rings.forEach(
-      (ring, index) => {
-        if (!ring) {
-          return;
-        }
-
-        ring.geometry?.dispose?.();
-
-        ring.geometry =
-          new THREE.TorusGeometry(
-            radii[index] ||
-              1.3,
-            0.010,
-            8,
-            96
-          );
-
-        if (ring.material) {
-          ring.material.opacity =
-            [0.14, 0.075, 0.035][index] ||
-            0.04;
-        }
-      }
-    );
-  }
-
-  if (fx.light) {
-    fx.light.intensity =
-      0.32;
-
-    fx.light.distance =
-      4.0;
-  }
-}
-
-function mf22Camera(
-  reset = true
-) {
-  if (
-    !app.camera ||
-    !app.controls
-  ) {
-    return;
-  }
-
-  const mobile =
-    window.matchMedia(
-      '(max-width: 900px)'
-    ).matches;
-
-  app.camera.fov =
-    mobile
-      ? 37
-      : 35;
-
-  app.camera.updateProjectionMatrix();
-
-  app.cameraHome.set(
-    0,
-    mobile
-      ? 6.70
-      : 6.35,
-    mobile
-      ? 15.10
-      : 14.45
-  );
-
-  app.targetHome.set(
-    -0.30,
-    -0.22,
-    0.78
-  );
-
-  if (reset) {
-    app.camera.position.copy(
-      app.cameraHome
-    );
-
-    app.controls.target.copy(
-      app.targetHome
-    );
-  }
-
-  app.controls.enablePan =
-    false;
-
-  app.controls.enableZoom =
-    true;
-
-  app.controls.minDistance =
-    8.8;
-
-  app.controls.maxDistance =
-    24;
-
-  app.controls.zoomSpeed =
-    1.02;
-
-  app.controls.rotateSpeed =
-    0.50;
-
-  app.controls.minAzimuthAngle =
-    -0.46;
-
-  app.controls.maxAzimuthAngle =
-    0.46;
-
-  app.controls.minPolarAngle =
-    Math.PI * 0.235;
-
-  app.controls.maxPolarAngle =
-    Math.PI * 0.455;
-
-  app.controls.autoRotate =
-    false;
-
-  app.autoRotate =
-    false;
-
-  app.controls.update();
-}
-
-function mf22AnimationLoop(now) {
-  requestAnimationFrame(
-    mf22AnimationLoop
-  );
-
-  if (
-    !MF22.installed ||
-    typeof MF20 === 'undefined'
-  ) {
-    return;
-  }
-
-  const seconds =
-    now * 0.001;
-
-  const packets =
-    MF20.packets || [];
-
-  packets.forEach(
-    (packet, index) => {
-      const slot =
-        index % 3;
-
-      if (slot === 2) {
-        packet.visible =
-          false;
-
-        return;
-      }
-
-      packet.visible =
-        true;
-
-      const data =
-        packet.userData?.mf20;
-
-      const phase =
-        Number(
-          data?.progress || 0
-        );
-
-      const pulse =
-        0.43 +
-        Math.sin(
-          seconds * 7 +
-          phase * 11
-        ) * 0.035;
-
-      packet.scale.setScalar(
-        pulse
-      );
-    }
-  );
-
-  if (
-    MF20.coreFx?.orb
-  ) {
-    MF20.coreFx.orb.scale.setScalar(
-      0.78 +
-      Math.sin(
-        seconds * 1.7
-      ) * 0.015
-    );
-  }
-}
-
-function mf22Install() {
-  if (
-    MF22.installed ||
-    typeof MF20 === 'undefined' ||
-    !MF20.installed
-  ) {
-    return;
-  }
-
-  MF22.installed =
-    true;
-
-  mf22RefineModules();
-  mf22RefinePipes();
-  mf22RefinePackets();
-  mf22RefineCore();
-  mf22Camera(true);
-
-  resize();
-
-  const resetButton =
-    [...document.querySelectorAll(
-      'button'
-    )]
-      .find(
-        button =>
-          /reset\s*view/i.test(
-            button.textContent || ''
-          )
-      );
-
-  if (resetButton) {
-    resetButton.addEventListener(
-      'click',
-      () => {
-        setTimeout(
-          () => {
-            mf22RefineModules();
-            mf22Camera(true);
-            resize();
-          },
-          35
-        );
-      }
-    );
-  }
-
-  requestAnimationFrame(
-    mf22AnimationLoop
-  );
-}
-
-setTimeout(
-  mf22Install,
-  2150
-);
-
-window.addEventListener(
-  'resize',
-  () => {
-    if (!MF22.installed) {
-      return;
-    }
-
-    setTimeout(
-      () => {
-        mf22RefineModules();
-        mf22Camera(false);
-        resize();
-      },
-      180
-    );
-  }
-);
-
-
-/* ===== MEMEFLOW DATA PULSES V23 ===== */
-
-const MF23 = {
-  installed: false,
-  pulses: [],
-  lastFrame: performance.now()
-};
-
-function mf23DisableOldPackets() {
-  if (
-    typeof MF20 === 'undefined'
-  ) {
-    return;
-  }
-
-  for (
-    const packet
-    of MF20.packets || []
-  ) {
-    packet.visible = false;
-
-    packet.scale.setScalar(0.001);
-
-    if (packet.material) {
-      packet.material.opacity = 0;
-      packet.material.depthWrite = false;
-    }
-  }
-}
-
-function mf23CreatePulse(route, index) {
-  const color =
-    route?.pipe?.material?.color
-      ?.getHex?.() ||
-    0x54dfff;
-
-  const group =
-    new THREE.Group();
-
-  group.name =
-    'MF23_DATA_PULSE';
-
-  const head =
-    new THREE.Mesh(
-      new THREE.SphereGeometry(
-        0.026,
-        8,
-        6
-      ),
-      new THREE.MeshBasicMaterial({
-        color,
-        transparent: true,
-        opacity: 0.92,
-        depthWrite: false,
-        blending:
-          THREE.AdditiveBlending
-      })
-    );
-
-  group.add(head);
-
-  const trail =
-    new THREE.Mesh(
-      new THREE.CylinderGeometry(
-        0.010,
-        0.026,
-        0.22,
-        7,
-        1,
-        true
-      ),
-      new THREE.MeshBasicMaterial({
-        color,
-        transparent: true,
-        opacity: 0.34,
-        depthWrite: false,
-        blending:
-          THREE.AdditiveBlending
-      })
-    );
-
-  trail.rotation.x =
-    Math.PI / 2;
-
-  trail.position.z =
-    -0.105;
-
-  group.add(trail);
-
-  group.userData.mf23 = {
-    route,
-    progress:
-      (
-        index * 0.47 +
-        Math.random() * 0.12
-      ) % 1
-  };
-
-  app.scene.add(group);
-
-  MF23.pulses.push(group);
-}
-
-function mf23BuildPulses() {
-  if (
-    typeof MF20 === 'undefined'
-  ) {
-    return;
-  }
-
-  for (
-    const route
-    of MF20.pipes || []
-  ) {
-    mf23CreatePulse(
-      route,
-      0
-    );
-
-    /*
-      Second pulse only on longer routes.
-    */
-    const length =
-      route.curve
-        ?.getLength?.() || 0;
-
-    if (length > 4.5) {
-      mf23CreatePulse(
-        route,
-        1
-      );
-    }
-  }
-}
-
-function mf23RouteSpeed(route) {
-  const source =
-    (app.edgePulses || [])
-      .find(pulse => {
-        const key =
-          String(
-            pulse?.userData?.edgeKey ||
-            ''
-          ).toLowerCase();
-
-        return (
-          key.includes(
-            route.from
-          ) &&
-          key.includes(
-            route.to
-          )
-        );
-      });
-
-  const raw =
-    Number(
-      source?.userData?.speed
-    );
-
-  if (
-    Number.isFinite(raw) &&
-    raw > 0
-  ) {
-    return Math.max(
-      0.32,
-      Math.min(
-        2.20,
-        raw
-      )
-    );
-  }
-
-  return 0.72;
-}
-
-function mf23RefineCore() {
-  if (
-    typeof MF20 === 'undefined' ||
-    !MF20.coreFx
-  ) {
-    return;
-  }
-
-  const fx =
-    MF20.coreFx;
-
-  if (fx.orb) {
-    fx.orb.scale.setScalar(
-      0.54
-    );
-
-    if (fx.orb.material) {
-      fx.orb.material.opacity =
-        0.17;
-    }
-  }
-
-  if (fx.light) {
-    fx.light.intensity =
-      0.24;
-
-    fx.light.distance =
-      3.2;
-  }
-
-  if (
-    Array.isArray(fx.rings)
-  ) {
-    const opacity =
-      [0.11, 0.055, 0.025];
-
-    fx.rings.forEach(
-      (ring, index) => {
-        if (
-          ring?.material
-        ) {
-          ring.material.opacity =
-            opacity[index] ||
-            0.025;
-        }
-      }
-    );
-  }
-}
-
-function mf23RefineCamera(
-  reset = true
-) {
-  if (
-    !app.camera ||
-    !app.controls
-  ) {
-    return;
-  }
-
-  const mobile =
-    window.matchMedia(
-      '(max-width: 900px)'
-    ).matches;
-
-  app.camera.fov =
-    mobile ? 38 : 36;
-
-  app.camera.updateProjectionMatrix();
-
-  app.cameraHome.set(
-    0,
-    mobile ? 7.15 : 6.60,
-    mobile ? 15.20 : 14.50
-  );
-
-  app.targetHome.set(
-    -0.25,
-    -0.10,
-    0.75
-  );
-
-  if (reset) {
-    app.camera.position.copy(
-      app.cameraHome
-    );
-
-    app.controls.target.copy(
-      app.targetHome
-    );
-  }
-
-  app.controls.update();
-}
-
-function mf23Animate(now) {
-  requestAnimationFrame(
-    mf23Animate
-  );
-
-  if (!MF23.installed) {
-    return;
-  }
-
-  /*
-    MF20 still owns its old RAF loop.
-    Force its spheres invisible every frame.
-  */
-  mf23DisableOldPackets();
-
-  const delta =
-    Math.min(
-      0.05,
-      Math.max(
-        0,
-        (now - MF23.lastFrame) /
-        1000
-      )
-    );
-
-  MF23.lastFrame =
-    now;
-
-  for (
-    const pulse
-    of MF23.pulses
-  ) {
-    const data =
-      pulse.userData.mf23;
-
-    const route =
-      data.route;
-
-    const speed =
-      mf23RouteSpeed(route);
-
-    data.progress +=
-      delta *
-      (
-        0.52 +
-        speed * 0.42
-      );
-
-    if (
-      data.progress >= 1
-    ) {
-      data.progress -= 1;
-    }
-
-    const point =
-      route.curve.getPointAt(
-        data.progress
-      );
-
-    const next =
-      route.curve.getPointAt(
-        Math.min(
-          1,
-          data.progress + 0.012
-        )
-      );
-
-    pulse.position.copy(
-      point
-    );
-
-    pulse.lookAt(next);
-  }
-}
-
-function mf23Install() {
-  if (
-    MF23.installed ||
-    typeof MF20 === 'undefined' ||
-    !MF20.installed
-  ) {
-    return;
-  }
-
-  MF23.installed = true;
-
-  mf23DisableOldPackets();
-  mf23BuildPulses();
-  mf23RefineCore();
-  mf23RefineCamera(true);
-
-  resize();
-
-  const reset =
-    [...document.querySelectorAll(
-      'button'
-    )]
-      .find(
-        button =>
-          /reset\s*view/i.test(
-            button.textContent || ''
-          )
-      );
-
-  if (reset) {
-    reset.addEventListener(
-      'click',
-      () => {
-        setTimeout(
-          () => {
-            mf23RefineCamera(true);
-            resize();
-          },
-          35
-        );
-      }
-    );
-  }
-
-  requestAnimationFrame(
-    mf23Animate
-  );
-}
-
-setTimeout(
-  mf23Install,
-  2400
-);
-
-
-/* ===== LEGACY PARTICLE CLEANUP V26 ===== */
-
-const MF26 = {
-  installed: false
-};
-
-function mf26HasAncestorName(object, prefix) {
+function mf29ProtectedObject(object) {
   let current = object;
 
   while (current) {
+    const name = String(current.name || '');
+
     if (
-      typeof current.name === 'string' &&
-      current.name.includes(prefix)
+      name.startsWith('MF20_HARDWARE_') ||
+      name === 'MF20_CORE_FX' ||
+      name === 'MF20_FLOOR'
     ) {
       return true;
     }
@@ -6033,1103 +2220,244 @@ function mf26HasAncestorName(object, prefix) {
   return false;
 }
 
-function mf26IsProtected(object) {
-  return (
-    mf26HasAncestorName(
-      object,
-      'MF23_DATA_PULSE'
-    ) ||
-    mf26HasAncestorName(
-      object,
-      'MF20_CORE_FX'
-    ) ||
-    mf26HasAncestorName(
-      object,
-      'MF20_HARDWARE_'
-    )
-  );
-}
+function mf29HideLegacyNodeGeometry() {
+  for (const node of app.nodes.values()) {
+    if (!node?.group) {
+      continue;
+    }
 
-function mf26HideLegacyParticles() {
-  if (!app?.scene) {
-    return;
+    node.group.traverse((object) => {
+      if (object === node.group || mf29ProtectedObject(object)) {
+        return;
+      }
+
+      if (
+        object.isMesh ||
+        object.isLine ||
+        object.isLineSegments ||
+        object.isPoints ||
+        object.isLight
+      ) {
+        object.visible = false;
+      }
+    });
   }
 
-  const legacyGeometryTypes =
-    new Set([
-      'SphereGeometry',
-      'SphereBufferGeometry',
-      'OctahedronGeometry',
-      'DodecahedronGeometry'
-    ]);
-
-  app.scene.traverse(object => {
-    if (
-      !object ||
-      !object.isMesh ||
-      mf26IsProtected(object)
-    ) {
+  app.scene.traverse((object) => {
+    if (mf29ProtectedObject(object)) {
       return;
     }
 
-    const geometryType =
-      object.geometry?.type || '';
-
-    if (
-      legacyGeometryTypes.has(
-        geometryType
-      )
-    ) {
+    if (object.isLine || object.isLineSegments || object.isPoints) {
       object.visible = false;
-
-      if (object.material) {
-        const materials =
-          Array.isArray(object.material)
-            ? object.material
-            : [object.material];
-
-        for (const material of materials) {
-          material.transparent = true;
-          material.opacity = 0;
-          material.depthWrite = false;
-        }
-      }
     }
   });
 }
 
-function mf26Install() {
-  if (MF26.installed) {
-    return;
-  }
+function mf29RefineHardware() {
+  for (const [id, hardware] of MF20.hardware) {
+    const node = app.nodes.get(id);
 
-  MF26.installed = true;
-
-  mf26HideLegacyParticles();
-
-  /*
-    Old animation loops may recreate or re-enable
-    legacy particles. Keep them suppressed.
-  */
-  setInterval(
-    mf26HideLegacyParticles,
-    250
-  );
-}
-
-setTimeout(
-  mf26Install,
-  2800
-);
-
-
-/* ===== MEMEFLOW CLICKABLE HARDWARE V27 ===== */
-
-const MF27 = {
-  installed: false,
-  raycaster: new THREE.Raycaster(),
-  pointer: new THREE.Vector2(),
-  hitTargets: [],
-  pointerDown: null,
-  selectedId: null
-};
-
-function mf27ModuleLabel(id) {
-  const labels = {
-    discovery: 'DISCOVERY',
-    bootstrap: 'FAST BOOTSTRAP',
-    core: 'MEMEFLOW CORE',
-    risk: 'RISK ENGINE',
-    market: 'MARKET LEDGER',
-    holders: 'HOLDER LEDGER',
-    openai: 'OPENAI ASSISTANT',
-    decision: 'DECISION',
-    paper: 'PAPER ENGINE',
-    execution: 'LIVE EXECUTION'
-  };
-
-  return labels[id] || id;
-}
-
-function mf27AnnotateObject(object, id) {
-  if (!object) {
-    return;
-  }
-
-  object.userData.mf27ModuleId = id;
-  object.userData.moduleId = id;
-  object.userData.nodeId = id;
-  object.userData.kind = 'module';
-  object.userData.selectable = true;
-}
-
-function mf27RegisterWithExistingLists(hit) {
-  const possibleLists = [
-    'pickables',
-    'clickTargets',
-    'raycastTargets',
-    'interactables',
-    'selectables'
-  ];
-
-  for (const key of possibleLists) {
-    const list = app?.[key];
-
-    if (
-      Array.isArray(list) &&
-      !list.includes(hit)
-    ) {
-      list.push(hit);
-    }
-  }
-}
-
-function mf27CreateHitTarget(id, hardware) {
-  const node = app.nodes.get(id);
-
-  if (
-    !node?.group ||
-    !hardware?.group
-  ) {
-    return;
-  }
-
-  mf27AnnotateObject(
-    hardware.group,
-    id
-  );
-
-  hardware.group.traverse(object => {
-    mf27AnnotateObject(
-      object,
-      id
-    );
-  });
-
-  const box =
-    new THREE.Box3()
-      .setFromObject(
-        hardware.group
-      );
-
-  const size =
-    new THREE.Vector3();
-
-  box.getSize(size);
-
-  const width =
-    Math.max(
-      1.8,
-      size.x * 1.06
-    );
-
-  const depth =
-    Math.max(
-      1.25,
-      size.z * 1.06
-    );
-
-  const hit =
-    new THREE.Mesh(
-      new THREE.BoxGeometry(
-        width,
-        0.42,
-        depth
-      ),
-      new THREE.MeshBasicMaterial({
-        color: 0xffffff,
-        transparent: true,
-        opacity: 0.001,
-        depthWrite: false,
-        colorWrite: false
-      })
-    );
-
-  hit.name =
-    'MF27_HIT_' + id;
-
-  hit.position.y =
-    0.03;
-
-  mf27AnnotateObject(
-    hit,
-    id
-  );
-
-  hardware.group.add(hit);
-
-  MF27.hitTargets.push(hit);
-
-  mf27RegisterWithExistingLists(
-    hit
-  );
-}
-
-function mf27PointerFromEvent(event) {
-  const canvas =
-    app.renderer?.domElement ||
-    document.getElementById(
-      'systemCanvas'
-    );
-
-  if (!canvas) {
-    return false;
-  }
-
-  const rect =
-    canvas.getBoundingClientRect();
-
-  if (
-    rect.width <= 0 ||
-    rect.height <= 0
-  ) {
-    return false;
-  }
-
-  MF27.pointer.x =
-    (
-      (
-        event.clientX -
-        rect.left
-      ) /
-      rect.width
-    ) * 2 - 1;
-
-  MF27.pointer.y =
-    -(
-      (
-        event.clientY -
-        rect.top
-      ) /
-      rect.height
-    ) * 2 + 1;
-
-  return true;
-}
-
-function mf27HitTest(event) {
-  if (
-    !mf27PointerFromEvent(event) ||
-    !app.camera
-  ) {
-    return null;
-  }
-
-  MF27.raycaster.setFromCamera(
-    MF27.pointer,
-    app.camera
-  );
-
-  const hits =
-    MF27.raycaster.intersectObjects(
-      MF27.hitTargets,
-      false
-    );
-
-  if (!hits.length) {
-    return null;
-  }
-
-  const object =
-    hits[0].object;
-
-  const id =
-    object?.userData?.mf27ModuleId ||
-    object?.userData?.moduleId ||
-    object?.userData?.nodeId;
-
-  if (!id) {
-    return null;
-  }
-
-  return {
-    id,
-    object,
-    intersection: hits[0]
-  };
-}
-
-function mf27FindLabel(id) {
-  const expected =
-    mf27ModuleLabel(id)
-      .replace(/\s+/g, ' ')
-      .trim()
-      .toUpperCase();
-
-  return [
-    ...document.querySelectorAll(
-      '.node-label'
-    )
-  ].find(label => {
-    const datasetId =
-      label.dataset?.nodeId ||
-      label.dataset?.moduleId ||
-      label.dataset?.id;
-
-    if (datasetId === id) {
-      return true;
-    }
-
-    const text =
-      String(
-        label.textContent || ''
-      )
-        .replace(/\s+/g, ' ')
-        .trim()
-        .toUpperCase();
-
-    return (
-      text === expected ||
-      text.includes(expected)
-    );
-  }) || null;
-}
-
-function mf27TryFunction(owner, names, id, node) {
-  if (!owner) {
-    return false;
-  }
-
-  for (const name of names) {
-    const fn = owner[name];
-
-    if (
-      typeof fn !== 'function'
-    ) {
+    if (!node?.group || !hardware?.group) {
       continue;
     }
 
-    try {
-      fn.call(
-        owner,
-        id,
-        node
+    const position = MF20_LAYOUT[id];
+
+    if (position) {
+      node.group.position.set(
+        position[0],
+        MF29_HEIGHT[id] ?? 0,
+        position[2]
       );
-
-      return true;
-    } catch (error) {
-      try {
-        fn.call(
-          owner,
-          node
-        );
-
-        return true;
-      } catch (_) {}
     }
-  }
-
-  return false;
-}
-
-function mf27SelectModule(id) {
-  const node =
-    app.nodes.get(id);
-
-  if (!node) {
-    return;
-  }
-
-  MF27.selectedId = id;
-
-  /*
-    Preserve the selection shape used by the
-    current V20/V22 visual layers.
-  */
-  app.selected = {
-    kind: 'module',
-    id
-  };
-
-  /*
-    First use any selector already exposed
-    by the existing application.
-  */
-  const selectorNames = [
-    'selectModule',
-    'selectNode',
-    'setSelectedModule',
-    'setSelectedNode',
-    'inspectModule',
-    'focusModule'
-  ];
-
-  const selectedByApp =
-    mf27TryFunction(
-      app,
-      selectorNames,
-      id,
-      node
-    );
-
-  /*
-    Existing DOM labels may already contain
-    the original selection handler.
-  */
-  const label =
-    mf27FindLabel(id);
-
-  if (
-    label &&
-    !selectedByApp
-  ) {
-    try {
-      label.click();
-    } catch (_) {}
-  }
-
-  /*
-    Ask any existing inspector renderer to
-    redraw immediately.
-  */
-  const inspectorNames = [
-    'renderInspector',
-    'updateInspector',
-    'refreshInspector',
-    'renderLiveInspector',
-    'updateLiveInspector',
-    'showInspector'
-  ];
-
-  mf27TryFunction(
-    app,
-    inspectorNames,
-    id,
-    node
-  );
-
-  /*
-    Broadcast one neutral event as a fallback
-    without changing trading logic.
-  */
-  window.dispatchEvent(
-    new CustomEvent(
-      'memeflow:module-selected',
-      {
-        detail: {
-          id,
-          node
-        }
-      }
-    )
-  );
-
-  mf27RefreshVisualSelection();
-}
-
-function mf27RefreshVisualSelection() {
-  if (
-    typeof MF20 === 'undefined' ||
-    !MF20.hardware
-  ) {
-    return;
-  }
-
-  for (
-    const [id, hardware]
-    of MF20.hardware
-  ) {
-    if (!hardware?.group) {
-      continue;
-    }
-
-    const active =
-      id === MF27.selectedId;
 
     hardware.group.scale.setScalar(
-      id === 'core'
-        ? active ? 1.18 : 1.14
-        : active ? 1.065 : 1.03
+      id === 'core' ? 1.14 : 1.03
     );
 
-    if (
-      hardware.underside?.material
-    ) {
-      hardware.underside.material.opacity =
-        active
-          ? 0.105
-          : id === 'core'
-            ? 0.040
-            : 0.012;
+    if (hardware.display?.material) {
+      hardware.display.material.opacity = id === 'core' ? 1 : 0.94;
     }
 
-    if (
-      hardware.display?.material
-    ) {
-      hardware.display.material.opacity =
-        active
-          ? 1
-          : id === 'core'
-            ? 1
-            : 0.94;
-    }
-  }
-}
-
-function mf27OnPointerDown(event) {
-  MF27.pointerDown = {
-    x: event.clientX,
-    y: event.clientY,
-    time: performance.now()
-  };
-}
-
-function mf27OnPointerUp(event) {
-  if (!MF27.pointerDown) {
-    return;
-  }
-
-  const dx =
-    event.clientX -
-    MF27.pointerDown.x;
-
-  const dy =
-    event.clientY -
-    MF27.pointerDown.y;
-
-  const distance =
-    Math.hypot(dx, dy);
-
-  const elapsed =
-    performance.now() -
-    MF27.pointerDown.time;
-
-  MF27.pointerDown = null;
-
-  /*
-    Do not treat camera rotation as a click.
-  */
-  if (
-    distance > 10 ||
-    elapsed > 650
-  ) {
-    return;
-  }
-
-  const hit =
-    mf27HitTest(event);
-
-  if (!hit) {
-    return;
-  }
-
-  mf27SelectModule(
-    hit.id
-  );
-}
-
-function mf27OnPointerMove(event) {
-  const canvas =
-    app.renderer?.domElement ||
-    document.getElementById(
-      'systemCanvas'
-    );
-
-  if (!canvas) {
-    return;
-  }
-
-  /*
-    Do not interfere with touch dragging.
-  */
-  if (
-    event.pointerType === 'touch'
-  ) {
-    return;
-  }
-
-  const hit =
-    mf27HitTest(event);
-
-  canvas.style.cursor =
-    hit
-      ? 'pointer'
-      : 'grab';
-}
-
-function mf27Install() {
-  if (
-    MF27.installed ||
-    typeof MF20 === 'undefined' ||
-    !MF20.installed ||
-    !MF20.hardware
-  ) {
-    return;
-  }
-
-  MF27.installed = true;
-
-  for (
-    const [id, hardware]
-    of MF20.hardware
-  ) {
-    mf27CreateHitTarget(
-      id,
-      hardware
-    );
-  }
-
-  const canvas =
-    app.renderer?.domElement ||
-    document.getElementById(
-      'systemCanvas'
-    );
-
-  if (!canvas) {
-    console.error(
-      '[MF27] Canvas not found'
-    );
-
-    return;
-  }
-
-  canvas.style.touchAction =
-    'none';
-
-  canvas.addEventListener(
-    'pointerdown',
-    mf27OnPointerDown,
-    {
-      passive: true
-    }
-  );
-
-  canvas.addEventListener(
-    'pointerup',
-    mf27OnPointerUp,
-    {
-      passive: true
-    }
-  );
-
-  canvas.addEventListener(
-    'pointermove',
-    mf27OnPointerMove,
-    {
-      passive: true
-    }
-  );
-
-  console.log(
-    '[MF27] Clickable modules:',
-    MF27.hitTargets.length
-  );
-}
-
-setTimeout(
-  mf27Install,
-  3000
-);
-
-
-/* ===== MEMEFLOW INSTANT SELECTION V28 ===== */
-
-const MF28 = {
-  installed: false,
-  selectedId: null,
-  pressedId: null,
-  pointerDown: null,
-  effects: new Map()
-};
-
-function mf28ModuleColor(id, hardware) {
-  if (
-    hardware?.color !== undefined &&
-    hardware?.color !== null
-  ) {
-    return hardware.color;
-  }
-
-  const fallback = {
-    discovery: 0x4f83ff,
-    bootstrap: 0x4f83ff,
-    core: 0x47e5a4,
-    risk: 0x54dfff,
-    market: 0x4f83ff,
-    holders: 0x54dfff,
-    openai: 0x54dfff,
-    decision: 0x8d67ff,
-    paper: 0x4f83ff,
-    execution: 0x47e5a4
-  };
-
-  return fallback[id] || 0x54dfff;
-}
-
-function mf28CreateEffect(id, hardware) {
-  if (
-    !hardware?.group ||
-    MF28.effects.has(id)
-  ) {
-    return;
-  }
-
-  const color =
-    mf28ModuleColor(
-      id,
-      hardware
-    );
-
-  const box =
-    new THREE.Box3()
-      .setFromObject(
-        hardware.group
-      );
-
-  const size =
-    new THREE.Vector3();
-
-  box.getSize(size);
-
-  const width =
-    Math.max(
-      1.8,
-      size.x * 1.12
-    );
-
-  const depth =
-    Math.max(
-      1.25,
-      size.z * 1.14
-    );
-
-  const glow =
-    new THREE.Mesh(
-      new THREE.PlaneGeometry(
-        width,
-        depth
-      ),
-      new THREE.MeshBasicMaterial({
-        color,
-        transparent: true,
-        opacity: 0,
-        depthWrite: false,
-        blending:
-          THREE.AdditiveBlending,
-        side:
-          THREE.DoubleSide
-      })
-    );
-
-  glow.name =
-    'MF28_ACTIVE_GLOW_' + id;
-
-  glow.rotation.x =
-    -Math.PI / 2;
-
-  glow.position.y =
-    -0.43;
-
-  hardware.group.add(glow);
-
-  const light =
-    new THREE.PointLight(
-      color,
-      0,
-      id === 'core' ? 5.0 : 3.8,
-      2
-    );
-
-  light.name =
-    'MF28_ACTIVE_LIGHT_' + id;
-
-  light.position.set(
-    0,
-    0.55,
-    0
-  );
-
-  hardware.group.add(light);
-
-  const edgeMaterials = [];
-  const bodyMaterials = [];
-
-  hardware.group.traverse(object => {
-    if (
-      object === glow ||
-      object.name?.startsWith(
-        'MF27_HIT_'
-      )
-    ) {
-      return;
+    if (hardware.underside?.material) {
+      hardware.underside.material.opacity = id === 'core' ? 0.04 : 0.012;
     }
 
-    const materials =
-      object.material
+    hardware.group.traverse((object) => {
+      const materials = object.material
         ? Array.isArray(object.material)
           ? object.material
           : [object.material]
         : [];
 
-    for (const material of materials) {
-      if (
-        object.isLineSegments &&
-        material
-      ) {
-        if (
-          material.userData
-            .mf28BaseOpacity ===
-          undefined
-        ) {
-          material.userData
-            .mf28BaseOpacity =
-            Number(
-              material.opacity ?? 1
-            );
+      for (const material of materials) {
+        if (!MF29.materialState.has(material)) {
+          MF29.materialState.set(material, {
+            opacity: Number(material.opacity ?? 1),
+            emissiveIntensity: Number(material.emissiveIntensity ?? 0)
+          });
         }
-
-        edgeMaterials.push(
-          material
-        );
       }
-
-      if (
-        object.isMesh &&
-        material?.emissive &&
-        'emissiveIntensity' in material
-      ) {
-        if (
-          material.userData
-            .mf28BaseEmissive ===
-          undefined
-        ) {
-          material.userData
-            .mf28BaseEmissive =
-            Number(
-              material.emissiveIntensity ??
-              0
-            );
-        }
-
-        bodyMaterials.push(
-          material
-        );
-      }
-    }
-  });
-
-  MF28.effects.set(
-    id,
-    {
-      id,
-      color,
-      hardware,
-      glow,
-      light,
-      edgeMaterials,
-      bodyMaterials,
-      level: 0,
-      target: 0,
-      flash: 0
-    }
-  );
+    });
+  }
 }
 
-function mf28CreateEffects() {
-  if (
-    typeof MF20 === 'undefined' ||
-    !MF20.hardware
-  ) {
+function mf29CreateHitTarget(id, hardware) {
+  if (!hardware?.group || !hardware?.display?.geometry) {
     return;
   }
 
-  for (
-    const [id, hardware]
-    of MF20.hardware
-  ) {
-    mf28CreateEffect(
-      id,
-      hardware
+  const width = Number(hardware.display.geometry.parameters?.width) || 2.4;
+  const depth = Number(hardware.display.geometry.parameters?.height) || 1.6;
+
+  const hit = new THREE.Mesh(
+    new THREE.BoxGeometry(width * 1.18, 0.72, depth * 1.22),
+    new THREE.MeshBasicMaterial({
+      color: 0xffffff,
+      transparent: true,
+      opacity: 0.001,
+      depthWrite: false,
+      colorWrite: false
+    })
+  );
+
+  hit.name = `MF29_HIT_${id}`;
+  hit.position.y = -0.02;
+  hit.userData = { kind: 'module', id };
+
+  hardware.group.add(hit);
+  MF29.hitTargets.push(hit);
+
+  const light = new THREE.PointLight(
+    hardware.color || MF20_COLOR.cyan,
+    0,
+    id === 'core' ? 4.8 : 3.5,
+    2
+  );
+
+  light.name = `MF29_LIGHT_${id}`;
+  light.position.set(0, 0.58, 0);
+  hardware.group.add(light);
+  MF29.lights.set(id, light);
+}
+
+function mf29SelectionId() {
+  return app.selected?.kind === 'module'
+    ? app.selected.id
+    : null;
+}
+
+function mf29ApplyVisualState() {
+  const selectedId = mf29SelectionId();
+
+  for (const [id, hardware] of MF20.hardware) {
+    const selected = id === selectedId;
+    const pressed = id === MF29.pressedId;
+    const energy = pressed ? 1 : selected ? 0.82 : 0;
+    const baseScale = id === 'core' ? 1.14 : 1.03;
+
+    hardware.group.scale.setScalar(
+      baseScale * (1 + energy * (id === 'core' ? 0.028 : 0.040))
     );
-  }
-}
 
-function mf28SetTargets() {
-  for (
-    const [id, effect]
-    of MF28.effects
-  ) {
-    if (
-      id === MF28.selectedId
-    ) {
-      effect.target = 1;
-    } else if (
-      id === MF28.pressedId
-    ) {
-      effect.target = 0.52;
-    } else {
-      effect.target = 0;
+    if (hardware.underside?.material) {
+      hardware.underside.material.opacity = energy > 0
+        ? 0.12 + energy * 0.045
+        : id === 'core'
+          ? 0.04
+          : 0.012;
     }
-  }
-}
 
-function mf28Pressed(id) {
-  MF28.pressedId =
-    id || null;
-
-  mf28SetTargets();
-}
-
-function mf28CommitVisual(id) {
-  MF28.selectedId =
-    id;
-
-  MF28.pressedId =
-    null;
-
-  const effect =
-    MF28.effects.get(id);
-
-  if (effect) {
-    effect.flash = 1;
-  }
-
-  /*
-    This is synchronous.
-    Existing animation layers see the new
-    selection immediately in the same frame.
-  */
-  app.selected = {
-    kind: 'module',
-    id
-  };
-
-  mf28SetTargets();
-}
-
-function mf28ForwardToInspector(id) {
-  const node =
-    app.nodes.get(id);
-
-  if (!node) {
-    return;
-  }
-
-  /*
-    Prefer the original DOM module handler.
-    It already knows how to populate the
-    current Live Inspector.
-  */
-  let forwarded = false;
-
-  if (
-    typeof mf27FindLabel ===
-    'function'
-  ) {
-    const label =
-      mf27FindLabel(id);
-
-    if (label) {
-      try {
-        label.click();
-        forwarded = true;
-      } catch (_) {}
+    if (hardware.display?.material) {
+      hardware.display.material.opacity = energy > 0
+        ? 1
+        : id === 'core'
+          ? 1
+          : 0.94;
     }
-  }
 
-  /*
-    If no original label handler exists,
-    call one existing selector only.
-    Do not walk through many fallbacks.
-  */
-  if (!forwarded) {
-    const names = [
-      'selectModule',
-      'selectNode',
-      'inspectModule',
-      'setSelectedModule',
-      'setSelectedNode'
-    ];
+    const light = MF29.lights.get(id);
 
-    for (const name of names) {
-      const fn =
-        app?.[name];
+    if (light) {
+      light.intensity = energy * (id === 'core' ? 0.85 : 0.62);
+    }
 
-      if (
-        typeof fn !== 'function'
-      ) {
-        continue;
+    hardware.group.traverse((object) => {
+      if (object.name?.startsWith('MF29_HIT_')) {
+        return;
       }
 
-      try {
-        fn.call(
-          app,
-          id,
-          node
-        );
+      const materials = object.material
+        ? Array.isArray(object.material)
+          ? object.material
+          : [object.material]
+        : [];
 
-        forwarded = true;
-        break;
-      } catch (_) {
-        try {
-          fn.call(
-            app,
-            node
+      for (const material of materials) {
+        const base = MF29.materialState.get(material);
+
+        if (!base) {
+          continue;
+        }
+
+        if (object.isLineSegments) {
+          material.opacity = Math.min(
+            1,
+            base.opacity + energy * 0.34
           );
+        }
 
-          forwarded = true;
-          break;
-        } catch (_) {}
-      }
-    }
-  }
-
-  /*
-    Always emit the selection immediately
-    for any current or future listeners.
-  */
-  window.dispatchEvent(
-    new CustomEvent(
-      'memeflow:module-selected',
-      {
-        detail: {
-          id,
-          node
+        if (material.emissive && 'emissiveIntensity' in material) {
+          material.emissiveIntensity =
+            base.emissiveIntensity + energy * 0.34;
         }
       }
-    )
-  );
+    });
+  }
 }
 
-function mf28Select(id) {
-  if (!id) {
-    return;
+function mf29PointerFromEvent(event) {
+  const canvas = app.renderer?.domElement;
+
+  if (!canvas) {
+    return false;
   }
 
-  /*
-    Visual reaction first.
-    No await, timeout or network dependency.
-  */
-  mf28CommitVisual(id);
+  const rect = canvas.getBoundingClientRect();
 
-  /*
-    Then update the existing Inspector.
-    requestAnimationFrame lets the active
-    hardware render before heavier UI work.
-  */
-  requestAnimationFrame(
-    () => {
-      mf28ForwardToInspector(id);
-    }
-  );
+  if (rect.width <= 0 || rect.height <= 0) {
+    return false;
+  }
+
+  MF29.pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+  MF29.pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+  return true;
 }
 
-function mf28Hit(event) {
-  if (
-    typeof mf27HitTest !==
-    'function'
-  ) {
+function mf29HitTest(event) {
+  if (!mf29PointerFromEvent(event) || !app.camera) {
     return null;
   }
 
-  return mf27HitTest(event);
+  MF29.raycaster.setFromCamera(MF29.pointer, app.camera);
+
+  const hits = MF29.raycaster.intersectObjects(MF29.hitTargets, false);
+
+  if (!hits.length) {
+    return null;
+  }
+
+  const id = hits[0].object?.userData?.id;
+
+  return id ? { id, hit: hits[0] } : null;
 }
 
-function mf28PointerDown(event) {
-  const hit =
-    mf28Hit(event);
+function mf29PointerDown(event) {
+  const hit = mf29HitTest(event);
 
-  MF28.pointerDown = {
+  MF29.pointerDown = {
     x: event.clientX,
     y: event.clientY,
     time: performance.now(),
@@ -7137,334 +2465,1639 @@ function mf28PointerDown(event) {
     moved: false
   };
 
-  /*
-    Immediate press glow.
-  */
-  if (hit?.id) {
-    mf28Pressed(
-      hit.id
-    );
-  }
+  MF29.pressedId = hit?.id || null;
+  mf29ApplyVisualState();
 }
 
-function mf28PointerMove(event) {
-  if (!MF28.pointerDown) {
+function mf29PointerMove(event) {
+  if (!MF29.pointerDown) {
     return;
   }
 
-  const dx =
-    event.clientX -
-    MF28.pointerDown.x;
+  const dx = event.clientX - MF29.pointerDown.x;
+  const dy = event.clientY - MF29.pointerDown.y;
 
-  const dy =
-    event.clientY -
-    MF28.pointerDown.y;
-
-  if (
-    Math.hypot(dx, dy) > 9
-  ) {
-    MF28.pointerDown.moved =
-      true;
-
-    /*
-      User is rotating the scene,
-      so remove the temporary press glow.
-    */
-    mf28Pressed(null);
+  if (Math.hypot(dx, dy) > 9) {
+    MF29.pointerDown.moved = true;
+    MF29.pressedId = null;
+    mf29ApplyVisualState();
   }
 }
 
-function mf28PointerCancel() {
-  MF28.pointerDown =
-    null;
-
-  mf28Pressed(null);
+function mf29PointerCancel() {
+  MF29.pointerDown = null;
+  MF29.pressedId = null;
+  mf29ApplyVisualState();
 }
 
-function mf28PointerUp(event) {
-  const down =
-    MF28.pointerDown;
-
-  MF28.pointerDown =
-    null;
+function mf29PointerUp(event) {
+  const down = MF29.pointerDown;
+  MF29.pointerDown = null;
 
   if (!down) {
-    mf28Pressed(null);
+    MF29.pressedId = null;
+    mf29ApplyVisualState();
     return;
   }
 
-  const dx =
-    event.clientX -
-    down.x;
+  const distance = Math.hypot(
+    event.clientX - down.x,
+    event.clientY - down.y
+  );
 
-  const dy =
-    event.clientY -
-    down.y;
+  const elapsed = performance.now() - down.time;
 
-  const distance =
-    Math.hypot(dx, dy);
-
-  const elapsed =
-    performance.now() -
-    down.time;
-
-  if (
-    down.moved ||
-    distance > 10 ||
-    elapsed > 700
-  ) {
-    mf28Pressed(null);
+  if (down.moved || distance > 10 || elapsed > 700) {
+    MF29.pressedId = null;
+    mf29ApplyVisualState();
     return;
   }
 
-  const hit =
-    mf28Hit(event);
+  const hit = mf29HitTest(event);
+  const id = hit?.id || down.id;
 
-  const id =
-    hit?.id ||
-    down.id;
+  MF29.pressedId = null;
 
   if (!id) {
-    mf28Pressed(null);
+    mf29ApplyVisualState();
     return;
   }
 
-  mf28Select(id);
+  select({ kind: 'module', id });
+  mf29ApplyVisualState();
 }
 
-function mf28Animate() {
-  requestAnimationFrame(
-    mf28Animate
+function mf29Camera(reset = true) {
+  const mobile = window.matchMedia('(max-width: 900px)').matches;
+  app.camera.fov = mobile ? 40 : 36;
+  app.camera.updateProjectionMatrix();
+
+  const canvas = app.renderer?.domElement || document.getElementById('systemCanvas');
+  const aspect = canvas && canvas.clientHeight > 0
+    ? Math.max(0.55, canvas.clientWidth / canvas.clientHeight)
+    : (mobile ? 1.25 : 1.55);
+
+  const box = new THREE.Box3().makeEmpty();
+  if (typeof MF20 !== 'undefined' && MF20.hardware && typeof MF20.hardware.values === 'function') {
+    for (const hardware of MF20.hardware.values()) {
+      if (hardware?.group) box.expandByObject(hardware.group);
+    }
+  }
+
+  const center = new THREE.Vector3(0, 0, 0.65);
+  const size = new THREE.Vector3(9.5, 1.5, 10.5);
+  if (!box.isEmpty()) {
+    box.getCenter(center);
+    box.getSize(size);
+  }
+
+  const verticalFov = THREE.MathUtils.degToRad(app.camera.fov);
+  const tanHalfFov = Math.tan(verticalFov / 2);
+  const halfDepth = Math.max(3.8, size.z * 0.5);
+  const halfWidth = Math.max(3.8, size.x * 0.5);
+  const distanceForDepth = halfDepth / tanHalfFov;
+  const distanceForWidth = halfWidth / (tanHalfFov * aspect);
+  const distance = Math.max(distanceForDepth, distanceForWidth) * (mobile ? 1.34 : 1.20);
+
+  app.cameraHome.set(
+    center.x,
+    center.y + distance,
+    center.z + distance * (mobile ? 0.10 : 0.14)
   );
+  app.targetHome.set(center.x, center.y - 0.18, center.z);
 
-  if (!MF28.installed) {
-    return;
+  if (reset) {
+    app.camera.position.copy(app.cameraHome);
+    app.controls.target.copy(app.targetHome);
   }
 
-  for (
-    const effect
-    of MF28.effects.values()
-  ) {
-    /*
-      Fast attack, slower release.
-    */
-    const rate =
-      effect.target >
-      effect.level
-        ? 0.34
-        : 0.18;
-
-    effect.level +=
-      (
-        effect.target -
-        effect.level
-      ) * rate;
-
-    effect.flash *=
-      0.84;
-
-    const energy =
-      Math.min(
-        1.35,
-        effect.level +
-        effect.flash * 0.48
-      );
-
-    const core =
-      effect.id === 'core';
-
-    effect.glow.material.opacity =
-      energy *
-      (
-        core
-          ? 0.17
-          : 0.125
-      );
-
-    effect.light.intensity =
-      energy *
-      (
-        core
-          ? 1.15
-          : 0.72
-      );
-
-    for (
-      const material
-      of effect.edgeMaterials
-    ) {
-      const base =
-        Number(
-          material.userData
-            .mf28BaseOpacity ??
-          0.20
-        );
-
-      material.opacity =
-        base +
-        energy *
-        (
-          0.78 - base
-        );
-    }
-
-    for (
-      const material
-      of effect.bodyMaterials
-    ) {
-      const base =
-        Number(
-          material.userData
-            .mf28BaseEmissive ??
-          0
-        );
-
-      material.emissiveIntensity =
-        base +
-        energy *
-        (
-          core
-            ? 0.56
-            : 0.42
-        );
-    }
-
-    if (
-      effect.hardware?.display
-        ?.material
-    ) {
-      effect.hardware
-        .display.material.opacity =
-        Math.min(
-          1,
-          0.94 +
-          energy * 0.06
-        );
-    }
-  }
+  app.controls.enablePan = false;
+  app.controls.enableZoom = true;
+  app.controls.minDistance = Math.max(8.8, distance * 0.55);
+  app.controls.maxDistance = Math.max(30, distance * 1.8);
+  app.controls.zoomSpeed = 1.02;
+  app.controls.rotateSpeed = 0.50;
+  app.controls.minPolarAngle = Math.PI * 0.075;
+  app.controls.maxPolarAngle = Math.PI * 0.47;
+  app.controls.minAzimuthAngle = -0.68;
+  app.controls.maxAzimuthAngle = 0.68;
+  app.controls.autoRotate = false;
+  app.autoRotate = false;
+  app.controls.update();
 }
 
-function mf28Install() {
-  if (
-    MF28.installed ||
-    typeof MF27 === 'undefined' ||
-    !MF27.installed ||
-    typeof MF20 === 'undefined' ||
-    !MF20.installed
-  ) {
+function mf29DisableLegacyTokenMeshes() {
+  for (const item of app.tokenMeshes.values()) {
+    if (item?.mesh) {
+      app.scene.remove(item.mesh);
+    }
+  }
+
+  app.tokenMeshes.clear();
+  app.pickables = [];
+}
+
+function mf29Install() {
+  if (MF29.installed || !MF20.installed || !MF20.hardware?.size) {
     return;
   }
 
-  MF28.installed =
-    true;
+  MF29.installed = true;
 
-  mf28CreateEffects();
+  mf29DisableLegacyTokenMeshes();
+  mf29HideLegacyNodeGeometry();
+  mf29RefineHardware();
 
-  /*
-    Keep the currently selected module,
-    if one already exists.
-  */
-  if (
-    app.selected?.kind ===
-      'module' &&
-    app.selected?.id
-  ) {
-    MF28.selectedId =
-      app.selected.id;
+  for (const [id, hardware] of MF20.hardware) {
+    mf29CreateHitTarget(id, hardware);
   }
 
-  mf28SetTargets();
-
-  const canvas =
-    app.renderer?.domElement ||
-    document.getElementById(
-      'systemCanvas'
-    );
+  const canvas = app.renderer?.domElement;
 
   if (!canvas) {
-    console.error(
-      '[MF28] Canvas not found'
-    );
+    throw new Error('MEMEFLOW V29 canvas is unavailable');
+  }
 
+  canvas.style.touchAction = 'none';
+  canvas.addEventListener('pointerdown', mf29PointerDown, { passive: true });
+  canvas.addEventListener('pointermove', mf29PointerMove, { passive: true });
+  canvas.addEventListener('pointerup', mf29PointerUp, { passive: true });
+  canvas.addEventListener('pointercancel', mf29PointerCancel, { passive: true });
+
+  window.__mf29SyncSelection = mf29ApplyVisualState;
+
+  mf29Camera(true);
+  mf29ApplyVisualState();
+  resize();
+
+  console.log('[MF29] Clean system layer enabled');
+}
+
+mf29Install();
+
+window.addEventListener('resize', () => {
+  if (!MF29.installed) {
     return;
   }
 
-  /*
-    Remove the slower V27 pointer handlers.
-  */
-  if (
-    typeof mf27OnPointerDown ===
-    'function'
-  ) {
-    canvas.removeEventListener(
-      'pointerdown',
-      mf27OnPointerDown
-    );
+  mf29Camera(false);
+  resize();
+});
+
+/* ===== MEMEFLOW V29.3 CAMERA FIT + SETTINGS ===== */
+
+const MF293 = {
+  installed: false,
+  settings: null,
+  version: null,
+  capabilities: null,
+  killSwitchActive: false,
+  dirty: false,
+  saving: false
+};
+
+const MF293_GROUPS = [
+  ['logic', 'Logic', 'Decision thresholds and operating policy', true, [
+    ['operatingMode', 'Operating mode', 'select', [['observe','Observe'],['assist','Assist'],['automate','Automate']]],
+    ['tradingEnvironment', 'Trading environment', 'select', [['paper','Paper'],['live','Live']]],
+    ['profile', 'Profile', 'select', [['conservative','Conservative'],['balanced','Balanced'],['aggressive','Aggressive']]],
+    ['minScore', 'Minimum AI score', 'number', 0, 100, 1],
+    ['minConfidence', 'Minimum confidence %', 'number', 0, 100, 1],
+    ['minBuyPressure', 'Minimum buy pressure', 'number', 0, null, 0.01],
+    ['decisionFreshnessSec', 'Decision freshness sec', 'integer', 5, 3600, 1],
+    ['requireFreshHolderSnapshot', 'Require fresh holder snapshot', 'boolean'],
+    ['requireWebsiteOrX', 'Require website or X', 'boolean'],
+    ['ownerApproval', 'Owner approval', 'boolean'],
+    ['shadowValidation', 'Shadow validation', 'boolean'],
+    ['changeLog', 'Settings change log', 'boolean']
+  ]],
+  ['trading', 'Trading', 'Capital, position sizing and daily limits', true, [
+    ['tradingCapital', 'Trading capital SOL', 'number', 0, null, 0.01],
+    ['dailySpendLimit', 'Daily spend limit SOL', 'number', 0, null, 0.01],
+    ['positionSize', 'Default position SOL', 'number', 0.000001, null, 0.01],
+    ['maxPositionSize', 'Maximum position SOL', 'number', 0.000001, null, 0.01],
+    ['maxOpenPositions', 'Maximum open positions', 'integer', 0, null, 1],
+    ['maxDailyEntries', 'Maximum daily entries', 'integer', 0, null, 1],
+    ['dailyLossLimit', 'Daily loss limit SOL', 'number', 0, null, 0.01],
+    ['feeReserve', 'Fee reserve SOL', 'number', 0, null, 0.001]
+  ]],
+  ['filters', 'Entry filters', 'Market, holder, concentration and token filters', false, [
+    ['minLiquidityUsd', 'Minimum liquidity USD', 'number', 0, null, 1],
+    ['minHolders', 'Minimum holders', 'nullable', 0, null, 1],
+    ['maxHolders', 'Maximum holders', 'nullable', 0, null, 1],
+    ['minTokenAgeMinutes', 'Minimum age min', 'nullable', 0, null, 0.1],
+    ['maxTokenAgeMinutes', 'Maximum age min', 'nullable', 0, null, 0.1],
+    ['minMarketCapUsd', 'Minimum market cap USD', 'nullable', 0, null, 1],
+    ['maxMarketCapUsd', 'Maximum market cap USD', 'nullable', 0, null, 1],
+    ['minBondingCurvePct', 'Minimum bonding curve %', 'nullable', 0, 100, 0.1],
+    ['maxBondingCurvePct', 'Maximum bonding curve %', 'nullable', 0, 100, 0.1],
+    ['minTotalFeesSol', 'Minimum total fees SOL', 'nullable', 0, null, 0.001],
+    ['maxTotalFeesSol', 'Maximum total fees SOL', 'nullable', 0, null, 0.001],
+    ['minVolume24hUsd', 'Minimum 24h volume USD', 'nullable', 0, null, 1],
+    ['maxVolume24hUsd', 'Maximum 24h volume USD', 'nullable', 0, null, 1],
+    ['minBuyTransactions', 'Minimum buy transactions', 'nullable', 0, null, 1],
+    ['maxBuyTransactions', 'Maximum buy transactions', 'nullable', 0, null, 1],
+    ['minSellTransactions', 'Minimum sell transactions', 'nullable', 0, null, 1],
+    ['maxSellTransactions', 'Maximum sell transactions', 'nullable', 0, null, 1],
+    ['minTotalTransactions', 'Minimum total transactions', 'nullable', 0, null, 1],
+    ['maxTotalTransactions', 'Maximum total transactions', 'nullable', 0, null, 1],
+    ['minTop10Pct', 'Minimum Top 10 %', 'nullable', 0, 100, 0.1],
+    ['maxTop10Pct', 'Maximum Top 10 %', 'nullable', 0, 100, 0.1],
+    ['minDeveloperPct', 'Minimum developer %', 'nullable', 0, 100, 0.1],
+    ['maxDeveloperPct', 'Maximum developer %', 'nullable', 0, 100, 0.1],
+    ['minBundlePct', 'Minimum bundle %', 'nullable', 0, 100, 0.1],
+    ['maxBundlePct', 'Maximum bundle %', 'nullable', 0, 100, 0.1],
+    ['minSniperPct', 'Minimum sniper %', 'nullable', 0, 100, 0.1],
+    ['maxSniperPct', 'Maximum sniper %', 'nullable', 0, 100, 0.1],
+    ['requireTwitter', 'Require X / Twitter', 'boolean'],
+    ['requireWebsite', 'Require website', 'boolean'],
+    ['requireTelegram', 'Require Telegram', 'boolean'],
+    ['requireAnySocial', 'Require any social', 'boolean'],
+    ['includeKeywords', 'Include keywords', 'text'],
+    ['excludeKeywords', 'Exclude keywords', 'text'],
+    ['developerBlacklistWallets', 'Developer blacklist wallets', 'array']
+  ]],
+  ['exits', 'Risk & exits', 'Stops, take profit allocation and exit pressure', true, [
+    ['hardStopPct', 'Hard stop %', 'number', 0.000001, 100, 0.1],
+    ['trailingStopPct', 'Trailing stop %', 'number', 0, 100, 0.1],
+    ['tp1Pct', 'TP1 gain %', 'number', 0.000001, null, 1],
+    ['tp1SellPct', 'TP1 sell %', 'number', 0, 100, 1],
+    ['tp2Pct', 'TP2 gain %', 'number', 0.000001, null, 1],
+    ['tp2SellPct', 'TP2 sell %', 'number', 0, 100, 1],
+    ['runnerPct', 'Runner %', 'number', 0, 100, 1],
+    ['maxHoldMinutes', 'Maximum hold min', 'integer', 1, null, 1],
+    ['exitBuyPressure', 'Exit buy pressure', 'number', 0, null, 0.01],
+    ['exitOnWeakBuyPressure', 'Exit on weak buy pressure', 'boolean']
+  ]]
+];
+
+function mf293Clone(value) {
+  return JSON.parse(JSON.stringify(value));
+}
+
+function mf293Fields() {
+  return MF293_GROUPS.flatMap(group => group[4]);
+}
+
+function mf293Status(text, state = '') {
+  const node = document.getElementById('mf293SettingsStatus');
+  if (!node) return;
+  node.textContent = text;
+  node.dataset.state = state;
+}
+
+function mf293Error(message) {
+  let node = document.getElementById('mf293SettingsError');
+  if (!node) {
+    node = document.createElement('div');
+    node.id = 'mf293SettingsError';
+    node.className = 'mf293-settings-error';
+    document.getElementById('mf293SettingsBody')?.prepend(node);
+  }
+  node.hidden = false;
+  node.textContent = String(message || 'Unknown error');
+}
+
+function mf293ClearError() {
+  const node = document.getElementById('mf293SettingsError');
+  if (node) {
+    node.hidden = true;
+    node.textContent = '';
+  }
+}
+
+function mf293Disable(disabled) {
+  for (const id of ['mf293SaveSettings', 'mf293RestoreDefaults']) {
+    const node = document.getElementById(id);
+    if (node) node.disabled = disabled;
+  }
+}
+
+function mf293CreateField(field) {
+  const [key, label, kind, min, max, step] = field;
+  const wrap = document.createElement('label');
+  wrap.className = kind === 'boolean'
+    ? 'mf293-field mf293-field-switch'
+    : 'mf293-field';
+
+  const title = document.createElement('span');
+  title.className = 'mf293-field-label';
+  title.textContent = label;
+  wrap.appendChild(title);
+
+  let input;
+
+  if (kind === 'boolean') {
+    const switchWrap = document.createElement('span');
+    switchWrap.className = 'mf293-switch';
+    input = document.createElement('input');
+    input.type = 'checkbox';
+    const track = document.createElement('span');
+    track.className = 'mf293-switch-track';
+    switchWrap.append(input, track);
+    wrap.appendChild(switchWrap);
+  } else if (kind === 'select') {
+    input = document.createElement('select');
+    for (const [value, text] of field[3]) {
+      const option = document.createElement('option');
+      option.value = value;
+      option.textContent = text;
+      input.appendChild(option);
+    }
+    wrap.appendChild(input);
+  } else if (kind === 'array') {
+    input = document.createElement('textarea');
+    input.rows = 3;
+    input.placeholder = 'One wallet per line or comma-separated';
+    wrap.classList.add('mf293-field-wide');
+    wrap.appendChild(input);
+  } else {
+    input = document.createElement('input');
+    input.type = (kind === 'number' || kind === 'integer' || kind === 'nullable') ? 'number' : 'text';
+    if (min !== undefined && min !== null) input.min = String(min);
+    if (max !== undefined && max !== null) input.max = String(max);
+    if (step !== undefined && step !== null) input.step = String(step);
+    if (kind === 'nullable') input.placeholder = 'Off';
+    wrap.appendChild(input);
+  }
+
+  input.dataset.settingKey = key;
+  input.dataset.settingKind = kind;
+  const markDirty = () => {
+    MF293.dirty = true;
+    mf293Status('Unsaved', 'dirty');
+  };
+  input.addEventListener('input', markDirty);
+  input.addEventListener('change', markDirty);
+
+  return wrap;
+}
+
+
+// MEMEFLOW_PLATFORM_NATIVE_DIRECT_V4
+const MF_PLATFORM_V4 = {
+  mode: 'pump',
+  busy: false,
+  select: null
+};
+
+function mfPlatformV4Text(el) {
+  return (el?.innerText || el?.textContent || '').replace(/\s+/g, ' ').trim();
+}
+
+function mfPlatformV4Panel() {
+  return document.getElementById('mf293SettingsPanel')
+    || document.getElementById('mf293SettingsBackdrop')
+    || document.body;
+}
+
+function mfPlatformV4FindPlatformCard() {
+  const root = mfPlatformV4Panel();
+  const leaves = Array.from(root.querySelectorAll('*')).filter(el => {
+    if (el.children.length) return false;
+    return mfPlatformV4Text(el).toLowerCase() === 'platform';
+  });
+
+  const label = leaves[0];
+  if (!label) return null;
+
+  let node = label.parentElement;
+  let best = null;
+
+  for (let i = 0; node && node !== root.parentElement && i < 6; i++, node = node.parentElement) {
+    const t = mfPlatformV4Text(node).toLowerCase();
+
+    if (!t.includes('platform')) continue;
+    if (t.includes('ai policy') || t.includes('kill switch')) break;
+
+    const r = node.getBoundingClientRect?.();
+    if (!r || r.width < 90 || r.height < 40 || r.height > 150) continue;
+
+    best = node;
+
+    const cs = getComputedStyle(node);
+    if (parseFloat(cs.borderTopWidth || '0') > 0) break;
+  }
+
+  return best;
+}
+
+function mfPlatformV4FindValueNode(card) {
+  if (!card) return null;
+
+  const leaves = Array.from(card.querySelectorAll('*')).filter(el => {
+    if (el.children.length) return false;
+    const t = mfPlatformV4Text(el).toLowerCase();
+    return t && t !== 'platform';
+  });
+
+  return leaves.find(el => {
+    const t = mfPlatformV4Text(el).toLowerCase();
+    return t === 'pump.fun' || t === 'pump' || t === 'dex' || t === 'hybrid';
+  }) || leaves[leaves.length - 1] || null;
+}
+
+function mfPlatformV4Label(mode) {
+  return mode === 'dex' ? 'DEX'
+    : mode === 'hybrid' ? 'Hybrid'
+    : 'Pump.fun';
+}
+
+function mfPlatformV4NativeSelect() {
+  const select = document.createElement('select');
+  select.id = 'mfPlatformNativeSelectV4';
+  select.setAttribute('aria-label', 'Platform');
+
+  for (const [value, label] of [
+    ['pump', 'Pump.fun'],
+    ['dex', 'DEX'],
+    ['hybrid', 'Hybrid']
+  ]) {
+    const option = document.createElement('option');
+    option.value = value;
+    option.textContent = label;
+    select.appendChild(option);
+  }
+
+  // Keep it visually identical to the old plain "Pump.fun" value,
+  // while remaining a REAL native select, so iOS opens the same picker
+  // as Operating mode / Profile / Trading environment.
+  Object.assign(select.style, {
+    display: 'block',
+    width: '100%',
+    maxWidth: '100%',
+    margin: '0',
+    padding: '0 18px 0 0',
+    border: '0',
+    outline: '0',
+    background: 'transparent',
+    color: 'inherit',
+    font: 'inherit',
+    fontWeight: 'inherit',
+    lineHeight: 'inherit',
+    fontSize: '16px',
+    WebkitAppearance: 'none',
+    appearance: 'none',
+    cursor: 'pointer'
+  });
+
+  select.addEventListener('change', async () => {
+    if (MF_PLATFORM_V4.busy) return;
+
+    const previous = MF_PLATFORM_V4.mode;
+    const next = String(select.value || 'pump').toLowerCase();
+
+    if (next === previous) return;
+
+    MF_PLATFORM_V4.busy = true;
+    select.disabled = true;
+
+    try {
+      const response = await fetch('/api/discovery-source', {
+        method: 'POST',
+        cache: 'no-store',
+        credentials: 'same-origin',
+        headers: {
+          'content-type': 'application/json',
+          'accept': 'application/json'
+        },
+        body: JSON.stringify({ mode: next })
+      });
+
+      const body = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(body?.message || body?.error || `HTTP ${response.status}`);
+      }
+
+      MF_PLATFORM_V4.mode = String(body?.source?.mode || next).toLowerCase();
+      select.value = MF_PLATFORM_V4.mode;
+      mfPlatformV4ApplyCompatibility(MF_PLATFORM_V4.mode);
+    } catch (error) {
+      console.error('[PLATFORM V4] switch failed', error);
+      MF_PLATFORM_V4.mode = previous;
+      select.value = previous;
+    } finally {
+      MF_PLATFORM_V4.busy = false;
+      select.disabled = false;
+    }
+  });
+
+  return select;
+}
+
+function mfPlatformV4FieldCards() {
+  const root = document.getElementById('mf293SettingsPanel') || mfPlatformV4Panel();
+  const controls = Array.from(
+    root.querySelectorAll(
+      '[data-setting-key], input, select, textarea, [role="switch"]'
+    )
+  );
+
+  const cards = [];
+
+  for (const control of controls) {
+    if (control.id === 'mfPlatformNativeSelectV4') continue;
+
+    let node = control.parentElement;
+    let best = null;
+
+    for (let i = 0; node && node !== root && i < 5; i++, node = node.parentElement) {
+      const t = mfPlatformV4Text(node);
+      if (!t || t.length > 300) break;
+
+      const count = node.querySelectorAll(
+        '[data-setting-key], input, select, textarea, [role="switch"]'
+      ).length;
+
+      const r = node.getBoundingClientRect?.();
+      if (!r || r.width < 100 || r.height < 38 || r.height > 240) continue;
+
+      if (count === 1) {
+        best = node;
+        const cs = getComputedStyle(node);
+        if (parseFloat(cs.borderTopWidth || '0') > 0) break;
+      }
+    }
+
+    if (best && !cards.includes(best)) cards.push(best);
+  }
+
+  return cards;
+}
+
+function mfPlatformV4Rule(text) {
+  const t = String(text || '').toLowerCase();
+
+  if (t.includes('bonding curve')) {
+    return {
+      dex: 'Pump.fun only · inactive in DEX mode',
+      hybrid: 'Pump.fun only · ignored by DEX branch'
+    };
+  }
+
+  if (t.includes('total fees')) {
+    return {
+      dex: 'Pump.fun only · inactive in DEX mode',
+      hybrid: 'Pump.fun only · ignored by DEX branch'
+    };
+  }
+
+  if (t.includes('bundle')) {
+    return {
+      dex: 'No DEX bundle signal · inactive',
+      hybrid: 'Pump.fun branch only · no DEX bundle signal'
+    };
+  }
+
+  if (t.includes('sniper')) {
+    return {
+      dex: 'No DEX sniper signal · inactive',
+      hybrid: 'Pump.fun branch only · no DEX sniper signal'
+    };
   }
 
   if (
-    typeof mf27OnPointerUp ===
-    'function'
+    t.includes('developer') &&
+    (
+      t.includes('share') ||
+      t.includes('concentration') ||
+      t.includes('blacklist') ||
+      t.includes('wallet') ||
+      t.includes('minimum') ||
+      t.includes('maximum') ||
+      t.includes('min ') ||
+      t.includes('max ') ||
+      t.includes('%')
+    )
   ) {
-    canvas.removeEventListener(
-      'pointerup',
-      mf27OnPointerUp
-    );
+    return {
+      dex: 'Creator/developer signal unavailable from DEX pool · inactive',
+      hybrid: 'Pump.fun tokens only · ignored by DEX branch'
+    };
   }
 
-  if (
-    typeof mf27OnPointerMove ===
-    'function'
-  ) {
-    canvas.removeEventListener(
-      'pointermove',
-      mf27OnPointerMove
-    );
+  return null;
+}
+
+function mfPlatformV4RestoreCard(card) {
+  if (!card.dataset.mfPlatformV4Touched) return;
+
+  card.style.opacity = card.dataset.mfPlatformV4Opacity || '';
+  card.style.filter = card.dataset.mfPlatformV4Filter || '';
+
+  card.querySelector(':scope > [data-mf-platform-v4-note]')?.remove();
+
+  for (const control of card.querySelectorAll(
+    '[data-mf-platform-v4-disabled]'
+  )) {
+    const wasDisabled = control.dataset.mfPlatformV4Disabled === '1';
+    control.disabled = wasDisabled;
+    delete control.dataset.mfPlatformV4Disabled;
   }
 
-  canvas.addEventListener(
-    'pointerdown',
-    mf28PointerDown,
-    {
-      passive: true
+  delete card.dataset.mfPlatformV4Touched;
+  delete card.dataset.mfPlatformV4Opacity;
+  delete card.dataset.mfPlatformV4Filter;
+}
+
+function mfPlatformV4ApplyCompatibility(mode) {
+  const cards = mfPlatformV4FieldCards();
+
+  for (const card of cards) {
+    mfPlatformV4RestoreCard(card);
+  }
+
+  if (mode === 'pump') return;
+
+  for (const card of cards) {
+    const rule = mfPlatformV4Rule(mfPlatformV4Text(card));
+    if (!rule) continue;
+
+    card.dataset.mfPlatformV4Touched = '1';
+    card.dataset.mfPlatformV4Opacity = card.style.opacity || '';
+    card.dataset.mfPlatformV4Filter = card.style.filter || '';
+
+    const note = document.createElement('div');
+    note.dataset.mfPlatformV4Note = '1';
+    note.textContent = mode === 'dex' ? rule.dex : rule.hybrid;
+
+    Object.assign(note.style, {
+      marginTop: '6px',
+      paddingTop: '6px',
+      borderTop: '1px solid rgba(120,145,155,.12)',
+      color: mode === 'dex' ? '#687f89' : '#8177a8',
+      fontSize: '9px',
+      lineHeight: '1.25',
+      letterSpacing: '.02em'
+    });
+
+    if (mode === 'dex') {
+      card.style.opacity = '.38';
+      card.style.filter = 'grayscale(.55) saturate(.3)';
+
+      for (const control of card.querySelectorAll(
+        'input, select, textarea, button, [role="switch"]'
+      )) {
+        if (control.id === 'mfPlatformNativeSelectV4') continue;
+        control.dataset.mfPlatformV4Disabled = control.disabled ? '1' : '0';
+        control.disabled = true;
+      }
+    } else {
+      card.style.opacity = '.78';
     }
-  );
 
-  canvas.addEventListener(
-    'pointermove',
-    mf28PointerMove,
-    {
-      passive: true
+    card.appendChild(note);
+  }
+}
+
+async function mfPlatformV4Load() {
+  try {
+    const response = await fetch('/api/discovery-source', {
+      method: 'GET',
+      cache: 'no-store',
+      credentials: 'same-origin',
+      headers: { 'accept': 'application/json' }
+    });
+
+    const body = await response.json().catch(() => ({}));
+    if (!response.ok) return;
+
+    MF_PLATFORM_V4.mode = String(body?.source?.mode || 'pump').toLowerCase();
+
+    if (MF_PLATFORM_V4.select) {
+      MF_PLATFORM_V4.select.value = MF_PLATFORM_V4.mode;
     }
-  );
 
-  canvas.addEventListener(
-    'pointerup',
-    mf28PointerUp,
-    {
-      passive: true
+    mfPlatformV4ApplyCompatibility(MF_PLATFORM_V4.mode);
+  } catch (error) {
+    console.warn('[PLATFORM V4] status unavailable', error);
+  }
+}
+
+function mfPlatformV4Mount() {
+  const card = mfPlatformV4FindPlatformCard();
+  if (!card) {
+    console.warn('[PLATFORM V4] Platform card not found during mf293Build');
+    return;
+  }
+
+  const old = card.querySelector('#mfPlatformNativeSelectV4');
+  if (old) {
+    MF_PLATFORM_V4.select = old;
+    mfPlatformV4Load();
+    return;
+  }
+
+  const valueNode = mfPlatformV4FindValueNode(card);
+  if (!valueNode) {
+    console.warn('[PLATFORM V4] Platform value node not found');
+    return;
+  }
+
+  const select = mfPlatformV4NativeSelect();
+
+  // Replace the static Pump.fun text with the actual native <select>.
+  // This is the same browser control type used by the working settings.
+  valueNode.replaceWith(select);
+
+  MF_PLATFORM_V4.valueNode = null;
+  MF_PLATFORM_V4.select = select;
+  mfPlatformV4Load();
+}
+
+
+function mf293Build() {
+  if (document.getElementById('mf293SettingsPanel')) return;
+
+  const actions = document.querySelector('.top-actions');
+  if (actions) {
+    const button = document.createElement('button');
+    button.id = 'mf293SettingsBtn';
+    button.className = 'tool-btn mf293-settings-trigger';
+    button.type = 'button';
+    button.textContent = 'Settings';
+    actions.insertBefore(button, document.getElementById('resetViewBtn') || null);
+    button.addEventListener('click', mf293Open);
+  }
+
+  const backdrop = document.createElement('div');
+  backdrop.id = 'mf293SettingsBackdrop';
+  backdrop.className = 'mf293-settings-backdrop';
+  backdrop.hidden = true;
+
+  const panel = document.createElement('section');
+  panel.id = 'mf293SettingsPanel';
+  panel.className = 'mf293-settings-panel';
+  panel.setAttribute('role', 'dialog');
+  panel.setAttribute('aria-modal', 'true');
+  panel.setAttribute('aria-labelledby', 'mf293SettingsTitle');
+  panel.innerHTML = `
+    <header class="mf293-settings-head">
+      <div>
+        <span class="eyebrow">LIVE CONFIGURATION</span>
+        <h2 id="mf293SettingsTitle">System settings</h2>
+      </div>
+      <div class="mf293-settings-head-actions">
+        <span id="mf293SettingsStatus" class="mf293-settings-status">Ready</span>
+        <button id="mf293SettingsClose" type="button" aria-label="Close settings">×</button>
+      </div>
+    </header>
+    <div class="mf293-settings-meta">
+      <span>Platform<strong>Pump.fun</strong></span>
+      <span>AI policy<strong>Propose only</strong></span>
+      <span>Kill switch<strong id="mf293KillSwitch">Checking</strong></span>
+    </div>
+    <div id="mf293SettingsBody" class="mf293-settings-body"></div>
+    <footer class="mf293-settings-footer">
+      <button id="mf293RestoreDefaults" class="mf293-secondary" type="button">Restore defaults</button>
+      <button id="mf293SaveSettings" class="mf293-primary" type="button">Save settings</button>
+    </footer>
+  `;
+
+  backdrop.appendChild(panel);
+  document.body.appendChild(backdrop);
+
+  const body = document.getElementById('mf293SettingsBody');
+  for (const [id, title, subtitle, open, fields] of MF293_GROUPS) {
+    const section = document.createElement('details');
+    section.className = 'mf293-settings-group';
+    section.open = open;
+    const summary = document.createElement('summary');
+    summary.innerHTML = `<span><strong>${title}</strong><small>${subtitle}</small></span><i></i>`;
+    const grid = document.createElement('div');
+    grid.className = 'mf293-settings-grid';
+    for (const field of fields) grid.appendChild(mf293CreateField(field));
+    section.append(summary, grid);
+    body.appendChild(section);
+  }
+
+  document.getElementById('mf293SettingsClose')?.addEventListener('click', mf293Close);
+  document.getElementById('mf293SaveSettings')?.addEventListener('click', mf293Save);
+  document.getElementById('mf293RestoreDefaults')?.addEventListener('click', mf293Restore);
+  backdrop.addEventListener('click', event => {
+    if (event.target === backdrop) mf293Close();
+  });
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && !backdrop.hidden) mf293Close();
+  });
+  
+}
+
+function mf293Populate() {
+  if (!MF293.settings) return;
+
+  for (const field of mf293Fields()) {
+    const [key, , kind] = field;
+    const input = document.querySelector(`[data-setting-key="${key}"]`);
+    if (!input) continue;
+    const value = MF293.settings[key];
+
+    if (kind === 'boolean') input.checked = Boolean(value);
+    else if (kind === 'array') input.value = Array.isArray(value) ? value.join('\n') : '';
+    else if (kind === 'nullable') input.value = value === null || value === undefined ? '' : String(value);
+    else input.value = value === null || value === undefined ? '' : String(value);
+  }
+
+  const environment = document.querySelector('[data-setting-key="tradingEnvironment"]');
+  if (environment) {
+    const liveOption = [...environment.options].find(option => option.value === 'live');
+    if (liveOption) {
+      const currentLive = MF293.settings.tradingEnvironment === 'live';
+      liveOption.disabled = !currentLive && MF293.capabilities?.liveAutomation !== true;
     }
-  );
+  }
 
-  canvas.addEventListener(
-    'pointercancel',
-    mf28PointerCancel,
-    {
-      passive: true
+  const kill = document.getElementById('mf293KillSwitch');
+  if (kill) {
+    kill.textContent = MF293.killSwitchActive ? 'ACTIVE' : 'Off';
+    kill.dataset.active = MF293.killSwitchActive ? 'true' : 'false';
+  }
+
+  MF293.dirty = false;
+  mf293Status(`v${MF293.version ?? '—'}`, 'saved');
+}
+
+async function mf293Load() {
+  mf293Status('Loading', 'busy');
+  mf293Disable(true);
+  mf293ClearError();
+
+  try {
+    const response = await fetch('/api/settings', {
+      method: 'GET',
+      credentials: 'same-origin',
+      cache: 'no-store'
+    });
+    const payload = await response.json();
+
+    if (!response.ok) {
+      throw new Error(payload?.message || payload?.error || 'Unable to load settings');
     }
-  );
 
-  requestAnimationFrame(
-    mf28Animate
-  );
+    MF293.settings = mf293Clone(payload.settings || {});
+    MF293.version = payload.version ?? 1;
+    MF293.capabilities = payload.capabilities || {};
+    MF293.killSwitchActive = payload.killSwitchActive === true;
+    mf293Populate();
+  } catch (error) {
+    mf293Status('Load failed', 'error');
+    mf293Error(error.message || 'Unable to load settings');
+  } finally {
+    mf293Disable(false);
+  }
+}
 
-  console.log(
-    '[MF28] Instant selection enabled'
+function mf293Read(field, input) {
+  const kind = field[2];
+  if (kind === 'boolean') return input.checked;
+  if (kind === 'array') {
+    return [...new Set(String(input.value || '').split(/[\n,\s]+/).map(v => v.trim()).filter(Boolean))];
+  }
+  if (kind === 'nullable') {
+    const text = String(input.value || '').trim();
+    return text === '' ? null : Number(text);
+  }
+  if (kind === 'number') return Number(input.value);
+  if (kind === 'integer') return Math.trunc(Number(input.value));
+  return String(input.value || '').trim();
+}
+
+function mf293Collect() {
+  if (!MF293.settings) throw new Error('Settings are not loaded');
+  const next = mf293Clone(MF293.settings);
+
+  for (const field of mf293Fields()) {
+    const input = document.querySelector(`[data-setting-key="${field[0]}"]`);
+    if (input) next[field[0]] = mf293Read(field, input);
+  }
+
+  next.launchPlatforms = ['pump'];
+  next.aiChangePolicy = 'propose';
+  next.adaptiveProfile = false;
+  return next;
+}
+
+async function mf293Save() {
+  if (MF293.saving) return;
+  mf293ClearError();
+
+  let next;
+  try {
+    next = mf293Collect();
+  } catch (error) {
+    mf293Error(error.message);
+    return;
+  }
+
+  MF293.saving = true;
+  mf293Disable(true);
+  mf293Status('Saving', 'busy');
+
+  try {
+    const response = await fetch('/api/settings', {
+      method: 'PUT',
+      credentials: 'same-origin',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({settings: next, version: MF293.version})
+    });
+    const payload = await response.json();
+
+    if (!response.ok) {
+      if (response.status === 409) {
+        await mf293Load();
+        throw new Error('Settings changed on the server. Latest values were reloaded.');
+      }
+      const message = Array.isArray(payload?.errors)
+        ? payload.errors.join(' ')
+        : (payload?.message || payload?.error || 'Unable to save settings');
+      throw new Error(message);
+    }
+
+    MF293.settings = mf293Clone(payload.settings || next);
+    MF293.version = payload.version ?? MF293.version;
+    MF293.dirty = false;
+    mf293Populate();
+
+    const count = Number(payload.decisionsReevaluated);
+    mf293Status(
+      Number.isFinite(count) ? `Saved · ${count} re-evaluated` : 'Saved',
+      'saved'
+    );
+  } catch (error) {
+    mf293Status('Save failed', 'error');
+    mf293Error(error.message || 'Unable to save settings');
+  } finally {
+    MF293.saving = false;
+    mf293Disable(false);
+  }
+}
+
+async function mf293Restore() {
+  if (!window.confirm('Restore all MEMEFLOW settings to server defaults?')) return;
+  mf293ClearError();
+  mf293Disable(true);
+  mf293Status('Restoring', 'busy');
+
+  try {
+    const response = await fetch('/api/settings/defaults', {
+      method: 'POST',
+      credentials: 'same-origin'
+    });
+    const payload = await response.json();
+
+    if (!response.ok) {
+      throw new Error(payload?.message || payload?.error || 'Unable to restore defaults');
+    }
+
+    MF293.settings = mf293Clone(payload.settings || {});
+    MF293.version = payload.version ?? MF293.version;
+    mf293Populate();
+    mf293Status('Defaults restored', 'saved');
+  } catch (error) {
+    mf293Status('Restore failed', 'error');
+    mf293Error(error.message || 'Unable to restore defaults');
+  } finally {
+    mf293Disable(false);
+  }
+}
+
+async function mf293Open() {
+  const backdrop = document.getElementById('mf293SettingsBackdrop');
+  if (!backdrop) return;
+  backdrop.hidden = false;
+  document.body.classList.add('mf293-settings-open');
+  await mf293Load();
+  // MF_PLATFORM_V4_2_MOUNT
+  requestAnimationFrame(() => {
+    mfPlatformV4Mount();
+    setTimeout(() => mfPlatformV4Mount(), 80);
+  });
+}
+
+function mf293Close() {
+  const backdrop = document.getElementById('mf293SettingsBackdrop');
+  if (!backdrop) return;
+  if (MF293.dirty && !window.confirm('Close settings without saving changes?')) return;
+  backdrop.hidden = true;
+  document.body.classList.remove('mf293-settings-open');
+}
+
+function mf293Install() {
+  if (MF293.installed) return;
+  MF293.installed = true;
+  mf293Build();
+
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      if (typeof mf29Camera === 'function' && app?.camera && app?.controls) {
+        mf29Camera(true);
+        resize();
+      }
+    });
+  });
+}
+
+mf293Install();
+
+/* ===== MEMEFLOW V30 TRADING TERMINAL LINK ===== */
+(function mf30TradingLink(){
+  const actions = document.querySelector('.top-actions');
+  if (!actions || document.getElementById('mf30TradingBtn')) return;
+
+  const button = document.createElement('button');
+  button.id = 'mf30TradingBtn';
+  button.className = 'tool-btn';
+  button.type = 'button';
+  button.textContent = 'Trading';
+  button.addEventListener('click', () => {
+    window.location.href = '/trading.html';
+  });
+
+  const settings = document.getElementById('mf293SettingsBtn');
+  if (settings && settings.parentNode === actions) {
+    actions.insertBefore(button, settings);
+  } else {
+    actions.insertBefore(button, actions.firstChild);
+  }
+})();
+
+// MEMEFLOW_V31_REAL_EVENT_WEB
+
+/* ========================================================================
+   MEMEFLOW V31 — REAL EVENT WEB / FITTED DIGITAL TWIN
+   ======================================================================== */
+
+const REAL_WEB_V31 = {
+  installed: false,
+  group: null,
+  edges: new Map(),
+  source: null,
+  frame: 0,
+  lastFrameAt: 0,
+  lastTelemetry: null,
+  resizeTimer: null,
+  installTimer: null,
+  reconnects: 0,
+  mobileQuery: window.matchMedia('(max-width: 900px)')
+};
+
+const WEB_EDGES_V31 = [
+  { key:'discovery:bootstrap', from:'discovery', to:'bootstrap', color:COLORS.cyan },
+  { key:'bootstrap:core',      from:'bootstrap', to:'core',      color:COLORS.blue },
+  { key:'core:holders',        from:'core',      to:'holders',   color:COLORS.cyan },
+  { key:'core:market',         from:'core',      to:'market',    color:COLORS.blue },
+  { key:'holders:risk',        from:'holders',   to:'risk',      color:COLORS.cyan },
+  { key:'market:risk',         from:'market',    to:'risk',      color:COLORS.blue },
+  { key:'openai:risk',         from:'openai',    to:'risk',      color:COLORS.purple },
+  { key:'risk:decision',       from:'risk',      to:'decision',  color:COLORS.green },
+  { key:'decision:paper',      from:'decision',  to:'paper',     color:COLORS.purple },
+  { key:'paper:execution',     from:'paper',     to:'execution', color:COLORS.yellow }
+];
+
+const WEB_LAYOUT_MOBILE_V31 = {
+  discovery: { pos:[-4.45,  2.85,  0.12], scale:0.52 },
+  bootstrap: { pos:[ 0.00,  2.85, -0.04], scale:0.52 },
+  core:      { pos:[ 4.45,  2.85,  0.18], scale:0.59 },
+
+  risk:      { pos:[-4.45,  0.62,  0.08], scale:0.50 },
+  market:    { pos:[ 0.00,  0.62, -0.06], scale:0.50 },
+  holders:   { pos:[ 4.45,  0.62,  0.18], scale:0.50 },
+
+  openai:    { pos:[-4.45, -1.62, -0.10], scale:0.49 },
+  decision:  { pos:[ 0.00, -1.62,  0.04], scale:0.51 },
+  paper:     { pos:[ 4.45, -1.62,  0.02], scale:0.50 },
+
+  execution: { pos:[ 0.00, -3.78, -0.12], scale:0.49 }
+};
+
+const WEB_LAYOUT_DESKTOP_V31 = {
+  discovery: { pos:[-5.60,  3.10,  0.10], scale:0.68 },
+  bootstrap: { pos:[ 0.00,  3.10, -0.05], scale:0.68 },
+  core:      { pos:[ 5.60,  3.10,  0.20], scale:0.76 },
+
+  risk:      { pos:[-5.60,  0.55,  0.08], scale:0.66 },
+  market:    { pos:[ 0.00,  0.55, -0.08], scale:0.66 },
+  holders:   { pos:[ 5.60,  0.55,  0.18], scale:0.66 },
+
+  openai:    { pos:[-5.60, -2.00, -0.12], scale:0.64 },
+  decision:  { pos:[ 0.00, -2.00,  0.02], scale:0.67 },
+  paper:     { pos:[ 5.60, -2.00,  0.02], scale:0.65 },
+
+  execution: { pos:[ 0.00, -4.45, -0.12], scale:0.63 }
+};
+
+function webClampV31(v, a, b) {
+  return Math.max(a, Math.min(b, Number(v) || 0));
+}
+
+function webMobileV31() {
+  return REAL_WEB_V31.mobileQuery.matches;
+}
+
+function webNodeV31(id) {
+  return app.nodes?.get?.(id) || null;
+}
+
+function webPointV31(id) {
+  const node = webNodeV31(id);
+  if (!node?.group) return new THREE.Vector3();
+
+  const p = node.group.position.clone();
+  p.y += 0.18;
+  return p;
+}
+
+function webCurveV31(edge, index = 0) {
+  const a = webPointV31(edge.from);
+  const b = webPointV31(edge.to);
+  const mid = a.clone().lerp(b, 0.5);
+
+  mid.z += ((index % 3) - 1) * 0.18;
+  mid.y += (index % 2 === 0 ? 0.10 : -0.06);
+
+  return new THREE.CatmullRomCurve3(
+    [a, mid, b],
+    false,
+    'catmullrom',
+    0.06
   );
 }
 
-setTimeout(
-  mf28Install,
-  3200
-);
+function webDisposeObjectV31(object) {
+  if (!object) return;
 
+  object.traverse?.((child) => {
+    child.geometry?.dispose?.();
+
+    if (Array.isArray(child.material)) {
+      for (const m of child.material) m?.dispose?.();
+    } else {
+      child.material?.dispose?.();
+    }
+  });
+
+  object.parent?.remove?.(object);
+}
+
+function disableLegacyFlowV31() {
+  try {
+    if (typeof syncRealitySpeedsV8 === 'function') {
+      syncRealitySpeedsV8 = () => {};
+    }
+  } catch {}
+
+  try {
+    if (typeof clearFlowLinesV7 === 'function') {
+      clearFlowLinesV7();
+    }
+  } catch {}
+
+  try {
+    for (const entry of FLOW_REALITY_V8?.lines || []) {
+      webDisposeObjectV31(entry?.line);
+    }
+    if (FLOW_REALITY_V8?.lines) FLOW_REALITY_V8.lines.length = 0;
+  } catch {}
+
+  try {
+    for (const pulse of app.edgePulses || []) {
+      webDisposeObjectV31(pulse);
+    }
+    if (app.edgePulses) app.edgePulses.length = 0;
+  } catch {}
+}
+
+function applyWebLayoutV31(forceHome = false) {
+  if (!app.scene || !app.camera || !app.controls || !app.nodes?.size) return false;
+
+  const mobile = webMobileV31();
+  const layout = mobile ? WEB_LAYOUT_MOBILE_V31 : WEB_LAYOUT_DESKTOP_V31;
+
+  for (const [id, cfg] of Object.entries(layout)) {
+    const node = webNodeV31(id);
+    if (!node?.group) continue;
+
+    node.group.position.set(...cfg.pos);
+    node.group.scale.setScalar(cfg.scale);
+  }
+
+  if (mobile) {
+    app.cameraHome.set(0.0, 13.4, 28.2);
+    app.targetHome.set(0.0, -1.15, 0.0);
+
+    app.controls.minDistance = 13.5;
+    app.controls.maxDistance = 46.0;
+    app.controls.minPolarAngle = Math.PI * 0.20;
+    app.controls.maxPolarAngle = Math.PI * 0.52;
+    app.controls.minAzimuthAngle = -0.95;
+    app.controls.maxAzimuthAngle = 0.95;
+  } else {
+    app.cameraHome.set(0.0, 12.0, 30.0);
+    app.targetHome.set(0.0, -0.65, 0.0);
+
+    app.controls.minDistance = 14.0;
+    app.controls.maxDistance = 48.0;
+    app.controls.minPolarAngle = Math.PI * 0.20;
+    app.controls.maxPolarAngle = Math.PI * 0.55;
+    app.controls.minAzimuthAngle = -1.20;
+    app.controls.maxAzimuthAngle = 1.20;
+  }
+
+  app.controls.enableZoom = true;
+  app.controls.enableRotate = true;
+  app.controls.enablePan = false;
+  app.controls.enableDamping = true;
+  app.controls.dampingFactor = 0.055;
+  app.controls.zoomSpeed = 1.15;
+  app.controls.rotateSpeed = 0.76;
+  app.controls.autoRotate = false;
+  app.autoRotate = false;
+
+  if (app.controls.touches) {
+    app.controls.touches.ONE = THREE.TOUCH.ROTATE;
+    app.controls.touches.TWO = THREE.TOUCH.DOLLY_ROTATE;
+  }
+
+  if (forceHome) {
+    app.camera.position.copy(app.cameraHome);
+    app.controls.target.copy(app.targetHome);
+  }
+
+  app.controls.update();
+  return true;
+}
+
+function clearWebV31() {
+  if (REAL_WEB_V31.group) {
+    webDisposeObjectV31(REAL_WEB_V31.group);
+  }
+
+  REAL_WEB_V31.group = null;
+  REAL_WEB_V31.edges.clear();
+}
+
+function buildWebV31() {
+  if (!app.scene || !app.nodes?.size) return;
+
+  clearWebV31();
+
+  const group = new THREE.Group();
+  group.name = 'MEMEFLOW_REAL_EVENT_WEB_V31';
+  app.scene.add(group);
+  REAL_WEB_V31.group = group;
+
+  WEB_EDGES_V31.forEach((edge, index) => {
+    const curve = webCurveV31(edge, index);
+    const points = curve.getPoints(72);
+
+    const baseGeometry = new THREE.BufferGeometry().setFromPoints(points);
+    const base = new THREE.Line(
+      baseGeometry,
+      new THREE.LineBasicMaterial({
+        color: edge.color,
+        transparent: true,
+        opacity: edge.key === 'paper:execution' ? 0.018 : 0.034,
+        depthWrite: false
+      })
+    );
+    base.renderOrder = 4;
+    group.add(base);
+
+    const hotGeometry = new THREE.BufferGeometry().setFromPoints(points);
+    hotGeometry.setDrawRange(0, 0);
+
+    const hot = new THREE.Line(
+      hotGeometry,
+      new THREE.LineBasicMaterial({
+        color: edge.color,
+        transparent: true,
+        opacity: 0,
+        depthWrite: false
+      })
+    );
+    hot.renderOrder = 8;
+    group.add(hot);
+
+    const head = new THREE.Mesh(
+      new THREE.SphereGeometry(0.075, 10, 10),
+      new THREE.MeshBasicMaterial({
+        color: edge.color,
+        transparent: true,
+        opacity: 0,
+        depthWrite: false
+      })
+    );
+    head.visible = false;
+    head.renderOrder = 9;
+    group.add(head);
+
+    REAL_WEB_V31.edges.set(edge.key, {
+      ...edge,
+      curve,
+      points,
+      base,
+      hot,
+      head,
+      active: false,
+      startedAt: 0,
+      durationMs: 90,
+      fadeStartedAt: 0,
+      fadeMs: 105,
+      boost: 1,
+      lastShotAt: 0
+    });
+  });
+}
+
+function visualLatencyV31(serverTs) {
+  const lag = Math.max(0, Date.now() - Number(serverTs || Date.now()));
+  return webClampV31(lag, 70, 220);
+}
+
+function flashNodeV31(id, until) {
+  const node = webNodeV31(id);
+  if (!node?.group) return;
+
+  node.group.userData.webFlashUntilV31 = Math.max(
+    Number(node.group.userData.webFlashUntilV31) || 0,
+    until
+  );
+}
+
+function shootWebEdgeV31(key, serverTs, strength = 1) {
+  const entry = REAL_WEB_V31.edges.get(key);
+  if (!entry || key === 'paper:execution') return;
+
+  const now = performance.now();
+  const duration = visualLatencyV31(serverTs);
+
+  if (entry.active && (now - entry.lastShotAt) < 34) {
+    entry.boost = Math.min(1.8, entry.boost + 0.20 * strength);
+    entry.lastShotAt = now;
+    return;
+  }
+
+  entry.active = true;
+  entry.startedAt = now;
+  entry.durationMs = duration;
+  entry.fadeStartedAt = 0;
+  entry.boost = webClampV31(strength, 0.65, 1.8);
+  entry.lastShotAt = now;
+
+  entry.hot.visible = true;
+  entry.hot.material.opacity = Math.min(1, 0.76 * entry.boost);
+  entry.hot.geometry.setDrawRange(0, 1);
+
+  entry.head.visible = true;
+  entry.head.material.opacity = Math.min(1, 0.92 * entry.boost);
+  entry.head.scale.setScalar(0.78 + 0.30 * entry.boost);
+
+  const until = now + duration + 120;
+  flashNodeV31(entry.from, until);
+  flashNodeV31(entry.to, until);
+}
+
+function currentDecisionForMintV31(mint) {
+  const sample = Array.isArray(app.telemetry?.diag?.sample)
+    ? app.telemetry.diag.sample
+    : [];
+
+  const row = sample.find((item) => String(item?.mint || '') === String(mint || ''));
+  return stateKey(row?.decision?.state || '');
+}
+
+function runCreateRouteV31(payload = {}) {
+  const d = visualLatencyV31(payload.ts);
+
+  shootWebEdgeV31('discovery:bootstrap', payload.ts, 1.12);
+
+  setTimeout(
+    () => shootWebEdgeV31('bootstrap:core', payload.ts, 1.18),
+    Math.max(24, d * 0.42)
+  );
+}
+
+function runTokenRouteV31(payload = {}) {
+  const d = visualLatencyV31(payload.ts);
+
+  shootWebEdgeV31('core:holders', payload.ts, 1.06);
+  shootWebEdgeV31('core:market', payload.ts, 1.12);
+
+  setTimeout(() => {
+    shootWebEdgeV31('holders:risk', payload.ts, 1.02);
+    shootWebEdgeV31('market:risk', payload.ts, 1.08);
+  }, Math.max(18, d * 0.30));
+
+  setTimeout(() => {
+    shootWebEdgeV31('risk:decision', payload.ts, 1.15);
+  }, Math.max(34, d * 0.60));
+
+  if (currentDecisionForMintV31(payload.mint) === 'ready') {
+    setTimeout(() => {
+      shootWebEdgeV31('decision:paper', payload.ts, 1.22);
+    }, Math.max(48, d * 0.88));
+  }
+}
+
+function applyNodeFlashV31(now) {
+  for (const [, node] of app.nodes || []) {
+    if (!node?.group) continue;
+
+    const until = Number(node.group.userData.webFlashUntilV31) || 0;
+    const active = until > now;
+
+    if (!node.group.userData.webHaloV31) {
+      const ring = new THREE.Mesh(
+        new THREE.RingGeometry(0.72, 0.79, 40),
+        new THREE.MeshBasicMaterial({
+          color: node.cfg?.color || COLORS.cyan,
+          transparent: true,
+          opacity: 0,
+          side: THREE.DoubleSide,
+          depthWrite: false
+        })
+      );
+      ring.rotation.x = -Math.PI / 2;
+      ring.position.y = (Number(node.cfg?.size?.[1]) || 1) * 0.56 + 0.08;
+      node.group.add(ring);
+      node.group.userData.webHaloV31 = ring;
+    }
+
+    const halo = node.group.userData.webHaloV31;
+    const target = active ? 0.55 : 0.0;
+    const current = Number(halo.material.opacity) || 0;
+
+    halo.material.opacity += (target - current) * 0.22;
+
+    if (active) {
+      const pulse = 1 + Math.sin(now * 0.020) * 0.08;
+      halo.scale.setScalar(pulse);
+    }
+  }
+}
+
+function animateWebV31(now) {
+  REAL_WEB_V31.frame = requestAnimationFrame(animateWebV31);
+
+  if (document.hidden || !REAL_WEB_V31.installed) return;
+
+  if ((now - REAL_WEB_V31.lastFrameAt) < 32) return;
+  REAL_WEB_V31.lastFrameAt = now;
+
+  for (const entry of REAL_WEB_V31.edges.values()) {
+    if (!entry.active) continue;
+
+    const elapsed = now - entry.startedAt;
+    const p = webClampV31(elapsed / entry.durationMs, 0, 1);
+
+    if (p < 1) {
+      const count = Math.max(2, Math.floor(entry.points.length * p));
+      entry.hot.geometry.setDrawRange(0, count);
+      entry.hot.material.opacity = Math.min(1, 0.80 * entry.boost);
+
+      const headP = entry.curve.getPointAt(Math.min(0.999, p));
+      entry.head.position.copy(headP);
+      entry.head.material.opacity = Math.min(1, 0.96 * entry.boost);
+
+      continue;
+    }
+
+    if (!entry.fadeStartedAt) {
+      entry.fadeStartedAt = now;
+      entry.hot.geometry.setDrawRange(0, entry.points.length);
+    }
+
+    const fade = webClampV31(
+      1 - ((now - entry.fadeStartedAt) / entry.fadeMs),
+      0,
+      1
+    );
+
+    entry.hot.material.opacity = fade * 0.62 * entry.boost;
+    entry.head.material.opacity = fade * 0.78 * entry.boost;
+
+    if (fade <= 0) {
+      entry.active = false;
+      entry.boost = 1;
+      entry.hot.visible = false;
+      entry.head.visible = false;
+      entry.hot.geometry.setDrawRange(0, 0);
+    }
+  }
+
+  applyNodeFlashV31(now);
+}
+
+function parseWebEventV31(event) {
+  try {
+    return JSON.parse(event.data || '{}');
+  } catch {
+    return {};
+  }
+}
+
+function connectSystemStreamV31() {
+  try {
+    REAL_WEB_V31.source?.close?.();
+  } catch {}
+
+  if (typeof EventSource === 'undefined') return;
+
+  const source = new EventSource('/api/system/stream');
+  REAL_WEB_V31.source = source;
+
+  source.addEventListener('create', (event) => {
+    runCreateRouteV31(parseWebEventV31(event));
+  });
+
+  source.addEventListener('token', (event) => {
+    runTokenRouteV31(parseWebEventV31(event));
+  });
+
+  source.addEventListener('hello', () => {
+    REAL_WEB_V31.reconnects = 0;
+  });
+
+  source.onerror = () => {
+    REAL_WEB_V31.reconnects += 1;
+  };
+}
+
+function telemetryFallbackV31() {
+  // Do not synthesize fallback shots while the real SSE transport is open.
+  if (
+    REAL_WEB_V31.source &&
+    typeof EventSource !== 'undefined' &&
+    REAL_WEB_V31.source.readyState === EventSource.OPEN
+  ) {
+    return;
+  }
+
+  const current = {
+    ts: Date.now(),
+    events: Number(app.telemetry?.discovery?.eventsReceived) || 0,
+    trades: Number(app.telemetry?.diag?.liveTradeFeed?.tradeEventsDecoded) || 0
+  };
+
+  const previous = REAL_WEB_V31.lastTelemetry;
+  REAL_WEB_V31.lastTelemetry = current;
+
+  if (!previous) return;
+
+  if (current.events > previous.events) {
+    runCreateRouteV31({ ts: current.ts });
+  }
+
+  if (current.trades > previous.trades) {
+    runTokenRouteV31({ ts: current.ts });
+  }
+}
+
+function rebuildRealWebV31(forceHome = false) {
+  if (!applyWebLayoutV31(forceHome)) return;
+
+  disableLegacyFlowV31();
+  buildWebV31();
+}
+
+function installRealWebV31() {
+  if (REAL_WEB_V31.installed) return;
+
+  if (!app.scene || !app.camera || !app.controls || !app.nodes?.size) {
+    REAL_WEB_V31.installTimer = setTimeout(installRealWebV31, 180);
+    return;
+  }
+
+  REAL_WEB_V31.installed = true;
+
+  rebuildRealWebV31(true);
+  connectSystemStreamV31();
+
+  REAL_WEB_V31.frame = requestAnimationFrame(animateWebV31);
+
+  setInterval(() => {
+    if (!document.hidden) telemetryFallbackV31();
+  }, 1500);
+
+  setTimeout(() => {
+    if (!REAL_WEB_V31.installed) return;
+    rebuildRealWebV31(true);
+  }, 900);
+}
+
+window.addEventListener('resize', () => {
+  if (!REAL_WEB_V31.installed) return;
+
+  clearTimeout(REAL_WEB_V31.resizeTimer);
+  REAL_WEB_V31.resizeTimer = setTimeout(() => {
+    rebuildRealWebV31(false);
+  }, 320);
+});
+
+setTimeout(installRealWebV31, 1250);
+
+
+// MEMEFLOW_PLATFORM_NATIVE_DIRECT_V4_1
+
+// MEMEFLOW_PLATFORM_NATIVE_DIRECT_V4_2
