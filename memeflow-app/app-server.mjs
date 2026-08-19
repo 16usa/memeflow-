@@ -1475,6 +1475,25 @@ async function handler(req,res){const url=new URL(req.url,'http://x');
    }else{fs.createReadStream(f).pipe(res);}
    return;
  }
+ 
+ /* MF_V74_HEALTHZ
+    Must run BEFORE user(), touchUser(), settings and game status.
+    This tells the browser whether Node itself is reachable.
+ */
+ if(url.pathname==='/api/healthz'&&req.method==='GET'){
+   res.statusCode=200;
+   res.setHeader('content-type','application/json; charset=utf-8');
+   res.setHeader('cache-control','no-store, no-cache, must-revalidate');
+   res.setHeader('x-mf-health','v74');
+   return res.end(JSON.stringify({
+     ok:true,
+     version:'V74',
+     pid:process.pid,
+     uptimeMs:Math.round(process.uptime()*1000),
+     at:Date.now()
+   }));
+ }
+
  const u=user(req,res);if(u){store.touchUser(u.id);if(OWNER_USER_IDS.has(u.id)&&!u.isOwner)store.grantOwner(u.id,'owner_user_ids');}
 
  /* MEMEFLOW_NATIVE_AI_V46_ROUTES_BEGIN */
@@ -1798,7 +1817,7 @@ if(false && url.pathname==='/api/ai/assistant' &&req.method==='POST'){
   }
  if(url.pathname==='/api/debug/filter-pipeline-lifecycle'){
     const now=Date.now();
-    const limit=Math.max(1,Math.min(25,Number(url.searchParams.get('limit')||10)));
+    const limit=Math.max(1,Math.min(250,Number(url.searchParams.get('limit')||10)));
 
     const allTokens=Object.values(store?.state?.tokens||{});
     const pumpTokens=allTokens
@@ -1820,6 +1839,12 @@ if(false && url.pathname==='/api/ai/assistant' &&req.method==='POST'){
       const discovered=Number(token?.discoveredAt||token?.createdAt||0);
       return {
         mint,
+        name:token?.name??token?.metadataName??null,
+        symbol:token?.symbol??token?.metadataSymbol??null,
+        uri:token?.uri??token?.metadataUrl??null,
+        imageUrl:token?.imageUrl??token?.image??token?.logoUrl??null,
+        image:token?.image??token?.imageUrl??token?.logoUrl??null,
+        logoUrl:token?.logoUrl??token?.imageUrl??token?.image??null,
         ageMinutes:discovered>0?Math.max(0,(now-discovered)/60000):null,
         schedulerLane:
           discovered>0 && now-discovered<=FRESH_PRIORITY_MAX_AGE_MS
@@ -2085,14 +2110,15 @@ if(false && url.pathname==='/api/ai/assistant' &&req.method==='POST'){
  if(url.pathname==='/api/game/cashout'&&req.method==='POST'){const r=pepeGame.cashout(u.id);return json(res,r.ok?200:409,r);}
  if(url.pathname==='/api/game/reset'&&req.method==='POST'){const r=pepeGame.reset(u.id);return json(res,r.ok?200:409,r);}
  if(url.pathname==='/api/game/history/clear'&&req.method==='POST')return json(res,200,pepeGame.clearHistory(u.id));
+ // MF_V66_SSE_STABILITY
  if(url.pathname==='/api/game/stream'&&req.method==='GET'){
   res.writeHead(200,{'content-type':'text/event-stream; charset=utf-8','cache-control':'no-cache, no-store, no-transform','connection':'keep-alive','x-accel-buffering':'no'});
   res.flushHeaders?.();
-  try{res.write('retry: 2500\n\n')}catch{}
+  try{res.write('retry: 1500\n\n')}catch{}
   const send=(payload)=>{try{const event=String(payload?.type||'state').replace(/[^a-z0-9_-]/gi,'');res.write('event: '+event+'\ndata: '+JSON.stringify(payload)+'\n\n')}catch{}};
   const unsubscribe=pepeGame.subscribe(u.id,send);
   send({type:'snapshot',...pepeGame.status(u.id)});
-  const heartbeat=setInterval(()=>{try{res.write(': ping\n\n')}catch{}},12000);heartbeat.unref?.();
+  const heartbeat=setInterval(()=>{try{res.write(': ping\n\n')}catch{}},6000);heartbeat.unref?.();
   let closed=false;const close=()=>{if(closed)return;closed=true;clearInterval(heartbeat);unsubscribe();};req.once('close',close);req.once('aborted',close);res.once('close',close);
   return;
  }

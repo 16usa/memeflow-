@@ -86,29 +86,25 @@
     return true;
   }
 
+  /* MF_V64_BOUNDED_FLIGHT_LAUNCHER
+     #fullscreenBtn may not exist on the Game page.
+     Never keep a document-wide MutationObserver alive.
+  */
+
   let attempts=0;
 
-  const timer=setInterval(()=>{
-    attempts+=1;
+  const timer=setInterval(
+    ()=>{
+      attempts+=1;
 
-    if(install() || attempts>=60){
-      clearInterval(timer);
-    }
-  },100);
-
-  const observer=new MutationObserver(()=>{
-    removeOldGuide();
-
-    if(!document.querySelector('[data-flight-v124="true"]')){
-      install();
-    }
-  });
-
-  observer.observe(
-    document.documentElement,
-    {
-      childList:true,
-      subtree:true
-    }
+      if(
+        install() ||
+        attempts>=20
+      ){
+        clearInterval(timer);
+      }
+    },
+    250
   );
+
 })();

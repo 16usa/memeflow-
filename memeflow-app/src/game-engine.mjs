@@ -810,7 +810,27 @@ export class GameEngine {
       stateRevision: user.stateRevision,
       balance: roundMoney(user.balance),
       session,
-      history: user.history.slice(0, HISTORY_LIMIT),
+      /*
+        MF_V67:
+        Old rounds created before imageUrl was stored can
+        recover their token avatar from the current token store.
+      */
+      history: user.history
+        .slice(0, HISTORY_LIMIT)
+        .map(row => {
+          const liveToken =
+            this.store.state.tokens?.[row?.mint] || null;
+
+          return {
+            ...row,
+
+            imageUrl:
+              row?.imageUrl ||
+              gameTokenImageUrl(liveToken) ||
+              null,
+          };
+        }),
+
       stats: this.stats(uid),
       selector: this.selectorDiagnostics(uid),
       activeRounds: this.activeRoundCount(),
@@ -878,6 +898,13 @@ export class GameEngine {
       id: session.id,
       symbol: session.token?.symbol || session.token?.name || 'TOKEN',
       mint: session.mint,
+
+      // MF_V67_HISTORY_TOKEN_IMAGE
+      imageUrl:
+        session.token?.imageUrl ||
+        gameTokenImageUrl(session.token) ||
+        null,
+
       reason: session.reason,
       voided: session.voided === true,
       stake: session.bet,

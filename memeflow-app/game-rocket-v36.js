@@ -25,11 +25,23 @@ if(!stage){
     premultipliedAlpha:true
   });
 
+  /* MF_V64_MOBILE_DPR
+     2x DPR is unnecessarily expensive for the iPhone
+     Game canvas. Live rendering remains sharp at 1.5x.
+  */
+  const mfMobileRenderer=
+    globalThis.matchMedia?.(
+      '(max-width:700px)'
+    )?.matches===true;
+
   renderer.setPixelRatio(
-    Math.min(window.devicePixelRatio||1,2)
+    Math.min(
+      window.devicePixelRatio||1,
+      mfMobileRenderer ? 1.5 : 2
+    )
   );
 
-  renderer.setClearColor(0x01040b,1);
+  renderer.setClearColor(0x000000,0);
 
   renderer.domElement.id='pepeRocketCanvasV36';
 
@@ -566,34 +578,66 @@ function placeRocket(){
   );
 }
 
-function frame(){
-    if(destroyed)return;
+/* MF_V64_ADAPTIVE_RENDER_RATE
+   READY / SEARCHING: max ~30 FPS.
+   LIVE / results: full requestAnimationFrame rate.
+*/
+let mfLastRenderAt=0;
 
-    requestAnimationFrame(frame);
+function frame(
+  now=performance.now()
+){
+  if(destroyed)return;
 
-    if(document.hidden)return;
+  requestAnimationFrame(frame);
 
-    const dt=Math.min(
-      clock.getDelta(),
-      .05
-    );
+  if(document.hidden)return;
 
-    t+=dt;
 
-    updateSmooth(dt);
-    placeRocket();
+  const mode=
+    String(
+      target.mode||'idle'
+    ).toLowerCase();
 
-    ride.update(
-      t,
-      dt,
-      current
-    );
 
-    renderer.render(
-      scene,
-      camera
-    );
+  const lowActivity=
+    mode==='idle' ||
+    mode==='searching';
+
+
+  if(
+    lowActivity &&
+    now-mfLastRenderAt<33
+  ){
+    return;
   }
+
+
+  mfLastRenderAt=now;
+
+
+  const dt=Math.min(
+    clock.getDelta(),
+    .05
+  );
+
+  t+=dt;
+
+  updateSmooth(dt);
+  placeRocket();
+
+  ride.update(
+    t,
+    dt,
+    current
+  );
+
+  renderer.render(
+    scene,
+    camera
+  );
+}
+
 
   const ro=
     new ResizeObserver(resize);

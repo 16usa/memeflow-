@@ -8012,3 +8012,4759 @@ body{
 }
 
 /* === V56 MOBILE LAYOUT REPAIR END === */
+
+/* === V57 FINAL MOBILE POLISH START === */
+
+/*
+  Final mobile polish only.
+  No selector / PAPER / settlement / trading logic changes.
+*/
+
+@media
+  (max-width:620px)
+  and (orientation:portrait){
+
+  /* ==========================================
+     PEPE — +20/25% visual presence
+  ========================================== */
+
+  .story-hero{
+    left:49%!important;
+
+    width:clamp(
+      275px,
+      72vw,
+      315px
+    )!important;
+
+    bottom:6.5%!important;
+  }
+
+
+  /* ==========================================
+     FLIGHT POSITION — secondary information
+  ========================================== */
+
+  .flight-position-hud{
+    right:7px!important;
+    top:13%!important;
+
+    width:74px!important;
+
+    padding:4px 5px!important;
+
+    border-radius:7px!important;
+
+    border-color:
+      rgba(160,181,200,.075)!important;
+
+    background:
+      rgba(3,7,10,.36)!important;
+
+    opacity:.72!important;
+
+    box-shadow:none!important;
+  }
+
+  .flight-position-hud small{
+    font-size:3.9px!important;
+    letter-spacing:.045em!important;
+  }
+
+  .flight-position-hud div{
+    margin-top:1px!important;
+
+    font-size:4.4px!important;
+  }
+
+
+  /* ==========================================
+     LAUNCH CONTROL — tighter
+  ========================================== */
+
+  .launch-panel{
+    gap:6px!important;
+
+    padding:11px!important;
+  }
+
+  .launch-panel > .game-utility{
+    gap:7px!important;
+
+    padding:1px 0 3px!important;
+  }
+
+  .game-balance b{
+    font-size:13px!important;
+  }
+
+  .stream-utility{
+    gap:5px!important;
+  }
+
+  .stream-utility b{
+    font-size:6.5px!important;
+  }
+
+  .stream-utility small{
+    font-size:5px!important;
+  }
+
+
+  /* Stake */
+
+  .launch-panel .field-title{
+    margin:0 0 -1px!important;
+
+    font-size:6.5px!important;
+  }
+
+  .launch-panel .stake-input{
+    height:44px!important;
+    min-height:44px!important;
+
+    padding:0 10px!important;
+
+    border-radius:10px!important;
+  }
+
+  .launch-panel .stake-input > span{
+    font-size:16px!important;
+  }
+
+  .launch-panel .stake-input input{
+    font-size:19px!important;
+
+    padding-left:5px!important;
+  }
+
+
+  /* 25 / 50 / 75 / MAX */
+
+  .launch-panel .quick-bets{
+    gap:5px!important;
+  }
+
+  .launch-panel .quick-bets button{
+    height:27px!important;
+    min-height:27px!important;
+
+    border-radius:7px!important;
+
+    font-size:6.5px!important;
+  }
+
+
+  /* Auto cash out / Stop loss */
+
+  .launch-panel .select-grid{
+    gap:7px!important;
+
+    margin-top:1px!important;
+  }
+
+  .launch-panel .select-grid label{
+    gap:3px!important;
+  }
+
+  .launch-panel .select-grid label > span{
+    font-size:6.5px!important;
+  }
+
+  .launch-panel .select-grid select{
+    height:34px!important;
+    min-height:34px!important;
+
+    border-radius:8px!important;
+
+    font-size:9px!important;
+  }
+
+
+  /* ==========================================
+     FLIGHT PLAN — compact, still readable
+  ========================================== */
+
+  .launch-panel > .risk-deck{
+    margin-top:2px!important;
+
+    padding-top:8px!important;
+  }
+
+  .risk-head span,
+  .risk-head b{
+    font-size:6.5px!important;
+  }
+
+  .risk-metrics{
+    margin-top:4px!important;
+  }
+
+  .risk-metrics > div{
+    padding:4px 5px!important;
+  }
+
+  .risk-metrics small{
+    font-size:5px!important;
+  }
+
+  .risk-metrics b{
+    margin-top:2px!important;
+
+    font-size:9px!important;
+  }
+
+  .risk-track{
+    margin-top:4px!important;
+
+    height:3px!important;
+  }
+
+
+  /* ==========================================
+     PRIMARY / SECONDARY ACTION
+  ========================================== */
+
+  .launch-panel > .start-button{
+    height:58px!important;
+    min-height:58px!important;
+
+    margin-top:4px!important;
+
+    border-radius:11px!important;
+  }
+
+  .launch-panel > .start-button b{
+    font-size:14px!important;
+  }
+
+  .launch-panel > .start-button small{
+    margin-top:2px!important;
+
+    font-size:7.5px!important;
+  }
+
+  #mfAutoLoopBtn{
+    height:42px!important;
+    min-height:42px!important;
+    max-height:42px!important;
+
+    border-radius:10px!important;
+  }
+
+  #mfAutoLoopBtn b{
+    font-size:9px!important;
+  }
+
+  #mfAutoLoopBtn small{
+    font-size:6px!important;
+  }
+
+
+  /* ==========================================
+     STAGE NUMBERS
+  ========================================== */
+
+  .position-strip > div:nth-child(3) b{
+    font-size:7.5px!important;
+
+    white-space:nowrap!important;
+
+    letter-spacing:-.015em!important;
+  }
+
+  .position-strip b{
+    font-variant-numeric:
+      tabular-nums!important;
+  }
+
+
+  /* ==========================================
+     LOWER PANELS — tiny polish
+  ========================================== */
+
+  .token-panel,
+  .stats-panel{
+    padding:11px!important;
+  }
+
+  .token-head{
+    margin-top:7px!important;
+  }
+
+  .quality-line{
+    margin-top:7px!important;
+  }
+
+  .telemetry{
+    margin-top:7px!important;
+    padding-top:7px!important;
+  }
+
+  .stats-grid{
+    margin-top:7px!important;
+  }
+
+}
+
+
+/* Smaller iPhones */
+
+@media
+  (max-width:380px)
+  and (orientation:portrait){
+
+  .story-hero{
+    width:260px!important;
+  }
+
+}
+
+/* === V57 FINAL MOBILE POLISH END === */
+
+/* === V58 FULL MODULE INFORMATION START === */
+
+/*
+  Reveal all useful information inside mobile modules.
+  No game logic / PAPER logic / selector logic changed.
+*/
+
+@media
+  (max-width:620px)
+  and (orientation:portrait){
+
+  /* =====================================================
+     GENERAL MODULE BEHAVIOUR
+  ===================================================== */
+
+  .launch-panel,
+  .token-panel,
+  .stats-panel,
+  .history-panel{
+    height:auto!important;
+    min-height:0!important;
+    max-height:none!important;
+
+    overflow:visible!important;
+  }
+
+  .launch-panel *,
+  .token-panel *,
+  .stats-panel *,
+  .history-panel *{
+    max-height:none;
+  }
+
+
+  /* =====================================================
+     LAUNCH CONTROL
+  ===================================================== */
+
+  /*
+    Restore explanation under balance.
+  */
+  .launch-panel > .lead{
+    display:block!important;
+
+    margin:
+      2px
+      0
+      3px!important;
+
+    font-size:7px!important;
+    line-height:1.35!important;
+
+    color:#7f8c97!important;
+
+    white-space:normal!important;
+    overflow:visible!important;
+    text-overflow:clip!important;
+  }
+
+
+  /*
+    Do not truncate stream status.
+  */
+  .stream-utility span{
+    overflow:visible!important;
+  }
+
+  .stream-utility b,
+  .stream-utility small{
+    white-space:normal!important;
+
+    overflow:visible!important;
+    text-overflow:clip!important;
+
+    line-height:1.2!important;
+  }
+
+
+  /* =====================================================
+     FLIGHT PLAN
+  ===================================================== */
+
+  /*
+    Restore full risk explanation.
+  */
+  #riskCopy{
+    display:block!important;
+
+    margin:
+      6px
+      1px
+      0!important;
+
+    font-size:6.5px!important;
+    line-height:1.4!important;
+
+    color:#71808b!important;
+
+    white-space:normal!important;
+
+    overflow:visible!important;
+    text-overflow:clip!important;
+  }
+
+  .risk-metrics{
+    overflow:visible!important;
+  }
+
+  .risk-metrics > div{
+    overflow:visible!important;
+  }
+
+  .risk-metrics small,
+  .risk-metrics b{
+    white-space:normal!important;
+
+    overflow:visible!important;
+    text-overflow:clip!important;
+  }
+
+
+  /* =====================================================
+     SELECTED LAUNCH — SHOW EVERYTHING
+  ===================================================== */
+
+  /*
+    V55/V56 hid these when idle/searching.
+    Restore all four metrics.
+  */
+  .game[data-state="idle"]
+  .token-panel
+  .token-metrics,
+
+  .game[data-state="searching"]
+  .token-panel
+  .token-metrics,
+
+  .token-panel
+  .token-metrics{
+    display:grid!important;
+
+    grid-template-columns:
+      repeat(2,minmax(0,1fr))!important;
+
+    width:100%!important;
+
+    margin-top:9px!important;
+
+    overflow:visible!important;
+  }
+
+
+  /*
+    Restore Selector and Decision telemetry too.
+  */
+  .game[data-state="idle"]
+  .token-panel
+  .telemetry span,
+
+  .game[data-state="searching"]
+  .token-panel
+  .telemetry span,
+
+  .token-panel
+  .telemetry span{
+    display:block!important;
+  }
+
+
+  .token-panel .telemetry{
+    display:grid!important;
+
+    grid-template-columns:
+      repeat(2,minmax(0,1fr))!important;
+
+    gap:
+      7px
+      10px!important;
+
+    width:100%!important;
+
+    margin-top:9px!important;
+    padding-top:9px!important;
+
+    overflow:visible!important;
+  }
+
+  .token-panel .telemetry span:last-child{
+    grid-column:auto!important;
+  }
+
+
+  /*
+    Never clamp token name/mint/reason.
+  */
+  .token-head{
+    align-items:flex-start!important;
+  }
+
+  .token-head > div:last-child{
+    overflow:visible!important;
+  }
+
+  .token-head b,
+  .token-head small{
+    white-space:normal!important;
+
+    overflow:visible!important;
+    text-overflow:clip!important;
+
+    max-width:none!important;
+  }
+
+  .token-head small{
+    display:block!important;
+
+    -webkit-line-clamp:unset!important;
+    -webkit-box-orient:initial!important;
+
+    line-height:1.35!important;
+  }
+
+  .quality-line{
+    align-items:flex-start!important;
+
+    white-space:normal!important;
+
+    overflow:visible!important;
+    text-overflow:clip!important;
+
+    line-height:1.35!important;
+  }
+
+  .quality-line span{
+    white-space:normal!important;
+
+    overflow:visible!important;
+    text-overflow:clip!important;
+  }
+
+
+  /*
+    Metrics values can wrap instead of disappearing.
+  */
+  .token-metrics > div{
+    min-width:0!important;
+
+    overflow:visible!important;
+  }
+
+  .token-metrics small,
+  .token-metrics b{
+    white-space:normal!important;
+
+    overflow:visible!important;
+    text-overflow:clip!important;
+  }
+
+
+  /* =====================================================
+     SESSION — SHOW FULL INFORMATION
+  ===================================================== */
+
+  .stats-panel{
+    overflow:visible!important;
+  }
+
+  .stats-grid{
+    overflow:visible!important;
+  }
+
+  .stats-grid > div{
+    overflow:visible!important;
+  }
+
+  .stats-grid small,
+  .stats-grid b{
+    white-space:normal!important;
+
+    overflow:visible!important;
+    text-overflow:clip!important;
+  }
+
+
+  /*
+    Restore server safety explanation.
+  */
+  .stats-panel .safety-note{
+    display:flex!important;
+
+    width:100%!important;
+
+    margin-top:8px!important;
+
+    padding:
+      8px
+      9px!important;
+
+    font-size:6.5px!important;
+    line-height:1.4!important;
+
+    white-space:normal!important;
+
+    overflow:visible!important;
+    text-overflow:clip!important;
+  }
+
+  .stats-panel .safety-note span{
+    white-space:normal!important;
+
+    overflow:visible!important;
+    text-overflow:clip!important;
+  }
+
+
+  /* =====================================================
+     RECENT ROUNDS — SHOW FULL LIST
+  ===================================================== */
+
+  .history-panel{
+    overflow:visible!important;
+  }
+
+
+  /*
+    Restore header underneath Recent Rounds.
+  */
+  .history-toolbar{
+    display:flex!important;
+
+    width:100%!important;
+
+    padding:
+      7px
+      11px!important;
+
+    font-size:6.5px!important;
+
+    overflow:visible!important;
+  }
+
+
+  /*
+    No internal 220px window.
+    Page itself scrolls, history expands naturally.
+  */
+  .history{
+    width:100%!important;
+
+    height:auto!important;
+    min-height:0!important;
+    max-height:none!important;
+
+    overflow:visible!important;
+  }
+
+
+  .history-row{
+    width:100%!important;
+
+    min-height:0!important;
+
+    padding:
+      8px
+      10px!important;
+
+    overflow:visible!important;
+  }
+
+
+  /*
+    Full token/result information.
+  */
+  .history-row > div:first-child{
+    overflow:visible!important;
+  }
+
+  .history-row b,
+  .history-row small{
+    white-space:normal!important;
+
+    overflow:visible!important;
+    text-overflow:clip!important;
+
+    max-width:none!important;
+  }
+
+  .history-row b{
+    line-height:1.25!important;
+  }
+
+  .history-row small{
+    line-height:1.3!important;
+  }
+
+  .history-mult{
+    white-space:nowrap!important;
+    overflow:visible!important;
+  }
+
+
+  /* =====================================================
+     EMPTY VALUES
+  ===================================================== */
+
+  /*
+    Keep placeholders visible.
+    This makes the entire module structure readable
+    even before START.
+  */
+  .token-metrics b:empty::after,
+  .telemetry b:empty::after,
+  .stats-grid b:empty::after{
+    content:"—";
+  }
+
+}
+
+/* === V58 FULL MODULE INFORMATION END === */
+
+/* === V59 FORCE ALL MODULE DATA START === */
+
+/*
+  Final override for legacy V55/V56 hiding rules.
+  SHOW ALL information contained in mobile modules.
+  No game/PAPER/selector logic changes.
+*/
+
+@media
+  (max-width:620px)
+  and (orientation:portrait){
+
+  /* =====================================================
+     SELECTED LAUNCH — FORCE ALL 8 VALUES
+  ===================================================== */
+
+  /*
+    These selectors intentionally match/exceed the
+    specificity of old nth-child hiding rules.
+  */
+
+  .game[data-state="idle"]
+  .token-panel
+  .telemetry
+  span:nth-child(3),
+
+  .game[data-state="idle"]
+  .token-panel
+  .telemetry
+  span:nth-child(4),
+
+  .game[data-state="searching"]
+  .token-panel
+  .telemetry
+  span:nth-child(3),
+
+  .game[data-state="searching"]
+  .token-panel
+  .telemetry
+  span:nth-child(4),
+
+  .game[data-state="live"]
+  .token-panel
+  .telemetry
+  span:nth-child(3),
+
+  .game[data-state="live"]
+  .token-panel
+  .telemetry
+  span:nth-child(4),
+
+  .game[data-state="settling"]
+  .token-panel
+  .telemetry
+  span:nth-child(3),
+
+  .game[data-state="settling"]
+  .token-panel
+  .telemetry
+  span:nth-child(4),
+
+  .game[data-state="complete"]
+  .token-panel
+  .telemetry
+  span:nth-child(3),
+
+  .game[data-state="complete"]
+  .token-panel
+  .telemetry
+  span:nth-child(4){
+    display:block!important;
+
+    visibility:visible!important;
+    opacity:1!important;
+
+    grid-column:auto!important;
+    grid-row:auto!important;
+
+    width:auto!important;
+    height:auto!important;
+
+    min-width:0!important;
+    min-height:0!important;
+
+    max-width:none!important;
+    max-height:none!important;
+
+    overflow:visible!important;
+  }
+
+
+  /* Actual Selected Launch telemetry layout */
+
+  .token-panel .telemetry{
+    display:grid!important;
+
+    grid-template-columns:
+      repeat(2,minmax(0,1fr))!important;
+
+    grid-template-rows:
+      auto
+      auto!important;
+
+    gap:
+      7px
+      12px!important;
+
+    width:100%!important;
+
+    height:auto!important;
+    min-height:0!important;
+    max-height:none!important;
+
+    overflow:visible!important;
+  }
+
+
+  /*
+    Explicit positions:
+      FEED      VELOCITY
+      SELECTOR  DECISION
+  */
+
+  .token-panel .telemetry span:nth-child(1){
+    grid-column:1!important;
+    grid-row:1!important;
+  }
+
+  .token-panel .telemetry span:nth-child(2){
+    grid-column:2!important;
+    grid-row:1!important;
+  }
+
+  .token-panel .telemetry span:nth-child(3){
+    grid-column:1!important;
+    grid-row:2!important;
+  }
+
+  .token-panel .telemetry span:nth-child(4){
+    grid-column:2!important;
+    grid-row:2!important;
+  }
+
+
+  .token-panel .telemetry span{
+    white-space:normal!important;
+
+    overflow:visible!important;
+    text-overflow:clip!important;
+
+    font-size:7px!important;
+    line-height:1.3!important;
+  }
+
+  .token-panel .telemetry b{
+    display:inline!important;
+
+    margin-left:5px!important;
+
+    white-space:normal!important;
+
+    overflow:visible!important;
+    text-overflow:clip!important;
+  }
+
+
+  /* =====================================================
+     TOKEN METRICS — NEVER HIDE THEM
+  ===================================================== */
+
+  .game[data-state="idle"]
+  .token-panel
+  .token-metrics,
+
+  .game[data-state="searching"]
+  .token-panel
+  .token-metrics,
+
+  .game[data-state="live"]
+  .token-panel
+  .token-metrics,
+
+  .game[data-state="settling"]
+  .token-panel
+  .token-metrics,
+
+  .game[data-state="complete"]
+  .token-panel
+  .token-metrics{
+    display:grid!important;
+
+    visibility:visible!important;
+    opacity:1!important;
+
+    grid-template-columns:
+      repeat(2,minmax(0,1fr))!important;
+
+    height:auto!important;
+    min-height:0!important;
+    max-height:none!important;
+  }
+
+
+  /* =====================================================
+     NO CLIPPING IN MODULE CONTENT
+  ===================================================== */
+
+  .token-panel,
+  .stats-panel,
+  .history-panel,
+  .risk-deck{
+    max-height:none!important;
+    overflow:visible!important;
+  }
+
+  .token-panel b,
+  .token-panel small,
+  .token-panel span,
+
+  .stats-panel b,
+  .stats-panel small,
+  .stats-panel span,
+
+  .history-panel b,
+  .history-panel small,
+  .history-panel span{
+    text-overflow:clip!important;
+  }
+
+
+  /* History remains fully expanded */
+
+  .history{
+    max-height:none!important;
+    height:auto!important;
+
+    overflow:visible!important;
+  }
+
+}
+
+/* === V59 FORCE ALL MODULE DATA END === */
+
+/* === V60 READY + STICKY ACTIONS START === */
+
+/*
+  Mobile:
+  1. Full READY/status message.
+  2. Persistent bottom action dock.
+  3. START + AUTO before flight.
+  4. CASH OUT + AUTO while LIVE.
+  No PAPER / trading / settlement logic changes.
+*/
+
+@media
+  (max-width:620px)
+  and (orientation:portrait){
+
+  /* =====================================================
+     FULL READY STATUS
+  ===================================================== */
+
+  .stage-card{
+    grid-template-rows:
+      auto
+      minmax(0,1fr)
+      48px!important;
+  }
+
+  .stage-head{
+    height:auto!important;
+    min-height:52px!important;
+    max-height:none!important;
+
+    padding:
+      7px
+      9px!important;
+
+    align-items:center!important;
+  }
+
+  .round-state{
+    min-width:0!important;
+
+    display:grid!important;
+
+    grid-template-columns:
+      auto
+      minmax(0,1fr)!important;
+
+    grid-template-rows:
+      auto
+      auto!important;
+
+    column-gap:6px!important;
+    row-gap:2px!important;
+
+    align-items:center!important;
+  }
+
+  .round-state .state-dot{
+    grid-column:1!important;
+    grid-row:1 / 3!important;
+  }
+
+  .round-state > b{
+    grid-column:2!important;
+    grid-row:1!important;
+  }
+
+  /*
+    Full message instead of:
+    "Set a paper stake and launch whe..."
+  */
+  .round-state > small,
+  #stateMessage{
+    grid-column:2!important;
+    grid-row:2!important;
+
+    width:auto!important;
+    max-width:
+      min(
+        45vw,
+        220px
+      )!important;
+
+    height:auto!important;
+    max-height:none!important;
+
+    display:block!important;
+
+    white-space:normal!important;
+
+    overflow:visible!important;
+    text-overflow:clip!important;
+
+    font-size:6.2px!important;
+    line-height:1.2!important;
+
+    letter-spacing:.035em!important;
+
+    color:#75828d!important;
+  }
+
+
+  /* FEED / TIME keep their own space */
+
+  .round-meta{
+    flex:none!important;
+
+    gap:7px!important;
+
+    align-self:center!important;
+  }
+
+  .round-meta > span{
+    min-width:29px!important;
+  }
+
+  .round-meta small{
+    font-size:5px!important;
+    letter-spacing:.055em!important;
+  }
+
+  .round-meta b{
+    margin-top:1px!important;
+
+    font-size:8px!important;
+  }
+
+
+  /* =====================================================
+     PAGE SPACE FOR FIXED ACTIONS
+  ===================================================== */
+
+  /*
+    Prevent final history row from disappearing
+    behind the fixed buttons.
+  */
+  .layout{
+    padding-bottom:
+      calc(
+        82px +
+        env(safe-area-inset-bottom)
+      )!important;
+  }
+
+
+  /* =====================================================
+     FIXED PRIMARY ACTION
+     START while idle/searching.
+     CASH OUT while live/settling.
+  ===================================================== */
+
+  .launch-panel > .start-button,
+  .launch-panel > .cash-button{
+    position:fixed!important;
+
+    left:
+      max(
+        8px,
+        env(safe-area-inset-left)
+      )!important;
+
+    right:auto!important;
+
+    bottom:
+      calc(
+        8px +
+        env(safe-area-inset-bottom)
+      )!important;
+
+    width:
+      calc(
+        62% - 12px
+      )!important;
+
+    height:58px!important;
+    min-height:58px!important;
+    max-height:58px!important;
+
+    margin:0!important;
+
+    z-index:2147482000!important;
+
+    border-radius:13px!important;
+
+    transform:none!important;
+
+    touch-action:manipulation!important;
+  }
+
+
+  /* START */
+
+  .launch-panel > .start-button b{
+    font-size:13px!important;
+    letter-spacing:.055em!important;
+  }
+
+  .launch-panel > .start-button small{
+    margin-top:2px!important;
+
+    font-size:6.5px!important;
+
+    white-space:nowrap!important;
+
+    overflow:hidden!important;
+    text-overflow:ellipsis!important;
+  }
+
+
+  /* CASH OUT gets same geometry */
+
+  .launch-panel > .cash-button b{
+    font-size:13px!important;
+  }
+
+  .launch-panel > .cash-button small{
+    margin-top:2px!important;
+
+    font-size:6.5px!important;
+
+    white-space:nowrap!important;
+
+    overflow:hidden!important;
+    text-overflow:ellipsis!important;
+  }
+
+
+  /* =====================================================
+     FIXED AUTO NEXT TO PRIMARY ACTION
+  ===================================================== */
+
+  #mfAutoLoopBtn{
+    position:fixed!important;
+
+    right:
+      max(
+        8px,
+        env(safe-area-inset-right)
+      )!important;
+
+    left:auto!important;
+
+    bottom:
+      calc(
+        8px +
+        env(safe-area-inset-bottom)
+      )!important;
+
+    width:
+      calc(
+        38% - 12px
+      )!important;
+
+    height:58px!important;
+    min-height:58px!important;
+    max-height:58px!important;
+
+    flex:none!important;
+
+    margin:0!important;
+
+    padding:
+      0
+      8px!important;
+
+    z-index:2147482001!important;
+
+    border:
+      1px solid
+      rgba(127,151,162,.28)!important;
+
+    border-radius:13px!important;
+
+    background:
+      linear-gradient(
+        180deg,
+        rgba(15,25,30,.97),
+        rgba(6,12,16,.985)
+      )!important;
+
+    box-shadow:
+      0
+      10px
+      32px
+      rgba(0,0,0,.48)!important;
+
+    backdrop-filter:
+      blur(18px)!important;
+
+    -webkit-backdrop-filter:
+      blur(18px)!important;
+
+    touch-action:manipulation!important;
+  }
+
+  #mfAutoLoopBtn > span{
+    font-size:15px!important;
+  }
+
+  #mfAutoLoopBtn b{
+    font-size:10px!important;
+
+    letter-spacing:.06em!important;
+  }
+
+  #mfAutoLoopBtn small{
+    margin-top:2px!important;
+
+    font-size:5.8px!important;
+
+    white-space:nowrap!important;
+  }
+
+
+  /* =====================================================
+     STATE BEHAVIOUR
+  ===================================================== */
+
+  /*
+    Before launch:
+    START | AUTO
+  */
+
+  .game[data-state="idle"]
+  .launch-panel > .start-button,
+
+  .game[data-state="searching"]
+  .launch-panel > .start-button{
+    display:flex!important;
+  }
+
+  .game[data-state="idle"]
+  .launch-panel > .cash-button,
+
+  .game[data-state="searching"]
+  .launch-panel > .cash-button{
+    display:none!important;
+  }
+
+
+  /*
+    During flight:
+    CASH OUT | AUTO
+
+    This preserves existing game behaviour instead of
+    showing an unusable START button during a live round.
+  */
+
+  .game[data-state="live"]
+  .launch-panel > .start-button,
+
+  .game[data-state="settling"]
+  .launch-panel > .start-button{
+    display:none!important;
+  }
+
+  .game[data-state="live"]
+  .launch-panel > .cash-button,
+
+  .game[data-state="settling"]
+  .launch-panel > .cash-button{
+    display:flex!important;
+  }
+
+
+  /* =====================================================
+     FIXED BUTTON VISIBILITY
+  ===================================================== */
+
+  .start-button,
+  .cash-button,
+  #mfAutoLoopBtn{
+    -webkit-transform:
+      translateZ(0)!important;
+
+    backface-visibility:hidden!important;
+  }
+
+
+  /* =====================================================
+     RESULT SCREEN ABOVE THE DOCK
+  ===================================================== */
+
+  #result{
+    z-index:2147483000!important;
+  }
+
+}
+
+
+/* Very narrow iPhones */
+
+@media
+  (max-width:380px)
+  and (orientation:portrait){
+
+  .launch-panel > .start-button,
+  .launch-panel > .cash-button{
+    width:
+      calc(
+        60% - 12px
+      )!important;
+  }
+
+  #mfAutoLoopBtn{
+    width:
+      calc(
+        40% - 12px
+      )!important;
+  }
+
+  .start-button small,
+  .cash-button small{
+    font-size:5.8px!important;
+  }
+
+}
+
+/* === V60 READY + STICKY ACTIONS END === */
+
+/* === V61 REAL STICKY ACTION DOCK START === */
+
+/*
+  Real persistent action dock.
+  The actual START / CASH OUT / AUTO elements live here.
+*/
+
+@media
+  (max-width:620px)
+  and (orientation:portrait){
+
+  /* room so bottom content is never covered */
+  .layout{
+    padding-bottom:
+      calc(
+        86px +
+        env(safe-area-inset-bottom)
+      )!important;
+  }
+
+
+  /* ======================================================
+     FIXED DOCK
+  ====================================================== */
+
+  #mfStickyActions{
+    position:fixed!important;
+
+    left:
+      max(
+        8px,
+        env(safe-area-inset-left)
+      )!important;
+
+    right:
+      max(
+        8px,
+        env(safe-area-inset-right)
+      )!important;
+
+    bottom:
+      calc(
+        8px +
+        env(safe-area-inset-bottom)
+      )!important;
+
+    z-index:2147482000!important;
+
+    width:auto!important;
+
+    display:grid!important;
+
+    /*
+       START = larger left button
+       AUTO  = smaller right button
+    */
+    grid-template-columns:
+      minmax(0,1.72fr)
+      minmax(118px,.90fr)!important;
+
+    grid-template-rows:
+      58px!important;
+
+    gap:8px!important;
+
+    margin:0!important;
+    padding:0!important;
+
+    pointer-events:none!important;
+  }
+
+
+  #mfStickyActions > button{
+    pointer-events:auto!important;
+  }
+
+
+  /* ======================================================
+     RESET OLD FIXED RULES
+  ====================================================== */
+
+  #mfStickyActions .start-button,
+  #mfStickyActions .cash-button,
+  #mfStickyActions #mfAutoLoopBtn{
+
+    position:relative!important;
+
+    left:auto!important;
+    right:auto!important;
+    top:auto!important;
+    bottom:auto!important;
+
+    width:100%!important;
+
+    height:58px!important;
+    min-height:58px!important;
+    max-height:58px!important;
+
+    margin:0!important;
+
+    transform:none!important;
+
+    flex:none!important;
+
+    align-self:stretch!important;
+
+    border-radius:13px!important;
+
+    overflow:hidden!important;
+
+    -webkit-transform:
+      translateZ(0)!important;
+
+    backface-visibility:hidden!important;
+
+    touch-action:manipulation!important;
+  }
+
+
+  /* ======================================================
+     LEFT BUTTON
+  ====================================================== */
+
+  #mfStickyActions .start-button{
+    grid-column:1!important;
+    grid-row:1!important;
+
+    box-shadow:
+      0 10px 28px
+      rgba(65,220,142,.20),
+      0 8px 28px
+      rgba(0,0,0,.42)!important;
+  }
+
+  #mfStickyActions .cash-button{
+    grid-column:1!important;
+    grid-row:1!important;
+
+    box-shadow:
+      0 10px 28px
+      rgba(248,77,92,.18),
+      0 8px 28px
+      rgba(0,0,0,.42)!important;
+  }
+
+
+  #mfStickyActions .start-button b,
+  #mfStickyActions .cash-button b{
+    font-size:13px!important;
+
+    line-height:1!important;
+
+    letter-spacing:.055em!important;
+  }
+
+
+  #mfStickyActions .start-button small,
+  #mfStickyActions .cash-button small{
+    display:block!important;
+
+    margin-top:3px!important;
+
+    max-width:100%!important;
+
+    font-size:6.5px!important;
+    line-height:1.1!important;
+
+    white-space:nowrap!important;
+
+    overflow:hidden!important;
+    text-overflow:ellipsis!important;
+  }
+
+
+  /* ======================================================
+     AUTO — RIGHT BESIDE START
+  ====================================================== */
+
+  #mfStickyActions #mfAutoLoopBtn{
+    grid-column:2!important;
+    grid-row:1!important;
+
+    display:flex!important;
+
+    align-items:center!important;
+    justify-content:center!important;
+
+    gap:7px!important;
+
+    padding:
+      0
+      8px!important;
+
+    border:
+      1px solid
+      rgba(127,151,162,.28)!important;
+
+    background:
+      linear-gradient(
+        180deg,
+        rgba(15,25,30,.98),
+        rgba(6,12,16,.99)
+      )!important;
+
+    color:#dce5ea!important;
+
+    box-shadow:
+      0 8px 28px
+      rgba(0,0,0,.44)!important;
+
+    backdrop-filter:
+      blur(18px)!important;
+
+    -webkit-backdrop-filter:
+      blur(18px)!important;
+  }
+
+
+  #mfStickyActions #mfAutoLoopBtn > span{
+    flex:none!important;
+
+    font-size:15px!important;
+    line-height:1!important;
+
+    color:#83939d!important;
+  }
+
+
+  #mfStickyActions #mfAutoLoopBtn > div{
+    min-width:0!important;
+  }
+
+
+  #mfStickyActions #mfAutoLoopBtn b{
+    display:block!important;
+
+    font-size:10px!important;
+    line-height:1!important;
+
+    letter-spacing:.065em!important;
+
+    white-space:nowrap!important;
+  }
+
+
+  #mfStickyActions #mfAutoLoopBtn small{
+    display:block!important;
+
+    margin-top:3px!important;
+
+    font-size:5.7px!important;
+    line-height:1!important;
+
+    color:#71808a!important;
+
+    white-space:nowrap!important;
+
+    overflow:hidden!important;
+    text-overflow:ellipsis!important;
+  }
+
+
+  #mfStickyActions
+  #mfAutoLoopBtn.is-active{
+    border-color:
+      rgba(100,236,169,.42)!important;
+
+    background:
+      linear-gradient(
+        180deg,
+        rgba(58,151,105,.25),
+        rgba(20,64,47,.22)
+      )!important;
+
+    color:#effff5!important;
+  }
+
+
+  #mfStickyActions
+  #mfAutoLoopBtn.is-active > span{
+    color:var(--green)!important;
+  }
+
+
+  /* ======================================================
+     GAME STATES
+  ====================================================== */
+
+  /*
+    IDLE / SEARCHING:
+          START | AUTO
+  */
+
+  .game[data-state="idle"]
+  ~ #mfStickyActions .start-button,
+
+  .game[data-state="searching"]
+  ~ #mfStickyActions .start-button,
+
+  .game[data-state="complete"]
+  ~ #mfStickyActions .start-button{
+    display:flex!important;
+  }
+
+
+  .game[data-state="idle"]
+  ~ #mfStickyActions .cash-button,
+
+  .game[data-state="searching"]
+  ~ #mfStickyActions .cash-button,
+
+  .game[data-state="complete"]
+  ~ #mfStickyActions .cash-button{
+    display:none!important;
+  }
+
+
+  /*
+    LIVE / SETTLING:
+          CASH OUT | AUTO
+  */
+
+  .game[data-state="live"]
+  ~ #mfStickyActions .start-button,
+
+  .game[data-state="settling"]
+  ~ #mfStickyActions .start-button{
+    display:none!important;
+  }
+
+
+  .game[data-state="live"]
+  ~ #mfStickyActions .cash-button,
+
+  .game[data-state="settling"]
+  ~ #mfStickyActions .cash-button{
+    display:flex!important;
+  }
+
+
+  /* result overlay stays over dock */
+  #result{
+    z-index:2147483000!important;
+  }
+
+}
+
+
+/* Narrow phones */
+
+@media
+  (max-width:380px)
+  and (orientation:portrait){
+
+  #mfStickyActions{
+    grid-template-columns:
+      minmax(0,1.62fr)
+      minmax(108px,.88fr)!important;
+
+    gap:6px!important;
+  }
+
+  #mfStickyActions #mfAutoLoopBtn{
+    padding:
+      0
+      6px!important;
+  }
+
+  #mfStickyActions #mfAutoLoopBtn small{
+    font-size:5.2px!important;
+  }
+
+}
+
+/* === V61 REAL STICKY ACTION DOCK END === */
+
+/* === V62 EQUAL ACTION BUTTONS START === */
+
+/*
+  Make START/CASH OUT and AUTO
+  equal width + equal height in the sticky dock.
+  Visual only.
+*/
+
+@media
+  (max-width:620px)
+  and (orientation:portrait){
+
+  #mfStickyActions{
+    grid-template-columns:
+      repeat(2,minmax(0,1fr))!important;
+
+    grid-template-rows:
+      60px!important;
+
+    gap:8px!important;
+  }
+
+  #mfStickyActions .start-button,
+  #mfStickyActions .cash-button,
+  #mfStickyActions #mfAutoLoopBtn{
+    width:100%!important;
+
+    height:60px!important;
+    min-height:60px!important;
+    max-height:60px!important;
+
+    border-radius:13px!important;
+  }
+
+  #mfStickyActions .start-button,
+  #mfStickyActions .cash-button{
+    justify-content:center!important;
+    text-align:left!important;
+  }
+
+  #mfStickyActions #mfAutoLoopBtn{
+    justify-content:center!important;
+    text-align:left!important;
+  }
+
+  #mfStickyActions .start-button > div,
+  #mfStickyActions .cash-button > div,
+  #mfStickyActions #mfAutoLoopBtn > div{
+    min-width:0!important;
+  }
+
+  #mfStickyActions .start-button b,
+  #mfStickyActions .cash-button b,
+  #mfStickyActions #mfAutoLoopBtn b{
+    font-size:12px!important;
+    line-height:1!important;
+    letter-spacing:.055em!important;
+  }
+
+  #mfStickyActions .start-button small,
+  #mfStickyActions .cash-button small,
+  #mfStickyActions #mfAutoLoopBtn small{
+    display:block!important;
+    margin-top:3px!important;
+
+    font-size:6.2px!important;
+    line-height:1.1!important;
+
+    white-space:nowrap!important;
+    overflow:hidden!important;
+    text-overflow:ellipsis!important;
+  }
+
+  #mfStickyActions #mfAutoLoopBtn > span{
+    font-size:15px!important;
+  }
+}
+
+@media
+  (max-width:380px)
+  and (orientation:portrait){
+
+  #mfStickyActions{
+    grid-template-columns:
+      repeat(2,minmax(0,1fr))!important;
+    gap:6px!important;
+  }
+
+  #mfStickyActions .start-button,
+  #mfStickyActions .cash-button,
+  #mfStickyActions #mfAutoLoopBtn{
+    height:58px!important;
+    min-height:58px!important;
+    max-height:58px!important;
+  }
+
+  #mfStickyActions .start-button small,
+  #mfStickyActions .cash-button small,
+  #mfStickyActions #mfAutoLoopBtn small{
+    font-size:5.8px!important;
+  }
+}
+
+/* === V62 EQUAL ACTION BUTTONS END === */
+
+/* === V67 RECENT ROUND TOKEN AVATARS START === */
+
+/*
+  IMPORTANT:
+  .history-token-avatar ALSO has .token-avatar.
+  Therefore it automatically uses the exact same
+  size, radius, border and mobile scaling as
+  SELECTED LAUNCH.
+*/
+
+.history-row{
+  grid-template-columns:
+    auto
+    minmax(0,1fr)
+    auto!important;
+
+  column-gap:
+    clamp(7px,.75vw,11px)!important;
+}
+
+
+.history-row > .history-main{
+  min-width:0!important;
+
+  overflow:hidden!important;
+}
+
+
+.history-token-avatar{
+  /*
+    Do NOT define width / height / radius here.
+    Those come directly from .token-avatar.
+  */
+
+  padding:0!important;
+
+  overflow:hidden!important;
+
+  align-self:center!important;
+
+  justify-self:start!important;
+
+  flex:none!important;
+}
+
+
+.history-token-avatar img{
+  display:block!important;
+
+  width:100%!important;
+  height:100%!important;
+
+  object-fit:cover!important;
+
+  border-radius:inherit!important;
+}
+
+
+/*
+  Existing selector used to assume the first div
+  contained the text. It is now the avatar.
+*/
+.history-row > div:first-child{
+  overflow:hidden!important;
+}
+
+
+@media
+  (max-width:620px)
+  and (orientation:portrait){
+
+  .history-row{
+    /*
+      Enough vertical room for the SAME avatar used
+      by Selected Launch, without making rows huge.
+    */
+    min-height:54px!important;
+
+    padding:
+      7px
+      10px!important;
+
+    gap:9px!important;
+  }
+
+
+  .history-row > .history-main b{
+    line-height:1.2!important;
+  }
+
+
+  .history-row > .history-main small{
+    margin-top:4px!important;
+
+    line-height:1.2!important;
+  }
+
+}
+
+/* === V67 RECENT ROUND TOKEN AVATARS END === */
+
+/* === V65 SAFE STICKY DOCK VIEWPORT START === */
+
+/*
+  Mobile dock safety.
+
+  START / AUTO stay permanently visible,
+  but scrolling content now ends ABOVE the dock.
+
+  No game logic changes.
+*/
+
+@media
+  (max-width:620px)
+  and (orientation:portrait){
+
+  :root{
+    --mf-action-dock-h:76px;
+    --mf-action-dock-gap:8px;
+  }
+
+
+  /* =====================================================
+     VIEWPORT
+  ===================================================== */
+
+  html{
+    width:100%!important;
+    height:100%!important;
+
+    overflow:hidden!important;
+  }
+
+  body{
+    position:static!important;
+    inset:auto!important;
+
+    width:100%!important;
+    height:100%!important;
+    min-height:0!important;
+
+    margin:0!important;
+
+    overflow:hidden!important;
+
+    overscroll-behavior:none!important;
+  }
+
+  .game{
+    width:100%!important;
+
+    height:100dvh!important;
+    min-height:0!important;
+    max-height:100dvh!important;
+
+    overflow:hidden!important;
+  }
+
+
+  /* =====================================================
+     SCROLLING AREA
+  ===================================================== */
+
+  .layout{
+    box-sizing:border-box!important;
+
+    width:100%!important;
+
+    /*
+      IMPORTANT:
+      scrolling viewport physically stops above
+      START / AUTO.
+    */
+    height:
+      calc(
+        100dvh -
+        var(--mf-action-dock-h) -
+        env(safe-area-inset-bottom)
+      )!important;
+
+    min-height:0!important;
+    max-height:none!important;
+
+    padding:
+      7px
+      7px
+      14px
+      7px!important;
+
+    overflow-x:hidden!important;
+    overflow-y:auto!important;
+
+    overscroll-behavior-y:contain!important;
+
+    -webkit-overflow-scrolling:touch!important;
+
+    scroll-padding-bottom:18px!important;
+
+    touch-action:pan-y!important;
+  }
+
+
+  /*
+    Old V60/V61 rules added a large bottom padding
+    because the dock overlaid the document.
+
+    V65 no longer needs it.
+  */
+  .layout{
+    padding-bottom:14px!important;
+  }
+
+
+  /* =====================================================
+     FIXED DOCK AREA
+  ===================================================== */
+
+  #mfStickyActions{
+    box-sizing:border-box!important;
+
+    position:fixed!important;
+
+    left:0!important;
+    right:0!important;
+
+    bottom:0!important;
+
+    width:100%!important;
+
+    height:
+      calc(
+        var(--mf-action-dock-h) +
+        env(safe-area-inset-bottom)
+      )!important;
+
+    display:grid!important;
+
+    grid-template-columns:
+      repeat(2,minmax(0,1fr))!important;
+
+    grid-template-rows:60px!important;
+
+    align-content:start!important;
+
+    gap:8px!important;
+
+    padding:
+      8px
+      max(8px,env(safe-area-inset-right))
+      env(safe-area-inset-bottom)
+      max(8px,env(safe-area-inset-left))!important;
+
+    margin:0!important;
+
+    z-index:2147482000!important;
+
+    /*
+      Solid dock surface instead of content being
+      visible behind the buttons.
+    */
+    background:
+      linear-gradient(
+        180deg,
+        rgba(3,7,10,.96) 0%,
+        rgba(2,5,8,.995) 36%,
+        #020508 100%
+      )!important;
+
+    border-top:
+      1px solid
+      rgba(160,181,200,.10)!important;
+
+    box-shadow:
+      0 -16px 34px
+      rgba(0,0,0,.30)!important;
+
+    backdrop-filter:none!important;
+    -webkit-backdrop-filter:none!important;
+
+    pointer-events:none!important;
+  }
+
+  #mfStickyActions::before{
+    content:"";
+
+    position:absolute;
+
+    left:0;
+    right:0;
+    top:-16px;
+
+    height:16px;
+
+    pointer-events:none;
+
+    background:
+      linear-gradient(
+        180deg,
+        rgba(2,5,8,0),
+        rgba(2,5,8,.80)
+      );
+  }
+
+  #mfStickyActions > button{
+    pointer-events:auto!important;
+  }
+
+
+  /* =====================================================
+     BUTTON GEOMETRY
+  ===================================================== */
+
+  #mfStickyActions .start-button,
+  #mfStickyActions .cash-button,
+  #mfStickyActions #mfAutoLoopBtn{
+    position:relative!important;
+
+    inset:auto!important;
+
+    width:100%!important;
+
+    height:60px!important;
+    min-height:60px!important;
+    max-height:60px!important;
+
+    margin:0!important;
+
+    border-radius:13px!important;
+
+    transform:none!important;
+
+    overflow:hidden!important;
+  }
+
+  #mfStickyActions .start-button,
+  #mfStickyActions .cash-button{
+    grid-column:1!important;
+    grid-row:1!important;
+  }
+
+  #mfStickyActions #mfAutoLoopBtn{
+    grid-column:2!important;
+    grid-row:1!important;
+  }
+
+
+  /* =====================================================
+     LAST MODULE
+  ===================================================== */
+
+  /*
+    Give Recent Rounds a little breathing room,
+    but no fake 80px spacer anymore.
+  */
+
+  .history-panel{
+    margin-bottom:4px!important;
+  }
+
+
+  /* =====================================================
+     iOS KEYBOARD
+  ===================================================== */
+
+  /*
+    When the stake input is focused, allow Safari to
+    handle the keyboard without moving the dock over it.
+  */
+
+  body:has(#betInputDisplay:focus)
+  #mfStickyActions,
+
+  body:has(#betInput:focus)
+  #mfStickyActions{
+    opacity:.18!important;
+    pointer-events:none!important;
+  }
+
+}
+
+
+/* =========================================================
+   SMALL IPHONES
+========================================================= */
+
+@media
+  (max-width:380px)
+  and (orientation:portrait){
+
+  :root{
+    --mf-action-dock-h:72px;
+  }
+
+  #mfStickyActions{
+    grid-template-rows:58px!important;
+
+    gap:6px!important;
+
+    padding-top:7px!important;
+  }
+
+  #mfStickyActions .start-button,
+  #mfStickyActions .cash-button,
+  #mfStickyActions #mfAutoLoopBtn{
+    height:58px!important;
+    min-height:58px!important;
+    max-height:58px!important;
+  }
+
+}
+
+/* === V65 SAFE STICKY DOCK VIEWPORT END === */
+
+
+
+
+
+
+
+/* === V73 PHOTOREAL TIME SCENES START === */
+
+/*
+  Photorealistic time-of-day backgrounds.
+  Existing V72 controller still chooses day / evening / night
+  using local device time and already-granted geolocation.
+*/
+
+.world{
+  --mf-scene-photo:none;
+
+  background-color:#02060d!important;
+  background-image:
+    linear-gradient(
+      180deg,
+      rgba(1,5,12,.10) 0%,
+      rgba(1,5,12,.07) 40%,
+      rgba(0,3,9,.28) 74%,
+      rgba(0,2,7,.48) 100%
+    ),
+    var(--mf-scene-photo)!important;
+
+  background-repeat:no-repeat!important;
+  background-size:cover!important;
+  background-position:center center!important;
+
+  isolation:isolate!important;
+
+  box-shadow:
+    inset 0 0 70px rgba(0,0,0,.15),
+    inset 0 -95px 120px rgba(0,2,8,.28)!important;
+}
+
+.world[data-mf-scene="day"]{
+  --mf-scene-photo:
+    url("/game-assets/time-scenes/scene-day.webp?v=73");
+
+  background-position:center 56%!important;
+}
+
+.world[data-mf-scene="evening"]{
+  --mf-scene-photo:
+    url("/game-assets/time-scenes/scene-evening.webp?v=73");
+
+  background-position:center 55%!important;
+
+  box-shadow:
+    inset 0 0 76px rgba(9,1,11,.15),
+    inset 0 -100px 125px rgba(5,1,8,.36)!important;
+}
+
+.world[data-mf-scene="night"]{
+  --mf-scene-photo:
+    url("/game-assets/time-scenes/scene-night.webp?v=73");
+
+  background-position:center 51%!important;
+
+  box-shadow:
+    inset 0 0 80px rgba(0,0,0,.10),
+    inset 0 -105px 135px rgba(0,2,8,.40),
+    inset 0 0 65px rgba(34,98,174,.035)!important;
+}
+
+#pepeRocketCanvasV36{
+  background:transparent!important;
+}
+
+.world .trace{
+  filter:
+    drop-shadow(0 1px 2px rgba(0,0,0,.58))
+    drop-shadow(0 0 3px rgba(0,0,0,.26));
+}
+
+.world .levels,
+.world .flight-position-hud{
+  text-shadow:
+    0 1px 2px rgba(0,0,0,.90),
+    0 0 5px rgba(0,0,0,.46);
+}
+
+.world .flight-position-hud{
+  background:rgba(3,8,14,.58)!important;
+  backdrop-filter:blur(4px);
+  -webkit-backdrop-filter:blur(4px);
+}
+
+@media
+  (max-width:620px)
+  and (orientation:portrait){
+
+  .world[data-mf-scene="day"]{
+    background-position:center 53%!important;
+  }
+
+  .world[data-mf-scene="evening"]{
+    background-position:center 54%!important;
+  }
+
+  .world[data-mf-scene="night"]{
+    background-position:center 50%!important;
+  }
+}
+
+/* === V73 PHOTOREAL TIME SCENES END === */
+
+/* === V78 CANONICAL MOBILE FLOW START === */
+
+@media
+  (max-width:620px)
+  and (orientation:portrait){
+
+  /* =====================================================
+     ROOT
+  ===================================================== */
+
+  html,
+  body{
+    width:100%!important;
+    height:100%!important;
+  }
+
+  body{
+    position:fixed!important;
+    inset:0!important;
+
+    overflow:hidden!important;
+  }
+
+  html body #game{
+    position:relative!important;
+
+    width:100%!important;
+    height:100dvh!important;
+
+    min-height:0!important;
+    max-height:none!important;
+
+    overflow:hidden!important;
+  }
+
+
+  /* =====================================================
+     ONE AND ONLY SCROLLER
+  ===================================================== */
+
+  html body #game > .layout{
+    position:relative!important;
+
+    display:flex!important;
+    flex-direction:column!important;
+
+    width:100%!important;
+    height:100%!important;
+
+    min-height:0!important;
+    max-height:none!important;
+
+    margin:0!important;
+
+    padding:
+      8px
+      8px
+      calc(
+        150px +
+        env(safe-area-inset-bottom,0px)
+      )!important;
+
+    gap:8px!important;
+
+    overflow-x:hidden!important;
+    overflow-y:auto!important;
+
+    -webkit-overflow-scrolling:touch!important;
+
+    grid-template-columns:none!important;
+    grid-template-rows:none!important;
+
+    align-items:stretch!important;
+    align-content:initial!important;
+  }
+
+
+  /* =====================================================
+     STAGE
+  ===================================================== */
+
+  html body #game > .layout > .stage-card{
+    position:relative!important;
+
+    flex:0 0 auto!important;
+
+    width:100%!important;
+
+    height:auto!important;
+    min-height:0!important;
+    max-height:none!important;
+
+    margin:0!important;
+
+    transform:none!important;
+  }
+
+
+  /* =====================================================
+     COCKPIT
+  ===================================================== */
+
+  html body #game > .layout > .cockpit{
+    position:relative!important;
+
+    display:flex!important;
+    flex-direction:column!important;
+
+    flex:0 0 auto!important;
+
+    width:100%!important;
+
+    height:auto!important;
+    min-height:0!important;
+    max-height:none!important;
+
+    margin:0!important;
+
+    gap:8px!important;
+
+    overflow:visible!important;
+
+    transform:none!important;
+    contain:none!important;
+
+    grid-template-columns:none!important;
+    grid-template-rows:none!important;
+
+    align-items:stretch!important;
+  }
+
+
+  /* =====================================================
+     MODULE BOXES
+  ===================================================== */
+
+  html body #game > .layout > .cockpit > .launch-panel,
+  html body #game > .layout > .cockpit > .token-panel,
+  html body #game > .layout > .cockpit > .stats-panel,
+  html body #game > .layout > .cockpit > .history-panel{
+
+    position:relative!important;
+
+    inset:auto!important;
+
+    top:auto!important;
+    right:auto!important;
+    bottom:auto!important;
+    left:auto!important;
+
+    flex:0 0 auto!important;
+
+    width:100%!important;
+
+    height:auto!important;
+    min-height:0!important;
+    max-height:none!important;
+
+    margin:0!important;
+
+    transform:none!important;
+    translate:none!important;
+
+    overflow:visible!important;
+
+    contain:none!important;
+    content-visibility:visible!important;
+
+    clip:auto!important;
+    clip-path:none!important;
+
+    z-index:auto!important;
+  }
+
+
+  /* =====================================================
+     LAUNCH CONTROL
+     THIS IS THE IMPORTANT FIX
+  ===================================================== */
+
+  html body #game .launch-panel{
+    display:flex!important;
+    flex-direction:column!important;
+    align-items:stretch!important;
+
+    height:auto!important;
+    min-height:0!important;
+    max-height:none!important;
+  }
+
+
+  /*
+    These elements are currently being displaced by
+    old mobile rules.
+
+    Force every structural child back into normal flow.
+  */
+
+  html body #game .launch-panel > .panel-title,
+  html body #game .launch-panel > .game-utility,
+  html body #game .launch-panel > .lead,
+  html body #game .launch-panel > .field-title,
+  html body #game .launch-panel > .stake-input,
+  html body #game .launch-panel > .quick-bets,
+  html body #game .launch-panel > .select-grid,
+  html body #game .launch-panel > .risk-deck,
+  html body #game .launch-panel > #selectorStatus{
+
+    position:relative!important;
+
+    inset:auto!important;
+
+    top:auto!important;
+    right:auto!important;
+    bottom:auto!important;
+    left:auto!important;
+
+    width:auto!important;
+
+    height:auto;
+    min-height:0!important;
+    max-height:none!important;
+
+    transform:none!important;
+    translate:none!important;
+    scale:none!important;
+
+    float:none!important;
+
+    z-index:auto!important;
+
+    clip:auto!important;
+    clip-path:none!important;
+  }
+
+
+  html body #game .launch-panel > .panel-title{
+    display:flex!important;
+    margin:0!important;
+  }
+
+  html body #game .launch-panel > .game-utility{
+    display:grid!important;
+
+    margin:
+      5px
+      0
+      0!important;
+  }
+
+  html body #game .launch-panel > .lead{
+    display:block!important;
+
+    margin:
+      8px
+      2px
+      9px!important;
+  }
+
+  html body #game .launch-panel > .field-title{
+    display:block!important;
+
+    margin:
+      0
+      0
+      4px!important;
+  }
+
+  html body #game .launch-panel > .stake-input{
+    display:flex!important;
+
+    width:100%!important;
+
+    overflow:hidden!important;
+  }
+
+  html body #game .launch-panel > .quick-bets{
+    display:grid!important;
+
+    width:100%!important;
+
+    margin-top:6px!important;
+  }
+
+  html body #game .launch-panel > .select-grid{
+    display:grid!important;
+
+    width:100%!important;
+
+    margin-top:8px!important;
+  }
+
+  html body #game .launch-panel > .risk-deck{
+    display:block!important;
+
+    width:100%!important;
+
+    margin-top:9px!important;
+
+    overflow:visible!important;
+  }
+
+
+  /* =====================================================
+     FLIGHT PLAN
+  ===================================================== */
+
+  html body #game .risk-deck,
+  html body #game .risk-head,
+  html body #game .risk-metrics,
+  html body #game .risk-track,
+  html body #game #riskCopy{
+
+    position:relative!important;
+
+    height:auto!important;
+    min-height:0!important;
+    max-height:none!important;
+
+    inset:auto!important;
+
+    transform:none!important;
+  }
+
+  html body #game #riskCopy{
+    display:block!important;
+
+    white-space:normal!important;
+
+    overflow:visible!important;
+
+    text-overflow:clip!important;
+
+    -webkit-line-clamp:unset!important;
+    line-clamp:unset!important;
+  }
+
+
+  /* =====================================================
+     SELECTED LAUNCH
+  ===================================================== */
+
+  html body #game .token-panel{
+    display:block!important;
+
+    height:auto!important;
+    min-height:0!important;
+    max-height:none!important;
+  }
+
+
+  html body #game .token-panel > .panel-row,
+  html body #game .token-panel > .token-head,
+  html body #game .token-panel > .quality-line,
+  html body #game .token-panel > .token-metrics,
+  html body #game .token-panel > .telemetry{
+
+    position:relative!important;
+
+    inset:auto!important;
+
+    top:auto!important;
+    right:auto!important;
+    bottom:auto!important;
+    left:auto!important;
+
+    transform:none!important;
+
+    height:auto!important;
+    min-height:0!important;
+    max-height:none!important;
+
+    z-index:auto!important;
+  }
+
+
+  html body #game .token-metrics{
+    display:grid!important;
+
+    grid-template-columns:
+      minmax(0,1fr)
+      minmax(0,1fr)!important;
+
+    overflow:hidden!important;
+  }
+
+
+  html body #game .token-head b,
+  html body #game .token-head small,
+  html body #game .quality-line span,
+  html body #game .telemetry span{
+
+    white-space:normal!important;
+
+    overflow:visible!important;
+
+    text-overflow:clip!important;
+
+    max-height:none!important;
+
+    -webkit-line-clamp:unset!important;
+    line-clamp:unset!important;
+  }
+
+
+  /* =====================================================
+     SESSION
+  ===================================================== */
+
+  html body #game .stats-panel{
+    display:block!important;
+
+    height:auto!important;
+    min-height:0!important;
+    max-height:none!important;
+  }
+
+  html body #game .stats-grid{
+    overflow:hidden!important;
+  }
+
+  html body #game .safety-note{
+    display:flex!important;
+
+    height:auto!important;
+    min-height:0!important;
+    max-height:none!important;
+
+    overflow:visible!important;
+  }
+
+  html body #game .safety-note span{
+    white-space:normal!important;
+
+    overflow:visible!important;
+
+    text-overflow:clip!important;
+
+    -webkit-line-clamp:unset!important;
+    line-clamp:unset!important;
+  }
+
+
+  /* =====================================================
+     RECENT ROUNDS
+  ===================================================== */
+
+  html body #game details.history-panel{
+    display:block!important;
+
+    height:auto!important;
+    min-height:0!important;
+    max-height:none!important;
+
+    overflow:visible!important;
+  }
+
+  html body #game details.history-panel > summary{
+    display:flex!important;
+  }
+
+  html body #game details.history-panel[open] > .history-toolbar,
+  html body #game details.history-panel[open] > .history{
+    display:block!important;
+  }
+
+  html body #game .history{
+    position:relative!important;
+
+    height:auto!important;
+    min-height:0!important;
+    max-height:none!important;
+
+    overflow:visible!important;
+
+    transform:none!important;
+  }
+
+  html body #game .history-row{
+    position:relative!important;
+
+    height:auto!important;
+    min-height:54px!important;
+    max-height:none!important;
+
+    overflow:visible!important;
+  }
+
+
+  /* =====================================================
+     BOTTOM DOCK
+  ===================================================== */
+
+  html body #game #mfStickyActions{
+    position:fixed!important;
+
+    z-index:100!important;
+  }
+
+}
+
+/* === V78 CANONICAL MOBILE FLOW END === */
+
+/* === V79 RESTORE GAME SCENE START === */
+
+@media
+  (max-width:620px)
+  and (orientation:portrait){
+
+  /*
+    V78 fixed module flow correctly.
+    Do NOT touch cockpit/modules here.
+
+    The flight world needs explicit intrinsic height because
+    most of its visual children are positioned layers.
+  */
+
+  html body #game .stage-card{
+    display:flex!important;
+    flex-direction:column!important;
+
+    height:auto!important;
+    min-height:0!important;
+    max-height:none!important;
+
+    overflow:hidden!important;
+  }
+
+
+  html body #game .stage-head{
+    flex:0 0 auto!important;
+  }
+
+
+  html body #game .world{
+    position:relative!important;
+
+    display:block!important;
+
+    flex:
+      0
+      0
+      clamp(
+        250px,
+        62vw,
+        330px
+      )!important;
+
+    width:100%!important;
+
+    height:
+      clamp(
+        250px,
+        62vw,
+        330px
+      )!important;
+
+    min-height:
+      clamp(
+        250px,
+        62vw,
+        330px
+      )!important;
+
+    max-height:none!important;
+
+    overflow:hidden!important;
+
+    visibility:visible!important;
+    opacity:1!important;
+
+    transform:none!important;
+    clip:auto!important;
+    clip-path:none!important;
+  }
+
+
+  /*
+    Keep every scene layer inside the restored viewport.
+  */
+
+  html body #game .world > canvas,
+  html body #game .world > svg,
+  html body #game .world .trace,
+  html body #game #pepeRocketCanvasV36{
+    visibility:visible!important;
+    opacity:1!important;
+  }
+
+
+  html body #game .position-strip{
+    position:relative!important;
+
+    flex:0 0 auto!important;
+
+    width:100%!important;
+
+    transform:none!important;
+  }
+
+}
+
+/* === V79 RESTORE GAME SCENE END === */
+
+/* === V80 RECENT ROUND RESULT GRADIENT START === */
+
+/*
+  Recent round result styling.
+
+  Left side stays nearly neutral around the token avatar.
+  Result color gradually increases toward the multiplier.
+*/
+
+#history .history-row,
+#history > *[data-mf-v80-row]{
+  position:relative!important;
+
+  overflow:hidden!important;
+
+  isolation:isolate!important;
+}
+
+
+/* LOSS */
+
+#history .mf-v80-loss{
+  background:
+    linear-gradient(
+      90deg,
+      rgba(255,72,91,0.00) 0%,
+      rgba(255,72,91,0.00) 30%,
+      rgba(255,72,91,0.025) 45%,
+      rgba(255,72,91,0.060) 58%,
+      rgba(255,72,91,0.110) 74%,
+      rgba(255,72,91,0.175) 100%
+    )!important;
+
+  box-shadow:
+    inset -1px 0 rgba(255,92,110,0.16)!important;
+}
+
+
+/* WIN */
+
+#history .mf-v80-win{
+  background:
+    linear-gradient(
+      90deg,
+      rgba(66,255,166,0.00) 0%,
+      rgba(66,255,166,0.00) 30%,
+      rgba(66,255,166,0.025) 45%,
+      rgba(66,255,166,0.060) 58%,
+      rgba(66,255,166,0.110) 74%,
+      rgba(66,255,166,0.175) 100%
+    )!important;
+
+  box-shadow:
+    inset -1px 0 rgba(80,255,176,0.14)!important;
+}
+
+
+/* TOKEN IMAGE */
+
+#history .mf-v80-avatar{
+  width:48px!important;
+  height:48px!important;
+
+  min-width:48px!important;
+  min-height:48px!important;
+
+  max-width:48px!important;
+  max-height:48px!important;
+
+  flex:
+    0
+    0
+    48px!important;
+
+  object-fit:cover!important;
+  object-position:center!important;
+
+  border-radius:11px!important;
+
+  margin:0!important;
+
+  align-self:center!important;
+
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.075),
+    0 5px 15px rgba(0,0,0,0.22)!important;
+}
+
+
+/* AVATAR WRAPPER */
+
+#history .mf-v80-avatar-wrap{
+  width:48px!important;
+  height:48px!important;
+
+  min-width:48px!important;
+  min-height:48px!important;
+
+  max-width:48px!important;
+  max-height:48px!important;
+
+  flex:
+    0
+    0
+    48px!important;
+
+  overflow:hidden!important;
+
+  border-radius:11px!important;
+
+  align-self:center!important;
+}
+
+
+/*
+  Keep the image visually aligned with:
+  title on top
+  time / stake / PnL on bottom
+*/
+
+#history .history-row{
+  min-height:72px!important;
+
+  padding-top:10px!important;
+  padding-bottom:10px!important;
+}
+
+
+/*
+  Preserve text contrast above the gradient.
+*/
+
+#history .history-row > *,
+#history > *[data-mf-v80-row] > *{
+  position:relative!important;
+  z-index:1!important;
+}
+
+
+/*
+  Mobile tuning.
+*/
+
+@media
+  (max-width:620px)
+  and (orientation:portrait){
+
+  #history .mf-v80-avatar,
+  #history .mf-v80-avatar-wrap{
+    width:46px!important;
+    height:46px!important;
+
+    min-width:46px!important;
+    min-height:46px!important;
+
+    max-width:46px!important;
+    max-height:46px!important;
+
+    flex-basis:46px!important;
+  }
+
+  #history .history-row{
+    min-height:68px!important;
+
+    padding-top:9px!important;
+    padding-bottom:9px!important;
+  }
+
+}
+
+/* === V80 RECENT ROUND RESULT GRADIENT END === */
+
+
+
+/* === V82 MOBILE COMPACT POLISH START === */
+
+@media (max-width: 620px) and (orientation: portrait) {
+
+  /* WORLD / SCENE */
+  html body #game .world {
+    min-height: 270px !important;
+    height: 270px !important;
+    max-height: 270px !important;
+  }
+
+  /* TOP HUD BAR */
+  html body #game .hud,
+  html body #game .game-topbar,
+  html body #game .topbar {
+    min-height: 54px !important;
+    padding-top: 10px !important;
+    padding-bottom: 10px !important;
+  }
+
+  /* METRIC STRIP UNDER SCENE */
+  html body #game .metric-strip,
+  html body #game .stats-strip,
+  html body #game .game-stats-row {
+    min-height: 64px !important;
+  }
+
+  html body #game .metric-strip > *,
+  html body #game .stats-strip > *,
+  html body #game .game-stats-row > * {
+    min-height: 64px !important;
+    padding-top: 10px !important;
+    padding-bottom: 10px !important;
+  }
+
+  /* GENERIC PANEL COMPACT */
+  html body #game .panel,
+  html body #game .launch-panel,
+  html body #game .token-panel,
+  html body #game .session-panel,
+  html body #game .history-panel {
+    padding: 14px 14px 13px !important;
+    border-radius: 22px !important;
+  }
+
+  /* LAUNCH CONTROL */
+  html body #game .launch-panel {
+    gap: 8px !important;
+  }
+
+  html body #game .launch-panel .panel-title,
+  html body #game .launch-panel .section-title {
+    margin-bottom: 4px !important;
+  }
+
+  html body #game .launch-panel .lead,
+  html body #game .launch-panel .subcopy,
+  html body #game .launch-panel .helper-text {
+    margin-top: 6px !important;
+    margin-bottom: 8px !important;
+    line-height: 1.28 !important;
+  }
+
+  html body #game .launch-panel .stake-input,
+  html body #game .launch-panel input[type="text"],
+  html body #game .launch-panel input[type="number"] {
+    min-height: 54px !important;
+    height: 54px !important;
+    border-radius: 16px !important;
+  }
+
+  html body #game .launch-panel .quick-bets,
+  html body #game .launch-panel .quick-buttons {
+    gap: 7px !important;
+    margin-top: 7px !important;
+  }
+
+  html body #game .launch-panel .quick-bets button,
+  html body #game .launch-panel .quick-buttons button {
+    min-height: 40px !important;
+    height: 40px !important;
+    border-radius: 14px !important;
+    font-size: 14px !important;
+  }
+
+  html body #game .launch-panel .select-grid,
+  html body #game .launch-panel .controls-grid {
+    gap: 8px !important;
+    margin-top: 8px !important;
+  }
+
+  html body #game .launch-panel select {
+    min-height: 50px !important;
+    height: 50px !important;
+    border-radius: 14px !important;
+  }
+
+  html body #game .launch-panel .risk-deck,
+  html body #game .launch-panel .flight-plan {
+    margin-top: 10px !important;
+    padding-top: 10px !important;
+  }
+
+  html body #game .launch-panel .risk-metrics,
+  html body #game .launch-panel .flight-metrics {
+    row-gap: 6px !important;
+  }
+
+  /* SELECTED LAUNCH */
+  html body #game .token-panel {
+    min-height: auto !important;
+  }
+
+  html body #game .token-panel .token-head,
+  html body #game .token-panel .header-row {
+    margin-bottom: 6px !important;
+    gap: 8px !important;
+  }
+
+  html body #game .token-panel .quality-line {
+    margin-top: 5px !important;
+    margin-bottom: 7px !important;
+  }
+
+  html body #game .token-panel .telemetry {
+    margin-top: 6px !important;
+    padding-top: 6px !important;
+  }
+
+  html body #game .token-panel .token-avatar {
+    width: 32px !important;
+    height: 32px !important;
+    min-width: 32px !important;
+    min-height: 32px !important;
+  }
+
+  /* SESSION */
+  html body #game .session-panel .panel-title,
+  html body #game .session-panel .section-title {
+    margin-bottom: 8px !important;
+  }
+
+  html body #game .session-panel .info-note,
+  html body #game .session-panel .safety-note {
+    margin-top: 8px !important;
+    padding: 10px 12px !important;
+    line-height: 1.24 !important;
+  }
+
+  /* RECENT ROUNDS */
+  html body #game #history {
+    padding-bottom: 8px !important;
+  }
+
+  html body #game #history .history-toolbar {
+    margin-bottom: 6px !important;
+  }
+
+  html body #game #history .history-row {
+    min-height: 60px !important;
+    padding-top: 6px !important;
+    padding-bottom: 6px !important;
+  }
+
+  html body #game #history .mf-v80-avatar,
+  html body #game #history .mf-v80-avatar-wrap {
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+    min-height: 40px !important;
+    max-width: 40px !important;
+    max-height: 40px !important;
+    flex: 0 0 40px !important;
+    border-radius: 10px !important;
+  }
+
+  /* STICKY ACTIONS */
+  html body #game #mfStickyActions {
+    padding-top: 6px !important;
+    padding-bottom: max(6px, env(safe-area-inset-bottom)) !important;
+    gap: 10px !important;
+  }
+
+  html body #game #mfStickyActions #startBtn,
+  html body #game #mfStickyActions #mfAutoLoopBtn,
+  html body #game #mfStickyActions > button {
+    min-height: 72px !important;
+    height: 72px !important;
+    border-radius: 18px !important;
+  }
+
+  html body #game #mfStickyActions .button-title,
+  html body #game #startBtn .button-title,
+  html body #game #mfAutoLoopBtn .button-title {
+    font-size: 18px !important;
+  }
+
+  html body #game #mfStickyActions .button-subtitle,
+  html body #game #startBtn .button-subtitle,
+  html body #game #mfAutoLoopBtn .button-subtitle {
+    font-size: 12px !important;
+  }
+}
+
+/* === V82 MOBILE COMPACT POLISH END === */
+
+/* === V82 FINAL MOBILE DENSITY START === */
+
+@media
+  (max-width:620px)
+  and (orientation:portrait){
+
+  /* =====================================================
+     GLOBAL MOBILE FLOW
+  ===================================================== */
+
+  html body #game > .layout{
+    gap:7px!important;
+
+    padding-bottom:
+      calc(
+        106px +
+        env(safe-area-inset-bottom,0px)
+      )!important;
+
+    scroll-padding-bottom:
+      calc(
+        106px +
+        env(safe-area-inset-bottom,0px)
+      )!important;
+  }
+
+
+  html body #game .cockpit{
+    gap:7px!important;
+  }
+
+
+  /* =====================================================
+     SCENE
+  ===================================================== */
+
+  html body #game .world{
+    height:
+      clamp(
+        248px,
+        66vw,
+        292px
+      )!important;
+
+    min-height:
+      clamp(
+        248px,
+        66vw,
+        292px
+      )!important;
+
+    flex-basis:
+      clamp(
+        248px,
+        66vw,
+        292px
+      )!important;
+  }
+
+
+  html body #game .world[data-mf-scene="day"]{
+    box-shadow:
+      inset 0 0 0 9999px
+      rgba(2,6,12,0.12),
+      inset 0 -78px 105px
+      rgba(0,2,8,0.22)!important;
+  }
+
+
+  html body #game .world[data-mf-scene="evening"]{
+    box-shadow:
+      inset 0 0 0 9999px
+      rgba(4,3,10,0.16),
+      inset 0 -80px 108px
+      rgba(0,2,8,0.25)!important;
+  }
+
+
+  html body #game .world[data-mf-scene="night"]{
+    box-shadow:
+      inset 0 0 0 9999px
+      rgba(1,4,10,0.13),
+      inset 0 -84px 112px
+      rgba(0,2,8,0.28)!important;
+  }
+
+
+  html body #game .world .trace{
+    opacity:0.95!important;
+
+    filter:
+      brightness(1.12)
+      saturate(1.08)
+      drop-shadow(
+        0
+        0
+        4px
+        rgba(120,245,190,0.18)
+      )!important;
+  }
+
+
+  html body #game .world .levels{
+    opacity:0.94!important;
+  }
+
+
+  html body #game .world .flight-position-hud{
+    background:
+      rgba(3,8,14,0.67)!important;
+
+    backdrop-filter:
+      blur(5px)!important;
+
+    -webkit-backdrop-filter:
+      blur(5px)!important;
+  }
+
+
+  /* =====================================================
+     LAUNCH CONTROL
+  ===================================================== */
+
+  html body #game .launch-panel{
+    padding:
+      13px
+      14px
+      12px!important;
+
+    gap:0!important;
+  }
+
+
+  html body #game .launch-panel > .panel-title{
+    margin:
+      0
+      0
+      3px!important;
+  }
+
+
+  html body #game .launch-panel > .game-utility{
+    margin:
+      2px
+      0
+      0!important;
+
+    row-gap:2px!important;
+  }
+
+
+  html body #game .launch-panel > .lead{
+    margin:
+      7px
+      2px
+      9px!important;
+
+    line-height:1.26!important;
+  }
+
+
+  html body #game .launch-panel > .field-title{
+    margin:
+      0
+      0
+      4px!important;
+  }
+
+
+  html body #game .launch-panel > .stake-input{
+    width:100%!important;
+
+    height:52px!important;
+    min-height:52px!important;
+
+    border-radius:15px!important;
+  }
+
+
+  html body #game .launch-panel > .quick-bets{
+    margin-top:6px!important;
+
+    gap:6px!important;
+  }
+
+
+  html body #game .launch-panel > .quick-bets button{
+    height:38px!important;
+    min-height:38px!important;
+
+    border-radius:12px!important;
+  }
+
+
+  html body #game .launch-panel > .select-grid{
+    margin-top:7px!important;
+
+    gap:7px!important;
+  }
+
+
+  html body #game .launch-panel > .select-grid label{
+    gap:4px!important;
+  }
+
+
+  html body #game .launch-panel > .select-grid select{
+    height:48px!important;
+    min-height:48px!important;
+
+    border-radius:13px!important;
+  }
+
+
+  html body #game .launch-panel > .risk-deck{
+    margin-top:8px!important;
+
+    padding-top:8px!important;
+  }
+
+
+  html body #game .launch-panel .risk-head{
+    margin-bottom:7px!important;
+  }
+
+
+  html body #game .launch-panel .risk-metrics{
+    row-gap:5px!important;
+  }
+
+
+  html body #game .launch-panel .risk-track{
+    margin-top:6px!important;
+  }
+
+
+  html body #game .launch-panel #riskCopy{
+    margin:
+      5px
+      2px
+      0!important;
+
+    line-height:1.20!important;
+  }
+
+
+  /* =====================================================
+     SELECTED LAUNCH
+  ===================================================== */
+
+  html body #game .token-panel{
+    padding:
+      12px
+      14px
+      11px!important;
+  }
+
+
+  html body #game .token-panel > .panel-row{
+    margin-bottom:5px!important;
+  }
+
+
+  html body #game .token-panel .token-head{
+    gap:7px!important;
+
+    margin:
+      0
+      0
+      5px!important;
+  }
+
+
+  html body #game .token-panel .quality-line{
+    margin:
+      4px
+      0
+      5px!important;
+  }
+
+
+  html body #game .token-panel .token-metrics{
+    margin-top:4px!important;
+  }
+
+
+  html body #game .token-panel .telemetry{
+    margin-top:5px!important;
+
+    padding-top:5px!important;
+  }
+
+
+  html body #game .token-panel.mf-v82-waiting{
+    padding-bottom:10px!important;
+  }
+
+
+  html body #game .token-panel.mf-v82-waiting .token-head{
+    margin-bottom:3px!important;
+  }
+
+
+  html body #game .token-panel.mf-v82-waiting .quality-line{
+    margin:
+      3px
+      0
+      4px!important;
+  }
+
+
+  /* =====================================================
+     SESSION
+  ===================================================== */
+
+  html body #game .stats-panel{
+    padding:
+      12px
+      14px
+      11px!important;
+  }
+
+
+  html body #game .stats-panel .stats-grid{
+    margin-bottom:7px!important;
+  }
+
+
+  html body #game .stats-panel .safety-note{
+    margin-top:7px!important;
+
+    padding:
+      8px
+      10px!important;
+
+    line-height:1.20!important;
+  }
+
+
+  /* =====================================================
+     RECENT ROUNDS
+  ===================================================== */
+
+  html body #game .history-panel{
+    padding-bottom:0!important;
+  }
+
+
+  html body #game #history .history-row{
+    min-height:58px!important;
+
+    padding-top:6px!important;
+    padding-bottom:6px!important;
+  }
+
+
+  html body #game #history .mf-v80-avatar,
+  html body #game #history .mf-v80-avatar-wrap{
+    width:41px!important;
+    height:41px!important;
+
+    min-width:41px!important;
+    min-height:41px!important;
+
+    max-width:41px!important;
+    max-height:41px!important;
+
+    flex:
+      0
+      0
+      41px!important;
+
+    border-radius:9px!important;
+  }
+
+
+  html body #game #history .mf-v80-loss{
+    background:
+      linear-gradient(
+        90deg,
+        rgba(255,72,91,0.000) 0%,
+        rgba(255,72,91,0.000) 44%,
+        rgba(255,72,91,0.018) 58%,
+        rgba(255,72,91,0.045) 71%,
+        rgba(255,72,91,0.090) 84%,
+        rgba(255,72,91,0.155) 100%
+      )!important;
+  }
+
+
+  html body #game #history .mf-v80-win{
+    background:
+      linear-gradient(
+        90deg,
+        rgba(66,255,166,0.000) 0%,
+        rgba(66,255,166,0.000) 44%,
+        rgba(66,255,166,0.018) 58%,
+        rgba(66,255,166,0.045) 71%,
+        rgba(66,255,166,0.090) 84%,
+        rgba(66,255,166,0.155) 100%
+      )!important;
+  }
+
+
+  /* =====================================================
+     SECONDARY TEXT
+  ===================================================== */
+
+  html body #game .launch-panel .lead,
+  html body #game .launch-panel #riskCopy,
+  html body #game .stream-utility small,
+  html body #game .token-head small,
+  html body #game .quality-line,
+  html body #game .safety-note,
+  html body #game .history-toolbar,
+  html body #game .history-row small{
+    color:
+      rgba(
+        160,
+        174,
+        187,
+        0.92
+      )!important;
+  }
+
+
+  /* =====================================================
+     STICKY ACTIONS
+  ===================================================== */
+
+  html body #game #mfStickyActions{
+    gap:9px!important;
+
+    padding-top:5px!important;
+  }
+
+
+  html body #game #mfStickyActions #startBtn,
+  html body #game #mfStickyActions #mfAutoLoopBtn,
+  html body #game #mfStickyActions > button{
+    height:68px!important;
+    min-height:68px!important;
+
+    border-radius:18px!important;
+  }
+
+
+  html body #game #startBtn{
+    box-shadow:
+      0
+      7px
+      20px
+      rgba(85,233,165,0.10)!important;
+  }
+
+
+  html body #game #mfAutoLoopBtn{
+    box-shadow:
+      0
+      7px
+      18px
+      rgba(0,0,0,0.14)!important;
+  }
+
+}
+
+/* === V82 FINAL MOBILE DENSITY END === */
+
+/* === V84 FINAL DENSITY TUNE START === */
+
+@media
+  (max-width:620px)
+  and (orientation:portrait){
+
+  /* =====================================================
+     LAUNCH CONTROL
+  ===================================================== */
+
+  html body #game .launch-panel{
+    padding:
+      11px
+      13px
+      10px!important;
+
+    height:auto!important;
+    min-height:0!important;
+    max-height:none!important;
+  }
+
+
+  html body #game .launch-panel > .panel-title{
+    margin:
+      0
+      0
+      2px!important;
+  }
+
+
+  html body #game .launch-panel > .game-utility{
+    margin:0!important;
+
+    min-height:0!important;
+  }
+
+
+  html body #game .launch-panel > .lead{
+    margin:
+      5px
+      1px
+      6px!important;
+
+    line-height:1.20!important;
+  }
+
+
+  html body #game .launch-panel > .field-title{
+    margin:
+      0
+      0
+      3px!important;
+
+    line-height:1.08!important;
+  }
+
+
+  /* STAKE */
+
+  html body #game .launch-panel > .stake-input{
+    height:50px!important;
+    min-height:50px!important;
+    max-height:50px!important;
+
+    padding:
+      0
+      12px!important;
+
+    border-radius:13px!important;
+  }
+
+
+  html body #game .launch-panel > .stake-input input{
+    height:48px!important;
+    min-height:48px!important;
+    max-height:48px!important;
+
+    padding:
+      0!important;
+
+    font-size:18px!important;
+  }
+
+
+  /* QUICK BETS */
+
+  html body #game .launch-panel > .quick-bets{
+    margin-top:5px!important;
+
+    gap:6px!important;
+  }
+
+
+  html body #game .launch-panel > .quick-bets button{
+    height:35px!important;
+    min-height:35px!important;
+    max-height:35px!important;
+
+    padding:
+      0
+      6px!important;
+
+    border-radius:11px!important;
+
+    font-size:14px!important;
+    line-height:1!important;
+  }
+
+
+  /* CASH OUT / STOP LOSS */
+
+  html body #game .launch-panel > .select-grid{
+    margin-top:6px!important;
+
+    gap:7px!important;
+  }
+
+
+  html body #game .launch-panel > .select-grid label{
+    gap:3px!important;
+
+    margin:0!important;
+  }
+
+
+  html body #game .launch-panel > .select-grid select{
+    height:46px!important;
+    min-height:46px!important;
+    max-height:46px!important;
+
+    padding:
+      0
+      11px!important;
+
+    border-radius:12px!important;
+
+    font-size:15px!important;
+  }
+
+
+  /* FLIGHT PLAN */
+
+  html body #game .launch-panel > .risk-deck{
+    margin-top:6px!important;
+
+    padding-top:7px!important;
+  }
+
+
+  html body #game .launch-panel .risk-head{
+    margin:
+      0
+      0
+      5px!important;
+  }
+
+
+  html body #game .launch-panel .risk-metrics{
+    row-gap:3px!important;
+  }
+
+
+  html body #game .launch-panel .risk-metrics > *{
+    margin-top:0!important;
+    margin-bottom:0!important;
+  }
+
+
+  html body #game .launch-panel .risk-track{
+    margin-top:4px!important;
+  }
+
+
+  html body #game .launch-panel #riskCopy{
+    margin:
+      4px
+      1px
+      0!important;
+
+    line-height:1.16!important;
+  }
+
+
+  /* =====================================================
+     RECENT ROUNDS HEADER
+  ===================================================== */
+
+  html body #game details.history-panel > summary{
+    min-height:48px!important;
+
+    padding:
+      9px
+      14px!important;
+
+    margin:0!important;
+  }
+
+
+  html body #game .history-panel .history-toolbar{
+    min-height:35px!important;
+
+    padding:
+      7px
+      14px!important;
+
+    margin:0!important;
+  }
+
+
+  html body #game .history-panel .history{
+    margin-top:0!important;
+
+    padding-top:0!important;
+  }
+
+
+  html body #game #history .history-row{
+    min-height:56px!important;
+
+    padding-top:5px!important;
+    padding-bottom:5px!important;
+  }
+
+
+  html body #game #history .mf-v80-avatar,
+  html body #game #history .mf-v80-avatar-wrap{
+    width:40px!important;
+    height:40px!important;
+
+    min-width:40px!important;
+    min-height:40px!important;
+
+    max-width:40px!important;
+    max-height:40px!important;
+
+    flex:
+      0
+      0
+      40px!important;
+  }
+
+}
+
+/* === V84 FINAL DENSITY TUNE END === */
+
+/* === V85 SEMANTIC MOBILE COMPACT START === */
+
+@media
+  (max-width:620px)
+  and (orientation:portrait){
+
+  html body #game .launch-panel{
+    padding:
+      11px
+      13px
+      10px!important;
+
+    min-height:0!important;
+    height:auto!important;
+  }
+
+
+  html body #game .history-panel{
+    padding-top:0!important;
+  }
+
+
+  html body #game .history-panel summary{
+    margin:0!important;
+  }
+
+}
+
+/* === V85 SEMANTIC MOBILE COMPACT END === */
+
+/* === V86 GEOMETRIC MOBILE COMPACT START === */
+
+@media
+  (max-width:620px)
+  and (orientation:portrait){
+
+  html body #game .launch-panel{
+    height:auto!important;
+    min-height:0!important;
+    max-height:none!important;
+  }
+
+  html body #game .history-panel{
+    height:auto!important;
+    min-height:0!important;
+  }
+
+}
+
+/* === V86 GEOMETRIC MOBILE COMPACT END === */
+
+/* === V87 FINAL VERTICAL DENSITY START === */
+
+@media
+  (max-width:620px)
+  and (orientation:portrait){
+
+  /* =====================================================
+     SESSION
+  ===================================================== */
+
+  html body #game .stats-panel{
+    padding-top:9px!important;
+    padding-bottom:9px!important;
+
+    height:auto!important;
+    min-height:0!important;
+    max-height:none!important;
+  }
+
+
+  html body #game .stats-panel > .panel-row{
+    min-height:0!important;
+
+    margin-top:0!important;
+    margin-bottom:4px!important;
+
+    padding-top:0!important;
+    padding-bottom:0!important;
+  }
+
+
+  html body #game .stats-panel > .stats-grid{
+    margin-top:5px!important;
+    margin-bottom:0!important;
+
+    row-gap:0!important;
+  }
+
+
+  html body #game .stats-panel > .stats-grid > div{
+    padding-top:5px!important;
+    padding-bottom:5px!important;
+  }
+
+
+  html body #game .stats-panel > .safety-note{
+    margin-top:6px!important;
+    margin-bottom:0!important;
+
+    padding-top:7px!important;
+    padding-bottom:7px!important;
+
+    min-height:0!important;
+
+    line-height:1.16!important;
+  }
+
+
+  /* =====================================================
+     RECENT ROUNDS
+  ===================================================== */
+
+  html body #game details.history-panel{
+    padding-top:0!important;
+    padding-bottom:0!important;
+
+    height:auto!important;
+    min-height:0!important;
+    max-height:none!important;
+  }
+
+
+  html body #game details.history-panel > summary{
+    height:44px!important;
+    min-height:44px!important;
+    max-height:44px!important;
+
+    margin-top:0!important;
+    margin-bottom:0!important;
+
+    padding-top:0!important;
+    padding-bottom:0!important;
+
+    display:flex!important;
+    align-items:center!important;
+  }
+
+
+  html body #game details.history-panel > .history-toolbar{
+    height:32px!important;
+    min-height:32px!important;
+    max-height:32px!important;
+
+    margin-top:0!important;
+    margin-bottom:0!important;
+
+    padding-top:0!important;
+    padding-bottom:0!important;
+
+    display:flex!important;
+    align-items:center!important;
+  }
+
+
+  html body #game details.history-panel > .history{
+    margin-top:0!important;
+    margin-bottom:0!important;
+
+    padding-top:0!important;
+    padding-bottom:0!important;
+  }
+
+
+  html body #game details.history-panel[open] > summary{
+    margin-bottom:0!important;
+  }
+
+
+  html body #game details.history-panel > summary + .history-toolbar{
+    margin-top:0!important;
+  }
+
+}
+
+/* === V87 FINAL VERTICAL DENSITY END === */
+
+/* === V88 REMOVE QUICK BETS START === */
+
+@media
+  (max-width:620px)
+  and (orientation:portrait){
+
+  /* Remove preset stake buttons completely */
+
+  html body #game .launch-panel .quick-bets,
+  html body #game .launch-panel .stake-presets,
+  html body #game .launch-panel .stake-percentages{
+    display:none!important;
+
+    height:0!important;
+    min-height:0!important;
+    max-height:0!important;
+
+    margin:0!important;
+    padding:0!important;
+
+    gap:0!important;
+
+    overflow:hidden!important;
+  }
+
+
+  /* Pull the next controls upward */
+
+  html body #game .launch-panel .select-grid{
+    margin-top:7px!important;
+  }
+
+
+  /* Final Recent Rounds header density */
+
+  html body #game details.history-panel > summary{
+    height:38px!important;
+    min-height:38px!important;
+    max-height:38px!important;
+
+    padding-top:0!important;
+    padding-bottom:0!important;
+
+    margin:0!important;
+  }
+
+
+  html body #game details.history-panel > .history-toolbar{
+    height:28px!important;
+    min-height:28px!important;
+    max-height:28px!important;
+
+    padding-top:0!important;
+    padding-bottom:0!important;
+
+    margin:0!important;
+  }
+
+
+  html body #game details.history-panel > .history{
+    margin-top:0!important;
+    padding-top:0!important;
+  }
+
+}
+
+/* === V88 REMOVE QUICK BETS END === */
+
+/* === V89 FINAL DENSITY START === */
+
+@media
+  (max-width:620px)
+  and (orientation:portrait){
+
+  /* Launch Control */
+
+  html body #game .launch-panel .select-grid{
+    margin-top:2px!important;
+  }
+
+
+  /* Recent Rounds */
+
+  html body #game details.history-panel{
+    padding-top:8px!important;
+    padding-block-start:8px!important;
+    padding-bottom:0!important;
+
+    row-gap:0!important;
+    gap:0!important;
+
+    min-height:0!important;
+    height:auto!important;
+  }
+
+
+  html body #game details.history-panel > summary{
+    height:38px!important;
+    min-height:38px!important;
+    max-height:38px!important;
+
+    margin:0!important;
+
+    padding-top:0!important;
+    padding-bottom:0!important;
+
+    display:flex!important;
+    align-items:center!important;
+  }
+
+
+  html body #game details.history-panel > .history-toolbar{
+    height:28px!important;
+    min-height:28px!important;
+    max-height:28px!important;
+
+    margin:0!important;
+
+    padding-top:0!important;
+    padding-bottom:0!important;
+
+    display:flex!important;
+    align-items:center!important;
+  }
+
+
+  html body #game details.history-panel > .history{
+    margin-top:0!important;
+    padding-top:0!important;
+  }
+
+}
+
+/* === V89 FINAL DENSITY END === */
+
+/* === V90 RECENT ROUNDS FINAL COMPACT START === */
+
+@media
+  (max-width:620px)
+  and (orientation:portrait){
+
+  html body #game details.history-panel{
+    padding-top:0!important;
+    padding-block-start:0!important;
+
+    margin-top:0!important;
+
+    row-gap:0!important;
+    gap:0!important;
+
+    min-height:0!important;
+    height:auto!important;
+  }
+
+
+  html body #game details.history-panel > summary{
+    height:34px!important;
+    min-height:34px!important;
+    max-height:34px!important;
+
+    margin:0!important;
+
+    padding-top:0!important;
+    padding-bottom:0!important;
+
+    display:flex!important;
+    align-items:center!important;
+  }
+
+
+  html body #game details.history-panel > summary *{
+    margin-top:0!important;
+    margin-bottom:0!important;
+  }
+
+
+  html body #game details.history-panel > .history-toolbar{
+    height:26px!important;
+    min-height:26px!important;
+    max-height:26px!important;
+
+    margin:0!important;
+
+    padding-top:0!important;
+    padding-bottom:0!important;
+
+    display:flex!important;
+    align-items:center!important;
+  }
+
+
+  html body #game details.history-panel > .history{
+    margin-top:0!important;
+    padding-top:0!important;
+  }
+
+
+  html body #game details.history-panel[open] > summary{
+    margin-bottom:0!important;
+  }
+
+}
+
+/* === V90 RECENT ROUNDS FINAL COMPACT END === */
+
+/* === V91 RECENT ROUNDS HEADER COMPACT START === */
+
+@media (max-width:620px) and (orientation:portrait){
+
+  html body #game details.history-panel{
+    padding:0!important;
+    overflow:hidden!important;
+  }
+
+  html body #game details.history-panel > summary{
+    box-sizing:border-box!important;
+
+    min-height:58px!important;
+    height:58px!important;
+
+    margin:0!important;
+    padding:0 30px!important;
+
+    display:flex!important;
+    align-items:center!important;
+  }
+
+  html body #game details.history-panel > .history-toolbar{
+    box-sizing:border-box!important;
+
+    min-height:42px!important;
+    height:42px!important;
+
+    margin:0!important;
+    padding:0 30px!important;
+
+    display:flex!important;
+    align-items:center!important;
+  }
+
+  html body #game details.history-panel > .history{
+    margin:0!important;
+    padding:0!important;
+  }
+
+  html body #game details.history-panel > summary + .history-toolbar{
+    margin-top:0!important;
+  }
+
+}
+
+/* === V91 RECENT ROUNDS HEADER COMPACT END === */
+
+/* === V93 SCAN HEADER START === */
+
+@media
+  (max-width:620px)
+  and (orientation:portrait){
+
+  html body #game[data-state="searching"]
+  .stage-head{
+    position:relative!important;
+    overflow:hidden!important;
+    isolation:isolate!important;
+
+    background:
+      linear-gradient(
+        90deg,
+        rgba(5,10,15,.98) 0%,
+        rgba(5,18,24,.98) 50%,
+        rgba(5,10,15,.98) 100%
+      )!important;
+  }
+
+
+  html body #game[data-state="searching"]
+  .stage-head::after{
+    content:"";
+
+    position:absolute;
+
+    left:-42%;
+    bottom:0;
+
+    width:38%;
+    height:1px;
+
+    pointer-events:none;
+
+    background:
+      linear-gradient(
+        90deg,
+        transparent,
+        rgba(109,220,255,.92),
+        transparent
+      );
+
+    box-shadow:
+      0 0 10px
+      rgba(109,220,255,.55);
+
+    animation:
+      mfV93ScanLine
+      2.6s
+      ease-in-out
+      infinite;
+
+    z-index:0;
+  }
+
+
+  html body #game[data-state="searching"]
+  .round-state,
+
+  html body #game[data-state="searching"]
+  .round-meta{
+    position:relative!important;
+    z-index:1!important;
+  }
+
+
+  html body #game[data-state="searching"]
+  .round-state .state-dot{
+    background:#6ddcff!important;
+
+    box-shadow:
+      0 0 0 4px
+      rgba(109,220,255,.07),
+      0 0 13px
+      rgba(109,220,255,.55)!important;
+
+    animation:
+      mfV93RadarPulse
+      1.65s
+      ease-in-out
+      infinite;
+  }
+
+
+  html body #game[data-state="searching"]
+  .round-state b{
+    color:#f4fbff!important;
+  }
+
+
+  html body #game[data-state="searching"]
+  .round-state small{
+    color:#8398a3!important;
+  }
+
+
+  html body #game[data-state="searching"]
+  .round-meta small{
+    color:#607783!important;
+  }
+
+
+  html body #game[data-state="searching"]
+  .round-meta b{
+    color:#d8f7ff!important;
+
+    font-variant-numeric:
+      tabular-nums!important;
+  }
+
+}
+
+
+@keyframes mfV93ScanLine{
+
+  0%{
+    transform:translateX(0);
+    opacity:0;
+  }
+
+  14%{
+    opacity:.9;
+  }
+
+  86%{
+    opacity:.9;
+  }
+
+  100%{
+    transform:translateX(375%);
+    opacity:0;
+  }
+}
+
+
+@keyframes mfV93RadarPulse{
+
+  0%,
+  100%{
+    transform:scale(.92);
+    opacity:.78;
+  }
+
+  50%{
+    transform:scale(1.08);
+    opacity:1;
+  }
+}
+
+
+@media
+  (prefers-reduced-motion:reduce){
+
+  html body #game[data-state="searching"]
+  .stage-head::after,
+
+  html body #game[data-state="searching"]
+  .round-state .state-dot{
+    animation:none!important;
+  }
+}
+
+/* === V93 SCAN HEADER END === */
+
+/* === V94 COMPACT CONTROL HEIGHTS START === */
+
+@media
+  (max-width:620px)
+  and (orientation:portrait){
+
+  /*
+    Paper stake
+    Previous mobile maximum: 48px
+    Final height: 42px
+  */
+
+  html body #game .launch-panel .stake-input{
+    height:42px!important;
+    min-height:42px!important;
+    max-height:42px!important;
+
+    flex:0 0 42px!important;
+  }
+
+  html body #game .launch-panel .stake-input #betInput{
+    height:100%!important;
+    min-height:0!important;
+    max-height:100%!important;
+
+    padding-top:0!important;
+    padding-bottom:0!important;
+  }
+
+
+  /*
+    Auto cash out / Stop loss
+    Previous mobile maximum: 42px
+    Final height: 38px
+  */
+
+  html body #game .launch-panel .select-grid{
+    height:auto!important;
+    min-height:0!important;
+    max-height:none!important;
+
+    flex:0 0 auto!important;
+
+    align-items:start!important;
+  }
+
+  html body #game .launch-panel .select-grid label{
+    height:auto!important;
+    min-height:0!important;
+
+    gap:3px!important;
+  }
+
+  html body #game .launch-panel #autoCashout,
+  html body #game .launch-panel #stopLoss{
+    height:38px!important;
+    min-height:38px!important;
+    max-height:38px!important;
+
+    margin:0!important;
+  }
+
+}
+
+/* === V94 COMPACT CONTROL HEIGHTS END === */

@@ -125,7 +125,7 @@
     }
   );
 
-  const CLIENT_VERSION='10.8';
+  const CLIENT_VERSION='10.9';
 
   const $=(s)=>document.querySelector(s), $$=(s)=>[...document.querySelectorAll(s)];
   const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
@@ -1197,36 +1197,631 @@ function fillToken(s){const t=s?.token||{};const symbol=text(t.symbol,t.name,'?'
     return true;
   }
 
+  /* ======================================================
+     MF_V66_CONNECTION_STABILITY
+
+     SSE failure does NOT automatically mean
+     the server/internet is down.
+
+     First verify /api/game/status.
+     Show the reconnect banner only when BOTH:
+       - SSE is unavailable
+       - normal server status is also unavailable
+  ====================================================== */
+
+  function mfConnectionOnline(){
+    return (
+      game.pageVisible &&
+      !game.lifecyclePaused &&
+      navigator.onLine!==false
+    );
+  }
+
+
+  function mfHideNetworkWarning(){
+    if(ui.network){
+      ui.network.hidden=true;
+    }
+  }
+
+
+  function mfShowNetworkWarning(message){
+    if(!ui.network)return;
+
+    ui.network.hidden=false;
+
+    if(ui.networkText){
+      ui.networkText.textContent=
+        message;
+    }
+  }
+
+
+  function mfServerReachable(label){
+    game.lastStatusOkAt=Date.now();
+
+    /*
+      Invalidate delayed reconnect warnings.
+    */
+    game.streamErrorSeq=
+      (game.streamErrorSeq||0)+1;
+
+    mfHideNetworkWarning();
+
+    if(
+      label &&
+      ui.streamState
+    ){
+      ui.streamState.textContent=label;
+    }
+  }
+
+
+  function mfScheduleRealConnectionWarning(){
+
+    const seq=
+      (game.streamErrorSeq||0)+1;
+
+    game.streamErrorSeq=seq;
+
+    /*
+      Give EventSource + fallback a chance to recover.
+      Short Safari/Replit proxy interruptions therefore
+      never flash a warning to the user.
+    */
+    setTimeout(
+      ()=>{
+        if(
+          seq!==game.streamErrorSeq ||
+          !mfConnectionOnline()
+        ){
+          return;
+        }
+
+        const lastOk=
+          Number(game.lastStatusOkAt)||0;
+
+        const recentlyReachable=
+          Date.now()-lastOk<4200;
+
+        if(recentlyReachable){
+          mfHideNetworkWarning();
+
+          if(ui.streamState){
+            ui.streamState.textContent=
+              'Server reachable · stream recovering';
+          }
+
+          return;
+        }
+
+        mfShowNetworkWarning(
+          'Server connection interrupted. Reconnecting…'
+        );
+
+        if(ui.streamState){
+          ui.streamState.textContent=
+            'Server unreachable · retrying';
+        }
+      },
+      3000
+    );
+  }
+
+  /* ======================================================
+     MF_V66_CONNECTION_STABILITY
+
+     SSE failure does NOT automatically mean
+     the server/internet is down.
+
+     First verify /api/game/status.
+     Show the reconnect banner only when BOTH:
+       - SSE is unavailable
+       - normal server status is also unavailable
+  ====================================================== */
+
+  function mfConnectionOnline(){
+    return (
+      game.pageVisible &&
+      !game.lifecyclePaused &&
+      navigator.onLine!==false
+    );
+  }
+
+
+  function mfHideNetworkWarning(){
+    if(ui.network){
+      ui.network.hidden=true;
+    }
+  }
+
+
+  function mfShowNetworkWarning(message){
+    if(!ui.network)return;
+
+    ui.network.hidden=false;
+
+    if(ui.networkText){
+      ui.networkText.textContent=
+        message;
+    }
+  }
+
+
+  function mfServerReachable(label){
+    game.lastStatusOkAt=Date.now();
+
+    /*
+      Invalidate delayed reconnect warnings.
+    */
+    game.streamErrorSeq=
+      (game.streamErrorSeq||0)+1;
+
+    mfHideNetworkWarning();
+
+    if(
+      label &&
+      ui.streamState
+    ){
+      ui.streamState.textContent=label;
+    }
+  }
+
+
+  function mfScheduleRealConnectionWarning(){
+
+    const seq=
+      (game.streamErrorSeq||0)+1;
+
+    game.streamErrorSeq=seq;
+
+    /*
+      Give EventSource + fallback a chance to recover.
+      Short Safari/Replit proxy interruptions therefore
+      never flash a warning to the user.
+    */
+    setTimeout(
+      ()=>{
+        if(
+          seq!==game.streamErrorSeq ||
+          !mfConnectionOnline()
+        ){
+          return;
+        }
+
+        const lastOk=
+          Number(game.lastStatusOkAt)||0;
+
+        const recentlyReachable=
+          Date.now()-lastOk<4200;
+
+        if(recentlyReachable){
+          mfHideNetworkWarning();
+
+          if(ui.streamState){
+            ui.streamState.textContent=
+              'Server reachable · stream recovering';
+          }
+
+          return;
+        }
+
+        mfShowNetworkWarning(
+          'Server connection interrupted. Reconnecting…'
+        );
+
+        if(ui.streamState){
+          ui.streamState.textContent=
+            'Server unreachable · retrying';
+        }
+      },
+      3000
+    );
+  }
+
+
   function connectStream(){
-    if(!game.pageVisible||game.lifecyclePaused||navigator.onLine===false)return;
-    if(!('EventSource' in window)){startFallback();return;}
-    if(game.stream&&game.stream.readyState!==EventSource.CLOSED)return;
-    if(game.stream){try{game.stream.close();}catch{}game.stream=null;}
-    const es=new EventSource('/api/game/stream',{withCredentials:true});game.stream=es;game.streamHealthy=false;game.streamOpenedAt=Date.now();game.streamAcceptedAt=0;ui.streamState.textContent='Game stream connecting';startFallback();
-    const receive=(event)=>{try{const data=JSON.parse(event.data||'{}');const accepted=apply(data);if(accepted===false){if(!game.streamHealthy){ui.streamState.textContent='Stream awaiting current snapshot · fallback sync active';startFallback();}else ui.streamState.textContent='Server-authoritative game stream live · stale packet ignored';return;}game.streamHealthy=true;game.streamAcceptedAt=Date.now();ui.network.hidden=true;ui.streamState.textContent='Server-authoritative game stream live';stopFallback();}catch{game.streamHealthy=false;startFallback();}};
-    es.addEventListener('snapshot',receive);es.addEventListener('state',receive);es.addEventListener('tick',receive);
-    es.onopen=()=>{ui.streamState.textContent='Stream connected · awaiting server snapshot';startFallback();};
-    es.onerror=()=>{game.streamHealthy=false;ui.network.hidden=false;ui.networkText.textContent='Game stream reconnecting. Server state remains authoritative.';ui.streamState.textContent='Stream reconnecting · fallback sync active';startFallback();};
-  }
-  function startFallback(){
-    if(game.fallback)return;
-    const sync=async()=>{if(!game.pageVisible||game.lifecyclePaused||navigator.onLine===false||game.fallbackInFlight)return;game.fallbackInFlight=true;try{
-      const x=await api('/api/game/status');apply(x);
-      if('EventSource' in window){
-        const closed=!game.stream||game.stream.readyState===EventSource.CLOSED,now=Date.now();
-        const stuck=!closed&&!game.streamHealthy&&game.streamOpenedAt>0&&now-game.streamOpenedAt>15000&&now-game.streamReconnectAt>12000;
-        if(stuck){game.streamReconnectAt=now;try{game.stream.close();}catch{}game.stream=null;connectStream();}
-        else if(closed)connectStream();
+
+    if(!mfConnectionOnline()){
+      return;
+    }
+
+    if(!('EventSource' in window)){
+      startFallback();
+      return;
+    }
+
+    if(
+      game.stream &&
+      game.stream.readyState!==
+        EventSource.CLOSED
+    ){
+      return;
+    }
+
+    if(game.stream){
+      try{
+        game.stream.close();
+      }catch{}
+
+      game.stream=null;
+    }
+
+
+    const es=
+      new EventSource(
+        '/api/game/stream',
+        {
+          withCredentials:true
+        }
+      );
+
+
+    game.stream=es;
+    game.streamHealthy=false;
+
+    game.streamOpenedAt=
+      Date.now();
+
+    game.streamAcceptedAt=0;
+
+
+    if(ui.streamState){
+      ui.streamState.textContent=
+        'Game stream connecting';
+    }
+
+
+    /*
+      Keep fallback running until an actual valid
+      SSE snapshot/state/tick is accepted.
+    */
+    startFallback();
+
+
+    const receive=(event)=>{
+
+      try{
+
+        const data=
+          JSON.parse(
+            event.data||'{}'
+          );
+
+        const accepted=
+          apply(data);
+
+
+        if(accepted===false){
+
+          if(!game.streamHealthy){
+
+            if(ui.streamState){
+              ui.streamState.textContent=
+                'Stream awaiting current snapshot · fallback sync active';
+            }
+
+            startFallback();
+
+          }else if(ui.streamState){
+
+            ui.streamState.textContent=
+              'Server-authoritative game stream live · stale packet ignored';
+          }
+
+          return;
+        }
+
+
+        game.streamHealthy=true;
+
+        game.streamAcceptedAt=
+          Date.now();
+
+
+        mfServerReachable(
+          'Server-authoritative game stream live'
+        );
+
+
+        stopFallback();
+
+      }catch{
+
+        game.streamHealthy=false;
+
+        startFallback();
       }
-    }catch{}finally{game.fallbackInFlight=false;}};
-    void sync();game.fallback=setInterval(()=>void sync(),4000);
+    };
+
+
+    es.addEventListener(
+      'snapshot',
+      receive
+    );
+
+    es.addEventListener(
+      'state',
+      receive
+    );
+
+    es.addEventListener(
+      'tick',
+      receive
+    );
+
+
+    es.onopen=()=>{
+
+      /*
+        Opening the SSE HTTP connection itself proves
+        the app server is reachable.
+      */
+      game.lastStatusOkAt=
+        Date.now();
+
+      mfHideNetworkWarning();
+
+      if(ui.streamState){
+        ui.streamState.textContent=
+          'Stream connected · awaiting server snapshot';
+      }
+
+      startFallback();
+    };
+
+
+    es.onerror=()=>{
+
+      game.streamHealthy=false;
+
+      /*
+        DO NOT show the yellow warning immediately.
+        An EventSource interruption is common when
+        iOS changes foreground/background state or
+        a Replit proxy rotates the connection.
+      */
+      if(ui.streamState){
+        ui.streamState.textContent=
+          'Stream interrupted · verifying server';
+      }
+
+      startFallback();
+
+      mfScheduleRealConnectionWarning();
+    };
   }
+
+
+  function startFallback(){
+
+    if(game.fallback){
+      return;
+    }
+
+
+    const sync=async()=>{
+
+      if(
+        !mfConnectionOnline() ||
+        game.fallbackInFlight
+      ){
+        return;
+      }
+
+
+      game.fallbackInFlight=true;
+
+
+      try{
+
+        const x=
+          await api(
+            '/api/game/status'
+          );
+
+
+        apply(x);
+
+
+        /*
+          CRITICAL:
+          A successful normal API request means the
+          server is alive even when SSE is reconnecting.
+        */
+        mfServerReachable(
+          game.streamHealthy
+            ?'Server-authoritative game stream live'
+            :'Server reachable · fallback sync active'
+        );
+
+
+        if('EventSource' in window){
+
+          const closed=
+            !game.stream ||
+            game.stream.readyState===
+              EventSource.CLOSED;
+
+
+          const now=
+            Date.now();
+
+
+          /*
+            Rebuild an EventSource that opened but
+            never became healthy.
+          */
+          const stuck=
+            !closed &&
+            !game.streamHealthy &&
+            game.streamOpenedAt>0 &&
+            now-game.streamOpenedAt>10000 &&
+            now-game.streamReconnectAt>6000;
+
+
+          if(stuck){
+
+            game.streamReconnectAt=
+              now;
+
+            try{
+              game.stream.close();
+            }catch{}
+
+            game.stream=null;
+
+            connectStream();
+
+          }else if(closed){
+
+            connectStream();
+          }
+        }
+
+
+      }catch{
+
+        /*
+          Only the delayed health check is allowed
+          to display the reconnect banner.
+        */
+        mfScheduleRealConnectionWarning();
+
+      }finally{
+
+        game.fallbackInFlight=false;
+      }
+    };
+
+
+    /*
+      Immediate verification after SSE trouble.
+    */
+    void sync();
+
+
+    /*
+      Faster than old 4000ms, but still light.
+    */
+    game.fallback=
+      setInterval(
+        ()=>void sync(),
+        3000
+      );
+  }
+
+
   function stopFallback(){if(game.fallback){clearInterval(game.fallback);game.fallback=null;}}
   function resyncStatus({connect=true}={}){
     if(game.resyncPromise)return game.resyncPromise;
     game.resyncPromise=api('/api/game/status').then(status=>{apply(status);if(connect&&game.pageVisible&&!game.lifecyclePaused&&navigator.onLine!==false)connectStream();return status;}).catch(error=>{if(game.pageVisible&&!game.lifecyclePaused&&navigator.onLine!==false)startFallback();throw error;}).finally(()=>{game.resyncPromise=null;});
     return game.resyncPromise;
   }
+
+
+/* === MF_V92_IOS_STREAM_RESUME_START === */
+
+  function recoverVisibleStreamV92({
+    forceResync = false
+  } = {}){
+
+    if(document.hidden){
+      return;
+    }
+
+    game.pageVisible = true;
+    game.lifecyclePaused = false;
+
+    ui.game.dataset.lifecycle = 'active';
+
+    syncClockActivity();
+    syncVisualActivity();
+
+    void syncWakeLock();
+
+
+    if(navigator.onLine === false){
+
+      ui.streamState.textContent =
+        'Device offline';
+
+      return;
+    }
+
+
+    const hasEventSource =
+      'EventSource' in window;
+
+    const streamState =
+      game.stream?.readyState;
+
+    const streamOpen =
+      hasEventSource &&
+      streamState === 1;
+
+    const streamClosed =
+      !game.stream ||
+      streamState === 2;
+
+
+    /*
+      Never leave the background-paused label visible
+      while Safari has already returned to the page.
+    */
+
+    if(game.streamHealthy){
+
+      ui.streamState.textContent =
+        'Server-authoritative game stream live';
+
+    }else if(streamOpen){
+
+      ui.streamState.textContent =
+        'Stream connected · awaiting server snapshot';
+
+    }else{
+
+      ui.streamState.textContent =
+        'Game stream connecting';
+    }
+
+
+    if(hasEventSource){
+
+      if(streamClosed){
+        connectStream();
+      }
+
+    }else{
+
+      startFallback();
+    }
+
+
+    if(!game.streamHealthy){
+      startFallback();
+    }
+
+
+    if(forceResync){
+
+      void resyncStatus({
+        connect: true
+      }).catch(() => {
+
+        if(
+          !document.hidden &&
+          navigator.onLine !== false
+        ){
+          startFallback();
+        }
+      });
+    }
+  }
+
+/* === MF_V92_IOS_STREAM_RESUME_END === */
+
 
   function waitForSearchResume(seq){
     if(seq!==game.searchSeq||game.pageVisible&&navigator.onLine!==false)return Promise.resolve();
@@ -1322,8 +1917,212 @@ function fillToken(s){const t=s?.token||{};const symbol=text(t.symbol,t.name,'?'
 
   async function playAgain(){if(game.resetInFlight)return;game.resetInFlight=true;ui.playAgain.disabled=true;clearTimeout(game.resultFocusTimer);game.resultFocusTimer=null;sfx('click');try{const r=await api('/api/game/reset',{method:'POST',body:'{}'});game.resultFxSeq++;game.countdownSeq++;game.completionSeq++;game.pendingResultId=null;clearTimeout(showMilestone.timer);clearTimeout(pulseShockwave.timer);ui.center.hidden=true;ui.milestone.hidden=true;ui.result.hidden=true;ui.game.inert=false;ui.resultCard.dataset.tone='';game.showingResult=null;game.launchSeen.clear();game.session=null;resetRoundPresentation();setSelectorState('idle');apply(r,{allowResult:false});resetToken();previewStake();setMode('idle','Set a paper stake and launch the next round.');ui.start.focus({preventScroll:true});}catch(e){try{const status=await api('/api/game/status');apply(status,{allowResult:false});if(!status?.session){ui.result.hidden=true;ui.game.inert=false;setMode('idle','Server reset confirmed after a delayed response. Ready for the next round.');return;}}catch{}ui.stateMessage.textContent=e.message||'Reset failed. Server state was rechecked.';}finally{game.resetInFlight=false;ui.playAgain.disabled=false;}}
 
-  function escapeHtml(v){return String(v).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));}
-  function renderHistory(rows){rows=Array.isArray(rows)?rows:[];ui.historyCount.textContent=String(rows.length);if(!rows.length){ui.history.innerHTML='<div class="history-empty">No completed rounds yet.</div>';return;}ui.history.innerHTML=rows.map(row=>{const p=num(row.profit)||0,m=num(row.multiplier)||0,when=new Date(row.at||Date.now()).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});return `<div class="history-row"><div><b>${escapeHtml(row.symbol||'TOKEN')} · ${escapeHtml(String(row.reason||'CASH OUT').replaceAll('_',' '))}</b><small>${when} · ${money(row.stake)} · ${row.voided?'stake returned':`${p>=0?'+':''}${money(p)}`}</small></div><div class="history-mult ${row.voided?'':p<0?'negative':'positive'}">${row.voided?'VOID':`${m.toFixed(2)}×`}</div></div>`;}).join('');}
+  function escapeHtml(v){
+    return String(v).replace(
+      /[&<>'"]/g,
+      c=>({
+        '&':'&amp;',
+        '<':'&lt;',
+        '>':'&gt;',
+        "'":'&#39;',
+        '"':'&quot;'
+      }[c])
+    );
+  }
+
+
+  /* ========================================================
+     MF_V67_HISTORY_AVATAR
+     Uses the SAME .token-avatar class as SELECTED LAUNCH.
+     Therefore shape/size stay synchronized automatically.
+  ======================================================== */
+
+  function historyAvatarMarkup(row){
+
+    const symbol =
+      text(
+        row?.symbol,
+        'TOKEN'
+      );
+
+    const fallback =
+      String(
+        symbol[0] || '?'
+      ).toUpperCase();
+
+
+    const imageUrl =
+      tokenImageUrl(
+        row,
+        row
+      );
+
+
+    if(!imageUrl){
+
+      return `
+        <div
+          class="token-avatar history-token-avatar"
+          data-fallback="${escapeHtml(fallback)}"
+          aria-hidden="true"
+        >
+          ${escapeHtml(fallback)}
+        </div>
+      `;
+    }
+
+
+    return `
+      <div
+        class="token-avatar history-token-avatar"
+        data-fallback="${escapeHtml(fallback)}"
+        aria-hidden="true"
+      >
+        <img
+          src="${escapeHtml(imageUrl)}"
+          alt=""
+          loading="lazy"
+          decoding="async"
+        >
+      </div>
+    `;
+  }
+
+
+  function bindHistoryAvatarFallbacks(){
+
+    ui.history
+      ?.querySelectorAll(
+        '.history-token-avatar img'
+      )
+      .forEach(img=>{
+
+        img.addEventListener(
+          'error',
+          ()=>{
+
+            const box =
+              img.closest(
+                '.history-token-avatar'
+              );
+
+            if(!box)return;
+
+            const fallback =
+              box.dataset.fallback || '?';
+
+            box.replaceChildren();
+
+            box.textContent =
+              fallback;
+
+          },
+          {once:true}
+        );
+
+      });
+  }
+
+
+  function renderHistory(rows){
+
+    rows =
+      Array.isArray(rows)
+        ?rows
+        :[];
+
+
+    ui.historyCount.textContent =
+      String(rows.length);
+
+
+    if(!rows.length){
+
+      ui.history.innerHTML =
+        '<div class="history-empty">No completed rounds yet.</div>';
+
+      return;
+    }
+
+
+    ui.history.innerHTML =
+      rows.map(row=>{
+
+        const p =
+          num(row.profit)||0;
+
+        const m =
+          num(row.multiplier)||0;
+
+        const when =
+          new Date(
+            row.at||Date.now()
+          ).toLocaleTimeString(
+            [],
+            {
+              hour:'2-digit',
+              minute:'2-digit'
+            }
+          );
+
+
+        return `
+          <div class="history-row">
+
+            ${historyAvatarMarkup(row)}
+
+            <div class="history-main">
+
+              <b>
+                ${escapeHtml(row.symbol||'TOKEN')}
+                ·
+                ${escapeHtml(
+                  String(
+                    row.reason||'CASH OUT'
+                  ).replaceAll('_',' ')
+                )}
+              </b>
+
+              <small>
+                ${when}
+                ·
+                ${money(row.stake)}
+                ·
+                ${
+                  row.voided
+                    ?'stake returned'
+                    :`${p>=0?'+':''}${money(p)}`
+                }
+              </small>
+
+            </div>
+
+            <div
+              class="history-mult ${
+                row.voided
+                  ?''
+                  :p<0
+                    ?'negative'
+                    :'positive'
+              }"
+            >
+              ${
+                row.voided
+                  ?'VOID'
+                  :`${m.toFixed(2)}×`
+              }
+            </div>
+
+          </div>
+        `;
+
+      }).join('');
+
+
+    bindHistoryAvatarFallbacks();
+  }
+
+
   async function clearHistory(){if(game.clearHistoryInFlight)return;if(!game.historyClearArmed){game.historyClearArmed=true;ui.clearHistory.textContent='Confirm';clearTimeout(game.historyClearTimer);game.historyClearTimer=setTimeout(()=>{game.historyClearArmed=false;ui.clearHistory.textContent='Clear';game.historyClearTimer=null;},3000);return;}game.historyClearArmed=false;clearTimeout(game.historyClearTimer);game.historyClearTimer=null;ui.clearHistory.textContent='Clear';game.clearHistoryInFlight=true;ui.clearHistory.disabled=true;try{apply(await api('/api/game/history/clear',{method:'POST',body:'{}'}),{allowResult:false});}catch(e){ui.stateMessage.textContent=e.message;}finally{game.clearHistoryInFlight=false;ui.clearHistory.disabled=false;}}
 
   function createFx(){
@@ -1350,6 +2149,95 @@ function fillToken(s){const t=s?.token||{};const symbol=text(t.symbol,t.name,'?'
     addEventListener('offline',()=>{ui.network.hidden=false;ui.networkText.textContent='Device offline. The PAPER round remains on the server; controls are unavailable until connection returns.';ui.streamState.textContent='Device offline';game.streamHealthy=false;try{game.stream?.close?.();}catch{}game.stream=null;stopFallback();syncButtons();});
     addEventListener('pagehide',()=>{game.pageVisible=false;game.lifecyclePaused=true;game.wakeRequestSeq++;game.wakeRequestPending=false;game.searchResumeCleanup?.();game.searchResumeCleanup=null;game.countdownSeq++;game.resultFxSeq++;ui.center.hidden=true;if(game.session?.state==='LIVE')ui.game.dataset.launch='live';ui.game.dataset.lifecycle='paused';stopClock();stopVisualLoop();game.fx?.pause?.();game.stream?.close?.();game.stream=null;stopFallback();if(game.wakeLock){try{game.wakeLock.release();}catch{}game.wakeLock=null;}});
     addEventListener('pageshow',()=>{game.pageVisible=!document.hidden;game.lifecyclePaused=false;ui.game.dataset.lifecycle='active';syncClockActivity();syncVisualActivity();void resyncStatus().catch(()=>startFallback());void syncWakeLock();});
+
+    /*
+      V92:
+      iOS Safari can restore a page through visibilitychange,
+      pageshow or focus depending on how it was suspended.
+      Listen to all three without restarting the game/search.
+    */
+
+    document.addEventListener(
+      'visibilitychange',
+      ()=>{
+        if(!document.hidden){
+          recoverVisibleStreamV92({
+            forceResync: true
+          });
+        }
+      }
+    );
+
+    addEventListener(
+      'pageshow',
+      ()=>{
+        recoverVisibleStreamV92({
+          forceResync: true
+        });
+      },
+      {passive:true}
+    );
+
+    addEventListener(
+      'focus',
+      ()=>{
+        recoverVisibleStreamV92({
+          forceResync: true
+        });
+      },
+      {passive:true}
+    );
+
+
+    /*
+      Small guard for WebKit lifecycle edge cases.
+      It does nothing during normal operation.
+    */
+
+    const visibleStreamGuardV92 =
+      setInterval(
+        ()=>{
+          if(document.hidden){
+            return;
+          }
+
+          const label =
+            String(
+              ui.streamState?.textContent || ''
+            ).toLowerCase();
+
+          const staleBackgroundLabel =
+            label.includes(
+              'paused in background'
+            );
+
+          const staleLifecycle =
+            game.lifecyclePaused === true ||
+            game.pageVisible === false;
+
+          if(
+            staleBackgroundLabel ||
+            staleLifecycle
+          ){
+            recoverVisibleStreamV92({
+              forceResync: true
+            });
+          }
+        },
+        1500
+      );
+
+    addEventListener(
+      'beforeunload',
+      ()=>{
+        clearInterval(
+          visibleStreamGuardV92
+        );
+      },
+      {once:true}
+    );
+
+
     motionQuery?.addEventListener?.('change',event=>{reducedMotion=event.matches===true;if(reducedMotion){game.resultFxSeq++;game.displayMultiplier=game.targetMultiplier;renderVisual(game.displayMultiplier);}syncVisualActivity();});
     addEventListener('beforeunload',()=>{clearTimeout(game.historyClearTimer);clearTimeout(game.wakeRetryTimer);clearTimeout(game.resultFocusTimer);clearTimeout(game.balancePulseTimer);clearTimeout(game.summaryRefreshTimer);clearTimeout(game.roundResetTimer);game.wakeRetryTimer=null;game.resultFocusTimer=null;game.balancePulseTimer=null;game.summaryRefreshTimer=null;game.roundResetTimer=null;game.wakeRequestSeq++;game.searchResumeCleanup?.();game.searchResumeCleanup=null;stopClock();clearVisualTimers();game.completionSeq++;game.pendingResultId=null;stopVisualLoop();if(game.traceRaf!==null){cancelAnimationFrame(game.traceRaf);game.traceRaf=null;}game.stream?.close?.();game.stream=null;stopFallback();game.fx?.stop?.();game.searchAbort?.abort();if(game.wakeLock){try{game.wakeLock.release();}catch{}game.wakeLock=null;}});
   }

@@ -8,6 +8,9 @@ export class JsonStore {
     this.dir=dir;this.file=path.join(dir,'state.json');
     this.state={users:{},tokens:{},decisions:{},positions:{},stripeEvents:{},metrics:{discovered:0,scanned:0,errors:0},paperPositions:{},paperTrades:{},paperProposals:{},paperProcessed:{},paperMetrics:{entries:0,exits:0,errors:0},settingsAudit:{}};
     this._uidDec={}; // uid → Map<key,updatedAt> — in-memory only, not persisted
+
+    // MF_V74_TOUCH_THROTTLE
+    this._touchPersistAt={};
     fs.mkdirSync(dir,{recursive:true});
     this.load();
   }
@@ -29,7 +32,32 @@ export class JsonStore {
   revokeOwner(id){Object.assign(this.user(id),{isOwner:false,ownerGrantedAt:null,ownerGrantSource:null});this.save();return this.user(id)}
   hasStripeEvent(id){return Boolean(this.state.stripeEvents?.[id])}
   recordStripeEvent(id,type){this.state.stripeEvents||={};this.state.stripeEvents[id]={type,processedAt:new Date().toISOString()};const ids=Object.keys(this.state.stripeEvents);for(const old of ids.slice(0,Math.max(0,ids.length-5000)))delete this.state.stripeEvents[old];this.save()}
-  touchUser(id){this.user(id).lastActiveAt=Date.now();this.save();return this.user(id)}
+  touchUser(id){
+    const u=this.user(id);
+    const now=Date.now();
+
+    u.lastActiveAt=now;
+
+    /*
+      MF_V74_TOUCH_THROTTLE
+
+      Updating activity in memory is cheap.
+      Persisting the whole JSON store on every status request
+      is not.
+
+      Save this activity timestamp at most once per minute
+      for each user.
+    */
+    const last=
+      Number(this._touchPersistAt[id]||0);
+
+    if(now-last>=60000){
+      this._touchPersistAt[id]=now;
+      this.save();
+    }
+
+    return u;
+  }
   setSettings(id,s){const u=this.user(id);u.settings=normalizeSettings({...this.settings(id),...s});u.settingsVersion=Date.now();this.save();return u.settings}
   recordSettingsChange(id,before,after,meta={}){this.state.settingsAudit||={};this.state.settingsAudit[id]||=[];this.state.settingsAudit[id].push({at:Date.now(),actor:meta.actor||id,source:meta.source||'user',before,after});this.save();return this.state.settingsAudit[id].at?.(-1)||null}
   settingsHistory(id,limit=100){return (this.state.settingsAudit?.[id]||[]).slice(-Math.max(1,Math.min(500,Number(limit)||100))).reverse()}

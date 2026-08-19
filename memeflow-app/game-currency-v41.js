@@ -1,7 +1,7 @@
 (()=>{
   'use strict';
 
-  const VERSION='1.1';
+  const VERSION='1.2';
 
   const USD_KEY='memeflow.game.displayCurrency';
   const SOL_PRICE_KEY='memeflow.game.solUsd';
@@ -64,13 +64,13 @@
   function solDecimals(value){
     const n=Math.abs(Number(value)||0);
 
+    if(n===0)return 3;
     if(n>=100)return 2;
     if(n>=10)return 3;
     if(n>=1)return 3;
     if(n>=.1)return 4;
-    if(n>=.01)return 5;
 
-    return 6;
+    return 4;
   }
 
   function solTextFromUsd(usd){
@@ -229,8 +229,46 @@
     }
   }
 
+  /* MF_V64_TARGETED_CURRENCY_OBSERVER
+     Observe only UI regions that can actually contain money.
+     Do NOT watch multiplier/rocket/stage DOM every frame.
+  */
+
+  function currencyRoots(){
+    const selectors=[
+      '#balanceTop',
+
+      '#stakeValue',
+      '#paperValue',
+      '#profitValue',
+
+      '#riskDeck',
+
+      '#startHint',
+      '#mobileStartHint',
+
+      '#cashoutTelemetry',
+
+      '#statsNet',
+      '#history',
+
+      '#result',
+
+      '#mfAutoSummary'
+    ];
+
+    return selectors
+      .map(selector=>
+        document.querySelector(selector)
+      )
+      .filter(Boolean);
+  }
+
+
   function observe(){
+
     if(!observer){
+
       observer=
         new MutationObserver(
           mutations=>{
@@ -260,15 +298,23 @@
         );
     }
 
-    observer.observe(
-      document.body,
-      {
-        subtree:true,
-        childList:true,
-        characterData:true
-      }
-    );
+
+    observer.disconnect();
+
+
+    for(const root of currencyRoots()){
+
+      observer.observe(
+        root,
+        {
+          subtree:true,
+          childList:true,
+          characterData:true
+        }
+      );
+    }
   }
+
 
   function renderAllText(){
     observer?.disconnect();
@@ -408,6 +454,12 @@
     displayBet.id=
       'betInputDisplay';
 
+    /* MF_V57_LITERAL_DECIMAL_INPUT */
+    displayBet.type='text';
+    displayBet.inputMode='decimal';
+    displayBet.autocomplete='off';
+    displayBet.spellcheck=false;
+
     displayBet.removeAttribute(
       'name'
     );
@@ -433,7 +485,12 @@
       ()=>{
 
         const entered=
-          Number(displayBet.value);
+          Number(
+            String(displayBet.value||'')
+              .trim()
+              .replace(',', '.')
+              .replace(/[^0-9.+-]/g,'')
+          );
 
         if(!Number.isFinite(entered)){
           return;
@@ -477,9 +534,15 @@
       }
     );
 
+    /* MF_V57_STAKE_BLUR_NORMALIZE */
+    displayBet.addEventListener(
+      'blur',
+      ()=>syncStakeFromSource(true)
+    );
+
     setInterval(
       ()=>syncStakeFromSource(false),
-      180
+      500
     );
 
     syncStakeFromSource(true);

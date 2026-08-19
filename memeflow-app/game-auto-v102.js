@@ -1,7 +1,7 @@
 (()=>{
   'use strict';
 
-  const AUTO_VERSION='10.6';
+  const AUTO_VERSION='10.7';
 
   function bootAuto(){
     if(globalThis.__memeflowAutoPlayV104)return;
@@ -131,6 +131,33 @@
       'afterend',
       button
     );
+
+    /* MF_V61_REAL_STICKY_DOCK
+       Move the REAL controls into one persistent mobile dock.
+       Existing event listeners/references remain valid because
+       the actual DOM nodes are moved, not cloned.
+    */
+    let stickyDock=
+      document.getElementById('mfStickyActions');
+
+    if(!stickyDock){
+      stickyDock=
+        document.createElement('div');
+
+      stickyDock.id='mfStickyActions';
+      stickyDock.setAttribute(
+        'aria-label',
+        'Game actions'
+      );
+
+      document.body.appendChild(
+        stickyDock
+      );
+    }
+
+    stickyDock.appendChild(start);
+    stickyDock.appendChild(cash);
+    stickyDock.appendChild(button);
 
     // ========================================================
     // FINAL AUTO SESSION SUMMARY
