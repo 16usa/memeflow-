@@ -73,15 +73,6 @@ function marketFromEvent(e){
   if(e.realSolReserves!==null)liquiditySol=Number(e.realSolReserves)/1e9;
   return {priceSol,liquiditySol};
 }
-function executionPriceFromEvent(e){
-  // Pump base mints use 6 decimals; native SOL uses 9 decimals.
-  // TradeEvent exposes the exchanged amounts separately from fees.
-  const sol=Number(e?.solAmount)/1e9;
-  const tokens=Number(e?.tokenAmount)/1e6;
-  if(!(Number.isFinite(sol)&&sol>0&&Number.isFinite(tokens)&&tokens>0))return null;
-  const price=sol/tokens;
-  return Number.isFinite(price)&&price>0?price:null;
-}
 function tokenFromStore(store,mint){
   try{
     return store?.getToken?.(mint) ||
@@ -217,14 +208,9 @@ export function startPumpLiveTradeFeed(opts={}){
         updatedForEval=updated;
       }
 
-      // Chart is fed directly by the decoded TradeEvent and never by
-      // holder/AI/polling publishes. The engine continues using m.priceSol
-      // (bonding-curve mark); the chart uses the actual trade execution price.
-      const executionPriceSol=executionPriceFromEvent(e);
-      const chartPriceSol=
-        Number.isFinite(executionPriceSol)&&executionPriceSol>0
-          ? executionPriceSol
-          : m.priceSol;
+      // One chart authority: canonical post-trade Pump curve mark.
+      // AI, holder refreshes and candidate polling never create candle points.
+      const chartPriceSol=m.priceSol;
 
       if(Number.isFinite(chartPriceSol)&&chartPriceSol>0){
         try{
@@ -233,14 +219,11 @@ export function startPumpLiveTradeFeed(opts={}){
             mint:e.mint,
             t:eventAt,
             priceSol:chartPriceSol,
-            executionPriceSol:Number.isFinite(executionPriceSol)?executionPriceSol:null,
-            markPriceSol:Number.isFinite(m.priceSol)?m.priceSol:null,
+            markPriceSol:chartPriceSol,
             isBuy:e.isBuy===true,
             solAmount:Number(e.solAmount)/1e9,
             tokenAmount:Number(e.tokenAmount)/1e6,
-            source:Number.isFinite(executionPriceSol)
-              ? 'pump-trade-execution'
-              : 'pump-reserve-mark-fallback'
+            source:'pump-curve-mark'
           });
         }catch{}
       }
@@ -326,3 +309,4 @@ export function startPumpLiveTradeFeed(opts={}){
 
 // MEMEFLOW_TRADING_CHART_V30_4
 // MEMEFLOW_TRADING_CHART_V30_5_EXECUTION_TICKS
+// MEMEFLOW_TRADING_CHART_V30_6_CURVE_MARK

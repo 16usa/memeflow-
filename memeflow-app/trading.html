@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#03070a">
   <title>MEMEFLOW Trading Terminal</title>
-  <link rel="stylesheet" href="/trading.css?v=v305">
+  <link rel="stylesheet" href="/trading.css?v=v306">
 </head>
 <body>
   <div class="shell">
@@ -67,7 +67,7 @@
             </div>
 
             <div class="price-block">
-              <div id="tokenPrice" class="token-price">— SOL</div>
+              <div id="tokenPrice" class="token-price">$—</div>
               <div id="tokenMarket" class="token-market">MC — · BP —</div>
             </div>
           </div>
@@ -86,7 +86,7 @@
             <a class="chart-credit" href="https://www.tradingview.com/" target="_blank" rel="noopener noreferrer">TradingView Lightweight Charts™ · Copyright © 2025 TradingView, Inc.</a>
             <div id="chartEmpty" class="chart-empty">
               <strong>Live candles</strong>
-              <span>Select a token. Candles build from the existing Solana price stream.</span>
+              <span>Select a token. USD candles build from the canonical Pump curve price.</span>
             </div>
             <div id="chartLegend" class="chart-legend"></div>
           </div>
@@ -141,10 +141,10 @@
         <section class="control-section primary-control">
           <div class="section-title">Position amount</div>
           <div class="amount-box">
-            <input id="amountInput" inputmode="decimal" type="number" min="0" step="0.01" value="0.10">
+            <input id="amountInput" inputmode="decimal" type="number" min="0" step="0.01" value="10.00">
             <div class="unit-toggle" id="unitToggle">
-              <button data-unit="SOL" class="active" type="button">SOL</button>
-              <button data-unit="USD" type="button">USD</button>
+              <button data-unit="SOL" type="button">SOL</button>
+              <button data-unit="USD" class="active" type="button">USD</button>
             </div>
           </div>
           <div id="amountHint" class="field-hint">Position size used by the existing PaperEngine.</div>
@@ -255,8 +255,9 @@
   </div>
 
   <script src="https://unpkg.com/lightweight-charts@5.2.0/dist/lightweight-charts.standalone.production.js"></script>
-  <script type="module" src="/trading.js?v=v305"></script>
+  <script type="module" src="/trading.js?v=v306"></script>
   <!-- MEMEFLOW_TRADING_CHART_V30_4 -->
   <!-- MEMEFLOW_TRADING_CHART_V30_5_EXECUTION_OHLC -->
+  <!-- MEMEFLOW_TRADING_CHART_V30_6_USD_CURVE_MARK -->
 </body>
 </html>

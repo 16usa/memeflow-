@@ -16,7 +16,9 @@ const state = {
   selectedMint: null,
   selected: null,
   filter: 'all',
-  unit: 'SOL',
+  unit: 'USD',
+  solUsd: null,
+  solUsdUpdatedAt: null,
   timeframe: 1000,
   rawByMint: new Map(),
   chartSource: null,
@@ -93,21 +95,66 @@ function impliedSolUsd(candidate) {
   return null;
 }
 
+function solUsdRate(candidate = state.selected) {
+  const live = num(state.solUsd);
+  if (live > 0) return live;
+
+  const direct = impliedSolUsd(candidate);
+  if (direct > 0) return direct;
+
+  for (const row of state.candidates || []) {
+    const inferred = impliedSolUsd(row);
+    if (inferred > 0) return inferred;
+  }
+
+  return null;
+}
+
+function usdFromSol(value, candidate = state.selected) {
+  const sol = num(value);
+  const rate = solUsdRate(candidate);
+  return sol !== null && rate > 0 ? sol * rate : null;
+}
+
+async function loadSolUsd() {
+  const payload = await api('/api/market/sol-usd');
+  const next = num(payload?.priceUsd);
+
+  if (!(next > 0)) {
+    throw new Error('SOL/USD rate is unavailable.');
+  }
+
+  const previous = num(state.solUsd);
+  state.solUsd = next;
+  state.solUsdUpdatedAt = payload?.updatedAt || Date.now();
+
+  if (!previous || Math.abs(next / previous - 1) >= 0.0001) {
+    chartRuntime.dataKey = '';
+    chartRuntime.forceFit = true;
+    renderCandidates();
+    renderSelected();
+    updateAmountHint();
+    scheduleChart();
+  }
+
+  return next;
+}
+
 function amountSol() {
   const amount = num($('amountInput').value, 0);
   if (!(amount > 0)) throw new Error('Position amount must be greater than 0.');
   if (state.unit === 'SOL') return amount;
 
-  const rate = impliedSolUsd(state.selected);
+  const rate = solUsdRate();
   if (!(rate > 0)) {
-    throw new Error('USD → SOL conversion is unavailable until a selected candidate has both SOL and USD market data.');
+    throw new Error('USD → SOL conversion is temporarily unavailable.');
   }
   return amount / rate;
 }
 
 function updateAmountHint() {
   const value = num($('amountInput').value, 0);
-  const rate = impliedSolUsd(state.selected);
+  const rate = solUsdRate();
 
   if (state.unit === 'USD') {
     $('amountHint').textContent = rate > 0
@@ -170,7 +217,12 @@ function populateSettings() {
   const s = state.settings;
   if (!s) return;
 
-  $('amountInput').value = finite(s.positionSize) ? s.positionSize : 0.1;
+  const positionSol = finite(s.positionSize) ? Number(s.positionSize) : 0.1;
+  const rate = solUsdRate();
+  $('amountInput').value =
+    state.unit === 'USD' && rate > 0
+      ? (positionSol * rate).toFixed(2)
+      : positionSol;
 
   for (const key of STRATEGY_KEYS) {
     const node = $(key);
@@ -344,7 +396,7 @@ function renderCandidates() {
         </div>
         <div class="candidate-bottom">
           <span>Score ${fmt(item.score, 0)} · Holders ${fmt(item.holderCount ?? item.holders, 0)}</span>
-          <span class="candidate-price">${price ? `${fmt(price, 9)} SOL` : 'Price —'}</span>
+          <span class="candidate-price">${price ? formatPrice(usdFromSol(price, item)) : '$—'}</span>
         </div>
       </button>
     `;
@@ -430,14 +482,26 @@ function renderSelected() {
   $('tokenMint').textContent = short(c.mint, 7, 6);
 
   const price = candidatePrice(c);
-  $('tokenPrice').textContent = price > 0 ? `${fmt(price, 10)} SOL` : '— SOL';
-  $('tokenMarket').textContent = `MC ${finite(c.marketCapUsd) ? '$' + fmt(c.marketCapUsd, 0) : fmt(c.marketCapSol ?? c.marketCap, 1) + ' SOL'} · BP ${fmt(c.buyPressure, 2)}×`;
+  const priceUsd = usdFromSol(price, c);
+  const marketCapUsd =
+    num(c.marketCapUsd) ??
+    usdFromSol(c.marketCapSol ?? c.marketCap, c);
+
+  $('tokenPrice').textContent =
+    priceUsd > 0 ? formatPrice(priceUsd) : '$—';
+
+  $('tokenMarket').textContent =
+    `MC ${marketCapUsd > 0 ? '$' + fmt(marketCapUsd, 0) : '—'} · BP ${fmt(c.buyPressure, 2)}×`;
 
   $('metricScore').textContent = fmt(c.score, 0);
   $('metricHolders').textContent = fmt(c.holderCount ?? c.holders, 0);
   $('metricTop10').textContent = finite(c.top10Pct ?? c.top10) ? `${fmt(c.top10Pct ?? c.top10, 1)}%` : '—';
   $('metricDev').textContent = finite(c.developerPct ?? c.developer) ? `${fmt(c.developerPct ?? c.developer, 1)}%` : '—';
-  $('metricLiquidity').textContent = finite(c.liquidityUsd) ? `$${fmt(c.liquidityUsd, 0)}` : `${fmt(c.liquiditySol ?? c.liquidity, 2)} SOL`;
+  const liquidityUsd =
+    num(c.liquidityUsd) ??
+    usdFromSol(c.liquiditySol ?? c.liquidity, c);
+  $('metricLiquidity').textContent =
+    liquidityUsd !== null ? `$${fmt(liquidityUsd, 0)}` : '—';
 
   const avatar = $('tokenAvatar');
   const image = c.imageUrl || c.image || c.logoUrl;
@@ -461,10 +525,28 @@ function rawPoints(mint) {
 }
 
 function normalizeChartPoint(point){
+  const priceSol =
+    finite(point?.priceSol)
+      ? Number(point.priceSol)
+      : finite(point?.markPrice)
+        ? Number(point.markPrice)
+        : finite(point?.price)
+          ? Number(point.price)
+          : null;
+
+  const rate =
+    finite(point?.solUsd)
+      ? Number(point.solUsd)
+      : solUsdRate();
+
+  const priceUsd =
+    priceSol > 0 && rate > 0
+      ? priceSol * rate
+      : null;
+
   if(
     !finite(point?.t) ||
-    !finite(point?.price) ||
-    !(Number(point.price)>0)
+    !(priceUsd > 0)
   ){
     return null;
   }
@@ -472,12 +554,14 @@ function normalizeChartPoint(point){
   return {
     id:point?.id?String(point.id):null,
     t:Number(point.t),
-    price:Number(point.price),
+    price:Number(priceUsd),
+    priceSol,
+    solUsd:rate,
     source:point?.source||null,
     isBuy:point?.isBuy===true,
     solAmount:num(point?.solAmount,0),
     tokenAmount:num(point?.tokenAmount,0),
-    markPrice:finite(point?.markPrice)?Number(point.markPrice):null
+    markPrice:priceSol
   };
 }
 
@@ -729,10 +813,22 @@ function latestCandleFor(points,timeframe){
 
 function strategyLevels() {
   if (!state.selectedMint) return [];
-  const position = state.positions.find(p => p.status === 'OPEN' && p.mint === state.selectedMint);
-  const entry = num(position?.entryPriceSol, candidatePrice(state.selected));
-  if (!(entry > 0)) return [];
 
+  const rate = solUsdRate();
+  if (!(rate > 0)) return [];
+
+  const position = state.positions.find(
+    p => p.status === 'OPEN' && p.mint === state.selectedMint
+  );
+
+  const entrySol = num(
+    position?.entryPriceSol,
+    candidatePrice(state.selected)
+  );
+
+  if (!(entrySol > 0)) return [];
+
+  const entry = entrySol * rate;
   const hard = num($('hardStopPct').value, state.settings?.hardStopPct);
   const tp1 = num($('tp1Pct').value, state.settings?.tp1Pct);
   const tp2 = num($('tp2Pct').value, state.settings?.tp2Pct);
@@ -741,9 +837,15 @@ function strategyLevels() {
 
   return [
     { label: 'ENTRY', price: entry, kind: 'entry' },
-    hard > 0 ? { label: `SL -${fmt(hard, 1)}%`, price: entry * (1 - hard / 100), kind: 'stop' } : null,
-    tp1 > 0 ? { label: `TP1 +${fmt(tp1, 0)}% · SELL ${fmt(tp1Sell, 0)}%`, price: entry * (1 + tp1 / 100), kind: 'tp' } : null,
-    tp2 > 0 ? { label: `TP2 +${fmt(tp2, 0)}% · SELL ${fmt(tp2Sell, 0)}%`, price: entry * (1 + tp2 / 100), kind: 'tp2' } : null
+    hard > 0
+      ? { label: `SL -${fmt(hard, 1)}%`, price: entry * (1 - hard / 100), kind: 'stop' }
+      : null,
+    tp1 > 0
+      ? { label: `TP1 +${fmt(tp1, 0)}% · SELL ${fmt(tp1Sell, 0)}%`, price: entry * (1 + tp1 / 100), kind: 'tp' }
+      : null,
+    tp2 > 0
+      ? { label: `TP2 +${fmt(tp2, 0)}% · SELL ${fmt(tp2Sell, 0)}%`, price: entry * (1 + tp2 / 100), kind: 'tp2' }
+      : null
   ].filter(Boolean);
 }
 
@@ -1120,6 +1222,10 @@ function updateRealtimeChart(mint){
     points.length,
     chartRuntime.offscreenLevels||[]
   );
+
+  if(mint===state.selectedMint){
+    $('tokenPrice').textContent=formatPrice(last.close);
+  }
 }
 
 function drawChart() {
@@ -1213,6 +1319,8 @@ function drawChart() {
     offscreen
   );
 
+  $('tokenPrice').textContent=formatPrice(last.close);
+
   if(
     chartRuntime.forceFit ||
     contextChanged
@@ -1228,41 +1336,46 @@ function drawChart() {
 }
 
 function formatPrice(price) {
-  if (!finite(price)) return '—';
+  if (!finite(price)) return '$—';
 
   const p = Number(price);
+  if (!(p >= 0)) return '$—';
 
-  if (!(p >= 0)) return '—';
+  let body;
 
   if (p >= 1000) {
-    return p.toLocaleString(
+    body = p.toLocaleString(
       undefined,
       {maximumFractionDigits:2}
     );
+  } else if (p >= 1) {
+    body = p.toFixed(4);
+  } else if (p >= .01) {
+    body = p.toFixed(6);
+  } else if (p >= .0001) {
+    body = p.toFixed(8);
+  } else if (p === 0) {
+    body = '0';
+  } else {
+    const magnitude =
+      Math.floor(Math.log10(Math.abs(p)));
+
+    const decimals =
+      Math.max(
+        8,
+        Math.min(
+          14,
+          -magnitude + 4
+        )
+      );
+
+    body = p
+      .toFixed(decimals)
+      .replace(/0+$/,'')
+      .replace(/\.$/,'');
   }
 
-  if (p >= 1) return p.toFixed(4);
-  if (p >= .01) return p.toFixed(6);
-  if (p >= .0001) return p.toFixed(8);
-
-  if (p === 0) return '0';
-
-  const magnitude =
-    Math.floor(Math.log10(Math.abs(p)));
-
-  const decimals =
-    Math.max(
-      8,
-      Math.min(
-        14,
-        -magnitude + 4
-      )
-    );
-
-  return p
-    .toFixed(decimals)
-    .replace(/0+$/,'')
-    .replace(/\.$/,'');
+  return `$${body}`;
 }
 
 async function loadPaper() {
@@ -1417,8 +1530,34 @@ function bind() {
 
   document.querySelectorAll('#unitToggle button').forEach(button => {
     button.addEventListener('click', () => {
-      state.unit = button.dataset.unit;
-      document.querySelectorAll('#unitToggle button').forEach(b => b.classList.toggle('active', b === button));
+      const nextUnit = button.dataset.unit;
+      if (nextUnit === state.unit) return;
+
+      const rate = solUsdRate();
+      const value = num($('amountInput').value, 0);
+
+      if (!(rate > 0)) {
+        showError('SOL/USD conversion is temporarily unavailable.');
+        return;
+      }
+
+      if (state.unit === 'SOL' && nextUnit === 'USD') {
+        $('amountInput').value = (value * rate).toFixed(2);
+      } else if (state.unit === 'USD' && nextUnit === 'SOL') {
+        $('amountInput').value = (value / rate).toFixed(5);
+      }
+
+      state.unit = nextUnit;
+
+      document
+        .querySelectorAll('#unitToggle button')
+        .forEach(
+          b => b.classList.toggle(
+            'active',
+            b.dataset.unit === state.unit
+          )
+        );
+
       updateAmountHint();
     });
   });
@@ -1450,6 +1589,13 @@ async function poll() {
 
 async function init() {
   bind();
+
+  try {
+    await loadSolUsd();
+  } catch (error) {
+    console.warn('[MEMEFLOW USD]', error);
+  }
+
   try {
     await loadSettings();
   } catch (error) {
@@ -1458,6 +1604,14 @@ async function init() {
 
   await poll();
   setInterval(poll, 1800);
+
+  setInterval(
+    () => loadSolUsd().catch(
+      error => console.warn('[MEMEFLOW USD]', error)
+    ),
+    15_000
+  );
+
   scheduleChart();
 }
 
@@ -1469,3 +1623,4 @@ init();
 
 /* MEMEFLOW_TRADING_CHART_V30_4 */
 /* MEMEFLOW_TRADING_CHART_V30_5_EXECUTION_OHLC */
+/* MEMEFLOW_TRADING_CHART_V30_6_USD_CURVE_MARK */

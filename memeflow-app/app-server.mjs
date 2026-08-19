@@ -88,6 +88,152 @@ const __MF_CHART_MIN_GAP_MS=Math.max(
   Math.min(1000,Number(process.env.CHART_HISTORY_MIN_GAP_MS||500))
 );
 
+// MEMEFLOW_TRADING_CHART_V30_6_SOL_USD_CACHE
+const __MF_WSOL_MINT='So11111111111111111111111111111111111111112';
+const __MF_SOL_USD_REFRESH_MS=15_000;
+const __mfSolUsd={
+  price:null,
+  updatedAt:0,
+  pair:null,
+  error:null,
+  inFlight:null
+};
+
+function __mfValidSolUsd(value){
+  const n=Number(value);
+  return Number.isFinite(n)&&n>5&&n<5000?n:null;
+}
+
+function __mfSolUsdNow(){
+  return __mfValidSolUsd(__mfSolUsd.price);
+}
+
+async function __mfRefreshSolUsd(force=false){
+  const now=Date.now();
+  const cached=__mfSolUsdNow();
+
+  if(
+    !force &&
+    cached &&
+    now-Number(__mfSolUsd.updatedAt||0)<__MF_SOL_USD_REFRESH_MS
+  ){
+    return cached;
+  }
+
+  if(__mfSolUsd.inFlight){
+    return __mfSolUsd.inFlight;
+  }
+
+  const task=(async()=>{
+    const controller=new AbortController();
+    const timeout=setTimeout(()=>controller.abort(),4000);
+
+    try{
+      const response=await fetch(
+        `https://api.dexscreener.com/token-pairs/v1/solana/${__MF_WSOL_MINT}`,
+        {
+          headers:{
+            accept:'application/json',
+            'user-agent':'MEMEFLOW/1.0'
+          },
+          signal:controller.signal
+        }
+      );
+
+      if(!response.ok){
+        throw new Error(`DEX Screener SOL/USD HTTP ${response.status}`);
+      }
+
+      const body=await response.json();
+      const rows=Array.isArray(body)?body:[];
+
+      const direct=rows
+        .filter(row=>
+          row?.chainId==='solana' &&
+          row?.baseToken?.address===__MF_WSOL_MINT &&
+          __mfValidSolUsd(row?.priceUsd)
+        )
+        .sort(
+          (a,b)=>
+            Number(b?.liquidity?.usd||0)-
+            Number(a?.liquidity?.usd||0)
+        );
+
+      let price=direct.length
+        ? __mfValidSolUsd(direct[0]?.priceUsd)
+        : null;
+      let pair=direct[0]?.pairAddress||null;
+
+      if(!price){
+        const inverse=rows
+          .map(row=>{
+            if(
+              row?.chainId!=='solana' ||
+              row?.quoteToken?.address!==__MF_WSOL_MINT
+            )return null;
+
+            const baseUsd=Number(row?.priceUsd);
+            const baseInSol=Number(row?.priceNative);
+            const inferred=
+              Number.isFinite(baseUsd)&&baseUsd>0&&
+              Number.isFinite(baseInSol)&&baseInSol>0
+                ? baseUsd/baseInSol
+                : null;
+
+            const px=__mfValidSolUsd(inferred);
+            if(!px)return null;
+
+            return {
+              price:px,
+              pair:row?.pairAddress||null,
+              liquidity:Number(row?.liquidity?.usd||0)
+            };
+          })
+          .filter(Boolean)
+          .sort((a,b)=>b.liquidity-a.liquidity);
+
+        if(inverse.length){
+          price=inverse[0].price;
+          pair=inverse[0].pair;
+        }
+      }
+
+      if(!price){
+        throw new Error('DEX Screener returned no usable SOL/USD pool');
+      }
+
+      __mfSolUsd.price=price;
+      __mfSolUsd.updatedAt=Date.now();
+      __mfSolUsd.pair=pair;
+      __mfSolUsd.error=null;
+      return price;
+    }catch(error){
+      __mfSolUsd.error=String(error?.message||error);
+      return __mfSolUsdNow();
+    }finally{
+      clearTimeout(timeout);
+    }
+  })();
+
+  __mfSolUsd.inFlight=task;
+
+  try{
+    return await task;
+  }finally{
+    if(__mfSolUsd.inFlight===task){
+      __mfSolUsd.inFlight=null;
+    }
+  }
+}
+
+__mfRefreshSolUsd(true).catch(()=>{});
+
+const __mfSolUsdTimer=setInterval(
+  ()=>__mfRefreshSolUsd(true).catch(()=>{}),
+  __MF_SOL_USD_REFRESH_MS
+);
+__mfSolUsdTimer.unref?.();
+
 function __mfChartRecord(mint,price,at=Date.now(),source=null,id=null,meta={}){
   const p=Number(price);
   const ts=Number(at);
@@ -165,16 +311,17 @@ function __mfChartRecord(mint,price,at=Date.now(),source=null,id=null,meta={}){
   }
 
   if(__mfChartHistory.size>__MF_CHART_MAX_MINTS){
+    const removeCount=
+      __mfChartHistory.size-__MF_CHART_MAX_MINTS;
+
     const old=[...__mfChartHistory.values()]
+      .filter(item=>!(streams.get(item.mint)?.size))
       .sort(
         (a,b)=>
           Number(a.lastSeenAt||0)-
           Number(b.lastSeenAt||0)
       )
-      .slice(
-        0,
-        __mfChartHistory.size-__MF_CHART_MAX_MINTS
-      );
+      .slice(0,removeCount);
 
     for(const item of old){
       __mfChartHistory.delete(item.mint);
@@ -206,7 +353,7 @@ function __mfChartSnapshot(mint){
     (__mfChartHistory.get(mint)?.points||[])
       .slice(-__MF_CHART_MAX_POINTS);
 
-  const lastSource=points[points.length-1]?.source||'pump-trade-execution';
+  const lastSource=points[points.length-1]?.source||'pump-curve-mark';
   return {
     points,
     status:{
@@ -214,7 +361,9 @@ function __mfChartSnapshot(mint){
       source:lastSource,
       historyPoints:points.length,
       directTradeTicks:true,
-      executionPriceTicks:lastSource==='pump-trade-execution'
+      executionPriceTicks:false,
+      canonicalCurveMark:true,
+      currency:'SOL'
     }
   };
 }
@@ -234,7 +383,7 @@ function __mfChartTradeTick(tick){
     return false;
   }
 
-  const source=tick?.source||'pump-trade-execution';
+  const source=tick?.source||'pump-curve-mark';
 
   // A snapshot may have been seeded with the engine's reserve mark before the
   // first real trade arrived. Remove that seed as soon as real execution data
@@ -286,7 +435,9 @@ function __mfChartTradeTick(tick){
         stale:false,
         source,
         directTradeTicks:true,
-        executionPriceTicks:source==='pump-trade-execution'
+        executionPriceTicks:false,
+        canonicalCurveMark:true,
+        currency:'SOL'
       }
     })}\n\n`;
 
@@ -1798,6 +1949,35 @@ async function handler(req,res){const url=new URL(req.url,'http://x');
  if(url.pathname==='/api/billing/webhook'&&req.method==='POST'){const raw=await rawBody(req);try{billing.verify(raw,req.headers['stripe-signature']);const result=billing.processEvent(JSON.parse(raw));return json(res,200,{received:true,...result})}catch(e){return json(res,e.code==='BAD_SIGNATURE'?400:500,{error:e.code||'WEBHOOK_ERROR',message:e.message})}}
  // Health check — no session or store needed; must respond immediately
  if(url.pathname==='/api/healthz'||url.pathname==='/api/health')return json(res,200,{ok:true,server:'online',version:'1.0.1-clean',timestamp:new Date().toISOString()});
+ if(url.pathname==='/api/market/sol-usd'&&req.method==='GET'){
+  const tooOld=
+    !__mfSolUsdNow() ||
+    Date.now()-Number(__mfSolUsd.updatedAt||0)>(__MF_SOL_USD_REFRESH_MS*2);
+
+  if(tooOld){
+    await __mfRefreshSolUsd(true).catch(()=>{});
+  }
+
+  const priceUsd=__mfSolUsdNow();
+
+  return json(
+    res,
+    priceUsd?200:503,
+    {
+      ok:Boolean(priceUsd),
+      symbol:'SOL',
+      currency:'USD',
+      priceUsd,
+      source:'dexscreener',
+      pair:__mfSolUsd.pair,
+      updatedAt:__mfSolUsd.updatedAt||null,
+      stale:
+        !priceUsd ||
+        Date.now()-Number(__mfSolUsd.updatedAt||0)>120_000,
+      error:priceUsd?null:__mfSolUsd.error
+    }
+  );
+ }
  // Static files — served before session creation to avoid blocking store.save() on new users
  if(req.method==='GET'&&!url.pathname.startsWith('/api/')){
    const p=url.pathname==='/'?'index.html':(url.pathname==='/game'||url.pathname==='/game/')?'game.html':url.pathname.slice(1);const f=path.resolve(root,p); // MF_PEPE_ROCKET_GAME_ROUTE_ALIAS
