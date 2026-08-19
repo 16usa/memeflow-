@@ -221,14 +221,12 @@ async function saveSettings(mode = null) {
   const strategy = strategyFromUI();
   const sizeSol = amountSol();
 
+  // Trading Terminal owns only trading/risk fields. Never overwrite
+  // discovery platform, AI profile, or unrelated System settings here.
   const next = {
     ...state.settings,
     ...strategy,
-    positionSize: sizeSol,
-    maxPositionSize: num(state.settings.maxPositionSize, 0.5),
-    launchPlatforms: ['pump'],
-    aiChangePolicy: 'propose',
-    adaptiveProfile: false
+    positionSize: sizeSol
   };
 
   if (mode === 'automate') {
@@ -456,96 +454,83 @@ function renderSelected() {
 }
 
 function rawPoints(mint) {
-  if (!state.rawByMint.has(mint)) {
-    let points = [];
-
-    try {
-      // New cache namespace: V30.2 contained fake publish ticks and the
-      // premature candidate seed, so none of it is reused.
-      const saved = JSON.parse(
-        sessionStorage.getItem(
-          `mfchart:v4:${mint}`
-        ) || '[]'
-      );
-
-      if (Array.isArray(saved)) {
-        points = saved
-          .filter(
-            p =>
-              finite(p?.t) &&
-              finite(p?.price) &&
-              Number(p.price) > 0
-          )
-          .map(p => ({
-            t:Number(p.t),
-            price:Number(p.price),
-            source:p.source||null
-          }))
-          .sort((a,b)=>a.t-b.t)
-          .slice(-1800);
-      }
-    } catch {}
-
-    state.rawByMint.set(
-      mint,
-      points
-    );
+  if(!state.rawByMint.has(mint)){
+    state.rawByMint.set(mint,[]);
   }
-
   return state.rawByMint.get(mint);
 }
 
-function addPoint(mint, t, price, source = 'live', redraw = true) {
+function normalizeChartPoint(point){
   if(
-    !mint ||
-    !(num(price)>0)
+    !finite(point?.t) ||
+    !finite(point?.price) ||
+    !(Number(point.price)>0)
   ){
-    return false;
+    return null;
   }
+
+  return {
+    id:point?.id?String(point.id):null,
+    t:Number(point.t),
+    price:Number(point.price),
+    source:point?.source||null,
+    isBuy:point?.isBuy===true,
+    solAmount:num(point?.solAmount,0),
+    tokenAmount:num(point?.tokenAmount,0),
+    markPrice:finite(point?.markPrice)?Number(point.markPrice):null
+  };
+}
+
+function replaceChartSnapshot(mint,incoming){
+  const seen=new Set();
+  const points=(Array.isArray(incoming)?incoming:[])
+    .map(normalizeChartPoint)
+    .filter(Boolean)
+    .sort((a,b)=>a.t-b.t)
+    .filter(point=>{
+      if(!point.id)return true;
+      if(seen.has(point.id))return false;
+      seen.add(point.id);
+      return true;
+    })
+    .slice(-6000);
+
+  state.rawByMint.set(mint,points);
+  chartRuntime.dataKey='';
+  chartRuntime.forceFit=true;
+  chartRuntime.lastCandleTime=null;
+  chartRuntime.candleCount=0;
+}
+
+function addPoint(mint,point,redraw=true) {
+  if(!mint)return false;
+
+  const next=normalizeChartPoint(point);
+  if(!next)return false;
 
   const points=rawPoints(mint);
-  const ts=num(t,Date.now());
-  const p=num(price);
+  const last=points[points.length-1];
 
-  if(
-    !(ts>0) ||
-    !(p>0)
-  ){
-    return false;
+  // Server history already de-duplicates by transaction signature + event index.
+  // Do not rescan the whole browser history on every tick.
+  const late=Boolean(last && next.t<last.t);
+  points.push(next);
+
+  if(late){
+    points.sort((a,b)=>a.t-b.t);
   }
-
-  const duplicate=points.some(
-    point =>
-      Number(point.t)===ts &&
-      Number(point.price)===p
-  );
-
-  if(duplicate)return false;
-
-  points.push({
-    t:ts,
-    price:p,
-    source:source||null
-  });
-
-  points.sort((a,b)=>a.t-b.t);
 
   if(points.length>8000){
-    points.splice(
-      0,
-      points.length-8000
-    );
+    points.splice(0,points.length-8000);
   }
 
-  try{
-    sessionStorage.setItem(
-      `mfchart:v4:${mint}`,
-      JSON.stringify(points.slice(-5000))
-    );
-  }catch{}
-
   if(redraw){
-    updateRealtimeChart(mint);
+    if(late){
+      chartRuntime.dataKey='';
+      scheduleChart();
+    }else{
+      updateRealtimeChart(mint);
+    }
   }
 
   return true;
@@ -559,154 +544,187 @@ function connectChartStream(mint) {
 
   if(!mint || !window.EventSource)return;
 
+  $('feedState').textContent='CONNECTING';
+
   const source=new EventSource(
     `/api/chart/stream?tokenAddress=${encodeURIComponent(mint)}`
   );
-
   source.__mint=mint;
 
-  const applyPayload=(event,isSnapshot)=>{
+  const parseIncoming=event=>{
+    const payload=JSON.parse(event.data||'{}');
+    const incoming=[];
+    if(payload.point)incoming.push(payload.point);
+    if(Array.isArray(payload.points))incoming.push(...payload.points);
+    return {payload,incoming};
+  };
+
+  source.addEventListener('snapshot',event=>{
     try{
-      const payload=JSON.parse(event.data||'{}');
-      const incoming=[];
+      const {payload,incoming}=parseIncoming(event);
+      replaceChartSnapshot(mint,incoming);
+      $('feedState').textContent=
+        payload?.status?.stale===false || incoming.length
+          ? 'LIVE'
+          : 'WAITING';
+      scheduleChart();
+    }catch(error){
+      console.warn('[MEMEFLOW CHART] snapshot',error);
+    }
+  });
 
-      if(payload.point)incoming.push(payload.point);
-      if(Array.isArray(payload.points))incoming.push(...payload.points);
-
+  source.addEventListener('update',event=>{
+    try{
+      const {payload,incoming}=parseIncoming(event);
       let changed=false;
-
-      incoming
-        .filter(
-          point =>
-            finite(point?.t) &&
-            finite(point?.price) &&
-            Number(point.price)>0
-        )
-        .sort((a,b)=>Number(a.t)-Number(b.t))
-        .forEach(point=>{
-          changed=
-            addPoint(
-              mint,
-              point.t,
-              point.price,
-              point.source||payload?.status?.source||'pump-ws-trade-event',
-              false
-            ) || changed;
-        });
-
-      if(isSnapshot){
-        chartRuntime.forceFit=true;
-        scheduleChart();
-      }else if(changed){
-        updateRealtimeChart(mint);
+      for(const point of incoming){
+        changed=addPoint(mint,point,false)||changed;
       }
-
-      if(
-        payload?.status?.stale===false ||
-        incoming.length
-      ){
+      if(changed)updateRealtimeChart(mint);
+      if(payload?.status?.stale===false || incoming.length){
         $('feedState').textContent='LIVE';
       }
     }catch(error){
-      console.warn('[MEMEFLOW CHART] SSE payload',error);
+      console.warn('[MEMEFLOW CHART] update',error);
     }
-  };
-
-  source.addEventListener(
-    'snapshot',
-    event=>applyPayload(event,true)
-  );
-
-  source.addEventListener(
-    'update',
-    event=>applyPayload(event,false)
-  );
+  });
 
   source.onerror=()=>{
     $('feedState').textContent='RECONNECTING';
   };
 
   source.onopen=()=>{
-    $('feedState').textContent='LIVE';
+    $('feedState').textContent='CONNECTED';
   };
 
   state.chartSource=source;
 }
 
+function chartInterval(points,timeframe){
+  if(timeframe!=='all'){
+    return Math.max(1000,Number(timeframe)||1000);
+  }
+
+  const clean=(Array.isArray(points)?points:[])
+    .filter(point=>finite(point?.t));
+
+  if(clean.length<2)return 1000;
+
+  const span=Math.max(
+    1,
+    Number(clean[clean.length-1].t)-Number(clean[0].t)
+  );
+  const raw=Math.ceil(span/100);
+  const steps=[
+    1000,5000,15000,30000,
+    60000,300000,900000,
+    3600000
+  ];
+  return steps.find(step=>step>=raw)||3600000;
+}
+
 function candlesFor(points, timeframe) {
   const clean=(Array.isArray(points)?points:[])
     .filter(
-      point =>
+      point=>
         finite(point?.t) &&
         finite(point?.price) &&
         Number(point.price)>0
-    )
-    .map(point=>({
-      t:Number(point.t),
-      price:Number(point.price)
-    }))
-    .sort((a,b)=>a.t-b.t);
+    );
 
   if(!clean.length)return [];
 
-  let interval;
-
-  if(timeframe==='all'){
-    const span=Math.max(
-      1,
-      clean[clean.length-1].t-clean[0].t
-    );
-
-    // Around 100 visible bars for All.
-    const raw=Math.ceil(span/100);
-    const steps=[
-      1000,5000,15000,30000,
-      60000,300000,900000,
-      3600000
-    ];
-
-    interval=
-      steps.find(step=>step>=raw)||
-      3600000;
-  }else{
-    interval=Math.max(
-      1000,
-      Number(timeframe)||1000
-    );
-  }
-
-  const buckets=new Map();
+  const interval=chartInterval(clean,timeframe);
+  const candles=[];
+  let candle=null;
 
   for(const point of clean){
+    const price=Number(point.price);
     const bucket=
-      Math.floor(point.t/interval)*interval;
+      Math.floor(Number(point.t)/interval)*interval;
 
-    let candle=buckets.get(bucket);
-
-    if(!candle){
+    if(!candle || candle.t!==bucket){
       candle={
         t:bucket,
-        open:point.price,
-        high:point.price,
-        low:point.price,
-        close:point.price,
+        open:price,
+        high:price,
+        low:price,
+        close:price,
         samples:1,
         interval
       };
-
-      buckets.set(bucket,candle);
+      candles.push(candle);
       continue;
     }
 
-    candle.high=Math.max(candle.high,point.price);
-    candle.low=Math.min(candle.low,point.price);
-    candle.close=point.price;
+    candle.high=Math.max(candle.high,price);
+    candle.low=Math.min(candle.low,price);
+    candle.close=price;
     candle.samples++;
   }
 
-  return [...buckets.values()]
-    .sort((a,b)=>a.t-b.t)
-    .slice(-500);
+  return candles.slice(-500);
+}
+
+function latestCandleFor(points,timeframe){
+  if(timeframe==='all')return null;
+  if(!Array.isArray(points)||!points.length)return null;
+
+  const interval=Math.max(1000,Number(timeframe)||1000);
+  let i=points.length-1;
+
+  while(i>=0 && !(
+    finite(points[i]?.t) &&
+    finite(points[i]?.price) &&
+    Number(points[i].price)>0
+  ))i--;
+
+  if(i<0)return null;
+
+  const bucket=
+    Math.floor(Number(points[i].t)/interval)*interval;
+
+  let first=i;
+  while(
+    first>0 &&
+    Number(points[first-1]?.t)>=bucket
+  ){
+    first--;
+  }
+
+  let candle=null;
+  for(let j=first;j<=i;j++){
+    const point=points[j];
+    if(
+      !finite(point?.t) ||
+      !finite(point?.price) ||
+      Number(point.price)<=0
+    )continue;
+
+    const pointBucket=
+      Math.floor(Number(point.t)/interval)*interval;
+    if(pointBucket!==bucket)continue;
+
+    const price=Number(point.price);
+    if(!candle){
+      candle={
+        t:bucket,
+        open:price,
+        high:price,
+        low:price,
+        close:price,
+        samples:1,
+        interval
+      };
+    }else{
+      candle.high=Math.max(candle.high,price);
+      candle.low=Math.min(candle.low,price);
+      candle.close=price;
+      candle.samples++;
+    }
+  }
+
+  return candle;
 }
 
 function strategyLevels() {
@@ -739,7 +757,10 @@ const chartRuntime={
   timeframe:null,
   raf:null,
   forceFit:true,
-  initialized:false
+  initialized:false,
+  candleCount:0,
+  lastCandleTime:null,
+  offscreenLevels:[]
 };
 
 function ensureChartEngine(){
@@ -930,7 +951,8 @@ function refreshStrategyPriceLines(candles){
   const key=JSON.stringify(
     levels.map(level=>[
       level.label,
-      Number(level.price)
+      Number(level.price),
+      level.price>=visibleMin && level.price<=visibleMax
     ])
   );
 
@@ -1035,12 +1057,19 @@ function updateRealtimeChart(mint){
     return;
   }
 
-  const candles=candlesFor(
-    rawPoints(mint),
+  if(state.timeframe==='all'){
+    chartRuntime.dataKey='';
+    scheduleChart();
+    return;
+  }
+
+  const points=rawPoints(mint);
+  const last=latestCandleFor(
+    points,
     state.timeframe
   );
 
-  if(!candles.length){
+  if(!last){
     scheduleChart();
     return;
   }
@@ -1051,44 +1080,45 @@ function updateRealtimeChart(mint){
 
   if(runtimeChanged){
     chartRuntime.forceFit=true;
+    chartRuntime.dataKey='';
     scheduleChart();
     return;
   }
-
-  const last=candles[candles.length-1];
 
   try{
     chartRuntime.series.update(
       chartCandle(last)
     );
   }catch{
+    chartRuntime.dataKey='';
     scheduleChart();
     return;
   }
 
-  const lastPoint=rawPoints(mint).at(-1);
+  if(chartRuntime.lastCandleTime!==last.t){
+    if(
+      chartRuntime.lastCandleTime!==null &&
+      last.t>chartRuntime.lastCandleTime
+    ){
+      chartRuntime.candleCount++;
+    }
+    chartRuntime.lastCandleTime=last.t;
+  }
 
+  const lastPoint=points[points.length-1];
   chartRuntime.dataKey=[
     mint,
     String(state.timeframe),
-    rawPoints(mint).length,
+    points.length,
     Number(lastPoint?.t||0),
     Number(lastPoint?.price||0)
   ].join('|');
 
-  const offscreen=refreshStrategyPriceLines(candles);
-
-  const totalTicks=candles.reduce(
-    (sum,candle)=>
-      sum+Number(candle.samples||0),
-    0
-  );
-
   renderLegend(
     last,
-    candles.length,
-    totalTicks,
-    offscreen
+    chartRuntime.candleCount||1,
+    points.length,
+    chartRuntime.offscreenLevels||[]
   );
 }
 
@@ -1145,6 +1175,8 @@ function drawChart() {
     chartRuntime.dataKey=dataKey;
     chartRuntime.mint=state.selectedMint;
     chartRuntime.timeframe=state.timeframe;
+    chartRuntime.candleCount=candles.length;
+    chartRuntime.lastCandleTime=candles[candles.length-1]?.t??null;
   }
 
   chartRuntime.api.timeScale().applyOptions({
@@ -1164,6 +1196,7 @@ function drawChart() {
   const offscreen=refreshStrategyPriceLines(
     candles
   );
+  chartRuntime.offscreenLevels=offscreen;
 
   const last=candles[candles.length-1];
 
@@ -1435,3 +1468,4 @@ init();
 /* MEMEFLOW_TRADING_CHART_V30_3_1 */
 
 /* MEMEFLOW_TRADING_CHART_V30_4 */
+/* MEMEFLOW_TRADING_CHART_V30_5_EXECUTION_OHLC */

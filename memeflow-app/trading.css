@@ -836,9 +836,12 @@ button { cursor: pointer; }
     max-height: none;
   }
 
-  .candidates-panel { order: 2; }
-  .center-stack { order: 1; width: 100%; }
-  .control-panel { order: 3; }
+  .center-stack { display: contents; }
+  .chart-panel { order: 1; width: 100%; }
+  .control-panel { order: 2; width: 100%; }
+  .positions-panel { order: 3; width: 100%; }
+  .history-panel { order: 4; width: 100%; }
+  .candidates-panel { order: 5; width: 100%; }
 
   .candidate-list {
     max-height: 240px;
@@ -884,6 +887,9 @@ button { cursor: pointer; }
   .amount-box input { font-size: 16px; }
 }
 
+
+/* MEMEFLOW_TRADING_CHART_V30_5
+   Execution-price OHLC + mobile control placement. No global visual overrides. */
 
 /* MEMEFLOW_TRADING_CHART_V30_4
    Lightweight Charts host only. No global design overrides. */

@@ -88,7 +88,7 @@ const __MF_CHART_MIN_GAP_MS=Math.max(
   Math.min(1000,Number(process.env.CHART_HISTORY_MIN_GAP_MS||500))
 );
 
-function __mfChartRecord(mint,price,at=Date.now(),source=null){
+function __mfChartRecord(mint,price,at=Date.now(),source=null,id=null,meta={}){
   const p=Number(price);
   const ts=Number(at);
 
@@ -108,40 +108,60 @@ function __mfChartRecord(mint,price,at=Date.now(),source=null){
     row={
       mint,
       points:[],
+      seenIds:new Set(),
       lastSeenAt:ts
     };
     __mfChartHistory.set(mint,row);
   }
 
+  row.seenIds ||= new Set();
   row.lastSeenAt=Math.max(
     Number(row.lastSeenAt||0),
     ts
   );
 
-  const last=
-    row.points[row.points.length-1];
+  const pointId=id?String(id):null;
+  if(pointId && row.seenIds.has(pointId)){
+    return false;
+  }
 
-  // Exact duplicate = same canonical price observation.
-  // Do not throttle distinct TradeEvents: 1s OHLC needs all of them.
+  const last=row.points[row.points.length-1];
+
   if(
+    !pointId &&
     last &&
+    !last.id &&
     Number(last.t)===ts &&
-    Number(last.price)===p
+    Number(last.price)===p &&
+    String(last.source||'')===String(source||'')
   ){
     return false;
   }
 
-  row.points.push({
+  const point={
     t:ts,
     price:p,
-    source:source||null
-  });
+    source:source||null,
+    id:pointId,
+    isBuy:meta?.isBuy===true,
+    solAmount:Number(meta?.solAmount)||0,
+    tokenAmount:Number(meta?.tokenAmount)||0,
+    markPrice:Number.isFinite(Number(meta?.markPriceSol))
+      ? Number(meta.markPriceSol)
+      : null
+  };
+
+  row.points.push(point);
+  if(pointId)row.seenIds.add(pointId);
 
   if(row.points.length>__MF_CHART_MAX_POINTS){
-    row.points.splice(
+    const removed=row.points.splice(
       0,
       row.points.length-__MF_CHART_MAX_POINTS
     );
+    for(const item of removed){
+      if(item?.id)row.seenIds.delete(item.id);
+    }
   }
 
   if(__mfChartHistory.size>__MF_CHART_MAX_MINTS){
@@ -186,13 +206,15 @@ function __mfChartSnapshot(mint){
     (__mfChartHistory.get(mint)?.points||[])
       .slice(-__MF_CHART_MAX_POINTS);
 
+  const lastSource=points[points.length-1]?.source||'pump-trade-execution';
   return {
     points,
     status:{
       stale:points.length===0,
-      source:'pump-ws-trade-event',
+      source:lastSource,
       historyPoints:points.length,
-      directTradeTicks:true
+      directTradeTicks:true,
+      executionPriceTicks:lastSource==='pump-trade-execution'
     }
   };
 }
@@ -212,11 +234,32 @@ function __mfChartTradeTick(tick){
     return false;
   }
 
+  const source=tick?.source||'pump-trade-execution';
+
+  // A snapshot may have been seeded with the engine's reserve mark before the
+  // first real trade arrived. Remove that seed as soon as real execution data
+  // exists so it can never contaminate the first OHLC candle.
+  const existing=__mfChartHistory.get(mint);
+  if(
+    existing?.points?.length===1 &&
+    existing.points[0]?.source==='current-price-seed'
+  ){
+    existing.points.length=0;
+    existing.seenIds?.clear?.();
+  }
+
   const added=__mfChartRecord(
     mint,
     price,
     at,
-    tick?.source||'pump-ws-trade-event'
+    source,
+    tick?.id||null,
+    {
+      isBuy:tick?.isBuy===true,
+      solAmount:tick?.solAmount,
+      tokenAmount:tick?.tokenAmount,
+      markPriceSol:tick?.markPriceSol
+    }
   );
 
   if(!added)return false;
@@ -228,16 +271,22 @@ function __mfChartTradeTick(tick){
     `event: update\n`+
     `data: ${JSON.stringify({
       point:{
+        id:tick?.id||null,
         t:at,
         price,
-        source:tick?.source||'pump-ws-trade-event',
+        source,
         isBuy:tick?.isBuy===true,
-        solAmount:Number(tick?.solAmount)||0
+        solAmount:Number(tick?.solAmount)||0,
+        tokenAmount:Number(tick?.tokenAmount)||0,
+        markPrice:Number.isFinite(Number(tick?.markPriceSol))
+          ? Number(tick.markPriceSol)
+          : null
       },
       status:{
         stale:false,
-        source:'pump-ws-trade-event',
-        directTradeTicks:true
+        source,
+        directTradeTicks:true,
+        executionPriceTicks:source==='pump-trade-execution'
       }
     })}\n\n`;
 
@@ -249,6 +298,7 @@ function __mfChartTradeTick(tick){
 
   return true;
 }
+
 // MEMEFLOW_V31_REAL_EVENT_WEB
 // MEMEFLOW_V31_REAL_EVENT_WEB — read-only System View event stream.
 // No work is done on the hot path unless at least one System View is connected.

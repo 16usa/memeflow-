@@ -67,11 +67,20 @@ function programData(log){
 function marketFromEvent(e){
   let priceSol=null,liquiditySol=null;
   if(e.virtualSolReserves>0n && e.virtualTokenReserves>0n){
-    // SOL has 9 decimals, Pump token commonly has 6 decimals.
+    // Canonical post-trade bonding-curve mark price used by the engine.
     priceSol=(Number(e.virtualSolReserves)/1e9)/(Number(e.virtualTokenReserves)/1e6);
   }
   if(e.realSolReserves!==null)liquiditySol=Number(e.realSolReserves)/1e9;
   return {priceSol,liquiditySol};
+}
+function executionPriceFromEvent(e){
+  // Pump base mints use 6 decimals; native SOL uses 9 decimals.
+  // TradeEvent exposes the exchanged amounts separately from fees.
+  const sol=Number(e?.solAmount)/1e9;
+  const tokens=Number(e?.tokenAmount)/1e6;
+  if(!(Number.isFinite(sol)&&sol>0&&Number.isFinite(tokens)&&tokens>0))return null;
+  const price=sol/tokens;
+  return Number.isFinite(price)&&price>0?price:null;
 }
 function tokenFromStore(store,mint){
   try{
@@ -208,17 +217,30 @@ export function startPumpLiveTradeFeed(opts={}){
         updatedForEval=updated;
       }
 
-      // Chart is fed directly by the decoded TradeEvent.
-      // It is intentionally NOT routed through generic publish().
-      if(Number.isFinite(m.priceSol)&&m.priceSol>0){
+      // Chart is fed directly by the decoded TradeEvent and never by
+      // holder/AI/polling publishes. The engine continues using m.priceSol
+      // (bonding-curve mark); the chart uses the actual trade execution price.
+      const executionPriceSol=executionPriceFromEvent(e);
+      const chartPriceSol=
+        Number.isFinite(executionPriceSol)&&executionPriceSol>0
+          ? executionPriceSol
+          : m.priceSol;
+
+      if(Number.isFinite(chartPriceSol)&&chartPriceSol>0){
         try{
           onChartTick?.({
+            id:e.signature?`${e.signature}:${Number(e.eventIndex||0)}`:null,
             mint:e.mint,
             t:eventAt,
-            priceSol:m.priceSol,
+            priceSol:chartPriceSol,
+            executionPriceSol:Number.isFinite(executionPriceSol)?executionPriceSol:null,
+            markPriceSol:Number.isFinite(m.priceSol)?m.priceSol:null,
             isBuy:e.isBuy===true,
             solAmount:Number(e.solAmount)/1e9,
-            source:'pump-ws-trade-event'
+            tokenAmount:Number(e.tokenAmount)/1e6,
+            source:Number.isFinite(executionPriceSol)
+              ? 'pump-trade-execution'
+              : 'pump-reserve-mark-fallback'
           });
         }catch{}
       }
@@ -254,13 +276,18 @@ export function startPumpLiveTradeFeed(opts={}){
           const value=j?.params?.result?.value;
           if(!value||value.err)return;
           metrics.notifications++;
+          let eventIndex=0;
           for(const log of value.logs||[]){
             const b=programData(log);
             if(!b)continue;
             metrics.programDataSeen++;
             try{
               const e=decodeTradeEvent(b);
-              if(e)applyEvent(e);
+              if(e){
+                e.signature=value.signature||null;
+                e.eventIndex=eventIndex++;
+                applyEvent(e);
+              }
             }catch(err){
               metrics.decodeErrors++;
               metrics.lastError='decode:'+String(err?.message||err);
@@ -298,3 +325,4 @@ export function startPumpLiveTradeFeed(opts={}){
 // MEMEFLOW_V12_26_EVALUATION_LIFECYCLE_DIAGNOSTICS: evaluateAI hot-path instrumentation only; evaluator/execution semantics unchanged.
 
 // MEMEFLOW_TRADING_CHART_V30_4
+// MEMEFLOW_TRADING_CHART_V30_5_EXECUTION_TICKS
