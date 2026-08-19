@@ -77,11 +77,11 @@ const streams=new Map(),priceTimers=new Map(),tradeWindows=new Map();
 const __mfChartHistory=new Map();
 const __MF_CHART_MAX_MINTS=Math.max(
   40,
-  Math.min(300,Number(process.env.CHART_HISTORY_MAX_MINTS||180))
+  Math.min(160,Number(process.env.CHART_HISTORY_MAX_MINTS||80))
 );
 const __MF_CHART_MAX_POINTS=Math.max(
   240,
-  Math.min(2400,Number(process.env.CHART_HISTORY_MAX_POINTS||1500))
+  Math.min(12000,Number(process.env.CHART_HISTORY_MAX_POINTS||6000))
 );
 const __MF_CHART_MIN_GAP_MS=Math.max(
   100,
@@ -166,16 +166,19 @@ function __mfChartRecord(mint,price,at=Date.now(),source=null){
 
 function __mfChartSnapshot(mint){
   const token=store.state?.tokens?.[mint]||null;
+  const row=__mfChartHistory.get(mint);
 
-  if(token?.priceSol){
+  // Seed with current price only when this server has not yet observed a
+  // real TradeEvent for the token since startup.
+  if(
+    (!row || !row.points?.length) &&
+    token?.priceSol
+  ){
     __mfChartRecord(
       mint,
       token.priceSol,
       Number(token.lastPriceAt)||Date.now(),
-      token.marketSource||
-      token.priceSource||
-      token.source||
-      null
+      'current-price-seed'
     );
   }
 
@@ -187,14 +190,64 @@ function __mfChartSnapshot(mint){
     points,
     status:{
       stale:points.length===0,
-      source:
-        token?.marketSource||
-        token?.priceSource||
-        token?.source||
-        'Solana',
-      historyPoints:points.length
+      source:'pump-ws-trade-event',
+      historyPoints:points.length,
+      directTradeTicks:true
     }
   };
+}
+
+function __mfChartTradeTick(tick){
+  const mint=String(tick?.mint||'').trim();
+  const price=Number(tick?.priceSol);
+  const at=Number(tick?.t);
+
+  if(
+    !mint ||
+    !Number.isFinite(price) ||
+    price<=0 ||
+    !Number.isFinite(at) ||
+    at<=0
+  ){
+    return false;
+  }
+
+  const added=__mfChartRecord(
+    mint,
+    price,
+    at,
+    tick?.source||'pump-ws-trade-event'
+  );
+
+  if(!added)return false;
+
+  const listeners=streams.get(mint);
+  if(!listeners?.size)return true;
+
+  const payload=
+    `event: update\n`+
+    `data: ${JSON.stringify({
+      point:{
+        t:at,
+        price,
+        source:tick?.source||'pump-ws-trade-event',
+        isBuy:tick?.isBuy===true,
+        solAmount:Number(tick?.solAmount)||0
+      },
+      status:{
+        stale:false,
+        source:'pump-ws-trade-event',
+        directTradeTicks:true
+      }
+    })}\n\n`;
+
+  for(const res of [...listeners]){
+    try{
+      res.write(payload);
+    }catch{}
+  }
+
+  return true;
 }
 // MEMEFLOW_V31_REAL_EVENT_WEB
 // MEMEFLOW_V31_REAL_EVENT_WEB — read-only System View event stream.
@@ -709,94 +762,29 @@ async function enrich(mint,curve){
   try{paper.onTokenUpdate(mint,store.state.tokens[mint])}catch(_){}
 }
 function publish(mint){
-  // V31 System View: actual server publish cadence drives the 3D impulse.
+  // System View remains on the authoritative generic token-update cadence.
   try{
-    const __v31t=
-      store?.state?.tokens?.[mint]||{};
+    const token=store?.state?.tokens?.[mint]||{};
 
     __systemViewEmitV31(
       'token',
       {
         mint:String(mint||''),
         updatedAt:Number(
-          __v31t?.updatedAt||
+          token?.updatedAt||
           Date.now()
         )
       }
     );
   }catch{}
 
-  // Game remains on the exact same authoritative token updates.
+  // Game remains on the same generic token updates.
   try{
     pepeGame.onTokenUpdate(
       mint,
       store.state.tokens[mint]
     );
   }catch(_){}
-
-  const t=
-    store.state?.tokens?.[mint]||
-    null;
-
-  let chartPoint=null;
-
-  if(t?.priceSol){
-    const chartAt=
-      Number(t.lastPriceAt)||
-      Number(t.updatedAt)||
-      Date.now();
-
-    const chartSource=
-      t.marketSource||
-      t.priceSource||
-      t.source||
-      'Solana';
-
-    const added=
-      __mfChartRecord(
-        mint,
-        t.priceSol,
-        chartAt,
-        chartSource
-      );
-
-    if(added){
-      chartPoint={
-        t:chartAt,
-        price:Number(t.priceSol),
-        source:chartSource
-      };
-    }
-  }
-
-  const listeners=
-    streams.get(mint);
-
-  // A publish with no new price must NOT become a chart tick.
-  if(
-    !chartPoint ||
-    !listeners ||
-    listeners.size===0
-  ){
-    return;
-  }
-
-  const payload=
-    `event: update\n`+
-    `data: ${JSON.stringify({
-      point:chartPoint,
-      status:{
-        stale:false,
-        error:t?.scanError||null,
-        source:chartPoint.source
-      }
-    })}\n\n`;
-
-  for(const res of listeners){
-    try{
-      res.write(payload);
-    }catch{}
-  }
 }
 
 function curvePressure(mint,previousLiquidity,nextLiquidity){
@@ -2542,7 +2530,7 @@ if(false && url.pathname==='/api/ai/assistant' &&req.method==='POST'){
   });
 }
  if(url.pathname==='/api/chart/config'){const qualified=candidateFeed(store.decisions(u.id),'candidates');return json(res,200,{chainId:'solana',tokenAddress:qualified[0]?.mint||''});}
- if(url.pathname==='/api/chart/history'){const mint=url.searchParams.get('tokenAddress'),t=store.state.tokens[mint];const pts=t?.priceSol?[{t:t.updatedAt,price:t.priceSol,source:t.source}]:[];return json(res,200,{points:pts,status:{stale:!pts.length,source:t?.source||null,error:t?.scanError||null},tokenAddress:mint})}
+ if(url.pathname==='/api/chart/history'){const mint=String(url.searchParams.get('tokenAddress')||'').trim();const snap=__mfChartSnapshot(mint);return json(res,200,{...snap,tokenAddress:mint})}
   // MEMEFLOW_V31_REAL_EVENT_WEB
  if(url.pathname==='/api/system/stream'&&req.method==='GET'){
   res.writeHead(200,{
@@ -2677,7 +2665,10 @@ const __pumpLiveTradeFeedOpts={
   publish: typeof publish==='function'?publish:null,
   evaluateAI: typeof evaluateAll==='function'?evaluateAll:null,
   // MF_V302_PAPER_WS_DIRECT
-  onTokenUpdate:(mint,updated)=>{try{paper.onTokenUpdate(mint,updated||store.state.tokens[mint])}catch{}}
+  onTokenUpdate:(mint,updated)=>{try{paper.onTokenUpdate(mint,updated||store.state.tokens[mint])}catch{}},
+
+  // V30.4 chart path: decoded Pump TradeEvent -> bounded history -> SSE.
+  onChartTick:(tick)=>{try{__mfChartTradeTick(tick)}catch{}}
 };
 let __pumpLiveTradeFeed=null;
 let __dexVerificationGate=null;
@@ -2888,3 +2879,5 @@ globalThis.__MEMEFLOW_V12_24_GATE_FOR_MINT__=(mint,settings)=>__v1224GateForMint
 // MEMEFLOW_TRADING_CHART_V30_2
 
 // MEMEFLOW_TRADING_CHART_V30_3_1
+
+// MEMEFLOW_TRADING_CHART_V30_4

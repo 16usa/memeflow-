@@ -83,7 +83,7 @@ function tokenFromStore(store,mint){
 }
 
 export function startPumpLiveTradeFeed(opts={}){
-  const {eventHolderLedger,store,publish,evaluateAI,onTokenUpdate}=opts;
+  const {eventHolderLedger,store,publish,evaluateAI,onTokenUpdate,onChartTick}=opts;
   let urls=envList('SOLANA_WS_URLS');
   if(!urls.length)urls=envList('SOLANA_RPC_URLS').map(wsFromHttp).filter(Boolean);
 
@@ -181,11 +181,47 @@ export function startPumpLiveTradeFeed(opts={}){
 
     try{
       const m=marketFromEvent(e),buyPressure=updatePressure(e);
-      const patch={marketSource:'ws-direct-trade-event',buyPressure,lastPriceAt:Date.now()};
+
+      // Pump TradeEvent carries an on-chain Unix timestamp in seconds.
+      // Use it as the canonical candle timestamp instead of browser/server receipt time.
+      const eventAt=(
+        e.timestamp!==null &&
+        e.timestamp!==undefined &&
+        e.timestamp>0n
+      )
+        ? Number(e.timestamp)*1000
+        : Date.now();
+
+      const patch={
+        marketSource:'ws-direct-trade-event',
+        buyPressure,
+        lastPriceAt:eventAt
+      };
+
       if(Number.isFinite(m.priceSol)&&m.priceSol>0)patch.priceSol=m.priceSol;
       if(Number.isFinite(m.liquiditySol)&&m.liquiditySol>=0)patch.liquiditySol=m.liquiditySol;
+
       const updated=store?.setToken?.(e.mint,patch);
-      if(updated){metrics.marketSnapshots++;updatedForEval=updated}
+
+      if(updated){
+        metrics.marketSnapshots++;
+        updatedForEval=updated;
+      }
+
+      // Chart is fed directly by the decoded TradeEvent.
+      // It is intentionally NOT routed through generic publish().
+      if(Number.isFinite(m.priceSol)&&m.priceSol>0){
+        try{
+          onChartTick?.({
+            mint:e.mint,
+            t:eventAt,
+            priceSol:m.priceSol,
+            isBuy:e.isBuy===true,
+            solAmount:Number(e.solAmount)/1e9,
+            source:'pump-ws-trade-event'
+          });
+        }catch{}
+      }
     }catch(err){metrics.lastError='market:'+String(err?.message||err)}
 
     if(updatedForEval){
@@ -260,3 +296,5 @@ export function startPumpLiveTradeFeed(opts={}){
 }
 
 // MEMEFLOW_V12_26_EVALUATION_LIFECYCLE_DIAGNOSTICS: evaluateAI hot-path instrumentation only; evaluator/execution semantics unchanged.
+
+// MEMEFLOW_TRADING_CHART_V30_4

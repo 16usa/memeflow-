@@ -883,3 +883,49 @@ button { cursor: pointer; }
   .amount-box { height: 46px; }
   .amount-box input { font-size: 16px; }
 }
+
+
+/* MEMEFLOW_TRADING_CHART_V30_4
+   Lightweight Charts host only. No global design overrides. */
+.chart-wrap {
+  background: #02070a;
+}
+
+#chartCanvas {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: pan-y;
+}
+
+#chartCanvas > div {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.chart-legend {
+  z-index: 4;
+  max-width: calc(100% - 24px);
+}
+
+.chart-empty {
+  z-index: 5;
+}
+
+.chart-credit {
+  position: absolute;
+  right: 8px;
+  bottom: 5px;
+  z-index: 4;
+  color: rgba(111, 154, 172, .42);
+  font-size: 5px;
+  line-height: 1;
+  text-decoration: none;
+}
+
+.chart-credit:hover {
+  color: rgba(181, 237, 250, .72);
+}
