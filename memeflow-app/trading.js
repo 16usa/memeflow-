@@ -358,35 +358,49 @@ function renderCandidates() {
 }
 
 async function loadCandidates() {
-  const payload = await api('/api/ai/decisions?scope=all&limit=100');
-  state.candidates = Array.isArray(payload.decisions) ? payload.decisions : [];
-  $('candidateCount').textContent = `${state.candidates.length} candidates`;
+  const payload =
+    await api(
+      '/api/ai/decisions?scope=all&limit=100'
+    );
 
-  if (!state.selectedMint && state.candidates.length) {
-    const ready = state.candidates.find(item => String(item.state).toUpperCase() === 'BUY READY');
-    state.selectedMint = (ready || state.candidates[0]).mint;
+  state.candidates =
+    Array.isArray(payload.decisions)
+      ? payload.decisions
+      : [];
+
+  $('candidateCount').textContent =
+    `${state.candidates.length} candidates`;
+
+  if(
+    !state.selectedMint &&
+    state.candidates.length
+  ){
+    const ready =
+      state.candidates.find(
+        item =>
+          String(item.state).toUpperCase()===
+          'BUY READY'
+      );
+
+    state.selectedMint =
+      (ready||state.candidates[0]).mint;
   }
 
-  if (state.selectedMint) {
-    const current = state.candidates.find(item => item.mint === state.selectedMint);
-    if (current) {
-      state.selected = current;
-      const price = candidatePrice(current);
-      const existingPoints = rawPoints(state.selectedMint);
+  if(state.selectedMint){
+    const current =
+      state.candidates.find(
+        item =>
+          item.mint===state.selectedMint
+      );
 
-      // Candidate/decision price is only a one-time fallback seed.
-      // Live candles are owned by /api/chart/stream after that.
-      if (price > 0 && existingPoints.length === 0) {
-        addPoint(
-          state.selectedMint,
-          Date.now(),
-          price,
-          'candidate-seed'
-        );
-      }
+    if(current){
+      state.selected=current;
     }
   }
 
+  // IMPORTANT V30.3.1:
+  // candidate/decision prices never enter raw chart history.
+  // /api/chart/stream is the one chart-data authority.
   renderCandidates();
   renderSelected();
 }
@@ -444,10 +458,12 @@ function rawPoints(mint) {
     let points = [];
 
     try {
-      // V30.2 uses a new cache key so old mixed decision/SSE spikes
-      // from the previous chart implementation are not reloaded.
+      // New cache namespace: V30.2 contained fake publish ticks and the
+      // premature candidate seed, so none of it is reused.
       const saved = JSON.parse(
-        sessionStorage.getItem(`mfchart:v2:${mint}`) || '[]'
+        sessionStorage.getItem(
+          `mfchart:v3:${mint}`
+        ) || '[]'
       );
 
       if (Array.isArray(saved)) {
@@ -464,38 +480,53 @@ function rawPoints(mint) {
             source:p.source||null
           }))
           .sort((a,b)=>a.t-b.t)
-          .slice(-1500);
+          .slice(-1800);
       }
     } catch {}
 
-    state.rawByMint.set(mint, points);
+    state.rawByMint.set(
+      mint,
+      points
+    );
   }
 
   return state.rawByMint.get(mint);
 }
 
 function addPoint(mint, t, price, source = 'live') {
-  if (!mint || !(num(price) > 0)) return;
-
-  const points = rawPoints(mint);
-  const ts = num(t, Date.now());
-  const p = num(price);
-
-  if (!(ts > 0) || !(p > 0)) return;
-
-  const last = points[points.length - 1];
-
-  if (last) {
-    // Do not let a late/replayed SSE frame move chart time backwards.
-    if (ts < last.t - 1000) return;
-
-    if (
-      Math.abs(last.t - ts) < 250 &&
-      last.price === p
-    ) {
-      return;
-    }
+  if (
+    !mint ||
+    !(num(price) > 0)
+  ){
+    return;
   }
+
+  const points =
+    rawPoints(mint);
+
+  const ts =
+    num(t,Date.now());
+
+  const p =
+    num(price);
+
+  if(
+    !(ts > 0) ||
+    !(p > 0)
+  ){
+    return;
+  }
+
+  // Snapshot can contain older rows than session cache. Merge it; do not
+  // reject history merely because the browser already has a newer point.
+  const duplicate =
+    points.some(
+      point =>
+        Number(point.t)===ts &&
+        Number(point.price)===p
+    );
+
+  if(duplicate)return;
 
   points.push({
     t:ts,
@@ -503,18 +534,25 @@ function addPoint(mint, t, price, source = 'live') {
     source:source||null
   });
 
-  points.sort((a,b)=>a.t-b.t);
+  points.sort(
+    (a,b)=>a.t-b.t
+  );
 
-  if (points.length > 1800) {
-    points.splice(0, points.length - 1800);
+  if(points.length>2200){
+    points.splice(
+      0,
+      points.length-2200
+    );
   }
 
-  try {
+  try{
     sessionStorage.setItem(
-      `mfchart:v2:${mint}`,
-      JSON.stringify(points.slice(-1200))
+      `mfchart:v3:${mint}`,
+      JSON.stringify(
+        points.slice(-1800)
+      )
     );
-  } catch {}
+  }catch{}
 
   scheduleChart();
 }
@@ -583,71 +621,129 @@ function connectChartStream(mint) {
 }
 
 function candlesFor(points, timeframe) {
-  const clean = (Array.isArray(points) ? points : [])
-    .filter(
-      point =>
-        finite(point?.t) &&
-        finite(point?.price) &&
-        Number(point.price) > 0
-    )
-    .map(point => ({
-      t:Number(point.t),
-      price:Number(point.price)
-    }))
-    .sort((a,b)=>a.t-b.t);
+  const clean =
+    (Array.isArray(points) ? points : [])
+      .filter(
+        point =>
+          finite(point?.t) &&
+          finite(point?.price) &&
+          Number(point.price) > 0
+      )
+      .map(point => ({
+        t:Number(point.t),
+        price:Number(point.price)
+      }))
+      .sort((a,b)=>a.t-b.t);
 
-  if (!clean.length) return [];
+  if(!clean.length)return [];
 
   let interval;
 
-  if (timeframe === 'all') {
-    const span = Math.max(
-      1,
-      clean[clean.length - 1].t - clean[0].t
-    );
+  if(timeframe==='all'){
+    const span =
+      Math.max(
+        1,
+        clean[clean.length-1].t-
+        clean[0].t
+      );
 
-    // Keep All readable rather than generating hundreds of hairline bars.
-    interval = Math.max(
-      1000,
-      Math.ceil(span / 100)
-    );
-  } else {
-    interval = Math.max(
-      1000,
-      Number(timeframe) || 1000
-    );
+    interval =
+      Math.max(
+        1000,
+        Math.ceil(span/100)
+      );
+  }else{
+    interval =
+      Math.max(
+        1000,
+        Number(timeframe)||1000
+      );
   }
 
-  const buckets = new Map();
+  const buckets =
+    new Map();
 
-  for (const point of clean) {
+  for(const point of clean){
     const bucket =
-      Math.floor(point.t / interval) * interval;
+      Math.floor(
+        point.t/interval
+      )*interval;
 
-    let candle = buckets.get(bucket);
+    let row =
+      buckets.get(bucket);
 
-    if (!candle) {
-      candle = {
+    if(!row){
+      row={
         t:bucket,
-        open:point.price,
-        high:point.price,
-        low:point.price,
-        close:point.price,
-        samples:1
+        ticks:[],
+        interval
       };
 
-      buckets.set(bucket,candle);
-    } else {
-      candle.high = Math.max(candle.high,point.price);
-      candle.low = Math.min(candle.low,point.price);
-      candle.close = point.price;
-      candle.samples++;
+      buckets.set(
+        bucket,
+        row
+      );
     }
+
+    row.ticks.push(
+      point.price
+    );
   }
 
-  return [...buckets.values()]
-    .sort((a,b)=>a.t-b.t)
-    .slice(-160);
+  const ordered =
+    [...buckets.values()]
+      .sort((a,b)=>a.t-b.t)
+      .slice(-160);
+
+  const candles=[];
+  let previousClose=null;
+
+  for(const row of ordered){
+    const ticks =
+      row.ticks.filter(
+        value =>
+          Number.isFinite(value) &&
+          value>0
+      );
+
+    if(!ticks.length)continue;
+
+    // This is a continuous mark-price series. At interval start the mark
+    // remains the previous observed close until the first new trade update.
+    const open =
+      previousClose>0
+        ? previousClose
+        : ticks[0];
+
+    const close =
+      ticks[ticks.length-1];
+
+    const high =
+      Math.max(
+        open,
+        ...ticks
+      );
+
+    const low =
+      Math.min(
+        open,
+        ...ticks
+      );
+
+    candles.push({
+      t:row.t,
+      open,
+      high,
+      low,
+      close,
+      samples:ticks.length,
+      interval:row.interval
+    });
+
+    previousClose=close;
+  }
+
+  return candles;
 }
 
 function strategyLevels() {
@@ -679,78 +775,89 @@ function scheduleChart() {
 }
 
 function drawChart() {
-  const canvas = $('chartCanvas');
-  const rect = canvas.getBoundingClientRect();
-  const dpr = Math.min(
-    window.devicePixelRatio || 1,
-    2
-  );
+  const canvas =
+    $('chartCanvas');
 
-  const width = Math.max(
-    1,
-    Math.round(rect.width * dpr)
-  );
+  const rect =
+    canvas.getBoundingClientRect();
 
-  const height = Math.max(
-    1,
-    Math.round(rect.height * dpr)
-  );
+  const dpr =
+    Math.min(
+      window.devicePixelRatio||1,
+      2
+    );
 
-  if (
-    canvas.width !== width ||
-    canvas.height !== height
-  ) {
-    canvas.width = width;
-    canvas.height = height;
+  const width =
+    Math.max(
+      1,
+      Math.round(rect.width*dpr)
+    );
+
+  const height =
+    Math.max(
+      1,
+      Math.round(rect.height*dpr)
+    );
+
+  if(
+    canvas.width!==width ||
+    canvas.height!==height
+  ){
+    canvas.width=width;
+    canvas.height=height;
   }
 
-  const ctx = canvas.getContext('2d');
+  const ctx =
+    canvas.getContext('2d');
 
   ctx.setTransform(
-    dpr,
-    0,
-    0,
-    dpr,
-    0,
-    0
+    dpr,0,0,dpr,0,0
   );
 
-  const W = rect.width;
-  const H = rect.height;
+  const W=rect.width;
+  const H=rect.height;
 
-  ctx.clearRect(0,0,W,H);
+  ctx.clearRect(
+    0,0,W,H
+  );
 
-  if (!state.selectedMint) {
-    $('chartEmpty').style.display = 'grid';
-    $('chartLegend').innerHTML = '';
+  if(!state.selectedMint){
+    $('chartEmpty').style.display='grid';
+    $('chartLegend').innerHTML='';
     return;
   }
 
-  const points = rawPoints(state.selectedMint);
-  const candles = candlesFor(
-    points,
-    state.timeframe
-  );
-  const levels = strategyLevels();
+  const points =
+    rawPoints(
+      state.selectedMint
+    );
 
-  if (!candles.length) {
-    $('chartEmpty').style.display = 'grid';
-    $('chartLegend').innerHTML = '';
+  const candles =
+    candlesFor(
+      points,
+      state.timeframe
+    );
+
+  const levels =
+    strategyLevels();
+
+  if(!candles.length){
+    $('chartEmpty').style.display='grid';
+    $('chartLegend').innerHTML='';
     return;
   }
 
-  $('chartEmpty').style.display = 'none';
+  $('chartEmpty').style.display='none';
 
-  const pad = {
+  // Reserve the first ~42 px for the HTML OHLC legend.
+  // Strategy labels begin below it and can no longer overlap the legend.
+  const pad={
     left:10,
     right:82,
-    top:18,
-    bottom:28
+    top:48,
+    bottom:30
   };
 
-  // IMPORTANT:
-  // only actual market candles determine the Y scale.
-  // SL/TP levels must never crush live price action.
   const candleValues =
     candles.flatMap(
       candle => [
@@ -759,101 +866,141 @@ function drawChart() {
       ]
     );
 
-  let min = Math.min(...candleValues);
-  let max = Math.max(...candleValues);
+  let min =
+    Math.min(...candleValues);
+
+  let max =
+    Math.max(...candleValues);
 
   const reference =
-    candles[candles.length - 1]?.close ||
-    max ||
+    candles[candles.length-1]?.close||
+    max||
     1;
 
-  if (!(max > min)) {
-    const spread = Math.max(
-      Math.abs(reference) * .012,
+  if(!(max>min)){
+    const spread =
+      Math.max(
+        Math.abs(reference)*.012,
+        1e-14
+      );
+
+    min=reference-spread;
+    max=reference+spread;
+  }
+
+  const naturalSpan=max-min;
+
+  const minUsefulSpan =
+    Math.max(
+      Math.abs(reference)*.006,
       1e-14
     );
 
-    min = reference - spread;
-    max = reference + spread;
+  if(naturalSpan<minUsefulSpan){
+    const mid=(max+min)/2;
+    min=mid-minUsefulSpan/2;
+    max=mid+minUsefulSpan/2;
   }
 
-  // Do not allow a nearly flat few-tick chart to become visually absurd.
-  const naturalSpan = max - min;
-  const minUsefulSpan = Math.max(
-    Math.abs(reference) * .006,
-    1e-14
-  );
+  const extra =
+    Math.max(
+      (max-min)*.10,
+      Math.abs(reference)*.001
+    );
 
-  if (naturalSpan < minUsefulSpan) {
-    const mid = (max + min) / 2;
-    min = mid - minUsefulSpan / 2;
-    max = mid + minUsefulSpan / 2;
-  }
-
-  const extra = Math.max(
-    (max - min) * .12,
-    Math.abs(reference) * .001
-  );
-
-  min = Math.max(
+  min=Math.max(
     0,
-    min - extra
-  );
-  max += extra;
-
-  const plotW = Math.max(
-    10,
-    W - pad.left - pad.right
+    min-extra
   );
 
-  const plotH = Math.max(
-    10,
-    H - pad.top - pad.bottom
-  );
+  max+=extra;
+
+  const plotW =
+    Math.max(
+      10,
+      W-pad.left-pad.right
+    );
+
+  const plotH =
+    Math.max(
+      10,
+      H-pad.top-pad.bottom
+    );
 
   const y = price =>
-    pad.top +
-    (max - price) /
-    Math.max(max - min,1e-20) *
+    pad.top+
+    (max-price)/
+    Math.max(max-min,1e-20)*
     plotH;
 
-  const xStep =
-    plotW /
-    Math.max(candles.length,1);
+  // X is real time, not candle index.
+  const interval =
+    Number(
+      candles[0]?.interval
+    )||1000;
 
-  const bodyW = Math.max(
-    2,
-    Math.min(
-      12,
-      xStep * .60
-    )
-  );
+  const firstT =
+    candles[0].t;
+
+  const lastT =
+    candles[candles.length-1].t;
+
+  const xSpan =
+    Math.max(
+      interval,
+      lastT-firstT+interval
+    );
+
+  const x = t =>
+    pad.left+
+    ((t-firstT)/xSpan)*
+    plotW;
+
+  const intervalPx =
+    plotW*
+    interval/
+    xSpan;
+
+  const bodyW =
+    Math.max(
+      3,
+      Math.min(
+        13,
+        intervalPx*.66
+      )
+    );
 
   ctx.font =
     '8px ui-monospace, SFMono-Regular, monospace';
 
-  ctx.textBaseline = 'middle';
+  ctx.textBaseline='middle';
 
-  // Grid + Y-axis
-  for (let i = 0; i <= 5; i++) {
+  // Grid + Y labels.
+  for(let i=0;i<=5;i++){
     const yy =
-      pad.top +
-      plotH * i / 5;
+      pad.top+
+      plotH*i/5;
 
     const price =
-      max -
-      (max - min) * i / 5;
+      max-
+      (max-min)*i/5;
 
     ctx.strokeStyle =
       'rgba(106,145,162,.09)';
 
-    ctx.lineWidth = 1;
+    ctx.lineWidth=1;
     ctx.beginPath();
-    ctx.moveTo(pad.left,yy);
-    ctx.lineTo(W-pad.right,yy);
+    ctx.moveTo(
+      pad.left,
+      yy
+    );
+    ctx.lineTo(
+      W-pad.right,
+      yy
+    );
     ctx.stroke();
 
-    ctx.fillStyle = '#536f7b';
+    ctx.fillStyle='#536f7b';
 
     ctx.fillText(
       formatPrice(price),
@@ -862,34 +1009,28 @@ function drawChart() {
     );
   }
 
-  // A small time axis makes sparse 1s candles understandable.
-  const timeIndices = [...new Set([
-    0,
-    Math.floor((candles.length-1)/2),
-    candles.length-1
-  ])];
+  // Time axis uses actual elapsed time.
+  const timeValues=[
+    firstT,
+    firstT+xSpan/2,
+    firstT+xSpan
+  ];
 
-  ctx.fillStyle = '#405b67';
-  ctx.textBaseline = 'bottom';
+  ctx.fillStyle='#405b67';
+  ctx.textBaseline='bottom';
 
-  for (const idx of timeIndices) {
-    const candle = candles[idx];
-
-    if (!candle) continue;
-
-    const xx =
-      pad.left +
-      xStep * (idx + .5);
+  for(const value of timeValues){
+    const xx=x(value);
 
     const stamp =
-      new Date(candle.t)
+      new Date(value)
         .toLocaleTimeString(
           [],
           {
             hour:'2-digit',
             minute:'2-digit',
             second:
-              Number(state.timeframe) <= 1000
+              Number(state.timeframe)<=1000
                 ? '2-digit'
                 : undefined
           }
@@ -898,13 +1039,14 @@ function drawChart() {
     const metrics =
       ctx.measureText(stamp);
 
-    const tx = Math.max(
-      pad.left,
-      Math.min(
-        W-pad.right-metrics.width,
-        xx-metrics.width/2
-      )
-    );
+    const tx =
+      Math.max(
+        pad.left,
+        Math.min(
+          W-pad.right-metrics.width,
+          xx-metrics.width/2
+        )
+      );
 
     ctx.fillText(
       stamp,
@@ -913,92 +1055,116 @@ function drawChart() {
     );
   }
 
-  ctx.textBaseline = 'middle';
+  ctx.textBaseline='middle';
 
-  // Candles
-  candles.forEach((candle,i)=>{
+  // Candles: real time position; mark-price open carries previous close.
+  candles.forEach(candle=>{
     const xx =
-      pad.left +
-      xStep * (i + .5);
+      x(candle.t+interval/2);
 
     const up =
-      candle.close >= candle.open;
+      candle.close>=candle.open;
 
     const color =
       up
         ? '#4de6a1'
         : '#ff6679';
 
-    const highY = y(candle.high);
-    const lowY = y(candle.low);
-    const openY = y(candle.open);
-    const closeY = y(candle.close);
+    const highY=y(candle.high);
+    const lowY=y(candle.low);
+    const openY=y(candle.open);
+    const closeY=y(candle.close);
 
-    ctx.strokeStyle = color;
-    ctx.globalAlpha = .76;
-    ctx.lineWidth = 1;
+    ctx.strokeStyle=color;
+    ctx.globalAlpha=.82;
+    ctx.lineWidth=1.2;
 
     ctx.beginPath();
     ctx.moveTo(xx,highY);
     ctx.lineTo(xx,lowY);
     ctx.stroke();
 
-    ctx.globalAlpha = .9;
-    ctx.fillStyle = color;
-
     const top =
-      Math.min(openY,closeY);
+      Math.min(
+        openY,
+        closeY
+      );
 
-    const bodyH = Math.max(
-      2,
-      Math.abs(closeY-openY)
-    );
+    const rawBodyH =
+      Math.abs(
+        closeY-openY
+      );
 
-    ctx.fillRect(
-      xx-bodyW/2,
-      top,
-      bodyW,
-      bodyH
-    );
+    // A true unchanged mark remains a doji; changed marks get a real body.
+    if(rawBodyH<1){
+      ctx.globalAlpha=.95;
+      ctx.strokeStyle=color;
+      ctx.lineWidth=1.5;
+      ctx.beginPath();
+      ctx.moveTo(
+        xx-bodyW/2,
+        closeY
+      );
+      ctx.lineTo(
+        xx+bodyW/2,
+        closeY
+      );
+      ctx.stroke();
+    }else{
+      ctx.globalAlpha=.92;
+      ctx.fillStyle=color;
+      ctx.fillRect(
+        xx-bodyW/2,
+        top,
+        bodyW,
+        Math.max(2,rawBodyH)
+      );
+    }
   });
 
-  ctx.globalAlpha = 1;
+  ctx.globalAlpha=1;
 
-  // Strategy levels are informational overlays.
-  // Off-screen levels get an edge label instead of stretching the chart.
-  let topLabelOffset = 0;
-  let bottomLabelOffset = 0;
+  // Strategy levels are informational overlays only.
+  // They never participate in autoscale.
+  let topLabelOffset=0;
+  let bottomLabelOffset=0;
 
-  for (const level of levels) {
-    if (!(level?.price > 0)) continue;
+  for(const level of levels){
+    if(!(level?.price>0))continue;
 
     const color =
-      level.kind === 'stop'
+      level.kind==='stop'
         ? '#ff6679'
-        : level.kind === 'entry'
+        : level.kind==='entry'
           ? '#55d9ff'
-          : level.kind === 'tp'
+          : level.kind==='tp'
             ? '#4de6a1'
             : '#a98bff';
 
     const inside =
-      level.price >= min &&
-      level.price <= max;
+      level.price>=min &&
+      level.price<=max;
 
-    if (inside) {
-      const yy = y(level.price);
+    if(inside){
+      const yy=y(level.price);
 
-      ctx.strokeStyle = color;
-      ctx.globalAlpha = .44;
+      ctx.strokeStyle=color;
+      ctx.globalAlpha=.42;
       ctx.setLineDash([5,5]);
       ctx.beginPath();
-      ctx.moveTo(pad.left,yy);
-      ctx.lineTo(W-pad.right,yy);
+      ctx.moveTo(
+        pad.left,
+        yy
+      );
+      ctx.lineTo(
+        W-pad.right,
+        yy
+      );
       ctx.stroke();
       ctx.setLineDash([]);
 
-      ctx.globalAlpha = .9;
-      ctx.fillStyle = color;
+      ctx.globalAlpha=.9;
+      ctx.fillStyle=color;
 
       ctx.fillText(
         level.label,
@@ -1011,43 +1177,50 @@ function drawChart() {
           )
         )
       );
-    } else {
+    }else{
       const above =
-        level.price > max;
+        level.price>max;
 
       const yy =
         above
-          ? pad.top + 8 + topLabelOffset
-          : pad.top + plotH - 8 - bottomLabelOffset;
+          ? pad.top+8+topLabelOffset
+          : pad.top+plotH-8-bottomLabelOffset;
 
-      ctx.globalAlpha = .78;
-      ctx.fillStyle = color;
+      ctx.globalAlpha=.80;
+      ctx.fillStyle=color;
 
       ctx.fillText(
-        `${above ? '↑' : '↓'} ${level.label}`,
+        `${above?'↑':'↓'} ${level.label}`,
         pad.left+6,
         yy
       );
 
-      if (above) {
-        topLabelOffset += 12;
-      } else {
-        bottomLabelOffset += 12;
+      if(above){
+        topLabelOffset+=12;
+      }else{
+        bottomLabelOffset+=12;
       }
     }
   }
 
-  ctx.globalAlpha = 1;
+  ctx.globalAlpha=1;
 
   const last =
-    candles[candles.length - 1];
+    candles[candles.length-1];
 
-  $('chartLegend').innerHTML = `
+  const totalTicks =
+    candles.reduce(
+      (sum,candle)=>
+        sum+Number(candle.samples||0),
+      0
+    );
+
+  $('chartLegend').innerHTML=`
     <span>O ${formatPrice(last.open)}</span>
     <span>H ${formatPrice(last.high)}</span>
     <span>L ${formatPrice(last.low)}</span>
     <span>C ${formatPrice(last.close)}</span>
-    <span>${candles.length} candles</span>
+    <span>${candles.length} candles · ${totalTicks} ticks</span>
   `;
 }
 
@@ -1286,3 +1459,5 @@ async function init() {
 init();
 
 /* MEMEFLOW_TRADING_CHART_V30_2 */
+
+/* MEMEFLOW_TRADING_CHART_V30_3_1 */

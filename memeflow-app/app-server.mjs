@@ -113,34 +113,22 @@ function __mfChartRecord(mint,price,at=Date.now(),source=null){
     __mfChartHistory.set(mint,row);
   }
 
-  row.lastSeenAt=ts;
+  row.lastSeenAt=Math.max(
+    Number(row.lastSeenAt||0),
+    ts
+  );
 
-  const last=row.points[row.points.length-1];
+  const last=
+    row.points[row.points.length-1];
 
-  if(last){
-    const gap=ts-last.t;
-    const move=
-      last.price>0
-        ? Math.abs(p-last.price)/last.price
-        : 1;
-
-    // Normal updates: at most ~2 points/sec.
-    // Large moves are preserved immediately so a real fast move is not hidden.
-    if(
-      gap>=0 &&
-      gap<__MF_CHART_MIN_GAP_MS &&
-      move<0.025
-    ){
-      return false;
-    }
-
-    if(
-      gap>=0 &&
-      gap<80 &&
-      p===last.price
-    ){
-      return false;
-    }
+  // Exact duplicate = same canonical price observation.
+  // Do not throttle distinct TradeEvents: 1s OHLC needs all of them.
+  if(
+    last &&
+    Number(last.t)===ts &&
+    Number(last.price)===p
+  ){
+    return false;
   }
 
   row.points.push({
@@ -156,7 +144,6 @@ function __mfChartRecord(mint,price,at=Date.now(),source=null){
     );
   }
 
-  // Global cap: evict the least recently updated token histories.
   if(__mfChartHistory.size>__MF_CHART_MAX_MINTS){
     const old=[...__mfChartHistory.values()]
       .sort(
@@ -724,50 +711,91 @@ async function enrich(mint,curve){
 function publish(mint){
   // V31 System View: actual server publish cadence drives the 3D impulse.
   try{
-    const __v31t=store?.state?.tokens?.[mint]||{};
-    __systemViewEmitV31('token',{
-      mint:String(mint||''),
-      updatedAt:Number(__v31t?.updatedAt||Date.now())
-    });
+    const __v31t=
+      store?.state?.tokens?.[mint]||{};
+
+    __systemViewEmitV31(
+      'token',
+      {
+        mint:String(mint||''),
+        updatedAt:Number(
+          __v31t?.updatedAt||
+          Date.now()
+        )
+      }
+    );
   }catch{}
 
-  // MF_PEPE_ROCKET_GAME_PUBLISH_HOOK: one clean server-authoritative GameEngine receives the same accepted token updates.
-  try{pepeGame.onTokenUpdate(mint,store.state.tokens[mint])}catch(_){}
-  // Hot path: live Pump events can call publish many times per second.
-  // Do absolutely no work unless this mint has active SSE subscribers.
-  const __mfChartToken=store.state?.tokens?.[mint]||null;
-
-  if(__mfChartToken?.priceSol){
-    __mfChartRecord(
+  // Game remains on the exact same authoritative token updates.
+  try{
+    pepeGame.onTokenUpdate(
       mint,
-      __mfChartToken.priceSol,
-      Number(__mfChartToken.lastPriceAt)||Date.now(),
-      __mfChartToken.marketSource||
-      __mfChartToken.priceSource||
-      __mfChartToken.source||
-      null
+      store.state.tokens[mint]
     );
+  }catch(_){}
+
+  const t=
+    store.state?.tokens?.[mint]||
+    null;
+
+  let chartPoint=null;
+
+  if(t?.priceSol){
+    const chartAt=
+      Number(t.lastPriceAt)||
+      Number(t.updatedAt)||
+      Date.now();
+
+    const chartSource=
+      t.marketSource||
+      t.priceSource||
+      t.source||
+      'Solana';
+
+    const added=
+      __mfChartRecord(
+        mint,
+        t.priceSol,
+        chartAt,
+        chartSource
+      );
+
+    if(added){
+      chartPoint={
+        t:chartAt,
+        price:Number(t.priceSol),
+        source:chartSource
+      };
+    }
   }
 
-  const listeners=streams.get(mint);
-  if(!listeners||listeners.size===0)return;
+  const listeners=
+    streams.get(mint);
 
-  const t=store.state.tokens[mint];
-  const payload=`event: update\ndata: ${JSON.stringify({
-    point:t?.priceSol?{
-      t:Date.now(),
-      price:t.priceSol,
-      source:'Solana'
-    }:null,
-    status:{
-      stale:!t?.priceSol,
-      error:t?.scanError||null,
-      source:t?.source
-    }
-  })}\n\n`;
+  // A publish with no new price must NOT become a chart tick.
+  if(
+    !chartPoint ||
+    !listeners ||
+    listeners.size===0
+  ){
+    return;
+  }
+
+  const payload=
+    `event: update\n`+
+    `data: ${JSON.stringify({
+      point:chartPoint,
+      status:{
+        stale:false,
+        error:t?.scanError||null,
+        source:chartPoint.source
+      }
+    })}\n\n`;
 
   for(const res of listeners){
-    try{res.write(payload)}catch{}
+    try{
+      res.write(payload);
+    }catch{}
   }
 }
 
@@ -2858,3 +2886,5 @@ globalThis.__MEMEFLOW_V12_24_GATE_FOR_MINT__=(mint,settings)=>__v1224GateForMint
 // MEMEFLOW_PER_USER_DISCOVERY_V34_2
 
 // MEMEFLOW_TRADING_CHART_V30_2
+
+// MEMEFLOW_TRADING_CHART_V30_3_1
