@@ -89,6 +89,7 @@ const __MF_CHART_MIN_GAP_MS=Math.max(
 );
 
 // MEMEFLOW_TRADING_CHART_V30_6_SOL_USD_CACHE
+// MEMEFLOW_TRADING_CHART_V30_7_VIEWER_INDEPENDENT_CACHE
 const __MF_WSOL_MINT='So11111111111111111111111111111111111111112';
 const __MF_SOL_USD_REFRESH_MS=15_000;
 const __mfSolUsd={
@@ -315,7 +316,6 @@ function __mfChartRecord(mint,price,at=Date.now(),source=null,id=null,meta={}){
       __mfChartHistory.size-__MF_CHART_MAX_MINTS;
 
     const old=[...__mfChartHistory.values()]
-      .filter(item=>!(streams.get(item.mint)?.size))
       .sort(
         (a,b)=>
           Number(a.lastSeenAt||0)-

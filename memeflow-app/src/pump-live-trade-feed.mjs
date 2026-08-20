@@ -81,6 +81,17 @@ function tokenFromStore(store,mint){
       null;
   }catch{return null}
 }
+function trackedPumpToken(store,mint){
+  const token=tokenFromStore(store,mint);
+  if(!token)return null;
+  const discoveredAt=Number(token?.discoveredAt);
+  const launch=String(token?.launchPlatform||'').toLowerCase();
+  const protocol=String(token?.protocol||'').toLowerCase();
+  const source=String(token?.source||'').toLowerCase();
+  const discovered=Number.isFinite(discoveredAt)&&discoveredAt>0;
+  const pumpOrigin=launch==='pump'||protocol==='pump'||source.includes('pump create');
+  return discovered&&pumpOrigin?token:null;
+}
 
 export function startPumpLiveTradeFeed(opts={}){
   const {eventHolderLedger,store,publish,evaluateAI,onTokenUpdate,onChartTick}=opts;
@@ -90,7 +101,7 @@ export function startPumpLiveTradeFeed(opts={}){
   const metrics={
     version:VERSION,startedAt:Date.now(),connected:false,reconnects:0,
     notifications:0,programDataSeen:0,tradeEventsDecoded:0,decodeErrors:0,
-    holderSnapshots:0,marketSnapshots:0,repeatTradeEvents:0,
+    holderSnapshots:0,marketSnapshots:0,repeatTradeEvents:0,ignoredUntrackedTradeEvents:0,
     distinctMints:0,distinctUsers:0,lastMint:null,lastUser:null,lastError:null,
     httpRpcCalls:0,queueDepth:0,active:0,
     evaluationCalls:0,evaluationResolved:0,evaluationRejected:0,evaluationNullResults:0,
@@ -153,20 +164,57 @@ export function startPumpLiveTradeFeed(opts={}){
   }
 
   function applyEvent(e){
-    // MF_V302_SINGLE_EVAL_PER_TRADE_EVENT
+    // Decode metrics count the physical Pump stream; expensive engine work below
+    // is limited to tokens MEMEFLOW actually discovered.
     metrics.tradeEventsDecoded++;
     metrics.lastMint=e.mint;
     metrics.lastUser=e.user;
-    users.add(e.user);metrics.distinctUsers=users.size;
+
+    const knownToken=trackedPumpToken(store,e.mint);
+    if(!knownToken){
+      metrics.ignoredUntrackedTradeEvents++;
+      return;
+    }
+
+    users.add(e.user);
+    metrics.distinctUsers=users.size;
     const prev=mintCounts.get(e.mint)||0;
     mintCounts.set(e.mint,prev+1);
     if(prev>0)metrics.repeatTradeEvents++;
     metrics.distinctMints=mintCounts.size;
+
+    const eventAt=(
+      e.timestamp!==null &&
+      e.timestamp!==undefined &&
+      e.timestamp>0n
+    )
+      ? Number(e.timestamp)*1000
+      : Date.now();
+
+    const market=marketFromEvent(e);
+
+    // CHART FIRST: a browser candle must not wait for holder sorting,
+    // disk scheduling, per-user evaluation, or paper-engine callbacks.
+    if(Number.isFinite(market.priceSol)&&market.priceSol>0){
+      try{
+        onChartTick?.({
+          id:e.signature?`${e.signature}:${Number(e.eventIndex||0)}`:null,
+          mint:e.mint,
+          t:eventAt,
+          priceSol:market.priceSol,
+          markPriceSol:market.priceSol,
+          isBuy:e.isBuy===true,
+          solAmount:Number(e.solAmount)/1e9,
+          tokenAmount:Number(e.tokenAmount)/1e6,
+          source:'pump-curve-mark'
+        });
+      }catch{}
+    }
+
     let updatedForEval=null;
 
     try{
-      const token=tokenFromStore(store,e.mint);
-      const creator=token?.creator||token?.developer||token?.creatorWallet||null;
+      const creator=knownToken?.creator||knownToken?.developer||knownToken?.creatorWallet||null;
       if(creator)eventHolderLedger?.setCreator?.(e.mint,creator);
     }catch{}
 
@@ -174,58 +222,28 @@ export function startPumpLiveTradeFeed(opts={}){
       const snap=eventHolderLedger?.ingestTradeEventDirect?.(e);
       if(snap){
         metrics.holderSnapshots++;
-        const updated=eventHolderLedger?.applyToStore?.(store,e.mint);
+        // ingestTradeEventDirect already calculated this exact snapshot.
+        // Do not sort the same holder ledger a second time in applyToStore().
+        const updated=store?.setToken?.(e.mint,snap);
         if(updated)updatedForEval=updated;
       }
     }catch(err){metrics.lastError='holder:'+String(err?.message||err)}
 
     try{
-      const m=marketFromEvent(e),buyPressure=updatePressure(e);
-
-      // Pump TradeEvent carries an on-chain Unix timestamp in seconds.
-      // Use it as the canonical candle timestamp instead of browser/server receipt time.
-      const eventAt=(
-        e.timestamp!==null &&
-        e.timestamp!==undefined &&
-        e.timestamp>0n
-      )
-        ? Number(e.timestamp)*1000
-        : Date.now();
-
+      const buyPressure=updatePressure(e);
       const patch={
         marketSource:'ws-direct-trade-event',
         buyPressure,
         lastPriceAt:eventAt
       };
 
-      if(Number.isFinite(m.priceSol)&&m.priceSol>0)patch.priceSol=m.priceSol;
-      if(Number.isFinite(m.liquiditySol)&&m.liquiditySol>=0)patch.liquiditySol=m.liquiditySol;
+      if(Number.isFinite(market.priceSol)&&market.priceSol>0)patch.priceSol=market.priceSol;
+      if(Number.isFinite(market.liquiditySol)&&market.liquiditySol>=0)patch.liquiditySol=market.liquiditySol;
 
       const updated=store?.setToken?.(e.mint,patch);
-
       if(updated){
         metrics.marketSnapshots++;
         updatedForEval=updated;
-      }
-
-      // One chart authority: canonical post-trade Pump curve mark.
-      // AI, holder refreshes and candidate polling never create candle points.
-      const chartPriceSol=m.priceSol;
-
-      if(Number.isFinite(chartPriceSol)&&chartPriceSol>0){
-        try{
-          onChartTick?.({
-            id:e.signature?`${e.signature}:${Number(e.eventIndex||0)}`:null,
-            mint:e.mint,
-            t:eventAt,
-            priceSol:chartPriceSol,
-            markPriceSol:chartPriceSol,
-            isBuy:e.isBuy===true,
-            solAmount:Number(e.solAmount)/1e9,
-            tokenAmount:Number(e.tokenAmount)/1e6,
-            source:'pump-curve-mark'
-          });
-        }catch{}
       }
     }catch(err){metrics.lastError='market:'+String(err?.message||err)}
 
@@ -310,3 +328,4 @@ export function startPumpLiveTradeFeed(opts={}){
 // MEMEFLOW_TRADING_CHART_V30_4
 // MEMEFLOW_TRADING_CHART_V30_5_EXECUTION_TICKS
 // MEMEFLOW_TRADING_CHART_V30_6_CURVE_MARK
+// MEMEFLOW_TRADING_CHART_V30_7_CHART_FIRST_TRACKED_ONLY

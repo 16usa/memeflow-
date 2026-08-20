@@ -534,19 +534,9 @@ function normalizeChartPoint(point){
           ? Number(point.price)
           : null;
 
-  const rate =
-    finite(point?.solUsd)
-      ? Number(point.solUsd)
-      : solUsdRate();
-
-  const priceUsd =
-    priceSol > 0 && rate > 0
-      ? priceSol * rate
-      : null;
-
   if(
     !finite(point?.t) ||
-    !(priceUsd > 0)
+    !(priceSol > 0)
   ){
     return null;
   }
@@ -554,36 +544,53 @@ function normalizeChartPoint(point){
   return {
     id:point?.id?String(point.id):null,
     t:Number(point.t),
-    price:Number(priceUsd),
-    priceSol,
-    solUsd:rate,
+    // Raw history is canonical SOL mark price. USD is derived uniformly
+    // for every candle at render time from the current SOL/USD rate.
+    price:Number(priceSol),
+    priceSol:Number(priceSol),
     source:point?.source||null,
     isBuy:point?.isBuy===true,
     solAmount:num(point?.solAmount,0),
     tokenAmount:num(point?.tokenAmount,0),
-    markPrice:priceSol
+    markPrice:Number(priceSol)
   };
 }
 
 function replaceChartSnapshot(mint,incoming){
-  const seen=new Set();
-  const points=(Array.isArray(incoming)?incoming:[])
-    .map(normalizeChartPoint)
-    .filter(Boolean)
-    .sort((a,b)=>a.t-b.t)
-    .filter(point=>{
-      if(!point.id)return true;
-      if(seen.has(point.id))return false;
-      seen.add(point.id);
-      return true;
-    })
-    .slice(-6000);
+  const previous=rawPoints(mint).slice();
+  const merged=[
+    ...previous,
+    ...(Array.isArray(incoming)?incoming:[])
+      .map(normalizeChartPoint)
+      .filter(Boolean)
+  ].sort((a,b)=>a.t-b.t);
 
-  state.rawByMint.set(mint,points);
+  const seenIds=new Set();
+  const seenFallback=new Set();
+  const points=[];
+
+  for(const point of merged){
+    if(point.id){
+      if(seenIds.has(point.id))continue;
+      seenIds.add(point.id);
+    }else{
+      const key=[
+        Number(point.t),
+        Number(point.priceSol||point.price||0),
+        point.isBuy===true?1:0,
+        Number(point.solAmount||0),
+        Number(point.tokenAmount||0)
+      ].join('|');
+      if(seenFallback.has(key))continue;
+      seenFallback.add(key);
+    }
+    points.push(point);
+  }
+
+  state.rawByMint.set(mint,points.slice(-8000));
   chartRuntime.dataKey='';
-  chartRuntime.forceFit=true;
-  chartRuntime.lastCandleTime=null;
-  chartRuntime.candleCount=0;
+  // Fit only on the first real snapshot. Reconnects must not jump the viewport.
+  if(!previous.length)chartRuntime.forceFit=true;
 }
 
 function addPoint(mint,point,redraw=true) {
@@ -594,6 +601,13 @@ function addPoint(mint,point,redraw=true) {
 
   const points=rawPoints(mint);
   const last=points[points.length-1];
+
+  if(
+    next.id &&
+    (last?.id===next.id || points.slice(-64).some(item=>item?.id===next.id))
+  ){
+    return false;
+  }
 
   // Server history already de-duplicates by transaction signature + event index.
   // Do not rescan the whole browser history on every tick.
@@ -712,39 +726,46 @@ function candlesFor(points, timeframe) {
     .filter(
       point=>
         finite(point?.t) &&
-        finite(point?.price) &&
-        Number(point.price)>0
+        finite(point?.priceSol ?? point?.price) &&
+        Number(point?.priceSol ?? point?.price)>0
     );
 
   if(!clean.length)return [];
 
+  const rate=solUsdRate();
+  if(!(rate>0))return [];
+
   const interval=chartInterval(clean,timeframe);
   const candles=[];
   let candle=null;
+  let previousClose=null;
 
   for(const point of clean){
-    const price=Number(point.price);
+    const priceSol=Number(point?.priceSol ?? point?.price);
+    const price=priceSol*rate;
     const bucket=
       Math.floor(Number(point.t)/interval)*interval;
 
     if(!candle || candle.t!==bucket){
+      const open=previousClose===null?price:previousClose;
       candle={
         t:bucket,
-        open:price,
-        high:price,
-        low:price,
+        open,
+        high:Math.max(open,price),
+        low:Math.min(open,price),
         close:price,
         samples:1,
         interval
       };
       candles.push(candle);
-      continue;
+    }else{
+      candle.high=Math.max(candle.high,price);
+      candle.low=Math.min(candle.low,price);
+      candle.close=price;
+      candle.samples++;
     }
 
-    candle.high=Math.max(candle.high,price);
-    candle.low=Math.min(candle.low,price);
-    candle.close=price;
-    candle.samples++;
+    previousClose=candle.close;
   }
 
   return candles.slice(-500);
@@ -754,13 +775,16 @@ function latestCandleFor(points,timeframe){
   if(timeframe==='all')return null;
   if(!Array.isArray(points)||!points.length)return null;
 
+  const rate=solUsdRate();
+  if(!(rate>0))return null;
+
   const interval=Math.max(1000,Number(timeframe)||1000);
   let i=points.length-1;
 
   while(i>=0 && !(
     finite(points[i]?.t) &&
-    finite(points[i]?.price) &&
-    Number(points[i].price)>0
+    finite(points[i]?.priceSol ?? points[i]?.price) &&
+    Number(points[i]?.priceSol ?? points[i]?.price)>0
   ))i--;
 
   if(i<0)return null;
@@ -776,26 +800,37 @@ function latestCandleFor(points,timeframe){
     first--;
   }
 
+  let previousClose=null;
+  for(let j=first-1;j>=0;j--){
+    const p=Number(points[j]?.priceSol ?? points[j]?.price);
+    if(finite(points[j]?.t) && Number.isFinite(p) && p>0){
+      previousClose=p*rate;
+      break;
+    }
+  }
+
   let candle=null;
   for(let j=first;j<=i;j++){
     const point=points[j];
+    const pointSol=Number(point?.priceSol ?? point?.price);
     if(
       !finite(point?.t) ||
-      !finite(point?.price) ||
-      Number(point.price)<=0
+      !Number.isFinite(pointSol) ||
+      pointSol<=0
     )continue;
 
     const pointBucket=
       Math.floor(Number(point.t)/interval)*interval;
     if(pointBucket!==bucket)continue;
 
-    const price=Number(point.price);
+    const price=pointSol*rate;
     if(!candle){
+      const open=previousClose===null?price:previousClose;
       candle={
         t:bucket,
-        open:price,
-        high:price,
-        low:price,
+        open,
+        high:Math.max(open,price),
+        low:Math.min(open,price),
         close:price,
         samples:1,
         interval
@@ -1624,3 +1659,4 @@ init();
 /* MEMEFLOW_TRADING_CHART_V30_4 */
 /* MEMEFLOW_TRADING_CHART_V30_5_EXECUTION_OHLC */
 /* MEMEFLOW_TRADING_CHART_V30_6_USD_CURVE_MARK */
+/* MEMEFLOW_TRADING_CHART_V30_7_STABLE_HISTORY */
