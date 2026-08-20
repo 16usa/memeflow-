@@ -958,3 +958,71 @@ button { cursor: pointer; }
 }
 
 /* MEMEFLOW_TRADING_CHART_V30_8_PRICE_MC_GAP_SAFE */
+
+.live-trade-tape {
+  position: absolute;
+  z-index: 5;
+  left: 9px;
+  top: 88px;
+  width: 92px;
+  display: grid;
+  gap: 5px;
+  pointer-events: none;
+  contain: layout paint;
+}
+
+.live-tape-row {
+  width: max-content;
+  max-width: 90px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  opacity: .84;
+  transform: translate3d(0, 0, 0);
+  transition:
+    opacity .38s ease,
+    transform .38s ease;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px;
+  line-height: 1;
+  text-shadow: 0 1px 10px rgba(0,0,0,.9);
+}
+
+.live-tape-row strong {
+  font-weight: 820;
+  font-variant-numeric: tabular-nums;
+}
+
+.live-tape-row.buy {
+  color: rgba(77, 230, 161, .82);
+}
+
+.live-tape-row.sell {
+  color: rgba(255, 102, 121, .78);
+}
+
+.live-tape-arrow {
+  width: 9px;
+  text-align: center;
+  font-size: 8px;
+}
+
+.live-tape-row.leaving {
+  opacity: 0;
+  transform: translate3d(-5px, -2px, 0);
+}
+
+@media (max-width: 760px) {
+  .live-trade-tape {
+    top: 86px;
+    left: 8px;
+    width: 84px;
+    gap: 4px;
+  }
+
+  .live-tape-row {
+    max-width: 82px;
+    font-size: 9px;
+  }
+}
+/* MEMEFLOW_TRADING_CHART_V30_9_FAST_CONTINUOUS_TAPE_FIXED_LEVELS */

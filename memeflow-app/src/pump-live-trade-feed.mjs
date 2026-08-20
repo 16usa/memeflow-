@@ -103,6 +103,8 @@ export function startPumpLiveTradeFeed(opts={}){
     notifications:0,programDataSeen:0,tradeEventsDecoded:0,decodeErrors:0,
     holderSnapshots:0,marketSnapshots:0,repeatTradeEvents:0,ignoredUntrackedTradeEvents:0,
     distinctMints:0,distinctUsers:0,lastMint:null,lastUser:null,lastError:null,
+    fastChartConnected:false,fastChartReconnects:0,fastChartTicks:0,
+    fastChartBuffered:0,fastChartFlushed:0,fastChartLastAt:null,
     httpRpcCalls:0,queueDepth:0,active:0,
     evaluationCalls:0,evaluationResolved:0,evaluationRejected:0,evaluationNullResults:0,
     evaluationDecisionLikeResults:0,lastEvaluationMint:null,lastEvaluationTrigger:null,
@@ -111,6 +113,11 @@ export function startPumpLiveTradeFeed(opts={}){
 
   const mintCounts=new Map(), users=new Set(), pressure=new Map();
   let ws=null,stopped=false,idx=0,reconnectTimer=null;
+  let fastChartWs=null,fastChartIdx=0,fastChartReconnectTimer=null;
+  const fastWarmByMint=new Map();
+  const FAST_WARM_MAX_MINTS=200;
+  const FAST_WARM_MAX_TICKS=64;
+  const FAST_WARM_TTL_MS=30_000;
 
   function updatePressure(e){
     const now=Date.now(), windowMs=30_000;
@@ -254,6 +261,164 @@ export function startPumpLiveTradeFeed(opts={}){
     }
   }
 
+function fastChartTickFromEvent(e){
+    const market=marketFromEvent(e);
+    if(!(Number.isFinite(market.priceSol)&&market.priceSol>0))return null;
+
+    const eventAt=(
+      e.timestamp!==null &&
+      e.timestamp!==undefined &&
+      e.timestamp>0n
+    )
+      ? Number(e.timestamp)*1000
+      : Date.now();
+
+    return {
+      id:e.signature?`${e.signature}:${Number(e.eventIndex||0)}`:null,
+      mint:e.mint,
+      t:eventAt,
+      priceSol:market.priceSol,
+      markPriceSol:market.priceSol,
+      isBuy:e.isBuy===true,
+      solAmount:Number(e.solAmount)/1e9,
+      tokenAmount:Number(e.tokenAmount)/1e6,
+      source:'pump-curve-mark-processed'
+    };
+  }
+
+  function rememberFastWarm(tick){
+    if(!tick?.mint)return;
+    const now=Date.now();
+    let row=fastWarmByMint.get(tick.mint);
+    if(!row){
+      row={at:now,ticks:[]};
+      fastWarmByMint.set(tick.mint,row);
+    }
+    row.at=now;
+    row.ticks.push(tick);
+    if(row.ticks.length>FAST_WARM_MAX_TICKS){
+      row.ticks.splice(0,row.ticks.length-FAST_WARM_MAX_TICKS);
+    }
+    metrics.fastChartBuffered++;
+
+    if(fastWarmByMint.size>FAST_WARM_MAX_MINTS){
+      const stale=[...fastWarmByMint.entries()]
+        .sort((a,b)=>Number(a[1]?.at||0)-Number(b[1]?.at||0))
+        .slice(0,fastWarmByMint.size-FAST_WARM_MAX_MINTS);
+      for(const [mint] of stale)fastWarmByMint.delete(mint);
+    }
+
+    for(const [mint,item] of fastWarmByMint){
+      if(now-Number(item?.at||0)>FAST_WARM_TTL_MS){
+        fastWarmByMint.delete(mint);
+      }
+    }
+  }
+
+  function emitFastChart(e){
+    const tick=fastChartTickFromEvent(e);
+    if(!tick)return;
+
+    const known=trackedPumpToken(store,e.mint);
+    if(!known){
+      rememberFastWarm(tick);
+      return;
+    }
+
+    const warm=fastWarmByMint.get(e.mint);
+    if(warm?.ticks?.length){
+      fastWarmByMint.delete(e.mint);
+      for(const buffered of warm.ticks){
+        try{
+          onChartTick?.(buffered);
+          metrics.fastChartFlushed++;
+        }catch{}
+      }
+    }
+
+    try{
+      onChartTick?.(tick);
+      metrics.fastChartTicks++;
+      metrics.fastChartLastAt=Date.now();
+    }catch{}
+  }
+
+  async function connectFastChart(){
+    if(stopped||!urls.length||!onChartTick)return;
+
+    const url=urls[fastChartIdx++%urls.length];
+
+    try{
+      fastChartWs=await makeWS(url);
+
+      fastChartWs.onopen=()=>{
+        metrics.fastChartConnected=true;
+        try{
+          fastChartWs.send(JSON.stringify({
+            jsonrpc:'2.0',
+            id:129,
+            method:'logsSubscribe',
+            params:[
+              {mentions:[PUMP_PROGRAM]},
+              {commitment:'processed'}
+            ]
+          }));
+        }catch{}
+      };
+
+      fastChartWs.onmessage=ev=>{
+        try{
+          const j=JSON.parse(
+            typeof ev.data==='string'
+              ? ev.data
+              : String(ev.data)
+          );
+          const value=j?.params?.result?.value;
+          if(!value||value.err)return;
+
+          let eventIndex=0;
+          for(const log of value.logs||[]){
+            const b=programData(log);
+            if(!b)continue;
+            const e=decodeTradeEvent(b);
+            if(!e)continue;
+
+            e.signature=value.signature||null;
+            e.eventIndex=eventIndex++;
+            emitFastChart(e);
+          }
+        }catch(err){
+          metrics.lastError='fast-chart:'+String(err?.message||err);
+        }
+      };
+
+      fastChartWs.onerror=()=>{
+        metrics.lastError='fast-chart-ws-error';
+      };
+
+      fastChartWs.onclose=()=>{
+        metrics.fastChartConnected=false;
+        if(stopped)return;
+        metrics.fastChartReconnects++;
+        clearTimeout(fastChartReconnectTimer);
+        fastChartReconnectTimer=setTimeout(
+          connectFastChart,
+          700
+        );
+        fastChartReconnectTimer.unref?.();
+      };
+    }catch(err){
+      metrics.fastChartConnected=false;
+      metrics.fastChartReconnects++;
+      metrics.lastError='fast-chart-connect:'+String(err?.message||err);
+      fastChartReconnectTimer=setTimeout(
+        connectFastChart,
+        700
+      );
+      fastChartReconnectTimer.unref?.();
+    }
+  }
+
   async function connect(){
     if(stopped||!urls.length){
       if(!urls.length)metrics.lastError='No SOLANA_WS_URLS/SOLANA_RPC_URLS';
@@ -315,11 +480,20 @@ export function startPumpLiveTradeFeed(opts={}){
     }
   }
 
+  // V30.9: low-latency processed stream is chart/tape ONLY.
+  // Existing confirmed stream still owns engine/holder/AI semantics.
+  connectFastChart();
   connect();
 
   return {
     metrics:()=>({...metrics,queueDepth:0,active:0,httpRpcCalls:0,evaluationRecent:Array.from(__v1226EvalByMint.values()).slice(-12)}),
-    stop:()=>{stopped=true;clearTimeout(reconnectTimer);try{ws?.close?.()}catch{}}
+    stop:()=>{
+      stopped=true;
+      clearTimeout(reconnectTimer);
+      clearTimeout(fastChartReconnectTimer);
+      try{ws?.close?.()}catch{}
+      try{fastChartWs?.close?.()}catch{}
+    }
   };
 }
 
@@ -329,3 +503,5 @@ export function startPumpLiveTradeFeed(opts={}){
 // MEMEFLOW_TRADING_CHART_V30_5_EXECUTION_TICKS
 // MEMEFLOW_TRADING_CHART_V30_6_CURVE_MARK
 // MEMEFLOW_TRADING_CHART_V30_7_CHART_FIRST_TRACKED_ONLY
+
+// MEMEFLOW_TRADING_CHART_V30_9_PROCESSED_CHART_ONLY

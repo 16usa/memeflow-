@@ -245,7 +245,9 @@ async function loadSolUsd() {
 
   if (!previous || Math.abs(next / previous - 1) >= 0.0001) {
     chartRuntime.dataKey = '';
-    chartRuntime.forceFit = true;
+    chartRuntime.levelsKey = '';
+    // V30.9: FX refresh changes numeric USD values only.
+    // Never call fitContent here; that was making the live viewport jump.
     renderCandidates();
     renderSelected();
     updateAmountHint();
@@ -574,6 +576,7 @@ function selectCandidate(mint) {
   if (!mint) return;
   state.selectedMint = mint;
   state.selected = state.candidates.find(item => item.mint === mint) || null;
+  clearLiveTradeTape();
   chartRuntime.forceFit = true;
   chartRuntime.dataKey = '';
   renderCandidates();
@@ -742,6 +745,51 @@ function addPoint(mint,point,redraw=true) {
   return true;
 }
 
+function formatTapeAmount(value) {
+  const n = Number(value);
+  if (!(n > 0)) return '$0';
+  if (n >= 1000000) return `$${fmt(n / 1000000, 1)}M`;
+  if (n >= 1000) return `$${fmt(n / 1000, 1)}K`;
+  if (n >= 100) return `$${fmt(n, 0)}`;
+  if (n >= 10) return `$${fmt(n, 1)}`;
+  if (n >= 1) return `$${fmt(n, 1)}`;
+  return `$${fmt(n, 2)}`;
+}
+
+function clearLiveTradeTape() {
+  const host = $('liveTradeTape');
+  if (host) host.replaceChildren();
+}
+
+function pushLiveTradeTape(mint, point) {
+  if (mint !== state.selectedMint) return;
+
+  const host = $('liveTradeTape');
+  if (!host) return;
+
+  const sol = num(point?.solAmount);
+  const rate = solUsdRate();
+  const usd = sol > 0 && rate > 0 ? sol * rate : null;
+  if (!(usd > 0)) return;
+
+  const row = document.createElement('div');
+  row.className = `live-tape-row ${point?.isBuy === true ? 'buy' : 'sell'}`;
+  row.innerHTML =
+    `<span class="live-tape-arrow">${point?.isBuy === true ? '▲' : '▼'}</span>` +
+    `<strong>${esc(formatTapeAmount(usd))}</strong>`;
+
+  host.prepend(row);
+
+  while (host.children.length > 8) {
+    host.lastElementChild?.remove();
+  }
+
+  window.setTimeout(() => {
+    row.classList.add('leaving');
+    window.setTimeout(() => row.remove(), 420);
+  }, 3300);
+}
+
 function connectChartStream(mint) {
   if(state.chartSource){
     state.chartSource.close();
@@ -784,6 +832,7 @@ function connectChartStream(mint) {
       const {payload,incoming}=parseIncoming(event);
       let changed=false;
       for(const point of incoming){
+        pushLiveTradeTape(mint, point);
         changed=addPoint(mint,point,false)||changed;
       }
       if(changed)updateRealtimeChart(mint);
@@ -836,7 +885,8 @@ function candlesFor(points, timeframe) {
         finite(point?.t) &&
         finite(point?.priceSol ?? point?.price) &&
         Number(point?.priceSol ?? point?.price) > 0
-    );
+    )
+    .sort((a, b) => Number(a.t) - Number(b.t));
 
   if (!clean.length) return [];
 
@@ -845,7 +895,10 @@ function candlesFor(points, timeframe) {
 
   const horizon = chartHorizonMs(timeframe);
   if (horizon && clean.length > 1) {
-    const end = Number(clean[clean.length - 1].t);
+    const end = Math.max(
+      Number(clean[clean.length - 1].t),
+      Date.now()
+    );
     const floor = end - horizon;
     clean = clean.filter(point => Number(point.t) >= floor);
   }
@@ -858,31 +911,53 @@ function candlesFor(points, timeframe) {
   let previousClose = null;
   let previousBucket = null;
 
+  const pushFlat = bucket => {
+    if (!(previousClose > 0)) return;
+    candles.push({
+      t: bucket,
+      open: previousClose,
+      high: previousClose,
+      low: previousClose,
+      close: previousClose,
+      samples: 0,
+      interval,
+      carry: true
+    });
+    previousBucket = bucket;
+  };
+
   for (const point of clean) {
     const priceSol = Number(point?.priceSol ?? point?.price);
-    const priceUsd = priceSol * rate;
-    const price = chartValueFromUsdPrice(priceUsd);
+    const price = chartValueFromUsdPrice(priceSol * rate);
     if (!(price > 0)) continue;
 
     const bucket =
       Math.floor(Number(point.t) / interval) * interval;
 
     if (!candle || candle.t !== bucket) {
-      const adjacent =
-        previousClose !== null &&
+      if (
         previousBucket !== null &&
-        bucket - previousBucket === interval;
-
-      const open = adjacent ? previousClose : price;
+        previousClose > 0 &&
+        bucket > previousBucket + interval
+      ) {
+        for (
+          let gap = previousBucket + interval;
+          gap < bucket && candles.length < 520;
+          gap += interval
+        ) {
+          pushFlat(gap);
+        }
+      }
 
       candle = {
         t: bucket,
-        open,
-        high: Math.max(open, price),
-        low: Math.min(open, price),
+        open: price,
+        high: price,
+        low: price,
         close: price,
         samples: 1,
-        interval
+        interval,
+        carry: false
       };
       candles.push(candle);
       previousBucket = bucket;
@@ -894,6 +969,26 @@ function candlesFor(points, timeframe) {
     }
 
     previousClose = candle.close;
+  }
+
+  if (previousBucket !== null && previousClose > 0) {
+    const nowBucket =
+      Math.floor(Date.now() / interval) * interval;
+
+    const maxTailBars =
+      interval <= 1000 ? 12 :
+      interval <= 60_000 ? 2 :
+      1;
+
+    let added = 0;
+    for (
+      let gap = previousBucket + interval;
+      gap <= nowBucket && added < maxTailBars && candles.length < 520;
+      gap += interval
+    ) {
+      pushFlat(gap);
+      added++;
+    }
   }
 
   return candles.slice(-500);
@@ -928,22 +1023,6 @@ function latestCandleFor(points, timeframe) {
     first--;
   }
 
-  let previousClose = null;
-  let previousBucket = null;
-
-  for (let j = first - 1; j >= 0; j--) {
-    const p = Number(points[j]?.priceSol ?? points[j]?.price);
-    if (finite(points[j]?.t) && Number.isFinite(p) && p > 0) {
-      const converted = chartValueFromUsdPrice(p * rate);
-      if (converted > 0) {
-        previousClose = converted;
-        previousBucket =
-          Math.floor(Number(points[j].t) / interval) * interval;
-      }
-      break;
-    }
-  }
-
   let candle = null;
 
   for (let j = first; j <= i; j++) {
@@ -964,21 +1043,15 @@ function latestCandleFor(points, timeframe) {
     if (!(price > 0)) continue;
 
     if (!candle) {
-      const adjacent =
-        previousClose !== null &&
-        previousBucket !== null &&
-        bucket - previousBucket === interval;
-
-      const open = adjacent ? previousClose : price;
-
       candle = {
         t: bucket,
-        open,
-        high: Math.max(open, price),
-        low: Math.min(open, price),
+        open: price,
+        high: price,
+        low: price,
         close: price,
         samples: 1,
-        interval
+        interval,
+        carry: false
       };
     } else {
       candle.high = Math.max(candle.high, price);
@@ -1001,10 +1074,27 @@ function strategyLevels() {
     p => p.status === 'OPEN' && p.mint === state.selectedMint
   );
 
-  const entrySol = num(
-    position?.entryPriceSol,
-    candidatePrice(state.selected)
-  );
+  let entrySol = num(position?.entryPriceSol);
+
+  if (!(entrySol > 0)) {
+    entrySol = chartRuntime.previewEntrySolByMint.get(state.selectedMint) ?? null;
+
+    if (!(entrySol > 0)) {
+      const points = rawPoints(state.selectedMint);
+      const last = points[points.length - 1];
+      entrySol = num(
+        last?.priceSol ?? last?.price,
+        candidatePrice(state.selected)
+      );
+
+      if (entrySol > 0) {
+        chartRuntime.previewEntrySolByMint.set(
+          state.selectedMint,
+          entrySol
+        );
+      }
+    }
+  }
 
   if (!(entrySol > 0)) return [];
 
@@ -1045,7 +1135,8 @@ const chartRuntime={
   initialized:false,
   candleCount:0,
   lastCandleTime:null,
-  offscreenLevels:[]
+  offscreenLevels:[],
+  previewEntrySolByMint:new Map()
 };
 
 function ensureChartEngine(){
@@ -1107,7 +1198,9 @@ function ensureChartEngine(){
         barSpacing:11,
         minBarSpacing:3,
         fixLeftEdge:false,
-        fixRightEdge:false
+        fixRightEdge:false,
+        shiftVisibleRangeOnNewBar:true,
+        rightBarStaysOnScroll:true
       },
       crosshair:{
         mode:LW.CrosshairMode?.Normal ?? 0,
@@ -1459,13 +1552,16 @@ function drawChart() {
 
   const lastPoint=points[points.length-1];
 
+  const lastBuilt = candles[candles.length - 1];
   const dataKey=[
     state.selectedMint,
     String(state.timeframe),
     state.chartMetric,
     points.length,
     Number(lastPoint?.t||0),
-    Number(lastPoint?.price||0)
+    Number(lastPoint?.price||0),
+    candles.length,
+    Number(lastBuilt?.t||0)
   ].join('|');
 
   const contextChanged=
@@ -1846,6 +1942,16 @@ async function init() {
     15_000
   );
 
+  setInterval(() => {
+    if (
+      state.selectedMint &&
+      state.timeframe !== 'all' &&
+      Number(state.timeframe) <= 1000
+    ) {
+      scheduleChart();
+    }
+  }, 1000);
+
   scheduleChart();
 }
 
@@ -1860,3 +1966,5 @@ init();
 /* MEMEFLOW_TRADING_CHART_V30_6_USD_CURVE_MARK */
 /* MEMEFLOW_TRADING_CHART_V30_7_STABLE_HISTORY */
 /* MEMEFLOW_TRADING_CHART_V30_8_PRICE_MC_GAP_SAFE */
+
+/* MEMEFLOW_TRADING_CHART_V30_9_FAST_CONTINUOUS_TAPE_FIXED_LEVELS */
