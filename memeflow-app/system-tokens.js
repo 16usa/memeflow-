@@ -79,6 +79,70 @@ function stateLabel(state = '') {
   return 'WAITING';
 }
 
+function canonicalDecisionRow(row) {
+  const nested =
+    row?.decision && typeof row.decision === 'object'
+      ? row.decision
+      : {};
+
+  return {
+    ...row,
+    decision: {
+      ...nested,
+      state:
+        row?.state ??
+        nested?.state ??
+        'WAITING',
+      score:
+        row?.score ??
+        nested?.score ??
+        null,
+      primaryReason:
+        row?.primaryReason ??
+        nested?.primaryReason ??
+        nested?.reason ??
+        null,
+      reasons:
+        Array.isArray(row?.reasons)
+          ? row.reasons
+          : Array.isArray(nested?.reasons)
+            ? nested.reasons
+            : []
+    },
+    holder: {
+      ...(row?.holder || {}),
+      count:
+        row?.holder?.count ??
+        row?.holderCount ??
+        row?.holders ??
+        null,
+      top10Pct:
+        row?.holder?.top10Pct ??
+        row?.top10Pct ??
+        row?.top10 ??
+        null,
+      developerPct:
+        row?.holder?.developerPct ??
+        row?.developerPct ??
+        row?.developerSharePct ??
+        null
+    },
+    market: {
+      ...(row?.market || {}),
+      buyPressure:
+        row?.market?.buyPressure ??
+        row?.buyPressure ??
+        row?.momentum ??
+        null,
+      priceSol:
+        row?.market?.priceSol ??
+        row?.priceSol ??
+        row?.price ??
+        null
+    }
+  };
+}
+
 const state = {
   rows: [],
   filter: 'all',
@@ -677,8 +741,6 @@ async function loadDiscoveryStatus() {
 }
 
 async function loadTokens() {
-  void loadDiscoveryStatus();
-
   if (state.loading) {
     return;
   }
@@ -686,9 +748,10 @@ async function loadTokens() {
   state.loading = true;
 
   try {
+    // Same per-user, server-authoritative decisions feed used by Trading Terminal.
     const response =
       await fetch(
-        '/api/debug/filter-pipeline-lifecycle?limit=250',
+        '/api/ai/decisions?scope=all&limit=200',
         {
           cache: 'no-store',
           credentials: 'same-origin'
@@ -705,18 +768,16 @@ async function loadTokens() {
       await response.json();
 
     const rows =
-      Array.isArray(payload?.sample)
-        ? payload.sample
-        : Array.isArray(payload?.rows)
-          ? payload.rows
-          : Array.isArray(payload?.tokens)
-            ? payload.tokens
-            : [];
+      Array.isArray(payload?.decisions)
+        ? payload.decisions
+        : [];
 
     state.rows =
-      rows.filter(
-        (row) => row?.mint
-      );
+      rows
+        .map(canonicalDecisionRow)
+        .filter(
+          (row) => row?.mint
+        );
 
     $('lastUpdate').textContent =
       `Updated ${new Date().toLocaleTimeString(
@@ -736,7 +797,7 @@ async function loadTokens() {
     );
 
     $('lastUpdate').textContent =
-      'Telemetry unavailable';
+      'Decision feed unavailable';
   } finally {
     state.loading = false;
   }

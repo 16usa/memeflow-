@@ -1,3 +1,4 @@
+import './src/single-instance-lock.mjs'; // MEMEFLOW_SINGLE_V10
 import http from 'node:http';import fs from 'node:fs';import path from 'node:path';import crypto from 'node:crypto';import zlib from 'node:zlib';import {fileURLToPath} from 'node:url';
 import {JsonStore,sessionId,defaults} from './src/store.mjs';import {RpcPool,validPubkey,decodeCurve,decodeCreateData,decodePumpCreate,shouldExcludeMayhemCreate} from './src/solana.mjs';import {evaluate,tokenAgeMinutes} from './src/evaluate.mjs';import {validateSettings} from './src/settings.mjs';import {normalizeDiscoveryMode,tokenAllowedForSettings} from './src/discovery-eligibility.mjs';import {StripeBilling} from './src/billing.mjs';
 import {OpenAIIntelligence} from './src/openai-intelligence.mjs';import {PaperEngine} from './src/paper-engine.mjs';
@@ -68,7 +69,7 @@ const __mfChartArchive=new ChartHistoryArchive({
   txConcurrency:Number(process.env.CHART_HISTORY_TX_CONCURRENCY||3)
 });
 const PUMP='6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P',ALLOW_ANON=process.env.ALLOW_ANONYMOUS_PAPER!=='false';
-const EXCLUDE_MAYHEM_MODE=process.env.EXCLUDE_MAYHEM_MODE!=='false';
+const EXCLUDE_MAYHEM_MODE=true; // MEMEFLOW: Mayhem permanently excluded
 const OWNER_ACCESS_KEY=process.env.OWNER_ACCESS_KEY||'';
 const OWNER_USER_IDS=new Set((process.env.OWNER_USER_IDS||'').split(',').map(x=>x.trim()).filter(Boolean));
 const openaiAI=new OpenAIIntelligence({
@@ -730,7 +731,7 @@ function holderAdmissionForActiveUsers(mint){
   try{
     if(__v1223FreshPump(mint)){
       const __eventHolder=eventHolderLedger?.inspect?.(mint)||null;
-      if(__eventHolder){
+      if(__eventHolder?.holderFresh===true){
         const __u=(__v1224LinkCreator(mint,__v1223Token(mint)),eventHolderLedger?.applyToStore?.(store,mint));
         if(__u){
           try{Promise.resolve(evaluateAll(__u)).catch(()=>{})}catch{}
@@ -738,11 +739,11 @@ function holderAdmissionForActiveUsers(mint){
         }
         return {allow:false,drop:true,reason:'fresh_pump_event_holder_ready',source:'ws-direct'};
       }
-      return {allow:false,drop:true,reason:'fresh_pump_holder_warming',source:'ws-direct'};
+      return {allow:true,reason:'fresh_pump_canonical_holder_scan',source:'Solana getProgramAccounts'};
     }
   }catch(__e){}
 
-  try{const __h=eventHolderLedger.inspect(mint);if(__h){const __u=eventHolderLedger.applyToStore(store,mint);if(__u){try{Promise.resolve(evaluateAll(__u)).catch(()=>{})}catch{}try{publish(mint)}catch{}}return {allow:false,drop:true,reason:'event_holder_ledger_ready',source:'event-ledger'}}}catch{}
+  try{const __h=eventHolderLedger.inspect(mint);if(__h?.holderFresh===true){const __u=eventHolderLedger.applyToStore(store,mint);if(__u){try{Promise.resolve(evaluateAll(__u)).catch(()=>{})}catch{}try{publish(mint)}catch{}}return {allow:false,drop:true,reason:'event_holder_ledger_ready',source:'event-ledger'}}}catch{}
 
   const token=store.state.tokens[mint];
   if(!token)return {allow:false,drop:true,reason:'token_missing'};
@@ -848,7 +849,7 @@ const s = {...__holderAdmissionSettings, minBuyPressure: null};
   return {allow:false,drop:false,retryInMs:HOLDER_ADMISSION_RETRY_MS,reason:lastReason};
 }
 
-const holderQueue=makeHolderQueue({maxConcurrent:Math.max(1,Number(process.env.HOLDER_QUEUE_CONCURRENCY||2)),workerTimeoutMs:Math.max(5000,Number(process.env.HOLDER_WORKER_TIMEOUT_MS||11000)), /* MEMEFLOW_V12_14_HOLDER_CONCURRENCY */ queueMax:HOLDER_QUEUE_MAX,initialDelayMs:HOLDER_INITIAL_DELAY_MS,retryDelayMs:HOLDER_RETRY_DELAY_MS,maxRetries:HOLDER_MAX_RETRIES},{enrichHoldersFn:(mint)=>enrichHolders(mint,{rpc,store,evaluateAll,publish,enrichDiag}),holderMetrics,/* MEMEFLOW_V12_15_2_STALE_HOLDER_RECONCILIATION */
+const holderQueue=makeHolderQueue({maxConcurrent:Math.max(1,Number(process.env.HOLDER_QUEUE_CONCURRENCY||2)),workerTimeoutMs:Math.max(5000,Number(process.env.HOLDER_WORKER_TIMEOUT_MS||11000)), /* MEMEFLOW_V12_14_HOLDER_CONCURRENCY */ queueMax:HOLDER_QUEUE_MAX,initialDelayMs:HOLDER_INITIAL_DELAY_MS,retryDelayMs:HOLDER_RETRY_DELAY_MS,maxRetries:HOLDER_MAX_RETRIES},{enrichHoldersFn:(mint)=>enrichHolders(mint,{rpc,store,evaluateAll,publish,enrichDiag,eventHolderLedger}),holderMetrics,/* MEMEFLOW_V12_15_2_STALE_HOLDER_RECONCILIATION */
 isHolderFreshFn:(mint)=>Boolean(store.state?.tokens?.[mint]?.holderFresh===true),
 admissionFn:holderAdmissionForActiveUsers});
 const recoveryMetrics=makeRecoveryMetrics();
@@ -1388,6 +1389,270 @@ const discQueue=makeDiscoveryQueue(
    onSignatureProcessed:()=>{if(discovery.connected&&discovery.error)discovery.error=null;discovery.lastError=null},
    onSignatureFailed:(e)=>{discMetrics.lastErrorAt=Date.now();discovery.lastError={message:e.message,at:Date.now()}}}
 );
+
+
+/* MEMEFLOW_HOLDERS_V8_EXISTING_CANONICAL_BACKFILL
+   One-time bounded migration for old TradeEvent-only holder snapshots.
+   V7 fixes the authoritative path for new scans; V8 repairs cards that were
+   already persisted as holderFresh=true before V7 (for example Mage=163).
+*/
+const holderBackfillV8Metrics={
+  started:false,
+  completed:false,
+  candidates:0,
+  attempted:0,
+  succeeded:0,
+  failed:0,
+  rateLimited:0,
+  lastMint:null,
+  lastError:null,
+  startedAt:null,
+  completedAt:null
+};
+
+const holderBackfillV8Sleep=(ms)=>new Promise(resolve=>setTimeout(resolve,ms));
+
+function holderBackfillV8IsPump(t){
+  const mint=String(t?.mint||'').toLowerCase();
+  const platform=String(t?.launchPlatform||t?.protocol||'').toLowerCase();
+  const source=String(t?.source||'').toLowerCase();
+  return platform==='pump'||mint.endsWith('pump')||source.includes('pump create');
+}
+
+function holderBackfillV8NeedsCanonical(t){
+  if(!t||!holderBackfillV8IsPump(t))return false;
+
+  const source=String(t?.holderSource||'').toLowerCase();
+
+  // Already canonical — do not touch.
+  if(source.includes('getprogramaccounts'))return false;
+  if(source.includes('canonical') && !source.includes('provisional'))return false;
+
+  // Old authoritative bug: a partial TradeEvent.user ledger was persisted as
+  // a complete holder snapshot.
+  const eventLedgerEvidence=
+    source.includes('event-ledger') ||
+    source.includes('ws-direct') ||
+    t?.eventLedgerVersion!=null ||
+    t?.eventLedgerTxCount!=null;
+
+  return eventLedgerEvidence;
+}
+
+async function runHolderBackfillV8(){
+  if(holderBackfillV8Metrics.started)return;
+  holderBackfillV8Metrics.started=true;
+  holderBackfillV8Metrics.startedAt=Date.now();
+
+  const rows=Object.values(store?.state?.tokens||{})
+    .filter(holderBackfillV8NeedsCanonical)
+    .sort((a,b)=>Number(b?.discoveredAt||0)-Number(a?.discoveredAt||0))
+    .slice(0,200);
+
+  holderBackfillV8Metrics.candidates=rows.length;
+
+  for(const token of rows){
+    const mint=String(token?.mint||'').trim();
+    if(!mint)continue;
+
+    holderBackfillV8Metrics.attempted++;
+    holderBackfillV8Metrics.lastMint=mint;
+
+    // Do not allow a known-partial count to keep a false BUY READY while the
+    // canonical scan is pending.
+    try{
+      const pending=store.setToken(mint,{
+        holderFresh:false,
+        holderCount:null,
+        top10Pct:null,
+        developerPct:null,
+        developerSharePct:null,
+        holderSource:'canonical-backfill-v8-pending',
+        holderScannedAt:null
+      });
+      await Promise.resolve(evaluateAll(pending)).catch(()=>{});
+      try{publish(mint)}catch{}
+    }catch{}
+
+    let success=false;
+    for(let attempt=0;attempt<3&&!success;attempt++){
+      try{
+        const result=await enrichHolders(
+          mint,
+          {rpc,store,evaluateAll,publish,enrichDiag,eventHolderLedger}
+        );
+
+        if(result?.rateLimited){
+          holderBackfillV8Metrics.rateLimited++;
+          await holderBackfillV8Sleep(Math.min(30000,8000*(attempt+1)));
+          continue;
+        }
+
+        const updated=store?.state?.tokens?.[mint]||null;
+        const source=String(updated?.holderSource||'').toLowerCase();
+        if(updated?.holderFresh===true && source.includes('getprogramaccounts')){
+          success=true;
+          holderBackfillV8Metrics.succeeded++;
+          break;
+        }
+
+        throw new Error('canonical holder scan returned without authoritative state');
+      }catch(e){
+        holderBackfillV8Metrics.lastError=String(e?.message||e).slice(0,200);
+        if(attempt<2)await holderBackfillV8Sleep(4000*(attempt+1));
+      }
+    }
+
+    if(!success)holderBackfillV8Metrics.failed++;
+
+    // Be gentle with Solana/RPC; the shared RPC limiter also applies.
+    await holderBackfillV8Sleep(500);
+  }
+
+  holderBackfillV8Metrics.completed=true;
+  holderBackfillV8Metrics.completedAt=Date.now();
+}
+
+setTimeout(()=>{
+  void runHolderBackfillV8().catch(e=>{
+    holderBackfillV8Metrics.lastError=String(e?.message||e).slice(0,200);
+  });
+},1500).unref?.();
+
+
+/* MEMEFLOW_HOLDERS_V9_FORCE_CANONICAL_BACKFILL
+   Repair persisted user-only holder snapshots regardless of token age.
+   Sequential and bounded so it cannot create an RPC storm.
+*/
+const holderBackfillV9={
+  running:false,
+  completed:false,
+  candidates:0,
+  attempted:0,
+  succeeded:0,
+  failed:0,
+  rateLimited:0,
+  lastMint:null,
+  lastError:null
+};
+
+const holderBackfillV9Sleep=(ms)=>new Promise(r=>setTimeout(r,ms));
+
+function holderBackfillV9IsPump(t){
+  const mint=String(t?.mint||'').toLowerCase();
+  const platform=String(t?.launchPlatform||t?.protocol||'').toLowerCase();
+  const source=String(t?.source||'').toLowerCase();
+  return platform==='pump'||mint.endsWith('pump')||source.includes('pump create');
+}
+
+function holderBackfillV9NeedsScan(t){
+  if(!t||!holderBackfillV9IsPump(t))return false;
+
+  const src=String(t?.holderSource||'').toLowerCase();
+
+  if(
+    t?.holderFresh===true &&
+    Number.isFinite(Number(t?.holderCount)) &&
+    (
+      src.includes('getprogramaccounts') ||
+      src.includes('baseline + live')
+    )
+  ) return false;
+
+  return (
+    src.includes('event-ledger') ||
+    src.includes('user-only') ||
+    src.includes('provisional')
+  );
+}
+
+async function runHolderBackfillV9(){
+  if(holderBackfillV9.running||holderBackfillV9.completed)return;
+  holderBackfillV9.running=true;
+
+  try{
+    const rows=Object.values(store?.state?.tokens||{})
+      .filter(holderBackfillV9NeedsScan)
+      .sort((a,b)=>Number(b?.discoveredAt||0)-Number(a?.discoveredAt||0))
+      .slice(0,200);
+
+    holderBackfillV9.candidates=rows.length;
+
+    for(const token of rows){
+      const mint=String(token?.mint||'').trim();
+      if(!mint)continue;
+
+      holderBackfillV9.attempted++;
+      holderBackfillV9.lastMint=mint;
+
+      // Immediately invalidate the known-partial values. The V9 store guard
+      // prevents the live user-only ledger from putting them back.
+      try{
+        const pending=store.setToken(mint,{
+          holderFresh:false,
+          holderCount:null,
+          holders:null,
+          top10Pct:null,
+          developerPct:null,
+          developerSharePct:null,
+          holderSource:'canonical-v9-pending',
+          holderScannedAt:null
+        });
+        await Promise.resolve(evaluateAll(pending)).catch(()=>{});
+        try{publish(mint)}catch{}
+      }catch{}
+
+      let success=false;
+
+      for(let attempt=0;attempt<4&&!success;attempt++){
+        try{
+          const result=await enrichHolders(
+            mint,
+            {rpc,store,evaluateAll,publish,enrichDiag,eventHolderLedger}
+          );
+
+          if(result?.rateLimited){
+            holderBackfillV9.rateLimited++;
+            await holderBackfillV9Sleep(Math.min(30000,6000*(attempt+1)));
+            continue;
+          }
+
+          const updated=store?.state?.tokens?.[mint]||null;
+          const source=String(updated?.holderSource||'').toLowerCase();
+
+          if(
+            updated?.holderFresh===true &&
+            Number.isFinite(Number(updated?.holderCount)) &&
+            source.includes('getprogramaccounts')
+          ){
+            success=true;
+            holderBackfillV9.succeeded++;
+            break;
+          }
+
+          throw new Error('canonical scan did not produce authoritative holder state');
+        }catch(e){
+          holderBackfillV9.lastError=String(e?.message||e).slice(0,200);
+          if(attempt<3)await holderBackfillV9Sleep(4000*(attempt+1));
+        }
+      }
+
+      if(!success)holderBackfillV9.failed++;
+
+      await holderBackfillV9Sleep(750);
+    }
+
+    holderBackfillV9.completed=true;
+  }finally{
+    holderBackfillV9.running=false;
+  }
+}
+
+setTimeout(()=>{
+  void runHolderBackfillV9().catch(e=>{
+    holderBackfillV9.lastError=String(e?.message||e).slice(0,200);
+  });
+},2000).unref?.();
 
 /* MEMEFLOW_V12_DISCOVERY_ENRICHMENT_BRIDGE
    Self-healing bridge for fresh Pump tokens that reached store.tokens but

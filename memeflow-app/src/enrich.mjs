@@ -364,7 +364,7 @@ function aggregateWalletBalances(accounts,protocolAuthorities){
 }
 
 export async function enrichHolders(mint,deps){
-  const {rpc,store,evaluateAll,publish,enrichDiag}=deps;
+  const {rpc,store,evaluateAll,publish,enrichDiag,eventHolderLedger=null}=deps;
   const token=store.state.tokens[mint]||{};
   const decimals=Number(token.decimals??6);
   const total=Number(token.totalSupply||0);
@@ -405,6 +405,17 @@ export async function enrichHolders(mint,deps){
   const creator=token.creator||null;
   const creatorAmount=creator?(walletBalances.get(creator)||0):0;
   const developerPct=creator&&total>0?creatorAmount/total*100:null;
+
+  // Seed the full unique-wallet baseline before the live TradeEvent ledger
+  // continues applying incremental buys/sells.
+  try{
+    eventHolderLedger?.seedCanonicalBalances?.(
+      mint,
+      walletBalances,
+      {decimals,creator}
+    );
+  }catch(_){}
+
 
   const updated=store.setToken(mint,{
     holderFresh:true,

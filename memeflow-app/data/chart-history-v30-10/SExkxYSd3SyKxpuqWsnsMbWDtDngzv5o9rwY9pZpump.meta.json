@@ -1,0 +1,23 @@
+{
+  "running": false,
+  "lastError": null,
+  "lastStartedAt": 1787190728067,
+  "updatedAt": 1787190942149,
+  "pages": 1,
+  "signatures": 76,
+  "transactions": 76,
+  "historyPoints": 11,
+  "historyStartAt": 1787190711000,
+  "historyEndAt": 1787190711000,
+  "lastCursor": "spzJgqJqkPdy5MpZpUTSp86T6cWYmWKC1CwoNmLPQRGBVhtwZf1sXRRLsMqkXsJitfKqui1tYqFXLS5ui2DpTBc",
+  "oldestComplete": true,
+  "lastCompletedAt": 1787190942149,
+  "lastRun": {
+    "pages": 1,
+    "signatures": 76,
+    "transactions": 76,
+    "points": 11,
+    "reachedKnown": false,
+    "exhausted": true
+  }
+}

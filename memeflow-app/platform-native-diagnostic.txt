@@ -1,0 +1,818 @@
+MEMEFLOW PLATFORM NATIVE SELECT DIAGNOSTIC
+ROOT: /home/runner/workspace/memeflow-app
+SYSTEM: /home/runner/workspace/memeflow-app/system.js
+CLEAN_BACKUP: /home/runner/workspace/memeflow-app/.discovery-settings-ui-v1-backup-20260819-161256/system.js
+SAFETY_COPY: /home/runner/workspace/memeflow-app/.platform-before-clean-restore-20260819-165848/system.js
+
+COUNTS
+MEMEFLOW_DISCOVERY_SETTINGS_UI_V1: 0
+MEMEFLOW_DISCOVERY_PLATFORM_DROPDOWN_V2: 0
+MEMEFLOW_DISCOVERY_NATIVE_PLATFORM_V3: 0
+
+===== System settings @ 71428 =====
+
+    input.type = (kind === 'number' || kind === 'integer' || kind === 'nullable') ? 'number' : 'text';
+    if (min !== undefined && min !== null) input.min = String(min);
+    if (max !== undefined && max !== null) input.max = String(max);
+    if (step !== undefined && step !== null) input.step = String(step);
+    if (kind === 'nullable') input.placeholder = 'Off';
+    wrap.appendChild(input);
+  }
+
+  input.dataset.settingKey = key;
+  input.dataset.settingKind = kind;
+  const markDirty = () => {
+    MF293.dirty = true;
+    mf293Status('Unsaved', 'dirty');
+  };
+  input.addEventListener('input', markDirty);
+  input.addEventListener('change', markDirty);
+
+  return wrap;
+}
+
+function mf293Build() {
+  if (document.getElementById('mf293SettingsPanel')) return;
+
+  const actions = document.querySelector('.top-actions');
+  if (actions) {
+    const button = document.createElement('button');
+    button.id = 'mf293SettingsBtn';
+    button.className = 'tool-btn mf293-settings-trigger';
+    button.type = 'button';
+    button.textContent = 'Settings';
+    actions.insertBefore(button, document.getElementById('resetViewBtn') || null);
+    button.addEventListener('click', mf293Open);
+  }
+
+  const backdrop = document.createElement('div');
+  backdrop.id = 'mf293SettingsBackdrop';
+  backdrop.className = 'mf293-settings-backdrop';
+  backdrop.hidden = true;
+
+  const panel = document.createElement('section');
+  panel.id = 'mf293SettingsPanel';
+  panel.className = 'mf293-settings-panel';
+  panel.setAttribute('role', 'dialog');
+  panel.setAttribute('aria-modal', 'true');
+  panel.setAttribute('aria-labelledby', 'mf293SettingsTitle');
+  panel.innerHTML = `
+    <header class="mf293-settings-head">
+      <div>
+        <span class="eyebrow">LIVE CONFIGURATION</span>
+        <h2 id="mf293SettingsTitle">System settings</h2>
+      </div>
+      <div class="mf293-settings-head-actions">
+        <span id="mf293SettingsStatus" class="mf293-settings-status">Ready</span>
+        <button id="mf293SettingsClose" type="button" aria-label="Close settings">×</button>
+      </div>
+    </header>
+    <div class="mf293-settings-meta">
+      <span>Platform<strong>Pump.fun</strong></span>
+      <span>AI policy<strong>Propose only</strong></span>
+      <span>Kill switch<strong id="mf293KillSwitch">Checking</strong></span>
+    </div>
+    <div id="mf293SettingsBody" class="mf293-settings-body"></div>
+    <footer class="mf293-settings-footer">
+      <button id="mf293RestoreDefaults" class="mf293-secondary" type="button">Restore defaults</button>
+      <button id="mf293SaveSettings" class="mf293-primary" type="button">Save settings</button>
+    </footer>
+  `;
+
+  backdrop.appendChild(panel);
+  document.body.appendChild(backdrop);
+
+  const body = document.getElementById('mf293SettingsBody');
+  for (const [id, title, subtitle, open, fields] of MF293_GROUPS) {
+    const section = document.createElement('details');
+    section.className = 'mf293-settings-group';
+    section.open = open;
+    const summary = document.createElement('summary');
+    summary.innerHTML = `<span><strong>${title}</strong><small>${subtitle}</small></span><i></i>`;
+    const grid = document.createElement('div');
+    grid.className = 'mf293-settings-grid';
+    for (const field of fields) grid.appendChild(mf293CreateField(field));
+    section.append(summary, grid);
+    body.appendChild(section);
+  }
+
+  document.getElementById('mf293SettingsClose')?.addEventListener('click', mf293Close);
+  document.getElementById('mf293SaveSettings')?.addEventListener('click', mf293Save);
+  document.getElementById('mf293RestoreDefaults')?.addEventListener('c
+===== END =====
+
+===== Operating mode @ 62383 =====
+trols.minAzimuthAngle = -0.68;
+  app.controls.maxAzimuthAngle = 0.68;
+  app.controls.autoRotate = false;
+  app.autoRotate = false;
+  app.controls.update();
+}
+
+function mf29DisableLegacyTokenMeshes() {
+  for (const item of app.tokenMeshes.values()) {
+    if (item?.mesh) {
+      app.scene.remove(item.mesh);
+    }
+  }
+
+  app.tokenMeshes.clear();
+  app.pickables = [];
+}
+
+function mf29Install() {
+  if (MF29.installed || !MF20.installed || !MF20.hardware?.size) {
+    return;
+  }
+
+  MF29.installed = true;
+
+  mf29DisableLegacyTokenMeshes();
+  mf29HideLegacyNodeGeometry();
+  mf29RefineHardware();
+
+  for (const [id, hardware] of MF20.hardware) {
+    mf29CreateHitTarget(id, hardware);
+  }
+
+  const canvas = app.renderer?.domElement;
+
+  if (!canvas) {
+    throw new Error('MEMEFLOW V29 canvas is unavailable');
+  }
+
+  canvas.style.touchAction = 'none';
+  canvas.addEventListener('pointerdown', mf29PointerDown, { passive: true });
+  canvas.addEventListener('pointermove', mf29PointerMove, { passive: true });
+  canvas.addEventListener('pointerup', mf29PointerUp, { passive: true });
+  canvas.addEventListener('pointercancel', mf29PointerCancel, { passive: true });
+
+  window.__mf29SyncSelection = mf29ApplyVisualState;
+
+  mf29Camera(true);
+  mf29ApplyVisualState();
+  resize();
+
+  console.log('[MF29] Clean system layer enabled');
+}
+
+mf29Install();
+
+window.addEventListener('resize', () => {
+  if (!MF29.installed) {
+    return;
+  }
+
+  mf29Camera(false);
+  resize();
+});
+
+/* ===== MEMEFLOW V29.3 CAMERA FIT + SETTINGS ===== */
+
+const MF293 = {
+  installed: false,
+  settings: null,
+  version: null,
+  capabilities: null,
+  killSwitchActive: false,
+  dirty: false,
+  saving: false
+};
+
+const MF293_GROUPS = [
+  ['logic', 'Logic', 'Decision thresholds and operating policy', true, [
+    ['operatingMode', 'Operating mode', 'select', [['observe','Observe'],['assist','Assist'],['automate','Automate']]],
+    ['tradingEnvironment', 'Trading environment', 'select', [['paper','Paper'],['live','Live']]],
+    ['profile', 'Profile', 'select', [['conservative','Conservative'],['balanced','Balanced'],['aggressive','Aggressive']]],
+    ['minScore', 'Minimum AI score', 'number', 0, 100, 1],
+    ['minConfidence', 'Minimum confidence %', 'number', 0, 100, 1],
+    ['minBuyPressure', 'Minimum buy pressure', 'number', 0, null, 0.01],
+    ['decisionFreshnessSec', 'Decision freshness sec', 'integer', 5, 3600, 1],
+    ['requireFreshHolderSnapshot', 'Require fresh holder snapshot', 'boolean'],
+    ['requireWebsiteOrX', 'Require website or X', 'boolean'],
+    ['ownerApproval', 'Owner approval', 'boolean'],
+    ['shadowValidation', 'Shadow validation', 'boolean'],
+    ['changeLog', 'Settings change log', 'boolean']
+  ]],
+  ['trading', 'Trading', 'Capital, position sizing and daily limits', true, [
+    ['tradingCapital', 'Trading capital SOL', 'number', 0, null, 0.01],
+    ['dailySpendLimit', 'Daily spend limit SOL', 'number', 0, null, 0.01],
+    ['positionSize', 'Default position SOL', 'number', 0.000001, null, 0.01],
+    ['maxPositionSize', 'Maximum position SOL', 'number', 0.000001, null, 0.01],
+    ['maxOpenPositions', 'Maximum open positions', 'integer', 0, null, 1],
+    ['maxDailyEntries', 'Maximum daily entries', 'integer', 0, null, 1],
+    ['dailyLossLimit', 'Daily loss limit SOL', 'number', 0, null, 0.01],
+    ['feeReserve', 'Fee reserve SOL', 'number', 0, null, 0.001]
+  ]],
+  ['filters', 'Entry filters', 'Market, holder, concentration and token filters', false, [
+    ['minLiquidityUsd', 'Minimum liquidity USD', 'number', 0, null, 1],
+    ['minHolders', 'Minimum holders', 'nullable', 0, null, 1],
+    
+===== END =====
+
+===== Trading environment @ 62508 =====
+alse;
+  app.controls.update();
+}
+
+function mf29DisableLegacyTokenMeshes() {
+  for (const item of app.tokenMeshes.values()) {
+    if (item?.mesh) {
+      app.scene.remove(item.mesh);
+    }
+  }
+
+  app.tokenMeshes.clear();
+  app.pickables = [];
+}
+
+function mf29Install() {
+  if (MF29.installed || !MF20.installed || !MF20.hardware?.size) {
+    return;
+  }
+
+  MF29.installed = true;
+
+  mf29DisableLegacyTokenMeshes();
+  mf29HideLegacyNodeGeometry();
+  mf29RefineHardware();
+
+  for (const [id, hardware] of MF20.hardware) {
+    mf29CreateHitTarget(id, hardware);
+  }
+
+  const canvas = app.renderer?.domElement;
+
+  if (!canvas) {
+    throw new Error('MEMEFLOW V29 canvas is unavailable');
+  }
+
+  canvas.style.touchAction = 'none';
+  canvas.addEventListener('pointerdown', mf29PointerDown, { passive: true });
+  canvas.addEventListener('pointermove', mf29PointerMove, { passive: true });
+  canvas.addEventListener('pointerup', mf29PointerUp, { passive: true });
+  canvas.addEventListener('pointercancel', mf29PointerCancel, { passive: true });
+
+  window.__mf29SyncSelection = mf29ApplyVisualState;
+
+  mf29Camera(true);
+  mf29ApplyVisualState();
+  resize();
+
+  console.log('[MF29] Clean system layer enabled');
+}
+
+mf29Install();
+
+window.addEventListener('resize', () => {
+  if (!MF29.installed) {
+    return;
+  }
+
+  mf29Camera(false);
+  resize();
+});
+
+/* ===== MEMEFLOW V29.3 CAMERA FIT + SETTINGS ===== */
+
+const MF293 = {
+  installed: false,
+  settings: null,
+  version: null,
+  capabilities: null,
+  killSwitchActive: false,
+  dirty: false,
+  saving: false
+};
+
+const MF293_GROUPS = [
+  ['logic', 'Logic', 'Decision thresholds and operating policy', true, [
+    ['operatingMode', 'Operating mode', 'select', [['observe','Observe'],['assist','Assist'],['automate','Automate']]],
+    ['tradingEnvironment', 'Trading environment', 'select', [['paper','Paper'],['live','Live']]],
+    ['profile', 'Profile', 'select', [['conservative','Conservative'],['balanced','Balanced'],['aggressive','Aggressive']]],
+    ['minScore', 'Minimum AI score', 'number', 0, 100, 1],
+    ['minConfidence', 'Minimum confidence %', 'number', 0, 100, 1],
+    ['minBuyPressure', 'Minimum buy pressure', 'number', 0, null, 0.01],
+    ['decisionFreshnessSec', 'Decision freshness sec', 'integer', 5, 3600, 1],
+    ['requireFreshHolderSnapshot', 'Require fresh holder snapshot', 'boolean'],
+    ['requireWebsiteOrX', 'Require website or X', 'boolean'],
+    ['ownerApproval', 'Owner approval', 'boolean'],
+    ['shadowValidation', 'Shadow validation', 'boolean'],
+    ['changeLog', 'Settings change log', 'boolean']
+  ]],
+  ['trading', 'Trading', 'Capital, position sizing and daily limits', true, [
+    ['tradingCapital', 'Trading capital SOL', 'number', 0, null, 0.01],
+    ['dailySpendLimit', 'Daily spend limit SOL', 'number', 0, null, 0.01],
+    ['positionSize', 'Default position SOL', 'number', 0.000001, null, 0.01],
+    ['maxPositionSize', 'Maximum position SOL', 'number', 0.000001, null, 0.01],
+    ['maxOpenPositions', 'Maximum open positions', 'integer', 0, null, 1],
+    ['maxDailyEntries', 'Maximum daily entries', 'integer', 0, null, 1],
+    ['dailyLossLimit', 'Daily loss limit SOL', 'number', 0, null, 0.01],
+    ['feeReserve', 'Fee reserve SOL', 'number', 0, null, 0.001]
+  ]],
+  ['filters', 'Entry filters', 'Market, holder, concentration and token filters', false, [
+    ['minLiquidityUsd', 'Minimum liquidity USD', 'number', 0, null, 1],
+    ['minHolders', 'Minimum holders', 'nullable', 0, null, 1],
+    ['maxHolders', 'Maximum holders', 'nullable', 0, null, 1],
+    ['minTokenAgeMinutes', 'Minimum age min', 'nullable', 0, null, 0.1]
+===== END =====
+
+===== Profile @ 62584 =====
+  for (const item of app.tokenMeshes.values()) {
+    if (item?.mesh) {
+      app.scene.remove(item.mesh);
+    }
+  }
+
+  app.tokenMeshes.clear();
+  app.pickables = [];
+}
+
+function mf29Install() {
+  if (MF29.installed || !MF20.installed || !MF20.hardware?.size) {
+    return;
+  }
+
+  MF29.installed = true;
+
+  mf29DisableLegacyTokenMeshes();
+  mf29HideLegacyNodeGeometry();
+  mf29RefineHardware();
+
+  for (const [id, hardware] of MF20.hardware) {
+    mf29CreateHitTarget(id, hardware);
+  }
+
+  const canvas = app.renderer?.domElement;
+
+  if (!canvas) {
+    throw new Error('MEMEFLOW V29 canvas is unavailable');
+  }
+
+  canvas.style.touchAction = 'none';
+  canvas.addEventListener('pointerdown', mf29PointerDown, { passive: true });
+  canvas.addEventListener('pointermove', mf29PointerMove, { passive: true });
+  canvas.addEventListener('pointerup', mf29PointerUp, { passive: true });
+  canvas.addEventListener('pointercancel', mf29PointerCancel, { passive: true });
+
+  window.__mf29SyncSelection = mf29ApplyVisualState;
+
+  mf29Camera(true);
+  mf29ApplyVisualState();
+  resize();
+
+  console.log('[MF29] Clean system layer enabled');
+}
+
+mf29Install();
+
+window.addEventListener('resize', () => {
+  if (!MF29.installed) {
+    return;
+  }
+
+  mf29Camera(false);
+  resize();
+});
+
+/* ===== MEMEFLOW V29.3 CAMERA FIT + SETTINGS ===== */
+
+const MF293 = {
+  installed: false,
+  settings: null,
+  version: null,
+  capabilities: null,
+  killSwitchActive: false,
+  dirty: false,
+  saving: false
+};
+
+const MF293_GROUPS = [
+  ['logic', 'Logic', 'Decision thresholds and operating policy', true, [
+    ['operatingMode', 'Operating mode', 'select', [['observe','Observe'],['assist','Assist'],['automate','Automate']]],
+    ['tradingEnvironment', 'Trading environment', 'select', [['paper','Paper'],['live','Live']]],
+    ['profile', 'Profile', 'select', [['conservative','Conservative'],['balanced','Balanced'],['aggressive','Aggressive']]],
+    ['minScore', 'Minimum AI score', 'number', 0, 100, 1],
+    ['minConfidence', 'Minimum confidence %', 'number', 0, 100, 1],
+    ['minBuyPressure', 'Minimum buy pressure', 'number', 0, null, 0.01],
+    ['decisionFreshnessSec', 'Decision freshness sec', 'integer', 5, 3600, 1],
+    ['requireFreshHolderSnapshot', 'Require fresh holder snapshot', 'boolean'],
+    ['requireWebsiteOrX', 'Require website or X', 'boolean'],
+    ['ownerApproval', 'Owner approval', 'boolean'],
+    ['shadowValidation', 'Shadow validation', 'boolean'],
+    ['changeLog', 'Settings change log', 'boolean']
+  ]],
+  ['trading', 'Trading', 'Capital, position sizing and daily limits', true, [
+    ['tradingCapital', 'Trading capital SOL', 'number', 0, null, 0.01],
+    ['dailySpendLimit', 'Daily spend limit SOL', 'number', 0, null, 0.01],
+    ['positionSize', 'Default position SOL', 'number', 0.000001, null, 0.01],
+    ['maxPositionSize', 'Maximum position SOL', 'number', 0.000001, null, 0.01],
+    ['maxOpenPositions', 'Maximum open positions', 'integer', 0, null, 1],
+    ['maxDailyEntries', 'Maximum daily entries', 'integer', 0, null, 1],
+    ['dailyLossLimit', 'Daily loss limit SOL', 'number', 0, null, 0.01],
+    ['feeReserve', 'Fee reserve SOL', 'number', 0, null, 0.001]
+  ]],
+  ['filters', 'Entry filters', 'Market, holder, concentration and token filters', false, [
+    ['minLiquidityUsd', 'Minimum liquidity USD', 'number', 0, null, 1],
+    ['minHolders', 'Minimum holders', 'nullable', 0, null, 1],
+    ['maxHolders', 'Maximum holders', 'nullable', 0, null, 1],
+    ['minTokenAgeMinutes', 'Minimum age min', 'nullable', 0, null, 0.1],
+    ['maxTokenAgeMinutes', 'Maximum age min', 'nullable', 0, n
+===== END =====
+
+===== Platform @ 71762 =====
+able') input.placeholder = 'Off';
+    wrap.appendChild(input);
+  }
+
+  input.dataset.settingKey = key;
+  input.dataset.settingKind = kind;
+  const markDirty = () => {
+    MF293.dirty = true;
+    mf293Status('Unsaved', 'dirty');
+  };
+  input.addEventListener('input', markDirty);
+  input.addEventListener('change', markDirty);
+
+  return wrap;
+}
+
+function mf293Build() {
+  if (document.getElementById('mf293SettingsPanel')) return;
+
+  const actions = document.querySelector('.top-actions');
+  if (actions) {
+    const button = document.createElement('button');
+    button.id = 'mf293SettingsBtn';
+    button.className = 'tool-btn mf293-settings-trigger';
+    button.type = 'button';
+    button.textContent = 'Settings';
+    actions.insertBefore(button, document.getElementById('resetViewBtn') || null);
+    button.addEventListener('click', mf293Open);
+  }
+
+  const backdrop = document.createElement('div');
+  backdrop.id = 'mf293SettingsBackdrop';
+  backdrop.className = 'mf293-settings-backdrop';
+  backdrop.hidden = true;
+
+  const panel = document.createElement('section');
+  panel.id = 'mf293SettingsPanel';
+  panel.className = 'mf293-settings-panel';
+  panel.setAttribute('role', 'dialog');
+  panel.setAttribute('aria-modal', 'true');
+  panel.setAttribute('aria-labelledby', 'mf293SettingsTitle');
+  panel.innerHTML = `
+    <header class="mf293-settings-head">
+      <div>
+        <span class="eyebrow">LIVE CONFIGURATION</span>
+        <h2 id="mf293SettingsTitle">System settings</h2>
+      </div>
+      <div class="mf293-settings-head-actions">
+        <span id="mf293SettingsStatus" class="mf293-settings-status">Ready</span>
+        <button id="mf293SettingsClose" type="button" aria-label="Close settings">×</button>
+      </div>
+    </header>
+    <div class="mf293-settings-meta">
+      <span>Platform<strong>Pump.fun</strong></span>
+      <span>AI policy<strong>Propose only</strong></span>
+      <span>Kill switch<strong id="mf293KillSwitch">Checking</strong></span>
+    </div>
+    <div id="mf293SettingsBody" class="mf293-settings-body"></div>
+    <footer class="mf293-settings-footer">
+      <button id="mf293RestoreDefaults" class="mf293-secondary" type="button">Restore defaults</button>
+      <button id="mf293SaveSettings" class="mf293-primary" type="button">Save settings</button>
+    </footer>
+  `;
+
+  backdrop.appendChild(panel);
+  document.body.appendChild(backdrop);
+
+  const body = document.getElementById('mf293SettingsBody');
+  for (const [id, title, subtitle, open, fields] of MF293_GROUPS) {
+    const section = document.createElement('details');
+    section.className = 'mf293-settings-group';
+    section.open = open;
+    const summary = document.createElement('summary');
+    summary.innerHTML = `<span><strong>${title}</strong><small>${subtitle}</small></span><i></i>`;
+    const grid = document.createElement('div');
+    grid.className = 'mf293-settings-grid';
+    for (const field of fields) grid.appendChild(mf293CreateField(field));
+    section.append(summary, grid);
+    body.appendChild(section);
+  }
+
+  document.getElementById('mf293SettingsClose')?.addEventListener('click', mf293Close);
+  document.getElementById('mf293SaveSettings')?.addEventListener('click', mf293Save);
+  document.getElementById('mf293RestoreDefaults')?.addEventListener('click', mf293Restore);
+  backdrop.addEventListener('click', event => {
+    if (event.target === backdrop) mf293Close();
+  });
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && !backdrop.hidden) mf293Close();
+  });
+}
+
+function mf293Populate() {
+  if (!MF293.settings) return;
+
+  for (const field
+===== END =====
+
+===== Restore defaults @ 72137 =====
+ocument.getElementById('mf293SettingsPanel')) return;
+
+  const actions = document.querySelector('.top-actions');
+  if (actions) {
+    const button = document.createElement('button');
+    button.id = 'mf293SettingsBtn';
+    button.className = 'tool-btn mf293-settings-trigger';
+    button.type = 'button';
+    button.textContent = 'Settings';
+    actions.insertBefore(button, document.getElementById('resetViewBtn') || null);
+    button.addEventListener('click', mf293Open);
+  }
+
+  const backdrop = document.createElement('div');
+  backdrop.id = 'mf293SettingsBackdrop';
+  backdrop.className = 'mf293-settings-backdrop';
+  backdrop.hidden = true;
+
+  const panel = document.createElement('section');
+  panel.id = 'mf293SettingsPanel';
+  panel.className = 'mf293-settings-panel';
+  panel.setAttribute('role', 'dialog');
+  panel.setAttribute('aria-modal', 'true');
+  panel.setAttribute('aria-labelledby', 'mf293SettingsTitle');
+  panel.innerHTML = `
+    <header class="mf293-settings-head">
+      <div>
+        <span class="eyebrow">LIVE CONFIGURATION</span>
+        <h2 id="mf293SettingsTitle">System settings</h2>
+      </div>
+      <div class="mf293-settings-head-actions">
+        <span id="mf293SettingsStatus" class="mf293-settings-status">Ready</span>
+        <button id="mf293SettingsClose" type="button" aria-label="Close settings">×</button>
+      </div>
+    </header>
+    <div class="mf293-settings-meta">
+      <span>Platform<strong>Pump.fun</strong></span>
+      <span>AI policy<strong>Propose only</strong></span>
+      <span>Kill switch<strong id="mf293KillSwitch">Checking</strong></span>
+    </div>
+    <div id="mf293SettingsBody" class="mf293-settings-body"></div>
+    <footer class="mf293-settings-footer">
+      <button id="mf293RestoreDefaults" class="mf293-secondary" type="button">Restore defaults</button>
+      <button id="mf293SaveSettings" class="mf293-primary" type="button">Save settings</button>
+    </footer>
+  `;
+
+  backdrop.appendChild(panel);
+  document.body.appendChild(backdrop);
+
+  const body = document.getElementById('mf293SettingsBody');
+  for (const [id, title, subtitle, open, fields] of MF293_GROUPS) {
+    const section = document.createElement('details');
+    section.className = 'mf293-settings-group';
+    section.open = open;
+    const summary = document.createElement('summary');
+    summary.innerHTML = `<span><strong>${title}</strong><small>${subtitle}</small></span><i></i>`;
+    const grid = document.createElement('div');
+    grid.className = 'mf293-settings-grid';
+    for (const field of fields) grid.appendChild(mf293CreateField(field));
+    section.append(summary, grid);
+    body.appendChild(section);
+  }
+
+  document.getElementById('mf293SettingsClose')?.addEventListener('click', mf293Close);
+  document.getElementById('mf293SaveSettings')?.addEventListener('click', mf293Save);
+  document.getElementById('mf293RestoreDefaults')?.addEventListener('click', mf293Restore);
+  backdrop.addEventListener('click', event => {
+    if (event.target === backdrop) mf293Close();
+  });
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && !backdrop.hidden) mf293Close();
+  });
+}
+
+function mf293Populate() {
+  if (!MF293.settings) return;
+
+  for (const field of mf293Fields()) {
+    const [key, , kind] = field;
+    const input = document.querySelector(`[data-setting-key="${key}"]`);
+    if (!input) continue;
+    const value = MF293.settings[key];
+
+    if (kind === 'boolean') input.checked = Boolean(value);
+    else if (kind === 'array') input.value = Array.isArray(value) ? value.join('\n') : '';
+    else if (kind === 'nullable') input
+===== END =====
+
+===== Save settings @ 72236 =====
+op-actions');
+  if (actions) {
+    const button = document.createElement('button');
+    button.id = 'mf293SettingsBtn';
+    button.className = 'tool-btn mf293-settings-trigger';
+    button.type = 'button';
+    button.textContent = 'Settings';
+    actions.insertBefore(button, document.getElementById('resetViewBtn') || null);
+    button.addEventListener('click', mf293Open);
+  }
+
+  const backdrop = document.createElement('div');
+  backdrop.id = 'mf293SettingsBackdrop';
+  backdrop.className = 'mf293-settings-backdrop';
+  backdrop.hidden = true;
+
+  const panel = document.createElement('section');
+  panel.id = 'mf293SettingsPanel';
+  panel.className = 'mf293-settings-panel';
+  panel.setAttribute('role', 'dialog');
+  panel.setAttribute('aria-modal', 'true');
+  panel.setAttribute('aria-labelledby', 'mf293SettingsTitle');
+  panel.innerHTML = `
+    <header class="mf293-settings-head">
+      <div>
+        <span class="eyebrow">LIVE CONFIGURATION</span>
+        <h2 id="mf293SettingsTitle">System settings</h2>
+      </div>
+      <div class="mf293-settings-head-actions">
+        <span id="mf293SettingsStatus" class="mf293-settings-status">Ready</span>
+        <button id="mf293SettingsClose" type="button" aria-label="Close settings">×</button>
+      </div>
+    </header>
+    <div class="mf293-settings-meta">
+      <span>Platform<strong>Pump.fun</strong></span>
+      <span>AI policy<strong>Propose only</strong></span>
+      <span>Kill switch<strong id="mf293KillSwitch">Checking</strong></span>
+    </div>
+    <div id="mf293SettingsBody" class="mf293-settings-body"></div>
+    <footer class="mf293-settings-footer">
+      <button id="mf293RestoreDefaults" class="mf293-secondary" type="button">Restore defaults</button>
+      <button id="mf293SaveSettings" class="mf293-primary" type="button">Save settings</button>
+    </footer>
+  `;
+
+  backdrop.appendChild(panel);
+  document.body.appendChild(backdrop);
+
+  const body = document.getElementById('mf293SettingsBody');
+  for (const [id, title, subtitle, open, fields] of MF293_GROUPS) {
+    const section = document.createElement('details');
+    section.className = 'mf293-settings-group';
+    section.open = open;
+    const summary = document.createElement('summary');
+    summary.innerHTML = `<span><strong>${title}</strong><small>${subtitle}</small></span><i></i>`;
+    const grid = document.createElement('div');
+    grid.className = 'mf293-settings-grid';
+    for (const field of fields) grid.appendChild(mf293CreateField(field));
+    section.append(summary, grid);
+    body.appendChild(section);
+  }
+
+  document.getElementById('mf293SettingsClose')?.addEventListener('click', mf293Close);
+  document.getElementById('mf293SaveSettings')?.addEventListener('click', mf293Save);
+  document.getElementById('mf293RestoreDefaults')?.addEventListener('click', mf293Restore);
+  backdrop.addEventListener('click', event => {
+    if (event.target === backdrop) mf293Close();
+  });
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && !backdrop.hidden) mf293Close();
+  });
+}
+
+function mf293Populate() {
+  if (!MF293.settings) return;
+
+  for (const field of mf293Fields()) {
+    const [key, , kind] = field;
+    const input = document.querySelector(`[data-setting-key="${key}"]`);
+    if (!input) continue;
+    const value = MF293.settings[key];
+
+    if (kind === 'boolean') input.checked = Boolean(value);
+    else if (kind === 'array') input.value = Array.isArray(value) ? value.join('\n') : '';
+    else if (kind === 'nullable') input.value = value === null || value === undefined ? '' : String(value);
+    else input.value = valu
+===== END =====
+[NOT FOUND] <select
+
+===== createElement('select') @ 69080 =====
+elds() {
+  return MF293_GROUPS.flatMap(group => group[4]);
+}
+
+function mf293Status(text, state = '') {
+  const node = document.getElementById('mf293SettingsStatus');
+  if (!node) return;
+  node.textContent = text;
+  node.dataset.state = state;
+}
+
+function mf293Error(message) {
+  let node = document.getElementById('mf293SettingsError');
+  if (!node) {
+    node = document.createElement('div');
+    node.id = 'mf293SettingsError';
+    node.className = 'mf293-settings-error';
+    document.getElementById('mf293SettingsBody')?.prepend(node);
+  }
+  node.hidden = false;
+  node.textContent = String(message || 'Unknown error');
+}
+
+function mf293ClearError() {
+  const node = document.getElementById('mf293SettingsError');
+  if (node) {
+    node.hidden = true;
+    node.textContent = '';
+  }
+}
+
+function mf293Disable(disabled) {
+  for (const id of ['mf293SaveSettings', 'mf293RestoreDefaults']) {
+    const node = document.getElementById(id);
+    if (node) node.disabled = disabled;
+  }
+}
+
+function mf293CreateField(field) {
+  const [key, label, kind, min, max, step] = field;
+  const wrap = document.createElement('label');
+  wrap.className = kind === 'boolean'
+    ? 'mf293-field mf293-field-switch'
+    : 'mf293-field';
+
+  const title = document.createElement('span');
+  title.className = 'mf293-field-label';
+  title.textContent = label;
+  wrap.appendChild(title);
+
+  let input;
+
+  if (kind === 'boolean') {
+    const switchWrap = document.createElement('span');
+    switchWrap.className = 'mf293-switch';
+    input = document.createElement('input');
+    input.type = 'checkbox';
+    const track = document.createElement('span');
+    track.className = 'mf293-switch-track';
+    switchWrap.append(input, track);
+    wrap.appendChild(switchWrap);
+  } else if (kind === 'select') {
+    input = document.createElement('select');
+    for (const [value, text] of field[3]) {
+      const option = document.createElement('option');
+      option.value = value;
+      option.textContent = text;
+      input.appendChild(option);
+    }
+    wrap.appendChild(input);
+  } else if (kind === 'array') {
+    input = document.createElement('textarea');
+    input.rows = 3;
+    input.placeholder = 'One wallet per line or comma-separated';
+    wrap.classList.add('mf293-field-wide');
+    wrap.appendChild(input);
+  } else {
+    input = document.createElement('input');
+    input.type = (kind === 'number' || kind === 'integer' || kind === 'nullable') ? 'number' : 'text';
+    if (min !== undefined && min !== null) input.min = String(min);
+    if (max !== undefined && max !== null) input.max = String(max);
+    if (step !== undefined && step !== null) input.step = String(step);
+    if (kind === 'nullable') input.placeholder = 'Off';
+    wrap.appendChild(input);
+  }
+
+  input.dataset.settingKey = key;
+  input.dataset.settingKind = kind;
+  const markDirty = () => {
+    MF293.dirty = true;
+    mf293Status('Unsaved', 'dirty');
+  };
+  input.addEventListener('input', markDirty);
+  input.addEventListener('change', markDirty);
+
+  return wrap;
+}
+
+function mf293Build() {
+  if (document.getElementById('mf293SettingsPanel')) return;
+
+  const actions = document.querySelector('.top-actions');
+  if (actions) {
+    const button = document.createElement('button');
+    button.id = 'mf293SettingsBtn';
+    button.className = 'tool-btn mf293-settings-trigger';
+    button.type = 'button';
+    button.textContent = 'Settings';
+    actions.insertBefore(button, document.getElementById('resetViewBtn') || null);
+    button.addEventListener('click', mf293Open);
+  }
+
+  const backdrop = document.createElement('div');
+  backdrop.id = 'mf293SettingsBackdro
+===== END =====
+[NOT FOUND] createElement("select")

@@ -49,7 +49,9 @@ export function makeDiscoveryMetrics() {
     signaturesQueued: 0,
     signaturesProcessed: 0,
     signaturesDeduplicated: 0,
+    signaturesRecentlyDeduplicated: 0,
     queueDropped: 0,
+    retryQueueDropped: 0,
     transactionFetchSucceeded: 0,
     transactionFetchFailed: 0,
     transactionRetryScheduled: 0,
@@ -108,6 +110,8 @@ export function makeDiscoveryQueue(config, deps) {
     maxRetries = 4,
     circuitBreakerPauseMs = 15000,
     retryDelays = [250, 750, 2000, 5000],
+    recentDedupeMs = 300000,
+    retryQueueMax = queueMax,
   } = config || {};
   const { processFn, discMetrics, onSignatureProcessed, onSignatureFailed } = deps;
 
@@ -118,8 +122,10 @@ export function makeDiscoveryQueue(config, deps) {
   // retry queue: [{sig, enqueuedAt, attempt}] — already-failed, lower priority
   const retryQueue = [];
   const retrySet   = new Set();
+  const retryScheduled = new Set();
 
   const processing = new Set();
+  const recentDone = new Map();
 
   let circuitOpenUntil  = 0;
   let circuitDrainTimer = null;
@@ -135,6 +141,19 @@ export function makeDiscoveryQueue(config, deps) {
     discMetrics.oldestQueuedSignatureAgeMs = all.length
       ? Date.now() - Math.min(...all.map(x => x.enqueuedAt))
       : null;
+  }
+
+  function _pruneRecent(now = Date.now()) {
+    for (const [sig, at] of recentDone) {
+      if (now - at <= recentDedupeMs) break;
+      recentDone.delete(sig);
+    }
+  }
+
+  function _rememberDone(sig) {
+    recentDone.delete(sig);
+    recentDone.set(sig, Date.now());
+    _pruneRecent();
   }
 
   function _openCircuit() {
@@ -171,6 +190,7 @@ export function makeDiscoveryQueue(config, deps) {
     try {
       await processFn(sig);
       discMetrics.signaturesProcessed++;
+      _rememberDone(sig);
       if (onSignatureProcessed) onSignatureProcessed();
     } catch (e) {
       const rateLimited = isRateLimitError(e);
@@ -180,13 +200,33 @@ export function makeDiscoveryQueue(config, deps) {
         const delayMs = e.retryAfterMs ?? retryDelays[Math.min(attempt, retryDelays.length - 1)] ?? 5000;
         discMetrics.transactionRetryScheduled++;
         processing.delete(sig);
+        retryScheduled.add(sig);
         _sync();
         setTimeout(() => {
-          if (!retrySet.has(sig) && !processing.has(sig)) {
+          retryScheduled.delete(sig);
+          _pruneRecent();
+
+          if (Date.now() - enqueuedAt > maxSignatureAgeMs) {
+            discMetrics.staleSignaturesDropped++;
+            _sync();
+            _drain();
+            return;
+          }
+
+          if (!freshSet.has(sig) && !retrySet.has(sig) &&
+              !processing.has(sig) && !recentDone.has(sig)) {
+            if (retryQueue.length >= retryQueueMax) {
+              const dropped = retryQueue.shift();
+              retrySet.delete(dropped.sig);
+              discMetrics.retryQueueDropped++;
+              discMetrics.queueDropped++;
+            }
             retryQueue.push({ sig, enqueuedAt, attempt: attempt + 1 });
             retrySet.add(sig);
             _sync();
             _drain();
+          } else {
+            discMetrics.signaturesDeduplicated++;
           }
         }, delayMs);
         return; // don't call _release — already deleted from processing
@@ -242,7 +282,13 @@ export function makeDiscoveryQueue(config, deps) {
   // ── Public API ──────────────────────────────────────────────────────────────
 
   function enqueue(sig) {
-    if (freshSet.has(sig) || retrySet.has(sig) || processing.has(sig)) {
+    _pruneRecent();
+    if (recentDone.has(sig)) {
+      discMetrics.signaturesDeduplicated++;
+      discMetrics.signaturesRecentlyDeduplicated++;
+      return false;
+    }
+    if (freshSet.has(sig) || retrySet.has(sig) || retryScheduled.has(sig) || processing.has(sig)) {
       discMetrics.signaturesDeduplicated++;
       return false;
     }

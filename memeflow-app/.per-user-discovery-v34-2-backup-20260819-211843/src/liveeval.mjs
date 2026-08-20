@@ -1,0 +1,101 @@
+/**
+ * Live token evaluation — active-user registry.
+ * Reliability version: legacy settings are backfilled by JsonStore.settings(),
+ * per-user failures are observable instead of silently swallowed.
+ */
+import {evaluate} from './evaluate.mjs';
+
+function safeError(e){
+  return String(e?.message||e||'unknown error')
+    .replace(/https?:\/\/\S+/gi,'[url]')
+    .replace(/[1-9A-HJ-NP-Za-km-z]{32,}/g,'[addr]')
+    .slice(0,240);
+}
+
+export function makeLiveEvalMetrics() {
+  return {
+    activeEvaluationUsers: 0,
+    liveEvaluationsPerformed: 0,
+    liveEvaluationTokensProcessed: 0,
+    liveEvaluationUsersSkipped: 0,
+    liveEvaluationBatchErrors: 0,
+    decisionsInMemoryByActiveUsers: 0,
+    lastLiveEvaluationAt: null,
+    lastLiveEvaluationError: null,
+    lastLiveEvaluationErrorAt: null,
+    liveEvaluationErrorReasons: {},
+  };
+}
+
+export function makeEvaluateForActiveUsers({
+  store, metrics, activeUserHoursMs = 86400000, batchSize = 25, delayMs = 0, onDecision = null,
+}) {
+  let lastEvictAt = 0;
+
+  function recordError(e){
+    const msg=safeError(e);
+    metrics.liveEvaluationBatchErrors++;
+    metrics.lastLiveEvaluationError=msg;
+    metrics.lastLiveEvaluationErrorAt=Date.now();
+    metrics.liveEvaluationErrorReasons[msg]=(metrics.liveEvaluationErrorReasons[msg]||0)+1;
+  }
+
+  async function _run(token) {
+    const now = Date.now();
+    const cutoff = now - activeUserHoursMs;
+    const allUids = Object.keys(store.state.users);
+
+    if (now - lastEvictAt > 60000) {
+      lastEvictAt = now;
+      for (const uid of allUids) {
+        const u = store.state.users[uid];
+        if (!u?.isOwner && (!u?.lastActiveAt || u.lastActiveAt < cutoff)) {
+          if (store._uidDec[uid]) {
+            for (const key of store._uidDec[uid].keys()) delete store.state.decisions[key];
+            delete store._uidDec[uid];
+          }
+        }
+      }
+    }
+
+    const activeUids = allUids.filter(uid => {
+      const u = store.state.users[uid] || {};
+      return (u.lastActiveAt && u.lastActiveAt >= cutoff) || u.isOwner;
+    });
+
+    metrics.liveEvaluationUsersSkipped += allUids.length - activeUids.length;
+    metrics.activeEvaluationUsers = activeUids.length;
+
+    for (let i = 0; i < activeUids.length; i += Math.max(1,batchSize)) {
+      const batch = activeUids.slice(i, i + Math.max(1,batchSize));
+      for (const uid of batch) {
+        try {
+          const settings = store.settings(uid);
+          if (!settings || typeof settings !== 'object') throw new Error('user settings unavailable after normalization');
+          const d = evaluate(token, settings);
+          const savedDecision = { ...d, primaryReason: d.primaryReason };
+          store.setDecision(uid, token.mint, savedDecision);
+          if (onDecision) onDecision(uid, token, savedDecision);
+          metrics.liveEvaluationsPerformed++;
+        } catch (e) {
+          recordError(e);
+        }
+      }
+      if (i + Math.max(1,batchSize) < activeUids.length && delayMs > 0) {
+        await new Promise(r => setTimeout(r, delayMs));
+      } else if (i + Math.max(1,batchSize) < activeUids.length) {
+        await new Promise(r => setImmediate(r));
+      }
+    }
+
+    metrics.liveEvaluationTokensProcessed++;
+    metrics.lastLiveEvaluationAt = Date.now();
+    metrics.decisionsInMemoryByActiveUsers =
+      activeUids.reduce((s, uid) => s + (store._uidDec[uid]?.size || 0), 0);
+    return {decisionLike:true,activeUsers:activeUids.length,evaluationsPerformed:activeUids.length};
+  }
+
+  return function evaluateForActiveUsers(token) {
+    return _run(token).catch(e => { recordError(e); });
+  };
+}

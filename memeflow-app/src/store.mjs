@@ -2,21 +2,166 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import {defaultSettings,normalizeSettings} from './settings.mjs';
+import './runtime-tuning.mjs';
+
+const envNum=(name,fallback,min=0)=>{
+  const n=Number(process.env[name]);
+  return Number.isFinite(n)?Math.max(min,n):fallback;
+};
 
 export class JsonStore {
   constructor(dir){
-    this.dir=dir;this.file=path.join(dir,'state.json');
+    this.dir=dir;
+    this.file=path.join(dir,'state.json');
     this.state={users:{},tokens:{},decisions:{},positions:{},stripeEvents:{},metrics:{discovered:0,scanned:0,errors:0},paperPositions:{},paperTrades:{},paperProposals:{},paperProcessed:{},paperMetrics:{entries:0,exits:0,errors:0},settingsAudit:{}};
     this._uidDec={}; // uid → Map<key,updatedAt> — in-memory only, not persisted
-
-    // MF_V74_TOUCH_THROTTLE
-    this._touchPersistAt={};
+    this._st=null;
+    this._saveDueAt=0;
+    this._saving=false;
+    this._saveAgain=false;
+    this._dirty=false;
+    this._lastPruneAt=0;
+    this._tokenCount=0;
+    this.maxTokens=Math.max(250,Math.floor(envNum('STORE_MAX_TOKENS',2000,250)));
+    this.persistMaxTokens=Math.max(100,Math.min(this.maxTokens,Math.floor(envNum('STORE_PERSIST_MAX_TOKENS',750,100))));
+    this.tokenMaxAgeMs=Math.max(30*60_000,envNum('STORE_TOKEN_MAX_AGE_MS',6*60*60_000,30*60_000));
+    this.tokenSaveDelayMs=Math.max(1000,envNum('STORE_TOKEN_SAVE_DELAY_MS',5000,1000));
+    this.prioritySaveDelayMs=Math.max(100,envNum('STORE_PRIORITY_SAVE_DELAY_MS',500,100));
     fs.mkdirSync(dir,{recursive:true});
     this.load();
   }
-  load(){try{const d=JSON.parse(fs.readFileSync(this.file,'utf8'));this.state={...this.state,...d};if(!this.state.decisions)this.state.decisions={}}catch(_){}}
-  // Debounced async save — decisions excluded (re-evaluated after restart, not needed on disk)
-  save(){clearTimeout(this._st);this._st=setTimeout(()=>{this._st=null;const {decisions:_d,...persist}=this.state;const tmp=this.file+'.tmp';fs.promises.writeFile(tmp,JSON.stringify(persist),'utf8').then(()=>fs.promises.rename(tmp,this.file)).catch(()=>{})},200)}
+
+  load(){
+    try{
+      const d=JSON.parse(fs.readFileSync(this.file,'utf8'));
+      this.state={...this.state,...d};
+      // Decisions are deliberately ephemeral and are reconstructed by recovery.
+      // Old tracked state files used to persist them, which wastes memory at boot.
+      this.state.decisions={};
+      this._tokenCount=Object.keys(this.state.tokens||{}).length;
+      this._pruneTokens(true);
+    }catch(_){}
+  }
+
+  _tokenTs(t={}){
+    for(const v of [t.updatedAt,t.lastMarketActivityAt,t.lastPriceAt,t.discoveredAt,t.createdAt,t.firstSeenAt]){
+      const n=typeof v==='number'?v:Date.parse(v);
+      if(Number.isFinite(n)&&n>0)return n<1e12?n*1000:n;
+    }
+    return 0;
+  }
+
+  _pinnedMints(){
+    const out=new Set();
+    const walk=(value,depth=0)=>{
+      if(!value||typeof value!=='object'||depth>5)return;
+      for(const k of ['mint','tokenMint','tokenAddress']){
+        const v=String(value[k]||'').trim();
+        if(v)out.add(v);
+      }
+      for(const child of Object.values(value))walk(child,depth+1);
+    };
+    walk(this.state.positions);
+    walk(this.state.paperPositions);
+    walk(this.state.paperProposals);
+    return out;
+  }
+
+  _pruneTokens(force=false){
+    const now=Date.now();
+    const tokens=this.state.tokens||{};
+    const entries=Object.entries(tokens);
+    if(!force && entries.length<=this.maxTokens && now-this._lastPruneAt<60_000)return 0;
+    this._lastPruneAt=now;
+
+    const pinned=this._pinnedMints();
+    const recent=[];
+    const keptPinned=[];
+    for(const [mint,t] of entries){
+      const ts=this._tokenTs(t);
+      if(pinned.has(mint))keptPinned.push([mint,t]);
+      else if(!ts || now-ts<=this.tokenMaxAgeMs)recent.push([mint,t]);
+    }
+    recent.sort((a,b)=>this._tokenTs(b[1])-this._tokenTs(a[1]));
+    const keep=new Map([...keptPinned,...recent.slice(0,this.maxTokens)]);
+    const removed=entries.length-keep.size;
+    if(removed<=0)return 0;
+
+    this.state.tokens=Object.fromEntries(keep);
+    this._tokenCount=keep.size;
+    const liveMints=new Set(keep.keys());
+    for(const [key,d] of Object.entries(this.state.decisions||{})){
+      if(d?.mint && !liveMints.has(d.mint))delete this.state.decisions[key];
+    }
+    for(const [uid,m] of Object.entries(this._uidDec||{})){
+      if(!m?.entries)continue;
+      for(const [key] of [...m.entries()]){
+        const d=this.state.decisions?.[key];
+        if(!d || (d.mint&&!liveMints.has(d.mint)))m.delete(key);
+      }
+      if(!m.size)delete this._uidDec[uid];
+    }
+    return removed;
+  }
+
+
+  _persistTokens(){
+    const pinned=this._pinnedMints();
+    const entries=Object.entries(this.state.tokens||{});
+    const pinnedRows=[];
+    const normal=[];
+    for(const row of entries){
+      if(pinned.has(row[0]))pinnedRows.push(row);
+      else normal.push(row);
+    }
+    normal.sort((a,b)=>this._tokenTs(b[1])-this._tokenTs(a[1]));
+    return Object.fromEntries([...pinnedRows,...normal.slice(0,this.persistMaxTokens)]);
+  }
+
+  _scheduleSave(delayMs=this.prioritySaveDelayMs){
+    this._dirty=true;
+    const due=Date.now()+Math.max(0,Number(delayMs)||0);
+    if(this._st && this._saveDueAt<=due)return;
+    if(this._st)clearTimeout(this._st);
+    this._saveDueAt=due;
+    this._st=setTimeout(()=>{
+      this._st=null;
+      this._saveDueAt=0;
+      void this._flushSave();
+    },Math.max(0,due-Date.now()));
+    this._st.unref?.();
+  }
+
+  async _flushSave(){
+    if(this._saving){this._saveAgain=true;return}
+    if(!this._dirty)return;
+    this._saving=true;
+    this._dirty=false;
+    try{
+      this._pruneTokens(true);
+      const {decisions:_d,...rest}=this.state;
+      const persist={...rest,tokens:this._persistTokens()};
+      const tmp=this.file+'.tmp';
+      const payload=JSON.stringify(persist);
+      await fs.promises.writeFile(tmp,payload,'utf8');
+      await fs.promises.rename(tmp,this.file);
+    }catch(_){
+      this.state.metrics||={};
+      this.state.metrics.errors=Number(this.state.metrics.errors||0)+1;
+      this._dirty=true;
+    }finally{
+      this._saving=false;
+      if(this._saveAgain||this._dirty){
+        this._saveAgain=false;
+        this._scheduleSave(this.prioritySaveDelayMs);
+      }
+    }
+  }
+
+  // Priority state (settings/billing/positions) is persisted quickly.
+  save(){this._scheduleSave(this.prioritySaveDelayMs)}
+  _saveTokenState(){this._scheduleSave(this.tokenSaveDelayMs)}
+
   user(id){if(!this.state.users[id]){this.state.users[id]={id,createdAt:new Date().toISOString(),settings:defaults(),plan:'free',liveEntitled:false,subscriptionStatus:'free',stripeCustomerId:null,stripeSubscriptionId:null,currentPeriodEnd:null,cancelAtPeriodEnd:false,killSwitch:false,isOwner:false,ownerGrantedAt:null,ownerGrantSource:null};this.save()}return this.state.users[id]}
   settings(id){
     const u=this.user(id);
@@ -32,39 +177,67 @@ export class JsonStore {
   revokeOwner(id){Object.assign(this.user(id),{isOwner:false,ownerGrantedAt:null,ownerGrantSource:null});this.save();return this.user(id)}
   hasStripeEvent(id){return Boolean(this.state.stripeEvents?.[id])}
   recordStripeEvent(id,type){this.state.stripeEvents||={};this.state.stripeEvents[id]={type,processedAt:new Date().toISOString()};const ids=Object.keys(this.state.stripeEvents);for(const old of ids.slice(0,Math.max(0,ids.length-5000)))delete this.state.stripeEvents[old];this.save()}
-  touchUser(id){
-    const u=this.user(id);
-    const now=Date.now();
-
-    u.lastActiveAt=now;
-
-    /*
-      MF_V74_TOUCH_THROTTLE
-
-      Updating activity in memory is cheap.
-      Persisting the whole JSON store on every status request
-      is not.
-
-      Save this activity timestamp at most once per minute
-      for each user.
-    */
-    const last=
-      Number(this._touchPersistAt[id]||0);
-
-    if(now-last>=60000){
-      this._touchPersistAt[id]=now;
-      this.save();
-    }
-
-    return u;
-  }
+  touchUser(id){this.user(id).lastActiveAt=Date.now();this.save();return this.user(id)}
   setSettings(id,s){const u=this.user(id);u.settings=normalizeSettings({...this.settings(id),...s});u.settingsVersion=Date.now();this.save();return u.settings}
-  recordSettingsChange(id,before,after,meta={}){this.state.settingsAudit||={};this.state.settingsAudit[id]||=[];this.state.settingsAudit[id].push({at:Date.now(),actor:meta.actor||id,source:meta.source||'user',before,after});this.save();return this.state.settingsAudit[id].at?.(-1)||null}
+  recordSettingsChange(id,before,after,meta={}){this.state.settingsAudit||={};this.state.settingsAudit[id]||=[];this.state.settingsAudit[id].push({at:Date.now(),actor:meta.actor||id,source:meta.source||'user',before,after});this.state.settingsAudit[id]=this.state.settingsAudit[id].slice(-500);this.save();return this.state.settingsAudit[id].at?.(-1)||null}
   settingsHistory(id,limit=100){return (this.state.settingsAudit?.[id]||[]).slice(-Math.max(1,Math.min(500,Number(limit)||100))).reverse()}
-  addToken(t){const old=this.state.tokens[t.mint]||{};this.state.tokens[t.mint]={...old,...t,updatedAt:Date.now()};this.state.metrics.discovered++;this.save();return this.state.tokens[t.mint]}
+  addToken(t){
+    const existed=Boolean(this.state.tokens[t.mint]);
+    const old=this.state.tokens[t.mint]||{};
+    this.state.tokens[t.mint]={...old,...t,updatedAt:Date.now()};
+    if(!existed)this._tokenCount++;
+    this.state.metrics.discovered++;
+    if(this._tokenCount>this.maxTokens+100)this._pruneTokens(true);
+    this._saveTokenState();
+    return this.state.tokens[t.mint]
+  }
   setToken(mint,t){
-    const now=Date.now(),old=this.state.tokens[mint]||{};
+    const now=Date.now(),existed=Boolean(this.state.tokens[mint]),old=this.state.tokens[mint]||{};
     const patch={...(t||{})};
+
+    // MEMEFLOW_HOLDERS_V9_STORE_PRECEDENCE
+    // A user-only Pump TradeEvent ledger is partial by construction.
+    // Never let it become authoritative or overwrite a completed canonical scan.
+    const incomingHolderSource=String(patch?.holderSource||'').toLowerCase();
+    const oldHolderSource=String(old?.holderSource||'').toLowerCase();
+
+    const incomingUserOnlyLedger=
+      incomingHolderSource.includes('event-ledger') &&
+      (incomingHolderSource.includes('user-only') ||
+       incomingHolderSource.includes('provisional'));
+
+    const oldCanonicalHolderState=
+      old?.holderFresh===true &&
+      Number.isFinite(Number(old?.holderCount)) &&
+      (
+        oldHolderSource.includes('getprogramaccounts') ||
+        oldHolderSource.includes('canonical') ||
+        oldHolderSource.includes('baseline + live')
+      );
+
+    if(incomingUserOnlyLedger){
+      if(oldCanonicalHolderState){
+        // Keep the complete census. Live trades may still update their own
+        // internal ledger, but cannot replace the canonical holder fields.
+        for(const k of [
+          'holderFresh','holderCount','holders','top10Pct','top10',
+          'developerPct','developerSharePct','creatorPct',
+          'holderSource','holderScannedAt','holderTokenProgram'
+        ]) delete patch[k];
+      }else{
+        // No canonical census yet: explicitly WAIT for the full Solana scan.
+        patch.holderFresh=false;
+        patch.holderCount=null;
+        patch.holders=null;
+        patch.top10Pct=null;
+        patch.top10=null;
+        patch.developerPct=null;
+        patch.developerSharePct=null;
+        patch.creatorPct=null;
+        patch.holderSource='event-ledger-user-only-provisional';
+        patch.holderScannedAt=null;
+      }
+    }
 
     // Never promote an invalid or zero supply into canonical token state.
     // Missing supply must remain recoverable by the existing Phase A bridge.
@@ -125,7 +298,11 @@ export class JsonStore {
       lastMarketActivityAt:activityChanged?now:(old.lastMarketActivityAt||old.lastPriceChangeAt||null),
       updatedAt:now
     };
-    this.state.metrics.scanned++;this.save();return this.state.tokens[mint]
+    if(!existed)this._tokenCount++;
+    this.state.metrics.scanned++;
+    if(this._tokenCount>this.maxTokens+100)this._pruneTokens(true);
+    this._saveTokenState();
+    return this.state.tokens[mint]
   }
   tokens(){return Object.values(this.state.tokens).sort((a,b)=>(b.discoveredAt||0)-(a.discoveredAt||0))}
   // O(250) per call — uses per-user Map index instead of full O(N) scan
@@ -136,12 +313,7 @@ export class JsonStore {
     const m=this._uidDec[uid];
     m.set(key,now);
     if(m.size>250){let ok=null,ot=Infinity;for(const[k,t]of m)if(t<ot){ot=t;ok=k};if(ok){m.delete(ok);delete this.state.decisions[ok]}}
-    // MF_V302_DECISIONS_MEMORY_ONLY: decisions are memory-only; no state.json save here.
-  }
-  deleteDecision(uid,mint){
-    const key=uid+':'+mint;
-    if(this._uidDec?.[uid])this._uidDec[uid].delete(key);
-    delete this.state.decisions[key];
+    // Decisions are intentionally in-memory only; do not schedule a disk write.
   }
   decisions(uid){
     const m=this._uidDec[uid];

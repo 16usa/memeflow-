@@ -1,0 +1,215 @@
+diff --git a/memeflow-app/src/pump-live-trade-feed.mjs b/memeflow-app/src/pump-live-trade-feed.mjs
+--- a/memeflow-app/src/pump-live-trade-feed.mjs
++++ b/memeflow-app/src/pump-live-trade-feed.mjs
+@@
+   const metrics={
+     version:VERSION,startedAt:Date.now(),connected:false,reconnects:0,
+     notifications:0,programDataSeen:0,tradeEventsDecoded:0,decodeErrors:0,
++    untrackedEventsIgnored:0,
+     holderSnapshots:0,marketSnapshots:0,repeatTradeEvents:0,
+@@
+   function applyEvent(e){
+     metrics.tradeEventsDecoded++;
+     metrics.lastMint=e.mint;
+     metrics.lastUser=e.user;
++
++    // CRITICAL: this feed subscribes to ALL Pump.fun trades.
++    // Never let a trade for an unrelated mint create a token in MEMEFLOW.
++    // Only enrich/evaluate mints that were already accepted by discovery.
++    const trackedToken=tokenFromStore(store,e.mint);
++    if(!trackedToken){
++      metrics.untrackedEventsIgnored++;
++      return;
++    }
++
+     users.add(e.user); metrics.distinctUsers=users.size;
+
+     const prev=mintCounts.get(e.mint)||0;
+@@
+-    // Preserve creator from Pump CREATE token state.
++    // Preserve creator from Pump CREATE token state.
+     try{
+-      const t=tokenFromStore(store,e.mint);
+-      const creator=t?.creator||t?.developer||t?.creatorWallet||null;
++      const creator=trackedToken?.creator||trackedToken?.developer||trackedToken?.creatorWallet||null;
+       if(creator)eventHolderLedger?.setCreator?.(e.mint,creator);
+     }catch{}
+
++    let holderPatch=null;
+     try{
+       const snap=eventHolderLedger?.ingestTradeEventDirect?.(e);
+       if(snap){
+         metrics.holderSnapshots++;
+-        const updated=eventHolderLedger?.applyToStore?.(store,e.mint);
+-        if(updated){
+-          try{__v1226Evaluate(updated,e.mint,'holder-event')}catch{}
+-          try{publish?.(e.mint)}catch{}
+-        }
++        holderPatch=snap;
+       }
+     }catch(err){
+       metrics.lastError='holder:'+String(err?.message||err);
+     }
+
+     // Market update directly from the same TradeEvent; no HTTP RPC.
++    let marketPatch=null;
+     try{
+       const m=marketFromEvent(e);
+       const buyPressure=updatePressure(e);
+-      const patch={
++      marketPatch={
+         marketSource:'ws-direct-trade-event',
+         buyPressure,
+         lastPriceAt:Date.now()
+       };
+-      if(Number.isFinite(m.priceSol)&&m.priceSol>0)patch.priceSol=m.priceSol;
+-      if(Number.isFinite(m.liquiditySol)&&m.liquiditySol>=0)patch.liquiditySol=m.liquiditySol;
+-      const updated=store?.setToken?.(e.mint,patch);
+-      if(updated){
+-        metrics.marketSnapshots++;
+-        try{__v1226Evaluate(updated,e.mint,'market-event')}catch{}
+-        try{publish?.(e.mint)}catch{}
+-      }
++      if(Number.isFinite(m.priceSol)&&m.priceSol>0)marketPatch.priceSol=m.priceSol;
++      if(Number.isFinite(m.liquiditySol)&&m.liquiditySol>=0)marketPatch.liquiditySol=m.liquiditySol;
+     }catch(err){
+       metrics.lastError='market:'+String(err?.message||err);
+     }
++
++    // One store write + one evaluate per Pump trade, not two.
++    // This removes duplicate full active-user evaluation and duplicate save churn.
++    if(holderPatch||marketPatch){
++      try{
++        const updated=store?.setToken?.(e.mint,{
++          ...(holderPatch||{}),
++          ...(marketPatch||{})
++        });
++        if(updated){
++          if(marketPatch)metrics.marketSnapshots++;
++          try{__v1226Evaluate(updated,e.mint,'trade-event-combined')}catch{}
++          try{publish?.(e.mint)}catch{}
++        }
++      }catch(err){
++        metrics.lastError='store:'+String(err?.message||err);
++      }
++    }
+   }
+
+diff --git a/memeflow-app/src/discqueue.mjs b/memeflow-app/src/discqueue.mjs
+--- a/memeflow-app/src/discqueue.mjs
++++ b/memeflow-app/src/discqueue.mjs
+@@
+     signaturesProcessed: 0,
+     signaturesDeduplicated: 0,
++    signaturesRecentlyDeduplicated: 0,
+     queueDropped: 0,
++    retryQueueDropped: 0,
+@@
+ export function makeDiscoveryQueue(config, deps) {
+   const {
+@@
+     retryDelays = [250, 750, 2000, 5000],
++    recentDedupeMs = 300000,
++    retryQueueMax = queueMax,
+   } = config || {};
+@@
+   const retryQueue = [];
+   const retrySet   = new Set();
++  const retryScheduled = new Set();
+
+   const processing = new Set();
++  const recentDone = new Map();
+@@
+   function _sync() {
+@@
+   }
++
++  function _pruneRecent(now=Date.now()) {
++    for (const [sig, at] of recentDone) {
++      if (now - at <= recentDedupeMs) break;
++      recentDone.delete(sig);
++    }
++  }
++
++  function _rememberDone(sig) {
++    recentDone.delete(sig);
++    recentDone.set(sig, Date.now());
++    _pruneRecent();
++  }
+@@
+       await processFn(sig);
+       discMetrics.signaturesProcessed++;
++      _rememberDone(sig);
+       if (onSignatureProcessed) onSignatureProcessed();
+@@
+       if (isRetryableError(e) && attempt < maxRetries) {
+@@
+         discMetrics.transactionRetryScheduled++;
+         processing.delete(sig);
++        retryScheduled.add(sig);
+         _sync();
+         setTimeout(() => {
+-          if (!retrySet.has(sig) && !processing.has(sig)) {
++          retryScheduled.delete(sig);
++          _pruneRecent();
++
++          if (Date.now() - enqueuedAt > maxSignatureAgeMs) {
++            discMetrics.staleSignaturesDropped++;
++            _sync();
++            _drain();
++            return;
++          }
++
++          if (!freshSet.has(sig) && !retrySet.has(sig) &&
++              !processing.has(sig) && !recentDone.has(sig)) {
++            if (retryQueue.length >= retryQueueMax) {
++              const dropped = retryQueue.shift();
++              retrySet.delete(dropped.sig);
++              discMetrics.retryQueueDropped++;
++              discMetrics.queueDropped++;
++            }
+             retryQueue.push({ sig, enqueuedAt, attempt: attempt + 1 });
+             retrySet.add(sig);
+             _sync();
+             _drain();
++          } else {
++            discMetrics.signaturesDeduplicated++;
+           }
+         }, delayMs);
+@@
+   function enqueue(sig) {
+-    if (freshSet.has(sig) || retrySet.has(sig) || processing.has(sig)) {
++    _pruneRecent();
++    if (recentDone.has(sig)) {
++      discMetrics.signaturesDeduplicated++;
++      discMetrics.signaturesRecentlyDeduplicated++;
++      return false;
++    }
++    if (freshSet.has(sig) || retrySet.has(sig) || retryScheduled.has(sig) || processing.has(sig)) {
+       discMetrics.signaturesDeduplicated++;
+       return false;
+     }
+
+diff --git a/memeflow-app/app-server.mjs b/memeflow-app/app-server.mjs
+--- a/memeflow-app/app-server.mjs
++++ b/memeflow-app/app-server.mjs
+@@
+       discMetrics.createInstructionDecoded++;
+       discMetrics.createsDecoded++;
+       store.addToken({mint:result.mint,curve:result.curve,name:result.name,symbol:result.symbol,uri:result.uri,creator:result.creator,isMayhemMode:false,launchMode:'standard',launchPlatform:'pump',protocol:'pump',discoveredAt:Date.now(),slot:tx.slot,signature:sig,source:'Pump create'});
+-  try{__v1224LinkCreator(mint,__v1223Token(mint))}catch{}
++  try{__v1224LinkCreator(result.mint,__v1223Token(result.mint))}catch{}
+         // MEMEFLOW_V12_20_USER_ONLY_HOLDER_LEDGER: preserve Pump creator separately from trade signers.
+         try{
+-          const __created=store.state?.tokens?.[mint];
++          const __created=store.state?.tokens?.[result.mint];
+           const __creator=__created?.creator||null;
+-          if(__creator)eventHolderLedger.setCreator(mint,__creator);
++          if(__creator)eventHolderLedger.setCreator(result.mint,__creator);
+         }catch{}
+-      // MEMEFLOW V12.4 immediate discovery bootstrap
+-      fastPhaseAStart(result.mint,result.curve);
+-      
++      // enrich() already calls fastPhaseAStart() synchronously before its first await.
++      // Do not bootstrap/evaluate every CREATE twice.
+       void enrich(result.mint,result.curve).catch(e=>{discMetrics.lastErrorAt=Date.now();discovery.lastError={message:'enrich: '+String(e?.message||e),at:Date.now()}});

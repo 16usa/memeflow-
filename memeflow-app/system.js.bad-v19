@@ -1,0 +1,3656 @@
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+const $ = (id) => document.getElementById(id);
+const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
+const finite = (v) => v !== null && v !== undefined && Number.isFinite(Number(v));
+const fmt = (v, d = 2) => finite(v) ? Number(v).toLocaleString(undefined, { maximumFractionDigits: d }) : '—';
+const shortMint = (m = '') => m ? `${m.slice(0, 5)}…${m.slice(-4)}` : '—';
+
+const ago = (ts) => {
+  if (!finite(ts) || Number(ts) <= 0) return '—';
+  const ms = Math.max(0, Date.now() - Number(ts));
+  if (ms < 1000) return 'now';
+  if (ms < 60000) return `${Math.floor(ms / 1000)}s ago`;
+  if (ms < 3600000) return `${Math.floor(ms / 60000)}m ago`;
+  return `${Math.floor(ms / 3600000)}h ago`;
+};
+
+const stateKey = (state = '') => {
+  const s = String(state).toUpperCase();
+  if (s.includes('BUY')) return 'ready';
+  if (s.includes('BLOCK')) return 'blocked';
+  if (s.includes('WATCH')) return 'watch';
+  return 'waiting';
+};
+
+const COLORS = {
+  cyan: 0x55d9ff,
+  blue: 0x5c8dff,
+  green: 0x4de6a1,
+  yellow: 0xefc66a,
+  red: 0xff6679,
+  purple: 0xa98bff,
+  neutral: 0x91a3af,
+  waiting: 0x91a3af,
+  watch: 0x5c8dff,
+  blocked: 0xff6679,
+  ready: 0x4de6a1
+};
+
+const LAYOUT = {
+  discovery: { title: 'DISCOVERY', subtitle: 'Pump create · Solana WS', pos: [-10.2, 0.9, 0.0], color: COLORS.cyan, size: [3.2, 1.0, 1.9] },
+  bootstrap: { title: 'FAST BOOTSTRAP', subtitle: 'price · holder · initial eval', pos: [-6.3, 2.2, -1.2], color: COLORS.blue, size: [3.5, 1.0, 2.0] },
+  core: { title: 'MEMEFLOW CORE', subtitle: 'real-time event orchestration', pos: [-1.2, 0.7, 0.0], color: COLORS.green, size: [4.3, 1.4, 2.7], core: true },
+  holders: { title: 'HOLDER LEDGER', subtitle: 'user-only live balances', pos: [2.7, 1.4, 1.9], color: COLORS.cyan, size: [3.3, 1.0, 1.9] },
+  market: { title: 'MARKET LEDGER', subtitle: 'price · liquidity · pressure', pos: [2.7, -1.1, -0.2], color: COLORS.blue, size: [3.2, 1.0, 1.9] },
+  risk: { title: 'RISK ENGINE', subtitle: 'deterministic gates', pos: [6.3, 0.9, 0.0], color: COLORS.green, size: [3.0, 1.0, 1.8] },
+  decision: { title: 'DECISION', subtitle: 'WAIT · WATCH · BLOCK · READY', pos: [9.4, 0.9, 0.0], color: COLORS.purple, size: [2.8, 1.0, 1.8] },
+  paper: { title: 'PAPER ENGINE', subtitle: 'observe · assist · automate', pos: [6.5, -2.1, -2.1], color: COLORS.purple, size: [3.0, 1.0, 1.8] },
+  execution: { title: 'LIVE EXECUTION', subtitle: 'adapter not verified', pos: [9.5, -2.1, -2.1], color: COLORS.yellow, size: [3.0, 1.0, 1.8] },
+  openai: { title: 'OPENAI ASSISTANT', subtitle: 'advisory · read-only context', pos: [0.7, 4.1, -3.5], color: COLORS.purple, size: [3.1, 1.0, 1.8] }
+};
+
+const SPECIAL_POINTS = {
+  blockedExit: new THREE.Vector3(11.8, 1.1, 2.0),
+  watchHold: new THREE.Vector3(10.3, 1.4, -1.0)
+};
+
+const EDGES = [
+  { from: 'discovery', to: 'bootstrap', color: COLORS.cyan, via: [-8.4, 1.9, -0.4], pulses: 2, speed: 0.22 },
+  { from: 'bootstrap', to: 'core', color: COLORS.blue, via: [-4.1, 2.4, -0.5], pulses: 3, speed: 0.24 },
+  { from: 'core', to: 'holders', color: COLORS.cyan, via: [0.8, 1.8, 1.0], pulses: 2, speed: 0.19 },
+  { from: 'core', to: 'market', color: COLORS.blue, via: [0.8, -0.8, -0.2], pulses: 2, speed: 0.19 },
+  { from: 'holders', to: 'risk', color: COLORS.cyan, via: [4.4, 1.9, 1.0], pulses: 2, speed: 0.18 },
+  { from: 'market', to: 'risk', color: COLORS.blue, via: [4.5, -0.1, -0.1], pulses: 2, speed: 0.18 },
+  { from: 'openai', to: 'risk', color: COLORS.purple, via: [3.8, 3.0, -2.2], pulses: 1, speed: 0.12 },
+  { from: 'risk', to: 'decision', color: COLORS.green, via: [7.9, 1.2, 0.0], pulses: 3, speed: 0.25 },
+  { from: 'decision', to: 'paper', color: COLORS.purple, via: [7.9, -0.6, -1.0], pulses: 2, speed: 0.16 },
+  { from: 'paper', to: 'execution', color: COLORS.yellow, via: [7.9, -2.0, -2.0], pulses: 1, speed: 0.12 }
+];
+
+const app = {
+  scene: null,
+  camera: null,
+  renderer: null,
+  controls: null,
+  clock: new THREE.Clock(),
+  nodes: new Map(),
+  labels: [],
+  edgePulses: [],
+  pickables: [],
+  pointer: new THREE.Vector2(),
+  raycaster: new THREE.Raycaster(),
+  tokenMeshes: new Map(),
+  selected: null,
+  telemetry: null,
+  autoRotate: true,
+  cameraHome: new THREE.Vector3(2.2, 7.5, 20.8),
+  targetHome: new THREE.Vector3(0.8, 0.5, -0.2)
+};
+
+function makeMaterial(color, emissive = 0.12, opacity = 1) {
+  return new THREE.MeshStandardMaterial({
+    color,
+    roughness: 0.48,
+    metalness: 0.58,
+    emissive: color,
+    emissiveIntensity: emissive,
+    transparent: opacity < 1,
+    opacity
+  });
+}
+
+function addEdges(mesh, color = 0x315263, opacity = 0.62) {
+  const line = new THREE.LineSegments(
+    new THREE.EdgesGeometry(mesh.geometry),
+    new THREE.LineBasicMaterial({ color, transparent: true, opacity })
+  );
+  mesh.add(line);
+  return line;
+}
+
+function createLabel(id, object, title, subtitle, extraClass = '') {
+  const el = document.createElement('div');
+  el.className = `node-label ${extraClass}`.trim();
+  el.innerHTML = `<strong>${title}</strong><small>${subtitle}</small>`;
+  $('labels').appendChild(el);
+  app.labels.push({
+    id,
+    object,
+    el,
+    offsetY: id === 'openai' ? 38 : 32
+  });
+}
+
+function createModule(id, cfg) {
+  const group = new THREE.Group();
+  group.position.set(...cfg.pos);
+  group.userData = { kind: 'module', id };
+
+  const body = new THREE.Mesh(new THREE.BoxGeometry(...cfg.size), makeMaterial(cfg.core ? 0x0a151b : 0x081018, 0.02));
+  addEdges(body, cfg.color);
+  body.userData = { kind: 'module', id };
+  group.add(body);
+
+  const topPlate = new THREE.Mesh(
+    new THREE.BoxGeometry(cfg.size[0] * 0.78, 0.05, cfg.size[2] * 0.72),
+    makeMaterial(cfg.color, cfg.core ? 0.78 : 0.64, 0.95)
+  );
+  topPlate.position.y = cfg.size[1] / 2 + 0.05;
+  group.add(topPlate);
+
+  const beacon = new THREE.PointLight(cfg.color, cfg.core ? 1.15 : 0.38, cfg.core ? 7.5 : 4.5, 2);
+  beacon.position.y = 0.8;
+  group.add(beacon);
+
+  if (cfg.core) {
+    const ringA = new THREE.Mesh(new THREE.TorusGeometry(1.12, 0.05, 12, 96), makeMaterial(COLORS.green, 0.95));
+    ringA.rotation.x = Math.PI / 2;
+    ringA.position.y = 0.82;
+    group.add(ringA);
+
+    const ringB = new THREE.Mesh(new THREE.TorusGeometry(0.76, 0.032, 10, 72), makeMaterial(COLORS.cyan, 0.85));
+    ringB.rotation.set(Math.PI / 2, 0.3, 0.2);
+    ringB.position.y = 0.82;
+    group.add(ringB);
+  }
+
+  app.scene.add(group);
+  app.pickables.push(body);
+  app.nodes.set(id, { id, group, body, topPlate, beacon, cfg });
+
+  createLabel(id, group, cfg.title, cfg.subtitle, cfg.core ? 'core' : '');
+}
+
+function pointFor(id) {
+  return app.nodes.get(id).group.position.clone();
+}
+
+function curveFromPoints(points) {
+  return new THREE.CatmullRomCurve3(points, false, 'catmullrom', 0.08);
+}
+
+function createFlowLine(edge) {
+  const start = pointFor(edge.from);
+  const end = pointFor(edge.to);
+  const via = new THREE.Vector3(...edge.via);
+  const curve = curveFromPoints([start, via, end]);
+
+  const pts = curve.getPoints(80);
+  const positions = [];
+  for (const p of pts) positions.push(p.x, p.y, p.z);
+
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+
+  const line = new THREE.Line(
+    geo,
+    new THREE.LineBasicMaterial({
+      color: edge.color,
+      transparent: true,
+      opacity: 0.30
+    })
+  );
+
+  app.scene.add(line);
+
+  for (let i = 0; i < edge.pulses; i++) {
+    const pulse = new THREE.Mesh(
+      new THREE.SphereGeometry(0.09, 12, 12),
+      new THREE.MeshBasicMaterial({ color: edge.color, transparent: true, opacity: 0.95 })
+    );
+    pulse.userData = {
+      curve,
+      t: Math.random(),
+      speed: edge.speed * (0.9 + i * 0.12)
+    };
+    app.edgePulses.push(pulse);
+    app.scene.add(pulse);
+  }
+}
+
+function buildBackground() {
+  const hemi = new THREE.HemisphereLight(0x7bbad6, 0x040609, 0.95);
+  app.scene.add(hemi);
+
+  const key = new THREE.DirectionalLight(0xd4efff, 1.15);
+  key.position.set(8, 14, 10);
+  app.scene.add(key);
+
+  const rim = new THREE.DirectionalLight(0x6f91ff, 0.35);
+  rim.position.set(-10, 6, -12);
+  app.scene.add(rim);
+
+  const grid = new THREE.GridHelper(56, 56, 0x173140, 0x0a171e);
+  grid.position.y = -1.55;
+  grid.material.transparent = true;
+  grid.material.opacity = 0.26;
+  app.scene.add(grid);
+
+  const floor = new THREE.Mesh(
+    new THREE.PlaneGeometry(64, 42),
+    new THREE.MeshStandardMaterial({
+      color: 0x03070a,
+      roughness: 0.82,
+      metalness: 0.2,
+      transparent: true,
+      opacity: 0.76
+    })
+  );
+  floor.rotation.x = -Math.PI / 2;
+  floor.position.y = -1.57;
+  app.scene.add(floor);
+
+  const rowGuideMaterial = new THREE.LineBasicMaterial({ color: 0x0f202b, transparent: true, opacity: 0.45 });
+  const rowZ = [-3.4, 0.0, 3.4];
+  for (const z of rowZ) {
+    const geo = new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(-13.0, -1.35, z),
+      new THREE.Vector3(12.0, -1.35, z)
+    ]);
+    app.scene.add(new THREE.Line(geo, rowGuideMaterial));
+  }
+
+  const starGeo = new THREE.BufferGeometry();
+  const stars = [];
+  for (let i = 0; i < 420; i++) {
+    stars.push((Math.random() - 0.5) * 46, Math.random() * 18 - 1, (Math.random() - 0.5) * 34);
+  }
+  starGeo.setAttribute('position', new THREE.Float32BufferAttribute(stars, 3));
+  const starMat = new THREE.PointsMaterial({ color: 0x476c7c, size: 0.028, transparent: true, opacity: 0.42 });
+  app.scene.add(new THREE.Points(starGeo, starMat));
+}
+
+function buildScene() {
+  const canvas = $('systemCanvas');
+
+  app.scene = new THREE.Scene();
+  app.scene.fog = new THREE.FogExp2(0x020507, 0.024);
+
+  app.camera = new THREE.PerspectiveCamera(42, canvas.clientWidth / canvas.clientHeight, 0.1, 100);
+  app.camera.position.copy(app.cameraHome);
+
+  app.renderer = new THREE.WebGLRenderer({
+    canvas,
+    antialias: true,
+    alpha: true,
+    powerPreference: 'high-performance'
+  });
+
+  app.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.8));
+  app.renderer.setSize(canvas.clientWidth, canvas.clientHeight, false);
+  app.renderer.outputColorSpace = THREE.SRGBColorSpace;
+  app.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  app.renderer.toneMappingExposure = 1.04;
+
+  app.controls = new OrbitControls(app.camera, canvas);
+  app.controls.enableDamping = true;
+  app.controls.dampingFactor = 0.06;
+  app.controls.enablePan = false;
+  app.controls.minDistance = 12;
+  app.controls.maxDistance = 28;
+  app.controls.maxPolarAngle = Math.PI * 0.48;
+  app.controls.minPolarAngle = Math.PI * 0.22;
+  app.controls.minAzimuthAngle = -0.75;
+  app.controls.maxAzimuthAngle = 0.55;
+  app.controls.target.copy(app.targetHome);
+  app.controls.autoRotate = true;
+  app.controls.autoRotateSpeed = 0.18;
+
+  buildBackground();
+  Object.entries(LAYOUT).forEach(([id, cfg]) => createModule(id, cfg));
+  EDGES.forEach(createFlowLine);
+
+  canvas.addEventListener('pointerup', pick);
+  window.addEventListener('resize', resize);
+  animate();
+}
+
+function resize() {
+  const c = $('systemCanvas');
+  if (!app.renderer) return;
+  const w = c.clientWidth;
+  const h = c.clientHeight;
+  app.camera.aspect = w / h;
+  app.camera.updateProjectionMatrix();
+  app.renderer.setSize(w, h, false);
+}
+
+function updateLabels() {
+  const w = $('systemCanvas').clientWidth;
+  const h = $('systemCanvas').clientHeight;
+
+  for (const label of app.labels) {
+    const v = new THREE.Vector3();
+    label.object.getWorldPosition(v);
+    v.project(app.camera);
+
+    const visible = v.z < 1 && v.z > -1;
+    const x = (v.x * 0.5 + 0.5) * w;
+    const y = (-v.y * 0.5 + 0.5) * h - label.offsetY;
+
+    label.el.style.opacity = visible ? '1' : '0';
+    label.el.style.transform = `translate(-50%, -50%) translate(${x}px, ${y}px)`;
+    label.el.classList.toggle('active', app.selected?.kind === 'module' && app.selected?.id === label.id);
+  }
+}
+
+function pick(ev) {
+  if (!app.renderer) return;
+
+  const rect = $('systemCanvas').getBoundingClientRect();
+  app.pointer.x = ((ev.clientX - rect.left) / rect.width) * 2 - 1;
+  app.pointer.y = -((ev.clientY - rect.top) / rect.height) * 2 + 1;
+
+  app.raycaster.setFromCamera(app.pointer, app.camera);
+  const hits = app.raycaster.intersectObjects(app.pickables, false);
+  if (!hits.length) return;
+
+  select(hits[0].object.userData);
+}
+
+function focusObject(object) {
+  if (!object || !app.controls) return;
+
+  const pos = new THREE.Vector3();
+  object.getWorldPosition(pos);
+
+  const direction = new THREE.Vector3().subVectors(app.camera.position, app.controls.target).normalize();
+  app.controls.target.copy(pos);
+  app.camera.position.copy(pos).add(direction.multiplyScalar(10.8));
+  app.controls.update();
+}
+
+function metric(label, value) {
+  return `<div class="metric-card"><span>${label}</span><strong>${value}</strong></div>`;
+}
+
+function renderModuleInspector(id) {
+  const titles = {
+    discovery: ['Discovery', 'Pump create events enter through Solana WebSocket.'],
+    bootstrap: ['Fast Bootstrap', 'Price lifecycle, holder admission and initial evaluation start before slow enrichment.'],
+    core: ['MEMEFLOW Core', 'Coordinates discovery, enrichment, evaluation, publication and engine updates.'],
+    holders: ['Holder Ledger', 'Tracks user-only Pump trade balances and produces fresh holder concentration snapshots.'],
+    market: ['Market Ledger', 'Updates price, liquidity and buy pressure from live trade events and curve snapshots.'],
+    risk: ['Risk Engine', 'Independent quality score plus user-specific deterministic gates.'],
+    decision: ['Decision', 'Current deterministic state: WAITING, WATCH, BLOCKED or BUY READY.'],
+    paper: ['Paper Engine', 'Receives BUY READY decisions and applies paper execution safety gates.'],
+    openai: ['OpenAI Assistant', 'Optional advisory layer. Deterministic risk engine remains authoritative.'],
+    execution: ['Live Execution', 'Production signing / live execution adapter is not verified in this build.']
+  };
+
+  const x = titles[id] || titles.core;
+  $('inspectorTitle').textContent = x[0];
+  $('inspectorSummary').textContent = x[1];
+  $('inspectorState').textContent = id === 'execution' ? 'NOT VERIFIED' : 'SYSTEM';
+  $('inspectorState').className = `state-pill ${id === 'execution' ? 'waiting' : 'neutral'}`;
+
+  const d = app.telemetry?.diag || {};
+  const disc = app.telemetry?.discovery || {};
+
+  const maps = {
+    discovery: [['Events', disc.eventsReceived], ['Connected', disc.connected ? 'Yes' : 'No'], ['Queue', disc.queueDepth], ['Last event', ago(disc.lastEventAt)]],
+    bootstrap: [['Starts', d.fastPhase?.starts], ['Holder queued', d.fastPhase?.holderQueued], ['Eval started', d.fastPhase?.initialEvaluationStarted], ['Errors', d.fastPhase?.bootstrapErrors]],
+    holders: [['Queue', disc.holderQueueDepth], ['Processing', disc.holderProcessing], ['Snapshots', d.liveTradeFeed?.holderSnapshots], ['Ledger mints', d.eventHolderLedger?.trackedMints]],
+    market: [['Snapshots', d.liveTradeFeed?.marketSnapshots], ['Trade events', d.liveTradeFeed?.tradeEventsDecoded], ['WS direct', d.liveTradeFeed?.connected ? 'Live' : 'Offline'], ['HTTP hot path', d.liveTradeFeed?.httpRpcCalls ?? 0]],
+    risk: [['Active users', disc.activeEvaluationUsers], ['Evaluations', disc.liveEvaluationsPerformed], ['Tokens', disc.liveEvaluationTokensProcessed], ['Batch errors', disc.liveEvaluationBatchErrors]],
+    decision: [['Tokens', d.counts?.returned], ['Fresh backlog', d.bridge?.currentFreshBacklog], ['SLA misses', d.bridge?.slaMissesCurrent], ['Eval calls', d.liveTradeFeed?.evaluationCalls]],
+    paper: [['Environment', 'Paper'], ['Source', 'BUY READY'], ['Safety', 'Enabled'], ['Live funds', 'No']],
+    openai: [['Configured', app.telemetry?.openai?.configured ? 'Yes' : 'No'], ['Mode', app.telemetry?.openai?.mode || 'read-only'], ['Model', app.telemetry?.openai?.model || '—'], ['Authority', 'Advisory']],
+    execution: [['Adapter', 'Not verified'], ['Signing', 'Unavailable'], ['Paper engine', 'Available'], ['Risk authority', 'Enabled']],
+    core: [['Tokens', d.counts?.tokensInThisInstance], ['Pump tokens', d.counts?.pumpTokensInThisInstance], ['Fresh backlog', d.bridge?.currentFreshBacklog], ['PID', d.instance?.pid]]
+  };
+
+  $('metricGrid').innerHTML = (maps[id] || maps.core).map(([a, b]) => metric(a, b ?? '—')).join('');
+  $('primaryReason').textContent = x[1];
+  $('gateList').innerHTML = '';
+  $('inspectorMint').textContent = 'Architecture module';
+}
+
+function escapeHtml(s) {
+  return String(s ?? '').replace(/[&<>'"]/g, (c) => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    "'": '&#39;',
+    '"': '&quot;'
+  }[c]));
+}
+
+function renderTokenInspector(row) {
+  const d = row.decision || {};
+  const h = row.holder || {};
+  const m = row.market || {};
+  const state = d.state || 'WAITING';
+  const key = stateKey(state);
+
+  $('inspectorTitle').textContent = shortMint(row.mint);
+  $('inspectorSummary').textContent = `Pump token · ${row.schedulerLane || 'pipeline'} · age ${fmt(row.ageMinutes, 1)} min`;
+  $('inspectorState').textContent = state;
+  $('inspectorState').className = `state-pill ${key}`;
+
+  $('metricGrid').innerHTML = [
+    ['AI score', d.score ?? '—'],
+    ['Holders', h.count ?? '—'],
+    ['Top 10', finite(h.top10Pct) ? `${fmt(h.top10Pct, 2)}%` : '—'],
+    ['Developer', finite(h.developerPct) ? `${fmt(h.developerPct, 2)}%` : '—'],
+    ['Buy pressure', finite(m.buyPressure) ? `${fmt(m.buyPressure, 2)}×` : '—'],
+    ['Price SOL', finite(m.priceSol) ? fmt(m.priceSol, 9) : '—']
+  ].map(([a, b]) => metric(a, b)).join('');
+
+  $('primaryReason').textContent =
+    d.primaryReason ||
+    (Array.isArray(d.reasons) && d.reasons[0]) ||
+    'Waiting for deterministic evaluation.';
+
+  const gates = row.gates || null;
+  let list = [];
+
+  if (gates) {
+    list = Object.entries(gates).map(([name, g]) => ({
+      name,
+      status: g?.pass === true ? 'PASS' : g?.pass === false ? 'FAIL' : 'WAIT'
+    }));
+  } else if (Array.isArray(d.reasons) && d.reasons.length) {
+    list = d.reasons.slice(0, 4).map((r, i) => ({
+      name: r,
+      status: i === 0 && key === 'blocked' ? 'FAIL' : 'INFO'
+    }));
+  }
+
+  $('gateList').innerHTML = list.map((g) => `
+    <div class="gate ${g.status === 'PASS' ? 'pass' : g.status === 'FAIL' ? 'fail' : 'wait'}">
+      <span>${escapeHtml(g.name)}</span>
+      <b>${g.status}</b>
+    </div>
+  `).join('');
+
+  $('inspectorMint').textContent = row.mint || '—';
+}
+
+function select(data) {
+  app.selected = data;
+
+  document.querySelectorAll('.token-card').forEach((x) => {
+    x.classList.toggle('active', data.kind === 'token' && x.dataset.mint === data.mint);
+  });
+
+  if (data.kind === 'token') {
+    renderTokenInspector(data.row);
+  } else {
+    renderModuleInspector(data.id);
+  }
+}
+
+function rankSample(sample = []) {
+  const priority = { ready: 0, blocked: 1, watch: 2, waiting: 3 };
+
+  return sample
+    .filter((row) => row?.mint)
+    .slice()
+    .sort((a, b) => {
+      const pa = priority[stateKey(a.decision?.state)] ?? 9;
+      const pb = priority[stateKey(b.decision?.state)] ?? 9;
+      if (pa !== pb) return pa - pb;
+
+      const sa = Number(a.decision?.score ?? -1);
+      const sb = Number(b.decision?.score ?? -1);
+      if (sa !== sb) return sb - sa;
+
+      return Number(a.ageMinutes ?? 0) - Number(b.ageMinutes ?? 0);
+    })
+    .slice(0, 12);
+}
+
+function routePointsFor(row, index) {
+  const state = stateKey(row.decision?.state);
+  const branch = ((index + (row.holder?.count || 0)) % 2 === 0) ? 'holders' : 'market';
+
+  const points = [
+    pointFor('discovery'),
+    pointFor('bootstrap'),
+    pointFor('core')
+  ];
+
+  const hasMidTelemetry =
+    finite(row.market?.priceSol) ||
+    finite(row.market?.buyPressure) ||
+    finite(row.holder?.count) ||
+    row.pipelineStarted;
+
+  if (hasMidTelemetry) {
+    points.push(pointFor(branch));
+    points.push(pointFor('risk'));
+  }
+
+  if (state === 'watch' || state === 'blocked' || state === 'ready') {
+    points.push(pointFor('decision'));
+  }
+
+  if (state === 'watch') {
+    points.push(SPECIAL_POINTS.watchHold.clone());
+  }
+
+  if (state === 'ready') {
+    points.push(pointFor('paper'));
+  }
+
+  if (state === 'blocked') {
+    points.push(SPECIAL_POINTS.blockedExit.clone());
+  }
+
+  return points;
+}
+
+function routeCapFor(row) {
+  const state = stateKey(row.decision?.state);
+
+  if (state === 'ready') return 1;
+  if (state === 'blocked') return 1;
+  if (state === 'watch') return 0.92;
+
+  const hasMidTelemetry =
+    finite(row.market?.priceSol) ||
+    finite(row.market?.buyPressure) ||
+    finite(row.holder?.count) ||
+    row.pipelineStarted;
+
+  if (hasMidTelemetry) return 0.78;
+  return 0.48;
+}
+
+function createTokenMesh(color) {
+  const mesh = new THREE.Mesh(
+    new THREE.OctahedronGeometry(0.19, 1),
+    makeMaterial(color, 0.88)
+  );
+
+  const halo = new THREE.Mesh(
+    new THREE.TorusGeometry(0.29, 0.018, 8, 36),
+    new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.62 })
+  );
+  halo.rotation.x = Math.PI / 2;
+  mesh.add(halo);
+
+  return { mesh, halo };
+}
+
+function syncTokenMeshes(sample = []) {
+  const keep = new Set();
+
+  sample.forEach((row, index) => {
+    if (!row?.mint) return;
+
+    keep.add(row.mint);
+
+    const key = stateKey(row.decision?.state);
+    const color = COLORS[key];
+    let item = app.tokenMeshes.get(row.mint);
+
+    if (!item) {
+      const created = createTokenMesh(color);
+      created.mesh.userData = { kind: 'token', mint: row.mint, row };
+      app.scene.add(created.mesh);
+      app.pickables.push(created.mesh);
+
+      item = {
+        mesh: created.mesh,
+        halo: created.halo,
+        seed: Math.random(),
+        speed: 0.10 + (index % 5) * 0.02,
+        curve: curveFromPoints(routePointsFor(row, index)),
+        cap: routeCapFor(row),
+        state: key
+      };
+
+      app.tokenMeshes.set(row.mint, item);
+    }
+
+    item.mesh.userData = { kind: 'token', mint: row.mint, row };
+    item.curve = curveFromPoints(routePointsFor(row, index));
+    item.cap = routeCapFor(row);
+    item.speed = 0.10 + (index % 5) * 0.02;
+    item.state = key;
+
+    item.mesh.material.color.setHex(color);
+    item.mesh.material.emissive.setHex(color);
+    item.halo.material.color.setHex(color);
+  });
+
+  for (const [mint, item] of app.tokenMeshes) {
+    if (!keep.has(mint)) {
+      app.scene.remove(item.mesh);
+      app.pickables = app.pickables.filter((x) => x !== item.mesh);
+      app.tokenMeshes.delete(mint);
+    }
+  }
+}
+
+function renderRail(sample = []) {
+  $('tokenRail').innerHTML = sample.length
+    ? sample.map((row) => {
+        const key = stateKey(row.decision?.state);
+        const state = row.decision?.state || 'WAITING';
+
+        return `
+          <button class="token-card" type="button" data-mint="${escapeHtml(row.mint)}">
+            <div class="token-card-top">
+              <span class="token-symbol">${escapeHtml(shortMint(row.mint))}</span>
+              <span class="token-state ${key}">${escapeHtml(state)}</span>
+            </div>
+            <div class="token-card-meta">
+              <span>Holders<b>${row.holder?.count ?? '—'}</b></span>
+              <span>Buy pressure<b>${finite(row.market?.buyPressure) ? fmt(row.market.buyPressure, 2) + '×' : '—'}</b></span>
+              <span>Top 10<b>${finite(row.holder?.top10Pct) ? fmt(row.holder.top10Pct, 1) + '%' : '—'}</b></span>
+              <span>Age<b>${fmt(row.ageMinutes, 1)}m</b></span>
+            </div>
+          </button>
+        `;
+      }).join('')
+    : `
+      <div class="token-card">
+        <div class="token-symbol">No token telemetry yet</div>
+        <div class="token-card-meta">
+          <span>Pipeline<b>waiting</b></span>
+        </div>
+      </div>
+    `;
+
+  document.querySelectorAll('.token-card[data-mint]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const row = app.telemetry?.diag?.sample?.find((x) => x.mint === btn.dataset.mint);
+      if (row) select({ kind: 'token', mint: row.mint, row });
+    });
+  });
+}
+
+function setStatus(dot, status, text, kind) {
+  dot.className = `dot ${kind}`;
+  status.textContent = text;
+}
+
+async function getJson(url) {
+  const r = await fetch(url, { cache: 'no-store', credentials: 'same-origin' });
+  if (!r.ok) throw new Error(`${url} HTTP ${r.status}`);
+  return r.json();
+}
+
+async function refreshTelemetry() {
+  const results = await Promise.allSettled([
+    getJson('/api/debug/filter-pipeline-lifecycle?limit=12'),
+    getJson('/api/discovery/status'),
+    getJson('/api/market/status'),
+    getJson('/api/openai/status')
+  ]);
+
+  const [diagR, discR, marketR, aiR] = results;
+  const diag = diagR.status === 'fulfilled' ? diagR.value : null;
+  const discovery = discR.status === 'fulfilled' ? discR.value : null;
+  const market = marketR.status === 'fulfilled' ? marketR.value : null;
+  const openai = aiR.status === 'fulfilled' ? aiR.value : null;
+
+  app.telemetry = { diag, discovery, market, openai };
+
+  if (discovery?.connected) {
+    setStatus($('wsDot'), $('wsStatus'), 'Live', 'ok');
+  } else if (discovery) {
+    setStatus($('wsDot'), $('wsStatus'), 'Connecting', 'warning');
+  } else {
+    setStatus($('wsDot'), $('wsStatus'), 'Unavailable', 'bad');
+  }
+
+  const rpcOK = market?.rpc === 'online' || market?.solana?.ok === true || discovery?.rpcLastHttpStatus === 200;
+  if (rpcOK) {
+    setStatus($('rpcDot'), $('rpcStatus'), 'Online', 'ok');
+  } else if (market) {
+    setStatus($('rpcDot'), $('rpcStatus'), market.rpc || 'Degraded', 'warning');
+  } else {
+    setStatus($('rpcDot'), $('rpcStatus'), 'Unavailable', 'bad');
+  }
+
+  if (openai?.configured) {
+    setStatus($('aiDot'), $('aiStatus'), 'Configured', 'ok');
+  } else if (openai) {
+    setStatus($('aiDot'), $('aiStatus'), 'Optional', 'warning');
+  } else {
+    setStatus($('aiDot'), $('aiStatus'), 'Unavailable', 'bad');
+  }
+
+  $('eventCount').textContent = discovery?.eventsReceived ?? '—';
+  $('tradeCount').textContent = diag?.liveTradeFeed?.tradeEventsDecoded ?? discovery?.liveTradeFeed?.tradeEventsDecoded ?? '—';
+  $('holderQueue').textContent = discovery?.holderQueueDepth ?? '—';
+  $('activeUsers').textContent = discovery?.activeEvaluationUsers ?? '—';
+  $('freshBacklog').textContent = diag?.bridge?.currentFreshBacklog ?? '—';
+  $('lastEvent').textContent = ago(discovery?.lastEventAt);
+  $('lastSync').textContent = `updated ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`;
+
+  const ranked = rankSample(diag?.sample || []);
+  syncTokenMeshes(ranked);
+  renderRail(ranked);
+
+  $('telemetryMode').classList.toggle('offline', !(diag || discovery));
+  $('telemetryMode').lastChild.textContent = (diag || discovery) ? 'LIVE' : 'DEGRADED';
+
+  if (app.selected?.kind === 'token') {
+    const latest = (diag?.sample || []).find((x) => x.mint === app.selected.mint);
+    if (latest) {
+      app.selected.row = latest;
+      renderTokenInspector(latest);
+    }
+  } else {
+    renderModuleInspector(app.selected?.id || 'core');
+  }
+}
+
+function animate() {
+  requestAnimationFrame(animate);
+
+  const dt = Math.min(app.clock.getDelta(), 0.05);
+  const t = performance.now() * 0.001;
+
+  app.controls.update();
+
+  for (const pulse of app.edgePulses) {
+    pulse.userData.t = (pulse.userData.t + dt * pulse.userData.speed) % 1;
+    pulse.position.copy(pulse.userData.curve.getPointAt(pulse.userData.t));
+    const s = 0.86 + Math.sin((pulse.userData.t * 10 + t * 2.4) * Math.PI) * 0.18;
+    pulse.scale.setScalar(s);
+  }
+
+  for (const [id, node] of app.nodes) {
+    const pulse = 0.74 + Math.sin(t * 1.7 + node.group.position.x * 0.15) * 0.18;
+    node.beacon.intensity = id === 'core' ? 1.08 + pulse * 0.35 : 0.22 + pulse * 0.16;
+    node.topPlate.position.y = node.cfg.size[1] / 2 + 0.05 + Math.sin(t * 1.5 + node.group.position.x * 0.1) * 0.01;
+    if (node.cfg.core) {
+      for (const child of node.group.children) {
+        if (child.geometry?.type === 'TorusGeometry') {
+          child.rotation.z += dt * (child.geometry.parameters.tube > 0.04 ? 0.20 : -0.24);
+        }
+      }
+    }
+  }
+
+  for (const [mint, item] of app.tokenMeshes) {
+    const base = ((t * item.speed) + item.seed) % 1;
+    const u = clamp(0.04 + base * item.cap, 0, 1);
+    const pos = item.curve.getPointAt(u);
+    const ahead = item.curve.getPointAt(Math.min(u + 0.01, 1));
+
+    item.mesh.position.copy(pos);
+    item.mesh.position.y += 0.42 + Math.sin(t * 3.0 + item.seed * 10) * 0.05;
+    item.mesh.lookAt(ahead);
+    item.mesh.rotation.z += dt * 1.2;
+
+    const glow = item.state === 'ready' ? 1.0 : item.state === 'blocked' ? 0.9 : 0.78;
+    item.mesh.material.emissiveIntensity = glow;
+    item.halo.material.opacity = item.state === 'waiting' ? 0.38 : 0.64;
+  }
+
+  updateLabels();
+  app.renderer.render(app.scene, app.camera);
+}
+
+$('autoRotateBtn').addEventListener('click', () => {
+  app.autoRotate = !app.autoRotate;
+  app.controls.autoRotate = app.autoRotate;
+  $('autoRotateBtn').classList.toggle('active', app.autoRotate);
+});
+
+$('resetViewBtn').addEventListener('click', () => {
+  app.camera.position.copy(app.cameraHome);
+  app.controls.target.copy(app.targetHome);
+  app.controls.update();
+});
+
+$('focusBtn').addEventListener('click', () => {
+  if (app.selected?.kind === 'token') {
+    const x = app.tokenMeshes.get(app.selected.mint);
+    if (x) focusObject(x.mesh);
+    return;
+  }
+
+  focusObject(app.nodes.get(app.selected?.id || 'core')?.group);
+});
+
+try {
+  buildScene();
+  app.selected = { kind: 'module', id: 'core' };
+  renderModuleInspector('core');
+  refreshTelemetry().finally(() => setTimeout(() => $('boot').classList.add('hidden'), 420));
+  setInterval(refreshTelemetry, 2500);
+} catch (err) {
+  console.error('[MEMEFLOW SYSTEM VIEW]', err);
+  $('fatal').hidden = false;
+  $('boot').classList.add('hidden');
+}
+
+/* ===== MOBILE PORTRAIT DIGITAL TWIN V7 ===== */
+
+const PORTRAIT_LAYOUT_V7 = {
+  discovery: {
+    pos: [-4.6, 4.0, 0.3],
+    scale: 0.72
+  },
+
+  bootstrap: {
+    pos: [0.0, 4.0, -0.25],
+    scale: 0.72
+  },
+
+  core: {
+    pos: [4.6, 4.0, 0.2],
+    scale: 0.76
+  },
+
+  holders: {
+    pos: [4.6, 1.1, 0.8],
+    scale: 0.70
+  },
+
+  market: {
+    pos: [0.0, 1.1, -0.25],
+    scale: 0.70
+  },
+
+  risk: {
+    pos: [-4.6, 1.1, 0.15],
+    scale: 0.70
+  },
+
+  openai: {
+    pos: [-4.6, -2.0, -0.9],
+    scale: 0.67
+  },
+
+  decision: {
+    pos: [0.0, -2.0, 0.0],
+    scale: 0.72
+  },
+
+  paper: {
+    pos: [4.6, -2.0, 0.15],
+    scale: 0.70
+  },
+
+  execution: {
+    pos: [4.6, -4.7, -1.0],
+    scale: 0.65
+  }
+};
+
+const PORTRAIT_EDGES_V7 = [
+  {
+    from: 'discovery',
+    to: 'bootstrap',
+    color: COLORS.cyan,
+    via: [-2.3, 4.25, 0.0],
+    pulses: 3,
+    speed: 0.26
+  },
+
+  {
+    from: 'bootstrap',
+    to: 'core',
+    color: COLORS.blue,
+    via: [2.3, 4.25, 0.0],
+    pulses: 3,
+    speed: 0.25
+  },
+
+  {
+    from: 'core',
+    to: 'holders',
+    color: COLORS.cyan,
+    via: [4.8, 2.55, 0.55],
+    pulses: 2,
+    speed: 0.21
+  },
+
+  {
+    from: 'core',
+    to: 'market',
+    color: COLORS.blue,
+    via: [2.25, 2.45, -0.30],
+    pulses: 2,
+    speed: 0.20
+  },
+
+  {
+    from: 'holders',
+    to: 'risk',
+    color: COLORS.cyan,
+    via: [0.0, 1.55, 0.65],
+    pulses: 3,
+    speed: 0.20
+  },
+
+  {
+    from: 'market',
+    to: 'risk',
+    color: COLORS.blue,
+    via: [-2.35, 1.15, -0.10],
+    pulses: 2,
+    speed: 0.20
+  },
+
+  {
+    from: 'openai',
+    to: 'risk',
+    color: COLORS.purple,
+    via: [-4.75, -0.45, -0.55],
+    pulses: 1,
+    speed: 0.12
+  },
+
+  {
+    from: 'risk',
+    to: 'decision',
+    color: COLORS.green,
+    via: [-2.25, -0.80, 0.05],
+    pulses: 3,
+    speed: 0.26
+  },
+
+  {
+    from: 'decision',
+    to: 'paper',
+    color: COLORS.purple,
+    via: [2.25, -1.75, 0.05],
+    pulses: 2,
+    speed: 0.19
+  },
+
+  {
+    from: 'paper',
+    to: 'execution',
+    color: COLORS.yellow,
+    via: [4.75, -3.40, -0.50],
+    pulses: 1,
+    speed: 0.13
+  }
+];
+
+function clearFlowLinesV7() {
+  const remove = [];
+
+  app.scene.traverse((object) => {
+    if (
+      object.isLine === true &&
+      object.isLineSegments !== true
+    ) {
+      remove.push(object);
+    }
+  });
+
+  for (const object of remove) {
+    app.scene.remove(object);
+
+    if (object.geometry) {
+      object.geometry.dispose();
+    }
+
+    if (object.material) {
+      object.material.dispose();
+    }
+  }
+
+  for (const pulse of app.edgePulses) {
+    app.scene.remove(pulse);
+
+    if (pulse.geometry) {
+      pulse.geometry.dispose();
+    }
+
+    if (pulse.material) {
+      pulse.material.dispose();
+    }
+  }
+
+  app.edgePulses.length = 0;
+}
+
+function applyPortraitTopologyV7() {
+  const mobile =
+    window.matchMedia('(max-width: 900px)').matches;
+
+  if (!mobile) {
+    return;
+  }
+
+  for (
+    const [id, config]
+    of Object.entries(PORTRAIT_LAYOUT_V7)
+  ) {
+    const node = app.nodes.get(id);
+
+    if (!node) {
+      continue;
+    }
+
+    node.group.position.set(
+      config.pos[0],
+      config.pos[1],
+      config.pos[2]
+    );
+
+    node.group.scale.setScalar(
+      config.scale
+    );
+  }
+
+  SPECIAL_POINTS.watchHold.set(
+    0.0,
+    -3.65,
+    1.15
+  );
+
+  SPECIAL_POINTS.blockedExit.set(
+    -3.3,
+    -3.75,
+    1.75
+  );
+
+  clearFlowLinesV7();
+
+  for (
+    const edge
+    of PORTRAIT_EDGES_V7
+  ) {
+    createFlowLine(edge);
+  }
+
+  app.cameraHome.set(
+    0.0,
+    6.5,
+    24.0
+  );
+
+  app.targetHome.set(
+    0.0,
+    0.0,
+    0.0
+  );
+
+  app.camera.position.copy(
+    app.cameraHome
+  );
+
+  app.controls.target.copy(
+    app.targetHome
+  );
+
+  app.controls.enablePan = false;
+
+  app.controls.minDistance = 20;
+  app.controls.maxDistance = 27;
+
+  app.controls.minAzimuthAngle = -0.28;
+  app.controls.maxAzimuthAngle = 0.28;
+
+  app.controls.minPolarAngle =
+    Math.PI * 0.30;
+
+  app.controls.maxPolarAngle =
+    Math.PI * 0.43;
+
+  app.autoRotate = false;
+  app.controls.autoRotate = false;
+
+  const autoButton =
+    document.getElementById('autoRotateBtn');
+
+  if (autoButton) {
+    autoButton.classList.remove('active');
+  }
+
+  for (
+    const label
+    of app.labels
+  ) {
+    label.el.dataset.node =
+      label.id;
+  }
+
+  app.controls.update();
+  resize();
+
+  app.__portraitTopologyV7 = true;
+}
+
+let portraitResizeTimerV7 = null;
+
+window.addEventListener(
+  'resize',
+  () => {
+    clearTimeout(
+      portraitResizeTimerV7
+    );
+
+    portraitResizeTimerV7 =
+      setTimeout(
+        () => {
+          applyPortraitTopologyV7();
+        },
+        160
+      );
+  }
+);
+
+setTimeout(
+  () => {
+    applyPortraitTopologyV7();
+  },
+  80
+);
+
+
+/* ===== LIVE FLOW REALITY V8 ===== */
+
+const FLOW_REALITY_V8 = {
+  previousSnapshot: null,
+  lines: [],
+  lastTopologyKey: '',
+  timer: null
+};
+
+function topologyKeyV8() {
+  const mobile =
+    window.matchMedia('(max-width: 900px)').matches &&
+    typeof PORTRAIT_EDGES_V7 !== 'undefined';
+
+  return mobile ? 'portrait-v7' : 'desktop-v6';
+}
+
+function activeEdgesV8() {
+  const mobile =
+    window.matchMedia('(max-width: 900px)').matches &&
+    typeof PORTRAIT_EDGES_V7 !== 'undefined';
+
+  return mobile ? PORTRAIT_EDGES_V7 : EDGES;
+}
+
+function edgeKeyV8(edge) {
+  return `${edge.from}:${edge.to}`;
+}
+
+function lineOpacityV8(level) {
+  return 0.10 + level * 0.36;
+}
+
+function pulseOpacityV8(level) {
+  return 0.28 + level * 0.68;
+}
+
+function speedFromLevelV8(minSpeed, maxSpeed, level) {
+  return minSpeed + (maxSpeed - minSpeed) * level;
+}
+
+function clampRateV8(value) {
+  return clamp(value, 0, 1);
+}
+
+function normalizeRateV8(rate, expectedPeak) {
+  const safe = Math.max(0, Number(rate) || 0);
+  const peak = Math.max(1, Number(expectedPeak) || 1);
+
+  return clampRateV8(
+    Math.log10(1 + safe) / Math.log10(1 + peak)
+  );
+}
+
+function safeCounterV8(value) {
+  return Math.max(0, Number(value) || 0);
+}
+
+function counterDeltaV8(next, prev) {
+  const a = safeCounterV8(next);
+  const b = safeCounterV8(prev);
+
+  return a >= b ? a - b : 0;
+}
+
+function ratePerSecondV8(next, prev, dtSeconds) {
+  if (!dtSeconds || dtSeconds <= 0) {
+    return 0;
+  }
+
+  return counterDeltaV8(next, prev) / dtSeconds;
+}
+
+function stateCountsV8(sample) {
+  const counts = {
+    total: 0,
+    waiting: 0,
+    watch: 0,
+    blocked: 0,
+    ready: 0
+  };
+
+  for (const row of sample || []) {
+    counts.total += 1;
+    counts[stateKey(row?.decision?.state)] += 1;
+  }
+
+  return counts;
+}
+
+function captureRealitySnapshotV8() {
+  const diag = app.telemetry?.diag || {};
+  const discovery = app.telemetry?.discovery || {};
+  const live = diag.liveTradeFeed || {};
+  const sample = Array.isArray(diag.sample) ? diag.sample : [];
+
+  return {
+    ts: Date.now(),
+    eventsReceived: safeCounterV8(discovery.eventsReceived),
+    tradeEventsDecoded: safeCounterV8(
+      live.tradeEventsDecoded ??
+      diag.liveTradeFeed?.tradeEventsDecoded
+    ),
+    holderSnapshots: safeCounterV8(live.holderSnapshots),
+    marketSnapshots: safeCounterV8(live.marketSnapshots),
+    evaluationCalls: safeCounterV8(live.evaluationCalls),
+    freshBacklog: safeCounterV8(diag.bridge?.currentFreshBacklog),
+    holderQueueDepth: safeCounterV8(discovery.holderQueueDepth),
+    activeEvaluationUsers: safeCounterV8(discovery.activeEvaluationUsers),
+    openaiConfigured: !!app.telemetry?.openai?.configured,
+    sample,
+    counts: stateCountsV8(sample)
+  };
+}
+
+function rebuildRealityLinesV8() {
+  if (!app.scene) {
+    return;
+  }
+
+  if (typeof clearFlowLinesV7 === 'function') {
+    clearFlowLinesV7();
+  } else {
+    for (const pulse of app.edgePulses || []) {
+      app.scene.remove(pulse);
+
+      if (pulse.geometry) {
+        pulse.geometry.dispose();
+      }
+
+      if (pulse.material) {
+        pulse.material.dispose();
+      }
+    }
+
+    app.edgePulses.length = 0;
+  }
+
+  for (const lineEntry of FLOW_REALITY_V8.lines) {
+    app.scene.remove(lineEntry.line);
+
+    if (lineEntry.line.geometry) {
+      lineEntry.line.geometry.dispose();
+    }
+
+    if (lineEntry.line.material) {
+      lineEntry.line.material.dispose();
+    }
+  }
+
+  FLOW_REALITY_V8.lines.length = 0;
+
+  for (const edge of activeEdgesV8()) {
+    const start = pointFor(edge.from);
+    const end = pointFor(edge.to);
+    const via = new THREE.Vector3(...edge.via);
+
+    const curve = curveFromPoints([start, via, end]);
+    const pts = curve.getPoints(80);
+    const positions = [];
+
+    for (const p of pts) {
+      positions.push(p.x, p.y, p.z);
+    }
+
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute(
+      'position',
+      new THREE.Float32BufferAttribute(positions, 3)
+    );
+
+    const line = new THREE.Line(
+      geo,
+      new THREE.LineBasicMaterial({
+        color: edge.color,
+        transparent: true,
+        opacity: 0.18
+      })
+    );
+
+    line.userData = {
+      edgeKey: edgeKeyV8(edge)
+    };
+
+    app.scene.add(line);
+    FLOW_REALITY_V8.lines.push({
+      line,
+      edgeKey: edgeKeyV8(edge)
+    });
+
+    for (let i = 0; i < edge.pulses; i++) {
+      const pulse = new THREE.Mesh(
+        new THREE.SphereGeometry(0.09, 12, 12),
+        new THREE.MeshBasicMaterial({
+          color: edge.color,
+          transparent: true,
+          opacity: 0.55
+        })
+      );
+
+      pulse.userData = {
+        curve,
+        t: Math.random(),
+        speed: edge.speed || 0.18,
+        baseSpeed: edge.speed || 0.18,
+        edgeKey: edgeKeyV8(edge),
+        edgeColor: edge.color
+      };
+
+      app.edgePulses.push(pulse);
+      app.scene.add(pulse);
+    }
+  }
+
+  FLOW_REALITY_V8.lastTopologyKey = topologyKeyV8();
+}
+
+function computeRealityMapV8(current, previous) {
+  const dtSeconds = Math.max(
+    0.001,
+    (current.ts - previous.ts) / 1000
+  );
+
+  const eventsRate =
+    ratePerSecondV8(
+      current.eventsReceived,
+      previous.eventsReceived,
+      dtSeconds
+    );
+
+  const tradesRate =
+    ratePerSecondV8(
+      current.tradeEventsDecoded,
+      previous.tradeEventsDecoded,
+      dtSeconds
+    );
+
+  const holderRate =
+    ratePerSecondV8(
+      current.holderSnapshots,
+      previous.holderSnapshots,
+      dtSeconds
+    );
+
+  const marketRate =
+    ratePerSecondV8(
+      current.marketSnapshots,
+      previous.marketSnapshots,
+      dtSeconds
+    );
+
+  const evalRate =
+    ratePerSecondV8(
+      current.evaluationCalls,
+      previous.evaluationCalls,
+      dtSeconds
+    );
+
+  const total = Math.max(1, current.counts.total);
+  const readyRatio = current.counts.ready / total;
+  const blockedRatio = current.counts.blocked / total;
+  const watchRatio = current.counts.watch / total;
+
+  const backlogPenalty =
+    clampRateV8(current.freshBacklog / 12);
+
+  const holderQueuePenalty =
+    clampRateV8(current.holderQueueDepth / 20);
+
+  const eventLevel =
+    normalizeRateV8(eventsRate, 180);
+
+  const tradeLevel =
+    normalizeRateV8(tradesRate, 160);
+
+  const holderLevel =
+    normalizeRateV8(holderRate, 24);
+
+  const marketLevel =
+    normalizeRateV8(marketRate, 40);
+
+  const evalLevel =
+    normalizeRateV8(evalRate, 70);
+
+  const advisoryLevel =
+    current.openaiConfigured
+      ? 0.28 + evalLevel * 0.35
+      : 0.10;
+
+  const riskLevel =
+    clampRateV8(
+      (holderLevel * 0.42) +
+      (marketLevel * 0.34) +
+      (evalLevel * 0.24) -
+      (backlogPenalty * 0.14)
+    );
+
+  return {
+    'discovery:bootstrap': {
+      level: eventLevel,
+      speed: speedFromLevelV8(0.10, 0.70, eventLevel),
+      pulseOpacity: pulseOpacityV8(eventLevel),
+      lineOpacity: lineOpacityV8(eventLevel)
+    },
+
+    'bootstrap:core': {
+      level: clampRateV8((eventLevel * 0.55) + (tradeLevel * 0.45)),
+      speed: speedFromLevelV8(
+        0.10,
+        0.66,
+        clampRateV8((eventLevel * 0.55) + (tradeLevel * 0.45))
+      ),
+      pulseOpacity: pulseOpacityV8(
+        clampRateV8((eventLevel * 0.55) + (tradeLevel * 0.45))
+      ),
+      lineOpacity: lineOpacityV8(
+        clampRateV8((eventLevel * 0.55) + (tradeLevel * 0.45))
+      )
+    },
+
+    'core:holders': {
+      level: clampRateV8(holderLevel - holderQueuePenalty * 0.12),
+      speed: speedFromLevelV8(
+        0.08,
+        0.48,
+        clampRateV8(holderLevel - holderQueuePenalty * 0.12)
+      ),
+      pulseOpacity: pulseOpacityV8(
+        clampRateV8(holderLevel - holderQueuePenalty * 0.12)
+      ),
+      lineOpacity: lineOpacityV8(
+        clampRateV8(holderLevel - holderQueuePenalty * 0.12)
+      )
+    },
+
+    'core:market': {
+      level: clampRateV8((tradeLevel * 0.58) + (marketLevel * 0.42)),
+      speed: speedFromLevelV8(
+        0.08,
+        0.56,
+        clampRateV8((tradeLevel * 0.58) + (marketLevel * 0.42))
+      ),
+      pulseOpacity: pulseOpacityV8(
+        clampRateV8((tradeLevel * 0.58) + (marketLevel * 0.42))
+      ),
+      lineOpacity: lineOpacityV8(
+        clampRateV8((tradeLevel * 0.58) + (marketLevel * 0.42))
+      )
+    },
+
+    'holders:risk': {
+      level: riskLevel,
+      speed: speedFromLevelV8(0.08, 0.44, riskLevel),
+      pulseOpacity: pulseOpacityV8(riskLevel),
+      lineOpacity: lineOpacityV8(riskLevel)
+    },
+
+    'market:risk': {
+      level: riskLevel,
+      speed: speedFromLevelV8(0.08, 0.46, riskLevel),
+      pulseOpacity: pulseOpacityV8(riskLevel),
+      lineOpacity: lineOpacityV8(riskLevel)
+    },
+
+    'openai:risk': {
+      level: advisoryLevel,
+      speed: speedFromLevelV8(0.04, 0.18, advisoryLevel),
+      pulseOpacity: pulseOpacityV8(advisoryLevel * 0.75),
+      lineOpacity: lineOpacityV8(advisoryLevel * 0.70)
+    },
+
+    'risk:decision': {
+      level: clampRateV8(
+        (evalLevel * 0.72) +
+        (watchRatio * 0.12) +
+        (readyRatio * 0.16) -
+        (backlogPenalty * 0.12)
+      ),
+      speed: speedFromLevelV8(
+        0.10,
+        0.78,
+        clampRateV8(
+          (evalLevel * 0.72) +
+          (watchRatio * 0.12) +
+          (readyRatio * 0.16) -
+          (backlogPenalty * 0.12)
+        )
+      ),
+      pulseOpacity: pulseOpacityV8(
+        clampRateV8(
+          (evalLevel * 0.72) +
+          (watchRatio * 0.12) +
+          (readyRatio * 0.16) -
+          (backlogPenalty * 0.12)
+        )
+      ),
+      lineOpacity: lineOpacityV8(
+        clampRateV8(
+          (evalLevel * 0.72) +
+          (watchRatio * 0.12) +
+          (readyRatio * 0.16) -
+          (backlogPenalty * 0.12)
+        )
+      )
+    },
+
+    'decision:paper': {
+      level: clampRateV8(
+        (readyRatio * 0.64) +
+        (evalLevel * 0.26) +
+        (watchRatio * 0.10)
+      ),
+      speed: speedFromLevelV8(
+        0.05,
+        0.42,
+        clampRateV8(
+          (readyRatio * 0.64) +
+          (evalLevel * 0.26) +
+          (watchRatio * 0.10)
+        )
+      ),
+      pulseOpacity: pulseOpacityV8(
+        clampRateV8(
+          (readyRatio * 0.64) +
+          (evalLevel * 0.26) +
+          (watchRatio * 0.10)
+        )
+      ),
+      lineOpacity: lineOpacityV8(
+        clampRateV8(
+          (readyRatio * 0.64) +
+          (evalLevel * 0.26) +
+          (watchRatio * 0.10)
+        )
+      )
+    },
+
+    'paper:execution': {
+      level: clampRateV8(readyRatio * 0.30),
+      speed: speedFromLevelV8(
+        0.02,
+        0.10,
+        clampRateV8(readyRatio * 0.30)
+      ),
+      pulseOpacity: pulseOpacityV8(
+        clampRateV8(readyRatio * 0.30) * 0.7
+      ),
+      lineOpacity: lineOpacityV8(
+        clampRateV8(readyRatio * 0.30) * 0.7
+      )
+    }
+  };
+}
+
+function applyRealityMapV8(map) {
+  for (const pulse of app.edgePulses) {
+    const cfg = map[pulse.userData.edgeKey];
+
+    if (!cfg) {
+      continue;
+    }
+
+    pulse.userData.speed = cfg.speed;
+    pulse.material.opacity = cfg.pulseOpacity;
+  }
+
+  for (const entry of FLOW_REALITY_V8.lines) {
+    const cfg = map[entry.edgeKey];
+
+    if (!cfg) {
+      continue;
+    }
+
+    entry.line.material.opacity = cfg.lineOpacity;
+  }
+}
+
+function syncRealitySpeedsV8(force = false) {
+  if (!app.scene || !app.telemetry) {
+    return;
+  }
+
+  const nextKey = topologyKeyV8();
+
+  if (
+    force ||
+    nextKey !== FLOW_REALITY_V8.lastTopologyKey ||
+    FLOW_REALITY_V8.lines.length === 0
+  ) {
+    rebuildRealityLinesV8();
+  }
+
+  const current = captureRealitySnapshotV8();
+
+  if (!FLOW_REALITY_V8.previousSnapshot) {
+    FLOW_REALITY_V8.previousSnapshot = current;
+    return;
+  }
+
+  const dtMs =
+    current.ts - FLOW_REALITY_V8.previousSnapshot.ts;
+
+  if (!force && dtMs < 900) {
+    return;
+  }
+
+  const map = computeRealityMapV8(
+    current,
+    FLOW_REALITY_V8.previousSnapshot
+  );
+
+  applyRealityMapV8(map);
+
+  FLOW_REALITY_V8.previousSnapshot = current;
+}
+
+function scheduleRealityRebuildV8() {
+  clearTimeout(FLOW_REALITY_V8.timer);
+
+  FLOW_REALITY_V8.timer = setTimeout(
+    () => {
+      syncRealitySpeedsV8(true);
+    },
+    180
+  );
+}
+
+window.addEventListener(
+  'resize',
+  scheduleRealityRebuildV8
+);
+
+setTimeout(
+  () => {
+    syncRealitySpeedsV8(true);
+  },
+  220
+);
+
+setInterval(
+  () => {
+    syncRealitySpeedsV8(false);
+  },
+  900
+);
+
+
+/* ===== CENTERED MOBILE SCENE + VISUAL POLISH V9 ===== */
+
+function applyCenteredPortraitV9() {
+  if (
+    typeof PORTRAIT_LAYOUT_V7 === 'undefined' ||
+    typeof PORTRAIT_EDGES_V7 === 'undefined' ||
+    !app.scene ||
+    !app.controls
+  ) {
+    return;
+  }
+
+  const mobile =
+    window.matchMedia('(max-width: 900px)').matches;
+
+  if (!mobile) {
+    return;
+  }
+
+  const nextLayout = {
+    discovery: { pos: [-4.7, 3.15, 0.20], scale: 0.69 },
+    bootstrap: { pos: [ 0.0, 3.15,-0.15], scale: 0.69 },
+    core:      { pos: [ 4.7, 3.15, 0.15], scale: 0.74 },
+
+    risk:      { pos: [-4.7, 0.45, 0.10], scale: 0.68 },
+    market:    { pos: [ 0.0, 0.45,-0.15], scale: 0.68 },
+    holders:   { pos: [ 4.7, 0.45, 0.65], scale: 0.68 },
+
+    openai:    { pos: [-4.7,-2.35,-0.75], scale: 0.64 },
+    decision:  { pos: [ 0.0,-2.35, 0.00], scale: 0.70 },
+    paper:     { pos: [ 4.7,-2.35, 0.10], scale: 0.67 },
+
+    execution: { pos: [ 4.7,-4.65,-0.90], scale: 0.62 }
+  };
+
+  for (const [id, cfg] of Object.entries(nextLayout)) {
+    if (!PORTRAIT_LAYOUT_V7[id]) {
+      continue;
+    }
+
+    PORTRAIT_LAYOUT_V7[id].pos = cfg.pos;
+    PORTRAIT_LAYOUT_V7[id].scale = cfg.scale;
+  }
+
+  const edgeByKey = new Map(
+    PORTRAIT_EDGES_V7.map((edge) => [`${edge.from}:${edge.to}`, edge])
+  );
+
+  const patchEdge = (key, via, speed, pulses) => {
+    const edge = edgeByKey.get(key);
+    if (!edge) return;
+    edge.via = via;
+    if (typeof speed === 'number') edge.speed = speed;
+    if (typeof pulses === 'number') edge.pulses = pulses;
+  };
+
+  patchEdge('discovery:bootstrap', [-2.35, 3.35, 0.00], 0.28, 3);
+  patchEdge('bootstrap:core',      [ 2.35, 3.35, 0.00], 0.27, 3);
+
+  patchEdge('core:holders',        [ 4.75, 1.85, 0.55], 0.22, 2);
+  patchEdge('core:market',         [ 2.25, 1.55,-0.20], 0.22, 2);
+
+  patchEdge('holders:risk',        [ 0.00, 0.95, 0.55], 0.20, 3);
+  patchEdge('market:risk',         [-2.35, 0.55,-0.05], 0.20, 2);
+
+  patchEdge('openai:risk',         [-4.75,-0.95,-0.45], 0.13, 1);
+  patchEdge('risk:decision',       [-2.35,-1.05, 0.05], 0.28, 3);
+  patchEdge('decision:paper',      [ 2.35,-2.05, 0.05], 0.20, 2);
+  patchEdge('paper:execution',     [ 4.75,-3.55,-0.40], 0.14, 1);
+
+  SPECIAL_POINTS.watchHold.set(
+    0.15,
+    -3.95,
+    1.00
+  );
+
+  SPECIAL_POINTS.blockedExit.set(
+    -3.55,
+    -3.95,
+    1.60
+  );
+
+  if (typeof applyPortraitTopologyV7 === 'function') {
+    applyPortraitTopologyV7();
+  }
+
+  app.cameraHome.set(
+    0.1,
+    5.55,
+    21.8
+  );
+
+  app.targetHome.set(
+    0.0,
+    -0.15,
+    0.0
+  );
+
+  app.camera.position.copy(
+    app.cameraHome
+  );
+
+  app.controls.target.copy(
+    app.targetHome
+  );
+
+  app.controls.enablePan = false;
+
+  app.controls.minDistance = 13.5;
+  app.controls.maxDistance = 31.0;
+
+  app.controls.minAzimuthAngle = -0.42;
+  app.controls.maxAzimuthAngle = 0.42;
+
+  app.controls.minPolarAngle = Math.PI * 0.27;
+  app.controls.maxPolarAngle = Math.PI * 0.47;
+
+  app.controls.enableZoom = true;
+  app.controls.zoomSpeed = 1.05;
+  app.controls.rotateSpeed = 0.72;
+
+  if (app.controls.touches) {
+    app.controls.touches.ONE = THREE.TOUCH.ROTATE;
+    app.controls.touches.TWO = THREE.TOUCH.DOLLY_ROTATE;
+  }
+
+  for (const label of app.labels) {
+    label.offsetY = label.id === 'openai' ? 34 : 30;
+  }
+
+  const coreNode = app.nodes.get('core');
+  if (coreNode) {
+    coreNode.beacon.intensity = 1.45;
+
+    if (!coreNode.group.userData.heroGlowV9) {
+      const heroDisk = new THREE.Mesh(
+        new THREE.CircleGeometry(1.9, 48),
+        new THREE.MeshBasicMaterial({
+          color: COLORS.green,
+          transparent: true,
+          opacity: 0.11
+        })
+      );
+
+      heroDisk.rotation.x = -Math.PI / 2;
+      heroDisk.position.set(0, -0.62, 0);
+      coreNode.group.add(heroDisk);
+
+      const heroRing = new THREE.Mesh(
+        new THREE.TorusGeometry(1.65, 0.03, 12, 72),
+        new THREE.MeshBasicMaterial({
+          color: COLORS.cyan,
+          transparent: true,
+          opacity: 0.32
+        })
+      );
+
+      heroRing.rotation.x = Math.PI / 2;
+      heroRing.position.set(0, 0.92, 0);
+      coreNode.group.add(heroRing);
+
+      coreNode.group.userData.heroGlowV9 = {
+        heroDisk,
+        heroRing
+      };
+    }
+  }
+
+  if (!app.scene.userData.v9Atmosphere) {
+    const glowPlane = new THREE.Mesh(
+      new THREE.PlaneGeometry(18, 12),
+      new THREE.MeshBasicMaterial({
+        color: 0x103442,
+        transparent: true,
+        opacity: 0.09,
+        depthWrite: false
+      })
+    );
+
+    glowPlane.position.set(0, 0.6, -5.5);
+    app.scene.add(glowPlane);
+
+    const glowPlane2 = new THREE.Mesh(
+      new THREE.PlaneGeometry(11, 8),
+      new THREE.MeshBasicMaterial({
+        color: 0x0c2f3a,
+        transparent: true,
+        opacity: 0.08,
+        depthWrite: false
+      })
+    );
+
+    glowPlane2.position.set(0, -1.6, -4.4);
+    app.scene.add(glowPlane2);
+
+    app.scene.userData.v9Atmosphere = {
+      glowPlane,
+      glowPlane2
+    };
+  }
+
+  if (app.scene.userData.v9Atmosphere) {
+    const a = app.scene.userData.v9Atmosphere;
+    a.glowPlane.position.set(0, 0.6, -5.5);
+    a.glowPlane2.position.set(0, -1.6, -4.4);
+  }
+
+  for (const pulse of app.edgePulses) {
+    pulse.scale.setScalar(1.10);
+
+    if (pulse.material) {
+      pulse.material.opacity =
+        Math.max(
+          0.48,
+          Number(pulse.material.opacity) || 0
+        );
+    }
+  }
+
+  app.__centeredV9 = true;
+  app.controls.update();
+  resize();
+
+  if (typeof syncRealitySpeedsV8 === 'function') {
+    syncRealitySpeedsV8(true);
+  }
+}
+
+let centeredV9ResizeTimer = null;
+
+window.addEventListener(
+  'resize',
+  () => {
+    clearTimeout(centeredV9ResizeTimer);
+
+    centeredV9ResizeTimer = setTimeout(
+      () => {
+        applyCenteredPortraitV9();
+      },
+      180
+    );
+  }
+);
+
+setTimeout(
+  () => {
+    applyCenteredPortraitV9();
+  },
+  140
+);
+
+
+/* ===== PREMIUM DIGITAL TWIN V11 ===== */
+
+const PREMIUM_V11 = {
+  selectedRoute: null,
+  selectedRouteGlow: null,
+  selectedKey: '',
+  stage: null,
+  orbitals: [],
+  pads: [],
+  running: false
+};
+
+function premiumColorForStateV11(state) {
+  const key = stateKey(state);
+
+  return COLORS[key] || COLORS.cyan;
+}
+
+function createStageV11() {
+  if (!app.scene || PREMIUM_V11.stage) {
+    return;
+  }
+
+  const stage = new THREE.Group();
+  stage.name = 'PremiumDigitalTwinStageV11';
+
+  const deck = new THREE.Mesh(
+    new THREE.PlaneGeometry(17.8, 11.4),
+    new THREE.MeshStandardMaterial({
+      color: 0x02080c,
+      roughness: 0.58,
+      metalness: 0.62,
+      transparent: true,
+      opacity: 0.56
+    })
+  );
+
+  deck.rotation.x = -Math.PI / 2;
+  deck.position.y = -1.47;
+  stage.add(deck);
+
+  const glow = new THREE.Mesh(
+    new THREE.PlaneGeometry(15.5, 9.3),
+    new THREE.MeshBasicMaterial({
+      color: 0x123b46,
+      transparent: true,
+      opacity: 0.055,
+      depthWrite: false
+    })
+  );
+
+  glow.rotation.x = -Math.PI / 2;
+  glow.position.y = -1.44;
+  stage.add(glow);
+
+  const framePoints = [
+    new THREE.Vector3(-8.8, -1.40, -5.5),
+    new THREE.Vector3( 8.8, -1.40, -5.5),
+    new THREE.Vector3( 8.8, -1.40,  5.5),
+    new THREE.Vector3(-8.8, -1.40,  5.5),
+    new THREE.Vector3(-8.8, -1.40, -5.5)
+  ];
+
+  const frameGeometry =
+    new THREE.BufferGeometry()
+      .setFromPoints(framePoints);
+
+  const frame =
+    new THREE.Line(
+      frameGeometry,
+      new THREE.LineBasicMaterial({
+        color: COLORS.cyan,
+        transparent: true,
+        opacity: 0.10
+      })
+    );
+
+  stage.add(frame);
+
+  for (let i = 0; i < 5; i++) {
+    const ring =
+      new THREE.Mesh(
+        new THREE.RingGeometry(
+          1.0 + i * 0.72,
+          1.015 + i * 0.72,
+          96
+        ),
+        new THREE.MeshBasicMaterial({
+          color:
+            i % 2 === 0
+              ? COLORS.cyan
+              : COLORS.green,
+          transparent: true,
+          opacity: 0.035,
+          side: THREE.DoubleSide,
+          depthWrite: false
+        })
+      );
+
+    ring.rotation.x =
+      -Math.PI / 2;
+
+    ring.position.set(
+      0,
+      -1.39,
+      0
+    );
+
+    stage.add(ring);
+  }
+
+  app.scene.add(stage);
+
+  PREMIUM_V11.stage =
+    stage;
+}
+
+function addNodeHardwareV11() {
+  for (
+    const [id, node]
+    of app.nodes
+  ) {
+    if (
+      !node ||
+      node.group.userData.premiumV11
+    ) {
+      continue;
+    }
+
+    const cfg =
+      node.cfg || {};
+
+    const width =
+      cfg.size?.[0] || 3;
+
+    const depth =
+      cfg.size?.[2] || 1.8;
+
+    const pad =
+      new THREE.Mesh(
+        new THREE.PlaneGeometry(
+          width * 1.22,
+          depth * 1.36
+        ),
+        new THREE.MeshBasicMaterial({
+          color: cfg.color || COLORS.cyan,
+          transparent: true,
+          opacity:
+            id === 'core'
+              ? 0.075
+              : 0.035,
+          depthWrite: false,
+          side: THREE.DoubleSide
+        })
+      );
+
+    pad.rotation.x =
+      -Math.PI / 2;
+
+    pad.position.y =
+      -0.56;
+
+    node.group.add(pad);
+
+    PREMIUM_V11.pads.push({
+      id,
+      mesh: pad,
+      baseOpacity:
+        id === 'core'
+          ? 0.075
+          : 0.035
+    });
+
+    const railMaterial =
+      new THREE.MeshBasicMaterial({
+        color: cfg.color || COLORS.cyan,
+        transparent: true,
+        opacity: 0.24
+      });
+
+    const railLeft =
+      new THREE.Mesh(
+        new THREE.BoxGeometry(
+          0.028,
+          0.035,
+          depth * 0.94
+        ),
+        railMaterial.clone()
+      );
+
+    railLeft.position.set(
+      -width * 0.49,
+      -0.49,
+      0
+    );
+
+    const railRight =
+      railLeft.clone();
+
+    railRight.position.x =
+      width * 0.49;
+
+    node.group.add(
+      railLeft,
+      railRight
+    );
+
+    const statusLight =
+      new THREE.PointLight(
+        cfg.color || COLORS.cyan,
+        id === 'core' ? 0.85 : 0.18,
+        id === 'core' ? 5.5 : 2.8,
+        2
+      );
+
+    statusLight.position.set(
+      0,
+      0.85,
+      0
+    );
+
+    node.group.add(
+      statusLight
+    );
+
+    node.group.userData.premiumV11 = {
+      pad,
+      railLeft,
+      railRight,
+      statusLight
+    };
+  }
+}
+
+function addCoreOrbitalsV11() {
+  const core =
+    app.nodes.get('core');
+
+  if (
+    !core ||
+    core.group.userData.orbitalsV11
+  ) {
+    return;
+  }
+
+  const orbitalA =
+    new THREE.Mesh(
+      new THREE.TorusGeometry(
+        2.05,
+        0.018,
+        8,
+        120
+      ),
+      new THREE.MeshBasicMaterial({
+        color: COLORS.cyan,
+        transparent: true,
+        opacity: 0.19
+      })
+    );
+
+  orbitalA.rotation.set(
+    Math.PI / 2,
+    0.18,
+    0.10
+  );
+
+  orbitalA.position.y =
+    0.05;
+
+  const orbitalB =
+    new THREE.Mesh(
+      new THREE.TorusGeometry(
+        2.45,
+        0.014,
+        8,
+        120
+      ),
+      new THREE.MeshBasicMaterial({
+        color: COLORS.green,
+        transparent: true,
+        opacity: 0.11
+      })
+    );
+
+  orbitalB.rotation.set(
+    Math.PI / 2,
+    -0.20,
+    0.28
+  );
+
+  orbitalB.position.y =
+    0.02;
+
+  core.group.add(
+    orbitalA,
+    orbitalB
+  );
+
+  PREMIUM_V11.orbitals.push(
+    orbitalA,
+    orbitalB
+  );
+
+  core.group.userData.orbitalsV11 = true;
+}
+
+function removeSelectedRouteV11() {
+  if (PREMIUM_V11.selectedRoute) {
+    app.scene.remove(
+      PREMIUM_V11.selectedRoute
+    );
+
+    PREMIUM_V11.selectedRoute.geometry?.dispose();
+    PREMIUM_V11.selectedRoute.material?.dispose();
+
+    PREMIUM_V11.selectedRoute =
+      null;
+  }
+
+  if (PREMIUM_V11.selectedRouteGlow) {
+    app.scene.remove(
+      PREMIUM_V11.selectedRouteGlow
+    );
+
+    PREMIUM_V11.selectedRouteGlow.geometry?.dispose();
+    PREMIUM_V11.selectedRouteGlow.material?.dispose();
+
+    PREMIUM_V11.selectedRouteGlow =
+      null;
+  }
+}
+
+function updateSelectedRouteV11() {
+  const selected =
+    app.selected;
+
+  const key =
+    selected?.kind === 'token'
+      ? `token:${selected.mint}`
+      : `module:${selected?.id || 'core'}`;
+
+  if (
+    key === PREMIUM_V11.selectedKey
+  ) {
+    return;
+  }
+
+  PREMIUM_V11.selectedKey =
+    key;
+
+  removeSelectedRouteV11();
+
+  if (
+    selected?.kind !== 'token'
+  ) {
+    return;
+  }
+
+  const item =
+    app.tokenMeshes.get(
+      selected.mint
+    );
+
+  if (
+    !item ||
+    !item.curve
+  ) {
+    return;
+  }
+
+  const points =
+    item.curve.getPoints(110);
+
+  const color =
+    premiumColorForStateV11(
+      selected.row?.decision?.state
+    );
+
+  const geometry =
+    new THREE.BufferGeometry()
+      .setFromPoints(points);
+
+  PREMIUM_V11.selectedRoute =
+    new THREE.Line(
+      geometry,
+      new THREE.LineBasicMaterial({
+        color,
+        transparent: true,
+        opacity: 0.88
+      })
+    );
+
+  const glowGeometry =
+    new THREE.BufferGeometry()
+      .setFromPoints(points);
+
+  PREMIUM_V11.selectedRouteGlow =
+    new THREE.Line(
+      glowGeometry,
+      new THREE.LineBasicMaterial({
+        color,
+        transparent: true,
+        opacity: 0.18
+      })
+    );
+
+  PREMIUM_V11.selectedRouteGlow.scale.set(
+    1.003,
+    1.003,
+    1.003
+  );
+
+  app.scene.add(
+    PREMIUM_V11.selectedRouteGlow,
+    PREMIUM_V11.selectedRoute
+  );
+}
+
+function premiumCameraV11() {
+  if (
+    !app.camera ||
+    !app.controls
+  ) {
+    return;
+  }
+
+  const mobile =
+    window.matchMedia(
+      '(max-width: 900px)'
+    ).matches;
+
+  if (!mobile) {
+    return;
+  }
+
+  app.cameraHome.set(
+    0.15,
+    5.2,
+    21.2
+  );
+
+  app.targetHome.set(
+    0,
+    -0.15,
+    0
+  );
+
+  app.camera.position.copy(
+    app.cameraHome
+  );
+
+  app.controls.target.copy(
+    app.targetHome
+  );
+
+  app.controls.minDistance =
+    12.5;
+
+  app.controls.maxDistance =
+    31;
+
+  app.controls.enableZoom =
+    true;
+
+  app.controls.zoomSpeed =
+    1.15;
+
+  app.controls.rotateSpeed =
+    0.68;
+
+  app.controls.minAzimuthAngle =
+    -0.46;
+
+  app.controls.maxAzimuthAngle =
+    0.46;
+
+  app.controls.minPolarAngle =
+    Math.PI * 0.27;
+
+  app.controls.maxPolarAngle =
+    Math.PI * 0.48;
+
+  app.controls.autoRotate =
+    false;
+
+  app.autoRotate =
+    false;
+
+  app.controls.update();
+}
+
+function premiumAnimationV11() {
+  requestAnimationFrame(
+    premiumAnimationV11
+  );
+
+  if (!app.scene) {
+    return;
+  }
+
+  const t =
+    performance.now() * 0.001;
+
+  updateSelectedRouteV11();
+
+  for (
+    let i = 0;
+    i < PREMIUM_V11.orbitals.length;
+    i++
+  ) {
+    const ring =
+      PREMIUM_V11.orbitals[i];
+
+    ring.rotation.z +=
+      i === 0
+        ? 0.0016
+        : -0.0011;
+  }
+
+  for (
+    const entry
+    of PREMIUM_V11.pads
+  ) {
+    const selected =
+      app.selected?.kind === 'module' &&
+      app.selected?.id === entry.id;
+
+    const targetOpacity =
+      selected
+        ? entry.baseOpacity * 3.1
+        : entry.baseOpacity;
+
+    entry.mesh.material.opacity +=
+      (
+        targetOpacity -
+        entry.mesh.material.opacity
+      ) * 0.08;
+  }
+
+  for (
+    const [id, node]
+    of app.nodes
+  ) {
+    const premium =
+      node.group.userData.premiumV11;
+
+    if (!premium) {
+      continue;
+    }
+
+    const selected =
+      app.selected?.kind === 'module' &&
+      app.selected?.id === id;
+
+    const base =
+      id === 'core'
+        ? 0.72
+        : 0.16;
+
+    const pulse =
+      0.5 +
+      0.5 *
+      Math.sin(
+        t * 2.2 +
+        node.group.position.x * 0.25
+      );
+
+    premium.statusLight.intensity =
+      selected
+        ? base * 3.6
+        : base + pulse * 0.10;
+
+    if (
+      node.topPlate?.material &&
+      'emissiveIntensity'
+        in node.topPlate.material
+    ) {
+      node.topPlate.material.emissiveIntensity =
+        selected
+          ? 1.18
+          : id === 'core'
+            ? 0.82
+            : 0.56;
+    }
+  }
+
+  for (
+    const pulse
+    of app.edgePulses || []
+  ) {
+    const curve =
+      pulse.userData?.curve;
+
+    const u =
+      Number(
+        pulse.userData?.t
+      );
+
+    if (
+      !curve ||
+      !Number.isFinite(u)
+    ) {
+      continue;
+    }
+
+    const ahead =
+      curve.getPointAt(
+        Math.min(
+          1,
+          u + 0.012
+        )
+      );
+
+    pulse.lookAt(
+      ahead
+    );
+
+    pulse.scale.set(
+      0.62,
+      0.62,
+      2.8
+    );
+  }
+
+  if (
+    PREMIUM_V11.selectedRoute
+  ) {
+    const pulse =
+      0.72 +
+      Math.sin(t * 4.4) *
+      0.18;
+
+    PREMIUM_V11.selectedRoute.material.opacity =
+      pulse;
+  }
+}
+
+function installPremiumDigitalTwinV11() {
+  if (
+    PREMIUM_V11.running ||
+    !app.scene
+  ) {
+    return;
+  }
+
+  PREMIUM_V11.running =
+    true;
+
+  createStageV11();
+  addNodeHardwareV11();
+  addCoreOrbitalsV11();
+  premiumCameraV11();
+
+  premiumAnimationV11();
+
+  resize();
+}
+
+setTimeout(
+  installPremiumDigitalTwinV11,
+  260
+);
+
+window.addEventListener(
+  'resize',
+  () => {
+    setTimeout(
+      premiumCameraV11,
+      160
+    );
+  }
+);
+
+
+/* ===== CINEMATIC SYSTEM SCALE V12 ===== */
+
+const CINEMATIC_V12 = {
+  installed: false,
+  basePositions: new Map(),
+  baseScales: new Map()
+};
+
+function installCinematicSystemV12() {
+  if (
+    !app.scene ||
+    !app.camera ||
+    !app.controls ||
+    CINEMATIC_V12.installed
+  ) {
+    return;
+  }
+
+  const mobile =
+    window.matchMedia(
+      '(max-width: 900px)'
+    ).matches;
+
+  if (!mobile) {
+    return;
+  }
+
+  CINEMATIC_V12.installed = true;
+
+  const scaleX = 1.08;
+  const scaleY = 1.18;
+  const scaleZ = 1.04;
+
+  for (const [id, node] of app.nodes) {
+    if (!node?.group) {
+      continue;
+    }
+
+    CINEMATIC_V12.basePositions.set(
+      id,
+      node.group.position.clone()
+    );
+
+    CINEMATIC_V12.baseScales.set(
+      id,
+      node.group.scale.clone()
+    );
+
+    const p =
+      node.group.position;
+
+    p.x *= scaleX;
+    p.y =
+      (p.y * scaleY) - 0.35;
+    p.z *= scaleZ;
+
+    node.group.scale.multiplyScalar(
+      id === 'core'
+        ? 1.18
+        : 1.10
+    );
+  }
+
+  const core =
+    app.nodes.get('core');
+
+  if (core?.group) {
+    core.group.position.y += 0.08;
+
+    const coreGlow =
+      new THREE.PointLight(
+        COLORS.green,
+        1.55,
+        7.5,
+        2
+      );
+
+    coreGlow.position.set(
+      0,
+      1.25,
+      0
+    );
+
+    core.group.add(
+      coreGlow
+    );
+
+    core.group.userData.cinematicGlowV12 =
+      coreGlow;
+  }
+
+  app.cameraHome.set(
+    0.1,
+    4.65,
+    17.8
+  );
+
+  app.targetHome.set(
+    0,
+    -0.35,
+    0
+  );
+
+  app.camera.position.copy(
+    app.cameraHome
+  );
+
+  app.controls.target.copy(
+    app.targetHome
+  );
+
+  app.controls.minDistance =
+    9.8;
+
+  app.controls.maxDistance =
+    27;
+
+  app.controls.zoomSpeed =
+    1.20;
+
+  app.controls.rotateSpeed =
+    0.66;
+
+  app.controls.minAzimuthAngle =
+    -0.42;
+
+  app.controls.maxAzimuthAngle =
+    0.42;
+
+  app.controls.minPolarAngle =
+    Math.PI * 0.26;
+
+  app.controls.maxPolarAngle =
+    Math.PI * 0.47;
+
+  app.controls.enableZoom =
+    true;
+
+  app.controls.enablePan =
+    false;
+
+  for (const label of app.labels) {
+    label.offsetY =
+      label.id === 'core'
+        ? 35
+        : 29;
+  }
+
+  for (const pulse of app.edgePulses || []) {
+    if (!pulse?.geometry) {
+      continue;
+    }
+
+    pulse.scale.set(
+      0.45,
+      0.45,
+      3.8
+    );
+
+    if (pulse.material) {
+      pulse.material.opacity =
+        Math.max(
+          0.68,
+          Number(
+            pulse.material.opacity
+          ) || 0
+        );
+    }
+  }
+
+  for (
+    const entry
+    of FLOW_REALITY_V8?.lines || []
+  ) {
+    if (!entry?.line?.material) {
+      continue;
+    }
+
+    entry.line.material.opacity =
+      Math.max(
+        0.24,
+        Number(
+          entry.line.material.opacity
+        ) || 0
+      );
+  }
+
+  app.controls.update();
+  resize();
+
+  if (
+    typeof syncRealitySpeedsV8 ===
+    'function'
+  ) {
+    syncRealitySpeedsV8(true);
+  }
+}
+
+function reinforceCinematicPulseV12() {
+  if (!CINEMATIC_V12.installed) {
+    return;
+  }
+
+  const t =
+    performance.now() * 0.001;
+
+  for (const pulse of app.edgePulses || []) {
+    if (!pulse?.material) {
+      continue;
+    }
+
+    const activity =
+      0.78 +
+      Math.sin(
+        t * 5 +
+        (
+          Number(
+            pulse.userData?.t
+          ) || 0
+        ) * 8
+      ) * 0.18;
+
+    pulse.material.opacity =
+      Math.max(
+        0.42,
+        Math.min(
+          1,
+          pulse.material.opacity *
+          activity
+        )
+      );
+
+    pulse.scale.x = 0.42;
+    pulse.scale.y = 0.42;
+    pulse.scale.z = 3.6;
+  }
+
+  requestAnimationFrame(
+    reinforceCinematicPulseV12
+  );
+}
+
+setTimeout(
+  () => {
+    installCinematicSystemV12();
+    reinforceCinematicPulseV12();
+  },
+  620
+);
+
+
+/* ===== CONTROL ROOM DIGITAL TWIN V14 ===== */
+
+const CONTROL_ROOM_V14 = {
+  installed: false,
+  selectedId: null,
+  selectionRing: null,
+  routeLine: null,
+  routeGlow: null,
+  stage: null,
+  nodePads: new Map(),
+  pulseTrailsInstalled: new WeakSet()
+};
+
+const CONTROL_ROOM_LAYOUT_V14 = {
+  discovery: [-4.9, 2.65, 0.35],
+  bootstrap: [-1.75, 2.65, -0.15],
+  core: [1.75, 1.65, 0.20],
+
+  holders: [4.8, 0.70, 0.55],
+  market: [-0.10, 0.05, -0.15],
+  risk: [-4.55, 0.05, 0.20],
+
+  openai: [-4.35, -2.35, -0.65],
+  decision: [0.15, -2.15, 0.05],
+  paper: [3.75, -2.25, 0.15],
+
+  execution: [4.35, -4.45, -0.85]
+};
+
+const CONTROL_ROOM_SCALE_V14 = {
+  discovery: 0.78,
+  bootstrap: 0.78,
+  core: 0.94,
+
+  holders: 0.78,
+  market: 0.78,
+  risk: 0.78,
+
+  openai: 0.70,
+  decision: 0.80,
+  paper: 0.75,
+
+  execution: 0.66
+};
+
+function disposeObjectV14(object) {
+  if (!object) {
+    return;
+  }
+
+  if (object.parent) {
+    object.parent.remove(object);
+  }
+
+  object.geometry?.dispose?.();
+
+  if (Array.isArray(object.material)) {
+    for (const material of object.material) {
+      material?.dispose?.();
+    }
+  } else {
+    object.material?.dispose?.();
+  }
+}
+
+function installStageV14() {
+  if (!app.scene || CONTROL_ROOM_V14.stage) {
+    return;
+  }
+
+  const stage = new THREE.Group();
+  stage.name = 'ControlRoomStageV14';
+
+  const platform = new THREE.Mesh(
+    new THREE.PlaneGeometry(17.2, 11.6),
+    new THREE.MeshStandardMaterial({
+      color: 0x02080c,
+      metalness: 0.48,
+      roughness: 0.72,
+      transparent: true,
+      opacity: 0.52,
+      depthWrite: false
+    })
+  );
+
+  platform.rotation.x = -Math.PI / 2;
+  platform.position.y = -1.48;
+
+  stage.add(platform);
+
+  const centerGlow = new THREE.Mesh(
+    new THREE.CircleGeometry(4.7, 96),
+    new THREE.MeshBasicMaterial({
+      color: 0x1b6f73,
+      transparent: true,
+      opacity: 0.035,
+      depthWrite: false,
+      side: THREE.DoubleSide
+    })
+  );
+
+  centerGlow.rotation.x = -Math.PI / 2;
+  centerGlow.position.set(0.5, -1.43, 0.1);
+
+  stage.add(centerGlow);
+
+  const rings = [
+    { radius: 2.1, color: COLORS.green, opacity: 0.055 },
+    { radius: 3.4, color: COLORS.cyan, opacity: 0.035 },
+    { radius: 4.8, color: COLORS.blue, opacity: 0.020 }
+  ];
+
+  for (const entry of rings) {
+    const ring = new THREE.Mesh(
+      new THREE.RingGeometry(
+        entry.radius,
+        entry.radius + 0.018,
+        128
+      ),
+      new THREE.MeshBasicMaterial({
+        color: entry.color,
+        transparent: true,
+        opacity: entry.opacity,
+        side: THREE.DoubleSide,
+        depthWrite: false
+      })
+    );
+
+    ring.rotation.x = -Math.PI / 2;
+    ring.position.set(0.5, -1.40, 0.1);
+
+    stage.add(ring);
+  }
+
+  app.scene.add(stage);
+
+  CONTROL_ROOM_V14.stage = stage;
+}
+
+function applyNodeLayoutV14() {
+  for (const [id, position] of Object.entries(CONTROL_ROOM_LAYOUT_V14)) {
+    const node = app.nodes.get(id);
+
+    if (!node?.group) {
+      continue;
+    }
+
+    node.group.position.set(
+      position[0],
+      position[1],
+      position[2]
+    );
+
+    const scale =
+      CONTROL_ROOM_SCALE_V14[id] ?? 0.76;
+
+    node.group.scale.setScalar(scale);
+  }
+}
+
+function installNodePadsV14() {
+  for (const [id, node] of app.nodes) {
+    if (!node?.group || CONTROL_ROOM_V14.nodePads.has(id)) {
+      continue;
+    }
+
+    const width =
+      Number(node.cfg?.size?.[0]) || 3.1;
+
+    const depth =
+      Number(node.cfg?.size?.[2]) || 1.8;
+
+    const color =
+      Number(node.cfg?.color) || COLORS.cyan;
+
+    const group = new THREE.Group();
+    group.name = `NodePadV14_${id}`;
+
+    const glow = new THREE.Mesh(
+      new THREE.PlaneGeometry(
+        width * 1.28,
+        depth * 1.42
+      ),
+      new THREE.MeshBasicMaterial({
+        color,
+        transparent: true,
+        opacity: id === 'core' ? 0.085 : 0.030,
+        depthWrite: false,
+        side: THREE.DoubleSide
+      })
+    );
+
+    glow.rotation.x = -Math.PI / 2;
+    glow.position.y = -0.58;
+
+    group.add(glow);
+
+    const frameGeometry = new THREE.EdgesGeometry(
+      new THREE.BoxGeometry(
+        width * 1.14,
+        0.035,
+        depth * 1.22
+      )
+    );
+
+    const frame = new THREE.LineSegments(
+      frameGeometry,
+      new THREE.LineBasicMaterial({
+        color,
+        transparent: true,
+        opacity: id === 'core' ? 0.28 : 0.11
+      })
+    );
+
+    frame.position.y = -0.54;
+
+    group.add(frame);
+
+    node.group.add(group);
+
+    CONTROL_ROOM_V14.nodePads.set(id, {
+      group,
+      glow,
+      frame,
+      baseOpacity: id === 'core' ? 0.085 : 0.030
+    });
+  }
+}
+
+function installCoreVisualV14() {
+  const core = app.nodes.get('core');
+
+  if (!core?.group || core.group.userData.controlRoomCoreV14) {
+    return;
+  }
+
+  const outerRing = new THREE.Mesh(
+    new THREE.TorusGeometry(
+      1.75,
+      0.024,
+      10,
+      128
+    ),
+    new THREE.MeshBasicMaterial({
+      color: COLORS.green,
+      transparent: true,
+      opacity: 0.30
+    })
+  );
+
+  outerRing.rotation.x = Math.PI / 2;
+  outerRing.position.y = 0.83;
+
+  const innerRing = new THREE.Mesh(
+    new THREE.TorusGeometry(
+      1.28,
+      0.018,
+      10,
+      128
+    ),
+    new THREE.MeshBasicMaterial({
+      color: COLORS.cyan,
+      transparent: true,
+      opacity: 0.25
+    })
+  );
+
+  innerRing.rotation.x = Math.PI / 2;
+  innerRing.rotation.z = 0.34;
+  innerRing.position.y = 0.85;
+
+  const verticalLight = new THREE.PointLight(
+    COLORS.green,
+    1.15,
+    7,
+    2
+  );
+
+  verticalLight.position.set(0, 1.4, 0);
+
+  core.group.add(
+    outerRing,
+    innerRing,
+    verticalLight
+  );
+
+  core.group.userData.controlRoomCoreV14 = {
+    outerRing,
+    innerRing,
+    verticalLight
+  };
+}
+
+function installSelectionRingV14() {
+  if (CONTROL_ROOM_V14.selectionRing) {
+    return;
+  }
+
+  const ring = new THREE.Mesh(
+    new THREE.RingGeometry(
+      0.82,
+      0.86,
+      96
+    ),
+    new THREE.MeshBasicMaterial({
+      color: COLORS.cyan,
+      transparent: true,
+      opacity: 0,
+      side: THREE.DoubleSide,
+      depthWrite: false
+    })
+  );
+
+  ring.rotation.x = -Math.PI / 2;
+  ring.position.y = -0.52;
+
+  app.scene.add(ring);
+
+  CONTROL_ROOM_V14.selectionRing = ring;
+}
+
+function updateSelectionV14(time) {
+  const ring =
+    CONTROL_ROOM_V14.selectionRing;
+
+  if (!ring) {
+    return;
+  }
+
+  const selected =
+    app.selected;
+
+  if (selected?.kind === 'module') {
+    const node =
+      app.nodes.get(selected.id);
+
+    if (!node?.group) {
+      ring.material.opacity = 0;
+      return;
+    }
+
+    const position =
+      new THREE.Vector3();
+
+    node.group.getWorldPosition(position);
+
+    ring.position.set(
+      position.x,
+      -1.37,
+      position.z
+    );
+
+    const scale =
+      selected.id === 'core'
+        ? 2.15
+        : 1.60;
+
+    ring.scale.setScalar(
+      scale *
+      (
+        1 +
+        Math.sin(time * 3.2) * 0.035
+      )
+    );
+
+    ring.material.color.setHex(
+      selected.id === 'core'
+        ? COLORS.green
+        : COLORS.cyan
+    );
+
+    ring.material.opacity =
+      0.18 +
+      Math.sin(time * 3.2) * 0.04;
+
+    return;
+  }
+
+  ring.material.opacity = 0;
+}
+
+function removeRouteV14() {
+  disposeObjectV14(
+    CONTROL_ROOM_V14.routeLine
+  );
+
+  disposeObjectV14(
+    CONTROL_ROOM_V14.routeGlow
+  );
+
+  CONTROL_ROOM_V14.routeLine = null;
+  CONTROL_ROOM_V14.routeGlow = null;
+}
+
+function updateTokenRouteV14() {
+  const selected =
+    app.selected;
+
+  const selectedId =
+    selected?.kind === 'token'
+      ? selected.mint
+      : null;
+
+  if (
+    selectedId ===
+    CONTROL_ROOM_V14.selectedId
+  ) {
+    return;
+  }
+
+  CONTROL_ROOM_V14.selectedId =
+    selectedId;
+
+  removeRouteV14();
+
+  if (!selectedId) {
+    return;
+  }
+
+  const token =
+    app.tokenMeshes.get(selectedId);
+
+  if (!token?.curve) {
+    return;
+  }
+
+  const points =
+    token.curve.getPoints(120);
+
+  const color =
+    COLORS[
+      stateKey(
+        selected?.row?.decision?.state
+      )
+    ] || COLORS.cyan;
+
+  const glowGeometry =
+    new THREE.BufferGeometry()
+      .setFromPoints(points);
+
+  const lineGeometry =
+    new THREE.BufferGeometry()
+      .setFromPoints(points);
+
+  const glow = new THREE.Line(
+    glowGeometry,
+    new THREE.LineBasicMaterial({
+      color,
+      transparent: true,
+      opacity: 0.15
+    })
+  );
+
+  const line = new THREE.Line(
+    lineGeometry,
+    new THREE.LineBasicMaterial({
+      color,
+      transparent: true,
+      opacity: 0.88
+    })
+  );
+
+  app.scene.add(
+    glow,
+    line
+  );
+
+  CONTROL_ROOM_V14.routeGlow = glow;
+  CONTROL_ROOM_V14.routeLine = line;
+}
+
+function installPulseTrailsV14() {
+  for (const pulse of app.edgePulses || []) {
+    if (
+      !pulse ||
+      CONTROL_ROOM_V14.pulseTrailsInstalled.has(pulse)
+    ) {
+      continue;
+    }
+
+    CONTROL_ROOM_V14.pulseTrailsInstalled.add(pulse);
+
+    const color =
+      pulse.material?.color?.getHex?.() ||
+      COLORS.cyan;
+
+    const trail = new THREE.Mesh(
+      new THREE.CylinderGeometry(
+        0.025,
+        0.070,
+        0.72,
+        10,
+        1,
+        true
+      ),
+      new THREE.MeshBasicMaterial({
+        color,
+        transparent: true,
+        opacity: 0.42,
+        depthWrite: false
+      })
+    );
+
+    trail.rotation.x =
+      Math.PI / 2;
+
+    trail.position.z =
+      -0.34;
+
+    pulse.add(trail);
+
+    pulse.userData.trailV14 =
+      trail;
+  }
+}
+
+function updatePulseTrailsV14(time) {
+  installPulseTrailsV14();
+
+  for (const pulse of app.edgePulses || []) {
+    const curve =
+      pulse.userData?.curve;
+
+    const progress =
+      Number(
+        pulse.userData?.t
+      );
+
+    if (
+      !curve ||
+      !Number.isFinite(progress)
+    ) {
+      continue;
+    }
+
+    const current =
+      curve.getPointAt(
+        clamp(progress, 0, 1)
+      );
+
+    const next =
+      curve.getPointAt(
+        clamp(
+          progress + 0.008,
+          0,
+          1
+        )
+      );
+
+    pulse.position.copy(current);
+    pulse.lookAt(next);
+
+    const activity =
+      0.82 +
+      Math.sin(
+        time * 7 +
+        progress * 16
+      ) * 0.18;
+
+    pulse.scale.set(
+      0.60 * activity,
+      0.60 * activity,
+      1.0
+    );
+
+    if (pulse.material) {
+      pulse.material.opacity =
+        Math.max(
+          0.42,
+          Number(
+            pulse.material.opacity
+          ) || 0.42
+        );
+    }
+  }
+}
+
+function updateNodeActivityV14(time) {
+  for (const [id, node] of app.nodes) {
+    const pad =
+      CONTROL_ROOM_V14.nodePads.get(id);
+
+    if (!pad) {
+      continue;
+    }
+
+    const selected =
+      app.selected?.kind === 'module' &&
+      app.selected?.id === id;
+
+    const targetOpacity =
+      selected
+        ? pad.baseOpacity * 3.2
+        : pad.baseOpacity;
+
+    pad.glow.material.opacity +=
+      (
+        targetOpacity -
+        pad.glow.material.opacity
+      ) * 0.07;
+
+    if (node.topPlate?.material) {
+      const selectedBoost =
+        selected ? 0.40 : 0;
+
+      const coreBoost =
+        id === 'core'
+          ? 0.24
+          : 0;
+
+      const pulse =
+        Math.sin(
+          time * 2.1 +
+          node.group.position.x
+        ) * 0.08;
+
+      if (
+        'emissiveIntensity'
+        in node.topPlate.material
+      ) {
+        node.topPlate.material.emissiveIntensity =
+          0.48 +
+          selectedBoost +
+          coreBoost +
+          pulse;
+      }
+    }
+  }
+
+  const core =
+    app.nodes.get('core');
+
+  const visuals =
+    core?.group?.userData
+      ?.controlRoomCoreV14;
+
+  if (visuals) {
+    visuals.outerRing.rotation.z += 0.0020;
+    visuals.innerRing.rotation.z -= 0.0013;
+
+    visuals.outerRing.material.opacity =
+      0.24 +
+      Math.sin(time * 1.8) * 0.045;
+
+    visuals.verticalLight.intensity =
+      1.05 +
+      Math.sin(time * 2.0) * 0.14;
+  }
+}
+
+function applyCameraV14() {
+  if (
+    !app.camera ||
+    !app.controls
+  ) {
+    return;
+  }
+
+  const mobile =
+    window.matchMedia(
+      '(max-width: 900px)'
+    ).matches;
+
+  if (!mobile) {
+    return;
+  }
+
+  app.cameraHome.set(
+    0.3,
+    5.15,
+    19.2
+  );
+
+  app.targetHome.set(
+    0.15,
+    -0.25,
+    0
+  );
+
+  app.camera.position.copy(
+    app.cameraHome
+  );
+
+  app.controls.target.copy(
+    app.targetHome
+  );
+
+  app.controls.enablePan = false;
+  app.controls.enableZoom = true;
+
+  app.controls.minDistance = 10.5;
+  app.controls.maxDistance = 28;
+
+  app.controls.zoomSpeed = 1.10;
+  app.controls.rotateSpeed = 0.62;
+
+  app.controls.minAzimuthAngle = -0.42;
+  app.controls.maxAzimuthAngle = 0.42;
+
+  app.controls.minPolarAngle =
+    Math.PI * 0.27;
+
+  app.controls.maxPolarAngle =
+    Math.PI * 0.47;
+
+  app.controls.autoRotate = false;
+  app.autoRotate = false;
+
+  app.controls.update();
+}
+
+function controlRoomLoopV14() {
+  requestAnimationFrame(
+    controlRoomLoopV14
+  );
+
+  if (
+    !CONTROL_ROOM_V14.installed
+  ) {
+    return;
+  }
+
+  const time =
+    performance.now() * 0.001;
+
+  updateSelectionV14(time);
+  updateTokenRouteV14();
+  updatePulseTrailsV14(time);
+  updateNodeActivityV14(time);
+
+  if (CONTROL_ROOM_V14.routeLine) {
+    CONTROL_ROOM_V14.routeLine.material.opacity =
+      0.74 +
+      Math.sin(time * 4.2) * 0.14;
+  }
+}
+
+function installControlRoomV14() {
+  if (
+    CONTROL_ROOM_V14.installed ||
+    !app.scene ||
+    !app.nodes?.size
+  ) {
+    return;
+  }
+
+  CONTROL_ROOM_V14.installed = true;
+
+  installStageV14();
+  applyNodeLayoutV14();
+  installNodePadsV14();
+  installCoreVisualV14();
+  installSelectionRingV14();
+  applyCameraV14();
+
+  if (
+    typeof syncRealitySpeedsV8 ===
+    'function'
+  ) {
+    syncRealitySpeedsV8(true);
+  }
+
+  resize();
+
+  controlRoomLoopV14();
+}
+
+setTimeout(
+  installControlRoomV14,
+  850
+);
+
+window.addEventListener(
+  'resize',
+  () => {
+    setTimeout(
+      () => {
+        applyCameraV14();
+        resize();
+      },
+      180
+    );
+  }
+);
+
