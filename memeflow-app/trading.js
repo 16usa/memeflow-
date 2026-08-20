@@ -698,7 +698,9 @@ function replaceChartSnapshot(mint,incoming){
     points.push(point);
   }
 
-  state.rawByMint.set(mint,points.slice(-8000));
+  // V30.10: the selected token keeps its complete persistent history in the browser.
+  // Rendering still aggregates to candles, so All can start at token creation.
+  state.rawByMint.set(mint,points);
   chartRuntime.dataKey='';
   // Fit only on the first real snapshot. Reconnects must not jump the viewport.
   if(!previous.length)chartRuntime.forceFit=true;
@@ -727,10 +729,6 @@ function addPoint(mint,point,redraw=true) {
 
   if(late){
     points.sort((a,b)=>a.t-b.t);
-  }
-
-  if(points.length>8000){
-    points.splice(0,points.length-8000);
   }
 
   if(redraw){
@@ -818,9 +816,13 @@ function connectChartStream(mint) {
       const {payload,incoming}=parseIncoming(event);
       replaceChartSnapshot(mint,incoming);
       $('feedState').textContent=
-        payload?.status?.stale===false || incoming.length
-          ? 'LIVE'
-          : 'WAITING';
+        payload?.status?.backfillRunning===true
+          ? 'HISTORY SYNC'
+          : payload?.status?.fullHistoryReady===true
+            ? 'LIVE · FULL HISTORY'
+            : payload?.status?.stale===false || incoming.length
+              ? 'LIVE'
+              : 'WAITING';
       scheduleChart();
     }catch(error){
       console.warn('[MEMEFLOW CHART] snapshot',error);
@@ -895,10 +897,9 @@ function candlesFor(points, timeframe) {
 
   const horizon = chartHorizonMs(timeframe);
   if (horizon && clean.length > 1) {
-    const end = Math.max(
-      Number(clean[clean.length - 1].t),
-      Date.now()
-    );
+    // V30.10: window relative to the token's last real trade, not Date.now().
+    // Otherwise a quiet token's entire 1s/1m chart disappears after the horizon.
+    const end = Number(clean[clean.length - 1].t);
     const floor = end - horizon;
     clean = clean.filter(point => Number(point.t) >= floor);
   }
@@ -991,7 +992,7 @@ function candlesFor(points, timeframe) {
     }
   }
 
-  return candles.slice(-500);
+  return timeframe === 'all' ? candles : candles.slice(-500);
 }
 
 function latestCandleFor(points, timeframe) {

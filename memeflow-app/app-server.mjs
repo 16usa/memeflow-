@@ -10,6 +10,7 @@ import {candidateFeed,candidateVisibilityCounts} from './src/candidate-visibilit
 import { startPumpLiveTradeFeed } from './src/pump-live-trade-feed.mjs'; // MEMEFLOW_V12_21_LIVE_TRADE_STREAM_HOLDER_FEED
 import { DiscoverySourceController } from './src/discovery-source.mjs'; // MEMEFLOW_DISCOVERY_ROUTER_V1_1
 import { createDexVerificationGate } from './src/dex-verification-gate.mjs'; // MEMEFLOW_PUMP_DEX_GATE_V33
+import { ChartHistoryArchive } from './src/chart-history-archive.mjs'; // MEMEFLOW_TRADING_CHART_V30_10_FULL_HISTORY
 
 import { eventMarketLedger } from './src/event-market-ledger.mjs'; // MEMEFLOW_V12_18_EVENT_MARKET_LEDGER
 
@@ -56,6 +57,16 @@ const paper=new PaperEngine(store);
 const pepeGame=new GameEngine(store); // MF_PEPE_ROCKET_GAME_INSTANCE
 const billing=new StripeBilling({store,secretKey:process.env.STRIPE_SECRET_KEY,priceId:process.env.STRIPE_PRICE_ID,webhookSecret:process.env.STRIPE_WEBHOOK_SECRET,apiBase:process.env.STRIPE_API_BASE});
 const rpcUrls=(process.env.SOLANA_RPC_URLS||'').split(',').map(x=>x.trim()).filter(Boolean),wsUrls=(process.env.SOLANA_WS_URLS||'').split(',').map(x=>x.trim()).filter(Boolean);const rpc=new RpcPool(rpcUrls,process.env.SOLANA_COMMITMENT||'confirmed');
+const __mfChartHistoryRpcUrls=(process.env.CHART_HISTORY_RPC_URLS||process.env.SOLANA_RPC_URLS||'').split(',').map(x=>x.trim()).filter(Boolean);
+const __mfChartHistoryRpc=new RpcPool(__mfChartHistoryRpcUrls,process.env.SOLANA_COMMITMENT||'confirmed');
+__mfChartHistoryRpc.minIntervalMs=Math.max(250,Number(process.env.CHART_HISTORY_RPC_MIN_INTERVAL_MS||450));
+__mfChartHistoryRpc.methodMinIntervalMs.getTransaction=Math.max(250,Number(process.env.CHART_HISTORY_GET_TRANSACTION_MIN_INTERVAL_MS||350));
+const __mfChartArchive=new ChartHistoryArchive({
+  dataDir,
+  rpc:__mfChartHistoryRpc,
+  pageSize:Number(process.env.CHART_HISTORY_PAGE_SIZE||1000),
+  txConcurrency:Number(process.env.CHART_HISTORY_TX_CONCURRENCY||3)
+});
 const PUMP='6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P',ALLOW_ANON=process.env.ALLOW_ANONYMOUS_PAPER!=='false';
 const EXCLUDE_MAYHEM_MODE=process.env.EXCLUDE_MAYHEM_MODE!=='false';
 const OWNER_ACCESS_KEY=process.env.OWNER_ACCESS_KEY||'';
@@ -331,12 +342,48 @@ function __mfChartRecord(mint,price,at=Date.now(),source=null,id=null,meta={}){
   return true;
 }
 
-function __mfChartSnapshot(mint){
+const __mfChartBackfillJobs=new Map();
+
+function __mfBroadcastChartSnapshot(mint){
+  const listeners=streams.get(mint);
+  if(!listeners?.size)return;
+
+  const payload=
+    `event: snapshot\n`+
+    `data: ${JSON.stringify(__mfChartSnapshot(mint,{startBackfill:false}))}\n\n`;
+
+  for(const res of [...listeners]){
+    try{res.write(payload)}catch{}
+  }
+}
+
+function __mfStartChartBackfill(mint){
+  if(!mint || __mfChartBackfillJobs.has(mint))return;
+
+  const job=__mfChartArchive.ensureBackfill(mint,{
+    onProgress:()=>__mfBroadcastChartSnapshot(mint)
+  })
+    .then(()=>__mfBroadcastChartSnapshot(mint))
+    .catch(error=>{
+      console.warn('[MEMEFLOW CHART HISTORY]',mint,String(error?.message||error));
+      __mfBroadcastChartSnapshot(mint);
+    })
+    .finally(()=>{
+      if(__mfChartBackfillJobs.get(mint)===job){
+        __mfChartBackfillJobs.delete(mint);
+      }
+    });
+
+  __mfChartBackfillJobs.set(mint,job);
+}
+
+function __mfChartSnapshot(mint,{startBackfill=true}={}){
   const token=store.state?.tokens?.[mint]||null;
   const row=__mfChartHistory.get(mint);
 
-  // Seed with current price only when this server has not yet observed a
-  // real TradeEvent for the token since startup.
+  // Always keep one visible point while historical RPC sync starts.
+  // This seed is discarded by the normal real-trade path as soon as a
+  // canonical Pump TradeEvent arrives.
   if(
     (!row || !row.points?.length) &&
     token?.priceSol
@@ -349,20 +396,31 @@ function __mfChartSnapshot(mint){
     );
   }
 
-  const points=
-    (__mfChartHistory.get(mint)?.points||[])
-      .slice(-__MF_CHART_MAX_POINTS);
+  const hot=(__mfChartHistory.get(mint)?.points||[]);
+  const points=__mfChartArchive.mergePointsSync(mint,hot);
+  const archiveStatus=__mfChartArchive.statusSync(mint);
+
+  if(startBackfill){
+    queueMicrotask(()=>__mfStartChartBackfill(mint));
+  }
 
   const lastSource=points[points.length-1]?.source||'pump-curve-mark';
+
   return {
     points,
     status:{
       stale:points.length===0,
       source:lastSource,
       historyPoints:points.length,
+      historyStartAt:points[0]?.t||null,
+      historyEndAt:points[points.length-1]?.t||null,
+      backfillRunning:archiveStatus.running===true || __mfChartBackfillJobs.has(mint),
+      fullHistoryReady:archiveStatus.oldestComplete===true,
+      backfillError:archiveStatus.lastError||null,
       directTradeTicks:true,
       executionPriceTicks:false,
       canonicalCurveMark:true,
+      persistentHistory:true,
       currency:'SOL'
     }
   };
@@ -412,6 +470,24 @@ function __mfChartTradeTick(tick){
   );
 
   if(!added)return false;
+
+  // V30.10: accepted live TradeEvents are persisted independently from the
+  // bounded in-memory hot cache. This survives Replit/server restarts.
+  try{
+    __mfChartArchive.appendPoint(mint,{
+      id:tick?.id||null,
+      t:at,
+      priceSol:price,
+      price,
+      source,
+      isBuy:tick?.isBuy===true,
+      solAmount:Number(tick?.solAmount)||0,
+      tokenAmount:Number(tick?.tokenAmount)||0,
+      markPrice:Number.isFinite(Number(tick?.markPriceSol))
+        ? Number(tick.markPriceSol)
+        : price
+    });
+  }catch{}
 
   const listeners=streams.get(mint);
   if(!listeners?.size)return true;
