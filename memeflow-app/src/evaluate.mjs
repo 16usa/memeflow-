@@ -1,5 +1,5 @@
 // MEMEFLOW_V30_2_CORE_CLEANUP
-// MEMEFLOW_V30_2_CORE_CLEANUP
+// MEMEFLOW_UNIFIED_DECISION_V1_1
 const clampScore=v=>Math.max(0,Math.min(100,Math.round(Number(v)||0)));
 const finite=v=>v!==''&&v!==null&&v!==undefined&&Number.isFinite(Number(v));
 const firstFinite=(...xs)=>{for(const v of xs)if(finite(v))return Number(v);return null};
@@ -24,7 +24,19 @@ function independentAiScore(token={}){
 }
 
 function metadataKnown(t={}){
-  return Boolean(t.metadataReady===true||t.metadataFetched===true||t.metadataResolved===true||t.name||t.symbol||t.uri||t.metadataUri);
+  // A Pump CREATE name/symbol/URI does NOT mean off-chain metadata/socials
+  // have already been resolved. Treat social absence as authoritative only
+  // after metadata resolution (or when an enriched token has no metadata URI).
+  const hasSocial=Boolean(firstText(
+    t.twitter,t.twitterUrl,t.x,t.xUrl,
+    t.website,t.websiteUrl,t.telegram,t.telegramUrl,
+    t.socials?.twitter,t.socials?.x,t.socials?.website,t.socials?.telegram
+  ));
+  if(hasSocial)return true;
+  if(t.metadataReady===true||t.metadataFetched===true||t.metadataResolved===true)return true;
+  const hasUri=Boolean(firstText(t.uri,t.metadataUri,t.metadataUrl));
+  if(!hasUri&&(t.lastScannedAt||t.dexConfirmed===true))return true;
+  return false;
 }
 function socials(t={}){
   return {
@@ -51,11 +63,13 @@ function __mfEvaluateBaseV11(token,s={}){
   };
   const addMin=(name,value,limit,reason,zeroDisables=true)=>{
     if(!finite(limit))return;const x=Number(limit);if(zeroDisables&&x<=0)return;
-    addGate(name,value===null?null:value>=x,reason,{value,threshold:x,operator:'>='});
+    const pending=`${name.replace(/^(Minimum|Maximum)\s+/,'')} data pending`;
+    addGate(name,value===null?null:value>=x,value===null?pending:reason,{value,threshold:x,operator:'>='});
   };
   const addMax=(name,value,limit,reason)=>{
     if(!finite(limit))return;const x=Number(limit);
-    addGate(name,value===null?null:value<=x,reason,{value,threshold:x,operator:'<='});
+    const pending=`${name.replace(/^(Minimum|Maximum)\s+/,'')} data pending`;
+    addGate(name,value===null?null:value<=x,value===null?pending:reason,{value,threshold:x,operator:'<='});
   };
 
   const ai=independentAiScore(token),score=ai.score;
@@ -105,7 +119,7 @@ function __mfEvaluateBaseV11(token,s={}){
   addMin('Minimum total transactions',v.totalTx,s.minTotalTransactions,`total transactions below ${s.minTotalTransactions}`);
   addMax('Maximum total transactions',v.totalTx,s.maxTotalTransactions,`total transactions above ${s.maxTotalTransactions}`);
   addMin('Minimum holders',v.holders,s.minHolders,`holders below ${s.minHolders}`);
-  addMax('Maximum holders',v.holders,s.maxHolders,`holders above ${s.maxHolders}`);
+  addMax('Maximum holders',v.holders,s.maxHolders,`holders above maximum ${s.maxHolders}`);
   addMin('Minimum bundle',v.bundle,s.minBundlePct,`bundle below ${s.minBundlePct}%`);
   addMax('Maximum bundle',v.bundle,s.maxBundlePct,`bundle above ${s.maxBundlePct}%`);
   addMin('Minimum token age',v.age,s.minTokenAgeMinutes,`token age below ${s.minTokenAgeMinutes}m`);
@@ -120,11 +134,11 @@ function __mfEvaluateBaseV11(token,s={}){
   addMin('Buy pressure',v.pressure,s.minBuyPressure,`buy pressure below ${s.minBuyPressure}x`);
 
   const soc=socials(token),known=metadataKnown(token);
-  if(s.requireTwitter===true)addGate('Twitter / X required',known?Boolean(soc.twitter):null,'Twitter / X is required');
-  if(s.requireWebsite===true)addGate('Website required',known?Boolean(soc.website):null,'website is required');
-  if(s.requireTelegram===true)addGate('Telegram required',known?Boolean(soc.telegram):null,'Telegram is required');
-  if(s.requireAnySocial===true)addGate('Any social required',known?Boolean(soc.twitter||soc.website||soc.telegram):null,'at least one social link is required');
-  if(s.requireWebsiteOrX===true)addGate('Website or X required',known?Boolean(soc.website||soc.twitter):null,'website or X is required');
+  if(s.requireTwitter===true)addGate('Twitter / X required',known?Boolean(soc.twitter):null,'Twitter/X required');
+  if(s.requireWebsite===true)addGate('Website required',known?Boolean(soc.website):null,'Website required');
+  if(s.requireTelegram===true)addGate('Telegram required',known?Boolean(soc.telegram):null,'Telegram required');
+  if(s.requireAnySocial===true)addGate('Any social required',known?Boolean(soc.twitter||soc.website||soc.telegram):null,'At least one social link is required');
+  if(s.requireWebsiteOrX===true)addGate('Website or X required',known?Boolean(soc.website||soc.twitter):null,'Website or X required');
 
   const hay=[token.name,token.symbol,token.description,token.metadata?.name,token.metadata?.symbol,token.metadata?.description].filter(Boolean).join(' ').toLowerCase();
   const inc=list(s.includeKeywords);
@@ -135,25 +149,42 @@ function __mfEvaluateBaseV11(token,s={}){
   const bl=Array.isArray(s.developerBlacklistWallets)?s.developerBlacklistWallets.map(x=>String(x||'').trim()).filter(Boolean):[];
   if(bl.length){
     const creator=firstText(token.creator,token.creatorWallet,token.developerWallet,token.devWallet,token.developer);
-    addGate('Developer blacklist',creator?!bl.includes(creator):null,'developer wallet is blacklisted');
+    addGate('Developer blacklist',creator?!bl.includes(creator):null,'Developer wallet is blacklisted');
   }
 
   addGate('Verified price',v.price===null?null:v.price>0,'price unavailable',{value:v.price});
-  if(s.requireFreshHolderSnapshot===true)addGate('Fresh holder snapshot',token.holderFresh==null?null:token.holderFresh===true,'holder snapshot unavailable');
+  if(s.requireFreshHolderSnapshot===true){
+    // holderFresh=false is provisional while the holder scan is still running.
+    // Missing/freshness-pending evidence must WAIT; only known hard gates BLOCK.
+    addGate('Fresh holder snapshot',token.holderFresh===true?true:null,'fresh holder snapshot data pending');
+  }
 
   const minScore=finite(s.minScore)?Number(s.minScore):null;
   const minConfidence=finite(s.minConfidence)?Number(s.minConfidence):null;
   const scorePass=minScore===null||score>=minScore;
   const confPass=minConfidence===null||confidence>=minConfidence;
-  gates.push({name:'Minimum AI score',status:scorePass?'PASS':'FAIL',pass:scorePass,value:score,threshold:minScore});
-  if(!scorePass){blocked=true;reasons.push(`AI score ${score} below configured minimum ${minScore}`)}
-  gates.push({name:'Minimum data confidence',status:confPass?'PASS':'FAIL',pass:confPass,value:confidence,threshold:minConfidence});
-  if(!confPass){blocked=true;reasons.push(`data confidence ${confidence}% below configured minimum ${minConfidence}%`)}
+
+  // Critical lifecycle rule:
+  // incomplete enabled evidence is WAITING, never a synthetic low-score BLOCK.
+  // Known hard gate failures still win and remain BLOCKED.
+  if(waiting){
+    gates.push({name:'Minimum AI score',status:'WAITING',pass:false,value:score,threshold:minScore});
+    gates.push({name:'Minimum data confidence',status:'WAITING',pass:false,value:confidence,threshold:minConfidence});
+  }else{
+    gates.push({name:'Minimum AI score',status:scorePass?'PASS':'FAIL',pass:scorePass,value:score,threshold:minScore});
+    if(!scorePass){blocked=true;reasons.push(`AI score ${score} below configured minimum ${minScore}`)}
+    gates.push({name:'Minimum data confidence',status:confPass?'PASS':'FAIL',pass:confPass,value:confidence,threshold:minConfidence});
+    if(!confPass){blocked=true;reasons.push(`data confidence ${confidence}% below configured minimum ${minConfidence}%`)}
+  }
 
   const state=blocked?'BLOCKED':waiting?'WAITING':scorePass&&confPass?'BUY READY':'WATCH';
+  const primaryReason=blocked
+    ? (reasons.find(r=>!String(r).startsWith('Waiting: '))||reasons[0])
+    : reasons[0];
+
   return {
     state,score,confidence,dataConfidence:confidence,confidenceKind:'data-completeness',reasons,
-    primaryReason:reasons[0]||'Independent AI quality and all configured user gates passed',
+    primaryReason:primaryReason||'Independent AI quality and all configured user gates passed',
     aiQuality:{model:'MEMEFLOW_INDEPENDENT_AI_V1',score,components:ai.quality},
     settingsEvaluation:{minScore,minConfidence,gates}
   };

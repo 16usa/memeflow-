@@ -10,7 +10,7 @@ function parseOutputText(data){
 }
 function aiDefaults(){
   return {
-    enabled:true,analyze:true,assist:true,autoAi:true,learning:true,strategyCoach:true,autoOptimize:true,
+    enabled:true,analyze:true,assist:true,autoAi:true,learning:true,strategyCoach:true,autoOptimize:false,
     language:'auto',model:process.env.OPENAI_MODEL||'gpt-5-mini',minAiConfidence:65,maxAiPositionSol:0.20,
     allowedAutoTune:{
       minScore:{min:60,max:95},minConfidence:{min:50,max:95},minBuyPressure:{min:1.0,max:4.0},
@@ -39,12 +39,12 @@ function analysisSchema(){
 }
 
 export class OpenAIIntelligence {
-  constructor({store,executeTrade=null}){this.store=store;this.executeTrade=executeTrade;this.tokenCache=new Map()}
+  constructor({store,executeTrade=null,applySettingsProposal=null}){this.store=store;this.executeTrade=executeTrade;this.applySettingsProposal=applySettingsProposal;this.tokenCache=new Map()}
   configured(){return Boolean(process.env.OPENAI_API_KEY)}
   userState(uid){
     const u=this.store.user(uid);
     if(!u.ai||typeof u.ai!=='object')u.ai={};
-    u.ai.settings={...aiDefaults(),...(u.ai.settings||{})};
+    u.ai.settings={...aiDefaults(),...(u.ai.settings||{}),autoOptimize:false};
     u.ai.memory||=[];u.ai.analyses||=[];u.ai.outcomes||=[];u.ai.strategyProposals||=[];u.ai.audit||=[];
     return u.ai;
   }
@@ -112,9 +112,9 @@ export class OpenAIIntelligence {
     if(this.store.user(uid).killSwitch)reasons.push('KILL_SWITCH_ACTIVE');
     if(analysis.confidence<this.userState(uid).settings.minAiConfidence)reasons.push('AI_CONFIDENCE_TOO_LOW');
     if(t.holderFresh!==true&&s.requireFreshHolderSnapshot)reasons.push('HOLDERS_NOT_FRESH');
-    if(t.top10Pct!=null&&t.top10Pct>s.maxTop10Pct)reasons.push('TOP10_LIMIT');
-    if(t.developerPct!=null&&t.developerPct>s.maxDeveloperPct)reasons.push('DEVELOPER_LIMIT');
-    if(t.buyPressure!=null&&t.buyPressure<s.minBuyPressure)reasons.push('BUY_PRESSURE_LIMIT');
+    if(s.maxTop10Pct!=null&&Number.isFinite(Number(s.maxTop10Pct))&&t.top10Pct!=null&&Number(t.top10Pct)>Number(s.maxTop10Pct))reasons.push('TOP10_LIMIT');
+    if(s.maxDeveloperPct!=null&&Number.isFinite(Number(s.maxDeveloperPct))&&t.developerPct!=null&&Number(t.developerPct)>Number(s.maxDeveloperPct))reasons.push('DEVELOPER_LIMIT');
+    if(s.minBuyPressure!=null&&Number.isFinite(Number(s.minBuyPressure))&&t.buyPressure!=null&&Number(t.buyPressure)<Number(s.minBuyPressure))reasons.push('BUY_PRESSURE_LIMIT');
     const d=(this.store.decisions(uid)||[]).find(x=>x.mint===mint);if(!d||d.state!=='BUY READY')reasons.push('RULE_ENGINE_NOT_BUY_READY');
     const maxSol=Math.min(Number(s.maxPositionSize)||0,Number(this.userState(uid).settings.maxAiPositionSol)||0);
     const requested=Math.min(Number(analysis.suggestedPositionSol)||0,maxSol);if(!(requested>0))reasons.push('POSITION_SIZE_ZERO');
@@ -148,13 +148,26 @@ export class OpenAIIntelligence {
     const record={at:now(),...out};ai.strategyProposals.unshift(record);ai.strategyProposals=ai.strategyProposals.slice(0,100);this.save();return {enabled:true,...record};
   }
   async applyProposal(uid,proposal){
-    const ai=this.userState(uid),cfg=ai.settings;if(!cfg.autoOptimize)return {applied:false,reason:'AUTO_OPTIMIZE_DISABLED'};
-    const allowed=cfg.allowedAutoTune?.[proposal.setting];if(!allowed)return {applied:false,reason:'SETTING_NOT_ALLOWED'};
-    if((cfg.lockedSettings||[]).includes(proposal.setting))return {applied:false,reason:'SETTING_LOCKED'};
-    if(Number(proposal.confidence)<80)return {applied:false,reason:'CONFIDENCE_BELOW_80'};
-    const current=this.store.settings(uid),n=Number(proposal.proposed);if(!Number.isFinite(n))return {applied:false,reason:'NON_NUMERIC_PROPOSAL'};
-    const next={...current,[proposal.setting]:clamp(n,Number(allowed.min),Number(allowed.max))};this.store.setSettings(uid,next);
-    this.audit(uid,'auto_optimize',{setting:proposal.setting,from:current[proposal.setting],to:next[proposal.setting]});return {applied:true,setting:proposal.setting,value:next[proposal.setting]};
+    const ai=this.userState(uid),cfg=ai.settings;
+    const setting=String(proposal?.setting||'').trim();
+    const allowed=cfg.allowedAutoTune?.[setting];if(!allowed)return {applied:false,reason:'SETTING_NOT_ALLOWED'};
+    if((cfg.lockedSettings||[]).includes(setting))return {applied:false,reason:'SETTING_LOCKED'};
+    if(Number(proposal?.confidence)<80)return {applied:false,reason:'CONFIDENCE_BELOW_80'};
+    const n=Number(proposal?.proposed);if(!Number.isFinite(n))return {applied:false,reason:'NON_NUMERIC_PROPOSAL'};
+    if(typeof this.applySettingsProposal!=='function')return {applied:false,reason:'OWNER_APPROVAL_PATH_NOT_CONNECTED'};
+    const normalized={
+      ...proposal,
+      setting,
+      proposed:clamp(n,Number(allowed.min),Number(allowed.max)),
+      confidence:clamp(proposal.confidence,0,100)
+    };
+    const result=await this.applySettingsProposal({uid,proposal:normalized,aiSettings:cfg});
+    this.audit(uid,result?.applied?'owner_approved_strategy_apply':'strategy_apply_rejected',{
+      setting,
+      proposed:normalized.proposed,
+      reason:result?.reason||null
+    });
+    return result;
   }
   async chat(uid,message,mint=null){
     const ai=this.userState(uid),cfg=ai.settings;if(!cfg.enabled||!cfg.assist)throw Object.assign(new Error('AI Assist disabled for this user'),{code:'AI_DISABLED'});
@@ -172,7 +185,7 @@ export class OpenAIIntelligence {
     try{
       if(url.pathname==='/api/openai/status'&&req.method==='GET'){const ai=this.userState(uid);return {status:200,body:{configured:this.configured(),userIdBound:true,isolation:'per-user',settings:ai.settings,memoryCount:ai.memory.length,analysisCount:ai.analyses.length,outcomeCount:ai.outcomes.length,executionAdapterConnected:typeof this.executeTrade==='function',liveExecutionReady:false}}}
       if(url.pathname==='/api/openai/settings'&&req.method==='GET')return {status:200,body:{settings:this.userState(uid).settings}};
-      if(url.pathname==='/api/openai/settings'&&req.method==='PUT'){const b=await readBody(req),ai=this.userState(uid),next={...ai.settings,...(b.settings||{}),updatedAt:now()};delete next.userId;ai.settings=next;this.save();return {status:200,body:{settings:ai.settings}}}
+      if(url.pathname==='/api/openai/settings'&&req.method==='PUT'){const b=await readBody(req),ai=this.userState(uid),next={...ai.settings,...(b.settings||{}),autoOptimize:false,updatedAt:now()};delete next.userId;ai.settings=next;this.save();return {status:200,body:{settings:ai.settings}}}
       if(url.pathname==='/api/openai/analyze'&&req.method==='POST'){const b=await readBody(req);return {status:200,body:{analysis:await this.analyze(uid,safeText(b.mint,80),{force:Boolean(b.force),extra:b.extra||''})}}}
       if(url.pathname==='/api/openai/auto'&&req.method==='POST'){const b=await readBody(req);return {status:200,body:await this.auto(uid,safeText(b.mint,80))}}
       if(url.pathname==='/api/openai/chat'&&req.method==='POST'){const b=await readBody(req);return {status:200,body:await this.chat(uid,b.message,b.mint||null)}}

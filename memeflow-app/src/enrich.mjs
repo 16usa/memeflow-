@@ -45,9 +45,24 @@ function firstMetadataImage(metadata) {
   return null;
 }
 
+function firstMetadataText(metadata, keys=[]) {
+  if (!metadata || typeof metadata !== 'object') return null;
+  const roots=[metadata,metadata.extensions,metadata.links,metadata.socials].filter(Boolean);
+  for (const root of roots) {
+    for (const key of keys) {
+      const value=root?.[key];
+      if (typeof value === 'string' && value.trim()) return value.trim().slice(0,500);
+    }
+  }
+  return null;
+}
+
 async function fetchTokenMetadata(uri) {
   const metadataUrl = normalizeMetadataUrl(uri);
-  if (!metadataUrl) return {metadataUrl:null, imageUrl:null};
+  if (!metadataUrl) return {
+    metadataUrl:null,imageUrl:null,metadataResolved:true,
+    twitter:null,website:null,telegram:null
+  };
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 4500);
@@ -67,9 +82,13 @@ async function fetchTokenMetadata(uri) {
     const metadata = await response.json();
     return {
       metadataUrl,
+      metadataResolved:true,
       imageUrl:firstMetadataImage(metadata),
       metadataName:typeof metadata?.name === 'string' ? metadata.name.slice(0,160) : null,
-      metadataSymbol:typeof metadata?.symbol === 'string' ? metadata.symbol.slice(0,40) : null
+      metadataSymbol:typeof metadata?.symbol === 'string' ? metadata.symbol.slice(0,40) : null,
+      twitter:firstMetadataText(metadata,['twitter','x','twitter_url','x_url']),
+      website:firstMetadataText(metadata,['website','site','url','homepage']),
+      telegram:firstMetadataText(metadata,['telegram','tg','telegram_url'])
     };
   } finally {
     clearTimeout(timeout);
@@ -212,27 +231,40 @@ export async function enrichToken(mint, curve, deps) {
     const existingToken = store.state.tokens[mint] || {};
     const dexMarketLocked = existingToken.dexConfirmed === true;
     let metadataPatch = {};
+    const metadataAttemptAt=Number(existingToken.metadataFetchedAt||0);
+    const metadataRetryMs=60_000;
+    const metadataRetryReady=
+      !metadataAttemptAt ||
+      !existingToken.metadataError ||
+      Date.now()-metadataAttemptAt>=metadataRetryMs;
     const shouldFetchMetadata =
-      existingToken.uri &&
-      !existingToken.imageUrl &&
-      (!existingToken.metadataFetchedAt ||
-        Date.now() - Number(existingToken.metadataFetchedAt) > 6 * 60 * 60 * 1000);
+      Boolean(existingToken.uri) &&
+      existingToken.metadataResolved!==true &&
+      metadataRetryReady;
 
     if (shouldFetchMetadata) {
       try {
         const metadata = await fetchTokenMetadata(existingToken.uri);
+        const socialPatch={};
+        if(metadata.twitter){socialPatch.twitter=metadata.twitter;socialPatch.twitterUrl=metadata.twitter}
+        if(metadata.website){socialPatch.website=metadata.website;socialPatch.websiteUrl=metadata.website}
+        if(metadata.telegram){socialPatch.telegram=metadata.telegram;socialPatch.telegramUrl=metadata.telegram}
         metadataPatch = {
           metadataFetchedAt:Date.now(),
+          metadataResolved:metadata.metadataResolved===true,
+          metadataError:null,
           metadataUrl:metadata.metadataUrl,
           imageUrl:metadata.imageUrl,
           image:metadata.imageUrl,
           logoUrl:metadata.imageUrl,
           metadataName:metadata.metadataName,
-          metadataSymbol:metadata.metadataSymbol
+          metadataSymbol:metadata.metadataSymbol,
+          ...socialPatch
         };
       } catch (error) {
         metadataPatch = {
           metadataFetchedAt:Date.now(),
+          metadataResolved:false,
           metadataError:sanitize(error?.message || String(error))
         };
       }

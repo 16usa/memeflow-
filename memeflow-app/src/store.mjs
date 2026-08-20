@@ -22,6 +22,11 @@ export class JsonStore {
     this._dirty=false;
     this._lastPruneAt=0;
     this._tokenCount=0;
+    this._lastTouchPersistAt={};
+    this.userActivitySaveIntervalMs=Math.max(
+      5000,
+      envNum('STORE_USER_ACTIVITY_SAVE_INTERVAL_MS',30000,5000)
+    );
     this.maxTokens=Math.max(250,Math.floor(envNum('STORE_MAX_TOKENS',2000,250)));
     this.persistMaxTokens=Math.max(100,Math.min(this.maxTokens,Math.floor(envNum('STORE_PERSIST_MAX_TOKENS',750,100))));
     this.tokenMaxAgeMs=Math.max(30*60_000,envNum('STORE_TOKEN_MAX_AGE_MS',6*60*60_000,30*60_000));
@@ -177,7 +182,16 @@ export class JsonStore {
   revokeOwner(id){Object.assign(this.user(id),{isOwner:false,ownerGrantedAt:null,ownerGrantSource:null});this.save();return this.user(id)}
   hasStripeEvent(id){return Boolean(this.state.stripeEvents?.[id])}
   recordStripeEvent(id,type){this.state.stripeEvents||={};this.state.stripeEvents[id]={type,processedAt:new Date().toISOString()};const ids=Object.keys(this.state.stripeEvents);for(const old of ids.slice(0,Math.max(0,ids.length-5000)))delete this.state.stripeEvents[old];this.save()}
-  touchUser(id){this.user(id).lastActiveAt=Date.now();this.save();return this.user(id)}
+  touchUser(id){
+    const u=this.user(id),now=Date.now();
+    u.lastActiveAt=now;
+    const last=Number(this._lastTouchPersistAt[id]||0);
+    if(!last||now-last>=this.userActivitySaveIntervalMs){
+      this._lastTouchPersistAt[id]=now;
+      this.save();
+    }
+    return u
+  }
   setSettings(id,s){const u=this.user(id);u.settings=normalizeSettings({...this.settings(id),...s});u.settingsVersion=Date.now();this.save();return u.settings}
   recordSettingsChange(id,before,after,meta={}){this.state.settingsAudit||={};this.state.settingsAudit[id]||=[];this.state.settingsAudit[id].push({at:Date.now(),actor:meta.actor||id,source:meta.source||'user',before,after});this.state.settingsAudit[id]=this.state.settingsAudit[id].slice(-500);this.save();return this.state.settingsAudit[id].at?.(-1)||null}
   settingsHistory(id,limit=100){return (this.state.settingsAudit?.[id]||[]).slice(-Math.max(1,Math.min(500,Number(limit)||100))).reverse()}
@@ -308,12 +322,30 @@ export class JsonStore {
   // O(250) per call — uses per-user Map index instead of full O(N) scan
   setDecision(uid,mint,d){
     const key=uid+':'+mint,now=Date.now();
-    this.state.decisions[key]={...d,userId:uid,mint,updatedAt:now};
+    const settingsVersion=this.state.users?.[uid]?.settingsVersion||1;
+    this.state.decisions[key]={
+      ...d,
+      userId:uid,
+      mint,
+      settingsVersion:d?.settingsVersion??settingsVersion,
+      updatedAt:now
+    };
     if(!this._uidDec[uid])this._uidDec[uid]=new Map();
     const m=this._uidDec[uid];
     m.set(key,now);
     if(m.size>250){let ok=null,ot=Infinity;for(const[k,t]of m)if(t<ot){ot=t;ok=k};if(ok){m.delete(ok);delete this.state.decisions[ok]}}
     // Decisions are intentionally in-memory only; do not schedule a disk write.
+  }
+  deleteDecision(uid,mint){
+    const key=uid+':'+mint;
+    const existed=Boolean(this.state.decisions?.[key]);
+    if(this.state.decisions)delete this.state.decisions[key];
+    const m=this._uidDec?.[uid];
+    if(m){
+      m.delete(key);
+      if(!m.size)delete this._uidDec[uid];
+    }
+    return existed;
   }
   decisions(uid){
     const m=this._uidDec[uid];

@@ -72,8 +72,51 @@ const PUMP='6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P',ALLOW_ANON=process.env.
 const EXCLUDE_MAYHEM_MODE=true; // MEMEFLOW: Mayhem permanently excluded
 const OWNER_ACCESS_KEY=process.env.OWNER_ACCESS_KEY||'';
 const OWNER_USER_IDS=new Set((process.env.OWNER_USER_IDS||'').split(',').map(x=>x.trim()).filter(Boolean));
+async function applyOwnerApprovedAIProposal({uid,proposal}={}){
+  const setting=String(proposal?.setting||'').trim();
+  const proposed=Number(proposal?.proposed);
+  if(!uid||!setting||!Number.isFinite(proposed)){
+    return {applied:false,reason:'INVALID_PROPOSAL'};
+  }
+
+  const before=JSON.parse(JSON.stringify(store.settings(uid)));
+  if(before.aiChangePolicy!=='propose'){
+    return {applied:false,reason:'AI_POLICY_NOT_PROPOSE'};
+  }
+
+  const checked=validateSettings({...before,[setting]:proposed});
+  if(!checked.ok){
+    return {applied:false,reason:'INVALID_SETTINGS',errors:checked.errors};
+  }
+
+  const shadow=checked.settings.shadowValidation
+    ? shadowValidateSettings(checked.settings,50)
+    : null;
+  if(shadow?.errors?.length){
+    return {applied:false,reason:'SHADOW_VALIDATION_FAILED',shadowValidation:shadow};
+  }
+
+  const saved=store.setSettings(uid,checked.settings);
+  if(saved.changeLog!==false){
+    store.recordSettingsChange(uid,before,saved,{
+      actor:uid,
+      source:'openai_owner_approved'
+    });
+  }
+  const decisionsReevaluated=reevaluateUser(uid);
+  return {
+    applied:true,
+    setting,
+    value:saved[setting],
+    settingsVersion:store.user(uid)?.settingsVersion||1,
+    decisionsReevaluated,
+    shadowValidation:shadow
+  };
+}
+
 const openaiAI=new OpenAIIntelligence({
   store,
+  applySettingsProposal:applyOwnerApprovedAIProposal,
   executeTrade:async({uid,mint,side,amountSol})=>({
     executed:false,
     error:'LIVE_EXECUTION_NOT_READY',
@@ -2362,7 +2405,7 @@ async function handler(req,res){const url=new URL(req.url,'http://x');
  const u=user(req,res);if(u){store.touchUser(u.id);if(OWNER_USER_IDS.has(u.id)&&!u.isOwner)store.grantOwner(u.id,'owner_user_ids');}
 
  /* MEMEFLOW_NATIVE_AI_V46_ROUTES_BEGIN */
- if(url.pathname==='/api/openai/status'&&req.method==='GET')return json(res,200,{ok:true,configured:Boolean(process.env.OPENAI_API_KEY),model:OPENAI_MODEL,mode:'read-only'});
+ if(url.pathname==='/api/openai/status'&&req.method==='GET')return json(res,200,{ok:true,configured:Boolean(process.env.OPENAI_API_KEY),model:OPENAI_MODEL,mode:'proposal-only',autoOptimize:false,settingsPolicy:'owner-approved'});
  if(url.pathname==='/api/openai/analyze'&&req.method==='POST'){
    if(!u)return json(res,401,{error:'AUTH_REQUIRED'});
    try{
@@ -2585,8 +2628,9 @@ if(false && url.pathname==='/api/ai/assistant' &&req.method==='POST'){
   const _scope=String(url.searchParams.get('scope')||'candidates').toLowerCase();
   if(!store._uidDec[u.id]?.size)await lazyRecoverUser({store,uid:u.id,metrics:recoveryMetrics,tokenLimit:DECISION_RECOVERY_TOKEN_LIMIT});
   const _all=store.decisions(u.id);
-  const _selected=candidateFeed(_all,_scope);
-  const _counts=candidateVisibilityCounts(_all);
+  const _tokenLookup=(mint)=>store.state.tokens?.[mint]||null;
+  const _selected=candidateFeed(_all,_scope,_tokenLookup);
+  const _counts=candidateVisibilityCounts(_all,_tokenLookup);
   return json(res,200,{
     decisions:_selected.slice(_off,_off+_lim).map(candidateView),
     total:_selected.length,
@@ -2616,8 +2660,7 @@ if(false && url.pathname==='/api/ai/assistant' &&req.method==='POST'){
     const token=store.state.tokens[mint]||null;
     const now=Date.now();
     const decision=
-      store?._uidDec?.[u.id]?.get?.(mint) ??
-      store?.state?.decisions?.[u.id]?.[mint] ??
+      store?.state?.decisions?.[u.id+':'+mint] ??
       null;
     const holder=holderQueue.inspect?.(mint)||null;
       const queuedAt=Number(holder?.queuedAt||0);

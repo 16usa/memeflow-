@@ -53,6 +53,7 @@ export class PaperEngine {
       dailySpendLimit: Math.max(0, num(settings.dailySpendLimit, 0)),
       tradingCapital: Math.max(0, num(settings.tradingCapital, 0)),
       dailyLossLimit: Math.max(0, num(settings.dailyLossLimit, 0)),
+      feeReserve: Math.max(0, num(settings.feeReserve, 0)),
       hardStopPct: Math.max(0, num(settings.hardStopPct ?? settings.stopLoss, 25)),
       trailingStopPct: Math.max(0, num(settings.trailingStopPct ?? settings.trailingStop, 15)),
       tp1Pct: Math.max(0, num(settings.tp1Pct ?? settings.tp1, 100)),
@@ -125,6 +126,10 @@ export class PaperEngine {
       (sum, position) => sum + num(position.remainingSizeSol),
       0
     );
+    const tradableCapital =
+      s.tradingCapital > 0
+        ? Math.max(0, Math.round((s.tradingCapital - s.feeReserve) * 1e9) / 1e9)
+        : 0;
 
     const priceReady = Number.isFinite(price) && price > 0;
 
@@ -150,7 +155,7 @@ export class PaperEngine {
 
     const capitalAvailable =
       s.tradingCapital <= 0 ||
-      deployed + s.positionSize <= s.tradingCapital;
+      deployed + s.positionSize <= tradableCapital + 1e-12;
 
     const user = this.store.state.users?.[userId];
     const lossLimitClear =
@@ -230,6 +235,8 @@ export class PaperEngine {
         dailySpendLimit: s.dailySpendLimit,
         deployed,
         tradingCapital: s.tradingCapital,
+        feeReserve: s.feeReserve,
+        tradableCapital: s.tradingCapital > 0 ? tradableCapital : null,
         dailyRealizedPnl,
         dailyLossLimit: s.dailyLossLimit,
         positionSize: s.positionSize,

@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 
 const HERE=path.dirname(fileURLToPath(import.meta.url));
 const APP=path.resolve(HERE,'..');
-const DATA=path.join(APP,'data');
+const DATA=path.resolve(APP,process.env.DATA_DIR||'data');
 const LOCK=path.join(DATA,'.app-server-single-instance.lock');
 
 fs.mkdirSync(DATA,{recursive:true});
