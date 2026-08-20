@@ -409,6 +409,27 @@ button { cursor: pointer; }
 }
 
 .price-block { text-align: right; }
+.price-toggle {
+  min-width: 170px;
+  padding: 6px 0 6px 8px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  appearance: none;
+  -webkit-appearance: none;
+  touch-action: manipulation;
+}
+.price-toggle:active {
+  background: rgba(85, 217, 255, .035);
+}
+.price-toggle:focus-visible {
+  outline: 1px solid rgba(85, 217, 255, .34);
+  outline-offset: 2px;
+}
+.price-toggle[data-metric="marketCap"] .token-price {
+  letter-spacing: -.015em;
+}
 .token-price { font-size: 15px; font-weight: 760; font-variant-numeric: tabular-nums; }
 .token-market { margin-top: 4px; color: #647d88; font-size: 7px; }
 
@@ -935,3 +956,5 @@ button { cursor: pointer; }
 .chart-credit:hover {
   color: rgba(181, 237, 250, .72);
 }
+
+/* MEMEFLOW_TRADING_CHART_V30_8_PRICE_MC_GAP_SAFE */

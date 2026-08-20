@@ -20,6 +20,15 @@ const state = {
   solUsd: null,
   solUsdUpdatedAt: null,
   timeframe: 1000,
+  chartMetric: (() => {
+    try {
+      return localStorage.getItem('memeflow:chart-metric') === 'marketCap'
+        ? 'marketCap'
+        : 'price';
+    } catch {
+      return 'price';
+    }
+  })(),
   rawByMint: new Map(),
   chartSource: null,
   positions: [],
@@ -114,6 +123,112 @@ function usdFromSol(value, candidate = state.selected) {
   const sol = num(value);
   const rate = solUsdRate(candidate);
   return sol !== null && rate > 0 ? sol * rate : null;
+}
+
+function tokenSupply(candidate = state.selected) {
+  const direct = num(
+    candidate?.totalSupply ??
+    candidate?.supply ??
+    candidate?.tokenSupply
+  );
+  if (direct > 0) return direct;
+
+  const priceSol = candidatePrice(candidate);
+  const mcSol = num(candidate?.marketCapSol ?? candidate?.marketCap);
+  if (priceSol > 0 && mcSol > 0) return mcSol / priceSol;
+
+  const priceUsd = usdFromSol(priceSol, candidate);
+  const mcUsd = num(candidate?.marketCapUsd ?? candidate?.marketCapUSD);
+  if (priceUsd > 0 && mcUsd > 0) return mcUsd / priceUsd;
+
+  return null;
+}
+
+function marketCapUsdForPrice(priceUsd, candidate = state.selected) {
+  const px = num(priceUsd);
+  if (!(px > 0)) return null;
+
+  const supply = tokenSupply(candidate);
+  if (supply > 0) return px * supply;
+
+  const storedUsd = num(candidate?.marketCapUsd ?? candidate?.marketCapUSD);
+  if (storedUsd > 0) return storedUsd;
+
+  const storedSol = num(candidate?.marketCapSol ?? candidate?.marketCap);
+  const converted = usdFromSol(storedSol, candidate);
+  return converted > 0 ? converted : null;
+}
+
+function chartValueFromUsdPrice(priceUsd, candidate = state.selected) {
+  const px = num(priceUsd);
+  if (!(px > 0)) return null;
+  if (state.chartMetric !== 'marketCap') return px;
+  return marketCapUsdForPrice(px, candidate);
+}
+
+function formatMarketCap(value) {
+  if (!finite(value)) return '$—';
+  const n = Number(value);
+  if (!(n >= 0)) return '$—';
+
+  const abs = Math.abs(n);
+  if (abs >= 1e9) return `$${fmt(n / 1e9, 2)}B`;
+  if (abs >= 1e6) return `$${fmt(n / 1e6, 2)}M`;
+  if (abs >= 1e3) return `$${fmt(n / 1e3, abs < 10000 ? 2 : 1)}K`;
+  return `$${fmt(n, 2)}`;
+}
+
+function formatChartValue(value) {
+  return state.chartMetric === 'marketCap'
+    ? formatMarketCap(value)
+    : formatPrice(value);
+}
+
+function renderPriceModeSummary(livePriceUsd = null) {
+  const c = state.selected;
+  if (!c) return;
+
+  const priceUsd = num(livePriceUsd) > 0
+    ? Number(livePriceUsd)
+    : usdFromSol(candidatePrice(c), c);
+
+  const mcUsd = marketCapUsdForPrice(priceUsd, c);
+  const bp = fmt(c.buyPressure, 2);
+
+  if (state.chartMetric === 'marketCap') {
+    $('tokenPrice').textContent = mcUsd > 0 ? formatMarketCap(mcUsd) : '$—';
+    $('tokenMarket').textContent =
+      `MARKET CAP · PRICE ${priceUsd > 0 ? formatPrice(priceUsd) : '$—'} · BP ${bp}×`;
+  } else {
+    $('tokenPrice').textContent = priceUsd > 0 ? formatPrice(priceUsd) : '$—';
+    $('tokenMarket').textContent =
+      `PRICE · MC ${mcUsd > 0 ? formatMarketCap(mcUsd) : '—'} · BP ${bp}×`;
+  }
+
+  const button = $('priceModeBtn');
+  if (button) {
+    button.dataset.metric = state.chartMetric;
+    button.setAttribute(
+      'aria-label',
+      state.chartMetric === 'marketCap'
+        ? 'Market cap shown. Tap to show token price.'
+        : 'Token price shown. Tap to show market cap.'
+    );
+    button.title =
+      state.chartMetric === 'marketCap'
+        ? 'Tap: show token price'
+        : 'Tap: show market cap';
+  }
+}
+
+function chartHorizonMs(timeframe) {
+  if (timeframe === 'all') return null;
+  const tf = Math.max(1000, Number(timeframe) || 1000);
+  if (tf <= 1000) return 90 * 1000;
+  if (tf <= 60_000) return 90 * 60_000;
+  if (tf <= 300_000) return 12 * 60 * 60_000;
+  if (tf <= 900_000) return 36 * 60 * 60_000;
+  return 7 * 24 * 60 * 60_000;
 }
 
 async function loadSolUsd() {
@@ -483,20 +598,13 @@ function renderSelected() {
 
   const price = candidatePrice(c);
   const priceUsd = usdFromSol(price, c);
-  const marketCapUsd =
-    num(c.marketCapUsd) ??
-    usdFromSol(c.marketCapSol ?? c.marketCap, c);
-
-  $('tokenPrice').textContent =
-    priceUsd > 0 ? formatPrice(priceUsd) : '$—';
-
-  $('tokenMarket').textContent =
-    `MC ${marketCapUsd > 0 ? '$' + fmt(marketCapUsd, 0) : '—'} · BP ${fmt(c.buyPressure, 2)}×`;
+  renderPriceModeSummary(priceUsd);
 
   $('metricScore').textContent = fmt(c.score, 0);
   $('metricHolders').textContent = fmt(c.holderCount ?? c.holders, 0);
   $('metricTop10').textContent = finite(c.top10Pct ?? c.top10) ? `${fmt(c.top10Pct ?? c.top10, 1)}%` : '—';
   $('metricDev').textContent = finite(c.developerPct ?? c.developer) ? `${fmt(c.developerPct ?? c.developer, 1)}%` : '—';
+
   const liquidityUsd =
     num(c.liquidityUsd) ??
     usdFromSol(c.liquiditySol ?? c.liquidity, c);
@@ -722,123 +830,160 @@ function chartInterval(points,timeframe){
 }
 
 function candlesFor(points, timeframe) {
-  const clean=(Array.isArray(points)?points:[])
+  let clean = (Array.isArray(points) ? points : [])
     .filter(
-      point=>
+      point =>
         finite(point?.t) &&
         finite(point?.priceSol ?? point?.price) &&
-        Number(point?.priceSol ?? point?.price)>0
+        Number(point?.priceSol ?? point?.price) > 0
     );
 
-  if(!clean.length)return [];
+  if (!clean.length) return [];
 
-  const rate=solUsdRate();
-  if(!(rate>0))return [];
+  const rate = solUsdRate();
+  if (!(rate > 0)) return [];
 
-  const interval=chartInterval(clean,timeframe);
-  const candles=[];
-  let candle=null;
-  let previousClose=null;
+  const horizon = chartHorizonMs(timeframe);
+  if (horizon && clean.length > 1) {
+    const end = Number(clean[clean.length - 1].t);
+    const floor = end - horizon;
+    clean = clean.filter(point => Number(point.t) >= floor);
+  }
 
-  for(const point of clean){
-    const priceSol=Number(point?.priceSol ?? point?.price);
-    const price=priceSol*rate;
-    const bucket=
-      Math.floor(Number(point.t)/interval)*interval;
+  if (!clean.length) return [];
 
-    if(!candle || candle.t!==bucket){
-      const open=previousClose===null?price:previousClose;
-      candle={
-        t:bucket,
+  const interval = chartInterval(clean, timeframe);
+  const candles = [];
+  let candle = null;
+  let previousClose = null;
+  let previousBucket = null;
+
+  for (const point of clean) {
+    const priceSol = Number(point?.priceSol ?? point?.price);
+    const priceUsd = priceSol * rate;
+    const price = chartValueFromUsdPrice(priceUsd);
+    if (!(price > 0)) continue;
+
+    const bucket =
+      Math.floor(Number(point.t) / interval) * interval;
+
+    if (!candle || candle.t !== bucket) {
+      const adjacent =
+        previousClose !== null &&
+        previousBucket !== null &&
+        bucket - previousBucket === interval;
+
+      const open = adjacent ? previousClose : price;
+
+      candle = {
+        t: bucket,
         open,
-        high:Math.max(open,price),
-        low:Math.min(open,price),
-        close:price,
-        samples:1,
+        high: Math.max(open, price),
+        low: Math.min(open, price),
+        close: price,
+        samples: 1,
         interval
       };
       candles.push(candle);
-    }else{
-      candle.high=Math.max(candle.high,price);
-      candle.low=Math.min(candle.low,price);
-      candle.close=price;
+      previousBucket = bucket;
+    } else {
+      candle.high = Math.max(candle.high, price);
+      candle.low = Math.min(candle.low, price);
+      candle.close = price;
       candle.samples++;
     }
 
-    previousClose=candle.close;
+    previousClose = candle.close;
   }
 
   return candles.slice(-500);
 }
 
-function latestCandleFor(points,timeframe){
-  if(timeframe==='all')return null;
-  if(!Array.isArray(points)||!points.length)return null;
+function latestCandleFor(points, timeframe) {
+  if (timeframe === 'all') return null;
+  if (!Array.isArray(points) || !points.length) return null;
 
-  const rate=solUsdRate();
-  if(!(rate>0))return null;
+  const rate = solUsdRate();
+  if (!(rate > 0)) return null;
 
-  const interval=Math.max(1000,Number(timeframe)||1000);
-  let i=points.length-1;
+  const interval = Math.max(1000, Number(timeframe) || 1000);
+  let i = points.length - 1;
 
-  while(i>=0 && !(
+  while (i >= 0 && !(
     finite(points[i]?.t) &&
     finite(points[i]?.priceSol ?? points[i]?.price) &&
-    Number(points[i]?.priceSol ?? points[i]?.price)>0
-  ))i--;
+    Number(points[i]?.priceSol ?? points[i]?.price) > 0
+  )) i--;
 
-  if(i<0)return null;
+  if (i < 0) return null;
 
-  const bucket=
-    Math.floor(Number(points[i].t)/interval)*interval;
+  const bucket =
+    Math.floor(Number(points[i].t) / interval) * interval;
 
-  let first=i;
-  while(
-    first>0 &&
-    Number(points[first-1]?.t)>=bucket
-  ){
+  let first = i;
+  while (
+    first > 0 &&
+    Number(points[first - 1]?.t) >= bucket
+  ) {
     first--;
   }
 
-  let previousClose=null;
-  for(let j=first-1;j>=0;j--){
-    const p=Number(points[j]?.priceSol ?? points[j]?.price);
-    if(finite(points[j]?.t) && Number.isFinite(p) && p>0){
-      previousClose=p*rate;
+  let previousClose = null;
+  let previousBucket = null;
+
+  for (let j = first - 1; j >= 0; j--) {
+    const p = Number(points[j]?.priceSol ?? points[j]?.price);
+    if (finite(points[j]?.t) && Number.isFinite(p) && p > 0) {
+      const converted = chartValueFromUsdPrice(p * rate);
+      if (converted > 0) {
+        previousClose = converted;
+        previousBucket =
+          Math.floor(Number(points[j].t) / interval) * interval;
+      }
       break;
     }
   }
 
-  let candle=null;
-  for(let j=first;j<=i;j++){
-    const point=points[j];
-    const pointSol=Number(point?.priceSol ?? point?.price);
-    if(
+  let candle = null;
+
+  for (let j = first; j <= i; j++) {
+    const point = points[j];
+    const pointSol = Number(point?.priceSol ?? point?.price);
+
+    if (
       !finite(point?.t) ||
       !Number.isFinite(pointSol) ||
-      pointSol<=0
-    )continue;
+      pointSol <= 0
+    ) continue;
 
-    const pointBucket=
-      Math.floor(Number(point.t)/interval)*interval;
-    if(pointBucket!==bucket)continue;
+    const pointBucket =
+      Math.floor(Number(point.t) / interval) * interval;
+    if (pointBucket !== bucket) continue;
 
-    const price=pointSol*rate;
-    if(!candle){
-      const open=previousClose===null?price:previousClose;
-      candle={
-        t:bucket,
+    const price = chartValueFromUsdPrice(pointSol * rate);
+    if (!(price > 0)) continue;
+
+    if (!candle) {
+      const adjacent =
+        previousClose !== null &&
+        previousBucket !== null &&
+        bucket - previousBucket === interval;
+
+      const open = adjacent ? previousClose : price;
+
+      candle = {
+        t: bucket,
         open,
-        high:Math.max(open,price),
-        low:Math.min(open,price),
-        close:price,
-        samples:1,
+        high: Math.max(open, price),
+        low: Math.min(open, price),
+        close: price,
+        samples: 1,
         interval
       };
-    }else{
-      candle.high=Math.max(candle.high,price);
-      candle.low=Math.min(candle.low,price);
-      candle.close=price;
+    } else {
+      candle.high = Math.max(candle.high, price);
+      candle.low = Math.min(candle.low, price);
+      candle.close = price;
       candle.samples++;
     }
   }
@@ -863,7 +1008,9 @@ function strategyLevels() {
 
   if (!(entrySol > 0)) return [];
 
-  const entry = entrySol * rate;
+  const entry = chartValueFromUsdPrice(entrySol * rate);
+  if (!(entry > 0)) return [];
+
   const hard = num($('hardStopPct').value, state.settings?.hardStopPct);
   const tp1 = num($('tp1Pct').value, state.settings?.tp1Pct);
   const tp2 = num($('tp2Pct').value, state.settings?.tp2Pct);
@@ -892,6 +1039,7 @@ const chartRuntime={
   levelsKey:'',
   mint:null,
   timeframe:null,
+  metric:null,
   raf:null,
   forceFit:true,
   initialized:false,
@@ -1003,7 +1151,7 @@ function ensureChartEngine(){
       priceFormat:{
         type:'custom',
         minMove:1e-14,
-        formatter:formatPrice
+        formatter:formatChartValue
       }
     }
   );
@@ -1154,10 +1302,10 @@ function renderLegend(last,totalCandles,totalTicks,offscreenLevels=[]){
   }
 
   const parts=[
-    `<span>O ${formatPrice(last.open)}</span>`,
-    `<span>H ${formatPrice(last.high)}</span>`,
-    `<span>L ${formatPrice(last.low)}</span>`,
-    `<span>C ${formatPrice(last.close)}</span>`
+    `<span>O ${formatChartValue(last.open)}</span>`,
+    `<span>H ${formatChartValue(last.high)}</span>`,
+    `<span>L ${formatChartValue(last.low)}</span>`,
+    `<span>C ${formatChartValue(last.close)}</span>`
   ];
 
   if(totalCandles!==null && totalCandles!==undefined){
@@ -1213,7 +1361,8 @@ function updateRealtimeChart(mint){
 
   const runtimeChanged=
     chartRuntime.mint!==mint ||
-    chartRuntime.timeframe!==state.timeframe;
+    chartRuntime.timeframe!==state.timeframe ||
+    chartRuntime.metric!==state.chartMetric;
 
   if(runtimeChanged){
     chartRuntime.forceFit=true;
@@ -1246,6 +1395,7 @@ function updateRealtimeChart(mint){
   chartRuntime.dataKey=[
     mint,
     String(state.timeframe),
+    state.chartMetric,
     points.length,
     Number(lastPoint?.t||0),
     Number(lastPoint?.price||0)
@@ -1259,7 +1409,12 @@ function updateRealtimeChart(mint){
   );
 
   if(mint===state.selectedMint){
-    $('tokenPrice').textContent=formatPrice(last.close);
+    const rawSol=Number(lastPoint?.priceSol ?? lastPoint?.price);
+    renderPriceModeSummary(
+      Number.isFinite(rawSol) && rawSol>0
+        ? rawSol*solUsdRate()
+        : null
+    );
   }
 }
 
@@ -1286,16 +1441,28 @@ function drawChart() {
     chartRuntime.series.setData([]);
     $('chartEmpty').style.display='grid';
     $('chartLegend').innerHTML='';
+    renderPriceModeSummary();
     return;
   }
 
   $('chartEmpty').style.display='none';
+
+  try{
+    chartRuntime.series.applyOptions({
+      priceFormat:{
+        type:'custom',
+        minMove:state.chartMetric==='marketCap' ? 0.01 : 1e-14,
+        formatter:formatChartValue
+      }
+    });
+  }catch{}
 
   const lastPoint=points[points.length-1];
 
   const dataKey=[
     state.selectedMint,
     String(state.timeframe),
+    state.chartMetric,
     points.length,
     Number(lastPoint?.t||0),
     Number(lastPoint?.price||0)
@@ -1303,7 +1470,8 @@ function drawChart() {
 
   const contextChanged=
     chartRuntime.mint!==state.selectedMint ||
-    chartRuntime.timeframe!==state.timeframe;
+    chartRuntime.timeframe!==state.timeframe ||
+    chartRuntime.metric!==state.chartMetric;
 
   if(
     dataKey!==chartRuntime.dataKey ||
@@ -1316,6 +1484,7 @@ function drawChart() {
     chartRuntime.dataKey=dataKey;
     chartRuntime.mint=state.selectedMint;
     chartRuntime.timeframe=state.timeframe;
+    chartRuntime.metric=state.chartMetric;
     chartRuntime.candleCount=candles.length;
     chartRuntime.lastCandleTime=candles[candles.length-1]?.t??null;
   }
@@ -1330,8 +1499,12 @@ function drawChart() {
         : 2,
     barSpacing:
       Number(state.timeframe)<=1000
-        ? 12
-        : 9
+        ? 9
+        : 8,
+    minBarSpacing:
+      Number(state.timeframe)<=1000
+        ? 4
+        : 3
   });
 
   const offscreen=refreshStrategyPriceLines(
@@ -1354,7 +1527,12 @@ function drawChart() {
     offscreen
   );
 
-  $('tokenPrice').textContent=formatPrice(last.close);
+  const rawSol=Number(lastPoint?.priceSol ?? lastPoint?.price);
+  renderPriceModeSummary(
+    Number.isFinite(rawSol) && rawSol>0
+      ? rawSol*solUsdRate()
+      : null
+  );
 
   if(
     chartRuntime.forceFit ||
@@ -1531,6 +1709,27 @@ async function connectWallet() {
 
 function bind() {
   $('walletBtn').addEventListener('click', connectWallet);
+
+  $('priceModeBtn').addEventListener('click', () => {
+    state.chartMetric =
+      state.chartMetric === 'price'
+        ? 'marketCap'
+        : 'price';
+
+    try {
+      localStorage.setItem(
+        'memeflow:chart-metric',
+        state.chartMetric
+      );
+    } catch {}
+
+    chartRuntime.forceFit = true;
+    chartRuntime.dataKey = '';
+    chartRuntime.levelsKey = '';
+    chartRuntime.metric = null;
+    renderPriceModeSummary();
+    scheduleChart();
+  });
   $('copyMintBtn').addEventListener('click', async () => {
     if (!state.selectedMint) return;
     try {
@@ -1660,3 +1859,4 @@ init();
 /* MEMEFLOW_TRADING_CHART_V30_5_EXECUTION_OHLC */
 /* MEMEFLOW_TRADING_CHART_V30_6_USD_CURVE_MARK */
 /* MEMEFLOW_TRADING_CHART_V30_7_STABLE_HISTORY */
+/* MEMEFLOW_TRADING_CHART_V30_8_PRICE_MC_GAP_SAFE */
