@@ -38,94 +38,53 @@ import {
   animateRoutes
 } from './routes.js?v=true-3d-glb-v5';
 
-function buildFitBounds(
-  scene,
-  modules
-) {
-  scene.updateMatrixWorld(true);
-
+function buildFitBounds() {
+  /*
+    V8 FRAMING:
+    Home framing must describe the visible logical topology, not every
+    internal GLB mesh bound. Some chassis assets contain construction
+    geometry whose box is larger than what the eye actually reads.
+  */
   const box =
     new THREE.Box3()
       .makeEmpty();
 
-  for (
-    const module
-    of modules.values()
-  ) {
-    module.group
-      ?.updateWorldMatrix(
-        true,
-        true
-      );
+  for (const node of NODES) {
+    const width =
+      Number(node.size?.[0])
+      || 2.4;
 
-    module.fitObject
-      ?.updateWorldMatrix(
-        true,
-        true
-      );
+    const depth =
+      Number(node.size?.[1])
+      || 1.6;
 
-    if (module.fitObject) {
-      box.expandByObject(
-        module.fitObject,
-        true
-      );
-    }
-  }
+    const x =
+      Number(node.pos?.[0])
+      || 0;
 
-  const size =
-    new THREE.Vector3();
+    const y =
+      Number(node.pos?.[1])
+      || 0;
 
-  box.getSize(size);
+    const z =
+      Number(node.pos?.[2])
+      || 0;
 
-  if (
-    box.isEmpty()
-    || !Number.isFinite(size.x)
-    || !Number.isFinite(size.z)
-    || size.x < 6
-    || size.z < 7
-  ) {
-    box.makeEmpty();
+    box.expandByPoint(
+      new THREE.Vector3(
+        x - width * 0.56,
+        y - 0.62,
+        z - depth * 0.57
+      )
+    );
 
-    for (
-      const module
-      of modules.values()
-    ) {
-      const node = module.node;
-
-      if (!node) continue;
-
-      const width =
-        Number(node.size?.[0])
-        || 2.2;
-
-      const depth =
-        Number(node.size?.[1])
-        || 1.5;
-
-      const x =
-        Number(node.pos?.[0])
-        || 0;
-
-      const z =
-        Number(node.pos?.[2])
-        || 0;
-
-      box.expandByPoint(
-        new THREE.Vector3(
-          x - width * 0.62,
-          -0.66,
-          z - depth * 0.65
-        )
-      );
-
-      box.expandByPoint(
-        new THREE.Vector3(
-          x + width * 0.62,
-          0.28,
-          z + depth * 0.65
-        )
-      );
-    }
+    box.expandByPoint(
+      new THREE.Vector3(
+        x + width * 0.56,
+        y + 0.38,
+        z + depth * 0.57
+      )
+    );
   }
 
   return box;
@@ -293,8 +252,8 @@ export async function bootMemeflowTrue3D(
   const greenCore =
     new THREE.PointLight(
       0x57e69a,
-      5.0,
-      17,
+      3.8,
+      16,
       2
     );
 
@@ -327,7 +286,7 @@ export async function bootMemeflowTrue3D(
     new THREE.MeshBasicMaterial({
       color: 0x071018,
       transparent: true,
-      opacity: 0.12,
+      opacity: 0.18,
       depthWrite: false,
       side: THREE.DoubleSide
     })
@@ -342,7 +301,7 @@ export async function bootMemeflowTrue3D(
     new THREE.MeshBasicMaterial({
       color: 0x133247,
       transparent: true,
-      opacity: 0.055,
+      opacity: 0.075,
       depthWrite: false,
       side: THREE.DoubleSide
     })
@@ -410,10 +369,7 @@ export async function bootMemeflowTrue3D(
   }
 
   const bounds =
-    buildFitBounds(
-      scene,
-      modules
-    );
+    buildFitBounds();
 
   const fitCenter =
     new THREE.Vector3();
@@ -425,9 +381,9 @@ export async function bootMemeflowTrue3D(
 
   const homeDirection =
     new THREE.Vector3(
-      0,
-      0.64,
-      0.77
+      0.10,
+      0.50,
+      0.86
     ).normalize();
 
   const homeCamera =
@@ -458,10 +414,10 @@ export async function bootMemeflowTrue3D(
 
     camera.fov =
       aspect < 0.82
-        ? 41
+        ? 38
         : aspect < 1.10
-          ? 38
-          : 35;
+          ? 36
+          : 34;
 
     camera.updateProjectionMatrix();
 
@@ -526,13 +482,13 @@ export async function bootMemeflowTrue3D(
 
     const xLimit =
       aspect < 0.82
-        ? 0.985
-        : 0.975;
+        ? 0.972
+        : 0.965;
 
     const yLimit =
       aspect < 0.82
-        ? 0.972
-        : 0.962;
+        ? 0.948
+        : 0.942;
 
     let low = 4;
     let high = 60;
@@ -902,3 +858,5 @@ export async function bootMemeflowTrue3D(
 /* ===== MEMEFLOW_TRUE_3D_HERO_V6 ===== */
 
 /* ===== MEMEFLOW_TRUE_3D_STAGE_FILL_V7 ===== */
+
+/* ===== MEMEFLOW_TRUE_3D_CINEMATIC_V8 ===== */
