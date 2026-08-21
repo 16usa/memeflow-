@@ -2722,6 +2722,12 @@ const MF293_GROUPS = [
     ['maxBundlePct', 'Maximum bundle %', 'nullable', 0, 100, 0.1],
     ['minSniperPct', 'Minimum sniper %', 'nullable', 0, 100, 0.1],
     ['maxSniperPct', 'Maximum sniper %', 'nullable', 0, 100, 0.1],
+    ['maxSuspectedRiskyWalletsPct', 'Maximum suspected risky wallets %', 'nullable', 0, 100, 0.1],
+    ['maxInsidersPct', 'Maximum insiders %', 'nullable', 0, 100, 0.1],
+    ['maxDeveloperRugHistoryPct', 'Maximum developer rug history %', 'nullable', 0, 100, 0.1],
+    ['maxDeveloperExitPct', 'Maximum developer exit %', 'nullable', 0, 100, 0.1],
+    ['requireDevMigrated', 'Require dev migrated', 'boolean'],
+    ['requireTokenLogo', 'Require token logo', 'boolean'],
     ['requireTwitter', 'Require X / Twitter', 'boolean'],
     ['requireWebsite', 'Require website', 'boolean'],
     ['requireTelegram', 'Require Telegram', 'boolean'],
@@ -3874,3 +3880,5 @@ setTimeout(installRealWebV31, 1250);
 // MEMEFLOW_PLATFORM_SOURCE_CLEAN_V5
 
 // MEMEFLOW_TOP_VIEW_V32
+
+/* MEMEFLOW_ANTI_RUG_V1_5_EXACT */
