@@ -1,5 +1,5 @@
-import * as THREE from 'https://unpkg.com/three@0.166.1/build/three.module.js';
-import { OrbitControls } from 'https://unpkg.com/three@0.166.1/examples/jsm/controls/OrbitControls.js';
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { NODES, ROUTES } from './layout.js';
 import { createModule } from './modules.js';
 import { createRoute, animateRoutes } from './routes.js';
@@ -94,7 +94,7 @@ export function bootMemeflowTrue3D(rootId='app') {
     camera.updateProjectionMatrix();
   }
 
-  const resetButton = document.getElementById('resetView');
+  const resetButton = document.getElementById('resetViewBtn');
   if (resetButton) resetButton.addEventListener('click', resetView);
 
   resetView();

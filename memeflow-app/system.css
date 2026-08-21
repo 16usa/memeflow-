@@ -1411,3 +1411,49 @@ body.mf293-settings-open { overflow: hidden !important; }
 #systemCanvas:active {
   cursor: grabbing;
 }
+
+/* ===== MEMEFLOW_TRUE_3D_EMBED_V1 ===== */
+
+.viewport-wrap {
+  position: relative !important;
+  background: #000 !important;
+  background-image: none !important;
+}
+
+#systemCanvas {
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+#memeflowTrue3DHost {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  overflow: hidden;
+  background: #000;
+  border-radius: inherit;
+  touch-action: none;
+}
+
+#memeflowTrue3DCanvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: #000;
+  outline: none;
+  touch-action: none;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+#memeflowTrue3DCanvas:active {
+  cursor: grabbing;
+}
+
+.viewport-wrap .scene-labels,
+.viewport-wrap .node-label,
+.viewport-wrap .scene-hint {
+  display: none !important;
+}

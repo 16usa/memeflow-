@@ -781,6 +781,7 @@ async function refreshTelemetry() {
 function animate() {
   // MF_V3031_GATE_animate
   requestAnimationFrame(animate);
+  if (window.__MEMEFLOW_TRUE_3D_ACTIVE__) return;
   if (!mf3dFrameAllowedV3031('animate', 30, 45)) return;
 
   
@@ -4235,6 +4236,7 @@ function applyNodeFlashV31(now) {
 
 function animateWebV31(now) {
   REAL_WEB_V31.frame = requestAnimationFrame(animateWebV31);
+  if (window.__MEMEFLOW_TRUE_3D_ACTIVE__) return;
 
   if (document.hidden || !REAL_WEB_V31.installed) return;
   if ((now - REAL_WEB_V31.lastFrameAt) < 32) return;
@@ -4617,3 +4619,5 @@ if (document.readyState === 'loading') {
 /* ===== MEMEFLOW_PREMIUM_GLASS_3D_V5 ===== */
 
 /* ===== MEMEFLOW_RENDER_MATCH_V6 ===== */
+
+/* ===== MEMEFLOW_TRUE_3D_EMBED_V1 ===== */

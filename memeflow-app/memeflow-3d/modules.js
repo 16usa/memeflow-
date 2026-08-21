@@ -1,5 +1,5 @@
-import * as THREE from 'https://unpkg.com/three@0.166.1/build/three.module.js';
-import { RoundedBoxGeometry } from 'https://unpkg.com/three@0.166.1/examples/jsm/geometries/RoundedBoxGeometry.js';
+import * as THREE from 'three';
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { glowPlane, shellMaterial, edgeMaterial, labelTexture, iconTexture } from './materials.js';
 
 const ICONS = {

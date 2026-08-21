@@ -6,7 +6,7 @@
   <meta name="color-scheme" content="dark" />
   <meta name="description" content="MEMEFLOW Live System View — real-time 3D visualization of discovery, market, holder, evaluation and paper trading pipelines." />
   <title>MEMEFLOW · Live System View</title>
-  <link rel="stylesheet" href="/system.css?v=render-match-v6" />
+  <link rel="stylesheet" href="/system.css?v=true-3d-embed-v1" />
   <script type="importmap">
   {
     "imports": {
@@ -62,6 +62,7 @@
 
     <section class="viewport-wrap">
       <canvas id="systemCanvas" aria-label="Interactive 3D MEMEFLOW system topology"></canvas>
+      <div id="memeflowTrue3DHost" aria-label="MEMEFLOW true 3D renderer"></div>
       <div id="labels" class="scene-labels" aria-hidden="true"></div>
 
 <div class="scene-hint glass">Drag to orbit · Wheel / pinch to zoom · Tap a token or module</div>
@@ -115,6 +116,7 @@
     <span>The system telemetry panel can still update, but WebGL/Three.js could not start.</span>
   </div>
 
-  <script type="module" src="/system.js?v=render-match-v6"></script>
+  <script type="module" src="/system.js?v=true-3d-embed-v1"></script>
+  <script type="module" src="/memeflow-3d/embed.js?v=true-3d-embed-v1"></script>
 </body>
 </html>
