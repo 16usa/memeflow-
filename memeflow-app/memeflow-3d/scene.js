@@ -23,7 +23,7 @@ import {
 import {
   NODES,
   ROUTES
-} from './layout.js?v=variant-2-showcase-v1';
+} from './layout.js?v=variant-2-fullframe-v2';
 
 import {
   loadHardwareAssets
@@ -286,7 +286,7 @@ export async function bootMemeflowTrue3D(
     new THREE.MeshBasicMaterial({
       color: 0x071018,
       transparent: true,
-      opacity: 0.12,
+      opacity: 0.145,
       depthWrite: false,
       side: THREE.DoubleSide
     })
@@ -381,9 +381,9 @@ export async function bootMemeflowTrue3D(
 
   const homeDirection =
     new THREE.Vector3(
-      0.00,
-      0.58,
-      0.81
+      0.05,
+      0.82,
+      0.57
     ).normalize();
 
   const homeCamera =
@@ -414,10 +414,10 @@ export async function bootMemeflowTrue3D(
 
     camera.fov =
       aspect < 0.82
-        ? 36
+        ? 38
         : aspect < 1.10
-          ? 34
-          : 32;
+          ? 36
+          : 34;
 
     camera.updateProjectionMatrix();
 
@@ -482,13 +482,13 @@ export async function bootMemeflowTrue3D(
 
     const xLimit =
       aspect < 0.82
-        ? 0.985
-        : 0.978;
+        ? 0.955
+        : 0.952;
 
     const yLimit =
       aspect < 0.82
-        ? 0.962
-        : 0.955;
+        ? 0.948
+        : 0.945;
 
     let low = 4;
     let high = 60;
@@ -862,3 +862,5 @@ export async function bootMemeflowTrue3D(
 /* ===== MEMEFLOW_TRUE_3D_CINEMATIC_V8 ===== */
 
 /* ===== MEMEFLOW_VARIANT_2_SHOWCASE_V1 ===== */
+
+/* ===== MEMEFLOW_VARIANT_2_FULLFRAME_V2 ===== */
