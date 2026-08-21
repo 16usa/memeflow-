@@ -244,14 +244,12 @@ async function loadSolUsd() {
   state.solUsdUpdatedAt = payload?.updatedAt || Date.now();
 
   if (!previous || Math.abs(next / previous - 1) >= 0.0001) {
-    chartRuntime.dataKey = '';
-    chartRuntime.levelsKey = '';
-    // V30.9: FX refresh changes numeric USD values only.
-    // Never call fitContent here; that was making the live viewport jump.
+    // V30.11 REAL-TRADES-ONLY:
+    // the 15s FX refresh may update labels/conversions, but it is not
+    // chart market data and must never move/rebuild candles by itself.
     renderCandidates();
-    renderSelected();
+    renderSelected({ redrawChart: false });
     updateAmountHint();
-    scheduleChart();
   }
 
   return next;
@@ -524,7 +522,7 @@ function renderCandidates() {
   });
 }
 
-async function loadCandidates() {
+async function loadCandidates({ redrawChart = true } = {}) {
   const payload =
     await api(
       '/api/ai/decisions?scope=all&limit=100'
@@ -569,7 +567,7 @@ async function loadCandidates() {
   // candidate/decision prices never enter raw chart history.
   // /api/chart/stream is the one chart-data authority.
   renderCandidates();
-  renderSelected();
+  renderSelected({ redrawChart });
 }
 
 function selectCandidate(mint) {
@@ -586,7 +584,7 @@ function selectCandidate(mint) {
   scheduleChart();
 }
 
-function renderSelected() {
+function renderSelected({ redrawChart = true } = {}) {
   const c = state.selected;
   if (!c) {
     $('tokenName').textContent = 'Select a candidate';
@@ -621,7 +619,7 @@ function renderSelected() {
     : esc((c.symbol || c.name || '?').slice(0, 2).toUpperCase());
 
   updateAmountHint();
-  scheduleChart();
+  if (redrawChart) scheduleChart();
 
   if (!state.chartSource || state.chartSource.__mint !== c.mint) {
     connectChartStream(c.mint);
@@ -636,6 +634,20 @@ function rawPoints(mint) {
 }
 
 function normalizeChartPoint(point){
+  const source=String(point?.source||'').trim();
+  const solAmount=num(point?.solAmount,0);
+  const tokenAmount=num(point?.tokenAmount,0);
+  const hasSide=
+    point?.isBuy===true ||
+    point?.isBuy===false;
+
+  // V30.11: the chart accepts executions only.
+  // A mark/seed/timer point without actual trade size is not chart data.
+  const isRealTrade=
+    hasSide &&
+    (solAmount>0 || tokenAmount>0) &&
+    source!=='current-price-seed';
+
   const priceSol =
     finite(point?.priceSol)
       ? Number(point.priceSol)
@@ -646,6 +658,7 @@ function normalizeChartPoint(point){
           : null;
 
   if(
+    !isRealTrade ||
     !finite(point?.t) ||
     !(priceSol > 0)
   ){
@@ -655,14 +668,14 @@ function normalizeChartPoint(point){
   return {
     id:point?.id?String(point.id):null,
     t:Number(point.t),
-    // Raw history is canonical SOL mark price. USD is derived uniformly
-    // for every candle at render time from the current SOL/USD rate.
+    // Raw history is canonical SOL post-trade curve price.
+    // USD/market-cap display conversion never creates a chart point.
     price:Number(priceSol),
     priceSol:Number(priceSol),
-    source:point?.source||null,
-    isBuy:point?.isBuy===true,
-    solAmount:num(point?.solAmount,0),
-    tokenAmount:num(point?.tokenAmount,0),
+    source:source||null,
+    isBuy:point.isBuy===true,
+    solAmount,
+    tokenAmount,
     markPrice:Number(priceSol)
   };
 }
@@ -698,12 +711,19 @@ function replaceChartSnapshot(mint,incoming){
     points.push(point);
   }
 
-  // V30.10: the selected token keeps its complete persistent history in the browser.
-  // Rendering still aggregates to candles, so All can start at token creation.
+  // Snapshot/reconnect packets can repeat the same history.
+  // Rebuild only when at least one NEW real trade was actually added.
+  const changed=points.length!==previous.length;
+
   state.rawByMint.set(mint,points);
-  chartRuntime.dataKey='';
-  // Fit only on the first real snapshot. Reconnects must not jump the viewport.
-  if(!previous.length)chartRuntime.forceFit=true;
+
+  if(changed){
+    chartRuntime.dataKey='';
+    // Fit only on the first real trade snapshot.
+    if(!previous.length)chartRuntime.forceFit=true;
+  }
+
+  return changed;
 }
 
 function addPoint(mint,point,redraw=true) {
@@ -814,7 +834,7 @@ function connectChartStream(mint) {
   source.addEventListener('snapshot',event=>{
     try{
       const {payload,incoming}=parseIncoming(event);
-      replaceChartSnapshot(mint,incoming);
+      const changed=replaceChartSnapshot(mint,incoming);
       $('feedState').textContent=
         payload?.status?.backfillRunning===true
           ? 'HISTORY SYNC'
@@ -823,7 +843,10 @@ function connectChartStream(mint) {
             : payload?.status?.stale===false || incoming.length
               ? 'LIVE'
               : 'WAITING';
-      scheduleChart();
+
+      // History sync is allowed to redraw only when it supplied new,
+      // canonical BUY/SELL TradeEvents.
+      if(changed) scheduleChart();
     }catch(error){
       console.warn('[MEMEFLOW CHART] snapshot',error);
     }
@@ -886,7 +909,9 @@ function candlesFor(points, timeframe) {
       point =>
         finite(point?.t) &&
         finite(point?.priceSol ?? point?.price) &&
-        Number(point?.priceSol ?? point?.price) > 0
+        Number(point?.priceSol ?? point?.price) > 0 &&
+        (point?.isBuy===true || point?.isBuy===false) &&
+        (Number(point?.solAmount||0)>0 || Number(point?.tokenAmount||0)>0)
     )
     .sort((a, b) => Number(a.t) - Number(b.t));
 
@@ -897,8 +922,7 @@ function candlesFor(points, timeframe) {
 
   const horizon = chartHorizonMs(timeframe);
   if (horizon && clean.length > 1) {
-    // V30.10: window relative to the token's last real trade, not Date.now().
-    // Otherwise a quiet token's entire 1s/1m chart disappears after the horizon.
+    // Window is relative to the LAST REAL TRADE, never wall-clock Date.now().
     const end = Number(clean[clean.length - 1].t);
     const floor = end - horizon;
     clean = clean.filter(point => Number(point.t) >= floor);
@@ -909,47 +933,18 @@ function candlesFor(points, timeframe) {
   const interval = chartInterval(clean, timeframe);
   const candles = [];
   let candle = null;
-  let previousClose = null;
-  let previousBucket = null;
-
-  const pushFlat = bucket => {
-    if (!(previousClose > 0)) return;
-    candles.push({
-      t: bucket,
-      open: previousClose,
-      high: previousClose,
-      low: previousClose,
-      close: previousClose,
-      samples: 0,
-      interval,
-      carry: true
-    });
-    previousBucket = bucket;
-  };
 
   for (const point of clean) {
     const priceSol = Number(point?.priceSol ?? point?.price);
     const price = chartValueFromUsdPrice(priceSol * rate);
     if (!(price > 0)) continue;
 
+    // Time chooses the OHLC bucket only.
+    // Time itself NEVER creates a candle.
     const bucket =
       Math.floor(Number(point.t) / interval) * interval;
 
     if (!candle || candle.t !== bucket) {
-      if (
-        previousBucket !== null &&
-        previousClose > 0 &&
-        bucket > previousBucket + interval
-      ) {
-        for (
-          let gap = previousBucket + interval;
-          gap < bucket && candles.length < 520;
-          gap += interval
-        ) {
-          pushFlat(gap);
-        }
-      }
-
       candle = {
         t: bucket,
         open: price,
@@ -961,37 +956,19 @@ function candlesFor(points, timeframe) {
         carry: false
       };
       candles.push(candle);
-      previousBucket = bucket;
     } else {
       candle.high = Math.max(candle.high, price);
       candle.low = Math.min(candle.low, price);
       candle.close = price;
       candle.samples++;
     }
-
-    previousClose = candle.close;
   }
 
-  if (previousBucket !== null && previousClose > 0) {
-    const nowBucket =
-      Math.floor(Date.now() / interval) * interval;
-
-    const maxTailBars =
-      interval <= 1000 ? 12 :
-      interval <= 60_000 ? 2 :
-      1;
-
-    let added = 0;
-    for (
-      let gap = previousBucket + interval;
-      gap <= nowBucket && added < maxTailBars && candles.length < 520;
-      gap += interval
-    ) {
-      pushFlat(gap);
-      added++;
-    }
-  }
-
+  // V30.11:
+  // - no flat gap candles
+  // - no Date.now() tail candles
+  // - no empty-period filler
+  // - no synthetic movement
   return timeframe === 'all' ? candles : candles.slice(-500);
 }
 
@@ -1639,7 +1616,27 @@ function drawChart() {
 
     requestAnimationFrame(()=>{
       try{
-        chartRuntime.api.timeScale().fitContent();
+        const timeScale=chartRuntime.api.timeScale();
+        const count=candles.length;
+
+        // Keep young/sparse tokens readable. This changes viewport padding only;
+        // it never invents data or alters OHLC.
+        if(
+          count<24 &&
+          typeof timeScale.setVisibleLogicalRange==='function'
+        ){
+          const slots=24;
+          const missing=Math.max(0,slots-count);
+          const left=Math.ceil(missing*.45)+1;
+          const right=Math.floor(missing*.55)+2;
+
+          timeScale.setVisibleLogicalRange({
+            from:-left,
+            to:(count-1)+right
+          });
+        }else{
+          timeScale.fitContent();
+        }
       }catch{}
     });
   }
@@ -1688,7 +1685,7 @@ function formatPrice(price) {
   return `$${body}`;
 }
 
-async function loadPaper() {
+async function loadPaper({ redrawChart = true } = {}) {
   const [positionsPayload, tradesPayload, statusPayload] = await Promise.all([
     api('/api/paper/positions'),
     api('/api/paper/trades'),
@@ -1705,7 +1702,7 @@ async function loadPaper() {
   $('paperPnl').textContent = `${pnl >= 0 ? '+' : ''}${fmt(pnl, 5)} SOL`;
   $('paperPnl').className = pnl > 0 ? 'pnl-positive' : pnl < 0 ? 'pnl-negative' : '';
 
-  scheduleChart();
+  if (redrawChart) scheduleChart();
 }
 
 function renderPositions() {
@@ -1905,12 +1902,13 @@ function bind() {
   window.addEventListener('resize', scheduleChart);
 }
 
-async function poll() {
+async function poll({ redrawChart = false } = {}) {
   if (state.polling) return;
   state.polling = true;
   try {
-    await loadCandidates();
-    await loadPaper();
+    // Polling may refresh cards/paper state, but it is not chart market data.
+    await loadCandidates({ redrawChart });
+    await loadPaper({ redrawChart });
   } catch (error) {
     $('feedState').textContent = 'DEGRADED';
   } finally {
@@ -1933,9 +1931,14 @@ async function init() {
     showError(`Settings: ${error.message}`);
   }
 
-  await poll();
-  setInterval(poll, 1800);
+  // One initial draw is fine. Recurring UI polling must not redraw candles.
+  await poll({ redrawChart: true });
+  setInterval(
+    () => poll({ redrawChart: false }),
+    1800
+  );
 
+  // Currency refresh updates labels only; loadSolUsd() is chart-silent.
   setInterval(
     () => loadSolUsd().catch(
       error => console.warn('[MEMEFLOW USD]', error)
@@ -1943,16 +1946,9 @@ async function init() {
     15_000
   );
 
-  setInterval(() => {
-    if (
-      state.selectedMint &&
-      state.timeframe !== 'all' &&
-      Number(state.timeframe) <= 1000
-    ) {
-      scheduleChart();
-    }
-  }, 1000);
-
+  // IMPORTANT V30.11:
+  // There is intentionally NO 1-second chart timer here.
+  // EventSource BUY/SELL TradeEvents are the live chart clock.
   scheduleChart();
 }
 
@@ -1969,3 +1965,4 @@ init();
 /* MEMEFLOW_TRADING_CHART_V30_8_PRICE_MC_GAP_SAFE */
 
 /* MEMEFLOW_TRADING_CHART_V30_9_FAST_CONTINUOUS_TAPE_FIXED_LEVELS */
+/* MEMEFLOW_TRADING_CHART_V30_11_REAL_TRADES_ONLY */

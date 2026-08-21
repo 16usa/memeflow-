@@ -124,6 +124,7 @@ const streams=new Map(),priceTimers=new Map(),tradeWindows=new Map();
 
 // MEMEFLOW_TRADING_CHART_V30_2
 // Small bounded chart cache. It never decides trades and never writes token state.
+// MEMEFLOW_TRADING_CHART_V30_11_REAL_TRADES_ONLY
 const __mfChartHistory=new Map();
 const __MF_CHART_MAX_MINTS=Math.max(
   40,
@@ -457,24 +458,9 @@ function __mfStartChartBackfill(mint){
 }
 
 function __mfChartSnapshot(mint,{startBackfill=true}={}){
-  const token=store.state?.tokens?.[mint]||null;
-  const row=__mfChartHistory.get(mint);
-
-  // Always keep one visible point while historical RPC sync starts.
-  // This seed is discarded by the normal real-trade path as soon as a
-  // canonical Pump TradeEvent arrives.
-  if(
-    (!row || !row.points?.length) &&
-    token?.priceSol
-  ){
-    __mfChartRecord(
-      mint,
-      token.priceSol,
-      Number(token.lastPriceAt)||Date.now(),
-      'current-price-seed'
-    );
-  }
-
+  // V30.11 REAL-TRADES-ONLY:
+  // No current-price seed and no timer/mark seed is ever inserted.
+  // Until a canonical Pump TradeEvent exists, the chart is intentionally empty.
   const hot=(__mfChartHistory.get(mint)?.points||[]);
   const points=__mfChartArchive.mergePointsSync(mint,hot);
   const archiveStatus=__mfChartArchive.statusSync(mint);
