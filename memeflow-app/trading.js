@@ -973,6 +973,12 @@ function tokenImageCandidates(value){
   return out;
 }
 
+const tokenAvatarRuntime={
+  resolvedUrlByMint:new Map(),
+  loadingKey:'',
+  generation:0
+};
+
 function renderTokenAvatar(candidate){
   const avatar=$('tokenAvatar');
   if(!avatar)return;
@@ -984,8 +990,24 @@ function renderTokenAvatar(candidate){
     '?'
   ).slice(0,2).toUpperCase();
 
-  avatar.dataset.mint=mint;
-  avatar.textContent=fallback;
+  const sameMint=
+    avatar.dataset.mint===mint;
+
+  const currentImg=
+    sameMint
+      ? avatar.querySelector('img')
+      : null;
+
+  // IMPORTANT V30.17:
+  // Candidate polling may call renderSelected() several times per second.
+  // Never erase an already loaded image for the same mint while metadata
+  // refreshes. The old code did avatar.textContent=fallback on every call,
+  // producing the visible IMAGE -> "FU" -> IMAGE flicker.
+  if(!sameMint){
+    avatar.dataset.mint=mint;
+    avatar.dataset.imageSrc='';
+    avatar.textContent=fallback;
+  }
 
   const image=
     candidate?.imageUrl ||
@@ -993,25 +1015,87 @@ function renderTokenAvatar(candidate){
     candidate?.logoUrl ||
     null;
 
-  const urls=tokenImageCandidates(image);
-  if(!urls.length)return;
+  const cached=
+    tokenAvatarRuntime.resolvedUrlByMint.get(mint) ||
+    null;
 
+  const urls=[
+    ...(cached ? [cached] : []),
+    ...tokenImageCandidates(image)
+  ].filter((url,index,array)=>
+    url && array.indexOf(url)===index
+  );
+
+  // Transient metadata responses are allowed to omit imageUrl.
+  // If this mint already has a successful image, keep it on screen.
+  if(!urls.length){
+    if(currentImg)return;
+    if(!sameMint){
+      avatar.textContent=fallback;
+    }
+    return;
+  }
+
+  const currentSrc=
+    currentImg?.currentSrc ||
+    currentImg?.src ||
+    avatar.dataset.imageSrc ||
+    '';
+
+  if(
+    currentImg &&
+    urls.some(url=>String(currentSrc)===String(url))
+  ){
+    return;
+  }
+
+  const requestKey=
+    `${mint}|${urls.join('|')}`;
+
+  if(
+    sameMint &&
+    tokenAvatarRuntime.loadingKey===requestKey
+  ){
+    return;
+  }
+
+  tokenAvatarRuntime.loadingKey=requestKey;
+  const generation=++tokenAvatarRuntime.generation;
   let index=0;
+
   const tryNext=()=>{
     if(
       avatar.dataset.mint!==mint ||
+      generation!==tokenAvatarRuntime.generation ||
       index>=urls.length
     ){
+      if(tokenAvatarRuntime.loadingKey===requestKey){
+        tokenAvatarRuntime.loadingKey='';
+      }
       return;
     }
 
+    const url=urls[index];
     const img=new Image();
     img.alt='';
     img.referrerPolicy='no-referrer';
     img.decoding='async';
 
     img.onload=()=>{
-      if(avatar.dataset.mint!==mint)return;
+      if(
+        avatar.dataset.mint!==mint ||
+        generation!==tokenAvatarRuntime.generation
+      ){
+        return;
+      }
+
+      tokenAvatarRuntime.resolvedUrlByMint.set(
+        mint,
+        url
+      );
+      tokenAvatarRuntime.loadingKey='';
+
+      avatar.dataset.imageSrc=url;
       avatar.replaceChildren(img);
     };
 
@@ -1020,7 +1104,8 @@ function renderTokenAvatar(candidate){
       tryNext();
     };
 
-    img.src=urls[index];
+    // Preload off-DOM. Existing image remains visible until this succeeds.
+    img.src=url;
   };
 
   tryNext();
@@ -2743,3 +2828,4 @@ init();
 /* MEMEFLOW_TRADING_CHART_V30_14_1_BREAKOUT_FX_1S_ONLY */
 /* MEMEFLOW_TRADING_CHART_V30_15_2_GMGN_ECHARTS */
 /* MEMEFLOW_TRADING_CHART_V30_16_MOBILE_PAN_NO_SHADOW */
+/* MEMEFLOW_TRADING_CHART_V30_17_STABLE_TOKEN_AVATAR */
