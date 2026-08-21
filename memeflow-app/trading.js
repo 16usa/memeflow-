@@ -1413,6 +1413,31 @@ function connectChartStream(mint) {
   state.chartSource=source;
 }
 
+function chartBirthAnchor(points){
+  const rows=Array.isArray(points)?points:[];
+  for(const point of rows){
+    const t=Number(point?.t);
+    if(Number.isFinite(t))return t;
+  }
+  return null;
+}
+
+function chartBucketFromBirth(time,interval,anchor){
+  const t=Number(time);
+  const step=Math.max(1,Number(interval)||1);
+  const origin=Number(anchor);
+
+  if(!Number.isFinite(t))return null;
+  if(!Number.isFinite(origin))return t;
+
+  // V30.18:
+  // A newborn token must never appear to have existed before its first trade.
+  // Buckets are aligned to token birth (first canonical real execution), not
+  // to wall-clock boundaries such as 09:00 / 09:45 / 09:55.
+  const offset=Math.max(0,t-origin);
+  return origin + Math.floor(offset/step)*step;
+}
+
 function chartInterval(points,timeframe){
   if(timeframe!=='all'){
     return Math.max(1000,Number(timeframe)||1000);
@@ -1454,6 +1479,7 @@ function candlesFor(points, timeframe) {
   if (!(rate > 0)) return [];
 
   const interval = chartInterval(clean, timeframe);
+  const anchor = chartBirthAnchor(clean);
   const candles = [];
   let candle = null;
 
@@ -1466,7 +1492,7 @@ function candlesFor(points, timeframe) {
       Math.max(0, Number(point?.solAmount||0)) * rate;
 
     const bucket =
-      Math.floor(Number(point.t) / interval) * interval;
+      chartBucketFromBirth(point.t,interval,anchor);
 
     if (!candle || candle.t !== bucket) {
       const open =
@@ -1511,6 +1537,7 @@ function latestCandleFor(points, timeframe) {
   if (!(rate > 0)) return null;
 
   const interval = Math.max(1000, Number(timeframe) || 1000);
+  const anchor = chartBirthAnchor(points);
   let i = points.length - 1;
 
   while (i >= 0 && !(
@@ -1522,7 +1549,7 @@ function latestCandleFor(points, timeframe) {
   if (i < 0) return null;
 
   const bucket =
-    Math.floor(Number(points[i].t) / interval) * interval;
+    chartBucketFromBirth(points[i].t,interval,anchor);
 
   let first = i;
   while (
@@ -1556,7 +1583,7 @@ function latestCandleFor(points, timeframe) {
     ) continue;
 
     const pointBucket =
-      Math.floor(Number(point.t) / interval) * interval;
+      chartBucketFromBirth(point.t,interval,anchor);
     if (pointBucket !== bucket) continue;
 
     const price = chartValueFromUsdPrice(pointSol * rate);
@@ -2829,3 +2856,4 @@ init();
 /* MEMEFLOW_TRADING_CHART_V30_15_2_GMGN_ECHARTS */
 /* MEMEFLOW_TRADING_CHART_V30_16_MOBILE_PAN_NO_SHADOW */
 /* MEMEFLOW_TRADING_CHART_V30_17_STABLE_TOKEN_AVATAR */
+/* MEMEFLOW_TRADING_CHART_V30_18_TOKEN_BIRTH_ANCHORED_TIMEFRAMES */
