@@ -2321,8 +2321,11 @@ function drawChart(){
             snap:false,
             label:{show:false}
           },
-          min:'dataMin',
-          max:'dataMax'
+          // V30.20: force the full synthetic category range to exist.
+          // Without this, dataMin/dataMax removes the empty pad slots and
+          // stretches a few real candles across the entire chart.
+          min:0,
+          max:Math.max(0,labels.length-1)
         },
         {
           type:'category',
@@ -2351,8 +2354,11 @@ function drawChart(){
               backgroundColor:'#0b171d'
             }
           },
-          min:'dataMin',
-          max:'dataMax'
+          // V30.20: force the full synthetic category range to exist.
+          // Without this, dataMin/dataMax removes the empty pad slots and
+          // stretches a few real candles across the entire chart.
+          min:0,
+          max:Math.max(0,labels.length-1)
         }
       ],
       yAxis:[
