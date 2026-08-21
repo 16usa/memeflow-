@@ -444,7 +444,7 @@ function isStrongGreenBreakout(prev,curr,level){
 }
 
 function maybeTriggerBullishBreakoutFx(prev,curr,levels){
-  if(state.timeframe==='all')return;
+  if(Number(state.timeframe)!==1000)return;
   if(!chartRuntime.api || !chartRuntime.series)return;
   if(!prev || !curr)return;
 
@@ -2531,3 +2531,4 @@ init();
 /* MEMEFLOW_TRADING_CHART_V30_12_FULL_HISTORY_FREE_PAN_IMAGES */
 /* MEMEFLOW_TRADING_CHART_V30_13_SAFE_MARKET_CAP_TOGGLE */
 /* MEMEFLOW_TRADING_CHART_V30_14_BREAKOUT_FX */
+/* MEMEFLOW_TRADING_CHART_V30_14_1_BREAKOUT_FX_1S_ONLY */
