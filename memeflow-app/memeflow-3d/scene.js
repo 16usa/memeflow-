@@ -21,115 +21,408 @@ import {
 } from 'three/addons/postprocessing/OutputPass.js';
 
 import {
+  RoundedBoxGeometry
+} from 'three/addons/geometries/RoundedBoxGeometry.js';
+
+import {
   NODES,
   ROUTES
-} from './layout.js?v=variant-2-fullframe-v2';
+} from './layout.js?v=data-tunnel-page-v1';
 
 import {
   loadHardwareAssets
 } from './assets.js?v=true-3d-glb-v5';
 
 import {
-  createModule
-} from './modules.js?v=true-3d-stage-fill-v7';
+  createTunnelModule
+} from './modules.js?v=data-tunnel-page-v1';
 
 import {
   createRoute,
   animateRoutes
-} from './routes.js?v=true-3d-glb-v5';
+} from './routes.js?v=data-tunnel-page-v1';
 
-function buildFitBounds() {
-  /*
-    V8 FRAMING:
-    Home framing must describe the visible logical topology, not every
-    internal GLB mesh bound. Some chassis assets contain construction
-    geometry whose box is larger than what the eye actually reads.
-  */
-  const box =
-    new THREE.Box3()
-      .makeEmpty();
+import {
+  darkMetal,
+  additive,
+  lineMaterial,
+  textTexture
+} from './materials.js?v=data-tunnel-page-v1';
 
-  for (const node of NODES) {
-    const width =
-      Number(node.size?.[0])
-      || 2.4;
+function nodeMap() {
+  return new Map(
+    NODES.map(
+      node => [
+        node.id,
+        node
+      ]
+    )
+  );
+}
 
-    const depth =
-      Number(node.size?.[1])
-      || 1.6;
-
-    const x =
-      Number(node.pos?.[0])
-      || 0;
-
-    const y =
-      Number(node.pos?.[1])
-      || 0;
-
-    const z =
-      Number(node.pos?.[2])
-      || 0;
-
-    box.expandByPoint(
-      new THREE.Vector3(
-        x - width * 0.56,
-        y - 0.62,
-        z - depth * 0.57
-      )
+function makeBeam(
+  width,
+  height,
+  depth,
+  x,
+  y,
+  z,
+  material
+) {
+  const mesh =
+    new THREE.Mesh(
+      new RoundedBoxGeometry(
+        width,
+        height,
+        depth,
+        3,
+        .04
+      ),
+      material
     );
 
-    box.expandByPoint(
-      new THREE.Vector3(
-        x + width * 0.56,
-        y + 0.38,
-        z + depth * 0.57
-      )
+  mesh.position.set(
+    x,
+    y,
+    z
+  );
+
+  return mesh;
+}
+
+function addTunnelFloor(scene) {
+  const floor =
+    new THREE.Mesh(
+      new THREE.PlaneGeometry(
+        13.8,
+        28
+      ),
+      new THREE.MeshPhysicalMaterial({
+        color: 0x010407,
+        metalness: .82,
+        roughness: .23,
+        clearcoat: .88,
+        clearcoatRoughness: .12
+      })
+    );
+
+  floor.rotation.x =
+    -Math.PI / 2;
+
+  floor.position.set(
+    0,
+    -.22,
+    -2.2
+  );
+
+  scene.add(floor);
+
+  const guideXs =
+    [-5.35, -4.85, -2.2, -1.72, 1.72, 2.2, 4.85, 5.35];
+
+  const colors = [
+    0x2f78ff,
+    0x55cbff,
+    0x426cff,
+    0x8b62ff,
+    0x9c63ff,
+    0x71a7ff,
+    0x4ae19a,
+    0x33bb7f
+  ];
+
+  guideXs.forEach(
+    (x, index) => {
+      const guide =
+        makeBeam(
+          .055,
+          .035,
+          25.5,
+          x,
+          -.16,
+          -2.5,
+          additive(
+            colors[index],
+            .28
+          )
+        );
+
+      scene.add(guide);
+    }
+  );
+
+  for (
+    const z
+    of [2.5, 0, -2.5, -5, -7.5, -10]
+  ) {
+    const cross =
+      makeBeam(
+        11.6,
+        .025,
+        .035,
+        0,
+        -.15,
+        z,
+        additive(
+          0x497a96,
+          .08
+        )
+      );
+
+    scene.add(cross);
+  }
+}
+
+function addTunnelFrames(scene) {
+  const material =
+    darkMetal();
+
+  for (
+    const z
+    of [2.7, .3, -2.4, -5.1, -7.8, -10.2]
+  ) {
+    const scale =
+      THREE.MathUtils.mapLinear(
+        z,
+        2.7,
+        -10.2,
+        1,
+        .48
+      );
+
+    const halfWidth =
+      6.25 * scale
+      + .95;
+
+    const height =
+      5.05 * scale
+      + 1.05;
+
+    const left =
+      makeBeam(
+        .18,
+        height,
+        .20,
+        -halfWidth,
+        height / 2 - .20,
+        z,
+        material
+      );
+
+    const right =
+      left.clone();
+
+    right.position.x =
+      halfWidth;
+
+    const top =
+      makeBeam(
+        halfWidth * 2,
+        .15,
+        .20,
+        0,
+        height - .20,
+        z,
+        material
+      );
+
+    scene.add(
+      left,
+      right,
+      top
     );
   }
 
-  return box;
+  const leftGlow =
+    makeBeam(
+      .045,
+      .045,
+      25,
+      -5.75,
+      .18,
+      -2.4,
+      additive(
+        0x3598ff,
+        .35
+      )
+    );
+
+  const rightGlow =
+    makeBeam(
+      .045,
+      .045,
+      25,
+      5.75,
+      .18,
+      -2.4,
+      additive(
+        0x53e49c,
+        .32
+      )
+    );
+
+  scene.add(
+    leftGlow,
+    rightGlow
+  );
 }
 
-function boxCorners(box) {
-  const min = box.min;
-  const max = box.max;
+function addOverheadLabel(
+  scene,
+  node
+) {
+  if (!node.overhead) {
+    return null;
+  }
 
-  return [
-    new THREE.Vector3(min.x, min.y, min.z),
-    new THREE.Vector3(min.x, min.y, max.z),
-    new THREE.Vector3(min.x, max.y, min.z),
-    new THREE.Vector3(min.x, max.y, max.z),
-    new THREE.Vector3(max.x, min.y, min.z),
-    new THREE.Vector3(max.x, min.y, max.z),
-    new THREE.Vector3(max.x, max.y, min.z),
-    new THREE.Vector3(max.x, max.y, max.z)
+  const group =
+    new THREE.Group();
+
+  const texture =
+    textTexture(
+      node.label,
+      0xa6b6be,
+      {
+        width: 820,
+        height: 250,
+        fontSize:
+          node.label.length > 13
+            ? 58
+            : 66,
+        background: null,
+        border: false,
+        glow: 0
+      }
+    );
+
+  const material =
+    new THREE.SpriteMaterial({
+      map: texture,
+      transparent: true,
+      opacity: .86,
+      depthWrite: false
+    });
+
+  const sprite =
+    new THREE.Sprite(
+      material
+    );
+
+  sprite.position.set(
+    node.pos[0],
+    4.36,
+    node.pos[2] + .10
+  );
+
+  const scale =
+    node.label.length > 12
+      ? 2.55
+      : 2.15;
+
+  sprite.scale.set(
+    scale,
+    .72,
+    1
+  );
+
+  group.add(sprite);
+
+  const points = [
+    new THREE.Vector3(
+      node.pos[0],
+      4.00,
+      node.pos[2]
+    ),
+    new THREE.Vector3(
+      node.pos[0],
+      node.pos[1] + node.size[1] * .52,
+      node.pos[2]
+    )
   ];
+
+  const guide =
+    new THREE.Line(
+      new THREE.BufferGeometry()
+        .setFromPoints(points),
+      new THREE.LineDashedMaterial({
+        color: 0x718792,
+        dashSize: .06,
+        gapSize: .055,
+        transparent: true,
+        opacity: .42
+      })
+    );
+
+  guide.computeLineDistances();
+
+  group.add(guide);
+
+  scene.add(group);
+
+  return group;
+}
+
+function colorForRoute(aNode, bNode) {
+  if (
+    aNode.id === 'openai'
+    || aNode.id === 'decision'
+    || bNode.id === 'openai'
+    || bNode.id === 'decision'
+  ) {
+    return 0x9b6dff;
+  }
+
+  if (
+    aNode.id === 'paper'
+    || aNode.id === 'execution'
+    || bNode.id === 'paper'
+    || bNode.id === 'execution'
+    || aNode.id === 'core'
+    || bNode.id === 'core'
+  ) {
+    return 0x59e5a0;
+  }
+
+  return 0x52b9ff;
 }
 
 export async function bootMemeflowTrue3D(
   rootId = 'memeflowTrue3DHost'
 ) {
   const mount =
-    document.getElementById(rootId);
+    document.getElementById(
+      rootId
+    );
 
   if (!mount) {
     throw new Error(
-      'True 3D mount not found: '
+      'Data Tunnel mount not found: '
       + rootId
     );
   }
 
   mount.replaceChildren();
 
-  const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x000000);
+  const scene =
+    new THREE.Scene();
+
+  scene.background =
+    new THREE.Color(
+      0x000204
+    );
+
+  scene.fog =
+    new THREE.FogExp2(
+      0x000205,
+      .038
+    );
 
   const camera =
     new THREE.PerspectiveCamera(
-      40,
+      46,
       1,
-      0.05,
-      240
+      .05,
+      100
     );
 
   const renderer =
@@ -154,7 +447,7 @@ export async function bootMemeflowTrue3D(
     THREE.ACESFilmicToneMapping;
 
   renderer.toneMappingExposure =
-    0.96;
+    .92;
 
   renderer.domElement.id =
     'memeflowTrue3DCanvas';
@@ -164,7 +457,9 @@ export async function bootMemeflowTrue3D(
   );
 
   const composer =
-    new EffectComposer(renderer);
+    new EffectComposer(
+      renderer
+    );
 
   composer.addPass(
     new RenderPass(
@@ -176,12 +471,15 @@ export async function bootMemeflowTrue3D(
   const bloom =
     new UnrealBloomPass(
       new THREE.Vector2(1, 1),
-      0.12,
-      0.24,
-      0.92
+      .20,
+      .30,
+      .91
     );
 
-  composer.addPass(bloom);
+  composer.addPass(
+    bloom
+  );
+
   composer.addPass(
     new OutputPass()
   );
@@ -192,18 +490,30 @@ export async function bootMemeflowTrue3D(
       renderer.domElement
     );
 
-  controls.enablePan = false;
-  controls.enableDamping = true;
-  controls.dampingFactor = 0.055;
-  controls.rotateSpeed = 0.54;
-  controls.zoomSpeed = 1.04;
+  controls.enablePan =
+    false;
 
-  controls.minAzimuthAngle = -Infinity;
-  controls.maxAzimuthAngle = Infinity;
-  controls.minPolarAngle = 0.10;
-  controls.maxPolarAngle = Math.PI - 0.10;
+  controls.enableDamping =
+    true;
 
-  if (controls.touches) {
+  controls.dampingFactor =
+    .055;
+
+  controls.rotateSpeed =
+    .47;
+
+  controls.zoomSpeed =
+    .95;
+
+  controls.minPolarAngle =
+    .35;
+
+  controls.maxPolarAngle =
+    1.48;
+
+  if (
+    controls.touches
+  ) {
     controls.touches.ONE =
       THREE.TOUCH.ROTATE;
 
@@ -213,188 +523,196 @@ export async function bootMemeflowTrue3D(
 
   scene.add(
     new THREE.HemisphereLight(
-      0x9ecfe8,
-      0x010203,
-      0.32
+      0x6da8ca,
+      0x010204,
+      .23
     )
   );
 
   const key =
     new THREE.DirectionalLight(
-      0xf3fbff,
+      0xf2f9ff,
       1.10
     );
 
   key.position.set(
-    4.5,
-    9.0,
-    6.8
+    0,
+    8,
+    7
   );
 
-  scene.add(key);
+  scene.add(
+    key
+  );
 
-  const cyanRim =
+  const blueFill =
     new THREE.PointLight(
-      0x58d7ff,
-      3.0,
+      0x409fff,
+      5.2,
       18,
       2
     );
 
-  cyanRim.position.set(
-    -5.2,
-    3.2,
+  blueFill.position.set(
+    -4.8,
+    2.8,
     1.8
   );
 
-  scene.add(cyanRim);
+  scene.add(
+    blueFill
+  );
 
-  const greenCore =
+  const violetFill =
     new THREE.PointLight(
-      0x57e69a,
-      2.8,
-      15,
+      0x9a67ff,
+      3.8,
+      16,
       2
     );
 
-  greenCore.position.set(
-    3.2,
-    2.8,
-    -3.1
+  violetFill.position.set(
+    .2,
+    2.1,
+    -4.8
   );
 
-  scene.add(greenCore);
+  scene.add(
+    violetFill
+  );
 
-  const violetDecision =
+  const greenFill =
     new THREE.PointLight(
-      0x8d58ff,
-      3.2,
-      14,
+      0x52e89c,
+      4.8,
+      18,
       2
     );
 
-  violetDecision.position.set(
-    0,
-    2.0,
-    2.5
+  greenFill.position.set(
+    4.8,
+    2.7,
+    1.2
   );
 
-  scene.add(violetDecision);
-
-  const stage = new THREE.Mesh(
-    new THREE.PlaneGeometry(13.6, 9.8),
-    new THREE.MeshBasicMaterial({
-      color: 0x071018,
-      transparent: true,
-      opacity: 0.145,
-      depthWrite: false,
-      side: THREE.DoubleSide
-    })
+  scene.add(
+    greenFill
   );
 
-  stage.rotation.x = -Math.PI / 2;
-  stage.position.set(0, -0.72, 0.55);
-  scene.add(stage);
-
-  const stageRing = new THREE.Mesh(
-    new THREE.RingGeometry(3.9, 5.6, 96),
-    new THREE.MeshBasicMaterial({
-      color: 0x133247,
-      transparent: true,
-      opacity: 0.045,
-      depthWrite: false,
-      side: THREE.DoubleSide
-    })
+  addTunnelFloor(
+    scene
   );
 
-  stageRing.rotation.x = -Math.PI / 2;
-  stageRing.position.set(0, -0.705, 0.55);
-  scene.add(stageRing);
+  addTunnelFrames(
+    scene
+  );
 
-  const assets =
-    await loadHardwareAssets();
+  let assets = null;
+
+  try {
+    assets =
+      await loadHardwareAssets();
+  }
+
+  catch (error) {
+    console.warn(
+      '[DATA-TUNNEL] GLB decoration unavailable',
+      error
+    );
+  }
 
   const modules =
     new Map();
 
-  for (const node of NODES) {
+  const pickMeshes =
+    [];
+
+  for (
+    const node
+    of NODES
+  ) {
     const built =
-      createModule(
+      createTunnelModule(
         node,
         assets
       );
 
-    scene.add(built.group);
+    scene.add(
+      built.root
+    );
+
     modules.set(
       node.id,
       built
     );
-  }
 
-  const byId =
-    new Map(
-      NODES.map(
-        node => [
-          node.id,
-          node
-        ]
-      )
+    pickMeshes.push(
+      built.pickMesh
     );
 
-  const routes = [];
+    addOverheadLabel(
+      scene,
+      node
+    );
+  }
+
+  const nodes =
+    nodeMap();
+
+  const routes =
+    [];
 
   for (
-    const [from, to, color]
+    const [from, to]
     of ROUTES
   ) {
-    const source =
-      byId.get(from);
+    const a =
+      nodes.get(from);
 
-    const target =
-      byId.get(to);
+    const b =
+      nodes.get(to);
 
-    if (!source || !target) {
+    if (!a || !b) {
       continue;
     }
 
     const route =
       createRoute(
-        source.pos,
-        target.pos,
-        color
+        a,
+        b,
+        colorForRoute(
+          a,
+          b
+        )
       );
 
-    scene.add(route.group);
-    routes.push(route);
+    scene.add(
+      route.root
+    );
+
+    routes.push(
+      route
+    );
   }
 
-  const bounds =
-    buildFitBounds();
+  const home =
+    {
+      position:
+        new THREE.Vector3(
+          0,
+          4.45,
+          12.4
+        ),
 
-  const fitCenter =
-    new THREE.Vector3();
+      target:
+        new THREE.Vector3(
+          0,
+          1.42,
+          -4.10
+        )
+    };
 
-  bounds.getCenter(fitCenter);
-
-  const corners =
-    boxCorners(bounds);
-
-  const homeDirection =
-    new THREE.Vector3(
-      0.05,
-      0.82,
-      0.57
-    ).normalize();
-
-  const homeCamera =
-    new THREE.Vector3();
-
-  const homeTarget =
-    new THREE.Vector3();
-
-  let homeDistance = 18;
-
-  function updateProjection() {
+  function configureHomeForAspect() {
     const width =
       Math.max(
         1,
@@ -410,163 +728,102 @@ export async function bootMemeflowTrue3D(
     const aspect =
       width / height;
 
-    camera.aspect = aspect;
+    camera.aspect =
+      aspect;
 
-    camera.fov =
-      aspect < 0.82
-        ? 38
-        : aspect < 1.10
-          ? 36
-          : 34;
-
-    camera.updateProjectionMatrix();
-
-    return {
-      width,
-      height,
-      aspect
-    };
-  }
-
-  function fitsAt(
-    distance,
-    xLimit,
-    yLimit
-  ) {
-    camera.position
-      .copy(fitCenter)
-      .addScaledVector(
-        homeDirection,
-        distance
-      );
-
-    camera.lookAt(fitCenter);
-    camera.updateMatrixWorld(true);
-    camera.updateProjectionMatrix();
-
-    for (const corner of corners) {
-      const projected =
-        corner.clone()
-          .project(camera);
-
-      if (
-        !Number.isFinite(projected.x)
-        || !Number.isFinite(projected.y)
-        || Math.abs(projected.x) > xLimit
-        || Math.abs(projected.y) > yLimit
-      ) {
-        return false;
-      }
-    }
-
-    return true;
-  }
-
-  function computeHomeView() {
-    const {
-      width,
-      height,
-      aspect
-    } = updateProjection();
-
-    renderer.setSize(
-      width,
-      height,
-      false
-    );
-
-    composer.setSize(
-      width,
-      height
-    );
-
-    const xLimit =
-      aspect < 0.82
-        ? 0.955
-        : 0.952;
-
-    const yLimit =
-      aspect < 0.82
-        ? 0.948
-        : 0.945;
-
-    let low = 4;
-    let high = 60;
-
-    for (
-      let index = 0;
-      index < 34;
-      index++
+    if (
+      aspect < .88
     ) {
-      const mid =
-        (low + high) / 2;
+      camera.fov = 51;
 
-      if (
-        fitsAt(
-          mid,
-          xLimit,
-          yLimit
-        )
-      ) {
-        high = mid;
-      } else {
-        low = mid;
-      }
+      home.position.set(
+        0,
+        4.85,
+        14.65
+      );
+
+      home.target.set(
+        0,
+        1.40,
+        -4.10
+      );
     }
 
-    homeDistance = high;
+    else if (
+      aspect < 1.30
+    ) {
+      camera.fov = 47;
 
-    homeTarget.copy(fitCenter);
-
-    homeCamera
-      .copy(fitCenter)
-      .addScaledVector(
-        homeDirection,
-        homeDistance
+      home.position.set(
+        0,
+        4.55,
+        13.20
       );
+
+      home.target.set(
+        0,
+        1.42,
+        -4.10
+      );
+    }
+
+    else {
+      camera.fov = 43;
+
+      home.position.set(
+        0,
+        4.15,
+        11.80
+      );
+
+      home.target.set(
+        0,
+        1.45,
+        -4.25
+      );
+    }
+
+    camera.updateProjectionMatrix();
 
     controls.minDistance =
-      Math.max(
-        3.5,
-        homeDistance * 0.26
-      );
+      5.4;
 
     controls.maxDistance =
-      Math.max(
-        38,
-        homeDistance * 2.5
-      );
+      30;
   }
 
   function resetView() {
-    computeHomeView();
+    configureHomeForAspect();
 
     camera.position.copy(
-      homeCamera
+      home.position
     );
 
     controls.target.copy(
-      homeTarget
+      home.target
     );
 
     controls.update();
   }
 
-  let atHome = true;
+  resetView();
 
-  controls.addEventListener(
-    'start',
-    () => {
-      atHome = false;
-    }
-  );
+  const resetButton =
+    document.getElementById(
+      'resetViewBtn'
+    );
+
+  const resetHandler =
+    () => resetView();
+
+  resetButton
+    ?.addEventListener(
+      'click',
+      resetHandler
+    );
 
   const resize =
     () => {
-      const wasHome = atHome;
-
-      updateProjection();
-
       const width =
         Math.max(
           1,
@@ -590,33 +847,22 @@ export async function bootMemeflowTrue3D(
         height
       );
 
-      if (wasHome) {
-        resetView();
-      }
+      camera.aspect =
+        width / height;
+
+      camera.updateProjectionMatrix();
     };
 
   const resizeObserver =
-    new ResizeObserver(resize);
-
-  resizeObserver.observe(mount);
-
-  const resetButton =
-    document.getElementById(
-      'resetViewBtn'
+    new ResizeObserver(
+      resize
     );
 
-  const resetHandler =
-    () => {
-      atHome = true;
-      resetView();
-    };
-
-  resetButton?.addEventListener(
-    'click',
-    resetHandler
+  resizeObserver.observe(
+    mount
   );
 
-  resetView();
+  resize();
 
   const raycaster =
     new THREE.Raycaster();
@@ -624,103 +870,111 @@ export async function bootMemeflowTrue3D(
   const pointer =
     new THREE.Vector2();
 
-  const pickMeshes =
-    [...modules.values()]
-      .map(
-        module => module.pickMesh
-      );
-
   let pointerDown = null;
 
-  renderer.domElement.addEventListener(
-    'pointerdown',
-    event => {
-      pointerDown = {
-        x: event.clientX,
-        y: event.clientY
-      };
-    }
-  );
-
-  renderer.domElement.addEventListener(
-    'pointerup',
-    event => {
-      if (!pointerDown) return;
-
-      const movement =
-        Math.hypot(
-          event.clientX - pointerDown.x,
-          event.clientY - pointerDown.y
-        );
-
-      pointerDown = null;
-
-      if (movement > 8) {
-        return;
+  renderer.domElement
+    .addEventListener(
+      'pointerdown',
+      event => {
+        pointerDown = {
+          x: event.clientX,
+          y: event.clientY
+        };
       }
+    );
 
-      const rect =
-        renderer.domElement
-          .getBoundingClientRect();
+  renderer.domElement
+    .addEventListener(
+      'pointerup',
+      event => {
+        if (!pointerDown) {
+          return;
+        }
 
-      pointer.x =
-        (
-          (
+        const movement =
+          Math.hypot(
             event.clientX
-            - rect.left
-          ) / rect.width
-        ) * 2
-        - 1;
-
-      pointer.y =
-        -(
-          (
+              - pointerDown.x,
             event.clientY
-            - rect.top
-          ) / rect.height
-        ) * 2
-        + 1;
+              - pointerDown.y
+          );
 
-      raycaster.setFromCamera(
-        pointer,
-        camera
-      );
+        pointerDown =
+          null;
 
-      const hits =
-        raycaster.intersectObjects(
-          pickMeshes,
-          false
+        if (
+          movement > 8
+        ) {
+          return;
+        }
+
+        const rect =
+          renderer.domElement
+            .getBoundingClientRect();
+
+        pointer.x =
+          (
+            (
+              event.clientX
+              - rect.left
+            ) / rect.width
+          ) * 2 - 1;
+
+        pointer.y =
+          -(
+            (
+              event.clientY
+              - rect.top
+            ) / rect.height
+          ) * 2 + 1;
+
+        raycaster.setFromCamera(
+          pointer,
+          camera
         );
 
-      const nodeId =
-        hits[0]
-          ?.object
-          ?.userData
-          ?.nodeId;
+        const hit =
+          raycaster
+            .intersectObjects(
+              pickMeshes,
+              false
+            )[0];
 
-      if (nodeId) {
-        window.dispatchEvent(
-          new CustomEvent(
-            'memeflow:true3d-select',
-            {
-              detail: {
-                nodeId
+        const nodeId =
+          hit?.object?.userData?.nodeId;
+
+        if (
+          nodeId
+        ) {
+          window.dispatchEvent(
+            new CustomEvent(
+              'memeflow:true3d-select',
+              {
+                detail: {
+                  nodeId
+                }
               }
-            }
-          )
-        );
+            )
+          );
+        }
       }
-    }
-  );
+    );
 
   const clock =
     new THREE.Clock();
 
-  let frame = 0;
-  let disposed = false;
+  let frame =
+    0;
+
+  let disposed =
+    false;
 
   function animate() {
-    if (disposed) return;
+    if (
+      disposed
+    ) {
+      return;
+    }
 
     frame =
       requestAnimationFrame(
@@ -736,70 +990,38 @@ export async function bootMemeflowTrue3D(
     );
 
     const core =
-      modules.get('core');
-
-    const decision =
-      modules.get('decision');
-
-    const execution =
-      modules.get('execution');
-
-    if (core?.rings) {
-      core.rings.rotation.y +=
-        0.0015;
-    }
+      modules.get(
+        'core'
+      );
 
     if (
-      core?.innerGlow
-        ?.material
+      core?.halo
     ) {
-      core.innerGlow
-        .material
-        .opacity =
-          0.073
-          + Math.sin(
-            time * 1.9
-          ) * 0.012;
-    }
-
-    if (
-      decision?.innerGlow
-        ?.material
-    ) {
-      decision.innerGlow
-        .material
-        .opacity =
-          0.020
-          + Math.sin(
-            time * 2.0 + 1.4
-          ) * 0.006;
-    }
-
-    if (
-      execution?.innerGlow
-        ?.material
-    ) {
-      execution.innerGlow
-        .material
-        .opacity =
-          0.026
-          + Math.sin(
-            time * 2.0 + 2.6
-          ) * 0.007;
+      core.halo.rotation.z +=
+        .0015;
     }
 
     controls.update();
+
     composer.render();
   }
 
   animate();
 
   function dispose() {
-    if (disposed) return;
+    if (
+      disposed
+    ) {
+      return;
+    }
 
-    disposed = true;
+    disposed =
+      true;
 
-    cancelAnimationFrame(frame);
+    cancelAnimationFrame(
+      frame
+    );
+
     resizeObserver.disconnect();
 
     resetButton
@@ -810,33 +1032,39 @@ export async function bootMemeflowTrue3D(
 
     controls.dispose();
 
-    scene.traverse(object => {
-      object.geometry
-        ?.dispose
-        ?.();
+    scene.traverse(
+      object => {
+        object.geometry
+          ?.dispose
+          ?.();
 
-      if (
-        Array.isArray(
-          object.material
-        )
-      ) {
-        for (
-          const material
-          of object.material
+        if (
+          Array.isArray(
+            object.material
+          )
         ) {
-          material
+          for (
+            const material
+            of object.material
+          ) {
+            material
+              ?.dispose
+              ?.();
+          }
+        }
+
+        else {
+          object.material
             ?.dispose
             ?.();
         }
-      } else {
-        object.material
-          ?.dispose
-          ?.();
       }
-    });
+    );
 
     composer.dispose();
+
     renderer.dispose();
+
     mount.replaceChildren();
   }
 
@@ -853,14 +1081,4 @@ export async function bootMemeflowTrue3D(
   };
 }
 
-/* ===== MEMEFLOW_TRUE_3D_GLB_V5 ===== */
-
-/* ===== MEMEFLOW_TRUE_3D_HERO_V6 ===== */
-
-/* ===== MEMEFLOW_TRUE_3D_STAGE_FILL_V7 ===== */
-
-/* ===== MEMEFLOW_TRUE_3D_CINEMATIC_V8 ===== */
-
-/* ===== MEMEFLOW_VARIANT_2_SHOWCASE_V1 ===== */
-
-/* ===== MEMEFLOW_VARIANT_2_FULLFRAME_V2 ===== */
+/* ===== MEMEFLOW_DATA_TUNNEL_PAGE_V1 ===== */

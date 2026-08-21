@@ -1,230 +1,158 @@
 import * as THREE from 'three';
 
-function routePoint(nodePos) {
+import {
+  additive,
+  lineMaterial
+} from './materials.js?v=data-tunnel-page-v1';
+
+function point(node) {
   return new THREE.Vector3(
-    nodePos[0],
-    -0.22,
-    nodePos[2]
+    node.pos[0],
+    node.pos[1] - .42,
+    node.pos[2]
   );
 }
 
-function routeCurve(from, to) {
-  const a = routePoint(from);
-  const b = routePoint(to);
+function routeCurve(aNode, bNode) {
+  const a = point(aNode);
+  const b = point(bNode);
 
-  const dx = Math.abs(b.x - a.x);
-  const dz = Math.abs(b.z - a.z);
+  const middle =
+    a.clone()
+      .lerp(b, .5);
 
-  const points = [a];
-
-  if (dx < 0.15 || dz < 0.15) {
-    points.push(
-      a.clone().lerp(b, 0.5)
-    );
-  }
-
-  else if (dx >= dz) {
-    const mx =
-      a.x
-      + (b.x - a.x) * 0.52;
-
-    points.push(
-      new THREE.Vector3(
-        mx,
-        -0.22,
-        a.z
-      ),
-      new THREE.Vector3(
-        mx,
-        -0.22,
-        b.z
-      )
-    );
-  }
-
-  else {
-    const mz =
-      a.z
-      + (b.z - a.z) * 0.50;
-
-    points.push(
-      new THREE.Vector3(
-        a.x,
-        -0.22,
-        mz
-      ),
-      new THREE.Vector3(
-        b.x,
-        -0.22,
-        mz
-      )
-    );
-  }
-
-  points.push(b);
+  middle.y =
+    Math.min(a.y, b.y) - .12;
 
   return new THREE.CatmullRomCurve3(
-    points,
+    [
+      a,
+      middle,
+      b
+    ],
     false,
     'catmullrom',
-    0.022
+    .12
   );
 }
 
-function additive(color, opacity) {
-  return new THREE.MeshBasicMaterial({
-    color,
-    transparent: true,
-    opacity,
-    depthWrite: false,
-    blending: THREE.AdditiveBlending
-  });
-}
+export function createRoute(
+  aNode,
+  bNode,
+  color
+) {
+  const curve =
+    routeCurve(
+      aNode,
+      bNode
+    );
 
-function port(color, point) {
-  const group = new THREE.Group();
+  const root =
+    new THREE.Group();
 
-  const outer = new THREE.Mesh(
-    new THREE.CylinderGeometry(
-      0.075,
-      0.075,
-      0.028,
-      18
-    ),
-    new THREE.MeshStandardMaterial({
-      color: 0x08131a,
-      emissive: color,
-      emissiveIntensity: 0.26,
-      metalness: 0.86,
-      roughness: 0.18
-    })
-  );
-
-  outer.position.copy(point);
-  outer.position.y = -0.18;
-
-  group.add(outer);
-
-  const light = new THREE.Mesh(
-    new THREE.SphereGeometry(
-      0.030,
-      10,
-      8
-    ),
-    additive(color, 0.86)
-  );
-
-  light.position.copy(point);
-  light.position.y = -0.145;
-
-  group.add(light);
-
-  return group;
-}
-
-export function createRoute(from, to, color) {
-  const curve = routeCurve(from, to);
-
-  const group = new THREE.Group();
-
-  const outer = new THREE.Mesh(
-    new THREE.TubeGeometry(
-      curve,
-      84,
-      0.042,
-      8,
-      false
-    ),
-    additive(color, 0.040)
-  );
-
-  group.add(outer);
-
-  const rail = new THREE.Mesh(
-    new THREE.TubeGeometry(
-      curve,
-      84,
-      0.013,
-      8,
-      false
-    ),
-    additive(color, 0.42)
-  );
-
-  group.add(rail);
-
-  const coreLine = new THREE.Line(
-    new THREE.BufferGeometry()
-      .setFromPoints(
-        curve.getPoints(100)
+  const halo =
+    new THREE.Mesh(
+      new THREE.TubeGeometry(
+        curve,
+        48,
+        .034,
+        8,
+        false
       ),
-    new THREE.LineBasicMaterial({
-      color,
-      transparent: true,
-      opacity: 0.67,
-      depthWrite: false,
-      blending: THREE.AdditiveBlending
-    })
-  );
+      additive(
+        color,
+        .07
+      )
+    );
 
-  group.add(coreLine);
+  root.add(halo);
 
-  group.add(
-    port(color, curve.getPointAt(0.015)),
-    port(color, curve.getPointAt(0.985))
-  );
+  const tube =
+    new THREE.Mesh(
+      new THREE.TubeGeometry(
+        curve,
+        48,
+        .009,
+        8,
+        false
+      ),
+      additive(
+        color,
+        .48
+      )
+    );
+
+  root.add(tube);
+
+  const coreLine =
+    new THREE.Line(
+      new THREE.BufferGeometry()
+        .setFromPoints(
+          curve.getPoints(80)
+        ),
+      lineMaterial(
+        color,
+        .50
+      )
+    );
+
+  root.add(coreLine);
 
   const packets = [];
 
-  for (let index = 0; index < 3; index++) {
-    const packetGroup = new THREE.Group();
+  for (
+    let index = 0;
+    index < 3;
+    index++
+  ) {
+    const packet =
+      new THREE.Mesh(
+        new THREE.SphereGeometry(
+          .035,
+          10,
+          8
+        ),
+        additive(
+          0xffffff,
+          .86
+        )
+      );
 
-    const core = new THREE.Mesh(
-      new THREE.SphereGeometry(
-        0.030,
-        10,
-        8
-      ),
-      additive(0xffffff, 0.92)
-    );
-
-    const halo = new THREE.Mesh(
-      new THREE.SphereGeometry(
-        0.065,
-        10,
-        8
-      ),
-      additive(color, 0.10)
-    );
-
-    packetGroup.add(core, halo);
-
-    packetGroup.userData.seed =
+    packet.userData.seed =
       index / 3;
 
-    packetGroup.userData.speed =
-      0.040 + index * 0.003;
+    packet.userData.speed =
+      .055
+      + index * .004;
 
-    group.add(packetGroup);
-    packets.push(packetGroup);
+    root.add(packet);
+
+    packets.push(packet);
   }
 
   return {
-    group,
+    root,
     curve,
     packets,
     color
   };
 }
 
-export function animateRoutes(routes, time) {
-  for (const route of routes) {
+export function animateRoutes(
+  routes,
+  time
+) {
+  for (
+    const route
+    of routes
+  ) {
     for (
       let index = 0;
       index < route.packets.length;
       index++
     ) {
-      const packet = route.packets[index];
+      const packet =
+        route.packets[index];
 
       const t =
         (
@@ -236,15 +164,16 @@ export function animateRoutes(routes, time) {
         route.curve.getPointAt(t)
       );
 
-      const pulse =
-        0.90
+      const scale =
+        .78
         + Math.sin(
-          time * 6.8
-          + index * 1.8
-          + t * 9
-        ) * 0.12;
+          time * 6
+          + index * 1.7
+        ) * .12;
 
-      packet.scale.setScalar(pulse);
+      packet.scale.setScalar(
+        scale
+      );
     }
   }
 }
