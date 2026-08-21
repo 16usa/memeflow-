@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 
 /* MEMEFLOW_V30_3_1_3D_LIGHTWEIGHT
    Performance scheduler only. */
@@ -1257,189 +1258,326 @@ function mf20HideExistingNode(node) {
     true;
 }
 
+/* ===== MEMEFLOW_PREMIUM_GLASS_3D_V5 HELPERS ===== */
+
+function mf5GlassMaterial(color, core = false, layer = 0) {
+  const top = layer === 2;
+
+  return new THREE.MeshPhysicalMaterial({
+    color: top ? 0x071018 : 0x020609,
+    emissive: color,
+    emissiveIntensity:
+      top
+        ? core ? 0.16 : 0.065
+        : core ? 0.045 : 0.018,
+    metalness: top ? 0.48 : 0.62,
+    roughness: top ? 0.20 : 0.26,
+    clearcoat: 1,
+    clearcoatRoughness: 0.12,
+    transparent: true,
+    opacity: top ? 0.93 : 0.97
+  });
+}
+
+function mf5TopGlassMaterial(color, core = false) {
+  return new THREE.MeshPhysicalMaterial({
+    color: core ? 0x082018 : 0x07131b,
+    emissive: color,
+    emissiveIntensity: core ? 0.21 : 0.075,
+    metalness: 0.26,
+    roughness: 0.15,
+    clearcoat: 1,
+    clearcoatRoughness: 0.08,
+    transparent: true,
+    opacity: core ? 0.72 : 0.58,
+    depthWrite: true
+  });
+}
+
+function mf5EdgeMaterial(color, opacity = 0.5) {
+  return new THREE.LineBasicMaterial({
+    color,
+    transparent: true,
+    opacity,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending
+  });
+}
+
+function mf5GlowPlane(width, depth, color, opacity) {
+  const glow = new THREE.Mesh(
+    new THREE.PlaneGeometry(width, depth),
+    new THREE.MeshBasicMaterial({
+      color,
+      transparent: true,
+      opacity,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+      blending: THREE.AdditiveBlending
+    })
+  );
+
+  glow.rotation.x = -Math.PI / 2;
+  return glow;
+}
+
+function mf5MakeLed(color, opacity = 0.94) {
+  return new THREE.Mesh(
+    new THREE.SphereGeometry(0.034, 10, 8),
+    new THREE.MeshBasicMaterial({
+      color,
+      transparent: true,
+      opacity,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending
+    })
+  );
+}
+
+function mf5RouteColor(edge) {
+  if (edge?.key === 'paper:execution') {
+    return COLORS.green;
+  }
+
+  return edge?.color || COLORS.cyan;
+}
+
+function mf5HideLegacyPipes() {
+  if (typeof MF20 === 'undefined') return;
+
+  for (const route of MF20.pipes || []) {
+    if (route?.pipe) route.pipe.visible = false;
+    if (route?.halo) route.halo.visible = false;
+  }
+
+  for (const packet of MF20.packets || []) {
+    if (packet) packet.visible = false;
+  }
+}
+
 function mf20BuildModule(id) {
-  const node =
-    app.nodes.get(id);
+  const node = app.nodes.get(id);
 
   if (!node?.group) {
     return;
   }
 
-  const color =
-    MF20_NODE_COLOR[id];
+  const color = MF20_NODE_COLOR[id];
+  const core = id === 'core';
+  const decision = id === 'decision';
+  const execution = id === 'execution';
 
-  const core =
-    id === 'core';
-
-  node.group.position.set(
-    ...MF20_LAYOUT[id]
-  );
-
+  node.group.position.set(...MF20_LAYOUT[id]);
   node.group.scale.set(1, 1, 1);
 
   mf20HideExistingNode(node);
 
-  const hardware =
-    new THREE.Group();
-
-  hardware.name =
-    'MF20_HARDWARE_' + id;
+  const hardware = new THREE.Group();
+  hardware.name = 'MF20_HARDWARE_' + id;
 
   const width =
-    core ? 3.15 : 2.46;
+    core
+      ? 3.35
+      : decision
+        ? 2.62
+        : execution
+          ? 2.72
+          : 2.58;
 
   const depth =
-    core ? 2.05 : 1.58;
+    core
+      ? 2.20
+      : decision
+        ? 1.72
+        : execution
+          ? 1.72
+          : 1.68;
+
+  const radius = core ? 0.19 : 0.15;
 
   const levels = [
-    {
-      w: 1.10,
-      d: 1.12,
-      h: 0.13,
-      y: -0.34
-    },
-    {
-      w: 1.045,
-      d: 1.055,
-      h: 0.15,
-      y: -0.21
-    },
-    {
-      w: 1.00,
-      d: 1.00,
-      h: 0.18,
-      y: -0.07
-    }
+    { w: 1.10, d: 1.10, h: 0.16, y: -0.40 },
+    { w: 1.055, d: 1.055, h: 0.16, y: -0.245 },
+    { w: 1.00, d: 1.00, h: 0.20, y: -0.085 }
   ];
 
-  for (
-    let i = 0;
-    i < levels.length;
-    i++
-  ) {
-    const level =
-      levels[i];
+  const bodies = [];
+  const edgeLayers = [];
 
-    const geometry =
-      new THREE.BoxGeometry(
-        width * level.w,
-        level.h,
-        depth * level.d
-      );
+  for (let i = 0; i < levels.length; i++) {
+    const level = levels[i];
 
-    const body =
-      new THREE.Mesh(
-        geometry,
-        new THREE.MeshStandardMaterial({
-          color:
-            i === 2
-              ? 0x071016
-              : 0x03080c,
+    const geometry = new RoundedBoxGeometry(
+      width * level.w,
+      level.h,
+      depth * level.d,
+      3,
+      radius
+    );
 
-          emissive: color,
+    const body = new THREE.Mesh(
+      geometry,
+      mf5GlassMaterial(color, core, i)
+    );
 
-          emissiveIntensity:
-            i === 2
-              ? core ? 0.13 : 0.055
-              : 0.018,
-
-          metalness: 0.74,
-          roughness: 0.28
-        })
-      );
-
-    body.position.y =
-      level.y;
+    body.position.y = level.y;
+    body.renderOrder = 2 + i;
 
     hardware.add(body);
+    bodies.push(body);
 
-    const edges =
-      new THREE.LineSegments(
-        new THREE.EdgesGeometry(
-          geometry
-        ),
-        new THREE.LineBasicMaterial({
-          color,
-          transparent: true,
-          opacity:
-            i === 2
-              ? core ? 0.54 : 0.34
-              : 0.17
+    const edges = new THREE.LineSegments(
+      new THREE.EdgesGeometry(geometry, 24),
+      mf5EdgeMaterial(
+        color,
+        i === 2
+          ? core ? 0.82 : decision ? 0.72 : 0.56
+          : i === 1
+            ? 0.30
+            : 0.20
+      )
+    );
+
+    edges.position.copy(body.position);
+    edges.renderOrder = 6;
+
+    hardware.add(edges);
+    edgeLayers.push(edges);
+  }
+
+  const glassGeometry = new RoundedBoxGeometry(
+    width * 0.93,
+    0.085,
+    depth * 0.87,
+    3,
+    radius * 0.82
+  );
+
+  const glass = new THREE.Mesh(
+    glassGeometry,
+    mf5TopGlassMaterial(color, core)
+  );
+
+  glass.position.y = 0.055;
+  glass.renderOrder = 4;
+  hardware.add(glass);
+
+  const glassEdges = new THREE.LineSegments(
+    new THREE.EdgesGeometry(glassGeometry, 24),
+    mf5EdgeMaterial(
+      color,
+      core ? 0.88 : decision ? 0.78 : 0.60
+    )
+  );
+
+  glassEdges.position.copy(glass.position);
+  glassEdges.renderOrder = 7;
+  hardware.add(glassEdges);
+
+  const display = new THREE.Mesh(
+    new THREE.PlaneGeometry(
+      width * 0.84,
+      depth * 0.76
+    ),
+    new THREE.MeshBasicMaterial({
+      map: mf20MakeTopTexture(id, color),
+      transparent: true,
+      opacity: 0.98,
+      depthWrite: false,
+      blending: THREE.NormalBlending
+    })
+  );
+
+  display.rotation.x = -Math.PI / 2;
+  display.position.y = 0.105;
+  display.renderOrder = 9;
+  hardware.add(display);
+
+  const boltInsetX = width * 0.405;
+  const boltInsetZ = depth * 0.37;
+
+  for (const x of [-boltInsetX, boltInsetX]) {
+    for (const z of [-boltInsetZ, boltInsetZ]) {
+      const bolt = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.035, 0.035, 0.022, 12),
+        new THREE.MeshStandardMaterial({
+          color: 0x95b3c2,
+          emissive: color,
+          emissiveIntensity: 0.20,
+          metalness: 0.88,
+          roughness: 0.18
         })
       );
 
-    edges.position.copy(
-      body.position
-    );
-
-    hardware.add(edges);
+      bolt.position.set(x, 0.112, z);
+      hardware.add(bolt);
+    }
   }
 
-  const display =
-    new THREE.Mesh(
-      new THREE.PlaneGeometry(
-        width * 0.87,
-        depth * 0.80
-      ),
-      new THREE.MeshBasicMaterial({
-        map:
-          mf20MakeTopTexture(
-            id,
-            color
-          ),
+  const leds = [];
 
-        transparent: true,
-        opacity: 0.96,
-        depthWrite: false
-      })
+  for (let index = 0; index < 3; index++) {
+    const led = mf5MakeLed(
+      index === 2
+        ? color
+        : index === 1
+          ? 0x3e6f86
+          : 0x274755,
+      index === 2 ? 0.96 : 0.62
     );
 
-  display.rotation.x =
-    -Math.PI / 2;
-
-  display.position.y =
-    0.035;
-
-  hardware.add(display);
-
-  const underside =
-    new THREE.Mesh(
-      new THREE.PlaneGeometry(
-        width * 1.18,
-        depth * 1.22
-      ),
-      new THREE.MeshBasicMaterial({
-        color,
-        transparent: true,
-        opacity:
-          core ? 0.075 : 0.025,
-        depthWrite: false,
-        blending:
-          THREE.AdditiveBlending,
-        side:
-          THREE.DoubleSide
-      })
+    led.position.set(
+      width * 0.30 + index * 0.11,
+      -0.045,
+      depth * 0.505
     );
 
-  underside.rotation.x =
-    -Math.PI / 2;
+    hardware.add(led);
+    leds.push(led);
+  }
 
-  underside.position.y =
-    -0.42;
+  const underside = mf5GlowPlane(
+    width * 1.22,
+    depth * 1.25,
+    color,
+    core
+      ? 0.115
+      : decision
+        ? 0.082
+        : execution
+          ? 0.092
+          : 0.042
+  );
 
+  underside.position.y = -0.505;
+  underside.renderOrder = 1;
   hardware.add(underside);
+
+  const innerGlow = mf5GlowPlane(
+    width * 0.96,
+    depth * 0.94,
+    color,
+    core ? 0.075 : 0.026
+  );
+
+  innerGlow.position.y = -0.47;
+  innerGlow.renderOrder = 1;
+  hardware.add(innerGlow);
 
   node.group.add(hardware);
 
-  MF20.hardware.set(
-    id,
-    {
-      group: hardware,
-      display,
-      underside,
-      color
-    }
-  );
+  MF20.hardware.set(id, {
+    group: hardware,
+    display,
+    underside,
+    innerGlow,
+    glass,
+    glassEdges,
+    bodies,
+    edgeLayers,
+    leds,
+    color
+  });
 }
 
 function mf20CreateFloor() {
@@ -3301,33 +3439,33 @@ const WEB_EDGES_V31 = [
 const WEB_LAYOUT_MOBILE_V31 = {
   discovery: { pos:[-3.75, 0.08, -3.70], scale:0.67 },
   bootstrap: { pos:[ 0.00, 0.08, -3.70], scale:0.67 },
-  core:      { pos:[ 3.75, 0.12, -3.70], scale:0.72 },
+  core:      { pos:[ 3.75, 0.12, -3.70], scale:0.82 },
 
   risk:      { pos:[-3.75, 0.05, -0.70], scale:0.65 },
   market:    { pos:[ 0.00, 0.05, -0.70], scale:0.65 },
   holders:   { pos:[ 3.75, 0.05, -0.70], scale:0.65 },
 
   openai:    { pos:[-3.75, 0.03,  2.30], scale:0.63 },
-  decision:  { pos:[ 0.00, 0.03,  2.30], scale:0.65 },
+  decision:  { pos:[ 0.00, 0.03,  2.30], scale:0.70 },
   paper:     { pos:[ 3.75, 0.03,  2.30], scale:0.63 },
 
-  execution: { pos:[ 0.00, 0.03,  5.20], scale:0.64 }
+  execution: { pos:[ 0.00, 0.03,  5.20], scale:0.69 }
 };
 
 const WEB_LAYOUT_DESKTOP_V31 = {
   discovery: { pos:[-4.65, 0.08, -3.85], scale:0.78 },
   bootstrap: { pos:[ 0.00, 0.08, -3.85], scale:0.78 },
-  core:      { pos:[ 4.65, 0.13, -3.85], scale:0.84 },
+  core:      { pos:[ 4.65, 0.13, -3.85], scale:0.94 },
 
   risk:      { pos:[-4.65, 0.05, -0.55], scale:0.76 },
   market:    { pos:[ 0.00, 0.05, -0.55], scale:0.76 },
   holders:   { pos:[ 4.65, 0.05, -0.55], scale:0.76 },
 
   openai:    { pos:[-4.65, 0.03,  2.75], scale:0.74 },
-  decision:  { pos:[ 0.00, 0.03,  2.75], scale:0.77 },
+  decision:  { pos:[ 0.00, 0.03,  2.75], scale:0.82 },
   paper:     { pos:[ 4.65, 0.03,  2.75], scale:0.75 },
 
-  execution: { pos:[ 0.00, 0.03,  5.95], scale:0.74 }
+  execution: { pos:[ 0.00, 0.03,  5.95], scale:0.80 }
 };
 
 function webClampV31(v, a, b) {
@@ -3354,16 +3492,55 @@ function webPointV31(id) {
 function webCurveV31(edge, index = 0) {
   const a = webPointV31(edge.from);
   const b = webPointV31(edge.to);
-  const mid = a.clone().lerp(b, 0.5);
 
-  mid.z += ((index % 3) - 1) * 0.18;
-  mid.y += (index % 2 === 0 ? 0.10 : -0.06);
+  const points = [a];
+
+  const dx = Math.abs(b.x - a.x);
+  const dz = Math.abs(b.z - a.z);
+
+  if (dx < 0.35 || dz < 0.35) {
+    const mid = a.clone().lerp(b, 0.5);
+    mid.y += 0.03 + (index % 2) * 0.015;
+    points.push(mid);
+  } else if (dx >= dz) {
+    const mx = a.x + (b.x - a.x) * 0.52;
+
+    points.push(
+      new THREE.Vector3(
+        mx,
+        a.y + 0.03,
+        a.z
+      ),
+      new THREE.Vector3(
+        mx,
+        b.y + 0.03,
+        b.z
+      )
+    );
+  } else {
+    const mz = a.z + (b.z - a.z) * 0.50;
+
+    points.push(
+      new THREE.Vector3(
+        a.x,
+        a.y + 0.03,
+        mz
+      ),
+      new THREE.Vector3(
+        b.x,
+        b.y + 0.03,
+        mz
+      )
+    );
+  }
+
+  points.push(b);
 
   return new THREE.CatmullRomCurve3(
-    [a, mid, b],
+    points,
     false,
     'catmullrom',
-    0.06
+    0.045
   );
 }
 
@@ -3508,10 +3685,10 @@ function applyWebLayoutV31(forceHome = false) {
     Old V31 used 1.28 on mobile, which made the topology too small.
     1.10 keeps a safe frame while filling the viewport much better.
   */
-  const fitMargin = mobile ? 1.10 : 1.12;
+  const fitMargin = mobile ? 1.15 : 1.14;
   const distance = Math.max(forWidth, forDepth) * fitMargin;
 
-  const topTilt = mobile ? 0.105 : 0.13;
+  const topTilt = mobile ? 0.42 : 0.46;
 
   app.cameraHome.set(
     center.x,
@@ -3603,27 +3780,76 @@ function buildWebV31() {
   if (!app.scene || !app.nodes?.size) return;
 
   clearWebV31();
+  mf5HideLegacyPipes();
 
   const group = new THREE.Group();
   group.name = 'MEMEFLOW_REAL_EVENT_WEB_V31';
   app.scene.add(group);
+
   REAL_WEB_V31.group = group;
 
   WEB_EDGES_V31.forEach((edge, index) => {
     const curve = webCurveV31(edge, index);
-    const points = curve.getPoints(72);
+    const points = curve.getPoints(92);
+    const color = mf5RouteColor(edge);
 
-    const baseGeometry = new THREE.BufferGeometry().setFromPoints(points);
-    const base = new THREE.Line(
-      baseGeometry,
-      new THREE.LineBasicMaterial({
-        color: edge.color,
+    const pipe = new THREE.Mesh(
+      new THREE.TubeGeometry(
+        curve,
+        86,
+        webMobileV31() ? 0.034 : 0.040,
+        8,
+        false
+      ),
+      new THREE.MeshStandardMaterial({
+        color: 0x06131a,
+        emissive: color,
+        emissiveIntensity: 0.72,
+        metalness: 0.34,
+        roughness: 0.24,
         transparent: true,
-        opacity: edge.key === 'paper:execution' ? 0.018 : 0.034,
+        opacity: edge.key === 'paper:execution' ? 0.58 : 0.48,
         depthWrite: false
       })
     );
-    base.renderOrder = 4;
+
+    pipe.renderOrder = 3;
+    group.add(pipe);
+
+    const halo = new THREE.Mesh(
+      new THREE.TubeGeometry(
+        curve,
+        86,
+        webMobileV31() ? 0.072 : 0.082,
+        7,
+        false
+      ),
+      new THREE.MeshBasicMaterial({
+        color,
+        transparent: true,
+        opacity: edge.key === 'paper:execution' ? 0.070 : 0.050,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending
+      })
+    );
+
+    halo.renderOrder = 2;
+    group.add(halo);
+
+    const baseGeometry = new THREE.BufferGeometry().setFromPoints(points);
+
+    const base = new THREE.Line(
+      baseGeometry,
+      new THREE.LineBasicMaterial({
+        color,
+        transparent: true,
+        opacity: edge.key === 'paper:execution' ? 0.64 : 0.44,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending
+      })
+    );
+
+    base.renderOrder = 5;
     group.add(base);
 
     const hotGeometry = new THREE.BufferGeometry().setFromPoints(points);
@@ -3632,35 +3858,78 @@ function buildWebV31() {
     const hot = new THREE.Line(
       hotGeometry,
       new THREE.LineBasicMaterial({
-        color: edge.color,
+        color,
         transparent: true,
         opacity: 0,
-        depthWrite: false
+        depthWrite: false,
+        blending: THREE.AdditiveBlending
       })
     );
-    hot.renderOrder = 8;
+
+    hot.renderOrder = 9;
     group.add(hot);
 
     const head = new THREE.Mesh(
-      new THREE.SphereGeometry(0.075, 10, 10),
+      new THREE.SphereGeometry(
+        webMobileV31() ? 0.080 : 0.090,
+        12,
+        10
+      ),
       new THREE.MeshBasicMaterial({
-        color: edge.color,
+        color,
         transparent: true,
         opacity: 0,
-        depthWrite: false
+        depthWrite: false,
+        blending: THREE.AdditiveBlending
       })
     );
+
     head.visible = false;
-    head.renderOrder = 9;
+    head.renderOrder = 10;
     group.add(head);
+
+    const idleDots = [];
+
+    for (let dotIndex = 0; dotIndex < 3; dotIndex++) {
+      const dot = new THREE.Mesh(
+        new THREE.SphereGeometry(
+          webMobileV31() ? 0.042 : 0.050,
+          10,
+          8
+        ),
+        new THREE.MeshBasicMaterial({
+          color,
+          transparent: true,
+          opacity: 0.46,
+          depthWrite: false,
+          blending: THREE.AdditiveBlending
+        })
+      );
+
+      dot.userData.mf5 = {
+        seed: (dotIndex / 3 + index * 0.071) % 1,
+        speed:
+          edge.key === 'paper:execution'
+            ? 0.060
+            : 0.075 + (index % 3) * 0.010
+      };
+
+      dot.renderOrder = 8;
+      group.add(dot);
+      idleDots.push(dot);
+    }
 
     REAL_WEB_V31.edges.set(edge.key, {
       ...edge,
+      color,
       curve,
       points,
+      pipe,
+      halo,
       base,
       hot,
       head,
+      idleDots,
       active: false,
       startedAt: 0,
       durationMs: 90,
@@ -3805,44 +4074,105 @@ function animateWebV31(now) {
   if (document.hidden || !REAL_WEB_V31.installed) return;
 
   if ((now - REAL_WEB_V31.lastFrameAt) < 32) return;
+
   REAL_WEB_V31.lastFrameAt = now;
 
+  const seconds = now * 0.001;
+
   for (const entry of REAL_WEB_V31.edges.values()) {
+    for (let index = 0; index < (entry.idleDots || []).length; index++) {
+      const dot = entry.idleDots[index];
+      const data = dot.userData.mf5 || {};
+
+      const t =
+        (
+          Number(data.seed || 0) +
+          seconds * Number(data.speed || 0.07)
+        ) % 1;
+
+      dot.position.copy(entry.curve.getPointAt(t));
+
+      const pulse =
+        0.72 +
+        Math.sin(
+          seconds * 7.0 +
+          index * 1.9 +
+          t * 10
+        ) * 0.18;
+
+      dot.scale.setScalar(
+        entry.active
+          ? 1.34 + pulse * 0.20
+          : 0.90 + pulse * 0.10
+      );
+
+      dot.material.opacity =
+        entry.active
+          ? 0.82
+          : 0.32 + pulse * 0.15;
+    }
+
     if (!entry.active) continue;
 
     const elapsed = now - entry.startedAt;
-    const p = webClampV31(elapsed / entry.durationMs, 0, 1);
+    const p = webClampV31(
+      elapsed / entry.durationMs,
+      0,
+      1
+    );
 
     if (p < 1) {
-      const count = Math.max(2, Math.floor(entry.points.length * p));
-      entry.hot.geometry.setDrawRange(0, count);
-      entry.hot.material.opacity = Math.min(1, 0.80 * entry.boost);
+      const count = Math.max(
+        2,
+        Math.floor(entry.points.length * p)
+      );
 
-      const headP = entry.curve.getPointAt(Math.min(0.999, p));
+      entry.hot.geometry.setDrawRange(0, count);
+      entry.hot.material.opacity =
+        Math.min(1, 0.94 * entry.boost);
+
+      const headP =
+        entry.curve.getPointAt(
+          Math.min(0.999, p)
+        );
+
       entry.head.position.copy(headP);
-      entry.head.material.opacity = Math.min(1, 0.96 * entry.boost);
+      entry.head.material.opacity =
+        Math.min(1, 1.0 * entry.boost);
+
+      entry.head.scale.setScalar(
+        0.90 + 0.28 * entry.boost
+      );
 
       continue;
     }
 
     if (!entry.fadeStartedAt) {
       entry.fadeStartedAt = now;
-      entry.hot.geometry.setDrawRange(0, entry.points.length);
+      entry.hot.geometry.setDrawRange(
+        0,
+        entry.points.length
+      );
     }
 
     const fade = webClampV31(
-      1 - ((now - entry.fadeStartedAt) / entry.fadeMs),
+      1 - (
+        (now - entry.fadeStartedAt) /
+        entry.fadeMs
+      ),
       0,
       1
     );
 
-    entry.hot.material.opacity = fade * 0.62 * entry.boost;
-    entry.head.material.opacity = fade * 0.78 * entry.boost;
+    entry.hot.material.opacity =
+      fade * 0.72 * entry.boost;
+
+    entry.head.material.opacity =
+      fade * 0.90 * entry.boost;
 
     if (fade <= 0) {
       entry.active = false;
       entry.boost = 1;
-      entry.hot.visible = false;
       entry.head.visible = false;
       entry.hot.geometry.setDrawRange(0, 0);
     }
@@ -4096,3 +4426,5 @@ if (document.readyState === 'loading') {
 }
 
 /* ===== MEMEFLOW_3D_VIEWPORT_FREE_ORBIT_FIT_V4 ===== */
+
+/* ===== MEMEFLOW_PREMIUM_GLASS_3D_V5 ===== */
