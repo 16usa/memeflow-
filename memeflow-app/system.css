@@ -882,3 +882,114 @@ body.mf293-settings-open { overflow: hidden !important; }
     letter-spacing: .045em;
   }
 }
+
+/* ===== MEMEFLOW_LIVE_INSPECTOR_STANDALONE_V1 ===== */
+
+/*
+  The real .inspector node is now a sibling of TOKEN FLOW.
+  These rules neutralize its old overlay/grid positioning only.
+*/
+.mf-live-inspector-standalone-v1 {
+  position: relative !important;
+  inset: auto !important;
+  top: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  left: auto !important;
+
+  grid-column: auto !important;
+  grid-row: auto !important;
+
+  width: 100% !important;
+  max-width: none !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+
+  margin: 0 !important;
+  transform: none !important;
+  translate: none !important;
+
+  align-self: auto !important;
+  justify-self: stretch !important;
+
+  overflow: hidden !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+  z-index: 8 !important;
+}
+
+/* Keep the architecture, standalone Inspector and Token Flow in document order. */
+.mf-live-inspector-standalone-layout-v1 body {
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+}
+
+.mf-live-inspector-standalone-layout-v1 .system-shell {
+  height: auto !important;
+  min-height: 100dvh !important;
+  overflow: visible !important;
+  align-content: start !important;
+}
+
+/*
+  Existing mobile V29.x used:
+    row 1 = canvas
+    row 2 = inspector
+    row 3 = telemetry
+  After re-parenting Inspector, the empty second row collapses and telemetry
+  remains inside REAL-TIME ARCHITECTURE.
+*/
+@media (max-width: 900px) {
+  .mf-live-inspector-standalone-layout-v1,
+  .mf-live-inspector-standalone-layout-v1 body {
+    width: 100% !important;
+    height: auto !important;
+    min-height: 100% !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    overscroll-behavior-y: auto !important;
+  }
+
+  .mf-live-inspector-standalone-layout-v1 .system-shell {
+    display: grid !important;
+    grid-template-rows: auto auto auto auto !important;
+    gap: 6px !important;
+    height: auto !important;
+    min-height: 100dvh !important;
+    overflow: visible !important;
+  }
+
+  .mf-live-inspector-standalone-layout-v1 .viewport-wrap {
+    /*
+      Keep a real 3D scene after the shell stops being a fixed-height grid.
+      No scene/Three.js logic is changed.
+    */
+    height: clamp(500px, 68dvh, 760px) !important;
+    min-height: 500px !important;
+  }
+
+  .mf-live-inspector-standalone-v1 {
+    margin: 0 !important;
+    padding: 8px 9px !important;
+    border-radius: 13px !important;
+  }
+}
+
+@media (max-width: 430px) {
+  .mf-live-inspector-standalone-layout-v1 .viewport-wrap {
+    height: clamp(500px, 66dvh, 690px) !important;
+  }
+}
+
+/* Desktop/tablet: standalone card, not a floating overlay. */
+@media (min-width: 901px) {
+  .mf-live-inspector-standalone-layout-v1 .system-shell {
+    grid-template-rows: auto minmax(620px, 1fr) auto auto !important;
+  }
+
+  .mf-live-inspector-standalone-v1 {
+    margin: 0 !important;
+  }
+}
