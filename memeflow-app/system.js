@@ -1186,19 +1186,6 @@ function mf20MakeTopTexture(id, color) {
 
   ctx.shadowBlur = 0;
 
-  ctx.font =
-    id === 'core'
-      ? '700 66px Arial'
-      : '700 56px Arial';
-
-  ctx.fillStyle = '#d8e8ef';
-
-  ctx.fillText(
-    MF20_LABELS[id] || id,
-    512,
-    385
-  );
-
   const texture =
     new THREE.CanvasTexture(canvas);
 
@@ -1355,12 +1342,165 @@ function mf5HideLegacyPipes() {
   }
 }
 
+/* ===== MEMEFLOW_RENDER_MATCH_V6 HELPERS ===== */
+
+function mf6Hex(value) {
+  return '#' + Number(value).toString(16).padStart(6, '0');
+}
+
+function mf6MakeLabelTexture(id, color) {
+  const canvas = document.createElement('canvas');
+  canvas.width = 1024;
+  canvas.height = 220;
+
+  const ctx = canvas.getContext('2d');
+  const accent = mf6Hex(color);
+  const label = MF20_LABELS[id] || id.toUpperCase();
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  const bg = ctx.createLinearGradient(0, 0, 0, canvas.height);
+  bg.addColorStop(0, 'rgba(5,10,14,0.96)');
+  bg.addColorStop(1, 'rgba(2,5,8,0.98)');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.strokeStyle = accent;
+  ctx.globalAlpha = 0.88;
+  ctx.lineWidth = 6;
+  ctx.strokeRect(7, 7, canvas.width - 14, canvas.height - 14);
+  ctx.globalAlpha = 1;
+
+  ctx.shadowColor = accent;
+  ctx.shadowBlur = 20;
+  ctx.fillStyle = '#f3f8fb';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+
+  const fontSize =
+    label.length > 15
+      ? 58
+      : label.length > 11
+        ? 66
+        : 74;
+
+  ctx.font = `800 ${fontSize}px Arial`;
+  ctx.fillText(label, canvas.width / 2, canvas.height / 2 + 2);
+  ctx.shadowBlur = 0;
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.needsUpdate = true;
+  return texture;
+}
+
+function mf6GlowTexture() {
+  const canvas = document.createElement('canvas');
+  canvas.width = 256;
+  canvas.height = 256;
+
+  const ctx = canvas.getContext('2d');
+  const g = ctx.createRadialGradient(128, 128, 4, 128, 128, 124);
+
+  g.addColorStop(0.00, 'rgba(255,255,255,0.92)');
+  g.addColorStop(0.18, 'rgba(255,255,255,0.38)');
+  g.addColorStop(0.52, 'rgba(255,255,255,0.10)');
+  g.addColorStop(1.00, 'rgba(255,255,255,0.00)');
+
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, 256, 256);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.needsUpdate = true;
+  return texture;
+}
+
+const MF6_GLOW_TEXTURE = mf6GlowTexture();
+
+function mf6SoftGlow(width, depth, color, opacity) {
+  const plane = new THREE.Mesh(
+    new THREE.PlaneGeometry(width, depth),
+    new THREE.MeshBasicMaterial({
+      map: MF6_GLOW_TEXTURE,
+      color,
+      transparent: true,
+      opacity,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+      side: THREE.DoubleSide
+    })
+  );
+
+  plane.rotation.x = -Math.PI / 2;
+  return plane;
+}
+
+function mf6ShellMaterial(color, core = false, top = false) {
+  return new THREE.MeshPhysicalMaterial({
+    color: top
+      ? core ? 0x0a251c : 0x07131d
+      : 0x03090d,
+    emissive: color,
+    emissiveIntensity:
+      top
+        ? core ? 0.34 : 0.16
+        : core ? 0.11 : 0.055,
+    metalness: top ? 0.32 : 0.58,
+    roughness: top ? 0.14 : 0.22,
+    clearcoat: 1,
+    clearcoatRoughness: 0.055,
+    transparent: true,
+    opacity: top ? 0.78 : 0.98
+  });
+}
+
+function mf6BrightLine(color, opacity) {
+  return new THREE.LineBasicMaterial({
+    color,
+    transparent: true,
+    opacity,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending
+  });
+}
+
+function mf6AddCoreRings(hardware, color) {
+  const group = new THREE.Group();
+  group.position.y = 0.19;
+
+  for (const [radius, tube, opacity] of [
+    [0.63, 0.024, 0.92],
+    [0.84, 0.018, 0.62],
+    [1.04, 0.013, 0.32]
+  ]) {
+    const ring = new THREE.Mesh(
+      new THREE.TorusGeometry(radius, tube, 10, 72),
+      new THREE.MeshBasicMaterial({
+        color,
+        transparent: true,
+        opacity,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending
+      })
+    );
+
+    ring.rotation.x = Math.PI / 2;
+    group.add(ring);
+  }
+
+  hardware.add(group);
+  return group;
+}
+
+function mf6HideLegacyDomLabels() {
+  const labels = document.getElementById('labels');
+  if (labels) labels.setAttribute('aria-hidden', 'true');
+}
+
 function mf20BuildModule(id) {
   const node = app.nodes.get(id);
-
-  if (!node?.group) {
-    return;
-  }
+  if (!node?.group) return;
 
   const color = MF20_NODE_COLOR[id];
   const core = id === 'core';
@@ -1369,147 +1509,168 @@ function mf20BuildModule(id) {
 
   node.group.position.set(...MF20_LAYOUT[id]);
   node.group.scale.set(1, 1, 1);
-
   mf20HideExistingNode(node);
 
   const hardware = new THREE.Group();
   hardware.name = 'MF20_HARDWARE_' + id;
 
   const width =
-    core
-      ? 3.35
-      : decision
-        ? 2.62
-        : execution
-          ? 2.72
-          : 2.58;
+    core ? 3.45 :
+    decision ? 2.72 :
+    execution ? 2.82 : 2.66;
 
   const depth =
-    core
-      ? 2.20
-      : decision
-        ? 1.72
-        : execution
-          ? 1.72
-          : 1.68;
+    core ? 2.30 :
+    decision ? 1.82 :
+    execution ? 1.84 : 1.76;
 
-  const radius = core ? 0.19 : 0.15;
+  const radius = core ? 0.22 : 0.17;
 
-  const levels = [
-    { w: 1.10, d: 1.10, h: 0.16, y: -0.40 },
-    { w: 1.055, d: 1.055, h: 0.16, y: -0.245 },
-    { w: 1.00, d: 1.00, h: 0.20, y: -0.085 }
+  const tiers = [
+    { w: 1.12, d: 1.12, h: 0.19, y: -0.47, glow: 0.16 },
+    { w: 1.065, d: 1.065, h: 0.18, y: -0.285, glow: 0.26 },
+    { w: 1.00, d: 1.00, h: 0.22, y: -0.09, glow: 0.50 }
   ];
 
   const bodies = [];
   const edgeLayers = [];
 
-  for (let i = 0; i < levels.length; i++) {
-    const level = levels[i];
+  for (let i = 0; i < tiers.length; i++) {
+    const tier = tiers[i];
 
     const geometry = new RoundedBoxGeometry(
-      width * level.w,
-      level.h,
-      depth * level.d,
-      3,
+      width * tier.w,
+      tier.h,
+      depth * tier.d,
+      4,
       radius
     );
 
     const body = new THREE.Mesh(
       geometry,
-      mf5GlassMaterial(color, core, i)
+      mf6ShellMaterial(color, core, i === 2)
     );
 
-    body.position.y = level.y;
-    body.renderOrder = 2 + i;
-
+    body.position.y = tier.y;
+    body.renderOrder = 4 + i;
     hardware.add(body);
     bodies.push(body);
 
     const edges = new THREE.LineSegments(
-      new THREE.EdgesGeometry(geometry, 24),
-      mf5EdgeMaterial(
+      new THREE.EdgesGeometry(geometry, 22),
+      mf6BrightLine(
         color,
-        i === 2
-          ? core ? 0.82 : decision ? 0.72 : 0.56
-          : i === 1
-            ? 0.30
-            : 0.20
+        core
+          ? Math.min(1, tier.glow + 0.26)
+          : decision || execution
+            ? Math.min(1, tier.glow + 0.15)
+            : tier.glow
       )
     );
 
     edges.position.copy(body.position);
-    edges.renderOrder = 6;
-
+    edges.renderOrder = 9;
     hardware.add(edges);
     edgeLayers.push(edges);
   }
 
   const glassGeometry = new RoundedBoxGeometry(
-    width * 0.93,
-    0.085,
-    depth * 0.87,
-    3,
-    radius * 0.82
+    width * 0.94,
+    0.11,
+    depth * 0.89,
+    4,
+    radius * 0.86
   );
 
   const glass = new THREE.Mesh(
     glassGeometry,
-    mf5TopGlassMaterial(color, core)
+    new THREE.MeshPhysicalMaterial({
+      color: core ? 0x0b2f22 : 0x081723,
+      emissive: color,
+      emissiveIntensity:
+        core ? 0.40 :
+        decision ? 0.27 :
+        execution ? 0.32 : 0.18,
+      metalness: 0.18,
+      roughness: 0.10,
+      clearcoat: 1,
+      clearcoatRoughness: 0.035,
+      transparent: true,
+      opacity: core ? 0.68 : 0.58
+    })
   );
 
-  glass.position.y = 0.055;
-  glass.renderOrder = 4;
+  glass.position.y = 0.105;
+  glass.renderOrder = 7;
   hardware.add(glass);
 
   const glassEdges = new THREE.LineSegments(
-    new THREE.EdgesGeometry(glassGeometry, 24),
-    mf5EdgeMaterial(
+    new THREE.EdgesGeometry(glassGeometry, 22),
+    mf6BrightLine(
       color,
-      core ? 0.88 : decision ? 0.78 : 0.60
+      core ? 1.00 :
+      decision ? 0.94 :
+      execution ? 0.96 : 0.82
     )
   );
 
   glassEdges.position.copy(glass.position);
-  glassEdges.renderOrder = 7;
+  glassEdges.renderOrder = 11;
   hardware.add(glassEdges);
 
   const display = new THREE.Mesh(
     new THREE.PlaneGeometry(
-      width * 0.84,
-      depth * 0.76
+      width * 0.78,
+      depth * 0.69
     ),
     new THREE.MeshBasicMaterial({
       map: mf20MakeTopTexture(id, color),
       transparent: true,
       opacity: 0.98,
       depthWrite: false,
-      blending: THREE.NormalBlending
+      blending: THREE.AdditiveBlending
     })
   );
 
   display.rotation.x = -Math.PI / 2;
-  display.position.y = 0.105;
-  display.renderOrder = 9;
+  display.position.y = 0.168;
+  display.renderOrder = 13;
   hardware.add(display);
 
-  const boltInsetX = width * 0.405;
-  const boltInsetZ = depth * 0.37;
+  const label = new THREE.Mesh(
+    new THREE.PlaneGeometry(
+      width * 0.78,
+      core ? 0.38 : 0.34
+    ),
+    new THREE.MeshBasicMaterial({
+      map: mf6MakeLabelTexture(id, color),
+      transparent: true,
+      opacity: 1,
+      depthWrite: false
+    })
+  );
 
-  for (const x of [-boltInsetX, boltInsetX]) {
-    for (const z of [-boltInsetZ, boltInsetZ]) {
+  label.position.set(0, -0.115, depth * 0.505);
+  label.renderOrder = 14;
+  hardware.add(label);
+
+  const boltX = width * 0.405;
+  const boltZ = depth * 0.375;
+
+  for (const x of [-boltX, boltX]) {
+    for (const z of [-boltZ, boltZ]) {
       const bolt = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.035, 0.035, 0.022, 12),
+        new THREE.CylinderGeometry(0.040, 0.040, 0.028, 12),
         new THREE.MeshStandardMaterial({
-          color: 0x95b3c2,
+          color: 0x9bb5c2,
           emissive: color,
-          emissiveIntensity: 0.20,
-          metalness: 0.88,
-          roughness: 0.18
+          emissiveIntensity: 0.18,
+          metalness: 0.92,
+          roughness: 0.16
         })
       );
 
-      bolt.position.set(x, 0.112, z);
+      bolt.position.set(x, 0.175, z);
       hardware.add(bolt);
     }
   }
@@ -1517,58 +1678,67 @@ function mf20BuildModule(id) {
   const leds = [];
 
   for (let index = 0; index < 3; index++) {
-    const led = mf5MakeLed(
+    const ledColor =
       index === 2
         ? color
         : index === 1
-          ? 0x3e6f86
-          : 0x274755,
-      index === 2 ? 0.96 : 0.62
+          ? 0x4e819a
+          : 0x315565;
+
+    const led = new THREE.Mesh(
+      new THREE.SphereGeometry(0.038, 10, 8),
+      new THREE.MeshBasicMaterial({
+        color: ledColor,
+        transparent: true,
+        opacity: index === 2 ? 1 : 0.74,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending
+      })
     );
 
     led.position.set(
-      width * 0.30 + index * 0.11,
-      -0.045,
-      depth * 0.505
+      width * 0.27 + index * 0.13,
+      -0.005,
+      depth * 0.535
     );
 
     hardware.add(led);
     leds.push(led);
   }
 
-  const underside = mf5GlowPlane(
-    width * 1.22,
-    depth * 1.25,
+  const underside = mf6SoftGlow(
+    width * 1.62,
+    depth * 1.72,
     color,
-    core
-      ? 0.115
-      : decision
-        ? 0.082
-        : execution
-          ? 0.092
-          : 0.042
+    core ? 0.27 :
+    decision ? 0.20 :
+    execution ? 0.23 : 0.115
   );
 
-  underside.position.y = -0.505;
+  underside.position.y = -0.59;
   underside.renderOrder = 1;
   hardware.add(underside);
 
-  const innerGlow = mf5GlowPlane(
-    width * 0.96,
-    depth * 0.94,
+  const innerGlow = mf6SoftGlow(
+    width * 1.14,
+    depth * 1.18,
     color,
-    core ? 0.075 : 0.026
+    core ? 0.22 : 0.095
   );
 
-  innerGlow.position.y = -0.47;
-  innerGlow.renderOrder = 1;
+  innerGlow.position.y = -0.545;
+  innerGlow.renderOrder = 2;
   hardware.add(innerGlow);
+
+  let coreRings = null;
+  if (core) coreRings = mf6AddCoreRings(hardware, color);
 
   node.group.add(hardware);
 
   MF20.hardware.set(id, {
     group: hardware,
     display,
+    label,
     underside,
     innerGlow,
     glass,
@@ -1576,6 +1746,7 @@ function mf20BuildModule(id) {
     bodies,
     edgeLayers,
     leds,
+    coreRings,
     color
   });
 }
@@ -3437,19 +3608,19 @@ const WEB_EDGES_V31 = [
 ];
 
 const WEB_LAYOUT_MOBILE_V31 = {
-  discovery: { pos:[-3.75, 0.08, -3.70], scale:0.67 },
-  bootstrap: { pos:[ 0.00, 0.08, -3.70], scale:0.67 },
-  core:      { pos:[ 3.75, 0.12, -3.70], scale:0.82 },
+  discovery: { pos:[-3.42, 0.08, -3.45], scale:0.82 },
+  bootstrap: { pos:[ 0.00, 0.08, -3.45], scale:0.82 },
+  core:      { pos:[ 3.42, 0.12, -3.45], scale:0.92 },
 
-  risk:      { pos:[-3.75, 0.05, -0.70], scale:0.65 },
-  market:    { pos:[ 0.00, 0.05, -0.70], scale:0.65 },
-  holders:   { pos:[ 3.75, 0.05, -0.70], scale:0.65 },
+  risk:      { pos:[-3.42, 0.05, -0.55], scale:0.80 },
+  market:    { pos:[ 0.00, 0.05, -0.55], scale:0.80 },
+  holders:   { pos:[ 3.42, 0.05, -0.55], scale:0.80 },
 
-  openai:    { pos:[-3.75, 0.03,  2.30], scale:0.63 },
-  decision:  { pos:[ 0.00, 0.03,  2.30], scale:0.70 },
-  paper:     { pos:[ 3.75, 0.03,  2.30], scale:0.63 },
+  openai:    { pos:[-3.42, 0.03,  2.35], scale:0.78 },
+  decision:  { pos:[ 0.00, 0.03,  2.35], scale:0.86 },
+  paper:     { pos:[ 3.42, 0.03,  2.35], scale:0.78 },
 
-  execution: { pos:[ 0.00, 0.03,  5.20], scale:0.69 }
+  execution: { pos:[ 0.00, 0.03,  5.05], scale:0.82 }
 };
 
 const WEB_LAYOUT_DESKTOP_V31 = {
@@ -3492,45 +3663,26 @@ function webPointV31(id) {
 function webCurveV31(edge, index = 0) {
   const a = webPointV31(edge.from);
   const b = webPointV31(edge.to);
-
   const points = [a];
 
   const dx = Math.abs(b.x - a.x);
   const dz = Math.abs(b.z - a.z);
 
-  if (dx < 0.35 || dz < 0.35) {
-    const mid = a.clone().lerp(b, 0.5);
-    mid.y += 0.03 + (index % 2) * 0.015;
-    points.push(mid);
+  if (dx < 0.22 || dz < 0.22) {
+    points.push(a.clone().lerp(b, 0.5));
   } else if (dx >= dz) {
     const mx = a.x + (b.x - a.x) * 0.52;
 
     points.push(
-      new THREE.Vector3(
-        mx,
-        a.y + 0.03,
-        a.z
-      ),
-      new THREE.Vector3(
-        mx,
-        b.y + 0.03,
-        b.z
-      )
+      new THREE.Vector3(mx, a.y + 0.03, a.z),
+      new THREE.Vector3(mx, b.y + 0.03, b.z)
     );
   } else {
     const mz = a.z + (b.z - a.z) * 0.50;
 
     points.push(
-      new THREE.Vector3(
-        a.x,
-        a.y + 0.03,
-        mz
-      ),
-      new THREE.Vector3(
-        b.x,
-        b.y + 0.03,
-        mz
-      )
+      new THREE.Vector3(a.x, a.y + 0.03, mz),
+      new THREE.Vector3(b.x, b.y + 0.03, mz)
     );
   }
 
@@ -3540,7 +3692,7 @@ function webCurveV31(edge, index = 0) {
     points,
     false,
     'catmullrom',
-    0.045
+    0.035
   );
 }
 
@@ -3662,7 +3814,7 @@ function applyWebLayoutV31(forceHome = false) {
     - substantially larger than V31
     - no title/telemetry/legend overlay is consuming canvas space
   */
-  app.camera.fov = mobile ? 42 : 39;
+  app.camera.fov = mobile ? 38 : 36;
   app.camera.near = 0.05;
   app.camera.far = 180;
   app.camera.updateProjectionMatrix();
@@ -3685,10 +3837,10 @@ function applyWebLayoutV31(forceHome = false) {
     Old V31 used 1.28 on mobile, which made the topology too small.
     1.10 keeps a safe frame while filling the viewport much better.
   */
-  const fitMargin = mobile ? 1.15 : 1.14;
+  const fitMargin = mobile ? 0.93 : 1.02;
   const distance = Math.max(forWidth, forDepth) * fitMargin;
 
-  const topTilt = mobile ? 0.42 : 0.46;
+  const topTilt = mobile ? 0.72 : 0.70;
 
   app.cameraHome.set(
     center.x,
@@ -3785,80 +3937,89 @@ function buildWebV31() {
   const group = new THREE.Group();
   group.name = 'MEMEFLOW_REAL_EVENT_WEB_V31';
   app.scene.add(group);
-
   REAL_WEB_V31.group = group;
 
   WEB_EDGES_V31.forEach((edge, index) => {
     const curve = webCurveV31(edge, index);
-    const points = curve.getPoints(92);
-    const color = mf5RouteColor(edge);
+    const points = curve.getPoints(110);
 
-    const pipe = new THREE.Mesh(
+    const color =
+      edge.key === 'decision:paper'
+        ? COLORS.purple
+        : edge.key === 'paper:execution'
+          ? COLORS.green
+          : edge.key === 'core:holders' ||
+            edge.key === 'core:market' ||
+            edge.key === 'risk:decision'
+            ? COLORS.green
+            : edge.color;
+
+    const outer = new THREE.Mesh(
       new THREE.TubeGeometry(
         curve,
-        86,
-        webMobileV31() ? 0.034 : 0.040,
-        8,
-        false
-      ),
-      new THREE.MeshStandardMaterial({
-        color: 0x06131a,
-        emissive: color,
-        emissiveIntensity: 0.72,
-        metalness: 0.34,
-        roughness: 0.24,
-        transparent: true,
-        opacity: edge.key === 'paper:execution' ? 0.58 : 0.48,
-        depthWrite: false
-      })
-    );
-
-    pipe.renderOrder = 3;
-    group.add(pipe);
-
-    const halo = new THREE.Mesh(
-      new THREE.TubeGeometry(
-        curve,
-        86,
-        webMobileV31() ? 0.072 : 0.082,
-        7,
+        96,
+        webMobileV31() ? 0.080 : 0.090,
+        10,
         false
       ),
       new THREE.MeshBasicMaterial({
         color,
         transparent: true,
-        opacity: edge.key === 'paper:execution' ? 0.070 : 0.050,
+        opacity: 0.085,
         depthWrite: false,
         blending: THREE.AdditiveBlending
       })
     );
 
-    halo.renderOrder = 2;
-    group.add(halo);
+    outer.renderOrder = 2;
+    group.add(outer);
 
-    const baseGeometry = new THREE.BufferGeometry().setFromPoints(points);
+    const pipe = new THREE.Mesh(
+      new THREE.TubeGeometry(
+        curve,
+        96,
+        webMobileV31() ? 0.030 : 0.036,
+        9,
+        false
+      ),
+      new THREE.MeshBasicMaterial({
+        color,
+        transparent: true,
+        opacity: edge.key === 'paper:execution' ? 0.92 : 0.72,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending
+      })
+    );
+
+    pipe.renderOrder = 5;
+    group.add(pipe);
+
+    const baseGeometry =
+      new THREE.BufferGeometry().setFromPoints(points);
 
     const base = new THREE.Line(
       baseGeometry,
       new THREE.LineBasicMaterial({
         color,
         transparent: true,
-        opacity: edge.key === 'paper:execution' ? 0.64 : 0.44,
+        opacity: 0.92,
         depthWrite: false,
         blending: THREE.AdditiveBlending
       })
     );
 
-    base.renderOrder = 5;
+    base.renderOrder = 7;
     group.add(base);
 
-    const hotGeometry = new THREE.BufferGeometry().setFromPoints(points);
+    const hotGeometry =
+      new THREE.BufferGeometry().setFromPoints(points);
+
     hotGeometry.setDrawRange(0, 0);
 
     const hot = new THREE.Line(
       hotGeometry,
       new THREE.LineBasicMaterial({
-        color,
+        color: 0xffffff,
         transparent: true,
         opacity: 0,
         depthWrite: false,
@@ -3866,17 +4027,17 @@ function buildWebV31() {
       })
     );
 
-    hot.renderOrder = 9;
+    hot.renderOrder = 12;
     group.add(hot);
 
     const head = new THREE.Mesh(
       new THREE.SphereGeometry(
-        webMobileV31() ? 0.080 : 0.090,
+        webMobileV31() ? 0.085 : 0.098,
         12,
         10
       ),
       new THREE.MeshBasicMaterial({
-        color,
+        color: 0xffffff,
         transparent: true,
         opacity: 0,
         depthWrite: false,
@@ -3885,36 +4046,40 @@ function buildWebV31() {
     );
 
     head.visible = false;
-    head.renderOrder = 10;
+    head.renderOrder = 13;
     group.add(head);
 
     const idleDots = [];
 
-    for (let dotIndex = 0; dotIndex < 3; dotIndex++) {
+    for (let dotIndex = 0; dotIndex < 5; dotIndex++) {
       const dot = new THREE.Mesh(
         new THREE.SphereGeometry(
-          webMobileV31() ? 0.042 : 0.050,
+          webMobileV31() ? 0.046 : 0.054,
           10,
           8
         ),
         new THREE.MeshBasicMaterial({
           color,
           transparent: true,
-          opacity: 0.46,
+          opacity: 0.68,
           depthWrite: false,
           blending: THREE.AdditiveBlending
         })
       );
 
-      dot.userData.mf5 = {
-        seed: (dotIndex / 3 + index * 0.071) % 1,
+      dot.userData.mf6 = {
+        seed:
+          (
+            dotIndex / 5 +
+            index * 0.061
+          ) % 1,
         speed:
           edge.key === 'paper:execution'
-            ? 0.060
-            : 0.075 + (index % 3) * 0.010
+            ? 0.070
+            : 0.088 + (index % 3) * 0.010
       };
 
-      dot.renderOrder = 8;
+      dot.renderOrder = 10;
       group.add(dot);
       idleDots.push(dot);
     }
@@ -3924,17 +4089,17 @@ function buildWebV31() {
       color,
       curve,
       points,
+      outer,
       pipe,
-      halo,
       base,
       hot,
       head,
       idleDots,
       active: false,
       startedAt: 0,
-      durationMs: 90,
+      durationMs: 95,
       fadeStartedAt: 0,
-      fadeMs: 105,
+      fadeMs: 150,
       boost: 1,
       lastShotAt: 0
     });
@@ -4072,44 +4237,42 @@ function animateWebV31(now) {
   REAL_WEB_V31.frame = requestAnimationFrame(animateWebV31);
 
   if (document.hidden || !REAL_WEB_V31.installed) return;
-
   if ((now - REAL_WEB_V31.lastFrameAt) < 32) return;
 
   REAL_WEB_V31.lastFrameAt = now;
-
   const seconds = now * 0.001;
 
   for (const entry of REAL_WEB_V31.edges.values()) {
     for (let index = 0; index < (entry.idleDots || []).length; index++) {
       const dot = entry.idleDots[index];
-      const data = dot.userData.mf5 || {};
+      const data = dot.userData.mf6 || {};
 
       const t =
         (
           Number(data.seed || 0) +
-          seconds * Number(data.speed || 0.07)
+          seconds * Number(data.speed || 0.09)
         ) % 1;
 
       dot.position.copy(entry.curve.getPointAt(t));
 
       const pulse =
-        0.72 +
+        0.84 +
         Math.sin(
-          seconds * 7.0 +
-          index * 1.9 +
-          t * 10
-        ) * 0.18;
+          seconds * 8.5 +
+          index * 1.7 +
+          t * 12
+        ) * 0.16;
 
       dot.scale.setScalar(
         entry.active
-          ? 1.34 + pulse * 0.20
-          : 0.90 + pulse * 0.10
+          ? 1.42 + pulse * 0.18
+          : 0.92 + pulse * 0.12
       );
 
       dot.material.opacity =
         entry.active
-          ? 0.82
-          : 0.32 + pulse * 0.15;
+          ? 0.96
+          : 0.48 + pulse * 0.20;
     }
 
     if (!entry.active) continue;
@@ -4129,7 +4292,7 @@ function animateWebV31(now) {
 
       entry.hot.geometry.setDrawRange(0, count);
       entry.hot.material.opacity =
-        Math.min(1, 0.94 * entry.boost);
+        Math.min(1, 0.98 * entry.boost);
 
       const headP =
         entry.curve.getPointAt(
@@ -4141,7 +4304,7 @@ function animateWebV31(now) {
         Math.min(1, 1.0 * entry.boost);
 
       entry.head.scale.setScalar(
-        0.90 + 0.28 * entry.boost
+        1.0 + 0.36 * entry.boost
       );
 
       continue;
@@ -4165,16 +4328,39 @@ function animateWebV31(now) {
     );
 
     entry.hot.material.opacity =
-      fade * 0.72 * entry.boost;
+      fade * 0.82 * entry.boost;
 
     entry.head.material.opacity =
-      fade * 0.90 * entry.boost;
+      fade * 0.96 * entry.boost;
 
     if (fade <= 0) {
       entry.active = false;
       entry.boost = 1;
       entry.head.visible = false;
       entry.hot.geometry.setDrawRange(0, 0);
+    }
+  }
+
+  for (const id of ['core', 'decision', 'execution']) {
+    const hardware = MF20?.hardware?.get?.(id);
+    if (!hardware?.innerGlow?.material) continue;
+
+    const base =
+      id === 'core'
+        ? 0.19
+        : id === 'decision'
+          ? 0.12
+          : 0.14;
+
+    hardware.innerGlow.material.opacity =
+      base +
+      Math.sin(
+        seconds * 2.1 +
+        (id === 'core' ? 0 : id === 'decision' ? 1.8 : 3.2)
+      ) * 0.035;
+
+    if (hardware.coreRings) {
+      hardware.coreRings.rotation.y += 0.0025;
     }
   }
 
@@ -4254,6 +4440,7 @@ function rebuildRealWebV31(forceHome = false) {
 }
 
 function installRealWebV31() {
+  mf6HideLegacyDomLabels();
   if (REAL_WEB_V31.installed) return;
 
   if (!app.scene || !app.camera || !app.controls || !app.nodes?.size) {
@@ -4428,3 +4615,5 @@ if (document.readyState === 'loading') {
 /* ===== MEMEFLOW_3D_VIEWPORT_FREE_ORBIT_FIT_V4 ===== */
 
 /* ===== MEMEFLOW_PREMIUM_GLASS_3D_V5 ===== */
+
+/* ===== MEMEFLOW_RENDER_MATCH_V6 ===== */

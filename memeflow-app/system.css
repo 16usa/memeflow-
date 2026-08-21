@@ -1387,3 +1387,27 @@ body.mf293-settings-open { overflow: hidden !important; }
     overflow: hidden !important;
   }
 }
+
+/* ===== MEMEFLOW_RENDER_MATCH_V6 ===== */
+
+/* Old floating pill labels are not part of the approved 3D render. */
+.viewport-wrap .scene-labels,
+.viewport-wrap .node-label {
+  display: none !important;
+}
+
+/* Pure black viewport; no page-layout changes. */
+.viewport-wrap,
+#systemCanvas {
+  background: #000 !important;
+  background-image: none !important;
+}
+
+#systemCanvas {
+  touch-action: none !important;
+  cursor: grab;
+}
+
+#systemCanvas:active {
+  cursor: grabbing;
+}
