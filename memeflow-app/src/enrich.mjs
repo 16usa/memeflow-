@@ -1,7 +1,7 @@
 /**
  * Per-step token enrichment with partial-result preservation.
  * Phase A (enrichToken)  — immediate: supply, curve, store, evaluate, publish.
- * Phase B (enrichHolders) — delayed:  getTokenLargestAccounts, update holderFresh.
+ * Phase B (enrichHolders) — delayed: canonical getProgramAccounts wallet census.
  * makeHolderQueue — bounded, deduplicating holder enrichment queue (dep-injected).
  *
  * Imported by app-server.mjs.
@@ -109,8 +109,12 @@ export async function refreshTokenMetadata(mint,deps={}){
   if(existingImage)return {attempted:false,reason:'image-present'};
 
   const maxAttempts=Math.max(1,Number(process.env.METADATA_IMAGE_RETRY_MAX||4));
-  const retryMs=Math.max(60000,Number(process.env.METADATA_IMAGE_RETRY_MS||300000));
   const attempts=Math.max(0,Number(token.metadataImageRetryCount||0));
+  const configuredRetryMs=Number(process.env.METADATA_IMAGE_RETRY_MS);
+  const retrySchedule=[5000,15000,45000,120000];
+  const retryMs=Number.isFinite(configuredRetryMs)&&configuredRetryMs>0
+    ? Math.max(5000,configuredRetryMs)
+    : retrySchedule[Math.min(attempts,retrySchedule.length-1)];
   const lastAttempt=Number(token.metadataImageRetryAt||token.metadataFetchedAt||0);
 
   if(attempts>=maxAttempts)return {attempted:false,reason:'retry-limit'};
@@ -249,6 +253,18 @@ function isRateLimited(e) {
   );
 }
 
+// MEMEFLOW_RUNTIME_TRUTH_V1_4_1_HOLDER_HOTFIX
+function isTransientHolderError(e){
+  if(isRateLimited(e))return true;
+  const status=Number(e?.status);
+  const code=String(e?.code||'').toUpperCase();
+  const msg=String(e?.message||'').toLowerCase();
+  return e?.name==='AbortError'||[408,425,500,502,503,504].includes(status)||
+    ['ECONNRESET','ENOTFOUND','ETIMEDOUT','ECONNREFUSED','EAI_AGAIN'].includes(code)||
+    msg.includes('network')||msg.includes('connection reset')||msg.includes('temporarily unavailable')||
+    msg.includes('timeout')||msg.includes('timed out')||msg.includes('aborted');
+}
+
 // ── Phase A: immediate enrichment ─────────────────────────────────────────────
 
 /**
@@ -308,7 +324,6 @@ export async function enrichToken(mint, curve, deps) {
     const total = Number(supply?.value?.uiAmountString ?? 0);
     const tw = (tradeWindows?.get?.(mint)) || {buy: 0, sell: 0};
     const existingToken = store.state.tokens[mint] || {};
-    const dexMarketLocked = existingToken.dexConfirmed === true;
     let metadataPatch = {};
     const metadataAttemptAt=Number(existingToken.metadataFetchedAt||0);
     const metadataRetryMs=60_000;
@@ -369,24 +384,27 @@ export async function enrichToken(mint, curve, deps) {
       developerSharePct: existingToken.holderFresh === true
         ? (existingToken.developerPct ?? existingToken.developerSharePct ?? null)
         : null,
-      buyPressure: dexMarketLocked ? (existingToken.buyPressure ?? null) : (tw.sell ? tw.buy / tw.sell : (tw.buy ? tw.buy : null)),
-      dataQuality: Math.max(Number(existingToken.dataQuality) || 0, [total || null, dexMarketLocked ? (existingToken.priceSol ?? null) : (c.priceSol ?? null)].filter(x => x != null).length / 2),
-      source: dexMarketLocked ? (existingToken.source || 'Pump create') : 'Solana RPC',
+      buyPressure: tw.sell ? tw.buy / tw.sell : (tw.buy ? tw.buy : (existingToken.buyPressure ?? null)),
+      momentum: tw.sell ? tw.buy / tw.sell : (tw.buy ? tw.buy : (existingToken.buyPressure ?? existingToken.momentum ?? null)),
+      dataQuality: Math.max(Number(existingToken.dataQuality) || 0, [total || null, c.priceSol ?? existingToken.priceSol ?? null].filter(x => x != null).length / 2),
+      source: existingToken.source || 'Pump create',
     };
     // Supply data
     if (supply) { update.decimals = decimals; update.totalSupply = total; }
     // Curve data
     if (Object.keys(c).length) {
       update.complete = c.complete ?? null;
-      if (!dexMarketLocked) {
-        update.priceSol       = c.priceSol    ?? null;
-        update.liquiditySol   = c.liquiditySol ?? null;
-        update.marketCapSol   = (c.priceSol && total) ? c.priceSol * total : null;
-        /* MEMEFLOW_CANONICAL_ENRICH_FIELDS_V1 */
-        update.marketCap      = update.marketCapSol;
-        update.liquidity      = update.liquiditySol;
-        update.momentum       = update.buyPressure;
-      }
+      update.priceSol       = c.priceSol    ?? null;
+      update.liquiditySol   = c.liquiditySol ?? null;
+      update.marketCapSol   = (c.priceSol && total) ? c.priceSol * total : null;
+      /* MEMEFLOW_CANONICAL_ENRICH_FIELDS_V1 */
+      update.marketCap      = update.marketCapSol;
+      update.liquidity      = update.liquiditySol;
+      update.momentum       = update.buyPressure;
+      update.marketSource   = 'pump-bonding-curve';
+      update.priceSource    = 'pump-bonding-curve';
+      update.canonicalMarket = true;
+      update.pumpMarketUpdatedAt = Date.now();
     }
 
     // ── Always store, evaluate, publish ────────────────────────────────────
@@ -398,7 +416,7 @@ export async function enrichToken(mint, curve, deps) {
     } catch(e) { fail('evaluate', e); }
 
     publish(mint);
-    if (ensurePriceTimer && token?.dexConfirmed !== true) ensurePriceTimer(mint, curve);
+    if (ensurePriceTimer) ensurePriceTimer(mint, curve);
 
     // Success: token stored and published regardless of step failures
     discMetrics.enrichSucceeded++;
@@ -450,7 +468,7 @@ function decodeHolderSlice(row,decimals){
 }
 
 async function mintTokenAccounts(rpc,mint,programId,decimals){
-  const rows=await rpc.call('getProgramAccounts',[
+  const rows=await rpc.callOnce('getProgramAccounts',[
     programId,
     {
       commitment:'confirmed',
@@ -505,6 +523,10 @@ export async function enrichHolders(mint,deps){
       .filter(x=>typeof x==='string'&&x.length>0)
   );
 
+  const holderTokenAccountCount=accounts.filter(
+    row=>row.amount>0&&!protocolAuthorities.has(row.authority)
+  ).length;
+
   const walletBalances=aggregateWalletBalances(accounts,protocolAuthorities);
   const balances=[...walletBalances.values()].sort((a,b)=>b-a);
   const holderCount=balances.length;
@@ -523,7 +545,7 @@ export async function enrichHolders(mint,deps){
     eventHolderLedger?.seedCanonicalBalances?.(
       mint,
       walletBalances,
-      {decimals,creator}
+      {decimals,creator,totalSupplyUi:total,tokenAccountCount:holderTokenAccountCount}
     );
   }catch(_){}
 
@@ -531,6 +553,9 @@ export async function enrichHolders(mint,deps){
   const updated=store.setToken(mint,{
     holderFresh:true,
     holderCount,
+    holderWalletCount:holderCount,
+    holderTokenAccountCount,
+    holderScannedAccountCount:accounts.length,
     top10Pct,
     developerPct,
     developerSharePct:developerPct,
@@ -562,7 +587,7 @@ export function makeHolderQueue(config,deps){
   /* MEMEFLOW_V12_16_1_HOLDER_THROUGHPUT_SAFE_FIX
    Raise holder worker capacity to a safe minimum of 4.
    Existing timeout/watchdog/retry/backoff logic is intentionally untouched. */
-  const maxConcurrent=Math.max(4,Number(config?.maxConcurrent??4));
+  const maxConcurrent=Math.max(1,Math.min(4,Number(config?.maxConcurrent??2)));
   const queueMax=Math.max(10,Number(config?.queueMax??500));
   const initialDelayMs=Math.min(10000,Math.max(0,Number(config?.initialDelayMs??750)));
   const retryDelayMs=Math.max(1000,Number(config?.retryDelayMs??30000));
@@ -622,7 +647,10 @@ export function makeHolderQueue(config,deps){
         activeStartedAt:null,
         activeEndedAt:null,
         lastDurationMs:null,
-        workerTimeouts:0
+        workerTimeouts:0,
+        priority:0,
+        enqueueReason:null,
+        lastAdmissionReason:null
       };
       history.set(mint,row);
     }
@@ -737,6 +765,9 @@ export function makeHolderQueue(config,deps){
         gate={allow:true,reason:'admission_error_fail_open'};
       }
 
+      const admissionRow=diagRow(item.mint);
+      admissionRow.lastAdmissionReason=gate.reason||null;
+
       if(gate.allow===false){
         holderMetrics.lastHolderAdmissionReason=gate.reason||'deferred';
         if(gate.drop===true){
@@ -837,6 +868,13 @@ export function makeHolderQueue(config,deps){
         d.lastErrorAt=Date.now();
         reschedule(item,e?.retryAfterMs??retryDelayMs);
         finalStatus='queued';
+      }else if(Number(item.retries||0)<maxRetries && isTransientHolderError(e)){
+        holderMetrics.holderTransientRetries=(holderMetrics.holderTransientRetries||0)+1;
+        holderMetrics.holderRetries++;
+        d.lastError=sanitize(e?.message||'transient holder RPC error');
+        d.lastErrorAt=Date.now();
+        reschedule(item,Math.min(retryDelayMs,3000));
+        finalStatus='queued';
       }else{
         holderMetrics.holderFailed++;
         holderMetrics.lastHolderError=sanitize(e?.message||'unknown');
@@ -859,6 +897,9 @@ export function makeHolderQueue(config,deps){
 
     // First attempts before retries. Within first attempts, newest token first.
     rows.sort((a,b)=>{
+      const ap=Number(a?.priority||0);
+      const bp=Number(b?.priority||0);
+      if(ap!==bp)return bp-ap;
       const ar=Number(a?.retries||0);
       const br=Number(b?.retries||0);
       if((ar===0)!==(br===0))return ar===0?-1:1;
@@ -900,12 +941,16 @@ export function makeHolderQueue(config,deps){
     queueMicrotask(drain);
   }
 
-  function enqueue(mint){
+  function enqueue(mint,options={}){
     if(!mint||pending.has(mint)||active.has(mint))return false;
     if(pending.size>=queueMax)dropOldest();
 
     const now=Date.now();
-    const item={mint,retries:0,enqueuedAt:now,dueAt:now+initialDelayMs};
+    const requestedDelay=Number(options?.delayMs);
+    const delayMs=Number.isFinite(requestedDelay)?Math.max(0,Math.min(10000,requestedDelay)):initialDelayMs;
+    const priority=Math.max(0,Math.min(1000,Number(options?.priority)||0));
+    const enqueueReason=String(options?.reason||'').slice(0,120)||null;
+    const item={mint,retries:0,enqueuedAt:now,dueAt:now+delayMs,priority,enqueueReason};
     pending.set(mint,item);
 
     const d=diagRow(mint);
@@ -913,18 +958,14 @@ export function makeHolderQueue(config,deps){
     d.nextDueAt=item.dueAt;
     d.status='queued';
     d.retries=0;
+    d.priority=priority;
+    d.enqueueReason=enqueueReason;
 
     holderMetrics.holderQueued++;
-    holderMetrics.holderMaxObservedPending=Math.max(
-      holderMetrics.holderMaxObservedPending||0,
-      pending.size
-    );
-
+    holderMetrics.holderMaxObservedPending=Math.max(holderMetrics.holderMaxObservedPending||0,pending.size);
     pruneHistory();
     scheduleWake();
-
-    // If delay is already due (or turns due before another event), give drain an immediate chance.
-    if(initialDelayMs===0)kickDrain();
+    if(delayMs===0)kickDrain();
     return true;
   }
 
@@ -1011,6 +1052,9 @@ const row=history.get(mint)||null;
         nextDueAt:p?.dueAt??row?.nextDueAt??null,
         nextDueInMs:p?Math.max(0,p.dueAt-now):null,
         queueRetries:p?.retries??row?.retries??0,
+        priority:p?.priority??row?.priority??0,
+        enqueueReason:p?.enqueueReason??row?.enqueueReason??null,
+        lastAdmissionReason:row?.lastAdmissionReason??null,
         throughputFixVersion,
         configuredMaxConcurrent:maxConcurrent,
         queueDepth:pending.size,

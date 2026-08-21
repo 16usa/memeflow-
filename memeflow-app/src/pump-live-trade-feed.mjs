@@ -120,14 +120,31 @@ export function startPumpLiveTradeFeed(opts={}){
   const FAST_WARM_TTL_MS=30_000;
 
   function updatePressure(e){
-    const now=Date.now(), windowMs=30_000;
+    const now=Date.now(), windowMs=60_000;
     let a=pressure.get(e.mint);
     if(!a){a=[];pressure.set(e.mint,a)}
     a.push({t:now,buy:e.isBuy,sol:Number(e.solAmount)/1e9});
     while(a.length&&a[0].t<now-windowMs)a.shift();
-    let buys=0,sells=0;
-    for(const x of a){ if(x.buy)buys+=x.sol; else sells+=x.sol; }
-    return sells>0?buys/sells:(buys>0?Math.max(1,buys):null);
+
+    let buySol=0,sellSol=0,buyTransactions=0,sellTransactions=0;
+    for(const x of a){
+      if(x.buy){buySol+=x.sol;buyTransactions++}
+      else{sellSol+=x.sol;sellTransactions++}
+    }
+
+    const buyPressure=sellSol>0
+      ? buySol/sellSol
+      : (buySol>0?Math.max(1,buySol):null);
+
+    return {
+      buyPressure,
+      buyTransactions,
+      sellTransactions,
+      totalTransactions:buyTransactions+sellTransactions,
+      pumpBuyVolumeSol:buySol,
+      pumpSellVolumeSol:sellSol,
+      windowMs
+    };
   }
 
   // MEMEFLOW_V12_26_EVALUATION_LIFECYCLE_DIAGNOSTICS
@@ -237,15 +254,37 @@ export function startPumpLiveTradeFeed(opts={}){
     }catch(err){metrics.lastError='holder:'+String(err?.message||err)}
 
     try{
-      const buyPressure=updatePressure(e);
+      const flow=updatePressure(e);
       const patch={
-        marketSource:'ws-direct-trade-event',
-        buyPressure,
+        marketSource:'pump-trade-event',
+        priceSource:'pump-trade-event',
+        buyPressureSource:'pump-trade-event-60s-sol-flow',
+        buyPressure:flow.buyPressure,
+        momentum:flow.buyPressure,
+        buyTransactions:flow.buyTransactions,
+        sellTransactions:flow.sellTransactions,
+        totalTransactions:flow.totalTransactions,
+        pumpBuyVolumeSol:flow.pumpBuyVolumeSol,
+        pumpSellVolumeSol:flow.pumpSellVolumeSol,
+        pumpFlowWindowMs:flow.windowMs,
+        canonicalMarket:true,
+        pumpMarketUpdatedAt:eventAt,
         lastPriceAt:eventAt
       };
 
-      if(Number.isFinite(market.priceSol)&&market.priceSol>0)patch.priceSol=market.priceSol;
-      if(Number.isFinite(market.liquiditySol)&&market.liquiditySol>=0)patch.liquiditySol=market.liquiditySol;
+      if(Number.isFinite(market.priceSol)&&market.priceSol>0){
+        patch.priceSol=market.priceSol;
+        const supply=Number(knownToken?.totalSupply);
+        if(Number.isFinite(supply)&&supply>0){
+          const marketCapSol=market.priceSol*supply;
+          patch.marketCapSol=marketCapSol;
+          patch.marketCap=marketCapSol;
+        }
+      }
+      if(Number.isFinite(market.liquiditySol)&&market.liquiditySol>=0){
+        patch.liquiditySol=market.liquiditySol;
+        patch.liquidity=market.liquiditySol;
+      }
 
       const updated=store?.setToken?.(e.mint,patch);
       if(updated){

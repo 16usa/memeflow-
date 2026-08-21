@@ -74,7 +74,7 @@ function metadataKnown(t={}){
   if(hasSocial)return true;
   if(t.metadataReady===true||t.metadataFetched===true||t.metadataResolved===true)return true;
   const hasUri=Boolean(firstText(t.uri,t.metadataUri,t.metadataUrl));
-  if(!hasUri&&(t.lastScannedAt||t.dexConfirmed===true))return true;
+  if(!hasUri&&t.lastScannedAt)return true;
   return false;
 }
 function socials(t={}){
@@ -85,11 +85,59 @@ function socials(t={}){
   };
 }
 
+function __mfV14PumpOrigin(token={}){
+  const mint=String(token?.mint||token?.tokenMint||token?.tokenAddress||'').toLowerCase();
+  const launch=String(token?.launchPlatform||'').toLowerCase();
+  const protocol=String(token?.protocol||'').toLowerCase();
+  const source=String(token?.source||'').toLowerCase();
+  return launch==='pump'||protocol==='pump'||source.includes('pump create')||mint.endsWith('pump');
+}
+
+function __mfV14TimestampMs(value){
+  if(value===null||value===undefined||value==='')return null;
+  const numeric=Number(value);
+  if(Number.isFinite(numeric)&&numeric>0)return numeric<1e12?numeric*1000:numeric;
+  const parsed=Date.parse(String(value));
+  return Number.isFinite(parsed)&&parsed>0?parsed:null;
+}
+
+export function tokenAgeSource(token={}){
+  if(__mfV14PumpOrigin(token)){
+    const pumpTs=__mfV14TimestampMs(token.pumpCreatedAt??token.pumpCreateAt??token.pumpCreationAt);
+    if(pumpTs!==null)return 'pump-create-block-time';
+    if(token.pumpCreatedAtPending===true)return 'pump-create-time-pending';
+    const legacy=__mfV14TimestampMs(
+      token.createdAt??token.discoveredAt??token.firstSeenAt??token.seenAt??
+      token.created_at??token.discovered_at??token.timestamp
+    );
+    return legacy!==null?'legacy-pump-time-fallback':null;
+  }
+  const generic=__mfV14TimestampMs(
+    token.createdAt??token.discoveredAt??token.firstSeenAt??token.seenAt??
+    token.created_at??token.discovered_at??token.timestamp
+  );
+  return generic!==null?'generic-token-time':null;
+}
+
 export function tokenAgeMinutes(token={},now=Date.now()){
-  const created=firstFinite(token.createdAt,token.discoveredAt,token.firstSeenAt,token.seenAt,token.created_at,token.discovered_at,token.timestamp);
-  if(created===null||created<=0)return null;
-  const ms=created<1e12?created*1000:created;
-  return Math.max(0,(Number(now)-ms)/60000);
+  let created=null;
+  if(__mfV14PumpOrigin(token)){
+    created=__mfV14TimestampMs(token.pumpCreatedAt??token.pumpCreateAt??token.pumpCreationAt);
+    if(created===null&&token.pumpCreatedAtPending===true)return null;
+    if(created===null){
+      created=__mfV14TimestampMs(
+        token.createdAt??token.discoveredAt??token.firstSeenAt??token.seenAt??
+        token.created_at??token.discovered_at??token.timestamp
+      );
+    }
+  }else{
+    created=__mfV14TimestampMs(
+      token.createdAt??token.discoveredAt??token.firstSeenAt??token.seenAt??
+      token.created_at??token.discovered_at??token.timestamp
+    );
+  }
+  if(created===null)return null;
+  return Math.max(0,(Number(now)-created)/60000);
 }
 
 function __mfEvaluateBaseV11(token,s={}){
@@ -191,6 +239,34 @@ function __mfEvaluateBaseV11(token,s={}){
   if(bl.length){
     const creator=firstText(token.creator,token.creatorWallet,token.developerWallet,token.devWallet,token.developer);
     addGate('Developer blacklist',creator?!bl.includes(creator):null,'Developer wallet is blacklisted');
+  }
+
+  // MEMEFLOW_RUNTIME_TRUTH_V1_4_EXACT
+  // DEX display updates never refresh this gate. It is driven only by the
+  // canonical Pump/Solana market path.
+  const __mfMarketSource=String(token?.marketSource||token?.priceSource||'').toLowerCase();
+  const __mfCanonicalPumpMarket=
+    token?.canonicalMarket===true||
+    __mfMarketSource.startsWith('pump')||
+    __mfMarketSource.includes('ws-direct')||
+    String(token?.source||'').toLowerCase().includes('bonding curve');
+
+  if(__mfV14PumpOrigin(token)&&__mfCanonicalPumpMarket){
+    const __mfMarketAt=__mfV14TimestampMs(token?.pumpMarketUpdatedAt??token?.lastPriceAt);
+    const __mfConfiguredMarketAge=Number(process.env.PUMP_CANONICAL_MARKET_MAX_AGE_MS);
+    const __mfMarketMaxAge=Number.isFinite(__mfConfiguredMarketAge)
+      ? Math.max(15000,__mfConfiguredMarketAge)
+      : 120000;
+    const __mfMarketAge=__mfMarketAt===null?null:Math.max(0,Date.now()-__mfMarketAt);
+
+    addGate(
+      'Fresh Pump market data',
+      __mfMarketAge===null?null:(__mfMarketAge<=__mfMarketMaxAge?true:null),
+      __mfMarketAge===null
+        ? 'canonical Pump market timestamp pending'
+        : `canonical Pump market data is ${Math.round(__mfMarketAge/1000)}s old`,
+      {value:__mfMarketAge,threshold:__mfMarketMaxAge,operator:'<='}
+    );
   }
 
   // MEMEFLOW_DATA_INTEGRITY_V1_3_EXACT

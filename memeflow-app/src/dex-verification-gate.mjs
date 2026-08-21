@@ -33,17 +33,21 @@ function choosePair(rows, mint) {
 
 function marketPatch(pair, mint) {
   const activity = pairActivity(pair);
-  const pressure = activity.sells > 0 ? activity.buys / activity.sells : activity.buys > 0 ? Math.max(1, activity.buys) : null;
+  const pressure = activity.sells > 0
+    ? activity.buys / activity.sells
+    : activity.buys > 0 ? Math.max(1, activity.buys) : null;
   const base = String(pair?.baseToken?.address || '');
   const quote = String(pair?.quoteToken?.address || '');
-  let priceSol = null;
+  let dexPriceSol = null;
 
   if (base === mint && quote === WSOL && finite(pair?.priceNative) && Number(pair.priceNative) > 0) {
-    priceSol = Number(pair.priceNative);
+    dexPriceSol = Number(pair.priceNative);
   } else if (quote === mint && base === WSOL && finite(pair?.priceNative) && Number(pair.priceNative) > 0) {
-    priceSol = 1 / Number(pair.priceNative);
+    dexPriceSol = 1 / Number(pair.priceNative);
   }
 
+  // MEMEFLOW_RUNTIME_TRUTH_V1_4_EXACT
+  // DEX is verification/display only. Never emit canonical decision fields.
   const patch = {
     dexConfirmed: true,
     dexPairAddress: pair?.pairAddress || null,
@@ -51,23 +55,21 @@ function marketPatch(pair, mint) {
     dexUrl: pair?.url || null,
     dexPairCreatedAt: Number(pair?.pairCreatedAt) || null,
     dexMarketUpdatedAt: Date.now(),
-    marketSource: 'dexscreener',
-    priceSource: 'dexscreener',
-    buyPressureSource: 'dexscreener-' + (activity.window || 'available') + '-tx-count',
-    buyPressure: finite(pressure) ? Number(pressure) : null,
-    buyTransactions: activity.buys,
-    sellTransactions: activity.sells,
-    totalTransactions: activity.buys + activity.sells,
-    priceSol,
-    priceUsd: finite(pair?.priceUsd) ? Number(pair.priceUsd) : null,
-    liquidityUsd: finite(pair?.liquidity?.usd) ? Number(pair.liquidity.usd) : null,
-    marketCapUsd: finite(pair?.marketCap) ? Number(pair.marketCap) : null,
-    fdvUsd: finite(pair?.fdv) ? Number(pair.fdv) : null,
-    volume24hUsd: finite(pair?.volume?.h24) ? Number(pair.volume.h24) : null,
-    volume6hUsd: finite(pair?.volume?.h6) ? Number(pair.volume.h6) : null,
-    volume1hUsd: finite(pair?.volume?.h1) ? Number(pair.volume.h1) : null,
-    volume5mUsd: finite(pair?.volume?.m5) ? Number(pair.volume.m5) : null,
-    lastPriceAt: Date.now()
+    dexMarketSource: 'dexscreener',
+    dexPriceSol,
+    dexPriceUsd: finite(pair?.priceUsd) ? Number(pair.priceUsd) : null,
+    dexLiquidityUsd: finite(pair?.liquidity?.usd) ? Number(pair.liquidity.usd) : null,
+    dexMarketCapUsd: finite(pair?.marketCap) ? Number(pair.marketCap) : null,
+    dexFdvUsd: finite(pair?.fdv) ? Number(pair.fdv) : null,
+    dexVolume24hUsd: finite(pair?.volume?.h24) ? Number(pair.volume.h24) : null,
+    dexVolume6hUsd: finite(pair?.volume?.h6) ? Number(pair.volume.h6) : null,
+    dexVolume1hUsd: finite(pair?.volume?.h1) ? Number(pair.volume.h1) : null,
+    dexVolume5mUsd: finite(pair?.volume?.m5) ? Number(pair.volume.m5) : null,
+    dexBuyPressure: finite(pressure) ? Number(pressure) : null,
+    dexBuyTransactions: activity.buys,
+    dexSellTransactions: activity.sells,
+    dexTotalTransactions: activity.buys + activity.sells,
+    dexActivityWindow: activity.window || null
   };
   for (const key of Object.keys(patch)) if (patch[key] === null) delete patch[key];
   return patch;
@@ -80,10 +82,10 @@ function retryDelay(attempt) {
 
 function marketDelay(verifiedAt) {
   const age = Date.now() - Number(verifiedAt || Date.now());
-  if (age < 2 * 60_000) return 3000;
-  if (age < 15 * 60_000) return 10_000;
-  if (age < 60 * 60_000) return 30_000;
-  return 60_000;
+  if (age < 2 * 60_000) return 15000;
+  if (age < 15 * 60_000) return 30000;
+  if (age < 60 * 60_000) return 60000;
+  return 120000;
 }
 
 export function createDexVerificationGate(options = {}) {

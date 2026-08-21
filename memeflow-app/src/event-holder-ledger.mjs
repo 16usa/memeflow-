@@ -61,6 +61,14 @@ function decimalsFor(tx,m){
 function supplyRaw(decimals){
   return BigInt(Math.round(DEFAULT_SUPPLY_UI))*(10n**BigInt(decimals));
 }
+function canonicalSupplyRaw(row){
+  const ui=Number(row?.totalSupplyUi);
+  const decimals=Number.isInteger(Number(row?.decimals))?Number(row.decimals):6;
+  if(Number.isFinite(ui)&&ui>0&&Number.isInteger(ui)){
+    return BigInt(Math.round(ui))*(10n**BigInt(decimals));
+  }
+  return supplyRaw(decimals);
+}
 function postBalanceForUser(tx,m,user){
   const post=tx?.meta?.postTokenBalances||[];
   let found=false,sum=0n;
@@ -110,7 +118,7 @@ export class EventHolderLedger{
   row(m,decimals=6){
     let r=this.byMint.get(m);
     if(!r){
-      r={mint:m,creator:null,balances:new Map(),firstSeenAt:Date.now(),lastSeenAt:null,txCount:0,decimals};
+      r={mint:m,creator:null,balances:new Map(),firstSeenAt:Date.now(),lastSeenAt:null,txCount:0,decimals,totalSupplyUi:null,canonicalTokenAccountCount:null};
       this.byMint.set(m,r);
       this.metrics.mintsSeen++;
       if(this.byMint.size>MAX_MINTS+100)this.prune();
@@ -261,6 +269,12 @@ export class EventHolderLedger{
     r.canonicalSeedAt=Date.now();
     r.lastSeenAt=r.canonicalSeedAt;
     r.canonicalHolderCount=next.size;
+    r.totalSupplyUi=Number.isFinite(Number(opts.totalSupplyUi))&&Number(opts.totalSupplyUi)>0
+      ? Number(opts.totalSupplyUi)
+      : r.totalSupplyUi;
+    r.canonicalTokenAccountCount=Number.isFinite(Number(opts.tokenAccountCount))
+      ? Math.max(0,Number(opts.tokenAccountCount))
+      : r.canonicalTokenAccountCount;
 
     this.schedule();
     return this.snapshot(m);
@@ -276,7 +290,7 @@ export class EventHolderLedger{
       .filter(([,a])=>a>0n)
       .sort((a,b)=>a[1]===b[1]?0:(a[1]>b[1]?-1:1));
 
-    const totalSupply=supplyRaw(r.decimals??6);
+    const totalSupply=canonicalSupplyRaw(r);
     const top10=holders.slice(0,10).reduce((sum,[,amount])=>sum+amount,0n);
     const dev=r.creator?(r.balances.get(r.creator)||0n):0n;
     const tracked=holders.reduce((sum,[,amount])=>sum+amount,0n);
@@ -292,6 +306,10 @@ export class EventHolderLedger{
         ? 'Solana getProgramAccounts baseline + live Pump TradeEvent delta'
         : (canonicalSeedAt>0?'canonical-refresh-pending':'event-ledger-user-only-provisional'),
       holderCount:canonicalFresh?holders.length:null,
+      holderWalletCount:canonicalFresh?holders.length:null,
+      holderTokenAccountCount:canonicalFresh&&Number.isFinite(Number(r.canonicalTokenAccountCount))
+        ? Number(r.canonicalTokenAccountCount)
+        : null,
       top10Pct:canonicalFresh?pct(top10,totalSupply):null,
       developerPct:canonicalFresh&&r.creator?pct(dev,totalSupply):null,
       developerSharePct:canonicalFresh&&r.creator?pct(dev,totalSupply):null,
@@ -308,6 +326,7 @@ export class EventHolderLedger{
       eventLedgerTrackedSupplyRaw:tracked.toString(),
       eventLedgerTotalSupplyRaw:totalSupply.toString(),
       eventLedgerDecimals:r.decimals??6,
+      eventLedgerCanonicalSupplyUi:Number.isFinite(Number(r.totalSupplyUi))?Number(r.totalSupplyUi):null,
       eventLedgerCoveragePct:pct(tracked,totalSupply)
     };
   }
@@ -395,6 +414,10 @@ export class EventHolderLedger{
         decimals:r.decimals,
         canonicalSeedAt:r.canonicalSeedAt||null,
         canonicalHolderCount:r.canonicalHolderCount??null,
+        totalSupplyUi:Number.isFinite(Number(r.totalSupplyUi))?Number(r.totalSupplyUi):null,
+        canonicalTokenAccountCount:Number.isFinite(Number(r.canonicalTokenAccountCount))
+          ? Number(r.canonicalTokenAccountCount)
+          : null,
         balances:Object.fromEntries([...r.balances].map(([k,v])=>[k,v.toString()]))
       };
       const tmp=STATE+'.tmp';
@@ -455,6 +478,12 @@ export class EventHolderLedger{
           canonicalSeedAt:s.canonicalSeedAt||null,
           canonicalHolderCount:Number.isFinite(Number(s.canonicalHolderCount))
             ? Number(s.canonicalHolderCount)
+            : null,
+          totalSupplyUi:Number.isFinite(Number(s.totalSupplyUi))&&Number(s.totalSupplyUi)>0
+            ? Number(s.totalSupplyUi)
+            : null,
+          canonicalTokenAccountCount:Number.isFinite(Number(s.canonicalTokenAccountCount))
+            ? Number(s.canonicalTokenAccountCount)
             : null,
           balances:new Map()
         };

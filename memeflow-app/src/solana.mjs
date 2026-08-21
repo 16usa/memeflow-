@@ -69,7 +69,7 @@ export class RpcPool{
     this.metrics={retries:0,timeouts:0,http429:0,nonJsonResponses:0,endpointFailovers:0,lastHttpStatus:null,cooldownEvents:0,cooldownUntil:null};
     this.minIntervalMs=Math.max(0,Number(process.env.RPC_MIN_INTERVAL_MS||350));
     this.methodMinIntervalMs={
-      getProgramAccounts:Math.max(1500,Number(process.env.RPC_GET_PROGRAM_ACCOUNTS_MIN_INTERVAL_MS||3500)),
+      getProgramAccounts:Math.max(500,Number(process.env.RPC_GET_PROGRAM_ACCOUNTS_MIN_INTERVAL_MS||1200)), // MEMEFLOW_RUNTIME_TRUTH_V1_4_1_HOLDER_HOTFIX
       getTransaction:Math.max(250,Number(process.env.RPC_GET_TRANSACTION_MIN_INTERVAL_MS||400)),
       getTokenSupply:Math.max(500,Number(process.env.RPC_GET_TOKEN_SUPPLY_MIN_INTERVAL_MS||1000)),
       getAccountInfo:Math.max(500,Number(process.env.RPC_GET_ACCOUNT_INFO_MIN_INTERVAL_MS||1000)),
@@ -182,7 +182,7 @@ export class RpcPool{
 
   async call(method,params=[]){
     if(!this.urls.length)throw new Error('SOLANA_RPC_URLS is not configured');
-    const TIMEOUT=Number(process.env.SOLANA_RPC_TIMEOUT_MS||20000);
+    const TIMEOUT=this.methodTimeoutMs(method);
     const MAX_ATTEMPTS=3;
     let lastError;
 

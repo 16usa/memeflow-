@@ -115,7 +115,7 @@ export class PaperEngine {
     const now = this.clock();
 
     const price = num(token?.priceSol, NaN);
-    const tokenUpdatedAt = Number(token?.updatedAt || token?.lastPriceAt || 0);
+    const tokenUpdatedAt = Number(token?.pumpMarketUpdatedAt || token?.lastPriceAt || token?.lastMarketActivityAt || 0);
 
     const openPositions = this.userPositions(userId, 'OPEN');
     const existingPosition = this.openForMint(userId, token?.mint);

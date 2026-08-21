@@ -3,16 +3,16 @@ import path from 'node:path';
 
 const MODES = new Set(['pump', 'dex', 'hybrid']);
 
-function normalizeMode(value, fallback='dex') {
+function normalizeMode(value, fallback='pump') {
   const v = String(value || '').trim().toLowerCase();
   return MODES.has(v) ? v : fallback;
 }
 
 export class DiscoverySourceController {
-  constructor({dataDir, defaultMode='dex'}={}) {
+  constructor({dataDir, defaultMode='pump'}={}) {
     if (!dataDir) throw new Error('DiscoverySourceController requires dataDir');
     this.file = path.join(dataDir, 'discovery-source.json');
-    this.state = {mode:normalizeMode(defaultMode, 'dex'),updatedAt:Date.now(),version:1};
+    this.state = {mode:normalizeMode(defaultMode, 'pump'),updatedAt:Date.now(),version:1};
     this.load();
   }
   load() {

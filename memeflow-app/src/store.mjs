@@ -49,11 +49,21 @@ export class JsonStore {
   }
 
   _tokenTs(t={}){
-    for(const v of [t.updatedAt,t.lastMarketActivityAt,t.lastPriceAt,t.discoveredAt,t.createdAt,t.firstSeenAt]){
+    // MEMEFLOW_RUNTIME_TRUTH_V1_4_EXACT
+    // Display-only updates must not keep dead tokens resident forever.
+    for(const v of [
+      t.lastMarketActivityAt,
+      t.lastPriceChangeAt,
+      t.pumpCreatedAt,
+      t.discoveredAt,
+      t.createdAt,
+      t.firstSeenAt
+    ]){
       const n=typeof v==='number'?v:Date.parse(v);
       if(Number.isFinite(n)&&n>0)return n<1e12?n*1000:n;
     }
-    return 0;
+    const fallback=typeof t.updatedAt==='number'?t.updatedAt:Date.parse(t.updatedAt);
+    return Number.isFinite(fallback)&&fallback>0?(fallback<1e12?fallback*1000:fallback):0;
   }
 
   _pinnedMints(){
@@ -209,6 +219,40 @@ export class JsonStore {
     const now=Date.now(),existed=Boolean(this.state.tokens[mint]),old=this.state.tokens[mint]||{};
     const patch={...(t||{})};
 
+    // MEMEFLOW_RUNTIME_TRUTH_V1_4_EXACT
+    // DEX is a verification/display namespace only. Future legacy-looking DEX
+    // patches are isolated here before peak/activity/decision state is touched.
+    const dexSignal=[patch.dexMarketSource,patch.marketSource,patch.priceSource,patch.buyPressureSource]
+      .some(value=>String(value||'').toLowerCase().includes('dexscreener'));
+
+    if(dexSignal){
+      const map={
+        priceSol:'dexPriceSol',priceUsd:'dexPriceUsd',
+        liquiditySol:'dexLiquiditySol',liquidityUsd:'dexLiquidityUsd',
+        marketCapSol:'dexMarketCapSol',marketCapUsd:'dexMarketCapUsd',fdvUsd:'dexFdvUsd',
+        volume24hUsd:'dexVolume24hUsd',volume6hUsd:'dexVolume6hUsd',
+        volume1hUsd:'dexVolume1hUsd',volume5mUsd:'dexVolume5mUsd',
+        buyPressure:'dexBuyPressure',buyTransactions:'dexBuyTransactions',
+        sellTransactions:'dexSellTransactions',totalTransactions:'dexTotalTransactions'
+      };
+      for(const [canonical,dexKey] of Object.entries(map)){
+        if(patch[canonical]!==undefined&&patch[dexKey]===undefined)patch[dexKey]=patch[canonical];
+        delete patch[canonical];
+      }
+      delete patch.marketCap;delete patch.liquidity;delete patch.momentum;
+      delete patch.lastPriceAt;delete patch.lastPriceChangeAt;delete patch.lastMarketActivityAt;
+      delete patch.pumpMarketUpdatedAt;delete patch.canonicalMarket;delete patch.dataQuality;
+      if(String(patch.marketSource||'').toLowerCase().includes('dexscreener'))delete patch.marketSource;
+      if(String(patch.priceSource||'').toLowerCase().includes('dexscreener'))delete patch.priceSource;
+      if(String(patch.buyPressureSource||'').toLowerCase().includes('dexscreener'))delete patch.buyPressureSource;
+      patch.dexMarketSource=patch.dexMarketSource||'dexscreener';
+    }
+
+    const canonicalSource=String(patch.marketSource||patch.priceSource||'').toLowerCase();
+    if(canonicalSource.startsWith('pump')||canonicalSource.includes('ws-direct')||canonicalSource.includes('bonding-curve')){
+      patch.canonicalMarket=true;
+    }
+
     // MEMEFLOW_HOLDERS_V9_STORE_PRECEDENCE
     // A user-only Pump TradeEvent ledger is partial by construction.
     // Never let it become authoritative or overwrite a completed canonical scan.
@@ -268,18 +312,18 @@ export class JsonStore {
     const hasNextPrice=Number.isFinite(nextPrice)&&nextPrice>0;
     const priceChanged=hasNextPrice&&(!Number.isFinite(oldPrice)||Math.abs(nextPrice-oldPrice)>Math.max(1e-18,Math.abs(oldPrice)*0.000001));
     const peak=Math.max(Number(old?.peakPriceSol)||0,hasNextPrice?nextPrice:0);
-    const pressureChanged=t?.buyPressure!==undefined&&Number(t.buyPressure)!==Number(old?.buyPressure);
-    const activityChanged=priceChanged||pressureChanged||Number(t?.buyTransactions||0)!==Number(old?.buyTransactions||0)||Number(t?.sellTransactions||0)!==Number(old?.sellTransactions||0);
+    const pressureChanged=patch?.buyPressure!==undefined&&Number(patch.buyPressure)!==Number(old?.buyPressure);
+    const activityChanged=priceChanged||pressureChanged||Number(patch?.buyTransactions||0)!==Number(old?.buyTransactions||0)||Number(patch?.sellTransactions||0)!==Number(old?.sellTransactions||0);
     const prevHist=Array.isArray(old?.antiRugHistory)?old.antiRugHistory:[];
     const lastHist=prevHist[prevHist.length-1]||null;
     const snap={
       at:now,
       priceSol:hasNextPrice?nextPrice:(Number.isFinite(oldPrice)?oldPrice:null),
-      liquiditySol:Number.isFinite(Number(t?.liquiditySol??t?.liquidity))?Number(t?.liquiditySol??t?.liquidity):null,
-      holderCount:(t?.holderCount??t?.holders)==null?null:(Number.isFinite(Number(t?.holderCount??t?.holders))?Number(t?.holderCount??t?.holders):null),
-      top10Pct:Number.isFinite(Number(t?.top10Pct??t?.top10))?Number(t?.top10Pct??t?.top10):null,
-      developerPct:Number.isFinite(Number(t?.developerPct??t?.creatorPct))?Number(t?.developerPct??t?.creatorPct):null,
-      buyPressure:Number.isFinite(Number(t?.buyPressure??t?.momentum))?Number(t?.buyPressure??t?.momentum):null
+      liquiditySol:Number.isFinite(Number(patch?.liquiditySol??patch?.liquidity))?Number(patch?.liquiditySol??patch?.liquidity):null,
+      holderCount:(patch?.holderCount??patch?.holders)==null?null:(Number.isFinite(Number(patch?.holderCount??patch?.holders))?Number(patch?.holderCount??patch?.holders):null),
+      top10Pct:Number.isFinite(Number(patch?.top10Pct??patch?.top10))?Number(patch?.top10Pct??patch?.top10):null,
+      developerPct:Number.isFinite(Number(patch?.developerPct??patch?.creatorPct))?Number(patch?.developerPct??patch?.creatorPct):null,
+      buyPressure:Number.isFinite(Number(patch?.buyPressure??patch?.momentum))?Number(patch?.buyPressure??patch?.momentum):null
     };
     const meaningfulSnap=Object.values(snap).slice(1).some(v=>v!==null);
     const shouldSnap=meaningfulSnap&&(!lastHist||now-Number(lastHist.at||0)>=5000);
@@ -303,11 +347,16 @@ export class JsonStore {
       ? {marketCapSol:derivedMarketCap,marketCap:derivedMarketCap}
       : {};
 
+    const explicitLastPrice=Number(patch?.lastPriceAt);
+    const canonicalLastPriceAt=Number.isFinite(explicitLastPrice)&&explicitLastPrice>0
+      ? (explicitLastPrice<1e12?explicitLastPrice*1000:explicitLastPrice)
+      : now;
+
     this.state.tokens[mint]={
       ...old,...patch,...derivedMarketPatch,
       antiRugHistory:antiRugHistory,
       peakPriceSol:peak||old.peakPriceSol||null,
-      lastPriceAt:hasNextPrice?now:(old.lastPriceAt||null),
+      lastPriceAt:hasNextPrice?canonicalLastPriceAt:(old.lastPriceAt||null),
       lastPriceChangeAt:priceChanged?now:(old.lastPriceChangeAt||old.lastPriceAt||null),
       lastMarketActivityAt:activityChanged?now:(old.lastMarketActivityAt||old.lastPriceChangeAt||null),
       updatedAt:now

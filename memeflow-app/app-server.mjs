@@ -1,6 +1,6 @@
 import './src/single-instance-lock.mjs'; // MEMEFLOW_SINGLE_V10
 import http from 'node:http';import fs from 'node:fs';import path from 'node:path';import crypto from 'node:crypto';import zlib from 'node:zlib';import {fileURLToPath} from 'node:url';
-import {JsonStore,sessionId,defaults} from './src/store.mjs';import {RpcPool,validPubkey,decodeCurve,decodeCreateData,decodePumpCreate,shouldExcludeMayhemCreate} from './src/solana.mjs';import {evaluate,tokenAgeMinutes} from './src/evaluate.mjs';import {validateSettings} from './src/settings.mjs';import {normalizeDiscoveryMode,tokenAllowedForSettings} from './src/discovery-eligibility.mjs';import {StripeBilling} from './src/billing.mjs';
+import {JsonStore,sessionId,defaults} from './src/store.mjs';import {RpcPool,validPubkey,decodeCurve,decodeCreateData,decodePumpCreate,shouldExcludeMayhemCreate} from './src/solana.mjs';import {evaluate,tokenAgeMinutes,tokenAgeSource} from './src/evaluate.mjs';import {validateSettings} from './src/settings.mjs';import {normalizeDiscoveryMode,tokenAllowedForSettings} from './src/discovery-eligibility.mjs';import {StripeBilling} from './src/billing.mjs';
 import {OpenAIIntelligence} from './src/openai-intelligence.mjs';import {PaperEngine} from './src/paper-engine.mjs';
 import {GameEngine} from './src/game-engine.mjs'; // MF_PEPE_ROCKET_GAME_IMPORT
 import {enrichToken,enrichHolders,refreshTokenMetadata,makeEnrichDiag,makeHolderQueue,makeHolderMetrics} from './src/enrich.mjs';
@@ -20,7 +20,7 @@ import { eventHolderLedger } from './src/event-holder-ledger.mjs'; // MEMEFLOW_V
 import {manualAnalyze} from './src/manual-scan.mjs';
 // MEMEFLOW AI ASSISTANT HARD OFF: import disabled
 const root=path.dirname(fileURLToPath(import.meta.url)),dataDir=path.resolve(root,process.env.DATA_DIR||'data'),store=new JsonStore(dataDir);
-const __discoverySource=new DiscoverySourceController({dataDir,defaultMode:process.env.DISCOVERY_SOURCE_MODE||'dex'});
+const __discoverySource=new DiscoverySourceController({dataDir,defaultMode:process.env.DISCOVERY_SOURCE_MODE||'pump'});
 
 function __isPumpOriginToken(token){
   if(!token)return false;
@@ -39,18 +39,13 @@ function __tokenAllowedForUser(uid,token,settings=null){
 function __migrateLegacyDiscoveryModes(){
   const legacyMode=normalizeDiscoveryMode(__discoverySource?.mode||'pump');
   let changed=0;
-
   for(const user of Object.values(store?.state?.users||{})){
-    const current=(user?.settings&&typeof user.settings==='object'&&!Array.isArray(user.settings))
-      ? user.settings
-      : {};
-
+    const current=(user?.settings&&typeof user.settings==='object'&&!Array.isArray(user.settings))?user.settings:{};
     if(!Object.prototype.hasOwnProperty.call(current,'discoverySourceMode')){
-      user.settings={...current,discoverySourceMode:legacyMode};
+      user.settings={...current,discoverySourceMode:'pump'};
       changed++;
     }
   }
-
   if(changed)store.save();
   return {changed,legacyMode};
 }
@@ -162,6 +157,46 @@ function __mfValidSolUsd(value){
 
 function __mfSolUsdNow(){
   return __mfValidSolUsd(__mfSolUsd.price);
+}
+
+// MEMEFLOW_RUNTIME_TRUTH_V1_4_1_HOLDER_HOTFIX
+// Currency conversion only: canonical token evidence remains Pump/Solana.
+function __v141DecoratePumpUsd(token){
+  if(!token||!__isPumpOriginToken(token))return token;
+  const solUsd=__mfSolUsdNow();
+  if(!Number.isFinite(Number(solUsd))||Number(solUsd)<=0)return token;
+
+  const marketCapSol=Number(token?.marketCapSol??token?.marketCap);
+  const liquiditySol=Number(token?.liquiditySol??token?.liquidity);
+  const next={};
+
+  if(Number.isFinite(marketCapSol)&&marketCapSol>=0){
+    const marketCapUsd=marketCapSol*Number(solUsd);
+    if(!Number.isFinite(Number(token.marketCapUsd))||
+       Math.abs(Number(token.marketCapUsd)-marketCapUsd)>Math.max(0.01,marketCapUsd*0.0005)||
+       String(token.marketCapUsdSource||'')!=='pump-sol-x-solusd'){
+      next.marketCapUsd=marketCapUsd;
+      next.marketCapUSD=marketCapUsd;
+      next.marketCapUsdSource='pump-sol-x-solusd';
+    }
+  }
+
+  if(Number.isFinite(liquiditySol)&&liquiditySol>=0){
+    const liquidityUsd=liquiditySol*Number(solUsd);
+    if(!Number.isFinite(Number(token.liquidityUsd))||
+       Math.abs(Number(token.liquidityUsd)-liquidityUsd)>Math.max(0.01,liquidityUsd*0.0005)||
+       String(token.liquidityUsdSource||'')!=='pump-sol-x-solusd'){
+      next.liquidityUsd=liquidityUsd;
+      next.liquidityUSD=liquidityUsd;
+      next.liquidityUsdSource='pump-sol-x-solusd';
+    }
+  }
+
+  if(!Object.keys(next).length)return token;
+  next.solUsdReference=Number(solUsd);
+  next.solUsdReferenceAt=Number(__mfSolUsd.updatedAt||Date.now());
+  next.solUsdReferencePurpose='currency-conversion-only';
+  return token?.mint?store.setToken(token.mint,next):{...token,...next};
 }
 
 async function __mfRefreshSolUsd(force=false){
@@ -788,7 +823,7 @@ function holderAdmissionForActiveUsers(mint){
 
   try{const __h=eventHolderLedger.inspect(mint);if(__h?.holderFresh===true){const __u=eventHolderLedger.applyToStore(store,mint);if(__u){try{Promise.resolve(evaluateAll(__u)).catch(()=>{})}catch{}try{publish(mint)}catch{}}return {allow:false,drop:true,reason:'event_holder_ledger_ready',source:'event-ledger'}}}catch{}
 
-  const token=store.state.tokens[mint];
+  const token=__v141DecoratePumpUsd(store.state.tokens[mint]);
   if(!token)return {allow:false,drop:true,reason:'token_missing'};
 
   const now=Date.now();
@@ -802,8 +837,7 @@ function holderAdmissionForActiveUsers(mint){
   if(!users.length)return {allow:true,reason:'no_active_users_fail_open'};
 
   const platform=String(token.launchPlatform||token.protocol||token.source||'').toLowerCase();
-  const discovered=Number(token.discoveredAt||token.createdAt||0);
-  const ageMinutes=discovered>0?Math.max(0,(now-discovered)/60000):null;
+  const ageMinutes=tokenAgeMinutes(token,now);
   const price=v128Finite(token.priceSol);
   const pressure=v128Finite(token.buyPressure??token.momentum);
   const marketCapUsd=v128Finite(token.marketCapUsd??token.marketCapUSD);
@@ -892,7 +926,7 @@ const s = {...__holderAdmissionSettings, minBuyPressure: null};
   return {allow:false,drop:false,retryInMs:HOLDER_ADMISSION_RETRY_MS,reason:lastReason};
 }
 
-const holderQueue=makeHolderQueue({maxConcurrent:Math.max(1,Number(process.env.HOLDER_QUEUE_CONCURRENCY||2)),workerTimeoutMs:Math.max(5000,Number(process.env.HOLDER_WORKER_TIMEOUT_MS||11000)), /* MEMEFLOW_V12_14_HOLDER_CONCURRENCY */ queueMax:HOLDER_QUEUE_MAX,initialDelayMs:HOLDER_INITIAL_DELAY_MS,retryDelayMs:HOLDER_RETRY_DELAY_MS,maxRetries:HOLDER_MAX_RETRIES},{enrichHoldersFn:(mint)=>enrichHolders(mint,{rpc,store,evaluateAll,publish,enrichDiag,eventHolderLedger}),holderMetrics,/* MEMEFLOW_V12_15_2_STALE_HOLDER_RECONCILIATION */
+const holderQueue=makeHolderQueue({maxConcurrent:Math.max(1,Number(process.env.HOLDER_QUEUE_CONCURRENCY||2)),workerTimeoutMs:Math.max(5000,Number(process.env.HOLDER_WORKER_TIMEOUT_MS||18000)), /* MEMEFLOW_V12_14_HOLDER_CONCURRENCY */ queueMax:HOLDER_QUEUE_MAX,initialDelayMs:HOLDER_INITIAL_DELAY_MS,retryDelayMs:HOLDER_RETRY_DELAY_MS,maxRetries:HOLDER_MAX_RETRIES},{enrichHoldersFn:(mint)=>enrichHolders(mint,{rpc,store,evaluateAll,publish,enrichDiag,eventHolderLedger}),holderMetrics,/* MEMEFLOW_V12_15_2_STALE_HOLDER_RECONCILIATION */
 isHolderFreshFn:(mint)=>Boolean(store.state?.tokens?.[mint]?.holderFresh===true),
 admissionFn:holderAdmissionForActiveUsers});
 const recoveryMetrics=makeRecoveryMetrics();
@@ -954,6 +988,24 @@ function candidateView(d){
     liquidityUsd:finite(t.liquidityUsd),
     holders:finite(t.holderCount),
     holderCount:finite(t.holderCount),
+    holderWalletCount:finite(t.holderWalletCount??t.holderCount),
+    holderTokenAccountCount:finite(t.holderTokenAccountCount),
+    holderSource:t.holderSource||null,
+    holderPipeline:(()=>{
+      const q=holderQueue.inspect?.(d.mint)||null;
+      return q?{
+        status:q.status||null,
+        pending:q.pending===true,
+        active:q.active===true,
+        attempts:Number(q.attempts||0),
+        retries:Number(q.queueRetries??q.retries??0),
+        priority:Number(q.priority||0),
+        reason:q.enqueueReason||q.lastAdmissionReason||null,
+        lastAdmissionReason:q.lastAdmissionReason||null,
+        lastError:q.lastError||null,
+        nextDueInMs:q.nextDueInMs??null
+      }:null;
+    })(),
     top10:top10Pct,
     top10Pct,
     developer:developerPct,
@@ -962,6 +1014,22 @@ function candidateView(d){
     buyPressure,
     momentum:buyPressure,
     ageMinutes:tokenAgeMinutes(t),
+    ageSource:tokenAgeSource(t),
+    pumpCreatedAt:t.pumpCreatedAt||null,
+    pumpCreatedAtPending:t.pumpCreatedAtPending===true,
+    dexConfirmed:t.dexConfirmed===true,
+    dex:{
+      confirmed:t.dexConfirmed===true,
+      url:t.dexUrl||null,
+      pairAddress:t.dexPairAddress||null,
+      dexId:t.dexId||null,
+      priceSol:finite(t.dexPriceSol),
+      priceUsd:finite(t.dexPriceUsd),
+      liquidityUsd:finite(t.dexLiquidityUsd),
+      marketCapUsd:finite(t.dexMarketCapUsd),
+      buyPressure:finite(t.dexBuyPressure),
+      updatedAt:t.dexMarketUpdatedAt||null
+    },
     evidence:{
       'Mint':d.mint,
       'Price (SOL)':finite(t.priceSol)??'—',
@@ -990,7 +1058,7 @@ const LIVE_EVAL_BATCH=Number(process.env.LIVE_EVALUATION_BATCH_SIZE||25);
 const LIVE_EVAL_DELAY=Number(process.env.LIVE_EVALUATION_DELAY_MS||0);
 const __evaluateAllBase=makeEvaluateForActiveUsers({store,metrics:liveEvalMetrics,activeUserHoursMs:LIVE_EVAL_HOURS*3600000,batchSize:LIVE_EVAL_BATCH,delayMs:LIVE_EVAL_DELAY,onDecision:(uid,token,decision)=>{try{paper.onDecision(uid,token,decision,store.settings(uid))}catch(_){}}});
 function evaluateAll(token){
-  return __evaluateAllBase(token);
+  return __evaluateAllBase(__v141DecoratePumpUsd(token));
 }
 /* MEMEFLOW_V12_4_FAST_PHASE_A_DECOUPLED_ENRICHMENT */
 const fastPhaseMetrics={
@@ -1126,24 +1194,21 @@ function curvePressure(mint,previousLiquidity,nextLiquidity){
 }
 
 function ensurePriceTimer(mint,curve){
-  const __priceOwnerToken=store.state.tokens?.[mint];
-  if(__priceOwnerToken?.dexConfirmed===true)return;
   if(priceTimers.has(mint)||!curve)return;
   const _priceDiag=priceDiagRow(mint);
   _priceDiag.timerCreatedAt=Date.now();
   prunePriceDiag();
   let lastBackgroundPollAt=0;
+  let pollInFlight=false;
   const baseTick=Math.max(1000,Number(process.env.POLL_ACTIVE_MS||2000));
   const maxBackgroundAgeMs=Math.max(60000,Number(process.env.BACKGROUND_TOKEN_MAX_AGE_MS||10800000));
 
   const timer=setInterval(async()=>{
     const t=store.state.tokens[mint];
     if(!t){clearInterval(timer);priceTimers.delete(mint);return}
-    if(t?.dexConfirmed===true){clearInterval(timer);priceTimers.delete(mint);return}
-
     const now=Date.now();
     const hasStream=(streams.get(mint)?.size||0)>0;
-    const discoveredAt=Number(t.discoveredAt||now);
+    const discoveredAt=Number(t.pumpCreatedAt||t.discoveredAt||now);
     const ageMs=Math.max(0,now-discoveredAt);
 
     if(!hasStream&&ageMs>maxBackgroundAgeMs){
@@ -1165,6 +1230,8 @@ function ensurePriceTimer(mint,curve){
     // refresh roughly every 30s so anti-rug snapshots continue to progress.
     if(!hasStream&&holderBacklog>0&&priceAgeMs<30000)return;
 
+    if(pollInFlight)return;
+    pollInFlight=true;
     lastBackgroundPollAt=now;
 
     try{
@@ -1193,7 +1260,11 @@ function ensurePriceTimer(mint,curve){
           scanError:null,
           launchPlatform:t.launchPlatform||'pump',
           protocol:t.protocol||'pump',
-          source:'Solana bonding curve'
+          source:t.source||'Pump create',
+          marketSource:'pump-bonding-curve',
+          priceSource:'pump-bonding-curve',
+          canonicalMarket:true,
+          pumpMarketUpdatedAt:Date.now()
         });
   try{__v1224LinkCreator(mint,__v1223Token(mint))}catch{}
         /* MEMEFLOW_V12_10_MARKET_RECHECK_ADMISSION
@@ -1239,6 +1310,8 @@ function ensurePriceTimer(mint,curve){
       const updated=store.setToken(mint,{scanError:e.message});
   try{__v1224LinkCreator(mint,__v1223Token(mint))}catch{}
       await evaluateAll(updated);
+    }finally{
+      pollInFlight=false;
     }
   },baseTick);
   priceTimers.set(mint,timer);
@@ -1291,6 +1364,13 @@ async function processSignature(sig){
         launchPlatform:'pump',
         protocol:'pump',
         discoveredAt:Date.now(),
+        pumpCreatedAt:Number.isFinite(Number(tx?.blockTime))&&Number(tx.blockTime)>0
+          ? Number(tx.blockTime)*1000
+          : null,
+        pumpCreatedAtPending:!(Number.isFinite(Number(tx?.blockTime))&&Number(tx.blockTime)>0),
+        pumpCreatedAtSource:Number.isFinite(Number(tx?.blockTime))&&Number(tx.blockTime)>0
+          ? 'solana-create-transaction-block-time'
+          : null,
         slot:tx.slot,
         signature:sig,
         source:'Pump create'
@@ -1787,8 +1867,12 @@ async function __v13RunHolderReconcile(){
       .filter(token=>{
         const mint=String(token?.mint||'').trim();
         if(!mint||!visible.has(mint)||!__isPumpOriginToken(token))return false;
-        if(!__v13IsCanonicalHolderSource(token))return false;
-        if(__v13HolderScanAge(token,now)<=__V13_HOLDER_MAX_AGE_MS)return false;
+
+        const canonicalSource=__v13IsCanonicalHolderSource(token);
+        const holderCount=Number(token?.holderCount);
+        const holderMissing=token?.holderFresh!==true||!Number.isFinite(holderCount);
+        const canonicalStale=canonicalSource&&__v13HolderScanAge(token,now)>__V13_HOLDER_MAX_AGE_MS;
+        if(!holderMissing&&!canonicalStale)return false;
 
         const activity=__v13LastMarketActivity(token);
         if(activity>0&&now-activity>__V13_HOLDER_RECONCILE_ACTIVITY_MS)return false;
@@ -1826,27 +1910,10 @@ async function __v13RunHolderReconcile(){
       try{publish(mint)}catch{}
 
       try{
-        const result=await enrichHolders(
-          mint,
-          {rpc,store,evaluateAll,publish,enrichDiag,eventHolderLedger}
-        );
-
-        if(result?.rateLimited){
-          __v13IntegrityMetrics.holderRefreshRateLimited++;
-          continue;
-        }
-
-        const refreshed=store?.state?.tokens?.[mint]||null;
-        const source=String(refreshed?.holderSource||'').toLowerCase();
-
-        if(
-          refreshed?.holderFresh===true&&
-          Number.isFinite(Number(refreshed?.holderCount))&&
-          source.includes('getprogramaccounts')
-        ){
-          __v13IntegrityMetrics.holderRefreshSucceeded++;
-        }else{
-          __v13IntegrityMetrics.holderRefreshFailed++;
+        const queued=holderQueue.enqueue(mint,{priority:90,delayMs:0,reason:'visible-missing-or-stale-holder-reconcile'});
+        if(!queued){
+          const state=holderQueue.inspect?.(mint)||null;
+          if(!state?.pending&&!state?.active)__v13IntegrityMetrics.holderRefreshFailed++;
         }
       }catch(error){
         __v13IntegrityMetrics.holderRefreshFailed++;
@@ -1870,8 +1937,8 @@ setTimeout(
 ).unref?.();
 
 const __V13_METADATA_TICK_MS=Math.max(
-  30000,
-  Number(process.env.METADATA_IMAGE_RETRY_TICK_MS||60000)
+  3000,
+  Number(process.env.METADATA_IMAGE_RETRY_TICK_MS||5000)
 );
 const __V13_METADATA_MAX_TOKEN_AGE_MS=Math.max(
   300000,
@@ -1879,8 +1946,15 @@ const __V13_METADATA_MAX_TOKEN_AGE_MS=Math.max(
 );
 const __V13_METADATA_BATCH=Math.max(
   1,
-  Math.min(4,Number(process.env.METADATA_IMAGE_RETRY_BATCH||2))
+  Math.min(6,Number(process.env.METADATA_IMAGE_RETRY_BATCH||4))
 );
+
+function __v141MetadataRetryDelay(attempts){
+  const configured=Number(process.env.METADATA_IMAGE_RETRY_MS);
+  if(Number.isFinite(configured)&&configured>0)return Math.max(5000,configured);
+  const schedule=[5000,15000,45000,120000];
+  return schedule[Math.min(Math.max(0,Number(attempts)||0),schedule.length-1)];
+}
 
 async function __v13RunMetadataRetry(){
   if(__v13MetadataRunActive)return;
@@ -1905,7 +1979,7 @@ async function __v13RunMetadataRetry(){
         const maxAttempts=Math.max(1,Number(process.env.METADATA_IMAGE_RETRY_MAX||4));
         if(attempts>=maxAttempts)return false;
 
-        const retryMs=Math.max(60000,Number(process.env.METADATA_IMAGE_RETRY_MS||300000));
+        const retryMs=__v141MetadataRetryDelay(attempts);
         const last=Number(token?.metadataImageRetryAt||token?.metadataFetchedAt||0);
         if(last>0&&now-last<retryMs)return false;
 
@@ -2515,11 +2589,6 @@ async function mf49StandaloneScan(raw,u){
  if(tw&&(tw.buy||tw.sell)){
   buyPressure=tw.sell?tw.buy/tw.sell:(tw.buy||null);
   sources.add('Live flow')
- }else if(buyPressure==null&&pair){
-  const w=mf49TxnWindow(pair);
-  if(w.buys!=null||w.sells!=null){
-   buyPressure=w.sells?w.buys/w.sells:(w.buys||null)
-  }
  }
 
  const creator=known.creator||null;
@@ -3510,12 +3579,168 @@ if(false && url.pathname==='/api/ai/assistant' &&req.method==='POST'){
  {const m=url.pathname.match(/^\/api\/paper\/proposals\/([^/]+)\/reject$/);if(m&&req.method==='POST'){const r=paper.rejectProposal(u.id,m[1]);return json(res,r.ok?200:r.code==='NOT_FOUND'?404:409,r);}}
  {const m=url.pathname.match(/^\/api\/paper\/positions\/([^/]+)\/close$/);if(m&&req.method==='POST'){const r=paper.closePosition(u.id,m[1]);return json(res,r.ok?200:r.code==='NOT_FOUND'?404:409,r);}}
 }
+
+/* MEMEFLOW_RUNTIME_TRUTH_V1_4_EXACT
+   Pump/Solana is canonical. DEX is verification/display only. */
+const __v14RuntimeTruthMetrics={
+  normalizedDexContamination:0,pumpAgePending:0,pumpAgeBackfillAttempted:0,
+  pumpAgeBackfillSucceeded:0,pumpAgeBackfillFailed:0,pumpPriceTimersRescued:0,
+  lastAgeMint:null,lastError:null
+};
+
+function __v14NormalizePersistedEvidence(){
+  let changed=false;
+  for(const token of Object.values(store?.state?.tokens||{})){
+    if(!token||typeof token!=='object')continue;
+    const pump=__isPumpOriginToken(token);
+    if(pump&&!Number.isFinite(Number(token.pumpCreatedAt))){
+      token.pumpCreatedAtPending=true;
+      __v14RuntimeTruthMetrics.pumpAgePending++;
+      changed=true;
+    }
+
+    const sourceText=String(token.marketSource||token.priceSource||'').toLowerCase();
+    const currentCanonicalPump=
+      token.canonicalMarket===true||
+      sourceText.startsWith('pump')||
+      sourceText.includes('ws-direct')||
+      sourceText.includes('bonding-curve');
+
+    // V1.3 peak history may have been touched by legacy DEX canonical prices.
+    // Reset it once at migration so future drawdown is Pump-only.
+    if(token.dexConfirmed===true&&!token.v14PumpPeakResetAt){
+      const canonicalPrice=Number(token.priceSol);
+      token.peakPriceSol=currentCanonicalPump&&Number.isFinite(canonicalPrice)&&canonicalPrice>0
+        ? canonicalPrice
+        : null;
+      token.antiRugHistory=[];
+      token.v14PumpPeakResetAt=Date.now();
+      changed=true;
+    }
+
+    const dexContaminated=[token.marketSource,token.priceSource,token.buyPressureSource]
+      .some(value=>String(value||'').toLowerCase().includes('dexscreener'));
+    if(!dexContaminated)continue;
+
+    const map={
+      priceSol:'dexPriceSol',priceUsd:'dexPriceUsd',
+      liquiditySol:'dexLiquiditySol',liquidityUsd:'dexLiquidityUsd',
+      marketCapSol:'dexMarketCapSol',marketCapUsd:'dexMarketCapUsd',fdvUsd:'dexFdvUsd',
+      volume24hUsd:'dexVolume24hUsd',volume6hUsd:'dexVolume6hUsd',
+      volume1hUsd:'dexVolume1hUsd',volume5mUsd:'dexVolume5mUsd',
+      buyPressure:'dexBuyPressure',buyTransactions:'dexBuyTransactions',
+      sellTransactions:'dexSellTransactions',totalTransactions:'dexTotalTransactions'
+    };
+    for(const [canonical,dexKey] of Object.entries(map)){
+      if(token[canonical]!==undefined&&token[dexKey]===undefined)token[dexKey]=token[canonical];
+      delete token[canonical];
+    }
+    for(const key of [
+      'marketCap','liquidity','momentum','marketSource','priceSource','buyPressureSource',
+      'lastPriceAt','lastPriceChangeAt','lastMarketActivityAt','pumpMarketUpdatedAt',
+      'canonicalMarket','peakPriceSol'
+    ])delete token[key];
+    token.antiRugHistory=[];
+    token.dataQuality=0;
+    token.dexMarketSource=token.dexMarketSource||'dexscreener';
+    token.updatedAt=Date.now();
+    __v14RuntimeTruthMetrics.normalizedDexContamination++;
+    changed=true;
+  }
+  if(changed)store.save();
+  return changed;
+}
+
+let __v14AgeBackfillRunning=false;
+async function __v14BackfillPumpCreateTimes(limit=120){
+  if(__v14AgeBackfillRunning)return;
+  __v14AgeBackfillRunning=true;
+  try{
+    const rows=store.tokens()
+      .filter(token=>__isPumpOriginToken(token)&&token?.pumpCreatedAtPending===true&&(
+        Number.isFinite(Number(token?.slot))||Boolean(String(token?.signature||'').trim())
+      ))
+      .sort((a,b)=>Number(b?.updatedAt||0)-Number(a?.updatedAt||0))
+      .slice(0,Math.max(1,Math.min(250,Number(limit)||120)));
+
+    for(const token of rows){
+      const mint=String(token?.mint||'').trim();
+      if(!mint)continue;
+      __v14RuntimeTruthMetrics.pumpAgeBackfillAttempted++;
+      __v14RuntimeTruthMetrics.lastAgeMint=mint;
+      try{
+        let blockTime=null;
+        const slot=Number(token?.slot);
+        if(Number.isFinite(slot)&&slot>0){
+          blockTime=await rpc.callOnce('getBlockTime',[slot]);
+        }else{
+          const signature=String(token?.signature||'').trim();
+          if(signature){
+            const tx=await rpc.callOnce('getTransaction',[signature,{encoding:'jsonParsed',commitment:'confirmed',maxSupportedTransactionVersion:0}]);
+            blockTime=tx?.blockTime??null;
+          }
+        }
+        const seconds=Number(blockTime);
+        if(Number.isFinite(seconds)&&seconds>0){
+          const updated=store.setToken(mint,{
+            pumpCreatedAt:seconds*1000,
+            pumpCreatedAtPending:false,
+            pumpCreatedAtSource:Number.isFinite(slot)&&slot>0?'solana-getBlockTime':'solana-create-transaction-block-time'
+          });
+          __v14RuntimeTruthMetrics.pumpAgeBackfillSucceeded++;
+          await Promise.resolve(evaluateAll(updated)).catch(()=>{});
+          try{publish(mint)}catch{}
+        }else{
+          __v14RuntimeTruthMetrics.pumpAgeBackfillFailed++;
+        }
+      }catch(error){
+        __v14RuntimeTruthMetrics.pumpAgeBackfillFailed++;
+        __v14RuntimeTruthMetrics.lastError='age: '+String(error?.message||error).slice(0,180);
+      }
+      await new Promise(resolve=>setTimeout(resolve,50));
+    }
+  }finally{
+    __v14AgeBackfillRunning=false;
+  }
+}
+
+function __v14RescueVisiblePumpPriceTimers(){
+  const mints=new Set();
+  for(const decision of Object.values(store?.state?.decisions||{})){
+    const state=String(decision?.state||'').toUpperCase();
+    if(['BUY READY','WATCH','WAITING'].includes(state)&&decision?.mint)mints.add(String(decision.mint));
+  }
+  let rescued=0;
+  for(const mint of [...mints].slice(0,80)){
+    const token=store?.state?.tokens?.[mint];
+    if(!token||!__isPumpOriginToken(token)||!token?.curve||priceTimers.has(mint))continue;
+    try{
+      ensurePriceTimer(mint,token.curve);
+      if(priceTimers.has(mint)){rescued++;__v14RuntimeTruthMetrics.pumpPriceTimersRescued++;}
+    }catch(error){
+      __v14RuntimeTruthMetrics.lastError='price-rescue: '+String(error?.message||error).slice(0,180);
+    }
+  }
+  return rescued;
+}
+
+function __v14StartRuntimeTruthWorkers(){
+  setTimeout(()=>void __v14BackfillPumpCreateTimes(120),4000).unref?.();
+  setTimeout(()=>__v14RescueVisiblePumpPriceTimers(),6000).unref?.();
+  const ageTimer=setInterval(()=>void __v14BackfillPumpCreateTimes(40),Math.max(5*60_000,Number(process.env.PUMP_CREATE_TIME_BACKFILL_INTERVAL_MS||10*60_000)));
+  ageTimer.unref?.();
+  const priceRescueTimer=setInterval(()=>__v14RescueVisiblePumpPriceTimers(),Math.max(15000,Number(process.env.PUMP_PRICE_RESCUE_INTERVAL_MS||30000)));
+  priceRescueTimer.unref?.();
+}
+
 process.on('uncaughtException',e=>{console.error('[MEMEFLOW] uncaughtException',e.message,(e.stack||'').split('\n')[1]||'')});
 process.on('unhandledRejection',r=>{console.error('[MEMEFLOW] unhandledRejection',(r instanceof Error?r.message:String(r)))});
 const server=http.createServer((req,res)=>handler(req,res).catch(e=>json(res,500,{error:'SERVER_ERROR',message:e.message})));server.listen(Number(process.env.PORT||3000),'0.0.0.0',()=>{
   const listenAt=Date.now();
   console.log(`MEMEFLOW listening on ${process.env.PORT||3000}`);
+  __v14NormalizePersistedEvidence();
   __applyDiscoverySourceMode();
+  __v14StartRuntimeTruthWorkers();
   startDecisionRecovery({store,metrics:recoveryMetrics,getLiveState:()=>({queueDepth:discQueue.freshQueueDepth+discQueue.retryQueueDepth,processing:discQueue.processing}),batchSize:DECISION_RECOVERY_BATCH_SIZE,delayMs:DECISION_RECOVERY_DELAY_MS,tokenLimit:DECISION_RECOVERY_TOKEN_LIMIT,activeUserHoursMs:DECISION_RECOVERY_ACTIVE_USER_HOURS*3600000})
     .then(()=>{const ms=recoveryMetrics.decisionRecoveryCompletedAt-listenAt;console.log(`[RECOVERY] complete in ${ms}ms — ${recoveryMetrics.decisionRecoveryTokensProcessed} tokens, ${recoveryMetrics.decisionRecoveryDecisionsCreated} decisions, ${recoveryMetrics.decisionRecoveryErrors} errors`)})
     .catch(e=>console.error('[RECOVERY] error',e.message));
@@ -3540,32 +3765,18 @@ const __pumpLiveTradeFeedOpts={
 let __pumpLiveTradeFeed=null;
 let __dexVerificationGate=null;
 
-function __stopPumpPriceTimerForDex(mint){
-  const timer=priceTimers.get(mint);
-  if(timer){
-    try{clearInterval(timer)}catch{}
-    priceTimers.delete(mint);
-  }
-}
 function __startPumpLiveFeed(){
   if(!__pumpLiveTradeFeed)__pumpLiveTradeFeed=startPumpLiveTradeFeed(__pumpLiveTradeFeedOpts);
 }
 function __ensureDexVerifier(){
   if(__dexVerificationGate)return __dexVerificationGate;
-  __dexVerificationGate=createDexVerificationGate({
-    onVerified:__applyDexVerifiedPump,
-    onMarket:__applyDexVerifiedMarket
-  });
-
-  // Keep market updates alive for previously verified Pump tokens after restart.
+  __dexVerificationGate=createDexVerificationGate({onVerified:__applyDexVerifiedPump,onMarket:__applyDexVerifiedMarket});
   for(const token of store.tokens().filter(t=>__isPumpOriginToken(t)&&t?.dexConfirmed===true).slice(0,150)){
     __dexVerificationGate.trackVerified(token);
   }
   return __dexVerificationGate;
 }
-function __submitPumpCandidateForDex(candidate){
-  return __ensureDexVerifier().submit(candidate);
-}
+function __submitPumpCandidateForDex(candidate){return __ensureDexVerifier().submit(candidate);}
 function __seedDexVerifierFromRecentPump(){
   const gate=__ensureDexVerifier();
   const maxAgeMs=Math.max(10*60_000,Number(process.env.DEX_VERIFY_SEED_MAX_AGE_MS||3*60*60_000));
@@ -3573,14 +3784,14 @@ function __seedDexVerifierFromRecentPump(){
   const now=Date.now();
   const rows=store.tokens()
     .filter(t=>__isPumpOriginToken(t)&&t?.dexConfirmed!==true)
-    .filter(t=>{const ts=Number(t?.discoveredAt||t?.createdAt||0);return ts>0&&now-ts<=maxAgeMs})
+    .filter(t=>{const ts=Number(t?.discoveredAt||t?.pumpCreatedAt||t?.createdAt||0);return ts>0&&now-ts<=maxAgeMs})
     .slice(0,limit);
   for(const token of rows)gate.submit(token,{seeded:true});
   return rows.length;
 }
-function __reapplyDexMarket(mint,market){
+function __reapplyDexDisplay(mint,market){
   const current=store.state?.tokens?.[mint];
-  if(!current)return null;
+  if(!current||!__isPumpOriginToken(current))return null;
   return store.setToken(mint,{
     ...(market||{}),
     dexConfirmed:true,
@@ -3594,60 +3805,43 @@ function __reapplyDexMarket(mint,market){
 function __applyDexVerifiedPump(info){
   const mint=String(info?.mint||info?.candidate?.mint||'').trim();
   if(!mint)return;
-  const candidate={
-    ...(info?.candidate||{}),
-    mint,
-    launchPlatform:'pump',
-    protocol:'pump',
-    source:info?.candidate?.source||'Pump create',
-    dexConfirmed:true,
-    dexConfirmedAt:Date.now(),
-    dexListedAt:Date.now(),
-    dexVerificationPending:false,
-    ...(info?.market||{})
-  };
   const existing=store.state?.tokens?.[mint]||null;
-  let updated;
-  if(existing){
-    updated=store.setToken(mint,{
-      ...candidate,
-      discoveredAt:existing.discoveredAt||candidate.discoveredAt,
-      creator:existing.creator||candidate.creator||null,
-      dataQuality:Math.max(Number(existing.dataQuality)||0,0.45)
-    });
-  }else{
-    updated=store.addToken({...candidate,dataQuality:Math.max(Number(candidate.dataQuality)||0,0.45)});
-  }
-
-  __stopPumpPriceTimerForDex(mint);
+  if(!existing||!__isPumpOriginToken(existing))return;
+  const updated=__reapplyDexDisplay(mint,{
+    ...(info?.market||{}),
+    dexConfirmed:true,
+    dexConfirmedAt:existing.dexConfirmedAt||Date.now(),
+    dexListedAt:existing.dexListedAt||Date.now(),
+    dexVerificationPending:false
+  });
+  if(!updated)return;
+  try{ensurePriceTimer(mint,updated?.curve||updated?.bondingCurve||null)}catch{}
   try{if(updated?.creator)eventHolderLedger.setCreator(mint,updated.creator)}catch{}
 
-  const phaseADone=Boolean(updated?.totalSupply!=null&&updated?.decimals!=null);
-  if(!phaseADone){
-    void enrich(mint,updated?.curve||candidate?.curve||null).then(()=>{
-      const finalToken=__reapplyDexMarket(mint,info?.market||{});
-      if(finalToken){
-        Promise.resolve(evaluateAll(finalToken)).catch(()=>{});
-        try{publish(mint)}catch{}
-        try{paper.onTokenUpdate(mint,finalToken)}catch{}
-      }
-    }).catch(error=>console.error('[DEX VERIFY] enrich',mint,error?.message||error));
-    return;
+  // MEMEFLOW_RUNTIME_TRUTH_V1_4_1_HOLDER_HOTFIX
+  // A DEX-filter user cannot admit the token before confirmation. Confirmation
+  // changes visibility, so canonical Pump/Solana holder enrichment must start now.
+  try{
+    const holderState=holderQueue.inspect?.(mint)||null;
+    const holderReady=updated?.holderFresh===true&&Number.isFinite(Number(updated?.holderCount));
+    if(!holderReady&&!holderState?.pending&&!holderState?.active){
+      const queued=holderQueue.enqueue(mint,{priority:100,delayMs:0,reason:'dex-confirmed-visible-holder-bootstrap'});
+      if(queued)fastPhaseMetrics.holderQueued++;
+    }
+  }catch(error){
+    fastPhaseMetrics.bootstrapErrors++;
+    fastPhaseMetrics.lastBootstrapError='dex-confirmed holder bootstrap: '+String(error?.message||error);
   }
 
   Promise.resolve(evaluateAll(updated)).catch(()=>{});
   try{publish(mint)}catch{}
-  try{paper.onTokenUpdate(mint,updated)}catch{}
 }
 function __applyDexVerifiedMarket(mint,patch){
   const current=store.state?.tokens?.[mint];
   if(!current||current?.dexConfirmed!==true||!__isPumpOriginToken(current))return;
-  __stopPumpPriceTimerForDex(mint);
-  const updated=__reapplyDexMarket(mint,patch);
+  const updated=__reapplyDexDisplay(mint,patch);
   if(!updated)return;
-  Promise.resolve(evaluateAll(updated)).catch(()=>{});
   try{publish(mint)}catch{}
-  try{paper.onTokenUpdate(mint,updated)}catch{}
 }
 function __pruneDecisionsForUserMode(uid){
   const map=store?._uidDec?.[uid];
