@@ -159,6 +159,323 @@ function marketCapUsdForPrice(priceUsd, candidate = state.selected) {
   return converted > 0 ? converted : null;
 }
 
+const breakoutFxRuntime={
+  canvas:null,
+  ctx:null,
+  particles:[],
+  raf:0,
+  resizeObs:null,
+  lastKey:''
+};
+
+function ensureBreakoutFxCanvas(){
+  if(breakoutFxRuntime.canvas?.isConnected)return breakoutFxRuntime.canvas;
+
+  const chartHost=$('chart');
+  const mount=chartHost?.parentElement || chartHost;
+  if(!mount)return null;
+
+  const style=getComputedStyle(mount);
+  if(style.position==='static'){
+    mount.style.position='relative';
+  }
+
+  let canvas=mount.querySelector('.mf-breakout-fx');
+  if(!canvas){
+    canvas=document.createElement('canvas');
+    canvas.className='mf-breakout-fx';
+    canvas.style.position='absolute';
+    canvas.style.inset='0';
+    canvas.style.width='100%';
+    canvas.style.height='100%';
+    canvas.style.pointerEvents='none';
+    canvas.style.zIndex='5';
+    mount.appendChild(canvas);
+  }
+
+  breakoutFxRuntime.canvas=canvas;
+  breakoutFxRuntime.ctx=canvas.getContext('2d');
+
+  const resize=()=>resizeBreakoutFxCanvas();
+  breakoutFxRuntime.resizeObs?.disconnect?.();
+
+  if(typeof ResizeObserver==='function'){
+    breakoutFxRuntime.resizeObs=new ResizeObserver(resize);
+    breakoutFxRuntime.resizeObs.observe(mount);
+  }
+
+  resize();
+  return canvas;
+}
+
+function resizeBreakoutFxCanvas(){
+  const canvas=breakoutFxRuntime.canvas;
+  const ctx=breakoutFxRuntime.ctx;
+  if(!canvas || !ctx)return;
+
+  const rect=canvas.getBoundingClientRect();
+  const dpr=Math.max(1,window.devicePixelRatio||1);
+  const width=Math.max(1,Math.round(rect.width*dpr));
+  const height=Math.max(1,Math.round(rect.height*dpr));
+
+  if(canvas.width!==width || canvas.height!==height){
+    canvas.width=width;
+    canvas.height=height;
+  }
+
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+}
+
+function animateBreakoutFx(){
+  if(breakoutFxRuntime.raf)return;
+
+  const step=()=>{
+    breakoutFxRuntime.raf=0;
+
+    const canvas=breakoutFxRuntime.canvas;
+    const ctx=breakoutFxRuntime.ctx;
+    if(!canvas || !ctx)return;
+
+    resizeBreakoutFxCanvas();
+    const rect=canvas.getBoundingClientRect();
+    ctx.clearRect(0,0,rect.width,rect.height);
+
+    const next=[];
+
+    for(const p of breakoutFxRuntime.particles){
+      p.x+=p.vx;
+      p.y+=p.vy;
+      p.vy+=0.014;
+      p.life*=0.94;
+      p.radius*=p.glow ? 1.01 : 0.995;
+
+      if(p.life<=0.03)continue;
+      next.push(p);
+
+      ctx.save();
+      ctx.globalAlpha=Math.max(0,p.life);
+
+      if(p.glow){
+        const g=ctx.createRadialGradient(
+          p.x,p.y,0,
+          p.x,p.y,p.radius
+        );
+        g.addColorStop(0,'rgba(73,242,163,0.42)');
+        g.addColorStop(0.4,'rgba(73,242,163,0.18)');
+        g.addColorStop(1,'rgba(73,242,163,0)');
+        ctx.fillStyle=g;
+        ctx.beginPath();
+        ctx.arc(p.x,p.y,p.radius,0,Math.PI*2);
+        ctx.fill();
+      }else{
+        ctx.fillStyle=p.color;
+        ctx.shadowColor=p.color;
+        ctx.shadowBlur=10;
+        ctx.beginPath();
+        ctx.arc(p.x,p.y,p.radius,0,Math.PI*2);
+        ctx.fill();
+      }
+
+      ctx.restore();
+    }
+
+    breakoutFxRuntime.particles=next;
+
+    if(next.length){
+      breakoutFxRuntime.raf=requestAnimationFrame(step);
+    }else{
+      ctx.clearRect(0,0,rect.width,rect.height);
+    }
+  };
+
+  breakoutFxRuntime.raf=requestAnimationFrame(step);
+}
+
+function spawnBreakoutFx(x,y,power=1){
+  if(!Number.isFinite(x) || !Number.isFinite(y))return;
+  if(!ensureBreakoutFxCanvas())return;
+
+  const count=Math.max(12,Math.min(28,Math.round(14*power)));
+  const color='#49f2a3';
+
+  for(let i=0;i<count;i++){
+    const angle=(-Math.PI/2)+((Math.random()-0.5)*1.2);
+    const speed=(1.3+Math.random()*3.4)*power;
+
+    breakoutFxRuntime.particles.push({
+      x,
+      y,
+      vx:Math.cos(angle)*speed + (Math.random()-0.5)*1.2,
+      vy:Math.sin(angle)*speed,
+      life:0.92,
+      radius:1 + Math.random()*2.6,
+      color,
+      glow:false
+    });
+  }
+
+  breakoutFxRuntime.particles.push({
+    x,
+    y,
+    vx:0,
+    vy:-0.12,
+    life:0.9,
+    radius:18*power,
+    color,
+    glow:true
+  });
+
+  animateBreakoutFx();
+}
+
+function breakoutLevelValue(level){
+  if(!level || typeof level!=='object')return null;
+
+  for(const key of [
+    'price',
+    'value',
+    'level',
+    'linePrice',
+    'target',
+    'triggerPrice',
+    'y'
+  ]){
+    const raw=Number(level?.[key]);
+    if(Number.isFinite(raw) && raw>0)return raw;
+  }
+
+  return null;
+}
+
+function breakoutLevelLooksGreen(level){
+  const label=String(
+    level?.label ||
+    level?.text ||
+    level?.title ||
+    level?.name ||
+    ''
+  ).toLowerCase();
+
+  const color=String(
+    level?.color ||
+    level?.stroke ||
+    level?.lineColor ||
+    ''
+  ).toLowerCase();
+
+  return (
+    /tp|target|green|bull|resistance|break/i.test(label) ||
+    /#0f|#1f|#2f|#3f|#4f|green|lime|emerald/.test(color)
+  );
+}
+
+function chooseBreakoutLevel(levels,curr){
+  const currentHigh=Number(curr?.high||0);
+  const currentClose=Number(curr?.close||0);
+  if(!(currentHigh>0) || !(currentClose>0))return null;
+
+  const mapped=(Array.isArray(levels)?levels:[])
+    .map(level=>({
+      raw:level,
+      value:breakoutLevelValue(level),
+      green:breakoutLevelLooksGreen(level)
+    }))
+    .filter(item=>Number.isFinite(item.value) && item.value>0)
+    .filter(item=>item.value<=currentHigh*1.02)
+    .sort((a,b)=>a.value-b.value);
+
+  if(!mapped.length)return null;
+
+  const greenish=mapped.filter(item=>item.green);
+  const pool=greenish.length ? greenish : mapped;
+  let chosen=null;
+
+  for(const item of pool){
+    if(item.value<=currentClose*1.01){
+      chosen=item;
+    }
+  }
+
+  return chosen?.value ?? pool[pool.length-1]?.value ?? null;
+}
+
+function breakoutStrength(prev,curr,level){
+  const range=Math.max(1e-12,Number(curr.high)-Number(curr.low));
+  const body=Math.abs(Number(curr.close)-Number(curr.open));
+  const closeOver=Math.max(0,Number(curr.close)-level)/Math.max(level,1e-12);
+
+  let power=1;
+  if(body/range>=0.65)power+=0.22;
+  if(closeOver>=0.003)power+=0.22;
+  if(closeOver>=0.008)power+=0.18;
+  return Math.min(1.8,power);
+}
+
+function isStrongGreenBreakout(prev,curr,level){
+  if(!prev || !curr || !(level>0))return false;
+
+  const prevClose=Number(prev.close);
+  const currOpen=Number(curr.open);
+  const currClose=Number(curr.close);
+  const currHigh=Number(curr.high);
+  const currLow=Number(curr.low);
+
+  if(
+    !Number.isFinite(prevClose) ||
+    !Number.isFinite(currOpen) ||
+    !Number.isFinite(currClose) ||
+    !Number.isFinite(currHigh) ||
+    !Number.isFinite(currLow)
+  ){
+    return false;
+  }
+
+  const crossedUp=
+    prevClose<=level &&
+    currClose>level;
+
+  const greenBody=currClose>currOpen;
+  const range=Math.max(1e-12,currHigh-currLow);
+  const body=Math.abs(currClose-currOpen);
+  const bodyRatio=body/range;
+  const decisiveClose=(currClose-level)/Math.max(level,1e-12)>=0.0025;
+
+  return crossedUp && greenBody && bodyRatio>=0.55 && decisiveClose;
+}
+
+function maybeTriggerBullishBreakoutFx(prev,curr,levels){
+  if(state.timeframe==='all')return;
+  if(!chartRuntime.api || !chartRuntime.series)return;
+  if(!prev || !curr)return;
+
+  const level=chooseBreakoutLevel(levels,curr);
+  if(!(level>0))return;
+  if(!isStrongGreenBreakout(prev,curr,level))return;
+
+  const key=[
+    state.selectedMint,
+    state.timeframe,
+    Number(curr.t||0),
+    level.toFixed(12),
+    Number(curr.close||0).toFixed(12)
+  ].join('|');
+
+  if(breakoutFxRuntime.lastKey===key)return;
+  breakoutFxRuntime.lastKey=key;
+
+  const point=chartCandle(curr);
+  const x=chartRuntime.api.timeScale().timeToCoordinate?.(point.time);
+  const y=chartRuntime.series.priceToCoordinate?.(Number(curr.close));
+
+  if(!Number.isFinite(x) || !Number.isFinite(y))return;
+
+  spawnBreakoutFx(
+    x,
+    y,
+    breakoutStrength(prev,curr,level)
+  );
+}
+
 function marketCapMetricAvailable(candidate = state.selected) {
   // Historical market cap requires a stable token supply.
   // Never fabricate a Pump supply just to keep the chart visible.
@@ -1638,6 +1955,20 @@ function updateRealtimeChart(mint){
     );
   }
 
+  try{
+    const fxCandles=candlesFor(
+      points,
+      state.timeframe
+    );
+    const fxPrev=fxCandles[fxCandles.length-2] || null;
+    const fxCurr=fxCandles[fxCandles.length-1] || null;
+    maybeTriggerBullishBreakoutFx(
+      fxPrev,
+      fxCurr,
+      strategyLevels()
+    );
+  }catch{}
+
   if(newBar && followLatest){
     requestAnimationFrame(()=>{
       try{
@@ -2199,3 +2530,4 @@ init();
 /* MEMEFLOW_TRADING_CHART_V30_11_REAL_TRADES_ONLY */
 /* MEMEFLOW_TRADING_CHART_V30_12_FULL_HISTORY_FREE_PAN_IMAGES */
 /* MEMEFLOW_TRADING_CHART_V30_13_SAFE_MARKET_CAP_TOGGLE */
+/* MEMEFLOW_TRADING_CHART_V30_14_BREAKOUT_FX */
