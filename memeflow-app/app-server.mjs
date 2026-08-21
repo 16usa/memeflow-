@@ -3,7 +3,7 @@ import http from 'node:http';import fs from 'node:fs';import path from 'node:pat
 import {JsonStore,sessionId,defaults} from './src/store.mjs';import {RpcPool,validPubkey,decodeCurve,decodeCreateData,decodePumpCreate,shouldExcludeMayhemCreate} from './src/solana.mjs';import {evaluate,tokenAgeMinutes} from './src/evaluate.mjs';import {validateSettings} from './src/settings.mjs';import {normalizeDiscoveryMode,tokenAllowedForSettings} from './src/discovery-eligibility.mjs';import {StripeBilling} from './src/billing.mjs';
 import {OpenAIIntelligence} from './src/openai-intelligence.mjs';import {PaperEngine} from './src/paper-engine.mjs';
 import {GameEngine} from './src/game-engine.mjs'; // MF_PEPE_ROCKET_GAME_IMPORT
-import {enrichToken,enrichHolders,makeEnrichDiag,makeHolderQueue,makeHolderMetrics} from './src/enrich.mjs';
+import {enrichToken,enrichHolders,refreshTokenMetadata,makeEnrichDiag,makeHolderQueue,makeHolderMetrics} from './src/enrich.mjs';
 import {makeRecoveryMetrics,startDecisionRecovery,lazyRecoverUser} from './src/recovery.mjs';
 import {makeLiveEvalMetrics,makeEvaluateForActiveUsers} from './src/liveeval.mjs';
 import {makeDiscoveryMetrics,makeDiscoveryQueue} from './src/discqueue.mjs';
@@ -1696,6 +1696,259 @@ setTimeout(()=>{
     holderBackfillV9.lastError=String(e?.message||e).slice(0,200);
   });
 },2000).unref?.();
+
+
+/* MEMEFLOW_DATA_INTEGRITY_V1_3_EXACT
+   Runtime truth reconciliation:
+   - a getProgramAccounts holder census expires after a bounded age
+   - visible candidates are re-baselined from Solana without trusting accumulated deltas forever
+   - missing metadata images use a separate bounded HTTP retry path
+*/
+const __V13_HOLDER_MAX_AGE_MS=Math.max(
+  60000,
+  Number(process.env.HOLDER_CANONICAL_MAX_AGE_MS||180000)
+);
+const __V13_HOLDER_RECONCILE_TICK_MS=Math.max(
+  10000,
+  Number(process.env.HOLDER_RECONCILE_TICK_MS||20000)
+);
+const __V13_HOLDER_RECONCILE_ACTIVITY_MS=Math.max(
+  __V13_HOLDER_MAX_AGE_MS,
+  Number(process.env.HOLDER_RECONCILE_ACTIVITY_MS||900000)
+);
+const __V13_HOLDER_RECONCILE_BATCH=Math.max(
+  1,
+  Math.min(4,Number(process.env.HOLDER_RECONCILE_BATCH||2))
+);
+
+const __v13IntegrityMetrics={
+  holderRuns:0,
+  holderQueuedForRefresh:0,
+  holderRefreshSucceeded:0,
+  holderRefreshFailed:0,
+  holderRefreshRateLimited:0,
+  metadataRuns:0,
+  metadataAttempted:0,
+  metadataImageRecovered:0,
+  metadataFailed:0,
+  lastHolderMint:null,
+  lastMetadataMint:null,
+  lastError:null
+};
+
+let __v13HolderRunActive=false;
+let __v13MetadataRunActive=false;
+
+function __v13VisibleMints(){
+  const out=new Set();
+  for(const decision of Object.values(store?.state?.decisions||{})){
+    const mint=String(decision?.mint||'').trim();
+    if(!mint)continue;
+    if(['BUY READY','WATCH','WAITING'].includes(String(decision?.state||''))){
+      out.add(mint);
+    }
+  }
+  return out;
+}
+
+function __v13HolderScanAge(token,now=Date.now()){
+  const scanned=Number(token?.holderCanonicalSeedAt||token?.holderScannedAt||0);
+  return scanned>0?Math.max(0,now-scanned):Infinity;
+}
+
+function __v13LastMarketActivity(token){
+  return Math.max(
+    Number(token?.lastMarketActivityAt||0),
+    Number(token?.lastPriceAt||0),
+    Number(token?.updatedAt||0),
+    Number(token?.discoveredAt||0)
+  );
+}
+
+function __v13IsCanonicalHolderSource(token){
+  const source=String(token?.holderSource||'').toLowerCase();
+  return (
+    source.includes('getprogramaccounts')||
+    source.includes('baseline + live')||
+    source.includes('canonical-refresh-pending')
+  );
+}
+
+async function __v13RunHolderReconcile(){
+  if(__v13HolderRunActive)return;
+  __v13HolderRunActive=true;
+  __v13IntegrityMetrics.holderRuns++;
+
+  try{
+    const now=Date.now();
+    const visible=__v13VisibleMints();
+
+    const rows=Object.values(store?.state?.tokens||{})
+      .filter(token=>{
+        const mint=String(token?.mint||'').trim();
+        if(!mint||!visible.has(mint)||!__isPumpOriginToken(token))return false;
+        if(!__v13IsCanonicalHolderSource(token))return false;
+        if(__v13HolderScanAge(token,now)<=__V13_HOLDER_MAX_AGE_MS)return false;
+
+        const activity=__v13LastMarketActivity(token);
+        if(activity>0&&now-activity>__V13_HOLDER_RECONCILE_ACTIVITY_MS)return false;
+
+        const queueState=holderQueue.inspect?.(mint)||null;
+        if(queueState?.pending||queueState?.active)return false;
+        return true;
+      })
+      .sort((a,b)=>__v13HolderScanAge(b,now)-__v13HolderScanAge(a,now))
+      .slice(0,__V13_HOLDER_RECONCILE_BATCH);
+
+    for(const token of rows){
+      const mint=String(token.mint);
+      __v13IntegrityMetrics.holderQueuedForRefresh++;
+      __v13IntegrityMetrics.lastHolderMint=mint;
+
+      const oldScanAt=Number(token?.holderCanonicalSeedAt||token?.holderScannedAt||0)||null;
+
+      const pending=store.setToken(mint,{
+        holderFresh:false,
+        holderCount:null,
+        holders:null,
+        top10Pct:null,
+        top10:null,
+        developerPct:null,
+        developerSharePct:null,
+        creatorPct:null,
+        holderSource:'canonical-refresh-pending',
+        holderScannedAt:oldScanAt,
+        holderCanonicalSeedAt:oldScanAt,
+        holderCanonicalAgeMs:oldScanAt?Math.max(0,Date.now()-oldScanAt):null
+      });
+
+      await Promise.resolve(evaluateAll(pending)).catch(()=>{});
+      try{publish(mint)}catch{}
+
+      try{
+        const result=await enrichHolders(
+          mint,
+          {rpc,store,evaluateAll,publish,enrichDiag,eventHolderLedger}
+        );
+
+        if(result?.rateLimited){
+          __v13IntegrityMetrics.holderRefreshRateLimited++;
+          continue;
+        }
+
+        const refreshed=store?.state?.tokens?.[mint]||null;
+        const source=String(refreshed?.holderSource||'').toLowerCase();
+
+        if(
+          refreshed?.holderFresh===true&&
+          Number.isFinite(Number(refreshed?.holderCount))&&
+          source.includes('getprogramaccounts')
+        ){
+          __v13IntegrityMetrics.holderRefreshSucceeded++;
+        }else{
+          __v13IntegrityMetrics.holderRefreshFailed++;
+        }
+      }catch(error){
+        __v13IntegrityMetrics.holderRefreshFailed++;
+        __v13IntegrityMetrics.lastError='holder: '+String(error?.message||error).slice(0,180);
+      }
+    }
+  }finally{
+    __v13HolderRunActive=false;
+  }
+}
+
+const __v13HolderTimer=setInterval(
+  ()=>void __v13RunHolderReconcile(),
+  __V13_HOLDER_RECONCILE_TICK_MS
+);
+__v13HolderTimer.unref?.();
+
+setTimeout(
+  ()=>void __v13RunHolderReconcile(),
+  Math.min(10000,__V13_HOLDER_RECONCILE_TICK_MS)
+).unref?.();
+
+const __V13_METADATA_TICK_MS=Math.max(
+  30000,
+  Number(process.env.METADATA_IMAGE_RETRY_TICK_MS||60000)
+);
+const __V13_METADATA_MAX_TOKEN_AGE_MS=Math.max(
+  300000,
+  Number(process.env.METADATA_IMAGE_RETRY_TOKEN_MAX_AGE_MS||7200000)
+);
+const __V13_METADATA_BATCH=Math.max(
+  1,
+  Math.min(4,Number(process.env.METADATA_IMAGE_RETRY_BATCH||2))
+);
+
+async function __v13RunMetadataRetry(){
+  if(__v13MetadataRunActive)return;
+  __v13MetadataRunActive=true;
+  __v13IntegrityMetrics.metadataRuns++;
+
+  try{
+    const now=Date.now();
+    const visible=__v13VisibleMints();
+
+    const rows=Object.values(store?.state?.tokens||{})
+      .filter(token=>{
+        const mint=String(token?.mint||'').trim();
+        if(!mint||!visible.has(mint))return false;
+        if(token?.imageUrl||token?.image||token?.logoUrl)return false;
+        if(!(token?.uri||token?.metadataUri))return false;
+
+        const discovered=Number(token?.discoveredAt||token?.createdAt||0);
+        if(discovered>0&&now-discovered>__V13_METADATA_MAX_TOKEN_AGE_MS)return false;
+
+        const attempts=Math.max(0,Number(token?.metadataImageRetryCount||0));
+        const maxAttempts=Math.max(1,Number(process.env.METADATA_IMAGE_RETRY_MAX||4));
+        if(attempts>=maxAttempts)return false;
+
+        const retryMs=Math.max(60000,Number(process.env.METADATA_IMAGE_RETRY_MS||300000));
+        const last=Number(token?.metadataImageRetryAt||token?.metadataFetchedAt||0);
+        if(last>0&&now-last<retryMs)return false;
+
+        return true;
+      })
+      .sort((a,b)=>Number(b?.discoveredAt||0)-Number(a?.discoveredAt||0))
+      .slice(0,__V13_METADATA_BATCH);
+
+    for(const token of rows){
+      const mint=String(token.mint);
+      __v13IntegrityMetrics.lastMetadataMint=mint;
+
+      try{
+        const result=await refreshTokenMetadata(
+          mint,
+          {store,evaluateAll,publish}
+        );
+
+        if(result?.attempted){
+          __v13IntegrityMetrics.metadataAttempted++;
+          if(result?.imageFound)__v13IntegrityMetrics.metadataImageRecovered++;
+          if(result?.success===false)__v13IntegrityMetrics.metadataFailed++;
+        }
+      }catch(error){
+        __v13IntegrityMetrics.metadataFailed++;
+        __v13IntegrityMetrics.lastError='metadata: '+String(error?.message||error).slice(0,180);
+      }
+    }
+  }finally{
+    __v13MetadataRunActive=false;
+  }
+}
+
+const __v13MetadataTimer=setInterval(
+  ()=>void __v13RunMetadataRetry(),
+  __V13_METADATA_TICK_MS
+);
+__v13MetadataTimer.unref?.();
+
+setTimeout(
+  ()=>void __v13RunMetadataRetry(),
+  Math.min(15000,__V13_METADATA_TICK_MS)
+).unref?.();
 
 /* MEMEFLOW_V12_DISCOVERY_ENRICHMENT_BRIDGE
    Self-healing bridge for fresh Pump tokens that reached store.tokens but

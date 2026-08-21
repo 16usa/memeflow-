@@ -6,6 +6,45 @@ const firstFinite=(...xs)=>{for(const v of xs)if(finite(v))return Number(v);retu
 const firstText=(...xs)=>{for(const v of xs){const s=String(v??'').trim();if(s)return s}return ''};
 const list=v=>String(v??'').split(/[\n,]+/).map(x=>x.trim().toLowerCase()).filter(Boolean);
 
+const __MF_HOLDER_CANONICAL_MAX_AGE_MS=Math.max(
+  60000,
+  Number(process.env.HOLDER_CANONICAL_MAX_AGE_MS||180000)
+); // MEMEFLOW_DATA_INTEGRITY_V1_3_EXACT
+
+function __mfV13EffectiveEvidence(token={},now=Date.now()){
+  const source=String(token?.holderSource||'').toLowerCase();
+  const canonicalSource=
+    source.includes('getprogramaccounts')||
+    source.includes('baseline + live')||
+    source.includes('canonical');
+  const scanned=firstFinite(token.holderCanonicalSeedAt,token.holderScannedAt);
+  const canonicalAgeMs=scanned!==null&&scanned>0
+    ? Math.max(0,Number(now)-Number(scanned))
+    : null;
+  const stale=
+    token?.holderFresh===true&&
+    canonicalSource&&
+    canonicalAgeMs!==null&&
+    canonicalAgeMs>__MF_HOLDER_CANONICAL_MAX_AGE_MS;
+
+  if(!stale)return token;
+
+  return {
+    ...token,
+    holderFresh:false,
+    holderCount:null,
+    holders:null,
+    top10Pct:null,
+    top10:null,
+    developerPct:null,
+    developerSharePct:null,
+    creatorPct:null,
+    holderEvidenceStale:true,
+    holderCanonicalAgeMs:canonicalAgeMs
+  };
+}
+
+
 function independentAiScore(token={}){
   let score=0; const quality=[];
   const h=firstFinite(token.holderCount,token.holders,token.holder?.count);
@@ -54,6 +93,7 @@ export function tokenAgeMinutes(token={},now=Date.now()){
 }
 
 function __mfEvaluateBaseV11(token,s={}){
+  token=__mfV13EffectiveEvidence(token);
   const reasons=[],gates=[];let waiting=false,blocked=false;
   const addGate=(name,result,reason,meta={})=>{
     const status=result===null||result===undefined?'WAITING':result?'PASS':'FAIL';
@@ -72,7 +112,8 @@ function __mfEvaluateBaseV11(token,s={}){
     addGate(name,value===null?null:value<=x,value===null?pending:reason,{value,threshold:x,operator:'<='});
   };
 
-  const ai=independentAiScore(token),score=ai.score;
+  const ai=independentAiScore(token);
+  let score=ai.score;
   const completeness=[
     firstFinite(token.holderCount,token.holders,token.holder?.count),
     firstFinite(token.top10Pct,token.top10,token.holder?.top10Pct),
@@ -150,6 +191,32 @@ function __mfEvaluateBaseV11(token,s={}){
   if(bl.length){
     const creator=firstText(token.creator,token.creatorWallet,token.developerWallet,token.devWallet,token.developer);
     addGate('Developer blacklist',creator?!bl.includes(creator):null,'Developer wallet is blacklisted');
+  }
+
+  // MEMEFLOW_DATA_INTEGRITY_V1_3_EXACT
+  // Catastrophic drawdown is a hard market-integrity failure.
+  const __mfCurrentPrice=finite(token?.priceSol)?Number(token.priceSol):null;
+  const __mfPeakPrice=finite(token?.peakPriceSol)?Number(token.peakPriceSol):null;
+  const __mfConfiguredCollapse=Number(process.env.MEMEFLOW_COLLAPSE_DRAWDOWN_PCT);
+  const __mfCollapseLimit=Number.isFinite(__mfConfiguredCollapse)
+    ? Math.max(50,Math.min(99,__mfConfiguredCollapse))
+    : 90;
+  const __mfDrawdownPct=
+    __mfCurrentPrice!==null&&__mfCurrentPrice>0&&
+    __mfPeakPrice!==null&&__mfPeakPrice>0&&
+    __mfPeakPrice>=__mfCurrentPrice
+      ? (1-__mfCurrentPrice/__mfPeakPrice)*100
+      : null;
+
+  if(__mfDrawdownPct!==null){
+    const __mfNotCollapsed=__mfDrawdownPct<__mfCollapseLimit;
+    addGate(
+      'Peak drawdown safety',
+      __mfNotCollapsed,
+      `token collapsed ${__mfDrawdownPct.toFixed(1)}% from observed peak`,
+      {value:__mfDrawdownPct,threshold:__mfCollapseLimit,operator:'<'}
+    );
+    if(!__mfNotCollapsed)score=Math.min(score,20);
   }
 
   addGate('Verified price',v.price===null?null:v.price>0,'price unavailable',{value:v.price});

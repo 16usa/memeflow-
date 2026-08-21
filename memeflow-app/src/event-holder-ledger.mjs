@@ -13,6 +13,7 @@ const DEFAULT_SUPPLY_UI=Math.max(1,Number(process.env.PUMP_TOKEN_SUPPLY_UI||1000
 const MAX_MINTS=Math.max(250,Number(process.env.EVENT_HOLDER_MAX_MINTS||1500));
 const MAX_AGE_MS=Math.max(30*60_000,Number(process.env.EVENT_HOLDER_MAX_AGE_MS||6*60*60_000));
 const SAVE_INTERVAL_MS=Math.max(1000,Number(process.env.EVENT_HOLDER_SAVE_INTERVAL_MS||5000));
+const HOLDER_CANONICAL_MAX_AGE_MS=Math.max(60000,Number(process.env.HOLDER_CANONICAL_MAX_AGE_MS||180000)); // MEMEFLOW_DATA_INTEGRITY_V1_3_EXACT
 const DISC=crypto.createHash('sha256').update('event:TradeEvent').digest().subarray(0,8);
 const B58='123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
 
@@ -266,8 +267,8 @@ export class EventHolderLedger{
   }
 
   snapshot(m){
-    // MEMEFLOW_HOLDERS_V9_PROVISIONAL_GUARD
-    // TradeEvent.user balances are a delta stream, not a complete holder census.
+    // MEMEFLOW_DATA_INTEGRITY_V1_3_EXACT
+    // TradeEvent deltas do not renew the authoritative census timestamp.
     const r=this.byMint.get(m);
     if(!r)return null;
 
@@ -276,19 +277,30 @@ export class EventHolderLedger{
       .sort((a,b)=>a[1]===b[1]?0:(a[1]>b[1]?-1:1));
 
     const totalSupply=supplyRaw(r.decimals??6);
-    const top10=holders.slice(0,10).reduce((s,[,a])=>s+a,0n);
+    const top10=holders.slice(0,10).reduce((sum,[,amount])=>sum+amount,0n);
     const dev=r.creator?(r.balances.get(r.creator)||0n):0n;
-    const tracked=holders.reduce((s,[,a])=>s+a,0n);
+    const tracked=holders.reduce((sum,[,amount])=>sum+amount,0n);
+    const now=Date.now();
+    const canonicalSeedAt=Number(r.canonicalSeedAt||0);
+    const canonicalAgeMs=canonicalSeedAt>0?Math.max(0,now-canonicalSeedAt):null;
+    const canonicalFresh=canonicalSeedAt>0&&canonicalAgeMs<=HOLDER_CANONICAL_MAX_AGE_MS;
 
     return {
       mint:m,
-      holderFresh:Boolean(r.canonicalSeedAt),
-      holderSource:r.canonicalSeedAt?'Solana getProgramAccounts baseline + live Pump TradeEvent delta':'event-ledger-user-only-provisional',
-      holderCount:r.canonicalSeedAt?holders.length:null,
-      top10Pct:r.canonicalSeedAt?pct(top10,totalSupply):null,
-      developerPct:r.canonicalSeedAt&&r.creator?pct(dev,totalSupply):null,
-      developerSharePct:r.canonicalSeedAt&&r.creator?pct(dev,totalSupply):null,
-      holderScannedAt:r.lastSeenAt||Date.now(),
+      holderFresh:canonicalFresh,
+      holderSource:canonicalFresh
+        ? 'Solana getProgramAccounts baseline + live Pump TradeEvent delta'
+        : (canonicalSeedAt>0?'canonical-refresh-pending':'event-ledger-user-only-provisional'),
+      holderCount:canonicalFresh?holders.length:null,
+      top10Pct:canonicalFresh?pct(top10,totalSupply):null,
+      developerPct:canonicalFresh&&r.creator?pct(dev,totalSupply):null,
+      developerSharePct:canonicalFresh&&r.creator?pct(dev,totalSupply):null,
+      holderScannedAt:canonicalSeedAt||null,
+      holderCanonicalSeedAt:canonicalSeedAt||null,
+      holderCanonicalAgeMs:canonicalAgeMs,
+      holderCanonicalFresh:canonicalFresh,
+      holderObservedWallets:holders.length,
+      holderLastTradeEventAt:r.lastSeenAt||null,
       eventLedgerVersion:VERSION,
       eventLedgerLastUser:r.lastUser||null,
       eventLedgerTxCount:r.txCount,
@@ -345,6 +357,7 @@ export class EventHolderLedger{
       maxMints:MAX_MINTS,
       maxAgeMs:MAX_AGE_MS,
       saveIntervalMs:SAVE_INTERVAL_MS,
+      canonicalMaxAgeMs:HOLDER_CANONICAL_MAX_AGE_MS,
       defaultSupplyUi:DEFAULT_SUPPLY_UI,
       stateFile:path.basename(STATE),
       liveTradeStreamCompatible:true,

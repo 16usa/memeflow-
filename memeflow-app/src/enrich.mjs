@@ -95,6 +95,85 @@ async function fetchTokenMetadata(uri) {
   }
 }
 
+// MEMEFLOW_DATA_INTEGRITY_V1_3_EXACT
+// Lightweight retry for unresolved metadata or a missing token image.
+export async function refreshTokenMetadata(mint,deps={}){
+  const {store,evaluateAll,publish}=deps;
+  const token=store?.state?.tokens?.[mint]||null;
+  if(!token)return {attempted:false,reason:'token-missing'};
+
+  const uri=token.uri||token.metadataUri||null;
+  if(!uri)return {attempted:false,reason:'uri-missing'};
+
+  const existingImage=token.imageUrl||token.image||token.logoUrl||null;
+  if(existingImage)return {attempted:false,reason:'image-present'};
+
+  const maxAttempts=Math.max(1,Number(process.env.METADATA_IMAGE_RETRY_MAX||4));
+  const retryMs=Math.max(60000,Number(process.env.METADATA_IMAGE_RETRY_MS||300000));
+  const attempts=Math.max(0,Number(token.metadataImageRetryCount||0));
+  const lastAttempt=Number(token.metadataImageRetryAt||token.metadataFetchedAt||0);
+
+  if(attempts>=maxAttempts)return {attempted:false,reason:'retry-limit'};
+  if(lastAttempt>0&&Date.now()-lastAttempt<retryMs)return {attempted:false,reason:'retry-wait'};
+
+  const now=Date.now();
+
+  try{
+    const metadata=await fetchTokenMetadata(uri);
+    const imageUrl=metadata.imageUrl||existingImage||null;
+    const socialPatch={};
+
+    if(metadata.twitter){
+      socialPatch.twitter=metadata.twitter;
+      socialPatch.twitterUrl=metadata.twitter;
+    }
+    if(metadata.website){
+      socialPatch.website=metadata.website;
+      socialPatch.websiteUrl=metadata.website;
+    }
+    if(metadata.telegram){
+      socialPatch.telegram=metadata.telegram;
+      socialPatch.telegramUrl=metadata.telegram;
+    }
+
+    const updated=store.setToken(mint,{
+      metadataFetchedAt:now,
+      metadataResolved:metadata.metadataResolved===true||token.metadataResolved===true,
+      metadataError:null,
+      metadataUrl:metadata.metadataUrl||token.metadataUrl||null,
+      imageUrl,
+      image:imageUrl,
+      logoUrl:imageUrl,
+      metadataName:metadata.metadataName||token.metadataName||null,
+      metadataSymbol:metadata.metadataSymbol||token.metadataSymbol||null,
+      metadataImageRetryCount:attempts+1,
+      metadataImageRetryAt:now,
+      metadataImageRetryComplete:Boolean(imageUrl),
+      ...socialPatch
+    });
+
+    if(typeof evaluateAll==='function')await evaluateAll(updated);
+    try{publish?.(mint)}catch{}
+
+    return {attempted:true,success:true,imageFound:Boolean(imageUrl)};
+  }catch(error){
+    const updated=store.setToken(mint,{
+      metadataImageRetryCount:attempts+1,
+      metadataImageRetryAt:now,
+      metadataError:sanitize(error?.message||String(error)),
+      metadataResolved:token.metadataResolved===true
+    });
+
+    if(typeof evaluateAll==='function'){
+      await Promise.resolve(evaluateAll(updated)).catch(()=>{});
+    }
+    try{publish?.(mint)}catch{}
+
+    return {attempted:true,success:false,error:sanitize(error?.message||String(error))};
+  }
+}
+
+
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
