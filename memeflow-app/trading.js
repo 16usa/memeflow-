@@ -2412,6 +2412,9 @@ function drawChart(){
           filterMode:'filter',
           startValue:range.startValue,
           endValue:range.endValue,
+          // V30.21: never let pinch/wheel zoom stretch just 1-2 candles
+          // over the whole chart. Keep a professional minimum viewport.
+          minValueSpan:window.innerWidth<700 ? 8 : 12,
           zoomOnMouseWheel:true,
           moveOnMouseMove:true,
           moveOnMouseWheel:true,
@@ -2435,8 +2438,10 @@ function drawChart(){
             borderColor0:'#ff6679',
             borderWidth:1
           },
-          barMinWidth:1,
-          barMaxWidth:14,
+          // V30.21: candle body tracks category width while zooming.
+          // Percentage width keeps the inter-candle gap proportional instead
+          // of leaving a fixed 14px candle inside an ever-wider category.
+          barWidth:'78%',
           emphasis:{disabled:true},
           markLine:{
             silent:true,
@@ -2451,7 +2456,8 @@ function drawChart(){
           xAxisIndex:1,
           yAxisIndex:1,
           data:volumeData,
-          barMaxWidth:10,
+          // Keep volume aligned with the same zoom geometry.
+          barWidth:'64%',
           large:true,
           largeThreshold:800,
           emphasis:{disabled:true}
