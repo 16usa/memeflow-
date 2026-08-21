@@ -1610,6 +1610,18 @@ function chartTimeLabel(value){
   });
 }
 
+function chartTouchUi(){
+  return Boolean(
+    (typeof window.matchMedia==='function' &&
+      window.matchMedia('(pointer: coarse)').matches) ||
+    Number(navigator.maxTouchPoints||0)>0
+  );
+}
+
+function chartPointerTimeLabel(params){
+  return chartTimeLabel(params?.value);
+}
+
 function compactVolume(value){
   const n=Number(value);
   if(!Number.isFinite(n))return '';
@@ -1805,6 +1817,22 @@ function ensureChartEngine(){
   chartRuntime.api.on('datazoom',()=>{
     captureChartViewport();
   });
+
+  if(chartTouchUi()){
+    host.addEventListener(
+      'touchstart',
+      ()=>{
+        try{
+          chartRuntime.api?.dispatchAction?.({type:'hideTip'});
+          chartRuntime.api?.dispatchAction?.({
+            type:'updateAxisPointer',
+            currTrigger:'leave'
+          });
+        }catch{}
+      },
+      {passive:true}
+    );
+  }
 
   chartRuntime.resizeObserver?.disconnect?.();
 
@@ -2027,6 +2055,8 @@ function drawChart(){
         : chartInitialRange(labels);
   }
 
+  const touchUi=chartTouchUi();
+
   chartRuntime.suppressZoom=true;
 
   chartRuntime.api.setOption(
@@ -2039,17 +2069,39 @@ function drawChart(){
         fontSize:9
       },
       axisPointer:{
-        link:[{xAxisIndex:'all'}],
+        // Mobile Safari was interpreting a finger drag as an axis selection.
+        // Touch mode must pan/zoom with no category shadow or raw timestamp label.
+        show:!touchUi,
+        triggerTooltip:!touchUi,
+        link:touchUi ? [] : [{xAxisIndex:'all'}],
+        snap:false,
+        animation:false,
         label:{
-          backgroundColor:'#0b171d'
+          show:!touchUi,
+          backgroundColor:'#0b171d',
+          formatter:chartPointerTimeLabel
         }
       },
       tooltip:{
-        trigger:'axis',
+        show:!touchUi,
+        showContent:!touchUi,
+        trigger:touchUi ? 'none' : 'axis',
+        triggerOn:touchUi ? 'none' : 'mousemove|click',
+        alwaysShowContent:false,
+        confine:true,
         axisPointer:{
-          type:'cross',
-          crossStyle:{
-            color:'rgba(120,176,195,.30)'
+          show:!touchUi,
+          type:'line',
+          snap:false,
+          lineStyle:{
+            color:'rgba(120,176,195,.30)',
+            width:1,
+            type:'dashed'
+          },
+          label:{
+            show:!touchUi,
+            formatter:chartPointerTimeLabel,
+            backgroundColor:'#0b171d'
           }
         },
         backgroundColor:'rgba(5,12,17,.96)',
@@ -2115,6 +2167,12 @@ function drawChart(){
           axisTick:{show:false},
           axisLabel:{show:false},
           splitLine:{show:false},
+          axisPointer:{
+            show:!touchUi,
+            type:'line',
+            snap:false,
+            label:{show:false}
+          },
           min:'dataMin',
           max:'dataMax'
         },
@@ -2135,6 +2193,16 @@ function drawChart(){
             formatter:value=>chartTimeLabel(value)
           },
           splitLine:{show:false},
+          axisPointer:{
+            show:!touchUi,
+            type:'line',
+            snap:false,
+            label:{
+              show:!touchUi,
+              formatter:chartPointerTimeLabel,
+              backgroundColor:'#0b171d'
+            }
+          },
           min:'dataMin',
           max:'dataMax'
         }
@@ -2674,3 +2742,4 @@ init();
 /* MEMEFLOW_TRADING_CHART_V30_14_BREAKOUT_FX */
 /* MEMEFLOW_TRADING_CHART_V30_14_1_BREAKOUT_FX_1S_ONLY */
 /* MEMEFLOW_TRADING_CHART_V30_15_2_GMGN_ECHARTS */
+/* MEMEFLOW_TRADING_CHART_V30_16_MOBILE_PAN_NO_SHADOW */
