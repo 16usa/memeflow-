@@ -1812,6 +1812,36 @@ function levelColor(level){
   return '#a98bff';
 }
 
+// V30.19: keep sparse timeframes visually dense without inventing candles.
+// These are render-only empty category slots. They never enter OHLC, volume,
+// moving-average, trade, signal, TP/SL, or execution logic.
+function chartVisibleBarsTarget(){
+  return window.innerWidth<700
+    ? 48
+    : 84;
+}
+
+function chartDisplayData(candles){
+  const actual=Array.isArray(candles)?candles:[];
+  const target=chartVisibleBarsTarget();
+  const padCount=Math.max(0,target-actual.length);
+
+  // Stable non-time labels keep ECharts category spacing consistent while
+  // chartTimeLabel() renders them as blank. No pre-birth timestamps are made.
+  const padLabels=Array.from(
+    {length:padCount},
+    (_,index)=>`__mf_pad_${index}`
+  );
+
+  return {
+    labels:padLabels.concat(
+      actual.map(c=>String(Number(c.t)))
+    ),
+    rows:Array(padCount).fill(null).concat(actual),
+    padCount
+  };
+}
+
 function chartInitialRange(labels){
   const count=labels.length;
   if(!count){
@@ -1825,10 +1855,7 @@ function chartInitialRange(labels){
     };
   }
 
-  const visibleBars=
-    window.innerWidth<700
-      ? 48
-      : 84;
+  const visibleBars=chartVisibleBarsTarget();
 
   return {
     startValue:labels[Math.max(0,count-visibleBars)],
@@ -2073,15 +2100,22 @@ function drawChart(){
 
   $('chartEmpty').style.display='none';
 
-  const labels=candles.map(c=>String(Number(c.t)));
-  const candleData=candles.map(c=>[
-    Number(c.open),
-    Number(c.close),
-    Number(c.low),
-    Number(c.high)
-  ]);
+  const display=chartDisplayData(candles);
+  const labels=display.labels;
+  const displayCandles=display.rows;
 
-  const volumeData=candles.map(c=>({
+  const candleData=displayCandles.map(c=>
+    c
+      ? [
+          Number(c.open),
+          Number(c.close),
+          Number(c.low),
+          Number(c.high)
+        ]
+      : '-'
+  );
+
+  const actualVolumeData=candles.map(c=>({
     value:Math.max(0,Number(c.volumeUsd||0)),
     itemStyle:{
       color:
@@ -2091,8 +2125,10 @@ function drawChart(){
     }
   }));
 
-  const ma5=movingAverage(candles,5);
-  const ma10=movingAverage(candles,10);
+  const volumeData=Array(display.padCount).fill('-').concat(actualVolumeData);
+  const maPad=Array(display.padCount).fill('-');
+  const ma5=maPad.concat(movingAverage(candles,5));
+  const ma10=maPad.concat(movingAverage(candles,10));
 
   const levelInfo=chartLevelInfo(candles);
   chartRuntime.offscreenLevels=levelInfo.offscreen;
@@ -2227,7 +2263,7 @@ function drawChart(){
           const rows=Array.isArray(params)?params:[];
           const candleParam=rows.find(row=>row?.seriesName==='Price');
           const index=Number(candleParam?.dataIndex);
-          const c=Number.isFinite(index)?candles[index]:null;
+          const c=Number.isFinite(index)?displayCandles[index]:null;
           if(!c)return '';
 
           const time=chartTimeLabel(c.t);
