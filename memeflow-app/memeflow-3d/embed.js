@@ -1,6 +1,6 @@
 import {
   bootMemeflowTrue3D
-} from './scene.js?v=true-3d-hero-v6';
+} from './scene.js?v=true-3d-stage-fill-v7';
 
 async function startTrue3D() {
   const viewport =
@@ -63,7 +63,7 @@ async function startTrue3D() {
           );
 
         console.log(
-          '[TRUE-3D] HERO V6 mounted'
+          '[TRUE-3D] STAGE FILL V7 mounted'
         );
       }
 

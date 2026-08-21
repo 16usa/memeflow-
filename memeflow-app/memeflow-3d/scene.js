@@ -23,7 +23,7 @@ import {
 import {
   NODES,
   ROUTES
-} from './layout.js?v=true-3d-hero-v6';
+} from './layout.js?v=true-3d-stage-fill-v7';
 
 import {
   loadHardwareAssets
@@ -31,7 +31,7 @@ import {
 
 import {
   createModule
-} from './modules.js?v=true-3d-hero-v6';
+} from './modules.js?v=true-3d-stage-fill-v7';
 
 import {
   createRoute,
@@ -217,9 +217,9 @@ export async function bootMemeflowTrue3D(
   const bloom =
     new UnrealBloomPass(
       new THREE.Vector2(1, 1),
-      0.18,
-      0.28,
-      0.90
+      0.12,
+      0.24,
+      0.92
     );
 
   composer.addPass(bloom);
@@ -277,8 +277,8 @@ export async function bootMemeflowTrue3D(
   const cyanRim =
     new THREE.PointLight(
       0x58d7ff,
-      6.5,
-      21,
+      3.6,
+      19,
       2
     );
 
@@ -293,8 +293,8 @@ export async function bootMemeflowTrue3D(
   const greenCore =
     new THREE.PointLight(
       0x57e69a,
-      9.0,
-      18,
+      5.0,
+      17,
       2
     );
 
@@ -309,8 +309,8 @@ export async function bootMemeflowTrue3D(
   const violetDecision =
     new THREE.PointLight(
       0x8d58ff,
-      5.2,
-      15,
+      3.2,
+      14,
       2
     );
 
@@ -321,6 +321,36 @@ export async function bootMemeflowTrue3D(
   );
 
   scene.add(violetDecision);
+
+  const stage = new THREE.Mesh(
+    new THREE.PlaneGeometry(13.6, 9.8),
+    new THREE.MeshBasicMaterial({
+      color: 0x071018,
+      transparent: true,
+      opacity: 0.12,
+      depthWrite: false,
+      side: THREE.DoubleSide
+    })
+  );
+
+  stage.rotation.x = -Math.PI / 2;
+  stage.position.set(0, -0.72, 0.55);
+  scene.add(stage);
+
+  const stageRing = new THREE.Mesh(
+    new THREE.RingGeometry(3.9, 5.6, 96),
+    new THREE.MeshBasicMaterial({
+      color: 0x133247,
+      transparent: true,
+      opacity: 0.055,
+      depthWrite: false,
+      side: THREE.DoubleSide
+    })
+  );
+
+  stageRing.rotation.x = -Math.PI / 2;
+  stageRing.position.set(0, -0.705, 0.55);
+  scene.add(stageRing);
 
   const assets =
     await loadHardwareAssets();
@@ -396,8 +426,8 @@ export async function bootMemeflowTrue3D(
   const homeDirection =
     new THREE.Vector3(
       0,
-      0.73,
-      0.69
+      0.64,
+      0.77
     ).normalize();
 
   const homeCamera =
@@ -496,13 +526,13 @@ export async function bootMemeflowTrue3D(
 
     const xLimit =
       aspect < 0.82
-        ? 0.965
-        : 0.955;
+        ? 0.985
+        : 0.975;
 
     const yLimit =
       aspect < 0.82
-        ? 0.955
-        : 0.945;
+        ? 0.972
+        : 0.962;
 
     let low = 4;
     let high = 60;
@@ -870,3 +900,5 @@ export async function bootMemeflowTrue3D(
 /* ===== MEMEFLOW_TRUE_3D_GLB_V5 ===== */
 
 /* ===== MEMEFLOW_TRUE_3D_HERO_V6 ===== */
+
+/* ===== MEMEFLOW_TRUE_3D_STAGE_FILL_V7 ===== */

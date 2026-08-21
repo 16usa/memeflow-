@@ -84,7 +84,7 @@ export function createModule(node, assets) {
 
   group.position.set(
     node.pos[0],
-    0,
+    Number(node.pos?.[1]) || 0,
     node.pos[2]
   );
 
