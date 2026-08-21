@@ -1,20 +1,17 @@
 import {
   bootMemeflowTrue3D
-} from './scene.js?v=true-3d-bounds-fix-v4';
+} from './scene.js?v=true-3d-glb-v5';
 
-function startTrue3D() {
+async function startTrue3D() {
   const viewport =
     document.querySelector(
       '.viewport-wrap'
     );
 
-  if (
-    !viewport
-  ) {
+  if (!viewport) {
     console.error(
       '[TRUE-3D] viewport-wrap not found'
     );
-
     return;
   }
 
@@ -23,9 +20,7 @@ function startTrue3D() {
       'memeflowTrue3DHost'
     );
 
-  if (
-    !host
-  ) {
+  if (!host) {
     host =
       document.createElement(
         'div'
@@ -34,23 +29,27 @@ function startTrue3D() {
     host.id =
       'memeflowTrue3DHost';
 
-    viewport.appendChild(
-      host
-    );
+    viewport.appendChild(host);
   }
 
   window.__MEMEFLOW_TRUE_3D_ACTIVE__ =
     true;
 
   requestAnimationFrame(
-    () => {
+    async () => {
       try {
-        window.__memeflowTrue3D
-          ?.dispose
-          ?.();
+        const previous =
+          window.__memeflowTrue3D;
+
+        if (
+          previous
+          && typeof previous.dispose === 'function'
+        ) {
+          previous.dispose();
+        }
 
         window.__memeflowTrue3D =
-          bootMemeflowTrue3D(
+          await bootMemeflowTrue3D(
             'memeflowTrue3DHost'
           );
 
@@ -64,18 +63,16 @@ function startTrue3D() {
           );
 
         console.log(
-          '[TRUE-3D] bounds-fix V4 mounted'
+          '[TRUE-3D] GLB V5 mounted'
         );
       }
 
-      catch (
-        error
-      ) {
+      catch (error) {
         window.__MEMEFLOW_TRUE_3D_ACTIVE__ =
           false;
 
         console.error(
-          '[TRUE-3D] boot failed',
+          '[TRUE-3D] GLB V5 boot failed',
           error
         );
       }

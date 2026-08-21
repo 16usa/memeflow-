@@ -23,27 +23,25 @@ import {
 import {
   NODES,
   ROUTES
-} from './layout.js?v=true-3d-clean-v3';
+} from './layout.js?v=true-3d-glb-v5';
+
+import {
+  loadHardwareAssets
+} from './assets.js?v=true-3d-glb-v5';
 
 import {
   createModule
-} from './modules.js?v=true-3d-clean-v3';
+} from './modules.js?v=true-3d-glb-v5';
 
 import {
   createRoute,
   animateRoutes
-} from './routes.js?v=true-3d-clean-v3';
+} from './routes.js?v=true-3d-glb-v5';
 
 function buildFitBounds(
   scene,
   modules
 ) {
-  /*
-    V4 FIX:
-    V3 measured child fitObject nodes before parent world matrices were
-    guaranteed to be current on first mobile load. That could collapse the
-    fit box around the center and make Home/Reset zoom into one module.
-  */
   scene.updateMatrixWorld(true);
 
   const box =
@@ -66,9 +64,7 @@ function buildFitBounds(
         true
       );
 
-    if (
-      module.fitObject
-    ) {
+    if (module.fitObject) {
       box.expandByObject(
         module.fitObject,
         true
@@ -79,14 +75,8 @@ function buildFitBounds(
   const size =
     new THREE.Vector3();
 
-  box.getSize(
-    size
-  );
+  box.getSize(size);
 
-  /*
-    Safety fallback from layout coordinates. This guarantees Home view can
-    never collapse to one card even if a future Three.js timing change occurs.
-  */
   if (
     box.isEmpty()
     || !Number.isFinite(size.x)
@@ -100,54 +90,39 @@ function buildFitBounds(
       const module
       of modules.values()
     ) {
-      const node =
-        module.node;
+      const node = module.node;
 
-      if (
-        !node
-      ) {
-        continue;
-      }
+      if (!node) continue;
 
       const width =
-        Number(
-          node.size?.[0]
-        ) || 2.2;
+        Number(node.size?.[0])
+        || 2.2;
 
       const depth =
-        Number(
-          node.size?.[1]
-        ) || 1.5;
+        Number(node.size?.[1])
+        || 1.5;
 
       const x =
-        Number(
-          node.pos?.[0]
-        ) || 0;
+        Number(node.pos?.[0])
+        || 0;
 
       const z =
-        Number(
-          node.pos?.[2]
-        ) || 0;
-
-      const halfWidth =
-        width * 0.62;
-
-      const halfDepth =
-        depth * 0.64;
+        Number(node.pos?.[2])
+        || 0;
 
       box.expandByPoint(
         new THREE.Vector3(
-          x - halfWidth,
-          -0.62,
-          z - halfDepth
+          x - width * 0.62,
+          -0.66,
+          z - depth * 0.65
         )
       );
 
       box.expandByPoint(
         new THREE.Vector3(
-          x + halfWidth,
-          0.22,
-          z + halfDepth
+          x + width * 0.62,
+          0.28,
+          z + depth * 0.65
         )
       );
     }
@@ -156,9 +131,7 @@ function buildFitBounds(
   return box;
 }
 
-function boxCorners(
-  box
-) {
+function boxCorners(box) {
   const min = box.min;
   const max = box.max;
 
@@ -174,13 +147,11 @@ function boxCorners(
   ];
 }
 
-export function bootMemeflowTrue3D(
+export async function bootMemeflowTrue3D(
   rootId = 'memeflowTrue3DHost'
 ) {
   const mount =
-    document.getElementById(
-      rootId
-    );
+    document.getElementById(rootId);
 
   if (!mount) {
     throw new Error(
@@ -191,17 +162,12 @@ export function bootMemeflowTrue3D(
 
   mount.replaceChildren();
 
-  const scene =
-    new THREE.Scene();
-
-  scene.background =
-    new THREE.Color(
-      0x000000
-    );
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x000000);
 
   const camera =
     new THREE.PerspectiveCamera(
-      42,
+      41,
       1,
       0.05,
       240
@@ -229,7 +195,7 @@ export function bootMemeflowTrue3D(
     THREE.ACESFilmicToneMapping;
 
   renderer.toneMappingExposure =
-    1.02;
+    0.98;
 
   renderer.domElement.id =
     'memeflowTrue3DCanvas';
@@ -239,35 +205,24 @@ export function bootMemeflowTrue3D(
   );
 
   const composer =
-    new EffectComposer(
-      renderer
-    );
+    new EffectComposer(renderer);
 
-  const renderPass =
+  composer.addPass(
     new RenderPass(
       scene,
       camera
-    );
-
-  composer.addPass(
-    renderPass
+    )
   );
 
   const bloom =
     new UnrealBloomPass(
-      new THREE.Vector2(
-        1,
-        1
-      ),
-      0.30,
-      0.38,
-      0.82
+      new THREE.Vector2(1, 1),
+      0.24,
+      0.34,
+      0.86
     );
 
-  composer.addPass(
-    bloom
-  );
-
+  composer.addPass(bloom);
   composer.addPass(
     new OutputPass()
   );
@@ -278,36 +233,18 @@ export function bootMemeflowTrue3D(
       renderer.domElement
     );
 
-  controls.enablePan =
-    false;
+  controls.enablePan = false;
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.055;
+  controls.rotateSpeed = 0.54;
+  controls.zoomSpeed = 1.04;
 
-  controls.enableDamping =
-    true;
+  controls.minAzimuthAngle = -Infinity;
+  controls.maxAzimuthAngle = Infinity;
+  controls.minPolarAngle = 0.10;
+  controls.maxPolarAngle = Math.PI - 0.10;
 
-  controls.dampingFactor =
-    0.055;
-
-  controls.rotateSpeed =
-    0.56;
-
-  controls.zoomSpeed =
-    1.05;
-
-  controls.minAzimuthAngle =
-    -Infinity;
-
-  controls.maxAzimuthAngle =
-    Infinity;
-
-  controls.minPolarAngle =
-    0.10;
-
-  controls.maxPolarAngle =
-    Math.PI - 0.10;
-
-  if (
-    controls.touches
-  ) {
+  if (controls.touches) {
     controls.touches.ONE =
       THREE.TOUCH.ROTATE;
 
@@ -317,98 +254,88 @@ export function bootMemeflowTrue3D(
 
   scene.add(
     new THREE.HemisphereLight(
-      0x9fd9ff,
+      0x9ecfe8,
       0x010203,
-      0.42
+      0.32
     )
   );
 
   const key =
     new THREE.DirectionalLight(
-      0xf4fbff,
-      1.25
+      0xf3fbff,
+      1.10
     );
 
   key.position.set(
     4.5,
-    10,
-    6.5
+    9.0,
+    6.8
   );
 
-  scene.add(
-    key
-  );
+  scene.add(key);
 
   const cyanRim =
     new THREE.PointLight(
-      0x64dcff,
-      9,
-      22,
+      0x58d7ff,
+      6.5,
+      21,
       2
     );
 
   cyanRim.position.set(
-    -5.5,
+    -5.2,
     3.2,
     1.8
   );
 
-  scene.add(
-    cyanRim
-  );
+  scene.add(cyanRim);
 
   const greenCore =
     new THREE.PointLight(
       0x57e69a,
-      12,
-      19,
+      9.0,
+      18,
       2
     );
 
   greenCore.position.set(
     3.2,
-    2.7,
-    -3.2
+    2.8,
+    -3.1
   );
 
-  scene.add(
-    greenCore
-  );
+  scene.add(greenCore);
 
   const violetDecision =
     new THREE.PointLight(
-      0x8e58ff,
-      7,
-      16,
+      0x8d58ff,
+      5.2,
+      15,
       2
     );
 
   violetDecision.position.set(
     0,
-    2.2,
+    2.0,
     2.5
   );
 
-  scene.add(
-    violetDecision
-  );
+  scene.add(violetDecision);
+
+  const assets =
+    await loadHardwareAssets();
 
   const modules =
     new Map();
 
-  for (
-    const node
-    of NODES
-  ) {
+  for (const node of NODES) {
     const built =
       createModule(
-        node
+        node,
+        assets
       );
 
-    scene.add(
-      built.group
-    );
-
+    scene.add(built.group);
     modules.set(
       node.id,
       built
@@ -425,31 +352,19 @@ export function bootMemeflowTrue3D(
       )
     );
 
-  const routes =
-    [];
+  const routes = [];
 
   for (
-    const [
-      from,
-      to,
-      color
-    ]
+    const [from, to, color]
     of ROUTES
   ) {
     const source =
-      byId.get(
-        from
-      );
+      byId.get(from);
 
     const target =
-      byId.get(
-        to
-      );
+      byId.get(to);
 
-    if (
-      !source
-      || !target
-    ) {
+    if (!source || !target) {
       continue;
     }
 
@@ -460,13 +375,8 @@ export function bootMemeflowTrue3D(
         color
       );
 
-    scene.add(
-      route.group
-    );
-
-    routes.push(
-      route
-    );
+    scene.add(route.group);
+    routes.push(route);
   }
 
   const bounds =
@@ -478,20 +388,16 @@ export function bootMemeflowTrue3D(
   const fitCenter =
     new THREE.Vector3();
 
-  bounds.getCenter(
-    fitCenter
-  );
+  bounds.getCenter(fitCenter);
 
   const corners =
-    boxCorners(
-      bounds
-    );
+    boxCorners(bounds);
 
   const homeDirection =
     new THREE.Vector3(
       0,
-      0.87,
-      0.49
+      0.84,
+      0.54
     ).normalize();
 
   const homeCamera =
@@ -500,8 +406,7 @@ export function bootMemeflowTrue3D(
   const homeTarget =
     new THREE.Vector3();
 
-  let homeDistance =
-    18;
+  let homeDistance = 18;
 
   function updateProjection() {
     const width =
@@ -519,15 +424,14 @@ export function bootMemeflowTrue3D(
     const aspect =
       width / height;
 
-    camera.aspect =
-      aspect;
+    camera.aspect = aspect;
 
     camera.fov =
       aspect < 0.82
-        ? 43
+        ? 42
         : aspect < 1.10
-          ? 40
-          : 37;
+          ? 39
+          : 36;
 
     camera.updateProjectionMatrix();
 
@@ -543,46 +447,27 @@ export function bootMemeflowTrue3D(
     xLimit,
     yLimit
   ) {
-    camera.position.copy(
-      fitCenter
-    ).addScaledVector(
-      homeDirection,
-      distance
-    );
+    camera.position
+      .copy(fitCenter)
+      .addScaledVector(
+        homeDirection,
+        distance
+      );
 
-    camera.lookAt(
-      fitCenter
-    );
-
-    camera.updateMatrixWorld(
-      true
-    );
-
+    camera.lookAt(fitCenter);
+    camera.updateMatrixWorld(true);
     camera.updateProjectionMatrix();
 
-    for (
-      const corner
-      of corners
-    ) {
+    for (const corner of corners) {
       const projected =
         corner.clone()
-          .project(
-            camera
-          );
+          .project(camera);
 
       if (
-        !Number.isFinite(
-          projected.x
-        )
-        || !Number.isFinite(
-          projected.y
-        )
-        || Math.abs(
-          projected.x
-        ) > xLimit
-        || Math.abs(
-          projected.y
-        ) > yLimit
+        !Number.isFinite(projected.x)
+        || !Number.isFinite(projected.y)
+        || Math.abs(projected.x) > xLimit
+        || Math.abs(projected.y) > yLimit
       ) {
         return false;
       }
@@ -596,8 +481,7 @@ export function bootMemeflowTrue3D(
       width,
       height,
       aspect
-    } =
-      updateProjection();
+    } = updateProjection();
 
     renderer.setSize(
       width,
@@ -612,19 +496,16 @@ export function bootMemeflowTrue3D(
 
     const xLimit =
       aspect < 0.82
-        ? 0.86
-        : 0.90;
+        ? 0.92
+        : 0.93;
 
     const yLimit =
       aspect < 0.82
-        ? 0.84
-        : 0.88;
+        ? 0.90
+        : 0.92;
 
-    let low =
-      4;
-
-    let high =
-      60;
+    let low = 4;
+    let high = 60;
 
     for (
       let index = 0;
@@ -632,10 +513,7 @@ export function bootMemeflowTrue3D(
       index++
     ) {
       const mid =
-        (
-          low
-          + high
-        ) / 2;
+        (low + high) / 2;
 
       if (
         fitsAt(
@@ -644,32 +522,27 @@ export function bootMemeflowTrue3D(
           yLimit
         )
       ) {
-        high =
-          mid;
+        high = mid;
       } else {
-        low =
-          mid;
+        low = mid;
       }
     }
 
-    homeDistance =
-      high;
+    homeDistance = high;
 
-    homeTarget.copy(
-      fitCenter
-    );
+    homeTarget.copy(fitCenter);
 
-    homeCamera.copy(
-      fitCenter
-    ).addScaledVector(
-      homeDirection,
-      homeDistance
-    );
+    homeCamera
+      .copy(fitCenter)
+      .addScaledVector(
+        homeDirection,
+        homeDistance
+      );
 
     controls.minDistance =
       Math.max(
-        3.7,
-        homeDistance * 0.28
+        3.5,
+        homeDistance * 0.26
       );
 
     controls.maxDistance =
@@ -693,21 +566,18 @@ export function bootMemeflowTrue3D(
     controls.update();
   }
 
-  let atHome =
-    true;
+  let atHome = true;
 
   controls.addEventListener(
     'start',
     () => {
-      atHome =
-        false;
+      atHome = false;
     }
   );
 
   const resize =
     () => {
-      const wasHome =
-        atHome;
+      const wasHome = atHome;
 
       updateProjection();
 
@@ -734,21 +604,15 @@ export function bootMemeflowTrue3D(
         height
       );
 
-      if (
-        wasHome
-      ) {
+      if (wasHome) {
         resetView();
       }
     };
 
   const resizeObserver =
-    new ResizeObserver(
-      resize
-    );
+    new ResizeObserver(resize);
 
-  resizeObserver.observe(
-    mount
-  );
+  resizeObserver.observe(mount);
 
   const resetButton =
     document.getElementById(
@@ -757,9 +621,7 @@ export function bootMemeflowTrue3D(
 
   const resetHandler =
     () => {
-      atHome =
-        true;
-
+      atHome = true;
       resetView();
     };
 
@@ -777,12 +639,10 @@ export function bootMemeflowTrue3D(
     new THREE.Vector2();
 
   const pickMeshes =
-    [
-      ...modules.values()
-    ].map(
-      module =>
-        module.pickMesh
-    );
+    [...modules.values()]
+      .map(
+        module => module.pickMesh
+      );
 
   let pointerDown = null;
 
@@ -799,26 +659,17 @@ export function bootMemeflowTrue3D(
   renderer.domElement.addEventListener(
     'pointerup',
     event => {
-      if (
-        !pointerDown
-      ) {
-        return;
-      }
+      if (!pointerDown) return;
 
       const movement =
         Math.hypot(
-          event.clientX
-            - pointerDown.x,
-          event.clientY
-            - pointerDown.y
+          event.clientX - pointerDown.x,
+          event.clientY - pointerDown.y
         );
 
-      pointerDown =
-        null;
+      pointerDown = null;
 
-      if (
-        movement > 8
-      ) {
+      if (movement > 8) {
         return;
       }
 
@@ -861,9 +712,7 @@ export function bootMemeflowTrue3D(
           ?.userData
           ?.nodeId;
 
-      if (
-        nodeId
-      ) {
+      if (nodeId) {
         window.dispatchEvent(
           new CustomEvent(
             'memeflow:true3d-select',
@@ -881,18 +730,11 @@ export function bootMemeflowTrue3D(
   const clock =
     new THREE.Clock();
 
-  let frame =
-    0;
-
-  let disposed =
-    false;
+  let frame = 0;
+  let disposed = false;
 
   function animate() {
-    if (
-      disposed
-    ) {
-      return;
-    }
+    if (disposed) return;
 
     frame =
       requestAnimationFrame(
@@ -908,25 +750,17 @@ export function bootMemeflowTrue3D(
     );
 
     const core =
-      modules.get(
-        'core'
-      );
+      modules.get('core');
 
     const decision =
-      modules.get(
-        'decision'
-      );
+      modules.get('decision');
 
     const execution =
-      modules.get(
-        'execution'
-      );
+      modules.get('execution');
 
-    if (
-      core?.rings
-    ) {
+    if (core?.rings) {
       core.rings.rotation.y +=
-        0.0016;
+        0.0015;
     }
 
     if (
@@ -936,10 +770,10 @@ export function bootMemeflowTrue3D(
       core.innerGlow
         .material
         .opacity =
-          0.095
+          0.073
           + Math.sin(
-            time * 2.0
-          ) * 0.018;
+            time * 1.9
+          ) * 0.012;
     }
 
     if (
@@ -949,10 +783,10 @@ export function bootMemeflowTrue3D(
       decision.innerGlow
         .material
         .opacity =
-          0.035
+          0.020
           + Math.sin(
-            time * 2.1 + 1.5
-          ) * 0.009;
+            time * 2.0 + 1.4
+          ) * 0.006;
     }
 
     if (
@@ -962,33 +796,24 @@ export function bootMemeflowTrue3D(
       execution.innerGlow
         .material
         .opacity =
-          0.040
+          0.026
           + Math.sin(
-            time * 2.1 + 2.8
-          ) * 0.010;
+            time * 2.0 + 2.6
+          ) * 0.007;
     }
 
     controls.update();
-
     composer.render();
   }
 
   animate();
 
   function dispose() {
-    if (
-      disposed
-    ) {
-      return;
-    }
+    if (disposed) return;
 
-    disposed =
-      true;
+    disposed = true;
 
-    cancelAnimationFrame(
-      frame
-    );
-
+    cancelAnimationFrame(frame);
     resizeObserver.disconnect();
 
     resetButton
@@ -999,36 +824,33 @@ export function bootMemeflowTrue3D(
 
     controls.dispose();
 
-    scene.traverse(
-      object => {
-        object.geometry
-          ?.dispose
-          ?.();
+    scene.traverse(object => {
+      object.geometry
+        ?.dispose
+        ?.();
 
-        if (
-          Array.isArray(
-            object.material
-          )
-        ) {
-          for (
-            const material
-            of object.material
-          ) {
-            material
-              ?.dispose
-              ?.();
-          }
-        } else {
+      if (
+        Array.isArray(
           object.material
+        )
+      ) {
+        for (
+          const material
+          of object.material
+        ) {
+          material
             ?.dispose
             ?.();
         }
+      } else {
+        object.material
+          ?.dispose
+          ?.();
       }
-    );
+    });
 
     composer.dispose();
     renderer.dispose();
-
     mount.replaceChildren();
   }
 
@@ -1045,6 +867,4 @@ export function bootMemeflowTrue3D(
   };
 }
 
-/* ===== MEMEFLOW_TRUE_3D_CLEAN_V3 ===== */
-
-/* ===== MEMEFLOW_TRUE_3D_BOUNDS_FIX_V4 ===== */
+/* ===== MEMEFLOW_TRUE_3D_GLB_V5 ===== */

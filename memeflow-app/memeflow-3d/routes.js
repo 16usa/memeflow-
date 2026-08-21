@@ -1,256 +1,230 @@
 import * as THREE from 'three';
 
-import {
-  conduitMaterial
-} from './materials.js?v=true-3d-clean-v3';
-
-function point(nodePos) {
+function routePoint(nodePos) {
   return new THREE.Vector3(
     nodePos[0],
-    0.02,
+    -0.22,
     nodePos[2]
   );
 }
 
-export function makeRouteCurve(
-  from,
-  to
-) {
-  const a =
-    point(from);
+function routeCurve(from, to) {
+  const a = routePoint(from);
+  const b = routePoint(to);
 
-  const b =
-    point(to);
+  const dx = Math.abs(b.x - a.x);
+  const dz = Math.abs(b.z - a.z);
 
-  const dx =
-    Math.abs(
-      b.x - a.x
-    );
+  const points = [a];
 
-  const dz =
-    Math.abs(
-      b.z - a.z
-    );
-
-  const points =
-    [a];
-
-  if (
-    dx < 0.15
-    || dz < 0.15
-  ) {
+  if (dx < 0.15 || dz < 0.15) {
     points.push(
-      a.clone()
-        .lerp(
-          b,
-          0.5
-        )
+      a.clone().lerp(b, 0.5)
     );
   }
 
-  else if (
-    dx >= dz
-  ) {
-    const midX =
+  else if (dx >= dz) {
+    const mx =
       a.x
-      + (
-        b.x - a.x
-      ) * 0.52;
+      + (b.x - a.x) * 0.52;
 
     points.push(
       new THREE.Vector3(
-        midX,
-        0.02,
+        mx,
+        -0.22,
         a.z
-      )
-    );
-
-    points.push(
+      ),
       new THREE.Vector3(
-        midX,
-        0.02,
+        mx,
+        -0.22,
         b.z
       )
     );
   }
 
   else {
-    const midZ =
+    const mz =
       a.z
-      + (
-        b.z - a.z
-      ) * 0.50;
+      + (b.z - a.z) * 0.50;
 
     points.push(
       new THREE.Vector3(
         a.x,
-        0.02,
-        midZ
-      )
-    );
-
-    points.push(
+        -0.22,
+        mz
+      ),
       new THREE.Vector3(
         b.x,
-        0.02,
-        midZ
+        -0.22,
+        mz
       )
     );
   }
 
-  points.push(
-    b
-  );
+  points.push(b);
 
   return new THREE.CatmullRomCurve3(
     points,
     false,
     'catmullrom',
-    0.025
+    0.022
   );
 }
 
-export function createRoute(
-  from,
-  to,
-  color
-) {
-  const curve =
-    makeRouteCurve(
-      from,
-      to
-    );
+function additive(color, opacity) {
+  return new THREE.MeshBasicMaterial({
+    color,
+    transparent: true,
+    opacity,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending
+  });
+}
 
-  const group =
-    new THREE.Group();
+function port(color, point) {
+  const group = new THREE.Group();
 
-  const halo =
-    new THREE.Mesh(
-      new THREE.TubeGeometry(
-        curve,
-        80,
-        0.055,
-        8,
-        false
-      ),
-      conduitMaterial(
-        color,
-        0.055
-      )
-    );
-
-  group.add(
-    halo
+  const outer = new THREE.Mesh(
+    new THREE.CylinderGeometry(
+      0.075,
+      0.075,
+      0.028,
+      18
+    ),
+    new THREE.MeshStandardMaterial({
+      color: 0x08131a,
+      emissive: color,
+      emissiveIntensity: 0.26,
+      metalness: 0.86,
+      roughness: 0.18
+    })
   );
 
-  const pipe =
-    new THREE.Mesh(
-      new THREE.TubeGeometry(
-        curve,
-        80,
-        0.017,
-        8,
-        false
-      ),
-      conduitMaterial(
-        color,
-        0.55
-      )
-    );
+  outer.position.copy(point);
+  outer.position.y = -0.18;
 
-  group.add(
-    pipe
+  group.add(outer);
+
+  const light = new THREE.Mesh(
+    new THREE.SphereGeometry(
+      0.030,
+      10,
+      8
+    ),
+    additive(color, 0.86)
   );
 
-  const points =
-    curve.getPoints(
-      100
-    );
+  light.position.copy(point);
+  light.position.y = -0.145;
 
-  const coreLine =
-    new THREE.Line(
-      new THREE.BufferGeometry()
-        .setFromPoints(
-          points
-        ),
-      new THREE.LineBasicMaterial({
-        color,
-        transparent: true,
-        opacity: 0.82,
-        depthWrite: false,
-        blending: THREE.AdditiveBlending
-      })
-    );
+  group.add(light);
+
+  return group;
+}
+
+export function createRoute(from, to, color) {
+  const curve = routeCurve(from, to);
+
+  const group = new THREE.Group();
+
+  const outer = new THREE.Mesh(
+    new THREE.TubeGeometry(
+      curve,
+      84,
+      0.042,
+      8,
+      false
+    ),
+    additive(color, 0.040)
+  );
+
+  group.add(outer);
+
+  const rail = new THREE.Mesh(
+    new THREE.TubeGeometry(
+      curve,
+      84,
+      0.013,
+      8,
+      false
+    ),
+    additive(color, 0.42)
+  );
+
+  group.add(rail);
+
+  const coreLine = new THREE.Line(
+    new THREE.BufferGeometry()
+      .setFromPoints(
+        curve.getPoints(100)
+      ),
+    new THREE.LineBasicMaterial({
+      color,
+      transparent: true,
+      opacity: 0.67,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending
+    })
+  );
+
+  group.add(coreLine);
 
   group.add(
-    coreLine
+    port(color, curve.getPointAt(0.015)),
+    port(color, curve.getPointAt(0.985))
   );
 
   const packets = [];
 
-  for (
-    let index = 0;
-    index < 4;
-    index++
-  ) {
-    const packet =
-      new THREE.Mesh(
-        new THREE.SphereGeometry(
-          0.034,
-          10,
-          8
-        ),
-        new THREE.MeshBasicMaterial({
-          color: 0xffffff,
-          transparent: true,
-          opacity: 0.86,
-          depthWrite: false,
-          blending: THREE.AdditiveBlending
-        })
-      );
+  for (let index = 0; index < 3; index++) {
+    const packetGroup = new THREE.Group();
 
-    packet.userData.seed =
-      index / 4;
-
-    packet.userData.speed =
-      0.050
-      + index * 0.003;
-
-    group.add(
-      packet
+    const core = new THREE.Mesh(
+      new THREE.SphereGeometry(
+        0.030,
+        10,
+        8
+      ),
+      additive(0xffffff, 0.92)
     );
 
-    packets.push(
-      packet
+    const halo = new THREE.Mesh(
+      new THREE.SphereGeometry(
+        0.065,
+        10,
+        8
+      ),
+      additive(color, 0.10)
     );
+
+    packetGroup.add(core, halo);
+
+    packetGroup.userData.seed =
+      index / 3;
+
+    packetGroup.userData.speed =
+      0.040 + index * 0.003;
+
+    group.add(packetGroup);
+    packets.push(packetGroup);
   }
 
   return {
     group,
     curve,
     packets,
-    halo,
-    pipe,
-    coreLine,
     color
   };
 }
 
-export function animateRoutes(
-  routes,
-  time
-) {
-  for (
-    const route
-    of routes
-  ) {
+export function animateRoutes(routes, time) {
+  for (const route of routes) {
     for (
       let index = 0;
       index < route.packets.length;
       index++
     ) {
-      const packet =
-        route.packets[index];
+      const packet = route.packets[index];
 
       const t =
         (
@@ -259,26 +233,18 @@ export function animateRoutes(
         ) % 1;
 
       packet.position.copy(
-        route.curve.getPointAt(
-          t
-        )
+        route.curve.getPointAt(t)
       );
 
       const pulse =
-        0.92
+        0.90
         + Math.sin(
-          time * 7.5
-          + index * 1.7
-          + t * 10
-        ) * 0.16;
+          time * 6.8
+          + index * 1.8
+          + t * 9
+        ) * 0.12;
 
-      packet.scale.setScalar(
-        pulse
-      );
-
-      packet.material.opacity =
-        0.62
-        + pulse * 0.20;
+      packet.scale.setScalar(pulse);
     }
   }
 }
