@@ -23,66 +23,49 @@ import {
 import {
   NODES,
   ROUTES
-} from './layout.js?v=variant-2-fullframe-v2';
-
-import {
-  loadHardwareAssets
-} from './assets.js?v=true-3d-glb-v5';
+} from './layout.js?v=neon-pcb-scene-v1';
 
 import {
   createModule
-} from './modules.js?v=true-3d-stage-fill-v7';
+} from './modules.js?v=neon-pcb-scene-v1';
 
 import {
   createRoute,
   animateRoutes
-} from './routes.js?v=true-3d-glb-v5';
+} from './routes.js?v=neon-pcb-scene-v1';
 
-function buildFitBounds() {
-  /*
-    V8 FRAMING:
-    Home framing must describe the visible logical topology, not every
-    internal GLB mesh bound. Some chassis assets contain construction
-    geometry whose box is larger than what the eye actually reads.
-  */
+import {
+  createBoardTexture,
+  accentMaterial
+} from './materials.js?v=neon-pcb-scene-v1';
+
+function logicalBounds() {
   const box =
     new THREE.Box3()
       .makeEmpty();
 
   for (const node of NODES) {
-    const width =
+    const w =
       Number(node.size?.[0])
       || 2.4;
 
-    const depth =
+    const d =
       Number(node.size?.[1])
       || 1.6;
 
-    const x =
-      Number(node.pos?.[0])
-      || 0;
-
-    const y =
-      Number(node.pos?.[1])
-      || 0;
-
-    const z =
-      Number(node.pos?.[2])
-      || 0;
-
     box.expandByPoint(
       new THREE.Vector3(
-        x - width * 0.56,
-        y - 0.62,
-        z - depth * 0.57
+        node.pos[0] - w * 0.56,
+        -0.35,
+        node.pos[2] - d * 0.60
       )
     );
 
     box.expandByPoint(
       new THREE.Vector3(
-        x + width * 0.56,
-        y + 0.38,
-        z + depth * 0.57
+        node.pos[0] + w * 0.56,
+        0.82,
+        node.pos[2] + d * 0.60
       )
     );
   }
@@ -106,30 +89,104 @@ function boxCorners(box) {
   ];
 }
 
+function addBoard(scene) {
+  const board =
+    new THREE.Mesh(
+      new THREE.PlaneGeometry(
+        13.8,
+        11.4
+      ),
+      new THREE.MeshPhysicalMaterial({
+        map: createBoardTexture(),
+        color: 0x071017,
+        metalness: 0.74,
+        roughness: 0.33,
+        clearcoat: 0.68,
+        clearcoatRoughness: 0.20
+      })
+    );
+
+  board.rotation.x =
+    -Math.PI / 2;
+
+  board.position.y =
+    -0.38;
+
+  scene.add(
+    board
+  );
+
+  const edgeColor =
+    0x0b4161;
+
+  for (const [x, z, w, d] of [
+    [0, -5.58, 13.65, 0.035],
+    [0, 5.58, 13.65, 0.035],
+    [-6.72, 0, 0.035, 11.15],
+    [6.72, 0, 0.035, 11.15]
+  ]) {
+    const edge =
+      new THREE.Mesh(
+        new THREE.BoxGeometry(
+          w,
+          0.025,
+          d
+        ),
+        accentMaterial(
+          edgeColor,
+          0.34
+        )
+      );
+
+    edge.position.set(
+      x,
+      -0.345,
+      z
+    );
+
+    scene.add(
+      edge
+    );
+  }
+}
+
 export async function bootMemeflowTrue3D(
   rootId = 'memeflowTrue3DHost'
 ) {
   const mount =
-    document.getElementById(rootId);
+    document.getElementById(
+      rootId
+    );
 
   if (!mount) {
     throw new Error(
-      'True 3D mount not found: '
+      'Neon PCB mount not found: '
       + rootId
     );
   }
 
   mount.replaceChildren();
 
-  const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x000000);
+  const scene =
+    new THREE.Scene();
+
+  scene.background =
+    new THREE.Color(
+      0x000102
+    );
+
+  scene.fog =
+    new THREE.FogExp2(
+      0x000204,
+      0.026
+    );
 
   const camera =
     new THREE.PerspectiveCamera(
-      40,
+      39,
       1,
       0.05,
-      240
+      120
     );
 
   const renderer =
@@ -143,7 +200,7 @@ export async function bootMemeflowTrue3D(
   renderer.setPixelRatio(
     Math.min(
       window.devicePixelRatio || 1,
-      1.75
+      1.65
     )
   );
 
@@ -154,7 +211,7 @@ export async function bootMemeflowTrue3D(
     THREE.ACESFilmicToneMapping;
 
   renderer.toneMappingExposure =
-    0.96;
+    0.93;
 
   renderer.domElement.id =
     'memeflowTrue3DCanvas';
@@ -164,7 +221,9 @@ export async function bootMemeflowTrue3D(
   );
 
   const composer =
-    new EffectComposer(renderer);
+    new EffectComposer(
+      renderer
+    );
 
   composer.addPass(
     new RenderPass(
@@ -176,12 +235,15 @@ export async function bootMemeflowTrue3D(
   const bloom =
     new UnrealBloomPass(
       new THREE.Vector2(1, 1),
-      0.12,
-      0.24,
-      0.92
+      0.23,
+      0.34,
+      0.89
     );
 
-  composer.addPass(bloom);
+  composer.addPass(
+    bloom
+  );
+
   composer.addPass(
     new OutputPass()
   );
@@ -192,18 +254,30 @@ export async function bootMemeflowTrue3D(
       renderer.domElement
     );
 
-  controls.enablePan = false;
-  controls.enableDamping = true;
-  controls.dampingFactor = 0.055;
-  controls.rotateSpeed = 0.54;
-  controls.zoomSpeed = 1.04;
+  controls.enablePan =
+    false;
 
-  controls.minAzimuthAngle = -Infinity;
-  controls.maxAzimuthAngle = Infinity;
-  controls.minPolarAngle = 0.10;
-  controls.maxPolarAngle = Math.PI - 0.10;
+  controls.enableDamping =
+    true;
 
-  if (controls.touches) {
+  controls.dampingFactor =
+    0.052;
+
+  controls.rotateSpeed =
+    0.48;
+
+  controls.zoomSpeed =
+    1.00;
+
+  controls.minPolarAngle =
+    0.42;
+
+  controls.maxPolarAngle =
+    1.47;
+
+  if (
+    controls.touches
+  ) {
     controls.touches.ONE =
       THREE.TOUCH.ROTATE;
 
@@ -213,121 +287,112 @@ export async function bootMemeflowTrue3D(
 
   scene.add(
     new THREE.HemisphereLight(
-      0x9ecfe8,
-      0x010203,
-      0.32
+      0x6ca6c7,
+      0x000102,
+      0.30
     )
   );
 
   const key =
     new THREE.DirectionalLight(
-      0xf3fbff,
-      1.10
+      0xe8f6ff,
+      1.25
     );
 
   key.position.set(
-    4.5,
-    9.0,
-    6.8
+    -1.5,
+    8.2,
+    6.2
   );
 
-  scene.add(key);
+  scene.add(
+    key
+  );
 
-  const cyanRim =
+  const cyan =
     new THREE.PointLight(
-      0x58d7ff,
-      3.0,
-      18,
+      0x18aaff,
+      3.6,
+      16,
       2
     );
 
-  cyanRim.position.set(
-    -5.2,
-    3.2,
-    1.8
+  cyan.position.set(
+    -4.2,
+    2.4,
+    -0.2
   );
 
-  scene.add(cyanRim);
+  scene.add(
+    cyan
+  );
 
-  const greenCore =
+  const violet =
     new THREE.PointLight(
-      0x57e69a,
-      2.8,
+      0xa052ff,
+      3.4,
+      13,
+      2
+    );
+
+  violet.position.set(
+    -0.1,
+    2.3,
+    0.0
+  );
+
+  scene.add(
+    violet
+  );
+
+  const green =
+    new THREE.PointLight(
+      0x36ec8b,
+      4.0,
       15,
       2
     );
 
-  greenCore.position.set(
-    3.2,
-    2.8,
-    -3.1
+  green.position.set(
+    3.5,
+    2.5,
+    0.1
   );
 
-  scene.add(greenCore);
-
-  const violetDecision =
-    new THREE.PointLight(
-      0x8d58ff,
-      3.2,
-      14,
-      2
-    );
-
-  violetDecision.position.set(
-    0,
-    2.0,
-    2.5
+  scene.add(
+    green
   );
 
-  scene.add(violetDecision);
-
-  const stage = new THREE.Mesh(
-    new THREE.PlaneGeometry(13.6, 9.8),
-    new THREE.MeshBasicMaterial({
-      color: 0x071018,
-      transparent: true,
-      opacity: 0.145,
-      depthWrite: false,
-      side: THREE.DoubleSide
-    })
+  addBoard(
+    scene
   );
-
-  stage.rotation.x = -Math.PI / 2;
-  stage.position.set(0, -0.72, 0.55);
-  scene.add(stage);
-
-  const stageRing = new THREE.Mesh(
-    new THREE.RingGeometry(3.9, 5.6, 96),
-    new THREE.MeshBasicMaterial({
-      color: 0x133247,
-      transparent: true,
-      opacity: 0.045,
-      depthWrite: false,
-      side: THREE.DoubleSide
-    })
-  );
-
-  stageRing.rotation.x = -Math.PI / 2;
-  stageRing.position.set(0, -0.705, 0.55);
-  scene.add(stageRing);
-
-  const assets =
-    await loadHardwareAssets();
 
   const modules =
     new Map();
 
-  for (const node of NODES) {
+  const pickMeshes =
+    [];
+
+  for (
+    const node
+    of NODES
+  ) {
     const built =
       createModule(
-        node,
-        assets
+        node
       );
 
-    scene.add(built.group);
+    scene.add(
+      built.group
+    );
+
     modules.set(
       node.id,
       built
+    );
+
+    pickMeshes.push(
+      built.pickMesh
     );
   }
 
@@ -347,43 +412,56 @@ export async function bootMemeflowTrue3D(
     const [from, to, color]
     of ROUTES
   ) {
-    const source =
-      byId.get(from);
+    const a =
+      byId.get(
+        from
+      );
 
-    const target =
-      byId.get(to);
+    const b =
+      byId.get(
+        to
+      );
 
-    if (!source || !target) {
+    if (!a || !b) {
       continue;
     }
 
     const route =
       createRoute(
-        source.pos,
-        target.pos,
+        a,
+        b,
         color
       );
 
-    scene.add(route.group);
-    routes.push(route);
+    scene.add(
+      route.group
+    );
+
+    routes.push(
+      route
+    );
   }
 
   const bounds =
-    buildFitBounds();
+    logicalBounds();
 
-  const fitCenter =
+  const center =
     new THREE.Vector3();
 
-  bounds.getCenter(fitCenter);
+  bounds.getCenter(
+    center
+  );
 
   const corners =
-    boxCorners(bounds);
+    boxCorners(
+      bounds
+    );
 
   const homeDirection =
     new THREE.Vector3(
-      0.05,
-      0.82,
-      0.57
+      0.10,
+      0.95,
+      0.88
     ).normalize();
 
   const homeCamera =
@@ -392,7 +470,8 @@ export async function bootMemeflowTrue3D(
   const homeTarget =
     new THREE.Vector3();
 
-  let homeDistance = 18;
+  let homeDistance =
+    18;
 
   function updateProjection() {
     const width =
@@ -410,14 +489,15 @@ export async function bootMemeflowTrue3D(
     const aspect =
       width / height;
 
-    camera.aspect = aspect;
+    camera.aspect =
+      aspect;
 
     camera.fov =
       aspect < 0.82
-        ? 38
+        ? 42
         : aspect < 1.10
-          ? 36
-          : 34;
+          ? 39
+          : 36;
 
     camera.updateProjectionMatrix();
 
@@ -434,26 +514,45 @@ export async function bootMemeflowTrue3D(
     yLimit
   ) {
     camera.position
-      .copy(fitCenter)
+      .copy(
+        center
+      )
       .addScaledVector(
         homeDirection,
         distance
       );
 
-    camera.lookAt(fitCenter);
-    camera.updateMatrixWorld(true);
-    camera.updateProjectionMatrix();
+    camera.lookAt(
+      center
+    );
 
-    for (const corner of corners) {
+    camera.updateMatrixWorld(
+      true
+    );
+
+    for (
+      const corner
+      of corners
+    ) {
       const projected =
         corner.clone()
-          .project(camera);
+          .project(
+            camera
+          );
 
       if (
-        !Number.isFinite(projected.x)
-        || !Number.isFinite(projected.y)
-        || Math.abs(projected.x) > xLimit
-        || Math.abs(projected.y) > yLimit
+        !Number.isFinite(
+          projected.x
+        )
+        || !Number.isFinite(
+          projected.y
+        )
+        || Math.abs(
+          projected.x
+        ) > xLimit
+        || Math.abs(
+          projected.y
+        ) > yLimit
       ) {
         return false;
       }
@@ -467,7 +566,8 @@ export async function bootMemeflowTrue3D(
       width,
       height,
       aspect
-    } = updateProjection();
+    } =
+      updateProjection();
 
     renderer.setSize(
       width,
@@ -482,16 +582,16 @@ export async function bootMemeflowTrue3D(
 
     const xLimit =
       aspect < 0.82
-        ? 0.955
-        : 0.952;
+        ? 0.965
+        : 0.958;
 
     const yLimit =
       aspect < 0.82
-        ? 0.948
+        ? 0.950
         : 0.945;
 
     let low = 4;
-    let high = 60;
+    let high = 50;
 
     for (
       let index = 0;
@@ -509,17 +609,27 @@ export async function bootMemeflowTrue3D(
         )
       ) {
         high = mid;
-      } else {
+      }
+
+      else {
         low = mid;
       }
     }
 
-    homeDistance = high;
+    homeDistance =
+      high;
 
-    homeTarget.copy(fitCenter);
+    homeTarget.copy(
+      center
+    );
+
+    homeTarget.y =
+      0.08;
 
     homeCamera
-      .copy(fitCenter)
+      .copy(
+        center
+      )
       .addScaledVector(
         homeDirection,
         homeDistance
@@ -527,14 +637,14 @@ export async function bootMemeflowTrue3D(
 
     controls.minDistance =
       Math.max(
-        3.5,
-        homeDistance * 0.26
+        4.1,
+        homeDistance * 0.34
       );
 
     controls.maxDistance =
       Math.max(
-        38,
-        homeDistance * 2.5
+        32,
+        homeDistance * 2.2
       );
   }
 
@@ -552,32 +662,27 @@ export async function bootMemeflowTrue3D(
     controls.update();
   }
 
-  let atHome = true;
+  let atHome =
+    true;
 
   controls.addEventListener(
     'start',
     () => {
-      atHome = false;
+      atHome =
+        false;
     }
   );
 
   const resize =
     () => {
-      const wasHome = atHome;
+      const wasHome =
+        atHome;
 
-      updateProjection();
-
-      const width =
-        Math.max(
-          1,
-          mount.clientWidth
-        );
-
-      const height =
-        Math.max(
-          1,
-          mount.clientHeight
-        );
+      const {
+        width,
+        height
+      } =
+        updateProjection();
 
       renderer.setSize(
         width,
@@ -590,15 +695,21 @@ export async function bootMemeflowTrue3D(
         height
       );
 
-      if (wasHome) {
+      if (
+        wasHome
+      ) {
         resetView();
       }
     };
 
   const resizeObserver =
-    new ResizeObserver(resize);
+    new ResizeObserver(
+      resize
+    );
 
-  resizeObserver.observe(mount);
+  resizeObserver.observe(
+    mount
+  );
 
   const resetButton =
     document.getElementById(
@@ -607,14 +718,17 @@ export async function bootMemeflowTrue3D(
 
   const resetHandler =
     () => {
-      atHome = true;
+      atHome =
+        true;
+
       resetView();
     };
 
-  resetButton?.addEventListener(
-    'click',
-    resetHandler
-  );
+  resetButton
+    ?.addEventListener(
+      'click',
+      resetHandler
+    );
 
   resetView();
 
@@ -624,103 +738,117 @@ export async function bootMemeflowTrue3D(
   const pointer =
     new THREE.Vector2();
 
-  const pickMeshes =
-    [...modules.values()]
-      .map(
-        module => module.pickMesh
-      );
+  let pointerDown =
+    null;
 
-  let pointerDown = null;
-
-  renderer.domElement.addEventListener(
-    'pointerdown',
-    event => {
-      pointerDown = {
-        x: event.clientX,
-        y: event.clientY
-      };
-    }
-  );
-
-  renderer.domElement.addEventListener(
-    'pointerup',
-    event => {
-      if (!pointerDown) return;
-
-      const movement =
-        Math.hypot(
-          event.clientX - pointerDown.x,
-          event.clientY - pointerDown.y
-        );
-
-      pointerDown = null;
-
-      if (movement > 8) {
-        return;
+  renderer.domElement
+    .addEventListener(
+      'pointerdown',
+      event => {
+        pointerDown = {
+          x: event.clientX,
+          y: event.clientY
+        };
       }
+    );
 
-      const rect =
-        renderer.domElement
-          .getBoundingClientRect();
+  renderer.domElement
+    .addEventListener(
+      'pointerup',
+      event => {
+        if (
+          !pointerDown
+        ) {
+          return;
+        }
 
-      pointer.x =
-        (
-          (
+        const movement =
+          Math.hypot(
             event.clientX
-            - rect.left
-          ) / rect.width
-        ) * 2
-        - 1;
-
-      pointer.y =
-        -(
-          (
+              - pointerDown.x,
             event.clientY
-            - rect.top
-          ) / rect.height
-        ) * 2
-        + 1;
+              - pointerDown.y
+          );
 
-      raycaster.setFromCamera(
-        pointer,
-        camera
-      );
+        pointerDown =
+          null;
 
-      const hits =
-        raycaster.intersectObjects(
-          pickMeshes,
-          false
+        if (
+          movement > 8
+        ) {
+          return;
+        }
+
+        const rect =
+          renderer.domElement
+            .getBoundingClientRect();
+
+        pointer.x =
+          (
+            (
+              event.clientX
+              - rect.left
+            ) / rect.width
+          ) * 2 - 1;
+
+        pointer.y =
+          -(
+            (
+              event.clientY
+              - rect.top
+            ) / rect.height
+          ) * 2 + 1;
+
+        raycaster.setFromCamera(
+          pointer,
+          camera
         );
 
-      const nodeId =
-        hits[0]
-          ?.object
-          ?.userData
-          ?.nodeId;
+        const hit =
+          raycaster
+            .intersectObjects(
+              pickMeshes,
+              false
+            )[0];
 
-      if (nodeId) {
-        window.dispatchEvent(
-          new CustomEvent(
-            'memeflow:true3d-select',
-            {
-              detail: {
-                nodeId
+        const nodeId =
+          hit
+            ?.object
+            ?.userData
+            ?.nodeId;
+
+        if (
+          nodeId
+        ) {
+          window.dispatchEvent(
+            new CustomEvent(
+              'memeflow:true3d-select',
+              {
+                detail: {
+                  nodeId
+                }
               }
-            }
-          )
-        );
+            )
+          );
+        }
       }
-    }
-  );
+    );
 
   const clock =
     new THREE.Clock();
 
-  let frame = 0;
-  let disposed = false;
+  let frame =
+    0;
+
+  let disposed =
+    false;
 
   function animate() {
-    if (disposed) return;
+    if (
+      disposed
+    ) {
+      return;
+    }
 
     frame =
       requestAnimationFrame(
@@ -736,70 +864,56 @@ export async function bootMemeflowTrue3D(
     );
 
     const core =
-      modules.get('core');
+      modules.get(
+        'core'
+      );
 
-    const decision =
-      modules.get('decision');
+    const openai =
+      modules.get(
+        'openai'
+      );
 
-    const execution =
-      modules.get('execution');
-
-    if (core?.rings) {
-      core.rings.rotation.y +=
-        0.0015;
+    if (
+      core?.icon
+    ) {
+      core.icon.material.opacity =
+        0.86
+        + Math.sin(
+          time * 2.2
+        ) * 0.10;
     }
 
     if (
-      core?.innerGlow
-        ?.material
+      openai?.glass
     ) {
-      core.innerGlow
-        .material
-        .opacity =
-          0.073
-          + Math.sin(
-            time * 1.9
-          ) * 0.012;
-    }
-
-    if (
-      decision?.innerGlow
-        ?.material
-    ) {
-      decision.innerGlow
-        .material
-        .opacity =
-          0.020
-          + Math.sin(
-            time * 2.0 + 1.4
-          ) * 0.006;
-    }
-
-    if (
-      execution?.innerGlow
-        ?.material
-    ) {
-      execution.innerGlow
-        .material
-        .opacity =
-          0.026
-          + Math.sin(
-            time * 2.0 + 2.6
-          ) * 0.007;
+      openai.glass.material.emissiveIntensity =
+        0.07
+        + Math.sin(
+          time * 1.8
+        ) * 0.018;
     }
 
     controls.update();
+
     composer.render();
   }
 
   animate();
 
   function dispose() {
-    if (disposed) return;
+    if (
+      disposed
+    ) {
+      return;
+    }
 
-    disposed = true;
+    disposed =
+      true;
 
-    cancelAnimationFrame(frame);
+    cancelAnimationFrame(
+      frame
+    );
+
     resizeObserver.disconnect();
 
     resetButton
@@ -810,30 +924,34 @@ export async function bootMemeflowTrue3D(
 
     controls.dispose();
 
-    scene.traverse(object => {
-      object.geometry
-        ?.dispose
-        ?.();
+    scene.traverse(
+      object => {
+        object.geometry
+          ?.dispose
+          ?.();
 
-      if (
-        Array.isArray(
-          object.material
-        )
-      ) {
-        for (
-          const material
-          of object.material
+        if (
+          Array.isArray(
+            object.material
+          )
         ) {
-          material
+          for (
+            const material
+            of object.material
+          ) {
+            material
+              ?.dispose
+              ?.();
+          }
+        }
+
+        else {
+          object.material
             ?.dispose
             ?.();
         }
-      } else {
-        object.material
-          ?.dispose
-          ?.();
       }
-    });
+    );
 
     composer.dispose();
     renderer.dispose();
@@ -853,14 +971,4 @@ export async function bootMemeflowTrue3D(
   };
 }
 
-/* ===== MEMEFLOW_TRUE_3D_GLB_V5 ===== */
-
-/* ===== MEMEFLOW_TRUE_3D_HERO_V6 ===== */
-
-/* ===== MEMEFLOW_TRUE_3D_STAGE_FILL_V7 ===== */
-
-/* ===== MEMEFLOW_TRUE_3D_CINEMATIC_V8 ===== */
-
-/* ===== MEMEFLOW_VARIANT_2_SHOWCASE_V1 ===== */
-
-/* ===== MEMEFLOW_VARIANT_2_FULLFRAME_V2 ===== */
+/* ===== MEMEFLOW_NEON_PCB_SCENE_V1 ===== */

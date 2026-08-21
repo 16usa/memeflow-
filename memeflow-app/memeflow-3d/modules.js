@@ -1,293 +1,394 @@
 import * as THREE from 'three';
 
 import {
-  cloneHardwareAsset
-} from './assets.js?v=true-3d-glb-v5';
+  RoundedBoxGeometry
+} from 'three/addons/geometries/RoundedBoxGeometry.js';
 
 import {
   chassisMaterial,
-  glassMaterial,
-  metalDetailMaterial,
-  silverMaterial,
-  glowPlane,
-  labelTexture,
-  iconTexture
-} from './materials.js?v=true-3d-glb-v5';
+  topGlassMaterial,
+  accentMaterial,
+  createLabelTexture,
+  createIconTexture
+} from './materials.js?v=neon-pcb-scene-v1';
 
-const BASE_SIZE = {
-  standard: [2.2, 1.5],
-  core: [2.8, 1.8],
-  terminal: [2.3, 1.5]
-};
-
-function variantFor(node) {
-  if (node.core) return 'core';
-  if (node.decision || node.execution) return 'terminal';
-  return 'standard';
-}
-
-function styleHardware(root, node, emphasis) {
-  root.traverse(object => {
-    if (!object.isMesh) return;
-
-    const name = (object.name || '').toLowerCase();
-
-    if (name.includes('base')) {
-      object.material = chassisMaterial(node.color, 0, emphasis);
-    }
-
-    else if (name.includes('mid')) {
-      object.material = chassisMaterial(node.color, 1, emphasis);
-    }
-
-    else if (name.includes('top')) {
-      object.material = chassisMaterial(node.color, 2, emphasis);
-    }
-
-    else if (
-      name.includes('glass')
-      || name.includes('inset')
-    ) {
-      object.material = glassMaterial(node.color, emphasis);
-    }
-
-    else if (name.includes('post')) {
-      object.material = silverMaterial(node.color);
-    }
-
-    else {
-      object.material = metalDetailMaterial(node.color, emphasis);
-    }
-
-    object.castShadow = false;
-    object.receiveShadow = false;
-  });
-}
-
-function makeLed(color, active) {
+function makeRoundedBox(
+  width,
+  height,
+  depth,
+  radius,
+  material
+) {
   return new THREE.Mesh(
-    new THREE.SphereGeometry(0.028, 10, 8),
-    new THREE.MeshBasicMaterial({
-      color,
-      transparent: true,
-      opacity: active ? 1 : 0.46,
-      depthWrite: false,
-      blending: THREE.AdditiveBlending
-    })
+    new RoundedBoxGeometry(
+      width,
+      height,
+      depth,
+      4,
+      radius
+    ),
+    material
   );
 }
 
-export function createModule(node, assets) {
-  const group = new THREE.Group();
+function addCornerScrews(
+  group,
+  width,
+  depth,
+  y,
+  color
+) {
+  const material =
+    new THREE.MeshStandardMaterial({
+      color: 0x8aa1ad,
+      emissive: color,
+      emissiveIntensity: 0.025,
+      metalness: 0.98,
+      roughness: 0.14
+    });
 
-  group.name = `MEMEFLOW_NODE_${node.id}`;
+  for (const xSign of [-1, 1]) {
+    for (const zSign of [-1, 1]) {
+      const screw =
+        new THREE.Mesh(
+          new THREE.CylinderGeometry(
+            0.045,
+            0.045,
+            0.026,
+            12
+          ),
+          material
+        );
+
+      screw.position.set(
+        xSign * width * 0.41,
+        y,
+        zSign * depth * 0.39
+      );
+
+      group.add(screw);
+    }
+  }
+}
+
+function addGlowFrame(
+  group,
+  width,
+  depth,
+  y,
+  color,
+  emphasis
+) {
+  const barMaterial =
+    accentMaterial(
+      color,
+      0.48 * emphasis
+    );
+
+  const thickness = 0.028;
+  const lift = 0.012;
+
+  const front =
+    new THREE.Mesh(
+      new THREE.BoxGeometry(
+        width * 0.83,
+        thickness,
+        thickness
+      ),
+      barMaterial
+    );
+
+  front.position.set(
+    0,
+    y + lift,
+    depth * 0.40
+  );
+
+  const back =
+    front.clone();
+
+  back.position.z =
+    -depth * 0.40;
+
+  const side =
+    new THREE.Mesh(
+      new THREE.BoxGeometry(
+        thickness,
+        thickness,
+        depth * 0.80
+      ),
+      barMaterial
+    );
+
+  side.position.set(
+    width * 0.42,
+    y + lift,
+    0
+  );
+
+  const side2 =
+    side.clone();
+
+  side2.position.x =
+    -width * 0.42;
+
+  group.add(
+    front,
+    back,
+    side,
+    side2
+  );
+}
+
+export function createModule(node) {
+  const group =
+    new THREE.Group();
+
+  group.name =
+    `MEMEFLOW_NEON_NODE_${node.id}`;
 
   group.position.set(
     node.pos[0],
-    Number(node.pos?.[1]) || 0,
+    node.pos[1],
     node.pos[2]
   );
 
-  const hardware = new THREE.Group();
-  group.add(hardware);
+  const width =
+    node.size[0];
+
+  const depth =
+    node.size[1];
 
   const emphasis =
-    node.core
-      ? 1.55
-      : node.decision
-        ? 1.26
-        : node.execution
-          ? 1.32
-          : 1;
+    Number(node.emphasis) || 1;
 
-  const variant = variantFor(node);
-  const sourceSize = BASE_SIZE[variant];
+  // Deep floating shadow slab.
+  const shadow =
+    makeRoundedBox(
+      width * 1.07,
+      0.15,
+      depth * 1.08,
+      0.12,
+      new THREE.MeshBasicMaterial({
+        color: 0x000000,
+        transparent: true,
+        opacity: 0.72
+      })
+    );
 
-  const chassis = cloneHardwareAsset(
-    assets,
-    node
-  );
+  shadow.position.y =
+    -0.23;
 
-  chassis.name = `GLB_CHASSIS_${node.id}`;
+  group.add(shadow);
 
-  chassis.scale.set(
-    node.size[0] / sourceSize[0],
-    1.22,
-    node.size[1] / sourceSize[1]
-  );
+  // Layer 1.
+  const base =
+    makeRoundedBox(
+      width,
+      0.30,
+      depth,
+      0.13,
+      chassisMaterial(
+        node.color,
+        0,
+        emphasis
+      )
+    );
 
-  styleHardware(
-    chassis,
-    node,
+  base.position.y =
+    -0.04;
+
+  group.add(base);
+
+  // Layer 2 gives the thick expensive hardware profile.
+  const mid =
+    makeRoundedBox(
+      width * 0.95,
+      0.19,
+      depth * 0.95,
+      0.11,
+      chassisMaterial(
+        node.color,
+        1,
+        emphasis
+      )
+    );
+
+  mid.position.y =
+    0.15;
+
+  group.add(mid);
+
+  // Main top chassis.
+  const top =
+    makeRoundedBox(
+      width * 0.90,
+      0.16,
+      depth * 0.90,
+      0.10,
+      chassisMaterial(
+        node.color,
+        3,
+        emphasis
+      )
+    );
+
+  top.position.y =
+    0.31;
+
+  group.add(top);
+
+  // Inset top glass.
+  const glass =
+    makeRoundedBox(
+      width * 0.78,
+      0.045,
+      depth * 0.69,
+      0.07,
+      topGlassMaterial(
+        node.color,
+        emphasis
+      )
+    );
+
+  glass.position.y =
+    0.415;
+
+  group.add(glass);
+
+  addGlowFrame(
+    group,
+    width,
+    depth,
+    0.43,
+    node.color,
     emphasis
   );
 
-  hardware.add(chassis);
-
-  const fitObject = chassis;
-
-  const width = node.size[0];
-  const depth = node.size[1];
-
-  const icon = new THREE.Mesh(
-    new THREE.PlaneGeometry(
-      width * 0.54,
-      depth * 0.46
-    ),
-    new THREE.MeshBasicMaterial({
-      map: iconTexture(
-        node.id,
-        node.color
-      ),
-      transparent: true,
-      opacity: node.core ? 0.96 : 0.78,
-      depthWrite: false,
-      blending: THREE.AdditiveBlending
-    })
+  addCornerScrews(
+    group,
+    width,
+    depth,
+    0.455,
+    node.color
   );
 
-  icon.rotation.x = -Math.PI / 2;
-  icon.position.y = 0.155;
-
-  hardware.add(icon);
-
-  const label = new THREE.Mesh(
-    new THREE.PlaneGeometry(
-      width * 0.86,
-      node.core ? 0.39 : 0.35
-    ),
-    new THREE.MeshBasicMaterial({
-      map: labelTexture(
-        node.label,
-        node.color
+  // Top icon.
+  const icon =
+    new THREE.Mesh(
+      new THREE.PlaneGeometry(
+        width * 0.46,
+        depth * 0.46
       ),
-      transparent: true,
-      opacity: 0.98,
-      depthWrite: false
-    })
-  );
+      new THREE.MeshBasicMaterial({
+        map: createIconTexture(
+          node.icon || node.id,
+          node.color
+        ),
+        transparent: true,
+        opacity: 0.96,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending
+      })
+    );
+
+  icon.rotation.x =
+    -Math.PI / 2;
+
+  icon.position.y =
+    0.449;
+
+  group.add(icon);
+
+  // Front label plate.
+  const label =
+    new THREE.Mesh(
+      new THREE.PlaneGeometry(
+        width * 0.79,
+        node.compact ? 0.25 : 0.29
+      ),
+      new THREE.MeshBasicMaterial({
+        map: createLabelTexture(
+          node.label,
+          node.color
+        ),
+        transparent: true,
+        depthWrite: false
+      })
+    );
 
   label.position.set(
     0,
-    -0.12,
-    depth * 0.555
+    0.07,
+    depth * 0.505
   );
 
-  hardware.add(label);
+  group.add(label);
 
-  const leds = [];
-
-  for (let index = 0; index < 3; index++) {
-    const led = makeLed(
-      index === 2
-        ? node.color
-        : index === 1
-          ? 0x426d82
-          : 0x233d4a,
-      index === 2
-    );
-
-    led.position.set(
-      width * 0.20 + index * 0.095,
-      -0.06,
-      depth * 0.568
-    );
-
-    hardware.add(led);
-    leds.push(led);
-  }
-
-  const outerGlow = glowPlane(
-    width * 1.32,
-    depth * 1.38,
-    node.color,
-    node.core
-      ? 0.12
-      : node.decision
-        ? 0.070
-        : node.execution
-          ? 0.080
-          : 0.026
-  );
-
-  outerGlow.position.y = -0.48;
-  hardware.add(outerGlow);
-
-  const innerGlow = glowPlane(
-    width * 0.94,
-    depth * 0.98,
-    node.color,
-    node.core ? 0.075 : 0.020
-  );
-
-  innerGlow.position.y = -0.455;
-  hardware.add(innerGlow);
-
-  let rings = null;
-
-  if (node.core) {
-    rings = new THREE.Group();
-    rings.position.y = 0.145;
-
-    for (const [radius, tube, opacity] of [
-      [0.42, 0.012, 0.72],
-      [0.68, 0.009, 0.40],
-      [0.94, 0.007, 0.16]
-    ]) {
-      const ring = new THREE.Mesh(
-        new THREE.TorusGeometry(
-          radius,
-          tube,
-          10,
-          64
+  // Tiny side LEDs.
+  for (let index = 0; index < 4; index++) {
+    const led =
+      new THREE.Mesh(
+        new THREE.BoxGeometry(
+          0.06,
+          0.025,
+          0.025
         ),
-        new THREE.MeshBasicMaterial({
-          color: node.color,
-          transparent: true,
-          opacity,
-          depthWrite: false,
-          blending: THREE.AdditiveBlending
-        })
+        accentMaterial(
+          index === 3
+            ? node.color
+            : 0x2a5166,
+          index === 3
+            ? 0.88
+            : 0.26
+        )
       );
 
-      ring.rotation.x = Math.PI / 2;
-      rings.add(ring);
-    }
+    led.position.set(
+      width * 0.18
+        + index * 0.10,
+      -0.005,
+      depth * 0.512
+    );
 
-    hardware.add(rings);
+    group.add(led);
   }
 
-  const pickMesh = new THREE.Mesh(
-    new THREE.BoxGeometry(
-      width,
-      0.54,
-      depth
-    ),
-    new THREE.MeshBasicMaterial({
-      transparent: true,
-      opacity: 0,
-      depthWrite: false
-    })
+  // Invisible pick volume.
+  const pickMesh =
+    new THREE.Mesh(
+      new THREE.BoxGeometry(
+        width,
+        0.85,
+        depth
+      ),
+      new THREE.MeshBasicMaterial({
+        transparent: true,
+        opacity: 0,
+        depthWrite: false
+      })
+    );
+
+  pickMesh.position.y =
+    0.12;
+
+  pickMesh.userData.nodeId =
+    node.id;
+
+  group.add(
+    pickMesh
   );
-
-  pickMesh.position.y = -0.10;
-  pickMesh.userData.nodeId = node.id;
-
-  hardware.add(pickMesh);
 
   return {
     id: node.id,
     node,
     group,
-    hardware,
-    fitObject,
-    chassis,
-    label,
+    base,
+    mid,
+    top,
+    glass,
     icon,
-    outerGlow,
-    innerGlow,
-    leds,
-    rings,
+    label,
     pickMesh
   };
 }

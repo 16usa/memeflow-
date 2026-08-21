@@ -1,6 +1,6 @@
 import {
   bootMemeflowTrue3D
-} from './scene.js?v=variant-2-fullframe-v2';
+} from './scene.js?v=neon-pcb-scene-v1';
 
 async function startTrue3D() {
   const viewport =
@@ -10,8 +10,9 @@ async function startTrue3D() {
 
   if (!viewport) {
     console.error(
-      '[TRUE-3D] viewport-wrap not found'
+      '[NEON-PCB] viewport-wrap not found'
     );
+
     return;
   }
 
@@ -29,7 +30,9 @@ async function startTrue3D() {
     host.id =
       'memeflowTrue3DHost';
 
-    viewport.appendChild(host);
+    viewport.appendChild(
+      host
+    );
   }
 
   window.__MEMEFLOW_TRUE_3D_ACTIVE__ =
@@ -63,7 +66,7 @@ async function startTrue3D() {
           );
 
         console.log(
-          '[TRUE-3D] VARIANT 2 FULLFRAME V2 mounted'
+          '[NEON-PCB] scene V1 mounted'
         );
       }
 
@@ -72,7 +75,7 @@ async function startTrue3D() {
           false;
 
         console.error(
-          '[TRUE-3D] GLB V5 boot failed',
+          '[NEON-PCB] boot failed',
           error
         );
       }
