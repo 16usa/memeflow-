@@ -159,6 +159,32 @@ function marketCapUsdForPrice(priceUsd, candidate = state.selected) {
   return converted > 0 ? converted : null;
 }
 
+function marketCapMetricAvailable(candidate = state.selected) {
+  // Historical market cap requires a stable token supply.
+  // Never fabricate a Pump supply just to keep the chart visible.
+  return tokenSupply(candidate) > 0;
+}
+
+function persistChartMetric() {
+  try {
+    localStorage.setItem(
+      'memeflow:chart-metric',
+      state.chartMetric
+    );
+  } catch {}
+}
+
+function forcePriceMetricIfMarketCapUnavailable(candidate = state.selected) {
+  if (state.chartMetric !== 'marketCap') return false;
+  if (marketCapMetricAvailable(candidate)) return false;
+
+  // V30.13: a missing supply/MC must NEVER erase valid BUY/SELL candles.
+  // Stay in canonical price mode until enough data exists to calculate MC.
+  state.chartMetric = 'price';
+  persistChartMetric();
+  return true;
+}
+
 function chartValueFromUsdPrice(priceUsd, candidate = state.selected) {
   const px = num(priceUsd);
   if (!(px > 0)) return null;
@@ -681,6 +707,16 @@ function renderSelected({ redrawChart = true } = {}) {
   if (!c) {
     $('tokenName').textContent = 'Select a candidate';
     return;
+  }
+
+  const metricForcedToPrice =
+    forcePriceMetricIfMarketCapUnavailable(c);
+
+  if (metricForcedToPrice) {
+    chartRuntime.forceFit = true;
+    chartRuntime.dataKey = '';
+    chartRuntime.levelsKey = '';
+    chartRuntime.metric = null;
   }
 
   const stateText = String(c.state || 'WAITING').toUpperCase();
@@ -1985,17 +2021,32 @@ function bind() {
   $('walletBtn').addEventListener('click', connectWallet);
 
   $('priceModeBtn').addEventListener('click', () => {
-    state.chartMetric =
+    const nextMetric =
       state.chartMetric === 'price'
         ? 'marketCap'
         : 'price';
 
-    try {
-      localStorage.setItem(
-        'memeflow:chart-metric',
-        state.chartMetric
-      );
-    } catch {}
+    // Do not enter an impossible market-cap mode.
+    // The old code switched first, then candlesFor() converted every real
+    // trade to null when supply was unavailable, making the entire chart blank.
+    if (
+      nextMetric === 'marketCap' &&
+      !marketCapMetricAvailable(state.selected)
+    ) {
+      state.chartMetric = 'price';
+      persistChartMetric();
+
+      chartRuntime.dataKey = '';
+      chartRuntime.levelsKey = '';
+      chartRuntime.metric = null;
+
+      renderPriceModeSummary();
+      scheduleChart();
+      return;
+    }
+
+    state.chartMetric = nextMetric;
+    persistChartMetric();
 
     chartRuntime.forceFit = true;
     chartRuntime.dataKey = '';
@@ -2147,3 +2198,4 @@ init();
 /* MEMEFLOW_TRADING_CHART_V30_9_FAST_CONTINUOUS_TAPE_FIXED_LEVELS */
 /* MEMEFLOW_TRADING_CHART_V30_11_REAL_TRADES_ONLY */
 /* MEMEFLOW_TRADING_CHART_V30_12_FULL_HISTORY_FREE_PAN_IMAGES */
+/* MEMEFLOW_TRADING_CHART_V30_13_SAFE_MARKET_CAP_TOGGLE */
