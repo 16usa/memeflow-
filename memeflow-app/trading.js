@@ -1826,18 +1826,21 @@ function chartDisplayData(candles){
   const target=chartVisibleBarsTarget();
   const padCount=Math.max(0,target-actual.length);
 
-  // Stable non-time labels keep ECharts category spacing consistent while
-  // chartTimeLabel() renders them as blank. No pre-birth timestamps are made.
-  const padLabels=Array.from(
+  // V30.22: newborn/sparse chart starts on the LEFT and grows to the RIGHT.
+  // Empty render-only slots represent future screen space AFTER real candles.
+  // They are not timestamps and never enter OHLC, volume, trade or signal logic.
+  const futureLabels=Array.from(
     {length:padCount},
-    (_,index)=>`__mf_pad_${index}`
+    (_,index)=>`__mf_future_${index}`
   );
 
   return {
-    labels:padLabels.concat(
-      actual.map(c=>String(Number(c.t)))
+    labels:actual
+      .map(c=>String(Number(c.t)))
+      .concat(futureLabels),
+    rows:actual.concat(
+      Array(padCount).fill(null)
     ),
-    rows:Array(padCount).fill(null).concat(actual),
     padCount
   };
 }
@@ -2125,10 +2128,12 @@ function drawChart(){
     }
   }));
 
-  const volumeData=Array(display.padCount).fill('-').concat(actualVolumeData);
-  const maPad=Array(display.padCount).fill('-');
-  const ma5=maPad.concat(movingAverage(candles,5));
-  const ma10=maPad.concat(movingAverage(candles,10));
+  // V30.22: indicator/volume geometry follows the same left-anchored
+  // real-candle order. Future render slots stay empty on the RIGHT.
+  const futurePad=Array(display.padCount).fill('-');
+  const volumeData=actualVolumeData.concat(futurePad);
+  const ma5=movingAverage(candles,5).concat(futurePad);
+  const ma10=movingAverage(candles,10).concat(futurePad);
 
   const levelInfo=chartLevelInfo(candles);
   chartRuntime.offscreenLevels=levelInfo.offscreen;
