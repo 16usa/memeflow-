@@ -1,8 +1,8 @@
 import {
   bootMemeflowTrue3D
-} from './scene.js?v=data-tunnel-page-v1';
+} from './scene.js?v=variant-2-fullframe-v2';
 
-async function startDataTunnel() {
+async function startTrue3D() {
   const viewport =
     document.querySelector(
       '.viewport-wrap'
@@ -10,9 +10,8 @@ async function startDataTunnel() {
 
   if (!viewport) {
     console.error(
-      '[DATA-TUNNEL] viewport-wrap not found'
+      '[TRUE-3D] viewport-wrap not found'
     );
-
     return;
   }
 
@@ -30,9 +29,7 @@ async function startDataTunnel() {
     host.id =
       'memeflowTrue3DHost';
 
-    viewport.appendChild(
-      host
-    );
+    viewport.appendChild(host);
   }
 
   window.__MEMEFLOW_TRUE_3D_ACTIVE__ =
@@ -66,7 +63,7 @@ async function startDataTunnel() {
           );
 
         console.log(
-          '[DATA-TUNNEL] page V1 mounted'
+          '[TRUE-3D] VARIANT 2 FULLFRAME V2 mounted'
         );
       }
 
@@ -75,7 +72,7 @@ async function startDataTunnel() {
           false;
 
         console.error(
-          '[DATA-TUNNEL] boot failed',
+          '[TRUE-3D] GLB V5 boot failed',
           error
         );
       }
@@ -89,7 +86,7 @@ if (
 ) {
   document.addEventListener(
     'DOMContentLoaded',
-    startDataTunnel,
+    startTrue3D,
     {
       once: true
     }
@@ -97,5 +94,5 @@ if (
 }
 
 else {
-  startDataTunnel();
+  startTrue3D();
 }

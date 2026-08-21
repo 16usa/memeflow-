@@ -1,435 +1,293 @@
 import * as THREE from 'three';
 
 import {
-  RoundedBoxGeometry
-} from 'three/addons/geometries/RoundedBoxGeometry.js';
-
-import {
   cloneHardwareAsset
 } from './assets.js?v=true-3d-glb-v5';
 
 import {
-  metalMaterial,
-  darkMetal,
+  chassisMaterial,
   glassMaterial,
-  additive,
-  textTexture,
+  metalDetailMaterial,
+  silverMaterial,
+  glowPlane,
+  labelTexture,
   iconTexture
-} from './materials.js?v=data-tunnel-page-v1';
+} from './materials.js?v=true-3d-glb-v5';
 
-function frameBar(w, h, d, material) {
+const BASE_SIZE = {
+  standard: [2.2, 1.5],
+  core: [2.8, 1.8],
+  terminal: [2.3, 1.5]
+};
+
+function variantFor(node) {
+  if (node.core) return 'core';
+  if (node.decision || node.execution) return 'terminal';
+  return 'standard';
+}
+
+function styleHardware(root, node, emphasis) {
+  root.traverse(object => {
+    if (!object.isMesh) return;
+
+    const name = (object.name || '').toLowerCase();
+
+    if (name.includes('base')) {
+      object.material = chassisMaterial(node.color, 0, emphasis);
+    }
+
+    else if (name.includes('mid')) {
+      object.material = chassisMaterial(node.color, 1, emphasis);
+    }
+
+    else if (name.includes('top')) {
+      object.material = chassisMaterial(node.color, 2, emphasis);
+    }
+
+    else if (
+      name.includes('glass')
+      || name.includes('inset')
+    ) {
+      object.material = glassMaterial(node.color, emphasis);
+    }
+
+    else if (name.includes('post')) {
+      object.material = silverMaterial(node.color);
+    }
+
+    else {
+      object.material = metalDetailMaterial(node.color, emphasis);
+    }
+
+    object.castShadow = false;
+    object.receiveShadow = false;
+  });
+}
+
+function makeLed(color, active) {
   return new THREE.Mesh(
-    new RoundedBoxGeometry(
-      w,
-      h,
-      d,
-      3,
-      Math.min(w, h, d) * .18
-    ),
-    material
+    new THREE.SphereGeometry(0.028, 10, 8),
+    new THREE.MeshBasicMaterial({
+      color,
+      transparent: true,
+      opacity: active ? 1 : 0.46,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending
+    })
   );
 }
 
-function addCornerBolts(group, width, height, z, color) {
-  const material =
-    new THREE.MeshStandardMaterial({
-      color: 0x8fa1aa,
-      emissive: color,
-      emissiveIntensity: .025,
-      metalness: .95,
-      roughness: .15
-    });
+export function createModule(node, assets) {
+  const group = new THREE.Group();
 
-  for (const x of [-1, 1]) {
-    for (const y of [-1, 1]) {
-      const bolt =
-        new THREE.Mesh(
-          new THREE.CylinderGeometry(
-            .035,
-            .035,
-            .022,
-            12
-          ),
-          material
-        );
+  group.name = `MEMEFLOW_NODE_${node.id}`;
 
-      bolt.rotation.x =
-        Math.PI / 2;
-
-      bolt.position.set(
-        x * width * .43,
-        y * height * .43,
-        z
-      );
-
-      group.add(bolt);
-    }
-  }
-}
-
-function addInnerHardware(
-  group,
-  assets,
-  node,
-  width,
-  height,
-  frontZ
-) {
-  if (!assets) return;
-
-  try {
-    const inner =
-      cloneHardwareAsset(
-        assets,
-        node
-      );
-
-    inner.name =
-      `INNER_GLB_${node.id}`;
-
-    inner.rotation.x =
-      Math.PI / 2;
-
-    inner.rotation.z =
-      Math.PI / 2;
-
-    const scale =
-      Math.min(
-        width * .19,
-        height * .095
-      );
-
-    inner.scale.setScalar(scale);
-
-    inner.position.set(
-      0,
-      .06,
-      frontZ - .11
-    );
-
-    inner.traverse(object => {
-      if (!object.isMesh) return;
-
-      object.material =
-        object.material?.clone?.()
-        || darkMetal();
-
-      if (
-        object.material
-        && 'transparent' in object.material
-      ) {
-        object.material.transparent =
-          true;
-
-        object.material.opacity =
-          .35;
-      }
-    });
-
-    group.add(inner);
-  }
-
-  catch (error) {
-    console.warn(
-      '[DATA-TUNNEL] inner GLB skipped',
-      node.id,
-      error
-    );
-  }
-}
-
-export function createTunnelModule(node, assets) {
-  const root =
-    new THREE.Group();
-
-  root.name =
-    `MEMEFLOW_TUNNEL_NODE_${node.id}`;
-
-  root.position.set(
+  group.position.set(
     node.pos[0],
-    node.pos[1],
+    Number(node.pos?.[1]) || 0,
     node.pos[2]
   );
 
-  const [
-    width,
-    height,
-    depth
-  ] = node.size;
+  const hardware = new THREE.Group();
+  group.add(hardware);
 
-  const chassis =
-    new THREE.Mesh(
-      new RoundedBoxGeometry(
-        width,
-        height,
-        depth,
-        5,
-        .12
-      ),
-      metalMaterial(
-        node.color,
-        node.core ? .08 : .025
-      )
-    );
+  const emphasis =
+    node.core
+      ? 1.55
+      : node.decision
+        ? 1.26
+        : node.execution
+          ? 1.32
+          : 1;
 
-  root.add(chassis);
+  const variant = variantFor(node);
+  const sourceSize = BASE_SIZE[variant];
 
-  const frameMaterial =
-    new THREE.MeshStandardMaterial({
-      color: 0x10191f,
-      emissive: node.color,
-      emissiveIntensity:
-        node.execution
-          ? .07
-          : node.core
-            ? .07
-            : .025,
-      metalness: .92,
-      roughness: .18
-    });
-
-  const frontZ =
-    depth / 2 + .022;
-
-  const railW =
-    Math.max(.09, width * .075);
-
-  const railH =
-    Math.max(.09, height * .045);
-
-  const leftRail =
-    frameBar(
-      railW,
-      height * .92,
-      .075,
-      frameMaterial
-    );
-
-  leftRail.position.set(
-    -width * .46,
-    0,
-    frontZ
-  );
-
-  root.add(leftRail);
-
-  const rightRail =
-    leftRail.clone();
-
-  rightRail.position.x =
-    width * .46;
-
-  root.add(rightRail);
-
-  const topRail =
-    frameBar(
-      width * .92,
-      railH,
-      .075,
-      frameMaterial
-    );
-
-  topRail.position.set(
-    0,
-    height * .46,
-    frontZ
-  );
-
-  root.add(topRail);
-
-  const bottomRail =
-    topRail.clone();
-
-  bottomRail.position.y =
-    -height * .46;
-
-  root.add(bottomRail);
-
-  const glass =
-    new THREE.Mesh(
-      new RoundedBoxGeometry(
-        width * .78,
-        height * .62,
-        .06,
-        4,
-        .06
-      ),
-      glassMaterial(
-        node.color
-      )
-    );
-
-  glass.position.set(
-    0,
-    height * .08,
-    frontZ + .018
-  );
-
-  root.add(glass);
-
-  addInnerHardware(
-    root,
+  const chassis = cloneHardwareAsset(
     assets,
+    node
+  );
+
+  chassis.name = `GLB_CHASSIS_${node.id}`;
+
+  chassis.scale.set(
+    node.size[0] / sourceSize[0],
+    1.22,
+    node.size[1] / sourceSize[1]
+  );
+
+  styleHardware(
+    chassis,
     node,
-    width,
-    height,
-    frontZ
+    emphasis
   );
 
-  const icon =
-    new THREE.Mesh(
-      new THREE.PlaneGeometry(
-        width * .50,
-        width * .50
-      ),
-      new THREE.MeshBasicMaterial({
-        map: iconTexture(
-          node.id,
-          node.color
-        ),
-        transparent: true,
-        depthWrite: false,
-        blending: THREE.AdditiveBlending
-      })
-    );
+  hardware.add(chassis);
 
-  icon.position.set(
-    0,
-    height * .10,
-    frontZ + .07
+  const fitObject = chassis;
+
+  const width = node.size[0];
+  const depth = node.size[1];
+
+  const icon = new THREE.Mesh(
+    new THREE.PlaneGeometry(
+      width * 0.54,
+      depth * 0.46
+    ),
+    new THREE.MeshBasicMaterial({
+      map: iconTexture(
+        node.id,
+        node.color
+      ),
+      transparent: true,
+      opacity: node.core ? 0.96 : 0.78,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending
+    })
   );
 
-  root.add(icon);
+  icon.rotation.x = -Math.PI / 2;
+  icon.position.y = 0.155;
 
-  const label =
-    new THREE.Mesh(
-      new THREE.PlaneGeometry(
-        width * .86,
-        Math.min(.38, height * .12)
+  hardware.add(icon);
+
+  const label = new THREE.Mesh(
+    new THREE.PlaneGeometry(
+      width * 0.86,
+      node.core ? 0.39 : 0.35
+    ),
+    new THREE.MeshBasicMaterial({
+      map: labelTexture(
+        node.label,
+        node.color
       ),
-      new THREE.MeshBasicMaterial({
-        map: textTexture(
-          node.label,
-          node.color,
-          {
-            width: 1200,
-            height: 240,
-            fontSize:
-              node.label.length > 12
-                ? 63
-                : 76,
-            border: false,
-            glow: 5
-          }
-        ),
-        transparent: true,
-        depthWrite: false
-      })
-    );
+      transparent: true,
+      opacity: 0.98,
+      depthWrite: false
+    })
+  );
 
   label.position.set(
     0,
-    -height * .32,
-    frontZ + .074
+    -0.12,
+    depth * 0.555
   );
 
-  root.add(label);
+  hardware.add(label);
 
-  const accent =
-    new THREE.Mesh(
-      new THREE.BoxGeometry(
-        .055,
-        height * .54,
-        .035
-      ),
-      additive(
-        node.color,
-        node.execution
-          ? .95
-          : .62
-      )
+  const leds = [];
+
+  for (let index = 0; index < 3; index++) {
+    const led = makeLed(
+      index === 2
+        ? node.color
+        : index === 1
+          ? 0x426d82
+          : 0x233d4a,
+      index === 2
     );
 
-  accent.position.set(
-    -width * .40,
-    height * .05,
-    frontZ + .09
-  );
-
-  root.add(accent);
-
-  addCornerBolts(
-    root,
-    width,
-    height,
-    frontZ + .08,
-    node.color
-  );
-
-  const pickMesh =
-    new THREE.Mesh(
-      new THREE.BoxGeometry(
-        width,
-        height,
-        depth + .16
-      ),
-      new THREE.MeshBasicMaterial({
-        transparent: true,
-        opacity: 0,
-        depthWrite: false
-      })
+    led.position.set(
+      width * 0.20 + index * 0.095,
+      -0.06,
+      depth * 0.568
     );
 
-  pickMesh.userData.nodeId =
-    node.id;
-
-  root.add(pickMesh);
-
-  let halo = null;
-
-  if (node.core) {
-    halo =
-      new THREE.Group();
-
-    halo.position.z =
-      frontZ + .13;
-
-    for (
-      const [radius, opacity]
-      of [
-        [.34, .80],
-        [.55, .44],
-        [.78, .18]
-      ]
-    ) {
-      const ring =
-        new THREE.Mesh(
-          new THREE.TorusGeometry(
-            radius,
-            .012,
-            10,
-            64
-          ),
-          additive(
-            node.color,
-            opacity
-          )
-        );
-
-      halo.add(ring);
-    }
-
-    root.add(halo);
+    hardware.add(led);
+    leds.push(led);
   }
 
+  const outerGlow = glowPlane(
+    width * 1.32,
+    depth * 1.38,
+    node.color,
+    node.core
+      ? 0.12
+      : node.decision
+        ? 0.070
+        : node.execution
+          ? 0.080
+          : 0.026
+  );
+
+  outerGlow.position.y = -0.48;
+  hardware.add(outerGlow);
+
+  const innerGlow = glowPlane(
+    width * 0.94,
+    depth * 0.98,
+    node.color,
+    node.core ? 0.075 : 0.020
+  );
+
+  innerGlow.position.y = -0.455;
+  hardware.add(innerGlow);
+
+  let rings = null;
+
+  if (node.core) {
+    rings = new THREE.Group();
+    rings.position.y = 0.145;
+
+    for (const [radius, tube, opacity] of [
+      [0.42, 0.012, 0.72],
+      [0.68, 0.009, 0.40],
+      [0.94, 0.007, 0.16]
+    ]) {
+      const ring = new THREE.Mesh(
+        new THREE.TorusGeometry(
+          radius,
+          tube,
+          10,
+          64
+        ),
+        new THREE.MeshBasicMaterial({
+          color: node.color,
+          transparent: true,
+          opacity,
+          depthWrite: false,
+          blending: THREE.AdditiveBlending
+        })
+      );
+
+      ring.rotation.x = Math.PI / 2;
+      rings.add(ring);
+    }
+
+    hardware.add(rings);
+  }
+
+  const pickMesh = new THREE.Mesh(
+    new THREE.BoxGeometry(
+      width,
+      0.54,
+      depth
+    ),
+    new THREE.MeshBasicMaterial({
+      transparent: true,
+      opacity: 0,
+      depthWrite: false
+    })
+  );
+
+  pickMesh.position.y = -0.10;
+  pickMesh.userData.nodeId = node.id;
+
+  hardware.add(pickMesh);
+
   return {
-    root,
+    id: node.id,
     node,
+    group,
+    hardware,
+    fitObject,
     chassis,
-    glass,
-    icon,
     label,
-    pickMesh,
-    halo
+    icon,
+    outerGlow,
+    innerGlow,
+    leds,
+    rings,
+    pickMesh
   };
 }

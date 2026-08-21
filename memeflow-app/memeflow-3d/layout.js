@@ -1,102 +1,34 @@
 export const NODES = [
-  {
-    id: 'discovery',
-    label: 'DISCOVERY',
-    color: 0x35a8ff,
-    pos: [-4.10, 1.55, 0.70],
-    size: [1.72, 3.35, 0.54],
-    lane: 'left'
-  },
-  {
-    id: 'bootstrap',
-    label: 'FAST BOOTSTRAP',
-    color: 0x3c8dff,
-    pos: [-3.45, 1.50, -2.10],
-    size: [1.58, 3.10, 0.50],
-    lane: 'left'
-  },
-  {
-    id: 'risk',
-    label: 'RISK ENGINE',
-    color: 0x42d5ff,
-    pos: [-2.70, 1.42, -4.45],
-    size: [1.44, 2.85, 0.46],
-    lane: 'left',
-    overhead: true
-  },
-  {
-    id: 'market',
-    label: 'MARKET LEDGER',
-    color: 0x5e8fff,
-    pos: [-1.45, 1.34, -6.10],
-    size: [1.34, 2.58, 0.42],
-    lane: 'center',
-    overhead: true
-  },
-  {
-    id: 'holders',
-    label: 'HOLDER LEDGER',
-    color: 0x6aa8ff,
-    pos: [-0.40, 1.30, -7.15],
-    size: [1.22, 2.40, 0.40],
-    lane: 'center',
-    overhead: true
-  },
-  {
-    id: 'openai',
-    label: 'OPENAI ASSISTANT',
-    color: 0xa46dff,
-    pos: [0.72, 1.30, -7.25],
-    size: [1.22, 2.40, 0.40],
-    lane: 'center',
-    overhead: true
-  },
-  {
-    id: 'decision',
-    label: 'DECISION',
-    color: 0xb16cff,
-    pos: [1.72, 1.34, -6.05],
-    size: [1.34, 2.58, 0.42],
-    lane: 'center',
-    overhead: true
-  },
-  {
-    id: 'paper',
-    label: 'PAPER ENGINE',
-    color: 0x4bc6ff,
-    pos: [3.35, 1.50, -2.05],
-    size: [1.58, 3.10, 0.50],
-    lane: 'right'
-  },
-  {
-    id: 'execution',
-    label: 'LIVE EXECUTION',
-    color: 0x5fe8a4,
-    pos: [4.15, 1.58, 0.62],
-    size: [1.72, 3.40, 0.54],
-    lane: 'right',
-    execution: true
-  },
-  {
-    id: 'core',
-    label: 'MEMEFLOW CORE',
-    color: 0x65efa9,
-    pos: [0.18, 1.25, -9.45],
-    size: [1.16, 2.15, 0.38],
-    lane: 'core',
-    core: true
-  }
+  { id: 'discovery', label: 'DISCOVERY', color: 0x315cff, pos: [-3.00, 0.00, -3.70], size: [2.62, 1.68] },
+  { id: 'bootstrap', label: 'FAST BOOTSTRAP', color: 0x315cff, pos: [0, 0.00, -3.70], size: [2.78, 1.68] },
+  { id: 'core', label: 'MEMEFLOW CORE', color: 0x56e79a, pos: [3.00, 0.16, -3.70], size: [3.34, 2.08], core: true },
+
+  { id: 'risk', label: 'RISK ENGINE', color: 0x43c8ee, pos: [-3.00, 0.02, -1.10], size: [2.62, 1.68] },
+  { id: 'market', label: 'MARKET LEDGER', color: 0x3a7dff, pos: [0, 0.02, -1.10], size: [2.70, 1.68] },
+  { id: 'holders', label: 'HOLDER LEDGER', color: 0x43c8ee, pos: [3.00, 0.02, -1.10], size: [2.62, 1.68] },
+
+  { id: 'openai', label: 'OPENAI ASSISTANT', color: 0x43c8ee, pos: [-3.00, 0.04, 1.50], size: [2.76, 1.68] },
+  { id: 'decision', label: 'DECISION', color: 0x8d58ff, pos: [0, 0.10, 1.50], size: [2.54, 1.68], decision: true },
+  { id: 'paper', label: 'PAPER ENGINE', color: 0x315cff, pos: [3.00, 0.04, 1.50], size: [2.62, 1.68] },
+
+  { id: 'execution', label: 'LIVE EXECUTION', color: 0x48df8b, pos: [0, 0.14, 4.30], size: [2.90, 1.80], execution: true }
 ];
 
 export const ROUTES = [
-  ['discovery', 'bootstrap'],
-  ['bootstrap', 'risk'],
-  ['risk', 'market'],
-  ['market', 'holders'],
-  ['holders', 'openai'],
-  ['openai', 'decision'],
-  ['decision', 'paper'],
-  ['paper', 'execution'],
-  ['holders', 'core'],
-  ['openai', 'core']
+  ['discovery', 'bootstrap', 0x74dcff],
+  ['bootstrap', 'core', 0x74dcff],
+
+  ['core', 'risk', 0x6cdfff],
+  ['core', 'market', 0x59e99c],
+  ['core', 'holders', 0x59e99c],
+
+  ['risk', 'market', 0x74dcff],
+  ['market', 'holders', 0x74dcff],
+
+  ['risk', 'openai', 0x9a70ff],
+  ['openai', 'decision', 0x74dcff],
+  ['market', 'decision', 0x74dcff],
+
+  ['decision', 'paper', 0xa977ff],
+  ['paper', 'execution', 0x61eda0]
 ];

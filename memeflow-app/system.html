@@ -2,183 +2,121 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta
-    name="viewport"
-    content="width=device-width,initial-scale=1,viewport-fit=cover"
-  />
-  <meta name="theme-color" content="#020609" />
-  <title>MEMEFLOW — Data Tunnel Pipeline</title>
-
-  <link rel="stylesheet" href="/system.css?v=data-tunnel-page-v1" />
-
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="description" content="MEMEFLOW Live System View — real-time 3D visualization of discovery, market, holder, evaluation and paper trading pipelines." />
+  <title>MEMEFLOW · Live System View</title>
+  <link rel="stylesheet" href="/system.css?v=true-3d-clean-v3" />
   <script type="importmap">
   {
     "imports": {
-      "three": "https://unpkg.com/three@0.166.1/build/three.module.js",
-      "three/addons/": "https://unpkg.com/three@0.166.1/examples/jsm/"
+      "three": "https://cdn.jsdelivr.net/npm/three@0.185.1/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.185.1/examples/jsm/"
     }
   }
   </script>
 </head>
+<body>
+  <div id="boot" class="boot" aria-live="polite">
+    <div class="boot-mark"><i></i><i></i><i></i></div>
+    <strong>MEMEFLOW SYSTEM VIEW</strong>
+    <span>Initializing real-time topology…</span>
+  </div>
 
-<body class="system-page">
   <main class="system-shell">
-    <header class="topbar">
-      <div class="brand-side">
-        <button
-          class="icon-button back-button"
-          type="button"
-          aria-label="Back"
-          onclick="history.back()"
-        >
-          <span aria-hidden="true">←</span>
-        </button>
-
-        <a class="brand" href="/" aria-label="MEMEFLOW home">
-          <span class="brand-mark" aria-hidden="true">
-            <span class="brand-wing brand-wing-a"></span>
-            <span class="brand-wing brand-wing-b"></span>
-          </span>
-          <span class="brand-name">MEMEFLOW</span>
-        </a>
+    <header class="topbar glass">
+      <div class="brand-block">
+        <a class="back" href="/" aria-label="Back to dashboard">←</a>
+        <div class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></div>
+        <div>
+          <div class="brand">MEMEFLOW</div>
+          <div class="subtitle">LIVE SYSTEM VIEW</div>
+        </div>
       </div>
 
-      <nav class="top-actions" aria-label="System actions">
-        <a class="top-action" href="/trading">Trading</a>
-        <a class="top-action top-action-accent" href="/settings">Settings</a>
-        <button
-          id="resetViewBtn"
-          class="top-action"
-          type="button"
-        >
-          Reset view
-        </button>
+      <div class="system-chips" aria-label="System status">
+        <div class="status-chip"><i id="wsDot" class="dot idle"></i><span>Discovery</span><b id="wsStatus">Connecting</b></div>
+        <div class="status-chip"><i id="rpcDot" class="dot idle"></i><span>RPC</span><b id="rpcStatus">Checking</b></div>
+        <div class="status-chip"><i id="aiDot" class="dot idle"></i><span>OpenAI</span><b id="aiStatus">Checking</b></div>
+        <div class="status-chip execution"><i class="dot warning"></i><span>Live execution</span><b>Not verified</b></div>
+      </div>
 
-        <button
-          id="autoRotateBtn"
-          class="compat-control"
-          type="button"
-          aria-hidden="true"
-          tabindex="-1"
-        >
-          Auto rotate
-        </button>
-      </nav>
-
-      <div class="compat-status" aria-hidden="true">
-        <span id="wsDot"></span><span id="wsStatus"></span>
-        <span id="rpcDot"></span><span id="rpcStatus"></span>
-        <span id="aiDot"></span><span id="aiStatus"></span>
+      <div class="top-actions">
+        <button id="autoRotateBtn" class="tool-btn active" type="button">Auto orbit</button>
+        <button id="resetViewBtn" class="tool-btn" type="button">Reset view</button>
       </div>
     </header>
 
-    <section class="architecture-card">
-      <div class="architecture-heading">
-        <div>
-          <div class="eyebrow">REAL-TIME ARCHITECTURE</div>
-          <h1 class="scene-title">Data Tunnel Pipeline</h1>
+    <div class="scene-title glass mf-architecture-title-standalone-v3">
+            <span class="eyebrow">REAL-TIME ARCHITECTURE</span>
+            <h1>Live MEMEFLOW pipeline</h1>
+            <p>Discovery → bootstrap → holders & market → deterministic risk engine → decision → paper execution.</p>
+          </div>
+
+    <aside class="legend glass mf-legend-standalone-v4" aria-label="Decision legend">
+            <span><i class="legend-dot waiting"></i>WAITING</span>
+            <span><i class="legend-dot watch"></i>WATCH</span>
+            <span><i class="legend-dot blocked"></i>BLOCKED</span>
+            <span><i class="legend-dot ready"></i>BUY READY</span>
+          </aside>
+
+    <section class="viewport-wrap mf-true3d-clean-v3">
+      <canvas id="systemCanvas" aria-label="Interactive 3D MEMEFLOW system topology"></canvas>
+      <div id="memeflowTrue3DHost" aria-label="MEMEFLOW true 3D renderer"></div>
+      <div id="labels" class="scene-labels" aria-hidden="true"></div>
+
+<div class="scene-hint glass">Drag to orbit · Wheel / pinch to zoom · Tap a token or module</div>
+
+      <aside id="inspector" class="inspector glass">
+        <div class="inspector-head">
+          <div>
+            <span class="eyebrow">LIVE INSPECTOR</span>
+            <h2 id="inspectorTitle">MEMEFLOW Core</h2>
+          </div>
+          <span id="inspectorState" class="state-pill neutral">SYSTEM</span>
         </div>
-
-        <div class="legend" aria-label="Pipeline states">
-          <span><i class="legend-dot waiting"></i>WAITING</span>
-          <span><i class="legend-dot watch"></i>WATCH</span>
-          <span><i class="legend-dot blocked"></i>BLOCKED</span>
-          <span><i class="legend-dot ready"></i>BUY READY</span>
+        <p id="inspectorSummary" class="inspector-summary">Select a token or architecture module to inspect its live state.</p>
+        <div id="metricGrid" class="metric-grid"></div>
+        <div class="reason-block">
+          <span>PRIMARY SIGNAL</span>
+          <p id="primaryReason">Waiting for telemetry.</p>
         </div>
-      </div>
-
-      <div class="viewport-wrap mf-data-tunnel-viewport">
-        <canvas
-          id="systemCanvas"
-          aria-label="MEMEFLOW system topology"
-        ></canvas>
-        <div
-          id="memeflowTrue3DHost"
-          aria-label="Interactive MEMEFLOW Data Tunnel"
-        ></div>
-      </div>
-    </section>
-
-    <section class="telemetry-strip" aria-label="Live telemetry">
-      <article class="telemetry-cell">
-        <span class="telemetry-label">EVENTS</span>
-        <div class="telemetry-value-row">
-          <strong id="eventCount">0</strong>
-          <span>received</span>
+        <div id="gateList" class="gate-list"></div>
+        <div class="inspector-foot">
+          <span id="inspectorMint">Live architecture</span>
+          <button id="focusBtn" type="button">Focus</button>
         </div>
-      </article>
+      </aside>
 
-      <article class="telemetry-cell">
-        <span class="telemetry-label">TRADE EVENTS</span>
-        <div class="telemetry-value-row">
-          <strong id="tradeCount">0</strong>
-          <span>decoded</span>
-        </div>
-      </article>
+</section>
 
-      <article class="telemetry-cell">
-        <span class="telemetry-label">HOLDER QUEUE</span>
-        <div class="telemetry-value-row">
-          <strong id="holderQueue">0</strong>
-          <span>jobs</span>
-        </div>
-      </article>
+    <section class="telemetry glass mf-telemetry-standalone-v3" aria-label="Live telemetry">
+            <div class="telemetry-item"><span>Events</span><strong id="eventCount">—</strong><small>received</small></div>
+            <div class="telemetry-item"><span>Trade events</span><strong id="tradeCount">—</strong><small>decoded</small></div>
+            <div class="telemetry-item"><span>Holder queue</span><strong id="holderQueue">—</strong><small>jobs</small></div>
+            <div class="telemetry-item"><span>Active users</span><strong id="activeUsers">—</strong><small>evaluated</small></div>
+            <div class="telemetry-item"><span>Fresh backlog</span><strong id="freshBacklog">—</strong><small>tokens</small></div>
+            <div class="telemetry-item wide"><span>Last live event</span><strong id="lastEvent">—</strong><small id="lastSync">telemetry pending</small></div>
+          </section>
 
-      <div class="compat-telemetry" aria-hidden="true">
-        <span id="activeUsers">0</span>
-        <span id="freshBacklog">0</span>
-        <span id="lastEvent">—</span>
-        <span id="lastSync">—</span>
-      </div>
-    </section>
-
-    <aside id="inspector" class="inspector-card">
-      <div class="panel-heading">
-        <div>
-          <div class="eyebrow">LIVE INSPECTOR</div>
-          <h2 id="inspectorTitle">MEMEFLOW Core</h2>
-        </div>
-
-        <span class="panel-badge">SYSTEM</span>
-      </div>
-
-      <div id="metricGrid" class="metric-grid"></div>
-
-      <div class="inspector-secondary" aria-live="polite">
-        <div id="primaryReason"></div>
-        <div id="gateList"></div>
-        <div id="inspectorMint"></div>
-        <button id="focusBtn" type="button">Focus node</button>
-      </div>
-    </aside>
-
-    <section class="token-flow-card">
-      <div class="panel-heading token-flow-heading">
-        <div>
-          <div class="eyebrow">TOKEN FLOW</div>
-          <h2>Recent pipeline state</h2>
-        </div>
-
-        <div class="token-flow-actions">
-          <a class="view-all" href="/trading">VIEW ALL</a>
-          <span class="live-state">
-            <i></i>
-            <span id="telemetryMode">LIVE</span>
-          </span>
+    <section class="activity-panel glass">
+      <div class="activity-head">
+        <div><span class="eyebrow">TOKEN FLOW</span><h2>Recent pipeline state</h2></div>
+        <div class="activity-actions">
+          <a class="flow-view-all" href="/system-tokens.html">View all</a>
+          <span id="telemetryMode" class="live-badge"><i></i>LIVE</span>
         </div>
       </div>
-
       <div id="tokenRail" class="token-rail"></div>
     </section>
   </main>
 
-  <script
-    type="module"
-    src="/system.js?v=data-tunnel-page-v1"
-  ></script>
-  <script
-    type="module"
-    src="/memeflow-3d/embed.js?v=data-tunnel-page-v1"
-  ></script>
+  <div id="fatal" class="fatal" hidden>
+    <strong>3D renderer unavailable</strong>
+    <span>The system telemetry panel can still update, but WebGL/Three.js could not start.</span>
+  </div>
+
+  <script type="module" src="/system.js?v=true-3d-embed-v1"></script>
+  <script type="module" src="/memeflow-3d/embed.js?v=variant-2-fullframe-v2"></script>
 </body>
 </html>
