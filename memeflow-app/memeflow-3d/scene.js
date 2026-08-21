@@ -23,7 +23,7 @@ import {
 import {
   NODES,
   ROUTES
-} from './layout.js?v=true-3d-glb-v5';
+} from './layout.js?v=true-3d-hero-v6';
 
 import {
   loadHardwareAssets
@@ -31,7 +31,7 @@ import {
 
 import {
   createModule
-} from './modules.js?v=true-3d-glb-v5';
+} from './modules.js?v=true-3d-hero-v6';
 
 import {
   createRoute,
@@ -167,7 +167,7 @@ export async function bootMemeflowTrue3D(
 
   const camera =
     new THREE.PerspectiveCamera(
-      41,
+      40,
       1,
       0.05,
       240
@@ -195,7 +195,7 @@ export async function bootMemeflowTrue3D(
     THREE.ACESFilmicToneMapping;
 
   renderer.toneMappingExposure =
-    0.98;
+    0.96;
 
   renderer.domElement.id =
     'memeflowTrue3DCanvas';
@@ -217,9 +217,9 @@ export async function bootMemeflowTrue3D(
   const bloom =
     new UnrealBloomPass(
       new THREE.Vector2(1, 1),
-      0.24,
-      0.34,
-      0.86
+      0.18,
+      0.28,
+      0.90
     );
 
   composer.addPass(bloom);
@@ -396,8 +396,8 @@ export async function bootMemeflowTrue3D(
   const homeDirection =
     new THREE.Vector3(
       0,
-      0.84,
-      0.54
+      0.73,
+      0.69
     ).normalize();
 
   const homeCamera =
@@ -428,10 +428,10 @@ export async function bootMemeflowTrue3D(
 
     camera.fov =
       aspect < 0.82
-        ? 42
+        ? 41
         : aspect < 1.10
-          ? 39
-          : 36;
+          ? 38
+          : 35;
 
     camera.updateProjectionMatrix();
 
@@ -496,13 +496,13 @@ export async function bootMemeflowTrue3D(
 
     const xLimit =
       aspect < 0.82
-        ? 0.92
-        : 0.93;
+        ? 0.965
+        : 0.955;
 
     const yLimit =
       aspect < 0.82
-        ? 0.90
-        : 0.92;
+        ? 0.955
+        : 0.945;
 
     let low = 4;
     let high = 60;
@@ -868,3 +868,5 @@ export async function bootMemeflowTrue3D(
 }
 
 /* ===== MEMEFLOW_TRUE_3D_GLB_V5 ===== */
+
+/* ===== MEMEFLOW_TRUE_3D_HERO_V6 ===== */

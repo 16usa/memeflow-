@@ -112,7 +112,7 @@ export function createModule(node, assets) {
 
   chassis.scale.set(
     node.size[0] / sourceSize[0],
-    1,
+    1.22,
     node.size[1] / sourceSize[1]
   );
 
@@ -131,8 +131,8 @@ export function createModule(node, assets) {
 
   const icon = new THREE.Mesh(
     new THREE.PlaneGeometry(
-      width * 0.58,
-      depth * 0.50
+      width * 0.54,
+      depth * 0.46
     ),
     new THREE.MeshBasicMaterial({
       map: iconTexture(
@@ -147,14 +147,14 @@ export function createModule(node, assets) {
   );
 
   icon.rotation.x = -Math.PI / 2;
-  icon.position.y = 0.125;
+  icon.position.y = 0.155;
 
   hardware.add(icon);
 
   const label = new THREE.Mesh(
     new THREE.PlaneGeometry(
-      width * 0.72,
-      node.core ? 0.30 : 0.27
+      width * 0.86,
+      node.core ? 0.39 : 0.35
     ),
     new THREE.MeshBasicMaterial({
       map: labelTexture(
@@ -169,8 +169,8 @@ export function createModule(node, assets) {
 
   label.position.set(
     0,
-    -0.13,
-    depth * 0.545
+    -0.12,
+    depth * 0.555
   );
 
   hardware.add(label);
@@ -188,9 +188,9 @@ export function createModule(node, assets) {
     );
 
     led.position.set(
-      width * 0.22 + index * 0.095,
-      -0.07,
-      depth * 0.555
+      width * 0.20 + index * 0.095,
+      -0.06,
+      depth * 0.568
     );
 
     hardware.add(led);
