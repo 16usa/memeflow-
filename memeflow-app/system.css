@@ -993,3 +993,49 @@ body.mf293-settings-open { overflow: hidden !important; }
     margin: 0 !important;
   }
 }
+
+/* ===== MEMEFLOW_REALTIME_ARCHITECTURE_COMPACT_V2 =====
+   Mobile-only visual compaction of REAL-TIME ARCHITECTURE.
+   LIVE INSPECTOR / TOKEN FLOW / Three.js logic are untouched.
+*/
+
+/*
+  Current iPhone layout is ~500+ CSS px tall.
+  420px is the compact sweet spot:
+  - all 4 visual architecture rows still fit
+  - LIVE EXECUTION remains above telemetry
+  - title + legend stay readable
+  - LIVE INSPECTOR moves visibly higher on screen
+*/
+@media (max-width: 600px) {
+  .mf-live-inspector-standalone-layout-v1 .viewport-wrap,
+  .viewport-wrap {
+    height: 420px !important;
+    min-height: 420px !important;
+    max-height: 420px !important;
+  }
+}
+
+/*
+  Very short phones: allow a tiny reduction, but never collapse the topology.
+*/
+@media (max-width: 600px) and (max-height: 720px) {
+  .mf-live-inspector-standalone-layout-v1 .viewport-wrap,
+  .viewport-wrap {
+    height: 410px !important;
+    min-height: 410px !important;
+    max-height: 410px !important;
+  }
+}
+
+/*
+  Keep tablet composition roomy. The previous standalone Inspector patch
+  remains the owner of the general <=900px layout.
+*/
+@media (min-width: 601px) and (max-width: 900px) {
+  .mf-live-inspector-standalone-layout-v1 .viewport-wrap {
+    height: clamp(470px, 58dvh, 560px) !important;
+    min-height: 470px !important;
+    max-height: 560px !important;
+  }
+}
