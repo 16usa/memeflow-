@@ -1,6 +1,6 @@
 import {
   bootMemeflowTrue3D
-} from './scene.js?v=true-3d-cinematic-v8';
+} from './scene.js?v=variant-2-showcase-v1';
 
 async function startTrue3D() {
   const viewport =
@@ -63,7 +63,7 @@ async function startTrue3D() {
           );
 
         console.log(
-          '[TRUE-3D] CINEMATIC V8 mounted'
+          '[TRUE-3D] VARIANT 2 SHOWCASE V1 mounted'
         );
       }
 

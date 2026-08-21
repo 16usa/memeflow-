@@ -23,7 +23,7 @@ import {
 import {
   NODES,
   ROUTES
-} from './layout.js?v=true-3d-stage-fill-v7';
+} from './layout.js?v=variant-2-showcase-v1';
 
 import {
   loadHardwareAssets
@@ -236,8 +236,8 @@ export async function bootMemeflowTrue3D(
   const cyanRim =
     new THREE.PointLight(
       0x58d7ff,
-      3.6,
-      19,
+      3.0,
+      18,
       2
     );
 
@@ -252,8 +252,8 @@ export async function bootMemeflowTrue3D(
   const greenCore =
     new THREE.PointLight(
       0x57e69a,
-      3.8,
-      16,
+      2.8,
+      15,
       2
     );
 
@@ -286,7 +286,7 @@ export async function bootMemeflowTrue3D(
     new THREE.MeshBasicMaterial({
       color: 0x071018,
       transparent: true,
-      opacity: 0.18,
+      opacity: 0.12,
       depthWrite: false,
       side: THREE.DoubleSide
     })
@@ -301,7 +301,7 @@ export async function bootMemeflowTrue3D(
     new THREE.MeshBasicMaterial({
       color: 0x133247,
       transparent: true,
-      opacity: 0.075,
+      opacity: 0.045,
       depthWrite: false,
       side: THREE.DoubleSide
     })
@@ -381,9 +381,9 @@ export async function bootMemeflowTrue3D(
 
   const homeDirection =
     new THREE.Vector3(
-      0.10,
-      0.50,
-      0.86
+      0.00,
+      0.58,
+      0.81
     ).normalize();
 
   const homeCamera =
@@ -414,10 +414,10 @@ export async function bootMemeflowTrue3D(
 
     camera.fov =
       aspect < 0.82
-        ? 38
+        ? 36
         : aspect < 1.10
-          ? 36
-          : 34;
+          ? 34
+          : 32;
 
     camera.updateProjectionMatrix();
 
@@ -482,13 +482,13 @@ export async function bootMemeflowTrue3D(
 
     const xLimit =
       aspect < 0.82
-        ? 0.972
-        : 0.965;
+        ? 0.985
+        : 0.978;
 
     const yLimit =
       aspect < 0.82
-        ? 0.948
-        : 0.942;
+        ? 0.962
+        : 0.955;
 
     let low = 4;
     let high = 60;
@@ -860,3 +860,5 @@ export async function bootMemeflowTrue3D(
 /* ===== MEMEFLOW_TRUE_3D_STAGE_FILL_V7 ===== */
 
 /* ===== MEMEFLOW_TRUE_3D_CINEMATIC_V8 ===== */
+
+/* ===== MEMEFLOW_VARIANT_2_SHOWCASE_V1 ===== */
