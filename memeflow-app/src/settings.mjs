@@ -21,7 +21,7 @@ const bool=(v,fallback=false)=>{
  if(['false','0','no','off'].includes(s))return false;
  return fallback;
 };
-export function defaultSettings(){return {
+function __mfV15BaseDefaultSettings(){return {
  operatingMode:'observe',tradingEnvironment:'paper',profile:'balanced',
  tradingCapital:0,dailySpendLimit:0,positionSize:0.1,maxPositionSize:0.5,maxOpenPositions:4,maxDailyEntries:10,dailyLossLimit:0,feeReserve:0.05,
  minScore:72,minConfidence:70,minLiquidityUsd:0,minBuyPressure:1.2,requireFreshHolderSnapshot:true,requireWebsiteOrX:false,
@@ -35,7 +35,7 @@ export function defaultSettings(){return {
  adaptiveProfile:false,ownerApproval:true,shadowValidation:true,changeLog:true,
  aiChangePolicy:'propose',decisionFreshnessSec:60,discoverySourceMode:'pump'
 }}
-export function normalizeSettings(raw={}){
+function __mfV15BaseNormalizeSettings(raw={}){
  const d=defaultSettings(),o={...d,...raw};
 
  // Legacy UI-key migrations from builds that persisted view names directly.
@@ -75,7 +75,7 @@ export function normalizeSettings(raw={}){
  delete o.paperBeforeChange;delete o.auditSettings;delete o.decisionFreshness;delete o.exitWeakPressure;
  return o;
 }
-export function validateSettings(raw={}){
+function __mfV15BaseValidateSettings(raw={}){
  const s=normalizeSettings(raw),errors=[];
  const ranges=[
   ['Bonding curve',s.minBondingCurvePct,s.maxBondingCurvePct],['Market cap',s.minMarketCapUsd,s.maxMarketCapUsd],
@@ -127,4 +127,43 @@ export function validateSettings(raw={}){
  if(!Array.isArray(s.launchPlatforms)||s.launchPlatforms.some(x=>!PLATFORMS.includes(String(x).toLowerCase())))errors.push('Invalid launch platform. Supported discovery platforms are pump and dex.');
 
  return {ok:errors.length===0,errors,settings:s};
+}
+
+// MEMEFLOW_ANTI_RUG_V1_5_EXACT
+// Explicit evidence only. Disabled values are inert; no risk percentage is synthesized.
+const __mfV15NumericKeys=Object.freeze([
+  'maxSuspectedRiskyWalletsPct','maxInsidersPct',
+  'maxDeveloperRugHistoryPct','maxDeveloperExitPct'
+]);
+const __mfV15BooleanKeys=Object.freeze(['requireDevMigrated','requireTokenLogo']);
+function __mfV15Object(v){return v&&typeof v==='object'&&!Array.isArray(v)?v:{}}
+function __mfV15Strip(raw){const o={...__mfV15Object(raw)};for(const k of [...__mfV15NumericKeys,...__mfV15BooleanKeys])delete o[k];return o}
+function __mfV15Pct(v){if(v===''||v===null||v===undefined)return null;const n=Number(v);return Number.isFinite(n)?n:null}
+function __mfV15Bool(v,f=false){if(v===undefined||v===null||v==='')return Boolean(f);if(typeof v==='boolean')return v;if(typeof v==='string'){const x=v.trim().toLowerCase();if(['true','1','yes','on'].includes(x))return true;if(['false','0','no','off'].includes(x))return false}return Boolean(v)}
+
+export function defaultSettings(){
+  return {...__mfV15BaseDefaultSettings(),
+    maxSuspectedRiskyWalletsPct:null,maxInsidersPct:null,requireDevMigrated:false,
+    maxDeveloperRugHistoryPct:null,maxDeveloperExitPct:null,requireTokenLogo:false};
+}
+export function normalizeSettings(raw={}){
+  const input=__mfV15Object(raw),base=__mfV15BaseNormalizeSettings(__mfV15Strip(input)),out={...base};
+  for(const k of __mfV15NumericKeys)out[k]=__mfV15Pct(Object.prototype.hasOwnProperty.call(input,k)?input[k]:null);
+  for(const k of __mfV15BooleanKeys)out[k]=__mfV15Bool(Object.prototype.hasOwnProperty.call(input,k)?input[k]:false,false);
+  return out;
+}
+export function validateSettings(raw={}){
+  const input=__mfV15Object(raw),base=__mfV15BaseValidateSettings(__mfV15Strip(input));
+  const errors=Array.isArray(base?.errors)?[...base.errors]:[];
+  for(const k of __mfV15NumericKeys){
+    if(!Object.prototype.hasOwnProperty.call(input,k))continue;
+    const v=input[k];if(v===''||v===null||v===undefined)continue;
+    const n=Number(v);if(!Number.isFinite(n))errors.push(`${k} must be a number or blank.`);else if(n<0||n>100)errors.push(`${k} must be between 0 and 100.`);
+  }
+  for(const k of __mfV15BooleanKeys){
+    if(!Object.prototype.hasOwnProperty.call(input,k))continue;
+    const v=input[k],valid=typeof v==='boolean'||(typeof v==='string'&&['true','false','1','0','yes','no','on','off'].includes(v.trim().toLowerCase()));
+    if(!valid)errors.push(`${k} must be boolean.`);
+  }
+  return {...(base&&typeof base==='object'?base:{}),ok:errors.length===0,errors,settings:normalizeSettings(input)};
 }

@@ -444,7 +444,7 @@ function __mfEvaluateBaseV11(token,s={}){
 // DEX pools do not provide Pump bonding-curve/fee/bundle/sniper semantics.
 // Developer identity is also not a reliable DEX-pool property.
 // These owner settings remain active for Pump tokens and are N/A for DEX tokens.
-export function evaluate(token, s = {}) {
+function __mfV15BaseEvaluate(token, s = {}) {
   const isDex = String(token?.launchPlatform || '').toLowerCase() === 'dex';
 
   if (!isDex) {
@@ -480,3 +480,44 @@ export function evaluate(token, s = {}) {
   return result;
 }
 
+// MEMEFLOW_ANTI_RUG_V1_5_EXACT
+// Evidence-only wrapper around canonical V1.4.2. No DEX price/quote/pool-price inputs.
+export function evaluate(token={},s={}){
+  const base=__mfV15BaseEvaluate(token,s);
+  const originalState=String(base?.state||'WAITING').toUpperCase();
+  const gates=Array.isArray(base?.settingsEvaluation?.gates)?[...base.settingsEvaluation.gates]:[];
+  const reasons=Array.isArray(base?.reasons)?[...base.reasons]:[];
+  let blocked=false,waiting=false,primary=null;
+  const finite=v=>{if(v===''||v===null||v===undefined)return null;const n=Number(v);return Number.isFinite(n)?n:null};
+  const push=(name,status,reason,detail={})=>{
+    gates.push({name,status,pass:status==='PASS',...detail});
+    if(status==='FAIL'){blocked=true;if(reason)reasons.push(reason);if(!primary&&reason)primary=reason}
+    else if(status==='WAITING'){waiting=true;const r=reason?.startsWith('Waiting: ')?reason:`Waiting: ${reason||name+' evidence pending'}`;reasons.push(r);if(!primary)primary=r}
+  };
+  const maxGate=(name,settingKey,tokenKey,pending,failLabel)=>{
+    const threshold=finite(s?.[settingKey]);if(threshold===null)return;
+    const value=finite(token?.[tokenKey]);
+    if(value===null)return push(name,'WAITING',pending,{value:null,threshold,operator:'<='});
+    if(value>threshold)return push(name,'FAIL',`${failLabel} ${value}% above configured maximum ${threshold}%`,{value,threshold,operator:'<='});
+    push(name,'PASS',null,{value,threshold,operator:'<='});
+  };
+  maxGate('Suspected risky wallets','maxSuspectedRiskyWalletsPct','suspectedRiskyWalletsPct','suspected risky wallets evidence pending','suspected risky wallets');
+  maxGate('Insiders','maxInsidersPct','insidersPct','insider evidence pending','insiders');
+  maxGate('Developer rug history','maxDeveloperRugHistoryPct','developerRugHistoryPct','developer rug history evidence pending','developer rug history');
+  maxGate('Developer exit','maxDeveloperExitPct','developerExitPct','developer exit evidence pending','developer exit');
+  if(s?.requireDevMigrated===true){
+    if(typeof token?.devMigrated!=='boolean')push('Developer migrated','WAITING','developer migration evidence pending',{value:null,required:true});
+    else if(token.devMigrated!==true)push('Developer migrated','FAIL','developer migration requirement failed',{value:false,required:true});
+    else push('Developer migrated','PASS',null,{value:true,required:true});
+  }
+  if(s?.requireTokenLogo===true){
+    const logo=typeof token?.imageUrl==='string'&&token.imageUrl.trim()?token.imageUrl.trim():null;
+    const resolved=token?.metadataResolved===true||token?.metadataReady===true||token?.metadataFetched===true||Boolean(token?.metadataFetchedAt&&!token?.metadataError);
+    if(logo)push('Token logo','PASS',null,{value:logo,required:true});
+    else if(resolved)push('Token logo','FAIL','token logo is required',{value:null,required:true});
+    else push('Token logo','WAITING','token logo metadata pending',{value:null,required:true});
+  }
+  let state=originalState;if(blocked)state='BLOCKED';else if(waiting&&originalState!=='BLOCKED')state='WAITING';
+  const preservePrimary=originalState==='BLOCKED'&&!blocked;
+  return {...base,state,reasons,primaryReason:preservePrimary?base?.primaryReason:(primary||base?.primaryReason||reasons[0]||null),settingsEvaluation:{...(base?.settingsEvaluation||{}),gates},antiRugEvidenceVersion:'V1.5'};
+}

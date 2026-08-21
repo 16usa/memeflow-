@@ -1,7 +1,7 @@
 {
-  "running": false,
-  "lastError": "Too many requests for a specific RPC call",
-  "lastStartedAt": 1787216889993,
-  "updatedAt": 1787217623863,
+  "running": true,
+  "lastError": null,
+  "lastStartedAt": 1787271931195,
+  "updatedAt": 1787271931195,
   "lastFailedAt": 1787217623863
 }
