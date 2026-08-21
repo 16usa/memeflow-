@@ -269,14 +269,32 @@ function __mfEvaluateBaseV11(token,s={}){
     );
   }
 
-  // MEMEFLOW_DATA_INTEGRITY_V1_3_EXACT
-  // Catastrophic drawdown is a hard market-integrity failure.
+  // MEMEFLOW_ANTI_RUG_V1_4_2_EXACT
+  // Canonical Pump anti-rug circuit breaker.
+  // DEX values never participate: only priceSol/peakPriceSol/Pump flow/history.
   const __mfCurrentPrice=finite(token?.priceSol)?Number(token.priceSol):null;
   const __mfPeakPrice=finite(token?.peakPriceSol)?Number(token.peakPriceSol):null;
-  const __mfConfiguredCollapse=Number(process.env.MEMEFLOW_COLLAPSE_DRAWDOWN_PCT);
-  const __mfCollapseLimit=Number.isFinite(__mfConfiguredCollapse)
-    ? Math.max(50,Math.min(99,__mfConfiguredCollapse))
-    : 90;
+  const __mfHardPeakConfigured=Number(process.env.MEMEFLOW_RUG_HARD_DRAWDOWN_PCT);
+  const __mfHardPeakLimit=Number.isFinite(__mfHardPeakConfigured)
+    ? Math.max(70,Math.min(95,__mfHardPeakConfigured))
+    : 75;
+  const __mfRapid30Configured=Number(process.env.MEMEFLOW_RUG_30S_DROP_PCT);
+  const __mfRapid30Limit=Number.isFinite(__mfRapid30Configured)
+    ? Math.max(25,Math.min(80,__mfRapid30Configured))
+    : 40;
+  const __mfRapid120Configured=Number(process.env.MEMEFLOW_RUG_120S_DROP_PCT);
+  const __mfRapid120Limit=Number.isFinite(__mfRapid120Configured)
+    ? Math.max(35,Math.min(90,__mfRapid120Configured))
+    : 55;
+  const __mfHoldConfigured=Number(process.env.MEMEFLOW_RUG_RECOVERY_HOLD_DRAWDOWN_PCT);
+  const __mfHoldLimit=Number.isFinite(__mfHoldConfigured)
+    ? Math.max(25,Math.min(70,__mfHoldConfigured))
+    : 45;
+  const __mfHoldPressureConfigured=Number(process.env.MEMEFLOW_RUG_RECOVERY_MAX_BUY_PRESSURE);
+  const __mfHoldPressure=Number.isFinite(__mfHoldPressureConfigured)
+    ? Math.max(0.1,Math.min(1.5,__mfHoldPressureConfigured))
+    : 0.80;
+
   const __mfDrawdownPct=
     __mfCurrentPrice!==null&&__mfCurrentPrice>0&&
     __mfPeakPrice!==null&&__mfPeakPrice>0&&
@@ -284,15 +302,104 @@ function __mfEvaluateBaseV11(token,s={}){
       ? (1-__mfCurrentPrice/__mfPeakPrice)*100
       : null;
 
+  const __mfHistory=Array.isArray(token?.antiRugHistory)
+    ? token.antiRugHistory.filter(row=>finite(row?.priceSol)&&finite(row?.at))
+    : [];
+  const __mfNow=Date.now();
+  const __mfRecentPeak=(windowMs)=>{
+    let peak=__mfCurrentPrice||0;
+    for(const row of __mfHistory){
+      const at=Number(row.at);
+      const price=Number(row.priceSol);
+      if(__mfNow-at<=windowMs&&price>peak)peak=price;
+    }
+    return peak>0?peak:null;
+  };
+  const __mfDropFromRecent=(windowMs)=>{
+    const peak=__mfRecentPeak(windowMs);
+    return peak!==null&&__mfCurrentPrice!==null&&__mfCurrentPrice>0&&peak>=__mfCurrentPrice
+      ? (1-__mfCurrentPrice/peak)*100
+      : null;
+  };
+  const __mfDrop30=__mfDropFromRecent(30_000);
+  const __mfDrop120=__mfDropFromRecent(120_000);
+
+  // Missing peak history is not incomplete decision evidence.
+  // A token can be evaluated normally before its first local peak snapshot exists.
+  // The anti-rug gate becomes active only after a real canonical Pump peak exists.
+  const __mfPeakSafe=__mfDrawdownPct===null||__mfDrawdownPct<__mfHardPeakLimit;
   if(__mfDrawdownPct!==null){
-    const __mfNotCollapsed=__mfDrawdownPct<__mfCollapseLimit;
     addGate(
       'Peak drawdown safety',
-      __mfNotCollapsed,
-      `token collapsed ${__mfDrawdownPct.toFixed(1)}% from observed peak`,
-      {value:__mfDrawdownPct,threshold:__mfCollapseLimit,operator:'<'}
+      __mfPeakSafe,
+      `token collapsed ${__mfDrawdownPct.toFixed(1)}% from observed peak (canonical Pump)`,
+      {value:__mfDrawdownPct,threshold:__mfHardPeakLimit,operator:'<'}
     );
-    if(!__mfNotCollapsed)score=Math.min(score,20);
+  }
+
+  const __mfRapid30Fail=__mfDrop30!==null&&__mfDrop30>=__mfRapid30Limit;
+  const __mfRapid120Fail=__mfDrop120!==null&&__mfDrop120>=__mfRapid120Limit;
+  const __mfRapidFail=__mfRapid30Fail||__mfRapid120Fail;
+  if(__mfDrop30!==null||__mfDrop120!==null){
+    addGate(
+      'Rapid drawdown safety',
+      !__mfRapidFail,
+      __mfRapid30Fail
+        ? `rapid Pump dump ${__mfDrop30.toFixed(1)}% inside 30s`
+        : `rapid Pump dump ${Number(__mfDrop120||0).toFixed(1)}% inside 120s`,
+      {
+        value30s:__mfDrop30,
+        threshold30s:__mfRapid30Limit,
+        value120s:__mfDrop120,
+        threshold120s:__mfRapid120Limit
+      }
+    );
+  }
+
+  const __mfLatchUntil=finite(token?.rugRiskUntil)?Number(token.rugRiskUntil):0;
+  const __mfLatchActive=__mfLatchUntil>Date.now();
+  if(__mfLatchActive){
+    addGate(
+      'Anti-rug cooldown',
+      false,
+      token?.rugRiskReason||'recent Pump dump remains inside anti-rug cooldown',
+      {until:__mfLatchUntil}
+    );
+  }
+
+  const __mfHardRisk=!__mfPeakSafe||__mfRapidFail||__mfLatchActive;
+  if(__mfHardRisk){
+    score=Math.min(score,20);
+  }else{
+    const __mfPressure=v.pressure;
+    const __mfBuyCount=v.buys;
+    const __mfSellCount=v.sells;
+    const __mfBearishPressure=
+      __mfPressure!==null&&__mfPressure<__mfHoldPressure;
+    const __mfBearishCounts=
+      __mfBuyCount!==null&&__mfSellCount!==null&&
+      __mfSellCount>=Math.max(2,__mfBuyCount*2);
+    const __mfRecoveryHold=
+      __mfDrawdownPct!==null&&
+      __mfDrawdownPct>=__mfHoldLimit&&
+      (__mfBearishPressure||__mfBearishCounts);
+
+    if(__mfRecoveryHold){
+      addGate(
+        'Selloff recovery hold',
+        null,
+        `Pump price is ${__mfDrawdownPct.toFixed(1)}% below peak while sell pressure remains elevated`,
+        {
+          drawdownPct:__mfDrawdownPct,
+          drawdownThreshold:__mfHoldLimit,
+          buyPressure:__mfPressure,
+          buyPressureThreshold:__mfHoldPressure,
+          buys:__mfBuyCount,
+          sells:__mfSellCount
+        }
+      );
+      score=Math.min(score,55);
+    }
   }
 
   addGate('Verified price',v.price===null?null:v.price>0,'price unavailable',{value:v.price});

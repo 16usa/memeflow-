@@ -1006,6 +1006,15 @@ function candidateView(d){
         nextDueInMs:q.nextDueInMs??null
       }:null;
     })(),
+    antiRug:{
+      active:Number(t.rugRiskUntil||0)>Date.now(),
+      until:t.rugRiskUntil||null,
+      reason:t.rugRiskReason||null,
+      peakDrawdownPct:finite(t.rugRiskPeakDrawdownPct),
+      drop30sPct:finite(t.rugRiskDrop30sPct),
+      drop120sPct:finite(t.rugRiskDrop120sPct),
+      version:t.rugRiskVersion||null
+    },
     top10:top10Pct,
     top10Pct,
     developer:developerPct,

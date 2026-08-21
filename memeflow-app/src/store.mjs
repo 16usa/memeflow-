@@ -327,7 +327,7 @@ export class JsonStore {
     };
     const meaningfulSnap=Object.values(snap).slice(1).some(v=>v!==null);
     const shouldSnap=meaningfulSnap&&(!lastHist||now-Number(lastHist.at||0)>=5000);
-    const antiRugHistory=shouldSnap?[...prevHist,snap].slice(-12):prevHist;
+    const antiRugHistory=shouldSnap?[...prevHist,snap].slice(-36):prevHist; // MEMEFLOW_ANTI_RUG_V1_4_2_EXACT
 
     const oldSupply=Number(old?.totalSupply);
     const patchSupply=Number(patch?.totalSupply);
@@ -347,13 +347,79 @@ export class JsonStore {
       ? {marketCapSol:derivedMarketCap,marketCap:derivedMarketCap}
       : {};
 
+    // MEMEFLOW_ANTI_RUG_V1_4_2_EXACT
+    // Latch only from canonical incoming Pump price updates. The latch prevents
+    // a dead-cat bounce from instantly restoring BUY READY after a severe dump.
+    const rugHardPeakLimit=Math.max(
+      70,
+      Math.min(95,Number(process.env.MEMEFLOW_RUG_HARD_DRAWDOWN_PCT)||75)
+    );
+    const rug30Limit=Math.max(
+      25,
+      Math.min(80,Number(process.env.MEMEFLOW_RUG_30S_DROP_PCT)||40)
+    );
+    const rug120Limit=Math.max(
+      35,
+      Math.min(90,Number(process.env.MEMEFLOW_RUG_120S_DROP_PCT)||55)
+    );
+    const rugLatchMs=Math.max(
+      60_000,
+      Number(process.env.MEMEFLOW_RUG_LATCH_MS)||20*60_000
+    );
+
+    const recentPeak=(windowMs)=>{
+      let p=mergedPrice||0;
+      for(const row of antiRugHistory){
+        const at=Number(row?.at);
+        const price=Number(row?.priceSol);
+        if(Number.isFinite(at)&&Number.isFinite(price)&&price>0&&now-at<=windowMs&&price>p)p=price;
+      }
+      return p>0?p:null;
+    };
+    const dropFrom=(reference)=>
+      reference!==null&&mergedPrice!==null&&mergedPrice>0&&reference>=mergedPrice
+        ? (1-mergedPrice/reference)*100
+        : null;
+    const peakDrawdownPct=dropFrom(peak>0?peak:null);
+    const drop30sPct=dropFrom(recentPeak(30_000));
+    const drop120sPct=dropFrom(recentPeak(120_000));
+    const hardPeak=peakDrawdownPct!==null&&peakDrawdownPct>=rugHardPeakLimit;
+    const rapid30=drop30sPct!==null&&drop30sPct>=rug30Limit;
+    const rapid120=drop120sPct!==null&&drop120sPct>=rug120Limit;
+    const hardTrigger=hasNextPrice&&(hardPeak||rapid30||rapid120);
+
+    let rugRiskUntil=Number(old?.rugRiskUntil)||0;
+    let rugRiskLatchedAt=Number(old?.rugRiskLatchedAt)||null;
+    let rugRiskReason=old?.rugRiskReason||null;
+
+    if(hardTrigger){
+      rugRiskUntil=Math.max(rugRiskUntil,now+rugLatchMs);
+      rugRiskLatchedAt=now;
+      rugRiskReason=hardPeak
+        ? `Pump peak drawdown ${peakDrawdownPct.toFixed(1)}%`
+        : rapid30
+          ? `Pump rapid dump ${drop30sPct.toFixed(1)}% / 30s`
+          : `Pump rapid dump ${drop120sPct.toFixed(1)}% / 120s`;
+    }
+
+    const rugRiskPatch={
+      rugRiskUntil:rugRiskUntil>0?rugRiskUntil:null,
+      rugRiskLatchedAt,
+      rugRiskReason,
+      rugRiskPeakDrawdownPct:peakDrawdownPct,
+      rugRiskDrop30sPct:drop30sPct,
+      rugRiskDrop120sPct:drop120sPct,
+      rugRiskActive:rugRiskUntil>now,
+      rugRiskVersion:'V1.4.2'
+    };
+
     const explicitLastPrice=Number(patch?.lastPriceAt);
     const canonicalLastPriceAt=Number.isFinite(explicitLastPrice)&&explicitLastPrice>0
       ? (explicitLastPrice<1e12?explicitLastPrice*1000:explicitLastPrice)
       : now;
 
     this.state.tokens[mint]={
-      ...old,...patch,...derivedMarketPatch,
+      ...old,...patch,...derivedMarketPatch,...rugRiskPatch,
       antiRugHistory:antiRugHistory,
       peakPriceSol:peak||old.peakPriceSol||null,
       lastPriceAt:hasNextPrice?canonicalLastPriceAt:(old.lastPriceAt||null),
