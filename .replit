@@ -1,4 +1,4 @@
-run = "cd memeflow-app && exec node app-server.mjs"
+run = "bash ./run-project.sh"
 modules = ["nodejs-24", "python-base-3.13"]
 
 [deployment]
@@ -69,6 +69,10 @@ author = "agent"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "bash ./run-project.sh"
+waitForPort = 3000
+
+[workflows.workflow.metadata]
+outputType = "webview"
 
 [[ports]]
 localPort = 3000
@@ -79,3 +83,5 @@ localPort = 13791
 externalPort = 3000
 
 [nix]
+
+# MEMEFLOW_REPLIT_V67_PREVIEW_STABILITY
