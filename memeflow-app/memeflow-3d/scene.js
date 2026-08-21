@@ -35,8 +35,17 @@ import {
 } from './routes.js?v=true-3d-clean-v3';
 
 function buildFitBounds(
+  scene,
   modules
 ) {
+  /*
+    V4 FIX:
+    V3 measured child fitObject nodes before parent world matrices were
+    guaranteed to be current on first mobile load. That could collapse the
+    fit box around the center and make Home/Reset zoom into one module.
+  */
+  scene.updateMatrixWorld(true);
+
   const box =
     new THREE.Box3()
       .makeEmpty();
@@ -45,9 +54,103 @@ function buildFitBounds(
     const module
     of modules.values()
   ) {
-    box.expandByObject(
+    module.group
+      ?.updateWorldMatrix(
+        true,
+        true
+      );
+
+    module.fitObject
+      ?.updateWorldMatrix(
+        true,
+        true
+      );
+
+    if (
       module.fitObject
-    );
+    ) {
+      box.expandByObject(
+        module.fitObject,
+        true
+      );
+    }
+  }
+
+  const size =
+    new THREE.Vector3();
+
+  box.getSize(
+    size
+  );
+
+  /*
+    Safety fallback from layout coordinates. This guarantees Home view can
+    never collapse to one card even if a future Three.js timing change occurs.
+  */
+  if (
+    box.isEmpty()
+    || !Number.isFinite(size.x)
+    || !Number.isFinite(size.z)
+    || size.x < 6
+    || size.z < 7
+  ) {
+    box.makeEmpty();
+
+    for (
+      const module
+      of modules.values()
+    ) {
+      const node =
+        module.node;
+
+      if (
+        !node
+      ) {
+        continue;
+      }
+
+      const width =
+        Number(
+          node.size?.[0]
+        ) || 2.2;
+
+      const depth =
+        Number(
+          node.size?.[1]
+        ) || 1.5;
+
+      const x =
+        Number(
+          node.pos?.[0]
+        ) || 0;
+
+      const z =
+        Number(
+          node.pos?.[2]
+        ) || 0;
+
+      const halfWidth =
+        width * 0.62;
+
+      const halfDepth =
+        depth * 0.64;
+
+      box.expandByPoint(
+        new THREE.Vector3(
+          x - halfWidth,
+          -0.62,
+          z - halfDepth
+        )
+      );
+
+      box.expandByPoint(
+        new THREE.Vector3(
+          x + halfWidth,
+          0.22,
+          z + halfDepth
+        )
+      );
+    }
   }
 
   return box;
@@ -156,9 +259,9 @@ export function bootMemeflowTrue3D(
         1,
         1
       ),
-      0.44,
-      0.46,
-      0.72
+      0.30,
+      0.38,
+      0.82
     );
 
   composer.addPass(
@@ -368,6 +471,7 @@ export function bootMemeflowTrue3D(
 
   const bounds =
     buildFitBounds(
+      scene,
       modules
     );
 
@@ -942,3 +1046,5 @@ export function bootMemeflowTrue3D(
 }
 
 /* ===== MEMEFLOW_TRUE_3D_CLEAN_V3 ===== */
+
+/* ===== MEMEFLOW_TRUE_3D_BOUNDS_FIX_V4 ===== */

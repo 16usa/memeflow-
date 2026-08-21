@@ -1,6 +1,6 @@
 import {
   bootMemeflowTrue3D
-} from './scene.js?v=true-3d-clean-v3';
+} from './scene.js?v=true-3d-bounds-fix-v4';
 
 function startTrue3D() {
   const viewport =
@@ -64,7 +64,7 @@ function startTrue3D() {
           );
 
         console.log(
-          '[TRUE-3D] clean V3 mounted'
+          '[TRUE-3D] bounds-fix V4 mounted'
         );
       }
 
