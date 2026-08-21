@@ -6,7 +6,7 @@
   <meta name="color-scheme" content="dark" />
   <meta name="description" content="MEMEFLOW Live System View — real-time 3D visualization of discovery, market, holder, evaluation and paper trading pipelines." />
   <title>MEMEFLOW · Live System View</title>
-  <link rel="stylesheet" href="/system.css?v=realtime-architecture-compact-v2" />
+  <link rel="stylesheet" href="/system.css?v=architecture-frame-split-v3" />
   <script type="importmap">
   {
     "imports": {
@@ -47,17 +47,17 @@
       </div>
     </header>
 
+    <div class="scene-title glass mf-architecture-title-standalone-v3">
+            <span class="eyebrow">REAL-TIME ARCHITECTURE</span>
+            <h1>Live MEMEFLOW pipeline</h1>
+            <p>Discovery → bootstrap → holders & market → deterministic risk engine → decision → paper execution.</p>
+          </div>
+
     <section class="viewport-wrap">
       <canvas id="systemCanvas" aria-label="Interactive 3D MEMEFLOW system topology"></canvas>
       <div id="labels" class="scene-labels" aria-hidden="true"></div>
 
-      <div class="scene-title glass">
-        <span class="eyebrow">REAL-TIME ARCHITECTURE</span>
-        <h1>Live MEMEFLOW pipeline</h1>
-        <p>Discovery → bootstrap → holders & market → deterministic risk engine → decision → paper execution.</p>
-      </div>
-
-      <aside class="legend glass" aria-label="Decision legend">
+<aside class="legend glass" aria-label="Decision legend">
         <span><i class="legend-dot waiting"></i>WAITING</span>
         <span><i class="legend-dot watch"></i>WATCH</span>
         <span><i class="legend-dot blocked"></i>BLOCKED</span>
@@ -87,15 +87,16 @@
         </div>
       </aside>
 
-      <section class="telemetry glass" aria-label="Live telemetry">
-        <div class="telemetry-item"><span>Events</span><strong id="eventCount">—</strong><small>received</small></div>
-        <div class="telemetry-item"><span>Trade events</span><strong id="tradeCount">—</strong><small>decoded</small></div>
-        <div class="telemetry-item"><span>Holder queue</span><strong id="holderQueue">—</strong><small>jobs</small></div>
-        <div class="telemetry-item"><span>Active users</span><strong id="activeUsers">—</strong><small>evaluated</small></div>
-        <div class="telemetry-item"><span>Fresh backlog</span><strong id="freshBacklog">—</strong><small>tokens</small></div>
-        <div class="telemetry-item wide"><span>Last live event</span><strong id="lastEvent">—</strong><small id="lastSync">telemetry pending</small></div>
-      </section>
-    </section>
+</section>
+
+    <section class="telemetry glass mf-telemetry-standalone-v3" aria-label="Live telemetry">
+            <div class="telemetry-item"><span>Events</span><strong id="eventCount">—</strong><small>received</small></div>
+            <div class="telemetry-item"><span>Trade events</span><strong id="tradeCount">—</strong><small>decoded</small></div>
+            <div class="telemetry-item"><span>Holder queue</span><strong id="holderQueue">—</strong><small>jobs</small></div>
+            <div class="telemetry-item"><span>Active users</span><strong id="activeUsers">—</strong><small>evaluated</small></div>
+            <div class="telemetry-item"><span>Fresh backlog</span><strong id="freshBacklog">—</strong><small>tokens</small></div>
+            <div class="telemetry-item wide"><span>Last live event</span><strong id="lastEvent">—</strong><small id="lastSync">telemetry pending</small></div>
+          </section>
 
     <section class="activity-panel glass">
       <div class="activity-head">
