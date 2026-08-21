@@ -1191,3 +1191,39 @@ button { cursor: pointer; }
   }
 }
 \n
+
+/* MEMEFLOW_TRADING_CHART_V30_25_INDICATOR_TOUCH_LAYER
+   Keep the ECharts/ZRender touch surface inside chart-wrap and guarantee that
+   the sibling indicator toolbar receives taps on iOS Safari. */
+.chart-wrap {
+  overflow: hidden;
+  isolation: isolate;
+  z-index: 0;
+}
+
+#chartCanvas,
+#chartCanvas > div {
+  overflow: hidden !important;
+}
+
+.indicator-bar {
+  position: relative;
+  z-index: 20;
+  isolation: isolate;
+  pointer-events: auto;
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+}
+
+.indicator-scroll {
+  position: relative;
+  z-index: 1;
+  pointer-events: auto;
+}
+
+.indicator-bar button {
+  position: relative;
+  z-index: 2;
+  pointer-events: auto;
+  -webkit-tap-highlight-color: transparent;
+}
