@@ -222,13 +222,10 @@ function renderPriceModeSummary(livePriceUsd = null) {
 }
 
 function chartHorizonMs(timeframe) {
-  if (timeframe === 'all') return null;
-  const tf = Math.max(1000, Number(timeframe) || 1000);
-  if (tf <= 1000) return 90 * 1000;
-  if (tf <= 60_000) return 90 * 60_000;
-  if (tf <= 300_000) return 12 * 60 * 60_000;
-  if (tf <= 900_000) return 36 * 60 * 60_000;
-  return 7 * 24 * 60 * 60_000;
+  // V30.12 FULL HISTORY:
+  // Timeframe changes OHLC aggregation only. It never discards older trades.
+  // 1s / 1m / 5m / 15m / 1h can all be dragged back to token creation.
+  return null;
 }
 
 async function loadSolUsd() {
@@ -584,6 +581,101 @@ function selectCandidate(mint) {
   scheduleChart();
 }
 
+function tokenImageCandidates(value){
+  const raw=String(value||'').trim();
+  if(!raw)return [];
+
+  const out=[];
+  const add=url=>{
+    const clean=String(url||'').trim();
+    if(
+      clean &&
+      /^https?:\/\//i.test(clean) &&
+      !out.includes(clean)
+    ){
+      out.push(clean);
+    }
+  };
+
+  if(/^https?:\/\//i.test(raw))add(raw);
+
+  let ipfsPath=null;
+  if(/^ipfs:\/\//i.test(raw)){
+    ipfsPath=raw
+      .replace(/^ipfs:\/\//i,'')
+      .replace(/^ipfs\//i,'');
+  }else{
+    const match=/\/ipfs\/(.+)$/i.exec(raw);
+    if(match?.[1])ipfsPath=match[1];
+  }
+
+  if(ipfsPath){
+    const cleanPath=ipfsPath.replace(/^\/+/,'');
+    add(`https://ipfs.io/ipfs/${cleanPath}`);
+    add(`https://dweb.link/ipfs/${cleanPath}`);
+    add(`https://gateway.pinata.cloud/ipfs/${cleanPath}`);
+  }
+
+  if(/^ar:\/\//i.test(raw)){
+    add(`https://arweave.net/${raw.replace(/^ar:\/\//i,'').replace(/^\/+/,'')}`);
+  }
+
+  return out;
+}
+
+function renderTokenAvatar(candidate){
+  const avatar=$('tokenAvatar');
+  if(!avatar)return;
+
+  const mint=String(candidate?.mint||'');
+  const fallback=String(
+    candidate?.symbol ||
+    candidate?.name ||
+    '?'
+  ).slice(0,2).toUpperCase();
+
+  avatar.dataset.mint=mint;
+  avatar.textContent=fallback;
+
+  const image=
+    candidate?.imageUrl ||
+    candidate?.image ||
+    candidate?.logoUrl ||
+    null;
+
+  const urls=tokenImageCandidates(image);
+  if(!urls.length)return;
+
+  let index=0;
+  const tryNext=()=>{
+    if(
+      avatar.dataset.mint!==mint ||
+      index>=urls.length
+    ){
+      return;
+    }
+
+    const img=new Image();
+    img.alt='';
+    img.referrerPolicy='no-referrer';
+    img.decoding='async';
+
+    img.onload=()=>{
+      if(avatar.dataset.mint!==mint)return;
+      avatar.replaceChildren(img);
+    };
+
+    img.onerror=()=>{
+      index++;
+      tryNext();
+    };
+
+    img.src=urls[index];
+  };
+
+  tryNext();
+}
+
 function renderSelected({ redrawChart = true } = {}) {
   const c = state.selected;
   if (!c) {
@@ -612,11 +704,7 @@ function renderSelected({ redrawChart = true } = {}) {
   $('metricLiquidity').textContent =
     liquidityUsd !== null ? `$${fmt(liquidityUsd, 0)}` : '—';
 
-  const avatar = $('tokenAvatar');
-  const image = c.imageUrl || c.image || c.logoUrl;
-  avatar.innerHTML = image
-    ? `<img alt="" src="${esc(image)}" referrerpolicy="no-referrer">`
-    : esc((c.symbol || c.name || '?').slice(0, 2).toUpperCase());
+  renderTokenAvatar(c);
 
   updateAmountHint();
   if (redrawChart) scheduleChart();
@@ -904,7 +992,7 @@ function chartInterval(points,timeframe){
 }
 
 function candlesFor(points, timeframe) {
-  let clean = (Array.isArray(points) ? points : [])
+  const clean = (Array.isArray(points) ? points : [])
     .filter(
       point =>
         finite(point?.t) &&
@@ -920,16 +1008,6 @@ function candlesFor(points, timeframe) {
   const rate = solUsdRate();
   if (!(rate > 0)) return [];
 
-  const horizon = chartHorizonMs(timeframe);
-  if (horizon && clean.length > 1) {
-    // Window is relative to the LAST REAL TRADE, never wall-clock Date.now().
-    const end = Number(clean[clean.length - 1].t);
-    const floor = end - horizon;
-    clean = clean.filter(point => Number(point.t) >= floor);
-  }
-
-  if (!clean.length) return [];
-
   const interval = chartInterval(clean, timeframe);
   const candles = [];
   let candle = null;
@@ -939,17 +1017,20 @@ function candlesFor(points, timeframe) {
     const price = chartValueFromUsdPrice(priceSol * rate);
     if (!(price > 0)) continue;
 
-    // Time chooses the OHLC bucket only.
-    // Time itself NEVER creates a candle.
     const bucket =
       Math.floor(Number(point.t) / interval) * interval;
 
     if (!candle || candle.t !== bucket) {
+      const open =
+        candle && finite(candle.close)
+          ? Number(candle.close)
+          : price;
+
       candle = {
         t: bucket,
-        open: price,
-        high: price,
-        low: price,
+        open,
+        high: Math.max(open, price),
+        low: Math.min(open, price),
         close: price,
         samples: 1,
         interval,
@@ -964,12 +1045,8 @@ function candlesFor(points, timeframe) {
     }
   }
 
-  // V30.11:
-  // - no flat gap candles
-  // - no Date.now() tail candles
-  // - no empty-period filler
-  // - no synthetic movement
-  return timeframe === 'all' ? candles : candles.slice(-500);
+  // Full history for every timeframe. No timer filler and no 500-candle cut.
+  return candles;
 }
 
 function latestCandleFor(points, timeframe) {
@@ -1001,6 +1078,17 @@ function latestCandleFor(points, timeframe) {
     first--;
   }
 
+  let previousClose = null;
+  for (let j = first - 1; j >= 0; j--) {
+    const pointSol = Number(points[j]?.priceSol ?? points[j]?.price);
+    if (!(Number.isFinite(pointSol) && pointSol > 0)) continue;
+    const converted = chartValueFromUsdPrice(pointSol * rate);
+    if (converted > 0) {
+      previousClose = converted;
+      break;
+    }
+  }
+
   let candle = null;
 
   for (let j = first; j <= i; j++) {
@@ -1021,11 +1109,16 @@ function latestCandleFor(points, timeframe) {
     if (!(price > 0)) continue;
 
     if (!candle) {
+      const open =
+        previousClose > 0
+          ? previousClose
+          : price;
+
       candle = {
         t: bucket,
-        open: price,
-        high: price,
-        low: price,
+        open,
+        high: Math.max(open, price),
+        low: Math.min(open, price),
         close: price,
         samples: 1,
         interval,
@@ -1177,7 +1270,7 @@ function ensureChartEngine(){
         minBarSpacing:3,
         fixLeftEdge:false,
         fixRightEdge:false,
-        shiftVisibleRangeOnNewBar:true,
+        shiftVisibleRangeOnNewBar:false,
         rightBarStaysOnScroll:true
       },
       crosshair:{
@@ -1442,6 +1535,27 @@ function updateRealtimeChart(mint){
     return;
   }
 
+  const oldCount=Number(chartRuntime.candleCount||0);
+  const oldLastTime=chartRuntime.lastCandleTime;
+  const newBar=
+    oldLastTime!==null &&
+    oldLastTime!==undefined &&
+    last.t>oldLastTime;
+
+  let followLatest=true;
+  try{
+    const logical=
+      chartRuntime.api.timeScale().getVisibleLogicalRange?.();
+    if(logical && oldCount>0){
+      followLatest=
+        Number(logical.to) >= (
+          (oldCount - 1) +
+          (Number(state.timeframe)<=1000 ? 3 : 2) -
+          0.6
+        );
+    }
+  }catch{}
+
   try{
     chartRuntime.series.update(
       chartCandle(last)
@@ -1487,6 +1601,14 @@ function updateRealtimeChart(mint){
         : null
     );
   }
+
+  if(newBar && followLatest){
+    requestAnimationFrame(()=>{
+      try{
+        chartRuntime.api.timeScale().scrollToRealTime?.();
+      }catch{}
+    });
+  }
 }
 
 function drawChart() {
@@ -1529,8 +1651,8 @@ function drawChart() {
   }catch{}
 
   const lastPoint=points[points.length-1];
+  const lastBuilt=candles[candles.length-1];
 
-  const lastBuilt = candles[candles.length - 1];
   const dataKey=[
     state.selectedMint,
     String(state.timeframe),
@@ -1547,10 +1669,34 @@ function drawChart() {
     chartRuntime.timeframe!==state.timeframe ||
     chartRuntime.metric!==state.chartMetric;
 
+  let viewport=null;
+
   if(
     dataKey!==chartRuntime.dataKey ||
     contextChanged
   ){
+    if(!chartRuntime.forceFit && !contextChanged){
+      try{
+        const timeScale=chartRuntime.api.timeScale();
+        const logical=timeScale.getVisibleLogicalRange?.()||null;
+        const visible=timeScale.getVisibleRange?.()||null;
+        const oldCount=Number(chartRuntime.candleCount||0);
+
+        viewport={
+          logical,
+          visible,
+          atLatest:
+            !logical ||
+            oldCount<=0 ||
+            Number(logical.to) >= (
+          (oldCount - 1) +
+          (Number(state.timeframe)<=1000 ? 3 : 2) -
+          0.6
+        )
+        };
+      }catch{}
+    }
+
     chartRuntime.series.setData(
       candles.map(chartCandle)
     );
@@ -1561,6 +1707,28 @@ function drawChart() {
     chartRuntime.metric=state.chartMetric;
     chartRuntime.candleCount=candles.length;
     chartRuntime.lastCandleTime=candles[candles.length-1]?.t??null;
+
+    if(viewport){
+      requestAnimationFrame(()=>{
+        try{
+          const timeScale=chartRuntime.api.timeScale();
+
+          if(viewport.atLatest){
+            timeScale.scrollToRealTime?.();
+          }else if(
+            viewport.visible &&
+            typeof timeScale.setVisibleRange==='function'
+          ){
+            timeScale.setVisibleRange(viewport.visible);
+          }else if(
+            viewport.logical &&
+            typeof timeScale.setVisibleLogicalRange==='function'
+          ){
+            timeScale.setVisibleLogicalRange(viewport.logical);
+          }
+        }catch{}
+      });
+    }
   }
 
   chartRuntime.api.timeScale().applyOptions({
@@ -1619,9 +1787,9 @@ function drawChart() {
         const timeScale=chartRuntime.api.timeScale();
         const count=candles.length;
 
-        // Keep young/sparse tokens readable. This changes viewport padding only;
-        // it never invents data or alters OHLC.
-        if(
+        if(state.timeframe==='all'){
+          timeScale.fitContent();
+        }else if(
           count<24 &&
           typeof timeScale.setVisibleLogicalRange==='function'
         ){
@@ -1632,6 +1800,18 @@ function drawChart() {
 
           timeScale.setVisibleLogicalRange({
             from:-left,
+            to:(count-1)+right
+          });
+        }else if(
+          typeof timeScale.setVisibleLogicalRange==='function'
+        ){
+          const visibleBars=
+            window.innerWidth<700
+              ? 52
+              : 84;
+          const right=3;
+          timeScale.setVisibleLogicalRange({
+            from:Math.max(-1,count-visibleBars),
             to:(count-1)+right
           });
         }else{
@@ -1966,3 +2146,4 @@ init();
 
 /* MEMEFLOW_TRADING_CHART_V30_9_FAST_CONTINUOUS_TAPE_FIXED_LEVELS */
 /* MEMEFLOW_TRADING_CHART_V30_11_REAL_TRADES_ONLY */
+/* MEMEFLOW_TRADING_CHART_V30_12_FULL_HISTORY_FREE_PAN_IMAGES */

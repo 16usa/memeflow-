@@ -1,4 +1,5 @@
 // MEMEFLOW_TRADING_CHART_V30_10_FULL_HISTORY
+// MEMEFLOW_TRADING_CHART_V30_12_FULL_HISTORY_FREE_PAN_IMAGES
 // Persistent Pump.fun TradeEvent history for the Trading Terminal.
 // - live chart ticks are appended to disk
 // - historical signatures are paged newest -> oldest
@@ -365,6 +366,7 @@ export class ChartHistoryArchive {
     let signaturesThisRun = 0;
     let transactionsThisRun = 0;
     let pointsThisRun = 0;
+    let lastProgressAt = 0;
 
     meta = {
       ...meta,
@@ -401,9 +403,12 @@ export class ChartHistoryArchive {
           const signature = String(row?.signature || '');
           if (!signature || row?.err) continue;
 
-          if (wasOldestComplete && seenSignatures.has(signature)) {
-            reachedKnown = true;
-            break;
+          if (seenSignatures.has(signature)) {
+            if (wasOldestComplete) {
+              reachedKnown = true;
+              break;
+            }
+            continue;
           }
 
           toFetch.push(row);
@@ -439,6 +444,25 @@ export class ChartHistoryArchive {
               fresh.map(point => JSON.stringify(point)).join('\n') + '\n'
             );
             pointsThisRun += fresh.length;
+          }
+
+          const progressDue =
+            typeof onProgress === 'function' &&
+            (
+              Date.now() - lastProgressAt >= 800 ||
+              i + chunk.length >= toFetch.length
+            );
+
+          if (progressDue) {
+            lastProgressAt = Date.now();
+            try {
+              onProgress({
+                mint,
+                page: pagesThisRun,
+                points: null,
+                oldestComplete: false
+              });
+            } catch {}
           }
         }
 
