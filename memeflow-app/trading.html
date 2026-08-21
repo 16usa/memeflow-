@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#03070a">
   <title>MEMEFLOW Trading Terminal</title>
-  <link rel="stylesheet" href="/trading.css?v=v309">
+  <link rel="stylesheet" href="/trading.css?v=gmgn1">
 </head>
 <body>
   <div class="shell">
@@ -75,6 +75,7 @@
 
           <div class="timeframes" id="timeframes">
             <button data-tf="1000" class="active">1s</button>
+            <button data-tf="30000">30s</button>
             <button data-tf="60000">1m</button>
             <button data-tf="300000">5m</button>
             <button data-tf="900000">15m</button>
@@ -83,8 +84,7 @@
           </div>
 
           <div class="chart-wrap">
-            <div id="chartCanvas" aria-label="Live candlestick chart"></div>
-            <a class="chart-credit" href="https://www.tradingview.com/" target="_blank" rel="noopener noreferrer">TradingView Lightweight Charts™ · Copyright © 2025 TradingView, Inc.</a>
+            <div id="chartCanvas" aria-label="Live candlestick and volume chart"></div>
             <div id="chartEmpty" class="chart-empty">
               <strong>Live candles</strong>
               <span>Select a token. Tap the top-right value to switch USD price / market cap.</span>
@@ -256,8 +256,8 @@
     </main>
   </div>
 
-  <script src="https://unpkg.com/lightweight-charts@5.2.0/dist/lightweight-charts.standalone.production.js"></script>
-  <script type="module" src="/trading.js?v=v309"></script>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@6.1.0/dist/echarts.min.js"></script>
+  <script type="module" src="/trading.js?v=gmgn1"></script>
   <!-- MEMEFLOW_TRADING_CHART_V30_4 -->
   <!-- MEMEFLOW_TRADING_CHART_V30_5_EXECUTION_OHLC -->
   <!-- MEMEFLOW_TRADING_CHART_V30_6_USD_CURVE_MARK -->
@@ -267,3 +267,5 @@
 <!-- MEMEFLOW_TRADING_CHART_V30_8_PRICE_MC_GAP_SAFE -->
 
 <!-- MEMEFLOW_TRADING_CHART_V30_9_FAST_CONTINUOUS_TAPE_FIXED_LEVELS -->
+
+<!-- MEMEFLOW_TRADING_CHART_V30_15_2_GMGN_ECHARTS -->

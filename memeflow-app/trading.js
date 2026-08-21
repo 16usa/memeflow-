@@ -171,7 +171,7 @@ const breakoutFxRuntime={
 function ensureBreakoutFxCanvas(){
   if(breakoutFxRuntime.canvas?.isConnected)return breakoutFxRuntime.canvas;
 
-  const chartHost=$('chart');
+  const chartHost=$('chartCanvas');
   const mount=chartHost?.parentElement || chartHost;
   if(!mount)return null;
 
@@ -444,9 +444,9 @@ function isStrongGreenBreakout(prev,curr,level){
 }
 
 function maybeTriggerBullishBreakoutFx(prev,curr,levels){
+  // Breakout FX is intentionally 1s-only.
   if(Number(state.timeframe)!==1000)return;
-  if(!chartRuntime.api || !chartRuntime.series)return;
-  if(!prev || !curr)return;
+  if(!chartRuntime.api || !prev || !curr)return;
 
   const level=chooseBreakoutLevel(levels,curr);
   if(!(level>0))return;
@@ -463,9 +463,16 @@ function maybeTriggerBullishBreakoutFx(prev,curr,levels){
   if(breakoutFxRuntime.lastKey===key)return;
   breakoutFxRuntime.lastKey=key;
 
-  const point=chartCandle(curr);
-  const x=chartRuntime.api.timeScale().timeToCoordinate?.(point.time);
-  const y=chartRuntime.series.priceToCoordinate?.(Number(curr.close));
+  let pixel=null;
+  try{
+    pixel=chartRuntime.api.convertToPixel(
+      {xAxisIndex:0,yAxisIndex:0},
+      [String(Number(curr.t)),Number(curr.close)]
+    );
+  }catch{}
+
+  const x=Array.isArray(pixel)?Number(pixel[0]):NaN;
+  const y=Array.isArray(pixel)?Number(pixel[1]):NaN;
 
   if(!Number.isFinite(x) || !Number.isFinite(y))return;
 
@@ -1370,6 +1377,9 @@ function candlesFor(points, timeframe) {
     const price = chartValueFromUsdPrice(priceSol * rate);
     if (!(price > 0)) continue;
 
+    const volumeUsd =
+      Math.max(0, Number(point?.solAmount||0)) * rate;
+
     const bucket =
       Math.floor(Number(point.t) / interval) * interval;
 
@@ -1387,7 +1397,10 @@ function candlesFor(points, timeframe) {
         close: price,
         samples: 1,
         interval,
-        carry: false
+        carry: false,
+        volumeUsd,
+        buyVolumeUsd: point?.isBuy===true ? volumeUsd : 0,
+        sellVolumeUsd: point?.isBuy===false ? volumeUsd : 0
       };
       candles.push(candle);
     } else {
@@ -1395,10 +1408,13 @@ function candlesFor(points, timeframe) {
       candle.low = Math.min(candle.low, price);
       candle.close = price;
       candle.samples++;
+      candle.volumeUsd += volumeUsd;
+      if(point?.isBuy===true)candle.buyVolumeUsd += volumeUsd;
+      if(point?.isBuy===false)candle.sellVolumeUsd += volumeUsd;
     }
   }
 
-  // Full history for every timeframe. No timer filler and no 500-candle cut.
+  // Full real-trade history. No wall-clock filler and no empty candles.
   return candles;
 }
 
@@ -1547,8 +1563,7 @@ function strategyLevels() {
 
 const chartRuntime={
   api:null,
-  series:null,
-  priceLines:[],
+  series:{engine:'echarts'},
   dataKey:'',
   levelsKey:'',
   mint:null,
@@ -1560,141 +1575,251 @@ const chartRuntime={
   candleCount:0,
   lastCandleTime:null,
   offscreenLevels:[],
-  previewEntrySolByMint:new Map()
+  previewEntrySolByMint:new Map(),
+  labels:[],
+  lastCandles:[],
+  viewport:{
+    followLatest:true,
+    startValue:null,
+    endValue:null
+  },
+  suppressZoom:false,
+  resizeObserver:null,
+  pendingFx:null
 };
+
+function chartTimeLabel(value){
+  const ms=Number(value);
+  if(!Number.isFinite(ms))return '';
+
+  const d=new Date(ms);
+  const includeSeconds=
+    Number(state.timeframe)<=30000;
+
+  if(includeSeconds){
+    return d.toLocaleTimeString([],{
+      hour:'2-digit',
+      minute:'2-digit',
+      second:'2-digit'
+    });
+  }
+
+  return d.toLocaleTimeString([],{
+    hour:'2-digit',
+    minute:'2-digit'
+  });
+}
+
+function compactVolume(value){
+  const n=Number(value);
+  if(!Number.isFinite(n))return '';
+  if(Math.abs(n)>=1e6)return `${fmt(n/1e6,1)}M`;
+  if(Math.abs(n)>=1e3)return `${fmt(n/1e3,1)}K`;
+  if(Math.abs(n)>=100)return fmt(n,0);
+  return fmt(n,1);
+}
+
+function movingAverage(candles,period,key='volumeUsd'){
+  const out=new Array(candles.length).fill('-');
+  let sum=0;
+
+  for(let i=0;i<candles.length;i++){
+    const value=Math.max(0,Number(candles[i]?.[key]||0));
+    sum+=value;
+
+    if(i>=period){
+      sum-=Math.max(0,Number(candles[i-period]?.[key]||0));
+    }
+
+    if(i>=period-1){
+      out[i]=sum/period;
+    }
+  }
+
+  return out;
+}
+
+function chartLevelInfo(candles){
+  const levels=strategyLevels();
+  if(!candles.length || !levels.length){
+    return {visible:[],offscreen:levels};
+  }
+
+  const basis=
+    state.timeframe==='all'
+      ? candles
+      : candles.slice(-Math.min(140,candles.length));
+
+  const values=basis.flatMap(c=>[
+    Number(c.high),
+    Number(c.low)
+  ]).filter(Number.isFinite);
+
+  if(!values.length){
+    return {visible:[],offscreen:levels};
+  }
+
+  const min=Math.min(...values);
+  const max=Math.max(...values);
+  const span=Math.max(
+    max-min,
+    Math.abs(max||1)*.006
+  );
+
+  const low=Math.max(0,min-span*.30);
+  const high=max+span*.30;
+
+  return {
+    visible:levels.filter(level=>
+      Number(level?.price)>=low &&
+      Number(level?.price)<=high
+    ),
+    offscreen:levels.filter(level=>
+      Number(level?.price)<low ||
+      Number(level?.price)>high
+    )
+  };
+}
+
+function levelColor(level){
+  if(level?.kind==='stop')return '#ff6679';
+  if(level?.kind==='entry')return '#55d9ff';
+  if(level?.kind==='tp')return '#4de6a1';
+  return '#a98bff';
+}
+
+function chartInitialRange(labels){
+  const count=labels.length;
+  if(!count){
+    return {startValue:null,endValue:null};
+  }
+
+  if(state.timeframe==='all'){
+    return {
+      startValue:labels[0],
+      endValue:labels[count-1]
+    };
+  }
+
+  const visibleBars=
+    window.innerWidth<700
+      ? 48
+      : 84;
+
+  return {
+    startValue:labels[Math.max(0,count-visibleBars)],
+    endValue:labels[count-1]
+  };
+}
+
+function captureChartViewport(){
+  if(
+    chartRuntime.suppressZoom ||
+    !chartRuntime.api ||
+    !chartRuntime.labels.length
+  ){
+    return;
+  }
+
+  try{
+    const option=chartRuntime.api.getOption();
+    const dz=option?.dataZoom?.[0]||{};
+    const labels=chartRuntime.labels;
+    const count=labels.length;
+
+    let startIndex=0;
+    let endIndex=count-1;
+
+    if(Number.isFinite(Number(dz.start))){
+      startIndex=Math.max(
+        0,
+        Math.min(
+          count-1,
+          Math.round(Number(dz.start)/100*Math.max(0,count-1))
+        )
+      );
+    }
+
+    if(Number.isFinite(Number(dz.end))){
+      endIndex=Math.max(
+        startIndex,
+        Math.min(
+          count-1,
+          Math.round(Number(dz.end)/100*Math.max(0,count-1))
+        )
+      );
+    }
+
+    if(dz.startValue!==undefined && dz.startValue!==null){
+      const i=labels.indexOf(String(dz.startValue));
+      if(i>=0)startIndex=i;
+    }
+
+    if(dz.endValue!==undefined && dz.endValue!==null){
+      const i=labels.indexOf(String(dz.endValue));
+      if(i>=0)endIndex=i;
+    }
+
+    chartRuntime.viewport.followLatest=
+      endIndex>=count-2;
+
+    chartRuntime.viewport.startValue=
+      labels[startIndex]??null;
+
+    chartRuntime.viewport.endValue=
+      labels[endIndex]??null;
+  }catch{}
+}
 
 function ensureChartEngine(){
   if(chartRuntime.initialized){
-    return Boolean(chartRuntime.api&&chartRuntime.series);
+    return Boolean(chartRuntime.api);
   }
 
   chartRuntime.initialized=true;
 
-  const LW=window.LightweightCharts;
+  const EC=window.echarts;
   const host=$('chartCanvas');
 
   if(
-    !LW ||
-    typeof LW.createChart!=='function' ||
-    !LW.CandlestickSeries
+    !EC ||
+    typeof EC.init!=='function' ||
+    !host
   ){
     $('chartEmpty').style.display='grid';
     $('chartEmpty').innerHTML=
       '<strong>Chart library unavailable</strong>'+
-      '<span>Lightweight Charts did not load. Reload the page or check network access.</span>';
+      '<span>Apache ECharts did not load. Reload the page or check network access.</span>';
     return false;
   }
 
-  chartRuntime.api=LW.createChart(
+  chartRuntime.api=EC.init(
     host,
+    null,
     {
-      autoSize:true,
-      layout:{
-        background:{
-          type:'solid',
-          color:'#02070a'
-        },
-        textColor:'#536f7b',
-        attributionLogo:true,
-        fontFamily:'ui-monospace, SFMono-Regular, Menlo, monospace',
-        fontSize:9
-      },
-      grid:{
-        vertLines:{
-          color:'rgba(106,145,162,.055)'
-        },
-        horzLines:{
-          color:'rgba(106,145,162,.07)'
-        }
-      },
-      rightPriceScale:{
-        borderVisible:false,
-        scaleMargins:{
-          top:.14,
-          bottom:.14
-        }
-      },
-      timeScale:{
-        borderVisible:false,
-        timeVisible:true,
-        secondsVisible:true,
-        rightOffset:3,
-        barSpacing:11,
-        minBarSpacing:3,
-        fixLeftEdge:false,
-        fixRightEdge:false,
-        shiftVisibleRangeOnNewBar:false,
-        rightBarStaysOnScroll:true
-      },
-      crosshair:{
-        mode:LW.CrosshairMode?.Normal ?? 0,
-        vertLine:{
-          color:'rgba(120,176,195,.28)',
-          width:1,
-          style:LW.LineStyle?.Dotted ?? 1,
-          labelBackgroundColor:'#0b171d'
-        },
-        horzLine:{
-          color:'rgba(120,176,195,.28)',
-          width:1,
-          style:LW.LineStyle?.Dotted ?? 1,
-          labelBackgroundColor:'#0b171d'
-        }
-      },
-      handleScroll:{
-        mouseWheel:true,
-        pressedMouseMove:true,
-        horzTouchDrag:true,
-        vertTouchDrag:false
-      },
-      handleScale:{
-        axisPressedMouseMove:true,
-        mouseWheel:true,
-        pinch:true
-      }
+      renderer:'canvas',
+      useDirtyRect:true
     }
   );
 
-  chartRuntime.series=chartRuntime.api.addSeries(
-    LW.CandlestickSeries,
-    {
-      upColor:'#4de6a1',
-      downColor:'#ff6679',
-      wickUpColor:'#4de6a1',
-      wickDownColor:'#ff6679',
-      borderVisible:false,
-      priceLineVisible:false,
-      lastValueVisible:true,
-      priceFormat:{
-        type:'custom',
-        minMove:1e-14,
-        formatter:formatChartValue
-      }
-    }
-  );
-
-  chartRuntime.api.subscribeCrosshairMove(param=>{
-    if(!param?.time)return;
-
-    const data=param.seriesData?.get?.(
-      chartRuntime.series
-    );
-
-    if(
-      data &&
-      finite(data.open) &&
-      finite(data.high) &&
-      finite(data.low) &&
-      finite(data.close)
-    ){
-      $('chartLegend').dataset.crosshair='true';
-      renderLegend(
-        data,
-        null,
-        null
-      );
-    }
+  chartRuntime.api.on('datazoom',()=>{
+    captureChartViewport();
   });
+
+  chartRuntime.resizeObserver?.disconnect?.();
+
+  if(typeof ResizeObserver==='function'){
+    chartRuntime.resizeObserver=new ResizeObserver(()=>{
+      try{chartRuntime.api?.resize?.()}catch{}
+      resizeBreakoutFxCanvas();
+    });
+    chartRuntime.resizeObserver.observe(host);
+  }else{
+    window.addEventListener('resize',()=>{
+      try{chartRuntime.api?.resize?.()}catch{}
+      resizeBreakoutFxCanvas();
+    },{passive:true});
+  }
 
   return true;
 }
@@ -1707,109 +1832,6 @@ function chartCandle(candle){
     low:Number(candle.low),
     close:Number(candle.close)
   };
-}
-
-function clearStrategyPriceLines(){
-  if(!chartRuntime.series)return;
-
-  for(const line of chartRuntime.priceLines){
-    try{
-      chartRuntime.series.removePriceLine(line);
-    }catch{}
-  }
-
-  chartRuntime.priceLines=[];
-}
-
-function refreshStrategyPriceLines(candles){
-  if(
-    !chartRuntime.series ||
-    !candles?.length
-  ){
-    clearStrategyPriceLines();
-    return [];
-  }
-
-  const levels=strategyLevels();
-
-  const values=candles.flatMap(c=>[
-    Number(c.high),
-    Number(c.low)
-  ]);
-
-  const min=Math.min(...values);
-  const max=Math.max(...values);
-  const span=Math.max(
-    max-min,
-    Math.abs(max||1)*.005
-  );
-
-  const visibleMin=Math.max(
-    0,
-    min-span*.25
-  );
-  const visibleMax=max+span*.25;
-
-  const key=JSON.stringify(
-    levels.map(level=>[
-      level.label,
-      Number(level.price),
-      level.price>=visibleMin && level.price<=visibleMax
-    ])
-  );
-
-  if(key===chartRuntime.levelsKey){
-    return levels.filter(
-      level =>
-        level.price<visibleMin ||
-        level.price>visibleMax
-    );
-  }
-
-  chartRuntime.levelsKey=key;
-  clearStrategyPriceLines();
-
-  const LW=window.LightweightCharts;
-
-  for(const level of levels){
-    if(!(level?.price>0))continue;
-
-    // Far-away targets never participate in chart scaling.
-    if(
-      level.price<visibleMin ||
-      level.price>visibleMax
-    ){
-      continue;
-    }
-
-    const color=
-      level.kind==='stop'
-        ? '#ff6679'
-        : level.kind==='entry'
-          ? '#55d9ff'
-          : level.kind==='tp'
-            ? '#4de6a1'
-            : '#a98bff';
-
-    try{
-      chartRuntime.priceLines.push(
-        chartRuntime.series.createPriceLine({
-          price:Number(level.price),
-          color,
-          lineWidth:1,
-          lineStyle:LW.LineStyle?.Dashed ?? 2,
-          axisLabelVisible:false,
-          title:level.label
-        })
-      );
-    }catch{}
-  }
-
-  return levels.filter(
-    level =>
-      level.price<visibleMin ||
-      level.price>visibleMax
-  );
 }
 
 function renderLegend(last,totalCandles,totalTicks,offscreenLevels=[]){
@@ -1859,130 +1881,34 @@ function updateRealtimeChart(mint){
     return;
   }
 
-  if(state.timeframe==='all'){
-    chartRuntime.dataKey='';
-    scheduleChart();
-    return;
-  }
-
   const points=rawPoints(mint);
-  const last=latestCandleFor(
+  const candles=candlesFor(
     points,
     state.timeframe
   );
 
-  if(!last){
-    scheduleChart();
-    return;
+  if(
+    Number(state.timeframe)===1000 &&
+    candles.length>=2
+  ){
+    chartRuntime.pendingFx={
+      prev:candles[candles.length-2],
+      curr:candles[candles.length-1],
+      levels:strategyLevels()
+    };
   }
 
-  const runtimeChanged=
-    chartRuntime.mint!==mint ||
-    chartRuntime.timeframe!==state.timeframe ||
-    chartRuntime.metric!==state.chartMetric;
-
-  if(runtimeChanged){
-    chartRuntime.forceFit=true;
-    chartRuntime.dataKey='';
-    scheduleChart();
-    return;
-  }
-
-  const oldCount=Number(chartRuntime.candleCount||0);
-  const oldLastTime=chartRuntime.lastCandleTime;
-  const newBar=
-    oldLastTime!==null &&
-    oldLastTime!==undefined &&
-    last.t>oldLastTime;
-
-  let followLatest=true;
-  try{
-    const logical=
-      chartRuntime.api.timeScale().getVisibleLogicalRange?.();
-    if(logical && oldCount>0){
-      followLatest=
-        Number(logical.to) >= (
-          (oldCount - 1) +
-          (Number(state.timeframe)<=1000 ? 3 : 2) -
-          0.6
-        );
-    }
-  }catch{}
-
-  try{
-    chartRuntime.series.update(
-      chartCandle(last)
-    );
-  }catch{
-    chartRuntime.dataKey='';
-    scheduleChart();
-    return;
-  }
-
-  if(chartRuntime.lastCandleTime!==last.t){
-    if(
-      chartRuntime.lastCandleTime!==null &&
-      last.t>chartRuntime.lastCandleTime
-    ){
-      chartRuntime.candleCount++;
-    }
-    chartRuntime.lastCandleTime=last.t;
-  }
-
-  const lastPoint=points[points.length-1];
-  chartRuntime.dataKey=[
-    mint,
-    String(state.timeframe),
-    state.chartMetric,
-    points.length,
-    Number(lastPoint?.t||0),
-    Number(lastPoint?.price||0)
-  ].join('|');
-
-  renderLegend(
-    last,
-    chartRuntime.candleCount||1,
-    points.length,
-    chartRuntime.offscreenLevels||[]
-  );
-
-  if(mint===state.selectedMint){
-    const rawSol=Number(lastPoint?.priceSol ?? lastPoint?.price);
-    renderPriceModeSummary(
-      Number.isFinite(rawSol) && rawSol>0
-        ? rawSol*solUsdRate()
-        : null
-    );
-  }
-
-  try{
-    const fxCandles=candlesFor(
-      points,
-      state.timeframe
-    );
-    const fxPrev=fxCandles[fxCandles.length-2] || null;
-    const fxCurr=fxCandles[fxCandles.length-1] || null;
-    maybeTriggerBullishBreakoutFx(
-      fxPrev,
-      fxCurr,
-      strategyLevels()
-    );
-  }catch{}
-
-  if(newBar && followLatest){
-    requestAnimationFrame(()=>{
-      try{
-        chartRuntime.api.timeScale().scrollToRealTime?.();
-      }catch{}
-    });
-  }
+  // ECharts receives one coalesced rAF redraw. The dataZoom viewport is
+  // preserved by timestamp, so a viewer panned into history is not yanked live.
+  chartRuntime.dataKey='';
+  scheduleChart();
 }
 
-function drawChart() {
+function drawChart(){
   if(!ensureChartEngine())return;
 
   if(!state.selectedMint){
-    chartRuntime.series.setData([]);
+    chartRuntime.api.clear();
     $('chartEmpty').style.display='grid';
     $('chartLegend').innerHTML='';
     return;
@@ -1998,7 +1924,7 @@ function drawChart() {
   );
 
   if(!candles.length){
-    chartRuntime.series.setData([]);
+    chartRuntime.api.clear();
     $('chartEmpty').style.display='grid';
     $('chartLegend').innerHTML='';
     renderPriceModeSummary();
@@ -2007,121 +1933,362 @@ function drawChart() {
 
   $('chartEmpty').style.display='none';
 
-  try{
-    chartRuntime.series.applyOptions({
-      priceFormat:{
-        type:'custom',
-        minMove:state.chartMetric==='marketCap' ? 0.01 : 1e-14,
-        formatter:formatChartValue
+  const labels=candles.map(c=>String(Number(c.t)));
+  const candleData=candles.map(c=>[
+    Number(c.open),
+    Number(c.close),
+    Number(c.low),
+    Number(c.high)
+  ]);
+
+  const volumeData=candles.map(c=>({
+    value:Math.max(0,Number(c.volumeUsd||0)),
+    itemStyle:{
+      color:
+        Number(c.close)>=Number(c.open)
+          ? 'rgba(77,230,161,.68)'
+          : 'rgba(255,102,121,.64)'
+    }
+  }));
+
+  const ma5=movingAverage(candles,5);
+  const ma10=movingAverage(candles,10);
+
+  const levelInfo=chartLevelInfo(candles);
+  chartRuntime.offscreenLevels=levelInfo.offscreen;
+
+  const last=candles[candles.length-1];
+
+  const markLines=[
+    ...levelInfo.visible.map(level=>({
+      yAxis:Number(level.price),
+      name:String(level.label||''),
+      lineStyle:{
+        color:levelColor(level),
+        width:1,
+        type:'dashed',
+        opacity:.85
+      },
+      label:{
+        show:false
       }
-    });
-  }catch{}
-
-  const lastPoint=points[points.length-1];
-  const lastBuilt=candles[candles.length-1];
-
-  const dataKey=[
-    state.selectedMint,
-    String(state.timeframe),
-    state.chartMetric,
-    points.length,
-    Number(lastPoint?.t||0),
-    Number(lastPoint?.price||0),
-    candles.length,
-    Number(lastBuilt?.t||0)
-  ].join('|');
+    })),
+    {
+      yAxis:Number(last.close),
+      name:'LIVE',
+      lineStyle:{
+        color:'#55d9ff',
+        width:1,
+        type:'dashed',
+        opacity:.82
+      },
+      label:{
+        show:true,
+        position:'end',
+        color:'#021014',
+        backgroundColor:'#55d9ff',
+        borderRadius:2,
+        padding:[2,4],
+        fontSize:9,
+        formatter:()=>formatChartValue(last.close)
+      }
+    }
+  ];
 
   const contextChanged=
     chartRuntime.mint!==state.selectedMint ||
     chartRuntime.timeframe!==state.timeframe ||
     chartRuntime.metric!==state.chartMetric;
 
-  let viewport=null;
+  let range=null;
 
   if(
-    dataKey!==chartRuntime.dataKey ||
-    contextChanged
+    chartRuntime.forceFit ||
+    contextChanged ||
+    !chartRuntime.viewport.startValue ||
+    !chartRuntime.viewport.endValue
   ){
-    if(!chartRuntime.forceFit && !contextChanged){
-      try{
-        const timeScale=chartRuntime.api.timeScale();
-        const logical=timeScale.getVisibleLogicalRange?.()||null;
-        const visible=timeScale.getVisibleRange?.()||null;
-        const oldCount=Number(chartRuntime.candleCount||0);
+    range=chartInitialRange(labels);
+    chartRuntime.viewport.followLatest=true;
+  }else if(chartRuntime.viewport.followLatest){
+    range=chartInitialRange(labels);
+  }else{
+    const startExists=
+      labels.includes(String(chartRuntime.viewport.startValue));
+    const endExists=
+      labels.includes(String(chartRuntime.viewport.endValue));
 
-        viewport={
-          logical,
-          visible,
-          atLatest:
-            !logical ||
-            oldCount<=0 ||
-            Number(logical.to) >= (
-          (oldCount - 1) +
-          (Number(state.timeframe)<=1000 ? 3 : 2) -
-          0.6
-        )
-        };
-      }catch{}
-    }
-
-    chartRuntime.series.setData(
-      candles.map(chartCandle)
-    );
-
-    chartRuntime.dataKey=dataKey;
-    chartRuntime.mint=state.selectedMint;
-    chartRuntime.timeframe=state.timeframe;
-    chartRuntime.metric=state.chartMetric;
-    chartRuntime.candleCount=candles.length;
-    chartRuntime.lastCandleTime=candles[candles.length-1]?.t??null;
-
-    if(viewport){
-      requestAnimationFrame(()=>{
-        try{
-          const timeScale=chartRuntime.api.timeScale();
-
-          if(viewport.atLatest){
-            timeScale.scrollToRealTime?.();
-          }else if(
-            viewport.visible &&
-            typeof timeScale.setVisibleRange==='function'
-          ){
-            timeScale.setVisibleRange(viewport.visible);
-          }else if(
-            viewport.logical &&
-            typeof timeScale.setVisibleLogicalRange==='function'
-          ){
-            timeScale.setVisibleLogicalRange(viewport.logical);
+    range=
+      startExists && endExists
+        ? {
+            startValue:String(chartRuntime.viewport.startValue),
+            endValue:String(chartRuntime.viewport.endValue)
           }
-        }catch{}
-      });
-    }
+        : chartInitialRange(labels);
   }
 
-  chartRuntime.api.timeScale().applyOptions({
-    timeVisible:true,
-    secondsVisible:
-      Number(state.timeframe)<=1000,
-    rightOffset:
-      Number(state.timeframe)<=1000
-        ? 3
-        : 2,
-    barSpacing:
-      Number(state.timeframe)<=1000
-        ? 9
-        : 8,
-    minBarSpacing:
-      Number(state.timeframe)<=1000
-        ? 4
-        : 3
-  });
+  chartRuntime.suppressZoom=true;
 
-  const offscreen=refreshStrategyPriceLines(
-    candles
+  chartRuntime.api.setOption(
+    {
+      animation:false,
+      backgroundColor:'#02070a',
+      textStyle:{
+        color:'#536f7b',
+        fontFamily:'ui-monospace, SFMono-Regular, Menlo, monospace',
+        fontSize:9
+      },
+      axisPointer:{
+        link:[{xAxisIndex:'all'}],
+        label:{
+          backgroundColor:'#0b171d'
+        }
+      },
+      tooltip:{
+        trigger:'axis',
+        axisPointer:{
+          type:'cross',
+          crossStyle:{
+            color:'rgba(120,176,195,.30)'
+          }
+        },
+        backgroundColor:'rgba(5,12,17,.96)',
+        borderColor:'rgba(111,170,190,.22)',
+        textStyle:{
+          color:'#cfe0e7',
+          fontSize:10
+        },
+        extraCssText:'box-shadow:0 8px 30px rgba(0,0,0,.32);',
+        formatter:params=>{
+          const rows=Array.isArray(params)?params:[];
+          const candleParam=rows.find(row=>row?.seriesName==='Price');
+          const index=Number(candleParam?.dataIndex);
+          const c=Number.isFinite(index)?candles[index]:null;
+          if(!c)return '';
+
+          const time=chartTimeLabel(c.t);
+          return [
+            `<strong>${time}</strong>`,
+            `O ${formatChartValue(c.open)}`,
+            `H ${formatChartValue(c.high)}`,
+            `L ${formatChartValue(c.low)}`,
+            `C ${formatChartValue(c.close)}`,
+            `VOL $${compactVolume(c.volumeUsd)}`
+          ].join('<br>');
+        }
+      },
+      legend:{
+        data:['VOL','MAVOL5','MAVOL10'],
+        left:10,
+        top:'72%',
+        itemWidth:10,
+        itemHeight:6,
+        textStyle:{
+          color:'#718894',
+          fontSize:8
+        },
+        selectedMode:false
+      },
+      grid:[
+        {
+          left:10,
+          right:76,
+          top:42,
+          height:'55%',
+          containLabel:false
+        },
+        {
+          left:10,
+          right:76,
+          top:'77%',
+          height:'15%',
+          containLabel:false
+        }
+      ],
+      xAxis:[
+        {
+          type:'category',
+          data:labels,
+          gridIndex:0,
+          boundaryGap:true,
+          axisLine:{show:false},
+          axisTick:{show:false},
+          axisLabel:{show:false},
+          splitLine:{show:false},
+          min:'dataMin',
+          max:'dataMax'
+        },
+        {
+          type:'category',
+          data:labels,
+          gridIndex:1,
+          boundaryGap:true,
+          axisLine:{
+            show:true,
+            lineStyle:{color:'rgba(111,154,172,.10)'}
+          },
+          axisTick:{show:false},
+          axisLabel:{
+            color:'#536f7b',
+            fontSize:8,
+            hideOverlap:true,
+            formatter:value=>chartTimeLabel(value)
+          },
+          splitLine:{show:false},
+          min:'dataMin',
+          max:'dataMax'
+        }
+      ],
+      yAxis:[
+        {
+          type:'value',
+          gridIndex:0,
+          position:'right',
+          scale:true,
+          axisLine:{show:false},
+          axisTick:{show:false},
+          axisLabel:{
+            color:'#536f7b',
+            fontSize:9,
+            margin:10,
+            formatter:value=>formatChartValue(value)
+          },
+          splitLine:{
+            show:true,
+            lineStyle:{
+              color:'rgba(106,145,162,.07)',
+              width:1
+            }
+          }
+        },
+        {
+          type:'value',
+          gridIndex:1,
+          position:'right',
+          scale:true,
+          axisLine:{show:false},
+          axisTick:{show:false},
+          axisLabel:{
+            color:'#455c67',
+            fontSize:7,
+            margin:10,
+            formatter:value=>compactVolume(value)
+          },
+          splitLine:{
+            show:true,
+            lineStyle:{
+              color:'rgba(106,145,162,.045)',
+              width:1
+            }
+          }
+        }
+      ],
+      dataZoom:[
+        {
+          type:'inside',
+          xAxisIndex:[0,1],
+          filterMode:'filter',
+          startValue:range.startValue,
+          endValue:range.endValue,
+          zoomOnMouseWheel:true,
+          moveOnMouseMove:true,
+          moveOnMouseWheel:true,
+          preventDefaultMouseMove:true,
+          throttle:24,
+          cursorGrab:'grab',
+          cursorGrabbing:'grabbing'
+        }
+      ],
+      series:[
+        {
+          name:'Price',
+          type:'candlestick',
+          xAxisIndex:0,
+          yAxisIndex:0,
+          data:candleData,
+          itemStyle:{
+            color:'#4de6a1',
+            color0:'#ff6679',
+            borderColor:'#4de6a1',
+            borderColor0:'#ff6679',
+            borderWidth:1
+          },
+          barMinWidth:1,
+          barMaxWidth:14,
+          emphasis:{disabled:true},
+          markLine:{
+            silent:true,
+            symbol:['none','none'],
+            data:markLines,
+            lineStyle:{width:1}
+          }
+        },
+        {
+          name:'VOL',
+          type:'bar',
+          xAxisIndex:1,
+          yAxisIndex:1,
+          data:volumeData,
+          barMaxWidth:10,
+          large:true,
+          largeThreshold:800,
+          emphasis:{disabled:true}
+        },
+        {
+          name:'MAVOL5',
+          type:'line',
+          xAxisIndex:1,
+          yAxisIndex:1,
+          data:ma5,
+          showSymbol:false,
+          connectNulls:false,
+          smooth:false,
+          silent:true,
+          lineStyle:{
+            width:1,
+            color:'#ef9d42',
+            opacity:.9
+          }
+        },
+        {
+          name:'MAVOL10',
+          type:'line',
+          xAxisIndex:1,
+          yAxisIndex:1,
+          data:ma10,
+          showSymbol:false,
+          connectNulls:false,
+          smooth:false,
+          silent:true,
+          lineStyle:{
+            width:1,
+            color:'#d36bdf',
+            opacity:.86
+          }
+        }
+      ]
+    },
+    {
+      notMerge:true,
+      lazyUpdate:true
+    }
   );
-  chartRuntime.offscreenLevels=offscreen;
 
-  const last=candles[candles.length-1];
+  chartRuntime.labels=labels;
+  chartRuntime.lastCandles=candles;
+  chartRuntime.mint=state.selectedMint;
+  chartRuntime.timeframe=state.timeframe;
+  chartRuntime.metric=state.chartMetric;
+  chartRuntime.candleCount=candles.length;
+  chartRuntime.lastCandleTime=last.t;
+  chartRuntime.forceFit=false;
+
+  chartRuntime.viewport.startValue=range.startValue;
+  chartRuntime.viewport.endValue=range.endValue;
+
+  setTimeout(()=>{
+    chartRuntime.suppressZoom=false;
+  },0);
 
   const totalTicks=candles.reduce(
     (sum,candle)=>
@@ -2133,9 +2300,10 @@ function drawChart() {
     last,
     candles.length,
     totalTicks,
-    offscreen
+    chartRuntime.offscreenLevels
   );
 
+  const lastPoint=points[points.length-1];
   const rawSol=Number(lastPoint?.priceSol ?? lastPoint?.price);
   renderPriceModeSummary(
     Number.isFinite(rawSol) && rawSol>0
@@ -2143,47 +2311,20 @@ function drawChart() {
       : null
   );
 
-  if(
-    chartRuntime.forceFit ||
-    contextChanged
-  ){
-    chartRuntime.forceFit=false;
+  const fx=chartRuntime.pendingFx;
+  chartRuntime.pendingFx=null;
 
+  if(
+    fx &&
+    Number(state.timeframe)===1000
+  ){
     requestAnimationFrame(()=>{
       try{
-        const timeScale=chartRuntime.api.timeScale();
-        const count=candles.length;
-
-        if(state.timeframe==='all'){
-          timeScale.fitContent();
-        }else if(
-          count<24 &&
-          typeof timeScale.setVisibleLogicalRange==='function'
-        ){
-          const slots=24;
-          const missing=Math.max(0,slots-count);
-          const left=Math.ceil(missing*.45)+1;
-          const right=Math.floor(missing*.55)+2;
-
-          timeScale.setVisibleLogicalRange({
-            from:-left,
-            to:(count-1)+right
-          });
-        }else if(
-          typeof timeScale.setVisibleLogicalRange==='function'
-        ){
-          const visibleBars=
-            window.innerWidth<700
-              ? 52
-              : 84;
-          const right=3;
-          timeScale.setVisibleLogicalRange({
-            from:Math.max(-1,count-visibleBars),
-            to:(count-1)+right
-          });
-        }else{
-          timeScale.fitContent();
-        }
+        maybeTriggerBullishBreakoutFx(
+          fx.prev,
+          fx.curr,
+          fx.levels
+        );
       }catch{}
     });
   }
@@ -2532,3 +2673,4 @@ init();
 /* MEMEFLOW_TRADING_CHART_V30_13_SAFE_MARKET_CAP_TOGGLE */
 /* MEMEFLOW_TRADING_CHART_V30_14_BREAKOUT_FX */
 /* MEMEFLOW_TRADING_CHART_V30_14_1_BREAKOUT_FX_1S_ONLY */
+/* MEMEFLOW_TRADING_CHART_V30_15_2_GMGN_ECHARTS */
