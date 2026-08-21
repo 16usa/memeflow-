@@ -3425,6 +3425,35 @@ function applyWebLayoutV31(forceHome = false) {
     node.group.scale.setScalar(cfg.scale);
   }
 
+  /*
+    V4: the 3D frame is a pure black viewport.
+    Remove the legacy floor/glow planes that created the lighter band.
+  */
+  app.scene.background = new THREE.Color(0x000000);
+
+  if (app.scene.fog?.color) {
+    app.scene.fog.color.set(0x000000);
+  }
+
+  if (typeof MF20 !== 'undefined' && MF20.floor) {
+    MF20.floor.visible = false;
+  }
+
+  app.scene.traverse((object) => {
+    if (!object?.isMesh || object.geometry?.type !== 'PlaneGeometry') return;
+
+    const width = Number(object.geometry.parameters?.width) || 0;
+    const height = Number(object.geometry.parameters?.height) || 0;
+
+    /*
+      Only the old giant environment plane is removed.
+      Small module display planes remain untouched.
+    */
+    if (width >= 40 && height >= 30) {
+      object.visible = false;
+    }
+  });
+
   const box = new THREE.Box3().makeEmpty();
 
   if (typeof MF20 !== 'undefined' && MF20.hardware?.values) {
@@ -3448,9 +3477,17 @@ function applyWebLayoutV31(forceHome = false) {
   const aspect =
     canvas?.clientHeight > 0
       ? Math.max(0.55, canvas.clientWidth / canvas.clientHeight)
-      : (mobile ? 2.0 : 1.6);
+      : (mobile ? 1.10 : 1.60);
 
-  app.camera.fov = mobile ? 40 : 38;
+  /*
+    V4 initial fit:
+    - full architecture visible at reset/first load
+    - substantially larger than V31
+    - no title/telemetry/legend overlay is consuming canvas space
+  */
+  app.camera.fov = mobile ? 42 : 39;
+  app.camera.near = 0.05;
+  app.camera.far = 180;
   app.camera.updateProjectionMatrix();
 
   const fov = THREE.MathUtils.degToRad(app.camera.fov);
@@ -3459,14 +3496,22 @@ function applyWebLayoutV31(forceHome = false) {
   const halfX = Math.max(4.0, size.x * 0.5);
   const halfZ = Math.max(4.4, size.z * 0.5);
 
-  const forWidth = halfX / Math.max(0.01, tanHalf * aspect);
-  const forDepth = halfZ / Math.max(0.01, tanHalf);
+  const forWidth =
+    halfX /
+    Math.max(0.01, tanHalf * aspect);
 
-  const distance =
-    Math.max(forWidth, forDepth) *
-    (mobile ? 1.28 : 1.18);
+  const forDepth =
+    halfZ /
+    Math.max(0.01, tanHalf);
 
-  const topTilt = mobile ? 0.095 : 0.11;
+  /*
+    Old V31 used 1.28 on mobile, which made the topology too small.
+    1.10 keeps a safe frame while filling the viewport much better.
+  */
+  const fitMargin = mobile ? 1.10 : 1.12;
+  const distance = Math.max(forWidth, forDepth) * fitMargin;
+
+  const topTilt = mobile ? 0.105 : 0.13;
 
   app.cameraHome.set(
     center.x,
@@ -3476,25 +3521,62 @@ function applyWebLayoutV31(forceHome = false) {
 
   app.targetHome.set(
     center.x,
-    center.y - 0.08,
+    center.y - 0.04,
     center.z
   );
 
+  /*
+    Full free orbit inside the 3D frame.
+    Pan remains disabled so the architecture cannot be accidentally lost.
+  */
   app.controls.enableZoom = true;
-  app.controls.enableRotate = false;
+  app.controls.enableRotate = true;
   app.controls.enablePan = false;
+
   app.controls.enableDamping = true;
   app.controls.dampingFactor = 0.055;
+
   app.controls.zoomSpeed = 1.08;
+  app.controls.rotateSpeed = mobile ? 0.62 : 0.56;
+
+  /*
+    Unlimited horizontal orbit and almost the full vertical sphere.
+    Tiny pole guards avoid OrbitControls singularities.
+  */
+  app.controls.minAzimuthAngle = -Infinity;
+  app.controls.maxAzimuthAngle = Infinity;
+  app.controls.minPolarAngle = 0.025;
+  app.controls.maxPolarAngle = Math.PI - 0.025;
+
+  /*
+    Much wider zoom range than V31:
+    close inspection is possible, but Reset View always restores the fit.
+  */
+  app.controls.minDistance = Math.max(3.2, distance * 0.27);
+  app.controls.maxDistance = Math.max(42, distance * 3.2);
+
   app.controls.autoRotate = false;
   app.autoRotate = false;
 
-  app.controls.minDistance = distance * 0.72;
-  app.controls.maxDistance = distance * 1.80;
+  if ('zoomToCursor' in app.controls) {
+    app.controls.zoomToCursor = false;
+  }
 
   if (app.controls.touches) {
     app.controls.touches.ONE = THREE.TOUCH.ROTATE;
     app.controls.touches.TWO = THREE.TOUCH.DOLLY_ROTATE;
+  }
+
+  if (app.controls.mouseButtons) {
+    app.controls.mouseButtons.LEFT = THREE.MOUSE.ROTATE;
+    app.controls.mouseButtons.MIDDLE = THREE.MOUSE.DOLLY;
+    app.controls.mouseButtons.RIGHT = THREE.MOUSE.ROTATE;
+  }
+
+  if (canvas) {
+    canvas.style.touchAction = 'none';
+    canvas.style.userSelect = 'none';
+    canvas.style.webkitUserSelect = 'none';
   }
 
   if (forceHome) {
@@ -4012,3 +4094,5 @@ if (document.readyState === 'loading') {
 } else {
   queueMicrotask(mfLiveInspectorV1Install);
 }
+
+/* ===== MEMEFLOW_3D_VIEWPORT_FREE_ORBIT_FIT_V4 ===== */

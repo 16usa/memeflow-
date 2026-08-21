@@ -6,7 +6,7 @@
   <meta name="color-scheme" content="dark" />
   <meta name="description" content="MEMEFLOW Live System View — real-time 3D visualization of discovery, market, holder, evaluation and paper trading pipelines." />
   <title>MEMEFLOW · Live System View</title>
-  <link rel="stylesheet" href="/system.css?v=architecture-frame-split-v3" />
+  <link rel="stylesheet" href="/system.css?v=3d-free-orbit-fit-v4" />
   <script type="importmap">
   {
     "imports": {
@@ -53,18 +53,18 @@
             <p>Discovery → bootstrap → holders & market → deterministic risk engine → decision → paper execution.</p>
           </div>
 
+    <aside class="legend glass mf-legend-standalone-v4" aria-label="Decision legend">
+            <span><i class="legend-dot waiting"></i>WAITING</span>
+            <span><i class="legend-dot watch"></i>WATCH</span>
+            <span><i class="legend-dot blocked"></i>BLOCKED</span>
+            <span><i class="legend-dot ready"></i>BUY READY</span>
+          </aside>
+
     <section class="viewport-wrap">
       <canvas id="systemCanvas" aria-label="Interactive 3D MEMEFLOW system topology"></canvas>
       <div id="labels" class="scene-labels" aria-hidden="true"></div>
 
-<aside class="legend glass" aria-label="Decision legend">
-        <span><i class="legend-dot waiting"></i>WAITING</span>
-        <span><i class="legend-dot watch"></i>WATCH</span>
-        <span><i class="legend-dot blocked"></i>BLOCKED</span>
-        <span><i class="legend-dot ready"></i>BUY READY</span>
-      </aside>
-
-      <div class="scene-hint glass">Drag to orbit · Wheel / pinch to zoom · Tap a token or module</div>
+<div class="scene-hint glass">Drag to orbit · Wheel / pinch to zoom · Tap a token or module</div>
 
       <aside id="inspector" class="inspector glass">
         <div class="inspector-head">
@@ -115,6 +115,6 @@
     <span>The system telemetry panel can still update, but WebGL/Three.js could not start.</span>
   </div>
 
-  <script type="module" src="/system.js?v=live-inspector-standalone-v1"></script>
+  <script type="module" src="/system.js?v=3d-free-orbit-fit-v4"></script>
 </body>
 </html>
