@@ -8101,6 +8101,513 @@ panel.addEventListener('click',async e=>{const action=e.target?.dataset?.mfai;if
 <script id="mf-nav-active-glass-v1-script" src="./mf-nav-active-glass-v1-script.js"></script>
 
 <script id="mf-button-icons-v1-script" src="./mf-button-icons-v1-script.js"></script>
+
+
+<!-- MEMEFLOW_COMPACT_PATCH_V3_START -->
+<style id="memeflow-compact-patch-v3">
+/*
+  MEMEFLOW compact mobile layout v2.
+  Important: preserves existing DOM/data; only reorders and restyles sections.
+*/
+body.mf-compact-ui-v3{
+  --mf-gap:8px;
+  --mf-gap-sm:6px;
+  --mf-radius:14px;
+  --mf-line:rgba(84,221,255,.12);
+}
+
+@media (max-width: 920px){
+  body.mf-compact-ui-v3 .mf-cmp-panel,
+  body.mf-compact-ui-v3 .mf-wallet-host{
+    border-radius:var(--mf-radius) !important;
+    margin-block:8px !important;
+  }
+
+  body.mf-compact-ui-v3 .mf-cmp-panel h1,
+  body.mf-compact-ui-v3 .mf-cmp-panel h2,
+  body.mf-compact-ui-v3 .mf-cmp-panel h3,
+  body.mf-compact-ui-v3 .mf-cmp-panel h4,
+  body.mf-compact-ui-v3 .mf-wallet-host h1,
+  body.mf-compact-ui-v3 .mf-wallet-host h2,
+  body.mf-compact-ui-v3 .mf-wallet-host h3,
+  body.mf-compact-ui-v3 .mf-wallet-host h4{
+    line-height:1.12 !important;
+    margin-top:0 !important;
+    margin-bottom:4px !important;
+  }
+
+  body.mf-compact-ui-v3 .mf-cmp-panel [class*="head"],
+  body.mf-compact-ui-v3 .mf-cmp-panel [class*="header"],
+  body.mf-compact-ui-v3 .mf-wallet-host [class*="head"],
+  body.mf-compact-ui-v3 .mf-wallet-host [class*="header"]{
+    padding-top:10px !important;
+    padding-bottom:10px !important;
+  }
+
+  body.mf-compact-ui-v3 .mf-cmp-panel [class*="body"],
+  body.mf-compact-ui-v3 .mf-cmp-panel [class*="content"],
+  body.mf-compact-ui-v3 .mf-wallet-host [class*="body"],
+  body.mf-compact-ui-v3 .mf-wallet-host [class*="content"]{
+    padding-top:10px !important;
+    padding-bottom:10px !important;
+  }
+
+  body.mf-compact-ui-v3 .mf-cmp-panel button,
+  body.mf-compact-ui-v3 .mf-cmp-panel .btn,
+  body.mf-compact-ui-v3 .mf-cmp-panel [role="button"],
+  body.mf-compact-ui-v3 .mf-wallet-host button,
+  body.mf-compact-ui-v3 .mf-wallet-host .btn,
+  body.mf-compact-ui-v3 .mf-wallet-host [role="button"]{
+    min-height:34px !important;
+    padding-top:6px !important;
+    padding-bottom:6px !important;
+  }
+
+  /* Chart card */
+  body.mf-compact-ui-v3 .mf-chart-panel .mf-timeframe-btn{
+    min-width:0 !important;
+    min-height:32px !important;
+    padding:6px 8px !important;
+  }
+  body.mf-compact-ui-v3 .mf-chart-panel .mf-chart-chip-row{
+    gap:4px !important;
+    margin-top:6px !important;
+    margin-bottom:6px !important;
+  }
+  body.mf-compact-ui-v3 .mf-chart-panel .mf-chart-chip-row > *{
+    min-height:26px !important;
+    padding:4px 7px !important;
+    margin:0 !important;
+  }
+
+  /* Trade control compacting */
+  body.mf-compact-ui-v3 .mf-trade-panel .mf-block-grid-2{
+    display:grid !important;
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr) !important;
+    gap:8px !important;
+    align-items:start !important;
+  }
+  body.mf-compact-ui-v3 .mf-trade-panel .mf-field-box{
+    min-height:48px !important;
+    padding:7px 9px !important;
+    border-radius:10px !important;
+    margin:0 !important;
+  }
+  body.mf-compact-ui-v3 .mf-trade-panel .mf-field-box label,
+  body.mf-compact-ui-v3 .mf-trade-panel .mf-field-box small,
+  body.mf-compact-ui-v3 .mf-trade-panel .mf-field-box [class*="label"]{
+    margin:0 0 3px !important;
+    line-height:1.05 !important;
+  }
+  body.mf-compact-ui-v3 .mf-trade-panel .mf-amount-box{
+    min-height:58px !important;
+  }
+  body.mf-compact-ui-v3 .mf-trade-panel .mf-session-inline{
+    display:grid !important;
+    grid-template-columns:repeat(4,minmax(0,1fr)) !important;
+    gap:6px !important;
+  }
+  body.mf-compact-ui-v3 .mf-trade-panel .mf-session-inline > *{
+    min-width:0 !important;
+  }
+  /* Wallet + action panel */
+  body.mf-compact-ui-v3 .mf-wallet-host .mf-wallet-heading{
+    display:block !important;
+    margin-bottom:8px !important;
+    font-size:inherit !important;
+  }
+  body.mf-compact-ui-v3 .mf-wallet-host .mf-wallet-actions-grid{
+    display:grid !important;
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr) !important;
+    gap:8px !important;
+    align-items:stretch !important;
+  }
+  body.mf-compact-ui-v3 .mf-wallet-host .mf-wallet-actions-grid > *{
+    width:100% !important;
+    margin:0 !important;
+  }
+  body.mf-compact-ui-v3 .mf-wallet-host .mf-wallet-actions-grid .mf-pause-action{
+    grid-column:1 / -1 !important;
+  }
+  body.mf-compact-ui-v3 .mf-wallet-host .mf-wallet-real,
+  body.mf-compact-ui-v3 .mf-wallet-host .mf-live-real,
+  body.mf-compact-ui-v3 .mf-wallet-host .mf-settings-real{
+    margin-top:8px !important;
+  }
+
+  /* Open positions */
+  body.mf-compact-ui-v3 .mf-open-panel .mf-position-row{
+    display:grid !important;
+    grid-template-columns:minmax(92px,1.25fr) minmax(56px,.75fr) minmax(64px,.8fr) auto !important;
+    column-gap:8px !important;
+    row-gap:3px !important;
+    align-items:center !important;
+    min-height:0 !important;
+    padding:8px 10px !important;
+    border-radius:10px !important;
+    margin:0 0 6px !important;
+  }
+  body.mf-compact-ui-v3 .mf-open-panel .mf-position-row button{
+    min-height:30px !important;
+    padding:4px 8px !important;
+  }
+
+  /* Recent trades */
+  body.mf-compact-ui-v3 .mf-trades-panel .mf-trades-scroll{
+    display:flex !important;
+    flex-wrap:wrap !important;
+    gap:6px 12px !important;
+    align-items:center !important;
+  }
+  body.mf-compact-ui-v3 .mf-trades-panel .mf-trade-row{
+    display:inline-flex !important;
+    align-items:center !important;
+    gap:8px !important;
+    padding:0 !important;
+    min-height:0 !important;
+    border:none !important;
+    background:transparent !important;
+    margin:0 !important;
+    white-space:nowrap !important;
+  }
+
+  /* Candidates */
+  body.mf-compact-ui-v3 .mf-candidates-panel .mf-candidate-row{
+    min-height:0 !important;
+    padding:8px 10px !important;
+    border-radius:10px !important;
+    margin:0 0 6px !important;
+  }
+  body.mf-compact-ui-v3 .mf-candidates-panel .mf-candidate-row p,
+  body.mf-compact-ui-v3 .mf-candidates-panel .mf-candidate-row small{
+    margin-top:2px !important;
+    margin-bottom:2px !important;
+  }
+}
+
+@media (max-width: 430px){
+  body.mf-compact-ui-v3 .mf-trade-panel .mf-session-inline{
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+  }
+  body.mf-compact-ui-v3 .mf-open-panel .mf-position-row{
+    grid-template-columns:minmax(82px,1.15fr) minmax(54px,.7fr) minmax(60px,.75fr) auto !important;
+    column-gap:6px !important;
+    padding:7px 8px !important;
+  }
+}
+</style>
+
+<script id="memeflow-compact-patch-js-v3">
+(() => {
+  const BODY_CLASS = 'mf-compact-ui-v3';
+  const norm = s => String(s || '').replace(/\s+/g, ' ').trim().toLowerCase();
+  const textEq = (el, value) => norm(el && el.textContent) === norm(value);
+  const textHas = (el, value) => norm(el && el.textContent).includes(norm(value));
+  const rect = el => { try { return el.getBoundingClientRect(); } catch { return {width:0,height:0}; } };
+  const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+  const headingSel = 'h1,h2,h3,h4,h5,h6,[role="heading"],[class*="title"],[class*="heading"]';
+
+  function findHeading(label){
+    return $$(headingSel).find(el => textHas(el, label)) || null;
+  }
+
+  function findPanelByHeading(label){
+    const heading = findHeading(label);
+    if (!heading) return null;
+    let node = heading;
+    let best = heading.parentElement;
+    for (let i = 0; i < 8 && node && node !== document.body; i++, node = node.parentElement){
+      const r = rect(node);
+      const cls = String(node.className || '').toLowerCase();
+      if (r.width >= Math.min(window.innerWidth * 0.7, 320) && r.height >= 80) best = node;
+      if (/panel|card|section|module|widget|box/.test(cls)) return node;
+    }
+    return best;
+  }
+
+  function firstMatch(root, selector, predicate){
+    return $$(selector, root).find(predicate) || null;
+  }
+
+  function ancestor(start, stop, predicate, maxDepth=6){
+    let node = start;
+    for (let i = 0; i < maxDepth && node && node !== stop && node !== document.body; i++, node = node.parentElement){
+      if (predicate(node)) return node;
+    }
+    return null;
+  }
+
+  function simpleLeafNodes(root){
+    return $$('label,small,span,div,p,strong,b', root).filter(el => {
+      const t = norm(el.textContent);
+      if (!t) return false;
+      return !Array.from(el.children).some(ch => norm(ch.textContent) === t);
+    });
+  }
+
+  function tagChartPanel(){
+    const btns = $$('button,[role="button"],a');
+    const labels = ['1s','30s','1m','5m','15m','1h','all'];
+    const tf = btns.filter(btn => labels.includes(norm(btn.textContent)));
+    if (tf.length < 5) return null;
+    let panel = null;
+    let node = tf[0];
+    for (let i=0; i<8 && node && node !== document.body; i++, node=node.parentElement){
+      const inside = tf.filter(el => node.contains(el)).length;
+      const r = rect(node);
+      if (inside >= 5 && r.width >= window.innerWidth * 0.7 && r.height >= 180){
+        panel = node;
+        const cls = String(node.className || '').toLowerCase();
+        if (/panel|card|section|chart/.test(cls)) break;
+      }
+    }
+    if (!panel) return null;
+    panel.classList.add('mf-cmp-panel','mf-chart-panel');
+    tf.forEach(el => el.classList.add('mf-timeframe-btn'));
+    $$('div', panel).forEach(el => {
+      const t = norm(el.textContent);
+      const kids = el.children.length;
+      const r = rect(el);
+      if (kids >= 2 && r.height > 20 && r.height < 80 && (t.includes('candles') || t.includes('tp1') || t.includes('tp2'))){
+        el.classList.add('mf-chart-chip-row');
+      }
+    });
+    return panel;
+  }
+
+  function buildWalletHost(afterPanel){
+    let host = document.getElementById('mf-wallet-actions-host');
+    if (!host){
+      const basePanel = afterPanel || findPanelByHeading('Trade control') || document.body;
+      host = document.createElement('section');
+      host.id = 'mf-wallet-actions-host';
+      host.className = (basePanel.className || '') + ' mf-wallet-host';
+      host.style.display = '';
+      const parent = (afterPanel && afterPanel.parentElement) || basePanel.parentElement || document.body;
+      if (afterPanel && afterPanel.nextSibling) parent.insertBefore(host, afterPanel.nextSibling);
+      else parent.appendChild(host);
+    }
+    return host;
+  }
+
+
+  function tagTradeFields(panel){
+    if (!panel) return;
+    panel.classList.add('mf-cmp-panel','mf-trade-panel');
+    const fieldLabels = [
+      'Position amount','Hard stop','Trailing stop','TP1 price gain','Sell at TP1','TP2 price gain',
+      'Sell at TP2','Runner','Max hold','Exit pressure','Weak-pressure exit','Weak pressure exit',
+      'Daily spend','Daily loss','Max positions','Max entries/day'
+    ];
+    const leaves = simpleLeafNodes(panel);
+    fieldLabels.forEach(label => {
+      const leaf = leaves.find(el => textEq(el, label));
+      if (!leaf) return;
+      const box = ancestor(leaf, panel, node => {
+        const r = rect(node); const t = norm(node.textContent);
+        return r.width >= 100 && r.height >= 30 && r.height <= 160 && t.includes(norm(label));
+      }, 5);
+      if (box) box.classList.add('mf-field-box');
+      if (label === 'Position amount' && box) box.classList.add('mf-amount-box');
+    });
+
+    // Make 2-col block for risk fields and 4-up session row
+    const riskAnchor = findHeading('Risk & exit levels') || firstMatch(panel, '*', el => textHas(el, 'Risk & exit levels'));
+    const sessionAnchor = findHeading('Session limits') || firstMatch(panel, '*', el => textHas(el, 'Session limits'));
+    if (riskAnchor){
+      const riskFields = ['Hard stop','Trailing stop','TP1 price gain','Sell at TP1','TP2 price gain','Sell at TP2','Runner','Max hold','Exit pressure','Weak-pressure exit','Weak pressure exit'];
+      const boxes = [];
+      riskFields.forEach(label => {
+        const box = $$('.mf-field-box', panel).find(el => norm(el.textContent).includes(norm(label)));
+        if (box) boxes.push(box);
+      });
+      if (boxes.length >= 4){
+        let wrap = panel.querySelector('.mf-risk-wrap');
+        if (!wrap){
+          wrap = document.createElement('div');
+          wrap.className = 'mf-block-grid-2 mf-risk-wrap';
+          const insertAfter = ancestor(riskAnchor, panel, node => node.parentElement === panel, 3) || riskAnchor;
+          insertAfter.parentElement.insertBefore(wrap, insertAfter.nextSibling);
+        }
+        boxes.forEach(box => wrap.appendChild(box));
+      }
+    }
+
+    if (sessionAnchor){
+      const sessionFields = ['Daily spend','Daily loss','Max positions','Max entries/day'];
+      const boxes = [];
+      sessionFields.forEach(label => {
+        const box = $$('.mf-field-box', panel).find(el => norm(el.textContent).includes(norm(label)));
+        if (box) boxes.push(box);
+      });
+      if (boxes.length >= 2){
+        let wrap = panel.querySelector('.mf-session-inline');
+        if (!wrap){
+          wrap = document.createElement('div');
+          wrap.className = 'mf-session-inline';
+          const insertAfter = ancestor(sessionAnchor, panel, node => node.parentElement === panel, 3) || sessionAnchor;
+          insertAfter.parentElement.insertBefore(wrap, insertAfter.nextSibling);
+        }
+        boxes.forEach(box => wrap.appendChild(box));
+      }
+    }
+  }
+
+  function moveWalletAndActions(tradePanel, candidatesPanel){
+    if (!tradePanel) return;
+
+    let host = document.getElementById('mf-wallet-actions-host');
+    if (!host){
+      host = buildWalletHost(candidatesPanel || findPanelByHeading('Candidates') || findPanelByHeading('Recent trades'));
+    }
+
+    // Create the host structure only once. Reusing the same real DOM nodes avoids
+    // duplicate controls and preserves all original event listeners/state.
+    let title = host.querySelector('.mf-wallet-heading');
+    if (!title){
+      title = document.createElement('div');
+      title.className = 'mf-wallet-heading';
+      const h = document.createElement('h3');
+      h.textContent = 'Wallet';
+      title.appendChild(h);
+      host.appendChild(title);
+    }
+
+    // Move the real wallet block, not a clone.
+    if (!host.querySelector('.mf-wallet-real')){
+      const walletLabel = firstMatch(tradePanel, '*', el => textEq(el, 'Wallet'));
+      const walletBlock = walletLabel ? ancestor(walletLabel, tradePanel, node => {
+        const r = rect(node); const t = norm(node.textContent);
+        return r.width >= tradePanel.clientWidth * 0.65 && r.height >= 45 && t.includes('wallet');
+      }, 6) : null;
+      if (walletBlock){
+        walletBlock.classList.add('mf-wallet-real');
+        host.appendChild(walletBlock);
+      }
+    }
+
+    // Move the real live-execution warning.
+    if (!host.querySelector('.mf-live-real')){
+      const liveBlock = firstMatch(tradePanel, 'div,section,article', el => {
+        const t = norm(el.textContent);
+        return t.includes('live execution locked') || t.includes('live_execution_not_ready');
+      });
+      if (liveBlock){
+        liveBlock.classList.add('mf-live-real');
+        host.appendChild(liveBlock);
+      }
+    }
+
+    // Move original action buttons so their existing listeners keep working.
+    let grid = host.querySelector('.mf-wallet-actions-grid');
+    if (!grid){
+      grid = document.createElement('div');
+      grid.className = 'mf-wallet-actions-grid';
+      host.appendChild(grid);
+    }
+    const actionCandidates = $$('button,[role="button"],a', tradePanel);
+    ['Save strategy','Start paper auto','Pause new entries'].forEach(label => {
+      const el = actionCandidates.find(node => textEq(node, label));
+      if (el && !grid.contains(el)){
+        if (label === 'Pause new entries') el.classList.add('mf-pause-action');
+        grid.appendChild(el);
+      }
+    });
+
+    // Move settings/emergency strip if found, keeping the real node.
+    if (!host.querySelector('.mf-settings-real')){
+      const settingsBlock = firstMatch(tradePanel, 'div,section,article,p,small', el => {
+        const t = norm(el.textContent);
+        return t.includes('settings v') || t.includes('emergency entry lock');
+      });
+      if (settingsBlock){
+        settingsBlock.classList.add('mf-settings-real');
+        host.appendChild(settingsBlock);
+      }
+    }
+  }
+
+  function tagOpenPositions(panel){
+    if (!panel) return;
+    panel.classList.add('mf-cmp-panel','mf-open-panel');
+    const closers = $$('button,[role="button"],a', panel).filter(el => textEq(el, 'Close'));
+    closers.forEach(btn => {
+      const row = ancestor(btn, panel, node => {
+        const r = rect(node); const t = norm(node.textContent);
+        const nClose = $$('button,[role="button"],a', node).filter(el => textEq(el, 'Close')).length;
+        return nClose === 1 && r.width >= rect(panel).width * 0.65 && r.height >= 44 && r.height <= 220 && (t.includes('sol') || t.includes('p&l'));
+      }, 6);
+      if (row) row.classList.add('mf-position-row');
+    });
+  }
+
+  function tagRecentTrades(panel){
+    if (!panel) return;
+    panel.classList.add('mf-cmp-panel','mf-trades-panel');
+    const sideNodes = simpleLeafNodes(panel).filter(el => ['buy','sell'].includes(norm(el.textContent)));
+    const rows = [];
+    sideNodes.forEach(side => {
+      const row = ancestor(side, panel, node => {
+        const r = rect(node); const t = norm(node.textContent);
+        return r.width >= rect(panel).width * 0.55 && r.height >= 20 && r.height <= 90 && (t.includes('buy') || t.includes('sell')) && (t.includes('sol') || /\b0[.,]\d/.test(t));
+      }, 5);
+      if (row && !rows.includes(row)) rows.push(row);
+    });
+    rows.forEach(row => row.classList.add('mf-trade-row'));
+    if (rows.length >= 2){
+      const parent = rows[0].parentElement;
+      if (parent && !parent.classList.contains('mf-trades-scroll')) parent.classList.add('mf-trades-scroll');
+    }
+  }
+
+  function tagCandidates(panel){
+    if (!panel) return;
+    panel.classList.add('mf-cmp-panel','mf-candidates-panel');
+    const stateNodes = simpleLeafNodes(panel).filter(el => ['waiting','blocked','ready','watch'].includes(norm(el.textContent)));
+    stateNodes.forEach(state => {
+      const row = ancestor(state, panel, node => {
+        const r = rect(node); const t = norm(node.textContent);
+        return r.width >= rect(panel).width * 0.62 && r.height >= 40 && r.height <= 180 && (t.includes('score') || t.includes('holders') || t.includes('$'));
+      }, 6);
+      if (row) row.classList.add('mf-candidate-row');
+    });
+  }
+
+  function apply(){
+    document.body.classList.add(BODY_CLASS);
+    const chart = tagChartPanel();
+    const trade = findPanelByHeading('Trade control');
+    const open = findPanelByHeading('Open positions');
+    const recent = findPanelByHeading('Recent trades');
+    const candidates = findPanelByHeading('Candidates');
+
+    if (trade) tagTradeFields(trade);
+    if (open) tagOpenPositions(open);
+    if (recent) tagRecentTrades(recent);
+    if (candidates) tagCandidates(candidates);
+    moveWalletAndActions(trade, candidates || recent || open || chart);
+  }
+
+  let scheduled = false;
+  const schedule = () => {
+    if (scheduled) return;
+    scheduled = true;
+    requestAnimationFrame(() => { scheduled = false; apply(); });
+  };
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', schedule, {once:true});
+  else schedule();
+
+  const mo = new MutationObserver(schedule);
+  const startObserve = () => { if (document.body) mo.observe(document.body, {childList:true, subtree:true}); };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', startObserve, {once:true});
+  else startObserve();
+
+  window.addEventListener('resize', schedule, {passive:true});
+})();
+</script>
+<!-- MEMEFLOW_COMPACT_PATCH_V3_END -->
+
 </body>
 </html>
 <!-- MEMEFLOW_ANTI_RUG_V1_5_EXACT -->
