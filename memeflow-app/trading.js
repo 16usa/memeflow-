@@ -29,6 +29,31 @@ const state = {
       return 'price';
     }
   })(),
+  chartIndicators: (() => {
+    const overlayAllowed = new Set(['MA', 'EMA', 'BOLL', 'SAR']);
+    const lowerAllowed = new Set(['VOL', 'MACD', 'KDJ', 'RSI', 'STOCHRSI']);
+
+    try {
+      const parsed = JSON.parse(
+        localStorage.getItem('memeflow:chart-indicators') || '{}'
+      );
+
+      const overlays = Array.isArray(parsed?.overlays)
+        ? parsed.overlays.filter(name => overlayAllowed.has(name))
+        : [];
+
+      const lower = lowerAllowed.has(parsed?.lower)
+        ? parsed.lower
+        : null;
+
+      return {
+        overlays: [...new Set(overlays)],
+        lower
+      };
+    } catch {
+      return { overlays: [], lower: null };
+    }
+  })(),
   rawByMint: new Map(),
   chartSource: null,
   positions: [],
@@ -1763,6 +1788,600 @@ function movingAverage(candles,period,key='volumeUsd'){
   return out;
 }
 
+function persistChartIndicators(){
+  try{
+    localStorage.setItem(
+      'memeflow:chart-indicators',
+      JSON.stringify({
+        overlays:Array.isArray(state.chartIndicators?.overlays)
+          ? state.chartIndicators.overlays
+          : [],
+        lower:state.chartIndicators?.lower || null
+      })
+    );
+  }catch{}
+}
+
+function syncChartIndicatorButtons(){
+  const overlays=new Set(
+    Array.isArray(state.chartIndicators?.overlays)
+      ? state.chartIndicators.overlays
+      : []
+  );
+  const lower=state.chartIndicators?.lower || null;
+
+  document
+    .querySelectorAll('#indicatorBar [data-indicator]')
+    .forEach(button=>{
+      const name=String(button.dataset.indicator||'').toUpperCase();
+      const kind=String(button.dataset.kind||'');
+      const active=
+        kind==='overlay'
+          ? overlays.has(name)
+          : lower===name;
+
+      button.classList.toggle('active',active);
+      button.setAttribute('aria-pressed',active?'true':'false');
+    });
+}
+
+function toggleChartIndicator(button){
+  if(!button)return;
+
+  const name=String(button.dataset.indicator||'').toUpperCase();
+  const kind=String(button.dataset.kind||'');
+
+  if(kind==='overlay'){
+    const overlays=new Set(
+      Array.isArray(state.chartIndicators?.overlays)
+        ? state.chartIndicators.overlays
+        : []
+    );
+
+    if(overlays.has(name))overlays.delete(name);
+    else overlays.add(name);
+
+    state.chartIndicators.overlays=[...overlays];
+  }else if(kind==='lower'){
+    state.chartIndicators.lower=
+      state.chartIndicators?.lower===name
+        ? null
+        : name;
+  }else{
+    return;
+  }
+
+  persistChartIndicators();
+  syncChartIndicatorButtons();
+
+  // Presentation-only toggle: preserve zoom/pan/timeframe/metric.
+  scheduleChart();
+}
+
+function indicatorPad(values,padCount){
+  return values.concat(
+    Array(Math.max(0,Number(padCount)||0)).fill('-')
+  );
+}
+
+function simpleMovingAverageValues(values,period){
+  const clean=Array.isArray(values)?values:[];
+  const out=new Array(clean.length).fill('-');
+  const p=Math.max(1,Number(period)||1);
+  let sum=0;
+
+  for(let i=0;i<clean.length;i++){
+    const value=Number(clean[i]);
+    if(!Number.isFinite(value))continue;
+
+    sum+=value;
+
+    if(i>=p){
+      const old=Number(clean[i-p]);
+      if(Number.isFinite(old))sum-=old;
+    }
+
+    if(i>=p-1)out[i]=sum/p;
+  }
+
+  return out;
+}
+
+function sparseMovingAverageValues(values,period){
+  const clean=Array.isArray(values)?values:[];
+  const out=new Array(clean.length).fill('-');
+  const p=Math.max(1,Number(period)||1);
+
+  for(let i=p-1;i<clean.length;i++){
+    const window=clean.slice(i-p+1,i+1).map(Number);
+    if(window.every(Number.isFinite)){
+      out[i]=window.reduce((sum,value)=>sum+value,0)/p;
+    }
+  }
+
+  return out;
+}
+
+function emaValues(values,period){
+  const clean=Array.isArray(values)?values.map(Number):[];
+  const out=new Array(clean.length).fill('-');
+  if(!clean.length)return out;
+
+  const p=Math.max(1,Number(period)||1);
+  const alpha=2/(p+1);
+  let ema=Number(clean[0]);
+
+  if(!Number.isFinite(ema))return out;
+  out[0]=ema;
+
+  for(let i=1;i<clean.length;i++){
+    const value=Number(clean[i]);
+    if(!Number.isFinite(value))continue;
+    ema=value*alpha+ema*(1-alpha);
+    out[i]=ema;
+  }
+
+  return out;
+}
+
+function bollingerValues(values,period=20,multiplier=2){
+  const clean=Array.isArray(values)?values.map(Number):[];
+  const middle=simpleMovingAverageValues(clean,period);
+  const upper=new Array(clean.length).fill('-');
+  const lower=new Array(clean.length).fill('-');
+  const p=Math.max(2,Number(period)||20);
+  const mult=Math.max(0,Number(multiplier)||2);
+
+  for(let i=p-1;i<clean.length;i++){
+    const window=clean.slice(i-p+1,i+1);
+    if(!window.every(Number.isFinite))continue;
+
+    const mean=Number(middle[i]);
+    if(!Number.isFinite(mean))continue;
+
+    const variance=
+      window.reduce(
+        (sum,value)=>sum+Math.pow(value-mean,2),
+        0
+      )/p;
+
+    const deviation=Math.sqrt(Math.max(0,variance));
+    upper[i]=mean+deviation*mult;
+    lower[i]=Math.max(0,mean-deviation*mult);
+  }
+
+  return {middle,upper,lower};
+}
+
+function parabolicSarValues(candles,step=.02,maxStep=.2){
+  const rows=Array.isArray(candles)?candles:[];
+  const out=new Array(rows.length).fill('-');
+  if(rows.length<2)return out;
+
+  let up=Number(rows[1].close)>=Number(rows[0].close);
+  let sar=up ? Number(rows[0].low) : Number(rows[0].high);
+  let ep=up ? Number(rows[0].high) : Number(rows[0].low);
+  let af=step;
+
+  out[0]=sar;
+
+  for(let i=1;i<rows.length;i++){
+    const high=Number(rows[i].high);
+    const low=Number(rows[i].low);
+    const prevHigh=Number(rows[i-1].high);
+    const prevLow=Number(rows[i-1].low);
+
+    sar=sar+af*(ep-sar);
+
+    if(up){
+      sar=Math.min(sar,prevLow);
+      if(i>=2)sar=Math.min(sar,Number(rows[i-2].low));
+
+      if(low<sar){
+        up=false;
+        sar=ep;
+        ep=low;
+        af=step;
+      }else if(high>ep){
+        ep=high;
+        af=Math.min(maxStep,af+step);
+      }
+    }else{
+      sar=Math.max(sar,prevHigh);
+      if(i>=2)sar=Math.max(sar,Number(rows[i-2].high));
+
+      if(high>sar){
+        up=true;
+        sar=ep;
+        ep=high;
+        af=step;
+      }else if(low<ep){
+        ep=low;
+        af=Math.min(maxStep,af+step);
+      }
+    }
+
+    out[i]=sar;
+  }
+
+  return out;
+}
+
+function rsiValues(values,period=14){
+  const clean=Array.isArray(values)?values.map(Number):[];
+  const out=new Array(clean.length).fill('-');
+  const p=Math.max(2,Number(period)||14);
+
+  if(clean.length<=p)return out;
+
+  let gains=0;
+  let losses=0;
+
+  for(let i=1;i<=p;i++){
+    const delta=clean[i]-clean[i-1];
+    if(delta>=0)gains+=delta;
+    else losses-=delta;
+  }
+
+  let avgGain=gains/p;
+  let avgLoss=losses/p;
+
+  const calc=()=>{
+    if(avgLoss===0)return 100;
+    const rs=avgGain/avgLoss;
+    return 100-(100/(1+rs));
+  };
+
+  out[p]=calc();
+
+  for(let i=p+1;i<clean.length;i++){
+    const delta=clean[i]-clean[i-1];
+    const gain=Math.max(0,delta);
+    const loss=Math.max(0,-delta);
+
+    avgGain=(avgGain*(p-1)+gain)/p;
+    avgLoss=(avgLoss*(p-1)+loss)/p;
+    out[i]=calc();
+  }
+
+  return out;
+}
+
+function macdValues(values){
+  const fast=emaValues(values,12);
+  const slow=emaValues(values,26);
+  const macd=new Array(values.length).fill('-');
+
+  for(let i=0;i<values.length;i++){
+    const a=Number(fast[i]);
+    const b=Number(slow[i]);
+    if(Number.isFinite(a) && Number.isFinite(b)){
+      macd[i]=a-b;
+    }
+  }
+
+  const signalInput=macd.map(value=>
+    Number.isFinite(Number(value))
+      ? Number(value)
+      : 0
+  );
+  const signalRaw=emaValues(signalInput,9);
+  const signal=new Array(values.length).fill('-');
+  const histogram=new Array(values.length).fill('-');
+
+  for(let i=0;i<values.length;i++){
+    const m=Number(macd[i]);
+    const s=Number(signalRaw[i]);
+    if(Number.isFinite(m) && Number.isFinite(s)){
+      signal[i]=s;
+      histogram[i]=m-s;
+    }
+  }
+
+  return {macd,signal,histogram};
+}
+
+function kdjValues(candles,period=9){
+  const rows=Array.isArray(candles)?candles:[];
+  const k=new Array(rows.length).fill('-');
+  const d=new Array(rows.length).fill('-');
+  const j=new Array(rows.length).fill('-');
+  const p=Math.max(2,Number(period)||9);
+
+  let kv=50;
+  let dv=50;
+
+  for(let i=p-1;i<rows.length;i++){
+    const window=rows.slice(i-p+1,i+1);
+    const high=Math.max(...window.map(row=>Number(row.high)));
+    const low=Math.min(...window.map(row=>Number(row.low)));
+    const close=Number(rows[i].close);
+
+    if(!(Number.isFinite(high) && Number.isFinite(low) && Number.isFinite(close))){
+      continue;
+    }
+
+    const rsv=high===low ? 50 : ((close-low)/(high-low))*100;
+    kv=(2/3)*kv+(1/3)*rsv;
+    dv=(2/3)*dv+(1/3)*kv;
+
+    k[i]=kv;
+    d[i]=dv;
+    j[i]=3*kv-2*dv;
+  }
+
+  return {k,d,j};
+}
+
+function stochRsiValues(values,rsiPeriod=14,stochPeriod=14){
+  const rsi=rsiValues(values,rsiPeriod);
+  const raw=new Array(values.length).fill('-');
+  const p=Math.max(2,Number(stochPeriod)||14);
+
+  for(let i=0;i<rsi.length;i++){
+    if(i<p-1)continue;
+
+    const window=rsi.slice(i-p+1,i+1).map(Number);
+    if(!window.every(Number.isFinite))continue;
+
+    const min=Math.min(...window);
+    const max=Math.max(...window);
+    const current=Number(rsi[i]);
+
+    raw[i]=max===min
+      ? 50
+      : ((current-min)/(max-min))*100;
+  }
+
+  const k=sparseMovingAverageValues(raw,3);
+  const d=sparseMovingAverageValues(k,3);
+
+  return {k,d};
+}
+
+function compactIndicatorValue(value){
+  const n=Number(value);
+  if(!Number.isFinite(n))return '';
+  const abs=Math.abs(n);
+
+  if(abs>=1e6)return `${fmt(n/1e6,1)}M`;
+  if(abs>=1e3)return `${fmt(n/1e3,1)}K`;
+  if(abs>=100)return fmt(n,0);
+  if(abs>=1)return fmt(n,2);
+  if(abs>=.01)return fmt(n,3);
+  if(abs===0)return '0';
+  return n.toExponential(1);
+}
+
+function chartOverlayIndicatorSeries(candles,padCount){
+  const active=new Set(
+    Array.isArray(state.chartIndicators?.overlays)
+      ? state.chartIndicators.overlays
+      : []
+  );
+
+  if(!active.size)return [];
+
+  const close=candles.map(candle=>Number(candle.close));
+  const pad=data=>indicatorPad(data,padCount);
+  const line=(name,data,color,width=1)=>({
+    name,
+    type:'line',
+    xAxisIndex:0,
+    yAxisIndex:0,
+    data:pad(data),
+    showSymbol:false,
+    connectNulls:false,
+    smooth:false,
+    silent:true,
+    animation:false,
+    tooltip:{show:false},
+    emphasis:{disabled:true},
+    lineStyle:{color,width,opacity:.9},
+    z:4
+  });
+
+  const series=[];
+
+  if(active.has('MA')){
+    series.push(
+      line('MA5',simpleMovingAverageValues(close,5),'#55d9ff'),
+      line('MA10',simpleMovingAverageValues(close,10),'#a98bff'),
+      line('MA20',simpleMovingAverageValues(close,20),'#849aa5')
+    );
+  }
+
+  if(active.has('EMA')){
+    series.push(
+      line('EMA7',emaValues(close,7),'#4de6a1'),
+      line('EMA21',emaValues(close,21),'#6a99ff')
+    );
+  }
+
+  if(active.has('BOLL')){
+    const boll=bollingerValues(close,20,2);
+    series.push(
+      line('BOLL U',boll.upper,'#6a99ff'),
+      line('BOLL M',boll.middle,'#91a6b0'),
+      line('BOLL L',boll.lower,'#6a99ff')
+    );
+  }
+
+  if(active.has('SAR')){
+    series.push({
+      name:'SAR',
+      type:'scatter',
+      xAxisIndex:0,
+      yAxisIndex:0,
+      data:pad(parabolicSarValues(candles)),
+      symbol:'circle',
+      symbolSize:3,
+      silent:true,
+      animation:false,
+      tooltip:{show:false},
+      emphasis:{disabled:true},
+      itemStyle:{color:'#b9cbd3',opacity:.86},
+      z:5
+    });
+  }
+
+  return series;
+}
+
+function chartLowerIndicatorPane(candles,padCount,volumeData,ma5,ma10){
+  const name=String(state.chartIndicators?.lower||'').toUpperCase();
+  if(!name)return null;
+
+  const close=candles.map(candle=>Number(candle.close));
+  const pad=data=>indicatorPad(data,padCount);
+
+  const line=(seriesName,data,color,width=1)=>({
+    name:seriesName,
+    type:'line',
+    xAxisIndex:1,
+    yAxisIndex:1,
+    data:pad(data),
+    showSymbol:false,
+    connectNulls:false,
+    smooth:false,
+    silent:true,
+    animation:false,
+    emphasis:{disabled:true},
+    lineStyle:{color,width,opacity:.9}
+  });
+
+  const base={
+    name,
+    legend:[],
+    series:[],
+    axis:{
+      scale:true,
+      formatter:value=>compactIndicatorValue(value)
+    }
+  };
+
+  if(name==='VOL'){
+    base.legend=['VOL','MAVOL5','MAVOL10'];
+    base.axis.formatter=value=>compactVolume(value);
+    base.series=[
+      {
+        name:'VOL',
+        type:'bar',
+        xAxisIndex:1,
+        yAxisIndex:1,
+        data:volumeData,
+        barWidth:'64%',
+        large:true,
+        largeThreshold:800,
+        emphasis:{disabled:true}
+      },
+      {
+        name:'MAVOL5',
+        type:'line',
+        xAxisIndex:1,
+        yAxisIndex:1,
+        data:ma5,
+        showSymbol:false,
+        connectNulls:false,
+        smooth:false,
+        silent:true,
+        lineStyle:{width:1,color:'#ef9d42',opacity:.9}
+      },
+      {
+        name:'MAVOL10',
+        type:'line',
+        xAxisIndex:1,
+        yAxisIndex:1,
+        data:ma10,
+        showSymbol:false,
+        connectNulls:false,
+        smooth:false,
+        silent:true,
+        lineStyle:{width:1,color:'#d36bdf',opacity:.86}
+      }
+    ];
+    return base;
+  }
+
+  if(name==='MACD'){
+    const macd=macdValues(close);
+    const histogram=pad(macd.histogram).map(value=>{
+      const n=Number(value);
+      if(!Number.isFinite(n))return '-';
+      return {
+        value:n,
+        itemStyle:{
+          color:n>=0
+            ? 'rgba(77,230,161,.62)'
+            : 'rgba(255,102,121,.62)'
+        }
+      };
+    });
+
+    base.legend=['MACD','SIGNAL','HIST'];
+    base.series=[
+      {
+        name:'HIST',
+        type:'bar',
+        xAxisIndex:1,
+        yAxisIndex:1,
+        data:histogram,
+        barWidth:'58%',
+        emphasis:{disabled:true}
+      },
+      line('MACD',macd.macd,'#55d9ff'),
+      line('SIGNAL',macd.signal,'#d36bdf')
+    ];
+    return base;
+  }
+
+  if(name==='KDJ'){
+    const kdj=kdjValues(candles,9);
+    base.legend=['K','D','J'];
+    base.axis.formatter=value=>fmt(value,0);
+    base.series=[
+      line('K',kdj.k,'#55d9ff'),
+      line('D',kdj.d,'#d36bdf'),
+      line('J',kdj.j,'#4de6a1')
+    ];
+    return base;
+  }
+
+  if(name==='RSI'){
+    base.legend=['RSI6','RSI12','RSI24'];
+    base.axis={
+      scale:false,
+      min:0,
+      max:100,
+      formatter:value=>fmt(value,0)
+    };
+    base.series=[
+      line('RSI6',rsiValues(close,6),'#55d9ff'),
+      line('RSI12',rsiValues(close,12),'#a98bff'),
+      line('RSI24',rsiValues(close,24),'#4de6a1')
+    ];
+    return base;
+  }
+
+  if(name==='STOCHRSI'){
+    const stoch=stochRsiValues(close,14,14);
+    base.legend=['STOCH K','STOCH D'];
+    base.axis={
+      scale:false,
+      min:0,
+      max:100,
+      formatter:value=>fmt(value,0)
+    };
+    base.series=[
+      line('STOCH K',stoch.k,'#55d9ff'),
+      line('STOCH D',stoch.d,'#d36bdf')
+    ];
+    return base;
+  }
+
+  return null;
+}
+
 function chartLevelInfo(candles){
   const levels=strategyLevels();
   if(!candles.length || !levels.length){
@@ -2205,6 +2824,29 @@ function drawChart(){
   const ma5=movingAverage(candles,5).concat(futurePad);
   const ma10=movingAverage(candles,10).concat(futurePad);
 
+  const overlayIndicatorSeries=
+    chartOverlayIndicatorSeries(
+      candles,
+      display.padCount
+    );
+
+  const lowerIndicatorPane=
+    chartLowerIndicatorPane(
+      candles,
+      display.padCount,
+      volumeData,
+      ma5,
+      ma10
+    );
+
+  const lowerIndicatorVisible=Boolean(lowerIndicatorPane);
+  const lowerIndicatorSeries=lowerIndicatorPane?.series || [];
+  const lowerIndicatorLegend=lowerIndicatorPane?.legend || [];
+  const lowerIndicatorAxis=lowerIndicatorPane?.axis || {
+    scale:true,
+    formatter:value=>compactIndicatorValue(value)
+  };
+
   const levelInfo=chartLevelInfo(candles);
   chartRuntime.offscreenLevels=levelInfo.offscreen;
 
@@ -2325,7 +2967,8 @@ function drawChart(){
         }
       },
       legend:{
-        data:['VOL','MAVOL5','MAVOL10'],
+        show:lowerIndicatorVisible,
+        data:lowerIndicatorLegend,
         left:10,
         top:'72%',
         itemWidth:10,
@@ -2341,14 +2984,15 @@ function drawChart(){
           left:10,
           right:76,
           top:42,
-          height:'55%',
+          height:lowerIndicatorVisible ? '55%' : '78%',
           containLabel:false
         },
         {
+          show:lowerIndicatorVisible,
           left:10,
           right:76,
-          top:'77%',
-          height:'15%',
+          top:lowerIndicatorVisible ? '77%' : '94%',
+          height:lowerIndicatorVisible ? '15%' : 0,
           containLabel:false
         }
       ],
@@ -2360,7 +3004,13 @@ function drawChart(){
           boundaryGap:true,
           axisLine:{show:false},
           axisTick:{show:false},
-          axisLabel:{show:false},
+          axisLabel:{
+            show:!lowerIndicatorVisible,
+            color:'#536f7b',
+            fontSize:8,
+            hideOverlap:true,
+            formatter:value=>chartTimeLabel(value)
+          },
           splitLine:{show:false},
           axisPointer:{
             show:!touchUi,
@@ -2375,16 +3025,18 @@ function drawChart(){
           max:Math.max(0,labels.length-1)
         },
         {
+          show:lowerIndicatorVisible,
           type:'category',
           data:labels,
           gridIndex:1,
           boundaryGap:true,
           axisLine:{
-            show:true,
+            show:lowerIndicatorVisible,
             lineStyle:{color:'rgba(111,154,172,.10)'}
           },
           axisTick:{show:false},
           axisLabel:{
+            show:lowerIndicatorVisible,
             color:'#536f7b',
             fontSize:8,
             hideOverlap:true,
@@ -2431,20 +3083,24 @@ function drawChart(){
           }
         },
         {
+          show:lowerIndicatorVisible,
           type:'value',
           gridIndex:1,
           position:'right',
-          scale:true,
+          scale:lowerIndicatorAxis.scale!==false,
+          min:lowerIndicatorAxis.min,
+          max:lowerIndicatorAxis.max,
           axisLine:{show:false},
           axisTick:{show:false},
           axisLabel:{
+            show:lowerIndicatorVisible,
             color:'#455c67',
             fontSize:7,
             margin:10,
-            formatter:value=>compactVolume(value)
+            formatter:lowerIndicatorAxis.formatter
           },
           splitLine:{
-            show:true,
+            show:lowerIndicatorVisible,
             lineStyle:{
               color:'rgba(106,145,162,.045)',
               width:1
@@ -2455,7 +3111,7 @@ function drawChart(){
       dataZoom:[
         {
           type:'inside',
-          xAxisIndex:[0,1],
+          xAxisIndex:lowerIndicatorVisible ? [0,1] : [0],
           filterMode:'filter',
           startValue:range.startValue,
           endValue:range.endValue,
@@ -2491,51 +3147,9 @@ function drawChart(){
           barWidth:'78%',
           emphasis:{disabled:true}
         },
+        ...overlayIndicatorSeries,
         ...horizontalLevelSeries,
-        {
-          name:'VOL',
-          type:'bar',
-          xAxisIndex:1,
-          yAxisIndex:1,
-          data:volumeData,
-          // Keep volume aligned with the same zoom geometry.
-          barWidth:'64%',
-          large:true,
-          largeThreshold:800,
-          emphasis:{disabled:true}
-        },
-        {
-          name:'MAVOL5',
-          type:'line',
-          xAxisIndex:1,
-          yAxisIndex:1,
-          data:ma5,
-          showSymbol:false,
-          connectNulls:false,
-          smooth:false,
-          silent:true,
-          lineStyle:{
-            width:1,
-            color:'#ef9d42',
-            opacity:.9
-          }
-        },
-        {
-          name:'MAVOL10',
-          type:'line',
-          xAxisIndex:1,
-          yAxisIndex:1,
-          data:ma10,
-          showSymbol:false,
-          connectNulls:false,
-          smooth:false,
-          silent:true,
-          lineStyle:{
-            width:1,
-            color:'#d36bdf',
-            opacity:.86
-          }
-        }
+        ...lowerIndicatorSeries
       ]
     },
     {
@@ -2762,6 +3376,13 @@ async function connectWallet() {
 function bind() {
   $('walletBtn').addEventListener('click', connectWallet);
 
+  const indicatorBar=$('indicatorBar');
+  indicatorBar?.addEventListener('click',event=>{
+    const button=event.target.closest('[data-indicator]');
+    if(button)toggleChartIndicator(button);
+  });
+  syncChartIndicatorButtons();
+
   $('priceModeBtn').addEventListener('click', () => {
     const nextMetric =
       state.chartMetric === 'price'
@@ -2948,3 +3569,5 @@ init();
 /* MEMEFLOW_TRADING_CHART_V30_16_MOBILE_PAN_NO_SHADOW */
 /* MEMEFLOW_TRADING_CHART_V30_17_STABLE_TOKEN_AVATAR */
 /* MEMEFLOW_TRADING_CHART_V30_18_TOKEN_BIRTH_ANCHORED_TIMEFRAMES */
+
+/* MEMEFLOW_TRADING_CHART_V30_24_OPTIONAL_INDICATORS */

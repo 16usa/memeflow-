@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#03070a">
   <title>MEMEFLOW Trading Terminal</title>
-  <link rel="stylesheet" href="/trading.css?v=gmgn1">
+  <link rel="stylesheet" href="/trading.css?v=gmgn-indicators1">
 </head>
 <body>
   <div class="shell">
@@ -84,13 +84,28 @@
           </div>
 
           <div class="chart-wrap">
-            <div id="chartCanvas" aria-label="Live candlestick and volume chart"></div>
+            <div id="chartCanvas" aria-label="Live candlestick chart with optional technical indicators"></div>
             <div id="chartEmpty" class="chart-empty">
               <strong>Live candles</strong>
               <span>Select a token. Tap the top-right value to switch USD price / market cap.</span>
             </div>
             <div id="chartLegend" class="chart-legend"></div>
             <div id="liveTradeTape" class="live-trade-tape" aria-hidden="true"></div>
+          </div>
+
+          <div id="indicatorBar" class="indicator-bar" aria-label="Chart indicators">
+            <div class="indicator-scroll">
+              <button type="button" data-indicator="MA" data-kind="overlay" aria-pressed="false">MA</button>
+              <button type="button" data-indicator="EMA" data-kind="overlay" aria-pressed="false">EMA</button>
+              <button type="button" data-indicator="BOLL" data-kind="overlay" aria-pressed="false">BOLL</button>
+              <button type="button" data-indicator="SAR" data-kind="overlay" aria-pressed="false">SAR</button>
+              <span class="indicator-divider" aria-hidden="true"></span>
+              <button type="button" data-indicator="VOL" data-kind="lower" aria-pressed="false">VOL</button>
+              <button type="button" data-indicator="MACD" data-kind="lower" aria-pressed="false">MACD</button>
+              <button type="button" data-indicator="KDJ" data-kind="lower" aria-pressed="false">KDJ</button>
+              <button type="button" data-indicator="RSI" data-kind="lower" aria-pressed="false">RSI</button>
+              <button type="button" data-indicator="STOCHRSI" data-kind="lower" aria-pressed="false">StochRSI</button>
+            </div>
           </div>
 
           <div class="selected-metrics">
@@ -257,7 +272,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/echarts@6.1.0/dist/echarts.min.js"></script>
-  <script type="module" src="/trading.js?v=v3023c-levels3"></script>
+  <script type="module" src="/trading.js?v=v3024-indicators1"></script>
   <!-- MEMEFLOW_TRADING_CHART_V30_4 -->
   <!-- MEMEFLOW_TRADING_CHART_V30_5_EXECUTION_OHLC -->
   <!-- MEMEFLOW_TRADING_CHART_V30_6_USD_CURVE_MARK -->
@@ -278,3 +293,4 @@
 <!-- MEMEFLOW_TRADING_CHART_V30_22_LEFT_ANCHORED_NEWBORN -->
 <!-- MEMEFLOW_TRADING_CHART_V30_23B_PRICE_MC_LEVEL_PARITY_AUDITED -->
 <!-- MEMEFLOW_TRADING_CHART_V30_23C_CACHE_ACTIVATED -->
+<!-- MEMEFLOW_TRADING_CHART_V30_24_OPTIONAL_INDICATORS -->
