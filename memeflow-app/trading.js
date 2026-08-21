@@ -31,7 +31,11 @@ const state = {
   })(),
   chartIndicators: (() => {
     const overlayAllowed = new Set(['MA', 'EMA', 'BOLL', 'SAR']);
-    const lowerAllowed = new Set(['VOL', 'MACD', 'KDJ', 'RSI', 'STOCHRSI']);
+    const lowerAllowed = new Set([
+      'VOL', 'MACD', 'KDJ', 'RSI', 'STOCHRSI',
+      'TRIX', 'OBV', 'WR', 'CCI', 'ROC', 'DMI',
+      'VR', 'PSY', 'BIAS', 'DMA', 'EMV', 'ATR'
+    ]);
 
     try {
       const parsed = JSON.parse(
@@ -2139,6 +2143,324 @@ function stochRsiValues(values,rsiPeriod=14,stochPeriod=14){
   return {k,d};
 }
 
+function trueRangeValues(candles){
+  const rows=Array.isArray(candles)?candles:[];
+  const out=new Array(rows.length).fill('-');
+
+  for(let i=0;i<rows.length;i++){
+    const high=Number(rows[i]?.high);
+    const low=Number(rows[i]?.low);
+    if(!(Number.isFinite(high) && Number.isFinite(low)))continue;
+
+    if(i===0){
+      out[i]=Math.max(0,high-low);
+      continue;
+    }
+
+    const prevClose=Number(rows[i-1]?.close);
+    if(!Number.isFinite(prevClose))continue;
+
+    out[i]=Math.max(
+      Math.max(0,high-low),
+      Math.abs(high-prevClose),
+      Math.abs(low-prevClose)
+    );
+  }
+
+  return out;
+}
+
+function atrValues(candles,period=14){
+  const tr=trueRangeValues(candles).map(value=>
+    Number.isFinite(Number(value)) ? Number(value) : 0
+  );
+  const out=new Array(tr.length).fill('-');
+  const p=Math.max(2,Number(period)||14);
+  if(tr.length<p)return out;
+
+  let atr=tr.slice(0,p).reduce((sum,value)=>sum+value,0)/p;
+  out[p-1]=atr;
+
+  for(let i=p;i<tr.length;i++){
+    atr=((atr*(p-1))+tr[i])/p;
+    out[i]=atr;
+  }
+
+  return out;
+}
+
+function trixValues(values,period=12){
+  const clean=Array.isArray(values)?values.map(Number):[];
+  const ema1=emaValues(clean,period).map(value=>Number(value)||0);
+  const ema2=emaValues(ema1,period).map(value=>Number(value)||0);
+  const ema3=emaValues(ema2,period);
+  const out=new Array(clean.length).fill('-');
+
+  for(let i=1;i<ema3.length;i++){
+    const prev=Number(ema3[i-1]);
+    const current=Number(ema3[i]);
+    if(Number.isFinite(prev) && prev!==0 && Number.isFinite(current)){
+      out[i]=100*((current-prev)/Math.abs(prev));
+    }
+  }
+
+  return out;
+}
+
+function obvValues(candles){
+  const rows=Array.isArray(candles)?candles:[];
+  const out=new Array(rows.length).fill('-');
+  let obv=0;
+
+  for(let i=0;i<rows.length;i++){
+    const volume=Math.max(0,Number(rows[i]?.volumeUsd||0));
+
+    if(i===0){
+      out[i]=obv;
+      continue;
+    }
+
+    const close=Number(rows[i]?.close);
+    const prev=Number(rows[i-1]?.close);
+    if(!(Number.isFinite(close) && Number.isFinite(prev)))continue;
+
+    if(close>prev)obv+=volume;
+    else if(close<prev)obv-=volume;
+
+    out[i]=obv;
+  }
+
+  return out;
+}
+
+function williamsRValues(candles,period=14){
+  const rows=Array.isArray(candles)?candles:[];
+  const out=new Array(rows.length).fill('-');
+  const p=Math.max(2,Number(period)||14);
+
+  for(let i=p-1;i<rows.length;i++){
+    const window=rows.slice(i-p+1,i+1);
+    const high=Math.max(...window.map(row=>Number(row.high)));
+    const low=Math.min(...window.map(row=>Number(row.low)));
+    const close=Number(rows[i]?.close);
+
+    if(!(Number.isFinite(high) && Number.isFinite(low) && Number.isFinite(close)))continue;
+
+    out[i]=high===low
+      ? -50
+      : -100*((high-close)/(high-low));
+  }
+
+  return out;
+}
+
+function cciValues(candles,period=20){
+  const rows=Array.isArray(candles)?candles:[];
+  const typical=rows.map(row=>
+    (Number(row.high)+Number(row.low)+Number(row.close))/3
+  );
+  const out=new Array(rows.length).fill('-');
+  const p=Math.max(2,Number(period)||20);
+
+  for(let i=p-1;i<rows.length;i++){
+    const window=typical.slice(i-p+1,i+1);
+    if(!window.every(Number.isFinite))continue;
+
+    const mean=window.reduce((sum,value)=>sum+value,0)/p;
+    const deviation=
+      window.reduce((sum,value)=>sum+Math.abs(value-mean),0)/p;
+
+    out[i]=deviation===0
+      ? 0
+      : (typical[i]-mean)/(.015*deviation);
+  }
+
+  return out;
+}
+
+function rocValues(values,period=12){
+  const clean=Array.isArray(values)?values.map(Number):[];
+  const out=new Array(clean.length).fill('-');
+  const p=Math.max(1,Number(period)||12);
+
+  for(let i=p;i<clean.length;i++){
+    const prev=Number(clean[i-p]);
+    const current=Number(clean[i]);
+    if(Number.isFinite(prev) && prev!==0 && Number.isFinite(current)){
+      out[i]=100*((current-prev)/Math.abs(prev));
+    }
+  }
+
+  return out;
+}
+
+function dmiValues(candles,period=14){
+  const rows=Array.isArray(candles)?candles:[];
+  const p=Math.max(2,Number(period)||14);
+  const plusDm=new Array(rows.length).fill(0);
+  const minusDm=new Array(rows.length).fill(0);
+  const tr=trueRangeValues(rows).map(value=>Number(value)||0);
+  const plusDi=new Array(rows.length).fill('-');
+  const minusDi=new Array(rows.length).fill('-');
+  const dx=new Array(rows.length).fill('-');
+  const adx=new Array(rows.length).fill('-');
+
+  for(let i=1;i<rows.length;i++){
+    const up=Number(rows[i].high)-Number(rows[i-1].high);
+    const down=Number(rows[i-1].low)-Number(rows[i].low);
+    plusDm[i]=up>down && up>0 ? up : 0;
+    minusDm[i]=down>up && down>0 ? down : 0;
+  }
+
+  if(rows.length<=p)return {plusDi,minusDi,adx};
+
+  let smTr=tr.slice(1,p+1).reduce((sum,value)=>sum+value,0);
+  let smPlus=plusDm.slice(1,p+1).reduce((sum,value)=>sum+value,0);
+  let smMinus=minusDm.slice(1,p+1).reduce((sum,value)=>sum+value,0);
+
+  for(let i=p;i<rows.length;i++){
+    if(i>p){
+      smTr=smTr-(smTr/p)+tr[i];
+      smPlus=smPlus-(smPlus/p)+plusDm[i];
+      smMinus=smMinus-(smMinus/p)+minusDm[i];
+    }
+
+    if(smTr<=0)continue;
+
+    const plus=100*(smPlus/smTr);
+    const minus=100*(smMinus/smTr);
+    plusDi[i]=plus;
+    minusDi[i]=minus;
+
+    const denom=plus+minus;
+    dx[i]=denom===0 ? 0 : 100*Math.abs(plus-minus)/denom;
+  }
+
+  const first=(p*2)-1;
+  if(rows.length>first){
+    const initial=dx.slice(p,first+1).map(Number).filter(Number.isFinite);
+    if(initial.length){
+      let current=initial.reduce((sum,value)=>sum+value,0)/initial.length;
+      adx[first]=current;
+
+      for(let i=first+1;i<rows.length;i++){
+        const value=Number(dx[i]);
+        if(!Number.isFinite(value))continue;
+        current=((current*(p-1))+value)/p;
+        adx[i]=current;
+      }
+    }
+  }
+
+  return {plusDi,minusDi,adx};
+}
+
+function vrValues(candles,period=26){
+  const rows=Array.isArray(candles)?candles:[];
+  const out=new Array(rows.length).fill('-');
+  const p=Math.max(2,Number(period)||26);
+
+  for(let i=p;i<rows.length;i++){
+    let up=0;
+    let down=0;
+    let flat=0;
+
+    for(let j=i-p+1;j<=i;j++){
+      const close=Number(rows[j]?.close);
+      const prev=Number(rows[j-1]?.close);
+      const volume=Math.max(0,Number(rows[j]?.volumeUsd||0));
+      if(!(Number.isFinite(close) && Number.isFinite(prev)))continue;
+
+      if(close>prev)up+=volume;
+      else if(close<prev)down+=volume;
+      else flat+=volume;
+    }
+
+    const denom=down+(flat*.5);
+    out[i]=denom===0
+      ? (up>0 ? 400 : 100)
+      : 100*((up+(flat*.5))/denom);
+  }
+
+  return out;
+}
+
+function psyValues(values,period=12){
+  const clean=Array.isArray(values)?values.map(Number):[];
+  const out=new Array(clean.length).fill('-');
+  const p=Math.max(2,Number(period)||12);
+
+  for(let i=p;i<clean.length;i++){
+    let advances=0;
+    for(let j=i-p+1;j<=i;j++){
+      if(clean[j]>clean[j-1])advances++;
+    }
+    out[i]=100*(advances/p);
+  }
+
+  return out;
+}
+
+function biasValues(values,period=12){
+  const clean=Array.isArray(values)?values.map(Number):[];
+  const ma=simpleMovingAverageValues(clean,period);
+  const out=new Array(clean.length).fill('-');
+
+  for(let i=0;i<clean.length;i++){
+    const avg=Number(ma[i]);
+    const close=Number(clean[i]);
+    if(Number.isFinite(avg) && avg!==0 && Number.isFinite(close)){
+      out[i]=100*((close-avg)/Math.abs(avg));
+    }
+  }
+
+  return out;
+}
+
+function dmaValues(values,fastPeriod=10,slowPeriod=50,amaPeriod=10){
+  const clean=Array.isArray(values)?values.map(Number):[];
+  const fast=simpleMovingAverageValues(clean,fastPeriod);
+  const slow=simpleMovingAverageValues(clean,slowPeriod);
+  const dma=new Array(clean.length).fill('-');
+
+  for(let i=0;i<clean.length;i++){
+    const a=Number(fast[i]);
+    const b=Number(slow[i]);
+    if(Number.isFinite(a) && Number.isFinite(b))dma[i]=a-b;
+  }
+
+  return {
+    dma,
+    ama:sparseMovingAverageValues(dma,amaPeriod)
+  };
+}
+
+function emvValues(candles,period=14){
+  const rows=Array.isArray(candles)?candles:[];
+  const raw=new Array(rows.length).fill('-');
+
+  for(let i=1;i<rows.length;i++){
+    const high=Number(rows[i]?.high);
+    const low=Number(rows[i]?.low);
+    const prevHigh=Number(rows[i-1]?.high);
+    const prevLow=Number(rows[i-1]?.low);
+    const volume=Math.max(0,Number(rows[i]?.volumeUsd||0));
+
+    if(![high,low,prevHigh,prevLow].every(Number.isFinite))continue;
+
+    const midpointMove=((high+low)/2)-((prevHigh+prevLow)/2);
+    const range=Math.max(
+      Math.abs(high-low),
+      Math.max(Math.abs(high),1)*1e-12
+    );
+    const boxRatio=(volume||1)/range;
+
+    raw[i]=boxRatio===0 ? 0 : midpointMove/boxRatio;
+  }
+
+  return sparseMovingAverageValues(raw,period);
+}
+
 function compactIndicatorValue(value){
   const n=Number(value);
   if(!Number.isFinite(n))return '';
@@ -2376,6 +2698,112 @@ function chartLowerIndicatorPane(candles,padCount,volumeData,ma5,ma10){
       line('STOCH K',stoch.k,'#55d9ff'),
       line('STOCH D',stoch.d,'#d36bdf')
     ];
+    return base;
+  }
+
+  if(name==='TRIX'){
+    const trix=trixValues(close,12);
+    const signal=sparseMovingAverageValues(trix,9);
+    base.legend=['TRIX','MATRIX'];
+    base.series=[
+      line('TRIX',trix,'#55d9ff'),
+      line('MATRIX',signal,'#d36bdf')
+    ];
+    return base;
+  }
+
+  if(name==='OBV'){
+    const obv=obvValues(candles);
+    const numeric=obv.map(value=>Number.isFinite(Number(value)) ? Number(value) : 0);
+    base.legend=['OBV','MA20'];
+    base.series=[
+      line('OBV',obv,'#55d9ff'),
+      line('MA20',simpleMovingAverageValues(numeric,20),'#d36bdf')
+    ];
+    return base;
+  }
+
+  if(name==='WR'){
+    base.legend=['WR14'];
+    base.axis={scale:false,min:-100,max:0,formatter:value=>fmt(value,0)};
+    base.series=[line('WR14',williamsRValues(candles,14),'#55d9ff')];
+    return base;
+  }
+
+  if(name==='CCI'){
+    base.legend=['CCI20'];
+    base.series=[line('CCI20',cciValues(candles,20),'#55d9ff')];
+    return base;
+  }
+
+  if(name==='ROC'){
+    const roc=rocValues(close,12);
+    base.legend=['ROC12','MAROC6'];
+    base.series=[
+      line('ROC12',roc,'#55d9ff'),
+      line('MAROC6',sparseMovingAverageValues(roc,6),'#d36bdf')
+    ];
+    return base;
+  }
+
+  if(name==='DMI'){
+    const dmi=dmiValues(candles,14);
+    base.legend=['+DI','-DI','ADX'];
+    base.axis={scale:false,min:0,max:100,formatter:value=>fmt(value,0)};
+    base.series=[
+      line('+DI',dmi.plusDi,'#4de6a1'),
+      line('-DI',dmi.minusDi,'#ff6679'),
+      line('ADX',dmi.adx,'#55d9ff')
+    ];
+    return base;
+  }
+
+  if(name==='VR'){
+    base.legend=['VR26'];
+    base.series=[line('VR26',vrValues(candles,26),'#55d9ff')];
+    return base;
+  }
+
+  if(name==='PSY'){
+    base.legend=['PSY12'];
+    base.axis={scale:false,min:0,max:100,formatter:value=>fmt(value,0)};
+    base.series=[line('PSY12',psyValues(close,12),'#55d9ff')];
+    return base;
+  }
+
+  if(name==='BIAS'){
+    base.legend=['BIAS6','BIAS12','BIAS24'];
+    base.series=[
+      line('BIAS6',biasValues(close,6),'#55d9ff'),
+      line('BIAS12',biasValues(close,12),'#a98bff'),
+      line('BIAS24',biasValues(close,24),'#4de6a1')
+    ];
+    return base;
+  }
+
+  if(name==='DMA'){
+    const dma=dmaValues(close,10,50,10);
+    base.legend=['DMA','AMA'];
+    base.series=[
+      line('DMA',dma.dma,'#55d9ff'),
+      line('AMA',dma.ama,'#d36bdf')
+    ];
+    return base;
+  }
+
+  if(name==='EMV'){
+    const emv=emvValues(candles,14);
+    base.legend=['EMV14','MAEMV9'];
+    base.series=[
+      line('EMV14',emv,'#55d9ff'),
+      line('MAEMV9',sparseMovingAverageValues(emv,9),'#d36bdf')
+    ];
+    return base;
+  }
+
+  if(name==='ATR'){
+    base.legend=['ATR14'];
+    base.series=[line('ATR14',atrValues(candles,14),'#55d9ff')];
     return base;
   }
 
@@ -3571,3 +3999,5 @@ init();
 /* MEMEFLOW_TRADING_CHART_V30_18_TOKEN_BIRTH_ANCHORED_TIMEFRAMES */
 
 /* MEMEFLOW_TRADING_CHART_V30_24_OPTIONAL_INDICATORS */
+
+/* MEMEFLOW_TRADING_CHART_V30_26_EXTENDED_INDICATORS */
