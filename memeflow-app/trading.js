@@ -1812,6 +1812,76 @@ function levelColor(level){
   return '#a98bff';
 }
 
+// V30.23: horizontal overlays are normal line series instead of candlestick
+// markLine. This keeps LIVE / ENTRY / SL / TP identical in PRICE and MARKET CAP,
+// including very small price values such as 0.00000x.
+function chartHorizontalLevelSeries(labels,visibleLevels,liveValue){
+  const count=Array.isArray(labels)?labels.length:0;
+  if(!count)return [];
+
+  const constantData=value=>
+    Array.from({length:count},()=>Number(value));
+
+  const rows=(Array.isArray(visibleLevels)?visibleLevels:[])
+    .filter(level=>Number.isFinite(Number(level?.price)) && Number(level.price)>0)
+    .map((level,index)=>({
+      name:`__MF_LEVEL_${index}_${String(level.kind||'level')}`,
+      type:'line',
+      xAxisIndex:0,
+      yAxisIndex:0,
+      data:constantData(level.price),
+      showSymbol:false,
+      symbol:'none',
+      silent:true,
+      animation:false,
+      tooltip:{show:false},
+      emphasis:{disabled:true},
+      lineStyle:{
+        color:levelColor(level),
+        width:1,
+        type:'dashed',
+        opacity:.85
+      },
+      z:5
+    }));
+
+  const live=Number(liveValue);
+  if(Number.isFinite(live) && live>0){
+    rows.push({
+      name:'__MF_LIVE_LEVEL',
+      type:'line',
+      xAxisIndex:0,
+      yAxisIndex:0,
+      data:constantData(live),
+      showSymbol:false,
+      symbol:'none',
+      silent:true,
+      animation:false,
+      tooltip:{show:false},
+      emphasis:{disabled:true},
+      lineStyle:{
+        color:'#55d9ff',
+        width:1,
+        type:'dashed',
+        opacity:.82
+      },
+      endLabel:{
+        show:true,
+        color:'#021014',
+        backgroundColor:'#55d9ff',
+        borderRadius:2,
+        padding:[2,4],
+        fontSize:9,
+        formatter:()=>formatChartValue(live)
+      },
+      labelLayout:{hideOverlap:false},
+      z:6
+    });
+  }
+
+  return rows;
+}
+
 // V30.19: keep sparse timeframes visually dense without inventing candles.
 // These are render-only empty category slots. They never enter OHLC, volume,
 // moving-average, trade, signal, TP/SL, or execution logic.
@@ -2140,52 +2210,24 @@ function drawChart(){
 
   const last=candles[candles.length-1];
 
-  const markLines=[
-    ...levelInfo.visible.map(level=>({
-      yAxis:Number(level.price),
-      name:String(level.label||''),
-      lineStyle:{
-        color:levelColor(level),
-        width:1,
-        type:'dashed',
-        opacity:.85
-      },
-      label:{
-        show:false
-      }
-    })),
-    {
-      yAxis:Number(last.close),
-      name:'LIVE',
-      lineStyle:{
-        color:'#55d9ff',
-        width:1,
-        type:'dashed',
-        opacity:.82
-      },
-      label:{
-        show:true,
-        position:'end',
-        color:'#021014',
-        backgroundColor:'#55d9ff',
-        borderRadius:2,
-        padding:[2,4],
-        fontSize:9,
-        formatter:()=>formatChartValue(last.close)
-      }
-    }
-  ];
+  // V30.23: use one shared overlay model for both metrics.
+  const horizontalLevelSeries=chartHorizontalLevelSeries(
+    labels,
+    levelInfo.visible,
+    last.close
+  );
 
-  const contextChanged=
+  // V30.23: PRICE <-> MARKET CAP is a Y-axis unit conversion only.
+  // Mint/timeframe changes may refit X; metric changes must preserve X viewport.
+  const xContextChanged=
     chartRuntime.mint!==state.selectedMint ||
-    chartRuntime.timeframe!==state.timeframe ||
-    chartRuntime.metric!==state.chartMetric;
+    chartRuntime.timeframe!==state.timeframe;
 
   let range=null;
 
   if(
     chartRuntime.forceFit ||
-    contextChanged ||
+    xContextChanged ||
     !chartRuntime.viewport.startValue ||
     !chartRuntime.viewport.endValue
   ){
@@ -2447,14 +2489,9 @@ function drawChart(){
           // Percentage width keeps the inter-candle gap proportional instead
           // of leaving a fixed 14px candle inside an ever-wider category.
           barWidth:'78%',
-          emphasis:{disabled:true},
-          markLine:{
-            silent:true,
-            symbol:['none','none'],
-            data:markLines,
-            lineStyle:{width:1}
-          }
+          emphasis:{disabled:true}
         },
+        ...horizontalLevelSeries,
         {
           name:'VOL',
           type:'bar',
@@ -2753,10 +2790,11 @@ function bind() {
     state.chartMetric = nextMetric;
     persistChartMetric();
 
-    chartRuntime.forceFit = true;
+    // V30.23: switching the display metric must not move/zoom the chart.
+    // If a chart is already mounted, preserve its exact X viewport.
+    chartRuntime.forceFit = !chartRuntime.labels.length;
     chartRuntime.dataKey = '';
     chartRuntime.levelsKey = '';
-    chartRuntime.metric = null;
     renderPriceModeSummary();
     scheduleChart();
   });
