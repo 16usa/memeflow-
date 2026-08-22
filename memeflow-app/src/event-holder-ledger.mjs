@@ -94,6 +94,9 @@ export class EventHolderLedger{
       mintsSeen:0,
       tradeEventsSeen:0,
       userBalanceUpdates:0,
+      directDuplicateEventsIgnored:0,
+      canonicalSlotCoveredEventsIgnored:0,
+      canonicalReplayEvents:0,
       authoritativeUserPostBalanceUpdates:0,
       userZeroBalanceRemovals:0,
       protocolOwnersIgnored:0,
@@ -120,7 +123,13 @@ export class EventHolderLedger{
   row(m,decimals=6){
     let r=this.byMint.get(m);
     if(!r){
-      r={mint:m,creator:null,balances:new Map(),firstSeenAt:Date.now(),createdAt:null,lastSeenAt:null,txCount:0,decimals,totalSupplyUi:null,canonicalTokenAccountCount:null,firstBuyAt:new Map(),slotBuyers:new Map(),bundleUsers:new Set()};
+      r={
+        mint:m,creator:null,balances:new Map(),firstSeenAt:Date.now(),
+        createdAt:null,lastSeenAt:null,txCount:0,decimals,
+        totalSupplyUi:null,canonicalTokenAccountCount:null,canonicalSlot:null,
+        firstBuyAt:new Map(),slotBuyers:new Map(),bundleUsers:new Set(),
+        recentDirectEvents:[],seenDirectEventIds:new Set()
+      };
       this.byMint.set(m,r);
       this.metrics.mintsSeen++;
       if(this.byMint.size>MAX_MINTS+100)this.prune();
@@ -129,6 +138,9 @@ export class EventHolderLedger{
       if(!(r.firstBuyAt instanceof Map))r.firstBuyAt=new Map();
       if(!(r.slotBuyers instanceof Map))r.slotBuyers=new Map();
       if(!(r.bundleUsers instanceof Set))r.bundleUsers=new Set();
+      if(!Array.isArray(r.recentDirectEvents))r.recentDirectEvents=[];
+      if(!(r.seenDirectEventIds instanceof Set))r.seenDirectEventIds=new Set();
+      if(!Number.isFinite(Number(r.canonicalSlot)))r.canonicalSlot=null;
     }
     return r;
   }
@@ -225,6 +237,57 @@ export class EventHolderLedger{
     return out;
   }
 
+  _directEventId(e){
+    return e?.signature
+      ? String(e.signature)+':'+String(Number(e.eventIndex||0))
+      : null;
+  }
+
+  _rememberDirectEvent(r,e,eventAt){
+    const id=this._directEventId(e);
+    if(id&&r.seenDirectEventIds.has(id)){
+      this.metrics.directDuplicateEventsIgnored++;
+      return {duplicate:true,event:null};
+    }
+    if(id){
+      r.seenDirectEventIds.add(id);
+      while(r.seenDirectEventIds.size>1024){
+        const oldest=r.seenDirectEventIds.values().next().value;
+        r.seenDirectEventIds.delete(oldest);
+      }
+    }
+
+    const amount=typeof e.tokenAmount==='bigint'
+      ? e.tokenAmount
+      : BigInt(String(e.tokenAmount||0));
+    const slot=Number(e.slot);
+    const event={
+      id,
+      slot:Number.isFinite(slot)&&slot>0?slot:null,
+      user:e.user,
+      isBuy:e.isBuy===true,
+      amount,
+      eventAt
+    };
+    r.recentDirectEvents.push(event);
+    if(r.recentDirectEvents.length>512){
+      r.recentDirectEvents.splice(0,r.recentDirectEvents.length-512);
+    }
+    return {duplicate:false,event};
+  }
+
+  _applyDirectBalanceDelta(r,event){
+    const before=r.balances.get(event.user)||0n;
+    const after=event.isBuy
+      ? before+event.amount
+      : (before>event.amount?before-event.amount:0n);
+    if(after>0n)r.balances.set(event.user,after);
+    else{
+      r.balances.delete(event.user);
+      this.metrics.userZeroBalanceRemovals++;
+    }
+  }
+
   ingestTradeEventDirect(e){
     if(!e?.mint||!e?.user||e?.tokenAmount===null||e?.tokenAmount===undefined)return null;
     this.metrics.transactionsSeen++;
@@ -233,36 +296,48 @@ export class EventHolderLedger{
     this.metrics.lastTxAt=Date.now();
 
     const r=this.row(e.mint,6);
-    r.txCount++;
     const eventAt=(
       e.timestamp!==null&&e.timestamp!==undefined&&
       typeof e.timestamp==='bigint'&&e.timestamp>0n
     )?Number(e.timestamp)*1000:Date.now();
+
+    const remembered=this._rememberDirectEvent(r,e,eventAt);
+    if(remembered.duplicate)return this.snapshot(e.mint);
+    const event=remembered.event;
+
+    r.txCount++;
     r.lastSeenAt=eventAt;
     r.lastUser=e.user;
 
-    if(e.isBuy===true&&!r.firstBuyAt.has(e.user)){
-      r.firstBuyAt.set(e.user,eventAt);
-      const slot=Number(e.slot);
+    // Classification metadata is safe to remember even when the balance
+    // itself is already represented by the canonical snapshot.
+    if(event.isBuy&&!r.firstBuyAt.has(event.user)){
+      r.firstBuyAt.set(event.user,eventAt);
       const created=Number(r.createdAt||r.firstSeenAt||eventAt);
-      if(Number.isFinite(slot)&&slot>0&&eventAt-created<=BUNDLE_WINDOW_MS){
-        let buyers=r.slotBuyers.get(slot);
-        if(!buyers){buyers=new Set();r.slotBuyers.set(slot,buyers)}
-        buyers.add(e.user);
+      if(event.slot&&eventAt-created<=BUNDLE_WINDOW_MS){
+        let buyers=r.slotBuyers.get(event.slot);
+        if(!buyers){buyers=new Set();r.slotBuyers.set(event.slot,buyers)}
+        buyers.add(event.user);
         if(buyers.size>=2)for(const wallet of buyers)r.bundleUsers.add(wallet);
       }
     }
 
-    const before=r.balances.get(e.user)||0n;
-    const amount=typeof e.tokenAmount==='bigint'?e.tokenAmount:BigInt(String(e.tokenAmount||0));
-    const after=e.isBuy?before+amount:(before>amount?before-amount:0n);
-
-    if(after>0n)r.balances.set(e.user,after);
-    else{
-      r.balances.delete(e.user);
-      this.metrics.userZeroBalanceRemovals++;
+    // If the canonical account snapshot is from slot N, a confirmed event at
+    // N or earlier is already inside that snapshot and MUST NOT be applied
+    // again. This is the critical Top-10 double-count fence.
+    const canonicalSlot=Number(r.canonicalSlot);
+    if(
+      Number.isFinite(canonicalSlot)&&canonicalSlot>0&&
+      event.slot&&event.slot<=canonicalSlot
+    ){
+      this.metrics.canonicalSlotCoveredEventsIgnored++;
+      this.metrics.holderSnapshots++;
+      this.metrics.lastMint=e.mint;
+      this.schedule();
+      return this.snapshot(e.mint);
     }
 
+    this._applyDirectBalanceDelta(r,event);
     this.metrics.userBalanceUpdates++;
     this.metrics.holderSnapshots++;
     this.metrics.lastMint=e.mint;
@@ -299,9 +374,26 @@ export class EventHolderLedger{
     r.balances=next;
     r.decimals=decimals;
     if(opts.creator)r.creator=opts.creator;
+    const canonicalSlot=Number(opts.canonicalSlot);
+    r.canonicalSlot=Number.isFinite(canonicalSlot)&&canonicalSlot>0
+      ? canonicalSlot
+      : null;
     r.canonicalSeedAt=Date.now();
     r.lastSeenAt=r.canonicalSeedAt;
     r.canonicalHolderCount=next.size;
+
+    // A TradeEvent can arrive while getProgramAccounts is in flight. The
+    // baseline can therefore overwrite a legitimate event newer than the
+    // snapshot. Replay exactly the buffered events after the snapshot slot.
+    if(r.canonicalSlot&&Array.isArray(r.recentDirectEvents)){
+      const replay=r.recentDirectEvents
+        .filter(event=>event?.slot&&event.slot>r.canonicalSlot)
+        .sort((a,b)=>a.slot-b.slot||a.eventAt-b.eventAt);
+      for(const event of replay){
+        this._applyDirectBalanceDelta(r,event);
+        this.metrics.canonicalReplayEvents++;
+      }
+    }
     r.totalSupplyUi=Number.isFinite(Number(opts.totalSupplyUi))&&Number(opts.totalSupplyUi)>0
       ? Number(opts.totalSupplyUi)
       : r.totalSupplyUi;
@@ -363,6 +455,8 @@ export class EventHolderLedger{
       bundleSource:'pump-same-slot-multi-first-buyer-live-heuristic',
       holderScannedAt:canonicalSeedAt||null,
       holderCanonicalSeedAt:canonicalSeedAt||null,
+      holderCanonicalSlot:Number.isFinite(Number(r.canonicalSlot))?Number(r.canonicalSlot):null,
+      holderCalculationVersion:'V36_SLOT_FENCED_UNIQUE_WALLET',
       holderCanonicalAgeMs:canonicalAgeMs,
       holderCanonicalFresh:canonicalFresh,
       holderObservedWallets:holders.length,
@@ -434,6 +528,7 @@ export class EventHolderLedger{
       wsDirectCompatible:true,
       v12_24CreatorLink:true,
       eventFirstV35:true,
+      holderAccuracyV36:true,
       sniperWindowMs:SNIPER_WINDOW_MS,
       bundleWindowMs:BUNDLE_WINDOW_MS,
       boundedPersistence:true,
@@ -468,6 +563,7 @@ export class EventHolderLedger{
         txCount:r.txCount,
         decimals:r.decimals,
         canonicalSeedAt:r.canonicalSeedAt||null,
+        canonicalSlot:Number.isFinite(Number(r.canonicalSlot))?Number(r.canonicalSlot):null,
         canonicalHolderCount:r.canonicalHolderCount??null,
         totalSupplyUi:Number.isFinite(Number(r.totalSupplyUi))?Number(r.totalSupplyUi):null,
         canonicalTokenAccountCount:Number.isFinite(Number(r.canonicalTokenAccountCount))
@@ -534,6 +630,9 @@ export class EventHolderLedger{
           txCount:s.txCount||0,
           decimals:Number.isInteger(s.decimals)?s.decimals:6,
           canonicalSeedAt:s.canonicalSeedAt||null,
+          canonicalSlot:Number.isFinite(Number(s.canonicalSlot))&&Number(s.canonicalSlot)>0
+            ? Number(s.canonicalSlot)
+            : null,
           canonicalHolderCount:Number.isFinite(Number(s.canonicalHolderCount))
             ? Number(s.canonicalHolderCount)
             : null,
@@ -546,6 +645,8 @@ export class EventHolderLedger{
           firstBuyAt:new Map(Object.entries(s.firstBuyAt||{}).map(([k,v])=>[k,Number(v)||0])),
           slotBuyers:new Map(),
           bundleUsers:new Set(Array.isArray(s.bundleUsers)?s.bundleUsers:[]),
+          recentDirectEvents:[],
+          seenDirectEventIds:new Set(),
           balances:new Map()
         };
         for(const[k,v]of Object.entries(s.balances||{})){

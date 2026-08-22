@@ -45,13 +45,22 @@ function __mfV13EffectiveEvidence(token={},now=Date.now()){
 }
 
 
+function __mfCanonicalHolderEvidence(token={}){
+  const source=String(token?.holderSource||'').toLowerCase();
+  return token?.holderFresh===true&&(
+    source.includes('getprogramaccounts')||
+    source.includes('baseline + live')
+  );
+}
+
 function independentAiScore(token={}){
   let score=0; const quality=[];
-  const h=firstFinite(token.holderCount,token.holders,token.holder?.count);
+  const canonicalHolder=__mfCanonicalHolderEvidence(token);
+  const h=canonicalHolder?firstFinite(token.holderCount,token.holders,token.holder?.count):null;
   if(h!==null){let p=0;if(h>=100)p=20;else if(h>=60)p=17;else if(h>=30)p=13;else if(h>=15)p=7;else if(h>0)p=3;score+=p;quality.push({key:'holders',value:h,points:p,maxPoints:20})}
-  const t=firstFinite(token.top10Pct,token.top10,token.holder?.top10Pct);
+  const t=canonicalHolder?firstFinite(token.top10Pct,token.top10,token.holder?.top10Pct):null;
   if(t!==null){let p=0;if(t<=15)p=20;else if(t<=25)p=17;else if(t<=35)p=12;else if(t<=50)p=6;score+=p;quality.push({key:'top10',value:t,points:p,maxPoints:20})}
-  const d=firstFinite(token.developerPct,token.developerSharePct,token.creatorPct,token.holder?.developerPct);
+  const d=canonicalHolder?firstFinite(token.developerPct,token.developerSharePct,token.creatorPct,token.holder?.developerPct):null;
   if(d!==null){let p=0;if(d<=5)p=20;else if(d<=10)p=18;else if(d<=20)p=14;else if(d<=30)p=7;score+=p;quality.push({key:'developer',value:d,points:p,maxPoints:20})}
   const b=firstFinite(token.buyPressure,token.momentum,token.market?.buyPressure);
   if(b!==null){let p=0;if(b>=3)p=20;else if(b>=2)p=17;else if(b>=1.5)p=13;else if(b>=1.2)p=9;else if(b>=1)p=4;score+=p;quality.push({key:'buyPressure',value:b,points:p,maxPoints:20})}
@@ -160,12 +169,13 @@ function __mfEvaluateBaseV11(token,s={}){
     addGate(name,value===null?null:value<=x,value===null?pending:reason,{value,threshold:x,operator:'<='});
   };
 
+  const holderCanonical=__mfCanonicalHolderEvidence(token);
   const ai=independentAiScore(token);
   let score=ai.score;
   const completeness=[
-    firstFinite(token.holderCount,token.holders,token.holder?.count),
-    firstFinite(token.top10Pct,token.top10,token.holder?.top10Pct),
-    firstFinite(token.developerPct,token.developerSharePct,token.creatorPct,token.holder?.developerPct),
+    holderCanonical?firstFinite(token.holderCount,token.holders,token.holder?.count):null,
+    holderCanonical?firstFinite(token.top10Pct,token.top10,token.holder?.top10Pct):null,
+    holderCanonical?firstFinite(token.developerPct,token.developerSharePct,token.creatorPct,token.holder?.developerPct):null,
     firstFinite(token.buyPressure,token.momentum,token.market?.buyPressure),
     firstFinite(token.priceSol)
   ];
@@ -207,18 +217,26 @@ function __mfEvaluateBaseV11(token,s={}){
   addMax('Maximum sell transactions',v.sells,s.maxSellTransactions,`sell transactions above ${s.maxSellTransactions}`);
   addMin('Minimum total transactions',v.totalTx,s.minTotalTransactions,`total transactions below ${s.minTotalTransactions}`);
   addMax('Maximum total transactions',v.totalTx,s.maxTotalTransactions,`total transactions above ${s.maxTotalTransactions}`);
-  addMin('Minimum holders',v.holders,s.minHolders,`holders below ${s.minHolders}`);
-  addMax('Maximum holders',v.holders,s.maxHolders,`holders above maximum ${s.maxHolders}`);
-  addMin('Minimum bundle',v.bundle,s.minBundlePct,`bundle below ${s.minBundlePct}%`);
-  addMax('Maximum bundle',v.bundle,s.maxBundlePct,`bundle above ${s.maxBundlePct}%`);
+  // MEMEFLOW_HOLDER_ACCURACY_V36
+  // Keep provisional holder metrics visible in token state, but never let a
+  // partial live ledger hard-block a user. All holder-derived hard settings
+  // become decision-grade only after the canonical unique-wallet snapshot.
+  const hv=holderCanonical
+    ? {holders:v.holders,bundle:v.bundle,top10:v.top10,developer:v.developer,sniper:v.sniper}
+    : {holders:null,bundle:null,top10:null,developer:null,sniper:null};
+
+  addMin('Minimum holders',hv.holders,s.minHolders,`holders below ${s.minHolders}`);
+  addMax('Maximum holders',hv.holders,s.maxHolders,`holders above maximum ${s.maxHolders}`);
+  addMin('Minimum bundle',hv.bundle,s.minBundlePct,`bundle below ${s.minBundlePct}%`);
+  addMax('Maximum bundle',hv.bundle,s.maxBundlePct,`bundle above ${s.maxBundlePct}%`);
   addMin('Minimum token age',v.age,s.minTokenAgeMinutes,`token age below ${s.minTokenAgeMinutes}m`);
   addMax('Maximum token age',v.age,s.maxTokenAgeMinutes,`token age above ${s.maxTokenAgeMinutes}m`);
-  addMin('Minimum Top-10 concentration',v.top10,s.minTop10Pct,`Top 10 below ${s.minTop10Pct}%`);
-  addMax('Maximum Top-10 concentration',v.top10,s.maxTop10Pct,`Top 10 above ${s.maxTop10Pct}%`);
-  addMin('Minimum developer share',v.developer,s.minDeveloperPct,`developer below ${s.minDeveloperPct}%`);
-  addMax('Maximum developer share',v.developer,s.maxDeveloperPct,`developer above ${s.maxDeveloperPct}%`);
-  addMin('Minimum sniper share',v.sniper,s.minSniperPct,`sniper share below ${s.minSniperPct}%`);
-  addMax('Maximum sniper share',v.sniper,s.maxSniperPct,`sniper share above ${s.maxSniperPct}%`);
+  addMin('Minimum Top-10 concentration',hv.top10,s.minTop10Pct,`Top 10 below ${s.minTop10Pct}%`);
+  addMax('Maximum Top-10 concentration',hv.top10,s.maxTop10Pct,`Top 10 above ${s.maxTop10Pct}%`);
+  addMin('Minimum developer share',hv.developer,s.minDeveloperPct,`developer below ${s.minDeveloperPct}%`);
+  addMax('Maximum developer share',hv.developer,s.maxDeveloperPct,`developer above ${s.maxDeveloperPct}%`);
+  addMin('Minimum sniper share',hv.sniper,s.minSniperPct,`sniper share below ${s.minSniperPct}%`);
+  addMax('Maximum sniper share',hv.sniper,s.maxSniperPct,`sniper share above ${s.maxSniperPct}%`);
   addMin('Minimum liquidity',v.liquidity,s.minLiquidityUsd,`liquidity below $${s.minLiquidityUsd}`);
   addMin('Buy pressure',v.pressure,s.minBuyPressure,`buy pressure below ${s.minBuyPressure}x`);
 
@@ -411,6 +429,18 @@ function __mfEvaluateBaseV11(token,s={}){
 
   const minScore=finite(s.minScore)?Number(s.minScore):null;
   const minConfidence=finite(s.minConfidence)?Number(s.minConfidence):null;
+
+  // The independent score allocates holder/top10/developer components.
+  // Therefore a configured score/confidence threshold cannot be finalized
+  // against provisional holder evidence.
+  if(!holderCanonical&&(
+    (minScore!==null&&minScore>0)||
+    (minConfidence!==null&&minConfidence>0)
+  )){
+    waiting=true;
+    reasons.push('Waiting: canonical holder evidence for score/confidence pending');
+  }
+
   const scorePass=minScore===null||score>=minScore;
   const confPass=minConfidence===null||confidence>=minConfidence;
 

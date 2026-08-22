@@ -483,18 +483,30 @@ function decodeHolderSlice(row,decimals){
 }
 
 async function mintTokenAccounts(rpc,mint,programId,decimals){
-  const rows=await rpc.callOnce('getProgramAccounts',[
+  // MEMEFLOW_HOLDER_ACCURACY_V36
+  // withContext gives us the exact slot represented by the account snapshot.
+  // That slot is the fence between the canonical baseline and subsequent
+  // confirmed TradeEvents.
+  const result=await rpc.callOnce('getProgramAccounts',[
     programId,
     {
       commitment:'confirmed',
       encoding:'base64',
+      withContext:true,
       filters:[{memcmp:{offset:0,bytes:mint}}],
       dataSlice:{offset:32,length:40}
     }
   ]);
-  return (Array.isArray(rows)?rows:[])
-    .map(row=>decodeHolderSlice(row,decimals))
-    .filter(Boolean);
+  const rows=Array.isArray(result)
+    ? result
+    : (Array.isArray(result?.value)?result.value:[]);
+  const slot=Number(result?.context?.slot);
+  return {
+    accounts:rows
+      .map(row=>decodeHolderSlice(row,decimals))
+      .filter(Boolean),
+    slot:Number.isFinite(slot)&&slot>0?slot:null
+  };
 }
 
 function aggregateWalletBalances(accounts,protocolAuthorities){
@@ -514,12 +526,29 @@ export async function enrichHolders(mint,deps){
   const total=Number(token.totalSupply||0);
 
   let accounts=[];
-  let programUsed=TOKEN_PROGRAM;
+  let canonicalSlot=null;
+  const hintedProgram=String(token?.tokenProgram||'');
+  const preferredProgram=
+    hintedProgram===TOKEN_2022_PROGRAM
+      ? TOKEN_2022_PROGRAM
+      : TOKEN_PROGRAM;
+  const fallbackProgram=
+    preferredProgram===TOKEN_PROGRAM
+      ? TOKEN_2022_PROGRAM
+      : TOKEN_PROGRAM;
+  let programUsed=preferredProgram;
   try{
-    accounts=await mintTokenAccounts(rpc,mint,TOKEN_PROGRAM,decimals);
+    // CreateEvent.tokenProgram is on-chain evidence, not an HTTP hint.
+    // Starting with it avoids an unnecessary full getProgramAccounts call for
+    // Token-2022 launches.
+    let scan=await mintTokenAccounts(rpc,mint,preferredProgram,decimals);
+    accounts=scan.accounts;
+    canonicalSlot=scan.slot;
     if(!accounts.length){
-      programUsed=TOKEN_2022_PROGRAM;
-      accounts=await mintTokenAccounts(rpc,mint,TOKEN_2022_PROGRAM,decimals);
+      programUsed=fallbackProgram;
+      scan=await mintTokenAccounts(rpc,mint,fallbackProgram,decimals);
+      accounts=scan.accounts;
+      canonicalSlot=scan.slot;
     }
   }catch(e){
     if(enrichDiag){
@@ -534,8 +563,18 @@ export async function enrichHolders(mint,deps){
   }
 
   const protocolAuthorities=new Set(
-    [token.curve,token.bondingCurve,token.associatedBondingCurve]
-      .filter(x=>typeof x==='string'&&x.length>0)
+    [
+      token.curve,
+      token.bondingCurve,
+      token.associatedBondingCurve,
+      // Post-migration PumpSwap base-token vaults are owned by the pool /
+      // pool-authority PDA and must never become "user holders".
+      token.pool,
+      token.pumpPool,
+      token.poolAuthority,
+      token.pumpPoolAuthority,
+      token.ammPoolAuthority
+    ].filter(x=>typeof x==='string'&&x.length>0)
   );
 
   const holderTokenAccountCount=accounts.filter(
@@ -560,7 +599,13 @@ export async function enrichHolders(mint,deps){
     eventHolderLedger?.seedCanonicalBalances?.(
       mint,
       walletBalances,
-      {decimals,creator,totalSupplyUi:total,tokenAccountCount:holderTokenAccountCount}
+      {
+        decimals,
+        creator,
+        totalSupplyUi:total,
+        tokenAccountCount:holderTokenAccountCount,
+        canonicalSlot
+      }
     );
   }catch(_){}
 
@@ -576,6 +621,9 @@ export async function enrichHolders(mint,deps){
     developerSharePct:developerPct,
     holderSource:'Solana getProgramAccounts unique-wallet scan',
     holderTokenProgram:programUsed,
+    holderCanonicalSlot:canonicalSlot,
+    holderCalculationVersion:'V36_SLOT_FENCED_UNIQUE_WALLET',
+    holderExcludedProtocolAuthorities:protocolAuthorities.size,
     holderScannedAt:Date.now(),
     marketCap:token.marketCapSol??token.marketCap??null,
     liquidity:token.liquiditySol??token.liquidity??null,
