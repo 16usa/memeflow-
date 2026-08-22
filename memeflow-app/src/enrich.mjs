@@ -297,33 +297,52 @@ export async function enrichToken(mint, curve, deps) {
   }
 
   try {
-    // ── Step 1: getTokenSupply ──────────────────────────────────────────────
-    let supply = null;
-    try {
-      supply = await rpc.call('getTokenSupply', [mint, {commitment: 'confirmed'}]);
-    } catch(e) { fail('getTokenSupply', e); }
+    const existingToken = store.state.tokens[mint] || {};
 
-    // ── Step 2: getAccountInfo (bonding curve, optional) ───────────────────
-    let curveInfo = null;
-    if (curve) {
-      try {
-        curveInfo = await rpc.call('getAccountInfo', [curve, {encoding: 'base64', commitment: 'confirmed'}]);
-      } catch(e) { fail('getAccountInfo', e); }
-    }
+    // MEMEFLOW_EVENT_FIRST_V35B
+    // Normal Pump CREATE already supplied total supply and curve reserves from
+    // the official CreateEvent. Only use RPC as fallback. When fallback is
+    // needed, independent supply/curve requests run concurrently.
+    const hasCreateSupply=
+      Number.isFinite(Number(existingToken.totalSupply))&&
+      Number(existingToken.totalSupply)>0&&
+      Number.isInteger(Number(existingToken.decimals));
 
-    // ── Step 3: decodeCurve (optional, depends on curveInfo) ───────────────
+    const supplyTask=hasCreateSupply
+      ? Promise.resolve({value:{
+          decimals:Number(existingToken.decimals),
+          uiAmountString:String(existingToken.totalSupply)
+        }})
+      : rpc.call('getTokenSupply',[mint,{commitment:'confirmed'}])
+          .catch(e=>{fail('getTokenSupply',e);return null});
+
+    const hasCreateCurve=existingToken.createEventReservesReady===true&&
+      Number.isFinite(Number(existingToken.priceSol));
+
+    const curveTask=(!hasCreateCurve&&curve)
+      ? rpc.call('getAccountInfo',[curve,{encoding:'base64',commitment:'confirmed'}])
+          .catch(e=>{fail('getAccountInfo',e);return null})
+      : Promise.resolve(null);
+
+    const [supply,curveInfo]=await Promise.all([supplyTask,curveTask]);
+
     let c = {};
-    if (curveInfo?.value?.data?.[0]) {
+    if(hasCreateCurve){
+      c={
+        complete:Boolean(existingToken.complete),
+        priceSol:Number(existingToken.priceSol),
+        liquiditySol:Number(existingToken.liquiditySol||0)
+      };
+    }else if (curveInfo?.value?.data?.[0]) {
       try {
         c = decodeCurve(curveInfo.value.data[0], supply?.value?.decimals ?? 6);
       } catch(e) { fail('decodeCurve', e); }
     }
 
     // ── Build token update from whatever succeeded ─────────────────────────
-    const decimals = supply?.value?.decimals ?? 6;
-    const total = Number(supply?.value?.uiAmountString ?? 0);
+    const decimals = supply?.value?.decimals ?? Number(existingToken.decimals??6);
+    const total = Number(supply?.value?.uiAmountString ?? existingToken.totalSupply ?? 0);
     const tw = (tradeWindows?.get?.(mint)) || {buy: 0, sell: 0};
-    const existingToken = store.state.tokens[mint] || {};
     let metadataPatch = {};
     const metadataAttemptAt=Number(existingToken.metadataFetchedAt||0);
     const metadataRetryMs=60_000;
@@ -372,20 +391,16 @@ export async function enrichToken(mint, curve, deps) {
       // MEMEFLOW_V12_7_HOLDER_CORRECTNESS_AND_PRIORITY
       // Phase A may finish AFTER Phase B. Never erase a successful holder scan.
       holderFresh: existingToken.holderFresh === true,
-      holderCount: existingToken.holderFresh === true
-        ? (existingToken.holderCount ?? null)
-        : null,
-      top10Pct: existingToken.holderFresh === true
-        ? (existingToken.top10Pct ?? null)
-        : null,
-      developerPct: existingToken.holderFresh === true
-        ? (existingToken.developerPct ?? existingToken.developerSharePct ?? null)
-        : null,
-      developerSharePct: existingToken.holderFresh === true
-        ? (existingToken.developerPct ?? existingToken.developerSharePct ?? null)
-        : null,
-      buyPressure: tw.sell ? tw.buy / tw.sell : (tw.buy ? tw.buy : (existingToken.buyPressure ?? null)),
-      momentum: tw.sell ? tw.buy / tw.sell : (tw.buy ? tw.buy : (existingToken.buyPressure ?? existingToken.momentum ?? null)),
+      // Preserve live provisional values while canonical verification runs.
+      holderCount: existingToken.holderCount ?? null,
+      top10Pct: existingToken.top10Pct ?? null,
+      developerPct: existingToken.developerPct ?? existingToken.developerSharePct ?? null,
+      developerSharePct: existingToken.developerPct ?? existingToken.developerSharePct ?? null,
+      bundlePct: existingToken.bundlePct ?? null,
+      sniperPct: existingToken.sniperPct ?? null,
+      // WS-confirmed pressure wins over slower fallback transaction windows.
+      buyPressure: existingToken.buyPressure ?? (tw.sell ? tw.buy / tw.sell : (tw.buy ? tw.buy : null)),
+      momentum: existingToken.buyPressure ?? existingToken.momentum ?? (tw.sell ? tw.buy / tw.sell : (tw.buy ? tw.buy : null)),
       dataQuality: Math.max(Number(existingToken.dataQuality) || 0, [total || null, c.priceSol ?? existingToken.priceSol ?? null].filter(x => x != null).length / 2),
       source: existingToken.source || 'Pump create',
     };

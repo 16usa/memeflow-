@@ -257,6 +257,74 @@ export class RpcPool{
 
 export function u64(buf,o){return Number(buf.readBigUInt64LE(o))}
 export function decodeCurve(base64,decimals=6){const b=Buffer.from(base64,'base64');if(b.length<49)throw Error('Bonding curve account too short');let o=8;const virtualToken=u64(b,o);o+=8;const virtualSol=u64(b,o);o+=8;const realToken=u64(b,o);o+=8;const realSol=u64(b,o);o+=8;const supply=u64(b,o);o+=8;const complete=Boolean(b[o]);const priceSol=virtualToken>0?(virtualSol/1e9)/(virtualToken/10**decimals):null;return {virtualToken,virtualSol,realToken,realSol,supply,complete,priceSol,liquiditySol:realSol/1e9}}
+// MEMEFLOW_EVENT_FIRST_V35B
+// Official Pump CreateEvent discriminator from pump-public-docs/idl/pump.json.
+// The live discovery path decodes this Program-data event directly so a new
+// token does not need getTransaction -> getTokenSupply -> getAccountInfo before
+// MEMEFLOW knows its core state.
+export const PUMP_EVENT_CREATE=[27,114,169,77,222,235,99,118];
+
+function __mfV35ProgramData(log){
+  const m=/^Program data:\s*([A-Za-z0-9+/=]+)\s*$/.exec(String(log||'').trim());
+  if(!m)return null;
+  try{return Buffer.from(m[1],'base64')}catch{return null}
+}
+function __mfV35ReadString(b,state){
+  if(state.o+4>b.length)throw Error('CreateEvent string length missing');
+  const n=b.readUInt32LE(state.o);state.o+=4;
+  if(n<0||n>4096||state.o+n>b.length)throw Error('CreateEvent string out of range');
+  const s=b.subarray(state.o,state.o+n).toString('utf8');state.o+=n;
+  return s;
+}
+function __mfV35ReadPubkey(b,state){
+  if(state.o+32>b.length)throw Error('CreateEvent pubkey missing');
+  const out=b58encode(b.subarray(state.o,state.o+32));state.o+=32;
+  return out;
+}
+function __mfV35ReadU64(b,state){
+  if(state.o+8>b.length)throw Error('CreateEvent u64 missing');
+  const out=b.readBigUInt64LE(state.o);state.o+=8;
+  return out;
+}
+function __mfV35ReadI64(b,state){
+  if(state.o+8>b.length)throw Error('CreateEvent i64 missing');
+  const out=b.readBigInt64LE(state.o);state.o+=8;
+  return out;
+}
+
+export function decodePumpCreateEventLog(log){
+  const b=__mfV35ProgramData(log);
+  if(!b||b.length<8)return null;
+  if(!PUMP_EVENT_CREATE.every((v,i)=>b[i]===v))return null;
+  try{
+    const s={o:8};
+    const name=__mfV35ReadString(b,s);
+    const symbol=__mfV35ReadString(b,s);
+    const uri=__mfV35ReadString(b,s);
+    const mint=__mfV35ReadPubkey(b,s);
+    const bondingCurve=__mfV35ReadPubkey(b,s);
+    const user=__mfV35ReadPubkey(b,s);
+    const creator=__mfV35ReadPubkey(b,s);
+    const timestamp=__mfV35ReadI64(b,s);
+    const virtualTokenReserves=__mfV35ReadU64(b,s);
+    const virtualSolReserves=__mfV35ReadU64(b,s);
+    const realTokenReserves=__mfV35ReadU64(b,s);
+    const tokenTotalSupply=__mfV35ReadU64(b,s);
+    const tokenProgram=__mfV35ReadPubkey(b,s);
+    const isMayhemMode=s.o<b.length?b[s.o++]!==0:false;
+    const isCashbackEnabled=s.o<b.length?b[s.o++]!==0:false;
+    let quoteMint=null,virtualQuoteReserves=null;
+    if(s.o+32<=b.length)quoteMint=__mfV35ReadPubkey(b,s);
+    if(s.o+8<=b.length)virtualQuoteReserves=__mfV35ReadU64(b,s);
+    return {
+      name,symbol,uri,mint,bondingCurve,user,creator,timestamp,
+      virtualTokenReserves,virtualSolReserves,realTokenReserves,
+      tokenTotalSupply,tokenProgram,isMayhemMode,isCashbackEnabled,
+      quoteMint,virtualQuoteReserves
+    };
+  }catch{return null}
+}
+
 export function decodeCreateData(data){try{const b=b58decode(data),disc=[...b.subarray(0,8)],create='24,30,200,40,5,28,7,119',create2='214,144,76,236,95,139,49,180';if(disc.join(',')!==create&&disc.join(',')!==create2)return null;let o=8;const str=()=>{const n=b.readUInt32LE(o);o+=4;const s=b.subarray(o,o+n).toString('utf8');o+=n;return s};return {kind:disc.join(',')===create?'create':'create_v2',name:str(),symbol:str(),uri:str()}}catch{return null}}
 
 /**

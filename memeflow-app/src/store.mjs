@@ -283,15 +283,11 @@ export class JsonStore {
           'holderSource','holderScannedAt','holderTokenProgram'
         ]) delete patch[k];
       }else{
-        // No canonical census yet: explicitly WAIT for the full Solana scan.
+        // MEMEFLOW_EVENT_FIRST_V35B
+        // Keep the immediately observed live values instead of replacing them
+        // with null. They stay non-authoritative until the canonical census;
+        // requireFreshHolderSnapshot still blocks final BUY when enabled.
         patch.holderFresh=false;
-        patch.holderCount=null;
-        patch.holders=null;
-        patch.top10Pct=null;
-        patch.top10=null;
-        patch.developerPct=null;
-        patch.developerSharePct=null;
-        patch.creatorPct=null;
         patch.holderSource='event-ledger-user-only-provisional';
         patch.holderScannedAt=null;
       }

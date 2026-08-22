@@ -13,7 +13,9 @@ const DEFAULT_SUPPLY_UI=Math.max(1,Number(process.env.PUMP_TOKEN_SUPPLY_UI||1000
 const MAX_MINTS=Math.max(250,Number(process.env.EVENT_HOLDER_MAX_MINTS||1500));
 const MAX_AGE_MS=Math.max(30*60_000,Number(process.env.EVENT_HOLDER_MAX_AGE_MS||6*60*60_000));
 const SAVE_INTERVAL_MS=Math.max(1000,Number(process.env.EVENT_HOLDER_SAVE_INTERVAL_MS||5000));
-const HOLDER_CANONICAL_MAX_AGE_MS=Math.max(60000,Number(process.env.HOLDER_CANONICAL_MAX_AGE_MS||180000)); // MEMEFLOW_DATA_INTEGRITY_V1_3_EXACT
+const HOLDER_CANONICAL_MAX_AGE_MS=Math.max(60000,Number(process.env.HOLDER_CANONICAL_MAX_AGE_MS||180000)); // canonical verification age, values never blank
+const SNIPER_WINDOW_MS=Math.max(1000,Number(process.env.PUMP_SNIPER_WINDOW_MS||10000));
+const BUNDLE_WINDOW_MS=Math.max(1000,Number(process.env.PUMP_BUNDLE_WINDOW_MS||15000));
 const DISC=crypto.createHash('sha256').update('event:TradeEvent').digest().subarray(0,8);
 const B58='123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
 
@@ -118,11 +120,16 @@ export class EventHolderLedger{
   row(m,decimals=6){
     let r=this.byMint.get(m);
     if(!r){
-      r={mint:m,creator:null,balances:new Map(),firstSeenAt:Date.now(),lastSeenAt:null,txCount:0,decimals,totalSupplyUi:null,canonicalTokenAccountCount:null};
+      r={mint:m,creator:null,balances:new Map(),firstSeenAt:Date.now(),createdAt:null,lastSeenAt:null,txCount:0,decimals,totalSupplyUi:null,canonicalTokenAccountCount:null,firstBuyAt:new Map(),slotBuyers:new Map(),bundleUsers:new Set()};
       this.byMint.set(m,r);
       this.metrics.mintsSeen++;
       if(this.byMint.size>MAX_MINTS+100)this.prune();
-    }else if(Number.isInteger(decimals))r.decimals=decimals;
+    }else{
+      if(Number.isInteger(decimals))r.decimals=decimals;
+      if(!(r.firstBuyAt instanceof Map))r.firstBuyAt=new Map();
+      if(!(r.slotBuyers instanceof Map))r.slotBuyers=new Map();
+      if(!(r.bundleUsers instanceof Set))r.bundleUsers=new Set();
+    }
     return r;
   }
 
@@ -135,6 +142,16 @@ export class EventHolderLedger{
     }
     this.metrics.creatorLinksSet++;
     this.schedule();
+  }
+
+  setCreatedAt(mint,createdAt){
+    const n=Number(createdAt);
+    if(!mint||!Number.isFinite(n)||n<=0)return;
+    const r=this.row(mint,6);
+    if(!Number.isFinite(Number(r.createdAt))||Number(r.createdAt)<=0||n<Number(r.createdAt)){
+      r.createdAt=n;
+      this.schedule();
+    }
   }
 
   ingestTransaction(tx){
@@ -217,8 +234,24 @@ export class EventHolderLedger{
 
     const r=this.row(e.mint,6);
     r.txCount++;
-    r.lastSeenAt=Date.now();
+    const eventAt=(
+      e.timestamp!==null&&e.timestamp!==undefined&&
+      typeof e.timestamp==='bigint'&&e.timestamp>0n
+    )?Number(e.timestamp)*1000:Date.now();
+    r.lastSeenAt=eventAt;
     r.lastUser=e.user;
+
+    if(e.isBuy===true&&!r.firstBuyAt.has(e.user)){
+      r.firstBuyAt.set(e.user,eventAt);
+      const slot=Number(e.slot);
+      const created=Number(r.createdAt||r.firstSeenAt||eventAt);
+      if(Number.isFinite(slot)&&slot>0&&eventAt-created<=BUNDLE_WINDOW_MS){
+        let buyers=r.slotBuyers.get(slot);
+        if(!buyers){buyers=new Set();r.slotBuyers.set(slot,buyers)}
+        buyers.add(e.user);
+        if(buyers.size>=2)for(const wallet of buyers)r.bundleUsers.add(wallet);
+      }
+    }
 
     const before=r.balances.get(e.user)||0n;
     const amount=typeof e.tokenAmount==='bigint'?e.tokenAmount:BigInt(String(e.tokenAmount||0));
@@ -294,6 +327,13 @@ export class EventHolderLedger{
     const top10=holders.slice(0,10).reduce((sum,[,amount])=>sum+amount,0n);
     const dev=r.creator?(r.balances.get(r.creator)||0n):0n;
     const tracked=holders.reduce((sum,[,amount])=>sum+amount,0n);
+    const created=Number(r.createdAt||r.firstSeenAt||0);
+    const sniperRaw=holders.reduce((sum,[wallet,amount])=>{
+      const at=Number(r.firstBuyAt?.get?.(wallet)||0);
+      return sum+(created>0&&at>0&&at-created<=SNIPER_WINDOW_MS?amount:0n);
+    },0n);
+    const bundleRaw=holders.reduce((sum,[wallet,amount])=>
+      sum+(r.bundleUsers?.has?.(wallet)?amount:0n),0n);
     const now=Date.now();
     const canonicalSeedAt=Number(r.canonicalSeedAt||0);
     const canonicalAgeMs=canonicalSeedAt>0?Math.max(0,now-canonicalSeedAt):null;
@@ -304,20 +344,31 @@ export class EventHolderLedger{
       holderFresh:canonicalFresh,
       holderSource:canonicalFresh
         ? 'Solana getProgramAccounts baseline + live Pump TradeEvent delta'
-        : (canonicalSeedAt>0?'canonical-refresh-pending':'event-ledger-user-only-provisional'),
-      holderCount:canonicalFresh?holders.length:null,
-      holderWalletCount:canonicalFresh?holders.length:null,
+        : (canonicalSeedAt>0?'canonical-refresh-pending-live-delta':'event-ledger-user-only-provisional'),
+      // Never blank live evidence. holderFresh tells the evaluator whether the
+      // full Solana census is currently verified.
+      holderCount:holders.length,
+      holderWalletCount:holders.length,
       holderTokenAccountCount:canonicalFresh&&Number.isFinite(Number(r.canonicalTokenAccountCount))
         ? Number(r.canonicalTokenAccountCount)
         : null,
-      top10Pct:canonicalFresh?pct(top10,totalSupply):null,
-      developerPct:canonicalFresh&&r.creator?pct(dev,totalSupply):null,
-      developerSharePct:canonicalFresh&&r.creator?pct(dev,totalSupply):null,
+      top10Pct:pct(top10,totalSupply),
+      developerPct:r.creator?pct(dev,totalSupply):null,
+      developerSharePct:r.creator?pct(dev,totalSupply):null,
+      sniperPct:created>0?pct(sniperRaw,totalSupply):null,
+      sniperPercent:created>0?pct(sniperRaw,totalSupply):null,
+      sniperSource:'pump-first-buy-live-window',
+      bundlePct:created>0?pct(bundleRaw,totalSupply):null,
+      bundlePercent:created>0?pct(bundleRaw,totalSupply):null,
+      bundleSource:'pump-same-slot-multi-first-buyer-live-heuristic',
       holderScannedAt:canonicalSeedAt||null,
       holderCanonicalSeedAt:canonicalSeedAt||null,
       holderCanonicalAgeMs:canonicalAgeMs,
       holderCanonicalFresh:canonicalFresh,
       holderObservedWallets:holders.length,
+      holderObservedTop10Pct:pct(top10,totalSupply),
+      holderObservedDeveloperPct:r.creator?pct(dev,totalSupply):null,
+      holderCreatedAt:created||null,
       holderLastTradeEventAt:r.lastSeenAt||null,
       eventLedgerVersion:VERSION,
       eventLedgerLastUser:r.lastUser||null,
@@ -382,6 +433,9 @@ export class EventHolderLedger{
       liveTradeStreamCompatible:true,
       wsDirectCompatible:true,
       v12_24CreatorLink:true,
+      eventFirstV35:true,
+      sniperWindowMs:SNIPER_WINDOW_MS,
+      bundleWindowMs:BUNDLE_WINDOW_MS,
       boundedPersistence:true,
       asyncPersistence:true
     };
@@ -409,6 +463,7 @@ export class EventHolderLedger{
       for(const[m,r]of this.byMint)o.mints[m]={
         creator:r.creator,
         firstSeenAt:r.firstSeenAt,
+        createdAt:r.createdAt||null,
         lastSeenAt:r.lastSeenAt,
         txCount:r.txCount,
         decimals:r.decimals,
@@ -418,6 +473,8 @@ export class EventHolderLedger{
         canonicalTokenAccountCount:Number.isFinite(Number(r.canonicalTokenAccountCount))
           ? Number(r.canonicalTokenAccountCount)
           : null,
+        firstBuyAt:Object.fromEntries([...(r.firstBuyAt||new Map())]),
+        bundleUsers:[...(r.bundleUsers||new Set())],
         balances:Object.fromEntries([...r.balances].map(([k,v])=>[k,v.toString()]))
       };
       const tmp=STATE+'.tmp';
@@ -472,6 +529,7 @@ export class EventHolderLedger{
           mint:m,
           creator:s.creator||null,
           firstSeenAt:s.firstSeenAt||Date.now(),
+          createdAt:Number(s.createdAt)||null,
           lastSeenAt:s.lastSeenAt||null,
           txCount:s.txCount||0,
           decimals:Number.isInteger(s.decimals)?s.decimals:6,
@@ -485,6 +543,9 @@ export class EventHolderLedger{
           canonicalTokenAccountCount:Number.isFinite(Number(s.canonicalTokenAccountCount))
             ? Number(s.canonicalTokenAccountCount)
             : null,
+          firstBuyAt:new Map(Object.entries(s.firstBuyAt||{}).map(([k,v])=>[k,Number(v)||0])),
+          slotBuyers:new Map(),
+          bundleUsers:new Set(Array.isArray(s.bundleUsers)?s.bundleUsers:[]),
           balances:new Map()
         };
         for(const[k,v]of Object.entries(s.balances||{})){

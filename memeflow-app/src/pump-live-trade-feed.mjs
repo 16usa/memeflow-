@@ -4,7 +4,7 @@
 
 import crypto from 'node:crypto';
 
-const VERSION='V12.22+V30.2';
+const VERSION='V12.22+V30.2+EVENT_FIRST_V35';
 const PUMP_PROGRAM='6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P';
 const DISC=crypto.createHash('sha256').update('event:TradeEvent').digest().subarray(0,8);
 const B58='123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
@@ -35,7 +35,7 @@ function b58(buf){
 function u64(b,o){
   return b.length>=o+8?b.readBigUInt64LE(o):null;
 }
-function decodeTradeEvent(buf){
+export function decodeTradeEvent(buf){
   // Pump TradeEvent:
   // disc(8), mint(32), solAmount u64, tokenAmount u64, isBuy bool,
   // user(32), timestamp i64, virtualSolReserves u64, virtualTokenReserves u64,
@@ -56,8 +56,21 @@ function decodeTradeEvent(buf){
   if(buf.length>=o+8){ realSolReserves=u64(buf,o); o+=8; }
   if(buf.length>=o+8){ realTokenReserves=u64(buf,o); o+=8; }
 
+  // Official current Pump TradeEvent continues with:
+  // fee_recipient, fee_basis_points, fee, creator,
+  // creator_fee_basis_points, creator_fee, ...
+  let feeRecipient=null,feeBasisPoints=null,fee=null;
+  let creator=null,creatorFeeBasisPoints=null,creatorFee=null;
+  if(buf.length>=o+32){feeRecipient=b58(buf.subarray(o,o+32));o+=32}
+  if(buf.length>=o+8){feeBasisPoints=u64(buf,o);o+=8}
+  if(buf.length>=o+8){fee=u64(buf,o);o+=8}
+  if(buf.length>=o+32){creator=b58(buf.subarray(o,o+32));o+=32}
+  if(buf.length>=o+8){creatorFeeBasisPoints=u64(buf,o);o+=8}
+  if(buf.length>=o+8){creatorFee=u64(buf,o);o+=8}
+
   return {mint,user,isBuy,solAmount,tokenAmount,timestamp,
-    virtualSolReserves,virtualTokenReserves,realSolReserves,realTokenReserves};
+    virtualSolReserves,virtualTokenReserves,realSolReserves,realTokenReserves,
+    feeRecipient,feeBasisPoints,fee,creator,creatorFeeBasisPoints,creatorFee};
 }
 function programData(log){
   const m=/^Program data:\s*([A-Za-z0-9+/=]+)\s*$/.exec(String(log||'').trim());
@@ -112,6 +125,9 @@ export function startPumpLiveTradeFeed(opts={}){
   };
 
   const mintCounts=new Map(), users=new Set(), pressure=new Map();
+  const liveTotals=new Map();
+  const confirmedWarmByMint=new Map();
+  let confirmedConnectionAt=0,confirmedGeneration=0;
   let ws=null,stopped=false,idx=0,reconnectTimer=null;
   let fastChartWs=null,fastChartIdx=0,fastChartReconnectTimer=null;
   const fastWarmByMint=new Map();
@@ -145,6 +161,143 @@ export function startPumpLiveTradeFeed(opts={}){
       pumpSellVolumeSol:sellSol,
       windowMs
     };
+  }
+
+  // MEMEFLOW_EVENT_FIRST_V35B
+  // Exact cumulative evidence is emitted only when this process has observed
+  // the token continuously from CREATE. After a WS reconnect, momentum remains
+  // live but cumulative tx/volume/fees are cleared until a new exact source
+  // establishes continuity.
+  function __v35RememberWarmEvent(e){
+    if(!e?.mint)return;
+    let row=confirmedWarmByMint.get(e.mint);
+    if(!row){row={at:Date.now(),events:[]};confirmedWarmByMint.set(e.mint,row)}
+    row.at=Date.now();
+    row.events.push(e);
+    if(row.events.length>48)row.events.splice(0,row.events.length-48);
+    if(confirmedWarmByMint.size>300){
+      const stale=[...confirmedWarmByMint.entries()]
+        .sort((a,b)=>Number(a[1]?.at||0)-Number(b[1]?.at||0))
+        .slice(0,confirmedWarmByMint.size-250);
+      for(const [mint] of stale)confirmedWarmByMint.delete(mint);
+    }
+    for(const [mint,item] of confirmedWarmByMint){
+      if(Date.now()-Number(item?.at||0)>45_000)confirmedWarmByMint.delete(mint);
+    }
+  }
+
+  function __v35LiveTotalsPatch(e,token,eventAt){
+    let row=liveTotals.get(e.mint);
+    if(!row||row.generation!==confirmedGeneration){
+      const created=Number(token?.pumpCreatedAt||token?.discoveredAt||0);
+      const directExact=token?.liveEvidenceComplete===true&&
+        String(token?.liveEvidenceSource||'').includes('create-event');
+      row={
+        generation:confirmedGeneration,
+        coverageComplete:Boolean(directExact||(created>0&&confirmedConnectionAt>0&&created>=confirmedConnectionAt-3000)),
+        feesComplete:true,
+        buys:directExact?Number(token?.buyTransactions||0):0,
+        sells:directExact?Number(token?.sellTransactions||0):0,
+        volumeSol:directExact?Number(token?.volume24hSol||0):0,
+        feesSol:directExact?Number(token?.totalFeesSol||0):0,
+        netTokenRaw:0n,
+        initialRealTokenRaw:null,
+        seen:new Set(),
+        seenOrder:[],
+        lastAt:0
+      };
+      try{
+        if(token?.bondingInitialRealTokenRaw!=null){
+          row.initialRealTokenRaw=BigInt(String(token.bondingInitialRealTokenRaw));
+        }
+      }catch{}
+      liveTotals.set(e.mint,row);
+    }
+
+    const eventId=e.signature?String(e.signature)+':'+String(e.eventIndex||0):null;
+    if(eventId&&row.seen.has(eventId))return {};
+    if(eventId){
+      row.seen.add(eventId);row.seenOrder.push(eventId);
+      while(row.seenOrder.length>256)row.seen.delete(row.seenOrder.shift());
+    }
+
+    const sol=Math.max(0,Number(e.solAmount||0n)/1e9);
+    const raw=typeof e.tokenAmount==='bigint'?e.tokenAmount:BigInt(String(e.tokenAmount||0));
+    row.buys+=e.isBuy?1:0;
+    row.sells+=e.isBuy?0:1;
+    row.volumeSol+=sol;
+    row.netTokenRaw+=e.isBuy?raw:-raw;
+    row.lastAt=eventAt;
+
+    if(e.fee===null||e.fee===undefined){
+      row.feesComplete=false;
+    }else{
+      row.feesSol+=Number(e.fee)/1e9;
+      if(e.creatorFee!==null&&e.creatorFee!==undefined)row.feesSol+=Number(e.creatorFee)/1e9;
+    }
+
+    if(e.realTokenReserves!==null&&e.realTokenReserves!==undefined){
+      const candidate=e.realTokenReserves+row.netTokenRaw;
+      if(candidate>0n){
+        if(row.initialRealTokenRaw===null)row.initialRealTokenRaw=candidate;
+        else if(row.coverageComplete&&row.initialRealTokenRaw!==candidate){
+          // A discontinuity means this process missed at least one trade.
+          row.coverageComplete=false;
+        }
+      }
+    }
+
+    const patch={
+      liveEvidenceSource:'pump-confirmed-trade-event',
+      liveEvidenceComplete:row.coverageComplete,
+      liveEvidenceGeneration:confirmedGeneration,
+      liveEvidenceUpdatedAt:eventAt,
+      liveObservedBuyTransactions:row.buys,
+      liveObservedSellTransactions:row.sells,
+      liveObservedTotalTransactions:row.buys+row.sells,
+      liveObservedVolumeSol:row.volumeSol
+    };
+
+    if(row.initialRealTokenRaw!==null&&row.initialRealTokenRaw>0n&&
+       e.realTokenReserves!==null&&e.realTokenReserves!==undefined){
+      const initial=Number(row.initialRealTokenRaw);
+      const current=Number(e.realTokenReserves);
+      if(Number.isFinite(initial)&&initial>0&&Number.isFinite(current)){
+        patch.bondingInitialRealTokenRaw=row.initialRealTokenRaw.toString();
+        patch.bondingCurvePct=Math.max(0,Math.min(100,(initial-current)/initial*100));
+        patch.bondingProgressPct=patch.bondingCurvePct;
+      }
+    }
+
+    if(row.coverageComplete){
+      patch.buyTransactions=row.buys;
+      patch.sellTransactions=row.sells;
+      patch.totalTransactions=row.buys+row.sells;
+      const created=Number(token?.pumpCreatedAt||token?.discoveredAt||eventAt);
+      if(eventAt-created<=24*60*60_000){
+        patch.volume24hSol=row.volumeSol;
+        patch.pumpVolume24hSol=row.volumeSol;
+      }
+      if(row.feesComplete)patch.totalFeesSol=row.feesSol;
+    }else{
+      // Never let pre-reconnect partial totals masquerade as exact settings evidence.
+      patch.buyTransactions=null;
+      patch.sellTransactions=null;
+      patch.totalTransactions=null;
+      patch.volume24hSol=null;
+      patch.pumpVolume24hSol=null;
+      patch.totalFeesSol=null;
+    }
+
+    if(e.creator&&!token?.creator)patch.creator=e.creator;
+
+    if(liveTotals.size>2200){
+      const stale=[...liveTotals.entries()]
+        .sort((a,b)=>Number(a[1]?.lastAt||0)-Number(b[1]?.lastAt||0))
+        .slice(0,liveTotals.size-1800);
+      for(const [mint] of stale)liveTotals.delete(mint);
+    }
+    return patch;
   }
 
   // MEMEFLOW_V12_26_EVALUATION_LIFECYCLE_DIAGNOSTICS
@@ -196,6 +349,10 @@ export function startPumpLiveTradeFeed(opts={}){
 
     const knownToken=trackedPumpToken(store,e.mint);
     if(!knownToken){
+      // CREATE and TradeEvent can arrive on separate WS connections in either
+      // order. Keep the confirmed event briefly and replay it as soon as the
+      // CreateEvent inserts the token.
+      __v35RememberWarmEvent(e);
       metrics.ignoredUntrackedTradeEvents++;
       return;
     }
@@ -238,8 +395,12 @@ export function startPumpLiveTradeFeed(opts={}){
     let updatedForEval=null;
 
     try{
-      const creator=knownToken?.creator||knownToken?.developer||knownToken?.creatorWallet||null;
+      const creator=knownToken?.creator||knownToken?.developer||knownToken?.creatorWallet||e.creator||null;
       if(creator)eventHolderLedger?.setCreator?.(e.mint,creator);
+      eventHolderLedger?.setCreatedAt?.(
+        e.mint,
+        Number(knownToken?.pumpCreatedAt||knownToken?.discoveredAt||eventAt)
+      );
     }catch{}
 
     try{
@@ -255,20 +416,23 @@ export function startPumpLiveTradeFeed(opts={}){
 
     try{
       const flow=updatePressure(e);
+      const totals=__v35LiveTotalsPatch(e,knownToken,eventAt);
       const patch={
+        ...totals,
         marketSource:'pump-trade-event',
         priceSource:'pump-trade-event',
         buyPressureSource:'pump-trade-event-60s-sol-flow',
         buyPressure:flow.buyPressure,
         momentum:flow.buyPressure,
-        buyTransactions:flow.buyTransactions,
-        sellTransactions:flow.sellTransactions,
-        totalTransactions:flow.totalTransactions,
+        pumpBuyTransactions60s:flow.buyTransactions,
+        pumpSellTransactions60s:flow.sellTransactions,
+        pumpTotalTransactions60s:flow.totalTransactions,
         pumpBuyVolumeSol:flow.pumpBuyVolumeSol,
         pumpSellVolumeSol:flow.pumpSellVolumeSol,
         pumpFlowWindowMs:flow.windowMs,
         canonicalMarket:true,
         pumpMarketUpdatedAt:eventAt,
+        lastMarketActivityAt:eventAt,
         lastPriceAt:eventAt
       };
 
@@ -468,6 +632,8 @@ function fastChartTickFromEvent(e){
       ws=await makeWS(url);
       ws.onopen=()=>{
         metrics.connected=true;
+        confirmedConnectionAt=Date.now();
+        confirmedGeneration++;
         try{
           ws.send(JSON.stringify({
             jsonrpc:'2.0',id:122,method:'logsSubscribe',
@@ -491,6 +657,7 @@ function fastChartTickFromEvent(e){
               if(e){
                 e.signature=value.signature||null;
                 e.eventIndex=eventIndex++;
+                e.slot=Number(j?.params?.result?.context?.slot)||null;
                 applyEvent(e);
               }
             }catch(err){
@@ -525,7 +692,22 @@ function fastChartTickFromEvent(e){
   connect();
 
   return {
-    metrics:()=>({...metrics,queueDepth:0,active:0,httpRpcCalls:0,evaluationRecent:Array.from(__v1226EvalByMint.values()).slice(-12)}),
+    // Called by the direct CreateEvent path immediately after store.addToken().
+    // Replays a creator/pre-buy TradeEvent that won the WS race against CREATE.
+    flushMint:(mint)=>{
+      const row=confirmedWarmByMint.get(String(mint||''));
+      if(!row?.events?.length)return 0;
+      confirmedWarmByMint.delete(String(mint||''));
+      let n=0;
+      for(const e of row.events){
+        try{applyEvent(e);n++}catch{}
+      }
+      return n;
+    },
+    metrics:()=>({...metrics,queueDepth:0,active:0,httpRpcCalls:0,
+      confirmedConnectionAt,confirmedGeneration,liveEvidenceMints:liveTotals.size,
+      confirmedWarmMints:confirmedWarmByMint.size,
+      evaluationRecent:Array.from(__v1226EvalByMint.values()).slice(-12)}),
     stop:()=>{
       stopped=true;
       clearTimeout(reconnectTimer);
