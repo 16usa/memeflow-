@@ -1511,3 +1511,68 @@ button { cursor: pointer; }
   .approval-stats { grid-template-columns: 1fr 1fr; }
 }
 /* MEMEFLOW_ASSIST_APPROVALS_V1_END */
+
+
+/* MEMEFLOW_APPROVALS_LAYOUT_V2_START
+   Layout-only refinement. Trading logic, proposal actions and conversion
+   error behavior are intentionally untouched. */
+
+/* When ASSIST is off, keep the panel present but compact. */
+.approvals-panel:not([data-active="true"]) .approval-list {
+  display: none;
+}
+
+.approvals-panel:not([data-active="true"]) .panel-head {
+  min-height: 51px;
+  border-bottom: 0;
+}
+
+/* Mobile/tablet flow:
+   chart -> pending approvals -> trade control -> positions -> history
+   -> candidates -> wallet. */
+@media (max-width: 820px) {
+  .chart-panel {
+    order: 1;
+    width: 100%;
+  }
+
+  .approvals-panel {
+    order: 2;
+    width: 100%;
+  }
+
+  .control-panel {
+    order: 3;
+    width: 100%;
+  }
+
+  .positions-panel {
+    order: 4;
+    width: 100%;
+  }
+
+  .history-panel {
+    order: 5;
+    width: 100%;
+  }
+
+  .candidates-panel {
+    order: 6;
+    width: 100%;
+  }
+
+  .compact-wallet-panel {
+    order: 7;
+    width: 100%;
+  }
+
+  .approvals-panel:not([data-active="true"]) .panel-head {
+    min-height: 45px;
+    padding: 8px 10px;
+  }
+
+  .approvals-panel[data-active="true"] .approval-list {
+    display: block;
+  }
+}
+/* MEMEFLOW_APPROVALS_LAYOUT_V2_END */
