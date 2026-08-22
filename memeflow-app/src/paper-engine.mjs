@@ -265,6 +265,16 @@ export class PaperEngine {
     if (!userId || !token?.mint || decision?.state !== 'BUY READY') return { action: 'NONE' };
     if (settings.tradingEnvironment !== 'paper') return { action: 'NONE', reason: 'NOT_PAPER' };
 
+    // AUTOMATE + PAPER means automatic paper execution. Repeated BUY READY
+    // revisions for a token that already has an open position are ignored
+    // before creating extra paperProcessed rows.
+    if (settings.operatingMode === 'automate') {
+      const existingPosition = this.openForMint(userId, token.mint);
+      if (existingPosition) {
+        return { action: 'NONE', reason: 'POSITION_EXISTS', position: existingPosition };
+      }
+    }
+
     const key = this.decisionKey(userId, token, decision);
     if (this.store.state.paperProcessed[key]) return { action: 'NONE', reason: 'IDEMPOTENT' };
 
@@ -274,8 +284,10 @@ export class PaperEngine {
       return { action: 'OBSERVED' };
     }
 
-    if (settings.operatingMode === 'assist' || (settings.operatingMode === 'automate' && settings.ownerApproval === true)) {
-      const existing = Object.values(this.store.state.paperProposals).find(p => p.idempotencyKey === key);
+    if (settings.operatingMode === 'assist') {
+      const existing = Object.values(this.store.state.paperProposals).find(
+        p => p.userId === userId && p.mint === token.mint && p.status === 'PENDING'
+      );
       if (existing) return { action: 'PROPOSAL_EXISTS', proposal: existing };
       const proposal = {
         id: crypto.randomUUID(),
