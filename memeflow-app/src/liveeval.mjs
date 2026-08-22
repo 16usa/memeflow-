@@ -73,7 +73,8 @@ export function makeEvaluateForActiveUsers({
           const settings = store.settings(uid);
           if (!settings || typeof settings !== 'object') throw new Error('user settings unavailable after normalization');
           const d = evaluate(token, settings);
-          const savedDecision = { ...d, primaryReason: d.primaryReason };
+          const settingsVersion = store.state.users?.[uid]?.settingsVersion || store.state.users?.[uid]?.updatedAt || Date.now();
+          const savedDecision = { ...d, primaryReason: d.primaryReason, settingsVersion, reevaluatedAt: Date.now() };
           store.setDecision(uid, token.mint, savedDecision);
           if (onDecision) onDecision(uid, token, savedDecision);
           metrics.liveEvaluationsPerformed++;

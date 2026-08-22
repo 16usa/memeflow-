@@ -45,6 +45,15 @@ function firstMetadataImage(metadata) {
   return null;
 }
 
+function firstMetadataText(metadata, paths) {
+  for (const path of paths) {
+    let value = metadata;
+    for (const key of path.split('.')) value = value?.[key];
+    if (typeof value === 'string' && value.trim()) return value.trim().slice(0, 500);
+  }
+  return null;
+}
+
 async function fetchTokenMetadata(uri) {
   const metadataUrl = normalizeMetadataUrl(uri);
   if (!metadataUrl) return {metadataUrl:null, imageUrl:null};
@@ -69,7 +78,11 @@ async function fetchTokenMetadata(uri) {
       metadataUrl,
       imageUrl:firstMetadataImage(metadata),
       metadataName:typeof metadata?.name === 'string' ? metadata.name.slice(0,160) : null,
-      metadataSymbol:typeof metadata?.symbol === 'string' ? metadata.symbol.slice(0,40) : null
+      metadataSymbol:typeof metadata?.symbol === 'string' ? metadata.symbol.slice(0,40) : null,
+      websiteUrl:firstMetadataText(metadata,['website','websiteUrl','external_url','externalUrl','extensions.website','links.website','socials.website']),
+      twitterUrl:firstMetadataText(metadata,['twitter','twitterUrl','x','xUrl','extensions.twitter','extensions.x','links.twitter','links.x','socials.twitter','socials.x']),
+      telegramUrl:firstMetadataText(metadata,['telegram','telegramUrl','extensions.telegram','links.telegram','socials.telegram']),
+      socialsKnown:true
     };
   } finally {
     clearTimeout(timeout);
@@ -227,7 +240,11 @@ export async function enrichToken(mint, curve, deps) {
           image:metadata.imageUrl,
           logoUrl:metadata.imageUrl,
           metadataName:metadata.metadataName,
-          metadataSymbol:metadata.metadataSymbol
+          metadataSymbol:metadata.metadataSymbol,
+          websiteUrl:metadata.websiteUrl,
+          twitterUrl:metadata.twitterUrl,
+          telegramUrl:metadata.telegramUrl,
+          socialsKnown:metadata.socialsKnown === true
         };
       } catch (error) {
         metadataPatch = {
