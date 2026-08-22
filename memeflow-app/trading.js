@@ -62,6 +62,7 @@ const state = {
   chartSource: null,
   positions: [],
   trades: [],
+  proposals: [],
   paperStatus: null,
   walletProvider: null,
   walletAddress: null,
@@ -725,6 +726,9 @@ function populateSettings() {
   const mode = String(s.operatingMode || 'observe').toLowerCase();
   $('modeBadge').textContent = mode.toUpperCase();
   $('modeBadge').dataset.mode = mode;
+  $('assistBtn').dataset.active = mode === 'assist' ? 'true' : 'false';
+  $('startAutoBtn').dataset.active = mode === 'automate' ? 'true' : 'false';
+  $('pauseBtn').dataset.active = mode === 'observe' ? 'true' : 'false';
 
   $('engineText').textContent = mode === 'automate'
     ? 'PAPER AUTO ACTIVE'
@@ -811,6 +815,21 @@ async function onSaveStrategy() {
     showError(error.message);
   } finally {
     $('saveStrategyBtn').disabled = false;
+  }
+}
+
+
+async function onAssist() {
+  try {
+    $('assistBtn').disabled = true;
+    await saveSettings('assist');
+    await loadPaper();
+    $('saveState').textContent = 'Manual review active · BUY READY tokens wait for Approve buy / Reject';
+  } catch (error) {
+    if (error.status === 409) await loadSettings().catch(() => {});
+    showError(error.message);
+  } finally {
+    $('assistBtn').disabled = false;
   }
 }
 
@@ -3686,15 +3705,18 @@ function formatPrice(price) {
 }
 
 async function loadPaper({ redrawChart = true } = {}) {
-  const [positionsPayload, tradesPayload, statusPayload] = await Promise.all([
+  const [positionsPayload, tradesPayload, proposalsPayload, statusPayload] = await Promise.all([
     api('/api/paper/positions'),
     api('/api/paper/trades'),
+    api('/api/paper/proposals'),
     api('/api/paper/status')
   ]);
 
   state.positions = Array.isArray(positionsPayload.positions) ? positionsPayload.positions : [];
   state.trades = Array.isArray(tradesPayload.trades) ? tradesPayload.trades : [];
+  state.proposals = Array.isArray(proposalsPayload.proposals) ? proposalsPayload.proposals : [];
   state.paperStatus = statusPayload || {};
+  renderProposals();
   renderPositions();
   renderTrades();
 
@@ -3703,6 +3725,125 @@ async function loadPaper({ redrawChart = true } = {}) {
   $('paperPnl').className = pnl > 0 ? 'pnl-positive' : pnl < 0 ? 'pnl-negative' : '';
 
   if (redrawChart) scheduleChart();
+}
+
+
+function proposalTimestamp(proposal) {
+  const direct = num(proposal?.createdAtMs);
+  if (direct > 0) return direct;
+  const parsed = Date.parse(proposal?.createdAt || '');
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function actionableProposals() {
+  const freshnessSec = Math.max(5, num(state.settings?.decisionFreshnessSec, 60));
+  const cutoff = Date.now() - freshnessSec * 1000;
+  const latestByMint = new Map();
+
+  for (const proposal of state.proposals || []) {
+    if (String(proposal?.status || '').toUpperCase() !== 'PENDING') continue;
+
+    const createdAtMs = proposalTimestamp(proposal);
+    if (createdAtMs > 0 && createdAtMs < cutoff) continue;
+
+    const mint = String(proposal?.mint || '').trim();
+    if (!mint) continue;
+
+    const existing = latestByMint.get(mint);
+    if (!existing || proposalTimestamp(existing) < createdAtMs) {
+      latestByMint.set(mint, proposal);
+    }
+  }
+
+  return [...latestByMint.values()]
+    .sort((a, b) => proposalTimestamp(b) - proposalTimestamp(a));
+}
+
+async function resolveProposal(proposalId, action, sourceButton) {
+  if (!proposalId || !['approve', 'reject'].includes(action)) return;
+
+  const row = sourceButton?.closest?.('.approval-row');
+  const buttons = row ? [...row.querySelectorAll('button')] : [];
+  buttons.forEach(button => { button.disabled = true; });
+  clearError();
+
+  try {
+    await api(
+      `/api/paper/proposals/${encodeURIComponent(proposalId)}/${action}`,
+      { method: 'POST' }
+    );
+    await loadPaper();
+  } catch (error) {
+    showError(error.message);
+    await loadPaper().catch(() => {});
+  } finally {
+    buttons.forEach(button => { button.disabled = false; });
+  }
+}
+
+function renderProposals() {
+  const panel = $('approvalsPanel');
+  const list = $('approvalList');
+  const count = $('approvalCount');
+  if (!panel || !list || !count) return;
+
+  const mode = String(state.settings?.operatingMode || 'observe').toLowerCase();
+  const rows = actionableProposals();
+
+  panel.dataset.active = mode === 'assist' ? 'true' : 'false';
+  count.dataset.active = mode === 'assist' ? 'true' : 'false';
+  count.textContent = rows.length
+    ? `${rows.length} PENDING`
+    : mode === 'assist'
+      ? 'ASSIST ACTIVE'
+      : 'ASSIST OFF';
+
+  if (!rows.length) {
+    list.innerHTML = `
+      <div class="empty approval-empty">
+        ${mode === 'assist'
+          ? 'Waiting for a fresh BUY READY token to review…'
+          : 'Switch Trade control to Review manually to approve BUY READY entries.'}
+      </div>
+    `;
+    return;
+  }
+
+  list.innerHTML = rows.map(proposal => {
+    const createdAtMs = proposalTimestamp(proposal);
+    const time = createdAtMs
+      ? new Date(createdAtMs).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})
+      : '—';
+    const score = finite(proposal.decisionScore) ? fmt(proposal.decisionScore, 0) : '—';
+    const confidence = finite(proposal.decisionConfidence) ? `${fmt(proposal.decisionConfidence, 0)}%` : '—';
+    const price = finite(proposal.proposedPriceSol) ? `${fmt(proposal.proposedPriceSol, 9)} SOL` : '—';
+    const size = finite(proposal.proposedSizeSol) ? `${fmt(proposal.proposedSizeSol, 4)} SOL` : '—';
+
+    return `
+      <div class="approval-row" data-id="${esc(proposal.id)}">
+        <div class="approval-main">
+          <strong>${esc(proposal.name || proposal.symbol || short(proposal.mint))}</strong>
+          <span>${esc(proposal.symbol || short(proposal.mint))} · ${esc(short(proposal.mint, 6, 5))} · ${esc(time)}</span>
+        </div>
+        <div class="approval-stats">
+          <span><b>SIZE</b><strong>${size}</strong></span>
+          <span><b>SCORE</b><strong>${score}</strong></span>
+          <span><b>CONF</b><strong>${confidence}</strong></span>
+          <span><b>PRICE</b><strong>${price}</strong></span>
+        </div>
+        <div class="approval-actions">
+          <button class="approval-reject" type="button" data-action="reject" data-id="${esc(proposal.id)}">Reject</button>
+          <button class="approval-approve" type="button" data-action="approve" data-id="${esc(proposal.id)}">Approve buy</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  list.querySelectorAll('[data-action][data-id]').forEach(button => {
+    button.addEventListener('click', () => {
+      resolveProposal(button.dataset.id, button.dataset.action, button);
+    });
+  });
 }
 
 function renderPositions() {
@@ -3918,6 +4059,7 @@ function bind() {
     .forEach(id => $(id).addEventListener('input', updateAllocation));
 
   $('saveStrategyBtn').addEventListener('click', onSaveStrategy);
+  $('assistBtn').addEventListener('click', onAssist);
   $('startAutoBtn').addEventListener('click', onStartAuto);
   $('pauseBtn').addEventListener('click', onPause);
   $('killBtn').addEventListener('click', onKill);

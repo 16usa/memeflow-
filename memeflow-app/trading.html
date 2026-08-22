@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#03070a">
   <title>MEMEFLOW Trading Terminal</title>
-  <link rel="stylesheet" href="/trading.css?v=compact-v4-20260821">
+  <link rel="stylesheet" href="/trading.css?v=assist-approvals-v1-20260822">
 <link rel="stylesheet" href="/memeflow-brand.css?v=final-v6">
 </head>
 <body>
@@ -127,6 +127,19 @@
             <div><span>Top 10</span><strong id="metricTop10">—</strong></div>
             <div><span>Developer</span><strong id="metricDev">—</strong></div>
             <div><span>Liquidity</span><strong id="metricLiquidity">—</strong></div>
+          </div>
+        </section>
+
+        <section class="panel approvals-panel" id="approvalsPanel">
+          <div class="panel-head compact-head">
+            <div>
+              <span class="eyebrow">ASSIST MODE</span>
+              <h2>Pending approvals</h2>
+            </div>
+            <span id="approvalCount" class="approval-count">ASSIST OFF</span>
+          </div>
+          <div id="approvalList" class="approval-list">
+            <div class="empty">Switch Trade control to Review manually to approve BUY READY entries.</div>
           </div>
         </section>
 
@@ -272,6 +285,7 @@
 
         <div class="control-actions">
           <button id="saveStrategyBtn" class="secondary-btn" type="button">Save strategy</button>
+          <button id="assistBtn" class="assist-btn" type="button">Review manually</button>
           <button id="startAutoBtn" class="start-btn" type="button">Start paper auto</button>
           <button id="pauseBtn" class="pause-btn" type="button">Pause new entries</button>
         </div>
@@ -285,7 +299,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/echarts@6.1.0/dist/echarts.min.js"></script>
-  <script type="module" src="/trading.js?v=v3026-indicators2"></script>
+  <script type="module" src="/trading.js?v=assist-approvals-v1-20260822"></script>
   <!-- MEMEFLOW_TRADING_CHART_V30_4 -->
   <!-- MEMEFLOW_TRADING_CHART_V30_5_EXECUTION_OHLC -->
   <!-- MEMEFLOW_TRADING_CHART_V30_6_USD_CURVE_MARK -->
