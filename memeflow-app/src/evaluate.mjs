@@ -3,7 +3,8 @@ import {evaluateSettingsGate,tokenAgeMinutes} from './settings-gate.mjs';
 const clampScore = value =>
   Math.max(0, Math.min(100, Math.round(Number(value) || 0)));
 
-const finite = value => Number.isFinite(Number(value));
+const finite = value =>
+  value !== null && value !== undefined && value !== '' && Number.isFinite(Number(value));
 
 function independentAiScore(token = {}) {
   let score = 0;
@@ -74,11 +75,51 @@ function independentAiScore(token = {}) {
   return {score: clampScore(score), quality};
 }
 
+/*
+ * Decision confidence is recomputed from CURRENT evidence on every evaluation.
+ * token.dataQuality is only an enrichment snapshot and can stay stale while the
+ * WS hot path later fills holder/market fields. Using that snapshot as the live
+ * confidence gate can pin a recovered token at 0% forever.
+ */
+function independentEvidenceConfidence(token = {}) {
+  const components = [
+    {key: 'holders', available: finite(token.holderCount), points: 20},
+    {key: 'top10', available: finite(token.top10Pct), points: 20},
+    {key: 'developer', available: finite(token.developerPct), points: 20},
+    {key: 'buyPressure', available: finite(token.buyPressure), points: 20},
+    {
+      key: 'verifiedPrice',
+      available: finite(token.priceSol) && Number(token.priceSol) > 0,
+      points: 10,
+    },
+    {key: 'freshHolders', available: token.holderFresh === true, points: 10},
+  ];
+
+  const confidence = components.reduce(
+    (sum, component) => sum + (component.available ? component.points : 0),
+    0,
+  );
+
+  return {
+    confidence: clampScore(confidence),
+    components: components.map(component => ({
+      key: component.key,
+      available: component.available,
+      points: component.available ? component.points : 0,
+      maxPoints: component.points,
+    })),
+  };
+}
+
 export function evaluate(token, s = {}) {
   // AI quality remains independent from user policy.
   const ai = independentAiScore(token);
   const score = ai.score;
-  const confidence = clampScore((finite(token.dataQuality) ? Number(token.dataQuality) : 0) * 100);
+
+  // MEMEFLOW_V13_LIVE_CONFIDENCE_RECOVERY
+  // Recompute from live fields every time; never gate on stale dataQuality.
+  const evidence = independentEvidenceConfidence(token);
+  const confidence = evidence.confidence;
 
   // One canonical settings gate is shared by the evaluator and the pipeline.
   // A known FAIL always outranks WAITING so an already-ineligible token cannot
@@ -170,7 +211,9 @@ export function evaluate(token, s = {}) {
     aiQuality: {
       model: 'MEMEFLOW_INDEPENDENT_AI_V1',
       score,
-      components: ai.quality
+      confidence,
+      components: ai.quality,
+      confidenceComponents: evidence.components
     },
     settingsEvaluation: {
       state: policy.state,

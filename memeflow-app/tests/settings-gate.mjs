@@ -57,6 +57,47 @@ const b=evaluate(baseToken,{...settings,minScore:100,minConfidence:100});
 assert.equal(a.score,b.score);
 assert.equal(a.confidence,b.confidence);
 
+// Regression: stale dataQuality must not pin a fully enriched live token at 0%.
+const staleQuality=evaluate(
+  {...baseToken,dataQuality:0},
+  {...settings,minScore:0,minConfidence:70}
+);
+assert.equal(staleQuality.confidence,100);
+assert.equal(staleQuality.state,'BUY READY');
+assert.equal(staleQuality.reasons.some(x=>String(x).includes('confidence 0%')),false);
+
+// Null/missing fields must not be treated as numeric zero and inflate score/confidence.
+const missingEvidence=evaluate(
+  {priceSol:null,holderFresh:false,dataQuality:0},
+  {minScore:0,minConfidence:70,requireFreshHolderSnapshot:true}
+);
+assert.equal(missingEvidence.score,0);
+assert.equal(missingEvidence.confidence,0);
+assert.equal(missingEvidence.state,'WAITING');
+
+// WS recovery: holder evidence can arrive first; missing market evidence keeps WAITING.
+const holderPhase=evaluate(
+  {...baseToken,buyPressure:null,priceSol:null,dataQuality:0},
+  {...settings,minScore:0,minConfidence:70,minBuyPressure:1.5}
+);
+assert.equal(holderPhase.confidence,70);
+assert.equal(holderPhase.state,'WAITING');
+
+// Once the WS market event fills price + pressure, the same token becomes BUY READY.
+const marketPhase=evaluate(
+  {...baseToken,buyPressure:2,priceSol:0.00001,dataQuality:0},
+  {...settings,minScore:0,minConfidence:70,minBuyPressure:1.5}
+);
+assert.equal(marketPhase.confidence,100);
+assert.equal(marketPhase.state,'BUY READY');
+
+// Risk/policy failures still outrank recovered confidence.
+const riskBlocked=evaluate(
+  {...baseToken,top10Pct:40,dataQuality:0},
+  {...settings,minScore:0,minConfidence:70,maxTop10Pct:25}
+);
+assert.equal(riskBlocked.confidence,100);
+assert.equal(riskBlocked.state,'BLOCKED');
 
 const entries=[
   {uid:'u1',version:2,settings:{launchPlatforms:['pump'],maxTop10Pct:10}},
