@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#03070a">
   <title>MEMEFLOW Trading Terminal</title>
-  <link rel="stylesheet" href="/trading.css?v=gmgn-indicators-touch1">
+  <link rel="stylesheet" href="/trading.css?v=compact-v4-20260821">
 </head>
 <body>
   <div class="shell">
@@ -288,6 +288,46 @@
   <!-- MEMEFLOW_TRADING_CHART_V30_4 -->
   <!-- MEMEFLOW_TRADING_CHART_V30_5_EXECUTION_OHLC -->
   <!-- MEMEFLOW_TRADING_CHART_V30_6_USD_CURVE_MARK -->
+
+
+<!-- MEMEFLOW_COMPACT_TRADING_V4_JS_START -->
+<script>
+(() => {
+  function installCompactTradingLayout() {
+    if (window.innerWidth > 820) return;
+    const terminal = document.querySelector('.terminal');
+    const control = document.querySelector('.control-panel');
+    const candidates = document.querySelector('.candidates-panel');
+    if (!terminal || !control || !candidates) return;
+
+    let walletPanel = document.querySelector('.compact-wallet-panel');
+    if (!walletPanel) {
+      walletPanel = document.createElement('section');
+      walletPanel.className = 'panel compact-wallet-panel';
+      walletPanel.innerHTML = '<div class="panel-head compact-head"><div><span class="eyebrow">ACCOUNT</span><h2>Wallet</h2></div></div><div class="compact-wallet-body"></div>';
+      candidates.insertAdjacentElement('afterend', walletPanel);
+    }
+
+    const body = walletPanel.querySelector('.compact-wallet-body');
+    const wallet = control.querySelector('.wallet-section');
+    const error = control.querySelector('#controlError');
+    const actions = control.querySelector('.control-actions');
+    const foot = control.querySelector('.control-foot');
+
+    [wallet, error, actions, foot].forEach(node => {
+      if (node && node.parentElement !== body) body.appendChild(node);
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', installCompactTradingLayout, { once: true });
+  } else {
+    installCompactTradingLayout();
+  }
+})();
+</script>
+<!-- MEMEFLOW_COMPACT_TRADING_V4_JS_END -->
+
 </body>
 </html>
 
