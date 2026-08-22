@@ -1,0 +1,17 @@
+{
+  "version": "pepe-character-rig-v2-shell",
+  "parts": {
+    "body": "body.svg",
+    "head": "head.svg",
+    "eyesOpen": "eyes_open.svg",
+    "eyesClosed": "eyes_closed.svg",
+    "mouthHappy": "mouth_happy.svg",
+    "mouthSad": "mouth_sad.svg",
+    "armLeft": "arm_left.svg",
+    "armRight": "arm_right.svg",
+    "handLeft": "hand_left.svg",
+    "handRight": "hand_right.svg",
+    "legLeft": "leg_left.svg",
+    "legRight": "leg_right.svg"
+  }
+}

@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport"
+        content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>PEPE RIG TEST</title>
+
+  <style>
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 50% 38%, #102a32 0%, #071218 42%, #020609 100%);
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    #stage {
+      position: fixed;
+      inset: 0;
+    }
+
+    #stage canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    #status {
+      position: fixed;
+      top: max(16px, env(safe-area-inset-top));
+      left: 16px;
+      right: 16px;
+      z-index: 5;
+      padding: 12px 14px;
+      border: 1px solid rgba(110,255,180,.22);
+      border-radius: 14px;
+      background: rgba(3,12,16,.72);
+      backdrop-filter: blur(14px);
+      color: #dfffee;
+      font-size: 12px;
+      letter-spacing: .12em;
+    }
+
+    #status b {
+      color: #64ff9a;
+    }
+
+    #controls {
+      position: fixed;
+      left: 16px;
+      right: 16px;
+      bottom: max(18px, env(safe-area-inset-bottom));
+      z-index: 5;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    button {
+      min-height: 48px;
+      border: 1px solid rgba(110,255,180,.22);
+      border-radius: 12px;
+      background: rgba(5,18,21,.82);
+      color: white;
+      font-weight: 700;
+      font-size: 12px;
+    }
+
+    button:active {
+      transform: scale(.97);
+    }
+
+    .green { color: #68ff9e; }
+    .red { color: #ff7272; }
+  </style>
+</head>
+
+<body>
+
+  <div id="stage"></div>
+
+  <div id="status">
+    PEPE RIG · <b id="statusText">LOADING</b>
+  </div>
+
+  <div id="controls">
+    <button id="happyBtn" class="green">▲ HAPPY</button>
+    <button id="neutralBtn">● IDLE</button>
+    <button id="sadBtn" class="red">▼ SAD</button>
+  </div>
+
+  <script type="module"
+          src="/character-test.js?v=1786492600"></script>
+
+</body>
+</html>

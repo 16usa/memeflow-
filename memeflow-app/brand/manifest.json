@@ -1,0 +1,41 @@
+{
+  "brand": "MEMEFLOW",
+  "version": "final-v5",
+  "source_of_truth": "memeflow-dragonfly-master.png",
+  "geometry_policy": "All variants derive from the same master alpha/geometry; no redrawing.",
+  "files": {
+    "master": "memeflow-dragonfly-master.png",
+    "dark": "memeflow-dragonfly-dark.png",
+    "light": "memeflow-dragonfly-light.png",
+    "webp": "memeflow-dragonfly.webp",
+    "ico": "favicon.ico",
+    "loader_gif": "memeflow-dragonfly-loader.gif",
+    "layers": [
+      "layer-body.png",
+      "layer-wings-left.png",
+      "layer-wings-right.png",
+      "layer-glow.png"
+    ],
+    "favicons": [
+      "favicon-16.png",
+      "favicon-32.png",
+      "favicon-48.png",
+      "favicon-64.png",
+      "favicon-72.png",
+      "favicon-96.png",
+      "favicon-128.png",
+      "favicon-144.png",
+      "favicon-152.png",
+      "favicon-180.png",
+      "favicon-192.png",
+      "favicon-512.png"
+    ]
+  },
+  "palette": [
+    "#00F7FF",
+    "#24E0E8",
+    "#0FC9E0",
+    "#0A1A24",
+    "#FFFFFF"
+  ]
+}

@@ -1,0 +1,525 @@
+/* ==========================================================
+   MEMEFLOW GAME SETTINGS V10.7
+   Isolated in-game settings overlay.
+   Does not alter Game / rocket / scanner layout.
+   ========================================================== */
+
+.game-settings-launcher{
+  width:clamp(18px,2.7vmin,25px);
+  height:clamp(18px,2.7vmin,25px);
+
+  min-width:0;
+  min-height:0;
+  flex:none;
+
+  padding:0;
+
+  display:grid;
+  place-items:center;
+
+  border:0;
+  border-radius:0;
+
+  background:transparent;
+  color:#747d85;
+
+  cursor:pointer;
+
+  box-shadow:none;
+
+  -webkit-tap-highlight-color:transparent;
+}
+
+.game-settings-launcher svg{
+  width:clamp(12px,1.75vmin,16px);
+  height:clamp(12px,1.75vmin,16px);
+
+  fill:none;
+  stroke:currentColor;
+
+  stroke-width:1.55;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}
+
+.game-settings-launcher:hover,
+.game-settings-launcher:focus-visible,
+.game-settings-launcher.is-open{
+  border:0;
+  background:transparent;
+  color:#f4f6f7;
+  outline:none;
+  box-shadow:none;
+}
+
+
+/* ==========================================================
+   OVERLAY
+   ========================================================== */
+
+.mf-game-settings-overlay{
+  position:fixed;
+  inset:0;
+
+  z-index:2147483630;
+
+  box-sizing:border-box;
+
+  padding:
+    max(10px,env(safe-area-inset-top))
+    max(10px,env(safe-area-inset-right))
+    max(10px,env(safe-area-inset-bottom))
+    max(10px,env(safe-area-inset-left));
+
+  display:grid;
+  place-items:center;
+
+  background:
+    radial-gradient(
+      circle at 50% 0%,
+      rgba(109,220,255,.10),
+      transparent 35%
+    ),
+    rgba(1,4,7,.94);
+
+  backdrop-filter:blur(18px);
+  -webkit-backdrop-filter:blur(18px);
+}
+
+.mf-game-settings-overlay[hidden]{
+  display:none!important;
+}
+
+.mf-game-settings-shell{
+  width:min(1080px,100%);
+  height:min(900px,100%);
+
+  min-width:0;
+  min-height:0;
+
+  display:grid;
+  grid-template-rows:auto auto minmax(0,1fr);
+
+  overflow:hidden;
+
+  border:
+    1px solid
+    rgba(128,163,178,.25);
+
+  border-radius:22px;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(11,17,23,.995),
+      rgba(4,8,12,.998)
+    );
+
+  box-shadow:
+    0 40px 120px
+    rgba(0,0,0,.72);
+}
+
+
+/* ==========================================================
+   HEADER
+   ========================================================== */
+
+.mf-game-settings-head{
+  min-height:64px;
+
+  padding:10px 14px 10px 16px;
+
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+
+  gap:12px;
+
+  border-bottom:
+    1px solid
+    rgba(160,181,200,.13);
+}
+
+.mf-game-settings-title{
+  min-width:0;
+}
+
+.mf-game-settings-title small{
+  display:block;
+
+  color:#6ddcff;
+
+  font-size:7px;
+  font-weight:850;
+
+  letter-spacing:.17em;
+}
+
+.mf-game-settings-title b{
+  display:block;
+
+  margin-top:3px;
+
+  color:#eff6f8;
+
+  font-size:18px;
+  line-height:1;
+
+  letter-spacing:-.025em;
+}
+
+.mf-game-settings-actions{
+  display:flex;
+  align-items:center;
+  gap:8px;
+
+  flex:none;
+}
+
+.mf-game-settings-state{
+  max-width:260px;
+
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+
+  padding:6px 9px;
+
+  border:
+    1px solid
+    rgba(100,236,169,.18);
+
+  border-radius:999px;
+
+  color:#8eeab5;
+
+  font-size:7px;
+  font-weight:800;
+
+  letter-spacing:.09em;
+}
+
+.mf-game-settings-state[data-state="loading"]{
+  border-color:rgba(109,220,255,.20);
+  color:#91dff2;
+}
+
+.mf-game-settings-state[data-state="error"]{
+  border-color:rgba(255,101,120,.25);
+  color:#ff8c9a;
+}
+
+.mf-game-settings-close{
+  width:38px;
+  height:38px;
+
+  border:
+    1px solid
+    rgba(160,181,200,.17);
+
+  border-radius:11px;
+
+  background:
+    rgba(255,255,255,.025);
+
+  color:#a9b5bd;
+
+  display:grid;
+  place-items:center;
+
+  padding:0;
+
+  cursor:pointer;
+
+  font-size:18px;
+  line-height:1;
+}
+
+.mf-game-settings-close:hover,
+.mf-game-settings-close:focus-visible{
+  color:white;
+  border-color:rgba(255,255,255,.30);
+  outline:none;
+}
+
+
+/* ==========================================================
+   INFO STRIP
+   ========================================================== */
+
+.mf-game-settings-info{
+  min-height:40px;
+
+  padding:8px 16px;
+
+  display:flex;
+  align-items:center;
+
+  gap:8px;
+
+  border-bottom:
+    1px solid
+    rgba(160,181,200,.10);
+
+  background:
+    rgba(109,220,255,.025);
+
+  color:#82909b;
+
+  font-size:8px;
+  line-height:1.35;
+}
+
+.mf-game-settings-info i{
+  width:6px;
+  height:6px;
+
+  border-radius:50%;
+
+  flex:none;
+
+  background:#64eca9;
+
+  box-shadow:
+    0 0 10px
+    rgba(100,236,169,.55);
+}
+
+.mf-game-settings-info b{
+  color:#c7d3d7;
+}
+
+
+/* ==========================================================
+   SAME-SITE SETTINGS FRAME
+   ========================================================== */
+
+.mf-game-settings-frame-wrap{
+  position:relative;
+
+  min-width:0;
+  min-height:0;
+
+  overflow:hidden;
+
+  background:#05080b;
+}
+
+.mf-game-settings-frame{
+  width:100%;
+  height:100%;
+
+  min-width:0;
+  min-height:0;
+
+  display:block;
+
+  border:0;
+
+  background:#05080b;
+}
+
+.mf-game-settings-loading{
+  position:absolute;
+  inset:0;
+
+  z-index:2;
+
+  display:grid;
+  place-items:center;
+
+  pointer-events:none;
+
+  background:
+    radial-gradient(
+      circle at center,
+      rgba(109,220,255,.055),
+      transparent 36%
+    ),
+    #05080b;
+
+  color:#778791;
+
+  font-size:9px;
+  letter-spacing:.11em;
+}
+
+.mf-game-settings-loading[hidden]{
+  display:none!important;
+}
+
+.mf-game-settings-loader{
+  display:grid;
+  justify-items:center;
+  gap:10px;
+}
+
+.mf-game-settings-loader i{
+  width:24px;
+  height:24px;
+
+  border-radius:50%;
+
+  border:
+    2px solid
+    rgba(109,220,255,.13);
+
+  border-top-color:#6ddcff;
+
+  animation:
+    mfGameSettingsSpin
+    .8s
+    linear
+    infinite;
+}
+
+@keyframes mfGameSettingsSpin{
+  to{
+    transform:rotate(360deg);
+  }
+}
+
+
+/* ==========================================================
+   PHONE
+   ========================================================== */
+
+@media(max-width:700px){
+
+  .mf-game-settings-overlay{
+    padding:
+      env(safe-area-inset-top)
+      0
+      env(safe-area-inset-bottom)
+      0;
+  }
+
+  .mf-game-settings-shell{
+    width:100%;
+    height:100%;
+
+    border-left:0;
+    border-right:0;
+
+    border-radius:0;
+  }
+
+  .mf-game-settings-head{
+    min-height:56px;
+
+    padding:
+      8px
+      9px
+      8px
+      12px;
+  }
+
+  .mf-game-settings-title b{
+    font-size:16px;
+  }
+
+  .mf-game-settings-state{
+    max-width:120px;
+    font-size:6px;
+  }
+
+  .mf-game-settings-close{
+    width:34px;
+    height:34px;
+  }
+
+  .mf-game-settings-info{
+    min-height:36px;
+
+    padding:
+      7px
+      11px;
+
+    font-size:7px;
+  }
+}
+
+
+/* ==========================================================
+   IPHONE LANDSCAPE
+   ========================================================== */
+
+@media
+  (max-width:1000px)
+  and (orientation:landscape){
+
+  .game-settings-launcher{
+    width:27px!important;
+    height:27px!important;
+
+    border-radius:8px!important;
+
+    font-size:12px!important;
+  }
+
+  .mf-game-settings-overlay{
+    padding:
+      max(2px,env(safe-area-inset-top))
+      max(3px,env(safe-area-inset-right))
+      max(2px,env(safe-area-inset-bottom))
+      max(3px,env(safe-area-inset-left));
+  }
+
+  .mf-game-settings-shell{
+    width:100%;
+    height:100%;
+
+    border-radius:14px;
+  }
+
+  .mf-game-settings-head{
+    min-height:42px;
+
+    padding:
+      5px
+      7px
+      5px
+      10px;
+  }
+
+  .mf-game-settings-title small{
+    font-size:5px;
+  }
+
+  .mf-game-settings-title b{
+    margin-top:1px;
+    font-size:13px;
+  }
+
+  .mf-game-settings-state{
+    padding:4px 7px;
+    font-size:5px;
+  }
+
+  .mf-game-settings-close{
+    width:29px;
+    height:29px;
+
+    border-radius:8px;
+
+    font-size:15px;
+  }
+
+  .mf-game-settings-info{
+    min-height:27px;
+
+    padding:
+      4px
+      9px;
+
+    font-size:5.5px;
+  }
+}
+
+
+@media(prefers-reduced-motion:reduce){
+  .mf-game-settings-loader i{
+    animation:none;
+  }
+}

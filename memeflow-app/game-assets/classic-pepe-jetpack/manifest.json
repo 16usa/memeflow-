@@ -1,0 +1,71 @@
+{
+  "name": "Classic Pepe + Jetpack FIXED",
+  "version": "2.0",
+  "description": "Single-character transparent PNG states; no neighboring frames.",
+  "states": {
+    "fly": "pepe_fly.png",
+    "boost": "pepe_boost.png",
+    "target": "pepe_target.png",
+    "cashout": "pepe_cashout.png",
+    "parachute": "pepe_parachute.png",
+    "crash": "pepe_crash.png",
+    "hover": "pepe_hover.png"
+  },
+  "effects": {
+    "flame_normal": "fx_flame_normal.png",
+    "flame_boost": "fx_flame_boost.png",
+    "smoke": "fx_smoke.png",
+    "sparks": "fx_sparks.png"
+  },
+  "sizes": {
+    "pepe_fly.png": [
+      790,
+      720
+    ],
+    "pepe_boost.png": [
+      1012,
+      726
+    ],
+    "pepe_target.png": [
+      975,
+      774
+    ],
+    "pepe_cashout.png": [
+      702,
+      700
+    ],
+    "pepe_hover.png": [
+      811,
+      844
+    ],
+    "pepe_parachute.png": [
+      797,
+      1007
+    ],
+    "pepe_crash.png": [
+      1052,
+      580
+    ],
+    "fx_flame_normal.png": [
+      584,
+      246
+    ],
+    "fx_flame_boost.png": [
+      784,
+      286
+    ],
+    "fx_smoke.png": [
+      684,
+      229
+    ],
+    "fx_sparks.png": [
+      602,
+      305
+    ]
+  },
+  "notes": [
+    "All state PNGs contain exactly one Classic Pepe character.",
+    "Transparent backgrounds.",
+    "Designed to replace memeflow-app/game-assets/classic-pepe-jetpack/."
+  ]
+}

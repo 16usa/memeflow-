@@ -1,0 +1,163 @@
+<!doctype html>
+
+<html lang="en">
+
+<head>
+
+<meta charset="utf-8">
+
+<meta
+  name="viewport"
+  content="width=device-width,initial-scale=1,viewport-fit=cover"
+>
+
+<title>PEPE REAL RIG V10 · ARMS FORWARD</title>
+
+<style>
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+
+  background:
+    radial-gradient(
+      circle at 50% 42%,
+      #10272d 0%,
+      #061115 45%,
+      #010608 100%
+    );
+
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
+}
+
+#stage {
+  position: fixed;
+  inset: 0;
+}
+
+#hud {
+  position: fixed;
+
+  top:
+    max(
+      18px,
+      env(safe-area-inset-top)
+    );
+
+  left: 18px;
+  right: 18px;
+
+  z-index: 10;
+
+  padding:
+    14px 16px;
+
+  border:
+    1px solid
+    rgba(70,255,180,.25);
+
+  border-radius:
+    15px;
+
+  background:
+    rgba(3,15,18,.78);
+
+  color: white;
+
+  font-size: 12px;
+
+  letter-spacing: .12em;
+}
+
+#buttons {
+
+  position: fixed;
+
+  left: 18px;
+  right: 18px;
+
+  bottom:
+    max(
+      18px,
+      env(safe-area-inset-bottom)
+    );
+
+  display: grid;
+
+  grid-template-columns:
+    repeat(3,1fr);
+
+  gap: 8px;
+
+  z-index: 10;
+}
+
+button {
+
+  min-height:
+    52px;
+
+  border:
+    1px solid
+    rgba(70,255,180,.25);
+
+  border-radius:
+    14px;
+
+  background:
+    rgba(4,17,20,.90);
+
+  color:
+    white;
+
+  font-weight:
+    800;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div id="stage"></div>
+
+<div id="hud">
+  PEPE REAL RIG V10 · ARMS FORWARD ·
+  <b id="state">LOADING</b>
+</div>
+
+<div id="buttons">
+
+  <button id="up">
+    ▲ UP
+  </button>
+
+  <button id="idle">
+    ● IDLE
+  </button>
+
+  <button id="down">
+    ▼ DOWN
+  </button>
+
+</div>
+
+<script
+  type="module"
+  src="/character-real-test-v10.js?v=arms-front-10"
+></script>
+
+</body>
+
+</html>
