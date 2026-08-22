@@ -22,9 +22,30 @@ const bool=(v,fallback=false)=>{
  return fallback;
 };
 export const PROFILE_PRESETS=Object.freeze({
- conservative:Object.freeze({minScore:82,minConfidence:70,minBuyPressure:1.5,minHolders:60,maxTop10Pct:20,maxDeveloperPct:10,requireFreshHolderSnapshot:true}),
- balanced:Object.freeze({minScore:72,minConfidence:70,minBuyPressure:1.2,minHolders:30,maxTop10Pct:25,maxDeveloperPct:20,requireFreshHolderSnapshot:true}),
- aggressive:Object.freeze({minScore:65,minConfidence:70,minBuyPressure:1.1,minHolders:20,maxTop10Pct:30,maxDeveloperPct:25,requireFreshHolderSnapshot:true})
+ conservative:Object.freeze({
+  minScore:82,
+  minConfidence:80,
+  minBuyPressure:1.5,
+  decisionFreshnessSec:30,
+  requireFreshHolderSnapshot:true,
+  requireWebsiteOrX:true
+ }),
+ balanced:Object.freeze({
+  minScore:72,
+  minConfidence:70,
+  minBuyPressure:1.2,
+  decisionFreshnessSec:60,
+  requireFreshHolderSnapshot:true,
+  requireWebsiteOrX:false
+ }),
+ aggressive:Object.freeze({
+  minScore:65,
+  minConfidence:65,
+  minBuyPressure:1.1,
+  decisionFreshnessSec:90,
+  requireFreshHolderSnapshot:true,
+  requireWebsiteOrX:false
+ })
 });
 export function profilePreset(profile){
  const key=String(profile||'').trim().toLowerCase();

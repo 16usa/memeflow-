@@ -2972,6 +2972,7 @@ const MF293 = {
   settings: null,
   version: null,
   capabilities: null,
+  profilePresets: {},
   killSwitchActive: false,
   dirty: false,
   saving: false,
@@ -3059,6 +3060,20 @@ const MF293_GROUPS = [
     ['exitOnWeakBuyPressure', 'Exit on weak buy pressure', 'boolean']
   ]]
 ];
+
+/*
+ * Strategy profiles are deliberately scoped to the visible Logic group only.
+ * Nothing outside this whitelist may be changed by Conservative / Balanced /
+ * Aggressive, even if a future server response contains extra preset keys.
+ */
+const MF293_PROFILE_LOGIC_KEYS = Object.freeze([
+  'minScore',
+  'minConfidence',
+  'minBuyPressure',
+  'decisionFreshnessSec',
+  'requireFreshHolderSnapshot',
+  'requireWebsiteOrX'
+]);
 
 function mf293Clone(value) {
   return JSON.parse(JSON.stringify(value));
@@ -3247,6 +3262,37 @@ async function mf293SetDiscoverySource(event) {
     select.disabled = false;
   }
 }
+function mf293ApplyProfilePreset(profile) {
+  const key = String(profile || '').trim().toLowerCase();
+  const preset = MF293.profilePresets?.[key];
+
+  if (!preset || typeof preset !== 'object') {
+    mf293Error(`Profile preset is unavailable: ${key || 'unknown'}`);
+    return false;
+  }
+
+  mf293ClearError();
+
+  for (const settingKey of MF293_PROFILE_LOGIC_KEYS) {
+    if (!Object.prototype.hasOwnProperty.call(preset, settingKey)) continue;
+
+    const input = document.querySelector(`[data-setting-key="${settingKey}"]`);
+    if (!input) continue;
+
+    const value = preset[settingKey];
+
+    if (input.dataset.settingKind === 'boolean') {
+      input.checked = Boolean(value);
+    } else {
+      input.value = value === null || value === undefined ? '' : String(value);
+    }
+  }
+
+  MF293.dirty = true;
+  mf293Status(`${key.charAt(0).toUpperCase()}${key.slice(1)} · Unsaved`, 'dirty');
+  return true;
+}
+
 function mf293Build() {
   if (document.getElementById('mf293SettingsPanel')) return;
 
@@ -3322,6 +3368,11 @@ function mf293Build() {
   document.getElementById('mf293SaveSettings')?.addEventListener('click', mf293Save);
   document.getElementById('mf293RestoreDefaults')?.addEventListener('click', mf293Restore);
   document.getElementById('mf293DiscoverySource')?.addEventListener('change', mf293SetDiscoverySource);
+
+  document.querySelector('[data-setting-key="profile"]')?.addEventListener('change', event => {
+    mf293ApplyProfilePreset(event.currentTarget?.value);
+  });
+
   backdrop.addEventListener('click', event => {
     if (event.target === backdrop) mf293Close();
   });
@@ -3391,6 +3442,7 @@ async function mf293Load() {
     MF293.settings = mf293Clone(payload.settings || {});
     MF293.version = payload.version ?? 1;
     MF293.capabilities = payload.capabilities || {};
+    MF293.profilePresets = payload.profilePresets || {};
     MF293.discoverySourceMode = String(
       payload?.capabilities?.discoverySourceMode || MF293.discoverySourceMode || 'pump'
     ).toLowerCase();
