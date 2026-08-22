@@ -1,4 +1,6 @@
 import crypto from 'node:crypto';
+import {evaluate} from './evaluate.mjs';
+import {calculateAdaptivePositionSize} from './adaptive-position-sizing.mjs';
 
 const num = (value, fallback = 0) => {
   const parsed = Number(value);
@@ -110,9 +112,11 @@ export class PaperEngine {
     return this.userPositions(userId, 'OPEN').find(p => p.mint === mint) || null;
   }
 
-  entryReadiness(userId, token, settings) {
+  entryReadiness(userId, token, settings, requestedSizeSol = null) {
     const s = this.settings(settings);
     const now = this.clock();
+    const requested = Number(requestedSizeSol);
+    const effectiveSizeSol = Number.isFinite(requested) && requested > 0 ? requested : s.positionSize;
 
     const price = num(token?.priceSol, NaN);
     const tokenUpdatedAt = Number(token?.pumpMarketUpdatedAt || token?.lastPriceAt || token?.lastMarketActivityAt || 0);
@@ -146,16 +150,16 @@ export class PaperEngine {
     const dataFresh = holderRequirementSatisfied && decisionFresh;
 
     const positionSizeValid =
-      s.positionSize > 0 &&
-      s.positionSize <= s.maxPositionSize;
+      effectiveSizeSol > 0 &&
+      effectiveSizeSol <= s.maxPositionSize;
 
     const dailySpendAvailable =
       s.dailySpendLimit <= 0 ||
-      dailySpent + s.positionSize <= s.dailySpendLimit;
+      dailySpent + effectiveSizeSol <= s.dailySpendLimit + 1e-12;
 
     const capitalAvailable =
       s.tradingCapital <= 0 ||
-      deployed + s.positionSize <= tradableCapital + 1e-12;
+      deployed + effectiveSizeSol <= tradableCapital + 1e-12;
 
     const user = this.store.state.users?.[userId];
     const lossLimitClear =
@@ -239,7 +243,8 @@ export class PaperEngine {
         tradableCapital: s.tradingCapital > 0 ? tradableCapital : null,
         dailyRealizedPnl,
         dailyLossLimit: s.dailyLossLimit,
-        positionSize: s.positionSize,
+        positionSize: effectiveSizeSol,
+        configuredPositionSize: s.positionSize,
         maxPositionSize: s.maxPositionSize,
         holderFresh,
         tokenUpdatedAt: timestampKnown ? tokenUpdatedAt : null,
@@ -249,8 +254,8 @@ export class PaperEngine {
     };
   }
 
-  canEnter(userId, token, settings) {
-    const readiness = this.entryReadiness(userId, token, settings);
+  canEnter(userId, token, settings, requestedSizeSol = null) {
+    const readiness = this.entryReadiness(userId, token, settings, requestedSizeSol);
     const failed = readiness.checks.find(check => !check.pass);
 
     if (failed) {
@@ -286,6 +291,7 @@ export class PaperEngine {
     if (settings.operatingMode === 'assist' || (settings.operatingMode === 'automate' && settings.ownerApproval === true)) {
       const existing = Object.values(this.store.state.paperProposals).find(p => p.idempotencyKey === key);
       if (existing) return { action: 'PROPOSAL_EXISTS', proposal: existing };
+      const sizing = calculateAdaptivePositionSize({ token, decision, settings });
       const proposal = {
         id: crypto.randomUUID(),
         idempotencyKey: key,
@@ -298,7 +304,8 @@ export class PaperEngine {
         createdAt: nowIso(),
         createdAtMs: this.clock(),
         proposedPriceSol: num(token.priceSol, null),
-        proposedSizeSol: settings.positionSize,
+        proposedSizeSol: sizing.ok ? sizing.amountSol : settings.positionSize,
+        positionSizing: sizing,
         decisionScore: decision.score ?? null,
         decisionConfidence: decision.confidence ?? null,
         primaryReason: decision.primaryReason || null,
@@ -326,11 +333,39 @@ export class PaperEngine {
 
   openPosition(userId, token, decision, rawSettings = {}, idempotencyKey = null) {
     const settings = this.settings(rawSettings);
-    const gate = this.canEnter(userId, token, settings);
-    if (!gate.ok) return gate;
+
+    // Execution-time source of truth: run the CURRENT token through the CURRENT
+    // user settings before any sizing or capital checks. A stale BUY READY decision
+    // or an old proposal can never bypass settings that changed later.
+    const currentDecision = evaluate(token || {}, settings);
+    if (currentDecision.state !== 'BUY READY') {
+      return {
+        ok: false,
+        code: currentDecision.state === 'WAITING' ? 'DECISION_WAITING' : 'DECISION_NOT_BUY_READY',
+        decision: currentDecision
+      };
+    }
+
+    // Only after the deterministic settings/decision gate passes do we decide
+    // how much of the user's configured per-trade budget to deploy.
+    const sizing = calculateAdaptivePositionSize({
+      token,
+      decision: currentDecision,
+      settings
+    });
+    if (!sizing.ok || !(sizing.amountSol > 0)) {
+      return {
+        ok: false,
+        code: sizing.code || 'INVALID_ADAPTIVE_POSITION_SIZE',
+        sizing
+      };
+    }
+
+    const gate = this.canEnter(userId, token, settings, sizing.amountSol);
+    if (!gate.ok) return {...gate, sizing, decision: currentDecision};
 
     const price = num(token.priceSol);
-    const size = settings.positionSize;
+    const size = sizing.amountSol;
     const quantity = size / price;
     const timestamp = this.clock();
     const position = {
@@ -360,20 +395,28 @@ export class PaperEngine {
       highestPriceSol: price,
       trailingStopPriceSol: null,
       closeReason: null,
-      decisionScore: decision?.score ?? null,
-      decisionConfidence: decision?.confidence ?? null,
+      decisionScore: currentDecision.score ?? null,
+      decisionConfidence: currentDecision.confidence ?? currentDecision.dataConfidence ?? null,
       sourceDecisionId: decision?.id || token.mint,
-      primaryReason: decision?.primaryReason || null,
+      primaryReason: currentDecision.primaryReason || null,
       tp1Executed: false,
       tp2Executed: false,
       takeProfitHistory: [],
+      positionSizing: sizing,
       settingsSnapshot: settings,
     };
     this.store.state.paperPositions[position.id] = position;
     this.store.state.paperMetrics.entries++;
-    this.recordTrade(position, 'BUY', quantity, price, 0, 'AUTOMATIC PAPER ENTRY');
+    this.recordTrade(
+      position,
+      'BUY',
+      quantity,
+      price,
+      0,
+      `AUTOMATIC PAPER ENTRY · ADAPTIVE ${Math.round(sizing.multiplier * 100)}%`
+    );
     this.save();
-    return { ok: true, position };
+    return { ok: true, position, sizing, decision: currentDecision };
   }
 
   approveProposal(userId, proposalId, token) {
@@ -396,6 +439,8 @@ export class PaperEngine {
     proposal.status = 'APPROVED';
     proposal.resolvedAt = nowIso();
     proposal.positionId = result.position.id;
+    proposal.executedSizeSol = result.position.initialSizeSol;
+    proposal.positionSizing = result.sizing || result.position.positionSizing || proposal.positionSizing || null;
     this.save();
     return result;
   }
