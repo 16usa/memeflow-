@@ -781,6 +781,58 @@ function v128Finite(v){
 function v128Enabled(v){
   return v!==null&&v!==undefined&&v!=='';
 }
+// MEMEFLOW_SETTINGS_FIRST_V34
+// Holder RPC is the expensive phase. Before it is admitted, every enabled
+// setting that can be decided WITHOUT holder census must already be PASS.
+// Holder-derived/final AI gates are intentionally excluded so we never
+// deadlock the data needed to evaluate them.
+const HOLDER_ADMISSION_POST_HOLDER_GATE_RE =
+  /^(?:Minimum holders|Maximum holders|Minimum Top-10 concentration|Maximum Top-10 concentration|Minimum developer share|Maximum developer share|Minimum bundle|Maximum bundle|Minimum sniper share|Maximum sniper share|Fresh holder snapshot|Suspected risky wallets|Insiders|Developer rug history|Developer exit|Developer migrated|Minimum AI score|Minimum data confidence)$/i;
+
+function holderAdmissionSettingsPrecheck(token,settings){
+  try{
+    const decision=evaluate(token,settings||{});
+    const gates=Array.isArray(decision?.settingsEvaluation?.gates)
+      ? decision.settingsEvaluation.gates
+      : [];
+
+    for(const gate of gates){
+      const name=String(gate?.name||'').trim();
+      const status=String(gate?.status||'').trim().toUpperCase();
+      if(status!=='FAIL'&&status!=='WAITING')continue;
+      if(HOLDER_ADMISSION_POST_HOLDER_GATE_RE.test(name))continue;
+
+      const slug=name
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g,'_')
+        .replace(/^_+|_+$/g,'')
+        .slice(0,80);
+
+      return {
+        ready:false,
+        state:status,
+        gate:name||null,
+        reason:`settings_${status.toLowerCase()}_${slug||'prerequisite'}`
+      };
+    }
+
+    return {
+      ready:true,
+      state:String(decision?.state||'').toUpperCase()||null,
+      gate:null,
+      reason:'settings_prerequisites_pass'
+    };
+  }catch(error){
+    return {
+      ready:false,
+      state:'WAITING',
+      gate:null,
+      reason:'settings_precheck_error',
+      error:String(error?.message||error).slice(0,160)
+    };
+  }
+}
+
 function holderAdmissionForActiveUsers(mint){
   // MEMEFLOW_V12_24_CREATOR_GATE_RECOVERY: event-holder snapshot remains authoritative even after fresh window.
   try{
@@ -803,7 +855,11 @@ function holderAdmissionForActiveUsers(mint){
         }
         return {allow:false,drop:true,reason:'fresh_pump_event_holder_ready',source:'ws-direct'};
       }
-      return {allow:true,reason:'fresh_pump_canonical_holder_scan',source:'Solana getProgramAccounts'};
+      // MEMEFLOW_SETTINGS_FIRST_V34:
+      // Fresh Pump tokens MUST NOT bypass per-user admission. Fall through to
+      // the active-user settings gate below. Live Pump events keep updating
+      // cheap market evidence and can admit the token later without wasting
+      // holder RPC while it is still outside the configured settings.
     }
   }catch(__e){}
 
@@ -839,12 +895,12 @@ function holderAdmissionForActiveUsers(mint){
       continue;
     }
 
-    /* MEMEFLOW_V12_12_HOLDER_ADMISSION_FIX
- * Admission-only settings view: minBuyPressure must not block holder enrichment.
- * The stored user setting remains unchanged and evaluateAll() still enforces it.
- */
-const __holderAdmissionSettings = store.settings(uid) || {};
-const s = {...__holderAdmissionSettings, minBuyPressure: null};
+    /* MEMEFLOW_SETTINGS_FIRST_V34
+     * Admission uses the REAL normalized user settings. Do not null out
+     * minBuyPressure: Pump WS trade events update it cheaply and re-evaluate
+     * this gate without holder RPC. */
+    const __holderAdmissionSettings = store.settings(uid) || {};
+    const s = __holderAdmissionSettings;
 
     // Stable hard filters: safe to rule this user out permanently.
     if(Array.isArray(s.launchPlatforms)&&s.launchPlatforms.length){
@@ -860,6 +916,16 @@ const s = {...__holderAdmissionSettings, minBuyPressure: null};
     }
 
     anyPotential=true;
+
+    // MEMEFLOW_SETTINGS_FIRST_V34
+    // All settings that do not require holder census must pass first.
+    // Dynamic FAIL/WAITING is a DEFER, not a terminal drop: trade/price/
+    // metadata updates can wake the gate immediately and preserve quality.
+    const __settingsGate=holderAdmissionSettingsPrecheck(token,s);
+    if(__settingsGate.ready!==true){
+      lastReason=__settingsGate.reason||'settings_prerequisite_pending';
+      continue;
+    }
 
     // MEMEFLOW_V12_13_HOLDER_ADMISSION_PRICE_GATE_FIX
     // Do NOT require priceSol merely to admit holder enrichment.
