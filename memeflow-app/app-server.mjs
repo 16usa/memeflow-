@@ -1673,11 +1673,8 @@ async function runHolderBackfillV8(){
     try{
       const pending=store.setToken(mint,{
         holderFresh:false,
-        holderCount:null,
-        top10Pct:null,
-        developerPct:null,
-        developerSharePct:null,
-        holderSource:'canonical-backfill-v8-pending',
+        // MEMEFLOW_EVENT_FIRST_V35E
+        holderSource:'canonical-backfill-v8-pending-live-evidence',
         holderScannedAt:null
       });
       await Promise.resolve(evaluateAll(pending)).catch(()=>{});
@@ -1800,12 +1797,8 @@ async function runHolderBackfillV9(){
       try{
         const pending=store.setToken(mint,{
           holderFresh:false,
-          holderCount:null,
-          holders:null,
-          top10Pct:null,
-          developerPct:null,
-          developerSharePct:null,
-          holderSource:'canonical-v9-pending',
+          // MEMEFLOW_EVENT_FIRST_V35E
+        holderSource:'canonical-v9-pending-live-evidence',
           holderScannedAt:null
         });
         await Promise.resolve(evaluateAll(pending)).catch(()=>{});
@@ -1980,14 +1973,8 @@ async function __v13RunHolderReconcile(){
 
       const pending=store.setToken(mint,{
         holderFresh:false,
-        holderCount:null,
-        holders:null,
-        top10Pct:null,
-        top10:null,
-        developerPct:null,
-        developerSharePct:null,
-        creatorPct:null,
-        holderSource:'canonical-refresh-pending',
+        // MEMEFLOW_EVENT_FIRST_V35E
+        holderSource:'canonical-refresh-pending-live-evidence',
         holderScannedAt:oldScanAt,
         holderCanonicalSeedAt:oldScanAt,
         holderCanonicalAgeMs:oldScanAt?Math.max(0,Date.now()-oldScanAt):null
