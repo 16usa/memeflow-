@@ -21,6 +21,17 @@ const bool=(v,fallback=false)=>{
  if(['false','0','no','off'].includes(s))return false;
  return fallback;
 };
+export const PROFILE_PRESETS=Object.freeze({
+ conservative:Object.freeze({minScore:82,minConfidence:70,minBuyPressure:1.5,minHolders:60,maxTop10Pct:20,maxDeveloperPct:10,requireFreshHolderSnapshot:true}),
+ balanced:Object.freeze({minScore:72,minConfidence:70,minBuyPressure:1.2,minHolders:30,maxTop10Pct:25,maxDeveloperPct:20,requireFreshHolderSnapshot:true}),
+ aggressive:Object.freeze({minScore:65,minConfidence:70,minBuyPressure:1.1,minHolders:20,maxTop10Pct:30,maxDeveloperPct:25,requireFreshHolderSnapshot:true})
+});
+export function profilePreset(profile){
+ const key=String(profile||'').trim().toLowerCase();
+ const preset=PROFILE_PRESETS[key];
+ return preset?{...preset}:null;
+}
+
 export function defaultSettings(){return {
  operatingMode:'observe',tradingEnvironment:'paper',profile:'balanced',
  tradingCapital:0,dailySpendLimit:0,positionSize:0.1,maxPositionSize:0.5,maxOpenPositions:4,maxDailyEntries:10,dailyLossLimit:0,feeReserve:0.05,

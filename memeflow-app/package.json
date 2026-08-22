@@ -8,7 +8,7 @@
   },
   "scripts": {
     "start": "node app-server.mjs",
-    "test": "node tests/settings-gate.mjs && node tests/paper-engine-auto.mjs && node tests/integration.mjs && node tests/billing-cycle.mjs && node tests/owner-live.mjs",
+    "test": "node tests/settings-gate.mjs && node tests/profile-presets.mjs && node tests/paper-engine-auto.mjs && node tests/integration.mjs && node tests/billing-cycle.mjs && node tests/owner-live.mjs",
     "benchmark": "node tests/load-500-users.mjs"
   }
 }
