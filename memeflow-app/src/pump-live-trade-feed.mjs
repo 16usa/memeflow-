@@ -83,7 +83,7 @@ function tokenFromStore(store,mint){
 }
 
 export function startPumpLiveTradeFeed(opts={}){
-  const {eventHolderLedger,store,publish,evaluateAI}=opts;
+  const {eventHolderLedger,store,publish,publishTrade,evaluateAI}=opts;
   let urls=envList('SOLANA_WS_URLS');
   if(!urls.length)urls=envList('SOLANA_RPC_URLS').map(wsFromHttp).filter(Boolean);
 
@@ -200,6 +200,7 @@ export function startPumpLiveTradeFeed(opts={}){
         metrics.marketSnapshots++;
         try{__v1226Evaluate(updated,e.mint,'market-event')}catch{}
         try{publish?.(e.mint)}catch{}
+        try{publishTrade?.(e.mint,e,updated)}catch{}
       }
     }catch(err){
       metrics.lastError='market:'+String(err?.message||err);

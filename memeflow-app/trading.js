@@ -1411,7 +1411,7 @@ function connectChartStream(mint) {
   $('feedState').textContent='CONNECTING';
 
   const source=new EventSource(
-    `/api/chart/stream?tokenAddress=${encodeURIComponent(mint)}`
+    `/api/chart/trade-stream?tokenAddress=${encodeURIComponent(mint)}`
   );
   source.__mint=mint;
 
@@ -4095,11 +4095,9 @@ async function poll({ redrawChart = false } = {}) {
 async function init() {
   bind();
 
-  try {
-    await loadSolUsd();
-  } catch (error) {
-    console.warn('[MEMEFLOW USD]', error);
-  }
+  loadSolUsd().catch(
+    error => console.warn('[MEMEFLOW USD]', error)
+  );
 
   try {
     await loadSettings();

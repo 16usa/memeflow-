@@ -33,6 +33,7 @@ const openaiAI=new OpenAIIntelligence({
 });
 let discovery={connected:false,url:null,lastEventAt:null,reconnects:0,error:null,lastError:null,startedAt:Date.now()},ws=null,wsTimer=null,wsReconnectAttempt=0;
 const streams=new Map(),priceTimers=new Map(),tradeWindows=new Map();
+const chartTradeStreams=new Map(),chartTradeHistory=new Map();
 const priceLifecycleDiag=new Map(); // V10 read-only lifecycle diagnostics
 
 // MEMEFLOW_V12_24_CREATOR_GATE_RECOVERY
@@ -586,6 +587,81 @@ async function enrich(mint,curve){
 
   try{paper.onTokenUpdate(mint,store.state.tokens[mint])}catch(_){}
 }
+function publishTrade(mint,event,tokenOverride=null){
+  if(!mint||!event)return;
+
+  // Do not retain trade history for tokens nobody has opened in Terminal.
+  if(!chartTradeStreams.has(mint)&&!chartTradeHistory.has(mint))return;
+
+  const token=tokenOverride||store.state.tokens[mint];
+  const price=Number(token?.priceSol);
+  if(!(price>0))return;
+
+  const isBuy=
+    event.isBuy===true ? true :
+    event.isBuy===false ? false :
+    null;
+
+  if(isBuy===null)return;
+
+  const solAmount=
+    typeof event.solAmount==='bigint'
+      ? Number(event.solAmount)/1e9
+      : Number(event.solAmount||0);
+
+  const tokenAmount=
+    typeof event.tokenAmount==='bigint'
+      ? Number(event.tokenAmount)
+      : Number(event.tokenAmount||0);
+
+  if(!(solAmount>0||tokenAmount>0))return;
+
+  let at=Number(event.timestamp);
+
+  if(Number.isFinite(at)&&at>0){
+    if(at<1e12)at*=1000;
+  }else{
+    at=Date.now();
+  }
+
+  const point={
+    t:at,
+    price,
+    priceSol:price,
+    source:'pump-trade-event',
+    isBuy,
+    solAmount,
+    tokenAmount
+  };
+
+  const rows=chartTradeHistory.get(mint)||[];
+  rows.push(point);
+
+  if(rows.length>1200){
+    rows.splice(0,rows.length-1200);
+  }
+
+  chartTradeHistory.set(mint,rows);
+
+  const listeners=chartTradeStreams.get(mint);
+  if(!listeners||listeners.size===0)return;
+
+  const payload=`event: update
+data: ${JSON.stringify({
+    point,
+    status:{
+      stale:false,
+      source:'pump-trade-event'
+    }
+  })}
+
+`;
+
+  for(const res of listeners){
+    try{res.write(payload)}catch{}
+  }
+}
+
 function publish(mint){
   // Hot path: live Pump events can call publish many times per second.
   // Do absolutely no work unless this mint has active SSE subscribers.
@@ -2302,6 +2378,45 @@ async function mfDexFilterRowsByPool(rows) {
 }
  if(url.pathname==='/api/chart/config'){const qualified=candidateFeed(store.decisions(u.id),'candidates');return json(res,200,{chainId:'solana',tokenAddress:qualified[0]?.mint||''});}
  if(url.pathname==='/api/chart/history'){const mint=url.searchParams.get('tokenAddress'),t=store.state.tokens[mint];const pts=t?.priceSol?[{t:t.updatedAt,price:t.priceSol,source:t.source}]:[];return json(res,200,{points:pts,status:{stale:!pts.length,source:t?.source||null,error:t?.scanError||null},tokenAddress:mint})}
+ if(url.pathname==='/api/chart/trade-stream'){
+  const mint=url.searchParams.get('tokenAddress');
+
+  if(!chartTradeStreams.has(mint)){
+    chartTradeStreams.set(mint,new Set());
+  }
+
+  if(!chartTradeHistory.has(mint)){
+    chartTradeHistory.set(mint,[]);
+  }
+
+  const points=chartTradeHistory.get(mint)||[];
+
+  res.writeHead(200,{
+    'content-type':'text/event-stream',
+    'cache-control':'no-cache',
+    'connection':'keep-alive'
+  });
+
+  res.write(`event: snapshot
+data: ${JSON.stringify({
+    points,
+    status:{
+      stale:points.length===0,
+      source:'pump-trade-event'
+    }
+  })}
+
+`);
+
+  chartTradeStreams.get(mint).add(res);
+
+  req.on('close',()=>{
+    chartTradeStreams.get(mint)?.delete(res);
+  });
+
+  return
+}
+
  if(url.pathname==='/api/chart/stream'){const mint=url.searchParams.get('tokenAddress');res.writeHead(200,{'content-type':'text/event-stream','cache-control':'no-cache','connection':'keep-alive'});res.write(`event: snapshot\ndata: ${JSON.stringify({points:[],status:{stale:true,source:'Solana'}})}\n\n`);if(!streams.has(mint))streams.set(mint,new Set());streams.get(mint).add(res);req.on('close',()=>streams.get(mint)?.delete(res));return}
  if(url.pathname==='/api/live/execute'){if(!hasLiveEntitlement(u))return json(res,402,{error:'LIVE_ENTITLEMENT_REQUIRED',message:'An active MEMEFLOW Pro subscription or verified owner entitlement is required.'});return json(res,423,{error:'LIVE_EXECUTION_NOT_READY',message:u.isOwner?'Owner LIVE entitlement is active, but verified wallet and production execution engine are still required.':'Pro is active, but verified wallet and production execution engine are still required.'});}
  // ── PAPER API routes ──────────────────────────────────────────────────────
@@ -2350,6 +2465,7 @@ const __pumpLiveTradeFeed=startPumpLiveTradeFeed({
   eventMarketLedger: typeof eventMarketLedger!=='undefined'?eventMarketLedger:null,
   store: typeof store!=='undefined'?store:null,
   publish: typeof publish==='function'?publish:null,
+  publishTrade: typeof publishTrade==='function'?publishTrade:null,
   evaluateAI: typeof evaluateAll==='function'?evaluateAll:null
 });
 
