@@ -1,6 +1,7 @@
 
 const PAGE_SIZE = 20;
 const REFRESH_MS = 3000;
+const EMPTY_CONFIRMATIONS = 5;
 const DEX_POOL_FILTER_KEY = 'memeflow:dex-pool-filter';
 
 function dexPoolFilterEnabled() {
@@ -158,7 +159,8 @@ const state = {
   filter: 'all',
   query: '',
   page: 1,
-  loading: false
+  loading: false,
+  emptyResponses: 0
 };
 
 function holderCount(row) {
@@ -746,9 +748,9 @@ async function loadTokens() {
   state.loading = true;
 
   try {
-    // Same Pump.fun decisions as always. DEX only changes which rows are
-    // returned for display; it never changes evaluation or execution.
-    const dexOnly = dexPoolFilterEnabled();
+    const dexOnly =
+      dexPoolFilterEnabled();
+
     const decisionUrl =
       `/api/ai/decisions?scope=all&limit=200${dexOnly ? '&dexPool=1' : ''}`;
 
@@ -770,37 +772,101 @@ async function loadTokens() {
     const payload =
       await response.json();
 
-    const rows =
-      Array.isArray(payload?.decisions)
-        ? payload.decisions
-        : [];
+    if (!Array.isArray(payload?.decisions)) {
+      throw new Error(
+        'Invalid decision feed payload'
+      );
+    }
 
-    state.rows =
-      rows
+    const rawRows =
+      payload.decisions;
+
+    const reportedTotal =
+      Number(payload?.total);
+
+    if (
+      rawRows.length === 0 &&
+      Number.isFinite(reportedTotal) &&
+      reportedTotal > 0
+    ) {
+      throw new Error(
+        `Inconsistent decision feed: total=${reportedTotal}, rows=0`
+      );
+    }
+
+    const nextRows =
+      rawRows
         .map(canonicalDecisionRow)
         .filter(
           (row) => row?.mint
         );
 
-    $('lastUpdate').textContent =
-      `${dexOnly ? 'DEX · ' : ''}Updated ${new Date().toLocaleTimeString(
+    const prefix =
+      dexOnly
+        ? 'DEX · '
+        : '';
+
+    const nowLabel =
+      new Date().toLocaleTimeString(
         [],
         {
           hour: '2-digit',
           minute: '2-digit',
           second: '2-digit'
         }
-      )}`;
+      );
+
+    if (nextRows.length > 0) {
+      state.emptyResponses = 0;
+      state.rows = nextRows;
+
+      $('lastUpdate').textContent =
+        `${prefix}Updated ${nowLabel}`;
+
+      render();
+      return;
+    }
+
+    state.emptyResponses += 1;
+
+    if (
+      state.emptyResponses <
+      EMPTY_CONFIRMATIONS
+    ) {
+      if (state.rows.length > 0) {
+        $('lastUpdate').textContent =
+          `${prefix}Syncing · keeping ${state.rows.length} · ` +
+          `${state.emptyResponses}/${EMPTY_CONFIRMATIONS}`;
+      } else {
+        $('lastUpdate').textContent =
+          `${prefix}Syncing · ` +
+          `${state.emptyResponses}/${EMPTY_CONFIRMATIONS}`;
+      }
+
+      return;
+    }
+
+    state.emptyResponses = 0;
+    state.rows = [];
+
+    $('lastUpdate').textContent =
+      `${prefix}Updated ${nowLabel}`;
 
     render();
+
   } catch (error) {
+    state.emptyResponses = 0;
+
     console.error(
       '[MEMEFLOW TOKEN FLOW]',
       error
     );
 
     $('lastUpdate').textContent =
-      'Decision feed unavailable';
+      state.rows.length > 0
+        ? `Decision feed reconnecting · keeping ${state.rows.length}`
+        : 'Decision feed unavailable';
+
   } finally {
     state.loading = false;
   }
