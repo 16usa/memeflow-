@@ -3273,7 +3273,7 @@ function mf293Build() {
     <div class="mf293-settings-meta">
       <span>Platform<strong>Pump.fun</strong></span>
       <label class="mf293-dex-filter-meta" title="Show only Pump.fun tokens that already have a DEX Paid">
-        <div>DEX<strong>Pool only</strong></div>
+        <div>DEX<strong>DEX Paid</strong></div>
         <span class="mf293-switch">
           <input id="mf293DexPoolFilter" type="checkbox" aria-label="DEX Paid filter">
           <span class="mf293-switch-track"></span>
