@@ -5,7 +5,7 @@ import {enrichToken,enrichHolders,makeEnrichDiag,makeHolderQueue,makeHolderMetri
 import {makeRecoveryMetrics,startDecisionRecovery,lazyRecoverUser} from './src/recovery.mjs';
 import {makeLiveEvalMetrics,makeEvaluateForActiveUsers} from './src/liveeval.mjs';
 import {makeDiscoveryMetrics,makeDiscoveryQueue} from './src/discqueue.mjs';
-import {candidateFeed,candidateVisibilityCounts} from './src/candidate-visibility.mjs';
+import {candidateFeed,candidateVisibilityCounts} from './src/candidate-visibility.mjs';import {dexViewRequested,dexViewMint,dexPresenceFromPairs,filterRowsByDexPresence} from './src/dex-view-filter.mjs';
 import { startPumpLiveTradeFeed } from './src/pump-live-trade-feed.mjs'; // MEMEFLOW_V12_21_LIVE_TRADE_STREAM_HOLDER_FEED
 
 import { eventMarketLedger } from './src/event-market-ledger.mjs'; // MEMEFLOW_V12_18_EVENT_MARKET_LEDGER
@@ -1800,6 +1800,162 @@ if(false && url.pathname==='/api/ai/assistant' &&req.method==='POST'){
 }
 
 
+
+/* MEMEFLOW_DEX_POOL_VIEW_FILTER_V1
+   IMPORTANT:
+   - This is a DISPLAY/FEED filter only.
+   - Pump discovery, enrichment, evaluator, BUY READY, PaperEngine and execution
+     are untouched.
+   - A token qualifies only by existence of a real DEX pairAddress.
+   - Liquidity/volume/paid orders/boosts are deliberately NOT inspected.
+*/
+const MF_DEX_VIEW_CACHE = new Map();
+const MF_DEX_VIEW_INFLIGHT = new Map();
+const MF_DEX_VIEW_BATCH_SIZE = 30;
+const MF_DEX_VIEW_POSITIVE_TTL_MS = 5 * 60 * 1000;
+const MF_DEX_VIEW_NEGATIVE_TTL_MS = 20 * 1000;
+const MF_DEX_VIEW_ERROR_TTL_MS = 5 * 1000;
+
+function mfDexViewCached(mint, now = Date.now()) {
+  const cached = MF_DEX_VIEW_CACHE.get(mint);
+  return cached && Number(cached.expiresAt || 0) > now
+    ? cached
+    : null;
+}
+
+function mfDexViewStartBatch(batch) {
+  let task;
+
+  task = (async () => {
+    try {
+      const addresses = batch
+        .map(mint => encodeURIComponent(mint))
+        .join(',');
+
+      // DEX Screener supports up to 30 comma-separated token addresses here.
+      // We use ONLY pair existence, never liquidity or volume.
+      const pairs = await mf49FetchJson(
+        `https://api.dexscreener.com/tokens/v1/solana/${addresses}`,
+        6000
+      );
+
+      const found = dexPresenceFromPairs(batch, pairs);
+      const now = Date.now();
+
+      for (const mint of batch) {
+        const item = found.get(mint) || {
+          hasPool: false,
+          pairAddress: null,
+          url: null
+        };
+
+        MF_DEX_VIEW_CACHE.set(mint, {
+          ...item,
+          checkedAt: now,
+          expiresAt:
+            now +
+            (item.hasPool
+              ? MF_DEX_VIEW_POSITIVE_TTL_MS
+              : MF_DEX_VIEW_NEGATIVE_TTL_MS)
+        });
+      }
+    } catch (error) {
+      const now = Date.now();
+
+      for (const mint of batch) {
+        const previous = MF_DEX_VIEW_CACHE.get(mint);
+
+        // A transient DEX Screener error must never change MEMEFLOW decisions.
+        MF_DEX_VIEW_CACHE.set(
+          mint,
+          previous
+            ? {
+                ...previous,
+                degraded: true,
+                expiresAt: now + MF_DEX_VIEW_ERROR_TTL_MS
+              }
+            : {
+                hasPool: false,
+                pairAddress: null,
+                url: null,
+                degraded: true,
+                checkedAt: now,
+                expiresAt: now + MF_DEX_VIEW_ERROR_TTL_MS
+              }
+        );
+      }
+    } finally {
+      for (const mint of batch) {
+        if (MF_DEX_VIEW_INFLIGHT.get(mint) === task) {
+          MF_DEX_VIEW_INFLIGHT.delete(mint);
+        }
+      }
+    }
+  })();
+
+  for (const mint of batch) {
+    MF_DEX_VIEW_INFLIGHT.set(mint, task);
+  }
+
+  return task;
+}
+
+async function mfDexViewPresenceForRows(rows) {
+  const mints = [
+    ...new Set(
+      (Array.isArray(rows) ? rows : [])
+        .map(dexViewMint)
+        .filter(Boolean)
+    )
+  ];
+
+  const now = Date.now();
+  const missing = [];
+  const jobs = new Set();
+
+  for (const mint of mints) {
+    if (mfDexViewCached(mint, now)) continue;
+
+    const active = MF_DEX_VIEW_INFLIGHT.get(mint);
+    if (active) jobs.add(active);
+    else missing.push(mint);
+  }
+
+  for (let i = 0; i < missing.length; i += MF_DEX_VIEW_BATCH_SIZE) {
+    jobs.add(
+      mfDexViewStartBatch(
+        missing.slice(i, i + MF_DEX_VIEW_BATCH_SIZE)
+      )
+    );
+  }
+
+  if (jobs.size) {
+    await Promise.allSettled([...jobs]);
+  }
+
+  const presence = new Map();
+  for (const mint of mints) {
+    presence.set(
+      mint,
+      MF_DEX_VIEW_CACHE.get(mint) || {
+        hasPool: false,
+        pairAddress: null,
+        url: null
+      }
+    );
+  }
+
+  return presence;
+}
+
+async function mfDexFilterRowsByPool(rows) {
+  const source = Array.isArray(rows) ? rows : [];
+  if (!source.length) return [];
+
+  const presence = await mfDexViewPresenceForRows(source);
+  return filterRowsByDexPresence(source, presence);
+}
+
  /* MEMEFLOW_AI_STANDALONE_V49_ROUTE_BEGIN */
  if(url.pathname==='/api/ai/standalone-scan'&&req.method==='POST'){
   try{
@@ -1816,8 +1972,10 @@ if(false && url.pathname==='/api/ai/assistant' &&req.method==='POST'){
   const _lim=Math.min(200,Math.max(1,Number(url.searchParams.get('limit')||50)));
   const _off=Math.max(0,Number(url.searchParams.get('offset')||0));
   const _scope=String(url.searchParams.get('scope')||'candidates').toLowerCase();
+  const _dexPool=dexViewRequested(url.searchParams);
   if(!store._uidDec[u.id]?.size)await lazyRecoverUser({store,uid:u.id,metrics:recoveryMetrics,tokenLimit:DECISION_RECOVERY_TOKEN_LIMIT});
-  const _all=store.decisions(u.id);
+  const _raw=store.decisions(u.id);
+  const _all=_dexPool?await mfDexFilterRowsByPool(_raw):_raw;
   const _selected=candidateFeed(_all,_scope);
   const _counts=candidateVisibilityCounts(_all);
   return json(res,200,{
@@ -1826,7 +1984,11 @@ if(false && url.pathname==='/api/ai/assistant' &&req.method==='POST'){
     limit:_lim,
     offset:_off,
     scope:_scope,
-    counts:_counts
+    counts:_counts,
+    viewFilter:{
+      dexPool:_dexPool,
+      semantics:_dexPool?'pump-plus-existing-dex-pool':'pump'
+    }
   });
 }
  if(url.pathname==='/api/debug/filter-pipeline'){
@@ -1922,14 +2084,18 @@ if(false && url.pathname==='/api/ai/assistant' &&req.method==='POST'){
     const limit=Math.max(1,Math.min(25,Number(url.searchParams.get('limit')||10)));
 
     const allTokens=Object.values(store?.state?.tokens||{});
-    const pumpTokens=allTokens
+    let pumpTokens=allTokens
       .filter(t=>{
         const lp=String(t?.launchPlatform||t?.protocol||'').toLowerCase();
         const mint=String(t?.mint||t?.tokenMint||t?.tokenAddress||'');
         return lp==='pump'||mint.toLowerCase().endsWith('pump');
       })
-      .sort((a,b)=>Number(b?.discoveredAt||b?.createdAt||0)-Number(a?.discoveredAt||a?.createdAt||0))
-      .slice(0,limit);
+      .sort((a,b)=>Number(b?.discoveredAt||b?.createdAt||0)-Number(a?.discoveredAt||a?.createdAt||0));
+
+    if(dexViewRequested(url.searchParams)){
+      pumpTokens=await mfDexFilterRowsByPool(pumpTokens);
+    }
+    pumpTokens=pumpTokens.slice(0,limit);
 
     const settings=store.settings(u.id);
 

@@ -1,6 +1,16 @@
 
 const PAGE_SIZE = 20;
 const REFRESH_MS = 3000;
+const DEX_POOL_FILTER_KEY = 'memeflow:dex-pool-filter';
+
+function dexPoolFilterEnabled() {
+  try {
+    return localStorage.getItem(DEX_POOL_FILTER_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
 
 const $ = (id) =>
   document.getElementById(id);
@@ -712,31 +722,19 @@ function render() {
 async function loadDiscoveryStatus() {
   const label = document.getElementById('discoveryLiveLabel');
   if (!label) return;
+
   try {
-    const response = await fetch('/api/discovery-source', {cache:'no-store',credentials:'same-origin'});
+    const response = await fetch(
+      '/api/discovery/status',
+      {cache:'no-store',credentials:'same-origin'}
+    );
     if (!response.ok) return;
+
     const payload = await response.json();
-    const mode = String(payload?.source?.mode || 'unknown').toUpperCase();
-    const dex = payload?.dex?.metrics || payload?.dex || {};
-    const pump = payload?.pump || {};
+    const connected = payload?.connected === true;
 
-    let connected = false;
-    if (mode === 'DEX') connected = Boolean(payload?.dex?.connected ?? dex?.connected);
-    else if (mode === 'PUMP') connected = Boolean(pump?.connected);
-    else if (mode === 'HYBRID') connected = Boolean(pump?.connected || payload?.dex?.connected || dex?.connected);
-
-    label.textContent = `${mode} ${connected ? 'LIVE' : 'IDLE'}`;
-
-    const confirmed = Number(dex?.pairsConfirmed ?? dex?.discovered);
-    const rejected = Number(dex?.pairsRejected);
-    const pending = Number(dex?.pendingConfirms ?? dex?.pending);
-    const info = [];
-    if (Number.isFinite(confirmed)) info.push(`confirmed ${confirmed}`);
-    if (Number.isFinite(rejected)) info.push(`rejected ${rejected}`);
-    if (Number.isFinite(pending)) info.push(`pending ${pending}`);
-    if ((mode === 'DEX' || mode === 'HYBRID') && info.length) {
-      label.title = `DEX scanner | ${info.join(' | ')}`;
-    }
+    label.textContent = connected ? 'LIVE' : 'IDLE';
+    label.title = 'Pump.fun discovery';
   } catch {}
 }
 
@@ -748,10 +746,15 @@ async function loadTokens() {
   state.loading = true;
 
   try {
-    // Same per-user, server-authoritative decisions feed used by Trading Terminal.
+    // Same Pump.fun decisions as always. DEX only changes which rows are
+    // returned for display; it never changes evaluation or execution.
+    const dexOnly = dexPoolFilterEnabled();
+    const decisionUrl =
+      `/api/ai/decisions?scope=all&limit=200${dexOnly ? '&dexPool=1' : ''}`;
+
     const response =
       await fetch(
-        '/api/ai/decisions?scope=all&limit=200',
+        decisionUrl,
         {
           cache: 'no-store',
           credentials: 'same-origin'
@@ -780,7 +783,7 @@ async function loadTokens() {
         );
 
     $('lastUpdate').textContent =
-      `Updated ${new Date().toLocaleTimeString(
+      `${dexOnly ? 'DEX · ' : ''}Updated ${new Date().toLocaleTimeString(
         [],
         {
           hour: '2-digit',

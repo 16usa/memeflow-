@@ -1,4 +1,14 @@
 const $ = id => document.getElementById(id);
+const DEX_POOL_FILTER_KEY = 'memeflow:dex-pool-filter';
+
+function dexPoolFilterEnabled() {
+  try {
+    return localStorage.getItem(DEX_POOL_FILTER_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
 const finite = value => value !== null && value !== undefined && value !== '' && Number.isFinite(Number(value));
 const num = (value, fallback = null) => finite(value) ? Number(value) : fallback;
 const fmt = (value, digits = 2) => finite(value)
@@ -918,9 +928,10 @@ function renderCandidates() {
 }
 
 async function loadCandidates({ redrawChart = true } = {}) {
+  const dexOnly = dexPoolFilterEnabled();
   const payload =
     await api(
-      '/api/ai/decisions?scope=all&limit=100'
+      `/api/ai/decisions?scope=all&limit=100${dexOnly ? '&dexPool=1' : ''}`
     );
 
   state.candidates =
@@ -929,7 +940,7 @@ async function loadCandidates({ redrawChart = true } = {}) {
       : [];
 
   $('candidateCount').textContent =
-    `${state.candidates.length} candidates`;
+    `${dexOnly ? 'DEX · ' : ''}${state.candidates.length} candidates`;
 
   if(
     !state.selectedMint &&

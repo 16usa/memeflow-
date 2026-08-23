@@ -713,7 +713,7 @@ async function getJson(url) {
 
 async function refreshTelemetry() {
   const results = await Promise.allSettled([
-    getJson('/api/debug/filter-pipeline-lifecycle?limit=12'),
+    getJson(`/api/debug/filter-pipeline-lifecycle?limit=12${mf293DexQuerySuffix()}`),
     getJson('/api/discovery/status'),
     getJson('/api/market/status'),
     getJson('/api/openai/status')
@@ -2975,9 +2975,7 @@ const MF293 = {
   profilePresets: {},
   killSwitchActive: false,
   dirty: false,
-  saving: false,
-  discoverySourceMode: 'pump',
-  discoverySourceSaving: false
+  saving: false
 };
 
 const MF293_GROUPS = [
@@ -3111,7 +3109,7 @@ function mf293ClearError() {
 }
 
 function mf293Disable(disabled) {
-  for (const id of ['mf293SaveSettings', 'mf293RestoreDefaults', 'mf293DiscoverySource']) {
+  for (const id of ['mf293SaveSettings', 'mf293RestoreDefaults', 'mf293DexPoolFilter']) {
     const node = document.getElementById(id);
     if (node) node.disabled = disabled;
   }
@@ -3178,90 +3176,33 @@ function mf293CreateField(field) {
 }
 
 
-const MF293_DEX_IGNORED_KEYS = new Set([
-  'minBondingCurvePct','maxBondingCurvePct',
-  'minTotalFeesSol','maxTotalFeesSol',
-  'minDeveloperPct','maxDeveloperPct',
-  'minBundlePct','maxBundlePct',
-  'minSniperPct','maxSniperPct',
-  'developerBlacklistWallets'
-]);
+const MF293_DEX_POOL_FILTER_KEY = 'memeflow:dex-pool-filter';
 
-function mf293PlatformLabel(mode) {
-  return mode === 'dex' ? 'DEX' : mode === 'hybrid' ? 'Hybrid' : 'Pump.fun';
-}
-
-function mf293RestorePlatformField(input, wrap) {
-  if (!input || !wrap) return;
-  if (input.dataset.mf293SourceDisabled === '1') {
-    input.disabled = false;
-    delete input.dataset.mf293SourceDisabled;
-  }
-  wrap.classList.remove('mf293-source-inactive', 'mf293-source-hybrid');
-  wrap.querySelector(':scope > .mf293-source-note')?.remove();
-}
-
-function mf293ApplySourceCompatibility() {
-  // V33: DEX is an admission/verification gate over Pump-origin tokens.
-  // Normal Pump settings remain active and editable in all modes.
-  for (const key of MF293_DEX_IGNORED_KEYS) {
-    const input = document.querySelector(`[data-setting-key="${key}"]`);
-    const wrap = input?.closest('.mf293-field');
-    if (!input || !wrap) continue;
-    mf293RestorePlatformField(input, wrap);
-  }
-}
-
-async function mf293SetDiscoverySource(event) {
-  const select = event?.currentTarget || document.getElementById('mf293DiscoverySource');
-  if (!select || MF293.discoverySourceSaving) return;
-
-  const previous = String(MF293.discoverySourceMode || 'pump').toLowerCase();
-  const next = String(select.value || '').toLowerCase();
-
-  if (!['pump', 'dex', 'hybrid'].includes(next)) {
-    select.value = previous;
-    return;
-  }
-  if (next === previous) return;
-
-  MF293.discoverySourceSaving = true;
-  select.disabled = true;
-  mf293ClearError();
-  mf293Status('Switching', 'busy');
-
+function mf293DexPoolFilterEnabled() {
   try {
-    const response = await fetch('/api/discovery-source', {
-      method: 'POST',
-      credentials: 'same-origin',
-      cache: 'no-store',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({mode: next})
-    });
-    const payload = await response.json().catch(() => ({}));
-
-    if (!response.ok) {
-      throw new Error(payload?.message || payload?.error || 'Unable to switch platform');
-    }
-
-    MF293.discoverySourceMode = String(payload?.source?.mode || next).toLowerCase();
-    if (MF293.capabilities) {
-      MF293.capabilities.discoverySourceMode = MF293.discoverySourceMode;
-    }
-    select.value = MF293.discoverySourceMode;
-    mf293ApplySourceCompatibility();
-    mf293Status(`Platform · ${mf293PlatformLabel(MF293.discoverySourceMode)}`, 'saved');
-  } catch (error) {
-    MF293.discoverySourceMode = previous;
-    select.value = previous;
-    mf293ApplySourceCompatibility();
-    mf293Status('Switch failed', 'error');
-    mf293Error(error.message || 'Unable to switch platform');
-  } finally {
-    MF293.discoverySourceSaving = false;
-    select.disabled = false;
+    return localStorage.getItem(MF293_DEX_POOL_FILTER_KEY) === '1';
+  } catch {
+    return false;
   }
 }
+
+function mf293SetDexPoolFilterEnabled(enabled) {
+  try {
+    if (enabled) {
+      localStorage.setItem(MF293_DEX_POOL_FILTER_KEY, '1');
+    } else {
+      localStorage.removeItem(MF293_DEX_POOL_FILTER_KEY);
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function mf293DexQuerySuffix() {
+  return mf293DexPoolFilterEnabled() ? '&dexPool=1' : '';
+}
+
 function mf293ApplyProfilePreset(profile) {
   const key = String(profile || '').trim().toLowerCase();
   const preset = MF293.profilePresets?.[key];
@@ -3330,13 +3271,14 @@ function mf293Build() {
       </div>
     </header>
     <div class="mf293-settings-meta">
-      <span class="mf293-platform-meta">Platform
-        <select id="mf293DiscoverySource" aria-label="Platform">
-          <option value="pump">Pump.fun</option>
-          <option value="dex">DEX</option>
-          <option value="hybrid">Hybrid</option>
-        </select>
-      </span>
+      <span>Platform<strong>Pump.fun</strong></span>
+      <label class="mf293-dex-filter-meta" title="Show only Pump.fun tokens that already have a DEX pool">
+        <div>DEX<strong>Pool only</strong></div>
+        <span class="mf293-switch">
+          <input id="mf293DexPoolFilter" type="checkbox" aria-label="DEX pool filter">
+          <span class="mf293-switch-track"></span>
+        </span>
+      </label>
       <span>AI policy<strong>Propose only</strong></span>
       <span>Kill switch<strong id="mf293KillSwitch">Checking</strong></span>
     </div>
@@ -3367,7 +3309,20 @@ function mf293Build() {
   document.getElementById('mf293SettingsClose')?.addEventListener('click', mf293Close);
   document.getElementById('mf293SaveSettings')?.addEventListener('click', mf293Save);
   document.getElementById('mf293RestoreDefaults')?.addEventListener('click', mf293Restore);
-  document.getElementById('mf293DiscoverySource')?.addEventListener('change', mf293SetDiscoverySource);
+  document.getElementById('mf293DexPoolFilter')?.addEventListener('change', event => {
+    const enabled = event.currentTarget?.checked === true;
+
+    if (!mf293SetDexPoolFilterEnabled(enabled)) {
+      event.currentTarget.checked = !enabled;
+      mf293Status('DEX filter error', 'error');
+      mf293Error('Unable to store the DEX display filter on this device.');
+      return;
+    }
+
+    mf293ClearError();
+    mf293Status(`DEX · ${enabled ? 'ON' : 'OFF'}`, 'saved');
+    void refreshTelemetry().catch(() => {});
+  });
 
   document.querySelector('[data-setting-key="profile"]')?.addEventListener('change', event => {
     mf293ApplyProfilePreset(event.currentTarget?.value);
@@ -3406,11 +3361,10 @@ function mf293Populate() {
     }
   }
 
-  const platform = document.getElementById('mf293DiscoverySource');
-  if (platform) {
-    platform.value = String(MF293.discoverySourceMode || 'pump').toLowerCase();
+  const dexFilter = document.getElementById('mf293DexPoolFilter');
+  if (dexFilter) {
+    dexFilter.checked = mf293DexPoolFilterEnabled();
   }
-  mf293ApplySourceCompatibility();
 
   const kill = document.getElementById('mf293KillSwitch');
   if (kill) {
@@ -3443,9 +3397,6 @@ async function mf293Load() {
     MF293.version = payload.version ?? 1;
     MF293.capabilities = payload.capabilities || {};
     MF293.profilePresets = payload.profilePresets || {};
-    MF293.discoverySourceMode = String(
-      payload?.capabilities?.discoverySourceMode || MF293.discoverySourceMode || 'pump'
-    ).toLowerCase();
     MF293.killSwitchActive = payload.killSwitchActive === true;
     mf293Populate();
   } catch (error) {
@@ -3480,9 +3431,9 @@ function mf293Collect() {
     if (input) next[field[0]] = mf293Read(field, input);
   }
 
-  // Discovery source is global and controlled by /api/discovery-source.
-  // Per-user evaluation keeps both canonical platform tags available.
-  next.launchPlatforms = ['pump','dex'];
+  // Discovery remains Pump.fun only. DEX is a browser-side VIEW filter and
+  // never changes evaluation settings or triggers decision re-evaluation.
+  next.launchPlatforms = ['pump'];
   next.aiChangePolicy = 'propose';
   next.adaptiveProfile = false;
   return next;
