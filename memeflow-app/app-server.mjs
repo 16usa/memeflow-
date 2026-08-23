@@ -2338,7 +2338,79 @@ async function mfDexFilterRowsByPaid(rows) {
  }
  /* MEMEFLOW_AI_STANDALONE_V49_ROUTE_END */
 
- if(url.pathname==='/api/ai/decisions'){
+  // MEMEFLOW_LIVE_TOKEN_STATES_V7
+ if(url.pathname==='/api/system/live-token-states'&&req.method==='GET'){
+  const _lim=Math.min(200,Math.max(1,Number(url.searchParams.get('limit')||200)));
+  const _tokens=store.tokens().slice(0,_lim);
+  const _settings=store.settings(u.id);
+  let _recovered=0,_reindexed=0,_evalErrors=0,_viewErrors=0;
+  let _index=store._uidDec[u.id]||null;
+
+  for(const _token of _tokens){
+    const _mint=String(_token?.mint||'').trim();
+    if(!_mint)continue;
+
+    const _key=u.id+':'+_mint;
+    const _existing=store.state.decisions?.[_key]||null;
+
+    if(_existing){
+      if(!_index?.has(_key)){
+        try{
+          store.setDecision(u.id,_mint,_existing);
+          _index=store._uidDec[u.id]||_index;
+          _reindexed++;
+        }catch(_error){
+          _evalErrors++;
+        }
+      }
+      continue;
+    }
+
+    try{
+      const _decision=evaluate(_token,_settings);
+      store.setDecision(u.id,_mint,{..._decision,primaryReason:_decision.primaryReason});
+      _index=store._uidDec[u.id]||_index;
+      _recovered++;
+    }catch(_error){
+      _evalErrors++;
+    }
+  }
+
+  const _mintSet=new Set(_tokens.map(_token=>String(_token?.mint||'')).filter(Boolean));
+  const _all=store.decisions(u.id).filter(_decision=>_mintSet.has(String(_decision?.mint||'')));
+  const _selected=candidateFeed(_all,'all');
+  const _counts=candidateVisibilityCounts(_all);
+  const _stateCounts={};
+
+  for(const _decision of _selected){
+    const _state=String(_decision?.state||'WAITING').trim().toUpperCase()||'WAITING';
+    _stateCounts[_state]=(_stateCounts[_state]||0)+1;
+  }
+
+  const _views=[];
+  for(const _decision of _selected.slice(0,_lim)){
+    try{
+      _views.push(candidateView(_decision));
+    }catch(_error){
+      _viewErrors++;
+    }
+  }
+
+  return json(res,200,{
+    decisions:_views,
+    total:_views.length,
+    limit:_lim,
+    source:'system-live-token-states-v7',
+    persistedTokens:_tokens.length,
+    recovered:_recovered,
+    reindexed:_reindexed,
+    evaluationErrors:_evalErrors,
+    viewErrors:_viewErrors,
+    stateCounts:_stateCounts,
+    counts:_counts
+  });
+ }
+if(url.pathname==='/api/ai/decisions'){
   const _lim=Math.min(200,Math.max(1,Number(url.searchParams.get('limit')||50)));
   const _off=Math.max(0,Number(url.searchParams.get('offset')||0));
   const _scope=String(url.searchParams.get('scope')||'candidates').toLowerCase();

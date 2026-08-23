@@ -741,6 +741,10 @@ async function loadDiscoveryStatus() {
 }
 
 async function loadTokens() {
+  if (typeof loadDiscoveryStatus === 'function') {
+    void loadDiscoveryStatus();
+  }
+
   if (state.loading) {
     return;
   }
@@ -748,125 +752,68 @@ async function loadTokens() {
   state.loading = true;
 
   try {
-    const dexPaidOnly =
-      dexPaidFilterEnabled();
-
-    const decisionUrl =
-      `/api/ai/decisions?scope=all&limit=200${dexPaidOnly ? '&dexPaid=1' : ''}`;
-
-    const response =
-      await fetch(
-        decisionUrl,
-        {
-          cache: 'no-store',
-          credentials: 'same-origin'
-        }
-      );
+    const response = await fetch(
+      '/api/system/live-token-states?limit=200&_=' + Date.now(),
+      {
+        cache: 'no-store',
+        credentials: 'same-origin'
+      }
+    );
 
     if (!response.ok) {
-      throw new Error(
-        `HTTP ${response.status}`
-      );
+      throw new Error(`HTTP ${response.status}`);
     }
 
-    const payload =
-      await response.json();
+    const payload = await response.json();
+    const rows = Array.isArray(payload?.decisions)
+      ? payload.decisions
+      : [];
 
-    if (!Array.isArray(payload?.decisions)) {
-      throw new Error(
-        'Invalid decision feed payload'
-      );
-    }
+    state.rows = rows
+      .map(canonicalDecisionRow)
+      .filter(row => row?.mint);
 
-    const rawRows =
-      payload.decisions;
+    const persisted = Number(payload?.persistedTokens);
+    const recovered = Number(payload?.recovered);
+    const reindexed = Number(payload?.reindexed);
+    const evalErrors = Number(payload?.evaluationErrors);
+    const viewErrors = Number(payload?.viewErrors);
 
-    const reportedTotal =
-      Number(payload?.total);
-
-    if (
-      rawRows.length === 0 &&
-      Number.isFinite(reportedTotal) &&
-      reportedTotal > 0
-    ) {
-      throw new Error(
-        `Inconsistent decision feed: total=${reportedTotal}, rows=0`
-      );
-    }
-
-    const nextRows =
-      rawRows
-        .map(canonicalDecisionRow)
-        .filter(
-          (row) => row?.mint
-        );
-
-    const prefix =
-      dexPaidOnly
-        ? 'DEX PAID · '
-        : '';
-
-    const nowLabel =
-      new Date().toLocaleTimeString(
+    const parts = [
+      `Updated ${new Date().toLocaleTimeString(
         [],
         {
           hour: '2-digit',
           minute: '2-digit',
           second: '2-digit'
         }
-      );
+      )}`
+    ];
 
-    if (nextRows.length > 0) {
-      state.emptyResponses = 0;
-      state.rows = nextRows;
-
-      $('lastUpdate').textContent =
-        `${prefix}Updated ${nowLabel}`;
-
-      render();
-      return;
+    if (Number.isFinite(persisted)) {
+      parts.push(`${state.rows.length}/${persisted} visible`);
     }
 
-    state.emptyResponses += 1;
+    if (Number.isFinite(recovered) && recovered > 0) {
+      parts.push(`recovered ${recovered}`);
+    }
+
+    if (Number.isFinite(reindexed) && reindexed > 0) {
+      parts.push(`reindexed ${reindexed}`);
+    }
 
     if (
-      state.emptyResponses <
-      EMPTY_CONFIRMATIONS
+      (Number.isFinite(evalErrors) && evalErrors > 0) ||
+      (Number.isFinite(viewErrors) && viewErrors > 0)
     ) {
-      if (state.rows.length > 0) {
-        $('lastUpdate').textContent =
-          `${prefix}Syncing · keeping ${state.rows.length} · ` +
-          `${state.emptyResponses}/${EMPTY_CONFIRMATIONS}`;
-      } else {
-        $('lastUpdate').textContent =
-          `${prefix}Syncing · ` +
-          `${state.emptyResponses}/${EMPTY_CONFIRMATIONS}`;
-      }
-
-      return;
+      parts.push(`errors ${Math.max(0, evalErrors || 0) + Math.max(0, viewErrors || 0)}`);
     }
 
-    state.emptyResponses = 0;
-    state.rows = [];
-
-    $('lastUpdate').textContent =
-      `${prefix}Updated ${nowLabel}`;
-
+    $('lastUpdate').textContent = parts.join(' · ');
     render();
-
   } catch (error) {
-    state.emptyResponses = 0;
-
-    console.error(
-      '[MEMEFLOW TOKEN FLOW]',
-      error
-    );
-
-    $('lastUpdate').textContent =
-      state.rows.length > 0
-        ? `Decision feed reconnecting · keeping ${state.rows.length}`
-        : 'Decision feed unavailable';
-
+    console.error('[MEMEFLOW TOKEN FLOW]', error);
+    $('lastUpdate').textContent = 'Decision feed unavailable';
   } finally {
     state.loading = false;
   }
@@ -1722,3 +1669,5 @@ setTimeout(
 );
 
 // MEMEFLOW_DEX_TOKEN_FLOW_V26
+
+// MEMEFLOW_LIVE_TOKEN_STATES_V7
