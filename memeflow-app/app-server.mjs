@@ -2310,8 +2310,9 @@ async function mfDexFilterRowsByPaid(rows) {
     scope:_scope,
     counts:_counts,
     viewFilter:{
-      dexPool:_dexPool,
-      semantics:_dexPool?'pump-plus-existing-dex-pool':'pump'
+      dexPaid:_dexPaid,
+      dexPool:_dexPaid,
+      semantics:_dexPaid?'dex-paid':'pump'
     }
   });
 }
