@@ -110,7 +110,7 @@ function identityPatch(pair,mint,spec,signature,slot){
     discoveredAt:Date.now(),
     signature,
     slot:Number(slot)||null,
-    source:'DEX pool stream',
+    source:'DEX Paid stream',
     creator:null,
     creatorStatus:'unavailable-from-dex-pool'
   };

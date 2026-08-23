@@ -2,7 +2,7 @@ const TRUE_VALUES = new Set(['1', 'true', 'yes', 'on']);
 
 export function dexViewRequested(source) {
   const raw = source instanceof URLSearchParams
-    ? source.get('dexPool')
+    ? (source.get('dexPaid') ?? source.get('dexPool'))
     : source;
 
   return TRUE_VALUES.has(String(raw ?? '').trim().toLowerCase());

@@ -4,7 +4,7 @@ const REFRESH_MS = 3000;
 const EMPTY_CONFIRMATIONS = 5;
 const DEX_POOL_FILTER_KEY = 'memeflow:dex-pool-filter';
 
-function dexPoolFilterEnabled() {
+function dexPaidFilterEnabled() {
   try {
     return localStorage.getItem(DEX_POOL_FILTER_KEY) === '1';
   } catch {
@@ -748,11 +748,11 @@ async function loadTokens() {
   state.loading = true;
 
   try {
-    const dexOnly =
-      dexPoolFilterEnabled();
+    const dexPaidOnly =
+      dexPaidFilterEnabled();
 
     const decisionUrl =
-      `/api/ai/decisions?scope=all&limit=200${dexOnly ? '&dexPool=1' : ''}`;
+      `/api/ai/decisions?scope=all&limit=200${dexPaidOnly ? '&dexPaid=1' : ''}`;
 
     const response =
       await fetch(
@@ -802,8 +802,8 @@ async function loadTokens() {
         );
 
     const prefix =
-      dexOnly
-        ? 'DEX · '
+      dexPaidOnly
+        ? 'DEX PAID · '
         : '';
 
     const nowLabel =

@@ -2130,21 +2130,154 @@ async function mfDexViewPresenceForRows(rows) {
   return presence;
 }
 
-async function mfDexFilterRowsByPool(rows) {
-  const source = Array.isArray(rows) ? rows : [];
-  if (!source.length) return [];
+const MF_DEX_PAID_CACHE = new Map();
+const MF_DEX_PAID_INFLIGHT = new Map();
 
-  const presence = await mfDexViewPresenceForRows(source);
+const MF_DEX_PAID_MAX_RECENT = 40;
+const MF_DEX_PAID_POSITIVE_TTL_MS = 15 * 60 * 1000;
+const MF_DEX_PAID_NEGATIVE_TTL_MS = 90 * 1000;
+const MF_DEX_PAID_ERROR_TTL_MS = 10 * 1000;
 
-  const degraded = [...presence.values()].some(
-    entry => entry?.degraded === true
-  );
+function mfDexPaidCached(mint, now = Date.now()) {
+  const cached = MF_DEX_PAID_CACHE.get(mint);
 
-  if (degraded) {
-    throw new Error("DEX pool view temporarily unavailable");
+  if (!cached) return null;
+
+  if (Number(cached.expiresAt || 0) <= now) {
+    MF_DEX_PAID_CACHE.delete(mint);
+    return null;
   }
 
-  return filterRowsByDexPresence(source, presence);
+  return cached;
+}
+
+async function mfDexPaidCheck(mint) {
+  const cached = mfDexPaidCached(mint);
+
+  if (cached) {
+    return cached;
+  }
+
+  const active = MF_DEX_PAID_INFLIGHT.get(mint);
+
+  if (active) {
+    return active;
+  }
+
+  const task = (async () => {
+    try {
+      const orders = await mf49FetchJson(
+        `https://api.dexscreener.com/orders/v1/solana/${encodeURIComponent(mint)}`,
+        6000
+      );
+
+      if (!Array.isArray(orders)) {
+        throw new Error("Invalid DEX Paid response");
+      }
+
+      const hasPaid = orders.length > 0;
+      const now = Date.now();
+
+      const entry = {
+        hasPaid,
+        degraded: false,
+        checkedAt: now,
+        expiresAt:
+          now +
+          (
+            hasPaid
+              ? MF_DEX_PAID_POSITIVE_TTL_MS
+              : MF_DEX_PAID_NEGATIVE_TTL_MS
+          )
+      };
+
+      MF_DEX_PAID_CACHE.set(mint, entry);
+
+      return entry;
+    } catch (error) {
+      const previous = MF_DEX_PAID_CACHE.get(mint);
+
+      if (previous?.hasPaid === true) {
+        const entry = {
+          ...previous,
+          expiresAt: Date.now() + MF_DEX_PAID_ERROR_TTL_MS
+        };
+
+        MF_DEX_PAID_CACHE.set(mint, entry);
+
+        return entry;
+      }
+
+      const now = Date.now();
+
+      const entry = {
+        hasPaid: null,
+        degraded: true,
+        checkedAt: now,
+        expiresAt: now + MF_DEX_PAID_ERROR_TTL_MS
+      };
+
+      MF_DEX_PAID_CACHE.set(mint, entry);
+
+      return entry;
+    } finally {
+      MF_DEX_PAID_INFLIGHT.delete(mint);
+    }
+  })();
+
+  MF_DEX_PAID_INFLIGHT.set(mint, task);
+
+  return task;
+}
+
+async function mfDexFilterRowsByPaid(rows) {
+  const source =
+    Array.isArray(rows)
+      ? rows.slice(0, MF_DEX_PAID_MAX_RECENT)
+      : [];
+
+  if (!source.length) {
+    return [];
+  }
+
+  const checks = await Promise.all(
+    source.map(async row => {
+      const mint = dexViewMint(row);
+
+      if (!mint) {
+        return {
+          row,
+          entry: {
+            hasPaid: false,
+            degraded: false
+          }
+        };
+      }
+
+      return {
+        row,
+        entry: await mfDexPaidCheck(mint)
+      };
+    })
+  );
+
+  if (
+    checks.some(
+      item => item.entry?.degraded === true
+    )
+  ) {
+    throw new Error(
+      "DEX Paid verification temporarily unavailable"
+    );
+  }
+
+  return checks
+    .filter(
+      item => item.entry?.hasPaid === true
+    )
+    .map(
+      item => item.row
+    );
 }
 
  /* MEMEFLOW_AI_STANDALONE_V49_ROUTE_BEGIN */
@@ -2163,10 +2296,10 @@ async function mfDexFilterRowsByPool(rows) {
   const _lim=Math.min(200,Math.max(1,Number(url.searchParams.get('limit')||50)));
   const _off=Math.max(0,Number(url.searchParams.get('offset')||0));
   const _scope=String(url.searchParams.get('scope')||'candidates').toLowerCase();
-  const _dexPool=dexViewRequested(url.searchParams);
+  const _dexPaid=dexViewRequested(url.searchParams);
   if(!store._uidDec[u.id]?.size)await lazyRecoverUser({store,uid:u.id,metrics:recoveryMetrics,tokenLimit:DECISION_RECOVERY_TOKEN_LIMIT});
   const _raw=store.decisions(u.id);
-  const _all=_dexPool?await mfDexFilterRowsByPool(_raw):_raw;
+  const _all=_dexPaid?await mfDexFilterRowsByPaid(_raw):_raw;
   const _selected=candidateFeed(_all,_scope);
   const _counts=candidateVisibilityCounts(_all);
   return json(res,200,{
@@ -2284,7 +2417,7 @@ async function mfDexFilterRowsByPool(rows) {
       .sort((a,b)=>Number(b?.discoveredAt||b?.createdAt||0)-Number(a?.discoveredAt||a?.createdAt||0));
 
     if(dexViewRequested(url.searchParams)){
-      pumpTokens=await mfDexFilterRowsByPool(pumpTokens);
+      pumpTokens=await mfDexFilterRowsByPaid(pumpTokens);
     }
     pumpTokens=pumpTokens.slice(0,limit);
 
