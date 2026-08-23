@@ -275,13 +275,19 @@ export class PaperEngine {
       }
     }
 
-    const key = this.decisionKey(userId, token, decision);
-    if (this.store.state.paperProcessed[key]) return { action: 'NONE', reason: 'IDEMPOTENT' };
-
+    // OBSERVE is intentionally read-only. Seeing BUY READY while paused must
+    // never consume the decision or prevent a later ASSIST/AUTOMATE entry.
     if (settings.operatingMode === 'observe') {
-      this.store.state.paperProcessed[key] = { result: 'OBSERVED', at: nowIso() };
-      this.save();
       return { action: 'OBSERVED' };
+    }
+
+    const key = this.decisionKey(userId, token, decision);
+    const processed = this.store.state.paperProcessed[key];
+
+    // Compatibility with older builds that persisted OBSERVED decisions.
+    // OBSERVED is not an execution result, so it must not block a later entry.
+    if (processed && processed.result !== 'OBSERVED') {
+      return { action: 'NONE', reason: 'IDEMPOTENT' };
     }
 
     if (settings.operatingMode === 'assist') {

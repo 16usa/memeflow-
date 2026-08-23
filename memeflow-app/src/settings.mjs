@@ -8,7 +8,7 @@ const nullableNumbers=[
 ];
 const booleans=[
 'requireTwitter','requireWebsite','requireTelegram','requireAnySocial','requireFreshHolderSnapshot','requireWebsiteOrX',
-'adaptiveProfile','ownerApproval','shadowValidation','changeLog','exitOnWeakBuyPressure'
+'adaptiveProfile','shadowValidation','changeLog','exitOnWeakBuyPressure'
 ];
 const finite=(v)=>v!==''&&v!==null&&v!==undefined&&Number.isFinite(Number(v));
 const cleanText=v=>String(v??'').trim();
@@ -64,7 +64,7 @@ export function defaultSettings(){return {
  developerBlacklistWallets:[],requireTwitter:false,requireWebsite:false,requireTelegram:false,requireAnySocial:false,
  hardStopPct:25,trailingStopPct:15,tp1Pct:100,tp1SellPct:50,tp2Pct:200,tp2SellPct:25,runnerPct:25,maxHoldMinutes:1440,
  exitBuyPressure:1.0,exitOnWeakBuyPressure:true,
- adaptiveProfile:false,ownerApproval:true,shadowValidation:true,changeLog:true,
+ adaptiveProfile:false,shadowValidation:true,changeLog:true,
  aiChangePolicy:'propose',decisionFreshnessSec:60
 }}
 export function normalizeSettings(raw={}){
@@ -102,7 +102,7 @@ export function normalizeSettings(raw={}){
  ])if(finite(o[k]))o[k]=Number(o[k]);else o[k]=d[k];
 
  // Drop legacy view-only keys so GET /api/settings stays canonical and understandable.
- delete o.paperBeforeChange;delete o.auditSettings;delete o.decisionFreshness;delete o.exitWeakPressure;
+ delete o.paperBeforeChange;delete o.auditSettings;delete o.decisionFreshness;delete o.exitWeakPressure;delete o.ownerApproval;
  return o;
 }
 export function validateSettings(raw={}){

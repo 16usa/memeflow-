@@ -790,7 +790,9 @@ async function saveSettings(mode = null) {
   if (mode === 'automate') {
     next.operatingMode = 'automate';
     next.tradingEnvironment = 'paper';
-    next.ownerApproval = false;
+  } else if (mode === 'assist') {
+    next.operatingMode = 'assist';
+    next.tradingEnvironment = 'paper';
   } else if (mode === 'observe') {
     next.operatingMode = 'observe';
     next.tradingEnvironment = 'paper';
