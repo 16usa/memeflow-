@@ -95,10 +95,18 @@ export function startPumpLiveTradeFeed(opts={}){
     httpRpcCalls:0,queueDepth:0,active:0,
     evaluationCalls:0,evaluationResolved:0,evaluationRejected:0,evaluationNullResults:0,
     evaluationDecisionLikeResults:0,lastEvaluationMint:null,lastEvaluationTrigger:null,
-    lastEvaluationAt:null,lastEvaluationResultType:null,lastEvaluationError:null
+    lastEvaluationAt:null,lastEvaluationResultType:null,lastEvaluationError:null,
+    // MEMEFLOW_CHART_TRADE_FEED_V2
+    logBatchesIngested:0,externalLogBatches:0,dedicatedLogBatches:0,
+    duplicateTradeEventsSkipped:0,lastTradeEventAt:null,lastTradeEventSource:null
   };
 
   const mintCounts=new Map(), users=new Set(), pressure=new Map();
+  // MEMEFLOW_CHART_TRADE_FEED_V2
+  // A provider may limit concurrent logsSubscribe sockets. The same Pump
+  // notification can therefore arrive through the dedicated trade socket,
+  // the discovery socket, or both. Keep one canonical event per signature/log.
+  const seenTradeEvents=new Map();
   let ws=null,stopped=false,idx=0,reconnectTimer=null;
 
   function updatePressure(e){
@@ -150,6 +158,76 @@ export function startPumpLiveTradeFeed(opts={}){
       __v1226Remember(mint||updated?.mint||null,trigger,'threw',null,err);
       return Promise.resolve(null);
     }
+  }
+
+  // MEMEFLOW_CHART_TRADE_FEED_V2
+  function tradeEventKey(e,signature,index){
+    const sig=String(signature||'').trim();
+    if(sig)return `${sig}:${Number(index)||0}`;
+
+    return [
+      e?.mint||'',
+      e?.user||'',
+      e?.isBuy===true?'B':'S',
+      String(e?.timestamp??''),
+      String(e?.solAmount??''),
+      String(e?.tokenAmount??'')
+    ].join('|');
+  }
+
+  function acceptTradeEventKey(key){
+    if(!key)return true;
+    if(seenTradeEvents.has(key))return false;
+
+    seenTradeEvents.set(key,Date.now());
+
+    // Bounded insertion-order cache. Enough for many minutes of Pump traffic
+    // without unbounded process memory.
+    while(seenTradeEvents.size>25000){
+      const oldest=seenTradeEvents.keys().next().value;
+      if(oldest===undefined)break;
+      seenTradeEvents.delete(oldest);
+    }
+    return true;
+  }
+
+  function ingestLogs(logs,{signature=null,source='external'}={}){
+    const rows=Array.isArray(logs)?logs:[];
+    if(!rows.length)return 0;
+
+    metrics.logBatchesIngested++;
+    if(source==='dedicated-ws')metrics.dedicatedLogBatches++;
+    else metrics.externalLogBatches++;
+
+    let accepted=0;
+
+    for(let i=0;i<rows.length;i++){
+      const b=programData(rows[i]);
+      if(!b)continue;
+
+      metrics.programDataSeen++;
+
+      try{
+        const e=decodeTradeEvent(b);
+        if(!e)continue;
+
+        const key=tradeEventKey(e,signature,i);
+        if(!acceptTradeEventKey(key)){
+          metrics.duplicateTradeEventsSkipped++;
+          continue;
+        }
+
+        metrics.lastTradeEventAt=Date.now();
+        metrics.lastTradeEventSource=source;
+        applyEvent(e);
+        accepted++;
+      }catch(err){
+        metrics.decodeErrors++;
+        metrics.lastError='decode:'+String(err?.message||err);
+      }
+    }
+
+    return accepted;
   }
 
   function applyEvent(e){
@@ -230,18 +308,10 @@ export function startPumpLiveTradeFeed(opts={}){
           const value=j?.params?.result?.value;
           if(!value||value.err)return;
           metrics.notifications++;
-          for(const log of value.logs||[]){
-            const b=programData(log);
-            if(!b)continue;
-            metrics.programDataSeen++;
-            try{
-              const e=decodeTradeEvent(b);
-              if(e)applyEvent(e);
-            }catch(err){
-              metrics.decodeErrors++;
-              metrics.lastError='decode:'+String(err?.message||err);
-            }
-          }
+          ingestLogs(value.logs||[],{
+            signature:value.signature||null,
+            source:'dedicated-ws'
+          });
         }catch(err){
           metrics.decodeErrors++;
           metrics.lastError='ws-message:'+String(err?.message||err);
@@ -266,6 +336,10 @@ export function startPumpLiveTradeFeed(opts={}){
   connect();
 
   return {
+    // MEMEFLOW_CHART_TRADE_FEED_V2
+    // Allows the main discovery socket to feed the exact same decoder. This
+    // removes the chart's dependency on a second successful WS connection.
+    ingestLogs,
     metrics:()=>({...metrics,queueDepth:0,active:0,httpRpcCalls:0,evaluationRecent:Array.from(__v1226EvalByMint.values()).slice(-12)}),
     stop:()=>{stopped=true;clearTimeout(reconnectTimer);try{ws?.close?.()}catch{}}
   };

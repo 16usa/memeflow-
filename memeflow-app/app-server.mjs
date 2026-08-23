@@ -106,26 +106,9 @@ function __mfChartSnapshotPayload(mint){
     points=Array.isArray(hot)?hot.slice():[];
   }
 
-  // Never leave an already-selected token visually blank while historical
-  // RPC sync starts. This one-point seed is only a temporary current-price
-  // fallback; real Pump TradeEvents remain the candle source.
-  if(!points.length){
-    const token=store?.state?.tokens?.[mint]||null;
-    const px=Number(token?.priceSol);
-    if(Number.isFinite(px)&&px>0){
-      const at=Number(token?.lastPriceAt||token?.updatedAt)||Date.now();
-      points=[{
-        t:at,
-        price:px,
-        priceSol:px,
-        source:'current-price-seed',
-        isBuy:false,
-        solAmount:0,
-        tokenAmount:0
-      }];
-    }
-  }
-
+  // MEMEFLOW_CHART_TRADE_FEED_V2
+  // REAL-TRADES-ONLY: do not manufacture a candle from a timer/current-price
+  // mark. If history is empty we wait for a canonical BUY/SELL TradeEvent.
   let archiveStatus={
     running:false,
     oldestComplete:false,
@@ -198,6 +181,10 @@ function __mfEnsureChartBackfill(mint){
       if(__mfChartBackfillJobs.get(mint)===job){
         __mfChartBackfillJobs.delete(mint);
       }
+      // MEMEFLOW_CHART_TRADE_FEED_V2
+      // One final frame after deleting the job flips HISTORY SYNC to the
+      // final status and exposes the last archived TradeEvents.
+      queueMicrotask(()=>__mfBroadcastChartSnapshot(mint));
     });
 
   __mfChartBackfillJobs.set(mint,job);
@@ -1550,7 +1537,22 @@ function startDiscovery(i=0){
         discMetrics.eventsReceived++;
         const logs=m.params?.result?.value?.logs;
         if(!Array.isArray(logs)){discMetrics.eventsWithoutLogs++;discMetrics.eventsFiltered++;return}
-        // Accept only Pump.fun token creation instructions; drop Buy/Sell/Withdraw/Migrate/etc.
+
+        // MEMEFLOW_CHART_TRADE_FEED_V2
+        // Reuse the already-connected discovery Pump logsSubscribe as a
+        // redundant source of canonical TradeEvents. The decoder itself
+        // deduplicates signature/log pairs if the dedicated trade WS also
+        // received the same notification.
+        try{
+          __pumpLiveTradeFeed?.ingestLogs?.(logs,{
+            signature:String(sig||''),
+            source:'discovery-ws'
+          });
+        }catch{}
+
+        // Accept only Pump.fun token creation instructions for DISCOVERY work.
+        // Trade decoding above is read-only for discovery and does not enqueue
+        // Buy/Sell/Withdraw/Migrate transactions into the create pipeline.
         const isCreate=logs.some(l=>/Instruction:\s*Create(?:V2|\s+V2|\s*$)/i.test(l));
         if(!isCreate){discMetrics.nonCreateEventsIgnored++;discMetrics.eventsFiltered++;return}
         // V4 System View: accepted real Pump CREATE event.

@@ -3348,6 +3348,9 @@ function drawChart(){
   if(!candles.length){
     chartRuntime.api.clear();
     $('chartEmpty').style.display='grid';
+    $('chartEmpty').innerHTML=
+      '<strong>Syncing real trades</strong>'+
+      '<span>Candles use confirmed BUY / SELL events only. History and the live Pump trade stream reconnect automatically.</span>';
     $('chartLegend').innerHTML='';
     renderPriceModeSummary();
     return;
