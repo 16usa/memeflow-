@@ -7,6 +7,7 @@ import {makeLiveEvalMetrics,makeEvaluateForActiveUsers} from './src/liveeval.mjs
 import {makeDiscoveryMetrics,makeDiscoveryQueue} from './src/discqueue.mjs';
 import {candidateFeed,candidateVisibilityCounts} from './src/candidate-visibility.mjs';import {dexViewRequested,dexViewMint,dexPresenceFromPairs,filterRowsByDexPresence} from './src/dex-view-filter.mjs';
 import { startPumpLiveTradeFeed } from './src/pump-live-trade-feed.mjs'; // MEMEFLOW_V12_21_LIVE_TRADE_STREAM_HOLDER_FEED
+import { ChartHistoryArchive } from './src/chart-history-archive.mjs'; // MEMEFLOW_CHART_HISTORY_RESTORE_V1
 
 import { eventMarketLedger } from './src/event-market-ledger.mjs'; // MEMEFLOW_V12_18_EVENT_MARKET_LEDGER
 
@@ -18,6 +19,27 @@ const root=path.dirname(fileURLToPath(import.meta.url)),dataDir=path.resolve(roo
 const paper=new PaperEngine(store);
 const billing=new StripeBilling({store,secretKey:process.env.STRIPE_SECRET_KEY,priceId:process.env.STRIPE_PRICE_ID,webhookSecret:process.env.STRIPE_WEBHOOK_SECRET,apiBase:process.env.STRIPE_API_BASE});
 const rpcUrls=(process.env.SOLANA_RPC_URLS||'').split(',').map(x=>x.trim()).filter(Boolean),wsUrls=(process.env.SOLANA_WS_URLS||'').split(',').map(x=>x.trim()).filter(Boolean);const rpc=new RpcPool(rpcUrls,process.env.SOLANA_COMMITMENT||'confirmed');
+// MEMEFLOW_CHART_HISTORY_RESTORE_V1
+const __mfChartHistoryRpcUrls=(process.env.CHART_HISTORY_RPC_URLS||process.env.SOLANA_RPC_URLS||'')
+  .split(',').map(x=>x.trim()).filter(Boolean);
+const __mfChartHistoryRpc=new RpcPool(
+  __mfChartHistoryRpcUrls,
+  process.env.SOLANA_COMMITMENT||'confirmed'
+);
+__mfChartHistoryRpc.minIntervalMs=Math.max(
+  250,
+  Number(process.env.CHART_HISTORY_RPC_MIN_INTERVAL_MS||450)
+);
+__mfChartHistoryRpc.methodMinIntervalMs.getTransaction=Math.max(
+  250,
+  Number(process.env.CHART_HISTORY_GET_TRANSACTION_MIN_INTERVAL_MS||350)
+);
+const __mfChartArchive=new ChartHistoryArchive({
+  dataDir,
+  rpc:__mfChartHistoryRpc,
+  pageSize:Number(process.env.CHART_HISTORY_PAGE_SIZE||1000),
+  txConcurrency:Number(process.env.CHART_HISTORY_TX_CONCURRENCY||3)
+});
 const PUMP='6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P',ALLOW_ANON=process.env.ALLOW_ANONYMOUS_PAPER!=='false';
 const EXCLUDE_MAYHEM_MODE=process.env.EXCLUDE_MAYHEM_MODE!=='false';
 const OWNER_ACCESS_KEY=process.env.OWNER_ACCESS_KEY||'';
@@ -67,6 +89,119 @@ function __systemViewEmitV31(type,payload={}){
 }
 
 const chartTradeStreams=new Map(),chartTradeHistory=new Map();
+
+// MEMEFLOW_CHART_HISTORY_RESTORE_V1
+// Trading chart source of truth:
+//   persistent archive + bounded real-time Pump TradeEvent hot cache.
+// This is display-only and does not change AI/risk/trading decisions.
+const __mfChartBackfillJobs=new Map();
+
+function __mfChartSnapshotPayload(mint){
+  const hot=chartTradeHistory.get(mint)||[];
+  let points=[];
+
+  try{
+    points=__mfChartArchive.mergePointsSync(mint,hot);
+  }catch{
+    points=Array.isArray(hot)?hot.slice():[];
+  }
+
+  // Never leave an already-selected token visually blank while historical
+  // RPC sync starts. This one-point seed is only a temporary current-price
+  // fallback; real Pump TradeEvents remain the candle source.
+  if(!points.length){
+    const token=store?.state?.tokens?.[mint]||null;
+    const px=Number(token?.priceSol);
+    if(Number.isFinite(px)&&px>0){
+      const at=Number(token?.lastPriceAt||token?.updatedAt)||Date.now();
+      points=[{
+        t:at,
+        price:px,
+        priceSol:px,
+        source:'current-price-seed',
+        isBuy:false,
+        solAmount:0,
+        tokenAmount:0
+      }];
+    }
+  }
+
+  let archiveStatus={
+    running:false,
+    oldestComplete:false,
+    lastError:null
+  };
+  try{
+    archiveStatus=__mfChartArchive.statusSync(mint);
+  }catch{}
+
+  const last=points[points.length-1]||null;
+
+  return {
+    points,
+    status:{
+      stale:points.length===0,
+      source:last?.source||'pump-trade-event',
+      historyPoints:points.length,
+      historyStartAt:points[0]?.t||null,
+      historyEndAt:last?.t||null,
+      backfillRunning:
+        archiveStatus.running===true ||
+        __mfChartBackfillJobs.has(mint),
+      fullHistoryReady:archiveStatus.oldestComplete===true,
+      backfillError:archiveStatus.lastError||null
+    },
+    tokenAddress:mint
+  };
+}
+
+function __mfBroadcastChartSnapshot(mint){
+  const listeners=chartTradeStreams.get(mint);
+  if(!listeners?.size)return;
+
+  const frame=
+    `event: snapshot\n`+
+    `data: ${JSON.stringify(__mfChartSnapshotPayload(mint))}\n\n`;
+
+  for(const res of [...listeners]){
+    try{
+      res.write(frame);
+    }catch{
+      listeners.delete(res);
+    }
+  }
+}
+
+function __mfEnsureChartBackfill(mint){
+  if(!mint||__mfChartBackfillJobs.has(mint))return;
+
+  try{
+    const status=__mfChartArchive.statusSync(mint);
+    if(status?.oldestComplete===true)return;
+  }catch{}
+
+  const job=__mfChartArchive.ensureBackfill(mint,{
+    onProgress:()=>__mfBroadcastChartSnapshot(mint)
+  })
+    .then(()=>{
+      __mfBroadcastChartSnapshot(mint);
+    })
+    .catch(error=>{
+      console.warn(
+        '[chart-history] backfill',
+        mint,
+        error?.message||error
+      );
+      __mfBroadcastChartSnapshot(mint);
+    })
+    .finally(()=>{
+      if(__mfChartBackfillJobs.get(mint)===job){
+        __mfChartBackfillJobs.delete(mint);
+      }
+    });
+
+  __mfChartBackfillJobs.set(mint,job);
+}
 const priceLifecycleDiag=new Map(); // V10 read-only lifecycle diagnostics
 
 // MEMEFLOW_V12_24_CREATOR_GATE_RECOVERY
@@ -669,6 +804,12 @@ function publishTrade(mint,event,tokenOverride=null){
 
   const rows=chartTradeHistory.get(mint)||[];
   rows.push(point);
+
+  // MEMEFLOW_CHART_HISTORY_RESTORE_V1
+  // Persist accepted real chart ticks independently from the bounded RAM cache.
+  try{
+    __mfChartArchive.appendPoint(mint,point);
+  }catch{}
 
   if(rows.length>1200){
     rows.splice(0,rows.length-1200);
@@ -2746,44 +2887,58 @@ if(url.pathname==='/api/ai/decisions'){
  if(url.pathname==='/api/chart/config'){const qualified=candidateFeed(store.decisions(u.id),'candidates');return json(res,200,{chainId:'solana',tokenAddress:qualified[0]?.mint||''});}
  if(url.pathname==='/api/chart/history'){const mint=url.searchParams.get('tokenAddress'),t=store.state.tokens[mint];const pts=t?.priceSol?[{t:t.updatedAt,price:t.priceSol,source:t.source}]:[];return json(res,200,{points:pts,status:{stale:!pts.length,source:t?.source||null,error:t?.scanError||null},tokenAddress:mint})}
  if(url.pathname==='/api/chart/trade-stream'){
-  const mint=url.searchParams.get('tokenAddress');
+  const mint=String(url.searchParams.get('tokenAddress')||'').trim();
+
+  if(!validPubkey(mint)){
+    return json(res,400,{error:'INVALID_TOKEN_ADDRESS'});
+  }
 
   if(!chartTradeStreams.has(mint)){
     chartTradeStreams.set(mint,new Set());
   }
-
   if(!chartTradeHistory.has(mint)){
     chartTradeHistory.set(mint,[]);
   }
 
-  const points=chartTradeHistory.get(mint)||[];
-
   res.writeHead(200,{
-    'content-type':'text/event-stream',
-    'cache-control':'no-cache',
-    'connection':'keep-alive'
+    'content-type':'text/event-stream; charset=utf-8',
+    'cache-control':'no-cache, no-store, no-transform',
+    'connection':'keep-alive',
+    'x-accel-buffering':'no'
   });
+  try{res.flushHeaders?.()}catch{}
 
-  res.write(`event: snapshot
-data: ${JSON.stringify({
-    points,
-    status:{
-      stale:points.length===0,
-      source:'pump-trade-event'
-    }
-  })}
+  res.write('retry: 1000\n');
+  res.write(
+    `event: snapshot\n`+
+    `data: ${JSON.stringify(__mfChartSnapshotPayload(mint))}\n\n`
+  );
 
-`);
+  const listeners=chartTradeStreams.get(mint);
+  listeners.add(res);
 
-  chartTradeStreams.get(mint).add(res);
+  // History sync must never block opening Trading Terminal.
+  queueMicrotask(()=>__mfEnsureChartBackfill(mint));
 
-  req.on('close',()=>{
-    chartTradeStreams.get(mint)?.delete(res);
-  });
+  const heartbeat=setInterval(()=>{
+    try{
+      res.write(`: chart ${Date.now()}\n\n`);
+    }catch{}
+  },15000);
+  heartbeat.unref?.();
 
+  let closed=false;
+  const closeChartTradeStream=()=>{
+    if(closed)return;
+    closed=true;
+    clearInterval(heartbeat);
+    listeners.delete(res);
+  };
+
+  req.on('close',closeChartTradeStream);
+  res.on('close',closeChartTradeStream);
   return
 }
-
 
  // MEMEFLOW_LIVE_SYSTEM_SSE_BACKEND_V4_ROUTE
  if(url.pathname==='/api/system/stream'&&req.method==='GET'){
