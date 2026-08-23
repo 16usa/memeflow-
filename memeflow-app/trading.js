@@ -619,7 +619,7 @@ function chartHorizonMs(timeframe) {
 }
 
 async function loadSolUsd() {
-  const payload = await api('/api/market/sol-usd');
+  const payload = await api('/api/market/sol-usd', { signal: AbortSignal.timeout(4000) });
   const next = num(payload?.priceUsd);
 
   if (!(next > 0)) {
