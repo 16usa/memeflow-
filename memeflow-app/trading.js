@@ -122,6 +122,7 @@ async function api(path, options = {}) {
 
 function decisionClass(value) {
   const s = String(value || '').toUpperCase();
+  if (s.includes('OPEN')) return 'ready';
   if (s.includes('BUY')) return 'ready';
   if (s.includes('BLOCK')) return 'blocked';
   if (s.includes('WATCH')) return 'watch';
@@ -888,9 +889,108 @@ async function onKill() {
   }
 }
 
+// MEMEFLOW_OPEN_POSITION_UI_V1
+function openPositionForMint(mint) {
+  if (!mint) return null;
+  return (state.positions || []).find(
+    position =>
+      position?.mint === mint &&
+      String(position?.status || '').toUpperCase() === 'OPEN'
+  ) || null;
+}
+
+function isMintOpen(mint) {
+  return Boolean(openPositionForMint(mint));
+}
+
+function positionAsCandidate(position) {
+  return {
+    mint: position.mint,
+    symbol: position.symbol || 'TOKEN',
+    name: position.name || position.symbol || short(position.mint),
+    priceSol: num(position.currentPriceSol) ?? num(position.entryPriceSol),
+    score: position.decisionScore ?? null,
+    confidence: position.decisionConfidence ?? null,
+    state: 'OPEN POSITION',
+    __openPosition: position
+  };
+}
+
+function mergedCandidates() {
+  const candidates = Array.isArray(state.candidates) ? state.candidates : [];
+  const byMint = new Map(
+    candidates
+      .filter(candidate => candidate?.mint)
+      .map(candidate => [candidate.mint, candidate])
+  );
+  const pinned = [];
+
+  for (const position of state.positions || []) {
+    if (
+      !position?.mint ||
+      String(position.status || '').toUpperCase() !== 'OPEN'
+    ) continue;
+
+    const existing = byMint.get(position.mint);
+    if (existing) {
+      pinned.push(existing);
+      byMint.delete(position.mint);
+    } else {
+      pinned.push(positionAsCandidate(position));
+    }
+  }
+
+  return [...pinned, ...byMint.values()];
+}
+
+function displayStateForCandidate(candidate) {
+  return isMintOpen(candidate?.mint)
+    ? 'OPEN POSITION'
+    : String(candidate?.state || 'WAITING').toUpperCase();
+}
+
+function updateCandidateCount() {
+  const dexOnly = dexPoolFilterEnabled();
+  $('candidateCount').textContent =
+    `${dexOnly ? 'DEX · ' : ''}${mergedCandidates().length} candidates`;
+}
+
+function syncSelectedCandidate() {
+  const rows = mergedCandidates();
+
+  if (!rows.length) {
+    state.selected = null;
+    return rows;
+  }
+
+  if (
+    !state.selectedMint ||
+    !rows.some(item => item.mint === state.selectedMint)
+  ) {
+    const open = rows.find(item => isMintOpen(item?.mint));
+    const ready = rows.find(
+      item => String(item?.state || '').toUpperCase() === 'BUY READY'
+    );
+    state.selectedMint = (open || ready || rows[0]).mint;
+  }
+
+  state.selected =
+    rows.find(item => item.mint === state.selectedMint) ||
+    null;
+
+  return rows;
+}
+
 function filteredCandidates() {
-  if (state.filter === 'all') return state.candidates;
-  return state.candidates.filter(item => String(item.state || '').toUpperCase() === state.filter);
+  const rows = mergedCandidates();
+  if (state.filter === 'all') return rows;
+
+  // Real OPEN positions stay pinned regardless of the scanner filter.
+  return rows.filter(
+    item =>
+      isMintOpen(item?.mint) ||
+      String(item.state || '').toUpperCase() === state.filter
+  );
 }
 
 function renderCandidates() {
@@ -904,7 +1004,7 @@ function renderCandidates() {
 
   list.innerHTML = rows.map(item => {
     const price = candidatePrice(item);
-    const stateText = String(item.state || 'WAITING').toUpperCase();
+    const stateText = displayStateForCandidate(item);
     return `
       <button class="candidate ${item.mint === state.selectedMint ? 'selected' : ''}" data-mint="${esc(item.mint)}" type="button">
         <div class="candidate-top">
@@ -940,7 +1040,7 @@ async function loadCandidates({ redrawChart = true } = {}) {
       : [];
 
   $('candidateCount').textContent =
-    `${dexOnly ? 'DEX · ' : ''}${state.candidates.length} candidates`;
+    `${dexOnly ? 'DEX · ' : ''}${mergedCandidates().length} candidates`;
 
   if(
     !state.selectedMint &&
@@ -969,6 +1069,9 @@ async function loadCandidates({ redrawChart = true } = {}) {
     }
   }
 
+  syncSelectedCandidate();
+  updateCandidateCount();
+
   // IMPORTANT V30.3.1:
   // candidate/decision prices never enter raw chart history.
   // /api/chart/stream is the one chart-data authority.
@@ -979,7 +1082,7 @@ async function loadCandidates({ redrawChart = true } = {}) {
 function selectCandidate(mint) {
   if (!mint) return;
   state.selectedMint = mint;
-  state.selected = state.candidates.find(item => item.mint === mint) || null;
+  state.selected = mergedCandidates().find(item => item.mint === mint) || null;
   clearLiveTradeTape();
   chartRuntime.forceFit = true;
   chartRuntime.dataKey = '';
@@ -1187,7 +1290,7 @@ function renderSelected({ redrawChart = true } = {}) {
     chartRuntime.metric = null;
   }
 
-  const stateText = String(c.state || 'WAITING').toUpperCase();
+  const stateText = displayStateForCandidate(c);
   $('tokenName').textContent = `${c.symbol || 'TOKEN'} · ${c.name || ''}`.replace(/\s+·\s*$/, '');
   $('tokenState').textContent = stateText;
   $('tokenState').className = `decision-badge ${decisionClass(stateText)}`;
@@ -3727,6 +3830,15 @@ async function loadPaper({ redrawChart = true } = {}) {
   state.trades = Array.isArray(tradesPayload.trades) ? tradesPayload.trades : [];
   state.proposals = Array.isArray(proposalsPayload.proposals) ? proposalsPayload.proposals : [];
   state.paperStatus = statusPayload || {};
+
+  const previousSelectedMint = state.selectedMint;
+  syncSelectedCandidate();
+  updateCandidateCount();
+  renderCandidates();
+  renderSelected({
+    redrawChart: redrawChart || previousSelectedMint !== state.selectedMint
+  });
+
   renderProposals();
   renderPositions();
   renderTrades();
@@ -4083,8 +4195,8 @@ async function poll({ redrawChart = false } = {}) {
   state.polling = true;
   try {
     // Polling may refresh cards/paper state, but it is not chart market data.
-    await loadCandidates({ redrawChart });
     await loadPaper({ redrawChart });
+    await loadCandidates({ redrawChart });
   } catch (error) {
     $('feedState').textContent = 'DEGRADED';
   } finally {
