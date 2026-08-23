@@ -2135,6 +2135,15 @@ async function mfDexFilterRowsByPool(rows) {
   if (!source.length) return [];
 
   const presence = await mfDexViewPresenceForRows(source);
+
+  const degraded = [...presence.values()].some(
+    entry => entry?.degraded === true
+  );
+
+  if (degraded) {
+    throw new Error("DEX pool view temporarily unavailable");
+  }
+
   return filterRowsByDexPresence(source, presence);
 }
 
