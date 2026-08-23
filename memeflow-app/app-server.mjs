@@ -590,8 +590,8 @@ async function enrich(mint,curve){
 function publishTrade(mint,event,tokenOverride=null){
   if(!mint||!event)return;
 
-  // Do not retain trade history for tokens nobody has opened in Terminal.
-  if(!chartTradeStreams.has(mint)&&!chartTradeHistory.has(mint))return;
+  // Keep a bounded rolling buffer of REAL Pump TradeEvents before
+  // the token is opened in Trading Terminal. No synthetic/timer points.
 
   const token=tokenOverride||store.state.tokens[mint];
   const price=Number(token?.priceSol);
@@ -641,7 +641,16 @@ function publishTrade(mint,event,tokenOverride=null){
     rows.splice(0,rows.length-1200);
   }
 
+  // Refresh insertion order so this map behaves as a bounded LRU.
+  chartTradeHistory.delete(mint);
   chartTradeHistory.set(mint,rows);
+
+  // Bound memory while keeping recent real-trade history for active tokens.
+  while(chartTradeHistory.size > 250){
+    const oldest = chartTradeHistory.keys().next().value;
+    if(oldest === undefined) break;
+    chartTradeHistory.delete(oldest);
+  }
 
   const listeners=chartTradeStreams.get(mint);
   if(!listeners||listeners.size===0)return;
@@ -1644,11 +1653,108 @@ async function mf49StandaloneScan(raw,u){
 }
 /* MEMEFLOW_AI_STANDALONE_V49_END */
 
+
+// MEMEFLOW_TERMINAL_SOL_USD_V1
+const MF_SOL_USD_TTL_MS=30000;
+let mfSolUsdCache={
+  priceUsd:null,
+  updatedAt:0,
+  source:null
+};
+
+async function mfFetchJsonTimeout(url,timeoutMs=1800){
+  const controller=new AbortController();
+  const timer=setTimeout(()=>controller.abort(),timeoutMs);
+
+  try{
+    const response=await fetch(url,{
+      headers:{
+        accept:'application/json',
+        'user-agent':'MEMEFLOW/1.0'
+      },
+      signal:controller.signal
+    });
+
+    const data=await response.json().catch(()=>null);
+
+    if(!response.ok){
+      throw new Error(`HTTP ${response.status}`);
+    }
+
+    return data;
+  }finally{
+    clearTimeout(timer);
+  }
+}
+
+async function mfGetSolUsd(){
+  const now=Date.now();
+
+  if(
+    Number(mfSolUsdCache.priceUsd)>0 &&
+    now-Number(mfSolUsdCache.updatedAt)<MF_SOL_USD_TTL_MS
+  ){
+    return {...mfSolUsdCache,stale:false};
+  }
+
+  try{
+    const result=await Promise.any([
+      mfFetchJsonTimeout(
+        'https://api.coinbase.com/v2/prices/SOL-USD/spot'
+      ).then(data=>{
+        const priceUsd=Number(data?.data?.amount);
+        if(!(priceUsd>0))throw new Error('Coinbase returned no SOL/USD price');
+        return {priceUsd,source:'coinbase'};
+      }),
+
+      mfFetchJsonTimeout(
+        'https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd'
+      ).then(data=>{
+        const priceUsd=Number(data?.solana?.usd);
+        if(!(priceUsd>0))throw new Error('CoinGecko returned no SOL/USD price');
+        return {priceUsd,source:'coingecko'};
+      })
+    ]);
+
+    mfSolUsdCache={
+      priceUsd:result.priceUsd,
+      updatedAt:Date.now(),
+      source:result.source
+    };
+
+    return {...mfSolUsdCache,stale:false};
+  }catch(error){
+    // Last known valid quote is safer than blocking Trading Terminal.
+    if(Number(mfSolUsdCache.priceUsd)>0){
+      return {...mfSolUsdCache,stale:true};
+    }
+
+    throw new Error('SOL/USD providers temporarily unavailable');
+  }
+}
+
 async function handler(req,res){const url=new URL(req.url,'http://x');
  if(url.pathname==='/api/billing/webhook'&&req.method==='POST'){const raw=await rawBody(req);try{billing.verify(raw,req.headers['stripe-signature']);const result=billing.processEvent(JSON.parse(raw));return json(res,200,{received:true,...result})}catch(e){return json(res,e.code==='BAD_SIGNATURE'?400:500,{error:e.code||'WEBHOOK_ERROR',message:e.message})}}
  // Health check — no session or store needed; must respond immediately
  if(url.pathname==='/api/healthz'||url.pathname==='/api/health')return json(res,200,{ok:true,server:'online',version:'1.0.1-clean',timestamp:new Date().toISOString()});
  // Static files — served before session creation to avoid blocking store.save() on new users
+ if(url.pathname==='/api/market/sol-usd'&&req.method==='GET'){
+   try{
+     const quote=await mfGetSolUsd();
+     return json(res,200,{
+       priceUsd:quote.priceUsd,
+       updatedAt:quote.updatedAt,
+       source:quote.source,
+       stale:quote.stale===true
+     });
+   }catch(error){
+     return json(res,503,{
+       error:'SOL_USD_UNAVAILABLE',
+       message:error.message
+     });
+   }
+ }
+
  if(req.method==='GET'&&!url.pathname.startsWith('/api/')){
    const p=url.pathname==='/'?'index.html':url.pathname.slice(1);const f=path.resolve(root,p);
    if(!f.startsWith(root)||!fs.existsSync(f)||fs.statSync(f).isDirectory()){console.log('[STATIC] 404',url.pathname);return json(res,404,{error:'NOT_FOUND'})}
