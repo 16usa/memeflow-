@@ -33,6 +33,39 @@ const openaiAI=new OpenAIIntelligence({
 });
 let discovery={connected:false,url:null,lastEventAt:null,reconnects:0,error:null,lastError:null,startedAt:Date.now()},ws=null,wsTimer=null,wsReconnectAttempt=0;
 const streams=new Map(),priceTimers=new Map(),tradeWindows=new Map();
+
+// MEMEFLOW_LIVE_SYSTEM_SSE_BACKEND_V4
+// Read-only System View event transport. No settings, decisions or positions are mutated here.
+const __systemViewStreamsV31 = new Set();
+let __systemViewSeqV31 = 0;
+const __systemViewLastMintV31 = new Map();
+
+function __systemViewEmitV31(type,payload={}){
+  if(!__systemViewStreamsV31.size)return;
+
+  const now=Date.now();
+  if(type==='token'&&payload?.mint){
+    const key=String(payload.mint);
+    const previous=Number(__systemViewLastMintV31.get(key)||0);
+    // publish() can fire multiple times in the same tick; keep the visual stream bounded.
+    if(now-previous<18)return;
+    __systemViewLastMintV31.set(key,now);
+    if(__systemViewLastMintV31.size>1000){
+      for(const [mint,ts] of __systemViewLastMintV31){
+        if(now-ts>30000)__systemViewLastMintV31.delete(mint);
+      }
+    }
+  }
+
+  const eventType=String(type||'system').replace(/[^a-z0-9_-]/gi,'');
+  const body=JSON.stringify({type:eventType,seq:++__systemViewSeqV31,ts:now,...payload});
+  const frame=`event: ${eventType}\ndata: ${body}\n\n`;
+
+  for(const res of [...__systemViewStreamsV31]){
+    try{res.write(frame)}catch{__systemViewStreamsV31.delete(res)}
+  }
+}
+
 const chartTradeStreams=new Map(),chartTradeHistory=new Map();
 const priceLifecycleDiag=new Map(); // V10 read-only lifecycle diagnostics
 
@@ -672,6 +705,17 @@ data: ${JSON.stringify({
 }
 
 function publish(mint){
+  // V4 System View: actual backend publish cadence drives the 3D/token-flow impulse.
+  if(__systemViewStreamsV31.size){
+   try{
+    const __v31t=store?.state?.tokens?.[mint]||{};
+    __systemViewEmitV31('token',{
+     mint:String(mint||''),
+     updatedAt:Number(__v31t?.updatedAt||Date.now())
+    });
+   }catch{}
+  }
+
   // Hot path: live Pump events can call publish many times per second.
   // Do absolutely no work unless this mint has active SSE subscribers.
   const listeners=streams.get(mint);
@@ -1368,6 +1412,8 @@ function startDiscovery(i=0){
         // Accept only Pump.fun token creation instructions; drop Buy/Sell/Withdraw/Migrate/etc.
         const isCreate=logs.some(l=>/Instruction:\s*Create(?:V2|\s+V2|\s*$)/i.test(l));
         if(!isCreate){discMetrics.nonCreateEventsIgnored++;discMetrics.eventsFiltered++;return}
+        // V4 System View: accepted real Pump CREATE event.
+        try{__systemViewEmitV31('create',{signature:String(sig||''),ts:Date.now()})}catch{}
         discMetrics.createEventsAccepted++;
         discovery.lastEventAt=Date.now();
         enqueue(sig);
@@ -2665,6 +2711,39 @@ data: ${JSON.stringify({
 
   return
 }
+
+
+ // MEMEFLOW_LIVE_SYSTEM_SSE_BACKEND_V4_ROUTE
+ if(url.pathname==='/api/system/stream'&&req.method==='GET'){
+  res.writeHead(200,{
+   'content-type':'text/event-stream; charset=utf-8',
+   'cache-control':'no-cache, no-store, no-transform',
+   'connection':'keep-alive',
+   'x-accel-buffering':'no'
+  });
+  try{res.flushHeaders?.()}catch{}
+  __systemViewStreamsV31.add(res);
+
+  try{
+   res.write(`retry: 1000\nevent: hello\ndata: ${JSON.stringify({type:'hello',seq:__systemViewSeqV31,ts:Date.now()})}\n\n`);
+  }catch{}
+
+  const heartbeat=setInterval(()=>{
+   try{res.write(`: v31 ${Date.now()}\n\n`)}catch{}
+  },15000);
+  heartbeat.unref?.();
+
+  let closed=false;
+  const closeSystemStream=()=>{
+   if(closed)return;
+   closed=true;
+   clearInterval(heartbeat);
+   __systemViewStreamsV31.delete(res);
+  };
+  req.on('close',closeSystemStream);
+  res.on('close',closeSystemStream);
+  return;
+ }
 
  if(url.pathname==='/api/chart/stream'){const mint=url.searchParams.get('tokenAddress');res.writeHead(200,{'content-type':'text/event-stream','cache-control':'no-cache','connection':'keep-alive'});res.write(`event: snapshot\ndata: ${JSON.stringify({points:[],status:{stale:true,source:'Solana'}})}\n\n`);if(!streams.has(mint))streams.set(mint,new Set());streams.get(mint).add(res);req.on('close',()=>streams.get(mint)?.delete(res));return}
  if(url.pathname==='/api/live/execute'){if(!hasLiveEntitlement(u))return json(res,402,{error:'LIVE_ENTITLEMENT_REQUIRED',message:'An active MEMEFLOW Pro subscription or verified owner entitlement is required.'});return json(res,423,{error:'LIVE_EXECUTION_NOT_READY',message:u.isOwner?'Owner LIVE entitlement is active, but verified wallet and production execution engine are still required.':'Pro is active, but verified wallet and production execution engine are still required.'});}
