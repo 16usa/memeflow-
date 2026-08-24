@@ -12,8 +12,9 @@
   min-height:520px !important;
   height:clamp(520px,64vh,760px) !important;
   background:
-    radial-gradient(ellipse at 50% 52%, rgba(34,120,144,.05), transparent 30%),
-    linear-gradient(180deg,#04090d 0%,#03070a 100%) !important;
+    radial-gradient(ellipse at 50% 50%, rgba(83,196,230,.18), transparent 34%),
+    radial-gradient(ellipse at 50% 43%, rgba(40,105,136,.28), transparent 64%),
+    linear-gradient(180deg,#122a38 0%,#0f2230 48%,#0c1a24 100%) !important;
 }
 
 .mf-flow-v4{
@@ -208,9 +209,14 @@
 .mf-flow-v4{
   background:
     radial-gradient(
-      ellipse at 52% 52%,
-      rgba(31,89,104,.030),
-      transparent 37%
+      ellipse at 52% 50%,
+      rgba(91,205,236,.095),
+      transparent 40%
+    ),
+    radial-gradient(
+      ellipse at 50% 50%,
+      rgba(35,96,124,.075),
+      transparent 72%
     ) !important;
 }
 
