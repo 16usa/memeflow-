@@ -157,6 +157,31 @@ function canonicalDecisionRow(row) {
         row?.market?.priceSol ??
         row?.priceSol ??
         row?.price ??
+        null,
+      volume5mSol:
+        row?.market?.volume5mSol ??
+        row?.volume5mSol ??
+        null,
+      volume5mUsd:
+        row?.market?.volume5mUsd ??
+        row?.volume5mUsd ??
+        null,
+      transactions5m:
+        row?.market?.transactions5m ??
+        row?.transactions5m ??
+        null,
+      marketCapSol:
+        row?.market?.marketCapSol ??
+        row?.marketCapSol ??
+        row?.marketCap ??
+        null,
+      marketCapUsd:
+        row?.market?.marketCapUsd ??
+        row?.marketCapUsd ??
+        null,
+      priceChange5mPct:
+        row?.market?.priceChange5mPct ??
+        row?.priceChange5mPct ??
         null
     }
   };
@@ -392,6 +417,118 @@ function openMarketStripTemplate(row) {
       </div>
 
       <div class="mf-open-market-stat">
+        <span>5m%</span>
+        <strong class="${marketMoveClass(move)}">
+          ${escapeHtml(signedPercent(move))}
+        </strong>
+      </div>
+    </div>
+  `;
+}
+
+
+/* MEMEFLOW_ALL_TOKEN_MARKET_METRICS_V4 */
+function regularMarketMetrics(row) {
+  return {
+    ageMinutes:
+      tokenAge(row),
+    holderCount:
+      holderCount(row),
+    volume5mSol:
+      row?.market?.volume5mSol ??
+      row?.volume5mSol ??
+      null,
+    volume5mUsd:
+      row?.market?.volume5mUsd ??
+      row?.volume5mUsd ??
+      null,
+    transactions5m:
+      row?.market?.transactions5m ??
+      row?.transactions5m ??
+      null,
+    marketCapSol:
+      row?.market?.marketCapSol ??
+      row?.marketCapSol ??
+      row?.marketCap ??
+      null,
+    marketCapUsd:
+      row?.market?.marketCapUsd ??
+      row?.marketCapUsd ??
+      null,
+    priceChange5mPct:
+      row?.market?.priceChange5mPct ??
+      row?.priceChange5mPct ??
+      null
+  };
+}
+
+function regularVolumeLabel(metrics) {
+  if (finite(metrics?.volume5mUsd)) {
+    return `$${compactMetricNumber(metrics.volume5mUsd, 1)}`;
+  }
+
+  if (finite(metrics?.volume5mSol)) {
+    return `${compactMetricNumber(metrics.volume5mSol, 1)} SOL`;
+  }
+
+  return '—';
+}
+
+function regularMarketCapLabel(metrics) {
+  if (finite(metrics?.marketCapUsd)) {
+    return `$${compactMetricNumber(metrics.marketCapUsd, 1)}`;
+  }
+
+  if (finite(metrics?.marketCapSol)) {
+    return `${compactMetricNumber(metrics.marketCapSol, 1)} SOL`;
+  }
+
+  return '—';
+}
+
+function regularMarketStripTemplate(row) {
+  const metrics =
+    regularMarketMetrics(row);
+
+  const tx =
+    finite(metrics?.transactions5m)
+      ? fmt(metrics.transactions5m, 0)
+      : '—';
+
+  const move =
+    metrics?.priceChange5mPct;
+
+  return `
+    <div
+      class="mf-regular-market-strip"
+      aria-label="Token market metrics"
+    >
+      <div class="mf-regular-market-stat">
+        <span>Age</span>
+        <strong>${escapeHtml(compactTokenAge(metrics.ageMinutes))}</strong>
+      </div>
+
+      <div class="mf-regular-market-stat">
+        <span>Holders</span>
+        <strong>${escapeHtml(metrics.holderCount)}</strong>
+      </div>
+
+      <div class="mf-regular-market-stat">
+        <span>Vol 5m</span>
+        <strong>${escapeHtml(regularVolumeLabel(metrics))}</strong>
+      </div>
+
+      <div class="mf-regular-market-stat">
+        <span>Tx 5m</span>
+        <strong>${escapeHtml(tx)}</strong>
+      </div>
+
+      <div class="mf-regular-market-stat">
+        <span>MC</span>
+        <strong>${escapeHtml(regularMarketCapLabel(metrics))}</strong>
+      </div>
+
+      <div class="mf-regular-market-stat">
         <span>5m%</span>
         <strong class="${marketMoveClass(move)}">
           ${escapeHtml(signedPercent(move))}
@@ -939,7 +1076,7 @@ function tokenTemplate(row, index) {
 
       </div>
 
-      <div class="token-metric ${key === 'open' ? 'mf-open-pnl-slot' : ''}">
+      <div class="token-metric ${key === 'open' ? 'mf-open-pnl-slot' : 'mf-score-slot'}">
         <span>${key === 'open' ? 'P&L' : 'Score'}</span>
         <strong class="${key === 'open' ? openPositionPnlClass(pnl) : ''}">
           ${
@@ -988,7 +1125,7 @@ function tokenTemplate(row, index) {
       ${
         key === 'open'
           ? openMarketStripTemplate(row)
-          : ''
+          : regularMarketStripTemplate(row)
       }
 
       <button

@@ -2345,3 +2345,120 @@ button {
     font-size: 6.6px;
   }
 }
+
+/* MEMEFLOW_ALL_TOKEN_MARKET_METRICS_V4 */
+
+/* On non-OPEN cards Score remains in the header.
+   Holders/Age/etc. move into the compact market strip below. */
+.flow-token:not(.open) > .token-metric:not(.mf-score-slot) {
+  display: none !important;
+}
+
+.mf-regular-market-strip {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 6px;
+  width: 100%;
+  padding-top: 8px;
+  border-top: 1px solid rgba(147, 178, 202, .07);
+}
+
+.mf-regular-market-stat {
+  min-width: 0;
+}
+
+.mf-regular-market-stat span {
+  display: block;
+  color: #637682;
+  font-size: 6px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: .075em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.mf-regular-market-stat strong {
+  display: block;
+  min-width: 0;
+  margin-top: 4px;
+  overflow: hidden;
+  color: #dfe9ef;
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.05;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mf-regular-market-stat strong.is-profit {
+  color: var(--green);
+}
+
+.mf-regular-market-stat strong.is-loss {
+  color: var(--red);
+}
+
+.mf-regular-market-stat strong.is-flat {
+  color: #9cadb8;
+}
+
+@media (max-width: 760px) {
+  .flow-token:not(.open) {
+    min-height: 82px !important;
+    padding-bottom: 7px !important;
+  }
+
+  .flow-token:not(.open) > .mf-score-slot {
+    display: flex !important;
+  }
+
+  .mf-regular-market-strip {
+    grid-column: 1 / -1 !important;
+    display: grid !important;
+    grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+    gap: 3px !important;
+    margin-top: 1px;
+    padding-top: 6px;
+  }
+
+  .mf-regular-market-stat {
+    min-width: 0;
+    padding-left: 4px;
+    border-left: 1px solid rgba(147, 178, 202, .07);
+  }
+
+  .mf-regular-market-stat:first-child {
+    padding-left: 0;
+    border-left: 0;
+  }
+
+  .mf-regular-market-stat span {
+    font-size: 4.2px;
+    letter-spacing: .045em;
+  }
+
+  .mf-regular-market-stat strong {
+    margin-top: 3px;
+    font-size: 7px;
+  }
+}
+
+@media (max-width: 390px) {
+  .mf-regular-market-strip {
+    gap: 2px !important;
+  }
+
+  .mf-regular-market-stat {
+    padding-left: 3px;
+  }
+
+  .mf-regular-market-stat span {
+    font-size: 3.9px;
+  }
+
+  .mf-regular-market-stat strong {
+    font-size: 6.6px;
+  }
+}

@@ -560,6 +560,115 @@ function origin(req){if(process.env.APP_URL||process.env.APP_BASE_URL)return (pr
 function hasLiveEntitlement(u){return Boolean(u?.isOwner||u?.liveEntitled)}
 function billingStatus(u){const owner=Boolean(u.isOwner);const stripe=Boolean(u.liveEntitled);return {plan:owner?'owner':(u.plan||'free'),subscriptionStatus:owner?'owner_grant':(u.subscriptionStatus||'free'),liveEntitled:owner||stripe,entitlementSource:owner?'owner':(stripe?'stripe':'none'),isOwner:owner,price:49.99,currency:'USD',stripeCustomerId:u.stripeCustomerId||null,currentPeriodEnd:owner?null:(u.currentPeriodEnd||null),cancelAtPeriodEnd:owner?false:Boolean(u.cancelAtPeriodEnd)}}
 /* MEMEFLOW_CANONICAL_CANDIDATE_PAYLOAD_V1 */
+/* MEMEFLOW_ALL_TOKEN_MARKET_METRICS_V4
+ * Read-only trailing 5 minute market snapshot for Token Flow cards.
+ * Uses existing real Pump chartTradeHistory plus already stored token fields.
+ */
+function __mfCandidateMarket5mV4(mint,t){
+  const finite=(v)=>v!==null&&v!==undefined&&v!==''&&Number.isFinite(Number(v))
+    ? Number(v)
+    : null;
+
+  const now=Date.now();
+  const cutoff=now-(5*60*1000);
+  const rows=Array.isArray(chartTradeHistory.get(String(mint||'')))
+    ? chartTradeHistory.get(String(mint||'')).slice()
+    : [];
+
+  const points=rows
+    .filter((p)=>{
+      const ts=Number(p?.t);
+      return Number.isFinite(ts)&&ts>0&&ts<=now+30000;
+    })
+    .sort((a,b)=>Number(a.t)-Number(b.t));
+
+  const recent=points.filter((p)=>Number(p.t)>=cutoff);
+  const latest=points.length?points[points.length-1]:null;
+
+  let base=null;
+  for(let i=points.length-1;i>=0;i--){
+    if(Number(points[i]?.t)<=cutoff){
+      base=points[i];
+      break;
+    }
+  }
+  if(!base&&recent.length)base=recent[0];
+
+  const pointPrice=(p)=>finite(p?.priceSol??p?.price);
+  const latestPrice=
+    finite(t?.priceSol) ??
+    pointPrice(latest);
+
+  const basePrice=pointPrice(base);
+
+  const volume5mSol=recent.reduce(
+    (sum,p)=>sum+Math.abs(finite(p?.solAmount)??0),
+    0
+  );
+
+  const directVolumeUsd=
+    finite(t?.volume5mUsd ?? t?.market?.volume5mUsd);
+
+  const directTx=
+    finite(t?.transactions5m ?? t?.tx5m) ??
+    (()=>{
+      const buys=finite(t?.buys5m);
+      const sells=finite(t?.sells5m);
+      return buys!==null||sells!==null
+        ? (buys??0)+(sells??0)
+        : null;
+    })();
+
+  const transactions5m=
+    recent.length>0
+      ? recent.length
+      : directTx;
+
+  let priceChange5mPct=
+    finite(t?.priceChange5mPct ?? t?.change5mPct);
+
+  if(
+    recent.length &&
+    latestPrice!==null &&
+    latestPrice>0 &&
+    basePrice!==null &&
+    basePrice>0
+  ){
+    priceChange5mPct=((latestPrice/basePrice)-1)*100;
+  }
+
+  const supply=finite(t?.totalSupply);
+  const storedMcSol=finite(t?.marketCapSol??t?.marketCap);
+  const marketCapSol=
+    latestPrice!==null&&latestPrice>0&&supply!==null&&supply>0
+      ? latestPrice*supply
+      : storedMcSol;
+
+  const marketCapUsd=finite(t?.marketCapUsd);
+
+  const impliedSolUsd=
+    marketCapUsd!==null&&marketCapUsd>0&&marketCapSol!==null&&marketCapSol>0
+      ? marketCapUsd/marketCapSol
+      : null;
+
+  const volume5mUsd=
+    directVolumeUsd ??
+    (
+      impliedSolUsd!==null
+        ? volume5mSol*impliedSolUsd
+        : null
+    );
+
+  return {
+    volume5mSol,
+    volume5mUsd,
+    transactions5m,
+    marketCapSol,
+    marketCapUsd,
+    priceChange5mPct
+  };
+}
+
 function candidateView(d){
   const t=store.state.tokens[d.mint]||{};
   const finite=(v)=>v!==null&&v!==undefined&&Number.isFinite(Number(v))?Number(v):null;
@@ -568,6 +677,7 @@ function candidateView(d){
   const top10Pct=finite(t.top10Pct);
   const developerPct=finite(t.developerPct??t.developerSharePct);
   const buyPressure=finite(t.buyPressure??t.momentum);
+  const market5m=__mfCandidateMarket5mV4(d.mint,t);
   return {
     id:d.mint,
     mint:d.mint,
@@ -611,6 +721,10 @@ function candidateView(d){
     buyPressure,
     momentum:buyPressure,
     ageMinutes:tokenAgeMinutes(t),
+    volume5mSol:market5m.volume5mSol,
+    volume5mUsd:market5m.volume5mUsd,
+    transactions5m:market5m.transactions5m,
+    priceChange5mPct:market5m.priceChange5mPct,
     evidence:{
       'Mint':d.mint,
       'Price (SOL)':finite(t.priceSol)??'—',
