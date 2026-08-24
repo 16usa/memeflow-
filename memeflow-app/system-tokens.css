@@ -4,8 +4,8 @@
   --surface: #071016;
   --surface-2: #09131a;
 
-  --line: rgba(147, 178, 202, .16);
-  --line-strong: rgba(147, 178, 202, .27);
+  --line: rgba(147, 178, 202, .09);
+  --line-strong: rgba(147, 178, 202, .17);
 
   --text: #eef5fa;
   --muted: #6f8290;
@@ -333,7 +333,7 @@ button {
 
 .summary-card.ready {
   border-color:
-    rgba(77, 230, 161, .20);
+    rgba(77, 230, 161, .10);
 }
 
 .summary-card.ready.active {
@@ -349,7 +349,7 @@ button {
 
 .summary-card.watch {
   border-color:
-    rgba(92, 141, 255, .20);
+    rgba(92, 141, 255, .10);
 }
 
 .summary-card.watch.active {
@@ -376,7 +376,7 @@ button {
 
 .summary-card.blocked {
   border-color:
-    rgba(255, 102, 121, .19);
+    rgba(255, 102, 121, .11);
 }
 
 .summary-card.blocked.active {
@@ -540,7 +540,7 @@ button {
 
 .flow-token.ready {
   border-color:
-    rgba(77, 230, 161, .42);
+    rgba(77, 230, 161, .14);
 
   box-shadow:
     0 0 24px rgba(77, 230, 161, .035);
@@ -555,7 +555,7 @@ button {
 
 .flow-token.watch {
   border-color:
-    rgba(92, 141, 255, .40);
+    rgba(92, 141, 255, .14);
 }
 
 .flow-token.watch::before {
@@ -567,7 +567,7 @@ button {
 
 .flow-token.waiting {
   border-color:
-    rgba(146, 165, 178, .22);
+    rgba(146, 165, 178, .10);
 }
 
 .flow-token.waiting::before {
@@ -576,7 +576,7 @@ button {
 
 .flow-token.blocked {
   border-color:
-    rgba(255, 102, 121, .38);
+    rgba(255, 102, 121, .16);
 
   opacity: .88;
 }
