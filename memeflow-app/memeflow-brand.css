@@ -139,12 +139,12 @@ html[data-theme="light"] .mf-brand-img, body.light .mf-brand-img, .theme-light .
    Presentation only: no state, navigation, trading or API behavior changes.
 */
 :root{
-  --mf-app-bg:#06080b;
-  --mf-app-surface:#0b0f14;
-  --mf-app-surface-2:#10161d;
-  --mf-app-surface-3:#151d26;
-  --mf-app-panel-top:rgba(15,21,28,.94);
-  --mf-app-panel-bottom:rgba(9,13,18,.96);
+  --mf-app-bg:#0f141a;
+  --mf-app-surface:#111820;
+  --mf-app-surface-2:#141c25;
+  --mf-app-surface-3:#18222d;
+  --mf-app-panel-top:rgba(20,28,37,.94);
+  --mf-app-panel-bottom:rgba(15,20,26,.97);
   --mf-app-line:rgba(145,166,190,.15);
   --mf-app-line-strong:rgba(145,166,190,.26);
   --mf-app-soft:rgba(255,255,255,.018);
@@ -174,20 +174,20 @@ html[data-theme="light"] .mf-brand-img, body.light .mf-brand-img, .theme-light .
 }
 
 html,body{
-  background:linear-gradient(180deg,#05070a 0%,#070a0e 100%)!important;
+  background:#0f141a!important;
   color:var(--mf-app-text)!important;
 }
 
 /* Persistent chrome */
 .sidebar{
-  background:rgba(5,7,10,.74)!important;
+  background:rgba(15,20,26,.90)!important;
   border-color:rgba(41,57,74,.72)!important;
   box-shadow:0 10px 30px rgba(0,0,0,.18),inset 0 1px 0 rgba(255,255,255,.025)!important;
   backdrop-filter:blur(22px) saturate(120%)!important;
   -webkit-backdrop-filter:blur(22px) saturate(120%)!important;
 }
 .topbar{
-  background:rgba(6,9,13,.78)!important;
+  background:rgba(15,20,26,.90)!important;
   border-color:var(--mf-app-line)!important;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.022)!important;
   backdrop-filter:blur(24px) saturate(130%)!important;
@@ -312,7 +312,7 @@ html,body{
 }
 .settings-footer{
   border-color:var(--mf-app-line)!important;
-  background:rgba(7,11,16,.88)!important;
+  background:rgba(15,20,26,.94)!important;
   box-shadow:none!important;
 }
 
@@ -337,7 +337,7 @@ button,.btn,a.btn{
   font-weight:760!important;
 }
 .btn:not(.primary){
-  background:#121a24!important;
+  background:#141c25!important;
   border-color:var(--mf-app-line)!important;
   color:#eaf0f6!important;
 }

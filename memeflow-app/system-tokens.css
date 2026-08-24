@@ -1,8 +1,8 @@
 
 :root {
-  --bg: #030507;
-  --surface: #071016;
-  --surface-2: #09131a;
+  --bg: #0f141a;
+  --surface: #111820;
+  --surface-2: #141c25;
 
   --line: rgba(147, 178, 202, .06);
   --line-strong: rgba(147, 178, 202, .12);
@@ -32,7 +32,7 @@ body {
       rgba(37, 92, 112, .13),
       transparent 28%
     ),
-    #030507;
+    #0f141a;
 
   color: var(--text);
 
@@ -89,8 +89,8 @@ button {
   background:
     linear-gradient(
       180deg,
-      rgba(9, 16, 22, .92),
-      rgba(4, 9, 13, .92)
+      rgba(20, 28, 37, .92),
+      rgba(15, 20, 26, .94)
     );
 
   backdrop-filter: blur(20px);
@@ -222,8 +222,8 @@ button {
   background:
     linear-gradient(
       145deg,
-      rgba(9, 19, 26, .86),
-      rgba(3, 8, 12, .78)
+      rgba(20, 28, 37, .88),
+      rgba(15, 20, 26, .86)
     );
 }
 
@@ -296,7 +296,7 @@ button {
   border-radius: 11px;
 
   background:
-    rgba(5, 11, 16, .72);
+    rgba(17, 24, 32, .74);
 
   cursor: pointer;
 
@@ -413,7 +413,7 @@ button {
   border-radius: 12px;
 
   background:
-    rgba(4, 9, 13, .93);
+    rgba(15, 20, 26, .94);
 
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
@@ -514,8 +514,8 @@ button {
   background:
     linear-gradient(
       180deg,
-      rgba(7, 14, 19, .88),
-      rgba(3, 8, 12, .82)
+      rgba(17, 24, 32, .88),
+      rgba(15, 20, 26, .88)
     );
 
   overflow: hidden;
