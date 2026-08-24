@@ -134,7 +134,7 @@ html[data-theme="light"] .mf-brand-img, body.light .mf-brand-img, .theme-light .
 }
 
 /* MF_UNIFIED_APP_THEME_START */
-/* MEMEFLOW UNIFIED APP THEME V1
+/* MEMEFLOW UNIFIED APP THEME V3 · QUIET HIERARCHY
    Mission Control is the visual source of truth for every application view.
    Presentation only: no state, navigation, trading or API behavior changes.
 */
@@ -145,10 +145,10 @@ html[data-theme="light"] .mf-brand-img, body.light .mf-brand-img, .theme-light .
   --mf-app-surface-3:#151d26;
   --mf-app-panel-top:rgba(15,21,28,.94);
   --mf-app-panel-bottom:rgba(9,13,18,.96);
-  --mf-app-line:rgba(145,166,190,.15);
-  --mf-app-line-strong:rgba(145,166,190,.26);
-  --mf-app-soft:rgba(255,255,255,.018);
-  --mf-app-soft-hover:rgba(255,255,255,.032);
+  --mf-app-line:rgba(145,166,190,.10);
+  --mf-app-line-strong:rgba(145,166,190,.18);
+  --mf-app-soft:rgba(255,255,255,.026);
+  --mf-app-soft-hover:rgba(255,255,255,.044);
   --mf-app-text:#f7f9fc;
   --mf-app-muted:#8d99a8;
   --mf-app-cyan:#61dfff;
@@ -256,7 +256,7 @@ html,body{
 .execution-readiness,.primary-blocker,.signal-explainer,.execution-check-list,
 .wallet-note,.wallet-network,.wallet-option,.mobile-wallet-card,.explain-step,
 .production-empty{
-  border-color:var(--mf-app-line)!important;
+  border-color:transparent!important;
   background:var(--mf-app-soft)!important;
   box-shadow:none!important;
 }
@@ -294,15 +294,15 @@ html,body{
 }
 .settings-group>summary{
   background:transparent!important;
-  border-color:var(--mf-app-line)!important;
+  border-color:transparent!important;
 }
-.settings-group[open]>summary{border-bottom:1px solid var(--mf-app-line)!important;}
+.settings-group[open]>summary{border-bottom:1px solid rgba(145,166,190,.08)!important;}
 .settings-group-body{background:transparent!important;}
 .mode-option label,.profile-option label,.setting-field input,.setting-field select{
   color:var(--mf-app-text)!important;
 }
 .mode-option input:checked+label,.profile-option input:checked+label{
-  border-color:rgba(97,223,255,.42)!important;
+  border-color:transparent!important;
   background:rgba(97,223,255,.055)!important;
   box-shadow:inset 2px 0 0 var(--mf-app-cyan)!important;
 }
@@ -523,7 +523,7 @@ h1,h2,h3{
 .system-shell .gate-list>*,
 .system-shell .telemetry-item,
 .system-shell .token-rail>*{
-  border-color:var(--mf-app-line)!important;
+  border-color:transparent!important;
   background:var(--mf-app-soft)!important;
   box-shadow:none!important;
 }
@@ -665,21 +665,21 @@ h1,h2,h3{
 }
 
 .flow-page .flow-token{
-  border:1px solid var(--mf-app-line)!important;
-  border-radius:16px!important;
-  background:linear-gradient(180deg,var(--mf-app-panel-top),var(--mf-app-panel-bottom))!important;
+  border:0!important;
+  border-radius:14px!important;
+  background:var(--mf-app-soft)!important;
   box-shadow:none!important;
 }
 
 .flow-page .flow-token:hover{
-  border-color:rgba(97,223,255,.23)!important;
-  background:linear-gradient(180deg,rgba(17,24,32,.95),rgba(10,15,20,.97))!important;
+  border-color:transparent!important;
+  background:var(--mf-app-soft-hover)!important;
 }
 
 .flow-page .token-avatar,
 .flow-page .token-details,
 .flow-page .detail-block{
-  border-color:var(--mf-app-line)!important;
+  border-color:transparent!important;
   background:var(--mf-app-soft)!important;
   box-shadow:none!important;
 }
@@ -749,7 +749,7 @@ h1,h2,h3{
 .shell .trade-history>*,
 .shell .candidate-filter,
 .shell .candidate-list>*{
-  border-color:var(--mf-app-line)!important;
+  border-color:transparent!important;
   background:var(--mf-app-soft)!important;
   box-shadow:none!important;
 }
@@ -777,6 +777,8 @@ h1,h2,h3{
   border-radius:10px!important;
   color:var(--mf-app-muted)!important;
   box-shadow:none!important;
+  border-color:transparent!important;
+  background:transparent!important;
 }
 
 .shell .timeframes button.active,
@@ -800,7 +802,7 @@ h1,h2,h3{
 
 .shell input,
 .shell select{
-  border-color:var(--mf-app-line-strong)!important;
+  border-color:rgba(145,166,190,.12)!important;
   border-radius:10px!important;
   background:#10161d!important;
   color:var(--mf-app-text)!important;
@@ -867,4 +869,99 @@ h1,h2,h3{
   .shell .chart-head{padding:12px!important;}
 }
 /* MF_UNIFIED_STANDALONE_END */
+/* QUIET HIERARCHY STRUCTURAL SEPARATORS */
+.settings-group,
+.plan-card{
+  border:1px solid var(--mf-app-line)!important;
+}
+
+.shell .selected-metrics>div{
+  background:transparent!important;
+  border:0!important;
+  border-right:1px solid rgba(145,166,190,.075)!important;
+  border-radius:0!important;
+}
+.shell .selected-metrics>div:last-child{
+  border-right:0!important;
+}
+
+.shell .strategy-grid label{
+  border:0!important;
+  background:rgba(255,255,255,.022)!important;
+}
+
+.shell .control-section{
+  border:0!important;
+  border-top:1px solid rgba(145,166,190,.075)!important;
+  border-radius:0!important;
+  background:transparent!important;
+}
+.shell .control-section:first-of-type{
+  border-top:0!important;
+}
+
+.shell .positions-list>*,
+.shell .trade-history>*,
+.shell .candidate-list>*,
+.shell .approval-list>*{
+  border:0!important;
+  border-bottom:1px solid rgba(145,166,190,.075)!important;
+  border-radius:0!important;
+  background:transparent!important;
+}
+.shell .positions-list>*:last-child,
+.shell .trade-history>*:last-child,
+.shell .candidate-list>*:last-child,
+.shell .approval-list>*:last-child{
+  border-bottom:0!important;
+}
+
+.shell .indicator-bar{
+  border:0!important;
+  border-top:1px solid rgba(145,166,190,.075)!important;
+  border-bottom:1px solid rgba(145,166,190,.075)!important;
+  background:transparent!important;
+}
+
+.shell .amount-box,
+.shell .price-block{
+  border:1px solid rgba(145,166,190,.12)!important;
+}
+.shell .token-avatar{
+  border:1px solid rgba(145,166,190,.12)!important;
+}
+
+.system-shell .telemetry-item{
+  border:0!important;
+  background:transparent!important;
+}
+.system-shell .telemetry-item:not(:last-child){
+  border-right:1px solid rgba(145,166,190,.075)!important;
+}
+.system-shell .metric-grid>*{
+  border:0!important;
+  background:rgba(255,255,255,.022)!important;
+}
+.system-shell .reason-block,
+.system-shell .gate-list>*,
+.system-shell .token-rail>*{
+  border:0!important;
+}
+
+.settings-summary>div,
+.system-health-summary>div,
+.wallet-stat,
+.subscription-metric,
+.data-row,
+.toggle-row,
+.mode-option label,
+.profile-option label,
+.setting-field input,
+.setting-field select{
+  border-color:transparent!important;
+}
+
+.flow-page .flow-token{
+  outline:0!important;
+}
 /* MF_UNIFIED_APP_THEME_END */
