@@ -215,7 +215,7 @@
 }
 
 .mf-flow-v4-rates{
-  border-color:rgba(138,166,185,.11) !important;
+  border-color:rgba(138,166,185,.055) !important;
 
   background:
     linear-gradient(
@@ -263,8 +263,7 @@
   Slightly calmer panel borders.
 */
 .viewport-wrap{
-  border-color:
-    rgba(126,157,178,.13) !important;
+  border-color: rgba(126,157,178,.055) !important;
 }
 
 @media(max-width:760px){
