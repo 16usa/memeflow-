@@ -176,29 +176,55 @@ const state = {
  * UI-only merge of the existing scanner feed with the existing paper-position feed.
  * Solana mint keys remain case-sensitive. No trading/risk settings are modified.
  */
-function openPositionPnlSol(position) {
+/* MEMEFLOW_SYSTEM_TOKEN_OPEN_PNL_PERCENT_V2
+ * OPEN POSITION P&L is shown and ranked as total return on the original
+ * position capital:
+ *   (realized P&L SOL + unrealized P&L SOL) / initialSizeSol * 100
+ * This keeps partial take-profits reflected in the percentage.
+ */
+function openPositionPnlPct(position) {
   if (!position || typeof position !== 'object') {
     return null;
   }
 
-  const realized =
-    finite(position.realizedPnlSol)
-      ? Number(position.realizedPnlSol)
-      : 0;
+  const initialSize =
+    finite(position.initialSizeSol)
+      ? Number(position.initialSizeSol)
+      : null;
 
-  const unrealized =
-    finite(position.unrealizedPnlSol)
-      ? Number(position.unrealizedPnlSol)
-      : 0;
+  const hasRealized =
+    finite(position.realizedPnlSol);
+
+  const hasUnrealized =
+    finite(position.unrealizedPnlSol);
 
   if (
-    !finite(position.realizedPnlSol) &&
-    !finite(position.unrealizedPnlSol)
+    initialSize !== null &&
+    initialSize > 0 &&
+    (hasRealized || hasUnrealized)
   ) {
-    return null;
+    const realized =
+      hasRealized
+        ? Number(position.realizedPnlSol)
+        : 0;
+
+    const unrealized =
+      hasUnrealized
+        ? Number(position.unrealizedPnlSol)
+        : 0;
+
+    return (
+      (realized + unrealized) /
+      initialSize
+    ) * 100;
   }
 
-  return realized + unrealized;
+  // Compatibility fallback for older position records.
+  if (finite(position.unrealizedPnlPct)) {
+    return Number(position.unrealizedPnlPct);
+  }
+
+  return null;
 }
 
 function openPositionPnlClass(value) {
@@ -211,7 +237,7 @@ function openPositionPnlClass(value) {
     : 'mf-open-position-pnl is-loss';
 }
 
-function formatSignedPnlSol(value) {
+function formatSignedPnlPct(value) {
   if (!finite(value)) {
     return '—';
   }
@@ -219,7 +245,7 @@ function formatSignedPnlSol(value) {
   const number = Number(value);
   const sign = number > 0 ? '+' : '';
 
-  return `${sign}${fmt(number, 4)} SOL`;
+  return `${sign}${fmt(number, 2)}%`;
 }
 
 function positionAsDecisionRow(position) {
@@ -418,8 +444,8 @@ function sortRows(rows) {
         const bOpen = isOpenPositionRow(b);
 
         if (aOpen && bOpen) {
-          const pnlA = openPositionPnlSol(a?.__openPosition);
-          const pnlB = openPositionPnlSol(b?.__openPosition);
+          const pnlA = openPositionPnlPct(a?.__openPosition);
+          const pnlB = openPositionPnlPct(b?.__openPosition);
 
           const rankA =
             finite(pnlA)
@@ -678,7 +704,7 @@ function tokenTemplate(row, index) {
 
   const pnl =
     key === 'open'
-      ? openPositionPnlSol(row?.__openPosition)
+      ? openPositionPnlPct(row?.__openPosition)
       : null;
 
   return `
@@ -735,7 +761,7 @@ function tokenTemplate(row, index) {
         <strong class="${key === 'open' ? openPositionPnlClass(pnl) : ''}">
           ${
             key === 'open'
-              ? formatSignedPnlSol(pnl)
+              ? formatSignedPnlPct(pnl)
               : (finite(score) ? fmt(score, 0) : '—')
           }
         </strong>
