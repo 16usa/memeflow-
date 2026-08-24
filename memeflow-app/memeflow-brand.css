@@ -134,7 +134,7 @@ html[data-theme="light"] .mf-brand-img, body.light .mf-brand-img, .theme-light .
 }
 
 /* MF_UNIFIED_APP_THEME_START */
-/* MEMEFLOW UNIFIED APP THEME V3 · QUIET HIERARCHY
+/* MEMEFLOW UNIFIED APP THEME V4 · MODERN TERMINAL
    Mission Control is the visual source of truth for every application view.
    Presentation only: no state, navigation, trading or API behavior changes.
 */
@@ -869,46 +869,139 @@ h1,h2,h3{
   .shell .chart-head{padding:12px!important;}
 }
 /* MF_UNIFIED_STANDALONE_END */
-/* QUIET HIERARCHY STRUCTURAL SEPARATORS */
+/* MODERN TERMINAL REFINEMENTS V4 START */
+/* One canonical theme block, refined in place. */
+
+/* Calm the shell a little more and reduce "inflated mobile app" feeling. */
+.shell>.topbar,
+.system-shell .topbar,
+.flow-header{
+  padding:14px 16px!important;
+  border-radius:14px!important;
+}
+
+.shell>.topbar .header-brand,
+.system-shell .topbar .header-brand,
+.flow-header .flow-brand{
+  gap:12px!important;
+}
+
+.shell .hero-panel,
+.shell .hero-card,
+.system-shell .scene-title,
+.flow-page .flow-hero{
+  border-radius:16px!important;
+  padding:18px 18px!important;
+}
+
+.shell .panel,
+.system-shell .panel,
+.flow-page .panel,
+.shell .section-card,
+.system-shell .scene-card,
+.flow-page .flow-card,
 .settings-group,
+.settings-context,
 .plan-card{
-  border:1px solid var(--mf-app-line)!important;
+  border-radius:14px!important;
+}
+
+.shell .panel-head,
+.system-shell .panel-head,
+.flow-page .section-head,
+.settings-group>summary{
+  padding:16px 18px!important;
+  min-height:auto!important;
+}
+
+.shell .panel-body,
+.system-shell .panel-body,
+.flow-page .section-body{
+  padding:14px 18px!important;
+}
+
+/* Compact action rows and filter rows. */
+.shell .timeframes,
+.shell .indicator-scroll,
+.shell .candidate-filter,
+.flow-page .pager,
+.flow-page .status-grid{
+  gap:8px!important;
+}
+
+.shell .timeframes button,
+.shell .indicator-scroll button,
+.shell .candidate-filter button,
+.flow-page .pager button,
+.flow-page .search-row button,
+.shell .topbar button,
+.system-shell .topbar button,
+.flow-header button{
+  min-height:36px!important;
+  padding:0 14px!important;
+  border-radius:10px!important;
+}
+
+/* Make metrics read as one system row instead of many mini-cards. */
+.shell .selected-metrics>div,
+.system-shell .telemetry-item,
+.flow-page .summary-card{
+  min-height:auto!important;
+  padding:14px 14px!important;
 }
 
 .shell .selected-metrics>div{
   background:transparent!important;
   border:0!important;
-  border-right:1px solid rgba(145,166,190,.075)!important;
+  border-right:1px solid rgba(145,166,190,.08)!important;
   border-radius:0!important;
 }
 .shell .selected-metrics>div:last-child{
   border-right:0!important;
 }
 
-.shell .strategy-grid label{
-  border:0!important;
-  background:rgba(255,255,255,.022)!important;
-}
-
-.shell .control-section{
-  border:0!important;
-  border-top:1px solid rgba(145,166,190,.075)!important;
-  border-radius:0!important;
+.system-shell .telemetry-item{
   background:transparent!important;
+  border:0!important;
 }
-.shell .control-section:first-of-type{
-  border-top:0!important;
+.system-shell .telemetry-item:not(:last-child){
+  border-right:1px solid rgba(145,166,190,.08)!important;
 }
 
+.flow-page .summary-card{
+  border-radius:12px!important;
+  background:rgba(255,255,255,.02)!important;
+  border:1px solid rgba(145,166,190,.08)!important;
+}
+
+/* Token Flow rows: slightly tighter and less "card in card". */
+.flow-page .flow-token{
+  padding:12px 14px!important;
+  border:0!important;
+  border-radius:14px!important;
+  background:rgba(255,255,255,.018)!important;
+  box-shadow:none!important;
+}
+
+.flow-page .flow-token:hover{
+  background:rgba(255,255,255,.028)!important;
+}
+
+/* Trading lists: cleaner terminal rows with separators, not bulky rounded cards. */
 .shell .positions-list>*,
 .shell .trade-history>*,
 .shell .candidate-list>*,
 .shell .approval-list>*{
-  border:0!important;
-  border-bottom:1px solid rgba(145,166,190,.075)!important;
-  border-radius:0!important;
+  padding:14px 10px!important;
   background:transparent!important;
+  border-left:0!important;
+  border-right:0!important;
+  border-top:0!important;
+  border-bottom:1px solid rgba(145,166,190,.08)!important;
+  border-radius:0!important;
+  box-shadow:none!important;
 }
+
 .shell .positions-list>*:last-child,
 .shell .trade-history>*:last-child,
 .shell .candidate-list>*:last-child,
@@ -916,38 +1009,33 @@ h1,h2,h3{
   border-bottom:0!important;
 }
 
-.shell .indicator-bar{
-  border:0!important;
-  border-top:1px solid rgba(145,166,190,.075)!important;
-  border-bottom:1px solid rgba(145,166,190,.075)!important;
-  background:transparent!important;
-}
-
+/* Keep strong CTA elements readable, but calm passive sub-blocks. */
+.shell .price-block,
 .shell .amount-box,
-.shell .price-block{
-  border:1px solid rgba(145,166,190,.12)!important;
-}
+.shell .wallet-address,
+.shell .live-warning,
 .shell .token-avatar{
-  border:1px solid rgba(145,166,190,.12)!important;
+  border-radius:12px!important;
+  box-shadow:none!important;
 }
 
-.system-shell .telemetry-item{
+.shell .control-section{
+  padding:14px 18px!important;
   border:0!important;
+  border-top:1px solid rgba(145,166,190,.08)!important;
+  border-radius:0!important;
   background:transparent!important;
 }
-.system-shell .telemetry-item:not(:last-child){
-  border-right:1px solid rgba(145,166,190,.075)!important;
-}
-.system-shell .metric-grid>*{
-  border:0!important;
-  background:rgba(255,255,255,.022)!important;
-}
-.system-shell .reason-block,
-.system-shell .gate-list>*,
-.system-shell .token-rail>*{
-  border:0!important;
+
+.shell .control-section:first-of-type{
+  border-top:0!important;
 }
 
+.shell .strategy-grid{
+  gap:10px!important;
+}
+
+.shell .strategy-grid label,
 .settings-summary>div,
 .system-health-summary>div,
 .wallet-stat,
@@ -957,11 +1045,49 @@ h1,h2,h3{
 .mode-option label,
 .profile-option label,
 .setting-field input,
-.setting-field select{
-  border-color:transparent!important;
+.setting-field select,
+.shell input,
+.shell select{
+  border:0!important;
+  border-radius:12px!important;
+  background:rgba(255,255,255,.018)!important;
+  box-shadow:none!important;
 }
 
-.flow-page .flow-token{
-  outline:0!important;
+/* Settings and control surfaces should feel like one form, not many boxes. */
+.settings-group,
+.settings-context,
+.plan-card,
+.wallet-card,
+.wallet-security,
+.execution-readiness,
+.primary-blocker,
+.wallet-note,
+.wallet-network{
+  border-color:rgba(145,166,190,.10)!important;
+  box-shadow:none!important;
 }
+
+/* Tone down uppercase utility text a little for a more premium look. */
+.shell .eyebrow,
+.system-shell .eyebrow,
+.flow-page .eyebrow,
+.shell .section-kicker,
+.system-shell .section-kicker,
+.flow-page .section-kicker{
+  letter-spacing:.18em!important;
+  opacity:.86!important;
+}
+
+/* Make inactive timeframe/filter chips quieter while preserving active state. */
+.shell .timeframes button:not(.active):not([aria-pressed="true"]),
+.shell .indicator-scroll button:not(.active):not([aria-pressed="true"]),
+.shell .candidate-filter button:not(.active):not([aria-pressed="true"]){
+  background:transparent!important;
+  border-color:transparent!important;
+  color:var(--mf-app-muted)!important;
+}
+
+/* Preserve chart/3D zones: do not touch canvas/svg layout. */
+/* MODERN TERMINAL REFINEMENTS V4 END */
 /* MF_UNIFIED_APP_THEME_END */
