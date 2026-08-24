@@ -4,19 +4,8 @@
   window.__MEMEFLOW_MANUAL_SCAN_PLACEHOLDER_V53__ = true;
 
   const STYLE_ID='mf-manual-scan-placeholder-v53-style';
-  const GLOBAL_STYLE_ID='mf-ui-quiet-borders-readability-v1';
-  const GLOBAL_STYLE_HREF='/ui-quiet-borders-readability-v1.css';
   const ROOT='mf-manual-scan-placeholder-v53';
   const INPUT='mf-manual-scan-placeholder-input-v53';
-
-  function installGlobalUiStyle(){
-    if(document.getElementById(GLOBAL_STYLE_ID)) return;
-    const link=document.createElement('link');
-    link.id=GLOBAL_STYLE_ID;
-    link.rel='stylesheet';
-    link.href=GLOBAL_STYLE_HREF;
-    document.head.appendChild(link);
-  }
 
   function installStyle(){
     if(document.getElementById(STYLE_ID)) return;
@@ -83,7 +72,6 @@
   }
 
   function boot(){
-    installGlobalUiStyle();
     enhance();
     let queued=false;
     const mo=new MutationObserver(()=>{
