@@ -2231,3 +2231,117 @@ button {
     letter-spacing: -.02em;
   }
 }
+
+/* MEMEFLOW_OPEN_POSITION_MARKET_METRICS_V3 */
+.flow-token.open > .token-metric:not(.mf-open-pnl-slot) {
+  display: none !important;
+}
+
+.mf-open-market-strip {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 6px;
+  width: 100%;
+  padding-top: 8px;
+  border-top: 1px solid rgba(147, 178, 202, .07);
+}
+
+.mf-open-market-stat {
+  min-width: 0;
+}
+
+.mf-open-market-stat span {
+  display: block;
+  color: #637682;
+  font-size: 6px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: .075em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.mf-open-market-stat strong {
+  display: block;
+  min-width: 0;
+  margin-top: 4px;
+  overflow: hidden;
+  color: #dfe9ef;
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.05;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mf-open-market-stat strong.is-profit {
+  color: var(--green);
+}
+
+.mf-open-market-stat strong.is-loss {
+  color: var(--red);
+}
+
+.mf-open-market-stat strong.is-flat {
+  color: #9cadb8;
+}
+
+@media (max-width: 760px) {
+  .flow-token.open {
+    min-height: 82px !important;
+    padding-bottom: 7px !important;
+  }
+
+  .mf-open-market-strip {
+    grid-column: 1 / -1 !important;
+    display: grid !important;
+    grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+    gap: 3px !important;
+    margin-top: 1px;
+    padding-top: 6px;
+  }
+
+  .mf-open-market-stat {
+    min-width: 0;
+    padding-left: 4px;
+    border-left: 1px solid rgba(147, 178, 202, .07);
+  }
+
+  .mf-open-market-stat:first-child {
+    padding-left: 0;
+    border-left: 0;
+  }
+
+  .mf-open-market-stat span {
+    font-size: 4.2px;
+    letter-spacing: .045em;
+  }
+
+  .mf-open-market-stat strong {
+    margin-top: 3px;
+    font-size: 7px;
+  }
+
+  .flow-token.open > .mf-open-pnl-slot {
+    display: flex !important;
+  }
+}
+
+@media (max-width: 390px) {
+  .mf-open-market-strip {
+    gap: 2px !important;
+  }
+
+  .mf-open-market-stat {
+    padding-left: 3px;
+  }
+
+  .mf-open-market-stat span {
+    font-size: 3.9px;
+  }
+
+  .mf-open-market-stat strong {
+    font-size: 6.6px;
+  }
+}

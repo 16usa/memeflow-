@@ -2982,7 +2982,129 @@ if(url.pathname==='/api/ai/decisions'){
  if(url.pathname==='/api/chart/stream'){const mint=url.searchParams.get('tokenAddress');res.writeHead(200,{'content-type':'text/event-stream','cache-control':'no-cache','connection':'keep-alive'});res.write(`event: snapshot\ndata: ${JSON.stringify({points:[],status:{stale:true,source:'Solana'}})}\n\n`);if(!streams.has(mint))streams.set(mint,new Set());streams.get(mint).add(res);req.on('close',()=>streams.get(mint)?.delete(res));return}
  if(url.pathname==='/api/live/execute'){if(!hasLiveEntitlement(u))return json(res,402,{error:'LIVE_ENTITLEMENT_REQUIRED',message:'An active MEMEFLOW Pro subscription or verified owner entitlement is required.'});return json(res,423,{error:'LIVE_EXECUTION_NOT_READY',message:u.isOwner?'Owner LIVE entitlement is active, but verified wallet and production execution engine are still required.':'Pro is active, but verified wallet and production execution engine are still required.'});}
  // ── PAPER API routes ──────────────────────────────────────────────────────
- if(url.pathname==='/api/paper/positions'&&req.method==='GET')return json(res,200,{positions:paper.userPositions(u.id)});
+ // MEMEFLOW_OPEN_POSITION_MARKET_METRICS_V3
+ if(url.pathname==='/api/paper/positions'&&req.method==='GET'){
+  const _now=Date.now();
+  const _cutoff=_now-(5*60*1000);
+  const _finite=(value)=>value!==null&&value!==undefined&&value!==''&&Number.isFinite(Number(value))
+    ? Number(value)
+    : null;
+
+  const _positions=paper.userPositions(u.id).map((_position)=>{
+    if(String(_position?.status||'').toUpperCase()!=='OPEN'||!_position?.mint){
+      return _position;
+    }
+
+    const _mint=String(_position.mint);
+    const _token=store.state.tokens?.[_mint]||{};
+    let _points=Array.isArray(chartTradeHistory.get(_mint))
+      ? chartTradeHistory.get(_mint).slice()
+      : [];
+
+    if(!_points.length){
+      try{
+        _points=__mfChartArchive.mergePointsSync(_mint,[])||[];
+      }catch{
+        _points=[];
+      }
+    }
+
+    _points=_points
+      .filter((_point)=>{
+        const _t=Number(_point?.t);
+        return Number.isFinite(_t)&&_t>0&&_t<=_now+30000;
+      })
+      .sort((a,b)=>Number(a.t)-Number(b.t));
+
+    const _recent=_points.filter((_point)=>Number(_point.t)>=_cutoff);
+    const _latest=_points.length?_points[_points.length-1]:null;
+    let _base=null;
+
+    for(let _i=_points.length-1;_i>=0;_i--){
+      if(Number(_points[_i]?.t)<=_cutoff){
+        _base=_points[_i];
+        break;
+      }
+    }
+    if(!_base&&_recent.length){
+      _base=_recent[0];
+    }
+
+    const _pointPrice=(point)=>_finite(point?.priceSol??point?.price);
+    const _latestPrice=
+      _finite(_position.currentPriceSol) ??
+      _finite(_token.priceSol) ??
+      _pointPrice(_latest);
+
+    const _basePrice=_pointPrice(_base);
+
+    const _volume5mSol=_recent.reduce(
+      (sum,_point)=>sum+Math.abs(_finite(_point?.solAmount)??0),
+      0
+    );
+
+    const _transactions5m=_recent.length;
+
+    let _priceChange5mPct=null;
+    if(
+      _recent.length &&
+      _latestPrice!==null &&
+      _latestPrice>0 &&
+      _basePrice!==null &&
+      _basePrice>0
+    ){
+      _priceChange5mPct=((_latestPrice/_basePrice)-1)*100;
+    }
+
+    const _supply=_finite(_token.totalSupply);
+    const _storedMcSol=_finite(_token.marketCapSol??_token.marketCap);
+    const _marketCapSol=
+      _latestPrice!==null&&_latestPrice>0&&_supply!==null&&_supply>0
+        ? _latestPrice*_supply
+        : _storedMcSol;
+
+    const _marketCapUsd=_finite(_token.marketCapUsd);
+    const _impliedSolUsd=
+      _marketCapUsd!==null&&
+      _marketCapUsd>0&&
+      _marketCapSol!==null&&
+      _marketCapSol>0
+        ? _marketCapUsd/_marketCapSol
+        : null;
+
+    const _volume5mUsd=
+      _impliedSolUsd!==null
+        ? _volume5mSol*_impliedSolUsd
+        : null;
+
+    let _ageMinutes=null;
+    try{
+      _ageMinutes=tokenAgeMinutes(_token);
+      if(!Number.isFinite(Number(_ageMinutes)))_ageMinutes=null;
+      else _ageMinutes=Number(_ageMinutes);
+    }catch{
+      _ageMinutes=null;
+    }
+
+    return {
+      ..._position,
+      tokenMetrics:{
+        ageMinutes:_ageMinutes,
+        holderCount:_finite(_token.holderCount),
+        volume5mSol:_volume5mSol,
+        volume5mUsd:_volume5mUsd,
+        transactions5m:_transactions5m,
+        marketCapSol:_marketCapSol,
+        marketCapUsd:_marketCapUsd,
+        priceChange5mPct:_priceChange5mPct,
+        windowMinutes:5,
+        source:'pump-trade-history'
+      }
+    };
+  });
+
+  return json(res,200,{positions:_positions});
+ }
  if(url.pathname==='/api/paper/trades'&&req.method==='GET')return json(res,200,{trades:paper.userTrades(u.id)});
  if(url.pathname==='/api/paper/proposals'&&req.method==='GET')return json(res,200,{proposals:paper.userProposals(u.id)});
  if(url.pathname==='/api/paper/readiness'&&req.method==='GET'){

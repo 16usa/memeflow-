@@ -248,7 +248,163 @@ function formatSignedPnlPct(value) {
   return `${sign}${fmt(number, 2)}%`;
 }
 
+/* MEMEFLOW_OPEN_POSITION_MARKET_METRICS_V3 */
+function compactMetricNumber(value, digits = 1) {
+  if (!finite(value)) {
+    return '—';
+  }
+
+  const number = Number(value);
+  const abs = Math.abs(number);
+
+  if (abs >= 1_000_000_000) {
+    return `${fmt(number / 1_000_000_000, digits)}B`;
+  }
+
+  if (abs >= 1_000_000) {
+    return `${fmt(number / 1_000_000, digits)}M`;
+  }
+
+  if (abs >= 1_000) {
+    return `${fmt(number / 1_000, digits)}K`;
+  }
+
+  return fmt(number, digits);
+}
+
+function compactTokenAge(value) {
+  if (!finite(value)) {
+    return '—';
+  }
+
+  const minutes = Math.max(0, Number(value));
+
+  if (minutes < 60) {
+    return `${fmt(minutes, minutes < 10 ? 1 : 0)}m`;
+  }
+
+  if (minutes < 1440) {
+    const hours = Math.floor(minutes / 60);
+    const rest = Math.floor(minutes % 60);
+    return rest ? `${hours}h ${rest}m` : `${hours}h`;
+  }
+
+  const days = Math.floor(minutes / 1440);
+  const hours = Math.floor((minutes % 1440) / 60);
+  return hours ? `${days}d ${hours}h` : `${days}d`;
+}
+
+function openPositionMetrics(row) {
+  return row?.__openPosition?.tokenMetrics || {};
+}
+
+function openVolumeLabel(metrics) {
+  if (finite(metrics?.volume5mUsd)) {
+    return `$${compactMetricNumber(metrics.volume5mUsd, 1)}`;
+  }
+
+  if (finite(metrics?.volume5mSol)) {
+    return `${compactMetricNumber(metrics.volume5mSol, 1)} SOL`;
+  }
+
+  return '—';
+}
+
+function openMarketCapLabel(metrics) {
+  if (finite(metrics?.marketCapUsd)) {
+    return `$${compactMetricNumber(metrics.marketCapUsd, 1)}`;
+  }
+
+  if (finite(metrics?.marketCapSol)) {
+    return `${compactMetricNumber(metrics.marketCapSol, 1)} SOL`;
+  }
+
+  return '—';
+}
+
+function signedPercent(value) {
+  if (!finite(value)) {
+    return '—';
+  }
+
+  const number = Number(value);
+  return `${number > 0 ? '+' : ''}${fmt(number, 1)}%`;
+}
+
+function marketMoveClass(value) {
+  if (!finite(value) || Number(value) === 0) {
+    return 'is-flat';
+  }
+
+  return Number(value) > 0
+    ? 'is-profit'
+    : 'is-loss';
+}
+
+function openMarketStripTemplate(row) {
+  const metrics =
+    openPositionMetrics(row);
+
+  const age =
+    metrics?.ageMinutes ??
+    tokenAge(row);
+
+  const holders =
+    metrics?.holderCount ??
+    holderCount(row);
+
+  const tx =
+    finite(metrics?.transactions5m)
+      ? fmt(metrics.transactions5m, 0)
+      : '—';
+
+  const move =
+    metrics?.priceChange5mPct;
+
+  return `
+    <div
+      class="mf-open-market-strip"
+      aria-label="Open position token market metrics"
+    >
+      <div class="mf-open-market-stat">
+        <span>Age</span>
+        <strong>${escapeHtml(compactTokenAge(age))}</strong>
+      </div>
+
+      <div class="mf-open-market-stat">
+        <span>Holders</span>
+        <strong>${escapeHtml(holders)}</strong>
+      </div>
+
+      <div class="mf-open-market-stat">
+        <span>Vol 5m</span>
+        <strong>${escapeHtml(openVolumeLabel(metrics))}</strong>
+      </div>
+
+      <div class="mf-open-market-stat">
+        <span>Tx 5m</span>
+        <strong>${escapeHtml(tx)}</strong>
+      </div>
+
+      <div class="mf-open-market-stat">
+        <span>MC</span>
+        <strong>${escapeHtml(openMarketCapLabel(metrics))}</strong>
+      </div>
+
+      <div class="mf-open-market-stat">
+        <span>5m%</span>
+        <strong class="${marketMoveClass(move)}">
+          ${escapeHtml(signedPercent(move))}
+        </strong>
+      </div>
+    </div>
+  `;
+}
+
 function positionAsDecisionRow(position) {
+  const metrics =
+    position?.tokenMetrics || {};
+
   return canonicalDecisionRow({
     mint: position?.mint,
     name:
@@ -265,6 +421,14 @@ function positionAsDecisionRow(position) {
       position?.currentPriceSol ??
       position?.entryPriceSol ??
       null,
+    holderCount:
+      metrics?.holderCount ?? null,
+    ageMinutes:
+      metrics?.ageMinutes ?? null,
+    marketCapSol:
+      metrics?.marketCapSol ?? null,
+    marketCapUsd:
+      metrics?.marketCapUsd ?? null,
     __openPosition: position
   });
 }
@@ -301,6 +465,25 @@ function mergedRows() {
             ...(existing?.decision || {}),
             state: 'OPEN POSITION'
           },
+          holderCount:
+            existing?.holderCount ??
+            existing?.holders ??
+            position?.tokenMetrics?.holderCount ??
+            null,
+          ageMinutes:
+            existing?.ageMinutes ??
+            existing?.tokenAgeMinutes ??
+            position?.tokenMetrics?.ageMinutes ??
+            null,
+          marketCapSol:
+            position?.tokenMetrics?.marketCapSol ??
+            existing?.marketCapSol ??
+            existing?.marketCap ??
+            null,
+          marketCapUsd:
+            position?.tokenMetrics?.marketCapUsd ??
+            existing?.marketCapUsd ??
+            null,
           market: {
             ...(existing?.market || {}),
             priceSol:
@@ -756,7 +939,7 @@ function tokenTemplate(row, index) {
 
       </div>
 
-      <div class="token-metric">
+      <div class="token-metric ${key === 'open' ? 'mf-open-pnl-slot' : ''}">
         <span>${key === 'open' ? 'P&L' : 'Score'}</span>
         <strong class="${key === 'open' ? openPositionPnlClass(pnl) : ''}">
           ${
@@ -801,6 +984,12 @@ function tokenTemplate(row, index) {
           ${finite(price) ? fmt(price, 9) : '—'}
         </strong>
       </div>
+
+      ${
+        key === 'open'
+          ? openMarketStripTemplate(row)
+          : ''
+      }
 
       <button
         class="details-button"
