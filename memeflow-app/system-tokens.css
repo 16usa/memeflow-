@@ -4,11 +4,11 @@
   --surface: #071016;
   --surface-2: #09131a;
 
-  --line: rgba(147, 178, 202, .16);
-  --line-strong: rgba(147, 178, 202, .27);
+  --line: rgba(147, 178, 202, .055);
+  --line-strong: rgba(147, 178, 202, .095);
 
   --text: #eef5fa;
-  --muted: #6f8290;
+  --muted: #91a3af;
 
   --cyan: #55d9ff;
   --green: #4de6a1;
@@ -333,7 +333,7 @@ button {
 
 .summary-card.ready {
   border-color:
-    rgba(77, 230, 161, .20);
+    rgba(77, 230, 161, .10);
 }
 
 .summary-card.ready.active {
@@ -349,7 +349,7 @@ button {
 
 .summary-card.watch {
   border-color:
-    rgba(92, 141, 255, .20);
+    rgba(92, 141, 255, .10);
 }
 
 .summary-card.watch.active {
@@ -376,7 +376,7 @@ button {
 
 .summary-card.blocked {
   border-color:
-    rgba(255, 102, 121, .19);
+    rgba(255, 102, 121, .10);
 }
 
 .summary-card.blocked.active {
@@ -436,7 +436,7 @@ button {
 }
 
 .search-wrap span {
-  color: #738692;
+  color: #8fa1ad;
 }
 
 .search-wrap input {
@@ -462,7 +462,7 @@ button {
 }
 
 .refresh-info span {
-  color: #627681;
+  color: #8295a1;
 
   font-size: 7px;
 }
@@ -540,7 +540,7 @@ button {
 
 .flow-token.ready {
   border-color:
-    rgba(77, 230, 161, .42);
+    rgba(77, 230, 161, .22);
 
   box-shadow:
     0 0 24px rgba(77, 230, 161, .035);
@@ -555,7 +555,7 @@ button {
 
 .flow-token.watch {
   border-color:
-    rgba(92, 141, 255, .40);
+    rgba(92, 141, 255, .20);
 }
 
 .flow-token.watch::before {
@@ -567,7 +567,7 @@ button {
 
 .flow-token.waiting {
   border-color:
-    rgba(146, 165, 178, .22);
+    rgba(146, 165, 178, .075);
 }
 
 .flow-token.waiting::before {
@@ -576,7 +576,7 @@ button {
 
 .flow-token.blocked {
   border-color:
-    rgba(255, 102, 121, .38);
+    rgba(255, 102, 121, .19);
 
   opacity: .88;
 }
@@ -646,7 +646,7 @@ button {
   text-overflow: ellipsis;
   white-space: nowrap;
 
-  color: #596d79;
+  color: #788b97;
 
   font-family:
     ui-monospace,
@@ -668,7 +668,7 @@ button {
 .token-metric span {
   display: block;
 
-  color: #637682;
+  color: #81939f;
 
   font-size: 6px;
   letter-spacing: .09em;
@@ -737,7 +737,7 @@ button {
 .detail-block span {
   display: block;
 
-  color: #607480;
+  color: #7f929e;
 
   font-size: 6px;
   letter-spacing: .10em;
@@ -823,7 +823,7 @@ button {
   align-items: center;
   gap: 5px;
 
-  color: #70838f;
+  color: #8b9da9;
 
   font-size: 8px;
 }
