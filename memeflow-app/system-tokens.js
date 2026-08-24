@@ -207,9 +207,30 @@ const state = {
  *   (realized P&L SOL + unrealized P&L SOL) / initialSizeSol * 100
  * This keeps partial take-profits reflected in the percentage.
  */
+/* MEMEFLOW_OPEN_PNL_LIVE_MARK_V5 */
 function openPositionPnlPct(position) {
   if (!position || typeof position !== 'object') {
     return null;
+  }
+
+  const telemetry =
+    position?.tokenMetrics;
+
+  if (
+    telemetry &&
+    Object.prototype.hasOwnProperty.call(
+      telemetry,
+      'pnlReady'
+    )
+  ) {
+    if (
+      telemetry.pnlReady !== true ||
+      !finite(telemetry.pnlPct)
+    ) {
+      return null;
+    }
+
+    return Number(telemetry.pnlPct);
   }
 
   const initialSize =
@@ -269,8 +290,20 @@ function formatSignedPnlPct(value) {
 
   const number = Number(value);
   const sign = number > 0 ? '+' : '';
+  const abs = Math.abs(number);
 
-  return `${sign}${fmt(number, 2)}%`;
+  const digits =
+    abs === 0
+      ? 2
+      : abs < 0.001
+        ? 6
+        : abs < 0.01
+          ? 4
+          : abs < 0.1
+            ? 3
+            : 2;
+
+  return `${sign}${fmt(number, digits)}%`;
 }
 
 /* MEMEFLOW_OPEN_POSITION_MARKET_METRICS_V3 */

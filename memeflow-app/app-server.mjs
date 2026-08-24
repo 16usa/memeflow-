@@ -3144,13 +3144,104 @@ if(url.pathname==='/api/ai/decisions'){
       _base=_recent[0];
     }
 
+    // MEMEFLOW_OPEN_PNL_LIVE_MARK_V5
     const _pointPrice=(point)=>_finite(point?.priceSol??point?.price);
-    const _latestPrice=
-      _finite(_position.currentPriceSol) ??
-      _finite(_token.priceSol) ??
-      _pointPrice(_latest);
+    const _entryPrice=_finite(_position.entryPriceSol);
+    const _openedAt=_finite(_position.openedAtMs);
+
+    const _tradePrice=_pointPrice(_latest);
+    const _tradeAt=_finite(_latest?.t);
+
+    const _tokenPrice=_finite(_token.priceSol);
+    const _tokenMarkAt=_finite(
+      _token.lastPriceAt ??
+      _token.marketScannedAt ??
+      _token.updatedAt ??
+      _token.lastScannedAt
+    );
+
+    const _enginePrice=_finite(_position.currentPriceSol);
+
+    let _latestPrice=null;
+    let _pnlMarkAt=null;
+    let _pnlMarkSource=null;
+
+    const _isPostEntry=(timestamp)=>(
+      _openedAt===null ||
+      (timestamp!==null && timestamp>=_openedAt)
+    );
+
+    // Prefer a real Pump trade mark when it exists after the position opened.
+    if(
+      _tradePrice!==null &&
+      _tradePrice>0 &&
+      _isPostEntry(_tradeAt)
+    ){
+      _latestPrice=_tradePrice;
+      _pnlMarkAt=_tradeAt;
+      _pnlMarkSource='pump-trade-event';
+    }
+    // Otherwise use token telemetry only when it is known to be post-entry,
+    // or when the price itself proves it is not the untouched entry placeholder.
+    else if(
+      _tokenPrice!==null &&
+      _tokenPrice>0 &&
+      (
+        _isPostEntry(_tokenMarkAt) ||
+        (
+          _entryPrice!==null &&
+          Math.abs(_tokenPrice-_entryPrice) >
+            Math.max(1e-18,Math.abs(_entryPrice)*1e-12)
+        )
+      )
+    ){
+      _latestPrice=_tokenPrice;
+      _pnlMarkAt=_tokenMarkAt;
+      _pnlMarkSource='token-market';
+    }
+    // Engine currentPriceSol has no timestamp. It is trustworthy for display
+    // only after it differs from entry; equality may simply be initialization.
+    else if(
+      _enginePrice!==null &&
+      _enginePrice>0 &&
+      _entryPrice!==null &&
+      Math.abs(_enginePrice-_entryPrice) >
+        Math.max(1e-18,Math.abs(_entryPrice)*1e-12)
+    ){
+      _latestPrice=_enginePrice;
+      _pnlMarkAt=null;
+      _pnlMarkSource='paper-engine-mark';
+    }
 
     const _basePrice=_pointPrice(_base);
+
+    const _initialSize=_finite(_position.initialSizeSol);
+    const _remainingQty=_finite(_position.remainingTokenQuantity);
+    const _realizedPnl=_finite(_position.realizedPnlSol)??0;
+
+    const _pnlReady=Boolean(
+      _latestPrice!==null &&
+      _latestPrice>0 &&
+      _entryPrice!==null &&
+      _entryPrice>0 &&
+      _initialSize!==null &&
+      _initialSize>0 &&
+      _remainingQty!==null &&
+      _remainingQty>=0
+    );
+
+    const _liveUnrealizedPnlSol=
+      _pnlReady
+        ? _remainingQty*(_latestPrice-_entryPrice)
+        : null;
+
+    const _livePnlPct=
+      _pnlReady
+        ? (
+            (_realizedPnl+_liveUnrealizedPnlSol) /
+            _initialSize
+          )*100
+        : null;
 
     const _volume5mSol=_recent.reduce(
       (sum,_point)=>sum+Math.abs(_finite(_point?.solAmount)??0),
@@ -3211,6 +3302,12 @@ if(url.pathname==='/api/ai/decisions'){
         marketCapSol:_marketCapSol,
         marketCapUsd:_marketCapUsd,
         priceChange5mPct:_priceChange5mPct,
+        pnlReady:_pnlReady,
+        pnlPct:_livePnlPct,
+        pnlUnrealizedSol:_liveUnrealizedPnlSol,
+        pnlMarkPriceSol:_latestPrice,
+        pnlMarkAt:_pnlMarkAt,
+        pnlMarkSource:_pnlMarkSource,
         windowMinutes:5,
         source:'pump-trade-history'
       }
