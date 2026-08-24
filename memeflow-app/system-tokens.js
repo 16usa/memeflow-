@@ -54,6 +54,10 @@ function stateKey(state = '') {
   const value =
     String(state).toUpperCase();
 
+  if (value.includes('OPEN')) {
+    return 'open';
+  }
+
   if (
     value.includes('BUY') ||
     value.includes('READY')
@@ -74,6 +78,10 @@ function stateKey(state = '') {
 
 function stateLabel(state = '') {
   const key = stateKey(state);
+
+  if (key === 'open') {
+    return 'OPEN POSITION';
+  }
 
   if (key === 'ready') {
     return 'BUY READY';
@@ -156,12 +164,145 @@ function canonicalDecisionRow(row) {
 
 const state = {
   rows: [],
+  positions: [],
   filter: 'all',
   query: '',
   page: 1,
   loading: false,
   emptyResponses: 0
 };
+
+/* MEMEFLOW_SYSTEM_TOKEN_OPEN_POSITIONS_V1
+ * UI-only merge of the existing scanner feed with the existing paper-position feed.
+ * Solana mint keys remain case-sensitive. No trading/risk settings are modified.
+ */
+function openPositionPnlSol(position) {
+  if (!position || typeof position !== 'object') {
+    return null;
+  }
+
+  const realized =
+    finite(position.realizedPnlSol)
+      ? Number(position.realizedPnlSol)
+      : 0;
+
+  const unrealized =
+    finite(position.unrealizedPnlSol)
+      ? Number(position.unrealizedPnlSol)
+      : 0;
+
+  if (
+    !finite(position.realizedPnlSol) &&
+    !finite(position.unrealizedPnlSol)
+  ) {
+    return null;
+  }
+
+  return realized + unrealized;
+}
+
+function openPositionPnlClass(value) {
+  if (!finite(value) || Number(value) === 0) {
+    return 'mf-open-position-pnl is-flat';
+  }
+
+  return Number(value) > 0
+    ? 'mf-open-position-pnl is-profit'
+    : 'mf-open-position-pnl is-loss';
+}
+
+function formatSignedPnlSol(value) {
+  if (!finite(value)) {
+    return '—';
+  }
+
+  const number = Number(value);
+  const sign = number > 0 ? '+' : '';
+
+  return `${sign}${fmt(number, 4)} SOL`;
+}
+
+function positionAsDecisionRow(position) {
+  return canonicalDecisionRow({
+    mint: position?.mint,
+    name:
+      position?.name ??
+      position?.symbol ??
+      shortMint(position?.mint),
+    symbol: position?.symbol ?? 'TOKEN',
+    state: 'OPEN POSITION',
+    score: position?.decisionScore ?? null,
+    primaryReason:
+      position?.primaryReason ??
+      'Open position',
+    priceSol:
+      position?.currentPriceSol ??
+      position?.entryPriceSol ??
+      null,
+    __openPosition: position
+  });
+}
+
+function mergedRows() {
+  const byMint = new Map();
+
+  for (const row of state.rows || []) {
+    const mint = String(row?.mint || '').trim();
+
+    if (mint && !byMint.has(mint)) {
+      byMint.set(mint, row);
+    }
+  }
+
+  for (const position of state.positions || []) {
+    const mint = String(position?.mint || '').trim();
+
+    if (
+      !mint ||
+      String(position?.status || '').toUpperCase() !== 'OPEN'
+    ) {
+      continue;
+    }
+
+    const existing = byMint.get(mint);
+
+    if (existing) {
+      byMint.set(
+        mint,
+        canonicalDecisionRow({
+          ...existing,
+          decision: {
+            ...(existing?.decision || {}),
+            state: 'OPEN POSITION'
+          },
+          market: {
+            ...(existing?.market || {}),
+            priceSol:
+              position?.currentPriceSol ??
+              existing?.market?.priceSol ??
+              existing?.priceSol ??
+              null
+          },
+          __openPosition: position
+        })
+      );
+    } else {
+      byMint.set(
+        mint,
+        positionAsDecisionRow(position)
+      );
+    }
+  }
+
+  return [...byMint.values()];
+}
+
+function isOpenPositionRow(row) {
+  return (
+    stateKey(row?.decision?.state) === 'open' &&
+    Boolean(row?.__openPosition)
+  );
+}
 
 function holderCount(row) {
   return (
@@ -260,11 +401,12 @@ function priority(row) {
     stateKey(row?.decision?.state);
 
   return {
-    ready: 0,
-    watch: 1,
-    waiting: 2,
-    blocked: 3
-  }[key] ?? 4;
+    open: 0,
+    ready: 1,
+    watch: 2,
+    waiting: 3,
+    blocked: 4
+  }[key] ?? 5;
 }
 
 function sortRows(rows) {
@@ -272,6 +414,33 @@ function sortRows(rows) {
     .slice()
     .sort(
       (a, b) => {
+        const aOpen = isOpenPositionRow(a);
+        const bOpen = isOpenPositionRow(b);
+
+        if (aOpen && bOpen) {
+          const pnlA = openPositionPnlSol(a?.__openPosition);
+          const pnlB = openPositionPnlSol(b?.__openPosition);
+
+          const rankA =
+            finite(pnlA)
+              ? Number(pnlA)
+              : Number.NEGATIVE_INFINITY;
+
+          const rankB =
+            finite(pnlB)
+              ? Number(pnlB)
+              : Number.NEGATIVE_INFINITY;
+
+          if (rankA !== rankB) {
+            return rankB - rankA;
+          }
+
+          return (
+            Number(b?.__openPosition?.openedAtMs ?? 0) -
+            Number(a?.__openPosition?.openedAtMs ?? 0)
+          );
+        }
+
         const stateDiff =
           priority(a) -
           priority(b);
@@ -303,7 +472,7 @@ function filteredRows() {
     state.query.trim().toLowerCase();
 
   return sortRows(
-    state.rows.filter(
+    mergedRows().filter(
       (row) => {
         const key =
           stateKey(
@@ -312,6 +481,7 @@ function filteredRows() {
 
         if (
           state.filter !== 'all' &&
+          key !== 'open' &&
           key !== state.filter
         ) {
           return false;
@@ -333,18 +503,26 @@ function filteredRows() {
 }
 
 function renderCounts() {
+  const rows = mergedRows();
+
   const counts = {
-    all: state.rows.length,
+    all: rows.length,
     ready: 0,
     watch: 0,
     waiting: 0,
     blocked: 0
   };
 
-  for (const row of state.rows) {
-    counts[
-      stateKey(row?.decision?.state)
-    ] += 1;
+  for (const row of rows) {
+    const key =
+      stateKey(row?.decision?.state);
+
+    if (
+      key !== 'open' &&
+      Object.prototype.hasOwnProperty.call(counts, key)
+    ) {
+      counts[key] += 1;
+    }
   }
 
   $('countAll').textContent =
@@ -498,6 +676,11 @@ function tokenTemplate(row, index) {
   const avatar =
     imageUrl(row);
 
+  const pnl =
+    key === 'open'
+      ? openPositionPnlSol(row?.__openPosition)
+      : null;
+
   return `
     <article
       class="flow-token ${key}"
@@ -548,9 +731,13 @@ function tokenTemplate(row, index) {
       </div>
 
       <div class="token-metric">
-        <span>Score</span>
-        <strong>
-          ${finite(score) ? fmt(score, 0) : '—'}
+        <span>${key === 'open' ? 'P&L' : 'Score'}</span>
+        <strong class="${key === 'open' ? openPositionPnlClass(pnl) : ''}">
+          ${
+            key === 'open'
+              ? formatSignedPnlSol(pnl)
+              : (finite(score) ? fmt(score, 0) : '—')
+          }
         </strong>
       </div>
 
@@ -772,6 +959,37 @@ async function loadTokens() {
     state.rows = rows
       .map(canonicalDecisionRow)
       .filter(row => row?.mint);
+
+    try {
+      const positionsResponse = await fetch(
+        '/api/paper/positions?_=' + Date.now(),
+        {
+          cache: 'no-store',
+          credentials: 'same-origin'
+        }
+      );
+
+      if (positionsResponse.ok) {
+        const positionsPayload =
+          await positionsResponse.json();
+
+        state.positions =
+          (
+            Array.isArray(positionsPayload?.positions)
+              ? positionsPayload.positions
+              : []
+          ).filter(
+            position =>
+              position?.mint &&
+              String(position?.status || '').toUpperCase() === 'OPEN'
+          );
+      }
+    } catch (positionError) {
+      console.warn(
+        '[token-flow] position refresh failed; keeping last snapshot',
+        positionError
+      );
+    }
 
     const persisted = Number(payload?.persistedTokens);
     const recovered = Number(payload?.recovered);
