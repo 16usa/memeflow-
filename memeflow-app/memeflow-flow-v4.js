@@ -1555,17 +1555,17 @@ function draw(g,now){
 
   bg.addColorStop(
     0,
-    'rgba(15,49,58,.045)'
+    'rgba(55,134,168,.46)'
   );
 
   bg.addColorStop(
     .45,
-    'rgba(4,12,17,.012)'
+    'rgba(22,66,86,.30)'
   );
 
   bg.addColorStop(
     1,
-    'rgba(0,0,0,0)'
+    'rgba(8,26,36,.16)'
   );
 
   g.fillStyle=bg;
