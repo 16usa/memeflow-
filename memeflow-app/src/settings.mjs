@@ -1,3 +1,5 @@
+// MEMEFLOW_COPY_TRADING_V1
+import {validPubkey} from './solana.mjs';
 const PLATFORMS=['pump'];
 const nullableNumbers=[
 'minBondingCurvePct','maxBondingCurvePct','minMarketCapUsd','maxMarketCapUsd','minTotalFeesSol','maxTotalFeesSol',
@@ -8,7 +10,7 @@ const nullableNumbers=[
 ];
 const booleans=[
 'requireTwitter','requireWebsite','requireTelegram','requireAnySocial','requireFreshHolderSnapshot','requireWebsiteOrX',
-'adaptiveProfile','shadowValidation','changeLog','exitOnWeakBuyPressure'
+'adaptiveProfile','shadowValidation','changeLog','exitOnWeakBuyPressure','copyTradingEnabled','copyTradingMirrorSells'
 ];
 const finite=(v)=>v!==''&&v!==null&&v!==undefined&&Number.isFinite(Number(v));
 const cleanText=v=>String(v??'').trim();
@@ -56,6 +58,7 @@ export function profilePreset(profile){
 export function defaultSettings(){return {
  operatingMode:'observe',tradingEnvironment:'paper',profile:'balanced',
  tradingCapital:0,dailySpendLimit:0,positionSize:0.1,maxPositionSize:0.5,maxOpenPositions:4,maxDailyEntries:10,dailyLossLimit:0,feeReserve:0.05,
+ copyTradingEnabled:false,copyTradingWallet:'',copyTradingBuyAmountSol:0.1,copyTradingMirrorSells:true,
  minScore:72,minConfidence:70,minLiquidityUsd:0,minBuyPressure:1.2,requireFreshHolderSnapshot:true,requireWebsiteOrX:false,
  launchPlatforms:['pump'],includeKeywords:'',excludeKeywords:'',
  minBondingCurvePct:null,maxBondingCurvePct:null,minMarketCapUsd:null,maxMarketCapUsd:null,minTotalFeesSol:null,maxTotalFeesSol:null,
@@ -90,14 +93,14 @@ export function normalizeSettings(raw={}){
  // Current discovery backend is Pump.fun only. Do not expose a pretend multi-launchpad filter.
  o.launchPlatforms=['pump'];
 
- o.includeKeywords=cleanText(o.includeKeywords);o.excludeKeywords=cleanText(o.excludeKeywords);
+ o.includeKeywords=cleanText(o.includeKeywords);o.excludeKeywords=cleanText(o.excludeKeywords);o.copyTradingWallet=cleanText(o.copyTradingWallet);
  o.developerBlacklistWallets=Array.isArray(o.developerBlacklistWallets)
    ? [...new Set(o.developerBlacklistWallets.map(cleanText).filter(Boolean))]
    : cleanText(o.developerBlacklistWallets).split(/[\s,]+/).filter(Boolean);
 
  for(const k of [
    'minScore','minConfidence','minLiquidityUsd','minBuyPressure','tradingCapital','dailySpendLimit','positionSize','maxPositionSize',
-   'maxOpenPositions','maxDailyEntries','dailyLossLimit','feeReserve','hardStopPct','trailingStopPct','tp1Pct','tp1SellPct',
+   'maxOpenPositions','maxDailyEntries','dailyLossLimit','feeReserve','copyTradingBuyAmountSol','hardStopPct','trailingStopPct','tp1Pct','tp1SellPct',
    'tp2Pct','tp2SellPct','runnerPct','maxHoldMinutes','exitBuyPressure','decisionFreshnessSec'
  ])if(finite(o[k]))o[k]=Number(o[k]);else o[k]=d[k];
 
@@ -126,11 +129,17 @@ export function validateSettings(raw={}){
  if(s.minLiquidityUsd<0)errors.push('Minimum liquidity cannot be negative.');
  if(s.minBuyPressure<0)errors.push('Minimum buy pressure cannot be negative.');
 
- for(const k of ['tradingCapital','dailySpendLimit','positionSize','maxPositionSize','dailyLossLimit','feeReserve','trailingStopPct','tp1Pct','tp1SellPct','tp2Pct','tp2SellPct','runnerPct','exitBuyPressure'])
+ for(const k of ['tradingCapital','dailySpendLimit','positionSize','maxPositionSize','dailyLossLimit','feeReserve','copyTradingBuyAmountSol','trailingStopPct','tp1Pct','tp1SellPct','tp2Pct','tp2SellPct','runnerPct','exitBuyPressure'])
    if(!Number.isFinite(s[k])||s[k]<0)errors.push(`${k} must be a non-negative number.`);
  if(!(s.positionSize>0))errors.push('Default position must be greater than 0 SOL.');
  if(!(s.maxPositionSize>0))errors.push('Maximum position must be greater than 0 SOL.');
  if(s.positionSize>s.maxPositionSize)errors.push('Default position cannot exceed maximum position.');
+ if(s.copyTradingEnabled){
+  if(!s.copyTradingWallet||!validPubkey(s.copyTradingWallet))errors.push('Copy Trading wallet must be a valid Solana public address.');
+  if(!(s.copyTradingBuyAmountSol>0))errors.push('Copy Trading BUY size must be greater than 0 SOL.');
+  if(s.copyTradingBuyAmountSol>s.maxPositionSize)errors.push('Copy Trading BUY size cannot exceed maximum position.');
+  if(s.dailySpendLimit>0&&s.copyTradingBuyAmountSol>s.dailySpendLimit)errors.push('Copy Trading BUY size cannot exceed the daily spending limit.');
+ }
  if(s.tradingCapital>0&&s.maxPositionSize>s.tradingCapital)errors.push('Maximum position cannot exceed trading capital when a capital cap is enabled.');
  if(s.tradingCapital>0&&s.dailySpendLimit>s.tradingCapital)errors.push('Daily spending limit cannot exceed trading capital when a capital cap is enabled.');
  if(s.dailySpendLimit>0&&s.positionSize>s.dailySpendLimit)errors.push('Default position cannot exceed the daily spending limit.');

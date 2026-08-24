@@ -219,7 +219,8 @@ export function startPumpLiveTradeFeed(opts={}){
 
         metrics.lastTradeEventAt=Date.now();
         metrics.lastTradeEventSource=source;
-        applyEvent(e);
+        // MEMEFLOW_COPY_TRADING_V1 — keep the canonical transaction signature on the decoded event.
+        applyEvent({...e,signature:signature||null});
         accepted++;
       }catch(err){
         metrics.decodeErrors++;
