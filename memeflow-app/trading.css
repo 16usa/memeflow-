@@ -3,8 +3,8 @@
   --bg: #020609;
   --panel: rgba(5, 12, 17, .88);
   --panel-2: rgba(8, 17, 23, .78);
-  --line: rgba(111, 154, 172, .085);
-  --line-strong: rgba(111, 170, 190, .16);
+  --line: rgba(111, 154, 172, .055);
+  --line-strong: rgba(111, 170, 190, .11);
   --text: #edf5f8;
   --muted: #718894;
   --faint: #455c67;
@@ -161,7 +161,7 @@ button { cursor: pointer; }
   background:
     linear-gradient(180deg, rgba(13, 25, 32, .24), transparent 30%),
     var(--panel);
-  box-shadow: 0 18px 55px rgba(0, 0, 0, .18);
+  box-shadow: 0 14px 40px rgba(0, 0, 0, .10);
   overflow: hidden;
 }
 
@@ -193,7 +193,7 @@ button { cursor: pointer; }
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  border-bottom: 1px solid rgba(111, 154, 172, .10);
+  border-bottom: 1px solid rgba(111, 154, 172, .065);
 }
 
 .compact-head { min-height: 51px; }
@@ -234,11 +234,11 @@ button { cursor: pointer; }
   padding: 7px 8px;
   display: flex;
   gap: 5px;
-  border-bottom: 1px solid rgba(111, 154, 172, .09);
+  border-bottom: 1px solid rgba(111, 154, 172, .055);
 }
 
 .candidate-filter button, .timeframes button {
-  border: 1px solid rgba(111, 154, 172, .07);
+  border: 1px solid rgba(111, 154, 172, .045);
   border-radius: 7px;
   background: transparent;
   color: #647d88;
@@ -269,7 +269,7 @@ button { cursor: pointer; }
   padding: 9px;
   display: grid;
   gap: 7px;
-  border: 1px solid rgba(111, 154, 172, .055);
+  border: 1px solid rgba(111, 154, 172, .035);
   border-radius: 9px;
   background: rgba(3, 9, 13, .62);
   color: inherit;
@@ -277,7 +277,7 @@ button { cursor: pointer; }
 }
 
 .candidate:hover, .candidate.selected {
-  border-color: rgba(85, 217, 255, .18);
+  border-color: rgba(85, 217, 255, .14);
   background: rgba(85, 217, 255, .035);
 }
 
@@ -334,7 +334,7 @@ button { cursor: pointer; }
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  border-bottom: 1px solid rgba(111, 154, 172, .10);
+  border-bottom: 1px solid rgba(111, 154, 172, .065);
 }
 
 .token-title {
@@ -439,7 +439,7 @@ button { cursor: pointer; }
   display: flex;
   align-items: center;
   gap: 5px;
-  border-bottom: 1px solid rgba(111, 154, 172, .08);
+  border-bottom: 1px solid rgba(111, 154, 172, .05);
 }
 
 .timeframes button {
@@ -487,7 +487,7 @@ button { cursor: pointer; }
 
 .chart-legend span {
   padding: 3px 5px;
-  border: 1px solid rgba(111, 154, 172, .06);
+  border: 1px solid rgba(111, 154, 172, .04);
   border-radius: 5px;
   background: rgba(2, 7, 10, .78);
   color: #748d98;
@@ -523,7 +523,7 @@ button { cursor: pointer; }
   grid-template-columns: minmax(100px, 1.1fr) repeat(4, minmax(62px, .7fr)) auto;
   align-items: center;
   gap: 7px;
-  border: 1px solid rgba(111, 154, 172, .055);
+  border: 1px solid rgba(111, 154, 172, .035);
   border-radius: 8px;
   background: rgba(3, 9, 13, .55);
 }
@@ -655,7 +655,7 @@ button { cursor: pointer; }
   flex-direction: column;
   justify-content: space-between;
   gap: 5px;
-  border: 1px solid rgba(111, 154, 172, .055);
+  border: 1px solid rgba(111, 154, 172, .035);
   border-radius: 8px;
   background: rgba(3, 9, 13, .52);
 }
@@ -700,7 +700,7 @@ button { cursor: pointer; }
 .wallet-address {
   padding: 8px 9px;
   overflow: hidden;
-  border: 1px solid rgba(111, 154, 172, .055);
+  border: 1px solid rgba(111, 154, 172, .035);
   border-radius: 8px;
   color: #647d88;
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
