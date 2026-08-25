@@ -1942,3 +1942,81 @@ and (
   }
 }
 /* ===== /MEMEFLOW_REALTIME_PAGE_GALLERY_SWIPE_V3 ===== */
+
+/* ===== MEMEFLOW_REALTIME_PAGE_GALLERY_CHROME_OFF_V4 ===== */
+/* Remove the black fill and the framed block around the page gallery. */
+.viewport-wrap.mf-page-gallery-host,
+.viewport-wrap.mf-page-gallery-clean-v2 {
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  outline: 0 !important;
+  overflow: visible !important;
+}
+
+.viewport-wrap.mf-page-gallery-host::before,
+.viewport-wrap.mf-page-gallery-host::after,
+.viewport-wrap.mf-page-gallery-clean-v2::before,
+.viewport-wrap.mf-page-gallery-clean-v2::after {
+  display: none !important;
+  content: none !important;
+}
+
+.viewport-wrap.mf-page-gallery-clean-v2 #mfPageGallery,
+.viewport-wrap.mf-page-gallery-host #mfPageGallery {
+  background: transparent !important;
+}
+
+/* Remove the inner scanner background plane, ring and black tray. */
+.viewport-wrap.mf-page-gallery-clean-v2 #mfPageGallery::before,
+.viewport-wrap.mf-page-gallery-clean-v2 #mfPageGallery::after,
+.viewport-wrap.mf-page-gallery-host #mfPageGallery::before,
+.viewport-wrap.mf-page-gallery-host #mfPageGallery::after {
+  display: none !important;
+  content: none !important;
+}
+
+/* Let the cards float without the boxed viewport chrome. */
+.viewport-wrap.mf-page-gallery-clean-v2 {
+  padding: 0 !important;
+  min-height: clamp(300px, 56vw, 430px) !important;
+}
+
+.viewport-wrap.mf-page-gallery-clean-v2 .mfpg-deck,
+.viewport-wrap.mf-page-gallery-host .mfpg-deck {
+  inset: 7% 0 4% !important;
+}
+
+.viewport-wrap.mf-page-gallery-clean-v2 .mfpg-head,
+.viewport-wrap.mf-page-gallery-host .mfpg-head {
+  top: 2.4% !important;
+}
+
+.viewport-wrap.mf-page-gallery-clean-v2 .mfpg-dots,
+.viewport-wrap.mf-page-gallery-host .mfpg-dots {
+  bottom: 1.8% !important;
+}
+
+@media (max-width: 600px) {
+  .viewport-wrap.mf-page-gallery-clean-v2,
+  .viewport-wrap.mf-page-gallery-host {
+    min-height: 270px !important;
+  }
+
+  .viewport-wrap.mf-page-gallery-clean-v2 .mfpg-deck,
+  .viewport-wrap.mf-page-gallery-host .mfpg-deck {
+    inset: 8% 0 4% !important;
+  }
+
+  .viewport-wrap.mf-page-gallery-clean-v2 .mfpg-head,
+  .viewport-wrap.mf-page-gallery-host .mfpg-head {
+    top: 2% !important;
+  }
+
+  .viewport-wrap.mf-page-gallery-clean-v2 .mfpg-dots,
+  .viewport-wrap.mf-page-gallery-host .mfpg-dots {
+    bottom: 1.4% !important;
+  }
+}
+/* ===== /MEMEFLOW_REALTIME_PAGE_GALLERY_CHROME_OFF_V4 ===== */
