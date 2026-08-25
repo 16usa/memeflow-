@@ -5277,3 +5277,441 @@ document.addEventListener('click', (event) => {
   window.location.assign('/settings.html');
 }, true);
 /* ===== /MEMEFLOW_STANDALONE_SETTINGS_PAGE_V1 ===== */
+
+/* ===== MEMEFLOW_GALLERY_AUTO_SNAPSHOTS_5M_V1 ===== */
+(() => {
+  'use strict';
+
+  /*
+    Why this is client-side:
+    the existing gallery is made from static .webp files. Simply adding a
+    cache-busting query every five minutes would reload the SAME old file.
+    This layer opens each real same-origin page off-screen, waits for it to
+    render, rasterizes the visible mobile viewport, writes the result into the
+    existing .mfpg-shot image, then destroys the temporary iframe.
+
+    Result:
+      - real refreshed preview
+      - no permanent iframe / duplicate SSE connections
+      - current 3D card/swipe/click code stays untouched
+      - static .webp remains the fallback if capture ever fails
+  */
+
+  const PATCH_ID = 'MEMEFLOW_GALLERY_AUTO_SNAPSHOTS_5M_V1';
+  const REFRESH_MS = 5 * 60 * 1000;
+  const CAPTURE_WIDTH = 390;
+  const CAPTURE_HEIGHT = 844;
+  const PAGE_SETTLE_MS = 4200;
+  const FRAME_TIMEOUT_MS = 22000;
+  const BETWEEN_CAPTURES_MS = 650;
+
+  const PAGES = [
+    {
+      title: 'Trading Terminal',
+      url: '/trading.html'
+    },
+    {
+      title: 'System Settings',
+      url: '/settings.html'
+    },
+    {
+      title: 'Real-Time Pipeline',
+      url: '/system-tokens.html'
+    }
+  ];
+
+  let running = false;
+  let lastCompletedAt = 0;
+  let html2CanvasPromise = null;
+  let scheduler = 0;
+  let stopped = false;
+  const activeFrames = new Set();
+
+  const wait = (ms) => new Promise(resolve => window.setTimeout(resolve, ms));
+
+  function loadHtml2Canvas() {
+    if (typeof window.html2canvas === 'function') {
+      return Promise.resolve(window.html2canvas);
+    }
+
+    if (html2CanvasPromise) {
+      return html2CanvasPromise;
+    }
+
+    html2CanvasPromise = new Promise((resolve, reject) => {
+      const existing = document.querySelector(
+        'script[data-mf-gallery-html2canvas="1"]'
+      );
+
+      if (existing) {
+        const started = Date.now();
+        const poll = window.setInterval(() => {
+          if (typeof window.html2canvas === 'function') {
+            window.clearInterval(poll);
+            resolve(window.html2canvas);
+            return;
+          }
+
+          if (Date.now() - started > 15000) {
+            window.clearInterval(poll);
+            reject(new Error('html2canvas load timeout'));
+          }
+        }, 100);
+        return;
+      }
+
+      const script = document.createElement('script');
+      script.src =
+        'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';
+      script.async = true;
+      script.dataset.mfGalleryHtml2canvas = '1';
+
+      script.onload = () => {
+        if (typeof window.html2canvas === 'function') {
+          resolve(window.html2canvas);
+        } else {
+          reject(new Error('html2canvas loaded without global API'));
+        }
+      };
+
+      script.onerror = () => {
+        reject(new Error('html2canvas CDN load failed'));
+      };
+
+      document.head.appendChild(script);
+    }).catch(error => {
+      html2CanvasPromise = null;
+      throw error;
+    });
+
+    return html2CanvasPromise;
+  }
+
+  function galleryCardForTitle(title) {
+    const cards = Array.from(
+      document.querySelectorAll('#mfPageGallery .mfpg-card')
+    );
+
+    return cards.find(card => {
+      const label = card.querySelector('.mfpg-title');
+      return String(label?.textContent || '').trim() === title;
+    }) || null;
+  }
+
+  function shotForTitle(title) {
+    return galleryCardForTitle(title)?.querySelector('.mfpg-shot') || null;
+  }
+
+  function previewUrl(baseUrl) {
+    const url = new URL(baseUrl, window.location.origin);
+    url.searchParams.set('mfGalleryPreview', '1');
+    url.searchParams.set('mfGalleryCapturedAt', String(Date.now()));
+    return url.href;
+  }
+
+  function makeFrame(url) {
+    const frame = document.createElement('iframe');
+    frame.src = previewUrl(url);
+    frame.width = String(CAPTURE_WIDTH);
+    frame.height = String(CAPTURE_HEIGHT);
+    frame.tabIndex = -1;
+    frame.setAttribute('aria-hidden', 'true');
+    frame.setAttribute(
+      'sandbox',
+      'allow-same-origin allow-scripts allow-forms allow-modals'
+    );
+
+    Object.assign(frame.style, {
+      position: 'fixed',
+      left: '-20000px',
+      top: '0',
+      width: `${CAPTURE_WIDTH}px`,
+      height: `${CAPTURE_HEIGHT}px`,
+      border: '0',
+      margin: '0',
+      padding: '0',
+      opacity: '0.001',
+      pointerEvents: 'none',
+      zIndex: '-2147483647',
+      background: '#0f141a'
+    });
+
+    document.body.appendChild(frame);
+    activeFrames.add(frame);
+    return frame;
+  }
+
+  function destroyFrame(frame) {
+    activeFrames.delete(frame);
+    try {
+      frame.src = 'about:blank';
+    } catch (_) {}
+
+    try {
+      frame.remove();
+    } catch (_) {}
+  }
+
+  function waitForFrameLoad(frame) {
+    return new Promise((resolve, reject) => {
+      let done = false;
+
+      const finish = (fn, value) => {
+        if (done) return;
+        done = true;
+        window.clearTimeout(timeout);
+        frame.removeEventListener('load', onLoad);
+        frame.removeEventListener('error', onError);
+        fn(value);
+      };
+
+      const onLoad = () => finish(resolve);
+      const onError = () => finish(
+        reject,
+        new Error('preview iframe failed to load')
+      );
+
+      const timeout = window.setTimeout(() => {
+        finish(
+          reject,
+          new Error('preview iframe timed out')
+        );
+      }, FRAME_TIMEOUT_MS);
+
+      frame.addEventListener('load', onLoad, { once: true });
+      frame.addEventListener('error', onError, { once: true });
+    });
+  }
+
+  async function waitForUsableDocument(frame) {
+    const started = Date.now();
+
+    while (Date.now() - started < PAGE_SETTLE_MS) {
+      if (stopped) return;
+
+      try {
+        const doc = frame.contentDocument;
+        if (
+          doc?.documentElement &&
+          doc?.body &&
+          doc.body.scrollHeight > 100 &&
+          doc.body.scrollWidth > 100
+        ) {
+          // Keep waiting through the settle window so live data/chart/settings
+          // can finish their first paint.
+        }
+      } catch (_) {}
+
+      await wait(180);
+    }
+
+    try {
+      frame.contentWindow?.scrollTo?.(0, 0);
+    } catch (_) {}
+
+    await wait(120);
+  }
+
+  async function capturePage(page, html2canvas) {
+    const shot = shotForTitle(page.title);
+    if (!shot) {
+      throw new Error(`gallery shot not found: ${page.title}`);
+    }
+
+    const frame = makeFrame(page.url);
+
+    try {
+      await waitForFrameLoad(frame);
+      await waitForUsableDocument(frame);
+
+      if (stopped) return false;
+
+      const doc = frame.contentDocument;
+      const target = doc?.documentElement || doc?.body;
+
+      if (!target) {
+        throw new Error(`preview document unavailable: ${page.title}`);
+      }
+
+      const canvas = await html2canvas(target, {
+        backgroundColor: '#0f141a',
+        width: CAPTURE_WIDTH,
+        height: CAPTURE_HEIGHT,
+        windowWidth: CAPTURE_WIDTH,
+        windowHeight: CAPTURE_HEIGHT,
+        scrollX: 0,
+        scrollY: 0,
+        scale: Math.min(
+          1.5,
+          Math.max(1, Number(window.devicePixelRatio || 1))
+        ),
+        useCORS: true,
+        allowTaint: false,
+        logging: false,
+        imageTimeout: 8000,
+        removeContainer: true
+      });
+
+      const freshSrc = canvas.toDataURL('image/webp', 0.84);
+
+      if (!freshSrc || freshSrc.length < 1000) {
+        throw new Error(`empty captured image: ${page.title}`);
+      }
+
+      // Decode before replacing the visible image to prevent flashes.
+      const probe = new Image();
+      probe.decoding = 'async';
+      probe.src = freshSrc;
+
+      if (typeof probe.decode === 'function') {
+        try {
+          await probe.decode();
+        } catch (_) {}
+      }
+
+      shot.src = freshSrc;
+      shot.dataset.mfLiveSnapshot = '1';
+      shot.dataset.mfLiveSnapshotAt = String(Date.now());
+
+      const card = galleryCardForTitle(page.title);
+      if (card) {
+        card.dataset.mfSnapshotUpdatedAt = String(Date.now());
+      }
+
+      return true;
+    } finally {
+      destroyFrame(frame);
+    }
+  }
+
+  async function refreshSnapshots(reason = 'timer') {
+    if (running || stopped || document.hidden) {
+      return;
+    }
+
+    const gallery = document.getElementById('mfPageGallery');
+    if (!gallery) {
+      return;
+    }
+
+    running = true;
+    gallery.dataset.mfSnapshotRefresh = 'running';
+    gallery.dataset.mfSnapshotRefreshReason = reason;
+
+    try {
+      const html2canvas = await loadHtml2Canvas();
+      let successCount = 0;
+
+      for (const page of PAGES) {
+        if (stopped || document.hidden) break;
+
+        try {
+          const ok = await capturePage(page, html2canvas);
+          if (ok) successCount += 1;
+        } catch (error) {
+          // Keep the old static/current snapshot for this card.
+          console.warn(
+            '[PAGE-GALLERY] snapshot refresh failed',
+            page.title,
+            error?.message || error
+          );
+        }
+
+        await wait(BETWEEN_CAPTURES_MS);
+      }
+
+      if (successCount > 0) {
+        lastCompletedAt = Date.now();
+        gallery.dataset.mfSnapshotUpdatedAt = String(lastCompletedAt);
+        gallery.dataset.mfSnapshotRefresh = 'ready';
+      } else {
+        gallery.dataset.mfSnapshotRefresh = 'fallback';
+      }
+    } catch (error) {
+      gallery.dataset.mfSnapshotRefresh = 'fallback';
+      console.warn(
+        '[PAGE-GALLERY] snapshot engine unavailable; static previews kept',
+        error?.message || error
+      );
+    } finally {
+      running = false;
+    }
+  }
+
+  function startScheduler() {
+    if (scheduler || stopped) return;
+
+    // First fresh capture shortly after the System View/gallery is ready.
+    window.setTimeout(() => {
+      refreshSnapshots('initial');
+    }, 1800);
+
+    // A light scheduler checks age; actual recapture is exactly on/after 5 min.
+    scheduler = window.setInterval(() => {
+      if (
+        !document.hidden &&
+        !running &&
+        Date.now() - lastCompletedAt >= REFRESH_MS
+      ) {
+        refreshSnapshots('5-minute');
+      }
+    }, 15000);
+  }
+
+  function waitForGallery() {
+    let attempts = 0;
+
+    const timer = window.setInterval(() => {
+      attempts += 1;
+
+      const gallery = document.getElementById('mfPageGallery');
+      const cards = gallery?.querySelectorAll('.mfpg-card');
+
+      if (gallery && cards?.length >= 3) {
+        window.clearInterval(timer);
+        gallery.dataset.mfSnapshotIntervalMs = String(REFRESH_MS);
+        startScheduler();
+        console.log(
+          `[PAGE-GALLERY] ${PATCH_ID} mounted; interval=${REFRESH_MS}ms`
+        );
+        return;
+      }
+
+      if (attempts >= 80) {
+        window.clearInterval(timer);
+      }
+    }, 100);
+  }
+
+  document.addEventListener('visibilitychange', () => {
+    if (
+      !document.hidden &&
+      !running &&
+      Date.now() - lastCompletedAt >= REFRESH_MS
+    ) {
+      refreshSnapshots('visibility-resume');
+    }
+  });
+
+  window.addEventListener('pagehide', () => {
+    stopped = true;
+
+    if (scheduler) {
+      window.clearInterval(scheduler);
+      scheduler = 0;
+    }
+
+    for (const frame of [...activeFrames]) {
+      destroyFrame(frame);
+    }
+  }, { once: true });
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', waitForGallery, {
+      once: true
+    });
+  } else {
+    waitForGallery();
+  }
+})();
+/* ===== /MEMEFLOW_GALLERY_AUTO_SNAPSHOTS_5M_V1 ===== */
