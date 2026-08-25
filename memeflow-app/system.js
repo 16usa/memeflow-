@@ -4624,3 +4624,160 @@ if (document.readyState === 'loading') {
 /* ===== MEMEFLOW_RENDER_MATCH_V6 ===== */
 
 /* ===== MEMEFLOW_TRUE_3D_EMBED_V1 ===== */
+
+/* ===== MEMEFLOW_REALTIME_PAGE_GALLERY_V1 ===== */
+(() => {
+  'use strict';
+
+  const PATCH_ID = 'MEMEFLOW_REALTIME_PAGE_GALLERY_V1';
+  const DESTINATIONS = [
+    { title: 'Trading Terminal', image: '/memeflow-gallery/trading-terminal.webp?v=page-gallery-v1', href: '/trading.html', slot: 'left' },
+    { title: 'System Settings', image: '/memeflow-gallery/system-settings.webp?v=page-gallery-v1', href: '/system.html?mfOpenSettings=1', slot: 'center' },
+    { title: 'Real-Time Pipeline', image: '/memeflow-gallery/live-token-states.webp?v=page-gallery-v1', href: '/system-tokens.html', slot: 'right' }
+  ];
+
+  function stopOldTrue3D() {
+    try {
+      const app = window.__memeflowTrue3D;
+      if (app && typeof app.dispose === 'function') {
+        app.dispose();
+        window.__memeflowTrue3D = null;
+      }
+    } catch (error) {
+      console.warn('[PAGE-GALLERY] old 3D dispose skipped:', error);
+    }
+  }
+
+  function openSettingsFromQuery() {
+    const url = new URL(window.location.href);
+    if (url.searchParams.get('mfOpenSettings') !== '1') return;
+
+    let tries = 0;
+    const timer = window.setInterval(() => {
+      tries += 1;
+      const direct = document.getElementById('mf293SettingsBtn');
+      const fallback = Array.from(document.querySelectorAll('button, [role="button"]'))
+        .find(el => String(el.textContent || '').trim().toLowerCase() === 'settings');
+      const button = direct || fallback;
+
+      if (button) {
+        window.clearInterval(timer);
+        button.click();
+        url.searchParams.delete('mfOpenSettings');
+        window.history.replaceState({}, '', url.pathname + url.search + url.hash);
+        return;
+      }
+
+      if (tries >= 45) {
+        window.clearInterval(timer);
+        console.warn('[PAGE-GALLERY] Settings button was not found.');
+      }
+    }, 100);
+  }
+
+  function makeCard(item) {
+    const card = document.createElement('button');
+    card.type = 'button';
+    card.className = 'mfpg-card';
+    card.dataset.slot = item.slot;
+    card.dataset.href = item.href;
+    card.setAttribute('aria-label', `Open ${item.title}`);
+    card.innerHTML = `
+      <img class="mfpg-shot" src="${item.image}" alt="" draggable="false">
+      <span class="mfpg-label" aria-hidden="true">
+        <span class="mfpg-title">${item.title}</span>
+        <span class="mfpg-open">OPEN</span>
+      </span>
+      <span class="mfpg-pulse" aria-hidden="true"></span>
+    `;
+
+    card.addEventListener('pointerenter', () => card.classList.add('is-hovered'));
+    card.addEventListener('pointerleave', () => card.classList.remove('is-hovered'));
+
+    card.addEventListener('click', () => {
+      if (card.dataset.busy === '1') return;
+      card.dataset.busy = '1';
+      const gallery = document.getElementById('mfPageGallery');
+      gallery?.classList.add('is-leaving');
+      card.classList.add('is-launching');
+
+      if (navigator.vibrate) {
+        try { navigator.vibrate(8); } catch (_) {}
+      }
+
+      window.setTimeout(() => window.location.assign(item.href), 285);
+    });
+
+    return card;
+  }
+
+  function mountGallery() {
+    const viewport = document.querySelector('.viewport-wrap');
+    if (!viewport || document.getElementById('mfPageGallery')) return false;
+
+    viewport.classList.add('mf-page-gallery-host');
+
+    const gallery = document.createElement('section');
+    gallery.id = 'mfPageGallery';
+    gallery.setAttribute('aria-label', 'MEMEFLOW page navigator');
+
+    const head = document.createElement('div');
+    head.className = 'mfpg-head';
+    head.innerHTML = `
+      <span class="mfpg-kicker">SYSTEM OVERVIEW</span>
+      <span class="mfpg-sub">Interactive architecture</span>
+    `;
+
+    const deck = document.createElement('div');
+    deck.className = 'mfpg-deck';
+    DESTINATIONS.forEach(item => deck.appendChild(makeCard(item)));
+
+    gallery.appendChild(head);
+    gallery.appendChild(deck);
+    viewport.appendChild(gallery);
+
+    gallery.addEventListener('pointermove', event => {
+      if (event.pointerType === 'touch') return;
+      const rect = gallery.getBoundingClientRect();
+      if (!rect.width || !rect.height) return;
+      const nx = ((event.clientX - rect.left) / rect.width) - .5;
+      const ny = ((event.clientY - rect.top) / rect.height) - .5;
+      gallery.style.setProperty('--mfpg-ry', `${(nx * 2.2).toFixed(2)}deg`);
+      gallery.style.setProperty('--mfpg-rx', `${(-ny * 1.2).toFixed(2)}deg`);
+    });
+
+    gallery.addEventListener('pointerleave', () => {
+      gallery.style.setProperty('--mfpg-ry', '0deg');
+      gallery.style.setProperty('--mfpg-rx', '0deg');
+    });
+
+    let cleanupTicks = 0;
+    const cleanup = window.setInterval(() => {
+      cleanupTicks += 1;
+      stopOldTrue3D();
+      if (cleanupTicks >= 15) window.clearInterval(cleanup);
+    }, 200);
+
+    console.log(`[PAGE-GALLERY] ${PATCH_ID} mounted`);
+    return true;
+  }
+
+  function boot() {
+    openSettingsFromQuery();
+
+    if (mountGallery()) return;
+
+    let tries = 0;
+    const timer = window.setInterval(() => {
+      tries += 1;
+      if (mountGallery() || tries >= 50) window.clearInterval(timer);
+    }, 100);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', boot, { once: true });
+  } else {
+    boot();
+  }
+})();
+/* ===== /MEMEFLOW_REALTIME_PAGE_GALLERY_V1 ===== */
