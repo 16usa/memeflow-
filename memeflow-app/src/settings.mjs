@@ -6,7 +6,7 @@ const nullableNumbers=[
 'minVolume24hUsd','maxVolume24hUsd','minBuyTransactions','maxBuyTransactions','minSellTransactions','maxSellTransactions',
 'minTotalTransactions','maxTotalTransactions','minHolders','maxHolders','minBundlePct','maxBundlePct',
 'minTokenAgeMinutes','maxTokenAgeMinutes','minTop10Pct','maxTop10Pct','minDeveloperPct','maxDeveloperPct',
-'minSniperPct','maxSniperPct'
+'minSniperPct','maxSniperPct','maxSuspectedRiskyWalletsPct','maxInsidersPct'
 ];
 const booleans=[
 'requireTwitter','requireWebsite','requireTelegram','requireAnySocial','requireFreshHolderSnapshot','requireWebsiteOrX',
@@ -63,7 +63,7 @@ export function defaultSettings(){return {
  launchPlatforms:['pump'],includeKeywords:'',excludeKeywords:'',
  minBondingCurvePct:null,maxBondingCurvePct:null,minMarketCapUsd:null,maxMarketCapUsd:null,minTotalFeesSol:null,maxTotalFeesSol:null,
  minVolume24hUsd:null,maxVolume24hUsd:null,minBuyTransactions:null,maxBuyTransactions:null,minSellTransactions:null,maxSellTransactions:null,minTotalTransactions:null,maxTotalTransactions:null,
- minHolders:30,maxHolders:null,minBundlePct:null,maxBundlePct:null,minTokenAgeMinutes:0,maxTokenAgeMinutes:180,minTop10Pct:null,maxTop10Pct:25,minDeveloperPct:null,maxDeveloperPct:20,minSniperPct:null,maxSniperPct:null,
+ minHolders:30,maxHolders:null,minBundlePct:null,maxBundlePct:null,minTokenAgeMinutes:0,maxTokenAgeMinutes:180,minTop10Pct:null,maxTop10Pct:25,minDeveloperPct:null,maxDeveloperPct:20,minSniperPct:null,maxSniperPct:null,maxSuspectedRiskyWalletsPct:35,maxInsidersPct:25,
  developerBlacklistWallets:[],requireTwitter:false,requireWebsite:false,requireTelegram:false,requireAnySocial:false,
  hardStopPct:25,trailingStopPct:15,tp1Pct:100,tp1SellPct:50,tp2Pct:200,tp2SellPct:25,runnerPct:25,maxHoldMinutes:1440,
  exitBuyPressure:1.0,exitOnWeakBuyPressure:true,
@@ -121,7 +121,7 @@ export function validateSettings(raw={}){
  ];
  for(const [name,min,max] of ranges)if(min!==null&&max!==null&&min>max)errors.push(`${name}: minimum cannot exceed maximum.`);
  for(const k of nullableNumbers)if(s[k]!==null&&s[k]<0)errors.push(`${k} cannot be negative.`);
- for(const k of ['minBondingCurvePct','maxBondingCurvePct','minBundlePct','maxBundlePct','minTop10Pct','maxTop10Pct','minDeveloperPct','maxDeveloperPct','minSniperPct','maxSniperPct'])
+ for(const k of ['minBondingCurvePct','maxBondingCurvePct','minBundlePct','maxBundlePct','minTop10Pct','maxTop10Pct','minDeveloperPct','maxDeveloperPct','minSniperPct','maxSniperPct','maxSuspectedRiskyWalletsPct','maxInsidersPct'])
    if(s[k]!==null&&s[k]>100)errors.push(`${k} cannot exceed 100%.`);
 
  if(s.minScore<0||s.minScore>100)errors.push('Minimum AI score must be between 0 and 100.');
@@ -166,3 +166,4 @@ export function validateSettings(raw={}){
 
  return {ok:errors.length===0,errors,settings:s};
 }
+// MEMEFLOW_WALLET_CLUSTER_RISK_V3: existing UI controls are now canonical backend settings.

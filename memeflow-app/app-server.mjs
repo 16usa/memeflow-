@@ -3373,3 +3373,114 @@ globalThis.__MEMEFLOW_V12_23_GATE__=(token,settings)=>__v1223Gate(token,settings
 globalThis.__MEMEFLOW_V12_24_GATE_FOR_MINT__=(mint,settings)=>__v1224GateForMint(mint,settings);
 
 // MEMEFLOW_V12_26_EVALUATION_LIFECYCLE_DIAGNOSTICS
+
+// MEMEFLOW_WALLET_CLUSTER_RISK_V3
+// Background only. Canonical holder enrichment supplies a bounded top-wallet sample;
+// this worker checks one-hop SOL funding and then re-evaluates the token.
+let __mfWalletRiskBusy=false;
+let __mfWalletRiskModulePromise=null;
+const __mfWalletRiskModule=()=>__mfWalletRiskModulePromise||=import('./src/wallet-cluster-risk.mjs');
+
+function __mfWalletRiskPumpToken(token){
+  const p=String(token?.launchPlatform||token?.protocol||token?.source||'').toLowerCase();
+  return p.includes('pump');
+}
+
+function __mfWalletRiskCandidate(){
+  const now=Date.now();
+  const maxAge=Math.max(5*60_000,Number(process.env.WALLET_CLUSTER_MAX_TOKEN_AGE_MS||20*60_000));
+  const ttl=Math.max(30_000,Number(process.env.WALLET_CLUSTER_SCAN_TTL_MS||120_000));
+  const retryDelay=Math.max(10_000,Number(process.env.WALLET_CLUSTER_RETRY_DELAY_MS||25_000));
+  const rows=typeof store?.tokens==='function'?store.tokens():Object.values(store?.state?.tokens||{});
+
+  return rows
+    .filter(token=>{
+      if(!token?.mint||!__mfWalletRiskPumpToken(token))return false;
+      if(!Array.isArray(token.holderRiskWallets)||token.holderRiskWallets.length<3)return false;
+
+      const created=Number(token.pumpCreatedAt||token.discoveredAt||token.createdAt||0);
+      if(created>0&&now-(created<1e12?created*1000:created)>maxAge)return false;
+
+      // Do not spend RPC on obviously dead/incomplete candidates.
+      if(!(Number(token.priceSol)>0))return false;
+      if(Number(token.holderCount||0)<10)return false;
+
+      const holdersAt=Number(token.holderRiskWalletsScannedAt||0);
+      const scannedAt=Number(token.walletClusterRiskScannedAt||0);
+      const attemptedAt=Number(token.walletClusterRiskLastAttemptAt||0);
+
+      // Rescan when the canonical holder sample is newer; otherwise honor TTL.
+      if(scannedAt>0&&holdersAt<=scannedAt&&now-scannedAt<ttl)return false;
+      if(attemptedAt>scannedAt&&now-attemptedAt<retryDelay)return false;
+
+      return true;
+    })
+    .sort((a,b)=>{
+      const aNever=a?.walletClusterRiskScannedAt?1:0;
+      const bNever=b?.walletClusterRiskScannedAt?1:0;
+      if(aNever!==bNever)return aNever-bNever;
+      return Number(b?.holderRiskWalletsScannedAt||b?.updatedAt||b?.discoveredAt||0)
+        -Number(a?.holderRiskWalletsScannedAt||a?.updatedAt||a?.discoveredAt||0);
+    })[0]||null;
+}
+
+async function __mfWalletRiskTick(){
+  if(__mfWalletRiskBusy)return;
+  const token=__mfWalletRiskCandidate();
+  if(!token)return;
+
+  __mfWalletRiskBusy=true;
+  const mint=String(token.mint);
+  const now=Date.now();
+
+  try{
+    const {scanWalletClusterRisk}=await __mfWalletRiskModule();
+    const result=await scanWalletClusterRisk({rpc,token});
+
+    let patch;
+    if(result?.ok){
+      patch={
+        suspectedRiskyWalletsPct:Number(result.suspectedRiskyWalletsPct)||0,
+        insidersPct:Number(result.insidersPct)||0,
+        walletClusterRiskScannedAt:Number(result.scannedAt)||Date.now(),
+        walletClusterRiskLastAttemptAt:Date.now(),
+        walletClusterRiskVersion:String(result.version||'V3'),
+        walletClusterRiskSampledWallets:Number(result.sampledWallets)||0,
+        walletClusterRiskFundingRecords:Number(result.fundingRecords)||0,
+        walletClusterRiskLinkedWallets:Number(result.linkedWallets)||0,
+        walletClusterRiskInsiderWallets:Number(result.insiderWallets)||0,
+        walletClusterRiskCommonFunders:Number(result.commonFunders)||0,
+        walletClusterRiskEvidence:Array.isArray(result.evidence)?result.evidence.slice(0,8):[],
+        walletClusterRiskLastError:null
+      };
+    }else{
+      patch={
+        walletClusterRiskLastAttemptAt:Date.now(),
+        walletClusterRiskLastError:String(result?.reason||'scan-failed').slice(0,180)
+      };
+    }
+
+    const updated=store?.setToken?.(mint,patch)||store?.state?.tokens?.[mint];
+
+    if(updated&&result?.ok){
+      try{await Promise.resolve(evaluateAll(updated))}catch{}
+      try{publish(mint)}catch{}
+    }
+  }catch(error){
+    try{
+      store?.setToken?.(mint,{
+        walletClusterRiskLastAttemptAt:Date.now(),
+        walletClusterRiskLastError:String(error?.message||error).slice(0,180)
+      });
+    }catch{}
+  }finally{
+    __mfWalletRiskBusy=false;
+  }
+}
+
+const __mfWalletRiskInterval=setInterval(
+  ()=>void __mfWalletRiskTick(),
+  Math.max(1_000,Number(process.env.WALLET_CLUSTER_SCAN_INTERVAL_MS||1_500))
+);
+__mfWalletRiskInterval.unref?.();
+setTimeout(()=>void __mfWalletRiskTick(),1_000).unref?.();

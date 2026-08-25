@@ -106,6 +106,8 @@ const METRICS={
   top10Pct:['top10Pct','top10','holder.top10Pct'],
   developerPct:['developerPct','developerSharePct','developer','holder.developerPct'],
   sniperPct:['sniperPct','snipersPct','sniperSharePct','snipers.percent'],
+  suspectedRiskyWalletsPct:['suspectedRiskyWalletsPct','walletClusterRiskPct','linkedWalletsPct'],
+  insidersPct:['insidersPct','creatorLinkedWalletsPct','insiderWalletsPct'],
   liquidityUsd:['liquidityUsd','liquidityUSD','market.liquidityUsd','liquidity.usd'],
   buyPressure:['buyPressure','momentum','market.buyPressure']
 };
@@ -190,6 +192,31 @@ export function evaluateSettingsGate(token={},settings={}){
   range('Top 10 concentration','top10Pct','minTop10Pct','maxTop10Pct');
   range('Developer share','developerPct','minDeveloperPct','maxDeveloperPct');
   range('Sniper share','sniperPct','minSniperPct','maxSniperPct');
+
+  // MEMEFLOW_WALLET_CLUSTER_RISK_V3
+  // These are existing user-configurable maxima. Missing evidence is WAITING,
+  // known excess is BLOCKED, and a known value below the limit passes.
+  const maxRiskyWallets=settingNumber(settings,'maxSuspectedRiskyWalletsPct');
+  if(maxRiskyWallets!==null){
+    const value=metric(token,'suspectedRiskyWalletsPct');
+    add(
+      'Suspected risky wallets maximum',
+      value===null?null:value<=maxRiskyWallets,
+      `suspected risky wallets above ${maxRiskyWallets}%`,
+      {key:'maxSuspectedRiskyWalletsPct',value,threshold:maxRiskyWallets,operator:'<=',retryable:true,source:'suspectedRiskyWalletsPct'}
+    );
+  }
+
+  const maxInsiders=settingNumber(settings,'maxInsidersPct');
+  if(maxInsiders!==null){
+    const value=metric(token,'insidersPct');
+    add(
+      'Insiders maximum',
+      value===null?null:value<=maxInsiders,
+      `creator-linked wallets above ${maxInsiders}%`,
+      {key:'maxInsidersPct',value,threshold:maxInsiders,operator:'<=',retryable:true,source:'insidersPct'}
+    );
+  }
 
   const minLiquidity=enabledPositive(settings,'minLiquidityUsd');
   if(minLiquidity!==null){

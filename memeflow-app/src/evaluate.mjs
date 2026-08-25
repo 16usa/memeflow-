@@ -1,4 +1,5 @@
 import {evaluateSettingsGate,tokenAgeMinutes} from './settings-gate.mjs';
+import {walletRiskPenalty} from './wallet-cluster-risk.mjs'; // MEMEFLOW_WALLET_CLUSTER_RISK_V3
 
 const clampScore = value =>
   Math.max(0, Math.min(100, Math.round(Number(value) || 0)));
@@ -72,7 +73,25 @@ function independentAiScore(token = {}) {
   if (freshHolders) score += 10;
   quality.push({key: 'freshHolders', value: freshHolders, points: freshHolders ? 10 : 0, maxPoints: 10});
 
-  return {score: clampScore(score), quality};
+  const scoreBeforeWalletRisk=clampScore(score);
+  const riskPenalty=walletRiskPenalty(token);
+  const adjustedScore=clampScore(scoreBeforeWalletRisk-riskPenalty);
+  quality.push({
+    key:'walletRiskPenalty',
+    value:{
+      suspectedRiskyWalletsPct:finite(token.suspectedRiskyWalletsPct)?Number(token.suspectedRiskyWalletsPct):null,
+      insidersPct:finite(token.insidersPct)?Number(token.insidersPct):null
+    },
+    points:-riskPenalty,
+    maxPoints:0
+  });
+
+  return {
+    score:adjustedScore,
+    quality,
+    scoreBeforeWalletRisk,
+    walletRiskPenalty:riskPenalty
+  };
 }
 
 /*
@@ -205,6 +224,14 @@ export function evaluate(token, s = {}) {
   return {
     state,
     score,
+    scoreBeforeWalletRisk:ai.scoreBeforeWalletRisk,
+    walletRiskPenalty:ai.walletRiskPenalty,
+    walletRisk:{
+      suspectedRiskyWalletsPct:finite(token.suspectedRiskyWalletsPct)?Number(token.suspectedRiskyWalletsPct):null,
+      insidersPct:finite(token.insidersPct)?Number(token.insidersPct):null,
+      scannedAt:token.walletClusterRiskScannedAt??null,
+      version:token.walletClusterRiskVersion??null
+    },
     confidence,
     reasons,
     primaryReason: reasons[0] || 'Independent AI quality and all configured user gates passed',

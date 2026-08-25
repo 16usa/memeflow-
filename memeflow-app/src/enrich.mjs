@@ -409,8 +409,16 @@ export async function enrichHolders(mint,deps){
   );
 
   const walletBalances=aggregateWalletBalances(accounts,protocolAuthorities);
-  const balances=[...walletBalances.values()].sort((a,b)=>b-a);
+  const holderEntries=[...walletBalances.entries()].sort((a,b)=>b[1]-a[1]);
+  const balances=holderEntries.map(([,amount])=>amount);
   const holderCount=balances.length;
+  // MEMEFLOW_WALLET_CLUSTER_RISK_V3
+  // Keep only the top eight canonical wallet owners + their current supply share.
+  // This is bounded public-chain evidence used by the background risk scanner.
+  const holderRiskWallets=holderEntries.slice(0,8).map(([wallet,amount])=>({
+    wallet,
+    pct:total>0?amount/total*100:null
+  }));
 
   const top10Pct=total>0
     ? balances.slice(0,10).reduce((sum,n)=>sum+n,0)/total*100
@@ -423,6 +431,8 @@ export async function enrichHolders(mint,deps){
   const updated=store.setToken(mint,{
     holderFresh:true,
     holderCount,
+    holderRiskWallets,
+    holderRiskWalletsScannedAt:Date.now(),
     top10Pct,
     developerPct,
     developerSharePct:developerPct,
