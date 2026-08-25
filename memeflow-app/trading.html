@@ -9,6 +9,28 @@
 <link rel="stylesheet" href="/memeflow-brand.css?v=final-v6">
   <!-- MEMEFLOW_TRADING_CHART_RESTORE_SITE_BG_V2 -->
   <!-- MEMEFLOW_TRADING_CHART_MATCH_PANEL_V3 -->
+
+<style id="mfTradingChartUnifyAllStatesV4">
+/* ===== MEMEFLOW_TRADING_CHART_UNIFY_ALL_STATES_V4 ===== */
+/*
+  The trading chart should feel like one unified panel in all states.
+  We use the exact panel surface color already chosen for the live chart.
+  This is presentation only. No chart rendering logic is touched.
+*/
+html[data-mf-chart-unify-all-states="1"] {
+  --mf-chart-panel-bg: #131b23;
+}
+
+html[data-mf-chart-unify-all-states="1"] #chartCanvas,
+html[data-mf-chart-unify-all-states="1"] #chartCanvas > div,
+html[data-mf-chart-unify-all-states="1"] [data-mf-chart-unified="1"],
+html[data-mf-chart-unify-all-states="1"] [data-mf-chart-placeholder="1"] {
+  background: var(--mf-chart-panel-bg) !important;
+  background-color: var(--mf-chart-panel-bg) !important;
+}
+/* ===== /MEMEFLOW_TRADING_CHART_UNIFY_ALL_STATES_V4 ===== */
+</style>
+
 </head>
 <body>
   <div class="shell">
@@ -355,6 +377,87 @@
 <!-- MEMEFLOW_COMPACT_TRADING_V4_JS_END -->
 
 <script src="/copy-trading-settings-sync-v2.js?v=2" data-patch="MEMEFLOW_COPY_TRADING_SETTINGS_SYNC_V2"></script>
+
+<script>
+/* ===== MEMEFLOW_TRADING_CHART_UNIFY_ALL_STATES_V4 ===== */
+(() => {
+  if (window.__mfTradingChartUnifyAllStatesV4) return;
+  window.__mfTradingChartUnifyAllStatesV4 = true;
+  document.documentElement.setAttribute('data-mf-chart-unify-all-states', '1');
+
+  const BG = '#131b23';
+  const STATE_MATCHERS = [
+    /syncing real trades/i,
+    /live candles/i,
+    /select a token/i,
+    /candles use confirmed buy\s*\/\s*sell events only/i,
+    /history and the live pump trade stream reconnect automatically/i,
+    /tap the top-right value to switch usd price \/ market cap/i
+  ];
+
+  const paint = (node, kind = 'unified') => {
+    if (!(node instanceof HTMLElement)) return;
+    node.style.background = BG;
+    node.style.backgroundColor = BG;
+    if (kind === 'placeholder') {
+      node.setAttribute('data-mf-chart-placeholder', '1');
+    } else {
+      node.setAttribute('data-mf-chart-unified', '1');
+    }
+  };
+
+  const normalizeChartArea = () => {
+    const chartHost = document.getElementById('chartCanvas');
+
+    if (chartHost instanceof HTMLElement) {
+      paint(chartHost);
+      if (chartHost.parentElement instanceof HTMLElement) paint(chartHost.parentElement);
+      if (chartHost.parentElement?.parentElement instanceof HTMLElement) {
+        paint(chartHost.parentElement.parentElement);
+      }
+      chartHost.querySelectorAll(':scope > div').forEach((child) => {
+        if (child instanceof HTMLElement) paint(child);
+      });
+    }
+
+    const all = Array.from(document.querySelectorAll('div, section, article'));
+    for (const el of all) {
+      if (!(el instanceof HTMLElement)) continue;
+      const text = (el.textContent || '').replace(/\s+/g, ' ').trim();
+      if (!text) continue;
+      if (!STATE_MATCHERS.some((rx) => rx.test(text))) continue;
+
+      let target = el;
+      for (let i = 0; i < 5; i += 1) {
+        const rect = target.getBoundingClientRect();
+        if (rect.width >= 240 && rect.height >= 180) break;
+        if (!(target.parentElement instanceof HTMLElement)) break;
+        target = target.parentElement;
+      }
+
+      paint(target, 'placeholder');
+      paint(el, 'placeholder');
+    }
+  };
+
+  const run = () => {
+    normalizeChartArea();
+    setTimeout(normalizeChartArea, 250);
+    setTimeout(normalizeChartArea, 1200);
+    setTimeout(normalizeChartArea, 2600);
+  };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', run, { once: true });
+  } else {
+    run();
+  }
+
+  window.addEventListener('load', run, { once: true });
+})();
+/* ===== /MEMEFLOW_TRADING_CHART_UNIFY_ALL_STATES_V4 ===== */
+</script>
+
 </body>
 </html>
 
