@@ -4481,134 +4481,38 @@ setTimeout(installRealWebV31, 1250);
 /* MEMEFLOW_ANTI_RUG_V1_5_EXACT */
 
 /* ===== MEMEFLOW_LIVE_INSPECTOR_STANDALONE_V1 =====
-   Layout-only patch:
-   - moves the existing LIVE INSPECTOR DOM node out of the 3D architecture card
-   - places that SAME live node immediately before TOKEN FLOW
-   - preserves all existing IDs, event handlers and live data bindings
+   Disabled because LIVE INSPECTOR was removed from the System Overview page.
+   Keep the DOM node hidden/inert so other system JS can safely keep references.
 */
-const MF_LIVE_INSPECTOR_STANDALONE_V1 = {
-  installed: false,
-  observer: null,
-  retryTimer: null,
-  retryCount: 0
-};
+(() => {
+  'use strict';
 
-function mfLiveInspectorV1TokenFlow() {
-  const panels = Array.from(document.querySelectorAll('.activity-panel'));
-
-  const byHeading = panels.find((panel) => {
-    const head = panel.querySelector('.activity-head');
-    const text = String(head?.textContent || panel.textContent || '')
-      .replace(/\s+/g, ' ')
-      .trim()
-      .toUpperCase();
-
-    return text.includes('TOKEN FLOW') ||
-      text.includes('RECENT PIPELINE STATE');
-  });
-
-  return byHeading || panels[0] || null;
-}
-
-function mfLiveInspectorV1Move() {
-  const inspector = document.querySelector('.inspector');
-  const tokenFlow = mfLiveInspectorV1TokenFlow();
-
-  if (!inspector || !tokenFlow || !tokenFlow.parentElement) {
-    return false;
-  }
-
-  if (inspector === tokenFlow || inspector.contains(tokenFlow)) {
-    console.error(
-      '[LIVE-INSPECTOR-V1] Refusing invalid inspector/token-flow topology'
+  function removeLiveInspectorV3() {
+    document.documentElement.classList.remove(
+      'mf-live-inspector-standalone-layout-v1'
     );
-    return false;
+
+    const inspector = document.getElementById('inspector');
+    if (!inspector) return;
+
+    inspector.classList.remove('mf-live-inspector-standalone-v1');
+    inspector.classList.add('mf-live-inspector-removed-v3');
+    inspector.hidden = true;
+    inspector.setAttribute('aria-hidden', 'true');
+    inspector.style.display = 'none';
+    inspector.style.pointerEvents = 'none';
   }
 
-  const parent = tokenFlow.parentElement;
-
-  inspector.classList.add('mf-live-inspector-standalone-v1');
-  document.documentElement.classList.add(
-    'mf-live-inspector-standalone-layout-v1'
-  );
-
-  if (
-    inspector.parentElement !== parent ||
-    inspector.nextElementSibling !== tokenFlow
-  ) {
-    parent.insertBefore(inspector, tokenFlow);
+  if (document.readyState === 'loading') {
+    document.addEventListener(
+      'DOMContentLoaded',
+      removeLiveInspectorV3,
+      { once: true }
+    );
+  } else {
+    removeLiveInspectorV3();
   }
-
-  return (
-    inspector.parentElement === parent &&
-    inspector.nextElementSibling === tokenFlow
-  );
-}
-
-function mfLiveInspectorV1Install() {
-  if (MF_LIVE_INSPECTOR_STANDALONE_V1.installed) {
-    mfLiveInspectorV1Move();
-    return;
-  }
-
-  MF_LIVE_INSPECTOR_STANDALONE_V1.installed = true;
-
-  if (!mfLiveInspectorV1Move()) {
-    MF_LIVE_INSPECTOR_STANDALONE_V1.retryTimer = setInterval(() => {
-      MF_LIVE_INSPECTOR_STANDALONE_V1.retryCount += 1;
-
-      if (
-        mfLiveInspectorV1Move() ||
-        MF_LIVE_INSPECTOR_STANDALONE_V1.retryCount >= 120
-      ) {
-        clearInterval(
-          MF_LIVE_INSPECTOR_STANDALONE_V1.retryTimer
-        );
-        MF_LIVE_INSPECTOR_STANDALONE_V1.retryTimer = null;
-      }
-    }, 100);
-  }
-
-  MF_LIVE_INSPECTOR_STANDALONE_V1.observer =
-    new MutationObserver(() => {
-      const inspector = document.querySelector('.inspector');
-      const tokenFlow = mfLiveInspectorV1TokenFlow();
-
-      if (
-        inspector &&
-        tokenFlow &&
-        tokenFlow.parentElement &&
-        (
-          inspector.parentElement !== tokenFlow.parentElement ||
-          inspector.nextElementSibling !== tokenFlow
-        )
-      ) {
-        queueMicrotask(mfLiveInspectorV1Move);
-      }
-    });
-
-  MF_LIVE_INSPECTOR_STANDALONE_V1.observer.observe(
-    document.documentElement,
-    {
-      childList: true,
-      subtree: true
-    }
-  );
-
-  console.log(
-    '[LIVE-INSPECTOR-V1] Standalone LIVE INSPECTOR installed'
-  );
-}
-
-if (document.readyState === 'loading') {
-  document.addEventListener(
-    'DOMContentLoaded',
-    mfLiveInspectorV1Install,
-    { once: true }
-  );
-} else {
-  queueMicrotask(mfLiveInspectorV1Install);
-}
+})();
 
 /* ===== MEMEFLOW_3D_VIEWPORT_FREE_ORBIT_FIT_V4 ===== */
 

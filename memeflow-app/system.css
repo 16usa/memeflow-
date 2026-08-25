@@ -3044,3 +3044,43 @@ body.mf-settings-standalone .mf293-settings-error {
   }
 }
 /* ===== /MEMEFLOW_SYSTEM_PAGE_FLOW_REFRESH_V2 ===== */
+
+/* ===== MEMEFLOW_REMOVE_LIVE_INSPECTOR_V3 =====
+   User requested full removal of the visible LIVE INSPECTOR block
+   from the System Overview page.
+
+   We intentionally keep the inspector DOM node hidden/inert instead of
+   hard-deleting it, because other System page JS may still reference
+   those element IDs. This removes the block from layout and from view,
+   while keeping the page stable.
+*/
+#inspector,
+.inspector.mf-live-inspector-removed-v3,
+.inspector.mf-live-inspector-standalone-v1,
+html.mf-live-inspector-standalone-layout-v1 #inspector {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+
+  width: 0 !important;
+  min-width: 0 !important;
+  max-width: 0 !important;
+
+  height: 0 !important;
+  min-height: 0 !important;
+  max-height: 0 !important;
+
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  overflow: hidden !important;
+
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+html.mf-live-inspector-standalone-layout-v1 {
+  --mf-live-inspector-removed: 1;
+}
+/* ===== /MEMEFLOW_REMOVE_LIVE_INSPECTOR_V3 ===== */

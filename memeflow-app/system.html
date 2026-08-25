@@ -6,7 +6,7 @@
   <meta name="color-scheme" content="dark" />
   <meta name="description" content="MEMEFLOW Live System View — real-time 3D visualization of discovery, market, holder, evaluation and paper trading pipelines." />
   <title>MEMEFLOW · Live System View</title>
-  <link rel="stylesheet" href="/system.css?v=system-flow-refresh-v2" />
+  <link rel="stylesheet" href="/system.css?v=remove-live-inspector-v3" />
   <script type="importmap">
   {
     "imports": {
@@ -60,7 +60,7 @@
 
 <div class="scene-hint glass">Drag to orbit · Wheel / pinch to zoom · Tap a token or module</div>
 
-      <aside id="inspector" class="inspector glass">
+      <aside id="inspector" class="inspector glass mf-live-inspector-removed-v3" hidden aria-hidden="true">
         <div class="inspector-head">
           <div>
             <span class="eyebrow">LIVE INSPECTOR</span>
@@ -98,7 +98,7 @@
     <span>The system telemetry panel can still update, but WebGL/Three.js could not start.</span>
   </div>
 
-  <script type="module" src="/system.js?v=remove-trading-settings-header-v1"></script>
+  <script type="module" src="/system.js?v=remove-live-inspector-v3"></script>
 <script src="/memeflow-nav.js?v=global-right-drawer-v1" defer></script>
 </body>
 </html>
