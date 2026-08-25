@@ -3237,16 +3237,7 @@ function mf293ApplyProfilePreset(profile) {
 function mf293Build() {
   if (document.getElementById('mf293SettingsPanel')) return;
 
-  const actions = document.querySelector('.top-actions');
-  if (actions) {
-    const button = document.createElement('button');
-    button.id = 'mf293SettingsBtn';
-    button.className = 'tool-btn mf293-settings-trigger';
-    button.type = 'button';
-    button.textContent = 'Settings';
-    actions.insertBefore(button, document.getElementById('resetViewBtn') || null);
-    button.addEventListener('click', () => window.location.assign('/settings.html'));
-  }
+  /* MEMEFLOW_SYSTEM_REMOVE_TRADING_SETTINGS_HEADER_BUTTONS_V1: Settings header trigger removed; settings engine preserved. */
 
   const backdrop = document.createElement('div');
   backdrop.id = 'mf293SettingsBackdrop';
@@ -3556,27 +3547,8 @@ function mf293Install() {
 
 mf293Install();
 
-/* ===== MEMEFLOW V30 TRADING TERMINAL LINK ===== */
-(function mf30TradingLink(){
-  const actions = document.querySelector('.top-actions');
-  if (!actions || document.getElementById('mf30TradingBtn')) return;
+/* MEMEFLOW_SYSTEM_REMOVE_TRADING_SETTINGS_HEADER_BUTTONS_V1: legacy Trading header-link installer removed. */
 
-  const button = document.createElement('button');
-  button.id = 'mf30TradingBtn';
-  button.className = 'tool-btn';
-  button.type = 'button';
-  button.textContent = 'Trading';
-  button.addEventListener('click', () => {
-    window.location.href = '/trading.html';
-  });
-
-  const settings = document.getElementById('mf293SettingsBtn');
-  if (settings && settings.parentNode === actions) {
-    actions.insertBefore(button, settings);
-  } else {
-    actions.insertBefore(button, actions.firstChild);
-  }
-})();
 
 // MEMEFLOW_V31_REAL_EVENT_WEB
 
@@ -5268,15 +5240,8 @@ if (document.readyState === 'loading') {
 })();
 /* ===== /MEMEFLOW_REMOVE_BACK_AND_RESET_V7 ===== */
 
-/* ===== MEMEFLOW_STANDALONE_SETTINGS_PAGE_V1 ===== */
-document.addEventListener('click', (event) => {
-  const trigger = event.target?.closest?.('#mf293SettingsBtn, .mf293-settings-trigger');
-  if (!trigger) return;
-  event.preventDefault();
-  event.stopImmediatePropagation();
-  window.location.assign('/settings.html');
-}, true);
-/* ===== /MEMEFLOW_STANDALONE_SETTINGS_PAGE_V1 ===== */
+/* MEMEFLOW_SYSTEM_REMOVE_TRADING_SETTINGS_HEADER_BUTTONS_V1: obsolete System-page Settings trigger router removed. */
+
 
 /* ===== MEMEFLOW_GALLERY_LIVE_IFRAMES_V1 ===== */
 (() => {
