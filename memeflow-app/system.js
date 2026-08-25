@@ -5196,3 +5196,74 @@ if (document.readyState === 'loading') {
   }
 })();
 /* ===== /MEMEFLOW_REALTIME_PAGE_GALLERY_CAPTION_V6 ===== */
+
+/* ===== MEMEFLOW_REMOVE_BACK_AND_RESET_V7 ===== */
+(() => {
+  'use strict';
+
+  const PATCH_ID = 'MEMEFLOW_REMOVE_BACK_AND_RESET_V7';
+
+  function isResetViewButton(node) {
+    if (!node) return false;
+    const text = String(node.textContent || '')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .toLowerCase();
+    return text === 'reset view';
+  }
+
+  function removeTargets() {
+    const topbar = document.querySelector('.topbar');
+    if (!topbar) return false;
+
+    let changed = false;
+
+    const back = topbar.querySelector('.back');
+    if (back) {
+      back.remove();
+      changed = true;
+    }
+
+    const byId = document.getElementById('resetViewBtn');
+    if (byId) {
+      byId.remove();
+      changed = true;
+    }
+
+    const buttons = Array.from(topbar.querySelectorAll('button, .tool-btn'));
+    for (const button of buttons) {
+      if (isResetViewButton(button)) {
+        button.remove();
+        changed = true;
+      }
+    }
+
+    return changed;
+  }
+
+  function boot() {
+    removeTargets();
+
+    if (typeof MutationObserver !== 'function') return;
+
+    const topbar = document.querySelector('.topbar');
+    if (!topbar) return;
+
+    const observer = new MutationObserver(() => {
+      removeTargets();
+    });
+
+    observer.observe(topbar, { childList: true, subtree: true });
+
+    window.setTimeout(() => observer.disconnect(), 4000);
+
+    console.log(`[TOPBAR] ${PATCH_ID} mounted`);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', boot, { once: true });
+  } else {
+    boot();
+  }
+})();
+/* ===== /MEMEFLOW_REMOVE_BACK_AND_RESET_V7 ===== */
