@@ -1840,3 +1840,30 @@ and (
   .mfpg-card::after { display: none; }
 }
 /* ===== /MEMEFLOW_REALTIME_PAGE_GALLERY_V1 ===== */
+
+/* ===== MEMEFLOW_REALTIME_PAGE_GALLERY_CLEAN_V2 ===== */
+.viewport-wrap.mf-page-gallery-clean-v2 > #systemCanvas,
+.viewport-wrap.mf-page-gallery-clean-v2 > #memeflowTrue3DHost,
+.viewport-wrap.mf-page-gallery-clean-v2 > .scene-labels,
+.viewport-wrap.mf-page-gallery-clean-v2 > .scene-hint,
+.viewport-wrap.mf-page-gallery-clean-v2 > .mf-flow-v4 {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+.viewport-wrap.mf-page-gallery-clean-v2 .mf-flow-v4,
+.viewport-wrap.mf-page-gallery-clean-v2 .mf-flow-v4 canvas,
+.viewport-wrap.mf-page-gallery-clean-v2 .mf-flow-v4-topline,
+.viewport-wrap.mf-page-gallery-clean-v2 .mf-flow-v4-foot {
+  display: none !important;
+}
+
+.viewport-wrap.mf-page-gallery-clean-v2 #mfPageGallery {
+  display: grid !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  z-index: 100 !important;
+}
+/* ===== /MEMEFLOW_REALTIME_PAGE_GALLERY_CLEAN_V2 ===== */

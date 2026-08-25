@@ -4781,3 +4781,66 @@ if (document.readyState === 'loading') {
   }
 })();
 /* ===== /MEMEFLOW_REALTIME_PAGE_GALLERY_V1 ===== */
+
+/* ===== MEMEFLOW_REALTIME_PAGE_GALLERY_CLEAN_V2 ===== */
+(() => {
+  'use strict';
+
+  function removeLegacyFlowLayer() {
+    const viewport = document.querySelector(
+      '.viewport-wrap.mf-page-gallery-clean-v2, .viewport-wrap.mf-page-gallery-host'
+    );
+    if (!viewport) return;
+
+    viewport.classList.add('mf-page-gallery-host', 'mf-page-gallery-clean-v2');
+
+    viewport.querySelectorAll('.mf-flow-v4').forEach(node => node.remove());
+
+    const oldCanvas = viewport.querySelector('#systemCanvas');
+    const oldTrue3D = viewport.querySelector('#memeflowTrue3DHost');
+    const oldLabels = viewport.querySelector('.scene-labels');
+    const oldHint = viewport.querySelector('.scene-hint');
+
+    for (const node of [oldCanvas, oldTrue3D, oldLabels, oldHint]) {
+      if (!node) continue;
+      node.setAttribute('aria-hidden', 'true');
+      node.style.display = 'none';
+      node.style.pointerEvents = 'none';
+    }
+
+    try {
+      const old3D = window.__memeflowTrue3D;
+      if (old3D && typeof old3D.dispose === 'function') old3D.dispose();
+      window.__memeflowTrue3D = null;
+    } catch (_) {}
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', removeLegacyFlowLayer, { once: true });
+  } else {
+    removeLegacyFlowLayer();
+  }
+
+  const startGuard = () => {
+    const viewport = document.querySelector('.viewport-wrap');
+    if (!viewport || typeof MutationObserver !== 'function') return;
+
+    const observer = new MutationObserver(() => {
+      const legacy = viewport.querySelector('.mf-flow-v4');
+      if (legacy) removeLegacyFlowLayer();
+    });
+
+    observer.observe(viewport, { childList: true, subtree: false });
+
+    window.setTimeout(() => {
+      observer.disconnect();
+    }, 4000);
+  };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', startGuard, { once: true });
+  } else {
+    startGuard();
+  }
+})();
+/* ===== /MEMEFLOW_REALTIME_PAGE_GALLERY_CLEAN_V2 ===== */
