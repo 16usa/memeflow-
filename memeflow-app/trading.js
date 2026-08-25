@@ -3465,8 +3465,9 @@ function drawChart(){
   chartRuntime.api.setOption(
     {
       animation:false,
-      /* MEMEFLOW_TRADING_CHART_RESTORE_SITE_BG_V2: match page background; render logic untouched */
-      backgroundColor:'#0f141a',
+      /* MEMEFLOW_TRADING_CHART_RESTORE_SITE_BG_V2: render logic untouched */
+      /* MEMEFLOW_TRADING_CHART_MATCH_PANEL_V3: match surrounding panel surface */
+      backgroundColor:'#131b23',
       textStyle:{
         color:'#536f7b',
         fontFamily:'ui-monospace, SFMono-Regular, Menlo, monospace',
