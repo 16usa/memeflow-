@@ -2462,3 +2462,89 @@ button {
     font-size: 6.6px;
   }
 }
+
+/* MEMEFLOW_PUMPFUN_LOGO_LINK_V6
+ * Pump.fun is represented by the official Pump logomark.
+ * The mark itself is the click target: no button frame, no tile background.
+ */
+.token-source-link.pump.mf-pump-logo-link {
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+
+  display: inline-grid;
+  place-items: center;
+
+  padding: 0;
+  margin: 0;
+
+  border: 0 !important;
+  border-radius: 0 !important;
+  outline: 0;
+
+  background: transparent !important;
+  box-shadow: none !important;
+
+  color: inherit;
+  overflow: visible;
+
+  transform: none;
+}
+
+.token-source-link.pump.mf-pump-logo-link:hover {
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.token-source-link.pump.mf-pump-logo-link:active {
+  transform: scale(.92);
+}
+
+.mf-pump-logo {
+  width: 21px;
+  height: 21px;
+
+  display: block;
+
+  object-fit: contain;
+  object-position: center;
+
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+@media (max-width: 760px) {
+  .token-source-link.pump.mf-pump-logo-link {
+    width: 22px !important;
+    height: 22px !important;
+    min-width: 22px !important;
+
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+  }
+
+  .mf-pump-logo {
+    width: 19px;
+    height: 19px;
+  }
+}
+
+@media (max-width: 390px) {
+  .token-source-link.pump.mf-pump-logo-link {
+    width: 21px !important;
+    height: 21px !important;
+    min-width: 21px !important;
+  }
+
+  .mf-pump-logo {
+    width: 18px;
+    height: 18px;
+  }
+}

@@ -1014,13 +1014,23 @@ function tokenSourceLinksTemplate(row) {
 
   if (links.pump) {
     out.push(`
-      <a class="token-source-link pump" href="${escapeHtml(links.pump)}" target="_blank"
-         rel="noopener noreferrer" aria-label="Open on Pump.fun" title="Pump.fun">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M6 16V8h7.2a3.8 3.8 0 010 7.6H9.7"></path>
-          <path d="M16.8 8.7H20v3.2"></path>
-          <path d="M19.7 9l-3.8 3.8"></path>
-        </svg>
+      <!-- MEMEFLOW_PUMPFUN_LOGO_LINK_V6 -->
+      <a
+        class="token-source-link pump mf-pump-logo-link"
+        href="${escapeHtml(links.pump)}"
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Open token on Pump.fun"
+        title="Open on Pump.fun"
+      >
+        <img
+          class="mf-pump-logo"
+          src="https://pump.fun/pump-logomark.svg"
+          alt=""
+          loading="lazy"
+          decoding="async"
+          referrerpolicy="no-referrer"
+        >
       </a>`);
   }
 
