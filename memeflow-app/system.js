@@ -5278,440 +5278,225 @@ document.addEventListener('click', (event) => {
 }, true);
 /* ===== /MEMEFLOW_STANDALONE_SETTINGS_PAGE_V1 ===== */
 
-/* ===== MEMEFLOW_GALLERY_AUTO_SNAPSHOTS_5M_V1 ===== */
+/* ===== MEMEFLOW_GALLERY_LIVE_IFRAMES_V1 ===== */
 (() => {
   'use strict';
 
   /*
-    Why this is client-side:
-    the existing gallery is made from static .webp files. Simply adding a
-    cache-busting query every five minutes would reload the SAME old file.
-    This layer opens each real same-origin page off-screen, waits for it to
-    render, rasterizes the visible mobile viewport, writes the result into the
-    existing .mfpg-shot image, then destroys the temporary iframe.
+    TRUE LIVE PREVIEWS
 
-    Result:
-      - real refreshed preview
-      - no permanent iframe / duplicate SSE connections
-      - current 3D card/swipe/click code stays untouched
-      - static .webp remains the fallback if capture ever fails
+    Each existing 3D gallery card keeps its WEBP <img> as a fallback.
+    A same-origin iframe is mounted above that image and renders the actual
+    page continuously. Because the iframe itself has pointer-events:none,
+    all existing swipe/click/navigation behavior stays owned by the card.
+
+    This is deliberately NOT a screenshot loop:
+      - no html2canvas
+      - no polling interval
+      - no rasterization
+      - no 5-minute refresh
+      - the embedded page simply stays alive while System View is open
   */
 
-  const PATCH_ID = 'MEMEFLOW_GALLERY_AUTO_SNAPSHOTS_5M_V1';
-  const REFRESH_MS = 5 * 60 * 1000;
-  const CAPTURE_WIDTH = 390;
-  const CAPTURE_HEIGHT = 844;
-  const PAGE_SETTLE_MS = 4200;
-  const FRAME_TIMEOUT_MS = 22000;
-  const BETWEEN_CAPTURES_MS = 650;
+  const PATCH_ID = 'MEMEFLOW_GALLERY_LIVE_IFRAMES_V1';
+  const BASE_WIDTH = 390;
+  const BASE_HEIGHT = 844;
+  const LOAD_FADE_DELAY_MS = 450;
 
-  const PAGES = [
-    {
-      title: 'Trading Terminal',
-      url: '/trading.html'
-    },
-    {
-      title: 'System Settings',
-      url: '/settings.html'
-    },
-    {
-      title: 'Real-Time Pipeline',
-      url: '/system-tokens.html'
-    }
-  ];
+  const LIVE_PAGES = {
+    'Trading Terminal': '/trading.html',
+    'System Settings': '/settings.html',
+    'Real-Time Pipeline': '/system-tokens.html'
+  };
 
-  let running = false;
-  let lastCompletedAt = 0;
-  let html2CanvasPromise = null;
-  let scheduler = 0;
+  const states = new Map();
+  let resizeObserver = null;
   let stopped = false;
-  const activeFrames = new Set();
 
-  const wait = (ms) => new Promise(resolve => window.setTimeout(resolve, ms));
-
-  function loadHtml2Canvas() {
-    if (typeof window.html2canvas === 'function') {
-      return Promise.resolve(window.html2canvas);
-    }
-
-    if (html2CanvasPromise) {
-      return html2CanvasPromise;
-    }
-
-    html2CanvasPromise = new Promise((resolve, reject) => {
-      const existing = document.querySelector(
-        'script[data-mf-gallery-html2canvas="1"]'
-      );
-
-      if (existing) {
-        const started = Date.now();
-        const poll = window.setInterval(() => {
-          if (typeof window.html2canvas === 'function') {
-            window.clearInterval(poll);
-            resolve(window.html2canvas);
-            return;
-          }
-
-          if (Date.now() - started > 15000) {
-            window.clearInterval(poll);
-            reject(new Error('html2canvas load timeout'));
-          }
-        }, 100);
-        return;
-      }
-
-      const script = document.createElement('script');
-      script.src =
-        'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';
-      script.async = true;
-      script.dataset.mfGalleryHtml2canvas = '1';
-
-      script.onload = () => {
-        if (typeof window.html2canvas === 'function') {
-          resolve(window.html2canvas);
-        } else {
-          reject(new Error('html2canvas loaded without global API'));
-        }
-      };
-
-      script.onerror = () => {
-        reject(new Error('html2canvas CDN load failed'));
-      };
-
-      document.head.appendChild(script);
-    }).catch(error => {
-      html2CanvasPromise = null;
-      throw error;
-    });
-
-    return html2CanvasPromise;
-  }
-
-  function galleryCardForTitle(title) {
-    const cards = Array.from(
-      document.querySelectorAll('#mfPageGallery .mfpg-card')
-    );
-
-    return cards.find(card => {
-      const label = card.querySelector('.mfpg-title');
-      return String(label?.textContent || '').trim() === title;
-    }) || null;
-  }
-
-  function shotForTitle(title) {
-    return galleryCardForTitle(title)?.querySelector('.mfpg-shot') || null;
-  }
-
-  function previewUrl(baseUrl) {
-    const url = new URL(baseUrl, window.location.origin);
-    url.searchParams.set('mfGalleryPreview', '1');
-    url.searchParams.set('mfGalleryCapturedAt', String(Date.now()));
+  function previewUrl(path) {
+    const url = new URL(path, window.location.origin);
+    url.searchParams.set('mfGalleryLive', '1');
     return url.href;
   }
 
-  function makeFrame(url) {
-    const frame = document.createElement('iframe');
-    frame.src = previewUrl(url);
-    frame.width = String(CAPTURE_WIDTH);
-    frame.height = String(CAPTURE_HEIGHT);
-    frame.tabIndex = -1;
-    frame.setAttribute('aria-hidden', 'true');
-    frame.setAttribute(
-      'sandbox',
-      'allow-same-origin allow-scripts allow-forms allow-modals'
+  function cardTitle(card) {
+    return String(
+      card.querySelector('.mfpg-title')?.textContent || ''
+    ).trim();
+  }
+
+  function scaleFrame(state) {
+    const { card, frame } = state;
+    if (!card?.isConnected || !frame?.isConnected) return;
+
+    const width = Math.max(1, card.clientWidth);
+    const height = Math.max(1, card.clientHeight);
+
+    // Match the old object-fit:cover behavior:
+    // fill the complete card, crop only what does not fit.
+    const scale = Math.max(
+      width / BASE_WIDTH,
+      height / BASE_HEIGHT
     );
 
-    Object.assign(frame.style, {
-      position: 'fixed',
-      left: '-20000px',
-      top: '0',
-      width: `${CAPTURE_WIDTH}px`,
-      height: `${CAPTURE_HEIGHT}px`,
-      border: '0',
-      margin: '0',
-      padding: '0',
-      opacity: '0.001',
-      pointerEvents: 'none',
-      zIndex: '-2147483647',
-      background: '#0f141a'
-    });
-
-    document.body.appendChild(frame);
-    activeFrames.add(frame);
-    return frame;
+    frame.style.transform =
+      `translate(-50%, -50%) scale(${scale.toFixed(5)})`;
   }
 
-  function destroyFrame(frame) {
-    activeFrames.delete(frame);
-    try {
-      frame.src = 'about:blank';
-    } catch (_) {}
+  function makeLiveLayer(card, title, path) {
+    const shot = card.querySelector('.mfpg-shot');
+    if (!shot) return null;
 
-    try {
-      frame.remove();
-    } catch (_) {}
-  }
+    const layer = document.createElement('span');
+    layer.className = 'mfpg-live-viewport';
+    layer.setAttribute('aria-hidden', 'true');
 
-  function waitForFrameLoad(frame) {
-    return new Promise((resolve, reject) => {
-      let done = false;
+    const frame = document.createElement('iframe');
+    frame.className = 'mfpg-live-frame';
+    frame.src = previewUrl(path);
+    frame.width = String(BASE_WIDTH);
+    frame.height = String(BASE_HEIGHT);
+    frame.tabIndex = -1;
+    frame.setAttribute('aria-hidden', 'true');
+    frame.setAttribute('title', `${title} live preview`);
+    frame.setAttribute('loading', 'eager');
 
-      const finish = (fn, value) => {
-        if (done) return;
-        done = true;
-        window.clearTimeout(timeout);
-        frame.removeEventListener('load', onLoad);
-        frame.removeEventListener('error', onError);
-        fn(value);
-      };
+    // Important: no sandbox here. These are same-origin app pages and must
+    // retain the same cookies/session/API/SSE/WebSocket behavior as when
+    // opened normally.
+    layer.appendChild(frame);
 
-      const onLoad = () => finish(resolve);
-      const onError = () => finish(
-        reject,
-        new Error('preview iframe failed to load')
-      );
+    // Put live page after the fallback image but before labels/pulse.
+    shot.insertAdjacentElement('afterend', layer);
 
-      const timeout = window.setTimeout(() => {
-        finish(
-          reject,
-          new Error('preview iframe timed out')
-        );
-      }, FRAME_TIMEOUT_MS);
+    const state = {
+      card,
+      layer,
+      frame,
+      title,
+      path,
+      loaded: false
+    };
 
-      frame.addEventListener('load', onLoad, { once: true });
-      frame.addEventListener('error', onError, { once: true });
-    });
-  }
+    frame.addEventListener('load', () => {
+      if (stopped || !layer.isConnected) return;
 
-  async function waitForUsableDocument(frame) {
-    const started = Date.now();
+      state.loaded = true;
+      scaleFrame(state);
 
-    while (Date.now() - started < PAGE_SETTLE_MS) {
-      if (stopped) return;
-
-      try {
-        const doc = frame.contentDocument;
+      window.setTimeout(() => {
         if (
-          doc?.documentElement &&
-          doc?.body &&
-          doc.body.scrollHeight > 100 &&
-          doc.body.scrollWidth > 100
+          !stopped &&
+          layer.isConnected &&
+          state.loaded
         ) {
-          // Keep waiting through the settle window so live data/chart/settings
-          // can finish their first paint.
+          layer.classList.add('is-live');
+          card.dataset.mfLivePreview = 'ready';
         }
-      } catch (_) {}
+      }, LOAD_FADE_DELAY_MS);
+    });
 
-      await wait(180);
-    }
+    frame.addEventListener('error', () => {
+      card.dataset.mfLivePreview = 'fallback';
+      layer.classList.remove('is-live');
+    });
 
-    try {
-      frame.contentWindow?.scrollTo?.(0, 0);
-    } catch (_) {}
-
-    await wait(120);
+    return state;
   }
 
-  async function capturePage(page, html2canvas) {
-    const shot = shotForTitle(page.title);
-    if (!shot) {
-      throw new Error(`gallery shot not found: ${page.title}`);
-    }
-
-    const frame = makeFrame(page.url);
-
-    try {
-      await waitForFrameLoad(frame);
-      await waitForUsableDocument(frame);
-
-      if (stopped) return false;
-
-      const doc = frame.contentDocument;
-      const target = doc?.documentElement || doc?.body;
-
-      if (!target) {
-        throw new Error(`preview document unavailable: ${page.title}`);
-      }
-
-      const canvas = await html2canvas(target, {
-        backgroundColor: '#0f141a',
-        width: CAPTURE_WIDTH,
-        height: CAPTURE_HEIGHT,
-        windowWidth: CAPTURE_WIDTH,
-        windowHeight: CAPTURE_HEIGHT,
-        scrollX: 0,
-        scrollY: 0,
-        scale: Math.min(
-          1.5,
-          Math.max(1, Number(window.devicePixelRatio || 1))
-        ),
-        useCORS: true,
-        allowTaint: false,
-        logging: false,
-        imageTimeout: 8000,
-        removeContainer: true
-      });
-
-      const freshSrc = canvas.toDataURL('image/webp', 0.84);
-
-      if (!freshSrc || freshSrc.length < 1000) {
-        throw new Error(`empty captured image: ${page.title}`);
-      }
-
-      // Decode before replacing the visible image to prevent flashes.
-      const probe = new Image();
-      probe.decoding = 'async';
-      probe.src = freshSrc;
-
-      if (typeof probe.decode === 'function') {
-        try {
-          await probe.decode();
-        } catch (_) {}
-      }
-
-      shot.src = freshSrc;
-      shot.dataset.mfLiveSnapshot = '1';
-      shot.dataset.mfLiveSnapshotAt = String(Date.now());
-
-      const card = galleryCardForTitle(page.title);
-      if (card) {
-        card.dataset.mfSnapshotUpdatedAt = String(Date.now());
-      }
-
-      return true;
-    } finally {
-      destroyFrame(frame);
-    }
-  }
-
-  async function refreshSnapshots(reason = 'timer') {
-    if (running || stopped || document.hidden) {
-      return;
-    }
+  function mount() {
+    if (stopped) return true;
 
     const gallery = document.getElementById('mfPageGallery');
-    if (!gallery) {
-      return;
+    if (!gallery) return false;
+
+    const cards = Array.from(
+      gallery.querySelectorAll('.mfpg-card')
+    );
+
+    if (cards.length < 3) return false;
+
+    resizeObserver = new ResizeObserver(entries => {
+      for (const entry of entries) {
+        const state = states.get(entry.target);
+        if (state) scaleFrame(state);
+      }
+    });
+
+    for (const card of cards) {
+      const title = cardTitle(card);
+      const path = LIVE_PAGES[title];
+      if (!path || states.has(card)) continue;
+
+      const state = makeLiveLayer(card, title, path);
+      if (!state) continue;
+
+      states.set(card, state);
+      resizeObserver.observe(card);
+      scaleFrame(state);
     }
 
-    running = true;
-    gallery.dataset.mfSnapshotRefresh = 'running';
-    gallery.dataset.mfSnapshotRefreshReason = reason;
+    gallery.dataset.mfLivePages = '1';
+    gallery.dataset.mfLiveMode = 'continuous';
+    gallery.dataset.mfLivePageCount = String(states.size);
 
-    try {
-      const html2canvas = await loadHtml2Canvas();
-      let successCount = 0;
+    console.log(
+      `[PAGE-GALLERY] ${PATCH_ID} mounted; live pages=${states.size}`
+    );
 
-      for (const page of PAGES) {
-        if (stopped || document.hidden) break;
-
-        try {
-          const ok = await capturePage(page, html2canvas);
-          if (ok) successCount += 1;
-        } catch (error) {
-          // Keep the old static/current snapshot for this card.
-          console.warn(
-            '[PAGE-GALLERY] snapshot refresh failed',
-            page.title,
-            error?.message || error
-          );
-        }
-
-        await wait(BETWEEN_CAPTURES_MS);
-      }
-
-      if (successCount > 0) {
-        lastCompletedAt = Date.now();
-        gallery.dataset.mfSnapshotUpdatedAt = String(lastCompletedAt);
-        gallery.dataset.mfSnapshotRefresh = 'ready';
-      } else {
-        gallery.dataset.mfSnapshotRefresh = 'fallback';
-      }
-    } catch (error) {
-      gallery.dataset.mfSnapshotRefresh = 'fallback';
-      console.warn(
-        '[PAGE-GALLERY] snapshot engine unavailable; static previews kept',
-        error?.message || error
-      );
-    } finally {
-      running = false;
-    }
+    return states.size >= 3;
   }
 
-  function startScheduler() {
-    if (scheduler || stopped) return;
-
-    // First fresh capture shortly after the System View/gallery is ready.
-    window.setTimeout(() => {
-      refreshSnapshots('initial');
-    }, 1800);
-
-    // A light scheduler checks age; actual recapture is exactly on/after 5 min.
-    scheduler = window.setInterval(() => {
-      if (
-        !document.hidden &&
-        !running &&
-        Date.now() - lastCompletedAt >= REFRESH_MS
-      ) {
-        refreshSnapshots('5-minute');
-      }
-    }, 15000);
-  }
-
-  function waitForGallery() {
+  function boot() {
     let attempts = 0;
 
     const timer = window.setInterval(() => {
       attempts += 1;
 
-      const gallery = document.getElementById('mfPageGallery');
-      const cards = gallery?.querySelectorAll('.mfpg-card');
-
-      if (gallery && cards?.length >= 3) {
-        window.clearInterval(timer);
-        gallery.dataset.mfSnapshotIntervalMs = String(REFRESH_MS);
-        startScheduler();
-        console.log(
-          `[PAGE-GALLERY] ${PATCH_ID} mounted; interval=${REFRESH_MS}ms`
-        );
-        return;
-      }
-
-      if (attempts >= 80) {
+      if (mount() || attempts >= 100) {
         window.clearInterval(timer);
       }
     }, 100);
   }
 
+  function destroy() {
+    stopped = true;
+
+    try {
+      resizeObserver?.disconnect();
+    } catch (_) {}
+
+    for (const state of states.values()) {
+      try {
+        state.frame.src = 'about:blank';
+      } catch (_) {}
+
+      try {
+        state.layer.remove();
+      } catch (_) {}
+    }
+
+    states.clear();
+  }
+
+  // Pages keep updating naturally while visible. On return from background,
+  // only re-scale them; do not reload them and lose their live state.
   document.addEventListener('visibilitychange', () => {
-    if (
-      !document.hidden &&
-      !running &&
-      Date.now() - lastCompletedAt >= REFRESH_MS
-    ) {
-      refreshSnapshots('visibility-resume');
+    if (!document.hidden) {
+      for (const state of states.values()) {
+        scaleFrame(state);
+      }
     }
   });
 
-  window.addEventListener('pagehide', () => {
-    stopped = true;
-
-    if (scheduler) {
-      window.clearInterval(scheduler);
-      scheduler = 0;
-    }
-
-    for (const frame of [...activeFrames]) {
-      destroyFrame(frame);
-    }
-  }, { once: true });
+  window.addEventListener('pagehide', destroy, { once: true });
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', waitForGallery, {
+    document.addEventListener('DOMContentLoaded', boot, {
       once: true
     });
   } else {
-    waitForGallery();
+    boot();
   }
 })();
-/* ===== /MEMEFLOW_GALLERY_AUTO_SNAPSHOTS_5M_V1 ===== */
+/* ===== /MEMEFLOW_GALLERY_LIVE_IFRAMES_V1 ===== */

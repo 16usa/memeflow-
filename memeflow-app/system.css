@@ -2757,3 +2757,86 @@ body.mf-settings-standalone .mf293-settings-error {
   No boot timing, loader assets, animation, JS, or application logic changed.
 */
 /* ===== /MEMEFLOW_SYSTEM_BOOT_MATCH_SITE_BG_V1 ===== */
+
+/* ===== MEMEFLOW_GALLERY_LIVE_IFRAMES_V1 ===== */
+
+/*
+  Live page sits exactly where the old screenshot sits.
+  WEBP remains below it as zero-cost instant fallback.
+*/
+#mfPageGallery .mfpg-card {
+  isolation: isolate;
+}
+
+#mfPageGallery .mfpg-shot {
+  position: relative;
+  z-index: 0;
+}
+
+#mfPageGallery .mfpg-live-viewport {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+
+  display: block;
+  overflow: hidden;
+
+  border-radius: inherit;
+  background: #0f141a;
+
+  opacity: 0;
+  visibility: hidden;
+
+  pointer-events: none !important;
+  user-select: none;
+  -webkit-user-select: none;
+
+  transition:
+    opacity 260ms ease,
+    visibility 260ms ease;
+}
+
+#mfPageGallery .mfpg-live-viewport.is-live {
+  opacity: 1;
+  visibility: visible;
+}
+
+#mfPageGallery .mfpg-live-frame {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+
+  width: 390px !important;
+  height: 844px !important;
+  min-width: 390px !important;
+  min-height: 844px !important;
+
+  margin: 0;
+  padding: 0;
+  border: 0;
+
+  transform-origin: center center;
+
+  background: #0f141a;
+
+  pointer-events: none !important;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Labels and launch FX must always stay above the living page. */
+#mfPageGallery .mfpg-label,
+#mfPageGallery .mfpg-pulse {
+  position: relative;
+  z-index: 5;
+}
+
+/*
+  Prevent the embedded document from stealing touch gestures even on Safari.
+  Parent .mfpg-card remains the click/swipe target.
+*/
+#mfPageGallery iframe.mfpg-live-frame {
+  touch-action: none !important;
+}
+
+/* ===== /MEMEFLOW_GALLERY_LIVE_IFRAMES_V1 ===== */
