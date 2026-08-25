@@ -2840,3 +2840,69 @@ body.mf-settings-standalone .mf293-settings-error {
 }
 
 /* ===== /MEMEFLOW_GALLERY_LIVE_IFRAMES_V1 ===== */
+
+/* ===== MEMEFLOW_CAPTION_FLOW_FIX_V1 =====
+   The lower architecture/legend/telemetry/TOKEN FLOW cards were removed.
+   The old <=900px shell grid depended on those extra siblings; without them
+   the gallery row stretches and pushes/overlaps the page caption.
+   This restores natural document flow without bringing any deleted block back.
+*/
+.system-shell.mf-caption-flow-fix-v1 {
+  display: block !important;
+  height: auto !important;
+  min-height: 100dvh !important;
+  overflow: visible !important;
+
+  grid-template-rows: none !important;
+  grid-auto-rows: auto !important;
+  align-content: initial !important;
+}
+
+.system-shell.mf-caption-flow-fix-v1 > .topbar {
+  margin: 0 !important;
+}
+
+.system-shell.mf-caption-flow-fix-v1 > .viewport-wrap {
+  display: block !important;
+  margin: 6px 0 0 !important;
+  flex: none !important;
+}
+
+.system-shell.mf-caption-flow-fix-v1 > .mfpg-caption {
+  position: relative !important;
+  inset: auto !important;
+  display: block !important;
+  width: 100% !important;
+  height: auto !important;
+  min-height: 0 !important;
+
+  margin: -2px 0 14px !important;
+  padding-left: 18px !important;
+  padding-right: 18px !important;
+
+  transform: none !important;
+  clear: both !important;
+  z-index: 12 !important;
+}
+
+.system-shell.mf-caption-flow-fix-v1 > .mfpg-caption .mfpg-caption-inner {
+  min-height: 74px !important;
+}
+
+@media (max-width: 600px) {
+  .system-shell.mf-caption-flow-fix-v1 > .viewport-wrap {
+    margin-top: 6px !important;
+  }
+
+  .system-shell.mf-caption-flow-fix-v1 > .mfpg-caption {
+    margin-top: -1px !important;
+    margin-bottom: 12px !important;
+    padding-left: 14px !important;
+    padding-right: 14px !important;
+  }
+
+  .system-shell.mf-caption-flow-fix-v1 > .mfpg-caption .mfpg-caption-inner {
+    min-height: 68px !important;
+  }
+}
+/* ===== /MEMEFLOW_CAPTION_FLOW_FIX_V1 ===== */
