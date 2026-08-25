@@ -4844,3 +4844,204 @@ if (document.readyState === 'loading') {
   }
 })();
 /* ===== /MEMEFLOW_REALTIME_PAGE_GALLERY_CLEAN_V2 ===== */
+
+/* ===== MEMEFLOW_REALTIME_PAGE_GALLERY_SWIPE_V3 ===== */
+(() => {
+  'use strict';
+
+  const PATCH_ID = 'MEMEFLOW_REALTIME_PAGE_GALLERY_SWIPE_V3';
+  const MIN_SWIPE_X = 46;
+  const AXIS_LOCK_GAP = 8;
+  const CLICK_SUPPRESS_MS = 320;
+
+  function wrapIndex(index, length) {
+    return ((index % length) + length) % length;
+  }
+
+  function getGalleryState() {
+    const gallery = document.getElementById('mfPageGallery');
+    if (!gallery) return null;
+    const deck = gallery.querySelector('.mfpg-deck');
+    if (!deck) return null;
+
+    const cards = Array.from(deck.querySelectorAll('.mfpg-card'));
+    if (cards.length < 3) return null;
+
+    cards.sort((a, b) => {
+      const order = { left: 0, center: 1, right: 2 };
+      return (order[a.dataset.slot] ?? 99) - (order[b.dataset.slot] ?? 99);
+    });
+
+    let activeIndex = cards.findIndex(card => card.dataset.slot === 'center');
+    if (activeIndex < 0) activeIndex = 1;
+
+    return {
+      gallery,
+      deck,
+      cards,
+      activeIndex,
+      swipe: null,
+      suppressClickUntil: 0,
+      dots: []
+    };
+  }
+
+  function ensureDots(state) {
+    let dotsWrap = state.gallery.querySelector('.mfpg-dots');
+    if (!dotsWrap) {
+      dotsWrap = document.createElement('div');
+      dotsWrap.className = 'mfpg-dots';
+      dotsWrap.setAttribute('aria-hidden', 'true');
+      state.gallery.appendChild(dotsWrap);
+    }
+
+    dotsWrap.innerHTML = '';
+    state.dots = state.cards.map(() => {
+      const dot = document.createElement('span');
+      dot.className = 'mfpg-dot';
+      dotsWrap.appendChild(dot);
+      return dot;
+    });
+  }
+
+  function updateDots(state) {
+    state.dots.forEach((dot, index) => {
+      dot.classList.toggle('is-active', index == state.activeIndex);
+    });
+  }
+
+  function render(state, pulseCard = null) {
+    const n = state.cards.length;
+    state.cards.forEach((card, index) => {
+      const diff = (index - state.activeIndex + n) % n;
+      let slot = 'hidden';
+      if (diff === 0) slot = 'center';
+      else if (diff === 1) slot = 'right';
+      else if (diff === n - 1) slot = 'left';
+
+      card.dataset.slot = slot;
+      card.setAttribute('aria-current', slot === 'center' ? 'true' : 'false');
+      card.classList.toggle('is-selected-pulse', pulseCard === card && slot === 'center');
+    });
+    updateDots(state);
+  }
+
+  function shift(state, direction) {
+    state.activeIndex = wrapIndex(state.activeIndex + direction, state.cards.length);
+    state.gallery.classList.add('is-swipe-armed');
+    render(state, state.cards[state.activeIndex]);
+    window.setTimeout(() => {
+      state.gallery.classList.remove('is-swipe-armed');
+      state.cards.forEach(card => card.classList.remove('is-selected-pulse'));
+    }, 260);
+  }
+
+  function focusCard(state, card) {
+    const nextIndex = state.cards.indexOf(card);
+    if (nextIndex < 0 || nextIndex === state.activeIndex) return false;
+    state.activeIndex = nextIndex;
+    state.gallery.classList.add('is-swipe-armed');
+    render(state, card);
+    window.setTimeout(() => {
+      state.gallery.classList.remove('is-swipe-armed');
+      state.cards.forEach(item => item.classList.remove('is-selected-pulse'));
+    }, 260);
+    return true;
+  }
+
+  function installInteraction(state) {
+    ensureDots(state);
+    render(state);
+
+    state.gallery.addEventListener('click', event => {
+      const card = event.target.closest('.mfpg-card');
+      if (!card) return;
+
+      if (Date.now() < state.suppressClickUntil) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        return;
+      }
+
+      if (card.dataset.slot !== 'center') {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        focusCard(state, card);
+      }
+    }, true);
+
+    let startX = 0;
+    let startY = 0;
+    let axis = null;
+
+    state.gallery.addEventListener('touchstart', event => {
+      if (!event.touches || event.touches.length !== 1) return;
+      const touch = event.touches[0];
+      startX = touch.clientX;
+      startY = touch.clientY;
+      axis = null;
+    }, { passive: true });
+
+    state.gallery.addEventListener('touchmove', event => {
+      if (!event.touches || event.touches.length !== 1) return;
+      const touch = event.touches[0];
+      const dx = touch.clientX - startX;
+      const dy = touch.clientY - startY;
+
+      if (axis == null) {
+        if (Math.abs(dx) > Math.abs(dy) + AXIS_LOCK_GAP) axis = 'x';
+        else if (Math.abs(dy) > Math.abs(dx) + AXIS_LOCK_GAP) axis = 'y';
+      }
+
+      if (axis === 'x') {
+        event.preventDefault();
+      }
+    }, { passive: false });
+
+    state.gallery.addEventListener('touchend', event => {
+      const touch = event.changedTouches && event.changedTouches[0];
+      if (!touch) return;
+
+      const dx = touch.clientX - startX;
+      const dy = touch.clientY - startY;
+      const horizontal = Math.abs(dx) > Math.abs(dy) + AXIS_LOCK_GAP;
+
+      if (horizontal && Math.abs(dx) >= MIN_SWIPE_X) {
+        state.suppressClickUntil = Date.now() + CLICK_SUPPRESS_MS;
+        shift(state, dx < 0 ? 1 : -1);
+      }
+
+      axis = null;
+    }, { passive: true });
+
+    state.gallery.addEventListener('keydown', event => {
+      if (event.key === 'ArrowLeft') {
+        event.preventDefault();
+        shift(state, -1);
+      } else if (event.key === 'ArrowRight') {
+        event.preventDefault();
+        shift(state, 1);
+      }
+    });
+
+    console.log(`[PAGE-GALLERY] ${PATCH_ID} mounted`);
+  }
+
+  function boot() {
+    const state = getGalleryState();
+    if (!state || state.gallery.dataset.swipeReady === '1') return;
+    state.gallery.dataset.swipeReady = '1';
+    installInteraction(state);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+      window.setTimeout(boot, 0);
+      window.setTimeout(boot, 350);
+    }, { once: true });
+  } else {
+    window.setTimeout(boot, 0);
+    window.setTimeout(boot, 350);
+  }
+})();
+/* ===== /MEMEFLOW_REALTIME_PAGE_GALLERY_SWIPE_V3 ===== */
