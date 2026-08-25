@@ -3003,6 +3003,13 @@ const MF293_GROUPS = [
     ['dailyLossLimit', 'Daily loss limit SOL', 'number', 0, null, 0.01],
     ['feeReserve', 'Fee reserve SOL', 'number', 0, null, 0.001]
   ]],
+  /* MEMEFLOW_NATIVE_COPY_TRADING_SETTINGS_V3 */
+  ['copyTrading', 'Copy trading', 'Mirror a Solana wallet with your own position size', false, [
+    ['copyTradingEnabled', 'Enable copy trading', 'boolean'],
+    ['copyTradingWallet', 'Tracked Solana wallet', 'text'],
+    ['copyTradingBuyAmountSol', 'Your BUY size · SOL', 'number', 0.001, null, 0.001],
+    ['copyTradingMirrorSells', 'Mirror sells proportionally', 'boolean']
+  ]],
   ['filters', 'Entry filters', 'Market, holder, concentration and token filters', false, [
     ['minLiquidityUsd', 'Minimum liquidity USD', 'number', 0, null, 1],
     ['minHolders', 'Minimum holders', 'nullable', 0, null, 1],
