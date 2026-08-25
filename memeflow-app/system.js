@@ -663,7 +663,9 @@ function syncTokenMeshes(sample = []) {
 }
 
 function renderRail(sample = []) {
-  $('tokenRail').innerHTML = sample.length
+  const tokenRailEl = $('tokenRail');
+  if (!tokenRailEl) return;
+  tokenRailEl.innerHTML = sample.length
     ? sample.map((row) => {
         const key = stateKey(row.decision?.state);
         const state = row.decision?.state || 'WAITING';
@@ -764,8 +766,13 @@ async function refreshTelemetry() {
   /* CLEAN V29 keeps token telemetry in the rail only. */
   renderRail(ranked);
 
-  $('telemetryMode').classList.toggle('offline', !(diag || discovery));
-  $('telemetryMode').lastChild.textContent = (diag || discovery) ? 'LIVE' : 'DEGRADED';
+  const telemetryModeEl = $('telemetryMode');
+  if (telemetryModeEl) {
+    telemetryModeEl.classList.toggle('offline', !(diag || discovery));
+    if (telemetryModeEl.lastChild) {
+      telemetryModeEl.lastChild.textContent = (diag || discovery) ? 'LIVE' : 'DEGRADED';
+    }
+  }
 
   if (app.selected?.kind === 'token') {
     const latest = (diag?.sample || []).find((x) => x.mint === app.selected.mint);
