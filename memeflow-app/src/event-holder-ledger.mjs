@@ -101,7 +101,7 @@ export class EventHolderLedger{
   row(m,decimals=6){
     let r=this.byMint.get(m);
     if(!r){
-      r={mint:m,creator:null,balances:new Map(),firstSeenAt:Date.now(),lastSeenAt:null,txCount:0,decimals};
+      r={mint:m,creator:null,totalSupplyRaw:null,balances:new Map(),firstSeenAt:Date.now(),lastSeenAt:null,txCount:0,decimals};
       this.byMint.set(m,r);
       this.metrics.mintsSeen++;
     }else if(Number.isInteger(decimals))r.decimals=decimals;
@@ -116,6 +116,34 @@ export class EventHolderLedger{
       r.creator=creator;
     }
     this.metrics.creatorLinksSet++;
+    this.schedule();
+  }
+
+
+  // MEMEFLOW_WS_FIRST_PREOPEN_RPC_V1
+  // Immutable CreateEvent data. No Solana HTTP RPC.
+  setCreateState(mint,{creator=null,totalSupplyRaw=null,decimals=6}={}){
+    if(!mint)return;
+
+    if(creator)this.setCreator(mint,creator);
+
+    const d=Number(decimals);
+    const r=this.row(
+      mint,
+      Number.isInteger(d)&&d>=0&&d<=18?d:6
+    );
+
+    try{
+      if(totalSupplyRaw!==null&&totalSupplyRaw!==undefined){
+        const raw=
+          typeof totalSupplyRaw==='bigint'
+            ? totalSupplyRaw
+            : BigInt(String(totalSupplyRaw));
+
+        if(raw>0n)r.totalSupplyRaw=raw;
+      }
+    }catch{}
+
     this.schedule();
   }
 
@@ -229,16 +257,26 @@ export class EventHolderLedger{
       .filter(([,a])=>a>0n)
       .sort((a,b)=>a[1]===b[1]?0:(a[1]>b[1]?-1:1));
 
-    const totalSupply=supplyRaw(r.decimals??6);
+    const totalSupply=(typeof r.totalSupplyRaw==='bigint'&&r.totalSupplyRaw>0n)?r.totalSupplyRaw:supplyRaw(r.decimals??6);
     const top10=holders.slice(0,10).reduce((s,[,a])=>s+a,0n);
     const dev=r.creator?(r.balances.get(r.creator)||0n):0n;
     const tracked=holders.reduce((s,[,a])=>s+a,0n);
+    // MEMEFLOW_WS_FIRST_PREOPEN_RPC_V1
+    // Addresses come ONLY from Pump TradeEvent.user.
+    const holderRiskWallets=holders.slice(0,8).map(([wallet,amount])=>({
+      wallet,
+      pct:pct(amount,totalSupply)
+    }));
+    const holderRiskWalletsKey=holderRiskWallets.map(x=>x.wallet).join('|');
 
     return {
       mint:m,
       holderFresh:true,
       holderSource:'event-ledger-v12-24-user-only',
       holderCount:holders.length,
+      holderRiskWallets,
+      holderRiskWalletsKey,
+      holderRiskWalletsScannedAt:r.lastSeenAt||Date.now(),
       top10Pct:pct(top10,totalSupply),
       developerPct:r.creator?pct(dev,totalSupply):null,
       developerSharePct:r.creator?pct(dev,totalSupply):null,
@@ -290,6 +328,9 @@ export class EventHolderLedger{
         lastSeenAt:r.lastSeenAt,
         txCount:r.txCount,
         decimals:r.decimals,
+        totalSupplyRaw:(typeof r.totalSupplyRaw==='bigint'&&r.totalSupplyRaw>0n)
+          ?r.totalSupplyRaw.toString()
+          :null,
         balances:Object.fromEntries([...r.balances].map(([k,v])=>[k,v.toString()]))
       };
       fs.writeFileSync(STATE+'.tmp',JSON.stringify(o));
@@ -314,8 +355,13 @@ export class EventHolderLedger{
           lastSeenAt:s.lastSeenAt||null,
           txCount:s.txCount||0,
           decimals:Number.isInteger(s.decimals)?s.decimals:6,
+          totalSupplyRaw:null,
           balances:new Map()
         };
+        try{
+          const raw=BigInt(String(s.totalSupplyRaw||0));
+          if(raw>0n)r.totalSupplyRaw=raw;
+        }catch{}
         for(const[k,v]of Object.entries(s.balances||{})){
           try{
             const a=BigInt(v);

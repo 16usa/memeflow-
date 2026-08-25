@@ -193,29 +193,51 @@ export function evaluateSettingsGate(token={},settings={}){
   range('Developer share','developerPct','minDeveloperPct','maxDeveloperPct');
   range('Sniper share','sniperPct','minSniperPct','maxSniperPct');
 
-  // MEMEFLOW_WALLET_CLUSTER_RISK_V3
-  // These are existing user-configurable maxima. Missing evidence is WAITING,
-  // known excess is BLOCKED, and a known value below the limit passes.
+  // MEMEFLOW_WS_FIRST_PREOPEN_RPC_V1
+  // Final pre-open policy. Missing RPC evidence is intentionally absent from
+  // the fast scanner. Once known, excess linked-wallet risk is hard BLOCKED.
   const maxRiskyWallets=settingNumber(settings,'maxSuspectedRiskyWalletsPct');
+
   if(maxRiskyWallets!==null){
     const value=metric(token,'suspectedRiskyWalletsPct');
-    add(
-      'Suspected risky wallets maximum',
-      value===null?null:value<=maxRiskyWallets,
-      `suspected risky wallets above ${maxRiskyWallets}%`,
-      {key:'maxSuspectedRiskyWalletsPct',value,threshold:maxRiskyWallets,operator:'<=',retryable:true,source:'suspectedRiskyWalletsPct'}
-    );
+
+    if(value!==null){
+      add(
+        'Suspected risky wallets maximum',
+        value<=maxRiskyWallets,
+        `suspected risky wallets above ${maxRiskyWallets}%`,
+        {
+          key:'maxSuspectedRiskyWalletsPct',
+          value,
+          threshold:maxRiskyWallets,
+          operator:'<=',
+          retryable:false,
+          source:'suspectedRiskyWalletsPct'
+        }
+      );
+    }
   }
 
   const maxInsiders=settingNumber(settings,'maxInsidersPct');
+
   if(maxInsiders!==null){
     const value=metric(token,'insidersPct');
-    add(
-      'Insiders maximum',
-      value===null?null:value<=maxInsiders,
-      `creator-linked wallets above ${maxInsiders}%`,
-      {key:'maxInsidersPct',value,threshold:maxInsiders,operator:'<=',retryable:true,source:'insidersPct'}
-    );
+
+    if(value!==null){
+      add(
+        'Insiders maximum',
+        value<=maxInsiders,
+        `creator-linked wallets above ${maxInsiders}%`,
+        {
+          key:'maxInsidersPct',
+          value,
+          threshold:maxInsiders,
+          operator:'<=',
+          retryable:false,
+          source:'insidersPct'
+        }
+      );
+    }
   }
 
   const minLiquidity=enabledPositive(settings,'minLiquidityUsd');

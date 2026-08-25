@@ -259,6 +259,91 @@ export function u64(buf,o){return Number(buf.readBigUInt64LE(o))}
 export function decodeCurve(base64,decimals=6){const b=Buffer.from(base64,'base64');if(b.length<49)throw Error('Bonding curve account too short');let o=8;const virtualToken=u64(b,o);o+=8;const virtualSol=u64(b,o);o+=8;const realToken=u64(b,o);o+=8;const realSol=u64(b,o);o+=8;const supply=u64(b,o);o+=8;const complete=Boolean(b[o]);const priceSol=virtualToken>0?(virtualSol/1e9)/(virtualToken/10**decimals):null;return {virtualToken,virtualSol,realToken,realSol,supply,complete,priceSol,liquiditySol:realSol/1e9}}
 export function decodeCreateData(data){try{const b=b58decode(data),disc=[...b.subarray(0,8)],create='24,30,200,40,5,28,7,119',create2='214,144,76,236,95,139,49,180';if(disc.join(',')!==create&&disc.join(',')!==create2)return null;let o=8;const str=()=>{const n=b.readUInt32LE(o);o+=4;const s=b.subarray(o,o+n).toString('utf8');o+=n;return s};return {kind:disc.join(',')===create?'create':'create_v2',name:str(),symbol:str(),uri:str()}}catch{return null}}
 
+
+// MEMEFLOW_WS_FIRST_PREOPEN_RPC_V1
+// Anchor CreateEvent discriminator = sha256("event:CreateEvent")[0:8].
+// Consume Program data directly from logsSubscribe. No HTTP RPC.
+export const PUMP_EVENT_CREATE=[27,114,169,77,222,235,99,118];
+
+function __pumpCreateEventBuffer(log){
+  if(Buffer.isBuffer(log))return log;
+  const m=/^Program data:\s*([A-Za-z0-9+/=]+)\s*$/.exec(String(log||'').trim());
+  if(!m)return null;
+  try{return Buffer.from(m[1],'base64')}catch{return null}
+}
+
+export function decodePumpCreateEventLog(log){
+  const b=__pumpCreateEventBuffer(log);
+  if(!b||b.length<8||!b.subarray(0,8).equals(Buffer.from(PUMP_EVENT_CREATE)))return null;
+
+  let o=8;
+
+  try{
+    const str=()=>{
+      if(o+4>b.length)throw Error('create-event string length missing');
+      const n=b.readUInt32LE(o);o+=4;
+      if(n<0||n>16384||o+n>b.length)throw Error('create-event string out of range');
+      const s=b.subarray(o,o+n).toString('utf8');o+=n;
+      return s;
+    };
+
+    const pk=()=>{
+      if(o+32>b.length)throw Error('create-event pubkey missing');
+      const s=b58encode(b.subarray(o,o+32));o+=32;
+      return s;
+    };
+
+    const i64=()=>{
+      if(o+8>b.length)throw Error('create-event i64 missing');
+      const v=b.readBigInt64LE(o);o+=8;return v;
+    };
+
+    const u64b=()=>{
+      if(o+8>b.length)throw Error('create-event u64 missing');
+      const v=b.readBigUInt64LE(o);o+=8;return v;
+    };
+
+    const name=str();
+    const symbol=str();
+    const uri=str();
+
+    const mint=pk();
+    const bondingCurve=pk();
+    const user=pk();
+    const creator=pk();
+
+    const timestamp=i64();
+    const virtualTokenReserves=u64b();
+    const virtualSolReserves=u64b();
+    const realTokenReserves=u64b();
+    const tokenTotalSupply=u64b();
+
+    let tokenProgram=null;
+    let isMayhemMode=null;
+    let isCashbackEnabled=null;
+
+    if(o+32<=b.length)tokenProgram=pk();
+    if(o<b.length&&(b[o]===0||b[o]===1))isMayhemMode=b[o++]===1;
+    if(o<b.length&&(b[o]===0||b[o]===1))isCashbackEnabled=b[o++]===1;
+
+    return {
+      kind:'create_event',
+      name,symbol,uri,
+      mint,bondingCurve,user,creator,
+      timestamp,
+      virtualTokenReserves,
+      virtualSolReserves,
+      realTokenReserves,
+      tokenTotalSupply,
+      tokenProgram,
+      isMayhemMode,
+      isCashbackEnabled
+    };
+  }catch{
+    return null;
+  }
+}
+
 /**
  * Decode a single Pump.fun instruction into a create record.
  * Returns {ok:true, mint, curve, creator, name, symbol, uri, kind}

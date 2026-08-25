@@ -1,5 +1,5 @@
 import http from 'node:http';import fs from 'node:fs';import path from 'node:path';import crypto from 'node:crypto';import zlib from 'node:zlib';import {fileURLToPath} from 'node:url';
-import {JsonStore,sessionId,defaults} from './src/store.mjs';import {RpcPool,validPubkey,decodeCurve,decodeCreateData,decodePumpCreate,shouldExcludeMayhemCreate} from './src/solana.mjs';import {evaluate,tokenAgeMinutes} from './src/evaluate.mjs';import {evaluateSettingsAdmission,settingsContextSignature} from './src/settings-gate.mjs';import {validateSettings,PROFILE_PRESETS} from './src/settings.mjs';import {StripeBilling} from './src/billing.mjs';
+import {JsonStore,sessionId,defaults} from './src/store.mjs';import {RpcPool,validPubkey,decodeCurve,decodeCreateData,decodePumpCreate,decodePumpCreateEventLog,shouldExcludeMayhemCreate} from './src/solana.mjs';import {evaluate,tokenAgeMinutes} from './src/evaluate.mjs';import {evaluateSettingsAdmission,settingsContextSignature} from './src/settings-gate.mjs';import {validateSettings,PROFILE_PRESETS} from './src/settings.mjs';import {StripeBilling} from './src/billing.mjs';
 import {OpenAIIntelligence} from './src/openai-intelligence.mjs';import {PaperEngine} from './src/paper-engine.mjs';import {CopyTradingManager} from './src/copy-trading.mjs'; // MEMEFLOW_COPY_TRADING_V1
 import {enrichToken,enrichHolders,makeEnrichDiag,makeHolderQueue,makeHolderMetrics} from './src/enrich.mjs';
 import {makeRecoveryMetrics,startDecisionRecovery,lazyRecoverUser} from './src/recovery.mjs';
@@ -19,6 +19,21 @@ const root=path.dirname(fileURLToPath(import.meta.url)),dataDir=path.resolve(roo
 const paper=new PaperEngine(store);
 const billing=new StripeBilling({store,secretKey:process.env.STRIPE_SECRET_KEY,priceId:process.env.STRIPE_PRICE_ID,webhookSecret:process.env.STRIPE_WEBHOOK_SECRET,apiBase:process.env.STRIPE_API_BASE});
 const rpcUrls=(process.env.SOLANA_RPC_URLS||'').split(',').map(x=>x.trim()).filter(Boolean),wsUrls=(process.env.SOLANA_WS_URLS||'').split(',').map(x=>x.trim()).filter(Boolean);const rpc=new RpcPool(rpcUrls,process.env.SOLANA_COMMITMENT||'confirmed');
+
+// MEMEFLOW_WS_FIRST_PREOPEN_RPC_V1
+// Dedicated RPC pool for the FINAL BUY READY -> OPEN POSITION verification.
+const __mfPreOpenRpcUrls=(
+  process.env.PREOPEN_SOLANA_RPC_URLS ||
+  process.env.SOLANA_RPC_URLS ||
+  ''
+).split(',').map(x=>x.trim()).filter(Boolean);
+
+const __mfPreOpenRpc=
+  new RpcPool(
+    __mfPreOpenRpcUrls,
+    process.env.SOLANA_COMMITMENT||'confirmed'
+  );
+
 const copyTrading=new CopyTradingManager({store,paper,rpc});
 // MEMEFLOW_CHART_HISTORY_RESTORE_V1
 const __mfChartHistoryRpcUrls=(process.env.CHART_HISTORY_RPC_URLS||process.env.SOLANA_RPC_URLS||'')
@@ -739,7 +754,14 @@ function candidateView(d){
     timeline:t.timeline||[],
     primaryReason:d.primaryReason,
     reasons:d.reasons,
-    riskApproved:d.state==='BUY READY',
+    riskApproved:
+      d.preOpenRiskVerified===true ||
+      (
+        d.state==='BUY READY' &&
+        d.walletRiskPending===false
+      ),
+    walletRiskPending:d.walletRiskPending===true,
+    preOpenRiskStatus:t.preOpenRiskStatus||null,
     routeApproved:t.priceSol!=null,
     holderFresh:t.holderFresh,
     positionSize:null,
@@ -751,7 +773,7 @@ const liveEvalMetrics=makeLiveEvalMetrics();
 const LIVE_EVAL_HOURS=Number(process.env.LIVE_EVALUATION_ACTIVE_USER_HOURS||24);
 const LIVE_EVAL_BATCH=Number(process.env.LIVE_EVALUATION_BATCH_SIZE||25);
 const LIVE_EVAL_DELAY=Number(process.env.LIVE_EVALUATION_DELAY_MS||0);
-const evaluateAll=makeEvaluateForActiveUsers({store,metrics:liveEvalMetrics,activeUserHoursMs:LIVE_EVAL_HOURS*3600000,batchSize:LIVE_EVAL_BATCH,delayMs:LIVE_EVAL_DELAY,onDecision:(uid,token,decision)=>{try{paper.onDecision(uid,token,decision,store.settings(uid))}catch(_){}}});
+const evaluateAll=makeEvaluateForActiveUsers({store,metrics:liveEvalMetrics,activeUserHoursMs:LIVE_EVAL_HOURS*3600000,batchSize:LIVE_EVAL_BATCH,delayMs:LIVE_EVAL_DELAY,onDecision:(uid,token,decision)=>{void __mfHandleDecision(uid,token,decision).catch(()=>{})}});
 /* MEMEFLOW_V12_4_FAST_PHASE_A_DECOUPLED_ENRICHMENT */
 const fastPhaseMetrics={
   starts:0,
@@ -773,6 +795,16 @@ const fastPhaseMetrics={
 function fastPhaseAStart(mint,curve){
   const token=store.state.tokens[mint];
   if(!token)return false;
+
+  // MEMEFLOW_WS_FIRST_PREOPEN_RPC_V1
+  // Automatic WS-first Pump tokens never enter legacy RPC enrichment.
+  if(token?.wsFirst===true){
+    try{
+      Promise.resolve(evaluateAll(token)).catch(()=>{});
+    }catch{}
+    try{publish(mint)}catch{}
+    return true;
+  }
 
   const settingsAdmission=settingsGateCheck(token);
   if(settingsAdmission?.allow===false&&settingsAdmission.retryable!==true){
@@ -1383,6 +1415,37 @@ async function bridgeRepairToken(token,now=Date.now()){
   // not the primary pipeline.
   if(bridgeAgeMs(token,now)<BRIDGE_MIN_TOKEN_AGE_MS)return;
 
+  // MEMEFLOW_WS_FIRST_PREOPEN_RPC_V1
+  // WS-first automatic Pump pipeline: evaluation/publish only.
+  // Do NOT run supply/curve/holder RPC recovery.
+  if(token?.wsFirst===true){
+    try{
+      const h=eventHolderLedger.inspect(mint);
+
+      if(h){
+        eventHolderLedger.applyToStore(
+          store,
+          mint
+        );
+      }
+    }catch{}
+
+    try{
+      await Promise.resolve(
+        evaluateAll(
+          store.state.tokens[mint] ||
+          token
+        )
+      );
+
+      bridgeMetrics.evaluationRescued++;
+    }catch{}
+
+    try{publish(mint)}catch{}
+
+    return;
+  }
+
   const settingsAdmission=settingsGateCheck(token);
   if(settingsAdmission?.allow===false){
     bridgeMetrics.settingsRejectedSkipped++;
@@ -1636,6 +1699,321 @@ function startDiscoveryBridge(){
 }
 startDiscoveryBridge();
 
+
+// MEMEFLOW_WS_FIRST_PREOPEN_RPC_V1
+function __mfWsMetadataUrl(value){
+  const raw=String(value||'').trim();
+
+  if(!raw)return null;
+
+  if(/^ipfs:\/\//i.test(raw)){
+    return 'https://ipfs.io/ipfs/' +
+      raw
+        .replace(/^ipfs:\/\//i,'')
+        .replace(/^ipfs\//i,'');
+  }
+
+  if(/^ar:\/\//i.test(raw)){
+    return 'https://arweave.net/' +
+      raw.replace(/^ar:\/\//i,'');
+  }
+
+  return /^https?:\/\//i.test(raw)
+    ? raw
+    : null;
+}
+
+async function __mfWsMetadataEnrich(mint,uri){
+  const url=__mfWsMetadataUrl(uri);
+
+  if(!url)return;
+
+  const c=new AbortController();
+  const timer=setTimeout(()=>c.abort(),4500);
+
+  try{
+    const r=await fetch(
+      url,
+      {
+        signal:c.signal,
+        headers:{
+          accept:'application/json',
+          'user-agent':'MEMEFLOW/1.0 token-metadata'
+        }
+      }
+    );
+
+    if(!r.ok)return;
+
+    const m=await r.json().catch(()=>null);
+
+    if(!m||typeof m!=='object')return;
+
+    const image=__mfWsMetadataUrl(
+      m.image ||
+      m.image_url ||
+      m.imageUrl ||
+      m.logo ||
+      m.logoUrl ||
+      m?.properties?.files?.[0]?.uri
+    );
+
+    const txt=(...xs)=>
+      xs
+        .find(x=>typeof x==='string'&&x.trim())
+        ?.trim()
+        ?.slice(0,500) || null;
+
+    const updated=store.setToken(
+      mint,
+      {
+        metadataUrl:url,
+        imageUrl:image||null,
+        image:image||null,
+        logoUrl:image||null,
+
+        websiteUrl:txt(
+          m.website,
+          m.websiteUrl,
+          m.external_url,
+          m.externalUrl,
+          m?.extensions?.website,
+          m?.links?.website
+        ),
+
+        twitterUrl:txt(
+          m.twitter,
+          m.twitterUrl,
+          m.x,
+          m.xUrl,
+          m?.extensions?.twitter,
+          m?.extensions?.x,
+          m?.links?.twitter,
+          m?.links?.x
+        ),
+
+        telegramUrl:txt(
+          m.telegram,
+          m.telegramUrl,
+          m?.extensions?.telegram,
+          m?.links?.telegram
+        ),
+
+        socialsKnown:true
+      }
+    );
+
+    try{
+      await Promise.resolve(evaluateAll(updated));
+    }catch{}
+
+    try{publish(mint)}catch{}
+
+  }catch{
+  }finally{
+    clearTimeout(timer);
+  }
+}
+
+function __ingestPumpCreateEventDirect(
+  logs,
+  {
+    signature=null,
+    slot=null
+  }={}
+){
+  const rows=
+    Array.isArray(logs)
+      ? logs
+      : [];
+
+  let e=null;
+
+  for(const log of rows){
+    e=decodePumpCreateEventLog(log);
+    if(e)break;
+  }
+
+  if(!e){
+    discMetrics.directCreateDecodeFailed++;
+    return null;
+  }
+
+  if(
+    EXCLUDE_MAYHEM_MODE &&
+    e.isMayhemMode===true
+  ){
+    discMetrics.mayhemCreatesIgnored++;
+    return null;
+  }
+
+  const decimals=6;
+
+  const totalSupplyRaw=
+    e.tokenTotalSupply;
+
+  const totalSupply=
+    typeof totalSupplyRaw==='bigint'
+      ? Number(totalSupplyRaw)/(10**decimals)
+      : null;
+
+  const vt=
+    typeof e.virtualTokenReserves==='bigint'
+      ? Number(e.virtualTokenReserves)
+      : NaN;
+
+  const vs=
+    typeof e.virtualSolReserves==='bigint'
+      ? Number(e.virtualSolReserves)
+      : NaN;
+
+  const priceSol=
+    Number.isFinite(vt) &&
+    vt>0 &&
+    Number.isFinite(vs) &&
+    vs>0
+      ? (vs/1e9)/(vt/(10**decimals))
+      : null;
+
+  const ts=
+    typeof e.timestamp==='bigint'
+      ? Number(e.timestamp)
+      : Number(e.timestamp);
+
+  const pumpCreatedAt=
+    Number.isFinite(ts)&&ts>0
+      ? (
+          ts<1e12
+            ? ts*1000
+            : ts
+        )
+      : Date.now();
+
+  const existing=
+    store.state.tokens?.[e.mint] ||
+    null;
+
+  const patch={
+    mint:e.mint,
+
+    curve:e.bondingCurve,
+    bondingCurve:e.bondingCurve,
+
+    name:e.name,
+    symbol:e.symbol,
+    uri:e.uri,
+    creator:e.creator,
+
+    decimals,
+
+    totalSupply:
+      Number.isFinite(totalSupply)&&totalSupply>0
+        ? totalSupply
+        : undefined,
+
+    priceSol:
+      Number.isFinite(priceSol)&&priceSol>0
+        ? priceSol
+        : undefined,
+
+    marketCapSol:
+      Number.isFinite(priceSol)&&
+      priceSol>0&&
+      Number.isFinite(totalSupply)&&
+      totalSupply>0
+        ? priceSol*totalSupply
+        : undefined,
+
+    pumpCreatedAt,
+    discoveredAt:
+      existing?.discoveredAt ||
+      Date.now(),
+
+    slot,
+    signature,
+
+    isMayhemMode:false,
+    launchMode:'standard',
+
+    launchPlatform:'pump',
+    protocol:'pump',
+
+    source:'Pump CreateEvent WS',
+    marketSource:'pump-create-event-ws',
+
+    wsFirst:true,
+
+    virtualTokenReservesRaw:
+      e.virtualTokenReserves?.toString?.()||null,
+
+    virtualSolReservesRaw:
+      e.virtualSolReserves?.toString?.()||null,
+
+    realTokenReservesRaw:
+      e.realTokenReserves?.toString?.()||null,
+
+    tokenTotalSupplyRaw:
+      e.tokenTotalSupply?.toString?.()||null,
+
+    scanError:null,
+
+    ...(
+      existing
+        ? {}
+        : {
+            holderFresh:false,
+            holderCount:null,
+            top10Pct:null,
+            developerPct:null,
+            buyPressure:null
+          }
+    )
+  };
+
+  for(const k of Object.keys(patch)){
+    if(patch[k]===undefined){
+      delete patch[k];
+    }
+  }
+
+  const token=
+    existing
+      ? store.setToken(e.mint,patch)
+      : store.addToken(patch);
+
+  try{
+    eventHolderLedger.setCreateState(
+      e.mint,
+      {
+        creator:e.creator,
+        totalSupplyRaw:e.tokenTotalSupply,
+        decimals
+      }
+    );
+  }catch{}
+
+  discMetrics.directCreateEvents++;
+  discMetrics.createsDecoded++;
+  discMetrics.createInstructionDecoded++;
+  discMetrics.lastSuccessfulScanAt=Date.now();
+
+  try{
+    Promise
+      .resolve(evaluateAll(token))
+      .catch(()=>{});
+  }catch{}
+
+  try{publish(e.mint)}catch{}
+
+  // Plain HTTP metadata only. No Solana RPC.
+  void __mfWsMetadataEnrich(
+    e.mint,
+    e.uri
+  );
+
+  return token;
+}
+
 function startDiscovery(i=0){
   if(process.env.DISCOVERY_ENABLED==='false'||!wsUrls.length){discovery.error='SOLANA_WS_URLS not configured';return}
   const url=wsUrls[i%wsUrls.length];
@@ -1677,7 +2055,17 @@ function startDiscovery(i=0){
         try{__systemViewEmitV31('create',{signature:String(sig||''),ts:Date.now()})}catch{}
         discMetrics.createEventsAccepted++;
         discovery.lastEventAt=Date.now();
-        enqueue(sig);
+
+        // MEMEFLOW_WS_FIRST_PREOPEN_RPC_V1
+        // CREATE is decoded directly from the WebSocket payload.
+        // There is NO getTransaction request here.
+        __ingestPumpCreateEventDirect(
+          logs,
+          {
+            signature:String(sig||''),
+            slot:m.params?.result?.context?.slot??null
+          }
+        );
       }catch{}
     };
     // WS errors stored as lastError; do not overwrite connection state here
@@ -1702,7 +2090,11 @@ function reevaluateUser(uid){
       // PAPER receives only the fresh current decision. It still applies owner approval,
       // capital and execution gates internally.
       if(d.state==='BUY READY'){
-        try{paper.onDecision(uid,token,saved,settings)}catch(_){}
+        void __mfHandleDecision(
+          uid,
+          token,
+          saved
+        ).catch(()=>{});
       }
       count++;
     }catch(_){errors++}
@@ -3338,7 +3730,7 @@ if(url.pathname==='/api/ai/decisions'){
   });
  }
  if(url.pathname==='/api/paper/status'&&req.method==='GET')return json(res,200,paper.status(u.id));
- {const m=url.pathname.match(/^\/api\/paper\/proposals\/([^/]+)\/approve$/);if(m&&req.method==='POST'){const token=store.state.tokens[store.state.paperProposals[m[1]]?.mint]||null;const r=paper.approveProposal(u.id,m[1],token);return json(res,r.ok?200:r.code==='NOT_FOUND'?404:409,r);}}
+ {const m=url.pathname.match(/^\/api\/paper\/proposals\/([^/]+)\/approve$/);if(m&&req.method==='POST'){const r=await __mfApprovePaperProposalWithRisk(u.id,m[1]);return json(res,r.ok?200:r.code==='NOT_FOUND'?404:409,r);}}
  {const m=url.pathname.match(/^\/api\/paper\/proposals\/([^/]+)\/reject$/);if(m&&req.method==='POST'){const r=paper.rejectProposal(u.id,m[1]);return json(res,r.ok?200:r.code==='NOT_FOUND'?404:409,r);}}
  {const m=url.pathname.match(/^\/api\/paper\/positions\/([^/]+)\/close$/);if(m&&req.method==='POST'){const r=paper.closePosition(u.id,m[1]);return json(res,r.ok?200:r.code==='NOT_FOUND'?404:409,r);}}
 }
@@ -3374,188 +3766,609 @@ globalThis.__MEMEFLOW_V12_24_GATE_FOR_MINT__=(mint,settings)=>__v1224GateForMint
 
 // MEMEFLOW_V12_26_EVALUATION_LIFECYCLE_DIAGNOSTICS
 
-// MEMEFLOW_WALLET_CLUSTER_RISK_V3
-// Background only. Canonical holder enrichment supplies a bounded top-wallet sample;
-// this worker checks one-hop SOL funding and then re-evaluates the token.
-let __mfWalletRiskBusy=false;
+// MEMEFLOW_WS_FIRST_PREOPEN_RPC_V1
+// Solana HTTP RPC enters the automatic trading pipeline ONLY HERE:
+// BUY READY -> FINAL WALLET VERIFY -> OPEN POSITION.
 let __mfWalletRiskModulePromise=null;
-const __mfWalletRiskModule=()=>__mfWalletRiskModulePromise||=import('./src/wallet-cluster-risk.mjs');
 
-function __mfWalletRiskPumpToken(token){
-  const p=String(token?.launchPlatform||token?.protocol||token?.source||'').toLowerCase();
-  return p.includes('pump');
-}
+const __mfWalletRiskModule=()=>
+  __mfWalletRiskModulePromise||=
+    import('./src/wallet-cluster-risk.mjs');
 
-// MEMEFLOW_WALLET_RISK_PRIORITY_V1
-// Expensive cluster analysis is a final safety check, not discovery/enrichment.
-// Ask whether at least one active user would have BUY READY if wallet-risk
-// evidence were temporarily ignored. Only then is the RPC-heavy scan useful.
+const __mfPreOpenRiskInflight=
+  new Map();
+
 function __mfWalletRiskSettingEnabled(value){
-  return value!==null &&
+  return (
+    value!==null &&
     value!==undefined &&
     value!=='' &&
-    Number.isFinite(Number(value));
-}
-
-function __mfWalletRiskNeededByActiveUser(token){
-  const cutoff=Date.now()-(24*60*60*1000);
-  const users=Object.entries(store?.state?.users||{});
-
-  // Remove both the policy gates AND any previous risk penalty while asking
-  // whether the token is intrinsically a BUY READY candidate.
-  const tokenWithoutWalletRisk={
-    ...token,
-    suspectedRiskyWalletsPct:null,
-    insidersPct:null,
-    walletClusterRiskScannedAt:null
-  };
-
-  for(const [uid,u] of users){
-    const lastActiveAt=Number(u?.lastActiveAt||0);
-    if(!u?.isOwner && !(lastActiveAt>0 && lastActiveAt>=cutoff))continue;
-
-    let settings=null;
-    try{settings=store.settings(uid)||{}}catch{continue}
-
-    const riskEnabled=
-      __mfWalletRiskSettingEnabled(settings.maxSuspectedRiskyWalletsPct) ||
-      __mfWalletRiskSettingEnabled(settings.maxInsidersPct);
-
-    if(!riskEnabled)continue;
-
-    try{
-      const decision=evaluate(tokenWithoutWalletRisk,{
-        ...settings,
-        maxSuspectedRiskyWalletsPct:null,
-        maxInsidersPct:null
-      });
-
-      if(decision?.state==='BUY READY')return true;
-    }catch{}
-  }
-
-  return false;
-}
-
-function __mfWalletRiskCandidate(){
-  const now=Date.now();
-  const maxAge=Math.max(5*60_000,Number(process.env.WALLET_CLUSTER_MAX_TOKEN_AGE_MS||20*60_000));
-  // MEMEFLOW_WALLET_RISK_PRIORITY_V1: avoid rescanning the same holder sample every 2m.
-  const ttl=Math.max(60_000,Number(process.env.WALLET_CLUSTER_SCAN_TTL_MS||300_000));
-  const retryDelay=Math.max(10_000,Number(process.env.WALLET_CLUSTER_RETRY_DELAY_MS||25_000));
-  const rows=typeof store?.tokens==='function'?store.tokens():Object.values(store?.state?.tokens||{});
-
-  return rows
-    .filter(token=>{
-      if(!token?.mint||!__mfWalletRiskPumpToken(token))return false;
-      if(!Array.isArray(token.holderRiskWallets)||token.holderRiskWallets.length<3)return false;
-
-      const created=Number(token.pumpCreatedAt||token.discoveredAt||token.createdAt||0);
-      if(created>0&&now-(created<1e12?created*1000:created)>maxAge)return false;
-
-      // Do not spend RPC on obviously dead/incomplete candidates.
-      if(!(Number(token.priceSol)>0))return false;
-      if(Number(token.holderCount||0)<10)return false;
-
-      // MEMEFLOW_WALLET_RISK_PRIORITY_V1
-      // Do not burn RPC on BLOCKED/WATCH/unfinished tokens. Cluster risk is
-      // requested only at the final step before a potential BUY READY.
-      if(!__mfWalletRiskNeededByActiveUser(token))return false;
-
-      const holdersAt=Number(token.holderRiskWalletsScannedAt||0);
-      const scannedAt=Number(token.walletClusterRiskScannedAt||0);
-      const attemptedAt=Number(token.walletClusterRiskLastAttemptAt||0);
-
-      // Rescan when the canonical holder sample is newer; otherwise honor TTL.
-      if(scannedAt>0&&holdersAt<=scannedAt&&now-scannedAt<ttl)return false;
-      if(attemptedAt>scannedAt&&now-attemptedAt<retryDelay)return false;
-
-      return true;
-    })
-    .sort((a,b)=>{
-      const aNever=a?.walletClusterRiskScannedAt?1:0;
-      const bNever=b?.walletClusterRiskScannedAt?1:0;
-      if(aNever!==bNever)return aNever-bNever;
-      return Number(b?.holderRiskWalletsScannedAt||b?.updatedAt||b?.discoveredAt||0)
-        -Number(a?.holderRiskWalletsScannedAt||a?.updatedAt||a?.discoveredAt||0);
-    })[0]||null;
-}
-
-// MEMEFLOW_WALLET_RISK_PRIORITY_V1
-// NEW_TOKEN discovery owns the RPC lane. Wallet-risk starts only when discovery
-// has no active/fresh/retry work waiting.
-function __mfWalletRiskDiscoveryBusy(){
-  return Boolean(
-    Number(discQueue?.processing||0)>0 ||
-    Number(discQueue?.freshQueueDepth||0)>0 ||
-    Number(discQueue?.retryQueueDepth||0)>0
+    Number.isFinite(Number(value))
   );
 }
 
-async function __mfWalletRiskTick(){
-  if(__mfWalletRiskBusy)return;
-  if(__mfWalletRiskDiscoveryBusy())return;
+function __mfWalletRiskRequired(settings={}){
+  return (
+    __mfWalletRiskSettingEnabled(
+      settings.maxSuspectedRiskyWalletsPct
+    ) ||
+    __mfWalletRiskSettingEnabled(
+      settings.maxInsidersPct
+    )
+  );
+}
 
-  // Do not add optional risk traffic while the provider is recovering from 429.
-  if(Number(rpc?.metrics?.cooldownUntil||0)>Date.now())return;
+function __mfWalletRiskSampleKey(token={}){
+  if(token.holderRiskWalletsKey){
+    return String(
+      token.holderRiskWalletsKey
+    );
+  }
 
-  const token=__mfWalletRiskCandidate();
-  if(!token)return;
+  return (
+    Array.isArray(token.holderRiskWallets)
+      ? token.holderRiskWallets
+      : []
+  )
+    .map(
+      x=>
+        String(
+          x?.wallet ||
+          x?.address ||
+          x ||
+          ''
+        ).trim()
+    )
+    .filter(Boolean)
+    .slice(0,8)
+    .join('|');
+}
 
-  __mfWalletRiskBusy=true;
-  const mint=String(token.mint);
-  const now=Date.now();
+function __mfWalletRiskCacheFresh(
+  token={},
+  sampleKey=''
+){
+  const scannedAt=
+    Number(
+      token.walletClusterRiskScannedAt ||
+      0
+    );
+
+  const ttl=
+    Math.max(
+      30_000,
+      Number(
+        process.env.PREOPEN_WALLET_RISK_TTL_MS ||
+        300_000
+      )
+    );
+
+  return Boolean(
+    scannedAt>0 &&
+    Date.now()-scannedAt<ttl &&
+    sampleKey &&
+    String(
+      token.walletClusterRiskSampleKey ||
+      ''
+    )===sampleKey
+  );
+}
+
+async function __mfRunPreOpenRiskScan(token){
+  const mint=
+    String(token?.mint||'');
+
+  const sampleKey=
+    __mfWalletRiskSampleKey(token);
 
   try{
-    const {scanWalletClusterRisk}=await __mfWalletRiskModule();
-    const result=await scanWalletClusterRisk({rpc,token});
-
-    let patch;
-    if(result?.ok){
-      patch={
-        suspectedRiskyWalletsPct:Number(result.suspectedRiskyWalletsPct)||0,
-        insidersPct:Number(result.insidersPct)||0,
-        walletClusterRiskScannedAt:Number(result.scannedAt)||Date.now(),
+    store.setToken(
+      mint,
+      {
+        preOpenRiskStatus:'RPC_VERIFYING',
         walletClusterRiskLastAttemptAt:Date.now(),
-        walletClusterRiskVersion:String(result.version||'V3'),
-        walletClusterRiskSampledWallets:Number(result.sampledWallets)||0,
-        walletClusterRiskFundingRecords:Number(result.fundingRecords)||0,
-        walletClusterRiskLinkedWallets:Number(result.linkedWallets)||0,
-        walletClusterRiskInsiderWallets:Number(result.insiderWallets)||0,
-        walletClusterRiskCommonFunders:Number(result.commonFunders)||0,
-        walletClusterRiskEvidence:Array.isArray(result.evidence)?result.evidence.slice(0,8):[],
         walletClusterRiskLastError:null
-      };
-    }else{
-      patch={
-        walletClusterRiskLastAttemptAt:Date.now(),
-        walletClusterRiskLastError:String(result?.reason||'scan-failed').slice(0,180)
-      };
-    }
+      }
+    );
+  }catch{}
 
-    const updated=store?.setToken?.(mint,patch)||store?.state?.tokens?.[mint];
+  try{
+    const {
+      scanWalletClusterRisk
+    }=
+      await __mfWalletRiskModule();
 
-    if(updated&&result?.ok){
-      try{await Promise.resolve(evaluateAll(updated))}catch{}
-      try{publish(mint)}catch{}
-    }
-  }catch(error){
-    try{
-      store?.setToken?.(mint,{
-        walletClusterRiskLastAttemptAt:Date.now(),
-        walletClusterRiskLastError:String(error?.message||error).slice(0,180)
+    const result=
+      await scanWalletClusterRisk({
+        rpc:__mfPreOpenRpc,
+        token
       });
-    }catch{}
-  }finally{
-    __mfWalletRiskBusy=false;
+
+    if(!result?.ok){
+      const updated=
+        store.setToken(
+          mint,
+          {
+            preOpenRiskStatus:'RPC_ERROR',
+            walletClusterRiskLastAttemptAt:Date.now(),
+            walletClusterRiskLastError:
+              String(
+                result?.reason ||
+                'scan-failed'
+              ).slice(0,180)
+          }
+        );
+
+      try{publish(mint)}catch{}
+
+      return {
+        ok:false,
+        code:'WALLET_RISK_RPC_UNAVAILABLE',
+        token:updated||token
+      };
+    }
+
+    const updated=
+      store.setToken(
+        mint,
+        {
+          suspectedRiskyWalletsPct:
+            Number(
+              result.suspectedRiskyWalletsPct
+            )||0,
+
+          insidersPct:
+            Number(
+              result.insidersPct
+            )||0,
+
+          walletClusterRiskScannedAt:
+            Number(
+              result.scannedAt
+            )||Date.now(),
+
+          walletClusterRiskLastAttemptAt:
+            Date.now(),
+
+          walletClusterRiskSampleKey:
+            sampleKey,
+
+          walletClusterRiskVersion:
+            String(
+              result.version ||
+              'V3'
+            ),
+
+          walletClusterRiskSampledWallets:
+            Number(
+              result.sampledWallets
+            )||0,
+
+          walletClusterRiskFundingRecords:
+            Number(
+              result.fundingRecords
+            )||0,
+
+          walletClusterRiskLinkedWallets:
+            Number(
+              result.linkedWallets
+            )||0,
+
+          walletClusterRiskInsiderWallets:
+            Number(
+              result.insiderWallets
+            )||0,
+
+          walletClusterRiskCommonFunders:
+            Number(
+              result.commonFunders
+            )||0,
+
+          walletClusterRiskEvidence:
+            Array.isArray(result.evidence)
+              ? result.evidence.slice(0,8)
+              : [],
+
+          walletClusterRiskLastError:null,
+
+          preOpenRiskStatus:
+            'RPC_SCANNED'
+        }
+      );
+
+    try{publish(mint)}catch{}
+
+    return {
+      ok:true,
+      token:updated||token
+    };
+
+  }catch(error){
+
+    const updated=
+      store.setToken(
+        mint,
+        {
+          preOpenRiskStatus:'RPC_ERROR',
+          walletClusterRiskLastAttemptAt:Date.now(),
+          walletClusterRiskLastError:
+            String(
+              error?.message ||
+              error
+            ).slice(0,180)
+        }
+      );
+
+    try{publish(mint)}catch{}
+
+    return {
+      ok:false,
+      code:'WALLET_RISK_RPC_UNAVAILABLE',
+      token:updated||token
+    };
   }
 }
 
-const __mfWalletRiskInterval=setInterval(
-  ()=>void __mfWalletRiskTick(),
-  // MEMEFLOW_WALLET_RISK_PRIORITY_V1
-  // Cluster analysis is deliberately slower than the NEW_TOKEN hot path.
-  Math.max(2_000,Number(process.env.WALLET_CLUSTER_SCAN_INTERVAL_MS||4_000))
-);
-__mfWalletRiskInterval.unref?.();
-setTimeout(()=>void __mfWalletRiskTick(),1_000).unref?.();
+async function __mfVerifyPreOpenRisk(
+  uid,
+  token,
+  decision,
+  settings
+){
+  // User disabled both wallet-risk gates.
+  if(!__mfWalletRiskRequired(settings)){
+    return {
+      ok:true,
+      token,
+      decision:{
+        ...decision,
+        preOpenRiskVerified:true
+      }
+    };
+  }
+
+  const wallets=
+    Array.isArray(token?.holderRiskWallets)
+      ? token.holderRiskWallets
+      : [];
+
+  // BUY READY can remain visible while the WS ledger builds the wallet sample,
+  // but no position may open yet.
+  if(wallets.length<3){
+    try{
+      store.setToken(
+        token.mint,
+        {
+          preOpenRiskStatus:
+            'WAITING_HOLDER_SAMPLE'
+        }
+      );
+    }catch{}
+
+    return {
+      ok:false,
+      code:'WALLET_RISK_SAMPLE_PENDING',
+      token,
+      decision
+    };
+  }
+
+  const sampleKey=
+    __mfWalletRiskSampleKey(token);
+
+  let updated=
+    store.state.tokens?.[token.mint] ||
+    token;
+
+  if(
+    !__mfWalletRiskCacheFresh(
+      updated,
+      sampleKey
+    )
+  ){
+    const lastAttempt=
+      Number(
+        updated.walletClusterRiskLastAttemptAt ||
+        0
+      );
+
+    const retryMs=
+      Math.max(
+        3000,
+        Number(
+          process.env.PREOPEN_WALLET_RISK_RETRY_MS ||
+          10_000
+        )
+      );
+
+    if(
+      updated.preOpenRiskStatus==='RPC_ERROR' &&
+      lastAttempt>0 &&
+      Date.now()-lastAttempt<retryMs
+    ){
+      return {
+        ok:false,
+        code:'WALLET_RISK_RETRY_COOLDOWN',
+        token:updated,
+        decision
+      };
+    }
+
+    let job=
+      __mfPreOpenRiskInflight.get(
+        token.mint
+      );
+
+    if(!job){
+      job=
+        __mfRunPreOpenRiskScan(
+          updated
+        ).finally(
+          ()=>
+            __mfPreOpenRiskInflight.delete(
+              token.mint
+            )
+        );
+
+      __mfPreOpenRiskInflight.set(
+        token.mint,
+        job
+      );
+    }
+
+    const scanned=
+      await job;
+
+    if(!scanned?.ok){
+      return {
+        ok:false,
+        code:
+          scanned?.code ||
+          'WALLET_RISK_RPC_UNAVAILABLE',
+        token:
+          scanned?.token ||
+          updated,
+        decision
+      };
+    }
+
+    updated=
+      scanned.token;
+  }
+
+  // Apply this user's own configured maxima to the now-known RPC evidence.
+  const finalDecision=
+    evaluate(
+      updated,
+      settings
+    );
+
+  const settingsVersion=
+    store.state.users?.[uid]?.settingsVersion ||
+    store.state.users?.[uid]?.updatedAt ||
+    Date.now();
+
+  const saved={
+    ...finalDecision,
+
+    primaryReason:
+      finalDecision.primaryReason,
+
+    settingsVersion,
+
+    reevaluatedAt:
+      Date.now(),
+
+    preOpenRiskVerified:
+      finalDecision.state==='BUY READY',
+
+    preOpenRiskCheckedAt:
+      updated.walletClusterRiskScannedAt ||
+      Date.now()
+  };
+
+  store.setDecision(
+    uid,
+    updated.mint,
+    saved
+  );
+
+  if(
+    finalDecision.state!=='BUY READY'
+  ){
+    return {
+      ok:false,
+      code:'WALLET_RISK_BLOCKED',
+      token:updated,
+      decision:saved
+    };
+  }
+
+  return {
+    ok:true,
+    token:updated,
+    decision:saved
+  };
+}
+
+async function __mfHandleDecision(
+  uid,
+  token,
+  decision
+){
+  if(
+    !uid ||
+    !token?.mint ||
+    decision?.state!=='BUY READY'
+  ){
+    return {
+      action:'NONE'
+    };
+  }
+
+  const settings=
+    store.settings(uid) ||
+    {};
+
+  if(
+    paper.environment(settings)!=='paper'
+  ){
+    return {
+      action:'NONE',
+      reason:'NOT_PAPER'
+    };
+  }
+
+  const mode=
+    paper.mode(settings);
+
+  // OBSERVE does not open anything.
+  // ASSIST only builds a proposal; RPC is deferred until approval/open.
+  if(
+    mode==='observe' ||
+    mode==='assist'
+  ){
+    return paper.onDecision(
+      uid,
+      token,
+      decision,
+      settings
+    );
+  }
+
+  if(mode!=='automate'){
+    return {
+      action:'NONE',
+      reason:'UNKNOWN_MODE'
+    };
+  }
+
+  if(
+    paper.openForMint(
+      uid,
+      token.mint
+    )
+  ){
+    return {
+      action:'NONE',
+      reason:'POSITION_EXISTS'
+    };
+  }
+
+  // No expensive RPC if normal execution rules already forbid an entry.
+  const readiness=
+    paper.canEnter(
+      uid,
+      token,
+      settings
+    );
+
+  if(!readiness?.ok){
+    return {
+      action:'NONE',
+      reason:
+        readiness?.code ||
+        'ENTRY_NOT_READY'
+    };
+  }
+
+  // THIS is the first automatic Solana HTTP RPC stage.
+  const verified=
+    await __mfVerifyPreOpenRisk(
+      uid,
+      token,
+      decision,
+      settings
+    );
+
+  if(!verified.ok){
+    return {
+      action:'NONE',
+      reason:verified.code
+    };
+  }
+
+  return paper.onDecision(
+    uid,
+    verified.token,
+    verified.decision,
+    settings
+  );
+}
+
+async function __mfApprovePaperProposalWithRisk(
+  uid,
+  proposalId
+){
+  const proposal=
+    store.state.paperProposals?.[
+      proposalId
+    ];
+
+  if(
+    !proposal ||
+    proposal.userId!==uid
+  ){
+    return {
+      ok:false,
+      code:'NOT_FOUND'
+    };
+  }
+
+  const token=
+    store.state.tokens?.[
+      proposal.mint
+    ] ||
+    null;
+
+  if(!token){
+    return {
+      ok:false,
+      code:'TOKEN_NOT_FOUND'
+    };
+  }
+
+  const settings=
+    store.settings(uid) ||
+    {};
+
+  const readiness=
+    paper.canEnter(
+      uid,
+      token,
+      settings
+    );
+
+  if(!readiness?.ok){
+    return readiness;
+  }
+
+  const decision={
+    state:'BUY READY',
+    score:proposal.decisionScore,
+    confidence:proposal.decisionConfidence,
+    primaryReason:proposal.primaryReason
+  };
+
+  const verified=
+    await __mfVerifyPreOpenRisk(
+      uid,
+      token,
+      decision,
+      settings
+    );
+
+  if(!verified.ok){
+    return {
+      ok:false,
+      code:verified.code
+    };
+  }
+
+  return paper.approveProposal(
+    uid,
+    proposalId,
+    verified.token
+  );
+}
+

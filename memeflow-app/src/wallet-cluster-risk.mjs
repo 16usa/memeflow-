@@ -79,15 +79,21 @@ function inboundSystemTransfer(tx,wallet,minLamports){
 
 async function recentFunder(rpc,wallet,window,opts){
   let signatures;
+
   try{
-    // MEMEFLOW_WALLET_RISK_PRIORITY_V1
     await walletRiskPriorityYield(rpc);
+
     signatures=await rpc.callOnce('getSignaturesForAddress',[
       wallet,
       {limit:opts.signatureLimit,commitment:'confirmed'}
     ]);
-  }catch{
-    return null;
+  }catch(error){
+    return {
+      ok:false,
+      reason:'signatures-rpc',
+      error:String(error?.message||error).slice(0,120),
+      record:null
+    };
   }
 
   const rows=(Array.isArray(signatures)?signatures:[])
@@ -98,36 +104,78 @@ async function recentFunder(rpc,wallet,window,opts){
     })
     .slice(0,opts.txPerWallet);
 
+  if(!rows.length){
+    return {ok:true,record:null};
+  }
+
+  let txSucceeded=0;
+
   for(const row of rows){
     if(!row?.signature)continue;
+
     let tx=null;
+
     try{
-      // MEMEFLOW_WALLET_RISK_PRIORITY_V1
       await walletRiskPriorityYield(rpc);
+
       tx=await rpc.callOnce('getTransaction',[
         row.signature,
-        {encoding:'jsonParsed',commitment:'confirmed',maxSupportedTransactionVersion:0}
+        {
+          encoding:'jsonParsed',
+          commitment:'confirmed',
+          maxSupportedTransactionVersion:0
+        }
       ]);
     }catch{
       continue;
     }
+
     if(!tx)continue;
 
-    const at=ms(tx?.blockTime)??ms(row?.blockTime);
-    if(at!==null&&(at<window.from||at>window.to))continue;
+    txSucceeded++;
 
-    const transfer=inboundSystemTransfer(tx,wallet,opts.minFundingLamports);
+    const at=ms(tx?.blockTime)??ms(row?.blockTime);
+
+    if(
+      at!==null &&
+      (at<window.from||at>window.to)
+    )continue;
+
+    const transfer=
+      inboundSystemTransfer(
+        tx,
+        wallet,
+        opts.minFundingLamports
+      );
+
     if(transfer){
       return {
-        wallet,
-        funder:transfer.source,
-        lamports:transfer.lamports,
-        at:at??window.to,
-        signature:row.signature
+        ok:true,
+        record:{
+          wallet,
+          funder:transfer.source,
+          lamports:transfer.lamports,
+          at:at??window.to,
+          signature:row.signature
+        }
       };
     }
   }
-  return null;
+
+  // Relevant signatures existed but RPC could not read any transaction.
+  // Never interpret that as "safe".
+  if(txSucceeded===0){
+    return {
+      ok:false,
+      reason:'transactions-rpc',
+      record:null
+    };
+  }
+
+  return {
+    ok:true,
+    record:null
+  };
 }
 
 async function mapLimit(items,limit,fn){
@@ -252,10 +300,27 @@ export async function scanWalletClusterRisk({rpc,token={},options={}}={}){
   const createdAt=ms(token.pumpCreatedAt??token.discoveredAt??token.createdAt??token.firstSeenAt)??Date.now();
   const window={from:createdAt-opts.lookbackMs,to:createdAt+opts.afterLaunchMs};
 
-  const found=await mapLimit(candidates,opts.concurrency,wallet=>
+  const probes=await mapLimit(candidates,opts.concurrency,wallet=>
     recentFunder(rpc,wallet,window,opts)
   );
-  const records=found.filter(Boolean);
+
+  const rpcErrors=
+    probes.filter(row=>row?.ok!==true);
+
+  if(rpcErrors.length){
+    return {
+      ok:false,
+      reason:'rpc-partial',
+      sampledWallets:candidates.length,
+      rpcErrors:rpcErrors.length,
+      scannedAt:Date.now()
+    };
+  }
+
+  const records=
+    probes
+      .map(row=>row?.record||null)
+      .filter(Boolean);
 
   const dsu=new DSU(candidates);
   const candidateSet=new Set(candidates);

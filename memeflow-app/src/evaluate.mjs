@@ -1,5 +1,4 @@
 import {evaluateSettingsGate,tokenAgeMinutes} from './settings-gate.mjs';
-import {walletRiskPenalty} from './wallet-cluster-risk.mjs'; // MEMEFLOW_WALLET_CLUSTER_RISK_V3
 
 const clampScore = value =>
   Math.max(0, Math.min(100, Math.round(Number(value) || 0)));
@@ -7,13 +6,6 @@ const clampScore = value =>
 const finite = value =>
   value !== null && value !== undefined && value !== '' && Number.isFinite(Number(value));
 
-// MEMEFLOW_WALLET_RISK_PRIORITY_V1
-// Wallet-cluster evidence is a late execution-safety gate. Missing evidence must
-// stop BUY READY, but must not turn every ordinary WATCH token into WAITING.
-const WALLET_RISK_GATE_KEYS = new Set([
-  'maxSuspectedRiskyWalletsPct',
-  'maxInsidersPct'
-]);
 
 function independentAiScore(token = {}) {
   let score = 0;
@@ -81,24 +73,16 @@ function independentAiScore(token = {}) {
   if (freshHolders) score += 10;
   quality.push({key: 'freshHolders', value: freshHolders, points: freshHolders ? 10 : 0, maxPoints: 10});
 
+  // MEMEFLOW_WS_FIRST_PREOPEN_RPC_V1
+  // Pre-buy AI quality uses WS evidence only.
+  // RPC wallet relationships are a separate execution gate.
   const scoreBeforeWalletRisk=clampScore(score);
-  const riskPenalty=walletRiskPenalty(token);
-  const adjustedScore=clampScore(scoreBeforeWalletRisk-riskPenalty);
-  quality.push({
-    key:'walletRiskPenalty',
-    value:{
-      suspectedRiskyWalletsPct:finite(token.suspectedRiskyWalletsPct)?Number(token.suspectedRiskyWalletsPct):null,
-      insidersPct:finite(token.insidersPct)?Number(token.insidersPct):null
-    },
-    points:-riskPenalty,
-    maxPoints:0
-  });
 
   return {
-    score:adjustedScore,
+    score:scoreBeforeWalletRisk,
     quality,
     scoreBeforeWalletRisk,
-    walletRiskPenalty:riskPenalty
+    walletRiskPenalty:0
   };
 }
 
@@ -181,29 +165,27 @@ export function evaluate(token, s = {}) {
     reasons.push(`confidence ${confidence}% below configured minimum ${minimumConfidence}%`);
   }
 
-  // MEMEFLOW_WALLET_RISK_PRIORITY_V1
-  // Split late wallet-risk WAITING from all normal/core WAITING gates.
-  // A token that is not good enough to buy is WATCH immediately; we do not
-  // spend the expensive wallet graph scan merely to classify it as WATCH.
-  // If it WOULD otherwise be BUY READY, wallet risk remains mandatory.
-  const walletRiskWaiting = policy.waitingGates.some(
-    gate => WALLET_RISK_GATE_KEYS.has(gate?.key)
-  );
-  const nonWalletRiskWaiting = policy.waitingGates.some(
-    gate => !WALLET_RISK_GATE_KEYS.has(gate?.key)
-  );
+  // MEMEFLOW_WS_FIRST_PREOPEN_RPC_V1
+  // Diagnostic only. BUY READY happens BEFORE final Solana RPC verification.
+  const walletRiskPending =
+    (
+      finite(s.maxSuspectedRiskyWalletsPct) &&
+      !finite(token.suspectedRiskyWalletsPct)
+    ) ||
+    (
+      finite(s.maxInsidersPct) &&
+      !finite(token.insidersPct)
+    );
 
   let state;
-  // A known failure always has highest priority.
+
   if (policy.blocked || priceBlocked) {
     state = 'BLOCKED';
-  } else if (nonWalletRiskWaiting || priceWaiting) {
+  } else if (policy.waiting || priceWaiting) {
     state = 'WAITING';
   } else if (aiScorePass && confidencePass) {
-    // Never permit BUY READY before configured wallet-risk checks finish.
-    state = walletRiskWaiting ? 'WAITING' : 'BUY READY';
+    state = 'BUY READY';
   } else {
-    // Wallet-risk-only missing evidence cannot hijack a normal WATCH token.
     state = 'WATCH';
   }
 
@@ -248,8 +230,8 @@ export function evaluate(token, s = {}) {
     score,
     scoreBeforeWalletRisk:ai.scoreBeforeWalletRisk,
     walletRiskPenalty:ai.walletRiskPenalty,
-    // MEMEFLOW_WALLET_RISK_PRIORITY_V1
-    walletRiskPending:walletRiskWaiting,
+    // MEMEFLOW_WS_FIRST_PREOPEN_RPC_V1
+    walletRiskPending,
     walletRisk:{
       suspectedRiskyWalletsPct:finite(token.suspectedRiskyWalletsPct)?Number(token.suspectedRiskyWalletsPct):null,
       insidersPct:finite(token.insidersPct)?Number(token.insidersPct):null,
