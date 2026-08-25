@@ -754,13 +754,20 @@ async function refreshTelemetry() {
     setStatus($('aiDot'), $('aiStatus'), 'Unavailable', 'bad');
   }
 
-  $('eventCount').textContent = discovery?.eventsReceived ?? '—';
-  $('tradeCount').textContent = diag?.liveTradeFeed?.tradeEventsDecoded ?? discovery?.liveTradeFeed?.tradeEventsDecoded ?? '—';
-  $('holderQueue').textContent = discovery?.holderQueueDepth ?? '—';
-  $('activeUsers').textContent = discovery?.activeEvaluationUsers ?? '—';
-  $('freshBacklog').textContent = diag?.bridge?.currentFreshBacklog ?? '—';
-  $('lastEvent').textContent = ago(discovery?.lastEventAt);
-  $('lastSync').textContent = `updated ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`;
+  const eventCountEl = $('eventCount');
+  if (eventCountEl) eventCountEl.textContent = discovery?.eventsReceived ?? '—';
+  const tradeCountEl = $('tradeCount');
+  if (tradeCountEl) tradeCountEl.textContent = diag?.liveTradeFeed?.tradeEventsDecoded ?? discovery?.liveTradeFeed?.tradeEventsDecoded ?? '—';
+  const holderQueueEl = $('holderQueue');
+  if (holderQueueEl) holderQueueEl.textContent = discovery?.holderQueueDepth ?? '—';
+  const activeUsersEl = $('activeUsers');
+  if (activeUsersEl) activeUsersEl.textContent = discovery?.activeEvaluationUsers ?? '—';
+  const freshBacklogEl = $('freshBacklog');
+  if (freshBacklogEl) freshBacklogEl.textContent = diag?.bridge?.currentFreshBacklog ?? '—';
+  const lastEventEl = $('lastEvent');
+  if (lastEventEl) lastEventEl.textContent = ago(discovery?.lastEventAt);
+  const lastSyncEl = $('lastSync');
+  if (lastSyncEl) lastSyncEl.textContent = `updated ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`;
 
   const ranked = rankSample(diag?.sample || []);
   /* CLEAN V29 keeps token telemetry in the rail only. */
