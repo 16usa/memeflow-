@@ -333,18 +333,18 @@ button {
 
 .summary-card.ready {
   border-color:
-    rgba(77, 230, 161, .06);
+    rgba(239, 198, 106, .06);
 }
 
 .summary-card.ready.active {
   border-color:
-    rgba(77, 230, 161, .62);
+    rgba(239, 198, 106, .62);
 
   background:
-    rgba(77, 230, 161, .065);
+    rgba(239, 198, 106, .065);
 
   box-shadow:
-    inset 3px 0 0 var(--green);
+    inset 3px 0 0 var(--yellow);
 }
 
 .summary-card.watch {
@@ -540,17 +540,17 @@ button {
 
 .flow-token.ready {
   border-color:
-    rgba(77, 230, 161, .08);
+    rgba(239, 198, 106, .08);
 
   box-shadow:
-    0 0 24px rgba(77, 230, 161, .035);
+    0 0 24px rgba(239, 198, 106, .035);
 }
 
 .flow-token.ready::before {
-  background: var(--green);
+  background: var(--yellow);
 
   box-shadow:
-    0 0 14px rgba(77, 230, 161, .55);
+    0 0 14px rgba(239, 198, 106, .55);
 }
 
 .flow-token.watch {
@@ -624,7 +624,7 @@ button {
 }
 
 .token-state.ready {
-  color: var(--green);
+  color: var(--yellow);
 }
 
 .token-state.watch {
@@ -1461,8 +1461,8 @@ button {
 }
 
 .token-avatar.ready {
-  border-color: rgba(77, 230, 161, .42);
-  box-shadow: 0 0 16px rgba(77, 230, 161, .06);
+  border-color: rgba(239, 198, 106, .42);
+  box-shadow: 0 0 16px rgba(239, 198, 106, .06);
 }
 
 .token-avatar.watch {
@@ -1574,8 +1574,8 @@ button {
 }
 
 .token-avatar.ready {
-  border-color: rgba(77, 230, 161, .42);
-  box-shadow: 0 0 16px rgba(77, 230, 161, .06);
+  border-color: rgba(239, 198, 106, .42);
+  box-shadow: 0 0 16px rgba(239, 198, 106, .06);
 }
 
 .token-avatar.watch {
@@ -2548,3 +2548,5 @@ button {
     height: 18px;
   }
 }
+
+/* MEMEFLOW_BUY_READY_YELLOW_OPEN_GREEN_V1: BUY READY = yellow; OPEN POSITION = green. */
