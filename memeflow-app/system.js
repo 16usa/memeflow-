@@ -784,7 +784,7 @@ function animate() {
   if (window.__MEMEFLOW_TRUE_3D_ACTIVE__) return;
   if (!mf3dFrameAllowedV3031('animate', 30, 45)) return;
 
-  
+
 
   const dt = Math.min(app.clock.getDelta(), 0.05);
   const t = performance.now() * 0.001;
@@ -2296,7 +2296,7 @@ function mf20Animate(now) {
   requestAnimationFrame(mf20Animate);
   if (!mf3dFrameAllowedV3031('mf20Animate', 18, 24)) return;
 
-  
+
 
   if (!MF20.installed) {
     return;
@@ -3334,7 +3334,7 @@ function mf293Build() {
   document.addEventListener('keydown', event => {
     if (event.key === 'Escape' && !backdrop.hidden) mf293Close();
   });
-  
+
 }
 
 function mf293Populate() {
@@ -5045,3 +5045,154 @@ if (document.readyState === 'loading') {
   }
 })();
 /* ===== /MEMEFLOW_REALTIME_PAGE_GALLERY_SWIPE_V3 ===== */
+
+/* ===== MEMEFLOW_REALTIME_PAGE_GALLERY_CAPTION_V6 ===== */
+(() => {
+  'use strict';
+
+  const PATCH_ID = 'MEMEFLOW_REALTIME_PAGE_GALLERY_CAPTION_V6';
+
+  const PAGE_META = {
+    'Trading Terminal': {
+      index: '01 / 03',
+      title: 'TRADING TERMINAL',
+      text: 'Live workspace for chart analysis, open positions, signals and trade execution.'
+    },
+    'System Settings': {
+      index: '02 / 03',
+      title: 'SYSTEM SETTINGS',
+      text: 'Configure trading mode, AI thresholds, risk filters and execution rules.'
+    },
+    'Real-Time Pipeline': {
+      index: '03 / 03',
+      title: 'REAL-TIME PIPELINE',
+      text: 'Monitor live token states, candidates, decisions and active positions.'
+    }
+  };
+
+  function normalizeTitle(value) {
+    return String(value || '')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  function titleFromCard(card) {
+    if (!card) return '';
+
+    const visibleTitle = card.querySelector('.mfpg-title');
+    const title = normalizeTitle(visibleTitle?.textContent);
+
+    if (PAGE_META[title]) return title;
+
+    const href = String(card.dataset.href || '');
+
+    if (href.includes('/trading.html')) return 'Trading Terminal';
+    if (href.includes('mfOpenSettings=1')) return 'System Settings';
+    if (href.includes('/system-tokens.html')) return 'Real-Time Pipeline';
+
+    return title;
+  }
+
+  function currentCenterCard(gallery) {
+    return gallery?.querySelector('.mfpg-card[data-slot="center"]') || null;
+  }
+
+  function renderCaption(meta, animate = true) {
+    const root = document.getElementById('mfPageCaption');
+    const inner = root?.querySelector('.mfpg-caption-inner');
+    const index = document.getElementById('mfPageCaptionIndex');
+    const title = document.getElementById('mfPageCaptionTitle');
+    const text = document.getElementById('mfPageCaptionText');
+
+    if (!root || !inner || !index || !title || !text || !meta) return;
+
+    const apply = () => {
+      index.textContent = meta.index;
+      title.textContent = meta.title;
+      text.textContent = meta.text;
+
+      inner.classList.remove('is-changing');
+      inner.classList.remove('is-entering');
+
+      if (animate) {
+        void inner.offsetWidth;
+        inner.classList.add('is-entering');
+        window.setTimeout(() => inner.classList.remove('is-entering'), 280);
+      }
+    };
+
+    if (!animate) {
+      apply();
+      return;
+    }
+
+    inner.classList.remove('is-entering');
+    inner.classList.add('is-changing');
+    window.setTimeout(apply, 145);
+  }
+
+  function syncCaption(gallery, animate = true) {
+    const center = currentCenterCard(gallery);
+    const key = titleFromCard(center);
+    const meta = PAGE_META[key];
+
+    if (!meta) return;
+
+    const active = document.getElementById('mfPageCaptionTitle');
+    if (active?.textContent === meta.title && animate) return;
+
+    renderCaption(meta, animate);
+  }
+
+  function install() {
+    const gallery = document.getElementById('mfPageGallery');
+    const caption = document.getElementById('mfPageCaption');
+
+    if (!gallery || !caption || caption.dataset.captionReady === '1') return false;
+
+    caption.dataset.captionReady = '1';
+
+    syncCaption(gallery, false);
+
+    const observer = new MutationObserver(mutations => {
+      const changed = mutations.some(mutation =>
+        mutation.type === 'attributes' &&
+        mutation.attributeName === 'data-slot' &&
+        mutation.target?.classList?.contains('mfpg-card')
+      );
+
+      if (changed) {
+        window.requestAnimationFrame(() => syncCaption(gallery, true));
+      }
+    });
+
+    const deck = gallery.querySelector('.mfpg-deck');
+    if (deck) {
+      observer.observe(deck, {
+        subtree: true,
+        attributes: true,
+        attributeFilter: ['data-slot']
+      });
+    }
+
+    console.log(`[PAGE-GALLERY] ${PATCH_ID} mounted`);
+    return true;
+  }
+
+  function boot() {
+    if (install()) return;
+
+    let tries = 0;
+    const timer = window.setInterval(() => {
+      tries += 1;
+      if (install() || tries >= 40) window.clearInterval(timer);
+    }, 100);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', boot, { once: true });
+  } else {
+    boot();
+  }
+})();
+/* ===== /MEMEFLOW_REALTIME_PAGE_GALLERY_CAPTION_V6 ===== */
