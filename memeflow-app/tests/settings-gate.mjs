@@ -91,6 +91,77 @@ const marketPhase=evaluate(
 assert.equal(marketPhase.confidence,100);
 assert.equal(marketPhase.state,'BUY READY');
 
+// MEMEFLOW_WALLET_RISK_PRIORITY_V1
+// Wallet risk is a late safety gate:
+// 1) a weak token stays WATCH while the expensive risk snapshot is absent;
+// 2) a token that would otherwise be BUY READY must WAIT for that snapshot;
+// 3) known-safe evidence releases BUY READY;
+// 4) known-risky evidence still BLOCKS.
+const walletRiskSettings={
+  ...settings,
+  minScore:72,
+  minConfidence:70,
+  maxSuspectedRiskyWalletsPct:35,
+  maxInsidersPct:25
+};
+
+const weakTokenWithRiskPending=evaluate(
+  {
+    ...baseToken,
+    holderCount:15,
+    top10Pct:45,
+    developerPct:25,
+    buyPressure:1,
+    suspectedRiskyWalletsPct:null,
+    insidersPct:null
+  },
+  {
+    ...walletRiskSettings,
+    minHolders:null,
+    minTop10Pct:null,
+    maxTop10Pct:null,
+    minDeveloperPct:null,
+    maxDeveloperPct:null,
+    minBuyPressure:0
+  }
+);
+assert.equal(weakTokenWithRiskPending.score<72,true);
+assert.equal(weakTokenWithRiskPending.walletRiskPending,true);
+assert.equal(weakTokenWithRiskPending.state,'WATCH');
+
+const buyCandidateWithRiskPending=evaluate(
+  {
+    ...baseToken,
+    suspectedRiskyWalletsPct:null,
+    insidersPct:null
+  },
+  walletRiskSettings
+);
+assert.equal(buyCandidateWithRiskPending.score>=72,true);
+assert.equal(buyCandidateWithRiskPending.walletRiskPending,true);
+assert.equal(buyCandidateWithRiskPending.state,'WAITING');
+
+const buyCandidateRiskPassed=evaluate(
+  {
+    ...baseToken,
+    suspectedRiskyWalletsPct:0,
+    insidersPct:0
+  },
+  walletRiskSettings
+);
+assert.equal(buyCandidateRiskPassed.walletRiskPending,false);
+assert.equal(buyCandidateRiskPassed.state,'BUY READY');
+
+const walletClusterBlocked=evaluate(
+  {
+    ...baseToken,
+    suspectedRiskyWalletsPct:40,
+    insidersPct:0
+  },
+  walletRiskSettings
+);
+assert.equal(walletClusterBlocked.state,'BLOCKED');
+
 // Risk/policy failures still outrank recovered confidence.
 const riskBlocked=evaluate(
   {...baseToken,top10Pct:40,dataQuality:0},

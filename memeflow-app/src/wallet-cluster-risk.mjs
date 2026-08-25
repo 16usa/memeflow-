@@ -9,6 +9,26 @@ const finite=v=>v!==null&&v!==undefined&&v!==''&&Number.isFinite(Number(v));
 const num=v=>finite(v)?Number(v):null;
 const clampPct=v=>Math.max(0,Math.min(100,Number(v)||0));
 
+// MEMEFLOW_WALLET_RISK_PRIORITY_V1
+// This scanner is explicitly low priority. Yield to the Node event loop before
+// every optional RPC so incoming Pump CREATE notifications can enqueue first.
+const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+
+async function walletRiskPriorityYield(rpc){
+  const cooldownUntil=Number(rpc?.metrics?.cooldownUntil||0);
+
+  if(Number.isFinite(cooldownUntil) && cooldownUntil>Date.now()){
+    await sleep(Math.min(12_000,Math.max(0,cooldownUntil-Date.now())+50));
+  }
+
+  const configured=Number(process.env.WALLET_CLUSTER_PRIORITY_YIELD_MS);
+  const delayMs=Number.isFinite(configured)
+    ? Math.max(25,Math.min(500,configured))
+    : 100;
+
+  await sleep(delayMs);
+}
+
 function ms(v){
   if(v===null||v===undefined||v==='')return null;
   if(typeof v==='bigint'){
@@ -60,6 +80,8 @@ function inboundSystemTransfer(tx,wallet,minLamports){
 async function recentFunder(rpc,wallet,window,opts){
   let signatures;
   try{
+    // MEMEFLOW_WALLET_RISK_PRIORITY_V1
+    await walletRiskPriorityYield(rpc);
     signatures=await rpc.callOnce('getSignaturesForAddress',[
       wallet,
       {limit:opts.signatureLimit,commitment:'confirmed'}
@@ -80,6 +102,8 @@ async function recentFunder(rpc,wallet,window,opts){
     if(!row?.signature)continue;
     let tx=null;
     try{
+      // MEMEFLOW_WALLET_RISK_PRIORITY_V1
+      await walletRiskPriorityYield(rpc);
       tx=await rpc.callOnce('getTransaction',[
         row.signature,
         {encoding:'jsonParsed',commitment:'confirmed',maxSupportedTransactionVersion:0}
@@ -172,10 +196,13 @@ export async function scanWalletClusterRisk({rpc,token={},options={}}={}){
   if(!rpc?.callOnce)return {ok:false,reason:'rpc-unavailable'};
 
   const opts={
-    maxWallets:Math.max(3,Math.min(10,Number(options.maxWallets??process.env.WALLET_CLUSTER_MAX_WALLETS??7))),
-    signatureLimit:Math.max(2,Math.min(8,Number(options.signatureLimit??process.env.WALLET_CLUSTER_SIGNATURE_LIMIT??5))),
-    txPerWallet:Math.max(1,Math.min(4,Number(options.txPerWallet??process.env.WALLET_CLUSTER_TX_PER_WALLET??3))),
-    concurrency:Math.max(1,Math.min(4,Number(options.concurrency??process.env.WALLET_CLUSTER_RPC_CONCURRENCY??3))),
+    // MEMEFLOW_WALLET_RISK_PRIORITY_V1
+    // Still enough wallets to detect a >=3-wallet common-funder cluster, but
+    // bounded tightly so this optional safety pass cannot starve discovery.
+    maxWallets:Math.max(3,Math.min(10,Number(options.maxWallets??process.env.WALLET_CLUSTER_MAX_WALLETS??5))),
+    signatureLimit:Math.max(2,Math.min(8,Number(options.signatureLimit??process.env.WALLET_CLUSTER_SIGNATURE_LIMIT??3))),
+    txPerWallet:Math.max(1,Math.min(4,Number(options.txPerWallet??process.env.WALLET_CLUSTER_TX_PER_WALLET??2))),
+    concurrency:Math.max(1,Math.min(4,Number(options.concurrency??process.env.WALLET_CLUSTER_RPC_CONCURRENCY??1))),
     lookbackMs:Math.max(5*60_000,Number(options.lookbackMs??process.env.WALLET_CLUSTER_FUNDING_LOOKBACK_MS??30*60_000)),
     afterLaunchMs:Math.max(30_000,Number(options.afterLaunchMs??process.env.WALLET_CLUSTER_AFTER_LAUNCH_MS??5*60_000)),
     commonFunderWindowMs:Math.max(30_000,Number(options.commonFunderWindowMs??process.env.WALLET_CLUSTER_COMMON_FUNDER_WINDOW_MS??180_000)),

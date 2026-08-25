@@ -7,6 +7,14 @@ const clampScore = value =>
 const finite = value =>
   value !== null && value !== undefined && value !== '' && Number.isFinite(Number(value));
 
+// MEMEFLOW_WALLET_RISK_PRIORITY_V1
+// Wallet-cluster evidence is a late execution-safety gate. Missing evidence must
+// stop BUY READY, but must not turn every ordinary WATCH token into WAITING.
+const WALLET_RISK_GATE_KEYS = new Set([
+  'maxSuspectedRiskyWalletsPct',
+  'maxInsidersPct'
+]);
+
 function independentAiScore(token = {}) {
   let score = 0;
   const quality = [];
@@ -173,15 +181,29 @@ export function evaluate(token, s = {}) {
     reasons.push(`confidence ${confidence}% below configured minimum ${minimumConfidence}%`);
   }
 
+  // MEMEFLOW_WALLET_RISK_PRIORITY_V1
+  // Split late wallet-risk WAITING from all normal/core WAITING gates.
+  // A token that is not good enough to buy is WATCH immediately; we do not
+  // spend the expensive wallet graph scan merely to classify it as WATCH.
+  // If it WOULD otherwise be BUY READY, wallet risk remains mandatory.
+  const walletRiskWaiting = policy.waitingGates.some(
+    gate => WALLET_RISK_GATE_KEYS.has(gate?.key)
+  );
+  const nonWalletRiskWaiting = policy.waitingGates.some(
+    gate => !WALLET_RISK_GATE_KEYS.has(gate?.key)
+  );
+
   let state;
-  // BLOCKED must win over WAITING whenever any configured gate has a known fail.
+  // A known failure always has highest priority.
   if (policy.blocked || priceBlocked) {
     state = 'BLOCKED';
-  } else if (policy.waiting || priceWaiting) {
+  } else if (nonWalletRiskWaiting || priceWaiting) {
     state = 'WAITING';
   } else if (aiScorePass && confidencePass) {
-    state = 'BUY READY';
+    // Never permit BUY READY before configured wallet-risk checks finish.
+    state = walletRiskWaiting ? 'WAITING' : 'BUY READY';
   } else {
+    // Wallet-risk-only missing evidence cannot hijack a normal WATCH token.
     state = 'WATCH';
   }
 
@@ -226,6 +248,8 @@ export function evaluate(token, s = {}) {
     score,
     scoreBeforeWalletRisk:ai.scoreBeforeWalletRisk,
     walletRiskPenalty:ai.walletRiskPenalty,
+    // MEMEFLOW_WALLET_RISK_PRIORITY_V1
+    walletRiskPending:walletRiskWaiting,
     walletRisk:{
       suspectedRiskyWalletsPct:finite(token.suspectedRiskyWalletsPct)?Number(token.suspectedRiskyWalletsPct):null,
       insidersPct:finite(token.insidersPct)?Number(token.insidersPct):null,

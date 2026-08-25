@@ -3386,10 +3386,62 @@ function __mfWalletRiskPumpToken(token){
   return p.includes('pump');
 }
 
+// MEMEFLOW_WALLET_RISK_PRIORITY_V1
+// Expensive cluster analysis is a final safety check, not discovery/enrichment.
+// Ask whether at least one active user would have BUY READY if wallet-risk
+// evidence were temporarily ignored. Only then is the RPC-heavy scan useful.
+function __mfWalletRiskSettingEnabled(value){
+  return value!==null &&
+    value!==undefined &&
+    value!=='' &&
+    Number.isFinite(Number(value));
+}
+
+function __mfWalletRiskNeededByActiveUser(token){
+  const cutoff=Date.now()-(24*60*60*1000);
+  const users=Object.entries(store?.state?.users||{});
+
+  // Remove both the policy gates AND any previous risk penalty while asking
+  // whether the token is intrinsically a BUY READY candidate.
+  const tokenWithoutWalletRisk={
+    ...token,
+    suspectedRiskyWalletsPct:null,
+    insidersPct:null,
+    walletClusterRiskScannedAt:null
+  };
+
+  for(const [uid,u] of users){
+    const lastActiveAt=Number(u?.lastActiveAt||0);
+    if(!u?.isOwner && !(lastActiveAt>0 && lastActiveAt>=cutoff))continue;
+
+    let settings=null;
+    try{settings=store.settings(uid)||{}}catch{continue}
+
+    const riskEnabled=
+      __mfWalletRiskSettingEnabled(settings.maxSuspectedRiskyWalletsPct) ||
+      __mfWalletRiskSettingEnabled(settings.maxInsidersPct);
+
+    if(!riskEnabled)continue;
+
+    try{
+      const decision=evaluate(tokenWithoutWalletRisk,{
+        ...settings,
+        maxSuspectedRiskyWalletsPct:null,
+        maxInsidersPct:null
+      });
+
+      if(decision?.state==='BUY READY')return true;
+    }catch{}
+  }
+
+  return false;
+}
+
 function __mfWalletRiskCandidate(){
   const now=Date.now();
   const maxAge=Math.max(5*60_000,Number(process.env.WALLET_CLUSTER_MAX_TOKEN_AGE_MS||20*60_000));
-  const ttl=Math.max(30_000,Number(process.env.WALLET_CLUSTER_SCAN_TTL_MS||120_000));
+  // MEMEFLOW_WALLET_RISK_PRIORITY_V1: avoid rescanning the same holder sample every 2m.
+  const ttl=Math.max(60_000,Number(process.env.WALLET_CLUSTER_SCAN_TTL_MS||300_000));
   const retryDelay=Math.max(10_000,Number(process.env.WALLET_CLUSTER_RETRY_DELAY_MS||25_000));
   const rows=typeof store?.tokens==='function'?store.tokens():Object.values(store?.state?.tokens||{});
 
@@ -3404,6 +3456,11 @@ function __mfWalletRiskCandidate(){
       // Do not spend RPC on obviously dead/incomplete candidates.
       if(!(Number(token.priceSol)>0))return false;
       if(Number(token.holderCount||0)<10)return false;
+
+      // MEMEFLOW_WALLET_RISK_PRIORITY_V1
+      // Do not burn RPC on BLOCKED/WATCH/unfinished tokens. Cluster risk is
+      // requested only at the final step before a potential BUY READY.
+      if(!__mfWalletRiskNeededByActiveUser(token))return false;
 
       const holdersAt=Number(token.holderRiskWalletsScannedAt||0);
       const scannedAt=Number(token.walletClusterRiskScannedAt||0);
@@ -3424,8 +3481,24 @@ function __mfWalletRiskCandidate(){
     })[0]||null;
 }
 
+// MEMEFLOW_WALLET_RISK_PRIORITY_V1
+// NEW_TOKEN discovery owns the RPC lane. Wallet-risk starts only when discovery
+// has no active/fresh/retry work waiting.
+function __mfWalletRiskDiscoveryBusy(){
+  return Boolean(
+    Number(discQueue?.processing||0)>0 ||
+    Number(discQueue?.freshQueueDepth||0)>0 ||
+    Number(discQueue?.retryQueueDepth||0)>0
+  );
+}
+
 async function __mfWalletRiskTick(){
   if(__mfWalletRiskBusy)return;
+  if(__mfWalletRiskDiscoveryBusy())return;
+
+  // Do not add optional risk traffic while the provider is recovering from 429.
+  if(Number(rpc?.metrics?.cooldownUntil||0)>Date.now())return;
+
   const token=__mfWalletRiskCandidate();
   if(!token)return;
 
@@ -3480,7 +3553,9 @@ async function __mfWalletRiskTick(){
 
 const __mfWalletRiskInterval=setInterval(
   ()=>void __mfWalletRiskTick(),
-  Math.max(1_000,Number(process.env.WALLET_CLUSTER_SCAN_INTERVAL_MS||1_500))
+  // MEMEFLOW_WALLET_RISK_PRIORITY_V1
+  // Cluster analysis is deliberately slower than the NEW_TOKEN hot path.
+  Math.max(2_000,Number(process.env.WALLET_CLUSTER_SCAN_INTERVAL_MS||4_000))
 );
 __mfWalletRiskInterval.unref?.();
 setTimeout(()=>void __mfWalletRiskTick(),1_000).unref?.();
