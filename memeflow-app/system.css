@@ -2169,3 +2169,188 @@ and (
   gap: clamp(8px, 1.1vw, 14px);
 }
 /* ===== /MEMEFLOW_REMOVE_BACK_AND_RESET_V7 ===== */
+
+/* ===== MEMEFLOW_STANDALONE_SETTINGS_PAGE_V1 ===== */
+body.mf-settings-standalone {
+  min-height: 100dvh;
+  overflow-x: hidden;
+  overflow-y: auto !important;
+  background: radial-gradient(circle at 50% -8%, rgba(85,217,255,.05), transparent 28%), #0f141a;
+}
+body.mf-settings-standalone.mf293-settings-open {
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+}
+.mf-settings-page-shell {
+  width: min(1180px, 100%);
+  margin: 0 auto;
+  padding: max(10px, env(safe-area-inset-top)) 12px 0;
+}
+.mf-settings-page-header {
+  min-height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 15px;
+  background: linear-gradient(180deg, rgba(20,28,37,.92), rgba(15,20,26,.94));
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+.mf-settings-page-header-left {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.mf-settings-page-back {
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: rgba(255,255,255,.015);
+  color: #94a8b6;
+  font-size: 18px;
+  line-height: 1;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.mf-settings-page-back:hover,
+.mf-settings-page-back:focus-visible {
+  border-color: rgba(85,217,255,.24);
+  color: #c7d7df;
+  outline: none;
+}
+.mf-settings-page-brand-mark {
+  width: 31px;
+  height: 31px;
+  flex: 0 0 31px;
+  display: grid;
+  place-items: center;
+}
+.mf-settings-page-brand-mark .mf-brand-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.mf-settings-page-title span {
+  display: block;
+  color: #dfe9ef;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: .14em;
+  white-space: nowrap;
+}
+.mf-settings-page-title strong {
+  display: block;
+  margin-top: 2px;
+  color: #708491;
+  font-size: 7px;
+  font-weight: 800;
+  letter-spacing: .13em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.mf-settings-page-live {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--green);
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: .12em;
+}
+.mf-settings-page-live i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 14px rgba(77,230,161,.65);
+}
+.mf-settings-page-loading {
+  width: min(1180px, calc(100% - 24px));
+  margin: 12px auto;
+  color: #627681;
+  font-size: 9px;
+  text-align: center;
+}
+body.mf-settings-page-ready .mf-settings-page-loading { display: none; }
+body.mf-settings-standalone .mf293-settings-backdrop {
+  position: static !important;
+  inset: auto !important;
+  z-index: auto !important;
+  width: 100% !important;
+  min-height: 0 !important;
+  display: block !important;
+  padding: 10px 12px max(24px, env(safe-area-inset-bottom)) !important;
+  background: transparent !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+body.mf-settings-standalone .mf293-settings-backdrop[hidden] { display: none !important; }
+body.mf-settings-standalone .mf293-settings-panel {
+  width: min(1180px, 100%) !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  margin: 0 auto !important;
+  display: grid !important;
+  grid-template-rows: auto auto auto auto !important;
+  overflow: visible !important;
+  border: 1px solid rgba(105,151,171,.12) !important;
+  border-radius: 16px !important;
+  background: radial-gradient(circle at 50% 0%, rgba(72,210,219,.055), transparent 28%), rgba(3,9,13,.82) !important;
+  box-shadow: none !important;
+}
+body.mf-settings-standalone .mf293-settings-head { border-radius: 16px 16px 0 0; }
+body.mf-settings-standalone #mf293SettingsClose { display: none !important; }
+body.mf-settings-standalone .mf293-settings-body {
+  min-height: 0 !important;
+  max-height: none !important;
+  overflow: visible !important;
+  overscroll-behavior: auto !important;
+}
+body.mf-settings-standalone .mf293-settings-footer {
+  position: sticky !important;
+  bottom: 0 !important;
+  z-index: 20 !important;
+  border-radius: 0 0 16px 16px;
+  background: rgba(3,9,13,.96) !important;
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+@media (min-width: 761px) {
+  body.mf-settings-standalone .mf293-settings-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+@media (max-width: 760px) {
+  .mf-settings-page-shell { padding: max(7px, env(safe-area-inset-top)) 7px 0; }
+  .mf-settings-page-header { min-height: 58px; padding: 7px 8px; border-radius: 13px; }
+  .mf-settings-page-header-left { gap: 8px; }
+  .mf-settings-page-back { width: 38px; height: 38px; flex-basis: 38px; }
+  .mf-settings-page-brand-mark { width: 29px; height: 29px; flex-basis: 29px; }
+  .mf-settings-page-title span { font-size: 10px; }
+  .mf-settings-page-title strong { font-size: 6px; }
+  .mf-settings-page-live { font-size: 7px; }
+  body.mf-settings-standalone .mf293-settings-backdrop {
+    padding: 7px 7px max(18px, env(safe-area-inset-bottom)) !important;
+  }
+  body.mf-settings-standalone .mf293-settings-panel {
+    width: 100% !important;
+    height: auto !important;
+    max-height: none !important;
+    border-radius: 14px !important;
+  }
+  body.mf-settings-standalone .mf293-settings-head { border-radius: 14px 14px 0 0; }
+  body.mf-settings-standalone .mf293-settings-footer {
+    border-radius: 0 0 14px 14px;
+    padding-bottom: max(10px, env(safe-area-inset-bottom)) !important;
+  }
+}
+/* ===== /MEMEFLOW_STANDALONE_SETTINGS_PAGE_V1 ===== */

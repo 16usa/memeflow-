@@ -3245,7 +3245,7 @@ function mf293Build() {
     button.type = 'button';
     button.textContent = 'Settings';
     actions.insertBefore(button, document.getElementById('resetViewBtn') || null);
-    button.addEventListener('click', mf293Open);
+    button.addEventListener('click', () => window.location.assign('/settings.html'));
   }
 
   const backdrop = document.createElement('div');
@@ -4632,7 +4632,7 @@ if (document.readyState === 'loading') {
   const PATCH_ID = 'MEMEFLOW_REALTIME_PAGE_GALLERY_V1';
   const DESTINATIONS = [
     { title: 'Trading Terminal', image: '/memeflow-gallery/trading-terminal.webp?v=page-gallery-v1', href: '/trading.html', slot: 'left' },
-    { title: 'System Settings', image: '/memeflow-gallery/system-settings.webp?v=page-gallery-v1', href: '/system.html?mfOpenSettings=1', slot: 'center' },
+    { title: 'System Settings', image: '/memeflow-gallery/system-settings.webp?v=page-gallery-v1', href: '/settings.html', slot: 'center' },
     { title: 'Real-Time Pipeline', image: '/memeflow-gallery/live-token-states.webp?v=page-gallery-v1', href: '/system-tokens.html', slot: 'right' }
   ];
 
@@ -5087,7 +5087,7 @@ if (document.readyState === 'loading') {
     const href = String(card.dataset.href || '');
 
     if (href.includes('/trading.html')) return 'Trading Terminal';
-    if (href.includes('mfOpenSettings=1')) return 'System Settings';
+    if (href.includes('/settings.html') || href.includes('mfOpenSettings=1')) return 'System Settings';
     if (href.includes('/system-tokens.html')) return 'Real-Time Pipeline';
 
     return title;
@@ -5267,3 +5267,13 @@ if (document.readyState === 'loading') {
   }
 })();
 /* ===== /MEMEFLOW_REMOVE_BACK_AND_RESET_V7 ===== */
+
+/* ===== MEMEFLOW_STANDALONE_SETTINGS_PAGE_V1 ===== */
+document.addEventListener('click', (event) => {
+  const trigger = event.target?.closest?.('#mf293SettingsBtn, .mf293-settings-trigger');
+  if (!trigger) return;
+  event.preventDefault();
+  event.stopImmediatePropagation();
+  window.location.assign('/settings.html');
+}, true);
+/* ===== /MEMEFLOW_STANDALONE_SETTINGS_PAGE_V1 ===== */
