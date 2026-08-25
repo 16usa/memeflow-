@@ -7,6 +7,50 @@
   <title>MEMEFLOW Trading Terminal</title>
   <link rel="stylesheet" href="/trading.css?v=trading-back-button-v1">
 <link rel="stylesheet" href="/memeflow-brand.css?v=final-v6">
+
+<style id="mfTradingChartTransparentBgV1">
+/* ===== MEMEFLOW_TRADING_CHART_TRANSPARENT_BG_V1 ===== */
+/*
+  Remove the dark/black plot background inside the Trading Terminal chart.
+  Scope is intentionally narrow:
+  - only on pages marked by <html data-mf-chart-bg-clear="1">
+  - only for likely chart containers/canvases
+*/
+html[data-mf-chart-bg-clear="1"] {
+  --mf-chart-transparent: transparent;
+}
+
+html[data-mf-chart-bg-clear="1"] .tv-lightweight-charts,
+html[data-mf-chart-bg-clear="1"] .tv-lightweight-charts > div,
+html[data-mf-chart-bg-clear="1"] .klinecharts,
+html[data-mf-chart-bg-clear="1"] .klinecharts-pro,
+html[data-mf-chart-bg-clear="1"] .chart-wrap,
+html[data-mf-chart-bg-clear="1"] .chart-shell,
+html[data-mf-chart-bg-clear="1"] .chart-area,
+html[data-mf-chart-bg-clear="1"] .chart-stage,
+html[data-mf-chart-bg-clear="1"] .chart-surface,
+html[data-mf-chart-bg-clear="1"] .chart-panel,
+html[data-mf-chart-bg-clear="1"] .chart-container,
+html[data-mf-chart-bg-clear="1"] .chart-viewport,
+html[data-mf-chart-bg-clear="1"] .terminal-chart,
+html[data-mf-chart-bg-clear="1"] .trade-chart,
+html[data-mf-chart-bg-clear="1"] .price-chart,
+html[data-mf-chart-bg-clear="1"] .candles,
+html[data-mf-chart-bg-clear="1"] [data-chart-root],
+html[data-mf-chart-bg-clear="1"] [data-mf-chart-bg-target] {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+html[data-mf-chart-bg-clear="1"] [data-mf-chart-bg-target] canvas,
+html[data-mf-chart-bg-clear="1"] [data-mf-chart-bg-target] svg,
+html[data-mf-chart-bg-clear="1"] [data-mf-chart-bg-target] table,
+html[data-mf-chart-bg-clear="1"] [data-mf-chart-bg-target] div {
+  background-color: transparent !important;
+}
+/* ===== /MEMEFLOW_TRADING_CHART_TRANSPARENT_BG_V1 ===== */
+</style>
+
 </head>
 <body>
   <div class="shell">
@@ -353,6 +397,199 @@
 <!-- MEMEFLOW_COMPACT_TRADING_V4_JS_END -->
 
 <script src="/copy-trading-settings-sync-v2.js?v=2" data-patch="MEMEFLOW_COPY_TRADING_SETTINGS_SYNC_V2"></script>
+
+<script>
+/* ===== MEMEFLOW_TRADING_CHART_TRANSPARENT_BG_V1 ===== */
+(() => {
+  if (window.__mfTradingChartTransparentBgV1) return;
+  window.__mfTradingChartTransparentBgV1 = true;
+  document.documentElement.setAttribute('data-mf-chart-bg-clear', '1');
+
+  const transparentChartOptions = (options = {}) => {
+    const layout = options.layout || {};
+    const background = layout.background || {};
+    return {
+      ...options,
+      layout: {
+        ...layout,
+        background: {
+          ...background,
+          color: 'transparent',
+        },
+      },
+    };
+  };
+
+  const clearElement = (node) => {
+    if (!node || !(node instanceof HTMLElement)) return;
+    node.dataset.mfChartBgTarget = '1';
+    node.style.background = 'transparent';
+    node.style.backgroundColor = 'transparent';
+  };
+
+  const likelyChartRoot = (node) => {
+    if (!(node instanceof HTMLElement)) return false;
+    const idClass = `${node.id || ''} ${node.className || ''}`.toLowerCase();
+
+    if (
+      /chart|candle|kline|tradingview|lightweight/.test(idClass) ||
+      node.hasAttribute('data-chart-root')
+    ) {
+      return node.querySelector('canvas,svg') !== null || node.tagName === 'CANVAS';
+    }
+
+    return false;
+  };
+
+  const clearChartRoots = (root = document) => {
+    const selectors = [
+      '.tv-lightweight-charts',
+      '.klinecharts',
+      '.klinecharts-pro',
+      '.chart-wrap',
+      '.chart-shell',
+      '.chart-area',
+      '.chart-stage',
+      '.chart-surface',
+      '.chart-panel',
+      '.chart-container',
+      '.chart-viewport',
+      '.terminal-chart',
+      '.trade-chart',
+      '.price-chart',
+      '.candles',
+      '[data-chart-root]',
+      '[id*="chart"]',
+      '[class*="chart"]',
+      '[id*="candle"]',
+      '[class*="candle"]',
+      '[id*="kline"]',
+      '[class*="kline"]'
+    ];
+
+    const seen = new Set();
+
+    root.querySelectorAll(selectors.join(',')).forEach((node) => {
+      if (!(node instanceof HTMLElement)) return;
+      if (seen.has(node)) return;
+      if (!likelyChartRoot(node)) return;
+      seen.add(node);
+      clearElement(node);
+      node.querySelectorAll('canvas, svg, table, div').forEach((child) => {
+        if (!(child instanceof HTMLElement)) return;
+        child.style.backgroundColor = 'transparent';
+      });
+    });
+
+    // As an extra safety net, clear large canvases inside the main content.
+    root.querySelectorAll('canvas').forEach((canvas) => {
+      if (!(canvas instanceof HTMLCanvasElement)) return;
+      const rect = canvas.getBoundingClientRect();
+      if (rect.width >= 240 && rect.height >= 180) {
+        canvas.style.backgroundColor = 'transparent';
+        const host = canvas.parentElement;
+        if (host) clearElement(host);
+      }
+    });
+  };
+
+  const patchLightweightCharts = () => {
+    const lib = window.LightweightCharts;
+    if (!lib || typeof lib.createChart !== 'function' || lib.__mfBgPatched) return;
+    const originalCreateChart = lib.createChart.bind(lib);
+
+    lib.createChart = function(container, options = {}) {
+      const chart = originalCreateChart(container, transparentChartOptions(options));
+      requestAnimationFrame(() => {
+        if (container instanceof HTMLElement) clearElement(container);
+        clearChartRoots(document);
+        try {
+          if (chart && typeof chart.applyOptions === 'function') {
+            chart.applyOptions(transparentChartOptions({}));
+          }
+        } catch (_) {}
+      });
+      return chart;
+    };
+
+    lib.__mfBgPatched = true;
+  };
+
+  const tryPatchKnownCharts = () => {
+    patchLightweightCharts();
+
+    // Try to update already-created chart instances that expose applyOptions().
+    Object.keys(window).forEach((key) => {
+      let value;
+      try { value = window[key]; } catch (_) { return; }
+      if (!value || typeof value !== 'object') return;
+      if (typeof value.applyOptions !== 'function') return;
+
+      const looksLikeChart =
+        typeof value.timeScale === 'function' ||
+        typeof value.priceScale === 'function' ||
+        typeof value.subscribeCrosshairMove === 'function';
+
+      if (!looksLikeChart) return;
+
+      try {
+        value.applyOptions(transparentChartOptions({}));
+      } catch (_) {}
+    });
+  };
+
+  const boot = () => {
+    clearChartRoots(document);
+    tryPatchKnownCharts();
+
+    const observer = new MutationObserver((mutations) => {
+      let needsRefresh = false;
+      for (const mutation of mutations) {
+        if (mutation.type === 'childList' && mutation.addedNodes.length) {
+          needsRefresh = true;
+          break;
+        }
+        if (mutation.type === 'attributes') {
+          needsRefresh = true;
+          break;
+        }
+      }
+      if (needsRefresh) {
+        clearChartRoots(document);
+        tryPatchKnownCharts();
+      }
+    });
+
+    observer.observe(document.documentElement, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['class', 'style', 'id']
+    });
+
+    window.addEventListener('load', () => {
+      clearChartRoots(document);
+      tryPatchKnownCharts();
+      setTimeout(() => {
+        clearChartRoots(document);
+        tryPatchKnownCharts();
+      }, 350);
+      setTimeout(() => {
+        clearChartRoots(document);
+        tryPatchKnownCharts();
+      }, 1200);
+    }, { once: true });
+  };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', boot, { once: true });
+  } else {
+    boot();
+  }
+})();
+/* ===== /MEMEFLOW_TRADING_CHART_TRANSPARENT_BG_V1 ===== */
+</script>
+
 </body>
 </html>
 
