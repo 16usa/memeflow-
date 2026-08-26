@@ -4,6 +4,30 @@ function finite(v){
   const n=Number(v);
   return Number.isFinite(n)?n:null;
 }
+
+// MEMEFLOW_PUMP_UNIT_NORMALIZATION_V1
+// Pump frontend API uses raw integer units for several fields.
+// `market_cap` is lamport-denominated; `total_supply` is token base units.
+function pumpMarketCapSol(coin){
+  const raw=finite(coin?.market_cap);
+  if(raw!==null)return raw/1e9;
+
+  // Camel-case fallbacks from other adapters are assumed already normalized.
+  return finite(coin?.marketCapSol??coin?.marketCap);
+}
+
+function pumpSupplyTokens(coin){
+  const raw=finite(coin?.total_supply);
+  if(raw!==null){
+    const decimals=Math.max(
+      0,
+      Math.min(12,Math.floor(finite(coin?.decimals)??6))
+    );
+    return raw/(10**decimals);
+  }
+
+  return finite(coin?.totalSupply);
+}
 function createdMs(coin){
   const raw=finite(
     coin?.created_timestamp ??
@@ -40,9 +64,19 @@ function coinToken(coin,{recent=false}={}){
     bondingCurve:coin?.bonding_curve||coin?.bondingCurve||null,
     pumpCreatedAt:created,
     discoveredAt:created||now,
+    // Pump API truth/reference fields.
     marketCapUsd:finite(coin?.usd_market_cap??coin?.marketCapUsd),
-    marketCapSol:finite(coin?.market_cap??coin?.marketCap),
-    totalSupply:finite(coin?.total_supply??coin?.totalSupply),
+    marketCapSol:pumpMarketCapSol(coin),
+    totalSupply:pumpSupplyTokens(coin),
+    pumpMarketCapRawLamports:finite(coin?.market_cap),
+    pumpTotalSupplyRaw:finite(coin?.total_supply),
+    tokenDecimals:finite(coin?.decimals)??6,
+    pumpReportedHolderCount:finite(
+      coin?.holder_count ??
+      coin?.holderCount ??
+      coin?.holders
+    ),
+    pumpReferenceAt:now,
     complete:coin?.complete===true,
     raydiumPool:coin?.raydium_pool||coin?.raydiumPool||null,
     twitterUrl:coin?.twitter||null,
@@ -93,7 +127,7 @@ export function startPumpHistoryBackfill({
   const jwt=String(process.env.PUMPFUN_HISTORY_JWT||'').trim();
   const pageSize=Math.max(10,Math.min(100,Number(process.env.PUMPFUN_HISTORY_PAGE_SIZE||100)));
   const intervalMs=Math.max(1000,Number(process.env.PUMPFUN_HISTORY_INTERVAL_MS||2500));
-  const recentEveryMs=Math.max(30000,Number(process.env.PUMPFUN_HISTORY_RECENT_SYNC_MS||60000));
+  const recentEveryMs=Math.max(10000,Number(process.env.PUMPFUN_HISTORY_RECENT_SYNC_MS||15000));
   const startDelayMs=Math.max(3000,Number(process.env.PUMPFUN_HISTORY_START_DELAY_MS||5000));
 
   let stopped=false;

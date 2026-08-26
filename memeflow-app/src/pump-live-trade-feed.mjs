@@ -61,6 +61,38 @@ function marketFromEvent(e){
   if(e.realSolReserves!==null)liquiditySol=Number(e.realSolReserves)/1e9;
   return {priceSol,liquiditySol};
 }
+
+// MEMEFLOW_LIVE_MARKET_CAP_V1
+function normalizedPumpSupply(token){
+  const direct=Number(token?.totalSupply);
+  if(Number.isFinite(direct)&&direct>0){
+    // Repair registry rows created before Pump base-unit normalization.
+    return direct>1e12?direct/1e6:direct;
+  }
+
+  const raw=Number(
+    token?.tokenTotalSupplyRaw ??
+    token?.pumpTotalSupplyRaw
+  );
+  if(Number.isFinite(raw)&&raw>0){
+    const decimals=Math.max(
+      0,
+      Math.min(12,Math.floor(Number(token?.tokenDecimals??6)))
+    );
+    return raw/(10**decimals);
+  }
+
+  // Pump bonding-curve tokens use the canonical 1B-token supply unless a
+  // decoded supply says otherwise.
+  const pump=String(
+    token?.launchPlatform ??
+    token?.protocol ??
+    token?.source ??
+    ''
+  ).toLowerCase();
+
+  return pump.includes('pump')?1_000_000_000:null;
+}
 function tokenFromStore(store,mint){
   try{
     const token=
@@ -247,11 +279,27 @@ export function startPumpLiveTradeFeed(opts={}){
         solUsd
       })||{};
 
+      const liveSupply=normalizedPumpSupply(mergedForFeatures);
+      const liveMarketCapSol=
+        Number.isFinite(m.priceSol)&&m.priceSol>0&&
+        Number.isFinite(liveSupply)&&liveSupply>0
+          ? m.priceSol*liveSupply
+          : null;
+
+      const liveMarketCapUsd=
+        Number.isFinite(liveMarketCapSol)&&liveMarketCapSol>0&&
+        Number.isFinite(Number(solUsd))&&Number(solUsd)>0
+          ? liveMarketCapSol*Number(solUsd)
+          : null;
+
       const patch={
         ...(holderSnap||{}),
         ...opp,
         marketSource:'ws-direct-trade-event-v13',
         lastPriceAt:Date.now(),
+        lastMarketActivityAt:Date.now(),
+        marketCapUpdatedAt:Date.now(),
+        liveMarketCapSource:'pump-trade-price-x-supply',
         eventSlot:e.slot??null,
         eventSignature:e.signature||null,
         virtualSolReservesRaw:e.virtualSolReserves?.toString?.()||null,
@@ -261,6 +309,9 @@ export function startPumpLiveTradeFeed(opts={}){
       };
       if(Number.isFinite(m.priceSol)&&m.priceSol>0)patch.priceSol=m.priceSol;
       if(Number.isFinite(m.liquiditySol)&&m.liquiditySol>=0)patch.liquiditySol=m.liquiditySol;
+      if(Number.isFinite(liveSupply)&&liveSupply>0)patch.totalSupply=liveSupply;
+      if(Number.isFinite(liveMarketCapSol)&&liveMarketCapSol>0)patch.marketCapSol=liveMarketCapSol;
+      if(Number.isFinite(liveMarketCapUsd)&&liveMarketCapUsd>0)patch.marketCapUsd=liveMarketCapUsd;
 
       const updated=store?.setToken?.(e.mint,patch);
       if(!updated)return;

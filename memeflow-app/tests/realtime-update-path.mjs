@@ -38,7 +38,9 @@ assert.doesNotMatch(route,/tokenRegistry\?\.count\?\.\(\)/);
 // Historical HTTP sync cannot overwrite an already-live WS snapshot and its
 // expensive evaluations are explicitly low priority.
 assert.match(app,/MEMEFLOW_REALTIME_HISTORY_ISOLATION_V1/);
-assert.match(app,/if\(current\?\.wsFirst===true\)return/);
+assert.match(app,/if\(current\?\.wsFirst===true\)\{/);
+assert.match(app,/pumpReportedMarketCapUsd/);
+assert.match(app,/pumpReportedHolderCount/);
 assert.match(app,/__mfQueueHistoryEvaluation\(hot\)/);
 assert.match(app,/HISTORY_EVAL_INTERVAL_MS/);
 

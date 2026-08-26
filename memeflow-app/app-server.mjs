@@ -761,100 +761,107 @@ function billingStatus(u){const owner=Boolean(u.isOwner);const stripe=Boolean(u.
  * Read-only trailing 5 minute market snapshot for Token Flow cards.
  * Uses existing real Pump chartTradeHistory plus already stored token fields.
  */
-function __mfCandidateMarket5mV4(mint,t){
-  const finite=(v)=>v!==null&&v!==undefined&&v!==''&&Number.isFinite(Number(v))
-    ? Number(v)
-    : null;
-
-  const now=Date.now();
-  const cutoff=now-(5*60*1000);
-  const rows=Array.isArray(chartTradeHistory.get(String(mint||'')))
-    ? chartTradeHistory.get(String(mint||'')).slice()
-    : [];
-
-  const points=rows
-    .filter((p)=>{
-      const ts=Number(p?.t);
-      return Number.isFinite(ts)&&ts>0&&ts<=now+30000;
-    })
-    .sort((a,b)=>Number(a.t)-Number(b.t));
-
-  const recent=points.filter((p)=>Number(p.t)>=cutoff);
-  const latest=points.length?points[points.length-1]:null;
-
-  let base=null;
-  for(let i=points.length-1;i>=0;i--){
-    if(Number(points[i]?.t)<=cutoff){
-      base=points[i];
-      break;
-    }
+function __mfNormalizePumpSupplyV5(t){
+  const direct=Number(t?.totalSupply);
+  if(Number.isFinite(direct)&&direct>0){
+    return direct>1e12?direct/1e6:direct;
   }
-  if(!base&&recent.length)base=recent[0];
 
-  const pointPrice=(p)=>finite(p?.priceSol??p?.price);
-  const latestPrice=
-    finite(t?.priceSol) ??
-    pointPrice(latest);
+  const raw=Number(
+    t?.tokenTotalSupplyRaw ??
+    t?.pumpTotalSupplyRaw
+  );
+  if(Number.isFinite(raw)&&raw>0){
+    const decimals=Math.max(
+      0,
+      Math.min(12,Math.floor(Number(t?.tokenDecimals??6)))
+    );
+    return raw/(10**decimals);
+  }
 
-  const basePrice=pointPrice(base);
+  const pump=String(
+    t?.launchPlatform ??
+    t?.protocol ??
+    t?.source ??
+    ''
+  ).toLowerCase();
 
-  const volume5mSol=recent.reduce(
-    (sum,p)=>sum+Math.abs(finite(p?.solAmount)??0),
-    0
+  return pump.includes('pump')?1_000_000_000:null;
+}
+
+function __mfCandidateMarket5mV4(mint,t){
+  // MEMEFLOW_CARD_MARKET_TRUTH_V5
+  const rows=chartTradeHistory.get(mint)||[];
+  const now=Date.now();
+  const cutoff=now-300000;
+
+  const recent=rows.filter(
+    r=>Number(r?.t)>=cutoff&&Number(r?.t)<=now
   );
 
-  const directVolumeUsd=
-    finite(t?.volume5mUsd ?? t?.market?.volume5mUsd);
+  const volume5mSol=recent.reduce(
+    (sum,row)=>sum+Number(row?.solAmount||0),
+    0
+  );
+  const transactions5m=recent.length;
 
-  const directTx=
-    finite(t?.transactions5m ?? t?.tx5m) ??
-    (()=>{
-      const buys=finite(t?.buys5m);
-      const sells=finite(t?.sells5m);
-      return buys!==null||sells!==null
-        ? (buys??0)+(sells??0)
-        : null;
-    })();
-
-  const transactions5m=
-    recent.length>0
-      ? recent.length
-      : directTx;
-
-  let priceChange5mPct=
-    finite(t?.priceChange5mPct ?? t?.change5mPct);
-
-  if(
-    recent.length &&
-    latestPrice!==null &&
-    latestPrice>0 &&
-    basePrice!==null &&
-    basePrice>0
-  ){
-    priceChange5mPct=((latestPrice/basePrice)-1)*100;
-  }
-
-  const supply=finite(t?.totalSupply);
-  const storedMcSol=finite(t?.marketCapSol??t?.marketCap);
-  const marketCapSol=
-    latestPrice!==null&&latestPrice>0&&supply!==null&&supply>0
-      ? latestPrice*supply
-      : storedMcSol;
-
-  const marketCapUsd=finite(t?.marketCapUsd);
-
-  const impliedSolUsd=
-    marketCapUsd!==null&&marketCapUsd>0&&marketCapSol!==null&&marketCapSol>0
-      ? marketCapUsd/marketCapSol
+  const finite=(v)=>
+    v!==null&&v!==undefined&&Number.isFinite(Number(v))
+      ? Number(v)
       : null;
 
-  const volume5mUsd=
-    directVolumeUsd ??
+  const latestPrice=finite(t?.priceSol);
+  const supply=__mfNormalizePumpSupplyV5(t);
+
+  const liveMcSol=
+    latestPrice!==null&&latestPrice>0&&
+    supply!==null&&supply>0
+      ? latestPrice*supply
+      : null;
+
+  let storedMcSol=finite(t?.marketCapSol);
+
+  // Repair old registry rows where Pump `market_cap` lamports were stored
+  // directly as SOL (e.g. 33,500,000,000 -> 33.5 SOL).
+  if(
+    storedMcSol!==null &&
+    storedMcSol>1_000_000 &&
     (
-      impliedSolUsd!==null
-        ? volume5mSol*impliedSolUsd
-        : null
-    );
+      t?.pumpMarketCapRawLamports!=null ||
+      t?.registryHistorical===true ||
+      String(t?.source||'').toLowerCase().includes('history')
+    )
+  ){
+    storedMcSol/=1e9;
+  }
+
+  const marketCapSol=
+    liveMcSol!==null&&liveMcSol>0
+      ? liveMcSol
+      : storedMcSol;
+
+  const solUsd=finite(solUsdOracle.get());
+  const storedMcUsd=finite(t?.marketCapUsd);
+
+  const marketCapUsd=
+    marketCapSol!==null&&marketCapSol>0&&
+    solUsd!==null&&solUsd>0
+      ? marketCapSol*solUsd
+      : storedMcUsd;
+
+  // 5m volume is derived from the same REAL Pump TradeEvents as the chart.
+  const volume5mUsd=
+    solUsd!==null&&solUsd>0
+      ? volume5mSol*solUsd
+      : finite(t?.volume5mUsd);
+
+  let priceChange5mPct=null;
+  const priced=recent.filter(r=>Number(r?.price)>0);
+  if(priced.length>=2){
+    const first=Number(priced[0].price);
+    const last=Number(priced[priced.length-1].price);
+    if(first>0)priceChange5mPct=((last-first)/first)*100;
+  }
 
   return {
     volume5mSol,
@@ -862,13 +869,18 @@ function __mfCandidateMarket5mV4(mint,t){
     transactions5m,
     marketCapSol,
     marketCapUsd,
-    priceChange5mPct
+    priceChange5mPct,
+    marketCapSource:
+      liveMcSol!==null
+        ? 'live-pump-trade'
+        : (marketCapSol!==null?'stored-normalized':null),
+    marketUpdatedAt:
+      Number(t?.marketCapUpdatedAt||t?.lastPriceAt||0)||null
   };
 }
 
 // MEMEFLOW_REALTIME_UI_FAIRNESS_V1
-// Building a large Live Token States response must never monopolize Node's
-// event loop and starve Pump WebSocket messages.
+// Building a large Live Token States response must yield to the Pump WS path.
 const __mfLiveStatesYieldEvery=Math.max(
   20,
   Number(process.env.LIVE_STATES_YIELD_EVERY||75)
@@ -883,7 +895,6 @@ const __mfYieldToEventLoop=()=>new Promise(resolve=>setImmediate(resolve));
 function candidateView(d){
   const t=store.state.tokens[d.mint]||{};
   const finite=(v)=>v!==null&&v!==undefined&&Number.isFinite(Number(v))?Number(v):null;
-  const marketCapSol=finite(t.marketCapSol);
   const liquiditySol=finite(t.liquiditySol);
   const top10Pct=finite(t.top10Pct);
   const developerPct=finite(t.developerPct??t.developerSharePct);
@@ -922,14 +933,31 @@ function candidateView(d){
     protocol:t.protocol||t.launchPlatform||null,
     price:t.priceSol??null,
     priceSol:finite(t.priceSol),
-    marketCap:marketCapSol,
-    marketCapSol,
-    marketCapUsd:finite(t.marketCapUsd),
+    // `marketCap` is the generic UI field and the UI renders it with `$`.
+    // Therefore it MUST be USD, never SOL or Pump lamports.
+    marketCap:market5m.marketCapUsd,
+    marketCapSol:market5m.marketCapSol,
+    marketCapUsd:market5m.marketCapUsd,
+    marketCapSource:market5m.marketCapSource,
+    marketCapUpdatedAt:market5m.marketUpdatedAt,
     liquidity:liquiditySol,
     liquiditySol,
     liquidityUsd:finite(t.liquidityUsd),
-    holders:finite(t.holderCount),
-    holderCount:finite(t.holderCount),
+    holders:
+      finite(t.pumpReportedHolderCount)!==null &&
+      Date.now()-Number(t.pumpReferenceAt||0)<=90000
+        ? finite(t.pumpReportedHolderCount)
+        : finite(t.holderCount),
+    holderCount:
+      finite(t.pumpReportedHolderCount)!==null &&
+      Date.now()-Number(t.pumpReferenceAt||0)<=90000
+        ? finite(t.pumpReportedHolderCount)
+        : finite(t.holderCount),
+    holderSource:
+      finite(t.pumpReportedHolderCount)!==null &&
+      Date.now()-Number(t.pumpReferenceAt||0)<=90000
+        ? 'pump-reference'
+        : (t.holderSource||t.eventLedgerVersion||'ws-event-ledger'),
     top10:top10Pct,
     top10Pct,
     developer:developerPct,
@@ -3783,7 +3811,23 @@ const server=http.createServer((req,res)=>handler(req,res).catch(e=>json(res,500
       // Do not lazy-hydrate or overwrite an already-live token with a sparse
       // HTTP history snapshot. Live WS state is always authoritative.
       const current=store.state.tokens?.[token.mint]||null;
-      if(current?.wsFirst===true)return;
+
+      if(current?.wsFirst===true){
+        const referencePatch={
+          pumpReferenceAt:Number(token?.pumpReferenceAt||Date.now())
+        };
+
+        if(Number.isFinite(Number(token?.marketCapUsd))){
+          referencePatch.pumpReportedMarketCapUsd=Number(token.marketCapUsd);
+        }
+        if(Number.isFinite(Number(token?.pumpReportedHolderCount))){
+          referencePatch.pumpReportedHolderCount=Number(token.pumpReportedHolderCount);
+        }
+
+        store.setToken(token.mint,referencePatch);
+        try{publish(token.mint)}catch{}
+        return;
+      }
 
       const hot=current
         ? store.setToken(
