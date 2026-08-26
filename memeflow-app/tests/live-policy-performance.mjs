@@ -22,7 +22,9 @@ try{
   }
   const token={
     mint:'PerfMint',launchPlatform:'pump',name:'Perf',symbol:'PERF',
-    creator:'Creator',discoveredAt:now-10_000,
+    creator:'Creator',
+    pumpCreatedAt:now-10_000,
+    discoveredAt:now-1_000,
     priceSol:0.000001,totalSupply:1_000_000_000,
     holderFresh:true,holderCount:80,top10Pct:15,developerPct:4,buyPressure:3,
     bondingCurvePct:20,marketCapUsd:150_000,totalFeesSol:0.1,volume24hUsd:40_000,

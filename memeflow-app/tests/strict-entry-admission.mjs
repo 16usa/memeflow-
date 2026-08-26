@@ -31,7 +31,10 @@ const strictSettings={
 const tooEarly={
   mint:'Early',
   launchPlatform:'pump',
-  discoveredAt:now-90_000,
+  // MEMEFLOW_SETTINGS_ONLY_DISCOVERY_V1:
+  // real token age comes from Pump/create time, not scanner discovery time.
+  pumpCreatedAt:now-90_000,
+  discoveredAt:now-1_000,
   marketCapUsd:2600,
   holderCount:5,
   top10Pct:20,
@@ -53,7 +56,8 @@ assert.ok(earlyAdmission.failedGates.some(g=>g.key==='minTokenAgeMinutes'));
 const admitted={
   ...tooEarly,
   mint:'Admitted',
-  discoveredAt:now-(21*60_000),
+  pumpCreatedAt:now-(21*60_000),
+  discoveredAt:now-1_000,
   marketCapUsd:35000,
   holderCount:44,
   top10Pct:18,
@@ -98,7 +102,8 @@ const missing=evaluateEntryAdmission(
   {
     mint:'Missing',
     launchPlatform:'pump',
-    discoveredAt:now-(21*60_000)
+    pumpCreatedAt:now-(21*60_000),
+    discoveredAt:now-1_000
   },
   strictSettings
 );

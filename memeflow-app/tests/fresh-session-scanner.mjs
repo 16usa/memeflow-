@@ -30,6 +30,22 @@ assert.ok(createAt>=0,'direct CREATE ingest missing');
 assert.ok(tradeAt>=0,'TradeEvent ingest missing');
 assert.ok(createAt<tradeAt,'CREATE must establish mint before same-tx TradeEvent ingest');
 
+// MEMEFLOW_SETTINGS_ONLY_DISCOVERY_V1
+assert.match(discovery,/const directToken=__ingestPumpCreateEventDirect\(/);
+assert.match(discovery,/if\(!directToken\)\{/);
+assert.match(discovery,/directCreateFallbackQueued\+\+/);
+assert.match(discovery,/enqueue\(String\(sig\)\)/);
+assert.doesNotMatch(discovery,/EXCLUDE_MAYHEM_MODE/);
+
+const legacyCreate=app.slice(
+  app.indexOf('async function processSignature(sig){'),
+  app.indexOf('const discQueue=makeDiscoveryQueue(')
+);
+assert.doesNotMatch(legacyCreate,/shouldExcludeMayhemCreate/);
+assert.match(legacyCreate,/pumpCreatedAt/);
+assert.match(legacyCreate,/wsFirst:true/);
+assert.match(legacyCreate,/isMayhemMode:result\.isMayhemMode===true/);
+
 assert.match(holders,/EVENT_HOLDER_LEDGER_PERSIST/);
 assert.match(holders,/if\(!PERSIST\)return/);
 assert.match(holders,/persistenceEnabled:PERSIST/);

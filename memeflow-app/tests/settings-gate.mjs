@@ -1,12 +1,13 @@
 import assert from 'node:assert/strict';
-import {evaluateSettingsGate,evaluateSettingsAdmission,settingsContextSignature} from '../src/settings-gate.mjs';
+import {evaluateSettingsGate,evaluateSettingsAdmission,settingsContextSignature,tokenAgeMinutes} from '../src/settings-gate.mjs';
 import {evaluate} from '../src/evaluate.mjs';
 
 const now=Date.now();
 const baseToken={
   mint:'Mint111111111111111111111111111111111111',
   launchPlatform:'pump',name:'Alpha Moon',symbol:'ALPHA',creator:'Creator111',
-  discoveredAt:now-10*60_000,
+  pumpCreatedAt:now-10*60_000,
+  discoveredAt:now-30_000,
   bondingCurvePct:25,marketCapUsd:25_000,totalFeesSol:1.2,volume24hUsd:50_000,
   buyTransactions:120,sellTransactions:40,totalTransactions:160,
   holderCount:120,bundlePct:3,top10Pct:18,developerPct:4,sniperPct:2,
@@ -29,6 +30,44 @@ const settings={
 };
 
 assert.equal(evaluateSettingsGate(baseToken,settings).state,'PASS');
+
+// MEMEFLOW_SETTINGS_ONLY_DISCOVERY_V1
+// Scanner discovery time must NEVER reset the token's configured age.
+const oldButJustDiscovered={
+  ...baseToken,
+  pumpCreatedAt:now-120*60_000,
+  discoveredAt:now-1_000
+};
+assert.ok(tokenAgeMinutes(oldButJustDiscovered,now)>=119.9);
+assert.equal(
+  evaluateSettingsGate(
+    oldButJustDiscovered,
+    {...settings,minTokenAgeMinutes:0,maxTokenAgeMinutes:60}
+  ).state,
+  'BLOCKED'
+);
+
+// With no authoritative create timestamp, age is unknown and the enabled age
+// filter waits for evidence instead of pretending the token is 0 minutes old.
+const unknownRealAge={
+  ...baseToken,
+  pumpCreatedAt:null,
+  createdAt:null,
+  created_at:null,
+  createTimestamp:null,
+  blockTime:null,
+  discoveredAt:now-1_000,
+  firstSeenAt:now-1_000,
+  timestamp:now-1_000
+};
+assert.equal(tokenAgeMinutes(unknownRealAge,now),null);
+assert.equal(
+  evaluateSettingsGate(
+    unknownRealAge,
+    {...settings,minTokenAgeMinutes:0,maxTokenAgeMinutes:60}
+  ).state,
+  'WAITING'
+);
 
 for(const [key,value] of [
   ['marketCapUsd',150_000],['bondingCurvePct',90],['totalFeesSol',10],['volume24hUsd',5_000],

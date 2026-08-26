@@ -98,6 +98,7 @@ const settings={
 const token={
   mint:b58encode(pk(1)),
   launchPlatform:'pump',
+  pumpCreatedAt:Date.now(),
   discoveredAt:Date.now(),
 
   priceSol:0.000001,

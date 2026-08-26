@@ -81,7 +81,17 @@ function socialState(token={},kind){
 }
 
 export function tokenAgeMinutes(token={},now=Date.now()){
-  const candidates=[token.createdAt,token.discoveredAt,token.firstSeenAt,token.created_at,token.timestamp];
+  // MEMEFLOW_SETTINGS_ONLY_DISCOVERY_V1
+  // Age filters must use chain/create evidence only.
+  // discoveredAt / firstSeenAt / updatedAt describe MEMEFLOW runtime timing and
+  // must never make an old token look newly created.
+  const candidates=[
+    token.pumpCreatedAt,
+    token.createdAt,
+    token.created_at,
+    token.createTimestamp,
+    token.blockTime
+  ];
   for(const value of candidates){
     if(value===null||value===undefined||value==='')continue;
     const numeric=finite(value);
@@ -90,6 +100,7 @@ export function tokenAgeMinutes(token={},now=Date.now()){
     const ms=parsed<1e12?parsed*1000:parsed;
     return Math.max(0,(Number(now)-ms)/60000);
   }
+  // Unknown real creation time is incomplete evidence, not "0 minutes old".
   return null;
 }
 

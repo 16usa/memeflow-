@@ -48,7 +48,9 @@ assert.ok(snap.sniperPct>=0);
 
 const liveToken={
   mint:'MintGrowing',launchPlatform:'pump',name:'Alpha',symbol:'ALPHA',
-  creator,discoveredAt:Date.now()-20_000,
+  creator,
+  pumpCreatedAt:Date.now()-20_000,
+  discoveredAt:Date.now()-1_000,
   priceSol:1.42e-6,totalSupply:1_000_000_000,
   holderFresh:true,holderCount:37,top10Pct:18,developerPct:4,
   twitterUrl:'https://x.example/alpha',websiteUrl:'https://alpha.example',

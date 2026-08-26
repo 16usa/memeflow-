@@ -1,5 +1,5 @@
 import http from 'node:http';import fs from 'node:fs';import path from 'node:path';import crypto from 'node:crypto';import zlib from 'node:zlib';import {fileURLToPath} from 'node:url';
-import {JsonStore,sessionId,defaults} from './src/store.mjs';import {RpcPool,validPubkey,decodeCurve,decodeCreateData,decodePumpCreate,decodePumpCreateEventLog,shouldExcludeMayhemCreate} from './src/solana.mjs';import {evaluate,tokenAgeMinutes} from './src/evaluate.mjs';import {evaluateSettingsAdmission,evaluateEntryAdmission,settingsContextSignature} from './src/settings-gate.mjs';import {validateSettings,PROFILE_PRESETS} from './src/settings.mjs';import {StripeBilling} from './src/billing.mjs';
+import {JsonStore,sessionId,defaults} from './src/store.mjs';import {RpcPool,validPubkey,decodeCurve,decodeCreateData,decodePumpCreate,decodePumpCreateEventLog} from './src/solana.mjs';import {evaluate,tokenAgeMinutes} from './src/evaluate.mjs';import {evaluateSettingsAdmission,evaluateEntryAdmission,settingsContextSignature} from './src/settings-gate.mjs';import {validateSettings,PROFILE_PRESETS} from './src/settings.mjs';import {StripeBilling} from './src/billing.mjs';
 import {OpenAIIntelligence} from './src/openai-intelligence.mjs';import {PaperEngine} from './src/paper-engine.mjs';import {CopyTradingManager} from './src/copy-trading.mjs'; // MEMEFLOW_COPY_TRADING_V1
 import {enrichToken,enrichHolders,makeEnrichDiag,makeHolderQueue,makeHolderMetrics} from './src/enrich.mjs';
 import {makeRecoveryMetrics,startDecisionRecovery,lazyRecoverUser} from './src/recovery.mjs';
@@ -211,7 +211,6 @@ const __mfChartArchive=new ChartHistoryArchive({
   txConcurrency:Number(process.env.CHART_HISTORY_TX_CONCURRENCY||3)
 });
 const PUMP='6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P',ALLOW_ANON=process.env.ALLOW_ANONYMOUS_PAPER!=='false';
-const EXCLUDE_MAYHEM_MODE=process.env.EXCLUDE_MAYHEM_MODE!=='false';
 const OWNER_ACCESS_KEY=process.env.OWNER_ACCESS_KEY||'';
 const OWNER_USER_IDS=new Set((process.env.OWNER_USER_IDS||'').split(',').map(x=>x.trim()).filter(Boolean));
 const openaiAI=new OpenAIIntelligence({
@@ -1653,16 +1652,39 @@ async function processSignature(sig){
 
     const result=decodePumpCreate(ix,keys);
     if(result.ok){
-      // Mayhem launches are rejected before storage, enrichment, AI, candidates and chart.
-      if(shouldExcludeMayhemCreate(result,EXCLUDE_MAYHEM_MODE)){
-        discMetrics.mayhemCreatesIgnored++;
-        continue;
-      }
+      // MEMEFLOW_SETTINGS_ONLY_DISCOVERY_V1
+      // No hidden launch-mode rejection here. Every decoded Pump CREATE enters
+      // scanner state first; the user's Entry Filters decide visibility.
       if(seenMints.has(result.mint))continue; // same mint in top-level and inner — add once
       seenMints.add(result.mint);
       discMetrics.createInstructionDecoded++;
       discMetrics.createsDecoded++;
-      store.addToken({mint:result.mint,curve:result.curve,name:result.name,symbol:result.symbol,uri:result.uri,creator:result.creator,isMayhemMode:false,launchMode:'standard',launchPlatform:'pump',protocol:'pump',discoveredAt:Date.now(),slot:tx.slot,signature:sig,source:'Pump create'});
+      const txBlockTime=Number(tx?.blockTime);
+      const pumpCreatedAt=
+        Number.isFinite(txBlockTime)&&txBlockTime>0
+          ? (txBlockTime<1e12?txBlockTime*1000:txBlockTime)
+          : null;
+      store.addToken({
+        mint:result.mint,
+        curve:result.curve,
+        name:result.name,
+        symbol:result.symbol,
+        uri:result.uri,
+        creator:result.creator,
+        isMayhemMode:result.isMayhemMode===true,
+        launchMode:result.launchMode||(result.isMayhemMode===true?'mayhem':'standard'),
+        launchPlatform:'pump',
+        protocol:'pump',
+        pumpCreatedAt,
+        discoveredAt:Date.now(),
+        slot:tx.slot,
+        signature:sig,
+        source:'Pump create RPC fallback',
+        // This token still originated from the live Pump WS CREATE signal.
+        // Mark it current so the Fresh Session Scanner does not discard the
+        // fallback simply because direct log decoding was unavailable.
+        wsFirst:true
+      });
   try{__v1224LinkCreator(result.mint,__v1223Token(result.mint))}catch{}
         // MEMEFLOW_V12_20_USER_ONLY_HOLDER_LEDGER: preserve Pump creator separately from trade signers.
         try{
@@ -2307,14 +2329,6 @@ function __ingestPumpCreateEventDirect(
     return null;
   }
 
-  if(
-    EXCLUDE_MAYHEM_MODE &&
-    e.isMayhemMode===true
-  ){
-    discMetrics.mayhemCreatesIgnored++;
-    return null;
-  }
-
   const decimals=6;
 
   const totalSupplyRaw=
@@ -2355,7 +2369,7 @@ function __ingestPumpCreateEventDirect(
             ? ts*1000
             : ts
         )
-      : Date.now();
+      : null;
 
   const existing=
     store.state.tokens?.[e.mint] ||
@@ -2400,8 +2414,8 @@ function __ingestPumpCreateEventDirect(
     slot,
     signature,
 
-    isMayhemMode:false,
-    launchMode:'standard',
+    isMayhemMode:e.isMayhemMode===true,
+    launchMode:e.isMayhemMode===true?'mayhem':'standard',
 
     launchPlatform:'pump',
     protocol:'pump',
@@ -2530,13 +2544,23 @@ function startDiscovery(i=0){
           try{__systemViewEmitV31('create',{signature:String(sig||''),ts:Date.now()})}catch{}
           discMetrics.createEventsAccepted++;
           discovery.lastEventAt=Date.now();
-          __ingestPumpCreateEventDirect(
+          const directToken=__ingestPumpCreateEventDirect(
             logs,
             {
               signature:String(sig||''),
               slot:m.params?.result?.context?.slot??null
             }
           );
+
+          // MEMEFLOW_SETTINGS_ONLY_DISCOVERY_V1
+          // A valid Pump CREATE signal must not disappear because the compact
+          // CreateEvent log layout changed or was missing. Fall back to the
+          // canonical transaction decoder; user settings remain the only
+          // admission policy after the mint is recovered.
+          if(!directToken){
+            discMetrics.directCreateFallbackQueued++;
+            enqueue(String(sig));
+          }
         }
 
         try{
