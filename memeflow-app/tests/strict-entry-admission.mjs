@@ -213,6 +213,16 @@ assert.match(app,/__mfAdmittedScannerTokensForUser\(u\.id\)/);
 assert.match(app,/preAdmissionHidden:/);
 assert.match(app,/preAdmissionHiddenForUser:/);
 
+// Entry admission is a TRADING gate, never a scanner/display gate.
+const liveStatesRoute=app.slice(
+  app.indexOf("if(url.pathname==='/api/system/live-token-states'"),
+  app.indexOf("if(url.pathname==='/api/ai/decisions'")
+);
+assert.match(liveStatesRoute,/const _tokens=_rawTokens\.slice\(0,_lim\)/);
+assert.doesNotMatch(liveStatesRoute,/_admittedAll=_rawTokens\.filter/);
+assert.match(liveStatesRoute,/tradeEligible:_tradeEligible/);
+assert.match(liveStatesRoute,/preAdmissionHidden:0/);
+
 const discovery=app.slice(
   app.indexOf('function startDiscovery(i=0){'),
   app.indexOf('function shadowValidateSettings')

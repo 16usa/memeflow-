@@ -15,20 +15,26 @@ assert.match(app,/MEMEFLOW_FRESH_SESSION_SCANNER_V1/);
 assert.match(app,/__mfScannerRuntimeStartedAt/);
 assert.match(app,/__mfLiveScannerTokens/);
 assert.match(app,/const _rawTokens=__mfLiveScannerTokens\(\)/);
-assert.match(app,/const _admittedAll=_rawTokens\.filter/);
-assert.match(app,/const _tokens=_admittedAll\.slice\(0,_lim\)/);
+assert.match(app,/const _tokens=_rawTokens\.slice\(0,_lim\)/);
 assert.match(app,/freshScannerTokens:__mfLiveScannerTokens\(\)\.length/);
 assert.match(app,/setHeader\('cache-control','no-store'\)/);
 
-// MEMEFLOW_AGE_THRESHOLD_WAKE_V1 regression
-// A configured minimum age is a CLOCK transition; it must not depend on a
-// later BUY/SELL event to re-run Entry Admission.
-assert.match(app,/MEMEFLOW_AGE_THRESHOLD_WAKE_V1/);
-assert.match(app,/function __mfRunAgeAdmissionWake\(\)/);
-assert.match(app,/tokenAgeMinutes\(token,now\)/);
-assert.match(app,/Promise\.resolve\(evaluateAll\(token\)\)/);
-assert.match(app,/AGE_ADMISSION_WAKE_INTERVAL_MS/);
-assert.match(app,/ageWakeTriggered/);
+// MEMEFLOW_SCAN_DISPLAY_TRADE_SPLIT_V1 regression
+// Live Token States must show raw scanner inventory. User settings only decide
+// trade eligibility / trading decisions.
+const liveRoute=app.slice(
+  app.indexOf("if(url.pathname==='/api/system/live-token-states'"),
+  app.indexOf("if(url.pathname==='/api/ai/decisions'")
+);
+assert.match(liveRoute,/MEMEFLOW_SCAN_DISPLAY_TRADE_SPLIT_V1_ROUTE/);
+assert.match(liveRoute,/tradeEligible:/);
+assert.match(liveRoute,/displayOnly:/);
+assert.match(liveRoute,/preAdmissionHidden:0/);
+assert.doesNotMatch(liveRoute,/const _admittedAll=_rawTokens\.filter/);
+assert.doesNotMatch(liveRoute,/store\.setDecision/);
+assert.doesNotMatch(app,/MEMEFLOW_AGE_THRESHOLD_WAKE_V1/);
+assert.match(app,/const __mfPreAdmissionSweepTimer=setInterval/);
+assert.match(app,/trade-ineligible -> trade-eligible/);
 assert.match(app,/MEMEFLOW_CREATE_DECODE_COVERAGE_V1/);
 assert.match(app,/createDecodeCoveragePct/);
 
@@ -58,6 +64,42 @@ const pruneScannerFn=app.slice(
 );
 assert.doesNotMatch(pruneScannerFn,/opportunityEngine\?\.staleReason/);
 assert.doesNotMatch(pruneScannerFn,/const lifecycleReason=/);
+assert.doesNotMatch(pruneScannerFn,/STABLE_SETTINGS_REJECTED/);
+
+// Scanner/chart evidence collection must not depend on any user's filters.
+const publishTradeFn=app.slice(
+  app.indexOf('function publishTrade('),
+  app.indexOf('function recordTradeWindow(')
+);
+assert.doesNotMatch(publishTradeFn,/__mfAnyActiveEntryAdmitted/);
+
+const bridgeFn=app.slice(
+  app.indexOf('async function runDiscoveryBridge()'),
+  app.indexOf('function startDiscoveryBridge()')
+);
+assert.doesNotMatch(bridgeFn,/settingsGateCachedRejection/);
+
+const bridgeRepairFn=app.slice(
+  app.indexOf('async function bridgeRepairToken('),
+  app.indexOf('let bridgeTimer=null')
+);
+assert.doesNotMatch(bridgeRepairFn,/settingsGateCheck\(token\)/);
+assert.doesNotMatch(bridgeRepairFn,/holderAdmissionForActiveUsers\(mint\)/);
+
+const fastPhaseFn=app.slice(
+  app.indexOf('function fastPhaseAStart('),
+  app.indexOf('// MEMEFLOW_WS_ONLY_PREOPEN_RPC_V1',app.indexOf('function fastPhaseAStart('))
+);
+assert.doesNotMatch(fastPhaseFn,/settingsGateCheck\(token\)/);
+assert.doesNotMatch(fastPhaseFn,/holderAdmissionForActiveUsers\(mint\)/);
+
+// Trading decisions remain gated.
+assert.match(app,/admissionCheck:__mfLiveEvalAdmissionCheck/);
+const aiDecisionRoute=app.slice(
+  app.indexOf("if(url.pathname==='/api/ai/decisions'"),
+  app.indexOf("if(url.pathname==='/api/debug/filter-pipeline'")
+);
+assert.match(aiDecisionRoute,/__mfAdmittedScannerTokensForUser\(u\.id\)/);
 
 assert.doesNotMatch(
   app,

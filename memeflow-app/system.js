@@ -3025,7 +3025,7 @@ const MF293_GROUPS = [
     ['copyTradingBuyAmountSol', 'Your BUY size · SOL', 'number', 0.001, null, 0.001],
     ['copyTradingMirrorSells', 'Mirror sells proportionally', 'boolean']
   ]],
-  ['filters', 'Entry filters', 'Scanner admission · WebSocket evidence and user filters', false, [
+  ['filters', 'Entry filters', 'Trading eligibility · scanner and cards always stay live', false, [
     ['minLiquidityUsd', 'Minimum liquidity USD', 'number', 0, null, 1],
     ['minHolders', 'Minimum holders', 'nullable', 0, null, 1],
     ['maxHolders', 'Maximum holders', 'nullable', 0, null, 1],

@@ -137,11 +137,9 @@ function __mfPruneScannerRuntimeState(now=Date.now()){
       continue;
     }
 
-    const age=Math.max(0,now-Number(token.discoveredAt||now));
-    if(age>=15_000&&__mfAllActiveUsersStableBlocked(mint,now)){
-      __mfDropScannerToken(mint,'STABLE_SETTINGS_REJECTED');
-      continue;
-    }
+    // MEMEFLOW_SCAN_DISPLAY_TRADE_SPLIT_V1
+    // User settings may block a TRADE, but they never delete the raw Pump
+    // scanner row. Raw retention is controlled only by session/TTL lifecycle.
 
     liveMints.add(mint);
   }
@@ -880,6 +878,12 @@ function candidateView(d){
     logoUrl:t.logoUrl||t.imageUrl||t.image||null,
     state:d.state,
     score:d.score,
+    // MEMEFLOW_SCAN_DISPLAY_TRADE_SPLIT_V1
+    // Visibility != trading permission.
+    tradeEligible:d.tradeEligible===true,
+    displayOnly:d.displayOnly===true,
+    entryAdmissionState:d.entryAdmissionState||null,
+    entryAdmissionReasons:Array.isArray(d.entryAdmissionReasons)?d.entryAdmissionReasons:[],
     /* confidence intentionally omitted: d.confidence = dataQuality×100 (data completeness),
        not an AI confidence score. Use candidate?.decision?.confidence or ai_confidence instead.
        Data completeness is already exposed as the `data` field below. */
@@ -1052,139 +1056,11 @@ const evaluateAll=makeEvaluateForActiveUsers({
   }
 });
 
-// MEMEFLOW_AGE_THRESHOLD_WAKE_V1
-// Entry admission is event-driven, but token AGE changes even when no trade
-// event arrives. Without this clock wake, a token that was PENDING at 4:59
-// could remain hidden forever after crossing a user's 5m minimum.
-// This scheduler wakes a token exactly once per distinct active-user minimum
-// age threshold/settings signature. It performs no RPC/network scan.
-const __mfAgeWakeState=new Map();
-const __mfAgeWakeIntervalMs=Math.max(
-  1000,
-  Number(process.env.AGE_ADMISSION_WAKE_INTERVAL_MS||2000)
-);
-const __mfAgeWakeMaxPerSweep=Math.max(
-  10,
-  Number(process.env.AGE_ADMISSION_WAKE_MAX_PER_SWEEP||100)
-);
-let __mfAgeWakeRunning=false;
-
-Object.assign(discMetrics,{
-  ageWakeSweeps:Number(discMetrics.ageWakeSweeps||0),
-  ageWakeTriggered:Number(discMetrics.ageWakeTriggered||0),
-  ageWakeEvaluated:Number(discMetrics.ageWakeEvaluated||0),
-  ageWakeErrors:Number(discMetrics.ageWakeErrors||0),
-  ageWakeLastAt:discMetrics.ageWakeLastAt||null,
-  ageWakeActiveThresholds:[],
-  ageWakeLastRawTokenCount:0
-});
-
-function __mfAgeWakePolicy(now=Date.now()){
-  const context=settingsGateContext(now);
-  const thresholds=[
-    ...new Set(
-      (context.entries||[])
-        .map(entry=>Number(entry?.settings?.minTokenAgeMinutes))
-        .filter(value=>Number.isFinite(value)&&value>0)
-    )
-  ].sort((a,b)=>a-b);
-
-  return {
-    signature:String(context.signature||'no-active-users'),
-    thresholds
-  };
-}
-
-function __mfPruneAgeWakeState(liveMints){
-  if(__mfAgeWakeState.size<=liveMints.size+500)return;
-  for(const mint of __mfAgeWakeState.keys()){
-    if(!liveMints.has(mint))__mfAgeWakeState.delete(mint);
-  }
-}
-
-function __mfRunAgeAdmissionWake(){
-  if(__mfAgeWakeRunning)return;
-  __mfAgeWakeRunning=true;
-
-  try{
-    const now=Date.now();
-    const policy=__mfAgeWakePolicy(now);
-    const tokens=__mfLiveScannerTokens(now);
-    const liveMints=new Set(tokens.map(t=>String(t?.mint||'')).filter(Boolean));
-
-    discMetrics.ageWakeSweeps++;
-    discMetrics.ageWakeLastAt=now;
-    discMetrics.ageWakeActiveThresholds=policy.thresholds.slice();
-    discMetrics.ageWakeLastRawTokenCount=tokens.length;
-
-    if(!policy.thresholds.length){
-      __mfPruneAgeWakeState(liveMints);
-      return;
-    }
-
-    let scheduled=0;
-
-    for(const token of tokens){
-      if(scheduled>=__mfAgeWakeMaxPerSweep)break;
-
-      const mint=String(token?.mint||'');
-      if(!mint)continue;
-
-      const age=tokenAgeMinutes(token,now);
-      if(!Number.isFinite(age))continue;
-
-      let row=__mfAgeWakeState.get(mint);
-      if(!row||row.signature!==policy.signature){
-        row={signature:policy.signature,fired:new Set()};
-        __mfAgeWakeState.set(mint,row);
-      }
-
-      const crossed=[];
-      for(const threshold of policy.thresholds){
-        const key=String(threshold);
-        if(age>=threshold&&!row.fired.has(key))crossed.push(key);
-      }
-
-      if(!crossed.length)continue;
-
-      for(const key of crossed)row.fired.add(key);
-
-      scheduled++;
-      discMetrics.ageWakeTriggered++;
-
-      Promise.resolve(evaluateAll(token))
-        .then(()=>{
-          discMetrics.ageWakeEvaluated++;
-          try{publish(mint)}catch{}
-        })
-        .catch(error=>{
-          discMetrics.ageWakeErrors++;
-          discMetrics.lastErrorAt=Date.now();
-          try{
-            discovery.lastError={
-              message:'age admission wake: '+String(error?.message||error),
-              at:Date.now()
-            };
-          }catch{}
-        });
-    }
-
-    __mfPruneAgeWakeState(liveMints);
-  }finally{
-    __mfAgeWakeRunning=false;
-  }
-}
-
-const __mfAgeWakeTimer=setInterval(
-  __mfRunAgeAdmissionWake,
-  __mfAgeWakeIntervalMs
-);
-__mfAgeWakeTimer.unref?.();
-
-
-// A TradeEvent causes immediate admission re-check. This sweep exists only for
-// gates that can change without a trade event (most importantly minimum age).
-// It triggers a full evaluation only on a hidden -> admitted transition.
+// MEMEFLOW_SCAN_DISPLAY_TRADE_SPLIT_V1
+// A TradeEvent causes immediate TRADE-eligibility re-check. This sweep exists
+// for gates that can change without a trade event (most importantly token age).
+// It triggers trading evaluation only on trade-ineligible -> trade-eligible.
+// Scanner ingestion and Live Token States visibility are NEVER gated here.
 const __mfPreAdmissionSweepMs=Math.max(
   1000,
   Number(process.env.PRE_ADMISSION_SWEEP_MS||2000)
@@ -1278,12 +1154,8 @@ function fastPhaseAStart(mint,curve){
     return true;
   }
 
-  const settingsAdmission=settingsGateCheck(token);
-  if(settingsAdmission?.allow===false&&settingsAdmission.retryable!==true){
-    try{Promise.resolve(evaluateAll(token)).catch(()=>{})}catch{}
-    try{publish(mint)}catch{}
-    return false;
-  }
+  // MEMEFLOW_SCAN_DISPLAY_TRADE_SPLIT_V1
+  // Data collection is unconditional. evaluateAll() remains the trade gate.
 
   fastPhaseMetrics.starts++;
   fastPhaseMetrics.lastBootstrapAt=Date.now();
@@ -1302,16 +1174,13 @@ function fastPhaseAStart(mint,curve){
   try{
     const before=holderQueue.inspect?.(mint)||null;
 
-    // MEMEFLOW_V12_9_PRE_QUEUE_ADMISSION_FAST
-    const admission=holderAdmissionForActiveUsers(mint);
+    // MEMEFLOW_SCAN_DISPLAY_TRADE_SPLIT_V1
+    // Holder evidence belongs to scanning, not to trade eligibility.
+    holderQueue.enqueue(mint);
 
-    if(admission?.allow!==false){
-      holderQueue.enqueue(mint);
-
-      const after=holderQueue.inspect?.(mint)||null;
-      if(!before?.pending && (after?.pending||after?.active||Number(after?.attempts||0)>0)){
-        fastPhaseMetrics.holderQueued++;
-      }
+    const after=holderQueue.inspect?.(mint)||null;
+    if(!before?.pending && (after?.pending||after?.active||Number(after?.attempts||0)>0)){
+      fastPhaseMetrics.holderQueued++;
     }
   }catch(e){
     fastPhaseMetrics.bootstrapErrors++;
@@ -1363,8 +1232,9 @@ function publishTrade(mint,event,tokenOverride=null){
 
   const token=tokenOverride||store.state.tokens[mint];
 
-  // MEMEFLOW_STRICT_ENTRY_ADMISSION_V1
-  if(!__mfAnyActiveEntryAdmitted(token))return;
+  // MEMEFLOW_SCAN_DISPLAY_TRADE_SPLIT_V1
+  // Keep real Pump TradeEvent evidence for EVERY scanned token.
+  // User settings are checked later by evaluateAll()/trading execution.
 
   const price=Number(token?.priceSol);
   if(!(price>0))return;
@@ -1624,11 +1494,8 @@ async function bridgeRepairToken(token,now=Date.now()){
     return;
   }
 
-  const settingsAdmission=settingsGateCheck(token);
-  if(settingsAdmission?.allow===false){
-    bridgeMetrics.settingsRejectedSkipped++;
-    return;
-  }
+  // MEMEFLOW_SCAN_DISPLAY_TRADE_SPLIT_V1
+  // Recovery repairs scanner data for every Pump token. No user settings here.
 
   bridgeMetrics.freshPumpSeen++;
   bridgeMetrics.lastMint=mint;
@@ -1686,18 +1553,12 @@ async function bridgeRepairToken(token,now=Date.now()){
     const alreadySucceeded=Boolean(hs?.lastSuccessAt);
     if(!busy&&!alreadySucceeded){
       try{
-        // MEMEFLOW_V12_9_PRE_QUEUE_ADMISSION_BRIDGE
-        const admission=holderAdmissionForActiveUsers(mint);
-
-        if(admission?.allow!==false){
-          const queued=holderQueue.enqueue(mint);
-          if(queued!==false){
-            st.holderAt=now;
-            bridgeMetrics.holderRescued++;
-          }
-        }else{
-          // throttle bridge retries while cheap market data is still developing
+        // MEMEFLOW_SCAN_DISPLAY_TRADE_SPLIT_V1
+        // Repair holder evidence for every scanned Pump token.
+        const queued=holderQueue.enqueue(mint);
+        if(queued!==false){
           st.holderAt=now;
+          bridgeMetrics.holderRescued++;
         }
       }catch(e){
         bridgeMetrics.lastError=String(e?.message||e).slice(0,200);
@@ -1795,10 +1656,11 @@ async function runDiscoveryBridge(){
   }
 
   try{
-    const settingsContext=settingsGateContext(now);
+    // MEMEFLOW_SCAN_DISPLAY_TRADE_SPLIT_V1
+    // Recovery inventory is the raw Pump scanner inventory, never a
+    // user-settings subset.
     const all=Object.values(store?.state?.tokens||{})
-      .filter(t=>bridgeIsPump(t)&&bridgeAgeMs(t,now)<=BRIDGE_MAX_AGE_MS&&bridgeAgeMs(t,now)>=BRIDGE_MIN_TOKEN_AGE_MS)
-      .filter(t=>!settingsGateCachedRejection(t,settingsContext,now));
+      .filter(t=>bridgeIsPump(t)&&bridgeAgeMs(t,now)<=BRIDGE_MAX_AGE_MS&&bridgeAgeMs(t,now)>=BRIDGE_MIN_TOKEN_AGE_MS);
 
     const freshWindow=all.filter(t=>bridgeAgeMs(t,now)<=FRESH_PRIORITY_MAX_AGE_MS);
     const freshUnprocessed=freshWindow
@@ -2960,51 +2822,82 @@ if(false && url.pathname==='/api/ai/assistant' &&req.method==='POST'){
 
   // MEMEFLOW_LIVE_TOKEN_STATES_V7
  if(url.pathname==='/api/system/live-token-states'&&req.method==='GET'){
-  const _lim=Math.min(200,Math.max(1,Number(url.searchParams.get('limit')||200)));
+  // MEMEFLOW_SCAN_DISPLAY_TRADE_SPLIT_V1_ROUTE
+  // DISPLAY: every raw Pump scanner token.
+  // TRADE: user Entry Filters + Logic still gate decisions/execution.
+  // This endpoint never creates a trading decision merely to render a card.
+  const _lim=Math.min(500,Math.max(1,Number(url.searchParams.get('limit')||500)));
   const _settings=store.settings(u.id);
   const _rawTokens=__mfLiveScannerTokens();
-  const _admittedAll=_rawTokens.filter(
-    _token=>
-      __mfEntryAdmissionForUser(_token,u.id,_settings)?.admitted===true
-  );
-  const _tokens=_admittedAll.slice(0,_lim);
-  let _recovered=0,_reindexed=0,_evalErrors=0,_viewErrors=0;
-  let _index=store._uidDec[u.id]||null;
+  const _tokens=_rawTokens.slice(0,_lim);
+
+  let _tradeEligible=0;
+  let _tradeIneligible=0;
+  let _displayEvaluated=0;
+  let _evalErrors=0;
+  let _viewErrors=0;
+
+  const _displayRows=[];
 
   for(const _token of _tokens){
     const _mint=String(_token?.mint||'').trim();
     if(!_mint)continue;
 
-    const _key=u.id+':'+_mint;
-    const _existing=store.state.decisions?.[_key]||null;
-
-    if(_existing){
-      if(!_index?.has(_key)){
-        try{
-          store.setDecision(u.id,_mint,_existing);
-          _index=store._uidDec[u.id]||_index;
-          _reindexed++;
-        }catch(_error){
-          _evalErrors++;
-        }
-      }
-      continue;
-    }
-
+    let _admission=null;
     try{
-      const _decision=evaluate(_token,_settings);
-      store.setDecision(u.id,_mint,{..._decision,primaryReason:_decision.primaryReason});
-      _index=store._uidDec[u.id]||_index;
-      _recovered++;
+      _admission=__mfEntryAdmissionForUser(
+        _token,
+        u.id,
+        _settings
+      );
     }catch(_error){
       _evalErrors++;
     }
+
+    const _eligible=_admission?.admitted===true;
+    if(_eligible)_tradeEligible++;
+    else _tradeIneligible++;
+
+    const _key=u.id+':'+_mint;
+
+    // Reuse a real trading decision only when one already exists.
+    // Otherwise perform a pure display evaluation; DO NOT store it and
+    // DO NOT call __mfHandleDecision.
+    let _decision=
+      _eligible
+        ? (store.state.decisions?.[_key]||null)
+        : null;
+
+    if(!_decision){
+      try{
+        _decision=evaluate(_token,_settings);
+        _displayEvaluated++;
+      }catch(_error){
+        _evalErrors++;
+        _decision={
+          state:'WAITING',
+          score:0,
+          confidence:0,
+          primaryReason:'Scanner data is still being collected',
+          reasons:['Scanner data is still being collected']
+        };
+      }
+    }
+
+    _displayRows.push({
+      ..._decision,
+      mint:_mint,
+      tradeEligible:_eligible,
+      displayOnly:!_eligible,
+      entryAdmissionState:_admission?.state||null,
+      entryAdmissionReasons:Array.isArray(_admission?.reasons)
+        ? _admission.reasons
+        : []
+    });
   }
 
-  const _mintSet=new Set(_tokens.map(_token=>String(_token?.mint||'')).filter(Boolean));
-  const _all=store.decisions(u.id).filter(_decision=>_mintSet.has(String(_decision?.mint||'')));
-  const _selected=candidateFeed(_all,'all');
-  const _counts=candidateVisibilityCounts(_all);
+  const _selected=candidateFeed(_displayRows,'all');
+  const _counts=candidateVisibilityCounts(_displayRows);
   const _stateCounts={};
 
   for(const _decision of _selected){
@@ -3020,22 +2913,35 @@ if(false && url.pathname==='/api/ai/assistant' &&req.method==='POST'){
       _viewErrors++;
     }
   }
-  // MEMEFLOW_FEED_RELEVANCE_RANKING_V1
-  // State priority is strict. Relevance only reorders cards inside a state.
+
+  // State priority remains UI-only. It never changes scanner inclusion.
   const _rankedViews=rankCandidateViews(_unrankedViews);
   const _views=_rankedViews.slice(0,_lim);
 
   return json(res,200,{
     decisions:_views,
-    total:_rankedViews.length,
+    total:_rawTokens.length,
+    returned:_views.length,
     limit:_lim,
-    source:'system-live-token-states-v7',
-    persistedTokens:_tokens.length,
+    source:'system-live-token-states-scan-all-v1',
+
+    // Scanner/display truth.
     rawScannerTokens:_rawTokens.length,
-    preAdmissionAdmitted:_admittedAll.length,
-    preAdmissionHidden:Math.max(0,_rawTokens.length-_admittedAll.length),
-    recovered:_recovered,
-    reindexed:_reindexed,
+    displayedScannerTokens:_tokens.length,
+
+    // Trading gate truth.
+    tradeEligible:_tradeEligible,
+    tradeIneligible:_tradeIneligible,
+
+    // Compatibility aliases. "Hidden" is intentionally always zero now.
+    persistedTokens:_tokens.length,
+    preAdmissionAdmitted:_tradeEligible,
+    preAdmissionHidden:0,
+
+    // Display evaluation is deliberately side-effect free.
+    displayEvaluated:_displayEvaluated,
+    recovered:0,
+    reindexed:0,
     evaluationErrors:_evalErrors,
     viewErrors:_viewErrors,
     stateCounts:_stateCounts,
@@ -3043,6 +2949,9 @@ if(false && url.pathname==='/api/ai/assistant' &&req.method==='POST'){
   });
  }
 if(url.pathname==='/api/ai/decisions'){
+  // MEMEFLOW_SCAN_DISPLAY_TRADE_SPLIT_V1
+  // This is the TRADING decision feed, so Entry Filters intentionally apply.
+  // Live Token States uses raw scanner inventory instead.
   const _lim=Math.min(200,Math.max(1,Number(url.searchParams.get('limit')||50)));
   const _off=Math.max(0,Number(url.searchParams.get('offset')||0));
   const _scope=String(url.searchParams.get('scope')||'candidates').toLowerCase();
