@@ -10,7 +10,7 @@
   <meta name="mf-trading-build" content="remove-mobile-ghost-wallet-v2-20260826">
   <meta name="theme-color" content="#03070a">
   <title>MEMEFLOW Trading Terminal</title>
-  <link rel="stylesheet" href="/trading.css?v=buy-ready-yellow-v1-copy-trading-v2-2-20260826">
+  <link rel="stylesheet" href="/trading.css?v=single-strategy-editor-v1-20260826">
 <link rel="stylesheet" href="/memeflow-brand.css?v=final-v6">
   <!-- MEMEFLOW_TRADING_CHART_RESTORE_SITE_BG_V2 -->
   <!-- MEMEFLOW_TRADING_CHART_MATCH_PANEL_V3 -->
@@ -204,117 +204,75 @@ html[data-mf-chart-unify-all-states="1"] [data-mf-chart-placeholder="1"] {
         </section>
       </section>
 
-      <aside class="panel control-panel">
+      <aside class="panel control-panel strategy-summary-panel">
         <div class="panel-head">
           <div>
-            <span class="eyebrow">AUTO ENGINE</span>
-            <h2>Trade control</h2>
+            <span class="eyebrow">SERVER STRATEGY</span>
+            <h2>Trade strategy</h2>
           </div>
           <span id="modeBadge" class="mode-badge">OBSERVE</span>
         </div>
 
-        <section class="control-section primary-control">
-          <div class="section-title">Position amount</div>
-          <div class="amount-box">
-            <input id="amountInput" inputmode="decimal" type="number" min="0" step="0.01" value="10.00">
-            <div class="unit-toggle" id="unitToggle">
-              <button data-unit="SOL" type="button">SOL</button>
-              <button data-unit="USD" class="active" type="button">USD</button>
+        <section class="control-section">
+          <div class="section-title">Current settings</div>
+          <div class="strategy-grid strategy-summary-grid">
+            <div class="strategy-summary-item">
+              <span>Position</span>
+              <div><strong id="strategyPosition" class="strategy-value">—</strong></div>
+            </div>
+
+            <div class="strategy-summary-item">
+              <span>Stops</span>
+              <div><strong id="strategyStops" class="strategy-value">—</strong></div>
+            </div>
+
+            <div class="strategy-summary-item">
+              <span>TP1</span>
+              <div><strong id="strategyTp1" class="strategy-value">—</strong></div>
+            </div>
+
+            <div class="strategy-summary-item">
+              <span>TP2</span>
+              <div><strong id="strategyTp2" class="strategy-value">—</strong></div>
+            </div>
+
+            <div class="strategy-summary-item">
+              <span>Runner / hold</span>
+              <div><strong id="strategyRunner" class="strategy-value">—</strong></div>
+            </div>
+
+            <div class="strategy-summary-item">
+              <span>Exit pressure</span>
+              <div><strong id="strategyExitPressure" class="strategy-value">—</strong></div>
+            </div>
+
+            <div class="strategy-summary-item">
+              <span>Daily limits</span>
+              <div><strong id="strategyDailyLimits" class="strategy-value">—</strong></div>
+            </div>
+
+            <div class="strategy-summary-item">
+              <span>Position limits</span>
+              <div><strong id="strategyPositionLimits" class="strategy-value">—</strong></div>
             </div>
           </div>
-          <div id="amountHint" class="field-hint">Position size used by the existing PaperEngine.</div>
         </section>
 
-        <section class="control-section">
-          <div class="section-title row-title">
-            <span>Risk & exit levels</span>
-            <span id="allocationBadge">100% allocated</span>
-          </div>
-
-          <div class="strategy-grid">
-            <label>
-              <span>Hard stop</span>
-              <div><input id="hardStopPct" type="number" step="0.1"><b>%</b></div>
-            </label>
-            <label>
-              <span>Trailing stop</span>
-              <div><input id="trailingStopPct" type="number" step="0.1"><b>%</b></div>
-            </label>
-
-            <label class="level-card tp">
-              <span>TP1 price gain</span>
-              <div><input id="tp1Pct" type="number" step="1"><b>%</b></div>
-            </label>
-            <label class="level-card tp">
-              <span>Sell at TP1</span>
-              <div><input id="tp1SellPct" type="number" step="1"><b>%</b></div>
-            </label>
-
-            <label class="level-card tp">
-              <span>TP2 price gain</span>
-              <div><input id="tp2Pct" type="number" step="1"><b>%</b></div>
-            </label>
-            <label class="level-card tp">
-              <span>Sell at TP2</span>
-              <div><input id="tp2SellPct" type="number" step="1"><b>%</b></div>
-            </label>
-
-            <label>
-              <span>Runner</span>
-              <div><input id="runnerPct" type="number" step="1"><b>%</b></div>
-            </label>
-            <label>
-              <span>Max hold</span>
-              <div><input id="maxHoldMinutes" type="number" step="1"><b>min</b></div>
-            </label>
-
-            <label>
-              <span>Exit pressure</span>
-              <div><input id="exitBuyPressure" type="number" step="0.01"><b>×</b></div>
-            </label>
-            <label class="switch-label">
-              <span>Weak-pressure exit</span>
-              <input id="exitOnWeakBuyPressure" type="checkbox">
-            </label>
-          </div>
-        </section>
-
-        <section class="control-section">
-          <div class="section-title">Session limits</div>
-          <div class="strategy-grid">
-            <label>
-              <span>Daily spend</span>
-              <div><input id="dailySpendLimit" type="number" step="0.01"><b>SOL</b></div>
-            </label>
-            <label>
-              <span>Daily loss</span>
-              <div><input id="dailyLossLimit" type="number" step="0.01"><b>SOL</b></div>
-            </label>
-            <label>
-              <span>Max positions</span>
-              <div><input id="maxOpenPositions" type="number" step="1"><b>#</b></div>
-            </label>
-            <label>
-              <span>Max entries/day</span>
-              <div><input id="maxDailyEntries" type="number" step="1"><b>#</b></div>
-            </label>
-          </div>
-        </section>
-<div id="controlError" class="control-error" hidden></div>
+        <div id="controlError" class="control-error" hidden></div>
 
         <div class="control-actions">
-          <button id="saveStrategyBtn" class="secondary-btn" type="button">Save strategy</button>
+          <button id="editStrategyBtn" class="secondary-btn strategy-edit-btn" type="button">Edit strategy</button>
         </div>
 
         <div class="control-foot">
-          <span id="saveState">Settings not loaded</span>
+          <span id="saveState">Loading server strategy…</span>
         </div>
       </aside>
     </main>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/echarts@6.1.0/dist/echarts.min.js"></script>
-  <script type="module" src="/trading.js?v=remove-mobile-ghost-wallet-v2-20260826"></script>
+  <script type="module" src="/trading.js?v=single-strategy-editor-v1-20260826"></script>
   <!-- MEMEFLOW_TRADING_CHART_V30_4 -->
   <!-- MEMEFLOW_TRADING_CHART_V30_5_EXECUTION_OHLC -->
   <!-- MEMEFLOW_TRADING_CHART_V30_6_USD_CURVE_MARK -->
@@ -400,7 +358,7 @@ html[data-mf-chart-unify-all-states="1"] [data-mf-chart-placeholder="1"] {
 /* ===== /MEMEFLOW_TRADING_CHART_UNIFY_ALL_STATES_V4 ===== */
 </script>
 
-  <script src="/memeflow-nav.js?v=global-right-drawer-remove-mobile-ghost-wallet-v2-20260826" defer></script>
+  <script src="/memeflow-nav.js?v=global-right-drawer-single-strategy-editor-v1-20260826" defer></script>
 </body>
 </html>
 

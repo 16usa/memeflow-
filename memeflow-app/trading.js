@@ -644,6 +644,7 @@ function amountSol() {
 }
 
 function updateAmountHint() {
+  if (!$('amountInput') || !$('amountHint')) return;
   const value = num($('amountInput').value, 0);
   const rate = solUsdRate();
 
@@ -696,6 +697,7 @@ function strategyFromUI() {
 }
 
 function updateAllocation() {
+  if (!$('allocationBadge')) return;
   const allocation = ['tp1SellPct', 'tp2SellPct', 'runnerPct']
     .reduce((sum, id) => sum + num($(id).value, 0), 0);
   const node = $('allocationBadge');
@@ -708,26 +710,62 @@ function populateSettings() {
   const s = state.settings;
   if (!s) return;
 
-  const positionSol = finite(s.positionSize) ? Number(s.positionSize) : 0.1;
-  const rate = solUsdRate();
-  $('amountInput').value =
-    state.unit === 'USD' && rate > 0
-      ? (positionSol * rate).toFixed(2)
-      : positionSol;
+  const text = (id, value) => {
+    const node = $(id);
+    if (node) node.textContent = value;
+  };
 
-  for (const key of STRATEGY_KEYS) {
-    const node = $(key);
-    if (!node) continue;
-    if (node.type === 'checkbox') node.checked = Boolean(s[key]);
-    else node.value = s[key] ?? '';
-  }
+  const value = (v, digits = 2) =>
+    finite(v) ? fmt(Number(v), digits) : '—';
+
+  text(
+    'strategyPosition',
+    finite(s.positionSize)
+      ? `${value(s.positionSize, 4)} SOL`
+      : '—'
+  );
+
+  text(
+    'strategyStops',
+    `Hard ${value(s.hardStopPct, 1)}% · Trail ${value(s.trailingStopPct, 1)}%`
+  );
+
+  text(
+    'strategyTp1',
+    `+${value(s.tp1Pct, 0)}% · sell ${value(s.tp1SellPct, 0)}%`
+  );
+
+  text(
+    'strategyTp2',
+    `+${value(s.tp2Pct, 0)}% · sell ${value(s.tp2SellPct, 0)}%`
+  );
+
+  text(
+    'strategyRunner',
+    `${value(s.runnerPct, 0)}% · ${value(s.maxHoldMinutes, 0)} min`
+  );
+
+  text(
+    'strategyExitPressure',
+    `${value(s.exitBuyPressure, 2)}× · weak ${s.exitOnWeakBuyPressure ? 'ON' : 'OFF'}`
+  );
+
+  text(
+    'strategyDailyLimits',
+    `${value(s.dailySpendLimit, 2)} spend · ${value(s.dailyLossLimit, 2)} loss SOL`
+  );
+
+  text(
+    'strategyPositionLimits',
+    `${value(s.maxOpenPositions, 0)} positions · ${value(s.maxDailyEntries, 0)}/day`
+  );
 
   const mode = String(s.operatingMode || 'observe').toLowerCase();
-  $('modeBadge').textContent = mode.toUpperCase();
-  $('modeBadge').dataset.mode = mode;
-  if ($('assistBtn')) $('assistBtn').dataset.active = mode === 'assist' ? 'true' : 'false';
-  if ($('startAutoBtn')) $('startAutoBtn').dataset.active = mode === 'automate' ? 'true' : 'false';
-  if ($('pauseBtn')) $('pauseBtn').dataset.active = mode === 'observe' ? 'true' : 'false';
+  const badge = $('modeBadge');
+  if (badge) {
+    badge.textContent = mode.toUpperCase();
+    badge.dataset.mode = mode;
+  }
 
   $('engineText').textContent = mode === 'automate'
     ? 'PAPER AUTO ACTIVE'
@@ -735,11 +773,16 @@ function populateSettings() {
       ? 'PAPER ASSIST'
       : 'ENGINE OBSERVE';
 
-  $('enginePill').dataset.active = mode === 'automate' && s.tradingEnvironment === 'paper' ? 'true' : 'false';
+  $('enginePill').dataset.active =
+    mode === 'automate' && s.tradingEnvironment === 'paper'
+      ? 'true'
+      : 'false';
 
-  $('saveState').textContent = `Settings v${state.settingsVersion ?? '—'} · ${s.tradingEnvironment || 'paper'}`;
-  updateAllocation();
-  updateAmountHint();
+  text(
+    'saveState',
+    `Synced from System Settings · ${s.tradingEnvironment || 'paper'}`
+  );
+
   scheduleChart();
 }
 
@@ -4150,11 +4193,14 @@ function bind() {
     });
   });
 
-  $('amountInput').addEventListener('input', updateAmountHint);
+  $('amountInput')?.addEventListener('input', updateAmountHint);
   ['hardStopPct', 'trailingStopPct', 'tp1Pct', 'tp1SellPct', 'tp2Pct', 'tp2SellPct', 'runnerPct']
-    .forEach(id => $(id).addEventListener('input', updateAllocation));
+    .forEach(id => $(id)?.addEventListener('input', updateAllocation));
 
-  $('saveStrategyBtn').addEventListener('click', onSaveStrategy);
+  $('saveStrategyBtn')?.addEventListener('click', onSaveStrategy);
+  $('editStrategyBtn')?.addEventListener('click', () => {
+    window.location.href = '/settings.html?v=cachefix-c6663c7-20260826-v1';
+  });
   $('assistBtn')?.addEventListener('click', onAssist);
   $('startAutoBtn')?.addEventListener('click', onStartAuto);
   $('pauseBtn')?.addEventListener('click', onPause);

@@ -647,7 +647,8 @@ button { cursor: pointer; }
   gap: 6px;
 }
 
-.strategy-grid label {
+.strategy-grid label,
+.strategy-grid .strategy-summary-item {
   min-width: 0;
   min-height: 52px;
   padding: 7px 8px;
@@ -660,18 +661,22 @@ button { cursor: pointer; }
   background: rgba(3, 9, 13, .52);
 }
 
-.strategy-grid label > span {
+.strategy-grid label > span,
+.strategy-grid .strategy-summary-item > span {
   color: #5b7480;
   font-size: 7px;
 }
 
-.strategy-grid label > div {
+.strategy-grid label > div,
+.strategy-grid .strategy-summary-item > div {
   display: flex;
   align-items: baseline;
   gap: 4px;
 }
 
-.strategy-grid input[type="number"] {
+.strategy-grid input[type="number"],
+.strategy-grid .strategy-value {
+  display: block;
   width: 100%;
   min-width: 0;
   padding: 0;
@@ -755,6 +760,8 @@ button { cursor: pointer; }
   font-size: 8px;
   font-weight: 800;
 }
+
+.strategy-edit-btn { grid-column: 1 / -1; }
 
 .secondary-btn {
   border: 1px solid rgba(111, 154, 172, .10);
