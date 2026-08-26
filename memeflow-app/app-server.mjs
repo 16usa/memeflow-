@@ -56,7 +56,11 @@ function __mfIsCurrentScannerToken(token,now=Date.now()){
   if(!token||token.wsFirst!==true)return false;
   const discovered=Number(token.discoveredAt||0);
   if(!(discovered>=__mfScannerRuntimeStartedAt))return false;
-  return token.dead!==true && now-discovered<=__mfScannerTokenTtlMs;
+
+  // MEMEFLOW_SETTINGS_CONTROL_SCANNER_RETENTION_V1
+  // Opportunity/dead state may BLOCK a trade, but it must not silently remove
+  // a Pump token before the user's age/settings filters get a chance to run.
+  return now-discovered<=__mfScannerTokenTtlMs;
 }
 
 function __mfLiveScannerTokens(now=Date.now()){
@@ -120,15 +124,13 @@ function __mfPruneScannerRuntimeState(now=Date.now()){
     if(!mint)continue;
     if(open.has(mint))continue;
 
-    const lifecycleReason=
-      token?.dead===true
-        ? (token.deadReason||'DEAD')
-        : opportunityEngine?.staleReason?.(token,now);
-
-    if(lifecycleReason){
-      __mfDropScannerToken(mint,lifecycleReason);
-      continue;
-    }
+    // MEMEFLOW_SETTINGS_CONTROL_SCANNER_RETENTION_V1
+    // Do NOT prune by opportunityEngine.staleReason/dead here.
+    // Previously tokens could be deleted for NO_TRADES_45S, LOW_ACTIVITY,
+    // INACTIVE_90S, FAILED_MOMENTUM or DEAD long before a configured
+    // minTokenAgeMinutes (for example 5 minutes) could ever be reached.
+    // Opportunity/dead signals remain available to evaluate() and can still
+    // produce WATCH/BLOCKED; they simply do not destroy scanner inventory.
 
     if(!__mfIsCurrentScannerToken(token,now)){
       __mfDropScannerToken(mint,'SESSION_OR_TTL_EXPIRED');
@@ -3604,7 +3606,7 @@ const __pumpLiveTradeFeed=startPumpLiveTradeFeed({
   evaluateAI: typeof evaluateAll==='function'?evaluateAll:null,
   opportunityEngine,
   getSolUsd:()=>solUsdOracle.get(),
-  onDead:(mint,reason)=>__mfDropScannerToken(mint,reason)
+  onDead:null // MEMEFLOW_SETTINGS_CONTROL_SCANNER_RETENTION_V1: decision-only, never scanner delete
 });
 
 // MEMEFLOW_V12_22_WS_DIRECT_TRADE_EVENT: live feed module now decodes Pump TradeEvent directly from logsSubscribe; no per-signature HTTP getTransaction.

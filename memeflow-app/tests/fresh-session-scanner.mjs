@@ -30,6 +30,28 @@ assert.ok(createAt>=0,'direct CREATE ingest missing');
 assert.ok(tradeAt>=0,'TradeEvent ingest missing');
 assert.ok(createAt<tradeAt,'CREATE must establish mint before same-tx TradeEvent ingest');
 
+// MEMEFLOW_SETTINGS_CONTROL_SCANNER_RETENTION_V1
+// A token must be allowed to survive until the USER'S configured minimum age.
+// Opportunity/dead signals can affect the decision, but cannot silently delete
+// the raw Pump scanner row at 45/60/90 seconds.
+const currentScannerFn=app.slice(
+  app.indexOf('function __mfIsCurrentScannerToken('),
+  app.indexOf('function __mfLiveScannerTokens(')
+);
+assert.doesNotMatch(currentScannerFn,/token\.dead\s*!==\s*true/);
+
+const pruneScannerFn=app.slice(
+  app.indexOf('function __mfPruneScannerRuntimeState('),
+  app.indexOf('const __mfScannerPruneTimer=')
+);
+assert.doesNotMatch(pruneScannerFn,/opportunityEngine\?\.staleReason/);
+assert.doesNotMatch(pruneScannerFn,/const lifecycleReason=/);
+
+assert.doesNotMatch(
+  app,
+  /onDead:\s*\(mint,reason\)=>__mfDropScannerToken\(mint,reason\)/
+);
+
 // MEMEFLOW_SETTINGS_ONLY_DISCOVERY_V1 + MEMEFLOW_WS_ONLY_PREOPEN_RPC_V1
 assert.doesNotMatch(discovery,/enqueue\s*\(/);
 assert.doesNotMatch(discovery,/getTransaction/);
