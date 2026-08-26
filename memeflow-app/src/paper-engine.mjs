@@ -373,6 +373,9 @@ export class PaperEngine {
       decisionConfidence: decision?.confidence ?? null,
       sourceDecisionId: decision?.id || token.mint,
       primaryReason: decision?.primaryReason || null,
+      strategySource: decision?.strategySource || null,
+      copyTradingWallet: decision?.copyTradingWallet || null,
+      copyTradingSource: decision?.copyTradingSource || null,
       tp1Executed: false,
       tp2Executed: false,
       takeProfitHistory: [],
@@ -380,7 +383,7 @@ export class PaperEngine {
     };
     this.store.state.paperPositions[position.id] = position;
     this.store.state.paperMetrics.entries++;
-    this.recordTrade(position, 'BUY', quantity, price, 0, 'AUTOMATIC PAPER ENTRY');
+    this.recordTrade(position, 'BUY', quantity, price, 0, decision?.entryReason || 'AUTOMATIC PAPER ENTRY');
     this.save();
     return { ok: true, position };
   }
@@ -543,6 +546,9 @@ export class PaperEngine {
       symbol: position.symbol,
       mode: 'paper',
       simulated: true,
+      strategySource: position.strategySource || null,
+      copyTradingWallet: position.copyTradingWallet || null,
+      copyTradingSource: position.copyTradingSource || null,
       side,
       quantity,
       priceSol: price,

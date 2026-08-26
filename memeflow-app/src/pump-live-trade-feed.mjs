@@ -123,7 +123,7 @@ function tokenFromStore(store,mint){
 
 export function startPumpLiveTradeFeed(opts={}){
   const {
-    eventHolderLedger,store,publish,publishTrade,evaluateAI,
+    eventHolderLedger,store,publish,publishTrade,preprocessTrade,evaluateAI,
     opportunityEngine,getSolUsd,onDead
   }=opts;
   const urls=envList('SOLANA_WS_URLS');
@@ -215,6 +215,20 @@ export function startPumpLiveTradeFeed(opts={}){
         const e=decodeTradeEvent(b);
         if(!e)continue;
 
+        /* MEMEFLOW_COPY_TRADING_PREPROCESS_UNKNOWN_MINT_V2
+         * Preserve the fresh-session scanner contract exactly:
+         * decode -> optional tracked-wallet materialization -> const known gate
+         * -> dedupe. The original `const known=tokenFromStore(...)` statement
+         * deliberately remains intact because it is the canonical scanner gate.
+         */
+        const event={...e,signature:signature||null,slot};
+
+        if(!tokenFromStore(store,e.mint)){
+          try{preprocessTrade?.(event)}catch(err){
+            metrics.lastError='copy-preprocess:'+String(err?.message||err);
+          }
+        }
+
         // MEMEFLOW_FRESH_SESSION_SCANNER_V1
         const known=tokenFromStore(store,e.mint);
         if(!known){metrics.unknownMintEventsIgnored++;continue}
@@ -224,7 +238,7 @@ export function startPumpLiveTradeFeed(opts={}){
 
         metrics.lastTradeEventAt=Date.now();
         metrics.lastTradeEventSource=source;
-        applyEvent({...e,signature:signature||null,slot});
+        applyEvent(event);
         accepted++;
       }catch(err){
         metrics.decodeErrors++;

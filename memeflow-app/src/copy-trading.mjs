@@ -56,7 +56,10 @@ export class CopyTradingManager{
 
     let sellInfo=null;
     if(event.isBuy!==true){
-      const wantsSell=matches.some(x=>x.settings.copyTradingMirrorSells!==false);
+      const wantsSell=matches.some(({user,settings})=>
+        settings.copyTradingMirrorSells!==false &&
+        Boolean(this.paper.openForMint?.(user?.id,mint))
+      );
       if(wantsSell)sellInfo=await this.resolveSellInfo(wallet,mint,event);
     }
 
@@ -134,6 +137,7 @@ export class CopyTradingManager{
       existing.highestPriceSol=Math.max(num(existing.highestPriceSol,price),price);
       existing.strategySource='copy-trading';
       existing.copyTradingWallet=settings.copyTradingWallet;
+      existing.copyTradingSource='pump-trade-event';
       existing.settingsSnapshot={...existing.settingsSnapshot,...settings};
       this.paper.recordTrade(existing,'BUY',addQty,price,0,'COPY TRADING BUY');
       this.store.state.copyTradingMetrics.buys++;
@@ -150,7 +154,11 @@ export class CopyTradingManager{
     const decision={
       id:`copy:${settings.copyTradingWallet}:${event.mint}:${this.clock()}`,
       state:'BUY READY',score:null,confidence:null,
-      primaryReason:`Mirrored BUY from ${settings.copyTradingWallet}`
+      primaryReason:`Mirrored BUY from ${settings.copyTradingWallet}`,
+      entryReason:'COPY TRADING BUY',
+      strategySource:'copy-trading',
+      copyTradingWallet:settings.copyTradingWallet,
+      copyTradingSource:'pump-trade-event'
     };
     const result=this.paper.openPosition(
       userId,freshToken,decision,copySettings,

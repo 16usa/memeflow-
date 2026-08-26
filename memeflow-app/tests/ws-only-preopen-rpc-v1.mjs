@@ -54,9 +54,14 @@ assert.match(app,/const __mfPreOpenRpc[\s\S]*?new RpcPool\s*\(/);
 assert.match(app,/scanWalletClusterRisk\(\{\s*rpc:__mfPreOpenRpc,\s*token\s*\}\)/s);
 assert.match(app,/THIS is the first automatic Solana HTTP RPC stage/);
 
-// Generic legacy callers are deliberately wired to a fail-fast NO-NETWORK shim.
+// Generic legacy callers remain fail-fast. Copy Trading is the only additional
+// consumer of the existing protected pool, and its wrapper permits only exact
+// tracked-wallet SELL reconciliation methods. Scanner transport stays WS-only.
+// MEMEFLOW_COPY_TRADING_RPC_TEST_V2
 assert.match(app,/SOLANA_HTTP_RPC_DISABLED_OUTSIDE_PREOPEN/);
-assert.match(app,/new CopyTradingManager\(\{store,paper,rpc:null\}\)/);
+assert.match(app,/new CopyTradingManager\(\{store,paper,rpc:__mfCopyTradingRpc\}\)/);
+assert.match(app,/MEMEFLOW_COPY_TRADING_RPC_RECONCILIATION_V2/);
+assert.match(app,/method!=='getTransaction'&&method!=='getTokenAccountsByOwner'/);
 
 // Price/holder scanner evidence now comes from WebSocket TradeEvents only.
 assert.match(app,/function ensurePriceTimer\(\)\{\s*return false;\s*\}/s);

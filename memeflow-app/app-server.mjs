@@ -211,7 +211,23 @@ const __mfPreOpenRpc=
     process.env.SOLANA_COMMITMENT||'confirmed'
   );
 
-const copyTrading=new CopyTradingManager({store,paper,rpc:null});
+/* MEMEFLOW_COPY_TRADING_RPC_RECONCILIATION_V2
+ * Keep exactly ONE RpcPool in the runtime. The scanner remains WebSocket-only.
+ * Copy Trading may reuse this already-configured pool asynchronously ONLY to
+ * reconcile the tracked wallet's SELL fraction. No RPC is added to discovery,
+ * holder scanning, pricing, or ordinary TradeEvent ingestion.
+ */
+const __mfCopyTradingRpc={
+  async call(method,args=[]){
+    if(method!=='getTransaction'&&method!=='getTokenAccountsByOwner'){
+      const e=new Error('COPY_TRADING_RPC_METHOD_BLOCKED');
+      e.code='COPY_TRADING_RPC_METHOD_BLOCKED';
+      throw e;
+    }
+    return __mfPreOpenRpc.call(method,args);
+  }
+};
+const copyTrading=new CopyTradingManager({store,paper,rpc:__mfCopyTradingRpc});
 // MEMEFLOW_WS_ONLY_PREOPEN_RPC_V1
 // Chart history is live-WS + local-disk only. Historical Solana HTTP backfill is disabled.
 const __mfChartArchive=new ChartHistoryArchive({dataDir});
@@ -1275,6 +1291,85 @@ async function enrich(mint,curve){
   try{paper.onTokenUpdate(mint,updated)}catch{}
   return {ok:true,wsOnly:true};
 }
+/* MEMEFLOW_COPY_TRADING_UNKNOWN_MINT_ACTIVATION_V2
+ * Normal scanner unknown-mint behavior stays unchanged.
+ * The ONLY exception is a Pump TradeEvent belonging to a wallet explicitly
+ * configured for Copy Trading:
+ *   - BUY: materialize the mint so the same event can open our copy position.
+ *   - SELL: materialize only when we already have an open copied position.
+ */
+function __mfCopyTradingMarketFromEvent(event){
+  let priceSol=null,liquiditySol=null;
+
+  try{
+    const vs=BigInt(event?.virtualSolReserves??0);
+    const vt=BigInt(event?.virtualTokenReserves??0);
+    if(vs>0n&&vt>0n){
+      priceSol=(Number(vs)/1e9)/(Number(vt)/1e6);
+    }
+  }catch{}
+
+  try{
+    const rs=BigInt(event?.realSolReserves??0);
+    if(rs>=0n)liquiditySol=Number(rs)/1e9;
+  }catch{}
+
+  // Last-resort trade execution price for a tracked copy BUY.
+  if(!(Number.isFinite(priceSol)&&priceSol>0)){
+    try{
+      const sol=BigInt(event?.solAmount??0);
+      const tok=BigInt(event?.tokenAmount??0);
+      if(sol>0n&&tok>0n){
+        priceSol=(Number(sol)/1e9)/(Number(tok)/1e6);
+      }
+    }catch{}
+  }
+
+  return {priceSol,liquiditySol};
+}
+
+function __mfPrepareTrackedCopyTrade(event){
+  const wallet=String(event?.user||'').trim();
+  const mint=String(event?.mint||'').trim();
+  if(!wallet||!mint)return null;
+
+  const matches=copyTrading.enabledUsers(wallet);
+  if(!matches.length)return null;
+
+  const existing=store.getToken?.(mint)||store.state.tokens?.[mint]||null;
+  if(existing)return existing;
+
+  const hasOpenCopyPosition=matches.some(({user})=>
+    Boolean(paper.openForMint?.(user?.id,mint))
+  );
+
+  if(event?.isBuy!==true&&!hasOpenCopyPosition)return null;
+
+  const market=__mfCopyTradingMarketFromEvent(event);
+  if(!(Number.isFinite(market.priceSol)&&market.priceSol>0))return null;
+
+  const now=Date.now();
+  return store.addToken({
+    mint,
+    name:`COPY ${mint.slice(0,6)}`,
+    symbol:'TOKEN',
+    source:'copy-trading-tracked-wallet',
+    launchPlatform:'pump',
+    protocol:'pump',
+    wsFirst:true,
+    copyTradingDiscovered:true,
+    copyTradingTrackedWallet:wallet,
+    discoveredAt:now,
+    createdAt:now,
+    lastPriceAt:now,
+    lastMarketActivityAt:now,
+    priceSol:market.priceSol,
+    liquiditySol:Number.isFinite(market.liquiditySol)?market.liquiditySol:null,
+    eventSignature:event?.signature||null,
+    eventSlot:event?.slot??null
+  });
+}
+
 function publishTrade(mint,event,tokenOverride=null){
   if(!mint||!event)return;
 
@@ -3856,6 +3951,7 @@ const __pumpLiveTradeFeed=startPumpLiveTradeFeed({
   store: typeof store!=='undefined'?store:null,
   publish: typeof publish==='function'?publish:null,
   publishTrade: typeof publishTrade==='function'?publishTrade:null,
+  preprocessTrade: typeof __mfPrepareTrackedCopyTrade==='function'?__mfPrepareTrackedCopyTrade:null,
   evaluateAI: typeof evaluateAll==='function'?evaluateAll:null,
   opportunityEngine,
   getSolUsd:()=>solUsdOracle.get(),

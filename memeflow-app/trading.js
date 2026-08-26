@@ -913,6 +913,8 @@ function positionAsCandidate(position) {
     priceSol: num(position.currentPriceSol) ?? num(position.entryPriceSol),
     score: position.decisionScore ?? null,
     confidence: position.decisionConfidence ?? null,
+    strategySource: position.strategySource || null,
+    copyTradingWallet: position.copyTradingWallet || null,
     state: 'OPEN POSITION',
     __openPosition: position
   };
@@ -935,7 +937,12 @@ function mergedCandidates() {
 
     const existing = byMint.get(position.mint);
     if (existing) {
-      pinned.push(existing);
+      pinned.push({
+        ...existing,
+        strategySource: position.strategySource || existing.strategySource || null,
+        copyTradingWallet: position.copyTradingWallet || existing.copyTradingWallet || null,
+        __openPosition: position
+      });
       byMint.delete(position.mint);
     } else {
       pinned.push(positionAsCandidate(position));
@@ -1011,7 +1018,7 @@ function renderCandidates() {
       <button class="candidate ${item.mint === state.selectedMint ? 'selected' : ''}" data-mint="${esc(item.mint)}" type="button">
         <div class="candidate-top">
           <div class="candidate-name">
-            <strong>${esc(item.symbol || item.name || short(item.mint))}</strong>
+            <strong>${esc(item.symbol || item.name || short(item.mint))}${String(item.strategySource || '').toLowerCase() === 'copy-trading' ? ' <em class="copy-trade-badge">COPY TRADE</em>' : ''}</strong>
             <span>${esc(item.name || short(item.mint))}</span>
           </div>
           <span class="state-dot ${decisionClass(stateText)}">${esc(stateText)}</span>
@@ -3988,9 +3995,10 @@ function renderPositions() {
   list.innerHTML = rows.map(position => {
     const pnl = num(position.unrealizedPnlPct, 0);
     const settings = position.settingsSnapshot || {};
+    const copyTrade = String(position.strategySource || '').toLowerCase() === 'copy-trading';
     return `
       <div class="position-row">
-        <div><span>TOKEN</span><strong class="position-symbol">${esc(position.symbol || short(position.mint))}</strong></div>
+        <div><span>TOKEN</span><strong class="position-symbol">${esc(position.symbol || short(position.mint))}${copyTrade ? ' <em class="copy-trade-badge">COPY TRADE</em>' : ''}</strong></div>
         <div><span>SIZE</span><strong>${fmt(position.remainingSizeSol ?? position.initialSizeSol, 4)} SOL</strong></div>
         <div><span>P&L</span><strong class="${pnl >= 0 ? 'pnl-positive' : 'pnl-negative'}">${pnl >= 0 ? '+' : ''}${fmt(pnl, 2)}%</strong></div>
         <div><span>SL</span><strong>${fmt(settings.hardStopPct, 1)}%</strong></div>
@@ -4027,15 +4035,16 @@ function renderTrades() {
 
   list.innerHTML = rows.map(trade => {
     const side = String(trade.side || '').toUpperCase();
-    const time = trade.at || trade.createdAt || trade.timestamp;
+    const time = trade.at || trade.createdAt || trade.timestamp || trade.executedAt;
     const reason = trade.reason || trade.exitReason || 'ENGINE';
+    const copyTrade = String(trade.strategySource || '').toLowerCase() === 'copy-trading';
     return `
       <div class="trade-row">
         <strong class="trade-side ${side.toLowerCase()}">${esc(side || '—')}</strong>
         <span>${esc(trade.symbol || short(trade.mint))}</span>
         <span>${fmt(trade.valueSol ?? trade.amountSol ?? trade.sizeSol, 4)} SOL</span>
         <span>${finite(trade.realizedPnlSol) ? `${num(trade.realizedPnlSol) >= 0 ? '+' : ''}${fmt(trade.realizedPnlSol, 5)}` : '—'}</span>
-        <span>${esc(reason)}${time ? ` · ${new Date(time).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}` : ''}</span>
+        <span>${copyTrade ? '<em class="copy-trade-badge">COPY TRADE</em> · ' : ''}${esc(reason)}${time ? ` · ${new Date(time).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}` : ''}</span>
       </div>
     `;
   }).join('');
