@@ -10,6 +10,7 @@ import { startPumpLiveTradeFeed } from './src/pump-live-trade-feed.mjs'; // MEME
 import { ChartHistoryArchive } from './src/chart-history-archive.mjs'; // MEMEFLOW_CHART_HISTORY_RESTORE_V1
 import {createOpportunityEngine} from './src/opportunity-engine.mjs'; // MEMEFLOW_OPPORTUNITY_ENGINE_V1
 import {createSolUsdOracle} from './src/sol-usd-oracle.mjs'; // MEMEFLOW_OPPORTUNITY_ENGINE_V1
+import {rankCandidateViews} from './src/feed-ranking.mjs'; // MEMEFLOW_FEED_RELEVANCE_RANKING_V1
 
 import { eventMarketLedger } from './src/event-market-ledger.mjs'; // MEMEFLOW_V12_18_EVENT_MARKET_LEDGER
 
@@ -3208,18 +3209,22 @@ async function mfDexFilterRowsByPaid(rows) {
     _stateCounts[_state]=(_stateCounts[_state]||0)+1;
   }
 
-  const _views=[];
-  for(const _decision of _selected.slice(0,_lim)){
+  const _unrankedViews=[];
+  for(const _decision of _selected){
     try{
-      _views.push(candidateView(_decision));
+      _unrankedViews.push(candidateView(_decision));
     }catch(_error){
       _viewErrors++;
     }
   }
+  // MEMEFLOW_FEED_RELEVANCE_RANKING_V1
+  // State priority is strict. Relevance only reorders cards inside a state.
+  const _rankedViews=rankCandidateViews(_unrankedViews);
+  const _views=_rankedViews.slice(0,_lim);
 
   return json(res,200,{
     decisions:_views,
-    total:_views.length,
+    total:_rankedViews.length,
     limit:_lim,
     source:'system-live-token-states-v7',
     persistedTokens:_tokens.length,
@@ -3253,9 +3258,11 @@ if(url.pathname==='/api/ai/decisions'){
   const _all=_dexPaid?await mfDexFilterRowsByPaid(_raw):_raw;
   const _selected=candidateFeed(_all,_scope);
   const _counts=candidateVisibilityCounts(_all);
+  // MEMEFLOW_FEED_RELEVANCE_RANKING_V1
+  const _rankedViews=rankCandidateViews(_selected.map(candidateView));
   return json(res,200,{
-    decisions:_selected.slice(_off,_off+_lim).map(candidateView),
-    total:_selected.length,
+    decisions:_rankedViews.slice(_off,_off+_lim),
+    total:_rankedViews.length,
     limit:_lim,
     offset:_off,
     scope:_scope,
@@ -3582,7 +3589,7 @@ if(url.pathname==='/api/ai/decisions'){
     decisionsInMemory:Object.values(store._uidDec).reduce((s,m)=>s+m.size,0)
   });
 }
- if(url.pathname==='/api/chart/config'){const qualified=candidateFeed(store.decisions(u.id),'candidates');return json(res,200,{chainId:'solana',tokenAddress:qualified[0]?.mint||''});}
+ if(url.pathname==='/api/chart/config'){const qualified=rankCandidateViews(candidateFeed(store.decisions(u.id),'candidates').map(candidateView));return json(res,200,{chainId:'solana',tokenAddress:qualified[0]?.mint||''});}
  if(url.pathname==='/api/chart/history'){const mint=url.searchParams.get('tokenAddress'),t=store.state.tokens[mint];const pts=t?.priceSol?[{t:t.updatedAt,price:t.priceSol,source:t.source}]:[];return json(res,200,{points:pts,status:{stale:!pts.length,source:t?.source||null,error:t?.scanError||null},tokenAddress:mint})}
  if(url.pathname==='/api/chart/trade-stream'){
   const mint=String(url.searchParams.get('tokenAddress')||'').trim();
