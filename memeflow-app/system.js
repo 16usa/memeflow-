@@ -1,3 +1,4 @@
+/* MEMEFLOW_DEX_PAID_SCANNER_LEVEL_V2 */
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
@@ -3024,7 +3025,8 @@ const MF293_GROUPS = [
     ['copyTradingBuyAmountSol', 'Your BUY size · SOL', 'number', 0.001, null, 0.001],
     ['copyTradingMirrorSells', 'Mirror sells proportionally', 'boolean']
   ]],
-  ['filters', 'Entry filters', 'Market, holder, concentration and token filters', false, [
+  ['filters', 'Entry filters', 'Scanner admission · DEX Paid is checked after the other entry rules pass', false, [
+    ['requireDexPaid', 'Require confirmed DEX Paid', 'boolean'],
     ['minLiquidityUsd', 'Minimum liquidity USD', 'number', 0, null, 1],
     ['minHolders', 'Minimum holders', 'nullable', 0, null, 1],
     ['maxHolders', 'Maximum holders', 'nullable', 0, null, 1],
@@ -3130,7 +3132,7 @@ function mf293ClearError() {
 }
 
 function mf293Disable(disabled) {
-  for (const id of ['mf293SaveSettings', 'mf293RestoreDefaults', 'mf293DexPaidFilter']) {
+  for (const id of ['mf293SaveSettings', 'mf293RestoreDefaults']) {
     const node = document.getElementById(id);
     if (node) node.disabled = disabled;
   }
@@ -3257,13 +3259,6 @@ function mf293Build() {
     </header>
     <div class="mf293-settings-meta">
       <span>Platform<strong>Pump.fun</strong></span>
-      <label class="mf293-dex-filter-meta" title="Require a confirmed DEX Paid order for scanner visibility and BUY READY">
-        <div>DEX<strong>Paid</strong></div>
-        <span class="mf293-switch">
-          <input id="mf293DexPaidFilter" type="checkbox" aria-label="Require confirmed DEX Paid">
-          <span class="mf293-switch-track"></span>
-        </span>
-      </label>
       <span>AI policy<strong>Propose only</strong></span>
       <span>Kill switch<strong id="mf293KillSwitch">Checking</strong></span>
     </div>
@@ -3294,12 +3289,6 @@ function mf293Build() {
   document.getElementById('mf293SettingsClose')?.addEventListener('click', mf293Close);
   document.getElementById('mf293SaveSettings')?.addEventListener('click', mf293Save);
   document.getElementById('mf293RestoreDefaults')?.addEventListener('click', mf293Restore);
-  document.getElementById('mf293DexPaidFilter')?.addEventListener('change', event => {
-    MF293.dirty = true;
-    mf293ClearError();
-    mf293Status(`DEX Paid · ${event.currentTarget?.checked === true ? 'Required' : 'Off'} · Unsaved`, 'dirty');
-  });
-
   document.querySelector('[data-setting-key="profile"]')?.addEventListener('change', event => {
     mf293ApplyProfilePreset(event.currentTarget?.value);
   });
@@ -3336,9 +3325,6 @@ function mf293Populate() {
       liveOption.disabled = !currentLive && MF293.capabilities?.liveAutomation !== true;
     }
   }
-
-  const dexPaid = document.getElementById('mf293DexPaidFilter');
-  if (dexPaid) dexPaid.checked = MF293.settings.requireDexPaid === true;
 
   const kill = document.getElementById('mf293KillSwitch');
   if (kill) {
@@ -3405,9 +3391,8 @@ function mf293Collect() {
     if (input) next[field[0]] = mf293Read(field, input);
   }
 
-  // Discovery remains Pump.fun only. DEX Paid is a REAL Entry Filter.
-  const dexPaid = document.getElementById('mf293DexPaidFilter');
-  if (dexPaid) next.requireDexPaid=dexPaid.checked;
+  // Discovery remains Pump.fun only. DEX Paid is collected generically
+  // from the Entry filters group above.
   next.launchPlatforms = ['pump'];
   next.aiChangePolicy = 'propose';
   next.adaptiveProfile = false;

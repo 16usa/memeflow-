@@ -201,8 +201,12 @@ const settingsPage=fs.readFileSync(
   new URL('../settings-page.js',import.meta.url),
   'utf8'
 );
-assert.match(settingsPage,/mf293DexPaidFilter/);
-assert.match(settingsPage,/next\.requireDexPaid=dexPaid\.checked/);
+const dexFilterStart=settingsPage.indexOf("['filters', 'Entry filters'");
+const dexPreopenStart=settingsPage.indexOf("['preopen', 'Pre-open RPC verification'");
+assert.ok(dexFilterStart>=0&&dexPreopenStart>dexFilterStart);
+const dexFilterBlock=settingsPage.slice(dexFilterStart,dexPreopenStart);
+assert.match(dexFilterBlock,/\['requireDexPaid', 'Require confirmed DEX Paid', 'boolean'\]/);
+assert.doesNotMatch(settingsPage,/mf293DexPaidFilter/);
 assert.doesNotMatch(settingsPage,/memeflow:dex-pool-filter/);
 assert.doesNotMatch(settingsPage,/mf293DexPoolFilterEnabled/);
 assert.doesNotMatch(settingsPage,/mf293DexQuerySuffix/);
