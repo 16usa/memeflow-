@@ -2,16 +2,6 @@
 const PAGE_SIZE = 20;
 const REFRESH_MS = 3000;
 const EMPTY_CONFIRMATIONS = 5;
-const DEX_POOL_FILTER_KEY = 'memeflow:dex-pool-filter';
-
-function dexPaidFilterEnabled() {
-  try {
-    return localStorage.getItem(DEX_POOL_FILTER_KEY) === '1';
-  } catch {
-    return false;
-  }
-}
-
 
 const $ = (id) =>
   document.getElementById(id);

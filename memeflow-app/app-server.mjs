@@ -5,7 +5,8 @@ import {enrichToken,enrichHolders,makeEnrichDiag,makeHolderQueue,makeHolderMetri
 import {makeRecoveryMetrics,startDecisionRecovery,lazyRecoverUser} from './src/recovery.mjs';
 import {makeLiveEvalMetrics,makeEvaluateForActiveUsers} from './src/liveeval.mjs';
 import {makeDiscoveryMetrics,makeDiscoveryQueue} from './src/discqueue.mjs';
-import {candidateFeed,candidateVisibilityCounts} from './src/candidate-visibility.mjs';import {dexViewRequested,dexViewMint,dexPresenceFromPairs,filterRowsByDexPresence} from './src/dex-view-filter.mjs';
+import {candidateFeed,candidateVisibilityCounts} from './src/candidate-visibility.mjs';
+import {createDexPaidVerifier} from './src/dex-paid.mjs'; // MEMEFLOW_DEX_PAID_ENTRY_FILTER_V1
 import { startPumpLiveTradeFeed } from './src/pump-live-trade-feed.mjs'; // MEMEFLOW_V12_21_LIVE_TRADE_STREAM_HOLDER_FEED
 import { ChartHistoryArchive } from './src/chart-history-archive.mjs'; // MEMEFLOW_CHART_HISTORY_RESTORE_V1
 import {createOpportunityEngine} from './src/opportunity-engine.mjs'; // MEMEFLOW_OPPORTUNITY_ENGINE_V1
@@ -22,6 +23,10 @@ const root=path.dirname(fileURLToPath(import.meta.url)),dataDir=path.resolve(roo
 const opportunityEngine=createOpportunityEngine(); // MEMEFLOW_OPPORTUNITY_ENGINE_V1
 const solUsdOracle=createSolUsdOracle(); // one shared quote, never per-token RPC
 solUsdOracle.start();
+const dexPaidVerifier=createDexPaidVerifier({
+  minIntervalMs:Math.max(1000,Number(process.env.DEX_PAID_MIN_INTERVAL_MS||1100)),
+  timeoutMs:Math.max(1000,Number(process.env.DEX_PAID_TIMEOUT_MS||6000))
+}); // MEMEFLOW_DEX_PAID_ENTRY_FILTER_V1
 
 // MEMEFLOW_FRESH_SESSION_SCANNER_V1
 // Live scanner data is session-scoped. A restart starts a clean scanner while
@@ -95,6 +100,7 @@ function __mfDropScannerToken(mint,reason='PRUNED'){
   try{store.removeToken?.(mint)}catch{}
   try{eventHolderLedger?.dropMint?.(mint)}catch{}
   try{opportunityEngine?.dropMint?.(mint)}catch{}
+  try{dexPaidVerifier?.drop?.(mint)}catch{}
   try{__pumpLiveTradeFeed?.dropMint?.(mint)}catch{}
   try{chartTradeHistory?.delete?.(mint)}catch{}
   try{
@@ -887,6 +893,9 @@ function candidateView(d){
     opportunityScore:finite(t.opportunityScore),
     opportunityEvidenceReady:t.opportunityEvidenceReady===true,
     opportunityTrendHealthy:t.opportunityTrendHealthy===true,
+    dexPaidConfirmed:t.dexPaidConfirmed===true,
+    dexPaidStatus:t.dexPaidStatus||null,
+    dexPaidCheckedAt:t.dexPaidCheckedAt||null,
     uniqueBuyers:finite(t.uniqueBuyers),
     netFlowSol:finite(t.netFlowSol),
     recentNetFlowSol:finite(t.recentNetFlowSol),
@@ -1092,6 +1101,142 @@ const __mfPreAdmissionSweepTimer=setInterval(()=>{
   }catch{}
 },__mfPreAdmissionSweepMs);
 __mfPreAdmissionSweepTimer.unref?.();
+// MEMEFLOW_DEX_PAID_ENTRY_FILTER_V1
+// DEX Paid is a TRUE Entry Filter now:
+//   OFF -> it has zero effect.
+//   ON  -> token remains hidden until a paid DEX Screener order is confirmed.
+// We only query DEX Screener after all OTHER Entry Filters pass, which keeps
+// the official 60 req/min orders endpoint out of the raw Pump hot path.
+const __mfDexPaidNextCheckAt=new Map();
+let __mfDexPaidWorkerBusy=false;
+
+function __mfDexPaidRequiredEntries(now=Date.now()){
+  try{
+    return settingsGateContext(now).entries
+      .filter(entry=>entry?.settings?.requireDexPaid===true);
+  }catch{
+    return [];
+  }
+}
+
+function __mfDexPaidPassesOtherEntryFilters(token,entry,now=Date.now()){
+  if(!token||!entry)return false;
+
+  const settings={
+    ...(entry.settings||{}),
+    requireDexPaid:false
+  };
+
+  return evaluateEntryAdmission(
+    token,
+    settings,
+    {now}
+  )?.admitted===true;
+}
+
+function __mfDexPaidCandidate(token,entries,now=Date.now()){
+  if(!token?.mint)return false;
+  if(token?.dead===true)return false;
+  if(token?.dexPaidConfirmed===true)return false;
+
+  const due=Number(
+    __mfDexPaidNextCheckAt.get(token.mint) ||
+    token.dexPaidNextCheckAt ||
+    0
+  );
+
+  if(due>now)return false;
+
+  return entries.some(
+    entry=>__mfDexPaidPassesOtherEntryFilters(token,entry,now)
+  );
+}
+
+async function __mfRunDexPaidCheck(){
+  if(__mfDexPaidWorkerBusy)return;
+
+  const now=Date.now();
+  const entries=__mfDexPaidRequiredEntries(now);
+  if(!entries.length)return;
+
+  const candidates=__mfLiveScannerTokens(now)
+    .filter(token=>__mfDexPaidCandidate(token,entries,now))
+    .sort((a,b)=>{
+      const aChecked=Number(a?.dexPaidCheckedAt||0);
+      const bChecked=Number(b?.dexPaidCheckedAt||0);
+
+      // Never-checked candidates first.
+      if(Boolean(aChecked)!==Boolean(bChecked)){
+        return aChecked?1:-1;
+      }
+
+      // Stronger live candidates first, then older unchecked candidate.
+      const aOpp=Number(a?.opportunityScore||0);
+      const bOpp=Number(b?.opportunityScore||0);
+      if(aOpp!==bOpp)return bOpp-aOpp;
+
+      return aChecked-bChecked;
+    });
+
+  const token=candidates[0];
+  if(!token)return;
+
+  __mfDexPaidWorkerBusy=true;
+
+  try{
+    const result=await dexPaidVerifier.check(token.mint);
+    const confirmed=
+      result?.confirmed===true
+        ? true
+        : result?.confirmed===false
+          ? false
+          : null;
+
+    const nextAt=
+      confirmed===true
+        ? null
+        : Number(result?.expiresAt||0) || (Date.now()+5000);
+
+    if(nextAt){
+      __mfDexPaidNextCheckAt.set(token.mint,nextAt);
+    }else{
+      __mfDexPaidNextCheckAt.delete(token.mint);
+    }
+
+    const updated=store.setToken(
+      token.mint,
+      {
+        dexPaidConfirmed:confirmed,
+        dexPaidStatus:result?.status||null,
+        dexPaidPaymentTimestamp:result?.paymentTimestamp||null,
+        dexPaidOrderType:result?.orderType||null,
+        dexPaidCheckedAt:result?.checkedAt||Date.now(),
+        dexPaidNextCheckAt:nextAt,
+        dexPaidSource:'dexscreener-paid-orders',
+        dexPaidError:result?.error||null
+      }
+    ) || token;
+
+    if(confirmed===true){
+      try{settingsGateClear(updated)}catch{}
+    }
+
+    try{
+      await Promise.resolve(evaluateAll(updated));
+    }catch{}
+
+    try{publish(token.mint)}catch{}
+  }finally{
+    __mfDexPaidWorkerBusy=false;
+  }
+}
+
+const __mfDexPaidSweepTimer=setInterval(
+  ()=>{void __mfRunDexPaidCheck().catch(()=>{})},
+  Math.max(500,Number(process.env.DEX_PAID_SWEEP_MS||1000))
+);
+__mfDexPaidSweepTimer.unref?.();
+
 /* MEMEFLOW_V12_4_FAST_PHASE_A_DECOUPLED_ENRICHMENT */
 const fastPhaseMetrics={
   starts:0,
@@ -3080,304 +3225,7 @@ if(false && url.pathname==='/api/ai/assistant' &&req.method==='POST'){
 
 
 
-/* MEMEFLOW_DEX_POOL_VIEW_FILTER_V1
-   IMPORTANT:
-   - This is a DISPLAY/FEED filter only.
-   - Pump discovery, enrichment, evaluator, BUY READY, PaperEngine and execution
-     are untouched.
-   - A token qualifies only by existence of a real DEX pairAddress.
-   - Liquidity/volume/paid orders/boosts are deliberately NOT inspected.
-*/
-const MF_DEX_VIEW_CACHE = new Map();
-const MF_DEX_VIEW_INFLIGHT = new Map();
-const MF_DEX_VIEW_BATCH_SIZE = 30;
-const MF_DEX_VIEW_POSITIVE_TTL_MS = 5 * 60 * 1000;
-const MF_DEX_VIEW_NEGATIVE_TTL_MS = 20 * 1000;
-const MF_DEX_VIEW_ERROR_TTL_MS = 5 * 1000;
-
-function mfDexViewCached(mint, now = Date.now()) {
-  const cached = MF_DEX_VIEW_CACHE.get(mint);
-  return cached && Number(cached.expiresAt || 0) > now
-    ? cached
-    : null;
-}
-
-function mfDexViewStartBatch(batch) {
-  let task;
-
-  task = (async () => {
-    try {
-      const addresses = batch
-        .map(mint => encodeURIComponent(mint))
-        .join(',');
-
-      // DEX Screener supports up to 30 comma-separated token addresses here.
-      // We use ONLY pair existence, never liquidity or volume.
-      const pairs = await mf49FetchJson(
-        `https://api.dexscreener.com/tokens/v1/solana/${addresses}`,
-        6000
-      );
-
-      const found = dexPresenceFromPairs(batch, pairs);
-      const now = Date.now();
-
-      for (const mint of batch) {
-        const item = found.get(mint) || {
-          hasPool: false,
-          pairAddress: null,
-          url: null
-        };
-
-        MF_DEX_VIEW_CACHE.set(mint, {
-          ...item,
-          checkedAt: now,
-          expiresAt:
-            now +
-            (item.hasPool
-              ? MF_DEX_VIEW_POSITIVE_TTL_MS
-              : MF_DEX_VIEW_NEGATIVE_TTL_MS)
-        });
-      }
-    } catch (error) {
-      const now = Date.now();
-
-      for (const mint of batch) {
-        const previous = MF_DEX_VIEW_CACHE.get(mint);
-
-        // A transient DEX Screener error must never change MEMEFLOW decisions.
-        MF_DEX_VIEW_CACHE.set(
-          mint,
-          previous
-            ? {
-                ...previous,
-                degraded: true,
-                expiresAt: now + MF_DEX_VIEW_ERROR_TTL_MS
-              }
-            : {
-                hasPool: false,
-                pairAddress: null,
-                url: null,
-                degraded: true,
-                checkedAt: now,
-                expiresAt: now + MF_DEX_VIEW_ERROR_TTL_MS
-              }
-        );
-      }
-    } finally {
-      for (const mint of batch) {
-        if (MF_DEX_VIEW_INFLIGHT.get(mint) === task) {
-          MF_DEX_VIEW_INFLIGHT.delete(mint);
-        }
-      }
-    }
-  })();
-
-  for (const mint of batch) {
-    MF_DEX_VIEW_INFLIGHT.set(mint, task);
-  }
-
-  return task;
-}
-
-async function mfDexViewPresenceForRows(rows) {
-  const mints = [
-    ...new Set(
-      (Array.isArray(rows) ? rows : [])
-        .map(dexViewMint)
-        .filter(Boolean)
-    )
-  ];
-
-  const now = Date.now();
-  const missing = [];
-  const jobs = new Set();
-
-  for (const mint of mints) {
-    if (mfDexViewCached(mint, now)) continue;
-
-    const active = MF_DEX_VIEW_INFLIGHT.get(mint);
-    if (active) jobs.add(active);
-    else missing.push(mint);
-  }
-
-  for (let i = 0; i < missing.length; i += MF_DEX_VIEW_BATCH_SIZE) {
-    jobs.add(
-      mfDexViewStartBatch(
-        missing.slice(i, i + MF_DEX_VIEW_BATCH_SIZE)
-      )
-    );
-  }
-
-  if (jobs.size) {
-    await Promise.allSettled([...jobs]);
-  }
-
-  const presence = new Map();
-  for (const mint of mints) {
-    presence.set(
-      mint,
-      MF_DEX_VIEW_CACHE.get(mint) || {
-        hasPool: false,
-        pairAddress: null,
-        url: null
-      }
-    );
-  }
-
-  return presence;
-}
-
-const MF_DEX_PAID_CACHE = new Map();
-const MF_DEX_PAID_INFLIGHT = new Map();
-
-const MF_DEX_PAID_MAX_RECENT = 40;
-const MF_DEX_PAID_POSITIVE_TTL_MS = 15 * 60 * 1000;
-const MF_DEX_PAID_NEGATIVE_TTL_MS = 90 * 1000;
-const MF_DEX_PAID_ERROR_TTL_MS = 10 * 1000;
-
-function mfDexPaidCached(mint, now = Date.now()) {
-  const cached = MF_DEX_PAID_CACHE.get(mint);
-
-  if (!cached) return null;
-
-  if (Number(cached.expiresAt || 0) <= now) {
-    MF_DEX_PAID_CACHE.delete(mint);
-    return null;
-  }
-
-  return cached;
-}
-
-async function mfDexPaidCheck(mint) {
-  const cached = mfDexPaidCached(mint);
-
-  if (cached) {
-    return cached;
-  }
-
-  const active = MF_DEX_PAID_INFLIGHT.get(mint);
-
-  if (active) {
-    return active;
-  }
-
-  const task = (async () => {
-    try {
-      const orders = await mf49FetchJson(
-        `https://api.dexscreener.com/orders/v1/solana/${encodeURIComponent(mint)}`,
-        6000
-      );
-
-      if (!Array.isArray(orders)) {
-        throw new Error("Invalid DEX Paid response");
-      }
-
-      const hasPaid = orders.length > 0;
-      const now = Date.now();
-
-      const entry = {
-        hasPaid,
-        degraded: false,
-        checkedAt: now,
-        expiresAt:
-          now +
-          (
-            hasPaid
-              ? MF_DEX_PAID_POSITIVE_TTL_MS
-              : MF_DEX_PAID_NEGATIVE_TTL_MS
-          )
-      };
-
-      MF_DEX_PAID_CACHE.set(mint, entry);
-
-      return entry;
-    } catch (error) {
-      const previous = MF_DEX_PAID_CACHE.get(mint);
-
-      if (previous?.hasPaid === true) {
-        const entry = {
-          ...previous,
-          expiresAt: Date.now() + MF_DEX_PAID_ERROR_TTL_MS
-        };
-
-        MF_DEX_PAID_CACHE.set(mint, entry);
-
-        return entry;
-      }
-
-      const now = Date.now();
-
-      const entry = {
-        hasPaid: null,
-        degraded: true,
-        checkedAt: now,
-        expiresAt: now + MF_DEX_PAID_ERROR_TTL_MS
-      };
-
-      MF_DEX_PAID_CACHE.set(mint, entry);
-
-      return entry;
-    } finally {
-      MF_DEX_PAID_INFLIGHT.delete(mint);
-    }
-  })();
-
-  MF_DEX_PAID_INFLIGHT.set(mint, task);
-
-  return task;
-}
-
-async function mfDexFilterRowsByPaid(rows) {
-  const source =
-    Array.isArray(rows)
-      ? rows.slice(0, MF_DEX_PAID_MAX_RECENT)
-      : [];
-
-  if (!source.length) {
-    return [];
-  }
-
-  const checks = await Promise.all(
-    source.map(async row => {
-      const mint = dexViewMint(row);
-
-      if (!mint) {
-        return {
-          row,
-          entry: {
-            hasPaid: false,
-            degraded: false
-          }
-        };
-      }
-
-      return {
-        row,
-        entry: await mfDexPaidCheck(mint)
-      };
-    })
-  );
-
-  if (
-    checks.some(
-      item => item.entry?.degraded === true
-    )
-  ) {
-    throw new Error(
-      "DEX Paid verification temporarily unavailable"
-    );
-  }
-
-  return checks
-    .filter(
-      item => item.entry?.hasPaid === true
-    )
-    .map(
-      item => item.row
-    );
-}
-
- /* MEMEFLOW_AI_STANDALONE_V49_ROUTE_BEGIN */
+/* MEMEFLOW_AI_STANDALONE_V49_ROUTE_BEGIN */
  if(url.pathname==='/api/ai/standalone-scan'&&req.method==='POST'){
   try{
    const b=await body(req);
@@ -3477,7 +3325,6 @@ if(url.pathname==='/api/ai/decisions'){
   const _lim=Math.min(200,Math.max(1,Number(url.searchParams.get('limit')||50)));
   const _off=Math.max(0,Number(url.searchParams.get('offset')||0));
   const _scope=String(url.searchParams.get('scope')||'candidates').toLowerCase();
-  const _dexPaid=dexViewRequested(url.searchParams);
   // MEMEFLOW_FRESH_SESSION_SCANNER_V1
   // Never rebuild the live candidate feed from persisted pre-restart tokens.
   if(!store._uidDec[u.id]?.size){
@@ -3496,7 +3343,7 @@ if(url.pathname==='/api/ai/decisions'){
       .map(t=>String(t?.mint||''))
   );
   const _raw=store.decisions(u.id).filter(d=>_liveMintSet.has(String(d?.mint||'')));
-  const _all=_dexPaid?await mfDexFilterRowsByPaid(_raw):_raw;
+  const _all=_raw;
   const _selected=candidateFeed(_all,_scope);
   const _counts=candidateVisibilityCounts(_all);
   // MEMEFLOW_FEED_RELEVANCE_RANKING_V1
@@ -3507,12 +3354,7 @@ if(url.pathname==='/api/ai/decisions'){
     limit:_lim,
     offset:_off,
     scope:_scope,
-    counts:_counts,
-    viewFilter:{
-      dexPaid:_dexPaid,
-      dexPool:_dexPaid,
-      semantics:_dexPaid?'dex-paid':'pump'
-    }
+    counts:_counts
   });
 }
  if(url.pathname==='/api/debug/filter-pipeline'){
@@ -3615,10 +3457,6 @@ if(url.pathname==='/api/ai/decisions'){
         return lp==='pump'||mint.toLowerCase().endsWith('pump');
       })
       .sort((a,b)=>Number(b?.discoveredAt||b?.createdAt||0)-Number(a?.discoveredAt||a?.createdAt||0));
-
-    if(dexViewRequested(url.searchParams)){
-      pumpTokens=await mfDexFilterRowsByPaid(pumpTokens);
-    }
     pumpTokens=pumpTokens.slice(0,limit);
 
     const settings=store.settings(u.id);
@@ -4819,4 +4657,3 @@ async function __mfApprovePaperProposalWithRisk(
     verified.token
   );
 }
-

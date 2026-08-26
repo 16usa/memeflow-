@@ -9,7 +9,7 @@ const nullableNumbers=[
 'minSniperPct','maxSniperPct','maxSuspectedRiskyWalletsPct','maxInsidersPct'
 ];
 const booleans=[
-'requireTwitter','requireWebsite','requireTelegram','requireAnySocial','requireFreshHolderSnapshot','requireWebsiteOrX',
+'requireTwitter','requireWebsite','requireTelegram','requireAnySocial','requireFreshHolderSnapshot','requireWebsiteOrX','requireDexPaid',
 'adaptiveProfile','shadowValidation','changeLog','exitOnWeakBuyPressure','copyTradingEnabled','copyTradingMirrorSells'
 ];
 const finite=(v)=>v!==''&&v!==null&&v!==undefined&&Number.isFinite(Number(v));
@@ -59,7 +59,7 @@ export function defaultSettings(){return {
  operatingMode:'observe',tradingEnvironment:'paper',profile:'balanced',
  tradingCapital:0,dailySpendLimit:0,positionSize:0.1,maxPositionSize:0.5,maxOpenPositions:4,maxDailyEntries:10,dailyLossLimit:0,feeReserve:0.05,
  copyTradingEnabled:false,copyTradingWallet:'',copyTradingBuyAmountSol:0.1,copyTradingMirrorSells:true,
- minScore:72,minConfidence:70,minLiquidityUsd:0,minBuyPressure:1.2,requireFreshHolderSnapshot:true,requireWebsiteOrX:false,
+ minScore:72,minConfidence:70,minLiquidityUsd:0,minBuyPressure:1.2,requireFreshHolderSnapshot:true,requireWebsiteOrX:false,requireDexPaid:false,
  launchPlatforms:['pump'],includeKeywords:'',excludeKeywords:'',
  minBondingCurvePct:null,maxBondingCurvePct:null,minMarketCapUsd:null,maxMarketCapUsd:null,minTotalFeesSol:null,maxTotalFeesSol:null,
  minVolume24hUsd:null,maxVolume24hUsd:null,minBuyTransactions:null,maxBuyTransactions:null,minSellTransactions:null,maxSellTransactions:null,minTotalTransactions:null,maxTotalTransactions:null,

@@ -200,7 +200,7 @@ function mf293ClearError() {
 }
 
 function mf293Disable(disabled) {
-  for (const id of ['mf293SaveSettings', 'mf293RestoreDefaults', 'mf293DexPoolFilter']) {
+  for (const id of ['mf293SaveSettings', 'mf293RestoreDefaults', 'mf293DexPaidFilter']) {
     const node = document.getElementById(id);
     if (node) node.disabled = disabled;
   }
@@ -274,33 +274,6 @@ function mf293CreateField(field) {
 }
 
 
-const MF293_DEX_POOL_FILTER_KEY = 'memeflow:dex-pool-filter';
-
-function mf293DexPoolFilterEnabled() {
-  try {
-    return localStorage.getItem(MF293_DEX_POOL_FILTER_KEY) === '1';
-  } catch {
-    return false;
-  }
-}
-
-function mf293SetDexPoolFilterEnabled(enabled) {
-  try {
-    if (enabled) {
-      localStorage.setItem(MF293_DEX_POOL_FILTER_KEY, '1');
-    } else {
-      localStorage.removeItem(MF293_DEX_POOL_FILTER_KEY);
-    }
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-function mf293DexQuerySuffix() {
-  return mf293DexPoolFilterEnabled() ? '&dexPool=1' : '';
-}
-
 function mf293ApplyProfilePreset(profile) {
   const key = String(profile || '').trim().toLowerCase();
   const preset = MF293.profilePresets?.[key];
@@ -371,10 +344,10 @@ function mf293Build() {
     </header>
     <div class="mf293-settings-meta">
       <span>Platform<strong>Pump.fun</strong></span>
-      <label class="mf293-dex-filter-meta" title="Show only Pump.fun tokens that already have a DEX Paid">
+      <label class="mf293-dex-filter-meta" title="Require a confirmed DEX Paid order for scanner visibility and BUY READY">
         <div>DEX<strong>Paid</strong></div>
         <span class="mf293-switch">
-          <input id="mf293DexPoolFilter" type="checkbox" aria-label="DEX Paid filter">
+          <input id="mf293DexPaidFilter" type="checkbox" aria-label="Require confirmed DEX Paid">
           <span class="mf293-switch-track"></span>
         </span>
       </label>
@@ -408,19 +381,10 @@ function mf293Build() {
   document.getElementById('mf293SettingsClose')?.addEventListener('click', mf293Close);
   document.getElementById('mf293SaveSettings')?.addEventListener('click', mf293Save);
   document.getElementById('mf293RestoreDefaults')?.addEventListener('click', mf293Restore);
-  document.getElementById('mf293DexPoolFilter')?.addEventListener('change', event => {
-    const enabled = event.currentTarget?.checked === true;
-
-    if (!mf293SetDexPoolFilterEnabled(enabled)) {
-      event.currentTarget.checked = !enabled;
-      mf293Status('DEX filter error', 'error');
-      mf293Error('Unable to store the DEX display filter on this device.');
-      return;
-    }
-
+  document.getElementById('mf293DexPaidFilter')?.addEventListener('change', event => {
+    MF293.dirty = true;
     mf293ClearError();
-    mf293Status(`DEX · ${enabled ? 'ON' : 'OFF'}`, 'saved');
-    void refreshTelemetry().catch(() => {});
+    mf293Status(`DEX Paid · ${event.currentTarget?.checked === true ? 'Required' : 'Off'} · Unsaved`, 'dirty');
   });
 
   document.querySelector('[data-setting-key="profile"]')?.addEventListener('change', event => {
@@ -470,9 +434,9 @@ function mf293Populate() {
     }
   }
 
-  const dexFilter = document.getElementById('mf293DexPoolFilter');
-  if (dexFilter) {
-    dexFilter.checked = mf293DexPoolFilterEnabled();
+  const dexPaid = document.getElementById('mf293DexPaidFilter');
+  if (dexPaid) {
+    dexPaid.checked = MF293.settings.requireDexPaid === true;
   }
 
   const kill = document.getElementById('mf293KillSwitch');
@@ -540,8 +504,9 @@ function mf293Collect() {
     if (input) next[field[0]] = mf293Read(field, input);
   }
 
-  // Discovery remains Pump.fun only. DEX is a browser-side VIEW filter and
-  // never changes evaluation settings or triggers decision re-evaluation.
+  // Discovery remains Pump.fun only. DEX Paid is a REAL Entry Filter.
+  const dexPaid = document.getElementById('mf293DexPaidFilter');
+  if (dexPaid) next.requireDexPaid=dexPaid.checked;
   next.launchPlatforms = ['pump'];
   next.aiChangePolicy = 'propose';
   next.adaptiveProfile = false;
