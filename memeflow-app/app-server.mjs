@@ -1052,6 +1052,136 @@ const evaluateAll=makeEvaluateForActiveUsers({
   }
 });
 
+// MEMEFLOW_AGE_THRESHOLD_WAKE_V1
+// Entry admission is event-driven, but token AGE changes even when no trade
+// event arrives. Without this clock wake, a token that was PENDING at 4:59
+// could remain hidden forever after crossing a user's 5m minimum.
+// This scheduler wakes a token exactly once per distinct active-user minimum
+// age threshold/settings signature. It performs no RPC/network scan.
+const __mfAgeWakeState=new Map();
+const __mfAgeWakeIntervalMs=Math.max(
+  1000,
+  Number(process.env.AGE_ADMISSION_WAKE_INTERVAL_MS||2000)
+);
+const __mfAgeWakeMaxPerSweep=Math.max(
+  10,
+  Number(process.env.AGE_ADMISSION_WAKE_MAX_PER_SWEEP||100)
+);
+let __mfAgeWakeRunning=false;
+
+Object.assign(discMetrics,{
+  ageWakeSweeps:Number(discMetrics.ageWakeSweeps||0),
+  ageWakeTriggered:Number(discMetrics.ageWakeTriggered||0),
+  ageWakeEvaluated:Number(discMetrics.ageWakeEvaluated||0),
+  ageWakeErrors:Number(discMetrics.ageWakeErrors||0),
+  ageWakeLastAt:discMetrics.ageWakeLastAt||null,
+  ageWakeActiveThresholds:[],
+  ageWakeLastRawTokenCount:0
+});
+
+function __mfAgeWakePolicy(now=Date.now()){
+  const context=settingsGateContext(now);
+  const thresholds=[
+    ...new Set(
+      (context.entries||[])
+        .map(entry=>Number(entry?.settings?.minTokenAgeMinutes))
+        .filter(value=>Number.isFinite(value)&&value>0)
+    )
+  ].sort((a,b)=>a-b);
+
+  return {
+    signature:String(context.signature||'no-active-users'),
+    thresholds
+  };
+}
+
+function __mfPruneAgeWakeState(liveMints){
+  if(__mfAgeWakeState.size<=liveMints.size+500)return;
+  for(const mint of __mfAgeWakeState.keys()){
+    if(!liveMints.has(mint))__mfAgeWakeState.delete(mint);
+  }
+}
+
+function __mfRunAgeAdmissionWake(){
+  if(__mfAgeWakeRunning)return;
+  __mfAgeWakeRunning=true;
+
+  try{
+    const now=Date.now();
+    const policy=__mfAgeWakePolicy(now);
+    const tokens=__mfLiveScannerTokens(now);
+    const liveMints=new Set(tokens.map(t=>String(t?.mint||'')).filter(Boolean));
+
+    discMetrics.ageWakeSweeps++;
+    discMetrics.ageWakeLastAt=now;
+    discMetrics.ageWakeActiveThresholds=policy.thresholds.slice();
+    discMetrics.ageWakeLastRawTokenCount=tokens.length;
+
+    if(!policy.thresholds.length){
+      __mfPruneAgeWakeState(liveMints);
+      return;
+    }
+
+    let scheduled=0;
+
+    for(const token of tokens){
+      if(scheduled>=__mfAgeWakeMaxPerSweep)break;
+
+      const mint=String(token?.mint||'');
+      if(!mint)continue;
+
+      const age=tokenAgeMinutes(token,now);
+      if(!Number.isFinite(age))continue;
+
+      let row=__mfAgeWakeState.get(mint);
+      if(!row||row.signature!==policy.signature){
+        row={signature:policy.signature,fired:new Set()};
+        __mfAgeWakeState.set(mint,row);
+      }
+
+      const crossed=[];
+      for(const threshold of policy.thresholds){
+        const key=String(threshold);
+        if(age>=threshold&&!row.fired.has(key))crossed.push(key);
+      }
+
+      if(!crossed.length)continue;
+
+      for(const key of crossed)row.fired.add(key);
+
+      scheduled++;
+      discMetrics.ageWakeTriggered++;
+
+      Promise.resolve(evaluateAll(token))
+        .then(()=>{
+          discMetrics.ageWakeEvaluated++;
+          try{publish(mint)}catch{}
+        })
+        .catch(error=>{
+          discMetrics.ageWakeErrors++;
+          discMetrics.lastErrorAt=Date.now();
+          try{
+            discovery.lastError={
+              message:'age admission wake: '+String(error?.message||error),
+              at:Date.now()
+            };
+          }catch{}
+        });
+    }
+
+    __mfPruneAgeWakeState(liveMints);
+  }finally{
+    __mfAgeWakeRunning=false;
+  }
+}
+
+const __mfAgeWakeTimer=setInterval(
+  __mfRunAgeAdmissionWake,
+  __mfAgeWakeIntervalMs
+);
+__mfAgeWakeTimer.unref?.();
+
+
 // A TradeEvent causes immediate admission re-check. This sweep exists only for
 // gates that can change without a trade event (most importantly minimum age).
 // It triggers a full evaluation only on a hidden -> admitted transition.
@@ -2103,13 +2233,30 @@ function startDiscovery(i=0){
           try{__systemViewEmitV31('create',{signature:String(sig||''),ts:Date.now()})}catch{}
           discMetrics.createEventsAccepted++;
           discovery.lastEventAt=Date.now();
-          __ingestPumpCreateEventDirect(
+          const directToken=__ingestPumpCreateEventDirect(
             logs,
             {
               signature:String(sig||''),
               slot:m.params?.result?.context?.slot??null
             }
           );
+
+          // MEMEFLOW_CREATE_DECODE_COVERAGE_V1
+          // Keep an explicit coverage ratio so provider/log-decoder loss can
+          // never masquerade as a settings problem again.
+          discMetrics.createDecodeCoveragePct=
+            discMetrics.createEventsAccepted>0
+              ? Number(
+                  (
+                    100*
+                    Number(discMetrics.directCreateEvents||0)/
+                    Number(discMetrics.createEventsAccepted||1)
+                  ).toFixed(2)
+                )
+              : 100;
+          if(!directToken){
+            discMetrics.lastDirectCreateDecodeFailedAt=Date.now();
+          }
         }
 
         try{

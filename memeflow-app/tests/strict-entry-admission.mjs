@@ -69,6 +69,35 @@ const good=evaluateEntryAdmission(admitted,strictSettings);
 assert.equal(good.admitted,true);
 assert.equal(good.state,'ADMITTED');
 
+// clock threshold admission regression
+const fiveMinuteSettings={
+  ...strictSettings,
+  minTokenAgeMinutes:5,
+  minMarketCapUsd:null,
+  minHolders:null,
+  maxTop10Pct:null,
+  maxDeveloperPct:null,
+  minBuyPressure:null,
+  requireAnySocial:false,
+  requireFreshHolderSnapshot:false
+};
+const justBeforeFive={
+  ...admitted,
+  pumpCreatedAt:now-(5*60_000)+1000
+};
+const justAfterFive={
+  ...admitted,
+  pumpCreatedAt:now-(5*60_000)-1000
+};
+assert.equal(
+  evaluateEntryAdmission(justBeforeFive,fiveMinuteSettings,{now}).admitted,
+  false
+);
+assert.equal(
+  evaluateEntryAdmission(justAfterFive,fiveMinuteSettings,{now}).admitted,
+  true
+);
+
 const finalOnly=evaluateEntryAdmission(
   {
     ...admitted,

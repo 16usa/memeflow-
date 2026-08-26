@@ -20,6 +20,18 @@ assert.match(app,/const _tokens=_admittedAll\.slice\(0,_lim\)/);
 assert.match(app,/freshScannerTokens:__mfLiveScannerTokens\(\)\.length/);
 assert.match(app,/setHeader\('cache-control','no-store'\)/);
 
+// MEMEFLOW_AGE_THRESHOLD_WAKE_V1 regression
+// A configured minimum age is a CLOCK transition; it must not depend on a
+// later BUY/SELL event to re-run Entry Admission.
+assert.match(app,/MEMEFLOW_AGE_THRESHOLD_WAKE_V1/);
+assert.match(app,/function __mfRunAgeAdmissionWake\(\)/);
+assert.match(app,/tokenAgeMinutes\(token,now\)/);
+assert.match(app,/Promise\.resolve\(evaluateAll\(token\)\)/);
+assert.match(app,/AGE_ADMISSION_WAKE_INTERVAL_MS/);
+assert.match(app,/ageWakeTriggered/);
+assert.match(app,/MEMEFLOW_CREATE_DECODE_COVERAGE_V1/);
+assert.match(app,/createDecodeCoveragePct/);
+
 const discovery=app.slice(
   app.indexOf('function startDiscovery(i=0){'),
   app.indexOf('function shadowValidateSettings')
