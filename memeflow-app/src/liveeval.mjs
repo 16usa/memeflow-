@@ -48,12 +48,18 @@ export function makeLiveEvalMetrics(){
     liveUniquePolicyEvaluations:0,
     livePolicyGroups:0,
     liveEvaluationCoalesced:0,
-    liveEvaluationInflightMints:0
+    liveEvaluationInflightMints:0,
+    entryAdmissionUsersChecked:0,
+    entryAdmissionUsersPassed:0,
+    entryAdmissionUsersHidden:0,
+    entryAdmissionDecisionsCleared:0,
+    entryAdmissionLastPassedUsers:0
   };
 }
 
 export function makeEvaluateForActiveUsers({
-  store,metrics,activeUserHoursMs=86400000,batchSize=25,delayMs=0,onDecision=null
+  store,metrics,activeUserHoursMs=86400000,batchSize=25,delayMs=0,
+  onDecision=null,admissionCheck=null
 }){
   let lastEvictAt=0;
   const settingsCache=new Map();
@@ -106,14 +112,38 @@ export function makeEvaluateForActiveUsers({
     metrics.activeEvaluationUsers=activeUids.length;
 
     const groups=new Map();
+    let admittedUserCount=0;
+
     for(const uid of activeUids){
       try{
         const c=cachedSettings(uid);
+
+        if(typeof admissionCheck==='function'){
+          metrics.entryAdmissionUsersChecked++;
+          const admission=admissionCheck(token,c.settings,uid);
+
+          if(admission?.admitted!==true){
+            metrics.entryAdmissionUsersHidden++;
+            const key=uid+':'+String(token?.mint||'');
+            if(store.state.decisions?.[key]){
+              delete store.state.decisions[key];
+              store._uidDec?.[uid]?.delete?.(key);
+              metrics.entryAdmissionDecisionsCleared++;
+            }
+            continue;
+          }
+
+          metrics.entryAdmissionUsersPassed++;
+        }
+
+        admittedUserCount++;
         let g=groups.get(c.key);
         if(!g){g={settings:c.settings,uids:[]};groups.set(c.key,g)}
         g.uids.push(uid);
       }catch(e){recordError(e)}
     }
+
+    metrics.entryAdmissionLastPassedUsers=admittedUserCount;
     metrics.livePolicyGroups=groups.size;
 
     const rows=[...groups.values()];
@@ -148,7 +178,13 @@ export function makeEvaluateForActiveUsers({
     metrics.liveEvaluationTokensProcessed++;
     metrics.lastLiveEvaluationAt=Date.now();
     metrics.decisionsInMemoryByActiveUsers=activeUids.reduce((s,uid)=>s+(store._uidDec[uid]?.size||0),0);
-    return {decisionLike:true,activeUsers:activeUids.length,evaluationsPerformed:activeUids.length,policyGroups:groups.size};
+    return {
+      decisionLike:true,
+      activeUsers:activeUids.length,
+      admittedUsers:admittedUserCount,
+      evaluationsPerformed:admittedUserCount,
+      policyGroups:groups.size
+    };
   }
 
   async function drain(mint,first){

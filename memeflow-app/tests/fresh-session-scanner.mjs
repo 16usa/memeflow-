@@ -14,7 +14,9 @@ const trades=fs.readFileSync(new URL('../src/pump-live-trade-feed.mjs',import.me
 assert.match(app,/MEMEFLOW_FRESH_SESSION_SCANNER_V1/);
 assert.match(app,/__mfScannerRuntimeStartedAt/);
 assert.match(app,/__mfLiveScannerTokens/);
-assert.match(app,/const _tokens=__mfLiveScannerTokens\(\)\.slice\(0,_lim\)/);
+assert.match(app,/const _rawTokens=__mfLiveScannerTokens\(\)/);
+assert.match(app,/const _admittedAll=_rawTokens\.filter/);
+assert.match(app,/const _tokens=_admittedAll\.slice\(0,_lim\)/);
 assert.match(app,/freshScannerTokens:__mfLiveScannerTokens\(\)\.length/);
 assert.match(app,/setHeader\('cache-control','no-store'\)/);
 

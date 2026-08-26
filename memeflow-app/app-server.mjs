@@ -1,5 +1,5 @@
 import http from 'node:http';import fs from 'node:fs';import path from 'node:path';import crypto from 'node:crypto';import zlib from 'node:zlib';import {fileURLToPath} from 'node:url';
-import {JsonStore,sessionId,defaults} from './src/store.mjs';import {RpcPool,validPubkey,decodeCurve,decodeCreateData,decodePumpCreate,decodePumpCreateEventLog,shouldExcludeMayhemCreate} from './src/solana.mjs';import {evaluate,tokenAgeMinutes} from './src/evaluate.mjs';import {evaluateSettingsAdmission,settingsContextSignature} from './src/settings-gate.mjs';import {validateSettings,PROFILE_PRESETS} from './src/settings.mjs';import {StripeBilling} from './src/billing.mjs';
+import {JsonStore,sessionId,defaults} from './src/store.mjs';import {RpcPool,validPubkey,decodeCurve,decodeCreateData,decodePumpCreate,decodePumpCreateEventLog,shouldExcludeMayhemCreate} from './src/solana.mjs';import {evaluate,tokenAgeMinutes} from './src/evaluate.mjs';import {evaluateSettingsAdmission,evaluateEntryAdmission,settingsContextSignature} from './src/settings-gate.mjs';import {validateSettings,PROFILE_PRESETS} from './src/settings.mjs';import {StripeBilling} from './src/billing.mjs';
 import {OpenAIIntelligence} from './src/openai-intelligence.mjs';import {PaperEngine} from './src/paper-engine.mjs';import {CopyTradingManager} from './src/copy-trading.mjs'; // MEMEFLOW_COPY_TRADING_V1
 import {enrichToken,enrichHolders,makeEnrichDiag,makeHolderQueue,makeHolderMetrics} from './src/enrich.mjs';
 import {makeRecoveryMetrics,startDecisionRecovery,lazyRecoverUser} from './src/recovery.mjs';
@@ -72,13 +72,18 @@ function __mfActiveScannerUserIds(now=Date.now()){
 }
 
 function __mfAllActiveUsersStableBlocked(mint,now=Date.now()){
+  const token=store.state.tokens?.[mint]||null;
+  if(!token)return true;
+
   const uids=__mfActiveScannerUserIds(now);
   if(!uids.length)return false;
+
   for(const uid of uids){
-    const d=store.state.decisions?.[uid+':'+mint];
-    if(!d)return false;
-    if(d.state!=='BLOCKED'||d.settingsEvaluation?.hasStableFailure!==true)return false;
+    const admission=__mfEntryAdmissionForUser(token,uid,null,now);
+    if(admission?.admitted===true)return false;
+    if(admission?.hasStableFailure!==true)return false;
   }
+
   return true;
 }
 
@@ -98,6 +103,11 @@ function __mfDropScannerToken(mint,reason='PRUNED'){
     priceTimers?.delete?.(mint);
   }catch{}
   try{tradeWindows?.delete?.(mint)}catch{}
+  try{
+    for(const key of __mfEntryAdmissionState?.keys?.()||[]){
+      if(String(key).endsWith(':'+mint))__mfEntryAdmissionState.delete(key);
+    }
+  }catch{}
   try{__systemViewEmitV31('token_removed',{mint,reason,ts:Date.now()})}catch{}
   return true;
 }
@@ -919,11 +929,169 @@ function candidateView(d){
     slippagePct:null
   };
 }
+// MEMEFLOW_STRICT_ENTRY_ADMISSION_V1
+const __mfEntryAdmissionState=new Map();
+
+function __mfEntryAdmissionForUser(
+  token,
+  uid,
+  settingsOverride=null,
+  now=Date.now()
+){
+  try{
+    const settings=
+      settingsOverride &&
+      typeof settingsOverride==='object'
+        ? settingsOverride
+        : (store.settings(uid)||{});
+
+    return evaluateEntryAdmission(token,settings,{now});
+  }catch(error){
+    return {
+      admitted:false,
+      state:'PENDING',
+      failedGates:[],
+      waitingGates:[],
+      hasStableFailure:false,
+      hasRetryableFailure:false,
+      reasons:['entry admission evaluation error']
+    };
+  }
+}
+
+function __mfClearDecisionForUserMint(uid,mint){
+  const key=String(uid||'')+':'+String(mint||'');
+  if(!uid||!mint)return false;
+
+  let removed=false;
+  if(store.state.decisions?.[key]){
+    delete store.state.decisions[key];
+    removed=true;
+  }
+
+  try{
+    if(store._uidDec?.[uid]?.has?.(key)){
+      store._uidDec[uid].delete(key);
+      removed=true;
+    }
+  }catch{}
+
+  return removed;
+}
+
+function __mfLiveEvalAdmissionCheck(token,settings,uid){
+  const admission=__mfEntryAdmissionForUser(token,uid,settings);
+  const key=String(uid||'')+':'+String(token?.mint||'');
+
+  if(uid&&token?.mint){
+    __mfEntryAdmissionState.set(key,admission?.admitted===true);
+  }
+
+  return admission;
+}
+
+function __mfAdmittedScannerTokensForUser(uid,now=Date.now()){
+  const settings=store.settings(uid)||{};
+  return __mfLiveScannerTokens(now)
+    .filter(token=>
+      __mfEntryAdmissionForUser(token,uid,settings,now)?.admitted===true
+    );
+}
+
+function __mfAnyActiveEntryAdmitted(token,now=Date.now()){
+  if(!token)return false;
+  const uids=__mfActiveScannerUserIds(now);
+  if(!uids.length)return false;
+
+  for(const uid of uids){
+    if(__mfEntryAdmissionForUser(token,uid,null,now)?.admitted===true){
+      return true;
+    }
+  }
+
+  return false;
+}
+
 const liveEvalMetrics=makeLiveEvalMetrics();
 const LIVE_EVAL_HOURS=Number(process.env.LIVE_EVALUATION_ACTIVE_USER_HOURS||24);
 const LIVE_EVAL_BATCH=Number(process.env.LIVE_EVALUATION_BATCH_SIZE||25);
 const LIVE_EVAL_DELAY=Number(process.env.LIVE_EVALUATION_DELAY_MS||0);
-const evaluateAll=makeEvaluateForActiveUsers({store,metrics:liveEvalMetrics,activeUserHoursMs:LIVE_EVAL_HOURS*3600000,batchSize:LIVE_EVAL_BATCH,delayMs:LIVE_EVAL_DELAY,onDecision:(uid,token,decision)=>{void __mfHandleDecision(uid,token,decision).catch(()=>{})}});
+const evaluateAll=makeEvaluateForActiveUsers({
+  store,
+  metrics:liveEvalMetrics,
+  activeUserHoursMs:LIVE_EVAL_HOURS*3600000,
+  batchSize:LIVE_EVAL_BATCH,
+  delayMs:LIVE_EVAL_DELAY,
+  admissionCheck:__mfLiveEvalAdmissionCheck,
+  onDecision:(uid,token,decision)=>{
+    void __mfHandleDecision(uid,token,decision).catch(()=>{});
+  }
+});
+
+// A TradeEvent causes immediate admission re-check. This sweep exists only for
+// gates that can change without a trade event (most importantly minimum age).
+// It triggers a full evaluation only on a hidden -> admitted transition.
+const __mfPreAdmissionSweepMs=Math.max(
+  1000,
+  Number(process.env.PRE_ADMISSION_SWEEP_MS||2000)
+);
+
+const __mfPreAdmissionSweepTimer=setInterval(()=>{
+  try{
+    const now=Date.now();
+    const tokens=__mfLiveScannerTokens(now);
+    const uids=__mfActiveScannerUserIds(now);
+
+    if(!tokens.length||!uids.length)return;
+
+    const users=uids.map(uid=>({
+      uid,
+      settings:store.settings(uid)||{}
+    }));
+
+    for(const token of tokens){
+      let promote=false;
+
+      for(const row of users){
+        const key=row.uid+':'+token.mint;
+        const previous=__mfEntryAdmissionState.get(key);
+        const admission=__mfEntryAdmissionForUser(
+          token,
+          row.uid,
+          row.settings,
+          now
+        );
+        const admitted=admission?.admitted===true;
+
+        if(admitted&&previous!==true){
+          promote=true;
+        }else if(!admitted&&previous===true){
+          __mfClearDecisionForUserMint(row.uid,token.mint);
+        }
+
+        __mfEntryAdmissionState.set(key,admitted);
+      }
+
+      if(promote){
+        Promise.resolve(evaluateAll(token)).catch(()=>{});
+      }
+    }
+
+    if(__mfEntryAdmissionState.size>50000){
+      const active=new Set(uids);
+      const live=new Set(tokens.map(t=>String(t?.mint||'')));
+      for(const key of [...__mfEntryAdmissionState.keys()]){
+        const cut=String(key).lastIndexOf(':');
+        const uid=cut>=0?String(key).slice(0,cut):'';
+        const mint=cut>=0?String(key).slice(cut+1):'';
+        if(!active.has(uid)||!live.has(mint)){
+          __mfEntryAdmissionState.delete(key);
+        }
+      }
+    }
+  }catch{}
+},__mfPreAdmissionSweepMs);
+__mfPreAdmissionSweepTimer.unref?.();
 /* MEMEFLOW_V12_4_FAST_PHASE_A_DECOUPLED_ENRICHMENT */
 const fastPhaseMetrics={
   starts:0,
@@ -1049,6 +1217,10 @@ function publishTrade(mint,event,tokenOverride=null){
   // the token is opened in Trading Terminal. No synthetic/timer points.
 
   const token=tokenOverride||store.state.tokens[mint];
+
+  // MEMEFLOW_STRICT_ENTRY_ADMISSION_V1
+  if(!__mfAnyActiveEntryAdmitted(token))return;
+
   const price=Number(token?.priceSol);
   if(!(price>0))return;
 
@@ -2242,33 +2414,90 @@ function startDiscovery(i=0){
     ws.onclose=()=>{discovery.connected=false;discovery.reconnects++;wsReconnectAttempt++;clearTimeout(wsTimer);wsTimer=setTimeout(()=>startDiscovery(i+1),Math.min(30000,1000*2**Math.min(wsReconnectAttempt,5)))};
   }catch(e){discovery.error=e.message;wsTimer=setTimeout(()=>startDiscovery(i+1),5000)}
 }
-function shadowValidateSettings(settings,limit=50){const rows=__mfLiveScannerTokens().slice(0,Math.max(1,Math.min(200,limit)));const counts={WAITING:0,WATCH:0,'BUY READY':0,BLOCKED:0,EXPIRED:0};const errors=[];for(const token of rows){try{const d=evaluate(token,settings);counts[d.state]=(counts[d.state]||0)+1}catch(e){errors.push({mint:token.mint||null,message:e.message})}}return {tested:rows.length,counts,errors};}
+function shadowValidateSettings(settings,limit=50){
+  const rows=__mfLiveScannerTokens()
+    .slice(0,Math.max(1,Math.min(200,limit)));
+
+  const counts={
+    WAITING:0,
+    WATCH:0,
+    'BUY READY':0,
+    BLOCKED:0,
+    EXPIRED:0
+  };
+  const admission={ADMITTED:0,PENDING:0,REJECTED:0};
+  const errors=[];
+
+  for(const token of rows){
+    try{
+      const gate=evaluateEntryAdmission(token,settings);
+      admission[gate.state]=(admission[gate.state]||0)+1;
+
+      if(gate.admitted!==true)continue;
+
+      const d=evaluate(token,settings);
+      counts[d.state]=(counts[d.state]||0)+1;
+    }catch(e){
+      errors.push({mint:token.mint||null,message:e.message});
+    }
+  }
+
+  return {
+    tested:rows.length,
+    admitted:admission.ADMITTED||0,
+    hidden:(admission.PENDING||0)+(admission.REJECTED||0),
+    admission,
+    counts,
+    errors
+  };
+}
+
 function reevaluateUser(uid){
   const settings=store.settings(uid);
   const tokens=__mfLiveScannerTokens();
-  const settingsVersion=store.user(uid)?.settingsVersion||store.user(uid)?.updatedAt||Date.now();
-  let count=0,errors=0;
+  const settingsVersion=
+    store.user(uid)?.settingsVersion||
+    store.user(uid)?.updatedAt||
+    Date.now();
+
+  let count=0,errors=0,hidden=0;
   const states={WAITING:0,WATCH:0,BLOCKED:0,'BUY READY':0,EXPIRED:0};
 
   for(const token of tokens){
     try{
+      const admission=__mfEntryAdmissionForUser(token,uid,settings);
+
+      if(admission?.admitted!==true){
+        __mfClearDecisionForUserMint(uid,token.mint);
+        __mfEntryAdmissionState.set(uid+':'+token.mint,false);
+        hidden++;
+        continue;
+      }
+
+      __mfEntryAdmissionState.set(uid+':'+token.mint,true);
+
       const d=evaluate(token,settings);
-      const saved={...d,primaryReason:d.primaryReason,settingsVersion,reevaluatedAt:Date.now()};
+      const saved={
+        ...d,
+        primaryReason:d.primaryReason,
+        settingsVersion,
+        reevaluatedAt:Date.now()
+      };
+
       store.setDecision(uid,token.mint,saved);
       states[d.state]=(states[d.state]||0)+1;
-      // PAPER receives only the fresh current decision. It still applies owner approval,
-      // capital and execution gates internally.
+
       if(d.state==='BUY READY'){
-        void __mfHandleDecision(
-          uid,
-          token,
-          saved
-        ).catch(()=>{});
+        void __mfHandleDecision(uid,token,saved).catch(()=>{});
       }
+
       count++;
-    }catch(_){errors++}
+    }catch(_){
+      errors++;
+    }
   }
-  return {count,errors,states,settingsVersion};
+
+  return {count,hidden,errors,states,settingsVersion};
 }
 
 /* MEMEFLOW_NATIVE_AI_V46_BEGIN */
@@ -3163,8 +3392,13 @@ async function mfDexFilterRowsByPaid(rows) {
   // MEMEFLOW_LIVE_TOKEN_STATES_V7
  if(url.pathname==='/api/system/live-token-states'&&req.method==='GET'){
   const _lim=Math.min(200,Math.max(1,Number(url.searchParams.get('limit')||200)));
-  const _tokens=__mfLiveScannerTokens().slice(0,_lim);
   const _settings=store.settings(u.id);
+  const _rawTokens=__mfLiveScannerTokens();
+  const _admittedAll=_rawTokens.filter(
+    _token=>
+      __mfEntryAdmissionForUser(_token,u.id,_settings)?.admitted===true
+  );
+  const _tokens=_admittedAll.slice(0,_lim);
   let _recovered=0,_reindexed=0,_evalErrors=0,_viewErrors=0;
   let _index=store._uidDec[u.id]||null;
 
@@ -3228,6 +3462,9 @@ async function mfDexFilterRowsByPaid(rows) {
     limit:_lim,
     source:'system-live-token-states-v7',
     persistedTokens:_tokens.length,
+    rawScannerTokens:_rawTokens.length,
+    preAdmissionAdmitted:_admittedAll.length,
+    preAdmissionHidden:Math.max(0,_rawTokens.length-_admittedAll.length),
     recovered:_recovered,
     reindexed:_reindexed,
     evaluationErrors:_evalErrors,
@@ -3244,7 +3481,8 @@ if(url.pathname==='/api/ai/decisions'){
   // MEMEFLOW_FRESH_SESSION_SCANNER_V1
   // Never rebuild the live candidate feed from persisted pre-restart tokens.
   if(!store._uidDec[u.id]?.size){
-    const _fresh=__mfLiveScannerTokens().slice(0,DECISION_RECOVERY_TOKEN_LIMIT);
+    const _fresh=__mfAdmittedScannerTokensForUser(u.id)
+      .slice(0,DECISION_RECOVERY_TOKEN_LIMIT);
     const _settings=store.settings(u.id);
     for(const _token of _fresh){
       try{
@@ -3253,7 +3491,10 @@ if(url.pathname==='/api/ai/decisions'){
       }catch{}
     }
   }
-  const _liveMintSet=new Set(__mfLiveScannerTokens().map(t=>String(t?.mint||'')));
+  const _liveMintSet=new Set(
+    __mfAdmittedScannerTokensForUser(u.id)
+      .map(t=>String(t?.mint||''))
+  );
   const _raw=store.decisions(u.id).filter(d=>_liveMintSet.has(String(d?.mint||'')));
   const _all=_dexPaid?await mfDexFilterRowsByPaid(_raw):_raw;
   const _selected=candidateFeed(_all,_scope);
@@ -3581,6 +3822,11 @@ if(url.pathname==='/api/ai/decisions'){
     metrics:store.state.metrics,
     tokens:store.tokens().length,
     freshScannerTokens:__mfLiveScannerTokens().length,
+    admittedScannerTokensForUser:__mfAdmittedScannerTokensForUser(u.id).length,
+    preAdmissionHiddenForUser:Math.max(
+      0,
+      __mfLiveScannerTokens().length-__mfAdmittedScannerTokensForUser(u.id).length
+    ),
     scannerSessionStartedAt:__mfScannerRuntimeStartedAt,
     scannerTokenTtlMs:__mfScannerTokenTtlMs,
     opportunityEngine:opportunityEngine.diagnostics(),

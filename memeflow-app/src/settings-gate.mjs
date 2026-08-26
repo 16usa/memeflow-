@@ -350,3 +350,58 @@ export function evaluateSettingsAdmission(token={},entries=[],options={}){
     failedKeys:[...new Set(failed.map(g=>g.key).filter(Boolean))].slice(0,16)
   };
 }
+
+// MEMEFLOW_STRICT_ENTRY_ADMISSION_V1
+// Entry Filters are the visibility/admission boundary for the scanner.
+//
+// A token is ADMITTED only when every currently knowable Entry Filter for that
+// user is PASS. A retryable FAIL (for example MC below minimum, holders below
+// minimum, token younger than minimum age) is PRE-ADMISSION PENDING: keep the
+// tiny WS state so it can improve, but do not create/show a scanner decision.
+//
+// Wallet funding/cluster checks are intentionally FINAL-ONLY. Their settings
+// remain enforced after BUY READY by the dedicated Solana RPC pre-open stage.
+const PRE_ADMISSION_FINAL_ONLY_KEYS = new Set([
+  'maxSuspectedRiskyWalletsPct',
+  'maxInsidersPct'
+]);
+
+export function evaluateEntryAdmission(token={},settings={},options={}){
+  const now=Number(options?.now)||Date.now();
+  void now;
+
+  const full=evaluateSettingsGate(token,settings);
+
+  const gates=(full.gates||[])
+    .filter(g=>!PRE_ADMISSION_FINAL_ONLY_KEYS.has(String(g?.key||'')));
+
+  const failedGates=gates.filter(g=>g?.status==='FAIL');
+  const waitingGates=gates.filter(g=>g?.status==='WAITING');
+
+  const hasStableFailure=failedGates.some(g=>g?.retryable!==true);
+  const hasRetryableFailure=failedGates.some(g=>g?.retryable===true);
+  const admitted=failedGates.length===0&&waitingGates.length===0;
+
+  let state='ADMITTED';
+  if(!admitted){
+    state=hasStableFailure?'REJECTED':'PENDING';
+  }
+
+  return {
+    admitted,
+    state,
+    gates,
+    failedGates,
+    waitingGates,
+    hasStableFailure,
+    hasRetryableFailure,
+    finalOnlyKeys:[...PRE_ADMISSION_FINAL_ONLY_KEYS],
+    reasons:[...failedGates,...waitingGates]
+      .map(g=>g?.reason)
+      .filter(Boolean)
+  };
+}
+
+export function isEntryAdmitted(token={},settings={},options={}){
+  return evaluateEntryAdmission(token,settings,options).admitted===true;
+}
