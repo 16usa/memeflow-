@@ -54,7 +54,7 @@ html[data-mf-chart-unify-all-states="1"] [data-mf-chart-placeholder="1"] {
 
       <div class="top-actions">
         <!-- MEMEFLOW_TRADING_REMOVE_SYSTEM_BUTTON_V1: System button removed -->
-        <button id="walletBtn" class="wallet-btn" type="button">Connect wallet</button>
+        <button id="walletBtn" class="wallet-btn" type="button">Wallet settings</button>
       </div>
     </header>
 
@@ -295,20 +295,7 @@ html[data-mf-chart-unify-all-states="1"] [data-mf-chart-placeholder="1"] {
             </label>
           </div>
         </section>
-
-        <section class="control-section wallet-section">
-          <div class="section-title row-title">
-            <span>Wallet</span>
-            <span id="walletState">NOT CONNECTED</span>
-          </div>
-          <div id="walletAddress" class="wallet-address">Connect Phantom or Solflare. Private keys never enter MEMEFLOW.</div>
-          <div class="live-warning">
-            <strong>LIVE execution locked</strong>
-            <span>The current server explicitly reports LIVE_EXECUTION_NOT_READY. Wallet connection is prepared, but real transactions stay disabled until the signer/execution adapter is verified.</span>
-          </div>
-        </section>
-
-        <div id="controlError" class="control-error" hidden></div>
+<div id="controlError" class="control-error" hidden></div>
 
         <div class="control-actions">
           <button id="saveStrategyBtn" class="secondary-btn" type="button">Save strategy</button>
@@ -326,7 +313,7 @@ html[data-mf-chart-unify-all-states="1"] [data-mf-chart-placeholder="1"] {
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/echarts@6.1.0/dist/echarts.min.js"></script>
-  <script type="module" src="/trading.js?v=no-dex-terminal-v1-20260826"></script>
+  <script type="module" src="/trading.js?v=remove-trading-wallet-v1-20260826"></script>
   <!-- MEMEFLOW_TRADING_CHART_V30_4 -->
   <!-- MEMEFLOW_TRADING_CHART_V30_5_EXECUTION_OHLC -->
   <!-- MEMEFLOW_TRADING_CHART_V30_6_USD_CURVE_MARK -->
@@ -449,7 +436,7 @@ html[data-mf-chart-unify-all-states="1"] [data-mf-chart-placeholder="1"] {
 /* ===== /MEMEFLOW_TRADING_CHART_UNIFY_ALL_STATES_V4 ===== */
 </script>
 
-  <script src="/memeflow-nav.js?v=global-right-drawer-wallet-settings-v1-20260826" defer></script>
+  <script src="/memeflow-nav.js?v=global-right-drawer-remove-trading-wallet-v1-20260826" defer></script>
 </body>
 </html>
 

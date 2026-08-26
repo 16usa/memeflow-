@@ -35,7 +35,6 @@
     const style = document.createElement('style');
     style.id = 'mfAccountWalletSettingsStyle';
     style.textContent = `
-      html[data-mf-wallet-moved="1"] .control-panel .wallet-section,
       html[data-mf-wallet-moved="1"] #assistBtn,
       html[data-mf-wallet-moved="1"] #startAutoBtn,
       html[data-mf-wallet-moved="1"] #pauseBtn,
@@ -65,12 +64,10 @@
 
   function installTradingCleanup() {
     if (!isTrading) return true;
-    const wallet = document.querySelector('.control-panel .wallet-section');
     const walletBtn = $('walletBtn');
-    if (!wallet || !walletBtn) return false;
+    if (!walletBtn) return false;
 
     document.documentElement.dataset.mfWalletMoved = '1';
-    wallet.setAttribute('aria-hidden','true');
     ['assistBtn','startAutoBtn','pauseBtn','killBtn'].forEach(id => $(id)?.setAttribute('aria-hidden','true'));
 
     if (!walletBtn.dataset.mfSettingsRoute) {

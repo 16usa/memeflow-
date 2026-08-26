@@ -64,9 +64,7 @@ const state = {
   trades: [],
   proposals: [],
   paperStatus: null,
-  walletProvider: null,
-  walletAddress: null,
-  polling: false,
+polling: false,
   chartRaf: null,
   lastCandidatePoll: 0
 };
@@ -4036,39 +4034,12 @@ function renderTrades() {
   }).join('');
 }
 
-function walletProvider() {
-  if (window.phantom?.solana?.isPhantom) return window.phantom.solana;
-  if (window.solana?.isPhantom) return window.solana;
-  if (window.solflare?.isSolflare) return window.solflare;
-  return null;
-}
-
-async function connectWallet() {
-  clearError();
-  const provider = walletProvider();
-  if (!provider) {
-    showError('No injected Solana wallet provider detected. Open this page inside Phantom/Solflare or install a compatible wallet. MEMEFLOW will never request a seed phrase.');
-    return;
-  }
-
-  try {
-    const result = await provider.connect();
-    const publicKey = result?.publicKey || provider.publicKey;
-    if (!publicKey) throw new Error('Wallet connected without a public key.');
-
-    state.walletProvider = provider;
-    state.walletAddress = String(publicKey.toString());
-    $('walletState').textContent = 'CONNECTED';
-    $('walletState').style.color = '#4de6a1';
-    $('walletAddress').textContent = state.walletAddress;
-    $('walletBtn').textContent = short(state.walletAddress, 5, 4);
-  } catch (error) {
-    showError(error.message || 'Wallet connection failed.');
-  }
+function openWalletSettings() {
+  window.location.href = '/settings.html?v=cachefix-c6663c7-20260826-v1#wallet';
 }
 
 function bind() {
-  $('walletBtn').addEventListener('click', connectWallet);
+  $('walletBtn')?.addEventListener('click', openWalletSettings);
 
   const indicatorBar=$('indicatorBar');
   indicatorBar?.addEventListener('click',event=>{
