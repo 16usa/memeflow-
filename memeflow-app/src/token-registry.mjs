@@ -100,8 +100,22 @@ export class TokenRegistry{
         updated_at=excluded.updated_at
     `);
 
+    // MEMEFLOW_REALTIME_NONBLOCKING_REGISTRY_V1
+    // Hot-path calls only mutate Maps. SQLite work is deferred and bounded.
     this.pending=new Map();
-    this.flushMs=Math.max(100,Number(opts.flushMs||process.env.TOKEN_REGISTRY_FLUSH_MS||250));
+    this.pendingCheckpoints=new Map();
+    this.flushMs=Math.max(
+      250,
+      Number(opts.flushMs||process.env.TOKEN_REGISTRY_FLUSH_MS||500)
+    );
+    this.flushBatchMax=Math.max(
+      10,
+      Number(opts.flushBatchMax||process.env.TOKEN_REGISTRY_FLUSH_BATCH_MAX||100)
+    );
+    this.checkpointBatchMax=Math.max(
+      1,
+      Number(process.env.TOKEN_REGISTRY_CHECKPOINT_BATCH_MAX||25)
+    );
     this.flushTimer=setInterval(()=>this.flush(),this.flushMs);
     this.flushTimer.unref?.();
 
@@ -116,7 +130,10 @@ export class TokenRegistry{
       lazyMisses:0,
       restoredHot:0,
       dbFile:path.basename(this.file),
+      permanentTokensApprox:Number(this.countStmt.get()?.n||0),
       lastFlushAt:null,
+      lastFlushDurationMs:0,
+      maxFlushDurationMs:0,
       lastError:null
     };
   }
@@ -141,15 +158,24 @@ export class TokenRegistry{
   }
 
   flush(){
-    if(!this.pending.size)return 0;
-    const rows=[...this.pending.values()];
-    this.pending.clear();
+    const rowEntries=[...this.pending.entries()].slice(0,this.flushBatchMax);
+    const checkpointEntries=[...this.pendingCheckpoints.entries()]
+      .slice(0,this.checkpointBatchMax);
+
+    if(!rowEntries.length&&!checkpointEntries.length)return 0;
+
+    // Remove only the selected bounded batch. New live writes keep coalescing
+    // in memory while the next timer tick waits.
+    for(const [mint] of rowEntries)this.pending.delete(mint);
+    for(const [key] of checkpointEntries)this.pendingCheckpoints.delete(key);
+
+    const started=Date.now();
 
     try{
       this.db.exec('BEGIN IMMEDIATE');
-      for(const row of rows){
+
+      for(const [mint,row] of rowEntries){
         let token=row.token||{};
-        const mint=String(token.mint||'').trim();
         if(!mint)continue;
 
         // Deep/history rows are intentionally sparse. Never let a later
@@ -175,18 +201,47 @@ export class TokenRegistry{
           safeJson(token,'{}')
         );
       }
+
+      for(const [key,row] of checkpointEntries){
+        this.checkpointSetStmt.run(
+          String(key),
+          safeJson(row?.value,'null'),
+          Number(row?.queuedAt)||Date.now()
+        );
+      }
+
       this.db.exec('COMMIT');
-      this.metrics.flushed+=rows.length;
+
+      const duration=Date.now()-started;
+      this.metrics.flushed+=rowEntries.length;
       this.metrics.flushes++;
       this.metrics.lastFlushAt=Date.now();
+      this.metrics.lastFlushDurationMs=duration;
+      this.metrics.maxFlushDurationMs=Math.max(
+        Number(this.metrics.maxFlushDurationMs||0),
+        duration
+      );
+
+      // Count once per background flush, never once per UI request.
+      this.metrics.permanentTokensApprox=Number(
+        this.countStmt.get()?.n||this.metrics.permanentTokensApprox||0
+      );
+
       this.metrics.lastError=null;
-      return rows.length;
+      return rowEntries.length;
     }catch(error){
       try{this.db.exec('ROLLBACK')}catch{}
-      for(const row of rows){
-        const mint=String(row?.token?.mint||'');
+
+      // Restore only if a newer live snapshot was not already queued.
+      for(const [mint,row] of rowEntries){
         if(mint&&!this.pending.has(mint))this.pending.set(mint,row);
       }
+      for(const [key,row] of checkpointEntries){
+        if(key&&!this.pendingCheckpoints.has(key)){
+          this.pendingCheckpoints.set(key,row);
+        }
+      }
+
       this.metrics.flushErrors++;
       this.metrics.lastError=String(error?.message||error);
       return 0;
@@ -243,30 +298,46 @@ export class TokenRegistry{
   }
 
   getCheckpoint(key,fallback=null){
-    const row=this.checkpointGetStmt.get(String(key));
+    key=String(key);
+    const queued=this.pendingCheckpoints.get(key);
+    if(queued)return queued.value;
+
+    const row=this.checkpointGetStmt.get(key);
     return row?.value_json?parseJson(row.value_json,fallback):fallback;
   }
 
   setCheckpoint(key,value){
-    this.checkpointSetStmt.run(
-      String(key),
-      safeJson(value,'null'),
-      Date.now()
-    );
+    // MEMEFLOW_REALTIME_NONBLOCKING_REGISTRY_V1
+    // NEVER run SQLite from a Pump WebSocket callback.
+    this.pendingCheckpoints.set(String(key),{
+      value,
+      queuedAt:Date.now()
+    });
     return value;
   }
 
   status(){
     return {
       ...this.metrics,
-      permanentTokens:this.count(),
-      queuedWrites:this.pending.size
+      permanentTokens:Number(this.metrics.permanentTokensApprox||0),
+      queuedWrites:this.pending.size,
+      queuedCheckpoints:this.pendingCheckpoints.size,
+      flushBatchMax:this.flushBatchMax
     };
   }
 
   close(){
     clearInterval(this.flushTimer);
-    this.flush();
+
+    // Shutdown-only drain. Runtime hot path never enters this loop.
+    let guard=0;
+    while(
+      (this.pending.size||this.pendingCheckpoints.size) &&
+      guard++<10000
+    ){
+      this.flush();
+    }
+
     try{this.db.close()}catch{}
   }
 }

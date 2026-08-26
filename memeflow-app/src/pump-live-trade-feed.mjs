@@ -108,7 +108,8 @@ export function startPumpLiveTradeFeed(opts={}){
     logBatchesIngested:0,externalLogBatches:0,dedicatedLogBatches:0,
     duplicateTradeEventsSkipped:0,unknownMintEventsIgnored:0,
     deadTokensDetected:0,deadTokensDropped:0,
-    lastTradeEventAt:null,lastTradeEventSource:null
+    lastTradeEventAt:null,lastTradeEventSource:null,
+    lastStoreUpdateAt:null,lastStoreUpdateMint:null
   };
 
   const mintCounts=new Map(),users=new Set();
@@ -264,6 +265,8 @@ export function startPumpLiveTradeFeed(opts={}){
       const updated=store?.setToken?.(e.mint,patch);
       if(!updated)return;
       metrics.marketSnapshots++;
+      metrics.lastStoreUpdateAt=Date.now();
+      metrics.lastStoreUpdateMint=e.mint;
 
       let dropped=false;
       if(updated.dead===true){

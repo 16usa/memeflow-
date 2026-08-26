@@ -866,6 +866,20 @@ function __mfCandidateMarket5mV4(mint,t){
   };
 }
 
+// MEMEFLOW_REALTIME_UI_FAIRNESS_V1
+// Building a large Live Token States response must never monopolize Node's
+// event loop and starve Pump WebSocket messages.
+const __mfLiveStatesYieldEvery=Math.max(
+  20,
+  Number(process.env.LIVE_STATES_YIELD_EVERY||75)
+);
+const __mfLiveStatesResponseCacheMs=Math.max(
+  100,
+  Number(process.env.LIVE_STATES_RESPONSE_CACHE_MS||350)
+);
+const __mfLiveStatesResponseCache=new Map();
+const __mfYieldToEventLoop=()=>new Promise(resolve=>setImmediate(resolve));
+
 function candidateView(d){
   const t=store.state.tokens[d.mint]||{};
   const finite=(v)=>v!==null&&v!==undefined&&Number.isFinite(Number(v))?Number(v):null;
@@ -2863,6 +2877,22 @@ if(false && url.pathname==='/api/ai/assistant' &&req.method==='POST'){
   const _rawTokens=__mfLiveScannerTokens();
   const _openMints=__mfOpenPositionMints();
 
+  // MEMEFLOW_REALTIME_UI_FAIRNESS_V1_ROUTE
+  // A tiny cache stops multiple browser polls from rebuilding the same large
+  // response at the same instant. 350ms is still effectively real-time.
+  const _cacheKey=String(u.id||'anon');
+  const _settingsVersion=Number(store.user(u.id)?.settingsVersion||0);
+  const _cached=__mfLiveStatesResponseCache.get(_cacheKey);
+
+  if(
+    _cached &&
+    Date.now()-Number(_cached.at||0)<=__mfLiveStatesResponseCacheMs &&
+    Number(_cached.settingsVersion||0)===_settingsVersion
+  ){
+    return json(res,200,{..._cached.payload,cacheHit:true});
+  }
+
+  let _processed=0;
   let _admitted=0;
   let _hiddenBySettings=0;
   let _openOverride=0;
@@ -2874,6 +2904,13 @@ if(false && url.pathname==='/api/ai/assistant' &&req.method==='POST'){
   for(const _token of _rawTokens){
     const _mint=String(_token?.mint||'').trim();
     if(!_mint)continue;
+
+    // Yield periodically so Pump WS onmessage callbacks can update prices,
+    // holders, volume, TX count and 5m metrics while this response is built.
+    _processed++;
+    if(_processed%__mfLiveStatesYieldEvery===0){
+      await __mfYieldToEventLoop();
+    }
 
     let _admission=null;
     try{
@@ -2947,7 +2984,7 @@ if(false && url.pathname==='/api/ai/assistant' &&req.method==='POST'){
     ? _rankedViews.slice(0,_limit)
     : _rankedViews;
 
-  return json(res,200,{
+  const _payload={
     decisions:_views,
     total:_rankedViews.length,
     returned:_views.length,
@@ -2956,7 +2993,9 @@ if(false && url.pathname==='/api/ai/assistant' &&req.method==='POST'){
 
     // Scanner truth.
     rawScannerTokens:_rawTokens.length,
-    permanentRegistryTokens:store.tokenRegistry?.count?.()||0,
+    // Never run synchronous SQLite COUNT from the live-card request path.
+    permanentRegistryTokens:
+      Number(store.tokenRegistry?.metrics?.permanentTokensApprox||0),
 
     // Display/trading-filter truth.
     preAdmissionAdmitted:_admitted,
@@ -2967,7 +3006,21 @@ if(false && url.pathname==='/api/ai/assistant' &&req.method==='POST'){
     viewErrors:_viewErrors,
     stateCounts:_stateCounts,
     counts:_counts
+  };
+
+  __mfLiveStatesResponseCache.set(_cacheKey,{
+    at:Date.now(),
+    settingsVersion:_settingsVersion,
+    payload:_payload
   });
+
+  // Bound per-user cache cardinality.
+  if(__mfLiveStatesResponseCache.size>1000){
+    const oldest=__mfLiveStatesResponseCache.keys().next().value;
+    if(oldest!==undefined)__mfLiveStatesResponseCache.delete(oldest);
+  }
+
+  return json(res,200,_payload);
  }
 if(url.pathname==='/api/ai/decisions'){
   // MEMEFLOW_SCAN_DISPLAY_TRADE_SPLIT_V1
@@ -3667,6 +3720,48 @@ if(url.pathname==='/api/ai/decisions'){
 }
 process.on('uncaughtException',e=>{console.error('[MEMEFLOW] uncaughtException',e.message,(e.stack||'').split('\n')[1]||'')});
 process.on('unhandledRejection',r=>{console.error('[MEMEFLOW] unhandledRejection',(r instanceof Error?r.message:String(r)))});
+// MEMEFLOW_HISTORY_LOW_PRIORITY_EVAL_V1
+// Historical/gap recovery must never compete with current Pump TradeEvents.
+// At most one recovered token is evaluated per interval.
+const __mfHistoryEvalQueue=[];
+const __mfHistoryEvalQueued=new Set();
+let __mfHistoryEvalTimer=null;
+
+function __mfQueueHistoryEvaluation(token){
+  const mint=String(token?.mint||'');
+  if(!mint||__mfHistoryEvalQueued.has(mint))return false;
+
+  __mfHistoryEvalQueued.add(mint);
+  __mfHistoryEvalQueue.push(token);
+
+  if(!__mfHistoryEvalTimer){
+    const interval=Math.max(
+      100,
+      Number(process.env.HISTORY_EVAL_INTERVAL_MS||250)
+    );
+
+    __mfHistoryEvalTimer=setInterval(()=>{
+      const next=__mfHistoryEvalQueue.shift();
+      if(!next){
+        clearInterval(__mfHistoryEvalTimer);
+        __mfHistoryEvalTimer=null;
+        return;
+      }
+
+      const nextMint=String(next?.mint||'');
+      __mfHistoryEvalQueued.delete(nextMint);
+
+      Promise.resolve(evaluateAll(next))
+        .then(()=>{try{publish(nextMint)}catch{}})
+        .catch(()=>{});
+    },interval);
+
+    __mfHistoryEvalTimer.unref?.();
+  }
+
+  return true;
+}
+
 const server=http.createServer((req,res)=>handler(req,res).catch(e=>json(res,500,{error:'SERVER_ERROR',message:e.message})));server.listen(Number(process.env.PORT||3000),'0.0.0.0',()=>{
   const listenAt=Date.now();
   console.log(`MEMEFLOW listening on ${process.env.PORT||3000}`);
@@ -3684,13 +3779,23 @@ const server=http.createServer((req,res)=>handler(req,res).catch(e=>json(res,500
       const age=tokenAgeMinutes(token);
       if(!Number.isFinite(Number(age))||Number(age)>360)return;
 
-      const current=store.getToken(token.mint);
-      const hot=current
-        ? store.setToken(token.mint,{...token,wsFirst:true,historyGapRestored:true})
-        : store.addToken({...token,wsFirst:true,historyGapRestored:true});
+      // MEMEFLOW_REALTIME_HISTORY_ISOLATION_V1
+      // Do not lazy-hydrate or overwrite an already-live token with a sparse
+      // HTTP history snapshot. Live WS state is always authoritative.
+      const current=store.state.tokens?.[token.mint]||null;
+      if(current?.wsFirst===true)return;
 
-      Promise.resolve(evaluateAll(hot)).catch(()=>{});
-      try{publish(token.mint)}catch{}
+      const hot=current
+        ? store.setToken(
+            token.mint,
+            {...token,wsFirst:true,historyGapRestored:true}
+          )
+        : store.addToken(
+            {...token,wsFirst:true,historyGapRestored:true}
+          );
+
+      // History is deliberately slower than the live path.
+      __mfQueueHistoryEvaluation(hot);
     }
   });
 
