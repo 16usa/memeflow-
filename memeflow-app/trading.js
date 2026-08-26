@@ -1,14 +1,4 @@
 const $ = id => document.getElementById(id);
-const DEX_POOL_FILTER_KEY = 'memeflow:dex-pool-filter';
-
-function dexPoolFilterEnabled() {
-  try {
-    return localStorage.getItem(DEX_POOL_FILTER_KEY) === '1';
-  } catch {
-    return false;
-  }
-}
-
 const finite = value => value !== null && value !== undefined && value !== '' && Number.isFinite(Number(value));
 const num = (value, fallback = null) => finite(value) ? Number(value) : fallback;
 const fmt = (value, digits = 2) => finite(value)
@@ -959,9 +949,8 @@ function displayStateForCandidate(candidate) {
 }
 
 function updateCandidateCount() {
-  const dexOnly = dexPoolFilterEnabled();
   $('candidateCount').textContent =
-    `${dexOnly ? 'DEX · ' : ''}${mergedCandidates().length} candidates`;
+    `${mergedCandidates().length} candidates`;
 }
 
 function syncSelectedCandidate() {
@@ -1037,11 +1026,8 @@ function renderCandidates() {
 }
 
 async function loadCandidates({ redrawChart = true } = {}) {
-  const dexOnly = dexPoolFilterEnabled();
   const payload =
-    await api(
-      `/api/ai/decisions?scope=all&limit=100${dexOnly ? '&dexPool=1' : ''}`
-    );
+    await api('/api/ai/decisions?scope=all&limit=100');
 
   state.candidates =
     Array.isArray(payload.decisions)
@@ -1049,7 +1035,7 @@ async function loadCandidates({ redrawChart = true } = {}) {
       : [];
 
   $('candidateCount').textContent =
-    `${dexOnly ? 'DEX · ' : ''}${mergedCandidates().length} candidates`;
+    `${mergedCandidates().length} candidates`;
 
   if(
     !state.selectedMint &&
