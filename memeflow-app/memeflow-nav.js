@@ -298,7 +298,7 @@
   if (window.__MEMEFLOW_ACCOUNT_WALLET_SETTINGS_LOADER_V1__) return;
   window.__MEMEFLOW_ACCOUNT_WALLET_SETTINGS_LOADER_V1__ = true;
   const script = document.createElement('script');
-  script.src = '/account-wallet-settings.js?v=account-wallet-settings-v1-20260826';
+  script.src = '/account-wallet-settings.js?v=account-wallet-settings-native-style-v1-20260826';
   script.defer = true;
   document.head.appendChild(script);
 })();

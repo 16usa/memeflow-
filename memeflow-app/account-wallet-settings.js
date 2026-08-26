@@ -41,18 +41,24 @@
       html[data-mf-wallet-moved="1"] #pauseBtn,
       html[data-mf-wallet-moved="1"] #killBtn{display:none!important}
       html[data-mf-wallet-moved="1"] .control-actions{grid-template-columns:1fr!important}
-      .mf-account-settings-group .mf-account-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;width:100%}
-      .mf-account-stat{border:1px solid var(--line,#28333e);border-radius:12px;padding:11px 12px;min-width:0;background:rgba(255,255,255,.018)}
-      .mf-account-stat small{display:block;color:var(--muted,#8c98a6);font-size:8px;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
-      .mf-account-stat b{display:block;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-      .mf-account-stat.wide{grid-column:1/-1}.mf-account-address{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;white-space:normal!important;word-break:break-all}
-      .mf-account-actions{grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap;margin-top:2px}
-      .mf-account-note{grid-column:1/-1;border:1px solid var(--line,#28333e);border-radius:11px;padding:10px 12px;color:var(--muted,#8c98a6);font-size:10px;line-height:1.5}
-      .mf-account-note strong{color:var(--text,#fff)}.mf-account-note.danger{border-color:rgba(255,101,118,.35);background:rgba(255,101,118,.055)}
-      .mf-status-ok{color:var(--green,#51e7a8)!important}.mf-status-danger{color:var(--red,#ff6576)!important}
-      #mfEmergencyEntryLock{border-color:rgba(255,101,118,.48)!important;color:var(--red,#ff6576)!important}
-      @media(max-width:760px){.mf-account-settings-group .mf-account-grid{grid-template-columns:1fr 1fr}}
-      @media(max-width:460px){.mf-account-settings-group .mf-account-grid{grid-template-columns:1fr}.mf-account-actions{display:grid;grid-template-columns:1fr}.mf-account-actions button{width:100%}}
+      /* MEMEFLOW_ACCOUNT_SETTINGS_NATIVE_STYLE_V1
+         Layout helpers only. Visual surfaces inherit the native Settings
+         design system instead of creating a second border/background layer. */
+      .mf-account-settings-group .mf-account-grid{width:100%}
+      .mf-account-stat{min-width:0}
+      .mf-account-stat b{display:block;margin-top:5px;font-size:12px;font-weight:650;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+      .mf-account-stat.wide{grid-column:1/-1}
+      .mf-account-address{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;white-space:normal!important;word-break:break-all}
+      .mf-account-actions{grid-column:1/-1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+      .mf-account-actions button{width:100%;min-width:0}
+      .mf-account-note{grid-column:1/-1;line-height:1.5}
+      .mf-account-note strong{color:var(--text,#fff)}
+      .mf-account-note.danger strong{color:var(--red,#ff6679)}
+      .mf-status-ok{color:var(--green,#51e7a8)!important}
+      .mf-status-danger{color:var(--red,#ff6679)!important}
+      /* Keep emergency semantics in text only; border remains native Settings style. */
+      #mfEmergencyEntryLock{color:var(--red,#ff6679)!important}
+      @media(max-width:460px){.mf-account-actions{grid-template-columns:1fr}}
     `;
     document.head.appendChild(style);
   }
@@ -256,19 +262,19 @@
     return `
       <summary><span><strong>Wallet</strong><small>Account connection · non-custodial</small></span><i></i></summary>
       <div class="mf293-settings-grid mf-account-grid">
-        <div class="mf-account-stat"><small>Provider</small><b id="mfWalletProvider">Not connected</b></div>
-        <div class="mf-account-stat"><small>Network</small><b>Solana Mainnet</b></div>
-        <div class="mf-account-stat"><small>Trading mode</small><b>PAPER INDEPENDENT</b></div>
-        <div class="mf-account-stat"><small>LIVE execution</small><b class="mf-status-danger">LOCKED</b></div>
-        <div class="mf-account-stat wide"><small>Public address</small><b id="mfWalletAddressValue" class="mf-account-address">Connect Phantom or Solflare</b></div>
+        <div class="mf293-field mf-account-stat"><small class="mf293-field-label">Provider</small><b id="mfWalletProvider">Not connected</b></div>
+        <div class="mf293-field mf-account-stat"><small class="mf293-field-label">Network</small><b>Solana Mainnet</b></div>
+        <div class="mf293-field mf-account-stat"><small class="mf293-field-label">Trading mode</small><b>PAPER INDEPENDENT</b></div>
+        <div class="mf293-field mf-account-stat"><small class="mf293-field-label">LIVE execution</small><b class="mf-status-danger">LOCKED</b></div>
+        <div class="mf293-field mf-account-stat wide"><small class="mf293-field-label">Public address</small><b id="mfWalletAddressValue" class="mf-account-address">Connect Phantom or Solflare</b></div>
         <div class="mf-account-actions">
           <button id="mfWalletConnect" class="mf293-primary" type="button">Connect wallet</button>
           <button id="mfWalletCopy" class="mf293-secondary" type="button" disabled>Copy address</button>
           <button id="mfWalletDisconnect" class="mf293-secondary" type="button" disabled>Disconnect</button>
         </div>
-        <div class="mf-account-note"><strong>Non-custodial.</strong> Signing stays inside Phantom or Solflare. MEMEFLOW receives only the public address and signatures you approve. Seed phrases and private keys are never requested or stored.</div>
-        <div class="mf-account-note"><strong>PAPER trading does not require a wallet.</strong> Connecting a wallet never unlocks real trading by itself.</div>
-        <div class="mf-account-note danger"><strong>LIVE execution locked.</strong> The backend remains fail-closed with <code>LIVE_EXECUTION_NOT_READY</code> until a verified production signer/execution adapter exists.</div>
+        <div class="mf293-field mf293-field-wide mf-account-note"><strong>Non-custodial.</strong> Signing stays inside Phantom or Solflare. MEMEFLOW receives only the public address and signatures you approve. Seed phrases and private keys are never requested or stored.</div>
+        <div class="mf293-field mf293-field-wide mf-account-note"><strong>PAPER trading does not require a wallet.</strong> Connecting a wallet never unlocks real trading by itself.</div>
+        <div class="mf293-field mf293-field-wide mf-account-note danger"><strong>LIVE execution locked.</strong> The backend remains fail-closed with <code>LIVE_EXECUTION_NOT_READY</code> until a verified production signer/execution adapter exists.</div>
       </div>`;
   }
 
@@ -276,19 +282,19 @@
     return `
       <summary><span><strong>Execution & safety</strong><small>PAPER automation · entry controls · emergency protection</small></span><i></i></summary>
       <div class="mf293-settings-grid mf-account-grid">
-        <div class="mf-account-stat"><small>PAPER automation</small><b id="mfPaperModeValue">CHECKING</b></div>
-        <div class="mf-account-stat"><small>New entries</small><b id="mfNewEntriesState">CHECKING</b></div>
-        <div class="mf-account-stat"><small>Wallet for PAPER</small><b>NOT REQUIRED</b></div>
-        <div class="mf-account-stat"><small>LIVE adapter</small><b class="mf-status-danger">NOT READY</b></div>
+        <div class="mf293-field mf-account-stat"><small class="mf293-field-label">PAPER automation</small><b id="mfPaperModeValue">CHECKING</b></div>
+        <div class="mf293-field mf-account-stat"><small class="mf293-field-label">New entries</small><b id="mfNewEntriesState">CHECKING</b></div>
+        <div class="mf293-field mf-account-stat"><small class="mf293-field-label">Wallet for PAPER</small><b>NOT REQUIRED</b></div>
+        <div class="mf293-field mf-account-stat"><small class="mf293-field-label">LIVE adapter</small><b class="mf-status-danger">NOT READY</b></div>
         <div class="mf-account-actions">
           <button id="mfReviewManually" class="mf293-secondary" type="button">Review manually</button>
           <button id="mfTogglePaperAuto" class="mf293-primary" type="button">Start paper auto</button>
           <button id="mfPauseEntries" class="mf293-secondary" type="button">Pause new entries</button>
           <button id="mfEmergencyEntryLock" class="mf293-secondary" type="button">Emergency entry lock · OFF</button>
         </div>
-        <div class="mf-account-note"><strong>Single server state.</strong> These controls write the authenticated server settings and read <code>/api/paper/status</code>; there is no separate browser-only PAPER flag.</div>
-        <div class="mf-account-note danger"><strong>Emergency entry lock:</strong> blocks new entries on the backend. It does not block closing existing PAPER positions. The current backend intentionally exposes activation only, not browser-side unlock.</div>
-        <div id="mfAccountWalletMessage" class="mf-account-note" hidden></div>
+        <div class="mf293-field mf293-field-wide mf-account-note"><strong>Single server state.</strong> These controls write the authenticated server settings and read <code>/api/paper/status</code>; there is no separate browser-only PAPER flag.</div>
+        <div class="mf293-field mf293-field-wide mf-account-note danger"><strong>Emergency entry lock:</strong> blocks new entries on the backend. It does not block closing existing PAPER positions. The current backend intentionally exposes activation only, not browser-side unlock.</div>
+        <div id="mfAccountWalletMessage" class="mf293-field mf293-field-wide mf-account-note" hidden></div>
       </div>`;
   }
 
