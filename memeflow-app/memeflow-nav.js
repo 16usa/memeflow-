@@ -25,7 +25,7 @@
       sub: 'Charts, candidates, positions and execution'
     },
     {
-      href: '/settings.html',
+      href: '/settings.html?v=cachefix-c6663c7-20260826-v1',
       title: 'System Settings',
       sub: 'Trading mode, filters, risk and exits'
     },
@@ -298,7 +298,7 @@
   if (window.__MEMEFLOW_ACCOUNT_WALLET_SETTINGS_LOADER_V1__) return;
   window.__MEMEFLOW_ACCOUNT_WALLET_SETTINGS_LOADER_V1__ = true;
   const script = document.createElement('script');
-  script.src = '/account-wallet-settings.js?v=account-wallet-settings-native-style-v1-20260826';
+  script.src = '/account-wallet-settings.js?v=account-wallet-settings-c6663c7-cachefix-c6663c7-20260826-v1';
   script.defer = true;
   document.head.appendChild(script);
 })();

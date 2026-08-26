@@ -80,7 +80,7 @@
       walletBtn.addEventListener('click', event => {
         event.preventDefault();
         event.stopImmediatePropagation();
-        location.href = '/settings.html#wallet';
+        location.href = '/settings.html?v=cachefix-c6663c7-20260826-v1#wallet';
       }, true);
     }
 
