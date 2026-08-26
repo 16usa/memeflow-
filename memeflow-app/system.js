@@ -1,4 +1,4 @@
-/* MEMEFLOW_DEX_PAID_SCANNER_LEVEL_V2 */
+/* MEMEFLOW_WS_ONLY_PREOPEN_RPC_V1 */
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
@@ -3025,8 +3025,7 @@ const MF293_GROUPS = [
     ['copyTradingBuyAmountSol', 'Your BUY size · SOL', 'number', 0.001, null, 0.001],
     ['copyTradingMirrorSells', 'Mirror sells proportionally', 'boolean']
   ]],
-  ['filters', 'Entry filters', 'Scanner admission · DEX Paid is checked after the other entry rules pass', false, [
-    ['requireDexPaid', 'Require confirmed DEX Paid', 'boolean'],
+  ['filters', 'Entry filters', 'Scanner admission · WebSocket evidence and user filters', false, [
     ['minLiquidityUsd', 'Minimum liquidity USD', 'number', 0, null, 1],
     ['minHolders', 'Minimum holders', 'nullable', 0, null, 1],
     ['maxHolders', 'Maximum holders', 'nullable', 0, null, 1],
@@ -3391,8 +3390,7 @@ function mf293Collect() {
     if (input) next[field[0]] = mf293Read(field, input);
   }
 
-  // Discovery remains Pump.fun only. DEX Paid is collected generically
-  // from the Entry filters group above.
+  // Discovery remains Pump.fun only.
   next.launchPlatforms = ['pump'];
   next.aiChangePolicy = 'propose';
   next.adaptiveProfile = false;

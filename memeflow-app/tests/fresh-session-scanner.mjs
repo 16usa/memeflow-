@@ -30,21 +30,21 @@ assert.ok(createAt>=0,'direct CREATE ingest missing');
 assert.ok(tradeAt>=0,'TradeEvent ingest missing');
 assert.ok(createAt<tradeAt,'CREATE must establish mint before same-tx TradeEvent ingest');
 
-// MEMEFLOW_SETTINGS_ONLY_DISCOVERY_V1
-assert.match(discovery,/const directToken=__ingestPumpCreateEventDirect\(/);
-assert.match(discovery,/if\(!directToken\)\{/);
-assert.match(discovery,/directCreateFallbackQueued\+\+/);
-assert.match(discovery,/enqueue\(String\(sig\)\)/);
+// MEMEFLOW_SETTINGS_ONLY_DISCOVERY_V1 + MEMEFLOW_WS_ONLY_PREOPEN_RPC_V1
+assert.doesNotMatch(discovery,/enqueue\s*\(/);
+assert.doesNotMatch(discovery,/getTransaction/);
+assert.doesNotMatch(app,/async function processSignature\s*\(/);
+assert.doesNotMatch(app,/const discQueue=makeDiscoveryQueue\s*\(/);
+assert.doesNotMatch(app,/directCreateFallbackQueued/);
 assert.doesNotMatch(discovery,/EXCLUDE_MAYHEM_MODE/);
 
-const legacyCreate=app.slice(
-  app.indexOf('async function processSignature(sig){'),
-  app.indexOf('const discQueue=makeDiscoveryQueue(')
+const directCreate=app.slice(
+  app.indexOf('function __ingestPumpCreateEventDirect('),
+  app.indexOf('function startDiscovery(i=0){')
 );
-assert.doesNotMatch(legacyCreate,/shouldExcludeMayhemCreate/);
-assert.match(legacyCreate,/pumpCreatedAt/);
-assert.match(legacyCreate,/wsFirst:true/);
-assert.match(legacyCreate,/isMayhemMode:result\.isMayhemMode===true/);
+assert.match(directCreate,/pumpCreatedAt/);
+assert.match(directCreate,/isMayhemMode:e\.isMayhemMode===true/);
+assert.match(directCreate,/source:'Pump CreateEvent WS'/);
 
 assert.match(holders,/EVENT_HOLDER_LEDGER_PERSIST/);
 assert.match(holders,/if\(!PERSIST\)return/);

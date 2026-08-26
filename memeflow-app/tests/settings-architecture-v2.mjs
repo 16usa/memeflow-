@@ -240,6 +240,6 @@ const html=fs.readFileSync(
   new URL('../settings.html',import.meta.url),
   'utf8'
 );
-assert.match(html,/settings-page\.js\?v=dex-paid-scanner-level-v2/);
+assert.match(html,/settings-page\.js\?v=ws-only-preopen-rpc-v1/);
 
 console.log('settings architecture v2 ok');

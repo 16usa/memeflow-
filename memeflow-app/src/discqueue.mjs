@@ -48,7 +48,6 @@ export function makeDiscoveryMetrics() {
     createEventsAccepted: 0,
     directCreateEvents: 0,
     directCreateDecodeFailed: 0,
-    directCreateFallbackQueued: 0,
     hotPathRpcCalls: 0,
     signaturesQueued: 0,
     signaturesProcessed: 0,

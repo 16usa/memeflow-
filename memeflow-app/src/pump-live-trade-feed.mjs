@@ -10,7 +10,6 @@ const DISC=crypto.createHash('sha256').update('event:TradeEvent').digest().subar
 const B58='123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
 
 function envList(name){return String(process.env[name]||'').split(',').map(x=>x.trim()).filter(Boolean)}
-function wsFromHttp(u){try{const x=new URL(u);x.protocol=x.protocol==='https:'?'wss:':'ws:';return x.toString()}catch{return null}}
 async function makeWS(url){if(typeof globalThis.WebSocket==='function')return new globalThis.WebSocket(url);const mod=await import('ws');return new mod.WebSocket(url)}
 function b58(buf){let x=0n;for(const b of buf)x=(x<<8n)+BigInt(b);let s='';while(x){const r=Number(x%58n);s=B58[r]+s;x/=58n}for(const b of buf){if(b!==0)break;s='1'+s}return s||'1'}
 function u64(b,o){return b.length>=o+8?b.readBigUInt64LE(o):null}
@@ -69,8 +68,7 @@ export function startPumpLiveTradeFeed(opts={}){
     eventHolderLedger,store,publish,publishTrade,evaluateAI,
     opportunityEngine,getSolUsd,onDead
   }=opts;
-  let urls=envList('SOLANA_WS_URLS');
-  if(!urls.length)urls=envList('SOLANA_RPC_URLS').map(wsFromHttp).filter(Boolean);
+  const urls=envList('SOLANA_WS_URLS');
 
   const metrics={
     version:VERSION,startedAt:Date.now(),connected:false,reconnects:0,
@@ -260,7 +258,7 @@ export function startPumpLiveTradeFeed(opts={}){
   }
 
   async function connect(){
-    if(stopped||!urls.length){if(!urls.length)metrics.lastError='No SOLANA_WS_URLS/SOLANA_RPC_URLS';return}
+    if(stopped||!urls.length){if(!urls.length)metrics.lastError='No SOLANA_WS_URLS';return}
     const url=urls[idx++%urls.length];
     try{
       ws=await makeWS(url);

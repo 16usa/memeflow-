@@ -204,29 +204,6 @@ export function evaluateSettingsGate(token={},settings={}){
   range('Developer share','developerPct','minDeveloperPct','maxDeveloperPct');
   range('Sniper share','sniperPct','minSniperPct','maxSniperPct');
 
-  if(settings.requireDexPaid===true){
-    const confirmed=
-      token?.dexPaidConfirmed===true
-        ? true
-        : token?.dexPaidConfirmed===false
-          ? false
-          : null;
-
-    add(
-      'DEX Paid confirmation',
-      confirmed,
-      'confirmed DEX Paid order is required',
-      {
-        key:'requireDexPaid',
-        value:confirmed,
-        threshold:true,
-        operator:'===',
-        retryable:true,
-        source:'dexPaidConfirmed'
-      }
-    );
-  }
-
   // MEMEFLOW_WS_FIRST_PREOPEN_RPC_V1
   // Final pre-open policy. Missing RPC evidence is intentionally absent from
   // the fast scanner. Once known, excess linked-wallet risk is hard BLOCKED.
@@ -472,7 +449,6 @@ export function evaluateSettingsAdmission(token={},entries=[],options={}){
 //    behind BUY READY. They never participate in discovery/admission.
 export const ENTRY_ADMISSION_KEYS = Object.freeze([
   'launchPlatforms',
-  'requireDexPaid',
   'includeKeywords',
   'excludeKeywords',
 

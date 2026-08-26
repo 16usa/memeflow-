@@ -332,22 +332,10 @@ export class ChartHistoryArchive {
   ensureBackfill(mint, { onProgress = null } = {}) {
     const safe = cleanMint(mint);
     if (!safe) return Promise.reject(new Error('invalid chart history mint'));
-    if (!this.rpc || typeof this.rpc.call !== 'function') {
-      return Promise.reject(new Error('chart history RPC is unavailable'));
-    }
-
-    const existingJob = this.inFlight.get(safe);
-    if (existingJob) return existingJob;
-
-    const job = this._runBackfill(safe, onProgress)
-      .finally(() => {
-        if (this.inFlight.get(safe) === job) {
-          this.inFlight.delete(safe);
-        }
-      });
-
-    this.inFlight.set(safe, job);
-    return job;
+    const status = this.statusSync(safe);
+    const result = {...status,mint:safe,wsOnly:true,backfillDisabled:true};
+    if (typeof onProgress === 'function') { try { onProgress(result); } catch {} }
+    return Promise.resolve(result);
   }
 
   async _runBackfill(mint, onProgress) {
