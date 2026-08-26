@@ -27,17 +27,16 @@ const MF293 = {
 };
 
 const MF293_GROUPS = [
-  ['logic', 'Logic', 'Decision thresholds and operating policy', true, [
+  ['logic', 'Logic', 'Post-admission decision rules · controls WAITING / WATCH / BUY READY', true, [
     ['operatingMode', 'Operating mode', 'select', [['observe','Observe'],['assist','Assist'],['automate','Automate']]],
     ['tradingEnvironment', 'Trading environment', 'select', [['paper','Paper'],['live','Live']]],
-    ['profile', 'Profile', 'select', [['conservative','Conservative'],['balanced','Balanced'],['aggressive','Aggressive']]],
+    ['profile', 'Decision preset', 'select', [['conservative','Conservative'],['balanced','Balanced'],['aggressive','Aggressive'],['custom','Custom']]],
     ['minScore', 'Minimum AI score', 'number', 0, 100, 1],
     ['minConfidence', 'Minimum confidence %', 'number', 0, 100, 1],
-    ['minBuyPressure', 'Minimum buy pressure', 'number', 0, null, 0.01],
+    ['minBuyPressure', 'Minimum buy pressure for BUY READY', 'number', 0, null, 0.01],
     ['decisionFreshnessSec', 'Decision freshness sec', 'integer', 5, 3600, 1],
-    ['requireFreshHolderSnapshot', 'Require fresh holder snapshot', 'boolean'],
-    ['requireWebsiteOrX', 'Require website or X', 'boolean'],
-    ['ownerApproval', 'Owner approval', 'boolean'],
+    ['requireFreshHolderSnapshot', 'Require fresh holders for decision', 'boolean'],
+    ['requireWebsiteOrX', 'Require website or X for decision', 'boolean'],
     ['shadowValidation', 'Shadow validation', 'boolean'],
     ['changeLog', 'Settings change log', 'boolean']
   ]],
@@ -51,7 +50,7 @@ const MF293_GROUPS = [
     ['dailyLossLimit', 'Daily loss limit SOL', 'number', 0, null, 0.01],
     ['feeReserve', 'Fee reserve SOL', 'number', 0, null, 0.001]
   ]],
-  ['filters', 'Entry filters', 'Market, holder, concentration and token filters', false, [
+  ['filters', 'Entry filters', 'Scanner admission only · failing tokens stay hidden in pre-admission', false, [
     ['minLiquidityUsd', 'Minimum liquidity USD', 'number', 0, null, 1],
     ['minHolders', 'Minimum holders', 'nullable', 0, null, 1],
     ['maxHolders', 'Maximum holders', 'nullable', 0, null, 1],
@@ -79,12 +78,6 @@ const MF293_GROUPS = [
     ['maxBundlePct', 'Maximum bundle %', 'nullable', 0, 100, 0.1],
     ['minSniperPct', 'Minimum sniper %', 'nullable', 0, 100, 0.1],
     ['maxSniperPct', 'Maximum sniper %', 'nullable', 0, 100, 0.1],
-    ['maxSuspectedRiskyWalletsPct', 'Maximum suspected risky wallets %', 'nullable', 0, 100, 0.1],
-    ['maxInsidersPct', 'Maximum insiders %', 'nullable', 0, 100, 0.1],
-    ['maxDeveloperRugHistoryPct', 'Maximum developer rug history %', 'nullable', 0, 100, 0.1],
-    ['maxDeveloperExitPct', 'Maximum developer exit %', 'nullable', 0, 100, 0.1],
-    ['requireDevMigrated', 'Require dev migrated', 'boolean'],
-    ['requireTokenLogo', 'Require token logo', 'boolean'],
     ['requireTwitter', 'Require X / Twitter', 'boolean'],
     ['requireWebsite', 'Require website', 'boolean'],
     ['requireTelegram', 'Require Telegram', 'boolean'],
@@ -92,6 +85,10 @@ const MF293_GROUPS = [
     ['includeKeywords', 'Include keywords', 'text'],
     ['excludeKeywords', 'Exclude keywords', 'text'],
     ['developerBlacklistWallets', 'Developer blacklist wallets', 'array']
+  ]],
+  ['preopen', 'Pre-open RPC verification', 'Only after BUY READY · linked and funded wallet risk', false, [
+    ['maxSuspectedRiskyWalletsPct', 'Maximum linked / risky wallets %', 'nullable', 0, 100, 0.1],
+    ['maxInsidersPct', 'Maximum insiders / common-funder wallets %', 'nullable', 0, 100, 0.1]
   ]],
   ['exits', 'Risk & exits', 'Stops, take profit allocation and exit pressure', true, [
     ['hardStopPct', 'Hard stop %', 'number', 0.000001, 100, 0.1],
@@ -127,6 +124,52 @@ function mf293Clone(value) {
 
 function mf293Fields() {
   return MF293_GROUPS.flatMap(group => group[4]);
+}
+
+function mf293PresetMatches(profile) {
+  const key = String(profile || '').trim().toLowerCase();
+  const preset = MF293.profilePresets?.[key];
+  if (!preset || typeof preset !== 'object') return false;
+
+  for (const settingKey of MF293_PROFILE_LOGIC_KEYS) {
+    if (!Object.prototype.hasOwnProperty.call(preset, settingKey)) continue;
+    const input = document.querySelector(`[data-setting-key="${settingKey}"]`);
+    if (!input) return false;
+
+    const expected = preset[settingKey];
+    if (input.dataset.settingKind === 'boolean') {
+      if (input.checked !== Boolean(expected)) return false;
+      continue;
+    }
+
+    const actual = String(input.value ?? '').trim();
+    if (finite(expected)) {
+      if (!finite(actual) || Math.abs(Number(actual) - Number(expected)) > 1e-9) return false;
+    } else if (actual !== String(expected ?? '')) {
+      return false;
+    }
+  }
+  return true;
+}
+
+function mf293InferProfileFromLogic() {
+  for (const key of ['conservative', 'balanced', 'aggressive']) {
+    if (mf293PresetMatches(key)) return key;
+  }
+  return 'custom';
+}
+
+function mf293SyncProfileSelection() {
+  const input = document.querySelector('[data-setting-key="profile"]');
+  if (!input) return 'custom';
+  const profile = mf293InferProfileFromLogic();
+  input.value = profile;
+  return profile;
+}
+
+function mf293ProfileLabel(profile) {
+  const key = String(profile || 'custom').trim().toLowerCase();
+  return key.charAt(0).toUpperCase() + key.slice(1);
 }
 
 function mf293Status(text, state = '') {
@@ -215,7 +258,14 @@ function mf293CreateField(field) {
   input.dataset.settingKind = kind;
   const markDirty = () => {
     MF293.dirty = true;
-    mf293Status('Unsaved', 'dirty');
+
+    if (key !== 'profile' && MF293_PROFILE_LOGIC_KEYS.includes(key)) {
+      mf293SyncProfileSelection();
+    }
+
+    const profileInput = document.querySelector('[data-setting-key="profile"]');
+    const profile = profileInput?.value || 'custom';
+    mf293Status(`${mf293ProfileLabel(profile)} · Unsaved`, 'dirty');
   };
   input.addEventListener('input', markDirty);
   input.addEventListener('change', markDirty);
@@ -277,8 +327,9 @@ function mf293ApplyProfilePreset(profile) {
     }
   }
 
+  mf293SyncProfileSelection();
   MF293.dirty = true;
-  mf293Status(`${key.charAt(0).toUpperCase()}${key.slice(1)} · Unsaved`, 'dirty');
+  mf293Status(`${mf293ProfileLabel(key)} · Unsaved`, 'dirty');
   return true;
 }
 
@@ -373,7 +424,15 @@ function mf293Build() {
   });
 
   document.querySelector('[data-setting-key="profile"]')?.addEventListener('change', event => {
-    mf293ApplyProfilePreset(event.currentTarget?.value);
+    const profile = String(event.currentTarget?.value || '').trim().toLowerCase();
+
+    if (profile === 'custom') {
+      MF293.dirty = true;
+      mf293Status('Custom · Unsaved', 'dirty');
+      return;
+    }
+
+    mf293ApplyProfilePreset(profile);
   });
 
   backdrop.addEventListener('click', event => {
@@ -399,6 +458,8 @@ function mf293Populate() {
     else if (kind === 'nullable') input.value = value === null || value === undefined ? '' : String(value);
     else input.value = value === null || value === undefined ? '' : String(value);
   }
+
+  mf293SyncProfileSelection();
 
   const environment = document.querySelector('[data-setting-key="tradingEnvironment"]');
   if (environment) {

@@ -316,64 +316,192 @@ export function settingsContextSignature(entries=[]){
 }
 
 export function evaluateSettingsAdmission(token={},entries=[],options={}){
-  const now=Number(options.now)||Date.now();
+  const now=Number(options.recheckMs)||5000;
+  void now;
+  const at=Number(options.now)||Date.now();
   const recheckMs=Math.max(1000,Number(options.recheckMs)||5000);
   const context=Array.isArray(entries)?entries:[];
   const signature=settingsContextSignature(context);
 
   if(context.length===0){
-    return {allow:true,drop:false,reason:'no_active_users_fail_open',signature,users:0,retryable:false,recheckAt:null,blockedUsers:0,reasons:[]};
+    return {
+      allow:true,
+      drop:false,
+      reason:'no_active_users_fail_open',
+      signature,
+      users:0,
+      retryable:false,
+      recheckAt:null,
+      blockedUsers:0,
+      reasons:[]
+    };
   }
 
   const blocked=[];
+
   for(const entry of context){
-    const gate=evaluateSettingsGate(token,entry?.settings||{});
-    if(gate.state!=='BLOCKED'){
+    const gate=evaluateEntryAdmission(
+      token,
+      entry?.settings||{},
+      {now:at}
+    );
+
+    // At least one active user already passes every real Entry Filter.
+    if(gate.admitted===true){
       return {
-        allow:true,drop:false,reason:gate.state==='WAITING'?'active_user_waiting_for_required_data':'active_user_settings_pass',
-        signature,users:context.length,retryable:false,recheckAt:null,blockedUsers:blocked.length,
-        uid:entry?.uid||null,gate
+        allow:true,
+        drop:false,
+        reason:'active_user_entry_filters_pass',
+        signature,
+        users:context.length,
+        retryable:false,
+        recheckAt:null,
+        blockedUsers:blocked.length,
+        uid:entry?.uid||null,
+        gate
       };
     }
+
+    // Missing data for an ENABLED Entry Filter must be allowed to warm.
+    // This preserves holder/market enrichment without letting Logic settings
+    // (buy pressure, confidence, website/X decision rule, etc.) reject raw WS.
+    if(
+      gate.state==='PENDING' &&
+      Array.isArray(gate.waitingGates) &&
+      gate.waitingGates.length>0
+    ){
+      return {
+        allow:true,
+        drop:false,
+        reason:'active_user_entry_data_pending',
+        signature,
+        users:context.length,
+        retryable:false,
+        recheckAt:null,
+        blockedUsers:blocked.length,
+        uid:entry?.uid||null,
+        gate
+      };
+    }
+
     blocked.push({uid:entry?.uid||null,gate});
   }
 
   const failed=blocked.flatMap(row=>row.gate.failedGates||[]);
-  // Recheck only when at least one active user is blocked solely by dynamic
-  // facts. If every blocked user already has a stable failure, rescanning can
-  // never make this token eligible under the current settings context.
-  const retryable=blocked.some(row=>row.gate.hasStableFailure!==true);
-  const reasons=[...new Set(failed.map(g=>g.reason).filter(Boolean))].slice(0,8);
+
+  // Retry only if at least one user is blocked exclusively by market facts
+  // that can recover (MC/holders/concentration/etc.). Stable failures such as
+  // platform/keyword/blacklist can be safely discarded for that settings set.
+  const retryable=blocked.some(
+    row=>row.gate.hasStableFailure!==true
+  );
+
+  const reasons=[
+    ...new Set(
+      failed.map(g=>g.reason).filter(Boolean)
+    )
+  ].slice(0,8);
+
   return {
-    allow:false,drop:true,reason:'settings_rejected_for_all_active_users',signature,users:context.length,
-    retryable,recheckAt:retryable?now+recheckMs:null,blockedUsers:blocked.length,reasons,
-    failedKeys:[...new Set(failed.map(g=>g.key).filter(Boolean))].slice(0,16)
+    allow:false,
+    drop:true,
+    reason:'entry_filters_rejected_for_all_active_users',
+    signature,
+    users:context.length,
+    retryable,
+    recheckAt:retryable?at+recheckMs:null,
+    blockedUsers:blocked.length,
+    reasons,
+    failedKeys:[
+      ...new Set(
+        failed.map(g=>g.key).filter(Boolean)
+      )
+    ].slice(0,16)
   };
 }
 
 // MEMEFLOW_STRICT_ENTRY_ADMISSION_V1
-// Entry Filters are the visibility/admission boundary for the scanner.
+// MEMEFLOW_SETTINGS_ARCHITECTURE_V2
 //
-// A token is ADMITTED only when every currently knowable Entry Filter for that
-// user is PASS. A retryable FAIL (for example MC below minimum, holders below
-// minimum, token younger than minimum age) is PRE-ADMISSION PENDING: keep the
-// tiny WS state so it can improve, but do not create/show a scanner decision.
+// Settings are intentionally split into three non-overlapping policy layers:
 //
-// Wallet funding/cluster checks are intentionally FINAL-ONLY. Their settings
-// remain enforced after BUY READY by the dedicated Solana RPC pre-open stage.
-const PRE_ADMISSION_FINAL_ONLY_KEYS = new Set([
+// 1) ENTRY_ADMISSION_KEYS
+//    Decide whether a token is visible in Live Token States.
+//    FAIL/WAITING => hidden lightweight PRE-ADMISSION telemetry.
+//
+// 2) LOGIC_DECISION_KEYS
+//    Run only AFTER admission. They may produce WAITING / WATCH / BUY READY,
+//    but they must never hide an otherwise admitted token from the feed.
+//
+// 3) PREOPEN_RPC_KEYS
+//    Heavy linked/funded-wallet verification. These are FINAL-ONLY and remain
+//    behind BUY READY. They never participate in discovery/admission.
+export const ENTRY_ADMISSION_KEYS = Object.freeze([
+  'launchPlatforms',
+  'includeKeywords',
+  'excludeKeywords',
+
+  'minBondingCurvePct',
+  'maxBondingCurvePct',
+  'minMarketCapUsd',
+  'maxMarketCapUsd',
+  'minTotalFeesSol',
+  'maxTotalFeesSol',
+  'minVolume24hUsd',
+  'maxVolume24hUsd',
+  'minBuyTransactions',
+  'maxBuyTransactions',
+  'minSellTransactions',
+  'maxSellTransactions',
+  'minTotalTransactions',
+  'maxTotalTransactions',
+  'minHolders',
+  'maxHolders',
+  'minBundlePct',
+  'maxBundlePct',
+  'minTokenAgeMinutes',
+  'maxTokenAgeMinutes',
+  'minTop10Pct',
+  'maxTop10Pct',
+  'minDeveloperPct',
+  'maxDeveloperPct',
+  'minSniperPct',
+  'maxSniperPct',
+  'minLiquidityUsd',
+
+  'developerBlacklistWallets',
+  'requireTwitter',
+  'requireWebsite',
+  'requireTelegram',
+  'requireAnySocial'
+]);
+
+export const LOGIC_DECISION_KEYS = Object.freeze([
+  'minScore',
+  'minConfidence',
+  'minBuyPressure',
+  'decisionFreshnessSec',
+  'requireFreshHolderSnapshot',
+  'requireWebsiteOrX'
+]);
+
+export const PREOPEN_RPC_KEYS = Object.freeze([
   'maxSuspectedRiskyWalletsPct',
   'maxInsidersPct'
 ]);
+
+const ENTRY_ADMISSION_KEY_SET = new Set(ENTRY_ADMISSION_KEYS);
 
 export function evaluateEntryAdmission(token={},settings={},options={}){
   const now=Number(options?.now)||Date.now();
   void now;
 
+  // evaluateSettingsGate is CPU-only. We intentionally reuse its canonical
+  // metric readers, then keep ONLY real Entry Filter gates.
   const full=evaluateSettingsGate(token,settings);
 
   const gates=(full.gates||[])
-    .filter(g=>!PRE_ADMISSION_FINAL_ONLY_KEYS.has(String(g?.key||'')));
+    .filter(g=>ENTRY_ADMISSION_KEY_SET.has(String(g?.key||'')));
 
   const failedGates=gates.filter(g=>g?.status==='FAIL');
   const waitingGates=gates.filter(g=>g?.status==='WAITING');
@@ -395,7 +523,9 @@ export function evaluateEntryAdmission(token={},settings={},options={}){
     waitingGates,
     hasStableFailure,
     hasRetryableFailure,
-    finalOnlyKeys:[...PRE_ADMISSION_FINAL_ONLY_KEYS],
+    entryKeys:ENTRY_ADMISSION_KEYS,
+    logicKeys:LOGIC_DECISION_KEYS,
+    finalOnlyKeys:PREOPEN_RPC_KEYS,
     reasons:[...failedGates,...waitingGates]
       .map(g=>g?.reason)
       .filter(Boolean)

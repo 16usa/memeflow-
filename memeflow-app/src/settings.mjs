@@ -106,6 +106,7 @@ export function normalizeSettings(raw={}){
 
  // Drop legacy view-only keys so GET /api/settings stays canonical and understandable.
  delete o.paperBeforeChange;delete o.auditSettings;delete o.decisionFreshness;delete o.exitWeakPressure;delete o.ownerApproval;
+ delete o.requireTokenLogo;delete o.requireDevMigrated;delete o.maxDeveloperRugHistoryPct;delete o.maxDeveloperExitPct;
  return o;
 }
 export function validateSettings(raw={}){
@@ -157,7 +158,7 @@ export function validateSettings(raw={}){
  if(!(s.maxHoldMinutes>=1))errors.push('Maximum hold must be at least 1 minute.');
  if(!(s.decisionFreshnessSec>=5&&s.decisionFreshnessSec<=3600))errors.push('Decision freshness must be between 5 and 3600 seconds.');
 
- const VALID_MODES=['observe','assist','automate'],VALID_ENVS=['paper','live'],VALID_PROFILES=['conservative','balanced','aggressive'];
+ const VALID_MODES=['observe','assist','automate'],VALID_ENVS=['paper','live'],VALID_PROFILES=['conservative','balanced','aggressive','custom'];
  if(!VALID_MODES.includes(s.operatingMode))errors.push('Invalid operatingMode: must be observe, assist or automate.');
  if(!VALID_ENVS.includes(s.tradingEnvironment))errors.push('Invalid tradingEnvironment: must be paper or live.');
  if(!VALID_PROFILES.includes(s.profile))errors.push('Invalid profile: must be conservative, balanced or aggressive.');
