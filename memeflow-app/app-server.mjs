@@ -16,6 +16,80 @@ import { eventHolderLedger } from './src/event-holder-ledger.mjs'; // MEMEFLOW_V
 import {manualAnalyze} from './src/manual-scan.mjs';
 // MEMEFLOW AI ASSISTANT HARD OFF: import disabled
 const root=path.dirname(fileURLToPath(import.meta.url)),dataDir=path.resolve(root,process.env.DATA_DIR||'data'),store=new JsonStore(dataDir);
+
+// MEMEFLOW_FRESH_SESSION_SCANNER_V1
+// Live scanner data is session-scoped. A restart starts a clean scanner while
+// OPEN-position token snapshots remain available for position continuity.
+const __mfScannerRuntimeStartedAt=Date.now();
+const __mfScannerTokenTtlMs=Math.max(
+  5*60_000,
+  Number(process.env.LIVE_SCANNER_TOKEN_TTL_MS||3*60*60_000)
+);
+
+function __mfOpenPositionMints(){
+  const out=new Set();
+  for(const p of Object.values(store.state.paperPositions||{})){
+    if(String(p?.status||'').toUpperCase()==='OPEN'&&p?.mint)out.add(String(p.mint));
+  }
+  for(const p of Object.values(store.state.positions||{})){
+    if(String(p?.status||'').toUpperCase()==='OPEN'&&p?.mint)out.add(String(p.mint));
+  }
+  return out;
+}
+
+{
+  const keep=__mfOpenPositionMints();
+  for(const mint of Object.keys(store.state.tokens||{})){
+    if(!keep.has(String(mint)))delete store.state.tokens[mint];
+  }
+  store.state.decisions={};
+  store._uidDec={};
+  store.save();
+}
+
+function __mfIsCurrentScannerToken(token,now=Date.now()){
+  if(!token||token.wsFirst!==true)return false;
+  const discovered=Number(token.discoveredAt||0);
+  if(!(discovered>=__mfScannerRuntimeStartedAt))return false;
+  return now-discovered<=__mfScannerTokenTtlMs;
+}
+
+function __mfLiveScannerTokens(now=Date.now()){
+  return store.tokens().filter(token=>__mfIsCurrentScannerToken(token,now));
+}
+
+function __mfPruneScannerRuntimeState(now=Date.now()){
+  const open=__mfOpenPositionMints();
+  const liveMints=new Set();
+
+  for(const token of Object.values(store.state.tokens||{})){
+    const mint=String(token?.mint||'');
+    if(__mfIsCurrentScannerToken(token,now)){
+      if(mint)liveMints.add(mint);
+      continue;
+    }
+    if(mint&&!open.has(mint))delete store.state.tokens[mint];
+  }
+
+  for(const [key,d] of Object.entries(store.state.decisions||{})){
+    const mint=String(d?.mint||'');
+    if(mint&&!liveMints.has(mint))delete store.state.decisions[key];
+  }
+
+  for(const [uid,index] of Object.entries(store._uidDec||{})){
+    for(const key of [...index.keys()]){
+      if(!store.state.decisions?.[key])index.delete(key);
+    }
+    if(!index.size)delete store._uidDec[uid];
+  }
+}
+
+const __mfScannerPruneTimer=setInterval(
+  ()=>__mfPruneScannerRuntimeState(),
+  Math.max(15_000,Number(process.env.LIVE_SCANNER_PRUNE_MS||60_000))
+);
+__mfScannerPruneTimer.unref?.();
+
 const paper=new PaperEngine(store);
 const billing=new StripeBilling({store,secretKey:process.env.STRIPE_SECRET_KEY,priceId:process.env.STRIPE_PRICE_ID,webhookSecret:process.env.STRIPE_WEBHOOK_SECRET,apiBase:process.env.STRIPE_API_BASE});
 const rpcUrls=(process.env.SOLANA_RPC_URLS||'').split(',').map(x=>x.trim()).filter(Boolean),wsUrls=(process.env.SOLANA_WS_URLS||'').split(',').map(x=>x.trim()).filter(Boolean);const rpc=new RpcPool(rpcUrls,process.env.SOLANA_COMMITMENT||'confirmed');
@@ -2024,7 +2098,7 @@ function startDiscovery(i=0){
       discovery.connected=true;discovery.error=null;wsReconnectAttempt=0;
       ws.send(JSON.stringify({jsonrpc:'2.0',id:1,method:'logsSubscribe',params:[{mentions:[PUMP]},{commitment:process.env.SOLANA_COMMITMENT||'confirmed'}]}));
     };
-    // Filter: only create instructions are worth a getTransaction call
+    // WS-first discovery: Pump CREATE is decoded directly from WebSocket logs.
     ws.onmessage=ev=>{
       try{
         const m=JSON.parse(ev.data);
@@ -2034,11 +2108,24 @@ function startDiscovery(i=0){
         const logs=m.params?.result?.value?.logs;
         if(!Array.isArray(logs)){discMetrics.eventsWithoutLogs++;discMetrics.eventsFiltered++;return}
 
-        // MEMEFLOW_CHART_TRADE_FEED_V2
-        // Reuse the already-connected discovery Pump logsSubscribe as a
-        // redundant source of canonical TradeEvents. The decoder itself
-        // deduplicates signature/log pairs if the dedicated trade WS also
-        // received the same notification.
+        const isCreate=logs.some(l=>/Instruction:\s*Create(?:V2|\s+V2|\s*$)/i.test(l));
+
+        // MEMEFLOW_FRESH_SESSION_SCANNER_V1
+        // CREATE establishes the mint before TradeEvents from the same tx are
+        // applied. Unknown global Pump trades are not allowed to create rows.
+        if(isCreate){
+          try{__systemViewEmitV31('create',{signature:String(sig||''),ts:Date.now()})}catch{}
+          discMetrics.createEventsAccepted++;
+          discovery.lastEventAt=Date.now();
+          __ingestPumpCreateEventDirect(
+            logs,
+            {
+              signature:String(sig||''),
+              slot:m.params?.result?.context?.slot??null
+            }
+          );
+        }
+
         try{
           __pumpLiveTradeFeed?.ingestLogs?.(logs,{
             signature:String(sig||''),
@@ -2046,26 +2133,11 @@ function startDiscovery(i=0){
           });
         }catch{}
 
-        // Accept only Pump.fun token creation instructions for DISCOVERY work.
-        // Trade decoding above is read-only for discovery and does not enqueue
-        // Buy/Sell/Withdraw/Migrate transactions into the create pipeline.
-        const isCreate=logs.some(l=>/Instruction:\s*Create(?:V2|\s+V2|\s*$)/i.test(l));
-        if(!isCreate){discMetrics.nonCreateEventsIgnored++;discMetrics.eventsFiltered++;return}
-        // V4 System View: accepted real Pump CREATE event.
-        try{__systemViewEmitV31('create',{signature:String(sig||''),ts:Date.now()})}catch{}
-        discMetrics.createEventsAccepted++;
-        discovery.lastEventAt=Date.now();
-
-        // MEMEFLOW_WS_FIRST_PREOPEN_RPC_V1
-        // CREATE is decoded directly from the WebSocket payload.
-        // There is NO getTransaction request here.
-        __ingestPumpCreateEventDirect(
-          logs,
-          {
-            signature:String(sig||''),
-            slot:m.params?.result?.context?.slot??null
-          }
-        );
+        if(!isCreate){
+          discMetrics.nonCreateEventsIgnored++;
+          discMetrics.eventsFiltered++;
+          return;
+        }
       }catch{}
     };
     // WS errors stored as lastError; do not overwrite connection state here
@@ -2073,10 +2145,10 @@ function startDiscovery(i=0){
     ws.onclose=()=>{discovery.connected=false;discovery.reconnects++;wsReconnectAttempt++;clearTimeout(wsTimer);wsTimer=setTimeout(()=>startDiscovery(i+1),Math.min(30000,1000*2**Math.min(wsReconnectAttempt,5)))};
   }catch(e){discovery.error=e.message;wsTimer=setTimeout(()=>startDiscovery(i+1),5000)}
 }
-function shadowValidateSettings(settings,limit=50){const rows=store.tokens().slice(0,Math.max(1,Math.min(200,limit)));const counts={WAITING:0,WATCH:0,'BUY READY':0,BLOCKED:0,EXPIRED:0};const errors=[];for(const token of rows){try{const d=evaluate(token,settings);counts[d.state]=(counts[d.state]||0)+1}catch(e){errors.push({mint:token.mint||null,message:e.message})}}return {tested:rows.length,counts,errors};}
+function shadowValidateSettings(settings,limit=50){const rows=__mfLiveScannerTokens().slice(0,Math.max(1,Math.min(200,limit)));const counts={WAITING:0,WATCH:0,'BUY READY':0,BLOCKED:0,EXPIRED:0};const errors=[];for(const token of rows){try{const d=evaluate(token,settings);counts[d.state]=(counts[d.state]||0)+1}catch(e){errors.push({mint:token.mint||null,message:e.message})}}return {tested:rows.length,counts,errors};}
 function reevaluateUser(uid){
   const settings=store.settings(uid);
-  const tokens=store.tokens();
+  const tokens=__mfLiveScannerTokens();
   const settingsVersion=store.user(uid)?.settingsVersion||store.user(uid)?.updatedAt||Date.now();
   let count=0,errors=0;
   const states={WAITING:0,WATCH:0,BLOCKED:0,'BUY READY':0,EXPIRED:0};
@@ -2994,7 +3066,7 @@ async function mfDexFilterRowsByPaid(rows) {
   // MEMEFLOW_LIVE_TOKEN_STATES_V7
  if(url.pathname==='/api/system/live-token-states'&&req.method==='GET'){
   const _lim=Math.min(200,Math.max(1,Number(url.searchParams.get('limit')||200)));
-  const _tokens=store.tokens().slice(0,_lim);
+  const _tokens=__mfLiveScannerTokens().slice(0,_lim);
   const _settings=store.settings(u.id);
   let _recovered=0,_reindexed=0,_evalErrors=0,_viewErrors=0;
   let _index=store._uidDec[u.id]||null;
@@ -3068,8 +3140,20 @@ if(url.pathname==='/api/ai/decisions'){
   const _off=Math.max(0,Number(url.searchParams.get('offset')||0));
   const _scope=String(url.searchParams.get('scope')||'candidates').toLowerCase();
   const _dexPaid=dexViewRequested(url.searchParams);
-  if(!store._uidDec[u.id]?.size)await lazyRecoverUser({store,uid:u.id,metrics:recoveryMetrics,tokenLimit:DECISION_RECOVERY_TOKEN_LIMIT});
-  const _raw=store.decisions(u.id);
+  // MEMEFLOW_FRESH_SESSION_SCANNER_V1
+  // Never rebuild the live candidate feed from persisted pre-restart tokens.
+  if(!store._uidDec[u.id]?.size){
+    const _fresh=__mfLiveScannerTokens().slice(0,DECISION_RECOVERY_TOKEN_LIMIT);
+    const _settings=store.settings(u.id);
+    for(const _token of _fresh){
+      try{
+        const _decision=evaluate(_token,_settings);
+        store.setDecision(u.id,_token.mint,{..._decision,primaryReason:_decision.primaryReason});
+      }catch{}
+    }
+  }
+  const _liveMintSet=new Set(__mfLiveScannerTokens().map(t=>String(t?.mint||'')));
+  const _raw=store.decisions(u.id).filter(d=>_liveMintSet.has(String(d?.mint||'')));
   const _all=_dexPaid?await mfDexFilterRowsByPaid(_raw):_raw;
   const _selected=candidateFeed(_all,_scope);
   const _counts=candidateVisibilityCounts(_all);
@@ -3393,6 +3477,9 @@ if(url.pathname==='/api/ai/decisions'){
     processing:discQueue.processing,
     metrics:store.state.metrics,
     tokens:store.tokens().length,
+    freshScannerTokens:__mfLiveScannerTokens().length,
+    scannerSessionStartedAt:__mfScannerRuntimeStartedAt,
+    scannerTokenTtlMs:__mfScannerTokenTtlMs,
     users:Object.keys(store.state.users).length,
     decisionsInMemory:Object.values(store._uidDec).reduce((s,m)=>s+m.size,0)
   });

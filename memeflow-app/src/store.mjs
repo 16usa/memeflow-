@@ -12,8 +12,31 @@ export class JsonStore {
     this.load();
   }
   load(){try{const d=JSON.parse(fs.readFileSync(this.file,'utf8'));this.state={...this.state,...d};if(!this.state.decisions)this.state.decisions={}}catch(_){}}
-  // Debounced async save — decisions excluded (re-evaluated after restart, not needed on disk)
-  save(){clearTimeout(this._st);this._st=setTimeout(()=>{this._st=null;const {decisions:_d,...persist}=this.state;const tmp=this.file+'.tmp';fs.promises.writeFile(tmp,JSON.stringify(persist),'utf8').then(()=>fs.promises.rename(tmp,this.file)).catch(()=>{})},200)}
+  // MEMEFLOW_FRESH_SESSION_SCANNER_V1
+  // Scanner tokens are runtime state. Persist only snapshots needed by an OPEN
+  // position. Decisions remain memory-only and are never restored as live.
+  save(){
+    clearTimeout(this._st);
+    this._st=setTimeout(()=>{
+      this._st=null;
+      const openMints=new Set();
+      for(const p of Object.values(this.state.paperPositions||{})){
+        if(String(p?.status||'').toUpperCase()==='OPEN'&&p?.mint)openMints.add(String(p.mint));
+      }
+      for(const p of Object.values(this.state.positions||{})){
+        if(String(p?.status||'').toUpperCase()==='OPEN'&&p?.mint)openMints.add(String(p.mint));
+      }
+      const persistedTokens=Object.fromEntries(
+        Object.entries(this.state.tokens||{}).filter(([mint])=>openMints.has(String(mint)))
+      );
+      const {decisions:_d,tokens:_tokens,...rest}=this.state;
+      const persist={...rest,tokens:persistedTokens};
+      const tmp=this.file+'.tmp';
+      fs.promises.writeFile(tmp,JSON.stringify(persist),'utf8')
+        .then(()=>fs.promises.rename(tmp,this.file))
+        .catch(()=>{});
+    },200)
+  }
   user(id){if(!this.state.users[id]){this.state.users[id]={id,createdAt:new Date().toISOString(),settings:defaults(),plan:'free',liveEntitled:false,subscriptionStatus:'free',stripeCustomerId:null,stripeSubscriptionId:null,currentPeriodEnd:null,cancelAtPeriodEnd:false,killSwitch:false,isOwner:false,ownerGrantedAt:null,ownerGrantSource:null};this.save()}return this.state.users[id]}
   settings(id){
     const u=this.user(id);

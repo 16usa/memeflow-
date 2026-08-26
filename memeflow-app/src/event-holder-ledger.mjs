@@ -9,6 +9,10 @@ import crypto from 'node:crypto';
 const VERSION='V12.24';
 const STATE=process.env.EVENT_HOLDER_LEDGER_STATE_PATH_V12_20 ||
   path.join(process.cwd(),'data','event-holder-ledger-v12-20.json');
+// MEMEFLOW_FRESH_SESSION_SCANNER_V1
+// Runtime holder state only by default. Disk persistence is opt-in.
+const PERSIST=String(process.env.EVENT_HOLDER_LEDGER_PERSIST||'false').toLowerCase()==='true';
+if(!PERSIST){try{fs.rmSync(STATE,{force:true})}catch{}}
 const DEFAULT_SUPPLY_UI=Math.max(1,Number(process.env.PUMP_TOKEN_SUPPLY_UI||1000000000));
 const DISC=crypto.createHash('sha256').update('event:TradeEvent').digest().subarray(0,8);
 const B58='123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
@@ -95,7 +99,7 @@ export class EventHolderLedger{
       lastError:null
     };
     this.t=null;
-    this.load();
+    if(PERSIST)this.load();
   }
 
   row(m,decimals=6){
@@ -308,11 +312,12 @@ export class EventHolderLedger{
       ...this.metrics,
       trackedMints:this.byMint.size,
       defaultSupplyUi:DEFAULT_SUPPLY_UI,
-      stateFile:path.basename(STATE),liveTradeStreamCompatible:true,wsDirectCompatible:true,v12_24CreatorLink:true
+      stateFile:path.basename(STATE),persistenceEnabled:PERSIST,liveTradeStreamCompatible:true,wsDirectCompatible:true,v12_24CreatorLink:true
     };
   }
 
   schedule(){
+    if(!PERSIST)return;
     if(this.t)return;
     this.t=setTimeout(()=>{this.t=null;this.save()},1000);
     this.t.unref?.();

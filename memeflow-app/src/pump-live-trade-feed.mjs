@@ -98,7 +98,7 @@ export function startPumpLiveTradeFeed(opts={}){
     lastEvaluationAt:null,lastEvaluationResultType:null,lastEvaluationError:null,
     // MEMEFLOW_CHART_TRADE_FEED_V2
     logBatchesIngested:0,externalLogBatches:0,dedicatedLogBatches:0,
-    duplicateTradeEventsSkipped:0,lastTradeEventAt:null,lastTradeEventSource:null
+    duplicateTradeEventsSkipped:0,unknownMintEventsIgnored:0,lastTradeEventAt:null,lastTradeEventSource:null
   };
 
   const mintCounts=new Map(), users=new Set(), pressure=new Map();
@@ -210,6 +210,15 @@ export function startPumpLiveTradeFeed(opts={}){
       try{
         const e=decodeTradeEvent(b);
         if(!e)continue;
+
+        // MEMEFLOW_FRESH_SESSION_SCANNER_V1
+        // Pump TradeEvent is enrichment only. It may NEVER manufacture a
+        // scanner token that current-session CREATE did not establish.
+        const known=tokenFromStore(store,e.mint);
+        if(!known){
+          metrics.unknownMintEventsIgnored++;
+          continue;
+        }
 
         const key=tradeEventKey(e,signature,i);
         if(!acceptTradeEventKey(key)){
