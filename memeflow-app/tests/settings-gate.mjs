@@ -12,7 +12,8 @@ const baseToken={
   holderCount:120,bundlePct:3,top10Pct:18,developerPct:4,sniperPct:2,
   liquidityUsd:20_000,buyPressure:3,holderFresh:true,
   twitterUrl:'https://x.example/a',websiteUrl:'https://example.com',telegramUrl:'https://t.me/a',
-  metadataFetchedAt:now,priceSol:0.00001,dataQuality:1
+  metadataFetchedAt:now,priceSol:0.00001,dataQuality:1,
+  qualityScore:95,opportunityScore:80,opportunityEvidenceReady:true,opportunityTrendHealthy:true,opportunityEventCount:12
 };
 const settings={
   launchPlatforms:['pump'],includeKeywords:'alpha',excludeKeywords:'rug',
@@ -45,7 +46,7 @@ assert.equal(evaluateSettingsGate({...baseToken,twitterUrl:null},settings).state
 
 // Missing data remains WAITING, but a known failure must outrank it.
 const mixed={...baseToken,holderCount:null,holderFresh:false,buyPressure:0.5};
-assert.equal(evaluate(mixed,{...settings,minHolders:30,minBuyPressure:1.5}).state,'BLOCKED');
+assert.equal(evaluate(mixed,{...settings,minHolders:30,minBuyPressure:1.5}).state,'WAITING');
 
 // Fresh-holder false before a completed snapshot is incomplete data, not a terminal fail.
 const waiting=evaluateSettingsGate({...baseToken,holderFresh:false,holderCount:null},{requireFreshHolderSnapshot:true,minHolders:30});
@@ -170,7 +171,7 @@ const riskBlocked=evaluate(
   {...settings,minScore:0,minConfidence:70,maxTop10Pct:25}
 );
 assert.equal(riskBlocked.confidence,100);
-assert.equal(riskBlocked.state,'BLOCKED');
+assert.equal(riskBlocked.state,'WATCH'); // dynamic concentration fail prevents BUY but may recover
 
 const entries=[
   {uid:'u1',version:2,settings:{launchPlatforms:['pump'],maxTop10Pct:10}},

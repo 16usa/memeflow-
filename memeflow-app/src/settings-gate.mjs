@@ -177,7 +177,7 @@ export function evaluateSettingsGate(token={},settings={}){
   range('Sell transactions','sellTransactions','minSellTransactions','maxSellTransactions');
   range('Total transactions','totalTransactions','minTotalTransactions','maxTotalTransactions');
   range('Holders','holders','minHolders','maxHolders');
-  range('Bundle','bundlePct','minBundlePct','maxBundlePct',{minRetryable:false,maxRetryable:false});
+  range('Bundle','bundlePct','minBundlePct','maxBundlePct');
 
   const age=tokenAgeMinutes(token);
   const minAge=settingNumber(settings,'minTokenAgeMinutes');

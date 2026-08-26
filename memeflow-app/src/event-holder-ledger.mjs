@@ -306,6 +306,7 @@ export class EventHolderLedger{
     }
   }
 
+  dropMint(m){return this.byMint.delete(String(m||''))}
   inspect(m){return this.snapshot(m)}
   diagnostics(){
     return {

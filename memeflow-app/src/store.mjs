@@ -56,7 +56,13 @@ export class JsonStore {
   setSettings(id,s){const u=this.user(id);u.settings=normalizeSettings({...this.settings(id),...s});u.settingsVersion=Date.now();this.save();return u.settings}
   recordSettingsChange(id,before,after,meta={}){this.state.settingsAudit||={};this.state.settingsAudit[id]||=[];this.state.settingsAudit[id].push({at:Date.now(),actor:meta.actor||id,source:meta.source||'user',before,after});this.save();return this.state.settingsAudit[id].at?.(-1)||null}
   settingsHistory(id,limit=100){return (this.state.settingsAudit?.[id]||[]).slice(-Math.max(1,Math.min(500,Number(limit)||100))).reverse()}
-  addToken(t){const old=this.state.tokens[t.mint]||{};this.state.tokens[t.mint]={...old,...t,updatedAt:Date.now()};this.state.metrics.discovered++;this.save();return this.state.tokens[t.mint]}
+  _tokenPersistenceRequired(mint){
+    mint=String(mint||'');
+    return Object.values(this.state.paperPositions||{}).some(p=>p?.mint===mint&&String(p?.status||'').toUpperCase()==='OPEN') ||
+      Object.values(this.state.positions||{}).some(p=>p?.mint===mint&&String(p?.status||'').toUpperCase()==='OPEN');
+  }
+  getToken(mint){return this.state.tokens?.[mint]||null}
+  addToken(t){const old=this.state.tokens[t.mint]||{};this.state.tokens[t.mint]={...old,...t,updatedAt:Date.now()};this.state.metrics.discovered++;if(this._tokenPersistenceRequired(t.mint))this.save();return this.state.tokens[t.mint]}
   setToken(mint,t){
     const now=Date.now(),old=this.state.tokens[mint]||{};
     const patch={...(t||{})};
@@ -120,7 +126,7 @@ export class JsonStore {
       lastMarketActivityAt:activityChanged?now:(old.lastMarketActivityAt||old.lastPriceChangeAt||null),
       updatedAt:now
     };
-    this.state.metrics.scanned++;this.save();return this.state.tokens[mint]
+    this.state.metrics.scanned++;if(this._tokenPersistenceRequired(mint))this.save();return this.state.tokens[mint]
   }
   tokens(){return Object.values(this.state.tokens).sort((a,b)=>(b.discoveredAt||0)-(a.discoveredAt||0))}
   // O(250) per call — uses per-user Map index instead of full O(N) scan
@@ -131,7 +137,21 @@ export class JsonStore {
     const m=this._uidDec[uid];
     m.set(key,now);
     if(m.size>250){let ok=null,ot=Infinity;for(const[k,t]of m)if(t<ot){ot=t;ok=k};if(ok){m.delete(ok);delete this.state.decisions[ok]}}
-    this.save()
+  }
+  removeToken(mint){
+    mint=String(mint||'');
+    if(!mint)return false;
+    delete this.state.tokens[mint];
+    for(const [key,d] of Object.entries(this.state.decisions||{})){
+      if(String(d?.mint||'')===mint)delete this.state.decisions[key];
+    }
+    for(const [uid,index] of Object.entries(this._uidDec||{})){
+      for(const key of [...index.keys()]){
+        if(!this.state.decisions?.[key])index.delete(key);
+      }
+      if(!index.size)delete this._uidDec[uid];
+    }
+    return true;
   }
   decisions(uid){
     const m=this._uidDec[uid];

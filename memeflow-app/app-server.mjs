@@ -8,6 +8,8 @@ import {makeDiscoveryMetrics,makeDiscoveryQueue} from './src/discqueue.mjs';
 import {candidateFeed,candidateVisibilityCounts} from './src/candidate-visibility.mjs';import {dexViewRequested,dexViewMint,dexPresenceFromPairs,filterRowsByDexPresence} from './src/dex-view-filter.mjs';
 import { startPumpLiveTradeFeed } from './src/pump-live-trade-feed.mjs'; // MEMEFLOW_V12_21_LIVE_TRADE_STREAM_HOLDER_FEED
 import { ChartHistoryArchive } from './src/chart-history-archive.mjs'; // MEMEFLOW_CHART_HISTORY_RESTORE_V1
+import {createOpportunityEngine} from './src/opportunity-engine.mjs'; // MEMEFLOW_OPPORTUNITY_ENGINE_V1
+import {createSolUsdOracle} from './src/sol-usd-oracle.mjs'; // MEMEFLOW_OPPORTUNITY_ENGINE_V1
 
 import { eventMarketLedger } from './src/event-market-ledger.mjs'; // MEMEFLOW_V12_18_EVENT_MARKET_LEDGER
 
@@ -16,6 +18,9 @@ import { eventHolderLedger } from './src/event-holder-ledger.mjs'; // MEMEFLOW_V
 import {manualAnalyze} from './src/manual-scan.mjs';
 // MEMEFLOW AI ASSISTANT HARD OFF: import disabled
 const root=path.dirname(fileURLToPath(import.meta.url)),dataDir=path.resolve(root,process.env.DATA_DIR||'data'),store=new JsonStore(dataDir);
+const opportunityEngine=createOpportunityEngine(); // MEMEFLOW_OPPORTUNITY_ENGINE_V1
+const solUsdOracle=createSolUsdOracle(); // one shared quote, never per-token RPC
+solUsdOracle.start();
 
 // MEMEFLOW_FRESH_SESSION_SCANNER_V1
 // Live scanner data is session-scoped. A restart starts a clean scanner while
@@ -51,11 +56,49 @@ function __mfIsCurrentScannerToken(token,now=Date.now()){
   if(!token||token.wsFirst!==true)return false;
   const discovered=Number(token.discoveredAt||0);
   if(!(discovered>=__mfScannerRuntimeStartedAt))return false;
-  return now-discovered<=__mfScannerTokenTtlMs;
+  return token.dead!==true && now-discovered<=__mfScannerTokenTtlMs;
 }
 
 function __mfLiveScannerTokens(now=Date.now()){
   return store.tokens().filter(token=>__mfIsCurrentScannerToken(token,now));
+}
+
+function __mfActiveScannerUserIds(now=Date.now()){
+  const cutoff=now-(Number(process.env.LIVE_EVALUATION_ACTIVE_USER_HOURS||24)*3600000);
+  return Object.entries(store.state.users||{})
+    .filter(([,u])=>u?.isOwner===true||(Number(u?.lastActiveAt||0)>0&&Number(u.lastActiveAt)>=cutoff))
+    .map(([uid])=>uid);
+}
+
+function __mfAllActiveUsersStableBlocked(mint,now=Date.now()){
+  const uids=__mfActiveScannerUserIds(now);
+  if(!uids.length)return false;
+  for(const uid of uids){
+    const d=store.state.decisions?.[uid+':'+mint];
+    if(!d)return false;
+    if(d.state!=='BLOCKED'||d.settingsEvaluation?.hasStableFailure!==true)return false;
+  }
+  return true;
+}
+
+function __mfDropScannerToken(mint,reason='PRUNED'){
+  mint=String(mint||'');
+  if(!mint)return false;
+  if(__mfOpenPositionMints().has(mint))return false;
+
+  try{store.removeToken?.(mint)}catch{}
+  try{eventHolderLedger?.dropMint?.(mint)}catch{}
+  try{opportunityEngine?.dropMint?.(mint)}catch{}
+  try{__pumpLiveTradeFeed?.dropMint?.(mint)}catch{}
+  try{chartTradeHistory?.delete?.(mint)}catch{}
+  try{
+    const t=priceTimers?.get?.(mint);
+    if(t)clearTimeout(t);
+    priceTimers?.delete?.(mint);
+  }catch{}
+  try{tradeWindows?.delete?.(mint)}catch{}
+  try{__systemViewEmitV31('token_removed',{mint,reason,ts:Date.now()})}catch{}
+  return true;
 }
 
 function __mfPruneScannerRuntimeState(now=Date.now()){
@@ -64,16 +107,36 @@ function __mfPruneScannerRuntimeState(now=Date.now()){
 
   for(const token of Object.values(store.state.tokens||{})){
     const mint=String(token?.mint||'');
-    if(__mfIsCurrentScannerToken(token,now)){
-      if(mint)liveMints.add(mint);
+    if(!mint)continue;
+    if(open.has(mint))continue;
+
+    const lifecycleReason=
+      token?.dead===true
+        ? (token.deadReason||'DEAD')
+        : opportunityEngine?.staleReason?.(token,now);
+
+    if(lifecycleReason){
+      __mfDropScannerToken(mint,lifecycleReason);
       continue;
     }
-    if(mint&&!open.has(mint))delete store.state.tokens[mint];
+
+    if(!__mfIsCurrentScannerToken(token,now)){
+      __mfDropScannerToken(mint,'SESSION_OR_TTL_EXPIRED');
+      continue;
+    }
+
+    const age=Math.max(0,now-Number(token.discoveredAt||now));
+    if(age>=15_000&&__mfAllActiveUsersStableBlocked(mint,now)){
+      __mfDropScannerToken(mint,'STABLE_SETTINGS_REJECTED');
+      continue;
+    }
+
+    liveMints.add(mint);
   }
 
   for(const [key,d] of Object.entries(store.state.decisions||{})){
     const mint=String(d?.mint||'');
-    if(mint&&!liveMints.has(mint))delete store.state.decisions[key];
+    if(mint&&!liveMints.has(mint)&&!open.has(mint))delete store.state.decisions[key];
   }
 
   for(const [uid,index] of Object.entries(store._uidDec||{})){
@@ -86,7 +149,7 @@ function __mfPruneScannerRuntimeState(now=Date.now()){
 
 const __mfScannerPruneTimer=setInterval(
   ()=>__mfPruneScannerRuntimeState(),
-  Math.max(15_000,Number(process.env.LIVE_SCANNER_PRUNE_MS||60_000))
+  Math.max(1000,Number(process.env.LIVE_SCANNER_PRUNE_MS||5000))
 );
 __mfScannerPruneTimer.unref?.();
 
@@ -809,6 +872,18 @@ function candidateView(d){
     developerSharePct:developerPct,
     buyPressure,
     momentum:buyPressure,
+    qualityScore:finite(t.qualityScore),
+    opportunityScore:finite(t.opportunityScore),
+    opportunityEvidenceReady:t.opportunityEvidenceReady===true,
+    opportunityTrendHealthy:t.opportunityTrendHealthy===true,
+    uniqueBuyers:finite(t.uniqueBuyers),
+    netFlowSol:finite(t.netFlowSol),
+    recentNetFlowSol:finite(t.recentNetFlowSol),
+    priceMomentumPct:finite(t.priceMomentumPct),
+    drawdownFromPeakPct:finite(t.drawdownFromPeakPct),
+    whaleDominancePct:finite(t.whaleDominancePct),
+    dead:t.dead===true,
+    deadReason:t.deadReason||null,
     ageMinutes:tokenAgeMinutes(t),
     volume5mSol:market5m.volume5mSol,
     volume5mUsd:market5m.volume5mUsd,
@@ -1873,6 +1948,7 @@ async function __mfWsMetadataEnrich(mint,uri){
           m?.links?.telegram
         ),
 
+        metadataDescription:txt(m.description,m?.metadata?.description),
         socialsKnown:true
       }
     );
@@ -2026,8 +2102,27 @@ function __ingestPumpCreateEventDirect(
     realTokenReservesRaw:
       e.realTokenReserves?.toString?.()||null,
 
+    initialRealTokenReservesRaw:
+      e.realTokenReserves?.toString?.()||null,
+
     tokenTotalSupplyRaw:
       e.tokenTotalSupply?.toString?.()||null,
+
+    quoteMint:e.quoteMint||null,
+    virtualQuoteReservesRaw:e.virtualQuoteReserves?.toString?.()||null,
+    createSlot:slot,
+    createSignature:signature,
+    bondingCurvePct:0,
+    buyTransactions:0,
+    sellTransactions:0,
+    totalTransactions:0,
+    totalFeesSol:0,
+    volume24hSol:0,
+    opportunityScore:0,
+    opportunityEvidenceReady:false,
+    opportunityTrendHealthy:false,
+    dead:false,
+    deadReason:null,
 
     scanError:null,
 
@@ -2129,7 +2224,8 @@ function startDiscovery(i=0){
         try{
           __pumpLiveTradeFeed?.ingestLogs?.(logs,{
             signature:String(sig||''),
-            source:'discovery-ws'
+            source:'discovery-ws',
+            slot:m.params?.result?.context?.slot??null
           });
         }catch{}
 
@@ -3480,6 +3576,8 @@ if(url.pathname==='/api/ai/decisions'){
     freshScannerTokens:__mfLiveScannerTokens().length,
     scannerSessionStartedAt:__mfScannerRuntimeStartedAt,
     scannerTokenTtlMs:__mfScannerTokenTtlMs,
+    opportunityEngine:opportunityEngine.diagnostics(),
+    solUsdOracle:solUsdOracle.diagnostics(),
     users:Object.keys(store.state.users).length,
     decisionsInMemory:Object.values(store._uidDec).reduce((s,m)=>s+m.size,0)
   });
@@ -3840,7 +3938,10 @@ const __pumpLiveTradeFeed=startPumpLiveTradeFeed({
   store: typeof store!=='undefined'?store:null,
   publish: typeof publish==='function'?publish:null,
   publishTrade: typeof publishTrade==='function'?publishTrade:null,
-  evaluateAI: typeof evaluateAll==='function'?evaluateAll:null
+  evaluateAI: typeof evaluateAll==='function'?evaluateAll:null,
+  opportunityEngine,
+  getSolUsd:()=>solUsdOracle.get(),
+  onDead:(mint,reason)=>__mfDropScannerToken(mint,reason)
 });
 
 // MEMEFLOW_V12_22_WS_DIRECT_TRADE_EVENT: live feed module now decodes Pump TradeEvent directly from logsSubscribe; no per-signature HTTP getTransaction.
@@ -4223,12 +4324,19 @@ async function __mfVerifyPreOpenRisk(
       scanned.token;
   }
 
-  // Apply this user's own configured maxima to the now-known RPC evidence.
-  const finalDecision=
-    evaluate(
-      updated,
-      settings
-    );
+  // MEMEFLOW_OPPORTUNITY_ENGINE_V1
+  // RPC may take seconds. Re-read the newest WS snapshot before entry.
+  const latest=store.state.tokens?.[updated.mint]||null;
+  if(!latest||latest.dead===true){
+    return {ok:false,code:'PREOPEN_TOKEN_DEAD_OR_REMOVED',token:latest||updated,decision};
+  }
+  const currentSampleKey=__mfWalletRiskSampleKey(latest);
+  if(latest.walletClusterRiskSampleKey&&currentSampleKey&&latest.walletClusterRiskSampleKey!==currentSampleKey){
+    try{store.setToken(latest.mint,{preOpenRiskStatus:'HOLDER_SAMPLE_CHANGED'})}catch{}
+    return {ok:false,code:'WALLET_RISK_SAMPLE_CHANGED',token:latest,decision};
+  }
+  updated=latest;
+  const finalDecision=evaluate(updated,settings);
 
   const settingsVersion=
     store.state.users?.[uid]?.settingsVersion ||

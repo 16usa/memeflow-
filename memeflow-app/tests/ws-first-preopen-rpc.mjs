@@ -108,6 +108,11 @@ const token={
   top10Pct:20,
   developerPct:5,
   buyPressure:2,
+  qualityScore:90,
+  opportunityScore:80,
+  opportunityEvidenceReady:true,
+  opportunityTrendHealthy:true,
+  opportunityEventCount:10,
 
   suspectedRiskyWalletsPct:null,
   insidersPct:null

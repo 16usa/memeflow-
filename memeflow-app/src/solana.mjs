@@ -321,10 +321,14 @@ export function decodePumpCreateEventLog(log){
     let tokenProgram=null;
     let isMayhemMode=null;
     let isCashbackEnabled=null;
+    let quoteMint=null;
+    let virtualQuoteReserves=null;
 
     if(o+32<=b.length)tokenProgram=pk();
     if(o<b.length&&(b[o]===0||b[o]===1))isMayhemMode=b[o++]===1;
     if(o<b.length&&(b[o]===0||b[o]===1))isCashbackEnabled=b[o++]===1;
+    if(o+32<=b.length)quoteMint=pk();
+    if(o+8<=b.length)virtualQuoteReserves=u64b();
 
     return {
       kind:'create_event',
@@ -337,7 +341,9 @@ export function decodePumpCreateEventLog(log){
       tokenTotalSupply,
       tokenProgram,
       isMayhemMode,
-      isCashbackEnabled
+      isCashbackEnabled,
+      quoteMint,
+      virtualQuoteReserves
     };
   }catch{
     return null;
