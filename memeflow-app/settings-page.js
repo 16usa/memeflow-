@@ -28,7 +28,7 @@ const MF293 = {
 };
 
 const MF293_GROUPS = [
-  ['logic', 'Logic', 'Post-admission decision rules · controls WAITING / WATCH / BUY READY', true, [
+  ['logic', 'Logic', 'Post-admission decision rules · controls WAITING / WATCH / BUY READY', false, [
     ['operatingMode', 'Operating mode', 'select', [['observe','Observe'],['assist','Assist'],['automate','Automate']]],
     ['tradingEnvironment', 'Trading environment', 'select', [['paper','Paper'],['live','Live']]],
     ['profile', 'Decision preset', 'select', [['conservative','Conservative'],['balanced','Balanced'],['aggressive','Aggressive'],['custom','Custom']]],
@@ -41,7 +41,7 @@ const MF293_GROUPS = [
     ['shadowValidation', 'Shadow validation', 'boolean'],
     ['changeLog', 'Settings change log', 'boolean']
   ]],
-  ['trading', 'Trading', 'Capital, position sizing and daily limits', true, [
+  ['trading', 'Trading', 'Capital, position sizing and daily limits', false, [
     ['tradingCapital', 'Trading capital SOL', 'number', 0, null, 0.01],
     ['dailySpendLimit', 'Daily spend limit SOL', 'number', 0, null, 0.01],
     ['positionSize', 'Default position SOL', 'number', 0.000001, null, 0.01],
@@ -98,7 +98,7 @@ const MF293_GROUPS = [
     ['maxSuspectedRiskyWalletsPct', 'Maximum linked / risky wallets %', 'nullable', 0, 100, 0.1],
     ['maxInsidersPct', 'Maximum insiders / common-funder wallets %', 'nullable', 0, 100, 0.1]
   ]],
-  ['exits', 'Risk & exits', 'Stops, take profit allocation and exit pressure', true, [
+  ['exits', 'Risk & exits', 'Stops, take profit allocation and exit pressure', false, [
     ['hardStopPct', 'Hard stop %', 'number', 0.000001, 100, 0.1],
     ['trailingStopPct', 'Trailing stop %', 'number', 0, 100, 0.1],
     ['tp1Pct', 'TP1 gain %', 'number', 0.000001, null, 1],
@@ -369,7 +369,9 @@ function mf293Build() {
   for (const [id, title, subtitle, open, fields] of MF293_GROUPS) {
     const section = document.createElement('details');
     section.className = 'mf293-settings-group';
-    section.open = open;
+    // MEMEFLOW_SETTINGS_ACCORDIONS_CLOSED_DEFAULT_V1
+    // All Settings sections start collapsed. The user opens only what they need.
+    section.open = false;
     const summary = document.createElement('summary');
     summary.innerHTML = `<span><strong>${title}</strong><small>${subtitle}</small></span><i></i>`;
     const grid = document.createElement('div');

@@ -301,13 +301,14 @@
     const wallet = document.createElement('details');
     wallet.id = 'mfAccountWalletGroup';
     wallet.className = 'mf293-settings-group mf-account-settings-group';
-    wallet.open = true;
+    // MEMEFLOW_SETTINGS_ACCORDIONS_CLOSED_DEFAULT_V1
+    wallet.open = false;
     wallet.innerHTML = walletHtml();
 
     const execution = document.createElement('details');
     execution.id = 'mfExecutionSettingsGroup';
     execution.className = 'mf293-settings-group mf-account-settings-group';
-    execution.open = true;
+    execution.open = false;
     execution.innerHTML = executionHtml();
 
     const executionBadge = document.createElement('span');
@@ -331,7 +332,10 @@
     renderWallet();
     refresh();
 
-    if (location.hash === '#wallet') requestAnimationFrame(()=>wallet.scrollIntoView({behavior:'smooth',block:'start'}));
+    if (location.hash === '#wallet') {
+      wallet.open = true;
+      requestAnimationFrame(()=>wallet.scrollIntoView({behavior:'smooth',block:'start'}));
+    }
     return true;
   }
 
