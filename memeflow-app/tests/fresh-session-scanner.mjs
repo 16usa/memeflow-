@@ -11,27 +11,31 @@ const app=fs.readFileSync(new URL('../app-server.mjs',import.meta.url),'utf8');
 const holders=fs.readFileSync(new URL('../src/event-holder-ledger.mjs',import.meta.url),'utf8');
 const trades=fs.readFileSync(new URL('../src/pump-live-trade-feed.mjs',import.meta.url),'utf8');
 
-assert.match(app,/MEMEFLOW_FRESH_SESSION_SCANNER_V1/);
+assert.match(app,/MEMEFLOW_PERMANENT_TOKEN_REGISTRY_V1/);
+assert.match(app,/MEMEFLOW_RESTART_CONTINUITY_V1/);
 assert.match(app,/__mfScannerRuntimeStartedAt/);
 assert.match(app,/__mfLiveScannerTokens/);
-assert.match(app,/const _rawTokens=__mfLiveScannerTokens\(\)/);
-assert.match(app,/const _tokens=_rawTokens\.slice\(0,_lim\)/);
 assert.match(app,/freshScannerTokens:__mfLiveScannerTokens\(\)\.length/);
+assert.match(app,/scannerTokenLifetime:'permanent-registry'/);
+assert.match(app,/scannerCacheMaxTokens:__mfScannerCacheMaxTokens/);
+assert.doesNotMatch(app,/LIVE_SCANNER_TOKEN_TTL_MS/);
+assert.doesNotMatch(app,/SESSION_OR_TTL_EXPIRED/);
 assert.match(app,/setHeader\('cache-control','no-store'\)/);
 
-// MEMEFLOW_SCAN_DISPLAY_TRADE_SPLIT_V1 regression
-// Live Token States must show raw scanner inventory. User settings only decide
-// trade eligibility / trading decisions.
+// Scanner sees all. Entry Filters control cards + trading.
 const liveRoute=app.slice(
   app.indexOf("if(url.pathname==='/api/system/live-token-states'"),
   app.indexOf("if(url.pathname==='/api/ai/decisions'")
 );
-assert.match(liveRoute,/MEMEFLOW_SCAN_DISPLAY_TRADE_SPLIT_V1_ROUTE/);
-assert.match(liveRoute,/tradeEligible:/);
-assert.match(liveRoute,/displayOnly:/);
-assert.match(liveRoute,/preAdmissionHidden:0/);
-assert.doesNotMatch(liveRoute,/const _admittedAll=_rawTokens\.filter/);
-assert.doesNotMatch(liveRoute,/store\.setDecision/);
+assert.match(liveRoute,/MEMEFLOW_SCAN_ALL_DISPLAY_FILTERED_V2/);
+assert.match(liveRoute,/const _rawTokens=__mfLiveScannerTokens\(\)/);
+assert.match(liveRoute,/if\(!_eligible&&!_isOpen\)/);
+assert.match(liveRoute,/_hiddenBySettings\+\+/);
+assert.match(liveRoute,/preAdmissionHidden:_hiddenBySettings/);
+assert.match(liveRoute,/system-live-token-states-filtered-unbounded-v2/);
+assert.doesNotMatch(liveRoute,/Math\.min\(500/);
+assert.doesNotMatch(liveRoute,/_rawTokens\.slice\(0,_lim\)/);
+
 assert.doesNotMatch(app,/MEMEFLOW_AGE_THRESHOLD_WAKE_V1/);
 assert.match(app,/const __mfPreAdmissionSweepTimer=setInterval/);
 assert.match(app,/trade-ineligible -> trade-eligible/);
@@ -65,6 +69,8 @@ const pruneScannerFn=app.slice(
 assert.doesNotMatch(pruneScannerFn,/opportunityEngine\?\.staleReason/);
 assert.doesNotMatch(pruneScannerFn,/const lifecycleReason=/);
 assert.doesNotMatch(pruneScannerFn,/STABLE_SETTINGS_REJECTED/);
+assert.doesNotMatch(pruneScannerFn,/SESSION_OR_TTL_EXPIRED/);
+assert.match(pruneScannerFn,/HOT_CACHE_CAPACITY_EVICTED/);
 
 // Scanner/chart evidence collection must not depend on any user's filters.
 const publishTradeFn=app.slice(
@@ -132,23 +138,51 @@ const dedupeAt=trades.indexOf('const key=tradeEventKey(e,signature,i);');
 assert.ok(decodedAt>=0&&knownAt>decodedAt,'known-mint gate must follow decode');
 assert.ok(dedupeAt>knownAt,'known-mint gate must run before dedupe');
 
-// JsonStore must persist token snapshots ONLY for OPEN positions.
-const tmp=fs.mkdtempSync(path.join(os.tmpdir(),'mf-fresh-store-'));
+// state.json stays compact, while SQLite permanently preserves scanner tokens.
+const tmp=fs.mkdtempSync(path.join(os.tmpdir(),'mf-registry-store-'));
+let s=null,s2=null;
 try{
-  const s=new JsonStore(tmp);
-  s.state.tokens={
-    stale:{mint:'stale',name:'STALE'},
-    open:{mint:'open',name:'OPEN'}
-  };
+  s=new JsonStore(tmp);
   s.state.paperPositions={
     p1:{id:'p1',mint:'open',status:'OPEN'}
   };
+
+  s.addToken({
+    mint:'recent',
+    name:'RECENT',
+    wsFirst:true,
+    launchPlatform:'pump',
+    pumpCreatedAt:Date.now()-60_000,
+    discoveredAt:Date.now()-60_000
+  });
+
+  s.addToken({
+    mint:'open',
+    name:'OPEN',
+    wsFirst:true,
+    launchPlatform:'pump',
+    pumpCreatedAt:Date.now()-120_000,
+    discoveredAt:Date.now()-120_000
+  });
+
   s.save();
-  await new Promise(r=>setTimeout(r,350));
+  await new Promise(r=>setTimeout(r,500));
+  s.tokenRegistry.flush();
+
   const disk=JSON.parse(fs.readFileSync(path.join(tmp,'state.json'),'utf8'));
   assert.deepEqual(Object.keys(disk.tokens||{}),['open']);
   assert.equal(disk.decisions,undefined);
+
+  assert.ok(s.tokenRegistry.count()>=2);
+  s.close();s=null;
+
+  s2=new JsonStore(tmp);
+  assert.equal(s2.getToken('recent')?.mint,'recent');
+  assert.equal(s2.getToken('open')?.mint,'open');
+  assert.ok(s2.registryStatus().permanentTokens>=2);
 }finally{
+  try{s?.close?.()}catch{}
+  try{s2?.close?.()}catch{}
   fs.rmSync(tmp,{recursive:true,force:true});
 }
 

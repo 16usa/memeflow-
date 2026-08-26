@@ -61,7 +61,33 @@ function marketFromEvent(e){
   if(e.realSolReserves!==null)liquiditySol=Number(e.realSolReserves)/1e9;
   return {priceSol,liquiditySol};
 }
-function tokenFromStore(store,mint){try{return store?.getToken?.(mint)||store?.state?.tokens?.[mint]||(Array.isArray(store?.state?.tokens)?store.state.tokens.find(x=>x?.mint===mint):null)||null}catch{return null}}
+function tokenFromStore(store,mint){
+  try{
+    const token=
+      store?.getToken?.(mint)||
+      store?.state?.tokens?.[mint]||
+      (Array.isArray(store?.state?.tokens)
+        ? store.state.tokens.find(x=>x?.mint===mint)
+        : null)||
+      null;
+
+    if(
+      token?.registryHistorical===true &&
+      token?.wsFirst!==true &&
+      typeof store?.setToken==='function'
+    ){
+      return store.setToken(mint,{
+        wsFirst:true,
+        registryReactivatedAt:Date.now(),
+        source:token.source||'Pump registry reactivated by live trade'
+      });
+    }
+
+    return token;
+  }catch{
+    return null
+  }
+}
 
 export function startPumpLiveTradeFeed(opts={}){
   const {

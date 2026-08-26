@@ -437,16 +437,17 @@ export function evaluateSettingsAdmission(token={},entries=[],options={}){
 // Settings are intentionally split into three non-overlapping policy layers:
 //
 // 1) ENTRY_ADMISSION_KEYS
-//    Decide TRADE eligibility only. They never control Pump discovery,
-//    scanner retention, data collection, or Live Token States visibility.
+//    Scanner collection is unconditional. These keys decide BOTH whether a
+//    token card is visible in Live Token States and whether it may enter the
+//    trading Logic pipeline.
 //
 // 2) LOGIC_DECISION_KEYS
-//    Run only AFTER trade admission. They may produce WAITING / WATCH /
-//    BUY READY, but they never remove a token from scanner/display inventory.
+//    Run only AFTER Entry admission. They decide WAITING / WATCH / BUY READY
+//    and execution eligibility; they never stop raw Pump scanning.
 //
 // 3) PREOPEN_RPC_KEYS
 //    Heavy linked/funded-wallet verification. These are FINAL-ONLY and remain
-//    behind BUY READY. They never participate in scanner/display admission.
+//    behind BUY READY. They never participate in raw scanner collection.
 export const ENTRY_ADMISSION_KEYS = Object.freeze([
   'launchPlatforms',
   'includeKeywords',

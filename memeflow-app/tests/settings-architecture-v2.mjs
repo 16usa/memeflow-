@@ -226,7 +226,7 @@ for(const obsolete of [
 assert.match(settingsPage,/\['preopen', 'Pre-open RPC verification'/);
 assert.match(settingsPage,/\['profile', 'Decision preset'.*?'custom','Custom'/s);
 assert.match(settingsPage,/Minimum buy pressure for BUY READY/);
-assert.match(settingsPage,/Trading eligibility only/);
+assert.match(settingsPage,/Scanner scans all · these filters control cards \+ trading/);
 assert.match(settingsPage,/mf293SyncProfileSelection/);
 
 const filterStart=settingsPage.indexOf("['filters', 'Entry filters'");

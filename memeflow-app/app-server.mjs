@@ -11,6 +11,7 @@ import { ChartHistoryArchive } from './src/chart-history-archive.mjs'; // MEMEFL
 import {createOpportunityEngine} from './src/opportunity-engine.mjs'; // MEMEFLOW_OPPORTUNITY_ENGINE_V1
 import {createSolUsdOracle} from './src/sol-usd-oracle.mjs'; // MEMEFLOW_OPPORTUNITY_ENGINE_V1
 import {rankCandidateViews} from './src/feed-ranking.mjs'; // MEMEFLOW_FEED_RELEVANCE_RANKING_V1
+import {startPumpHistoryBackfill} from './src/pump-history-backfill.mjs'; // MEMEFLOW_PERMANENT_TOKEN_REGISTRY_V1
 
 import { eventMarketLedger } from './src/event-market-ledger.mjs'; // MEMEFLOW_V12_18_EVENT_MARKET_LEDGER
 
@@ -22,14 +23,15 @@ const root=path.dirname(fileURLToPath(import.meta.url)),dataDir=path.resolve(roo
 const opportunityEngine=createOpportunityEngine(); // MEMEFLOW_OPPORTUNITY_ENGINE_V1
 const solUsdOracle=createSolUsdOracle(); // one shared quote, never per-token RPC
 solUsdOracle.start();
-// MEMEFLOW_FRESH_SESSION_SCANNER_V1
-// Live scanner data is session-scoped. A restart starts a clean scanner while
-// OPEN-position token snapshots remain available for position continuity.
-const __mfScannerRuntimeStartedAt=Date.now();
-const __mfScannerTokenTtlMs=Math.max(
-  5*60_000,
-  Number(process.env.LIVE_SCANNER_TOKEN_TTL_MS||3*60*60_000)
+// MEMEFLOW_PERMANENT_TOKEN_REGISTRY_V1
+// Token lifetime is permanent in the registry. There is NO 3-hour token TTL.
+// RAM is only a hot cache and may be capacity-evicted without deleting history.
+const __mfScannerRuntimeStartedAt=Date.now(); // diagnostics only
+const __mfScannerCacheMaxTokens=Math.max(
+  1000,
+  Number(process.env.LIVE_SCANNER_CACHE_MAX_TOKENS||20000)
 );
+let __mfPumpHistoryBackfill=null;
 
 function __mfOpenPositionMints(){
   const out=new Set();
@@ -43,24 +45,20 @@ function __mfOpenPositionMints(){
 }
 
 {
-  const keep=__mfOpenPositionMints();
-  for(const mint of Object.keys(store.state.tokens||{})){
-    if(!keep.has(String(mint)))delete store.state.tokens[mint];
-  }
+  // MEMEFLOW_RESTART_CONTINUITY_V1
+  // A restart/deploy NEVER wipes scanner inventory. JsonStore already restored
+  // the hot cache from the permanent registry. Only decisions are rebuilt from
+  // the user's current settings.
   store.state.decisions={};
   store._uidDec={};
   store.save();
 }
 
 function __mfIsCurrentScannerToken(token,now=Date.now()){
-  if(!token||token.wsFirst!==true)return false;
-  const discovered=Number(token.discoveredAt||0);
-  if(!(discovered>=__mfScannerRuntimeStartedAt))return false;
-
-  // MEMEFLOW_SETTINGS_CONTROL_SCANNER_RETENTION_V1
-  // Opportunity/dead state may BLOCK a trade, but it must not silently remove
-  // a Pump token before the user's age/settings filters get a chance to run.
-  return now-discovered<=__mfScannerTokenTtlMs;
+  void now;
+  // Token age is NOT a lifetime rule. A known hot Pump token remains scanner
+  // inventory until RAM cache capacity requires a cold eviction.
+  return Boolean(token&&token.wsFirst===true);
 }
 
 function __mfLiveScannerTokens(now=Date.now()){
@@ -116,33 +114,47 @@ function __mfDropScannerToken(mint,reason='PRUNED'){
 }
 
 function __mfPruneScannerRuntimeState(now=Date.now()){
+  // MEMEFLOW_PERMANENT_TOKEN_REGISTRY_V1
+  // No age TTL and no settings-based deletion. This function is RAM hygiene
+  // only; SQLite remains the permanent source of truth.
   const open=__mfOpenPositionMints();
-  const liveMints=new Set();
+  const scannerRows=Object.values(store.state.tokens||{})
+    .filter(token=>__mfIsCurrentScannerToken(token,now));
 
-  for(const token of Object.values(store.state.tokens||{})){
-    const mint=String(token?.mint||'');
-    if(!mint)continue;
-    if(open.has(mint))continue;
+  if(scannerRows.length>__mfScannerCacheMaxTokens){
+    const excess=scannerRows.length-__mfScannerCacheMaxTokens;
 
-    // MEMEFLOW_SETTINGS_CONTROL_SCANNER_RETENTION_V1
-    // Do NOT prune by opportunityEngine.staleReason/dead here.
-    // Previously tokens could be deleted for NO_TRADES_45S, LOW_ACTIVITY,
-    // INACTIVE_90S, FAILED_MOMENTUM or DEAD long before a configured
-    // minTokenAgeMinutes (for example 5 minutes) could ever be reached.
-    // Opportunity/dead signals remain available to evaluate() and can still
-    // produce WATCH/BLOCKED; they simply do not destroy scanner inventory.
+    const evictable=scannerRows
+      .filter(token=>!open.has(String(token?.mint||'')))
+      .sort((a,b)=>{
+        const at=Number(
+          a?.lastMarketActivityAt ??
+          a?.lastPriceAt ??
+          a?.updatedAt ??
+          a?.discoveredAt ??
+          0
+        );
+        const bt=Number(
+          b?.lastMarketActivityAt ??
+          b?.lastPriceAt ??
+          b?.updatedAt ??
+          b?.discoveredAt ??
+          0
+        );
+        return at-bt;
+      })
+      .slice(0,excess);
 
-    if(!__mfIsCurrentScannerToken(token,now)){
-      __mfDropScannerToken(mint,'SESSION_OR_TTL_EXPIRED');
-      continue;
+    for(const token of evictable){
+      __mfDropScannerToken(token.mint,'HOT_CACHE_CAPACITY_EVICTED');
     }
-
-    // MEMEFLOW_SCAN_DISPLAY_TRADE_SPLIT_V1
-    // User settings may block a TRADE, but they never delete the raw Pump
-    // scanner row. Raw retention is controlled only by session/TTL lifecycle.
-
-    liveMints.add(mint);
   }
+
+  const liveMints=new Set(
+    __mfLiveScannerTokens(now)
+      .map(token=>String(token?.mint||''))
+      .filter(Boolean)
+  );
 
   for(const [key,d] of Object.entries(store.state.decisions||{})){
     const mint=String(d?.mint||'');
@@ -2050,6 +2062,18 @@ function __ingestPumpCreateEventDirect(
   discMetrics.lastSuccessfulScanAt=Date.now();
 
   try{
+    store.tokenRegistry?.setCheckpoint?.(
+      'pump-live-create-v1',
+      {
+        mint:e.mint,
+        signature:String(signature||''),
+        slot:slot??null,
+        seenAt:Date.now()
+      }
+    );
+  }catch{}
+
+  try{
     Promise
       .resolve(evaluateAll(token))
       .catch(()=>{});
@@ -2822,24 +2846,32 @@ if(false && url.pathname==='/api/ai/assistant' &&req.method==='POST'){
 
   // MEMEFLOW_LIVE_TOKEN_STATES_V7
  if(url.pathname==='/api/system/live-token-states'&&req.method==='GET'){
-  // MEMEFLOW_SCAN_DISPLAY_TRADE_SPLIT_V1_ROUTE
-  // DISPLAY: every raw Pump scanner token.
-  // TRADE: user Entry Filters + Logic still gate decisions/execution.
-  // This endpoint never creates a trading decision merely to render a card.
-  const _lim=Math.min(500,Math.max(1,Number(url.searchParams.get('limit')||500)));
+  // MEMEFLOW_SCAN_ALL_DISPLAY_FILTERED_V2
+  // SCAN: every Pump token in the hot scanner cache.
+  // DISPLAY: only Entry-Filter-admitted tokens + OPEN positions.
+  // TRADE: the same Entry Filters remain mandatory before Logic/execution.
+  //
+  // The old fixed API cap of 500 is removed. "limit" is optional; when the
+  // current client does not send it, all matching hot-cache rows are returned
+  // and the existing UI paginates them. Permanent registry size is unlimited.
+  const _requestedLimit=Math.floor(Number(url.searchParams.get('limit')||0));
+  const _limit=Number.isFinite(_requestedLimit)&&_requestedLimit>0
+    ? _requestedLimit
+    : null;
+
   const _settings=store.settings(u.id);
   const _rawTokens=__mfLiveScannerTokens();
-  const _tokens=_rawTokens.slice(0,_lim);
+  const _openMints=__mfOpenPositionMints();
 
-  let _tradeEligible=0;
-  let _tradeIneligible=0;
-  let _displayEvaluated=0;
+  let _admitted=0;
+  let _hiddenBySettings=0;
+  let _openOverride=0;
   let _evalErrors=0;
   let _viewErrors=0;
 
   const _displayRows=[];
 
-  for(const _token of _tokens){
+  for(const _token of _rawTokens){
     const _mint=String(_token?.mint||'').trim();
     if(!_mint)continue;
 
@@ -2855,23 +2887,22 @@ if(false && url.pathname==='/api/ai/assistant' &&req.method==='POST'){
     }
 
     const _eligible=_admission?.admitted===true;
-    if(_eligible)_tradeEligible++;
-    else _tradeIneligible++;
+    const _isOpen=_openMints.has(_mint);
+
+    if(!_eligible&&!_isOpen){
+      _hiddenBySettings++;
+      continue;
+    }
+
+    if(_eligible)_admitted++;
+    if(_isOpen&&!_eligible)_openOverride++;
 
     const _key=u.id+':'+_mint;
-
-    // Reuse a real trading decision only when one already exists.
-    // Otherwise perform a pure display evaluation; DO NOT store it and
-    // DO NOT call __mfHandleDecision.
-    let _decision=
-      _eligible
-        ? (store.state.decisions?.[_key]||null)
-        : null;
+    let _decision=store.state.decisions?.[_key]||null;
 
     if(!_decision){
       try{
         _decision=evaluate(_token,_settings);
-        _displayEvaluated++;
       }catch(_error){
         _evalErrors++;
         _decision={
@@ -2888,7 +2919,7 @@ if(false && url.pathname==='/api/ai/assistant' &&req.method==='POST'){
       ..._decision,
       mint:_mint,
       tradeEligible:_eligible,
-      displayOnly:!_eligible,
+      openPositionOverride:_isOpen&&!_eligible,
       entryAdmissionState:_admission?.state||null,
       entryAdmissionReasons:Array.isArray(_admission?.reasons)
         ? _admission.reasons
@@ -2907,41 +2938,31 @@ if(false && url.pathname==='/api/ai/assistant' &&req.method==='POST'){
 
   const _unrankedViews=[];
   for(const _decision of _selected){
-    try{
-      _unrankedViews.push(candidateView(_decision));
-    }catch(_error){
-      _viewErrors++;
-    }
+    try{_unrankedViews.push(candidateView(_decision))}
+    catch(_error){_viewErrors++}
   }
 
-  // State priority remains UI-only. It never changes scanner inclusion.
   const _rankedViews=rankCandidateViews(_unrankedViews);
-  const _views=_rankedViews.slice(0,_lim);
+  const _views=_limit
+    ? _rankedViews.slice(0,_limit)
+    : _rankedViews;
 
   return json(res,200,{
     decisions:_views,
-    total:_rawTokens.length,
+    total:_rankedViews.length,
     returned:_views.length,
-    limit:_lim,
-    source:'system-live-token-states-scan-all-v1',
+    limit:_limit,
+    source:'system-live-token-states-filtered-unbounded-v2',
 
-    // Scanner/display truth.
+    // Scanner truth.
     rawScannerTokens:_rawTokens.length,
-    displayedScannerTokens:_tokens.length,
+    permanentRegistryTokens:store.tokenRegistry?.count?.()||0,
 
-    // Trading gate truth.
-    tradeEligible:_tradeEligible,
-    tradeIneligible:_tradeIneligible,
+    // Display/trading-filter truth.
+    preAdmissionAdmitted:_admitted,
+    preAdmissionHidden:_hiddenBySettings,
+    openPositionOverride:_openOverride,
 
-    // Compatibility aliases. "Hidden" is intentionally always zero now.
-    persistedTokens:_tokens.length,
-    preAdmissionAdmitted:_tradeEligible,
-    preAdmissionHidden:0,
-
-    // Display evaluation is deliberately side-effect free.
-    displayEvaluated:_displayEvaluated,
-    recovered:0,
-    reindexed:0,
     evaluationErrors:_evalErrors,
     viewErrors:_viewErrors,
     stateCounts:_stateCounts,
@@ -3296,7 +3317,11 @@ if(url.pathname==='/api/ai/decisions'){
       __mfLiveScannerTokens().length-__mfAdmittedScannerTokensForUser(u.id).length
     ),
     scannerSessionStartedAt:__mfScannerRuntimeStartedAt,
-    scannerTokenTtlMs:__mfScannerTokenTtlMs,
+    scannerTokenTtlMs:null,
+    scannerTokenLifetime:'permanent-registry',
+    scannerCacheMaxTokens:__mfScannerCacheMaxTokens,
+    tokenRegistry:store.registryStatus?.()||null,
+    historyBackfill:__mfPumpHistoryBackfill?.metrics?.()||null,
     opportunityEngine:opportunityEngine.diagnostics(),
     solUsdOracle:solUsdOracle.diagnostics(),
     users:Object.keys(store.state.users).length,
@@ -3645,7 +3670,30 @@ process.on('unhandledRejection',r=>{console.error('[MEMEFLOW] unhandledRejection
 const server=http.createServer((req,res)=>handler(req,res).catch(e=>json(res,500,{error:'SERVER_ERROR',message:e.message})));server.listen(Number(process.env.PORT||3000),'0.0.0.0',()=>{
   const listenAt=Date.now();
   console.log(`MEMEFLOW listening on ${process.env.PORT||3000}`);
+
+  // Priority #1: live WebSocket starts immediately.
   startDiscovery();
+
+  // Priority #2: low-rate history/gap sync starts in the background. It never
+  // blocks the live scanner and never consumes Solana RPC capacity.
+  __mfPumpHistoryBackfill=startPumpHistoryBackfill({
+    registry:store.tokenRegistry,
+    onRecentToken:(token)=>{
+      // Recent head-sync repairs tokens missed while the server was down.
+      // Deep historical pages stay cold in SQLite until they become active.
+      const age=tokenAgeMinutes(token);
+      if(!Number.isFinite(Number(age))||Number(age)>360)return;
+
+      const current=store.getToken(token.mint);
+      const hot=current
+        ? store.setToken(token.mint,{...token,wsFirst:true,historyGapRestored:true})
+        : store.addToken({...token,wsFirst:true,historyGapRestored:true});
+
+      Promise.resolve(evaluateAll(hot)).catch(()=>{});
+      try{publish(token.mint)}catch{}
+    }
+  });
+
   startDecisionRecovery({store,metrics:recoveryMetrics,getLiveState:()=>({queueDepth:0,processing:0}),batchSize:DECISION_RECOVERY_BATCH_SIZE,delayMs:DECISION_RECOVERY_DELAY_MS,tokenLimit:DECISION_RECOVERY_TOKEN_LIMIT,activeUserHoursMs:DECISION_RECOVERY_ACTIVE_USER_HOURS*3600000})
     .then(()=>{const ms=recoveryMetrics.decisionRecoveryCompletedAt-listenAt;console.log(`[RECOVERY] complete in ${ms}ms — ${recoveryMetrics.decisionRecoveryTokensProcessed} tokens, ${recoveryMetrics.decisionRecoveryDecisionsCreated} decisions, ${recoveryMetrics.decisionRecoveryErrors} errors`)})
     .catch(e=>console.error('[RECOVERY] error',e.message));

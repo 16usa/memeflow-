@@ -213,15 +213,17 @@ assert.match(app,/__mfAdmittedScannerTokensForUser\(u\.id\)/);
 assert.match(app,/preAdmissionHidden:/);
 assert.match(app,/preAdmissionHiddenForUser:/);
 
-// Entry admission is a TRADING gate, never a scanner/display gate.
+// Entry admission controls BOTH card visibility and trading eligibility.
+// Raw Pump scanning itself remains unconditional.
 const liveStatesRoute=app.slice(
   app.indexOf("if(url.pathname==='/api/system/live-token-states'"),
   app.indexOf("if(url.pathname==='/api/ai/decisions'")
 );
-assert.match(liveStatesRoute,/const _tokens=_rawTokens\.slice\(0,_lim\)/);
-assert.doesNotMatch(liveStatesRoute,/_admittedAll=_rawTokens\.filter/);
-assert.match(liveStatesRoute,/tradeEligible:_tradeEligible/);
-assert.match(liveStatesRoute,/preAdmissionHidden:0/);
+assert.match(liveStatesRoute,/MEMEFLOW_SCAN_ALL_DISPLAY_FILTERED_V2/);
+assert.match(liveStatesRoute,/const _rawTokens=__mfLiveScannerTokens\(\)/);
+assert.match(liveStatesRoute,/if\(!_eligible&&!_isOpen\)/);
+assert.match(liveStatesRoute,/preAdmissionHidden:_hiddenBySettings/);
+assert.doesNotMatch(liveStatesRoute,/Math\.min\(500/);
 
 const discovery=app.slice(
   app.indexOf('function startDiscovery(i=0){'),

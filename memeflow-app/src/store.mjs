@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import {defaultSettings,normalizeSettings} from './settings.mjs';
+import {TokenRegistry} from './token-registry.mjs';
 
 export class JsonStore {
   constructor(dir){
@@ -9,7 +10,27 @@ export class JsonStore {
     this.state={users:{},tokens:{},decisions:{},positions:{},stripeEvents:{},metrics:{discovered:0,scanned:0,errors:0},paperPositions:{},paperTrades:{},paperProposals:{},paperProcessed:{},paperMetrics:{entries:0,exits:0,errors:0},settingsAudit:{}};
     this._uidDec={}; // uid → Map<key,updatedAt> — in-memory only, not persisted
     fs.mkdirSync(dir,{recursive:true});
+
+    // MEMEFLOW_PERMANENT_TOKEN_REGISTRY_V1
+    // state.json remains compact; every discovered/scanned token is persisted
+    // independently in SQLite with WAL + batched writes.
+    this.tokenRegistry=new TokenRegistry(dir);
     this.load();
+
+    const warmLimit=Math.max(
+      1000,
+      Number(process.env.TOKEN_REGISTRY_WARM_LIMIT||5000)
+    );
+
+    for(const token of this.tokenRegistry.loadHot(warmLimit)){
+      const mint=String(token?.mint||'');
+      if(!mint)continue;
+      this.state.tokens[mint]={
+        ...token,
+        ...(this.state.tokens[mint]||{}),
+        registryRestored:true
+      };
+    }
   }
   load(){try{const d=JSON.parse(fs.readFileSync(this.file,'utf8'));this.state={...this.state,...d};if(!this.state.decisions)this.state.decisions={}}catch(_){}}
   // MEMEFLOW_FRESH_SESSION_SCANNER_V1
@@ -61,8 +82,38 @@ export class JsonStore {
     return Object.values(this.state.paperPositions||{}).some(p=>p?.mint===mint&&String(p?.status||'').toUpperCase()==='OPEN') ||
       Object.values(this.state.positions||{}).some(p=>p?.mint===mint&&String(p?.status||'').toUpperCase()==='OPEN');
   }
-  getToken(mint){return this.state.tokens?.[mint]||null}
-  addToken(t){const old=this.state.tokens[t.mint]||{};this.state.tokens[t.mint]={...old,...t,updatedAt:Date.now()};this.state.metrics.discovered++;if(this._tokenPersistenceRequired(t.mint))this.save();return this.state.tokens[t.mint]}
+  getToken(mint){
+    mint=String(mint||'');
+    if(!mint)return null;
+
+    const hot=this.state.tokens?.[mint]||null;
+    if(hot)return hot;
+
+    // Permanent registry lazy-hydration lets an old known Pump token become
+    // hot again immediately when a new live event references it.
+    const restored=this.tokenRegistry?.get?.(mint)||null;
+    if(!restored)return null;
+
+    this.state.tokens[mint]={
+      ...restored,
+      registryRestored:true
+    };
+    return this.state.tokens[mint];
+  }
+  addToken(t){
+    const old=this.state.tokens[t.mint]||{};
+    this.state.tokens[t.mint]={...old,...t,updatedAt:Date.now()};
+    this.state.metrics.discovered++;
+    this.tokenRegistry?.queueUpsert?.(
+      this.state.tokens[t.mint],
+      {
+        historical:t?.registryHistorical===true,
+        activityAt:t?.lastMarketActivityAt??t?.lastPriceAt??null
+      }
+    );
+    if(this._tokenPersistenceRequired(t.mint))this.save();
+    return this.state.tokens[t.mint]
+  }
   setToken(mint,t){
     const now=Date.now(),old=this.state.tokens[mint]||{};
     const patch={...(t||{})};
@@ -126,7 +177,16 @@ export class JsonStore {
       lastMarketActivityAt:activityChanged?now:(old.lastMarketActivityAt||old.lastPriceChangeAt||null),
       updatedAt:now
     };
-    this.state.metrics.scanned++;if(this._tokenPersistenceRequired(mint))this.save();return this.state.tokens[mint]
+    this.state.metrics.scanned++;
+    this.tokenRegistry?.queueUpsert?.(
+      this.state.tokens[mint],
+      {
+        historical:this.state.tokens[mint]?.registryHistorical===true,
+        activityAt:this.state.tokens[mint]?.lastMarketActivityAt??this.state.tokens[mint]?.lastPriceAt??null
+      }
+    );
+    if(this._tokenPersistenceRequired(mint))this.save();
+    return this.state.tokens[mint]
   }
   tokens(){return Object.values(this.state.tokens).sort((a,b)=>(b.discoveredAt||0)-(a.discoveredAt||0))}
   // O(250) per call — uses per-user Map index instead of full O(N) scan
@@ -153,6 +213,8 @@ export class JsonStore {
     }
     return true;
   }
+  registryStatus(){return this.tokenRegistry?.status?.()||null}
+  close(){try{this.tokenRegistry?.close?.()}catch{}}
   decisions(uid){
     const m=this._uidDec[uid];
     if(!m||!m.size)return[];
