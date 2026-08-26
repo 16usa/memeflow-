@@ -3,6 +3,11 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <!-- MEMEFLOW_TRADING_GHOST_WALLET_REMOVAL_V2 -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <meta name="mf-trading-build" content="remove-mobile-ghost-wallet-v2-20260826">
   <meta name="theme-color" content="#03070a">
   <title>MEMEFLOW Trading Terminal</title>
   <link rel="stylesheet" href="/trading.css?v=buy-ready-yellow-v1-copy-trading-v2-2-20260826">
@@ -299,63 +304,22 @@ html[data-mf-chart-unify-all-states="1"] [data-mf-chart-placeholder="1"] {
 
         <div class="control-actions">
           <button id="saveStrategyBtn" class="secondary-btn" type="button">Save strategy</button>
-          <button id="assistBtn" class="assist-btn" type="button">Review manually</button>
-          <button id="startAutoBtn" class="start-btn" type="button">Start paper auto</button>
-          <button id="pauseBtn" class="pause-btn" type="button">Pause new entries</button>
         </div>
 
         <div class="control-foot">
           <span id="saveState">Settings not loaded</span>
-          <button id="killBtn" type="button">Emergency entry lock</button>
         </div>
       </aside>
     </main>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/echarts@6.1.0/dist/echarts.min.js"></script>
-  <script type="module" src="/trading.js?v=remove-trading-wallet-v1-20260826"></script>
+  <script type="module" src="/trading.js?v=remove-mobile-ghost-wallet-v2-20260826"></script>
   <!-- MEMEFLOW_TRADING_CHART_V30_4 -->
   <!-- MEMEFLOW_TRADING_CHART_V30_5_EXECUTION_OHLC -->
   <!-- MEMEFLOW_TRADING_CHART_V30_6_USD_CURVE_MARK -->
 
 
-<!-- MEMEFLOW_COMPACT_TRADING_V4_JS_START -->
-<script>
-(() => {
-  function installCompactTradingLayout() {
-    if (window.innerWidth > 820) return;
-    const terminal = document.querySelector('.terminal');
-    const control = document.querySelector('.control-panel');
-    const candidates = document.querySelector('.candidates-panel');
-    if (!terminal || !control || !candidates) return;
-
-    let walletPanel = document.querySelector('.compact-wallet-panel');
-    if (!walletPanel) {
-      walletPanel = document.createElement('section');
-      walletPanel.className = 'panel compact-wallet-panel';
-      walletPanel.innerHTML = '<div class="panel-head compact-head"><div><span class="eyebrow">ACCOUNT</span><h2>Wallet</h2></div></div><div class="compact-wallet-body"></div>';
-      candidates.insertAdjacentElement('afterend', walletPanel);
-    }
-
-    const body = walletPanel.querySelector('.compact-wallet-body');
-    const wallet = control.querySelector('.wallet-section');
-    const error = control.querySelector('#controlError');
-    const actions = control.querySelector('.control-actions');
-    const foot = control.querySelector('.control-foot');
-
-    [wallet, error, actions, foot].forEach(node => {
-      if (node && node.parentElement !== body) body.appendChild(node);
-    });
-  }
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', installCompactTradingLayout, { once: true });
-  } else {
-    installCompactTradingLayout();
-  }
-})();
-</script>
-<!-- MEMEFLOW_COMPACT_TRADING_V4_JS_END -->
 <script>
 /* ===== MEMEFLOW_TRADING_CHART_UNIFY_ALL_STATES_V4 ===== */
 (() => {
@@ -436,7 +400,7 @@ html[data-mf-chart-unify-all-states="1"] [data-mf-chart-placeholder="1"] {
 /* ===== /MEMEFLOW_TRADING_CHART_UNIFY_ALL_STATES_V4 ===== */
 </script>
 
-  <script src="/memeflow-nav.js?v=global-right-drawer-remove-trading-wallet-v1-20260826" defer></script>
+  <script src="/memeflow-nav.js?v=global-right-drawer-remove-mobile-ghost-wallet-v2-20260826" defer></script>
 </body>
 </html>
 

@@ -725,9 +725,9 @@ function populateSettings() {
   const mode = String(s.operatingMode || 'observe').toLowerCase();
   $('modeBadge').textContent = mode.toUpperCase();
   $('modeBadge').dataset.mode = mode;
-  $('assistBtn').dataset.active = mode === 'assist' ? 'true' : 'false';
-  $('startAutoBtn').dataset.active = mode === 'automate' ? 'true' : 'false';
-  $('pauseBtn').dataset.active = mode === 'observe' ? 'true' : 'false';
+  if ($('assistBtn')) $('assistBtn').dataset.active = mode === 'assist' ? 'true' : 'false';
+  if ($('startAutoBtn')) $('startAutoBtn').dataset.active = mode === 'automate' ? 'true' : 'false';
+  if ($('pauseBtn')) $('pauseBtn').dataset.active = mode === 'observe' ? 'true' : 'false';
 
   $('engineText').textContent = mode === 'automate'
     ? 'PAPER AUTO ACTIVE'
@@ -754,9 +754,9 @@ async function loadSettings() {
   if (state.killSwitchActive) {
     $('engineText').textContent = 'ENTRY LOCK ACTIVE';
     $('enginePill').dataset.active = 'false';
-    $('startAutoBtn').disabled = true;
-    $('killBtn').textContent = 'Emergency lock active';
-    $('killBtn').disabled = true;
+    if ($('startAutoBtn')) $('startAutoBtn').disabled = true;
+    if ($('killBtn')) $('killBtn').textContent = 'Emergency lock active';
+    if ($('killBtn')) $('killBtn').disabled = true;
   }
 }
 
@@ -836,7 +836,7 @@ async function onAssist() {
 
 async function onStartAuto() {
   try {
-    $('startAutoBtn').disabled = true;
+    if ($('startAutoBtn')) $('startAutoBtn').disabled = true;
     await saveSettings('automate');
     await loadPaper();
   } catch (error) {
@@ -871,9 +871,9 @@ async function onKill() {
     state.killSwitchActive = true;
     $('engineText').textContent = 'ENTRY LOCK ACTIVE';
     $('enginePill').dataset.active = 'false';
-    $('startAutoBtn').disabled = true;
-    $('killBtn').textContent = 'Emergency lock active';
-    $('killBtn').disabled = true;
+    if ($('startAutoBtn')) $('startAutoBtn').disabled = true;
+    if ($('killBtn')) $('killBtn').textContent = 'Emergency lock active';
+    if ($('killBtn')) $('killBtn').disabled = true;
   } catch (error) {
     showError(error.message);
   }
@@ -4155,10 +4155,10 @@ function bind() {
     .forEach(id => $(id).addEventListener('input', updateAllocation));
 
   $('saveStrategyBtn').addEventListener('click', onSaveStrategy);
-  $('assistBtn').addEventListener('click', onAssist);
-  $('startAutoBtn').addEventListener('click', onStartAuto);
-  $('pauseBtn').addEventListener('click', onPause);
-  $('killBtn').addEventListener('click', onKill);
+  $('assistBtn')?.addEventListener('click', onAssist);
+  $('startAutoBtn')?.addEventListener('click', onStartAuto);
+  $('pauseBtn')?.addEventListener('click', onPause);
+  $('killBtn')?.addEventListener('click', onKill);
 
   window.addEventListener('resize', scheduleChart);
 }

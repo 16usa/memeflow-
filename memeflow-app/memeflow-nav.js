@@ -20,7 +20,7 @@
       sub: 'Live architecture and system state'
     },
     {
-      href: '/trading.html',
+      href: '/trading.html?v=remove-mobile-ghost-wallet-v2-20260826',
       title: 'Trading Terminal',
       sub: 'Charts, candidates, positions and execution'
     },
