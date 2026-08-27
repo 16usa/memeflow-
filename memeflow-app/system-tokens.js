@@ -1,7 +1,7 @@
 
 const PAGE_SIZE = 20;
-const REFRESH_MS = 3000;
 const EMPTY_CONFIRMATIONS = 5;
+// MEMEFLOW_NO_DATA_POLL_TIMER_V16
 
 const $ = (id) =>
   document.getElementById(id);
@@ -1038,6 +1038,105 @@ function tokenSourceLinksTemplate(row) {
   return out.length ? `<span class="token-source-links">${out.join('')}</span>` : '';
 }
 
+// MEMEFLOW_STATIC_TOKEN_IDENTITY_V16
+// Token name/image are identity fields, not realtime market fields.
+// Resolve each field once per mint, cache it, and never mutate it afterwards.
+const TOKEN_STATIC_IDENTITY_V16=new Map();
+
+function __mfLooksFinalTokenNameV16(value,mint=''){
+  const name=String(value||'').trim();
+  if(!name)return false;
+
+  if(name==='TOKEN')return false;
+  if(name===shortMint(mint))return false;
+  if(/^COPY\s+[1-9A-HJ-NP-Za-km-z]{4,12}$/i.test(name))return false;
+
+  return true;
+}
+
+function __mfLockStaticIdentityV16(
+  mint,
+  {
+    name=null,
+    image=null
+  }={}
+){
+  mint=String(mint||'').trim();
+
+  if(!mint){
+    return {
+      entry:{name:null,image:null},
+      nameAdded:false,
+      imageAdded:false
+    };
+  }
+
+  const entry=
+    TOKEN_STATIC_IDENTITY_V16.get(mint)||
+    {name:null,image:null};
+
+  let nameAdded=false;
+  let imageAdded=false;
+
+  if(
+    !entry.name &&
+    __mfLooksFinalTokenNameV16(name,mint)
+  ){
+    entry.name=String(name).trim();
+    nameAdded=true;
+  }
+
+  if(
+    !entry.image &&
+    typeof image==='string' &&
+    image.trim()
+  ){
+    entry.image=image.trim();
+    imageAdded=true;
+  }
+
+  TOKEN_STATIC_IDENTITY_V16.set(mint,entry);
+
+  return {
+    entry,
+    nameAdded,
+    imageAdded
+  };
+}
+
+function __mfStaticIdentityForRowV16(row){
+  const mint=String(row?.mint||'').trim();
+
+  const currentName=
+    row?.name ||
+    row?.metadataName ||
+    row?.symbol ||
+    row?.metadataSymbol ||
+    '';
+
+  const currentImage=imageUrl(row);
+
+  const locked=__mfLockStaticIdentityV16(
+    mint,
+    {
+      name:currentName,
+      image:currentImage
+    }
+  ).entry;
+
+  return {
+    name:
+      locked.name ||
+      currentName ||
+      shortMint(mint),
+    image:
+      locked.image ||
+      currentImage ||
+      ''
+  };
+}
+
+
 function tokenTemplate(row, index) {
   const key =
     stateKey(row?.decision?.state);
@@ -1063,8 +1162,14 @@ function tokenTemplate(row, index) {
   const score =
     tokenScore(row);
 
+  const staticIdentity =
+    __mfStaticIdentityForRowV16(row);
+
   const avatar =
-    imageUrl(row);
+    staticIdentity.image;
+
+  const staticName =
+    staticIdentity.name;
 
   const pnl =
     key === 'open'
@@ -1102,7 +1207,7 @@ function tokenTemplate(row, index) {
             <div class="token-top">
 
               <strong class="token-mint token-name">
-                ${escapeHtml(row?.name || row?.metadataName || row?.symbol || row?.metadataSymbol || shortMint(row?.mint))}
+                ${escapeHtml(staticName)}
               </strong>
               ${tokenSourceLinksTemplate(row)}
 
@@ -1485,54 +1590,119 @@ async function loadDiscoveryStatus() {
   }
 }
 
-// MEMEFLOW_OPEN_POSITION_FIXED_POLL_V15
-let __mfLastRealtimeRevision = 0;
+// MEMEFLOW_EVENT_FETCH_SAFETY_V16
+let __mfLastRealtimeRevision=0;
 
-async function loadOpenPositionsV15({
-  renderAfter = true
-} = {}) {
-  if (state.positionLoading) {
-    return;
-  }
+async function __mfFetchJsonV16(
+  url,
+  {
+    timeoutMs=8000
+  }={}
+){
+  const controller=new AbortController();
 
-  state.positionLoading = true;
+  const timeout=setTimeout(
+    ()=>controller.abort(),
+    timeoutMs
+  );
 
-  try {
-    const response = await fetch(
-      '/api/paper/positions?_=' + Date.now(),
+  try{
+    const response=await fetch(
+      url,
       {
-        cache: 'no-store',
-        credentials: 'same-origin'
+        cache:'no-store',
+        credentials:'same-origin',
+        signal:controller.signal
       }
     );
 
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
+    if(!response.ok){
+      const error=new Error(
+        `HTTP ${response.status}`
+      );
+      error.status=response.status;
+      throw error;
     }
 
-    const payload = await response.json();
+    return await response.json();
+  }finally{
+    clearTimeout(timeout);
+  }
+}
 
-    state.positions =
-      (
-        Array.isArray(payload?.positions)
-          ? payload.positions
-          : []
-      ).filter(
-        position =>
-          position?.mint &&
-          String(position?.status || '').toUpperCase() === 'OPEN'
+// MEMEFLOW_OPEN_POSITION_EVENT_FACT_V16
+let __mfPositionRequestActiveV16=false;
+let __mfPositionRequestPendingV16=false;
+
+async function __mfRefreshOpenPositionsV16({
+  patchDom=true
+}={}){
+  if(__mfPositionRequestActiveV16){
+    __mfPositionRequestPendingV16=true;
+    return;
+  }
+
+  __mfPositionRequestActiveV16=true;
+
+  try{
+    do{
+      __mfPositionRequestPendingV16=false;
+
+      const beforeOpen=new Set(
+        state.positions
+          .filter(
+            position=>
+              String(position?.status||'').toUpperCase()==='OPEN'
+          )
+          .map(position=>String(position?.mint||''))
+          .filter(Boolean)
       );
 
-    if (renderAfter) {
-      render();
-    }
-  } catch (error) {
+      const payload=
+        await __mfFetchJsonV16(
+          '/api/paper/positions?_='+
+          Date.now()
+        );
+
+      state.positions=
+        (
+          Array.isArray(payload?.positions)
+            ? payload.positions
+            : []
+        ).filter(
+          position=>
+            position?.mint &&
+            String(position?.status||'').toUpperCase()==='OPEN'
+        );
+
+      const afterOpen=new Set(
+        state.positions
+          .map(position=>String(position?.mint||''))
+          .filter(Boolean)
+      );
+
+      const membershipChanged=
+        beforeOpen.size!==afterOpen.size ||
+        [...beforeOpen].some(
+          mint=>!afterOpen.has(mint)
+        );
+
+      if(membershipChanged){
+        // Opening/closing a position is a structural fact.
+        render();
+      }else if(patchDom){
+        for(const mint of afterOpen){
+          __mfPatchMutableCardV16(mint);
+        }
+      }
+    }while(__mfPositionRequestPendingV16);
+  }catch(error){
     console.warn(
-      '[token-flow] open-position 3s refresh failed; keeping last snapshot',
+      '[token-flow] event-driven position refresh failed',
       error
     );
-  } finally {
-    state.positionLoading = false;
+  }finally{
+    __mfPositionRequestActiveV16=false;
   }
 }
 
@@ -1551,19 +1721,11 @@ async function loadTokens() {
   state.refreshPending = false;
 
   try {
-    const response = await fetch(
-      '/api/system/live-token-states?limit=200&_=' + Date.now(),
-      {
-        cache: 'no-store',
-        credentials: 'same-origin'
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
-    }
-
-    const payload = await response.json();
+    const payload =
+      await __mfFetchJsonV16(
+        '/api/system/live-token-states?limit=200&_=' +
+        Date.now()
+      );
 
     // MEMEFLOW_FULL_SNAPSHOT_REVISION_CLIENT_V14
     const snapshotRevision=Number(payload?.liveRevision||0);
@@ -1761,60 +1923,745 @@ $('nextPage')
 $('refreshButton')
   .addEventListener(
     'click',
-    __mfPollAllV15
+    ()=>{
+      void __mfStructuralRefreshV16();
+    }
   );
 
-__mfPollAllV15();
+// Initial reconciliation starts after the V16 stream state is initialized.
 
-/* MEMEFLOW_SYSTEM_TOKENS_FIXED_POLL_V15
- * Stable UI contract:
+/* MEMEFLOW_SYSTEM_TOKENS_EVENT_FACT_V16
+ * DISPLAY CONTRACT
  *
- * - one full token-feed refresh every 3 seconds;
- * - one independent Open Position refresh every 3 seconds;
- * - no event-burst rendering on this page;
- * - no SSE-open condition that can silently disable polling;
- * - no 30-second freeze window.
+ * Blockchain fact arrives -> update that mint.
+ * Decision write completes -> update that mint.
+ * Open-position mint trades -> refresh positions immediately.
+ * CREATE -> fetch/insert that new mint.
+ * REMOVE -> remove that mint.
  *
- * Backend scanning/trading remains event-driven. This changes ONLY the browser
- * presentation cadence, exactly as intended for this page.
+ * There is NO 3-second/30-second data polling loop.
+ *
+ * A 35-second timer exists ONLY as an SSE transport watchdog. It does not
+ * refresh token data. The server emits a heartbeat every 15 seconds; missing
+ * heartbeats force a stream reconnect and one reconciliation.
  */
+const __MF_STREAM_WATCHDOG_MS_V16=35000;
 
-let __mfFixedPollTimerV15 = null;
+let __mfTokenStateStreamV16=null;
+let __mfStreamWatchdogV16=null;
+let __mfStructuralRefreshActiveV16=false;
+let __mfStructuralRefreshPendingV16=false;
 
-function __mfPollAllV15() {
-  if (document.hidden) {
+const __mfMintRefreshStateV16=new Map();
+
+function __mfTouchStreamV16(){
+  if(__mfStreamWatchdogV16!==null){
+    clearTimeout(__mfStreamWatchdogV16);
+  }
+
+  __mfStreamWatchdogV16=setTimeout(
+    ()=>{
+      console.warn(
+        '[token-flow] SSE heartbeat stale; reconnecting'
+      );
+
+      try{
+        __mfTokenStateStreamV16?.close?.();
+      }catch{}
+
+      __mfTokenStateStreamV16=null;
+      __mfConnectTokenStateStreamV16();
+    },
+    __MF_STREAM_WATCHDOG_MS_V16
+  );
+}
+
+function __mfEventPayloadV16(event){
+  if(!event?.data){
+    return {};
+  }
+
+  try{
+    return JSON.parse(event.data)||{};
+  }catch{
+    return {};
+  }
+}
+
+function __mfKnownScannerMintV16(mint){
+  mint=String(mint||'');
+
+  return state.rows.some(
+    row=>String(row?.mint||'')===mint
+  );
+}
+
+function __mfKnownOpenMintV16(mint){
+  mint=String(mint||'');
+
+  return state.positions.some(
+    position=>
+      String(position?.mint||'')===mint &&
+      String(position?.status||'').toUpperCase()==='OPEN'
+  );
+}
+
+function __mfPreserveIdentityV16(previous,next){
+  if(!next||typeof next!=='object'){
+    return next;
+  }
+
+  if(!previous||typeof previous!=='object'){
+    return next;
+  }
+
+  const staticFields=[
+    'name',
+    'metadataName',
+    'symbol',
+    'metadataSymbol',
+    'image',
+    'imageUrl',
+    'logo',
+    'logoUrl',
+    'logoURI'
+  ];
+
+  const out={...next};
+
+  for(const key of staticFields){
+    if(
+      previous[key]!==null &&
+      previous[key]!==undefined &&
+      previous[key]!==''
+    ){
+      out[key]=previous[key];
+    }
+  }
+
+  return out;
+}
+
+function __mfMutableRowForMintV16(mint){
+  mint=String(mint||'');
+
+  return mergedRows().find(
+    row=>String(row?.mint||'')===mint
+  )||null;
+}
+
+function __mfSetStrongByLabelV16(
+  card,
+  selector,
+  label,
+  value,
+  className=null
+){
+  for(const node of card.querySelectorAll(selector)){
+    const labelNode=node.querySelector('span');
+    const strong=node.querySelector('strong');
+
+    if(
+      !labelNode ||
+      !strong ||
+      labelNode.textContent.trim()!==label
+    ){
+      continue;
+    }
+
+    strong.textContent=String(value);
+
+    if(className!==null){
+      strong.className=className;
+    }
+
+    return true;
+  }
+
+  return false;
+}
+
+function __mfSetDetailByLabelV16(
+  card,
+  label,
+  value
+){
+  for(const block of card.querySelectorAll('.detail-block')){
+    const labelNode=block.querySelector('span');
+    const body=block.querySelector('p');
+
+    if(
+      labelNode?.textContent.trim()===label &&
+      body
+    ){
+      body.textContent=String(value);
+      return true;
+    }
+  }
+
+  return false;
+}
+
+// MEMEFLOW_MUTABLE_DOM_ONLY_V16
+function __mfPatchMutableCardV16(mint){
+  mint=String(mint||'').trim();
+  if(!mint)return;
+
+  const row=__mfMutableRowForMintV16(mint);
+  if(!row)return;
+
+  const card=[
+    ...document.querySelectorAll(
+      '.flow-token[data-mint]'
+    )
+  ].find(
+    node=>String(node.dataset.mint||'')===mint
+  );
+
+  if(!card){
+    // Non-visible pages still get updated in state.rows/state.positions.
     return;
   }
 
-  // Run independently/in parallel. A token-feed failure cannot freeze OPEN
-  // POSITION telemetry, and a positions failure cannot freeze scanner cards.
-  void loadTokens();
-  void loadOpenPositionsV15();
+  const key=stateKey(row?.decision?.state);
+  const label=stateLabel(row?.decision?.state);
+
+  // Update state/border, but NEVER token-name/token-avatar/source links.
+  for(const stateClass of [
+    'open',
+    'ready',
+    'watch',
+    'waiting',
+    'blocked'
+  ]){
+    card.classList.remove(stateClass);
+  }
+  card.classList.add(key);
+
+  const stateNode=card.querySelector('.token-state');
+  if(stateNode){
+    stateNode.textContent=label;
+    stateNode.className=`token-state ${key}`;
+  }
+
+  const score=tokenScore(row);
+  const pnl=
+    key==='open'
+      ? openPositionPnlPct(row?.__openPosition)
+      : null;
+
+  __mfSetStrongByLabelV16(
+    card,
+    '.token-metric',
+    key==='open'?'P&L':'Score',
+    key==='open'
+      ? formatSignedPnlPct(pnl)
+      : (finite(score)?fmt(score,0):'—'),
+    key==='open'
+      ? openPositionPnlClass(pnl)
+      : ''
+  );
+
+  __mfSetStrongByLabelV16(
+    card,
+    '.token-metric',
+    'Holders',
+    holderCount(row)
+  );
+
+  const top=top10(row);
+  __mfSetStrongByLabelV16(
+    card,
+    '.token-metric',
+    'Top 10',
+    finite(top)?`${fmt(top,1)}%`:'—'
+  );
+
+  const pressure=buyPressure(row);
+  __mfSetStrongByLabelV16(
+    card,
+    '.token-metric',
+    'Buy pressure',
+    finite(pressure)?`${fmt(pressure,2)}×`:'—'
+  );
+
+  const age=tokenAge(row);
+  __mfSetStrongByLabelV16(
+    card,
+    '.token-metric',
+    'Age',
+    finite(age)?`${fmt(age,1)}m`:'—'
+  );
+
+  const price=priceSol(row);
+  __mfSetStrongByLabelV16(
+    card,
+    '.token-metric',
+    'Price SOL',
+    finite(price)?fmt(price,9):'—'
+  );
+
+  const metrics=
+    key==='open'
+      ? openPositionMetrics(row)
+      : regularMarketMetrics(row);
+
+  const stripSelector=
+    key==='open'
+      ? '.mf-open-market-stat'
+      : '.mf-regular-market-stat';
+
+  const stripAge=
+    key==='open'
+      ? (
+          metrics?.ageMinutes ??
+          tokenAge(row)
+        )
+      : metrics?.ageMinutes;
+
+  const stripHolders=
+    key==='open'
+      ? (
+          metrics?.holderCount ??
+          holderCount(row)
+        )
+      : metrics?.holderCount;
+
+  __mfSetStrongByLabelV16(
+    card,
+    stripSelector,
+    'Age',
+    compactTokenAge(stripAge)
+  );
+
+  __mfSetStrongByLabelV16(
+    card,
+    stripSelector,
+    'Holders',
+    stripHolders??'—'
+  );
+
+  __mfSetStrongByLabelV16(
+    card,
+    stripSelector,
+    'Vol 5m',
+    key==='open'
+      ? openVolumeLabel(metrics)
+      : regularVolumeLabel(metrics)
+  );
+
+  __mfSetStrongByLabelV16(
+    card,
+    stripSelector,
+    'Tx 5m',
+    finite(metrics?.transactions5m)
+      ? fmt(metrics.transactions5m,0)
+      : '—'
+  );
+
+  __mfSetStrongByLabelV16(
+    card,
+    stripSelector,
+    'MC',
+    key==='open'
+      ? openMarketCapLabel(metrics)
+      : regularMarketCapLabel(metrics)
+  );
+
+  const move=metrics?.priceChange5mPct;
+  __mfSetStrongByLabelV16(
+    card,
+    stripSelector,
+    '5m%',
+    signedPercent(move),
+    marketMoveClass(move)
+  );
+
+  __mfSetDetailByLabelV16(
+    card,
+    'Primary signal',
+    tokenReason(row)
+  );
+
+  __mfSetDetailByLabelV16(
+    card,
+    'Risk gates',
+    tokenGateSummary(row)
+  );
+
+  const dev=developer(row);
+  __mfSetDetailByLabelV16(
+    card,
+    'Developer',
+    finite(dev)?`${fmt(dev,2)}%`:'—'
+  );
+
+  renderCounts();
+
+  $('lastUpdate').textContent=
+    `Live ${new Date().toLocaleTimeString(
+      [],
+      {
+        hour:'2-digit',
+        minute:'2-digit',
+        second:'2-digit'
+      }
+    )}`;
 }
 
-__mfFixedPollTimerV15 =
-  setInterval(
-    __mfPollAllV15,
-    REFRESH_MS
+async function __mfStructuralRefreshV16(){
+  if(__mfStructuralRefreshActiveV16){
+    __mfStructuralRefreshPendingV16=true;
+    return;
+  }
+
+  __mfStructuralRefreshActiveV16=true;
+
+  try{
+    do{
+      __mfStructuralRefreshPendingV16=false;
+
+      // Positions first so one render of the feed already knows OPEN state.
+      await __mfRefreshOpenPositionsV16({
+        patchDom:false
+      });
+
+      await loadTokens();
+    }while(__mfStructuralRefreshPendingV16);
+  }finally{
+    __mfStructuralRefreshActiveV16=false;
+  }
+}
+
+async function __mfRefreshMintNowV16(
+  mint,
+  {
+    allowInsert=false
+  }={}
+){
+  mint=String(mint||'').trim();
+  if(!mint)return;
+
+  let slot=__mfMintRefreshStateV16.get(mint);
+
+  if(!slot){
+    slot={
+      inflight:false,
+      pending:false,
+      allowInsert:false
+    };
+
+    __mfMintRefreshStateV16.set(mint,slot);
+  }
+
+  slot.allowInsert=
+    slot.allowInsert||allowInsert;
+
+  if(slot.inflight){
+    slot.pending=true;
+    return;
+  }
+
+  slot.inflight=true;
+
+  try{
+    do{
+      slot.pending=false;
+
+      let payload=null;
+
+      try{
+        payload=
+          await __mfFetchJsonV16(
+            '/api/system/live-token-state?mint='+
+            encodeURIComponent(mint)+
+            '&_='+
+            Date.now()
+          );
+      }catch(error){
+        if(error?.status===404){
+          const before=state.rows.length;
+
+          state.rows=state.rows.filter(
+            row=>String(row?.mint||'')!==mint
+          );
+
+          if(state.rows.length!==before){
+            render();
+          }
+
+          return;
+        }
+
+        throw error;
+      }
+
+      const revision=
+        Number(payload?.liveRevision||0);
+
+      if(
+        Number.isFinite(revision) &&
+        revision>__mfLastRealtimeRevision
+      ){
+        __mfLastRealtimeRevision=revision;
+      }
+
+      const incoming=
+        payload?.row
+          ? canonicalDecisionRow(payload.row)
+          : null;
+
+      if(!incoming?.mint){
+        continue;
+      }
+
+      const index=state.rows.findIndex(
+        row=>String(row?.mint||'')===mint
+      );
+
+      if(index>=0){
+        const previous=state.rows[index];
+
+        state.rows[index]=
+          canonicalDecisionRow(
+            __mfPreserveIdentityV16(
+              previous,
+              incoming
+            )
+          );
+
+        __mfPatchMutableCardV16(mint);
+      }else if(slot.allowInsert){
+        state.rows.push(incoming);
+
+        // Keep the browser feed bounded. This is display-only; scanner/trading
+        // inventory remains unchanged.
+        state.rows=
+          sortRows(state.rows).slice(0,200);
+
+        render();
+      }
+    }while(slot.pending);
+  }catch(error){
+    console.warn(
+      '[token-flow] fact refresh failed',
+      mint,
+      error
+    );
+  }finally{
+    slot.inflight=false;
+    slot.allowInsert=false;
+
+    if(!slot.pending){
+      __mfMintRefreshStateV16.delete(mint);
+    }
+  }
+}
+
+function __mfRefreshMintV16(
+  mint,
+  options={}
+){
+  // No delay/coalesce timer. The only coalescing is in-flight backpressure:
+  // if another fact arrives while the GET is active, exactly one follow-up GET
+  // runs immediately after it finishes.
+  void __mfRefreshMintNowV16(
+    mint,
+    options
   );
+}
+
+function __mfHandleTokenFactV16(event){
+  __mfTouchStreamV16();
+
+  const payload=__mfEventPayloadV16(event);
+  const mint=String(payload?.mint||'').trim();
+
+  if(!mint)return;
+
+  if(__mfKnownScannerMintV16(mint)){
+    __mfRefreshMintV16(mint);
+  }
+
+  if(__mfKnownOpenMintV16(mint)){
+    void __mfRefreshOpenPositionsV16();
+  }
+}
+
+function __mfHandleDecisionFactV16(event){
+  __mfTouchStreamV16();
+
+  const payload=__mfEventPayloadV16(event);
+  const mint=String(payload?.mint||'').trim();
+
+  if(!mint){
+    void __mfStructuralRefreshV16();
+    return;
+  }
+
+  __mfRefreshMintV16(
+    mint,
+    {allowInsert:true}
+  );
+
+  if(__mfKnownOpenMintV16(mint)){
+    void __mfRefreshOpenPositionsV16();
+  }
+}
+
+function __mfHandleCreateFactV16(event){
+  __mfTouchStreamV16();
+
+  const payload=__mfEventPayloadV16(event);
+  const mint=String(payload?.mint||'').trim();
+
+  if(!mint){
+    void __mfStructuralRefreshV16();
+    return;
+  }
+
+  // Server V16 emits CREATE only after canonical ingest, so this GET cannot
+  // race a not-yet-created store row.
+  __mfRefreshMintV16(
+    mint,
+    {allowInsert:true}
+  );
+}
+
+function __mfHandleRemovedFactV16(event){
+  __mfTouchStreamV16();
+
+  const payload=__mfEventPayloadV16(event);
+  const mint=String(payload?.mint||'').trim();
+
+  if(!mint)return;
+
+  const rowsBefore=state.rows.length;
+  const positionsBefore=state.positions.length;
+
+  state.rows=state.rows.filter(
+    row=>String(row?.mint||'')!==mint
+  );
+
+  state.positions=state.positions.filter(
+    position=>String(position?.mint||'')!==mint
+  );
+
+  if(
+    state.rows.length!==rowsBefore ||
+    state.positions.length!==positionsBefore
+  ){
+    render();
+  }
+}
+
+function __mfConnectTokenStateStreamV16(){
+  if(typeof EventSource==='undefined'){
+    console.warn(
+      '[token-flow] EventSource unavailable'
+    );
+    return;
+  }
+
+  try{
+    __mfTokenStateStreamV16?.close?.();
+  }catch{}
+
+  const source=
+    new EventSource('/api/system/stream');
+
+  __mfTokenStateStreamV16=source;
+
+  source.addEventListener(
+    'heartbeat',
+    ()=>{
+      __mfTouchStreamV16();
+    }
+  );
+
+  source.addEventListener(
+    'hello',
+    ()=>{
+      __mfTouchStreamV16();
+
+      // One reconciliation after (re)connect recovers any facts missed while
+      // the transport was unavailable. It is NOT periodic polling.
+      void __mfStructuralRefreshV16();
+    }
+  );
+
+  source.addEventListener(
+    'token',
+    __mfHandleTokenFactV16
+  );
+
+  source.addEventListener(
+    'decision',
+    __mfHandleDecisionFactV16
+  );
+
+  source.addEventListener(
+    'create',
+    __mfHandleCreateFactV16
+  );
+
+  source.addEventListener(
+    'token_removed',
+    __mfHandleRemovedFactV16
+  );
+
+  source.onopen=()=>{
+    __mfTouchStreamV16();
+  };
+
+  source.onerror=()=>{
+    // Native EventSource automatically retries. The heartbeat watchdog handles
+    // half-open connections where no error event is delivered.
+    console.warn(
+      '[token-flow] SSE reconnecting'
+    );
+  };
+
+  __mfTouchStreamV16();
+}
+
+__mfConnectTokenStateStreamV16();
+
+// First page snapshot. After this, data changes are fact/event-driven.
+void __mfStructuralRefreshV16();
 
 document.addEventListener(
   'visibilitychange',
-  () => {
-    if (!document.hidden) {
-      __mfPollAllV15();
+  ()=>{
+    if(document.hidden){
+      return;
     }
+
+    // iOS may suspend sockets while the app is backgrounded. Reconcile once
+    // when returning, then continue by events.
+    if(
+      !__mfTokenStateStreamV16 ||
+      __mfTokenStateStreamV16.readyState===EventSource.CLOSED
+    ){
+      __mfConnectTokenStateStreamV16();
+    }
+
+    void __mfStructuralRefreshV16();
   }
 );
 
 window.addEventListener(
   'beforeunload',
-  () => {
-    if (__mfFixedPollTimerV15 !== null) {
-      clearInterval(__mfFixedPollTimerV15);
+  ()=>{
+    if(__mfStreamWatchdogV16!==null){
+      clearTimeout(__mfStreamWatchdogV16);
     }
+
+    try{
+      __mfTokenStateStreamV16?.close?.();
+    }catch{}
   },
-  { once: true }
+  {once:true}
 );
 
 
@@ -1832,32 +2679,45 @@ function applyTokenMetaV16(card,meta){
   }
 
   const mint=
-    card.dataset.mint||'';
+    String(card.dataset.mint||'').trim();
 
-  const nameEl=
-    card.querySelector(
-      '.token-name'
+  if(!mint){
+    return;
+  }
+
+  const displayName=
+    String(
+      meta.name||
+      meta.metadataName||
+      meta.symbol||
+      meta.metadataSymbol||
+      ''
+    ).trim();
+
+  const image=
+    String(meta.image||'').trim();
+
+  const locked=
+    __mfLockStaticIdentityV16(
+      mint,
+      {
+        name:displayName,
+        image
+      }
     );
 
-  if(nameEl){
-    const displayName=
-      String(
-        meta.name||
-        meta.metadataName||
-        meta.symbol||
-        meta.metadataSymbol||
-        shortMint(mint)
-      ).trim();
+  if(locked.nameAdded){
+    const nameEl=
+      card.querySelector('.token-name');
 
-    nameEl.textContent=
-      displayName||
-      'Token';
+    if(nameEl){
+      nameEl.textContent=
+        locked.entry.name;
+    }
   }
 
   const link=
-    card.querySelector(
-      '.token-pump-link'
-    );
+    card.querySelector('.token-pump-link');
 
   if(link&&mint){
     link.href=
@@ -1865,21 +2725,14 @@ function applyTokenMetaV16(card,meta){
       encodeURIComponent(mint);
   }
 
-  const avatar=
-    card.querySelector(
-      '.token-avatar'
-    );
-
-  if(!avatar){
+  if(!locked.imageAdded){
     return;
   }
 
-  const image=
-    String(
-      meta.image||''
-    ).trim();
+  const avatar=
+    card.querySelector('.token-avatar');
 
-  if(!image){
+  if(!avatar){
     return;
   }
 
@@ -1887,11 +2740,7 @@ function applyTokenMetaV16(card,meta){
     avatar.querySelector('img');
 
   if(!img){
-    img=
-      document.createElement(
-        'img'
-      );
-
+    img=document.createElement('img');
     img.alt='';
     img.loading='lazy';
     img.decoding='async';
@@ -1899,30 +2748,17 @@ function applyTokenMetaV16(card,meta){
     img.addEventListener(
       'error',
       ()=>{
-        avatar.classList.add(
-          'is-broken'
-        );
+        avatar.classList.add('is-broken');
       }
     );
 
     avatar.prepend(img);
   }
 
-  if(img.src!==image){
-    avatar.classList.remove(
-      'is-broken'
-    );
-
-    img.src=image;
-  }
-
-  avatar.classList.add(
-    'has-image'
-  );
-
-  avatar.classList.remove(
-    'fallback-only'
-  );
+  avatar.classList.remove('is-broken');
+  img.src=locked.entry.image;
+  avatar.classList.add('has-image');
+  avatar.classList.remove('fallback-only');
 }
 
 async function hydrateTokenCardsV16(){
@@ -2074,7 +2910,10 @@ if(tokenListV16){
     new MutationObserver(
       ()=>{
         queueMicrotask(
-          hydrateTokenCardsV16
+          ()=>{
+            void hydrateTokenCardsV16();
+            void hydrateTokenMediaV25();
+          }
         );
       }
     );
@@ -2087,15 +2926,8 @@ if(tokenListV16){
   );
 }
 
-setTimeout(
-  hydrateTokenCardsV16,
-  250
-);
-
-setInterval(
-  hydrateTokenCardsV16,
-  1800
-);
+// MEMEFLOW_NO_METADATA_POLLING_V16
+// Initial/new-card hydration is driven by tokenList structural mutation only.
 
 
 /* ===== TOKEN MEDIA V25 ===== */
@@ -2476,7 +3308,7 @@ function visibleCardsV25() {
 }
 
 async function hydrateTokenMediaV25() {
-  await loadTokenRowsV25();
+  await loadTokenRowsV25(true);
 
   const cards =
     visibleCardsV25();
@@ -2521,50 +3353,9 @@ async function hydrateTokenMediaV25() {
   }
 }
 
-let tokenMediaTimerV25 = 0;
-
-function scheduleTokenMediaV25() {
-  clearTimeout(
-    tokenMediaTimerV25
-  );
-
-  tokenMediaTimerV25 =
-    setTimeout(
-      hydrateTokenMediaV25,
-      100
-    );
-}
-
-const tokenMediaObserverV25 =
-  new MutationObserver(
-    scheduleTokenMediaV25
-  );
-
-tokenMediaObserverV25.observe(
-  document.body,
-  {
-    childList: true,
-    subtree: true
-  }
-);
-
-window.addEventListener(
-  'scroll',
-  scheduleTokenMediaV25,
-  {
-    passive: true
-  }
-);
-
-setInterval(
-  hydrateTokenMediaV25,
-  6000
-);
-
-setTimeout(
-  () => hydrateTokenMediaV25(),
-  350
-);
+// MEMEFLOW_NO_TOKEN_MEDIA_POLLING_V16
+// No body-wide observer, scroll refresh, or 6-second media timer.
+// TOKEN_STATIC_IDENTITY_V16 is hydrated by the tokenList observer only.
 
 // MEMEFLOW_DEX_TOKEN_FLOW_V26
 

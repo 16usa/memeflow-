@@ -960,10 +960,11 @@ let __mfLiveTokenRevision=0;
 const __mfYieldToEventLoop=()=>new Promise(resolve=>setImmediate(resolve));
 
 // MEMEFLOW_DECISION_REVISION_EVENT_V14
-// Token market mutation and per-user decision completion are separate moments.
-// One mint-level decision event is emitted after the decision write(s), so a
-// realtime card can never stop on a pre-evaluation score/state snapshot.
-const __mfDecisionRefreshTimersV14=new Map();
+// MEMEFLOW_DECISION_MICROTASK_EVENT_V16
+// Token market mutation and per-user decision completion are separate facts.
+// A decision event is emitted immediately after the current JS turn completes;
+// there is NO wall-clock refresh delay.
+const __mfDecisionRefreshTimersV14=new Set();
 
 function __mfEmitDecisionRefreshV14(mint){
   mint=String(mint||'').trim();
@@ -987,13 +988,12 @@ function __mfQueueDecisionRefreshV14(mint){
   mint=String(mint||'').trim();
   if(!mint||__mfDecisionRefreshTimersV14.has(mint))return;
 
-  const timer=setTimeout(()=>{
+  __mfDecisionRefreshTimersV14.add(mint);
+
+  queueMicrotask(()=>{
     __mfDecisionRefreshTimersV14.delete(mint);
     __mfEmitDecisionRefreshV14(mint);
-  },25);
-
-  timer.unref?.();
-  __mfDecisionRefreshTimersV14.set(mint,timer);
+  });
 }
 
 function candidateView(d){
@@ -2712,13 +2712,6 @@ function startDiscovery(i=0){
         // CREATE establishes the mint before TradeEvents from the same tx are
         // applied. Unknown global Pump trades still cannot create arbitrary rows.
         if(isCreate){
-          try{
-            __systemViewEmitV31(
-              'create',
-              {signature:String(sig||''),ts:Date.now()}
-            )
-          }catch{}
-
           discMetrics.createEventsAccepted++;
           discovery.lastCreateAt=Date.now();
 
@@ -2729,6 +2722,23 @@ function startDiscovery(i=0){
               slot:m.params?.result?.context?.slot??null
             }
           );
+
+          // MEMEFLOW_CREATE_EVENT_MINT_AFTER_INGEST_V16
+          // The UI receives CREATE only after the canonical mint exists.
+          if(directToken?.mint){
+            const createRevision=++__mfLiveTokenRevision;
+            try{
+              __systemViewEmitV31(
+                'create',
+                {
+                  mint:String(directToken.mint),
+                  revision:createRevision,
+                  signature:String(sig||''),
+                  updatedAt:Number(directToken?.updatedAt||Date.now())
+                }
+              );
+            }catch{}
+          }
 
           // MEMEFLOW_CREATE_DECODE_COVERAGE_V1
           // Preserve explicit CREATE decoder coverage diagnostics. This marker
@@ -4402,8 +4412,19 @@ if(url.pathname==='/api/ai/decisions'){
    res.write(`retry: 1000\nevent: hello\ndata: ${JSON.stringify({type:'hello',seq:__systemViewSeqV31,ts:Date.now()})}\n\n`);
   }catch{}
 
+  // MEMEFLOW_SYSTEM_SSE_HEARTBEAT_EVENT_V16
   const heartbeat=setInterval(()=>{
-   try{res.write(`: v31 ${Date.now()}\n\n`)}catch{}
+   try{
+    res.write(
+     `event: heartbeat\n`+
+     `data: ${JSON.stringify({
+       type:'heartbeat',
+       seq:__systemViewSeqV31,
+       ts:Date.now(),
+       revision:__mfLiveTokenRevision
+     })}\n\n`
+    );
+   }catch{}
   },15000);
   heartbeat.unref?.();
 
