@@ -1,6 +1,7 @@
 import http from 'node:http';import fs from 'node:fs';import path from 'node:path';import crypto from 'node:crypto';import zlib from 'node:zlib';import {fileURLToPath} from 'node:url';
 import {JsonStore,sessionId,defaults} from './src/store.mjs';import {RpcPool,validPubkey,decodeCurve,decodeCreateData,decodePumpCreate,decodePumpCreateEventLog} from './src/solana.mjs';import {evaluate,tokenAgeMinutes} from './src/evaluate.mjs';import {evaluateSettingsAdmission,evaluateEntryAdmission,settingsContextSignature} from './src/settings-gate.mjs';import {validateSettings,PROFILE_PRESETS} from './src/settings.mjs';import {StripeBilling} from './src/billing.mjs';
 import {OpenAIIntelligence} from './src/openai-intelligence.mjs';import {PaperEngine} from './src/paper-engine.mjs';import {CopyTradingManager} from './src/copy-trading.mjs'; // MEMEFLOW_COPY_TRADING_V1
+import './src/copy-trading-multi-wallet-v3.mjs'; // MEMEFLOW_COPY_TRADING_MULTI_WALLET_V3
 import {makeEnrichDiag,makeHolderMetrics} from './src/enrich.mjs';
 import {makeRecoveryMetrics,startDecisionRecovery,lazyRecoverUser} from './src/recovery.mjs';
 import {makeLiveEvalMetrics,makeEvaluateForActiveUsers} from './src/liveeval.mjs';
