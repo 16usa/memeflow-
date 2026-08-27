@@ -213,6 +213,39 @@ assert.doesNotMatch(
   /getTransaction/
 );
 
+// MEMEFLOW_CREATE_EVENT_DISCRIMINATOR_FIRST_V1
+// Provider-formatted instruction text is not authoritative. A valid official
+// CreateEvent Program-data discriminator must independently establish CREATE.
+assert.match(
+  discovery,
+  /MEMEFLOW_CREATE_EVENT_DISCRIMINATOR_FIRST_V1/
+);
+
+assert.match(
+  discovery,
+  /directCreateEvent=decodePumpCreateEventLog\(log\)/
+);
+
+assert.match(
+  discovery,
+  /const isCreate=Boolean\(directCreateEvent\)\|\|instructionCreate/
+);
+
+assert.match(
+  discovery,
+  /discovery\.subscribed=true/
+);
+
+assert.match(
+  app,
+  /DISCOVERY_WS_STALE_MS/
+);
+
+assert.match(
+  app,
+  /Pump WebSocket stale; forcing reconnect/
+);
+
 assert.doesNotMatch(
   app,
   /__mfWalletRiskInterval/

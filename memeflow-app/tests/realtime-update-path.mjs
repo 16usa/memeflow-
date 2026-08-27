@@ -4,6 +4,7 @@ import fs from 'node:fs';
 const app=fs.readFileSync(new URL('../app-server.mjs',import.meta.url),'utf8');
 const registry=fs.readFileSync(new URL('../src/token-registry.mjs',import.meta.url),'utf8');
 const trades=fs.readFileSync(new URL('../src/pump-live-trade-feed.mjs',import.meta.url),'utf8');
+const tokenHtml=fs.readFileSync(new URL('../system-tokens.html',import.meta.url),'utf8');
 
 // Pump TradeEvent must update canonical token state and publish it.
 assert.match(trades,/const updated=store\?\.setToken\?\.\(e\.mint,patch\)/);
@@ -58,5 +59,15 @@ assert.match(tokenUi,/source\.addEventListener\('token', __mfScheduleRealtimeRef
 assert.match(tokenUi,/state\.refreshPending = true;/);
 assert.match(tokenUi,/queueMicrotask\(loadTokens\)/);
 assert.match(tokenUi,/readyState !== EventSource\.OPEN/);
+
+// MEMEFLOW_LIVE_TOKEN_ASSET_NO_STORE_V1
+assert.match(app,/MEMEFLOW_LIVE_TOKEN_ASSET_NO_STORE_V1/);
+assert.match(app,/url\.pathname==='\/system-tokens\.js'/);
+assert.match(app,/url\.pathname==='\/system-tokens\.css'/);
+assert.match(tokenHtml,/system-tokens\.js\?v=live-scanner-cache-v9-20260827/);
+assert.match(tokenHtml,/id="scannerStatus"/);
+assert.match(tokenUi,/MEMEFLOW_SCANNER_STATUS_V9/);
+assert.match(tokenUi,/MEMEFLOW_LIVE_TOKEN_TELEMETRY_V9/);
+assert.match(tokenUi,/MEMEFLOW_REALTIME_COALESCE_250MS_V1/);
 
 console.log('realtime update path v1 ok');

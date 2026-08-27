@@ -1295,22 +1295,170 @@ function render() {
 
 
 async function loadDiscoveryStatus() {
-  const label = document.getElementById('discoveryLiveLabel');
-  if (!label) return;
+  // MEMEFLOW_SCANNER_STATUS_V9
+  const label =
+    document.getElementById('discoveryLiveLabel');
+  const scanner =
+    document.getElementById('scannerStatus');
+
+  if (!label && !scanner) return;
 
   try {
     const response = await fetch(
-      '/api/discovery/status',
-      {cache:'no-store',credentials:'same-origin'}
+      '/api/discovery/status?_=' + Date.now(),
+      {
+        cache: 'no-store',
+        credentials: 'same-origin'
+      }
     );
-    if (!response.ok) return;
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
 
     const payload = await response.json();
-    const connected = payload?.connected === true;
 
-    label.textContent = connected ? 'LIVE' : 'IDLE';
-    label.title = 'Pump.fun discovery';
-  } catch {}
+    const connected =
+      payload?.connected === true;
+    const subscribed =
+      payload?.subscribed === true;
+
+    const lastTransportAt =
+      Number(
+        payload?.lastMessageAt ??
+        payload?.lastEventAt ??
+        0
+      );
+
+    const transportFresh =
+      payload?.transportFresh === true ||
+      (
+        connected &&
+        lastTransportAt > 0 &&
+        Date.now() - lastTransportAt < 60000
+      );
+
+    const live =
+      connected &&
+      subscribed &&
+      transportFresh;
+
+    const mode =
+      live
+        ? 'LIVE'
+        : connected
+          ? 'SYNCING'
+          : 'IDLE';
+
+    if (label) {
+      label.textContent = mode;
+
+      const shell =
+        label.closest('.live-status');
+
+      shell?.classList.toggle(
+        'is-idle',
+        mode === 'IDLE'
+      );
+      shell?.classList.toggle(
+        'is-syncing',
+        mode === 'SYNCING'
+      );
+
+      label.title =
+        [
+          'Pump.fun discovery',
+          `connected=${connected}`,
+          `subscribed=${subscribed}`,
+          `fresh=${transportFresh}`,
+          `lastMessageAt=${payload?.lastMessageAt ?? 'none'}`,
+          `lastCreateAt=${payload?.lastCreateAt ?? 'none'}`
+        ].join(' · ');
+    }
+
+    if (scanner) {
+      const scannerCount =
+        Number(payload?.freshScannerTokens);
+      const accepted =
+        Number(payload?.createEventsAccepted);
+      const decoded =
+        Number(payload?.directCreateEvents);
+      const failed =
+        Number(payload?.directCreateDecodeFailed);
+
+      const parts = [
+        `Scanner ${
+          Number.isFinite(scannerCount)
+            ? Math.max(0, scannerCount)
+            : '—'
+        }`,
+        live
+          ? 'WS live'
+          : connected
+            ? 'WS syncing'
+            : 'WS offline'
+      ];
+
+      if (
+        Number.isFinite(accepted) ||
+        Number.isFinite(decoded)
+      ) {
+        parts.push(
+          `creates ${
+            Number.isFinite(decoded)
+              ? Math.max(0, decoded)
+              : 0
+          }/${
+            Number.isFinite(accepted)
+              ? Math.max(0, accepted)
+              : 0
+          }`
+        );
+      }
+
+      if (
+        Number.isFinite(failed) &&
+        failed > 0
+      ) {
+        parts.push(`decode fail ${failed}`);
+      }
+
+      if (
+        payload?.historyBackfill?.authRequired === true
+      ) {
+        parts.push('gap sync auth');
+      }
+
+      // If files were updated but the plain Node process was not restarted,
+      // make that visible instead of pretending the backend is current.
+      if (
+        payload?.scannerRuntimeVersion !== 'live-scanner-v9'
+      ) {
+        parts.push('backend old');
+      }
+
+      scanner.textContent =
+        parts.join(' · ');
+
+      scanner.title =
+        `runtime=${payload?.scannerRuntimeVersion || 'unknown'} · ` +
+        `registry=${payload?.tokenRegistry?.permanentTokens ?? '—'} · ` +
+        `reconnects=${payload?.reconnects ?? 0} · ` +
+        `stale reconnects=${payload?.staleReconnects ?? 0}`;
+    }
+  } catch (error) {
+    if (label) {
+      label.textContent = 'IDLE';
+      label
+        .closest('.live-status')
+        ?.classList.add('is-idle');
+    }
+
+    if (scanner) {
+      scanner.textContent =
+        'Scanner status unavailable';
+    }
+  }
 }
 
 async function loadTokens() {
@@ -1379,9 +1527,11 @@ async function loadTokens() {
       );
     }
 
-    const persisted = Number(payload?.persistedTokens);
-    const recovered = Number(payload?.recovered);
-    const reindexed = Number(payload?.reindexed);
+    // MEMEFLOW_LIVE_TOKEN_TELEMETRY_V9
+    const scanned = Number(payload?.rawScannerTokens);
+    const admitted = Number(payload?.preAdmissionAdmitted);
+    const pending = Number(payload?.preAdmissionPending);
+    const rejected = Number(payload?.preAdmissionRejected);
     const evalErrors = Number(payload?.evaluationErrors);
     const viewErrors = Number(payload?.viewErrors);
 
@@ -1396,26 +1546,42 @@ async function loadTokens() {
       )}`
     ];
 
-    if (Number.isFinite(persisted)) {
-      parts.push(`${state.rows.length}/${persisted} visible`);
+    if (Number.isFinite(scanned)) {
+      parts.push(`scanner ${Math.max(0, scanned)}`);
     }
 
-    if (Number.isFinite(recovered) && recovered > 0) {
-      parts.push(`recovered ${recovered}`);
+    if (Number.isFinite(admitted)) {
+      parts.push(`admitted ${Math.max(0, admitted)}`);
     }
 
-    if (Number.isFinite(reindexed) && reindexed > 0) {
-      parts.push(`reindexed ${reindexed}`);
+    if (
+      Number.isFinite(pending) &&
+      pending > 0
+    ) {
+      parts.push(`waiting ${Math.max(0, pending)}`);
+    }
+
+    if (
+      Number.isFinite(rejected) &&
+      rejected > 0
+    ) {
+      parts.push(`blocked ${Math.max(0, rejected)}`);
     }
 
     if (
       (Number.isFinite(evalErrors) && evalErrors > 0) ||
       (Number.isFinite(viewErrors) && viewErrors > 0)
     ) {
-      parts.push(`errors ${Math.max(0, evalErrors || 0) + Math.max(0, viewErrors || 0)}`);
+      parts.push(
+        `errors ${
+          Math.max(0, evalErrors || 0) +
+          Math.max(0, viewErrors || 0)
+        }`
+      );
     }
 
-    $('lastUpdate').textContent = parts.join(' · ');
+    $('lastUpdate').textContent =
+      parts.join(' · ');
     render();
   } catch (error) {
     console.error('[MEMEFLOW TOKEN FLOW]', error);
@@ -1552,7 +1718,7 @@ function __mfScheduleRealtimeRefresh(event = null) {
   __mfRealtimeRefreshTimer = setTimeout(() => {
     __mfRealtimeRefreshTimer = null;
     void loadTokens();
-  }, 80);
+  }, 250); // MEMEFLOW_REALTIME_COALESCE_250MS_V1
 }
 
 function __mfConnectTokenStateStream() {

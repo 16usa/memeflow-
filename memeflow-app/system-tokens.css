@@ -2550,3 +2550,43 @@ button {
 }
 
 /* MEMEFLOW_BUY_READY_YELLOW_OPEN_GREEN_V1: BUY READY = yellow; OPEN POSITION = green. */
+
+
+/* MEMEFLOW_SCANNER_STATUS_V9 */
+.hero-counter .scanner-status {
+  margin-top: 5px;
+  max-width: 190px;
+  margin-left: auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-transform: none;
+  letter-spacing: .025em;
+  font-size: 6px;
+  line-height: 1.25;
+}
+
+.live-status.is-syncing {
+  color: var(--yellow);
+}
+
+.live-status.is-syncing i {
+  background: var(--yellow);
+  box-shadow: 0 0 12px rgba(239, 198, 106, .42);
+}
+
+.live-status.is-idle {
+  color: var(--muted);
+}
+
+.live-status.is-idle i {
+  background: var(--muted);
+  box-shadow: none;
+}
+
+@media (max-width: 640px) {
+  .hero-counter .scanner-status {
+    max-width: 150px;
+    font-size: 5px;
+  }
+}

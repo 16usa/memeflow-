@@ -243,7 +243,55 @@ const openaiAI=new OpenAIIntelligence({
     uid,mint,side,amountSol
   })
 });
-let discovery={connected:false,url:null,lastEventAt:null,reconnects:0,error:null,lastError:null,startedAt:Date.now()},ws=null,wsTimer=null,wsReconnectAttempt=0;
+// MEMEFLOW_DISCOVERY_TRANSPORT_HEALTH_V1
+let discovery={
+  connected:false,
+  subscribed:false,
+  url:null,
+  connectedAt:null,
+  lastMessageAt:null,
+  lastEventAt:null,
+  lastCreateAt:null,
+  lastSubscriptionAt:null,
+  reconnects:0,
+  staleReconnects:0,
+  error:null,
+  lastError:null,
+  startedAt:Date.now()
+},ws=null,wsTimer=null,wsReconnectAttempt=0;
+
+const DISCOVERY_WS_STALE_MS=Math.max(
+  20000,
+  Number(process.env.DISCOVERY_WS_STALE_MS||45000)
+);
+const DISCOVERY_WS_WATCHDOG_MS=Math.max(
+  5000,
+  Number(process.env.DISCOVERY_WS_WATCHDOG_MS||10000)
+);
+
+// A WebSocket can remain OPEN while the provider has silently stopped sending
+// notifications. Pump is busy enough that 45s without any WS message is stale.
+const __mfDiscoveryWsWatchdog=setInterval(()=>{
+  if(discovery.connected!==true||!ws)return;
+
+  const last=Number(
+    discovery.lastMessageAt ||
+    discovery.connectedAt ||
+    0
+  );
+
+  if(!last||Date.now()-last<=DISCOVERY_WS_STALE_MS)return;
+
+  discovery.staleReconnects=
+    Number(discovery.staleReconnects||0)+1;
+  discovery.lastError={
+    message:'Pump WebSocket stale; forcing reconnect',
+    at:Date.now()
+  };
+
+  try{ws.close()}catch{}
+},DISCOVERY_WS_WATCHDOG_MS);
+__mfDiscoveryWsWatchdog.unref?.();
 const streams=new Map(),priceTimers=new Map(),tradeWindows=new Map();
 
 // MEMEFLOW_LIVE_SYSTEM_SSE_BACKEND_V4
@@ -2236,34 +2284,124 @@ function __ingestPumpCreateEventDirect(
 }
 
 function startDiscovery(i=0){
-  if(process.env.DISCOVERY_ENABLED==='false'||!wsUrls.length){discovery.error='SOLANA_WS_URLS not configured';return}
+  // MEMEFLOW_CREATE_EVENT_DISCRIMINATOR_FIRST_V1
+  if(process.env.DISCOVERY_ENABLED==='false'||!wsUrls.length){
+    discovery.connected=false;
+    discovery.subscribed=false;
+    discovery.error='SOLANA_WS_URLS not configured';
+    return;
+  }
+
   const url=wsUrls[i%wsUrls.length];
+
   try{
-    ws=new WebSocket(url);
+    const socket=new WebSocket(url);
+    ws=socket;
     discovery.url=url;
-    ws.onopen=()=>{
-      discovery.connected=true;discovery.error=null;wsReconnectAttempt=0;
-      ws.send(JSON.stringify({jsonrpc:'2.0',id:1,method:'logsSubscribe',params:[{mentions:[PUMP]},{commitment:process.env.SOLANA_COMMITMENT||'confirmed'}]}));
+
+    socket.onopen=()=>{
+      if(ws!==socket)return;
+
+      const now=Date.now();
+      discovery.connected=true;
+      discovery.subscribed=false;
+      discovery.connectedAt=now;
+      discovery.lastMessageAt=now;
+      discovery.error=null;
+      wsReconnectAttempt=0;
+
+      socket.send(JSON.stringify({
+        jsonrpc:'2.0',
+        id:1,
+        method:'logsSubscribe',
+        params:[
+          {mentions:[PUMP]},
+          {commitment:process.env.SOLANA_COMMITMENT||'confirmed'}
+        ]
+      }));
     };
-    // WS-first discovery: Pump CREATE is decoded directly from WebSocket logs.
-    ws.onmessage=ev=>{
+
+    // WS-first discovery:
+    // 1) every Pump notification refreshes transport health;
+    // 2) official CreateEvent Program data is authoritative;
+    // 3) "Instruction: Create/CreateV2" is only a compatibility hint.
+    socket.onmessage=ev=>{
+      if(ws!==socket)return;
+
       try{
         const m=JSON.parse(ev.data);
+        discovery.lastMessageAt=Date.now();
+
+        // JSON-RPC subscription acknowledgement.
+        if(m?.id===1){
+          if(m?.error){
+            discovery.subscribed=false;
+            discovery.lastError={
+              message:'Pump logsSubscribe failed: '+
+                String(m?.error?.message||m?.error?.code||'unknown'),
+              at:Date.now()
+            };
+            setTimeout(()=>{try{socket.close()}catch{}},50);
+            return;
+          }
+
+          if(m?.result!==undefined&&m?.result!==null){
+            discovery.subscribed=true;
+            discovery.lastSubscriptionAt=Date.now();
+          }
+          return;
+        }
+
         const sig=m.params?.result?.value?.signature;
         if(!sig)return;
-        discMetrics.eventsReceived++;
-        const logs=m.params?.result?.value?.logs;
-        if(!Array.isArray(logs)){discMetrics.eventsWithoutLogs++;discMetrics.eventsFiltered++;return}
 
-        const isCreate=logs.some(l=>/Instruction:\s*Create(?:V2|\s+V2|\s*$)/i.test(l));
+        discMetrics.eventsReceived++;
+        discovery.lastEventAt=Date.now();
+
+        const logs=m.params?.result?.value?.logs;
+        if(!Array.isArray(logs)){
+          discMetrics.eventsWithoutLogs++;
+          discMetrics.eventsFiltered++;
+          return;
+        }
+
+        let directCreateEvent=null;
+        for(const log of logs){
+          directCreateEvent=decodePumpCreateEventLog(log);
+          if(directCreateEvent)break;
+        }
+
+        const instructionCreate=logs.some(
+          l=>/Instruction:\s*Create(?:V2|\s+V2|\s*$)/i.test(l)
+        );
+
+        if(directCreateEvent){
+          discMetrics.createEventDiscriminatorHits=
+            Number(discMetrics.createEventDiscriminatorHits||0)+1;
+        }
+        if(instructionCreate){
+          discMetrics.createInstructionLogHints=
+            Number(discMetrics.createInstructionLogHints||0)+1;
+        }
+
+        // Critical repair: a valid CreateEvent is sufficient by itself.
+        const isCreate=Boolean(directCreateEvent)||instructionCreate;
 
         // MEMEFLOW_FRESH_SESSION_SCANNER_V1
+
         // CREATE establishes the mint before TradeEvents from the same tx are
-        // applied. Unknown global Pump trades are not allowed to create rows.
+        // applied. Unknown global Pump trades still cannot create arbitrary rows.
         if(isCreate){
-          try{__systemViewEmitV31('create',{signature:String(sig||''),ts:Date.now()})}catch{}
+          try{
+            __systemViewEmitV31(
+              'create',
+              {signature:String(sig||''),ts:Date.now()}
+            )
+          }catch{}
+
           discMetrics.createEventsAccepted++;
-          discovery.lastEventAt=Date.now();
+          discovery.lastCreateAt=Date.now();
+
           const directToken=__ingestPumpCreateEventDirect(
             logs,
             {
@@ -2273,8 +2411,9 @@ function startDiscovery(i=0){
           );
 
           // MEMEFLOW_CREATE_DECODE_COVERAGE_V1
-          // Keep an explicit coverage ratio so provider/log-decoder loss can
-          // never masquerade as a settings problem again.
+          // Preserve explicit CREATE decoder coverage diagnostics. This marker
+          // is part of the scanner regression contract and the metric below is
+          // operationally useful when a provider changes its log shape.
           discMetrics.createDecodeCoveragePct=
             discMetrics.createEventsAccepted>0
               ? Number(
@@ -2285,31 +2424,75 @@ function startDiscovery(i=0){
                   ).toFixed(2)
                 )
               : 100;
+
           if(!directToken){
             discMetrics.lastDirectCreateDecodeFailedAt=Date.now();
           }
         }
 
+        // Canonical TradeEvent ingestion remains unchanged.
         try{
-          __pumpLiveTradeFeed?.ingestLogs?.(logs,{
-            signature:String(sig||''),
-            source:'discovery-ws',
-            slot:m.params?.result?.context?.slot??null
-          });
+          __pumpLiveTradeFeed?.ingestLogs?.(
+            logs,
+            {
+              signature:String(sig||''),
+              source:'discovery-ws',
+              slot:m.params?.result?.context?.slot??null
+            }
+          );
         }catch{}
 
         if(!isCreate){
           discMetrics.nonCreateEventsIgnored++;
           discMetrics.eventsFiltered++;
-          return;
         }
-      }catch{}
+      }catch(error){
+        discovery.lastError={
+          message:'Pump WebSocket message error: '+
+            String(error?.message||error).slice(0,180),
+          at:Date.now()
+        };
+      }
     };
-    // WS errors stored as lastError; do not overwrite connection state here
-    ws.onerror=e=>{discovery.lastError={message:'WebSocket error'+(e?.message?': '+e.message:''),at:Date.now()};setTimeout(()=>{try{ws?.close()}catch{}},250)};
-    ws.onclose=()=>{discovery.connected=false;discovery.reconnects++;wsReconnectAttempt++;clearTimeout(wsTimer);wsTimer=setTimeout(()=>startDiscovery(i+1),Math.min(30000,1000*2**Math.min(wsReconnectAttempt,5)))};
-  }catch(e){discovery.error=e.message;wsTimer=setTimeout(()=>startDiscovery(i+1),5000)}
+
+    socket.onerror=e=>{
+      if(ws!==socket)return;
+      discovery.lastError={
+        message:'WebSocket error'+
+          (e?.message?': '+e.message:''),
+        at:Date.now()
+      };
+      setTimeout(()=>{try{socket.close()}catch{}},250);
+    };
+
+    socket.onclose=()=>{
+      // Never let a late close from an old socket take down a newer socket.
+      if(ws!==socket)return;
+
+      ws=null;
+      discovery.connected=false;
+      discovery.subscribed=false;
+      discovery.reconnects++;
+      wsReconnectAttempt++;
+
+      clearTimeout(wsTimer);
+      wsTimer=setTimeout(
+        ()=>startDiscovery(i+1),
+        Math.min(
+          30000,
+          1000*2**Math.min(wsReconnectAttempt,5)
+        )
+      );
+    };
+  }catch(e){
+    discovery.connected=false;
+    discovery.subscribed=false;
+    discovery.error=e.message;
+    clearTimeout(wsTimer);
+    wsTimer=setTimeout(()=>startDiscovery(i+1),5000);
+  }
 }
+
 function shadowValidateSettings(settings,limit=50){
   const rows=__mfLiveScannerTokens()
     .slice(0,Math.max(1,Math.min(200,limit)));
@@ -2757,8 +2940,26 @@ async function handler(req,res){const url=new URL(req.url,'http://x');
    const mime=MIME[ext.slice(1)]||'application/octet-stream';
    const isText=mime.startsWith('text/')||mime.includes('javascript')||mime.includes('json')||mime.includes('svg');
    const isHTML=ext==='.html'||ext==='.htm';
-   res.setHeader('content-type',mime);res.setHeader('cache-control',isHTML?'no-store, no-cache, must-revalidate':'public, max-age=3600, stale-while-revalidate=86400');
-   if(isHTML){res.setHeader('pragma','no-cache');res.setHeader('expires','0')}
+
+   // MEMEFLOW_LIVE_TOKEN_ASSET_NO_STORE_V1
+   // Live Token States must never execute an hour/day-old JS bundle after a
+   // deploy. Other versioned/static assets keep the existing fast cache.
+   const isLiveTokenAsset=
+     url.pathname==='/system-tokens.js' ||
+     url.pathname==='/system-tokens.css';
+   const noStoreAsset=isHTML||isLiveTokenAsset;
+
+   res.setHeader('content-type',mime);
+   res.setHeader(
+     'cache-control',
+     noStoreAsset
+       ? 'no-store, no-cache, must-revalidate'
+       : 'public, max-age=3600, stale-while-revalidate=86400'
+   );
+   if(noStoreAsset){
+     res.setHeader('pragma','no-cache');
+     res.setHeader('expires','0');
+   }
    const ae=req.headers['accept-encoding']||'',stat=fs.statSync(f);
    if(!isHTML&&isText&&stat.size>512){
      if(ae.includes('br')){res.setHeader('content-encoding','br');res.setHeader('vary','Accept-Encoding');fs.createReadStream(f).pipe(zlib.createBrotliCompress({params:{[zlib.constants.BROTLI_PARAM_QUALITY]:4}})).pipe(res);}
@@ -3500,11 +3701,24 @@ if(url.pathname==='/api/ai/decisions'){
  if(url.pathname==='/api/discovery/status'){
   let wsHostname=null;try{wsHostname=discovery.url?new URL(discovery.url).hostname:null}catch{}
   return json(res,200,{
+    scannerRuntimeVersion:'live-scanner-v9',
     connected:discovery.connected,
+    subscribed:discovery.subscribed===true,
+    transportFresh:Boolean(
+      discovery.connected===true &&
+      discovery.lastMessageAt &&
+      Date.now()-Number(discovery.lastMessageAt)<DISCOVERY_WS_STALE_MS
+    ),
     url:wsHostname,
     wsHostname,
+    connectedAt:discovery.connectedAt,
+    lastMessageAt:discovery.lastMessageAt,
     lastEventAt:discovery.lastEventAt,
+    lastCreateAt:discovery.lastCreateAt,
+    lastSubscriptionAt:discovery.lastSubscriptionAt,
     reconnects:discovery.reconnects,
+    staleReconnects:discovery.staleReconnects,
+    discoveryWsStaleMs:DISCOVERY_WS_STALE_MS,
     error:discovery.error,
     lastError:discovery.lastError,
     startedAt:discovery.startedAt,
