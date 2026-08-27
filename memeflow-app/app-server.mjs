@@ -866,77 +866,26 @@ function __mfNormalizePumpSupplyV5(t){
 
 function __mfCandidateMarket5mV4(mint,t){
   // MEMEFLOW_CARD_MARKET_TRUTH_V5
+  // MEMEFLOW_LIVE_CARD_MARKET_TRUTH_V19
+  // IMPORTANT: this function MUST delegate to the tested V19 truth module.
+  // Do not independently fall back to stored marketCapSol/marketCapUsd here.
   const rows=chartTradeHistory.get(mint)||[];
-  const now=Date.now();
-  const cutoff=now-300000;
+  const solUsd=solUsdOracle.get();
 
-  const recent=rows.filter(
-    r=>Number(r?.t)>=cutoff&&Number(r?.t)<=now
-  );
+  const snapshot=liveCardMarketSnapshot({
+    token:t||{},
+    points:rows,
+    solUsd,
+    now:Date.now(),
+    windowMs:300000
+  });
 
-  const volume5mSol=recent.reduce(
-    (sum,row)=>sum+Number(row?.solAmount||0),
-    0
-  );
-  const transactions5m=recent.length;
-
-  const finite=(v)=>
-    v!==null&&v!==undefined&&Number.isFinite(Number(v))
-      ? Number(v)
-      : null;
-
-  const latestPrice=finite(t?.priceSol);
-  const supply=__mfNormalizePumpSupplyV5(t);
-
-  const liveMcSol=
-    latestPrice!==null&&latestPrice>0&&
-    supply!==null&&supply>0
-      ? latestPrice*supply
-      : null;
-
-  let storedMcSol=finite(t?.marketCapSol);
-
-  // Repair old registry rows where Pump `market_cap` lamports were stored
-  // directly as SOL (e.g. 33,500,000,000 -> 33.5 SOL).
-  if(
-    storedMcSol!==null &&
-    storedMcSol>1_000_000 &&
-    (
-      t?.pumpMarketCapRawLamports!=null ||
-      t?.registryHistorical===true ||
-      String(t?.source||'').toLowerCase().includes('history')
-    )
-  ){
-    storedMcSol/=1e9;
-  }
-
-  const marketCapSol=
-    liveMcSol!==null&&liveMcSol>0
-      ? liveMcSol
-      : storedMcSol;
-
-  const solUsd=finite(solUsdOracle.get());
-  const storedMcUsd=finite(t?.marketCapUsd);
-
-  const marketCapUsd=
-    marketCapSol!==null&&marketCapSol>0&&
-    solUsd!==null&&solUsd>0
-      ? marketCapSol*solUsd
-      : storedMcUsd;
-
-  // 5m volume is derived from the same REAL Pump TradeEvents as the chart.
-  const volume5mUsd=
-    solUsd!==null&&solUsd>0
-      ? volume5mSol*solUsd
-      : finite(t?.volume5mUsd);
-
-  let priceChange5mPct=null;
-  const priced=recent.filter(r=>Number(r?.price)>0);
-  if(priced.length>=2){
-    const first=Number(priced[0].price);
-    const last=Number(priced[priced.length-1].price);
-    if(first>0)priceChange5mPct=((last-first)/first)*100;
-  }
+  const volume5mSol=snapshot.volume5mSol;
+  const volume5mUsd=snapshot.volume5mUsd;
+  const transactions5m=snapshot.transactions5m;
+  const marketCapSol=snapshot.marketCapSol;
+  const marketCapUsd=snapshot.marketCapUsd;
+  const priceChange5mPct=snapshot.priceChange5mPct;
 
   return {
     volume5mSol,
@@ -945,12 +894,11 @@ function __mfCandidateMarket5mV4(mint,t){
     marketCapSol,
     marketCapUsd,
     priceChange5mPct,
-    marketCapSource:
-      liveMcSol!==null
-        ? 'live-pump-trade'
-        : (marketCapSol!==null?'stored-normalized':null),
-    marketUpdatedAt:
-      Number(t?.marketCapUpdatedAt||t?.lastPriceAt||0)||null
+    marketCapSource:snapshot.marketCapSource,
+    marketUpdatedAt:snapshot.marketUpdatedAt,
+    latestTradePriceSol:snapshot.latestTradePriceSol,
+    latestTradeAt:snapshot.latestTradeAt,
+    tradeEvidence:snapshot.tradeEvidence
   };
 }
 

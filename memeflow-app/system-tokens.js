@@ -369,7 +369,24 @@ function openVolumeLabel(metrics) {
   return '—';
 }
 
+// MEMEFLOW_TRUSTED_MC_SOURCE_V19
+function trustedMarketCapSource(metrics) {
+  const source=
+    String(metrics?.marketCapSource||'')
+      .trim()
+      .toLowerCase();
+
+  return (
+    source.includes('trade') ||
+    source==='pump-reference'
+  );
+}
+
 function openMarketCapLabel(metrics) {
+  if (!trustedMarketCapSource(metrics)) {
+    return '—';
+  }
+
   if (finite(metrics?.marketCapUsd)) {
     return `$${compactMetricNumber(metrics.marketCapUsd, 1)}`;
   }
@@ -489,6 +506,10 @@ function regularMarketMetrics(row) {
       row?.market?.marketCapUsd ??
       row?.marketCapUsd ??
       null,
+    marketCapSource:
+      row?.market?.marketCapSource ??
+      row?.marketCapSource ??
+      null,
     priceChange5mPct:
       row?.market?.priceChange5mPct ??
       row?.priceChange5mPct ??
@@ -509,6 +530,10 @@ function regularVolumeLabel(metrics) {
 }
 
 function regularMarketCapLabel(metrics) {
+  if (!trustedMarketCapSource(metrics)) {
+    return '—';
+  }
+
   if (finite(metrics?.marketCapUsd)) {
     return `$${compactMetricNumber(metrics.marketCapUsd, 1)}`;
   }
@@ -1529,17 +1554,12 @@ function __mfReconcileVisibleCardsV183(){
     }
   }
 
+  // MEMEFLOW_STRUCTURE_MEMBERSHIP_ONLY_V19
   // append() MOVES an existing node. It does not recreate it.
+  // Crucially: structure reconciliation never patches mutable market values.
+  // The single V19 one-second clock is the ONLY automatic mutable-data writer.
   for(const card of ordered){
     list.append(card);
-
-    const mint=String(
-      card.dataset.mint||''
-    );
-
-    if(mint){
-      __mfPatchMutableCardV17(mint);
-    }
   }
 }
 
@@ -1766,77 +1786,73 @@ async function __mfFetchJsonV16(
 }
 
 // MEMEFLOW_OPEN_POSITION_EVENT_FACT_V16
+// MEMEFLOW_OPEN_POSITION_SINGLE_FLIGHT_V19
 let __mfPositionRequestActiveV16=false;
-let __mfPositionRequestPendingV16=false;
 
 async function __mfRefreshOpenPositionsV16({
   patchDom=true
 }={}){
   if(__mfPositionRequestActiveV16){
-    __mfPositionRequestPendingV16=true;
     return;
   }
 
   __mfPositionRequestActiveV16=true;
 
   try{
-    do{
-      __mfPositionRequestPendingV16=false;
-
-      const beforeOpen=new Set(
-        state.positions
-          .filter(
-            position=>
-              String(position?.status||'').toUpperCase()==='OPEN'
-          )
-          .map(position=>String(position?.mint||''))
-          .filter(Boolean)
-      );
-
-      const payload=
-        await __mfFetchJsonV16(
-          '/api/paper/positions/live?_='+
-          Date.now(),
-          {
-            timeoutMs:1500
-          }
-        );
-
-      state.positions=
-        (
-          Array.isArray(payload?.positions)
-            ? payload.positions
-            : []
-        ).filter(
+    const beforeOpen=new Set(
+      state.positions
+        .filter(
           position=>
-            position?.mint &&
             String(position?.status||'').toUpperCase()==='OPEN'
-        );
+        )
+        .map(position=>String(position?.mint||''))
+        .filter(Boolean)
+    );
 
-      const afterOpen=new Set(
-        state.positions
-          .map(position=>String(position?.mint||''))
-          .filter(Boolean)
+    const payload=
+      await __mfFetchJsonV16(
+        '/api/paper/positions/live?_='+
+        Date.now(),
+        {
+          timeoutMs:900
+        }
       );
 
-      const membershipChanged=
-        beforeOpen.size!==afterOpen.size ||
-        [...beforeOpen].some(
-          mint=>!afterOpen.has(mint)
-        );
+    state.positions=
+      (
+        Array.isArray(payload?.positions)
+          ? payload.positions
+          : []
+      ).filter(
+        position=>
+          position?.mint &&
+          String(position?.status||'').toUpperCase()==='OPEN'
+      );
 
-      if(membershipChanged){
-        // Opening/closing a position is a structural fact.
-        render();
-      }else if(patchDom){
-        for(const mint of afterOpen){
-          __mfPatchMutableCardV17(mint);
-        }
+    const afterOpen=new Set(
+      state.positions
+        .map(position=>String(position?.mint||''))
+        .filter(Boolean)
+    );
+
+    const membershipChanged=
+      beforeOpen.size!==afterOpen.size ||
+      [...beforeOpen].some(
+        mint=>!afterOpen.has(mint)
+      );
+
+    if(membershipChanged){
+      __mfReconcileVisibleCardsV183();
+    }
+
+    if(patchDom){
+      for(const mint of afterOpen){
+        __mfPatchMutableCardV17(mint);
       }
-    }while(__mfPositionRequestPendingV16);
+    }
   }catch(error){
     console.warn(
-      '[token-flow] event-driven position refresh failed',
+      '[token-flow] open-position live refresh failed',
       error
     );
   }finally{
@@ -2112,20 +2128,58 @@ async function loadTokens(){
   state.loading=true;
 
   try{
+    // MEMEFLOW_VISIBLE_MINTS_ONLY_V19
+    // Refresh only cards actually mounted on the current page (normally 20).
+    // OPEN POSITION cards use /api/paper/positions/live instead, so no card
+    // has two automatic mutable-data writers in the same clock tick.
+    const openMints=new Set(
+      state.positions
+        .filter(
+          position=>
+            String(position?.status||'').toUpperCase()==='OPEN'
+        )
+        .map(position=>String(position?.mint||''))
+        .filter(Boolean)
+    );
+
     const mints=[
       ...new Set(
-        state.rows
-          .map(row=>String(row?.mint||'').trim())
-          .filter(Boolean)
+        [...document.querySelectorAll(
+          '.flow-token[data-mint]'
+        )]
+          .map(
+            card=>
+              String(card.dataset.mint||'').trim()
+          )
+          .filter(
+            mint=>
+              mint &&
+              !openMints.has(mint)
+          )
       )
-    ].slice(0,200);
+    ].slice(0,PAGE_SIZE);
+
+    if(!mints.length){
+      $('lastUpdate').textContent=
+        `Updated ${
+          new Date().toLocaleTimeString(
+            [],
+            {
+              hour:'2-digit',
+              minute:'2-digit',
+              second:'2-digit'
+            }
+          )
+        }`;
+      return;
+    }
 
     const payload=
       await __mfPostJsonV18(
         '/api/system/live-token-card-batch',
         {mints},
         {
-          timeoutMs:1500
+          timeoutMs:900
         }
       );
 
@@ -2229,6 +2283,7 @@ document
             );
 
           render();
+          __mfKickCardClockV19();
         }
       );
     }
@@ -2244,6 +2299,7 @@ $('tokenSearch')
       state.page = 1;
 
       render();
+      __mfKickCardClockV19();
     }
   );
 
@@ -2294,7 +2350,7 @@ $('refreshButton')
     ()=>{
       void __mfLoadStructureV18()
         .finally(
-          ()=>__mfPollOneSecondV17(true)
+          ()=>__mfKickCardClockV19()
         );
     }
   );
@@ -2319,6 +2375,11 @@ const __MF_STRUCTURE_REFRESH_MS_V18=10000;
 
 let __mfOneSecondTimerV17=null;
 let __mfStructureTimerV18=null;
+
+// MEMEFLOW_SINGLE_CARD_CLOCK_V19
+let __mfCardClockRunningV19=false;
+let __mfCardClockKickPendingV19=false;
+let __mfCardClockNextAtV19=0;
 
 function __mfPreserveIdentityV17(previous,next){
   if(!next||typeof next!=='object'){
@@ -2620,14 +2681,98 @@ async function __mfPollOneSecondV17(force=false){
     return;
   }
 
-  // Exactly two bounded requests per tick:
-  // 1) one ranked token-feed snapshot;
-  // 2) one Open Position snapshot.
-  // Both have their own in-flight guards and request timeouts.
+  // MEMEFLOW_DISJOINT_CARD_WRITERS_V19
+  // Regular mounted cards and OPEN POSITION cards are separate data lanes.
   await Promise.allSettled([
     loadTokens(),
     __mfRefreshOpenPositionsV16()
   ]);
+}
+
+function __mfScheduleCardClockV19(){
+  if(__mfOneSecondTimerV17!==null){
+    clearTimeout(__mfOneSecondTimerV17);
+  }
+
+  const now=performance.now();
+
+  if(!(__mfCardClockNextAtV19>now)){
+    __mfCardClockNextAtV19=now;
+  }
+
+  __mfOneSecondTimerV17=
+    setTimeout(
+      ()=>{
+        void __mfRunCardClockV19();
+      },
+      Math.max(
+        0,
+        __mfCardClockNextAtV19-now
+      )
+    );
+}
+
+async function __mfRunCardClockV19(){
+  if(document.hidden){
+    __mfCardClockNextAtV19=
+      performance.now()+
+      __MF_CARD_REFRESH_MS_V17;
+
+    __mfScheduleCardClockV19();
+    return;
+  }
+
+  if(__mfCardClockRunningV19){
+    __mfCardClockKickPendingV19=true;
+    return;
+  }
+
+  __mfCardClockRunningV19=true;
+
+  const scheduledAt=
+    __mfCardClockNextAtV19>0
+      ? __mfCardClockNextAtV19
+      : performance.now();
+
+  try{
+    await __mfPollOneSecondV17(true);
+  }finally{
+    __mfCardClockRunningV19=false;
+
+    const now=performance.now();
+
+    if(__mfCardClockKickPendingV19){
+      __mfCardClockKickPendingV19=false;
+      __mfCardClockNextAtV19=now;
+    }else{
+      let next=
+        scheduledAt+
+        __MF_CARD_REFRESH_MS_V17;
+
+      // MEMEFLOW_NO_CATCHUP_BURST_V19
+      // If a request was slow, SKIP missed slots. Never replay several updates
+      // back-to-back to "catch up".
+      while(next<=now){
+        next+=__MF_CARD_REFRESH_MS_V17;
+      }
+
+      __mfCardClockNextAtV19=next;
+    }
+
+    __mfScheduleCardClockV19();
+  }
+}
+
+function __mfKickCardClockV19(){
+  if(__mfCardClockRunningV19){
+    __mfCardClockKickPendingV19=true;
+    return;
+  }
+
+  __mfCardClockNextAtV19=
+    performance.now();
+
+  __mfScheduleCardClockV19();
 }
 
 if(typeof loadDiscoveryStatus==='function'){
@@ -2635,19 +2780,14 @@ if(typeof loadDiscoveryStatus==='function'){
 }
 
 // MEMEFLOW_PER_MINT_ONE_SECOND_CLOCK_V18
+// MEMEFLOW_SINGLE_CARD_CLOCK_START_V19
 void __mfLoadStructureV18()
   .finally(
-    ()=>__mfPollOneSecondV17(true)
+    ()=>__mfKickCardClockV19()
   );
 
-__mfOneSecondTimerV17=
-  setInterval(
-    ()=>{
-      void __mfPollOneSecondV17();
-    },
-    __MF_CARD_REFRESH_MS_V17
-  );
-
+// Membership/ranking synchronization remains separate. It does not write
+// mutable card data after MEMEFLOW_STRUCTURE_MEMBERSHIP_ONLY_V19.
 __mfStructureTimerV18=
   setInterval(
     ()=>{
@@ -2662,8 +2802,30 @@ document.addEventListener(
   'visibilitychange',
   ()=>{
     if(!document.hidden){
-      void __mfPollOneSecondV17(true);
+      void __mfLoadStructureV18();
+      __mfKickCardClockV19();
     }
+  }
+);
+
+window.addEventListener(
+  'pageshow',
+  ()=>{
+    __mfKickCardClockV19();
+  }
+);
+
+window.addEventListener(
+  'focus',
+  ()=>{
+    __mfKickCardClockV19();
+  }
+);
+
+window.addEventListener(
+  'online',
+  ()=>{
+    __mfKickCardClockV19();
   }
 );
 
@@ -2671,7 +2833,7 @@ window.addEventListener(
   'beforeunload',
   ()=>{
     if(__mfOneSecondTimerV17!==null){
-      clearInterval(__mfOneSecondTimerV17);
+      clearTimeout(__mfOneSecondTimerV17);
     }
 
     if(__mfStructureTimerV18!==null){

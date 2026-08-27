@@ -1,4 +1,10 @@
 // MEMEFLOW_LIVE_CARD_MARKET_TRUTH_V18
+// MEMEFLOW_LIVE_CARD_MARKET_TRUTH_V19
+//
+// Live-card MC policy:
+//   real TradeEvent price x normalized supply x current SOL/USD
+// OR explicit Pump reference USD as a labeled fallback.
+// Historical/stored marketCapSol/marketCapUsd are NEVER treated as live truth.
 
 const finite=value=>{
   if(value===null||value===undefined||value==='')return null;
@@ -73,10 +79,16 @@ export function liveCardMarketSnapshot({
   const rows=Array.isArray(points)?points:[];
   const cutoff=now-windowMs;
 
-  const validRows=rows.filter(row=>{
-    const t=pointTime(row);
-    return t!==null&&t<=now+30000;
-  });
+  const validRows=rows
+    .filter(row=>{
+      const t=pointTime(row);
+      return t!==null&&t<=now+30000;
+    })
+    .sort(
+      (a,b)=>
+        Number(a?.t||0)-
+        Number(b?.t||0)
+    );
 
   const recent=validRows.filter(
     row=>Number(row.t)>=cutoff
@@ -95,12 +107,12 @@ export function liveCardMarketSnapshot({
   let latestTradePrice=null;
   let latestTradeAt=null;
 
-  for(let i=validRows.length-1;i>=0;i--){
-    const price=pointPrice(validRows[i]);
+  for(let index=validRows.length-1;index>=0;index--){
+    const price=pointPrice(validRows[index]);
     if(price===null)continue;
 
     latestTradePrice=price;
-    latestTradeAt=pointTime(validRows[i]);
+    latestTradeAt=pointTime(validRows[index]);
     break;
   }
 
@@ -117,17 +129,22 @@ export function liveCardMarketSnapshot({
   const marketSource=lower(token?.marketSource);
   const liveMarketCapSource=lower(token?.liveMarketCapSource);
 
-  // MEMEFLOW_NO_FAKE_CREATE_MC_V18
+  const explicitTradeEvidence=Boolean(
+    marketSource.includes('trade') ||
+    liveMarketCapSource.includes('trade') ||
+    (
+      token?.eventSignature &&
+      !marketSource.includes('create')
+    ) ||
+    token?.copyTradingDiscovered===true
+  );
+
   const tokenHasTradeEvidence=Boolean(
     tokenPrice!==null&&
     tokenPrice>0&&
     tokenTradeAt!==null&&
     tokenTradeAt>0&&
-    (
-      marketSource.includes('trade') ||
-      liveMarketCapSource.includes('trade') ||
-      finite(token?.lastMarketActivityAt)!==null
-    )
+    explicitTradeEvidence
   );
 
   const currentPrice=
@@ -140,7 +157,9 @@ export function liveCardMarketSnapshot({
 
   const supply=normalizePumpSupplyForCard(token);
 
-  const liveMarketCapSol=
+  // MEMEFLOW_NO_STORED_MC_FALLBACK_V19
+  // No real trade price = no live SOL market cap.
+  const marketCapSol=
     currentPrice!==null&&
     currentPrice>0&&
     supply!==null&&
@@ -148,47 +167,13 @@ export function liveCardMarketSnapshot({
       ? currentPrice*supply
       : null;
 
-  const createOnly=Boolean(
-    latestTradePrice===null&&
-    !tokenHasTradeEvidence&&
-    (
-      marketSource.includes('create') ||
-      lower(token?.source).includes('createevent')
-    )
-  );
-
-  let storedMarketCapSol=finite(
-    token?.marketCapSol ??
-    token?.marketCap
-  );
-
-  if(
-    storedMarketCapSol!==null&&
-    storedMarketCapSol>1_000_000&&
-    (
-      token?.pumpMarketCapRawLamports!=null ||
-      token?.registryHistorical===true ||
-      lower(token?.source).includes('history')
-    )
-  ){
-    storedMarketCapSol/=1e9;
-  }
-
-  if(createOnly){
-    storedMarketCapSol=null;
-  }
-
-  const marketCapSol=
-    liveMarketCapSol ??
-    storedMarketCapSol;
-
   const usd=finite(solUsd);
 
   const pumpReferenceUsd=finite(
     token?.pumpReportedMarketCapUsd
   );
 
-  const storedLiveUsd=
+  const storedTradeUsd=
     tokenHasTradeEvidence
       ? finite(token?.marketCapUsd)
       : null;
@@ -201,13 +186,17 @@ export function liveCardMarketSnapshot({
       ? marketCapSol*usd
       : (
           pumpReferenceUsd ??
-          storedLiveUsd
+          storedTradeUsd
         );
 
   const volume5mUsd=
     usd!==null&&usd>0
       ? volume5mSol*usd
-      : null;
+      : (
+          tokenHasTradeEvidence
+            ? finite(token?.volume5mUsd)
+            : null
+        );
 
   const pricedRecent=recent
     .map(row=>({
@@ -236,8 +225,6 @@ export function liveCardMarketSnapshot({
     marketCapSource='token-live-trade';
   }else if(pumpReferenceUsd!==null){
     marketCapSource='pump-reference';
-  }else if(marketCapSol!==null){
-    marketCapSource='stored-normalized';
   }
 
   return {
@@ -250,15 +237,21 @@ export function liveCardMarketSnapshot({
     marketCapSource,
     marketUpdatedAt:
       latestTradeAt ??
-      tokenTradeAt ??
-      finite(token?.marketCapUpdatedAt),
+      (
+        tokenHasTradeEvidence
+          ? tokenTradeAt
+          : finite(token?.pumpReferenceAt)
+      ),
     latestTradePriceSol:latestTradePrice,
     latestTradeAt,
     currentPriceSol:currentPrice,
     tradeEvidence:Boolean(
-      latestTradePrice!==null||
+      latestTradePrice!==null ||
       tokenHasTradeEvidence
     ),
-    createOnly
+    createOnly:!Boolean(
+      latestTradePrice!==null ||
+      tokenHasTradeEvidence
+    )
   };
 }

@@ -78,6 +78,27 @@ assert.ok(
   `expected ~25%, got ${traded.priceChange5mPct}`
 );
 
+// V19: an old/open-position token with a stored 33.5K-ish baseline but
+// NO proven TradeEvent must not display that baseline as live MC.
+const staleUnknownSource=liveCardMarketSnapshot({
+  token:{
+    launchPlatform:'pump',
+    priceSol:0.000000335,
+    lastPriceAt:900_000,
+    marketCapSol:335,
+    marketCapUsd:33_500,
+    totalSupply:1_000_000_000
+  },
+  points:[],
+  solUsd:100,
+  now:1_000_000
+});
+
+assert.equal(staleUnknownSource.tradeEvidence,false);
+assert.equal(staleUnknownSource.marketCapSol,null);
+assert.equal(staleUnknownSource.marketCapUsd,null);
+assert.equal(staleUnknownSource.marketCapSource,null);
+
 const referenced=liveCardMarketSnapshot({
   token:{
     launchPlatform:'pump',
@@ -159,7 +180,7 @@ assert.doesNotMatch(
 
 assert.match(
   html,
-  /system-tokens\.js\?v=no-rerender-v18-3-20260827/
+  /system-tokens\.js\?v=single-clock-v19-20260827/
 );
 
 console.log('per-mint card refresh v18 ok');
