@@ -4060,18 +4060,79 @@ function renderTrades() {
     return;
   }
 
+  const tradeTime = raw => {
+    if (raw === null || raw === undefined || raw === '') return '—';
+
+    let value = raw;
+    if (typeof value === 'number' && value > 0 && value < 1e12) {
+      value *= 1000;
+    }
+
+    const date = new Date(value);
+    if (!Number.isFinite(date.getTime())) return '—';
+
+    return date.toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
   list.innerHTML = rows.map(trade => {
-    const side = String(trade.side || '').toUpperCase();
-    const time = trade.at || trade.createdAt || trade.timestamp || trade.executedAt;
-    const reason = trade.reason || trade.exitReason || 'ENGINE';
-    const copyTrade = String(trade.strategySource || '').toLowerCase() === 'copy-trading';
+    const side = String(trade.side || '').toUpperCase() || '—';
+    const sideClass = side.toLowerCase();
+    const rawTime =
+      trade.at ??
+      trade.createdAt ??
+      trade.timestamp ??
+      trade.executedAt;
+
+    const reason = String(
+      trade.reason ||
+      trade.exitReason ||
+      'ENGINE'
+    ).trim();
+
+    const copyTrade =
+      String(trade.strategySource || '').toLowerCase() === 'copy-trading';
+
+    const sizeSol =
+      num(trade.valueSol) ??
+      num(trade.amountSol) ??
+      num(trade.sizeSol);
+
+    const pnl = num(trade.realizedPnlSol);
+    const pnlText = finite(pnl)
+      ? `${pnl >= 0 ? '+' : ''}${fmt(pnl, 5)} SOL`
+      : '—';
+    const pnlClass = finite(pnl)
+      ? (pnl >= 0 ? 'pnl-positive' : 'pnl-negative')
+      : '';
+
     return `
-      <div class="trade-row">
-        <strong class="trade-side ${side.toLowerCase()}">${esc(side || '—')}</strong>
-        <span>${esc(trade.symbol || short(trade.mint))}</span>
-        <span>${fmt(trade.valueSol ?? trade.amountSol ?? trade.sizeSol, 4)} SOL</span>
-        <span>${finite(trade.realizedPnlSol) ? `${num(trade.realizedPnlSol) >= 0 ? '+' : ''}${fmt(trade.realizedPnlSol, 5)}` : '—'}</span>
-        <span>${copyTrade ? '<em class="copy-trade-badge">COPY TRADE</em> · ' : ''}${esc(reason)}${time ? ` · ${new Date(time).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}` : ''}</span>
+      <div class="trade-row trade-log-row">
+        <div class="trade-log-primary">
+          <strong class="trade-side ${sideClass}">${esc(side)}</strong>
+          <strong class="trade-log-symbol">${esc(trade.symbol || short(trade.mint))}</strong>
+          ${copyTrade ? '<em class="copy-trade-badge">COPY TRADE</em>' : ''}
+          <time class="trade-log-time">${esc(tradeTime(rawTime))}</time>
+        </div>
+
+        <div class="trade-log-details">
+          <span>
+            <b>SIZE</b>
+            <strong>${finite(sizeSol) ? `${fmt(sizeSol, 4)} SOL` : '—'}</strong>
+          </span>
+
+          <span>
+            <b>P&amp;L</b>
+            <strong class="${pnlClass}">${esc(pnlText)}</strong>
+          </span>
+
+          <span class="trade-log-reason">
+            <b>REASON</b>
+            <strong>${esc(reason)}</strong>
+          </span>
+        </div>
       </div>
     `;
   }).join('');
