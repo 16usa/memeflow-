@@ -959,6 +959,43 @@ const __mfLiveStatesResponseCache=new Map();
 let __mfLiveTokenRevision=0;
 const __mfYieldToEventLoop=()=>new Promise(resolve=>setImmediate(resolve));
 
+// MEMEFLOW_DECISION_REVISION_EVENT_V14
+// Token market mutation and per-user decision completion are separate moments.
+// One mint-level decision event is emitted after the decision write(s), so a
+// realtime card can never stop on a pre-evaluation score/state snapshot.
+const __mfDecisionRefreshTimersV14=new Map();
+
+function __mfEmitDecisionRefreshV14(mint){
+  mint=String(mint||'').trim();
+  if(!mint)return;
+
+  const revision=++__mfLiveTokenRevision;
+
+  try{
+    __systemViewEmitV31(
+      'decision',
+      {
+        mint,
+        revision,
+        updatedAt:Date.now()
+      }
+    );
+  }catch{}
+}
+
+function __mfQueueDecisionRefreshV14(mint){
+  mint=String(mint||'').trim();
+  if(!mint||__mfDecisionRefreshTimersV14.has(mint))return;
+
+  const timer=setTimeout(()=>{
+    __mfDecisionRefreshTimersV14.delete(mint);
+    __mfEmitDecisionRefreshV14(mint);
+  },25);
+
+  timer.unref?.();
+  __mfDecisionRefreshTimersV14.set(mint,timer);
+}
+
 function candidateView(d){
   const t=store.state.tokens[d.mint]||{};
   const finite=(v)=>v!==null&&v!==undefined&&Number.isFinite(Number(v))?Number(v):null;
@@ -1078,6 +1115,275 @@ function candidateView(d){
     slippagePct:null
   };
 }
+
+// MEMEFLOW_SINGLE_TOKEN_LIVE_VIEW_V14
+function __mfLiveDecisionForUserV14(uid,token,settingsOverride=null){
+  const mint=String(token?.mint||'').trim();
+  if(!mint)return null;
+
+  const settings=
+    settingsOverride && typeof settingsOverride==='object'
+      ? settingsOverride
+      : (store.settings(uid)||{});
+
+  const admission=__mfEntryAdmissionForUser(
+    token,
+    uid,
+    settings
+  );
+
+  const eligible=admission?.admitted===true;
+  const isOpen=__mfOpenPositionMints().has(mint);
+  const admissionState=String(
+    admission?.state || (eligible?'ADMITTED':'PENDING')
+  ).trim().toUpperCase();
+
+  let decision=null;
+
+  if(!eligible&&!isOpen){
+    const reasons=
+      Array.isArray(admission?.reasons)
+        ? admission.reasons
+            .filter(x=>typeof x==='string'&&x.trim())
+            .map(x=>x.trim())
+        : [];
+
+    const blocked=admissionState==='REJECTED';
+    const fallbackReason=
+      blocked
+        ? 'Entry filters rejected this token'
+        : 'Waiting for entry-filter data';
+
+    decision={
+      state:blocked?'BLOCKED':'WAITING',
+      score:0,
+      confidence:0,
+      primaryReason:reasons[0]||fallbackReason,
+      reasons:reasons.length?reasons:[fallbackReason],
+      terminal:false
+    };
+  }else{
+    decision=store.state.decisions?.[uid+':'+mint]||null;
+
+    if(!decision){
+      try{
+        decision=evaluate(token,settings);
+      }catch{
+        decision={
+          state:'WAITING',
+          score:0,
+          confidence:0,
+          primaryReason:'Scanner data is still being collected',
+          reasons:['Scanner data is still being collected'],
+          terminal:false
+        };
+      }
+    }
+  }
+
+  return {
+    ...decision,
+    mint,
+    tradeEligible:eligible,
+    displayOnly:!eligible&&!isOpen,
+    openPositionOverride:isOpen&&!eligible,
+    entryAdmissionState:admissionState,
+    entryAdmissionReasons:
+      Array.isArray(admission?.reasons)
+        ? admission.reasons.filter(x=>typeof x==='string').slice(0,20)
+        : []
+  };
+}
+
+function __mfLiveCardViewV14(token,decision){
+  const t=token||{};
+  const mint=String(t?.mint||decision?.mint||'').trim();
+  if(!mint)return null;
+
+  const finite=v=>{
+    if(v===null||v===undefined||v==='')return null;
+    const n=Number(v);
+    return Number.isFinite(n)?n:null;
+  };
+
+  let market5m=null;
+  try{
+    market5m=__mfCandidateMarket5mV4(mint,t);
+  }catch{
+    market5m=null;
+  }
+
+  let ageMinutes=null;
+  try{
+    const age=tokenAgeMinutes(t);
+    ageMinutes=Number.isFinite(Number(age))?Number(age):null;
+  }catch{}
+
+  const marketCapSol=
+    finite(
+      market5m?.marketCapSol ??
+      t?.marketCapSol ??
+      t?.marketCap
+    );
+
+  const marketCapUsd=
+    finite(
+      market5m?.marketCapUsd ??
+      t?.marketCapUsd
+    );
+
+  const holderCount=
+    finite(t?.holderCount??t?.holders);
+
+  const top10Pct=
+    finite(t?.top10Pct??t?.top10);
+
+  const developerPct=
+    finite(t?.developerPct??t?.developerSharePct);
+
+  const buyPressure=
+    finite(t?.buyPressure??t?.momentum);
+
+  const priceSol=
+    finite(t?.priceSol??t?.price);
+
+  const liquiditySol=
+    finite(t?.liquiditySol??t?.liquidity);
+
+  const volume5mSol=
+    finite(market5m?.volume5mSol??t?.volume5mSol);
+
+  const volume5mUsd=
+    finite(market5m?.volume5mUsd??t?.volume5mUsd);
+
+  const transactions5m=
+    finite(market5m?.transactions5m??t?.transactions5m);
+
+  const priceChange5mPct=
+    finite(market5m?.priceChange5mPct??t?.priceChange5mPct);
+
+  return {
+    id:mint,
+    mint,
+    tokenMint:mint,
+    tokenAddress:mint,
+
+    name:
+      t?.name ||
+      t?.metadataName ||
+      t?.symbol ||
+      mint.slice(0,6),
+    symbol:t?.symbol||t?.metadataSymbol||'TOKEN',
+
+    launchPlatform:t?.launchPlatform||t?.protocol||'pump',
+    protocol:t?.protocol||t?.launchPlatform||'pump',
+    source:t?.source||null,
+
+    uri:t?.uri||t?.metadataUrl||null,
+    metadataUri:t?.metadataUrl||t?.uri||null,
+    imageUrl:t?.imageUrl||t?.image||t?.logoUrl||null,
+    image:t?.imageUrl||t?.image||t?.logoUrl||null,
+    logoUrl:t?.logoUrl||t?.imageUrl||t?.image||null,
+
+    state:String(decision?.state||'WAITING'),
+    score:finite(decision?.score),
+    confidence:finite(decision?.confidence),
+    primaryReason:
+      typeof decision?.primaryReason==='string'
+        ? decision.primaryReason
+        : null,
+    reasons:
+      Array.isArray(decision?.reasons)
+        ? decision.reasons.filter(x=>typeof x==='string').slice(0,20)
+        : [],
+
+    tradeEligible:decision?.tradeEligible===true,
+    displayOnly:decision?.displayOnly===true,
+    openPositionOverride:decision?.openPositionOverride===true,
+    entryAdmissionState:
+      String(decision?.entryAdmissionState||'PENDING'),
+    entryAdmissionReasons:
+      Array.isArray(decision?.entryAdmissionReasons)
+        ? decision.entryAdmissionReasons
+            .filter(x=>typeof x==='string')
+            .slice(0,20)
+        : [],
+
+    data:
+      Number.isFinite(Number(t?.dataQuality))
+        ? Math.round(Number(t.dataQuality)*100)
+        : null,
+
+    price:priceSol,
+    priceSol,
+    liquidity:liquiditySol,
+    liquiditySol,
+    liquidityUsd:finite(t?.liquidityUsd),
+
+    marketCap:marketCapUsd,
+    marketCapSol,
+    marketCapUsd,
+    marketCapSource:market5m?.marketCapSource||null,
+    marketCapUpdatedAt:
+      finite(market5m?.marketUpdatedAt??t?.marketCapUpdatedAt),
+
+    holders:holderCount,
+    holderCount,
+    holderSource:t?.holderSource||t?.eventLedgerVersion||'ws-event-ledger',
+    holderFresh:t?.holderFresh===true,
+    top10:top10Pct,
+    top10Pct,
+    developer:developerPct,
+    developerPct,
+    developerSharePct:developerPct,
+    buyPressure,
+    momentum:buyPressure,
+
+    ageMinutes,
+    volume5mSol,
+    volume5mUsd,
+    transactions5m,
+    priceChange5mPct,
+
+    qualityScore:finite(t?.qualityScore),
+    opportunityScore:finite(t?.opportunityScore),
+    opportunityEvidenceReady:t?.opportunityEvidenceReady===true,
+    opportunityTrendHealthy:t?.opportunityTrendHealthy===true,
+    uniqueBuyers:finite(t?.uniqueBuyers),
+    netFlowSol:finite(t?.netFlowSol),
+    recentNetFlowSol:finite(t?.recentNetFlowSol),
+    priceMomentumPct:finite(t?.priceMomentumPct),
+    drawdownFromPeakPct:finite(t?.drawdownFromPeakPct),
+    whaleDominancePct:finite(t?.whaleDominancePct),
+
+    dead:t?.dead===true,
+    deadReason:
+      typeof t?.deadReason==='string'
+        ? t.deadReason
+        : null,
+
+    riskApproved:
+      decision?.preOpenRiskVerified===true ||
+      (
+        decision?.state==='BUY READY' &&
+        decision?.walletRiskPending===false
+      ),
+    walletRiskPending:decision?.walletRiskPending===true,
+    preOpenRiskStatus:t?.preOpenRiskStatus||null,
+    routeApproved:priceSol!==null,
+
+    quoteAgeMs:
+      t?.lastPriceAt
+        ? Math.max(0,Date.now()-Number(t.lastPriceAt))
+        : null,
+
+    tokenUpdatedAt:finite(t?.updatedAt),
+    decisionUpdatedAt:
+      finite(decision?.updatedAt??decision?.reevaluatedAt),
+    snapshotAt:Date.now()
+  };
+}
+
 // MEMEFLOW_STRICT_ENTRY_ADMISSION_V1
 const __mfEntryAdmissionState=new Map();
 
@@ -1133,7 +1439,15 @@ function __mfLiveEvalAdmissionCheck(token,settings,uid){
   const key=String(uid||'')+':'+String(token?.mint||'');
 
   if(uid&&token?.mint){
-    __mfEntryAdmissionState.set(key,admission?.admitted===true);
+    const previous=__mfEntryAdmissionState.get(key);
+    const admitted=admission?.admitted===true;
+
+    __mfEntryAdmissionState.set(key,admitted);
+
+    // MEMEFLOW_ADMISSION_REVISION_EVENT_V14
+    if(previous!==undefined&&previous!==admitted){
+      __mfQueueDecisionRefreshV14(token.mint);
+    }
   }
 
   return admission;
@@ -1174,6 +1488,9 @@ const evaluateAll=makeEvaluateForActiveUsers({
   admissionCheck:__mfLiveEvalAdmissionCheck,
   onDecision:(uid,token,decision)=>{
     void __mfHandleDecision(uid,token,decision).catch(()=>{});
+
+    // MEMEFLOW_DECISION_COMPLETE_REFRESH_V14
+    __mfQueueDecisionRefreshV14(token?.mint);
   }
 });
 
@@ -1218,6 +1535,9 @@ const __mfPreAdmissionSweepTimer=setInterval(()=>{
           promote=true;
         }else if(!admitted&&previous===true){
           __mfClearDecisionForUserMint(row.uid,token.mint);
+
+          // MEMEFLOW_SWEEP_DECISION_REFRESH_V14
+          __mfQueueDecisionRefreshV14(token.mint);
         }
 
         __mfEntryAdmissionState.set(key,admitted);
@@ -3190,6 +3510,60 @@ if(false && url.pathname==='/api/ai/assistant' &&req.method==='POST'){
  }
  /* MEMEFLOW_AI_STANDALONE_V49_ROUTE_END */
 
+
+ // MEMEFLOW_SINGLE_TOKEN_LIVE_ROUTE_V14
+ if(url.pathname==='/api/system/live-token-state'&&req.method==='GET'){
+  const mint=String(url.searchParams.get('mint')||'').trim();
+
+  if(!mint){
+    return json(res,400,{error:'MINT_REQUIRED'});
+  }
+
+  const token=store.state.tokens?.[mint]||null;
+  const isOpen=__mfOpenPositionMints().has(mint);
+
+  if(
+    !token ||
+    (
+      !isOpen &&
+      __mfIsCurrentScannerToken(token)!==true
+    )
+  ){
+    return json(res,404,{
+      error:'TOKEN_NOT_IN_LIVE_STATE',
+      mint,
+      liveRevision:__mfLiveTokenRevision
+    });
+  }
+
+  const settings=store.settings(u.id);
+  const decision=__mfLiveDecisionForUserV14(
+    u.id,
+    token,
+    settings
+  );
+
+  const row=__mfLiveCardViewV14(
+    token,
+    decision
+  );
+
+  if(!row){
+    return json(res,404,{
+      error:'TOKEN_VIEW_UNAVAILABLE',
+      mint,
+      liveRevision:__mfLiveTokenRevision
+    });
+  }
+
+  return json(res,200,{
+    row,
+    mint,
+    liveRevision:__mfLiveTokenRevision,
+    source:'single-token-live-v14'
+  });
+ }
+
   // MEMEFLOW_LIVE_TOKEN_STATES_V7
  if(url.pathname==='/api/system/live-token-states'&&req.method==='GET'){
   // MEMEFLOW_LIVE_TOKEN_VISIBILITY_V8_CLEAN_WORKTREE
@@ -3543,7 +3917,9 @@ if(false && url.pathname==='/api/ai/assistant' &&req.method==='POST'){
     total:_rankedViews.length,
     returned:_views.length,
     limit:_limit,
+    liveRevision:__mfLiveTokenRevision,
 
+    // MEMEFLOW_FULL_SNAPSHOT_REVISION_V14
     // Keep old source value because regression/history tooling uses it.
     source:'system-live-token-states-transparent-v8',
     feedVersion:'MEMEFLOW_LIVE_TOKEN_FEED_BRIDGE_V13',
