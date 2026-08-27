@@ -103,7 +103,8 @@ const referenced=liveCardMarketSnapshot({
   token:{
     launchPlatform:'pump',
     marketSource:'pump-create-event-ws',
-    pumpReportedMarketCapUsd:12345
+    pumpReportedMarketCapUsd:12345,
+    pumpReferenceAt:999_500
   },
   points:[],
   solUsd:null,
@@ -180,7 +181,7 @@ assert.doesNotMatch(
 
 assert.match(
   html,
-  /system-tokens\.js\?v=single-clock-v19-20260827/
+  /system-tokens\.js\?v=instant-rank-v23-20260827/
 );
 
 console.log('per-mint card refresh v18 ok');

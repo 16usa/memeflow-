@@ -1945,9 +1945,11 @@ async function __mfRefreshOpenPositionsV16({
         mint=>!afterOpen.has(mint)
       );
 
-    if(membershipChanged){
-      __mfReconcileVisibleCardsV183();
-    }
+    // MEMEFLOW_INSTANT_OPEN_RANK_REORDER_V23
+    // OPEN POSITION P&L is mutable ranking data. Reconcile on EVERY successful
+    // live position snapshot, not only when position membership changes.
+    // Existing DOM nodes are moved; cards are not destroyed/recreated.
+    __mfReconcileVisibleCardsV183();
 
     if(patchDom){
       for(const mint of afterOpen){
@@ -2312,6 +2314,13 @@ async function loadTokens(){
             )
           : previous;
       });
+
+    // MEMEFLOW_INSTANT_SCORE_RANK_REORDER_V23
+    // state.rows now contains this exact 1-second batch's Score/market truth.
+    // Re-sort + move existing keyed cards NOW, in this same tick. This is what
+    // makes a card jump immediately when 80 -> 97 instead of waiting for the
+    // 10-second structural membership fallback.
+    __mfReconcileVisibleCardsV183();
 
     for(
       const card of document.querySelectorAll(
