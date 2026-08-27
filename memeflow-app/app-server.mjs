@@ -906,6 +906,9 @@ const __mfLiveStatesResponseCacheMs=Math.max(
   Number(process.env.LIVE_STATES_RESPONSE_CACHE_MS||350)
 );
 const __mfLiveStatesResponseCache=new Map();
+// MEMEFLOW_LIVE_TOKEN_REVISION_V1 — every canonical token mutation advances
+// the revision so the event-driven UI can never receive a cached pre-event snapshot.
+let __mfLiveTokenRevision=0;
 const __mfYieldToEventLoop=()=>new Promise(resolve=>setImmediate(resolve));
 
 function candidateView(d){
@@ -1469,12 +1472,17 @@ data: ${JSON.stringify({
 }
 
 function publish(mint){
+  // MEMEFLOW_LIVE_TOKEN_REVISION_V1
+  // publish() is called only after canonical token state is updated. Advancing
+  // this revision makes every following per-user snapshot cache-aware.
+  const __liveRevision=++__mfLiveTokenRevision;
   // V4 System View: actual backend publish cadence drives the 3D/token-flow impulse.
   if(__systemViewStreamsV31.size){
    try{
     const __v31t=store?.state?.tokens?.[mint]||{};
     __systemViewEmitV31('token',{
      mint:String(mint||''),
+     revision:__liveRevision,
      updatedAt:Number(__v31t?.updatedAt||Date.now())
     });
    }catch{}
@@ -3010,7 +3018,8 @@ if(false && url.pathname==='/api/ai/assistant' &&req.method==='POST'){
   if(
     _cached &&
     Date.now()-Number(_cached.at||0)<=__mfLiveStatesResponseCacheMs &&
-    Number(_cached.settingsVersion||0)===_settingsVersion
+    Number(_cached.settingsVersion||0)===_settingsVersion &&
+    Number(_cached.liveRevision||0)===__mfLiveTokenRevision
   ){
     return json(res,200,{..._cached.payload,cacheHit:true});
   }
@@ -3134,6 +3143,7 @@ if(false && url.pathname==='/api/ai/assistant' &&req.method==='POST'){
   __mfLiveStatesResponseCache.set(_cacheKey,{
     at:Date.now(),
     settingsVersion:_settingsVersion,
+    liveRevision:__mfLiveTokenRevision,
     payload:_payload
   });
 

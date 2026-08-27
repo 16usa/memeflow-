@@ -184,7 +184,8 @@ const state = {
   query: '',
   page: 1,
   loading: false,
-  emptyResponses: 0
+  emptyResponses: 0,
+  refreshPending: false
 };
 
 /* MEMEFLOW_SYSTEM_TOKEN_OPEN_POSITIONS_V1
@@ -1318,10 +1319,12 @@ async function loadTokens() {
   }
 
   if (state.loading) {
+    state.refreshPending = true;
     return;
   }
 
   state.loading = true;
+  state.refreshPending = false;
 
   try {
     const response = await fetch(
@@ -1419,6 +1422,10 @@ async function loadTokens() {
     $('lastUpdate').textContent = 'Decision feed unavailable';
   } finally {
     state.loading = false;
+    if (state.refreshPending) {
+      state.refreshPending = false;
+      queueMicrotask(loadTokens);
+    }
   }
 }
 
@@ -1517,10 +1524,79 @@ $('refreshButton')
 
 loadTokens();
 
-setInterval(
-  loadTokens,
-  REFRESH_MS
-);
+/* MEMEFLOW_SYSTEM_TOKENS_REALTIME_V1
+ * /api/system/stream is the single live change trigger.
+ * Every CREATE/TOKEN/REMOVE event immediately reloads one canonical per-user
+ * snapshot, so price, MC, holders, volume, tx count, 5m move, decision state,
+ * score/reasons and open-position telemetry move together. The old 3s timer is
+ * retained ONLY as a disconnected-stream safety net.
+ */
+let __mfTokenStateStream = null;
+let __mfRealtimeRefreshTimer = null;
+let __mfLastRealtimeRevision = 0;
+
+function __mfScheduleRealtimeRefresh(event = null) {
+  if (event?.data) {
+    try {
+      const payload = JSON.parse(event.data);
+      const revision = Number(payload?.revision || 0);
+      if (revision > 0) {
+        if (revision <= __mfLastRealtimeRevision) return;
+        __mfLastRealtimeRevision = revision;
+      }
+    } catch {}
+  }
+
+  if (__mfRealtimeRefreshTimer !== null) return;
+
+  __mfRealtimeRefreshTimer = setTimeout(() => {
+    __mfRealtimeRefreshTimer = null;
+    void loadTokens();
+  }, 80);
+}
+
+function __mfConnectTokenStateStream() {
+  if (typeof EventSource === 'undefined') return;
+
+  try { __mfTokenStateStream?.close?.(); } catch {}
+
+  const source = new EventSource('/api/system/stream');
+  __mfTokenStateStream = source;
+
+  source.addEventListener('hello', __mfScheduleRealtimeRefresh);
+  source.addEventListener('create', __mfScheduleRealtimeRefresh);
+  source.addEventListener('token', __mfScheduleRealtimeRefresh);
+  source.addEventListener('token_removed', __mfScheduleRealtimeRefresh);
+
+  source.onopen = () => {
+    __mfScheduleRealtimeRefresh();
+  };
+}
+
+__mfConnectTokenStateStream();
+
+setInterval(() => {
+  if (
+    !__mfTokenStateStream ||
+    typeof EventSource === 'undefined' ||
+    __mfTokenStateStream.readyState !== EventSource.OPEN
+  ) {
+    void loadTokens();
+  }
+}, REFRESH_MS);
+
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) {
+    __mfScheduleRealtimeRefresh();
+  }
+});
+
+window.addEventListener('beforeunload', () => {
+  if (__mfRealtimeRefreshTimer !== null) {
+    clearTimeout(__mfRealtimeRefreshTimer);
+  }
+  try { __mfTokenStateStream?.close?.(); } catch {}
+}, { once: true });
 
 
 

@@ -44,4 +44,19 @@ assert.match(app,/pumpReportedHolderCount/);
 assert.match(app,/__mfQueueHistoryEvaluation\(hot\)/);
 assert.match(app,/HISTORY_EVAL_INTERVAL_MS/);
 
+
+// Live Token States must be event-driven, and a token mutation must invalidate
+// any per-user response cached before that mutation.
+const tokenUi=fs.readFileSync(new URL('../system-tokens.js',import.meta.url),'utf8');
+assert.match(app,/let __mfLiveTokenRevision=0;/);
+assert.match(app,/const __liveRevision=\+\+__mfLiveTokenRevision;/);
+assert.match(app,/revision:__liveRevision/);
+assert.match(app,/Number\(_cached\.liveRevision\|\|0\)===__mfLiveTokenRevision/);
+assert.match(app,/liveRevision:__mfLiveTokenRevision/);
+assert.match(tokenUi,/new EventSource\('\/api\/system\/stream'\)/);
+assert.match(tokenUi,/source\.addEventListener\('token', __mfScheduleRealtimeRefresh\)/);
+assert.match(tokenUi,/state\.refreshPending = true;/);
+assert.match(tokenUi,/queueMicrotask\(loadTokens\)/);
+assert.match(tokenUi,/readyState !== EventSource\.OPEN/);
+
 console.log('realtime update path v1 ok');
