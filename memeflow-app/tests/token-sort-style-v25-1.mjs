@@ -1,1 +1,1 @@
-import './token-sort-v25-4-exact.mjs';
+import './token-sort-v25-6-compact.mjs';
