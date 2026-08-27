@@ -2591,44 +2591,46 @@ button {
   }
 }
 
-/* MEMEFLOW_GMGN_SORT_STYLE_V25_2_FINAL4
- * Single canonical sorting visual layer.
- * No previous sorting CSS is retained.
+/* MEMEFLOW_GMGN_SORT_STYLE_V25_3_EXACT
+ * Exact visual alignment with the approved mockup.
+ * This block fully replaces the previous sorting visual layer.
  */
 
-/* Trigger */
+/* Trigger: span the complete Search + Refresh grid width. */
 .mf-sort-toolbar-v25 {
   display:block;
+  grid-column:1 / -1;
   width:100%;
   margin:7px 0 0;
 }
 
 .mf-sort-trigger-v25 {
   position:relative;
+
   display:grid;
-  grid-template-columns:22px auto 22px;
+  grid-template-columns:18px auto 18px;
   align-items:center;
   justify-content:center;
-  column-gap:8px;
+  column-gap:7px;
 
   width:100% !important;
   min-width:0 !important;
-  min-height:40px;
-  padding:0 12px;
+  min-height:32px;
+  padding:0 10px;
 
   border:
     1px solid
     var(--line-strong,rgba(147,178,202,.095));
 
-  border-radius:11px;
+  border-radius:10px;
 
-  background:rgba(7,17,23,.48);
+  background:rgba(7,17,23,.46);
   color:var(--muted,#91a3af);
 
   font:inherit;
-  font-size:8.5px;
+  font-size:7.5px;
   font-weight:800;
-  letter-spacing:.13em;
+  letter-spacing:.12em;
   text-align:center;
   text-transform:uppercase;
 
@@ -2638,33 +2640,33 @@ button {
 }
 
 .mf-sort-trigger-v25.is-active {
-  border-color:rgba(77,230,161,.20);
-  background:rgba(77,230,161,.028);
-  color:#b9c8d0;
+  border-color:rgba(77,230,161,.22);
+  background:rgba(77,230,161,.026);
+  color:#bac9d1;
 }
 
 .mf-sort-trigger-icon-v251,
 .mf-sort-trigger-chevron-v251 {
   display:grid;
   place-items:center;
-  color:#7f939e;
+  color:#80949f;
 }
 
 .mf-sort-trigger-icon-v251 svg {
-  width:14px;
-  height:14px;
+  width:13px;
+  height:13px;
 
   fill:none;
   stroke:currentColor;
-  stroke-width:1.65;
+  stroke-width:1.6;
   stroke-linecap:round;
   stroke-linejoin:round;
 }
 
 .mf-sort-trigger-chevron-v251 {
-  font-size:17px;
+  font-size:15px;
   line-height:1;
-  transform:translateY(-2px);
+  transform:translateY(-1px);
 }
 
 .mf-sort-trigger-chevron-v251.is-active {
@@ -2677,7 +2679,7 @@ button {
   white-space:nowrap;
 }
 
-/* Overlay */
+/* Overlay: dim the page but keep it visually sharp like the mockup. */
 body.mf-sort-sheet-open-v25 {
   overflow:hidden;
 }
@@ -2693,51 +2695,52 @@ body.mf-sort-sheet-open-v25 {
 
   padding:0;
 
-  background:rgba(0,5,9,.33);
+  background:rgba(0,5,9,.48);
 
-  backdrop-filter:blur(1.5px);
-  -webkit-backdrop-filter:blur(1.5px);
+  backdrop-filter:none;
+  -webkit-backdrop-filter:none;
 
   -webkit-tap-highlight-color:transparent;
 }
 
-/* Bottom sheet */
+/* Bottom sheet: shorter, inset, and fully rounded. */
 .mf-sort-sheet-v25 {
-  width:min(100%,520px);
-  max-height:min(53dvh,470px);
+  width:min(calc(100% - 14px),520px);
+  max-height:min(45dvh,360px);
 
   overflow:auto;
   overscroll-behavior:contain;
 
+  margin-bottom:max(6px,env(safe-area-inset-bottom));
+
   padding:
+    5px
     7px
-    13px
-    max(12px,env(safe-area-inset-bottom));
+    8px;
 
   border:
     1px solid
-    var(--line-strong,rgba(147,178,202,.095));
+    rgba(138,171,190,.15);
 
-  border-bottom:0;
-  border-radius:20px 20px 0 0;
+  border-radius:20px;
 
   background:
     linear-gradient(
       180deg,
-      rgba(18,29,36,.985),
-      rgba(10,19,25,.995)
+      rgba(19,31,39,.985),
+      rgba(11,20,27,.992)
     );
 
   color:#edf4f7;
 
   box-shadow:
-    0 -12px 38px rgba(0,0,0,.24);
+    0 -10px 34px rgba(0,0,0,.22);
 }
 
 .mf-sort-handle-v25 {
-  width:35px;
+  width:34px;
   height:3px;
-  margin:2px auto 7px;
+  margin:1px auto 5px;
 
   border-radius:999px;
 
@@ -2749,9 +2752,11 @@ body.mf-sort-sheet-open-v25 {
   display:grid;
   grid-template-columns:auto 1fr;
   align-items:center;
-  column-gap:6px;
+  column-gap:5px;
 
-  min-height:40px;
+  min-height:32px;
+
+  padding:0 4px;
 
   border-bottom:0;
 }
@@ -2759,11 +2764,11 @@ body.mf-sort-sheet-open-v25 {
 .mf-sort-sheet-head-v25 h2 {
   margin:0;
 
-  color:#f3f7f9;
+  color:#f2f6f8;
 
-  font-size:14px;
+  font-size:12px;
   font-weight:780;
-  letter-spacing:.025em;
+  letter-spacing:.02em;
   text-align:left;
 }
 
@@ -2771,45 +2776,45 @@ body.mf-sort-sheet-open-v25 {
   display:grid;
   place-items:center;
 
-  width:27px;
-  height:27px;
+  width:24px;
+  height:24px;
   padding:0;
 
   border:0;
-  border-radius:8px;
+  border-radius:7px;
 
   background:transparent;
   color:#8da0ab;
 
   font:inherit;
-  font-size:23px;
+  font-size:21px;
   font-weight:400;
   line-height:1;
 
   cursor:pointer;
 }
 
-/* Direction segmented control */
+/* Direction control */
 .mf-sort-direction-v25 {
   display:grid;
   grid-template-columns:1fr 1fr;
   gap:2px;
 
-  margin:7px 0 10px;
-  padding:3px;
+  margin:4px 0 7px;
+  padding:2px;
 
   border:
     1px solid
     var(--line,rgba(147,178,202,.055));
 
-  border-radius:11px;
+  border-radius:10px;
 
-  background:rgba(3,10,15,.38);
+  background:rgba(3,10,15,.36);
 }
 
 .mf-sort-direction-v25 button {
-  min-height:31px;
-  padding:0 7px;
+  min-height:25px;
+  padding:0 6px;
 
   border:1px solid transparent;
   border-radius:8px;
@@ -2818,7 +2823,7 @@ body.mf-sort-sheet-open-v25 {
   color:#71848f;
 
   font:inherit;
-  font-size:7.8px;
+  font-size:7.6px;
   font-weight:800;
   letter-spacing:.09em;
 
@@ -2827,27 +2832,27 @@ body.mf-sort-sheet-open-v25 {
 }
 
 .mf-sort-direction-v25 button.is-active {
-  border-color:rgba(87,219,214,.48);
-  background:rgba(87,219,214,.025);
-  color:#e8f1f4;
+  border-color:rgba(87,219,214,.52);
+  background:rgba(87,219,214,.024);
+  color:#e9f2f5;
   box-shadow:none;
 }
 
-/* One shared option surface */
+/* One compact shared list surface. */
 .mf-sort-list-shell-v252 {
   overflow:hidden;
 
   border:
     1px solid
-    var(--line-strong,rgba(147,178,202,.095));
+    rgba(138,171,190,.13);
 
   border-radius:12px;
 
   background:
     linear-gradient(
       180deg,
-      rgba(20,31,38,.68),
-      rgba(13,23,29,.62)
+      rgba(20,31,38,.54),
+      rgba(13,23,29,.50)
     );
 }
 
@@ -2859,13 +2864,13 @@ body.mf-sort-sheet-open-v25 {
   position:relative;
 
   display:grid;
-  grid-template-columns:22px minmax(0,1fr) 20px;
+  grid-template-columns:20px minmax(0,1fr) 18px;
   align-items:center;
-  column-gap:9px;
+  column-gap:8px;
 
   width:100%;
-  min-height:43px;
-  padding:0 11px;
+  min-height:36px;
+  padding:0 10px;
 
   border:0;
   border-radius:0;
@@ -2874,7 +2879,7 @@ body.mf-sort-sheet-open-v25 {
   color:#e7eef2;
 
   font:inherit;
-  font-size:10.5px;
+  font-size:10px;
   font-weight:650;
   text-align:left;
 
@@ -2888,7 +2893,7 @@ body.mf-sort-sheet-open-v25 {
   position:absolute;
   top:0;
   right:0;
-  left:42px;
+  left:0;
 
   height:1px;
 
@@ -2904,8 +2909,8 @@ body.mf-sort-sheet-open-v25 {
   display:grid;
   place-items:center;
 
-  width:22px;
-  height:22px;
+  width:20px;
+  height:20px;
 
   color:#8fa1ad;
 }
@@ -2931,8 +2936,8 @@ body.mf-sort-sheet-open-v25 {
 .mf-sort-radio-v25 {
   justify-self:end;
 
-  width:15px;
-  height:15px;
+  width:14px;
+  height:14px;
 
   border:1.5px solid #758994;
   border-radius:50%;
@@ -2947,19 +2952,19 @@ body.mf-sort-sheet-open-v25 {
   box-shadow:none;
 }
 
-/* Age submenu */
+/* Age drill-in */
 .mf-sort-row-chevron-v251 {
   justify-self:end;
 
   color:#8fa1ad;
 
-  font-size:19px;
+  font-size:18px;
   font-weight:300;
   line-height:1;
 }
 
 .mf-sort-age-row-v251 {
-  grid-template-columns:minmax(0,1fr) 20px;
+  grid-template-columns:minmax(0,1fr) 18px;
 }
 
 .mf-age-list-v25 {
@@ -2967,21 +2972,18 @@ body.mf-sort-sheet-open-v25 {
 }
 
 .mf-age-shell-v252 {
-  margin-top:7px;
+  margin-top:4px;
 }
 
-/* Mobile */
+/* Mobile: keep the sheet floating inside the viewport. */
 @media (max-width:760px) {
   .mf-sort-sheet-v25 {
-    width:100%;
-    max-height:53dvh;
-
-    border-left:0;
-    border-right:0;
+    width:calc(100% - 14px);
+    max-height:45dvh;
   }
 
   .mf-sort-row-v25 {
-    min-height:42px;
+    min-height:36px;
     font-size:10px;
   }
 }
@@ -2990,12 +2992,6 @@ body.mf-sort-sheet-open-v25 {
 @media (min-width:761px) {
   .mf-sort-sheet-v25 {
     margin-bottom:14px;
-
-    border-bottom:
-      1px solid
-      var(--line-strong,rgba(147,178,202,.095));
-
-    border-radius:20px;
   }
 }
 
