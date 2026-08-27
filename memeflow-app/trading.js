@@ -4078,12 +4078,29 @@ function renderTrades() {
   };
 
   const avatarMarkup = (url, symbol) => {
+    const fallback = String(symbol || 'TK')
+      .replace(/[^A-Z0-9]/gi, '')
+      .slice(0, 2)
+      .toUpperCase() || 'TK';
+
     if (url) {
-      return `<span class="trade-token-avatar"><img src="${esc(url)}" alt="${esc(symbol)}"></span>`;
+      return `
+        <span class="trade-token-avatar">
+          <img
+            src="${esc(url)}"
+            alt="${esc(symbol)}"
+            onerror="this.parentElement.classList.add('is-fallback');this.remove();"
+          >
+          <span class="trade-avatar-fallback-text">${esc(fallback)}</span>
+        </span>
+      `;
     }
 
-    const fallback = String(symbol || 'TK').replace(/[^A-Z0-9]/gi, '').slice(0, 2).toUpperCase() || 'TK';
-    return `<span class="trade-token-avatar trade-token-avatar-fallback">${esc(fallback)}</span>`;
+    return `
+      <span class="trade-token-avatar is-fallback">
+        <span class="trade-avatar-fallback-text">${esc(fallback)}</span>
+      </span>
+    `;
   };
 
   list.innerHTML = rows.map(trade => {
@@ -4105,10 +4122,8 @@ function renderTrades() {
     const tokenName = String(
       trade.name ||
       related?.name ||
-      ''
+      symbol
     ).trim();
-
-    const showName = tokenName && tokenName.toUpperCase() !== symbol.toUpperCase();
 
     const avatarUrl = String(
       trade.logoUrl ||
@@ -4156,32 +4171,29 @@ function renderTrades() {
         ${avatarMarkup(avatarUrl, symbol)}
 
         <div class="trade-log-main">
-          <div class="trade-log-primary">
+          <div class="trade-log-topline">
             <strong class="trade-side ${sideClass}">${esc(side)}</strong>
+            <strong class="trade-log-symbol">${esc(symbol)}</strong>
 
-            <div class="trade-token">
-              <div class="trade-token-line">
-                <strong class="trade-log-symbol">${esc(symbol)}</strong>
-                ${pumpUrl
-                  ? `<a class="trade-pump-link"
-                        href="${esc(pumpUrl)}"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        aria-label="Open ${esc(symbol)} on Pump.fun">Pump &#8599;</a>`
-                  : ''}
-              </div>
-              ${showName
-                ? `<span class="trade-token-name">${esc(tokenName)}</span>`
-                : ''}
-            </div>
+            ${pumpUrl
+              ? `<a class="trade-pump-link"
+                    href="${esc(pumpUrl)}"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="Open ${esc(symbol)} on Pump.fun">Pump &#8599;</a>`
+              : ''}
 
             <time class="trade-log-time">${esc(tradeTime(rawTime))}</time>
           </div>
 
-          <div class="trade-log-secondary">
-            <span><b>SIZE</b><strong>${finite(sizeSol) ? `${fmt(sizeSol, 4)} SOL` : '—'}</strong></span>
-            <span><b>P&amp;L</b><strong class="${pnlClass}">${esc(pnlText)}</strong></span>
-            <span class="trade-log-reason"><b>REASON</b><strong>${esc(reason)}</strong></span>
+          <div class="trade-log-bottomline">
+            <span class="trade-token-name">${esc(tokenName)}</span>
+            <i>·</i>
+            <span>${finite(sizeSol) ? `${fmt(sizeSol, 4)} SOL` : '—'}</span>
+            <i>·</i>
+            <span class="${pnlClass}">${esc(pnlText)}</span>
+            <i>·</i>
+            <span class="trade-log-reason">${esc(reason)}</span>
           </div>
         </div>
       </article>

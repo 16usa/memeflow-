@@ -20,7 +20,7 @@
       sub: 'Live architecture and system state'
     },
     {
-      href: '/trading.html?v=restore-compact-trade-strategy-v1-20260826',
+      href: '/trading.html?v=recent-trades-true-two-rows-v4-20260826',
       title: 'Trading Terminal',
       sub: 'Charts, candidates, positions and execution'
     },
