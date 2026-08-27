@@ -185,7 +185,14 @@ const state = {
   page: 1,
   loading: false,
   emptyResponses: 0,
-  refreshPending: false
+  refreshPending: false,
+
+  // MEMEFLOW_LIVE_TOKEN_FEED_DIAGNOSTICS_V13
+  feedReturned: 0,
+  feedWorkingSet: 0,
+  feedRawScanner: 0,
+  feedViewErrors: 0,
+  feedEvaluationErrors: 0
 };
 
 /* MEMEFLOW_SYSTEM_TOKEN_OPEN_POSITIONS_V1
@@ -1423,6 +1430,20 @@ async function loadDiscoveryStatus() {
         parts.push(`decode fail ${failed}`);
       }
 
+      if (state.feedWorkingSet > 0) {
+        parts.push(
+          `feed ${state.feedReturned}/${state.feedWorkingSet}`
+        );
+      }
+
+      const feedErrors =
+        Number(state.feedViewErrors || 0) +
+        Number(state.feedEvaluationErrors || 0);
+
+      if (feedErrors > 0) {
+        parts.push(`feed errors ${feedErrors}`);
+      }
+
       if (
         payload?.historyBackfill?.authRequired === true
       ) {
@@ -1491,6 +1512,27 @@ async function loadTokens() {
     const rows = Array.isArray(payload?.decisions)
       ? payload.decisions
       : [];
+
+    state.feedReturned =
+      Number.isFinite(Number(payload?.returned))
+        ? Math.max(0,Number(payload.returned))
+        : rows.length;
+    state.feedWorkingSet =
+      Number.isFinite(Number(payload?.uiWorkingSetTokens))
+        ? Math.max(0,Number(payload.uiWorkingSetTokens))
+        : 0;
+    state.feedRawScanner =
+      Number.isFinite(Number(payload?.rawScannerTokens))
+        ? Math.max(0,Number(payload.rawScannerTokens))
+        : 0;
+    state.feedViewErrors =
+      Number.isFinite(Number(payload?.viewErrors))
+        ? Math.max(0,Number(payload.viewErrors))
+        : 0;
+    state.feedEvaluationErrors =
+      Number.isFinite(Number(payload?.evaluationErrors))
+        ? Math.max(0,Number(payload.evaluationErrors))
+        : 0;
 
     state.rows = rows
       .map(canonicalDecisionRow)

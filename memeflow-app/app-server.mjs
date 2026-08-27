@@ -3193,31 +3193,63 @@ if(false && url.pathname==='/api/ai/assistant' &&req.method==='POST'){
   // MEMEFLOW_LIVE_TOKEN_STATES_V7
  if(url.pathname==='/api/system/live-token-states'&&req.method==='GET'){
   // MEMEFLOW_LIVE_TOKEN_VISIBILITY_V8_CLEAN_WORKTREE
+  // MEMEFLOW_LIVE_TOKEN_FEED_BRIDGE_V13
   //
-  // SCANNER INVENTORY and TRADING ELIGIBILITY are separate concerns.
+  // SCANNER:
+  //   remains complete/permanent and is NOT limited here.
   //
   // DISPLAY:
+  //   uses a bounded recent working set so a 5k/20k permanent scanner cache
+  //   cannot stall a realtime browser request.
   //   ADMITTED -> normal Logic state
-  //   PENDING  -> WAITING with the real Entry Filter reason
-  //   REJECTED -> BLOCKED with the real Entry Filter reason
-  //   OPEN     -> always remains visible
+  //   PENDING  -> WAITING
+  //   REJECTED -> BLOCKED
   //
   // TRADE:
-  //   /api/ai/decisions and execution remain STRICTLY Entry-admitted.
-  const _requestedLimit=Math.floor(Number(url.searchParams.get('limit')||0));
-  const _limit=Number.isFinite(_requestedLimit)&&_requestedLimit>0
-    ? _requestedLimit
-    : null;
+  //   /api/ai/decisions + execution remain strictly Entry-admitted and are
+  //   completely independent of this display working set.
+  const _requestedLimit=Math.floor(
+    Number(url.searchParams.get('limit')||0)
+  );
+  const _limit=
+    Number.isFinite(_requestedLimit)&&_requestedLimit>0
+      ? Math.min(500,_requestedLimit)
+      : 200;
 
   const _settings=store.settings(u.id);
   const _rawTokens=__mfLiveScannerTokens();
   const _openMints=__mfOpenPositionMints();
 
   // MEMEFLOW_REALTIME_UI_FAIRNESS_V1_ROUTE
-  // Keep the existing realtime fairness contract: response construction yields
-  // to Pump WS callbacks, and cached snapshots are revision-aware.
-  // Cache identity also includes response shape.
-  const _cacheScope='limit:'+String(_limit??'all');
+  // The raw scanner is newest-first. Evaluate enough rows to cover roughly
+  // 15–25 minutes at normal Pump launch rates while keeping the HTTP/SSE path
+  // predictably bounded.
+  const _workingLimit=Math.max(
+    _limit,
+    Math.min(
+      1200,
+      Math.max(600,_limit*4)
+    )
+  );
+
+  const _workingTokens=_rawTokens.slice(0,_workingLimit);
+  const _workingMints=new Set(
+    _workingTokens.map(t=>String(t?.mint||'')).filter(Boolean)
+  );
+
+  // Keep any open token in the server-side view even when it is older than the
+  // live working window. The frontend also merges positions independently.
+  for(const _mint of _openMints){
+    if(_workingMints.has(_mint))continue;
+    const _token=store.state.tokens?.[_mint]||null;
+    if(!_token)continue;
+    _workingTokens.push(_token);
+    _workingMints.add(_mint);
+  }
+
+  const _cacheScope=
+    'limit:'+String(_limit)+
+    '|work:'+String(_workingLimit);
   const _cacheKey=String(u.id||'anon')+'|'+_cacheScope;
   const _settingsVersion=Number(store.user(u.id)?.settingsVersion||0);
   const _cached=__mfLiveStatesResponseCache.get(_cacheKey);
@@ -3241,7 +3273,7 @@ if(false && url.pathname==='/api/ai/assistant' &&req.method==='POST'){
 
   const _displayRows=[];
 
-  for(const _token of _rawTokens){
+  for(const _token of _workingTokens){
     const _mint=String(_token?.mint||'').trim();
     if(!_mint)continue;
 
@@ -3277,15 +3309,18 @@ if(false && url.pathname==='/api/ai/assistant' &&req.method==='POST'){
     let _decision=null;
 
     if(!_eligible&&!_isOpen){
-      // Entry Filters still block trading. Live Token States shows the real
-      // admission state instead of silently deleting the token.
-      const _reasons=Array.isArray(_admission?.reasons)
-        ? _admission.reasons.filter(Boolean)
-        : [];
+      const _reasons=
+        Array.isArray(_admission?.reasons)
+          ? _admission.reasons
+              .filter(x=>typeof x==='string'&&x.trim())
+              .map(x=>x.trim())
+          : [];
+
       const _blocked=_admissionState==='REJECTED';
-      const _fallbackReason=_blocked
-        ? 'Entry filters rejected this token'
-        : 'Waiting for entry-filter data';
+      const _fallbackReason=
+        _blocked
+          ? 'Entry filters rejected this token'
+          : 'Waiting for entry-filter data';
 
       _decision={
         state:_blocked?'BLOCKED':'WAITING',
@@ -3308,53 +3343,216 @@ if(false && url.pathname==='/api/ai/assistant' &&req.method==='POST'){
             score:0,
             confidence:0,
             primaryReason:'Scanner data is still being collected',
-            reasons:['Scanner data is still being collected']
+            reasons:['Scanner data is still being collected'],
+            terminal:false
           };
         }
       }
     }
 
     _displayRows.push({
-      ..._decision,
-      mint:_mint,
-      tradeEligible:_eligible,
-      displayOnly:!_eligible&&!_isOpen,
-      openPositionOverride:_isOpen&&!_eligible,
-      entryAdmissionState:_admissionState,
-      entryAdmissionReasons:Array.isArray(_admission?.reasons)
-        ? _admission.reasons
-        : []
+      token:_token,
+      decision:{
+        ..._decision,
+        mint:_mint,
+        tradeEligible:_eligible,
+        displayOnly:!_eligible&&!_isOpen,
+        openPositionOverride:_isOpen&&!_eligible,
+        entryAdmissionState:_admissionState,
+        entryAdmissionReasons:
+          Array.isArray(_admission?.reasons)
+            ? _admission.reasons.filter(x=>typeof x==='string')
+            : []
+      }
     });
   }
 
-  const _selected=candidateFeed(_displayRows,'all');
-  const _counts=candidateVisibilityCounts(_displayRows);
+  const _flatDecisions=_displayRows.map(row=>row.decision);
+  const _selected=candidateFeed(_flatDecisions,'all');
+  const _counts=candidateVisibilityCounts(_flatDecisions);
   const _stateCounts={};
 
   for(const _decision of _selected){
-    const _state=String(_decision?.state||'WAITING').trim().toUpperCase()||'WAITING';
+    const _state=String(
+      _decision?.state||'WAITING'
+    ).trim().toUpperCase()||'WAITING';
     _stateCounts[_state]=(_stateCounts[_state]||0)+1;
   }
 
-  const _unrankedViews=[];
+  // Build a JSON-safe Live Token States view directly from canonical token
+  // state. No timeline/raw BigInt/event objects are sent on this page.
+  const _rowsByMint=new Map(
+    _displayRows.map(row=>[String(row?.decision?.mint||''),row])
+  );
+  const _safeViews=[];
+
+  const _finite=v=>{
+    if(v===null||v===undefined||v==='')return null;
+    const n=Number(v);
+    return Number.isFinite(n)?n:null;
+  };
+
   for(const _decision of _selected){
-    try{_unrankedViews.push(candidateView(_decision))}
-    catch(_error){_viewErrors++}
+    const _mint=String(_decision?.mint||'').trim();
+    if(!_mint)continue;
+
+    const _row=_rowsByMint.get(_mint);
+    const _token=_row?.token||store.state.tokens?.[_mint]||{};
+
+    let _market5m=null;
+    try{
+      _market5m=__mfCandidateMarket5mV4(_mint,_token);
+    }catch(_error){
+      _viewErrors++;
+      _market5m=null;
+    }
+
+    const _age=tokenAgeMinutes(_token);
+
+    _safeViews.push({
+      id:_mint,
+      mint:_mint,
+      tokenMint:_mint,
+      tokenAddress:_mint,
+
+      name:
+        _token?.name ||
+        _token?.metadataName ||
+        _token?.symbol ||
+        _mint.slice(0,6),
+      symbol:_token?.symbol||_token?.metadataSymbol||'TOKEN',
+
+      launchPlatform:_token?.launchPlatform||_token?.protocol||'pump',
+      protocol:_token?.protocol||_token?.launchPlatform||'pump',
+      source:_token?.source||null,
+
+      uri:_token?.uri||_token?.metadataUrl||null,
+      imageUrl:
+        _token?.imageUrl ||
+        _token?.image ||
+        _token?.logoUrl ||
+        null,
+      image:
+        _token?.imageUrl ||
+        _token?.image ||
+        _token?.logoUrl ||
+        null,
+      logoUrl:
+        _token?.logoUrl ||
+        _token?.imageUrl ||
+        _token?.image ||
+        null,
+
+      state:String(_decision?.state||'WAITING'),
+      score:_finite(_decision?.score),
+      confidence:_finite(_decision?.confidence),
+      primaryReason:
+        typeof _decision?.primaryReason==='string'
+          ? _decision.primaryReason
+          : null,
+      reasons:
+        Array.isArray(_decision?.reasons)
+          ? _decision.reasons
+              .filter(x=>typeof x==='string')
+              .slice(0,20)
+          : [],
+
+      tradeEligible:_decision?.tradeEligible===true,
+      displayOnly:_decision?.displayOnly===true,
+      openPositionOverride:_decision?.openPositionOverride===true,
+      entryAdmissionState:
+        String(_decision?.entryAdmissionState||'PENDING'),
+      entryAdmissionReasons:
+        Array.isArray(_decision?.entryAdmissionReasons)
+          ? _decision.entryAdmissionReasons
+              .filter(x=>typeof x==='string')
+              .slice(0,20)
+          : [],
+
+      holderCount:_finite(_token?.holderCount??_token?.holders),
+      holders:_finite(_token?.holderCount??_token?.holders),
+      top10Pct:_finite(_token?.top10Pct??_token?.top10),
+      developerPct:
+        _finite(_token?.developerPct??_token?.developerSharePct),
+      buyPressure:_finite(_token?.buyPressure??_token?.momentum),
+
+      priceSol:_finite(_token?.priceSol??_token?.price),
+      liquiditySol:_finite(_token?.liquiditySol??_token?.liquidity),
+      marketCapSol:
+        _finite(
+          _market5m?.marketCapSol ??
+          _token?.marketCapSol ??
+          _token?.marketCap
+        ),
+      marketCapUsd:
+        _finite(
+          _market5m?.marketCapUsd ??
+          _token?.marketCapUsd
+        ),
+
+      ageMinutes:_age===null?null:_finite(_age),
+      volume5mSol:
+        _finite(
+          _market5m?.volume5mSol ??
+          _token?.volume5mSol
+        ),
+      volume5mUsd:
+        _finite(
+          _market5m?.volume5mUsd ??
+          _token?.volume5mUsd
+        ),
+      transactions5m:
+        _finite(
+          _market5m?.transactions5m ??
+          _token?.transactions5m
+        ),
+      priceChange5mPct:
+        _finite(
+          _market5m?.priceChange5mPct ??
+          _token?.priceChange5mPct
+        ),
+
+      qualityScore:_finite(_token?.qualityScore),
+      opportunityScore:_finite(_token?.opportunityScore),
+      opportunityEvidenceReady:
+        _token?.opportunityEvidenceReady===true,
+      opportunityTrendHealthy:
+        _token?.opportunityTrendHealthy===true,
+      dead:_token?.dead===true,
+      deadReason:
+        typeof _token?.deadReason==='string'
+          ? _token.deadReason
+          : null,
+      quoteAgeMs:
+        _token?.lastPriceAt
+          ? Math.max(0,Date.now()-Number(_token.lastPriceAt))
+          : null
+    });
   }
 
+  // MEMEFLOW_FEED_RANKING_COMPAT_V13
+  // _safeViews is the JSON-safe, unranked candidate set. Keep the historical
+  // _unrankedViews name as an explicit alias so the ranking contract/test and
+  // the new safe-view bridge describe the same stage of the pipeline.
+  const _unrankedViews=_safeViews;
   const _rankedViews=rankCandidateViews(_unrankedViews);
-  const _views=_limit
-    ? _rankedViews.slice(0,_limit)
-    : _rankedViews;
+  const _views=_rankedViews.slice(0,_limit);
 
   const _payload={
     decisions:_views,
     total:_rankedViews.length,
     returned:_views.length,
     limit:_limit,
+
+    // Keep old source value because regression/history tooling uses it.
     source:'system-live-token-states-transparent-v8',
+    feedVersion:'MEMEFLOW_LIVE_TOKEN_FEED_BRIDGE_V13',
 
     rawScannerTokens:_rawTokens.length,
+    uiWorkingSetTokens:_workingTokens.length,
+    displayRows:_displayRows.length,
+    safeViews:_safeViews.length,
+
     permanentRegistryTokens:
       Number(store.tokenRegistry?.metrics?.permanentTokensApprox||0),
 

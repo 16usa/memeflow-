@@ -64,10 +64,13 @@ assert.match(tokenUi,/readyState !== EventSource\.OPEN/);
 assert.match(app,/MEMEFLOW_LIVE_TOKEN_ASSET_NO_STORE_V1/);
 assert.match(app,/url\.pathname==='\/system-tokens\.js'/);
 assert.match(app,/url\.pathname==='\/system-tokens\.css'/);
-assert.match(tokenHtml,/system-tokens\.js\?v=live-scanner-cache-v9-20260827/);
+assert.match(tokenHtml,/system-tokens\.js\?v=live-token-feed-v13-20260827/);
 assert.match(tokenHtml,/id="scannerStatus"/);
 assert.match(tokenUi,/MEMEFLOW_SCANNER_STATUS_V9/);
 assert.match(tokenUi,/MEMEFLOW_LIVE_TOKEN_TELEMETRY_V9/);
 assert.match(tokenUi,/MEMEFLOW_REALTIME_COALESCE_250MS_V1/);
+assert.match(route,/MEMEFLOW_LIVE_TOKEN_FEED_BRIDGE_V13/);
+assert.match(tokenUi,/MEMEFLOW_LIVE_TOKEN_FEED_DIAGNOSTICS_V13/);
+assert.match(tokenUi,/feed \$\{state\.feedReturned\}\/\$\{state\.feedWorkingSet\}/);
 
 console.log('realtime update path v1 ok');

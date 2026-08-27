@@ -38,8 +38,23 @@ assert.match(liveRoute,/preAdmissionRejected:_rejected/);
 assert.match(liveRoute,/preAdmissionHidden:0/);
 assert.match(liveRoute,/system-live-token-states-transparent-v8/);
 assert.doesNotMatch(liveRoute,/_hiddenBySettings\+\+;\s*continue/);
-assert.doesNotMatch(liveRoute,/Math\.min\(500/);
+// MEMEFLOW_LIVE_TOKEN_FEED_UI_WINDOW_V13
+// The permanent scanner inventory is NOT capped here. Only the browser-facing
+// working set/output may be bounded for realtime performance.
+assert.doesNotMatch(liveRoute,/_rawTokens\.slice\(0,_limit\)/);
 assert.doesNotMatch(liveRoute,/_rawTokens\.slice\(0,_lim\)/);
+
+// MEMEFLOW_LIVE_TOKEN_FEED_BRIDGE_V13
+// Scanner inventory remains complete while the browser feed is a bounded,
+// recent, JSON-safe observability window.
+assert.match(liveRoute,/MEMEFLOW_LIVE_TOKEN_FEED_BRIDGE_V13/);
+assert.match(liveRoute,/const _workingLimit=Math\.max/);
+assert.match(liveRoute,/_rawTokens\.slice\(0,_workingLimit\)/);
+assert.match(liveRoute,/uiWorkingSetTokens:_workingTokens\.length/);
+assert.match(liveRoute,/safeViews:_safeViews\.length/);
+assert.match(liveRoute,/feedVersion:'MEMEFLOW_LIVE_TOKEN_FEED_BRIDGE_V13'/);
+assert.match(liveRoute,/const _safeViews=\[\]/);
+assert.doesNotMatch(liveRoute,/_unrankedViews\.push\(candidateView/);
 
 assert.doesNotMatch(app,/MEMEFLOW_AGE_THRESHOLD_WAKE_V1/);
 assert.match(app,/const __mfPreAdmissionSweepTimer=setInterval/);
