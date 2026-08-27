@@ -181,7 +181,7 @@ assert.doesNotMatch(
 
 assert.match(
   html,
-  /system-tokens\.js\?v=gmgn-sort-v25-20260827/
+  /system-tokens\.js\?v=gmgn-sort-v25-1-20260827/
 );
 
 console.log('per-mint card refresh v18 ok');

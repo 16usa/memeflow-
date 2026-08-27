@@ -2671,16 +2671,39 @@ function __mfSortTriggerTextV25(){
   return `SORT · ${label} ${arrow}${ageWindow}`;
 }
 
+
+// MEMEFLOW_GMGN_SORT_STYLE_V25_1
+function __mfSortTriggerMarkupV251(){
+  const active=
+    __mfSortConfigV25.key!=='smart' ||
+    finite(__mfSortConfigV25.ageMaxMinutes);
+
+  return `
+    <span class="mf-sort-trigger-icon-v251" aria-hidden="true">
+      <svg viewBox="0 0 24 24">
+        <path d="M8 4v16M5 7l3-3 3 3M16 20V4M13 17l3 3 3-3"></path>
+      </svg>
+    </span>
+    <span class="mf-sort-trigger-label-v251">
+      ${__mfSortTriggerTextV25()}
+    </span>
+    <span
+      class="mf-sort-trigger-chevron-v251 ${active?'is-active':''}"
+      aria-hidden="true"
+    >⌄</span>
+  `;
+}
+
 function __mfUpdateSortTriggerV25(){
   const button=document.getElementById('mfSortTriggerV25');
   if(!button)return;
 
-  button.textContent=__mfSortTriggerTextV25();
-  button.classList.toggle(
-    'is-active',
+  const active=
     __mfSortConfigV25.key!=='smart' ||
-    finite(__mfSortConfigV25.ageMaxMinutes)
-  );
+    finite(__mfSortConfigV25.ageMaxMinutes);
+
+  button.innerHTML=__mfSortTriggerMarkupV251();
+  button.classList.toggle('is-active',active);
 }
 
 function __mfCloseSortSheetV25(){
@@ -2756,6 +2779,46 @@ function __mfBindSortOverlayV25(){
   });
 }
 
+
+function __mfSortIconV251(key){
+  const icons={
+    smart:`
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M12 3l1.4 4.1L17.5 8.5l-4.1 1.4L12 14l-1.4-4.1-4.1-1.4 4.1-1.4L12 3z"></path>
+        <path d="M18.5 14l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8.8-2.2z"></path>
+      </svg>`,
+    mc:`
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M12 3v18M16 7.2c-.9-1.1-2.2-1.7-4-1.7-2.3 0-4 1.2-4 3s1.3 2.7 4 3.3c2.7.6 4 1.5 4 3.4 0 2-1.7 3.3-4.2 3.3-2 0-3.6-.7-4.8-2"></path>
+      </svg>`,
+    holders:`
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="9" cy="8" r="3"></circle>
+        <circle cx="17" cy="9" r="2.5"></circle>
+        <path d="M3.5 19c.4-3.3 2.2-5 5.5-5s5.1 1.7 5.5 5M14 14.5c3.5-.5 5.7 1 6.3 4.5"></path>
+      </svg>`,
+    transactions:`
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M4 8h14M15 5l3 3-3 3M20 16H6M9 13l-3 3 3 3"></path>
+      </svg>`,
+    volume:`
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M5 19v-5M10 19V9M15 19V5M20 19v-8"></path>
+      </svg>`,
+    age:`
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="12" cy="12" r="8"></circle>
+        <path d="M12 7v5l3 2"></path>
+      </svg>`
+  };
+
+  return `
+    <span class="mf-sort-option-icon-v251">
+      ${icons[key]||''}
+    </span>
+  `;
+}
+
 function __mfRenderSortRootV25(){
   __mfCloseSortSheetV25();
 
@@ -2769,16 +2832,25 @@ function __mfRenderSortRootV25(){
     ['age','Age']
   ];
 
-  const rows=criteria.map(([key,label])=>`
-    <button
-      class="mf-sort-row-v25"
-      type="button"
-      data-mf-sort-key="${key}"
-    >
-      <span>${label}</span>
-      ${__mfSortRadioV25(config.key===key)}
-    </button>
-  `).join('');
+  const rows=criteria.map(([key,label])=>{
+    const isAge=key==='age';
+
+    return `
+      <button
+        class="mf-sort-row-v25 ${isAge?'is-drill-in-v251':''}"
+        type="button"
+        data-mf-sort-key="${key}"
+      >
+        ${__mfSortIconV251(key)}
+        <span class="mf-sort-option-label-v251">${label}</span>
+        ${
+          isAge
+            ? '<span class="mf-sort-row-chevron-v251" aria-hidden="true">›</span>'
+            : __mfSortRadioV25(config.key===key)
+        }
+      </button>
+    `;
+  }).join('');
 
   const body=`
     <div class="mf-sort-direction-v25" aria-label="Sort direction">
@@ -2787,12 +2859,14 @@ function __mfRenderSortRootV25(){
         class="${config.direction==='desc'?'is-active':''}"
         data-mf-sort-dir="desc"
       >HIGH → LOW</button>
+
       <button
         type="button"
         class="${config.direction==='asc'?'is-active':''}"
         data-mf-sort-dir="asc"
       >LOW → HIGH</button>
     </div>
+
     <div class="mf-sort-list-v25">${rows}</div>
   `;
 
@@ -2863,11 +2937,11 @@ function __mfRenderAgeSheetV25(){
 
     return `
       <button
-        class="mf-sort-row-v25"
+        class="mf-sort-row-v25 mf-sort-age-row-v251"
         type="button"
         data-mf-age="${minutes===null?'all':minutes}"
       >
-        <span>${label}</span>
+        <span class="mf-sort-option-label-v251">${label}</span>
         ${__mfSortRadioV25(active)}
       </button>
     `;
@@ -2879,7 +2953,7 @@ function __mfRenderAgeSheetV25(){
       type="button"
       aria-label="Back to sorting"
       data-mf-sort-back
-    >←</button>
+    >‹</button>
   `;
 
   document.body.insertAdjacentHTML(
@@ -2903,6 +2977,7 @@ function __mfRenderAgeSheetV25(){
   overlay?.querySelectorAll('[data-mf-age]').forEach(button=>{
     button.addEventListener('click',()=>{
       const raw=button.dataset.mfAge;
+
       __mfApplySortV25({
         key:'age',
         ageMaxMinutes:raw==='all'?null:Number(raw)

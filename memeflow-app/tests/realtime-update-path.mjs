@@ -134,7 +134,7 @@ assert.doesNotMatch(oneSecondPoll,/hydrateTokenMediaV25/);
 assert.match(app,/MEMEFLOW_LIVE_TOKEN_ASSET_NO_STORE_V1/);
 assert.match(app,/url\.pathname==='\/system-tokens\.js'/);
 assert.match(app,/url\.pathname==='\/system-tokens\.css'/);
-assert.match(tokenHtml,/system-tokens\.js\?v=gmgn-sort-v25-20260827/);
+assert.match(tokenHtml,/system-tokens\.js\?v=gmgn-sort-v25-1-20260827/);
 assert.match(tokenHtml,/id="scannerStatus"/);
 assert.match(tokenUi,/MEMEFLOW_SCANNER_STATUS_V9/);
 assert.match(tokenUi,/MEMEFLOW_LIVE_TOKEN_TELEMETRY_V9/);

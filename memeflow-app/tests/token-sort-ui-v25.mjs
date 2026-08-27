@@ -39,7 +39,7 @@ for(const text of [
 assert.match(css,/MEMEFLOW_GMGN_SORT_V25/);
 assert.match(css,/\.mf-sort-sheet-v25/);
 assert.match(css,/\.mf-sort-trigger-v25/);
-assert.match(html,/system-tokens\.js\?v=gmgn-sort-v25-20260827/);
-assert.match(html,/system-tokens\.css\?v=gmgn-sort-v25-20260827/);
+assert.match(html,/system-tokens\.js\?v=gmgn-sort-v25-1-20260827/);
+assert.match(html,/system-tokens\.css\?v=gmgn-sort-v25-1-20260827/);
 
 console.log('token sort ui v25 ok');
