@@ -277,7 +277,12 @@ export class EventHolderLedger{
       mint:m,
       holderFresh:true,
       holderSource:'event-ledger-v12-24-user-only',
+      // TradeEvent.user only tells us how many holders MEMEFLOW has observed.
+      // It is NOT an authoritative total-holder count.
       holderCount:holders.length,
+      observedHolderCount:holders.length,
+      holderCountAuthoritative:false,
+      holderCountIsLowerBound:true,
       holderRiskWallets,
       holderRiskWalletsKey,
       holderRiskWalletsScannedAt:r.lastSeenAt||Date.now(),

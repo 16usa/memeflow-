@@ -123,7 +123,9 @@ export function liveCardMarketSnapshot({
 
   const tokenTradeAt=finite(
     token?.lastPriceAt ??
-    token?.lastMarketActivityAt
+    token?.lastMarketActivityAt ??
+    token?.marketCapUpdatedAt ??
+    token?.lastTradeAt
   );
 
   const marketSource=lower(token?.marketSource);
@@ -139,11 +141,17 @@ export function liveCardMarketSnapshot({
     token?.copyTradingDiscovered===true
   );
 
+  const tokenTradeAgeMs=
+    tokenTradeAt!==null&&tokenTradeAt>0
+      ? Math.max(0,now-tokenTradeAt)
+      : Number.POSITIVE_INFINITY;
+
   const tokenHasTradeEvidence=Boolean(
     tokenPrice!==null&&
     tokenPrice>0&&
     tokenTradeAt!==null&&
     tokenTradeAt>0&&
+    tokenTradeAgeMs<=windowMs&&
     explicitTradeEvidence
   );
 
@@ -169,9 +177,17 @@ export function liveCardMarketSnapshot({
 
   const usd=finite(solUsd);
 
-  const pumpReferenceUsd=finite(
-    token?.pumpReportedMarketCapUsd
+  const pumpReferenceAt=finite(token?.pumpReferenceAt);
+  const pumpReferenceFresh=Boolean(
+    pumpReferenceAt!==null&&
+    pumpReferenceAt>0&&
+    Math.max(0,now-pumpReferenceAt)<=Math.min(windowMs,90_000)
   );
+
+  const pumpReferenceUsd=
+    pumpReferenceFresh
+      ? finite(token?.pumpReportedMarketCapUsd)
+      : null;
 
   const storedTradeUsd=
     tokenHasTradeEvidence

@@ -6,8 +6,8 @@ import {
   candidateStatePriority
 } from '../src/feed-ranking.mjs';
 
-const strongWatch={
-  mint:'StrongWatch',
+const activeWatch={
+  mint:'ActiveWatch',
   state:'WATCH',
   score:71,
   qualityScore:78,
@@ -16,7 +16,7 @@ const strongWatch={
   volume5mUsd:1600,
   transactions5m:35,
   marketCapUsd:5000,
-  priceChange5mPct:105.5,
+  priceChange5mPct:35.5,
   ageMinutes:1.4,
   quoteAgeMs:1000,
   drawdownFromPeakPct:3,
@@ -43,9 +43,9 @@ const weakWatch={
 };
 
 assert.ok(
-  candidateRelevanceScore(strongWatch) >
+  candidateRelevanceScore(activeWatch) >
   candidateRelevanceScore(weakWatch),
-  'stronger card metrics must rank higher inside WATCH'
+  'stronger current card metrics must rank higher'
 );
 
 const hugeButWeakPump={
@@ -55,10 +55,57 @@ const hugeButWeakPump={
 };
 
 assert.ok(
-  candidateRelevanceScore(strongWatch) >
+  candidateRelevanceScore(activeWatch) >
   candidateRelevanceScore(hugeButWeakPump),
   'raw vertical price change alone must not dominate relevance'
 );
+
+// Regression from the 2026-08-27 screenshots:
+// Milo was WATCH/74 but had zero 5m activity and a stale card.
+// rizztek was WAITING/0 but had fresh trades, volume and +5m movement.
+// The active token must rank above the stale one regardless of WAITING/WATCH.
+const milo={
+  mint:'Milo',
+  state:'WATCH',
+  score:74,
+  holderCount:73,
+  holderCountIsLowerBound:true,
+  volume5mUsd:0,
+  volume5mSol:0,
+  transactions5m:0,
+  marketCapUsd:null,
+  priceChange5mPct:null,
+  ageMinutes:11,
+  quoteAgeMs:90_000,
+  opportunityScore:0,
+  qualityScore:40
+};
+
+const rizztek={
+  mint:'rizztek',
+  state:'WAITING',
+  score:0,
+  holderCount:4,
+  holderCountIsLowerBound:true,
+  volume5mUsd:179.7,
+  transactions5m:4,
+  marketCapUsd:5600,
+  priceChange5mPct:10.6,
+  ageMinutes:6.4,
+  quoteAgeMs:1000,
+  opportunityScore:52,
+  qualityScore:45,
+  opportunityTrendHealthy:true
+};
+
+const screenshotRegression=rankCandidateViews([milo,rizztek]);
+assert.equal(screenshotRegression[0].mint,'rizztek');
+assert.ok(
+  screenshotRegression[0].score > screenshotRegression[1].score,
+  'live feed score must agree with live ordering'
+);
+assert.equal(screenshotRegression[0].decisionScore,0);
+assert.equal(screenshotRegression[1].decisionScore,74);
 
 const lowBuyReady={
   ...weakWatch,
@@ -67,10 +114,11 @@ const lowBuyReady={
   score:72
 };
 
-const spectacularWatch={
-  ...strongWatch,
-  mint:'SpectacularWatch',
-  score:99,
+const spectacularWaiting={
+  ...activeWatch,
+  mint:'SpectacularWaiting',
+  state:'WAITING',
+  score:0,
   opportunityScore:99,
   qualityScore:99,
   holderCount:200,
@@ -79,33 +127,34 @@ const spectacularWatch={
   priceChange5mPct:90
 };
 
-const waitingStrong={...strongWatch,mint:'WaitingStrong',state:'WAITING'};
-const blockedStrong={...spectacularWatch,mint:'BlockedStrong',state:'BLOCKED'};
+const blockedStrong={
+  ...spectacularWaiting,
+  mint:'BlockedStrong',
+  state:'BLOCKED'
+};
 
 const ranked=rankCandidateViews([
   blockedStrong,
-  weakWatch,
-  waitingStrong,
-  spectacularWatch,
-  lowBuyReady,
-  strongWatch
+  activeWatch,
+  spectacularWaiting,
+  lowBuyReady
 ]);
 
 assert.equal(ranked[0].mint,'LowBuyReady');
-assert.equal(ranked[1].mint,'SpectacularWatch');
-assert.equal(ranked[2].mint,'StrongWatch');
-assert.equal(ranked[3].mint,'WeakWatch');
-assert.equal(ranked[4].mint,'WaitingStrong');
-assert.equal(ranked[5].mint,'BlockedStrong');
+assert.equal(ranked.at(-1).mint,'BlockedStrong');
+assert.ok(
+  ranked.findIndex(x=>x.mint==='SpectacularWaiting') <
+  ranked.findIndex(x=>x.mint==='ActiveWatch'),
+  'WAITING and WATCH must compete by live quality'
+);
 
 assert.ok(ranked.every(row=>Number.isFinite(row.relevanceScore)));
+assert.ok(candidateStatePriority('OPEN POSITION')>candidateStatePriority('BUY READY'));
 assert.ok(candidateStatePriority('BUY READY')>candidateStatePriority('WATCH'));
-assert.ok(candidateStatePriority('WATCH')>candidateStatePriority('WAITING'));
+assert.equal(candidateStatePriority('WATCH'),candidateStatePriority('WAITING'));
 assert.ok(candidateStatePriority('WAITING')>candidateStatePriority('BLOCKED'));
 
 const app=fs.readFileSync(new URL('../app-server.mjs',import.meta.url),'utf8');
-assert.match(app,/MEMEFLOW_FEED_RELEVANCE_RANKING_V1/);
-
 const liveStart=app.indexOf("if(url.pathname==='/api/system/live-token-states'");
 const aiStart=app.indexOf("if(url.pathname==='/api/ai/decisions')");
 const debugStart=app.indexOf("if(url.pathname==='/api/debug/filter-pipeline')");
@@ -114,5 +163,7 @@ const aiSlice=app.slice(aiStart,debugStart);
 
 assert.match(liveSlice,/rankCandidateViews\(_unrankedViews\)/);
 assert.match(aiSlice,/rankCandidateViews\(_selected\.map\(candidateView\)\)/);
+assert.match(app,/MEMEFLOW_WAITING_PREVIEW_SCORE_V21/);
+assert.match(app,/MEMEFLOW_LIVE_CARD_STALE_MC_FIX_V21/);
 
-console.log('feed relevance ranking v1 ok');
+console.log('feed relevance ranking v2 ok');

@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import {liveCardMarketSnapshot} from '../src/live-card-market.mjs';
 
 const app=fs.readFileSync(new URL('../app-server.mjs',import.meta.url),'utf8');
 const live=fs.readFileSync(new URL('../src/pump-live-trade-feed.mjs',import.meta.url),'utf8');
@@ -49,5 +50,44 @@ assert.match(app,/MEMEFLOW_OPEN_POSITION_LIVE_BATCH_V18/);
 // live WS price/reserve state.
 assert.match(app,/pumpReportedMarketCapUsd/);
 assert.match(app,/pumpReportedHolderCount/);
+
+
+// MEMEFLOW_STALE_MARKET_REGRESSION_V21
+// A stored TradeEvent market cap must expire when there has been no live trade
+// inside the card window. This is the Milo stale-$33.5K regression.
+{
+  const now=Date.now();
+  const stale=liveCardMarketSnapshot({
+    token:{
+      launchPlatform:'pump',
+      priceSol:0.0000002,
+      marketCapUsd:33500,
+      marketSource:'ws-direct-trade-event-v13',
+      liveMarketCapSource:'pump-trade-price-x-supply',
+      lastPriceAt:now-6*60_000
+    },
+    points:[],
+    solUsd:170,
+    now,
+    windowMs:300000
+  });
+  assert.equal(stale.marketCapUsd,null);
+
+  const fresh=liveCardMarketSnapshot({
+    token:{
+      launchPlatform:'pump',
+      priceSol:0.000000033,
+      marketCapUsd:5600,
+      marketSource:'ws-direct-trade-event-v13',
+      liveMarketCapSource:'pump-trade-price-x-supply',
+      lastPriceAt:now-1000
+    },
+    points:[],
+    solUsd:170,
+    now,
+    windowMs:300000
+  });
+  assert.ok(Number(fresh.marketCapUsd)>0);
+}
 
 console.log('live market truth v1 ok');

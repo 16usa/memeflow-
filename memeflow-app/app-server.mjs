@@ -1022,6 +1022,23 @@ function candidateView(d){
       Date.now()-Number(t.pumpReferenceAt||0)<=90000
         ? 'pump-reference'
         : (t.holderSource||t.eventLedgerVersion||'ws-event-ledger'),
+    holderCountAuthoritative:
+      finite(t.pumpReportedHolderCount)!==null &&
+      Date.now()-Number(t.pumpReferenceAt||0)<=90000
+        ? true
+        : t.holderCountAuthoritative===true,
+    holderCountIsLowerBound:
+      !(
+        finite(t.pumpReportedHolderCount)!==null &&
+        Date.now()-Number(t.pumpReferenceAt||0)<=90000
+      ) &&
+      (
+        t.holderCountIsLowerBound===true ||
+        String(t.holderSource||t.eventLedgerVersion||'')
+          .toLowerCase()
+          .includes('event-ledger')
+      ),
+    observedHolderCount:finite(t.observedHolderCount),
     top10:top10Pct,
     top10Pct,
     developer:developerPct,
@@ -1114,14 +1131,57 @@ function __mfLiveDecisionForUserV14(uid,token,settingsOverride=null){
         ? 'Entry filters rejected this token'
         : 'Waiting for entry-filter data';
 
-    decision={
-      state:blocked?'BLOCKED':'WAITING',
-      score:0,
-      confidence:0,
-      primaryReason:reasons[0]||fallbackReason,
-      reasons:reasons.length?reasons:[fallbackReason],
-      terminal:false
-    };
+    if(blocked){
+      decision={
+        state:'BLOCKED',
+        score:0,
+        confidence:0,
+        primaryReason:reasons[0]||fallbackReason,
+        reasons:reasons.length?reasons:[fallbackReason],
+        terminal:false
+      };
+    }else{
+      // MEMEFLOW_WAITING_PREVIEW_SCORE_V21
+      // WAITING is a trade-admission state, not a quality score. Calculate a
+      // read-only preview score from the evidence already present so a moving
+      // token is not displayed as "0" merely because one gate is still pending.
+      let preview=null;
+      try{preview=evaluate(token,settings)}catch{}
+
+      const numeric=v=>{
+        const n=Number(v);
+        return Number.isFinite(n)?n:0;
+      };
+      const previewScore=Math.max(
+        numeric(preview?.score),
+        numeric(token?.opportunityScore),
+        numeric(token?.qualityScore)
+      );
+      const previewConfidence=Math.max(
+        numeric(preview?.confidence),
+        numeric(token?.dataQuality)*100
+      );
+
+      decision={
+        ...(preview&&typeof preview==='object'?preview:{}),
+        state:'WAITING',
+        score:Math.max(0,Math.min(100,Math.round(previewScore))),
+        confidence:Math.max(0,Math.min(100,Math.round(previewConfidence))),
+        primaryReason:
+          reasons[0]||
+          preview?.primaryReason||
+          fallbackReason,
+        reasons:
+          reasons.length
+            ? reasons
+            : (
+                Array.isArray(preview?.reasons)&&preview.reasons.length
+                  ? preview.reasons
+                  : [fallbackReason]
+              ),
+        terminal:false
+      };
+    }
   }else{
     decision=store.state.decisions?.[uid+':'+mint]||null;
 
@@ -1179,21 +1239,36 @@ function __mfLiveCardViewV14(token,decision){
     ageMinutes=Number.isFinite(Number(age))?Number(age):null;
   }catch{}
 
+  // MEMEFLOW_LIVE_CARD_STALE_MC_FIX_V21
+  // The V19 market truth module is authoritative. Never resurrect a stale
+  // stored marketCapUsd/marketCapSol after the live snapshot rejected it.
   const marketCapSol=
-    finite(
-      market5m?.marketCapSol ??
-      t?.marketCapSol ??
-      t?.marketCap
-    );
+    finite(market5m?.marketCapSol);
 
   const marketCapUsd=
-    finite(
-      market5m?.marketCapUsd ??
-      t?.marketCapUsd
-    );
+    finite(market5m?.marketCapUsd);
+
+  const pumpHolderCount=
+    finite(t?.pumpReportedHolderCount)!==null &&
+    Date.now()-Number(t?.pumpReferenceAt||0)<=90_000
+      ? finite(t?.pumpReportedHolderCount)
+      : null;
 
   const holderCount=
-    finite(t?.holderCount??t?.holders);
+    pumpHolderCount ?? finite(t?.holderCount??t?.holders);
+
+  const holderCountAuthoritative=
+    pumpHolderCount!==null ||
+    t?.holderCountAuthoritative===true;
+
+  const holderCountIsLowerBound=
+    pumpHolderCount===null &&
+    (
+      t?.holderCountIsLowerBound===true ||
+      String(t?.holderSource||t?.eventLedgerVersion||'')
+        .toLowerCase()
+        .includes('event-ledger')
+    );
 
   const top10Pct=
     finite(t?.top10Pct??t?.top10);
@@ -1289,7 +1364,13 @@ function __mfLiveCardViewV14(token,decision){
 
     holders:holderCount,
     holderCount,
-    holderSource:t?.holderSource||t?.eventLedgerVersion||'ws-event-ledger',
+    observedHolderCount:finite(t?.observedHolderCount),
+    holderCountAuthoritative,
+    holderCountIsLowerBound,
+    holderSource:
+      pumpHolderCount!==null
+        ? 'pump-reference'
+        : (t?.holderSource||t?.eventLedgerVersion||'ws-event-ledger'),
     holderFresh:t?.holderFresh===true,
     top10:top10Pct,
     top10Pct,
