@@ -1660,8 +1660,11 @@ async function __mfRefreshOpenPositionsV16({
 
       const payload=
         await __mfFetchJsonV16(
-          '/api/paper/positions?_='+
-          Date.now()
+          '/api/paper/positions/live?_='+
+          Date.now(),
+          {
+            timeoutMs:1500
+          }
         );
 
       state.positions=
@@ -1707,43 +1710,174 @@ async function __mfRefreshOpenPositionsV16({
 }
 
 
+// MEMEFLOW_PER_MINT_BATCH_REFRESH_V18
+let __mfStructureLoadingV18=false;
+
+async function __mfPostJsonV18(
+  url,
+  payload,
+  {
+    timeoutMs=1500
+  }={}
+){
+  const controller=new AbortController();
+
+  const timeout=setTimeout(
+    ()=>controller.abort(),
+    timeoutMs
+  );
+
+  try{
+    const response=await fetch(
+      url,
+      {
+        method:'POST',
+        cache:'no-store',
+        credentials:'same-origin',
+        headers:{
+          'content-type':'application/json'
+        },
+        body:JSON.stringify(payload||{}),
+        signal:controller.signal
+      }
+    );
+
+    if(!response.ok){
+      const error=new Error(
+        `HTTP ${response.status}`
+      );
+      error.status=response.status;
+      throw error;
+    }
+
+    return await response.json();
+  }finally{
+    clearTimeout(timeout);
+  }
+}
+
+function __mfMergeMutableRowV18(previous,incoming){
+  if(!previous)return incoming;
+  if(!incoming)return previous;
+
+  const out={...previous};
+
+  const mutableTopLevel=[
+    'state',
+    'score',
+    'confidence',
+    'primaryReason',
+    'reasons',
+    'tradeEligible',
+    'displayOnly',
+    'openPositionOverride',
+    'entryAdmissionState',
+    'entryAdmissionReasons',
+    'holderCount',
+    'holders',
+    'top10Pct',
+    'top10',
+    'developerPct',
+    'developerSharePct',
+    'developer',
+    'buyPressure',
+    'momentum',
+    'price',
+    'priceSol',
+    'liquidity',
+    'liquiditySol',
+    'liquidityUsd',
+    'marketCap',
+    'marketCapSol',
+    'marketCapUsd',
+    'marketCapSource',
+    'marketCapUpdatedAt',
+    'ageMinutes',
+    'volume5mSol',
+    'volume5mUsd',
+    'transactions5m',
+    'priceChange5mPct',
+    'qualityScore',
+    'opportunityScore',
+    'opportunityEvidenceReady',
+    'opportunityTrendHealthy',
+    'uniqueBuyers',
+    'netFlowSol',
+    'recentNetFlowSol',
+    'priceMomentumPct',
+    'drawdownFromPeakPct',
+    'whaleDominancePct',
+    'dead',
+    'deadReason',
+    'riskApproved',
+    'walletRiskPending',
+    'preOpenRiskStatus',
+    'routeApproved',
+    'quoteAgeMs',
+    'tokenUpdatedAt',
+    'decisionUpdatedAt',
+    'snapshotAt'
+  ];
+
+  for(const key of mutableTopLevel){
+    if(
+      Object.prototype.hasOwnProperty.call(
+        incoming,
+        key
+      )
+    ){
+      out[key]=incoming[key];
+    }
+  }
+
+  out.decision={
+    ...(previous?.decision||{}),
+    ...(incoming?.decision||{})
+  };
+
+  out.holder={
+    ...(previous?.holder||{}),
+    ...(incoming?.holder||{})
+  };
+
+  out.market={
+    ...(previous?.market||{}),
+    ...(incoming?.market||{})
+  };
+
+  return canonicalDecisionRow(out);
+}
+
 // MEMEFLOW_ONE_SECOND_SNAPSHOT_APPLY_V17
-async function loadTokens() {
-  if (state.loading) {
+async function __mfLoadStructureV18(){
+  if(__mfStructureLoadingV18){
     return;
   }
 
-  state.loading = true;
-  state.refreshPending = false;
+  __mfStructureLoadingV18=true;
 
-  try {
-    const payload =
+  try{
+    const payload=
       await __mfFetchJsonV16(
-        '/api/system/live-token-states?limit=200&_=' +
-        Date.now()
+        '/api/system/live-token-states?limit=200&_='+
+        Date.now(),
+        {
+          timeoutMs:5000
+        }
       );
 
-    const snapshotRevision=Number(payload?.liveRevision||0);
-    if(
-      Number.isFinite(snapshotRevision) &&
-      snapshotRevision>__mfLastRealtimeRevision
-    ){
-      __mfLastRealtimeRevision=snapshotRevision;
-    }
-
-    const rows =
+    const rows=
       Array.isArray(payload?.decisions)
         ? payload.decisions
         : [];
 
-    const previousRows=state.rows;
     const previousByMint=new Map(
-      previousRows.map(
+      state.rows.map(
         row=>[String(row?.mint||''),row]
       )
     );
 
-    const nextRows=
+    state.rows=
       rows
         .map(canonicalDecisionRow)
         .filter(row=>row?.mint)
@@ -1761,148 +1895,170 @@ async function loadTokens() {
             : row;
         });
 
-    const previousMints=new Set(
-      previousRows
-        .map(row=>String(row?.mint||''))
-        .filter(Boolean)
-    );
-    const nextMints=new Set(
-      nextRows
-        .map(row=>String(row?.mint||''))
-        .filter(Boolean)
-    );
-
-    const membershipChanged=
-      previousMints.size!==nextMints.size ||
-      [...previousMints].some(
-        mint=>!nextMints.has(mint)
-      );
-
-    const filteredStateChanged=
-      state.filter!=='all' &&
-      nextRows.some(row=>{
-        const mint=String(row?.mint||'');
-        const previous=previousByMint.get(mint);
-        return (
-          previous &&
-          stateKey(previous?.decision?.state)!==
-            stateKey(row?.decision?.state)
-        );
-      });
-
-    state.feedReturned =
+    state.feedReturned=
       Number.isFinite(Number(payload?.returned))
         ? Math.max(0,Number(payload.returned))
-        : nextRows.length;
+        : state.rows.length;
 
-    state.feedWorkingSet =
+    state.feedWorkingSet=
       Number.isFinite(Number(payload?.uiWorkingSetTokens))
         ? Math.max(0,Number(payload.uiWorkingSetTokens))
         : 0;
 
-    state.feedRawScanner =
+    state.feedRawScanner=
       Number.isFinite(Number(payload?.rawScannerTokens))
         ? Math.max(0,Number(payload.rawScannerTokens))
         : 0;
 
-    state.feedViewErrors =
+    state.feedViewErrors=
       Number.isFinite(Number(payload?.viewErrors))
         ? Math.max(0,Number(payload.viewErrors))
         : 0;
 
-    state.feedEvaluationErrors =
+    state.feedEvaluationErrors=
       Number.isFinite(Number(payload?.evaluationErrors))
         ? Math.max(0,Number(payload.evaluationErrors))
         : 0;
 
-    state.rows=nextRows;
-
     // MEMEFLOW_POSITIONS_DECOUPLED_FROM_TOKEN_FEED_V15
-    // OPEN POSITION data is fetched independently in parallel.
 
     // MEMEFLOW_LIVE_TOKEN_TELEMETRY_V9
-    // Preserve scanner/feed telemetry while the visible cards use V17's
-    // one-second mutable-only rendering path.
     const scanned=Number(payload?.rawScannerTokens);
     const admitted=Number(payload?.preAdmissionAdmitted);
     const pending=Number(payload?.preAdmissionPending);
     const rejected=Number(payload?.preAdmissionRejected);
-    const evalErrors=Number(payload?.evaluationErrors);
-    const viewErrors=Number(payload?.viewErrors);
 
-    const parts=[
-      `Updated ${new Date().toLocaleTimeString(
-        [],
-        {
-          hour:'2-digit',
-          minute:'2-digit',
-          second:'2-digit'
-        }
-      )}`
-    ];
+    const statusParts=[];
 
     if(Number.isFinite(scanned)){
-      parts.push(`scanner ${Math.max(0,scanned)}`);
+      statusParts.push(`scanner ${Math.max(0,scanned)}`);
     }
 
     if(Number.isFinite(admitted)){
-      parts.push(`admitted ${Math.max(0,admitted)}`);
+      statusParts.push(`admitted ${Math.max(0,admitted)}`);
     }
 
     if(Number.isFinite(pending)&&pending>0){
-      parts.push(`waiting ${Math.max(0,pending)}`);
+      statusParts.push(`waiting ${Math.max(0,pending)}`);
     }
 
     if(Number.isFinite(rejected)&&rejected>0){
-      parts.push(`blocked ${Math.max(0,rejected)}`);
+      statusParts.push(`blocked ${Math.max(0,rejected)}`);
     }
 
-    if(
-      (Number.isFinite(evalErrors)&&evalErrors>0) ||
-      (Number.isFinite(viewErrors)&&viewErrors>0)
-    ){
-      parts.push(
-        `errors ${
-          Math.max(0,evalErrors||0)+
-          Math.max(0,viewErrors||0)
-        }`
-      );
+    render();
+
+    if(statusParts.length){
+      $('lastUpdate').textContent=
+        statusParts.join(' · ');
     }
+  }catch(error){
+    console.warn(
+      '[token-flow] structural feed refresh failed',
+      error
+    );
+  }finally{
+    __mfStructureLoadingV18=false;
+  }
+}
 
-    $('lastUpdate').textContent=parts.join(' · ');
+async function loadTokens(){
+  if(state.loading){
+    return;
+  }
 
-    const hasCards=
-      document.querySelector(
-        '.flow-token[data-mint]'
-      )!==null;
+  if(!state.rows.length){
+    await __mfLoadStructureV18();
+    return;
+  }
 
-    if(
-      !hasCards ||
-      membershipChanged ||
-      filteredStateChanged
-    ){
-      // Structural changes only: a token entered/left the 200-card feed or a
-      // non-ALL filter must gain/lose a card. Static identity is still locked.
-      render();
-    }else{
-      // Normal 1-second refresh: ONLY mutable chain/decision fields.
-      for(
-        const card of document.querySelectorAll(
-          '.flow-token[data-mint]'
-        )
-      ){
-        const mint=String(card.dataset.mint||'');
-        if(mint){
-          __mfPatchMutableCardV17(mint);
+  state.loading=true;
+
+  try{
+    const mints=[
+      ...new Set(
+        state.rows
+          .map(row=>String(row?.mint||'').trim())
+          .filter(Boolean)
+      )
+    ].slice(0,200);
+
+    const payload=
+      await __mfPostJsonV18(
+        '/api/system/live-token-card-batch',
+        {mints},
+        {
+          timeoutMs:1500
         }
-      }
+      );
 
-      renderCounts();
+    const incomingRows=
+      Array.isArray(payload?.rows)
+        ? payload.rows
+            .map(canonicalDecisionRow)
+            .filter(row=>row?.mint)
+        : [];
+
+    const incomingByMint=new Map(
+      incomingRows.map(
+        row=>[String(row.mint),row]
+      )
+    );
+
+    state.rows=
+      state.rows.map(previous=>{
+        const mint=String(previous?.mint||'');
+        const incoming=incomingByMint.get(mint);
+
+        return incoming
+          ? __mfMergeMutableRowV18(
+              previous,
+              incoming
+            )
+          : previous;
+      });
+
+    for(
+      const card of document.querySelectorAll(
+        '.flow-token[data-mint]'
+      )
+    ){
+      const mint=String(card.dataset.mint||'');
+      if(mint){
+        __mfPatchMutableCardV17(mint);
+      }
     }
-  } catch (error) {
-    console.error('[MEMEFLOW TOKEN FLOW]',error);
-    $('lastUpdate').textContent='Decision feed unavailable';
-  } finally {
+
+    renderCounts();
+
+    $('lastUpdate').textContent=
+      `Updated ${
+        new Date().toLocaleTimeString(
+          [],
+          {
+            hour:'2-digit',
+            minute:'2-digit',
+            second:'2-digit'
+          }
+        )
+      } · cards ${
+        Number(payload?.returned||incomingRows.length)
+      }/${mints.length}`;
+
+    if(
+      Number(payload?.returned||0)<mints.length
+    ){
+      void __mfLoadStructureV18();
+    }
+  }catch(error){
+    console.warn(
+      '[token-flow] per-mint 1s batch failed',
+      error
+    );
+
+    $('lastUpdate').textContent=
+      'Live card refresh retrying';
+  }finally{
     state.loading=false;
     state.refreshPending=false;
   }
@@ -1999,7 +2155,10 @@ $('refreshButton')
   .addEventListener(
     'click',
     ()=>{
-      void __mfPollOneSecondV17(true);
+      void __mfLoadStructureV18()
+        .finally(
+          ()=>__mfPollOneSecondV17(true)
+        );
     }
   );
 
@@ -2019,7 +2178,10 @@ $('refreshButton')
  * metadata resolves. Normal one-second ticks patch mutable fields in-place.
  */
 const __MF_CARD_REFRESH_MS_V17=1000;
+const __MF_STRUCTURE_REFRESH_MS_V18=10000;
+
 let __mfOneSecondTimerV17=null;
+let __mfStructureTimerV18=null;
 
 function __mfPreserveIdentityV17(previous,next){
   if(!next||typeof next!=='object'){
@@ -2335,7 +2497,11 @@ if(typeof loadDiscoveryStatus==='function'){
   void loadDiscoveryStatus();
 }
 
-void __mfPollOneSecondV17(true);
+// MEMEFLOW_PER_MINT_ONE_SECOND_CLOCK_V18
+void __mfLoadStructureV18()
+  .finally(
+    ()=>__mfPollOneSecondV17(true)
+  );
 
 __mfOneSecondTimerV17=
   setInterval(
@@ -2343,6 +2509,16 @@ __mfOneSecondTimerV17=
       void __mfPollOneSecondV17();
     },
     __MF_CARD_REFRESH_MS_V17
+  );
+
+__mfStructureTimerV18=
+  setInterval(
+    ()=>{
+      if(!document.hidden){
+        void __mfLoadStructureV18();
+      }
+    },
+    __MF_STRUCTURE_REFRESH_MS_V18
   );
 
 document.addEventListener(
@@ -2359,6 +2535,10 @@ window.addEventListener(
   ()=>{
     if(__mfOneSecondTimerV17!==null){
       clearInterval(__mfOneSecondTimerV17);
+    }
+
+    if(__mfStructureTimerV18!==null){
+      clearInterval(__mfStructureTimerV18);
     }
   },
   {once:true}

@@ -38,6 +38,9 @@ assert.match(market,/chartTradeHistory\.get\(mint\)/);
 assert.match(market,/volume5mSol/);
 assert.match(market,/transactions5m/);
 assert.match(market,/solUsdOracle\.get\(\)/);
+assert.match(app,/MEMEFLOW_LIVE_CARD_MARKET_TRUTH_V18/);
+assert.match(app,/MEMEFLOW_OPEN_POSITION_MC_TRUTH_V18/);
+assert.match(app,/MEMEFLOW_OPEN_POSITION_LIVE_BATCH_V18/);
 
 // Reference HTTP sync may refresh display/reference holders but cannot replace
 // live WS price/reserve state.

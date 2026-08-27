@@ -10,6 +10,7 @@ import { startPumpLiveTradeFeed } from './src/pump-live-trade-feed.mjs'; // MEME
 import { ChartHistoryArchive } from './src/chart-history-archive.mjs'; // MEMEFLOW_CHART_HISTORY_RESTORE_V1
 import {createOpportunityEngine} from './src/opportunity-engine.mjs'; // MEMEFLOW_OPPORTUNITY_ENGINE_V1
 import {createSolUsdOracle} from './src/sol-usd-oracle.mjs'; // MEMEFLOW_OPPORTUNITY_ENGINE_V1
+import {liveCardMarketSnapshot} from './src/live-card-market.mjs'; // MEMEFLOW_LIVE_CARD_MARKET_TRUTH_V18
 import {rankCandidateViews} from './src/feed-ranking.mjs'; // MEMEFLOW_FEED_RELEVANCE_RANKING_V1
 import {startPumpHistoryBackfill} from './src/pump-history-backfill.mjs'; // MEMEFLOW_PERMANENT_TOKEN_REGISTRY_V1
 
@@ -3547,6 +3548,92 @@ if(false && url.pathname==='/api/ai/assistant' &&req.method==='POST'){
  /* MEMEFLOW_AI_STANDALONE_V49_ROUTE_END */
 
 
+ // MEMEFLOW_LIVE_CARD_BATCH_V18
+ if(url.pathname==='/api/system/live-token-card-batch'&&req.method==='POST'){
+  let requestBody={};
+
+  try{
+    requestBody=await body(req);
+  }catch{
+    return json(res,400,{error:'INVALID_JSON'});
+  }
+
+  const requested=
+    Array.isArray(requestBody?.mints)
+      ? requestBody.mints
+      : [];
+
+  const mints=[
+    ...new Set(
+      requested
+        .map(mint=>String(mint||'').trim())
+        .filter(Boolean)
+    )
+  ].slice(0,200);
+
+  const settings=store.settings(u.id)||{};
+  const openMints=__mfOpenPositionMints();
+  const rows=[];
+
+  let processed=0;
+
+  for(const mint of mints){
+    const token=store.state.tokens?.[mint]||null;
+    if(!token)continue;
+
+    const isOpen=openMints.has(mint);
+
+    if(
+      !isOpen&&
+      __mfIsCurrentScannerToken(token)!==true
+    ){
+      continue;
+    }
+
+    let decision=null;
+
+    try{
+      decision=__mfLiveDecisionForUserV14(
+        u.id,
+        token,
+        settings
+      );
+    }catch{
+      decision=null;
+    }
+
+    const row=__mfLiveCardViewV14(
+      token,
+      decision||{
+        mint,
+        state:'WAITING',
+        score:0,
+        primaryReason:'Live data pending',
+        reasons:['Live data pending']
+      }
+    );
+
+    if(row){
+      rows.push(row);
+    }
+
+    processed++;
+
+    if(processed%50===0){
+      await __mfYieldToEventLoop();
+    }
+  }
+
+  return json(res,200,{
+    rows,
+    requested:mints.length,
+    returned:rows.length,
+    liveRevision:__mfLiveTokenRevision,
+    source:'per-mint-live-card-batch-v18',
+    snapshotAt:Date.now()
+  });
+ }
+
  // MEMEFLOW_SINGLE_TOKEN_LIVE_ROUTE_V14
  if(url.pathname==='/api/system/live-token-state'&&req.method==='GET'){
   const mint=String(url.searchParams.get('mint')||'').trim();
@@ -4469,6 +4556,147 @@ if(url.pathname==='/api/ai/decisions'){
  if(url.pathname==='/api/chart/stream'){const mint=url.searchParams.get('tokenAddress');res.writeHead(200,{'content-type':'text/event-stream','cache-control':'no-cache','connection':'keep-alive'});res.write(`event: snapshot\ndata: ${JSON.stringify({points:[],status:{stale:true,source:'Solana'}})}\n\n`);if(!streams.has(mint))streams.set(mint,new Set());streams.get(mint).add(res);req.on('close',()=>streams.get(mint)?.delete(res));return}
  if(url.pathname==='/api/live/execute'){if(!hasLiveEntitlement(u))return json(res,402,{error:'LIVE_ENTITLEMENT_REQUIRED',message:'An active MEMEFLOW Pro subscription or verified owner entitlement is required.'});return json(res,423,{error:'LIVE_EXECUTION_NOT_READY',message:u.isOwner?'Owner LIVE entitlement is active, but verified wallet and production execution engine are still required.':'Pro is active, but verified wallet and production execution engine are still required.'});}
  // ── PAPER API routes ──────────────────────────────────────────────────────
+ // MEMEFLOW_OPEN_POSITION_LIVE_BATCH_V18
+ if(url.pathname==='/api/paper/positions/live'&&req.method==='GET'){
+  const now=Date.now();
+
+  const finite=value=>{
+    if(value===null||value===undefined||value==='')return null;
+    const n=Number(value);
+    return Number.isFinite(n)?n:null;
+  };
+
+  const positions=
+    paper
+      .userPositions(u.id)
+      .filter(
+        position=>
+          String(position?.status||'').toUpperCase()==='OPEN'&&
+          position?.mint
+      )
+      .map(position=>{
+        const mint=String(position.mint);
+        const token=store.state.tokens?.[mint]||{};
+
+        let market=null;
+
+        try{
+          market=__mfCandidateMarket5mV4(
+            mint,
+            token
+          );
+        }catch{
+          market=null;
+        }
+
+        const entryPrice=finite(position.entryPriceSol);
+        const tokenPrice=finite(token.priceSol);
+        const tokenMarkAt=finite(
+          token.lastPriceAt ??
+          token.lastMarketActivityAt
+        );
+        const enginePrice=finite(position.currentPriceSol);
+
+        let markPrice=null;
+        let markAt=null;
+        let markSource=null;
+
+        if(
+          tokenPrice!==null&&
+          tokenPrice>0&&
+          tokenMarkAt!==null&&
+          tokenMarkAt>0
+        ){
+          markPrice=tokenPrice;
+          markAt=tokenMarkAt;
+          markSource='token-live-trade';
+        }else if(
+          enginePrice!==null&&
+          enginePrice>0&&
+          entryPrice!==null&&
+          Math.abs(enginePrice-entryPrice)>
+            Math.max(
+              1e-18,
+              Math.abs(entryPrice)*1e-12
+            )
+        ){
+          markPrice=enginePrice;
+          markAt=null;
+          markSource='paper-engine-mark';
+        }
+
+        const initialSize=finite(position.initialSizeSol);
+        const remainingQty=finite(position.remainingTokenQuantity);
+        const realized=finite(position.realizedPnlSol)??0;
+
+        const pnlReady=Boolean(
+          markPrice!==null&&
+          markPrice>0&&
+          entryPrice!==null&&
+          entryPrice>0&&
+          initialSize!==null&&
+          initialSize>0&&
+          remainingQty!==null&&
+          remainingQty>=0
+        );
+
+        const unrealized=
+          pnlReady
+            ? remainingQty*(markPrice-entryPrice)
+            : null;
+
+        const pnlPct=
+          pnlReady
+            ? ((realized+unrealized)/initialSize)*100
+            : null;
+
+        let ageMinutes=null;
+
+        try{
+          const age=tokenAgeMinutes(token);
+          ageMinutes=
+            Number.isFinite(Number(age))
+              ? Number(age)
+              : null;
+        }catch{}
+
+        return {
+          ...position,
+          currentPriceSol:
+            markPrice ??
+            position.currentPriceSol ??
+            position.entryPriceSol ??
+            null,
+          tokenMetrics:{
+            ageMinutes,
+            holderCount:finite(token.holderCount),
+            volume5mSol:finite(market?.volume5mSol),
+            volume5mUsd:finite(market?.volume5mUsd),
+            transactions5m:finite(market?.transactions5m),
+            marketCapSol:finite(market?.marketCapSol),
+            marketCapUsd:finite(market?.marketCapUsd),
+            marketCapSource:market?.marketCapSource||null,
+            priceChange5mPct:finite(market?.priceChange5mPct),
+            pnlReady,
+            pnlPct,
+            pnlUnrealizedSol:unrealized,
+            pnlMarkPriceSol:markPrice,
+            pnlMarkAt:markAt,
+            pnlMarkSource:markSource,
+            windowMinutes:5,
+            source:'canonical-live-token-v18',
+            snapshotAt:now
+          }
+        };
+      });
+
+  return json(res,200,{
+    positions,
+    snapshotAt:now,
+    source:'paper-positions-live-v18'
+  });
+ }
+
  // MEMEFLOW_OPEN_POSITION_MARKET_METRICS_V3
  if(url.pathname==='/api/paper/positions'&&req.method==='GET'){
   const _now=Date.now();
@@ -4634,26 +4862,44 @@ if(url.pathname==='/api/ai/decisions'){
       _priceChange5mPct=((_latestPrice/_basePrice)-1)*100;
     }
 
-    const _supply=_finite(_token.totalSupply);
-    const _storedMcSol=_finite(_token.marketCapSol??_token.marketCap);
-    const _marketCapSol=
-      _latestPrice!==null&&_latestPrice>0&&_supply!==null&&_supply>0
-        ? _latestPrice*_supply
-        : _storedMcSol;
+    // MEMEFLOW_OPEN_POSITION_MC_TRUTH_V18
+    const _supply=__mfNormalizePumpSupplyV5(_token);
 
-    const _marketCapUsd=_finite(_token.marketCapUsd);
-    const _impliedSolUsd=
-      _marketCapUsd!==null&&
-      _marketCapUsd>0&&
+    let _cardMarket=null;
+    try{
+      _cardMarket=__mfCandidateMarket5mV4(
+        _mint,
+        _token
+      );
+    }catch{
+      _cardMarket=null;
+    }
+
+    const _marketCapSol=
+      _latestPrice!==null&&
+      _latestPrice>0&&
+      _supply!==null&&
+      _supply>0
+        ? _latestPrice*_supply
+        : _finite(_cardMarket?.marketCapSol);
+
+    const _solUsd=_finite(solUsdOracle.get());
+
+    const _marketCapUsd=
       _marketCapSol!==null&&
-      _marketCapSol>0
-        ? _marketCapUsd/_marketCapSol
-        : null;
+      _marketCapSol>0&&
+      _solUsd!==null&&
+      _solUsd>0
+        ? _marketCapSol*_solUsd
+        : _finite(
+            _cardMarket?.marketCapUsd ??
+            _token.pumpReportedMarketCapUsd
+          );
 
     const _volume5mUsd=
-      _impliedSolUsd!==null
-        ? _volume5mSol*_impliedSolUsd
-        : null;
+      _solUsd!==null&&_solUsd>0
+        ? _volume5mSol*_solUsd
+        : _finite(_cardMarket?.volume5mUsd);
 
     let _ageMinutes=null;
     try{
