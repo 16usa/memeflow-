@@ -58,6 +58,35 @@ assert.match(app,/MEMEFLOW_SINGLE_TOKEN_LIVE_ROUTE_V14/);
 
 assert.match(tokenUi,/MEMEFLOW_SYSTEM_TOKENS_ONE_SECOND_V17/);
 assert.match(tokenUi,/MEMEFLOW_PER_MINT_BATCH_REFRESH_V18/);
+
+// MEMEFLOW_KEYED_CARD_RECONCILE_TEST_V18_3
+assert.match(tokenUi,/MEMEFLOW_KEYED_CARD_RECONCILE_V18_3/);
+assert.match(tokenUi,/MEMEFLOW_STRUCTURE_NO_FULL_RENDER_V18_3/);
+assert.match(tokenUi,/list\.append\(card\)/);
+
+const structureV183=tokenUi.slice(
+  tokenUi.indexOf('async function __mfLoadStructureV18(){'),
+  tokenUi.indexOf('async function loadTokens(){')
+);
+
+assert.doesNotMatch(
+  structureV183,
+  /\brender\(\);/
+);
+
+const oneSecondV183=tokenUi.slice(
+  tokenUi.indexOf('async function loadTokens(){'),
+  tokenUi.indexOf("document\n  .querySelectorAll(\n    '.summary-card'")
+);
+
+assert.doesNotMatch(
+  oneSecondV183,
+  /tokenList['"]?\)?\.innerHTML/
+);
+assert.doesNotMatch(
+  oneSecondV183,
+  /\brender\(\);/
+);
 assert.match(tokenUi,/MEMEFLOW_PER_MINT_ONE_SECOND_CLOCK_V18/);
 assert.match(tokenUi,/\/api\/system\/live-token-card-batch/);
 assert.match(tokenUi,/\/api\/paper\/positions\/live/);
@@ -99,7 +128,7 @@ assert.doesNotMatch(oneSecondPoll,/hydrateTokenMediaV25/);
 assert.match(app,/MEMEFLOW_LIVE_TOKEN_ASSET_NO_STORE_V1/);
 assert.match(app,/url\.pathname==='\/system-tokens\.js'/);
 assert.match(app,/url\.pathname==='\/system-tokens\.css'/);
-assert.match(tokenHtml,/system-tokens\.js\?v=per-mint-batch-v18-20260827/);
+assert.match(tokenHtml,/system-tokens\.js\?v=no-rerender-v18-3-20260827/);
 assert.match(tokenHtml,/id="scannerStatus"/);
 assert.match(tokenUi,/MEMEFLOW_SCANNER_STATUS_V9/);
 assert.match(tokenUi,/MEMEFLOW_LIVE_TOKEN_TELEMETRY_V9/);

@@ -1321,6 +1321,9 @@ function tokenTemplate(row, index) {
 }
 
 function render() {
+  // MEMEFLOW_USER_ACTION_FULL_RENDER_ONLY_V18_3
+  // Full HTML render is reserved for explicit page/filter/search actions.
+
   renderCounts();
 
   const rows =
@@ -1406,6 +1409,138 @@ function render() {
         );
       }
     );
+}
+
+
+// MEMEFLOW_KEYED_CARD_RECONCILE_V18_3
+// Background structure sync is keyed by mint. Existing cards are MOVED/PATCHED,
+// never destroyed/recreated. New DOM is created only for genuinely new cards.
+function __mfBindDetailsButtonV183(card){
+  const button=card?.querySelector('.details-button');
+  if(!button||button.dataset.mfBoundV183==='1'){
+    return;
+  }
+
+  button.dataset.mfBoundV183='1';
+
+  button.addEventListener(
+    'click',
+    ()=>{
+      const expanded=
+        card.classList.toggle('expanded');
+
+      button.textContent=
+        expanded
+          ? 'Close'
+          : 'Details';
+    }
+  );
+}
+
+function __mfCreateCardNodeV183(row,index){
+  const template=document.createElement('template');
+
+  template.innerHTML=
+    tokenTemplate(row,index).trim();
+
+  const card=template.content.firstElementChild;
+
+  if(card){
+    __mfBindDetailsButtonV183(card);
+  }
+
+  return card;
+}
+
+function __mfReconcileVisibleCardsV183(){
+  renderCounts();
+
+  const rows=filteredRows();
+
+  const pageTotal=Math.max(
+    1,
+    Math.ceil(rows.length/PAGE_SIZE)
+  );
+
+  state.page=Math.min(
+    state.page,
+    pageTotal
+  );
+
+  const start=
+    (state.page-1)*PAGE_SIZE;
+
+  const pageRows=
+    rows.slice(
+      start,
+      start+PAGE_SIZE
+    );
+
+  $('visibleCount').textContent=rows.length;
+  $('pageNumber').textContent=state.page;
+  $('pageTotal').textContent=pageTotal;
+  $('prevPage').disabled=state.page<=1;
+  $('nextPage').disabled=state.page>=pageTotal;
+  $('emptyState').hidden=pageRows.length!==0;
+
+  const list=$('tokenList');
+
+  const existing=new Map(
+    [...list.querySelectorAll('.flow-token[data-mint]')]
+      .map(card=>[
+        String(card.dataset.mint||''),
+        card
+      ])
+      .filter(([mint])=>mint)
+  );
+
+  const wanted=new Set();
+  const ordered=[];
+
+  for(let localIndex=0;localIndex<pageRows.length;localIndex++){
+    const row=pageRows[localIndex];
+    const mint=String(row?.mint||'').trim();
+
+    if(!mint)continue;
+
+    wanted.add(mint);
+
+    let card=existing.get(mint)||null;
+
+    if(!card){
+      card=__mfCreateCardNodeV183(
+        row,
+        start+localIndex
+      );
+    }
+
+    if(!card)continue;
+
+    card.dataset.index=String(
+      start+localIndex
+    );
+
+    ordered.push(card);
+  }
+
+  for(const [mint,card] of existing){
+    if(!wanted.has(mint)){
+      card.remove();
+    }
+  }
+
+  // append() MOVES an existing node. It does not recreate it.
+  for(const card of ordered){
+    list.append(card);
+
+    const mint=String(
+      card.dataset.mint||''
+    );
+
+    if(mint){
+      __mfPatchMutableCardV17(mint);
+    }
+  }
 }
 
 
@@ -1946,7 +2081,9 @@ async function __mfLoadStructureV18(){
       statusParts.push(`blocked ${Math.max(0,rejected)}`);
     }
 
-    render();
+    // MEMEFLOW_STRUCTURE_NO_FULL_RENDER_V18_3
+    // Keep every existing mint card alive; only reconcile membership/order.
+    __mfReconcileVisibleCardsV183();
 
     if(statusParts.length){
       $('lastUpdate').textContent=

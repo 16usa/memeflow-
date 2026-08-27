@@ -100,6 +100,18 @@ assert.match(app,/MEMEFLOW_OPEN_POSITION_MC_TRUTH_V18/);
 assert.match(app,/liveCardMarketSnapshot/);
 
 assert.match(ui,/MEMEFLOW_PER_MINT_BATCH_REFRESH_V18/);
+assert.match(ui,/MEMEFLOW_KEYED_CARD_RECONCILE_V18_3/);
+assert.match(ui,/MEMEFLOW_STRUCTURE_NO_FULL_RENDER_V18_3/);
+
+const structureNoReload=ui.slice(
+  ui.indexOf('async function __mfLoadStructureV18(){'),
+  ui.indexOf('async function loadTokens(){')
+);
+
+assert.doesNotMatch(
+  structureNoReload,
+  /\brender\(\);/
+);
 assert.match(ui,/MEMEFLOW_PER_MINT_ONE_SECOND_CLOCK_V18/);
 assert.match(ui,/const __MF_CARD_REFRESH_MS_V17=1000/);
 assert.match(ui,/\/api\/system\/live-token-card-batch/);
@@ -147,7 +159,7 @@ assert.doesNotMatch(
 
 assert.match(
   html,
-  /system-tokens\.js\?v=per-mint-batch-v18-20260827/
+  /system-tokens\.js\?v=no-rerender-v18-3-20260827/
 );
 
 console.log('per-mint card refresh v18 ok');
