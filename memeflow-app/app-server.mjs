@@ -2991,14 +2991,18 @@ if(false && url.pathname==='/api/ai/assistant' &&req.method==='POST'){
 
   // MEMEFLOW_LIVE_TOKEN_STATES_V7
  if(url.pathname==='/api/system/live-token-states'&&req.method==='GET'){
-  // MEMEFLOW_SCAN_ALL_DISPLAY_FILTERED_V2
-  // SCAN: every Pump token in the hot scanner cache.
-  // DISPLAY: only Entry-Filter-admitted tokens + OPEN positions.
-  // TRADE: the same Entry Filters remain mandatory before Logic/execution.
+  // MEMEFLOW_LIVE_TOKEN_VISIBILITY_V8_CLEAN_WORKTREE
   //
-  // The old fixed API cap of 500 is removed. "limit" is optional; when the
-  // current client does not send it, all matching hot-cache rows are returned
-  // and the existing UI paginates them. Permanent registry size is unlimited.
+  // SCANNER INVENTORY and TRADING ELIGIBILITY are separate concerns.
+  //
+  // DISPLAY:
+  //   ADMITTED -> normal Logic state
+  //   PENDING  -> WAITING with the real Entry Filter reason
+  //   REJECTED -> BLOCKED with the real Entry Filter reason
+  //   OPEN     -> always remains visible
+  //
+  // TRADE:
+  //   /api/ai/decisions and execution remain STRICTLY Entry-admitted.
   const _requestedLimit=Math.floor(Number(url.searchParams.get('limit')||0));
   const _limit=Number.isFinite(_requestedLimit)&&_requestedLimit>0
     ? _requestedLimit
@@ -3009,9 +3013,11 @@ if(false && url.pathname==='/api/ai/assistant' &&req.method==='POST'){
   const _openMints=__mfOpenPositionMints();
 
   // MEMEFLOW_REALTIME_UI_FAIRNESS_V1_ROUTE
-  // A tiny cache stops multiple browser polls from rebuilding the same large
-  // response at the same instant. 350ms is still effectively real-time.
-  const _cacheKey=String(u.id||'anon');
+  // Keep the existing realtime fairness contract: response construction yields
+  // to Pump WS callbacks, and cached snapshots are revision-aware.
+  // Cache identity also includes response shape.
+  const _cacheScope='limit:'+String(_limit??'all');
+  const _cacheKey=String(u.id||'anon')+'|'+_cacheScope;
   const _settingsVersion=Number(store.user(u.id)?.settingsVersion||0);
   const _cached=__mfLiveStatesResponseCache.get(_cacheKey);
 
@@ -3026,7 +3032,8 @@ if(false && url.pathname==='/api/ai/assistant' &&req.method==='POST'){
 
   let _processed=0;
   let _admitted=0;
-  let _hiddenBySettings=0;
+  let _pending=0;
+  let _rejected=0;
   let _openOverride=0;
   let _evalErrors=0;
   let _viewErrors=0;
@@ -3037,8 +3044,6 @@ if(false && url.pathname==='/api/ai/assistant' &&req.method==='POST'){
     const _mint=String(_token?.mint||'').trim();
     if(!_mint)continue;
 
-    // Yield periodically so Pump WS onmessage callbacks can update prices,
-    // holders, volume, TX count and 5m metrics while this response is built.
     _processed++;
     if(_processed%__mfLiveStatesYieldEvery===0){
       await __mfYieldToEventLoop();
@@ -3057,30 +3062,54 @@ if(false && url.pathname==='/api/ai/assistant' &&req.method==='POST'){
 
     const _eligible=_admission?.admitted===true;
     const _isOpen=_openMints.has(_mint);
-
-    if(!_eligible&&!_isOpen){
-      _hiddenBySettings++;
-      continue;
-    }
+    const _admissionState=String(
+      _admission?.state || (_eligible?'ADMITTED':'PENDING')
+    ).trim().toUpperCase();
 
     if(_eligible)_admitted++;
+    else if(_admissionState==='REJECTED')_rejected++;
+    else _pending++;
+
     if(_isOpen&&!_eligible)_openOverride++;
 
     const _key=u.id+':'+_mint;
-    let _decision=store.state.decisions?.[_key]||null;
+    let _decision=null;
 
-    if(!_decision){
-      try{
-        _decision=evaluate(_token,_settings);
-      }catch(_error){
-        _evalErrors++;
-        _decision={
-          state:'WAITING',
-          score:0,
-          confidence:0,
-          primaryReason:'Scanner data is still being collected',
-          reasons:['Scanner data is still being collected']
-        };
+    if(!_eligible&&!_isOpen){
+      // Entry Filters still block trading. Live Token States shows the real
+      // admission state instead of silently deleting the token.
+      const _reasons=Array.isArray(_admission?.reasons)
+        ? _admission.reasons.filter(Boolean)
+        : [];
+      const _blocked=_admissionState==='REJECTED';
+      const _fallbackReason=_blocked
+        ? 'Entry filters rejected this token'
+        : 'Waiting for entry-filter data';
+
+      _decision={
+        state:_blocked?'BLOCKED':'WAITING',
+        score:0,
+        confidence:0,
+        primaryReason:_reasons[0]||_fallbackReason,
+        reasons:_reasons.length?_reasons:[_fallbackReason],
+        terminal:false
+      };
+    }else{
+      _decision=store.state.decisions?.[_key]||null;
+
+      if(!_decision){
+        try{
+          _decision=evaluate(_token,_settings);
+        }catch(_error){
+          _evalErrors++;
+          _decision={
+            state:'WAITING',
+            score:0,
+            confidence:0,
+            primaryReason:'Scanner data is still being collected',
+            reasons:['Scanner data is still being collected']
+          };
+        }
       }
     }
 
@@ -3088,8 +3117,9 @@ if(false && url.pathname==='/api/ai/assistant' &&req.method==='POST'){
       ..._decision,
       mint:_mint,
       tradeEligible:_eligible,
+      displayOnly:!_eligible&&!_isOpen,
       openPositionOverride:_isOpen&&!_eligible,
-      entryAdmissionState:_admission?.state||null,
+      entryAdmissionState:_admissionState,
       entryAdmissionReasons:Array.isArray(_admission?.reasons)
         ? _admission.reasons
         : []
@@ -3121,17 +3151,17 @@ if(false && url.pathname==='/api/ai/assistant' &&req.method==='POST'){
     total:_rankedViews.length,
     returned:_views.length,
     limit:_limit,
-    source:'system-live-token-states-filtered-unbounded-v2',
+    source:'system-live-token-states-transparent-v8',
 
-    // Scanner truth.
     rawScannerTokens:_rawTokens.length,
-    // Never run synchronous SQLite COUNT from the live-card request path.
     permanentRegistryTokens:
       Number(store.tokenRegistry?.metrics?.permanentTokensApprox||0),
 
-    // Display/trading-filter truth.
     preAdmissionAdmitted:_admitted,
-    preAdmissionHidden:_hiddenBySettings,
+    preAdmissionPending:_pending,
+    preAdmissionRejected:_rejected,
+    preAdmissionVisible:_displayRows.length,
+    preAdmissionHidden:0,
     openPositionOverride:_openOverride,
 
     evaluationErrors:_evalErrors,
@@ -3147,8 +3177,7 @@ if(false && url.pathname==='/api/ai/assistant' &&req.method==='POST'){
     payload:_payload
   });
 
-  // Bound per-user cache cardinality.
-  if(__mfLiveStatesResponseCache.size>1000){
+  if(__mfLiveStatesResponseCache.size>2000){
     const oldest=__mfLiveStatesResponseCache.keys().next().value;
     if(oldest!==undefined)__mfLiveStatesResponseCache.delete(oldest);
   }

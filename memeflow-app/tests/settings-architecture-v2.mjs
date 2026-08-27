@@ -240,6 +240,7 @@ const html=fs.readFileSync(
   new URL('../settings.html',import.meta.url),
   'utf8'
 );
-assert.match(html,/settings-page\.js\?v=ws-only-preopen-rpc-v1/);
+assert.match(html,/MEMEFLOW_SETTINGS_CACHE_CHAIN_FIX_V1/);
+assert.match(html,/settings-page\.js\?v=[A-Za-z0-9._-]+/);
 
 console.log('settings architecture v2 ok');

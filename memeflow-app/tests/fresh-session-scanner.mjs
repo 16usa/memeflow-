@@ -22,17 +22,22 @@ assert.doesNotMatch(app,/LIVE_SCANNER_TOKEN_TTL_MS/);
 assert.doesNotMatch(app,/SESSION_OR_TTL_EXPIRED/);
 assert.match(app,/setHeader\('cache-control','no-store'\)/);
 
-// Scanner sees all. Entry Filters control cards + trading.
+// MEMEFLOW_LIVE_TOKEN_VISIBILITY_V8_CLEAN_WORKTREE
+// Scanner sees all. Entry Filters classify Live Token States and strictly gate
+// trading; they do not silently erase PENDING/REJECTED rows.
 const liveRoute=app.slice(
   app.indexOf("if(url.pathname==='/api/system/live-token-states'"),
   app.indexOf("if(url.pathname==='/api/ai/decisions'")
 );
-assert.match(liveRoute,/MEMEFLOW_SCAN_ALL_DISPLAY_FILTERED_V2/);
+assert.match(liveRoute,/MEMEFLOW_LIVE_TOKEN_VISIBILITY_V8_CLEAN_WORKTREE/);
+assert.match(liveRoute,/MEMEFLOW_REALTIME_UI_FAIRNESS_V1_ROUTE/);
 assert.match(liveRoute,/const _rawTokens=__mfLiveScannerTokens\(\)/);
-assert.match(liveRoute,/if\(!_eligible&&!_isOpen\)/);
-assert.match(liveRoute,/_hiddenBySettings\+\+/);
-assert.match(liveRoute,/preAdmissionHidden:_hiddenBySettings/);
-assert.match(liveRoute,/system-live-token-states-filtered-unbounded-v2/);
+assert.match(liveRoute,/state:_blocked\?'BLOCKED':'WAITING'/);
+assert.match(liveRoute,/preAdmissionPending:_pending/);
+assert.match(liveRoute,/preAdmissionRejected:_rejected/);
+assert.match(liveRoute,/preAdmissionHidden:0/);
+assert.match(liveRoute,/system-live-token-states-transparent-v8/);
+assert.doesNotMatch(liveRoute,/_hiddenBySettings\+\+;\s*continue/);
 assert.doesNotMatch(liveRoute,/Math\.min\(500/);
 assert.doesNotMatch(liveRoute,/_rawTokens\.slice\(0,_lim\)/);
 
