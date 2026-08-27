@@ -2992,3 +2992,66 @@ body.mf-sort-sheet-open-v25 {
     transition:none !important;
   }
 }
+
+/* MEMEFLOW_SORT_CONFLICT_FIX_V1_START */
+/* Isolate sorting UI from global button/.btn brand rules. */
+
+.mf-sort-toolbar-v25,
+.mf-sort-sheet-v25,
+.mf-sort-overlay-v25 {
+  --mf-sort-toolbar-radius: 10px;
+  --mf-sort-sheet-radius: 19px;
+  --mf-sort-control-radius: 7px;
+}
+
+/* Global button styles use !important, so sorting needs scoped overrides. */
+.mf-sort-toolbar-v25 :is(button, .btn, a.btn, [role="button"]),
+.mf-sort-sheet-v25 :is(button, .btn, a.btn, [role="button"]),
+.mf-sort-overlay-v25 :is(button, .btn, a.btn, [role="button"]) {
+  box-shadow: none !important;
+  text-transform: inherit !important;
+}
+
+.mf-sort-trigger-v25 {
+  border-radius: var(--mf-sort-toolbar-radius) !important;
+  font-weight: 720 !important;
+}
+
+.mf-sort-sheet-v25 {
+  border-radius: var(--mf-sort-sheet-radius) !important;
+}
+
+.mf-sort-sheet-head-v25 h2 {
+  font-weight: 650 !important;
+}
+
+.mf-sort-direction-v25 {
+  border-radius: 9px !important;
+}
+
+.mf-sort-direction-v25 button {
+  border-radius: var(--mf-sort-control-radius) !important;
+  font-weight: 690 !important;
+}
+
+.mf-sort-row-v25 {
+  border-radius: 0 !important;
+  font-weight: 530 !important;
+}
+
+.mf-sort-option-label-v251 {
+  font-weight: 530 !important;
+}
+
+.mf-sort-back-v25 {
+  border-radius: 6px !important;
+  font-weight: 400 !important;
+}
+
+/* Keep indicator geometry independent from button rules. */
+.mf-sort-radio-v25,
+.mf-sort-radio-v25.is-active {
+  box-shadow: none !important;
+}
+
+/* MEMEFLOW_SORT_CONFLICT_FIX_V1_END */
