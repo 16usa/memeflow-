@@ -2591,9 +2591,9 @@ button {
   }
 }
 
-/* MEMEFLOW_GMGN_SORT_STYLE_V25_5_POLISH_EXACT
- * Fine visual alignment with the approved mockup.
- * This block fully replaces V25.4 EXACT.
+/* MEMEFLOW_GMGN_SORT_STYLE_V25_4_EXACT
+ * Final mockup alignment pass.
+ * Replaces the complete prior sorting visual layer.
  */
 
 /* Trigger */
@@ -2606,26 +2606,28 @@ button {
 
 .mf-sort-trigger-v25 {
   position:relative;
-  display:grid;
-  grid-template-columns:18px auto 18px;
+  display:flex;
   align-items:center;
   justify-content:center;
-  column-gap:7px;
+  gap:7px;
 
   width:100% !important;
   min-width:0 !important;
   min-height:32px;
-  padding:0 10px;
+  padding:0 34px 0 10px;
 
-  border:1px solid rgba(77,230,161,.20);
+  border:
+    1px solid
+    var(--line-strong,rgba(147,178,202,.095));
+
   border-radius:10px;
 
-  background:rgba(7,17,23,.40);
-  color:#bac8cf;
+  background:rgba(7,17,23,.46);
+  color:var(--muted,#91a3af);
 
   font:inherit;
   font-size:7.5px;
-  font-weight:740;
+  font-weight:800;
   letter-spacing:.12em;
   text-align:center;
   text-transform:uppercase;
@@ -2636,16 +2638,16 @@ button {
 }
 
 .mf-sort-trigger-v25.is-active {
-  border-color:rgba(77,230,161,.24);
-  background:rgba(77,230,161,.020);
-  color:#c3d0d6;
+  border-color:rgba(77,230,161,.42);
+  background:rgba(77,230,161,.032);
+  color:#bac9d1;
 }
 
-.mf-sort-trigger-icon-v251,
-.mf-sort-trigger-chevron-v251 {
+.mf-sort-trigger-icon-v251 {
   display:grid;
   place-items:center;
-  color:#a8b8c0;
+  flex:none;
+  color:#80949f;
 }
 
 .mf-sort-trigger-icon-v251 svg {
@@ -2653,19 +2655,27 @@ button {
   height:13px;
   fill:none;
   stroke:currentColor;
-  stroke-width:1.55;
+  stroke-width:1.6;
   stroke-linecap:round;
   stroke-linejoin:round;
 }
 
 .mf-sort-trigger-chevron-v251 {
+  position:absolute;
+  top:50%;
+  right:13px;
+  display:grid;
+  place-items:center;
+
+  color:#80949f;
   font-size:15px;
   line-height:1;
-  transform:translateY(-1px);
+
+  transform:translateY(-55%);
 }
 
 .mf-sort-trigger-chevron-v251.is-active {
-  color:#aebfc7;
+  color:var(--green,#4de6a1);
 }
 
 .mf-sort-trigger-label-v251 {
@@ -2688,12 +2698,9 @@ body.mf-sort-sheet-open-v25 {
   align-items:flex-end;
   justify-content:center;
 
-  padding:
-    0
-    0
-    max(72px,env(safe-area-inset-bottom));
+  padding:0;
 
-  background:rgba(0,4,7,.035);
+  background:rgba(0,5,9,.46);
 
   backdrop-filter:none;
   -webkit-backdrop-filter:none;
@@ -2701,38 +2708,48 @@ body.mf-sort-sheet-open-v25 {
   -webkit-tap-highlight-color:transparent;
 }
 
-/* Floating sheet */
+/* Sheet */
 .mf-sort-sheet-v25 {
   width:min(calc(100% - 14px),520px);
-  max-height:min(35dvh,300px);
+  max-height:min(54dvh,430px);
 
   overflow:auto;
   overscroll-behavior:contain;
 
-  margin:0;
-  padding:4px 7px 8px;
+  margin-bottom:max(6px,env(safe-area-inset-bottom));
 
-  border:1px solid rgba(161,188,202,.20);
-  border-radius:20px;
+  padding:
+    5px
+    7px
+    8px;
+
+  border:
+    1px solid
+    rgba(138,171,190,.15);
+
+  border-radius:18px;
 
   background:
     linear-gradient(
       180deg,
-      rgba(25,39,48,.978),
-      rgba(16,28,36,.986)
+      rgba(22,34,42,.99),
+      rgba(12,22,29,.995)
     );
 
   color:#edf4f7;
 
-  box-shadow:0 -10px 32px rgba(0,0,0,.18);
+  box-shadow:
+    0 -10px 34px rgba(0,0,0,.22);
 }
 
 .mf-sort-handle-v25 {
   width:34px;
   height:3px;
-  margin:1px auto 4px;
+  margin:1px auto 5px;
+
   border-radius:999px;
-  background:rgba(163,182,193,.36);
+
+  background:rgba(145,166,190,.30);
 }
 
 /* Header */
@@ -2742,16 +2759,19 @@ body.mf-sort-sheet-open-v25 {
   align-items:center;
   column-gap:5px;
 
-  min-height:29px;
+  min-height:32px;
   padding:0 4px;
+
   border-bottom:0;
 }
 
 .mf-sort-sheet-head-v25 h2 {
   margin:0;
-  color:#f3f7f9;
-  font-size:11.5px;
-  font-weight:690;
+
+  color:#f2f6f8;
+
+  font-size:12px;
+  font-weight:760;
   letter-spacing:.02em;
   text-align:left;
 }
@@ -2759,52 +2779,56 @@ body.mf-sort-sheet-open-v25 {
 .mf-sort-back-v25 {
   display:grid;
   place-items:center;
-  width:23px;
-  height:23px;
+
+  width:24px;
+  height:24px;
   padding:0;
 
   border:0;
   border-radius:7px;
 
   background:transparent;
-  color:#a7b7bf;
+  color:#8da0ab;
 
   font:inherit;
-  font-size:20px;
+  font-size:21px;
   font-weight:400;
   line-height:1;
 
   cursor:pointer;
 }
 
-/* Direction control */
+/* Direction */
 .mf-sort-direction-v25 {
   display:grid;
   grid-template-columns:1fr 1fr;
   gap:2px;
 
-  margin:3px 0 6px;
+  margin:4px 0 7px;
   padding:2px;
 
-  border:1px solid rgba(159,187,201,.14);
+  border:
+    1px solid
+    var(--line,rgba(147,178,202,.055));
+
   border-radius:10px;
 
-  background:rgba(7,15,20,.27);
+  background:rgba(3,10,15,.36);
 }
 
 .mf-sort-direction-v25 button {
-  min-height:23px;
+  min-height:25px;
   padding:0 6px;
 
   border:1px solid transparent;
   border-radius:8px;
 
   background:transparent;
-  color:#8799a3;
+  color:#71848f;
 
   font:inherit;
-  font-size:7.4px;
-  font-weight:700;
+  font-size:7.6px;
+  font-weight:800;
   letter-spacing:.09em;
 
   box-shadow:none;
@@ -2812,24 +2836,27 @@ body.mf-sort-sheet-open-v25 {
 }
 
 .mf-sort-direction-v25 button.is-active {
-  border-color:#5eddf1;
-  background:rgba(94,221,241,.022);
-  color:#edf5f7;
+  border-color:rgba(87,219,214,.58);
+  background:rgba(87,219,214,.026);
+  color:#e9f2f5;
   box-shadow:none;
 }
 
-/* Shared option surface */
+/* Shared list surface */
 .mf-sort-list-shell-v252 {
   overflow:hidden;
 
-  border:1px solid rgba(159,187,201,.16);
+  border:
+    1px solid
+    rgba(138,171,190,.13);
+
   border-radius:12px;
 
   background:
     linear-gradient(
       180deg,
-      rgba(29,43,52,.68),
-      rgba(20,33,41,.64)
+      rgba(21,32,39,.58),
+      rgba(13,23,29,.52)
     );
 }
 
@@ -2846,7 +2873,7 @@ body.mf-sort-sheet-open-v25 {
   column-gap:8px;
 
   width:100%;
-  min-height:33px;
+  min-height:36px;
   padding:0 10px;
 
   border:0;
@@ -2856,8 +2883,8 @@ body.mf-sort-sheet-open-v25 {
   color:#e7eef2;
 
   font:inherit;
-  font-size:9.6px;
-  font-weight:550;
+  font-size:10px;
+  font-weight:620;
   text-align:left;
 
   box-shadow:none;
@@ -2866,16 +2893,20 @@ body.mf-sort-sheet-open-v25 {
 
 .mf-sort-row-v25 + .mf-sort-row-v25::before {
   content:"";
+
   position:absolute;
   top:0;
   right:0;
   left:0;
+
   height:1px;
-  background:rgba(159,187,201,.11);
+
+  background:
+    var(--line,rgba(147,178,202,.055));
 }
 
 .mf-sort-row-v25:active {
-  background:rgba(255,255,255,.016);
+  background:rgba(255,255,255,.018);
 }
 
 .mf-sort-option-icon-v251 {
@@ -2885,16 +2916,16 @@ body.mf-sort-sheet-open-v25 {
   width:20px;
   height:20px;
 
-  color:#b9c9d0;
+  color:#9aadb7;
 }
 
 .mf-sort-option-icon-v251 svg {
-  width:15.5px;
-  height:15.5px;
+  width:15px;
+  height:15px;
 
   fill:none;
   stroke:currentColor;
-  stroke-width:1.42;
+  stroke-width:1.45;
   stroke-linecap:round;
   stroke-linejoin:round;
 }
@@ -2905,14 +2936,14 @@ body.mf-sort-sheet-open-v25 {
   white-space:nowrap;
 }
 
-/* Radio controls */
+/* Radio */
 .mf-sort-radio-v25 {
   justify-self:end;
 
   width:14px;
   height:14px;
 
-  border:1.35px solid #9fb1ba;
+  border:1.5px solid #758994;
   border-radius:50%;
 
   background:transparent;
@@ -2920,15 +2951,8 @@ body.mf-sort-sheet-open-v25 {
 }
 
 .mf-sort-radio-v25.is-active {
-  border:1.5px solid #62dff6;
-
-  background:
-    radial-gradient(
-      circle at center,
-      #62dff6 0 2.5px,
-      transparent 2.9px
-    );
-
+  border:4px solid var(--green,#4de6a1);
+  background:#07120f;
   box-shadow:none;
 }
 
@@ -2936,7 +2960,7 @@ body.mf-sort-sheet-open-v25 {
 .mf-sort-row-chevron-v251 {
   justify-self:end;
 
-  color:#b2c2c9;
+  color:#8fa1ad;
 
   font-size:18px;
   font-weight:300;
@@ -2952,38 +2976,27 @@ body.mf-sort-sheet-open-v25 {
 }
 
 .mf-age-shell-v252 {
-  margin-top:3px;
+  margin-top:4px;
 }
 
-/* Mobile */
 @media (max-width:760px) {
-  .mf-sort-overlay-v25 {
-    padding-bottom:max(72px,env(safe-area-inset-bottom));
-  }
-
   .mf-sort-sheet-v25 {
     width:calc(100% - 14px);
-    max-height:min(35dvh,300px);
+    max-height:54dvh;
   }
 
   .mf-sort-row-v25 {
-    min-height:33px;
-    font-size:9.6px;
+    min-height:36px;
+    font-size:10px;
   }
 }
 
-/* Desktop */
 @media (min-width:761px) {
-  .mf-sort-overlay-v25 {
-    padding-bottom:14px;
-  }
-
   .mf-sort-sheet-v25 {
-    max-height:min(44dvh,390px);
+    margin-bottom:14px;
   }
 }
 
-/* Reduced motion */
 @media (prefers-reduced-motion:reduce) {
   .mf-sort-overlay-v25 *,
   .mf-sort-trigger-v25 {
