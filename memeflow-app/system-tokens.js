@@ -861,7 +861,162 @@ function priority(row) {
   }[key] ?? 5;
 }
 
-function sortRows(rows) {
+
+/* MEMEFLOW_GMGN_SORT_V25
+ * Extra user sorting for Real-Time Pipeline.
+ * SMART preserves the existing MEMEFLOW ranking exactly.
+ */
+const __MF_SORT_STORAGE_KEY_V25='memeflow:token-sort-v25';
+const __MF_SORT_DEFAULT_V25={
+  key:'smart',
+  direction:'desc',
+  ageMaxMinutes:null
+};
+
+function __mfLoadSortConfigV25(){
+  try{
+    const stored=JSON.parse(
+      localStorage.getItem(__MF_SORT_STORAGE_KEY_V25)||'null'
+    );
+    const allowed=new Set([
+      'smart','mc','holders','transactions','volume','age'
+    ]);
+    return {
+      key:allowed.has(stored?.key)?stored.key:'smart',
+      direction:stored?.direction==='asc'?'asc':'desc',
+      ageMaxMinutes:
+        finite(stored?.ageMaxMinutes)&&Number(stored.ageMaxMinutes)>0
+          ? Number(stored.ageMaxMinutes)
+          : null
+    };
+  }catch{
+    return {...__MF_SORT_DEFAULT_V25};
+  }
+}
+
+let __mfSortConfigV25=__mfLoadSortConfigV25();
+
+function __mfSaveSortConfigV25(){
+  try{
+    localStorage.setItem(
+      __MF_SORT_STORAGE_KEY_V25,
+      JSON.stringify(__mfSortConfigV25)
+    );
+  }catch{}
+}
+
+function __mfSortMetricsV25(row){
+  const key=stateKey(row?.decision?.state);
+
+  if(key==='open'){
+    const metrics=openPositionMetrics(row)||{};
+    return {
+      mc:
+        finite(metrics?.marketCapUsd)
+          ? Number(metrics.marketCapUsd)
+          : finite(metrics?.marketCapSol)
+            ? Number(metrics.marketCapSol)
+            : null,
+      holders:
+        finite(metrics?.holderCount)
+          ? Number(metrics.holderCount)
+          : finite(holderCount(row))
+            ? Number(holderCount(row))
+            : null,
+      transactions:
+        finite(metrics?.transactions5m)
+          ? Number(metrics.transactions5m)
+          : null,
+      volume:
+        finite(metrics?.volume5mUsd)
+          ? Number(metrics.volume5mUsd)
+          : finite(metrics?.volume5mSol)
+            ? Number(metrics.volume5mSol)
+            : null,
+      age:
+        finite(metrics?.ageMinutes)
+          ? Number(metrics.ageMinutes)
+          : finite(tokenAge(row))
+            ? Number(tokenAge(row))
+            : null
+    };
+  }
+
+  const metrics=regularMarketMetrics(row)||{};
+  return {
+    mc:
+      finite(metrics?.marketCapUsd)
+        ? Number(metrics.marketCapUsd)
+        : finite(metrics?.marketCapSol)
+          ? Number(metrics.marketCapSol)
+          : null,
+    holders:
+      finite(metrics?.holderCount)
+        ? Number(metrics.holderCount)
+        : finite(holderCount(row))
+          ? Number(holderCount(row))
+          : null,
+    transactions:
+      finite(metrics?.transactions5m)
+        ? Number(metrics.transactions5m)
+        : null,
+    volume:
+      finite(metrics?.volume5mUsd)
+        ? Number(metrics.volume5mUsd)
+        : finite(metrics?.volume5mSol)
+          ? Number(metrics.volume5mSol)
+          : null,
+    age:
+      finite(metrics?.ageMinutes)
+        ? Number(metrics.ageMinutes)
+        : finite(tokenAge(row))
+          ? Number(tokenAge(row))
+          : null
+  };
+}
+
+function __mfManualSortValueV25(row,key){
+  const value=__mfSortMetricsV25(row)?.[key];
+  return finite(value)?Number(value):null;
+}
+
+function sortRows(rows){
+  const smart=__mfSmartSortRowsV25(rows);
+
+  if(__mfSortConfigV25.key==='smart'){
+    return smart;
+  }
+
+  const key=__mfSortConfigV25.key;
+  const direction=__mfSortConfigV25.direction;
+  const smartRank=new Map(
+    smart.map((row,index)=>[row,index])
+  );
+
+  return [...smart].sort((a,b)=>{
+    const laneDiff=priority(a)-priority(b);
+    if(laneDiff!==0)return laneDiff;
+
+    const valueA=__mfManualSortValueV25(a,key);
+    const valueB=__mfManualSortValueV25(b,key);
+
+    if(valueA===null&&valueB===null){
+      return (smartRank.get(a)??0)-(smartRank.get(b)??0);
+    }
+    if(valueA===null)return 1;
+    if(valueB===null)return -1;
+
+    if(valueA!==valueB){
+      return direction==='asc'
+        ? valueA-valueB
+        : valueB-valueA;
+    }
+
+    return (smartRank.get(a)??0)-(smartRank.get(b)??0);
+  });
+}
+
+function __mfSmartSortRowsV25(rows) {
   return rows
     .slice()
     .sort(
@@ -973,7 +1128,7 @@ function sortRows(rows) {
     );
 }
 
-function filteredRows() {
+function __mfBaseFilteredRowsV25() {
   const query =
     state.query.trim().toLowerCase();
 
@@ -1006,6 +1161,29 @@ function filteredRows() {
       }
     )
   );
+}
+
+
+function filteredRows(){
+  const rows=__mfBaseFilteredRowsV25();
+  const maxAge=__mfSortConfigV25.ageMaxMinutes;
+
+  if(!finite(maxAge)||Number(maxAge)<=0){
+    return rows;
+  }
+
+  return rows.filter(row=>{
+    if(stateKey(row?.decision?.state)==='open'){
+      return true;
+    }
+
+    const age=__mfManualSortValueV25(row,'age');
+
+    return (
+      age!==null &&
+      age<=Number(maxAge)
+    );
+  });
 }
 
 function renderCounts() {
@@ -2456,6 +2634,332 @@ $('nextPage')
       }
     }
   );
+
+
+// MEMEFLOW_GMGN_SORT_UI_V25
+const __MF_SORT_LABELS_V25={
+  smart:'SMART',
+  mc:'MC',
+  holders:'HOLDERS',
+  transactions:'TX 5M',
+  volume:'VOL 5M',
+  age:'AGE'
+};
+
+function __mfAgeLabelV25(minutes){
+  const value=Number(minutes);
+  if(value===1)return '1M';
+  if(value===5)return '5M';
+  if(value===60)return '1H';
+  if(value===360)return '6H';
+  if(value===1440)return '24H';
+  return 'ALL';
+}
+
+function __mfSortTriggerTextV25(){
+  if(__mfSortConfigV25.key==='smart'){
+    return 'SORT · SMART';
+  }
+
+  const label=__MF_SORT_LABELS_V25[__mfSortConfigV25.key]||'SMART';
+  const arrow=__mfSortConfigV25.direction==='asc'?'↑':'↓';
+  const ageWindow=
+    finite(__mfSortConfigV25.ageMaxMinutes)
+      ? ` · ${__mfAgeLabelV25(__mfSortConfigV25.ageMaxMinutes)}`
+      : '';
+
+  return `SORT · ${label} ${arrow}${ageWindow}`;
+}
+
+function __mfUpdateSortTriggerV25(){
+  const button=document.getElementById('mfSortTriggerV25');
+  if(!button)return;
+
+  button.textContent=__mfSortTriggerTextV25();
+  button.classList.toggle(
+    'is-active',
+    __mfSortConfigV25.key!=='smart' ||
+    finite(__mfSortConfigV25.ageMaxMinutes)
+  );
+}
+
+function __mfCloseSortSheetV25(){
+  document.getElementById('mfSortOverlayV25')?.remove();
+  document.body.classList.remove('mf-sort-sheet-open-v25');
+}
+
+function __mfApplySortV25(next,close=true){
+  __mfSortConfigV25={...__mfSortConfigV25,...next};
+  __mfSaveSortConfigV25();
+  __mfUpdateSortTriggerV25();
+
+  state.page=1;
+  render();
+
+  if(typeof __mfKickCardClockV19==='function'){
+    __mfKickCardClockV19();
+  }
+
+  if(close)__mfCloseSortSheetV25();
+}
+
+function __mfSortRadioV25(active){
+  return `
+    <span
+      class="mf-sort-radio-v25 ${active?'is-active':''}"
+      aria-hidden="true"
+    ></span>
+  `;
+}
+
+function __mfSortSheetShellV25(title,body,backButton=''){
+  return `
+    <div
+      class="mf-sort-overlay-v25"
+      id="mfSortOverlayV25"
+      role="presentation"
+    >
+      <section
+        class="mf-sort-sheet-v25"
+        role="dialog"
+        aria-modal="true"
+        aria-label="${title}"
+      >
+        <div class="mf-sort-handle-v25" aria-hidden="true"></div>
+        <header class="mf-sort-sheet-head-v25">
+          ${backButton}
+          <h2>${title}</h2>
+          <button
+            class="mf-sort-close-v25"
+            type="button"
+            aria-label="Close sorting"
+            data-mf-sort-close
+          >×</button>
+        </header>
+        ${body}
+      </section>
+    </div>
+  `;
+}
+
+function __mfBindSortOverlayV25(){
+  const overlay=document.getElementById('mfSortOverlayV25');
+  if(!overlay)return;
+
+  overlay.addEventListener('click',event=>{
+    if(
+      event.target===overlay ||
+      event.target.closest('[data-mf-sort-close]')
+    ){
+      __mfCloseSortSheetV25();
+    }
+  });
+}
+
+function __mfRenderSortRootV25(){
+  __mfCloseSortSheetV25();
+
+  const config=__mfSortConfigV25;
+  const criteria=[
+    ['smart','Smart / Default'],
+    ['mc','Market Cap'],
+    ['holders','Holders'],
+    ['transactions','Transactions'],
+    ['volume','Volume'],
+    ['age','Age']
+  ];
+
+  const rows=criteria.map(([key,label])=>`
+    <button
+      class="mf-sort-row-v25"
+      type="button"
+      data-mf-sort-key="${key}"
+    >
+      <span>${label}</span>
+      ${__mfSortRadioV25(config.key===key)}
+    </button>
+  `).join('');
+
+  const body=`
+    <div class="mf-sort-direction-v25" aria-label="Sort direction">
+      <button
+        type="button"
+        class="${config.direction==='desc'?'is-active':''}"
+        data-mf-sort-dir="desc"
+      >HIGH → LOW</button>
+      <button
+        type="button"
+        class="${config.direction==='asc'?'is-active':''}"
+        data-mf-sort-dir="asc"
+      >LOW → HIGH</button>
+    </div>
+    <div class="mf-sort-list-v25">${rows}</div>
+  `;
+
+  document.body.insertAdjacentHTML(
+    'beforeend',
+    __mfSortSheetShellV25('SORT BY',body)
+  );
+
+  document.body.classList.add('mf-sort-sheet-open-v25');
+  __mfBindSortOverlayV25();
+
+  const overlay=document.getElementById('mfSortOverlayV25');
+
+  overlay?.querySelectorAll('[data-mf-sort-dir]').forEach(button=>{
+    button.addEventListener('click',()=>{
+      __mfApplySortV25(
+        {direction:button.dataset.mfSortDir},
+        false
+      );
+      __mfRenderSortRootV25();
+    });
+  });
+
+  overlay?.querySelectorAll('[data-mf-sort-key]').forEach(button=>{
+    button.addEventListener('click',()=>{
+      const key=button.dataset.mfSortKey;
+
+      if(key==='age'){
+        __mfRenderAgeSheetV25();
+        return;
+      }
+
+      if(key==='smart'){
+        __mfApplySortV25({
+          key:'smart',
+          ageMaxMinutes:null
+        });
+        return;
+      }
+
+      __mfApplySortV25({key});
+    });
+  });
+}
+
+function __mfRenderAgeSheetV25(){
+  __mfCloseSortSheetV25();
+
+  const options=[
+    [null,'All'],
+    [1,'1m'],
+    [5,'5m'],
+    [60,'1h'],
+    [360,'6h'],
+    [1440,'24h']
+  ];
+
+  const current=
+    finite(__mfSortConfigV25.ageMaxMinutes)
+      ? Number(__mfSortConfigV25.ageMaxMinutes)
+      : null;
+
+  const rows=options.map(([minutes,label])=>{
+    const active=
+      minutes===null
+        ? current===null
+        : current===minutes;
+
+    return `
+      <button
+        class="mf-sort-row-v25"
+        type="button"
+        data-mf-age="${minutes===null?'all':minutes}"
+      >
+        <span>${label}</span>
+        ${__mfSortRadioV25(active)}
+      </button>
+    `;
+  }).join('');
+
+  const back=`
+    <button
+      class="mf-sort-back-v25"
+      type="button"
+      aria-label="Back to sorting"
+      data-mf-sort-back
+    >←</button>
+  `;
+
+  document.body.insertAdjacentHTML(
+    'beforeend',
+    __mfSortSheetShellV25(
+      'AGE',
+      `<div class="mf-sort-list-v25 mf-age-list-v25">${rows}</div>`,
+      back
+    )
+  );
+
+  document.body.classList.add('mf-sort-sheet-open-v25');
+  __mfBindSortOverlayV25();
+
+  const overlay=document.getElementById('mfSortOverlayV25');
+
+  overlay
+    ?.querySelector('[data-mf-sort-back]')
+    ?.addEventListener('click',__mfRenderSortRootV25);
+
+  overlay?.querySelectorAll('[data-mf-age]').forEach(button=>{
+    button.addEventListener('click',()=>{
+      const raw=button.dataset.mfAge;
+      __mfApplySortV25({
+        key:'age',
+        ageMaxMinutes:raw==='all'?null:Number(raw)
+      });
+    });
+  });
+}
+
+function __mfEnsureSortUiV25(){
+  if(document.getElementById('mfSortTriggerV25')){
+    __mfUpdateSortTriggerV25();
+    return;
+  }
+
+  const refresh=document.getElementById('refreshButton');
+  const searchRow=refresh?.parentElement;
+  if(!searchRow)return;
+
+  const toolbar=document.createElement('div');
+  toolbar.className='mf-sort-toolbar-v25';
+  toolbar.innerHTML=`
+    <button
+      id="mfSortTriggerV25"
+      class="mf-sort-trigger-v25"
+      type="button"
+      aria-haspopup="dialog"
+    ></button>
+  `;
+
+  searchRow.insertAdjacentElement('afterend',toolbar);
+
+  toolbar
+    .querySelector('#mfSortTriggerV25')
+    .addEventListener('click',__mfRenderSortRootV25);
+
+  __mfUpdateSortTriggerV25();
+}
+
+document.addEventListener('keydown',event=>{
+  if(
+    event.key==='Escape' &&
+    document.getElementById('mfSortOverlayV25')
+  ){
+    __mfCloseSortSheetV25();
+  }
+});
+
+if(document.readyState==='loading'){
+  document.addEventListener(
+    'DOMContentLoaded',
+    __mfEnsureSortUiV25,
+    {once:true}
+  );
+}else{
+  __mfEnsureSortUiV25();
+}
+
 
 $('refreshButton')
   .addEventListener(
