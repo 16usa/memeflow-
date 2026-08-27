@@ -2591,12 +2591,12 @@ button {
   }
 }
 
-/* MEMEFLOW_GMGN_SORT_STYLE_V25_3_EXACT
- * Exact visual alignment with the approved mockup.
- * This block fully replaces the previous sorting visual layer.
+/* MEMEFLOW_GMGN_SORT_STYLE_V25_4_EXACT
+ * Final mockup alignment pass.
+ * Replaces the complete prior sorting visual layer.
  */
 
-/* Trigger: span the complete Search + Refresh grid width. */
+/* Trigger */
 .mf-sort-toolbar-v25 {
   display:block;
   grid-column:1 / -1;
@@ -2606,17 +2606,15 @@ button {
 
 .mf-sort-trigger-v25 {
   position:relative;
-
-  display:grid;
-  grid-template-columns:18px auto 18px;
+  display:flex;
   align-items:center;
   justify-content:center;
-  column-gap:7px;
+  gap:7px;
 
   width:100% !important;
   min-width:0 !important;
   min-height:32px;
-  padding:0 10px;
+  padding:0 34px 0 10px;
 
   border:
     1px solid
@@ -2640,22 +2638,21 @@ button {
 }
 
 .mf-sort-trigger-v25.is-active {
-  border-color:rgba(77,230,161,.22);
-  background:rgba(77,230,161,.026);
+  border-color:rgba(77,230,161,.42);
+  background:rgba(77,230,161,.032);
   color:#bac9d1;
 }
 
-.mf-sort-trigger-icon-v251,
-.mf-sort-trigger-chevron-v251 {
+.mf-sort-trigger-icon-v251 {
   display:grid;
   place-items:center;
+  flex:none;
   color:#80949f;
 }
 
 .mf-sort-trigger-icon-v251 svg {
   width:13px;
   height:13px;
-
   fill:none;
   stroke:currentColor;
   stroke-width:1.6;
@@ -2664,9 +2661,17 @@ button {
 }
 
 .mf-sort-trigger-chevron-v251 {
+  position:absolute;
+  top:50%;
+  right:13px;
+  display:grid;
+  place-items:center;
+
+  color:#80949f;
   font-size:15px;
   line-height:1;
-  transform:translateY(-1px);
+
+  transform:translateY(-55%);
 }
 
 .mf-sort-trigger-chevron-v251.is-active {
@@ -2679,7 +2684,7 @@ button {
   white-space:nowrap;
 }
 
-/* Overlay: dim the page but keep it visually sharp like the mockup. */
+/* Overlay */
 body.mf-sort-sheet-open-v25 {
   overflow:hidden;
 }
@@ -2695,7 +2700,7 @@ body.mf-sort-sheet-open-v25 {
 
   padding:0;
 
-  background:rgba(0,5,9,.48);
+  background:rgba(0,5,9,.46);
 
   backdrop-filter:none;
   -webkit-backdrop-filter:none;
@@ -2703,10 +2708,10 @@ body.mf-sort-sheet-open-v25 {
   -webkit-tap-highlight-color:transparent;
 }
 
-/* Bottom sheet: shorter, inset, and fully rounded. */
+/* Sheet */
 .mf-sort-sheet-v25 {
   width:min(calc(100% - 14px),520px);
-  max-height:min(45dvh,360px);
+  max-height:min(54dvh,430px);
 
   overflow:auto;
   overscroll-behavior:contain;
@@ -2722,13 +2727,13 @@ body.mf-sort-sheet-open-v25 {
     1px solid
     rgba(138,171,190,.15);
 
-  border-radius:20px;
+  border-radius:18px;
 
   background:
     linear-gradient(
       180deg,
-      rgba(19,31,39,.985),
-      rgba(11,20,27,.992)
+      rgba(22,34,42,.99),
+      rgba(12,22,29,.995)
     );
 
   color:#edf4f7;
@@ -2755,7 +2760,6 @@ body.mf-sort-sheet-open-v25 {
   column-gap:5px;
 
   min-height:32px;
-
   padding:0 4px;
 
   border-bottom:0;
@@ -2767,7 +2771,7 @@ body.mf-sort-sheet-open-v25 {
   color:#f2f6f8;
 
   font-size:12px;
-  font-weight:780;
+  font-weight:760;
   letter-spacing:.02em;
   text-align:left;
 }
@@ -2794,7 +2798,7 @@ body.mf-sort-sheet-open-v25 {
   cursor:pointer;
 }
 
-/* Direction control */
+/* Direction */
 .mf-sort-direction-v25 {
   display:grid;
   grid-template-columns:1fr 1fr;
@@ -2832,13 +2836,13 @@ body.mf-sort-sheet-open-v25 {
 }
 
 .mf-sort-direction-v25 button.is-active {
-  border-color:rgba(87,219,214,.52);
-  background:rgba(87,219,214,.024);
+  border-color:rgba(87,219,214,.58);
+  background:rgba(87,219,214,.026);
   color:#e9f2f5;
   box-shadow:none;
 }
 
-/* One compact shared list surface. */
+/* Shared list surface */
 .mf-sort-list-shell-v252 {
   overflow:hidden;
 
@@ -2851,8 +2855,8 @@ body.mf-sort-sheet-open-v25 {
   background:
     linear-gradient(
       180deg,
-      rgba(20,31,38,.54),
-      rgba(13,23,29,.50)
+      rgba(21,32,39,.58),
+      rgba(13,23,29,.52)
     );
 }
 
@@ -2880,7 +2884,7 @@ body.mf-sort-sheet-open-v25 {
 
   font:inherit;
   font-size:10px;
-  font-weight:650;
+  font-weight:620;
   text-align:left;
 
   box-shadow:none;
@@ -2912,7 +2916,7 @@ body.mf-sort-sheet-open-v25 {
   width:20px;
   height:20px;
 
-  color:#8fa1ad;
+  color:#9aadb7;
 }
 
 .mf-sort-option-icon-v251 svg {
@@ -2921,7 +2925,7 @@ body.mf-sort-sheet-open-v25 {
 
   fill:none;
   stroke:currentColor;
-  stroke-width:1.5;
+  stroke-width:1.45;
   stroke-linecap:round;
   stroke-linejoin:round;
 }
@@ -2975,11 +2979,10 @@ body.mf-sort-sheet-open-v25 {
   margin-top:4px;
 }
 
-/* Mobile: keep the sheet floating inside the viewport. */
 @media (max-width:760px) {
   .mf-sort-sheet-v25 {
     width:calc(100% - 14px);
-    max-height:45dvh;
+    max-height:54dvh;
   }
 
   .mf-sort-row-v25 {
@@ -2988,14 +2991,12 @@ body.mf-sort-sheet-open-v25 {
   }
 }
 
-/* Desktop */
 @media (min-width:761px) {
   .mf-sort-sheet-v25 {
     margin-bottom:14px;
   }
 }
 
-/* Reduced motion */
 @media (prefers-reduced-motion:reduce) {
   .mf-sort-overlay-v25 *,
   .mf-sort-trigger-v25 {
