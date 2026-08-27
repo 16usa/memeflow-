@@ -903,6 +903,85 @@ function __mfCandidateMarket5mV4(mint,t){
   };
 }
 
+// MEMEFLOW_OPEN_POSITION_ARCHIVE_MARKET_V22
+// OPEN POSITION survives scanner/cache churn, therefore its market snapshot
+// must survive it too. Warm each open mint once from the persistent REAL Pump
+// TradeEvent archive and then keep using the hot RAM map for subsequent ticks.
+const __mfOpenPositionArchiveWarmedV22=new Set();
+
+function __mfOpenPositionMarket5mV22(mint,t,now=Date.now()){
+  let rows=Array.isArray(chartTradeHistory.get(mint))
+    ? chartTradeHistory.get(mint).slice()
+    : [];
+
+  if(!__mfOpenPositionArchiveWarmedV22.has(mint)){
+    try{
+      const merged=__mfChartArchive.mergePointsSync(mint,rows);
+
+      if(Array.isArray(merged)){
+        rows=merged
+          .filter(point=>{
+            const ts=Number(point?.t);
+            return Number.isFinite(ts)&&ts>0&&ts<=now+30000;
+          })
+          .sort((a,b)=>Number(a.t)-Number(b.t))
+          .slice(-1200);
+
+        if(rows.length){
+          chartTradeHistory.delete(mint);
+          chartTradeHistory.set(mint,rows);
+        }
+
+        __mfOpenPositionArchiveWarmedV22.add(mint);
+      }
+    }catch{}
+  }
+
+  const snapshot=liveCardMarketSnapshot({
+    token:t||{},
+    points:rows,
+    solUsd:solUsdOracle.get(),
+    now,
+    windowMs:300000
+  });
+
+  // V19 computes 5m% from two recent points. For an old OPEN POSITION we can
+  // do better because the archive contains the last trade at/before the 5m
+  // boundary. Price changes only on a real Pump TradeEvent, so that point is a
+  // valid 5m baseline; no synthetic candles or timer prices are created.
+  if(
+    snapshot.priceChange5mPct===null&&
+    Number(snapshot.currentPriceSol)>0&&
+    rows.length
+  ){
+    const cutoff=now-300000;
+    let baseline=null;
+
+    for(const point of rows){
+      const ts=Number(point?.t);
+      const price=Number(point?.priceSol??point?.price);
+
+      if(!(Number.isFinite(ts)&&ts>0&&Number.isFinite(price)&&price>0)){
+        continue;
+      }
+
+      if(ts<=cutoff){
+        baseline=price;
+        continue;
+      }
+
+      break;
+    }
+
+    if(Number(baseline)>0){
+      snapshot.priceChange5mPct=
+        ((Number(snapshot.currentPriceSol)-Number(baseline))/Number(baseline))*100;
+    }
+  }
+
+  return snapshot;
+}
+
 // MEMEFLOW_REALTIME_UI_FAIRNESS_V1
 // Building a large Live Token States response must yield to the Pump WS path.
 const __mfLiveStatesYieldEvery=Math.max(
@@ -4611,9 +4690,11 @@ if(url.pathname==='/api/ai/decisions'){
         let market=null;
 
         try{
-          market=__mfCandidateMarket5mV4(
+          // MEMEFLOW_OPEN_POSITION_USE_ARCHIVE_V22
+          market=__mfOpenPositionMarket5mV22(
             mint,
-            token
+            token,
+            now
           );
         }catch{
           market=null;
@@ -4710,13 +4791,18 @@ if(url.pathname==='/api/ai/decisions'){
             null,
           tokenMetrics:{
             ageMinutes,
-            holderCount:finite(token.holderCount),
+            // MEMEFLOW_OPEN_POSITION_HOLDER_FALLBACK_V22
+            holderCount:
+              finite(token.holderCount) ??
+              finite(eventHolderLedger?.inspect?.(mint)?.holderCount),
             volume5mSol:finite(market?.volume5mSol),
             volume5mUsd:finite(market?.volume5mUsd),
             transactions5m:finite(market?.transactions5m),
             marketCapSol:liveMc.marketCapSol,
             marketCapUsd:liveMc.marketCapUsd,
             marketCapSource:liveMc.marketCapSource,
+            // MEMEFLOW_OPEN_POSITION_MARKET_UPDATED_AT_V22
+            marketUpdatedAt:finite(market?.marketUpdatedAt),
             priceChange5mPct:finite(market?.priceChange5mPct),
             pnlReady,
             pnlPct,

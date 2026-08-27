@@ -169,6 +169,15 @@ function canonicalDecisionRow(row) {
         row?.market?.marketCapUsd ??
         row?.marketCapUsd ??
         null,
+      // MEMEFLOW_CANONICAL_MC_SOURCE_V22
+      marketCapSource:
+        row?.market?.marketCapSource ??
+        row?.marketCapSource ??
+        null,
+      marketUpdatedAt:
+        row?.market?.marketUpdatedAt ??
+        row?.marketCapUpdatedAt ??
+        null,
       priceChange5mPct:
         row?.market?.priceChange5mPct ??
         row?.priceChange5mPct ??
@@ -661,15 +670,18 @@ function mergedRows() {
             ...(existing?.decision || {}),
             state: 'OPEN POSITION'
           },
+          // MEMEFLOW_OPEN_POSITION_LIVE_ROW_PRIORITY_V22
+          // The OPEN POSITION endpoint is the dedicated live lane. Prefer it
+          // over a possibly stale scanner row for mutable position metrics.
           holderCount:
+            position?.tokenMetrics?.holderCount ??
             existing?.holderCount ??
             existing?.holders ??
-            position?.tokenMetrics?.holderCount ??
             null,
           ageMinutes:
+            position?.tokenMetrics?.ageMinutes ??
             existing?.ageMinutes ??
             existing?.tokenAgeMinutes ??
-            position?.tokenMetrics?.ageMinutes ??
             null,
           marketCapSol:
             position?.tokenMetrics?.marketCapSol ??
@@ -680,12 +692,44 @@ function mergedRows() {
             position?.tokenMetrics?.marketCapUsd ??
             existing?.marketCapUsd ??
             null,
+          // MEMEFLOW_OPEN_POSITION_MARKET_OVERLAY_V22
           market: {
             ...(existing?.market || {}),
             priceSol:
               position?.currentPriceSol ??
               existing?.market?.priceSol ??
               existing?.priceSol ??
+              null,
+            volume5mSol:
+              position?.tokenMetrics?.volume5mSol ??
+              existing?.market?.volume5mSol ??
+              existing?.volume5mSol ??
+              null,
+            volume5mUsd:
+              position?.tokenMetrics?.volume5mUsd ??
+              existing?.market?.volume5mUsd ??
+              existing?.volume5mUsd ??
+              null,
+            transactions5m:
+              position?.tokenMetrics?.transactions5m ??
+              existing?.market?.transactions5m ??
+              existing?.transactions5m ??
+              null,
+            marketCapSol:
+              position?.tokenMetrics?.marketCapSol ??
+              null,
+            marketCapUsd:
+              position?.tokenMetrics?.marketCapUsd ??
+              null,
+            marketCapSource:
+              position?.tokenMetrics?.marketCapSource ??
+              null,
+            marketUpdatedAt:
+              position?.tokenMetrics?.marketUpdatedAt ??
+              position?.tokenMetrics?.snapshotAt ??
+              null,
+            priceChange5mPct:
+              position?.tokenMetrics?.priceChange5mPct ??
               null
           },
           __openPosition: position
@@ -801,6 +845,9 @@ function tokenGateSummary(row) {
     .join(' · ');
 }
 
+// MEMEFLOW_WATCH_WAITING_SCORE_ORDER_V22
+// WATCH and WAITING describe admission state, not list quality. They share the
+// same visual priority so Score decides which live candidate is higher.
 function priority(row) {
   const key =
     stateKey(row?.decision?.state);
@@ -809,7 +856,7 @@ function priority(row) {
     open: 0,
     ready: 1,
     watch: 2,
-    waiting: 3,
+    waiting: 2,
     blocked: 4
   }[key] ?? 5;
 }
@@ -862,6 +909,60 @@ function sortRows(rows) {
 
         if (scoreA !== scoreB) {
           return scoreB - scoreA;
+        }
+
+        // MEMEFLOW_SCORE_FIRST_TIEBREAK_V22
+        // Score is authoritative inside WATCH+WAITING. Only when Score ties do
+        // current market facts decide order: activity -> MC -> holders -> age.
+        const marketA = regularMarketMetrics(a);
+        const marketB = regularMarketMetrics(b);
+
+        const txA = finite(marketA?.transactions5m)
+          ? Number(marketA.transactions5m)
+          : -1;
+        const txB = finite(marketB?.transactions5m)
+          ? Number(marketB.transactions5m)
+          : -1;
+        if (txA !== txB) {
+          return txB - txA;
+        }
+
+        const volumeA = finite(marketA?.volume5mUsd)
+          ? Number(marketA.volume5mUsd)
+          : finite(marketA?.volume5mSol)
+            ? Number(marketA.volume5mSol)
+            : -1;
+        const volumeB = finite(marketB?.volume5mUsd)
+          ? Number(marketB.volume5mUsd)
+          : finite(marketB?.volume5mSol)
+            ? Number(marketB.volume5mSol)
+            : -1;
+        if (volumeA !== volumeB) {
+          return volumeB - volumeA;
+        }
+
+        const mcA = finite(marketA?.marketCapUsd)
+          ? Number(marketA.marketCapUsd)
+          : finite(marketA?.marketCapSol)
+            ? Number(marketA.marketCapSol)
+            : -1;
+        const mcB = finite(marketB?.marketCapUsd)
+          ? Number(marketB.marketCapUsd)
+          : finite(marketB?.marketCapSol)
+            ? Number(marketB.marketCapSol)
+            : -1;
+        if (mcA !== mcB) {
+          return mcB - mcA;
+        }
+
+        const holdersA = finite(holderCount(a))
+          ? Number(holderCount(a))
+          : -1;
+        const holdersB = finite(holderCount(b))
+          ? Number(holderCount(b))
+          : -1;
+        if (holdersA !== holdersB) {
+          return holdersB - holdersA;
         }
 
         return (
