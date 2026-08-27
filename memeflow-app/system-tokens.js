@@ -2672,7 +2672,7 @@ function __mfSortTriggerTextV25(){
 }
 
 
-// MEMEFLOW_GMGN_SORT_STYLE_V25_1
+// MEMEFLOW_GMGN_SORT_STYLE_V25_2_FINAL4
 function __mfSortTriggerMarkupV251(){
   const active=
     __mfSortConfigV25.key!=='smart' ||
@@ -2748,17 +2748,16 @@ function __mfSortSheetShellV25(title,body,backButton=''){
         aria-modal="true"
         aria-label="${title}"
       >
-        <div class="mf-sort-handle-v25" aria-hidden="true"></div>
+        <div
+          class="mf-sort-handle-v25"
+          aria-hidden="true"
+        ></div>
+
         <header class="mf-sort-sheet-head-v25">
           ${backButton}
           <h2>${title}</h2>
-          <button
-            class="mf-sort-close-v25"
-            type="button"
-            aria-label="Close sorting"
-            data-mf-sort-close
-          >×</button>
         </header>
+
         ${body}
       </section>
     </div>
@@ -2766,14 +2765,13 @@ function __mfSortSheetShellV25(title,body,backButton=''){
 }
 
 function __mfBindSortOverlayV25(){
-  const overlay=document.getElementById('mfSortOverlayV25');
+  const overlay=
+    document.getElementById('mfSortOverlayV25');
+
   if(!overlay)return;
 
   overlay.addEventListener('click',event=>{
-    if(
-      event.target===overlay ||
-      event.target.closest('[data-mf-sort-close]')
-    ){
+    if(event.target===overlay){
       __mfCloseSortSheetV25();
     }
   });
@@ -2842,7 +2840,11 @@ function __mfRenderSortRootV25(){
         data-mf-sort-key="${key}"
       >
         ${__mfSortIconV251(key)}
-        <span class="mf-sort-option-label-v251">${label}</span>
+
+        <span class="mf-sort-option-label-v251">
+          ${label}
+        </span>
+
         ${
           isAge
             ? '<span class="mf-sort-row-chevron-v251" aria-hidden="true">›</span>'
@@ -2853,7 +2855,10 @@ function __mfRenderSortRootV25(){
   }).join('');
 
   const body=`
-    <div class="mf-sort-direction-v25" aria-label="Sort direction">
+    <div
+      class="mf-sort-direction-v25"
+      aria-label="Sort direction"
+    >
       <button
         type="button"
         class="${config.direction==='desc'?'is-active':''}"
@@ -2867,7 +2872,11 @@ function __mfRenderSortRootV25(){
       >LOW → HIGH</button>
     </div>
 
-    <div class="mf-sort-list-v25">${rows}</div>
+    <div class="mf-sort-list-shell-v252">
+      <div class="mf-sort-list-v25">
+        ${rows}
+      </div>
+    </div>
   `;
 
   document.body.insertAdjacentHTML(
@@ -2875,41 +2884,50 @@ function __mfRenderSortRootV25(){
     __mfSortSheetShellV25('SORT BY',body)
   );
 
-  document.body.classList.add('mf-sort-sheet-open-v25');
+  document.body.classList.add(
+    'mf-sort-sheet-open-v25'
+  );
+
   __mfBindSortOverlayV25();
 
-  const overlay=document.getElementById('mfSortOverlayV25');
+  const overlay=
+    document.getElementById('mfSortOverlayV25');
 
-  overlay?.querySelectorAll('[data-mf-sort-dir]').forEach(button=>{
-    button.addEventListener('click',()=>{
-      __mfApplySortV25(
-        {direction:button.dataset.mfSortDir},
-        false
-      );
-      __mfRenderSortRootV25();
+  overlay
+    ?.querySelectorAll('[data-mf-sort-dir]')
+    .forEach(button=>{
+      button.addEventListener('click',()=>{
+        __mfApplySortV25(
+          {direction:button.dataset.mfSortDir},
+          false
+        );
+
+        __mfRenderSortRootV25();
+      });
     });
-  });
 
-  overlay?.querySelectorAll('[data-mf-sort-key]').forEach(button=>{
-    button.addEventListener('click',()=>{
-      const key=button.dataset.mfSortKey;
+  overlay
+    ?.querySelectorAll('[data-mf-sort-key]')
+    .forEach(button=>{
+      button.addEventListener('click',()=>{
+        const key=button.dataset.mfSortKey;
 
-      if(key==='age'){
-        __mfRenderAgeSheetV25();
-        return;
-      }
+        if(key==='age'){
+          __mfRenderAgeSheetV25();
+          return;
+        }
 
-      if(key==='smart'){
-        __mfApplySortV25({
-          key:'smart',
-          ageMaxMinutes:null
-        });
-        return;
-      }
+        if(key==='smart'){
+          __mfApplySortV25({
+            key:'smart',
+            ageMaxMinutes:null
+          });
+          return;
+        }
 
-      __mfApplySortV25({key});
+        __mfApplySortV25({key});
+      });
     });
-  });
 }
 
 function __mfRenderAgeSheetV25(){
@@ -2941,7 +2959,10 @@ function __mfRenderAgeSheetV25(){
         type="button"
         data-mf-age="${minutes===null?'all':minutes}"
       >
-        <span class="mf-sort-option-label-v251">${label}</span>
+        <span class="mf-sort-option-label-v251">
+          ${label}
+        </span>
+
         ${__mfSortRadioV25(active)}
       </button>
     `;
@@ -2956,34 +2977,54 @@ function __mfRenderAgeSheetV25(){
     >‹</button>
   `;
 
+  const body=`
+    <div
+      class="mf-sort-list-shell-v252 mf-age-shell-v252"
+    >
+      <div
+        class="mf-sort-list-v25 mf-age-list-v25"
+      >
+        ${rows}
+      </div>
+    </div>
+  `;
+
   document.body.insertAdjacentHTML(
     'beforeend',
-    __mfSortSheetShellV25(
-      'AGE',
-      `<div class="mf-sort-list-v25 mf-age-list-v25">${rows}</div>`,
-      back
-    )
+    __mfSortSheetShellV25('AGE',body,back)
   );
 
-  document.body.classList.add('mf-sort-sheet-open-v25');
+  document.body.classList.add(
+    'mf-sort-sheet-open-v25'
+  );
+
   __mfBindSortOverlayV25();
 
-  const overlay=document.getElementById('mfSortOverlayV25');
+  const overlay=
+    document.getElementById('mfSortOverlayV25');
 
   overlay
     ?.querySelector('[data-mf-sort-back]')
-    ?.addEventListener('click',__mfRenderSortRootV25);
+    ?.addEventListener(
+      'click',
+      __mfRenderSortRootV25
+    );
 
-  overlay?.querySelectorAll('[data-mf-age]').forEach(button=>{
-    button.addEventListener('click',()=>{
-      const raw=button.dataset.mfAge;
+  overlay
+    ?.querySelectorAll('[data-mf-age]')
+    .forEach(button=>{
+      button.addEventListener('click',()=>{
+        const raw=button.dataset.mfAge;
 
-      __mfApplySortV25({
-        key:'age',
-        ageMaxMinutes:raw==='all'?null:Number(raw)
+        __mfApplySortV25({
+          key:'age',
+          ageMaxMinutes:
+            raw==='all'
+              ? null
+              : Number(raw)
+        });
       });
     });
-  });
 }
 
 function __mfEnsureSortUiV25(){
