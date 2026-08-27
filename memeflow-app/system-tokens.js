@@ -1814,7 +1814,10 @@ async function __mfRefreshOpenPositionsV16({
         '/api/paper/positions/live?_='+
         Date.now(),
         {
-          timeoutMs:900
+          // MEMEFLOW_OPEN_POSITION_REFRESH_TIMEOUT_V20
+          // Replit deployment latency can exceed 900 ms. A short transient
+          // delay must not freeze all OPEN POSITION cards.
+          timeoutMs:1800
         }
       );
 

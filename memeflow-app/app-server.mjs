@@ -10,7 +10,7 @@ import { startPumpLiveTradeFeed } from './src/pump-live-trade-feed.mjs'; // MEME
 import { ChartHistoryArchive } from './src/chart-history-archive.mjs'; // MEMEFLOW_CHART_HISTORY_RESTORE_V1
 import {createOpportunityEngine} from './src/opportunity-engine.mjs'; // MEMEFLOW_OPPORTUNITY_ENGINE_V1
 import {createSolUsdOracle} from './src/sol-usd-oracle.mjs'; // MEMEFLOW_OPPORTUNITY_ENGINE_V1
-import {liveCardMarketSnapshot} from './src/live-card-market.mjs'; // MEMEFLOW_LIVE_CARD_MARKET_TRUTH_V18
+import {liveCardMarketSnapshot,openPositionLiveMarketCap} from './src/live-card-market.mjs'; // MEMEFLOW_LIVE_CARD_MARKET_TRUTH_V18 / MEMEFLOW_OPEN_POSITION_LIVE_MC_V20
 import {rankCandidateViews} from './src/feed-ranking.mjs'; // MEMEFLOW_FEED_RELEVANCE_RANKING_V1
 import {startPumpHistoryBackfill} from './src/pump-history-backfill.mjs'; // MEMEFLOW_PERMANENT_TOKEN_REGISTRY_V1
 
@@ -898,6 +898,7 @@ function __mfCandidateMarket5mV4(mint,t){
     marketUpdatedAt:snapshot.marketUpdatedAt,
     latestTradePriceSol:snapshot.latestTradePriceSol,
     latestTradeAt:snapshot.latestTradeAt,
+    currentPriceSol:snapshot.currentPriceSol,
     tradeEvidence:snapshot.tradeEvidence
   };
 }
@@ -4538,11 +4539,16 @@ if(url.pathname==='/api/ai/decisions'){
         }
 
         const entryPrice=finite(position.entryPriceSol);
-        const tokenPrice=finite(token.priceSol);
-        const tokenMarkAt=finite(
-          token.lastPriceAt ??
-          token.lastMarketActivityAt
-        );
+
+        // MEMEFLOW_OPEN_POSITION_LIVE_MC_V20
+        // Use only the canonical trade-backed market mark for live position
+        // valuation. Pump-reference MC never becomes an OPEN POSITION live MC.
+        const marketPrice=finite(market?.currentPriceSol);
+        const marketMarkAt=finite(market?.marketUpdatedAt);
+        const marketMarkSource=String(
+          market?.marketCapSource||''
+        ).trim();
+
         const enginePrice=finite(position.currentPriceSol);
 
         let markPrice=null;
@@ -4550,14 +4556,13 @@ if(url.pathname==='/api/ai/decisions'){
         let markSource=null;
 
         if(
-          tokenPrice!==null&&
-          tokenPrice>0&&
-          tokenMarkAt!==null&&
-          tokenMarkAt>0
+          marketPrice!==null&&
+          marketPrice>0&&
+          marketMarkSource.toLowerCase().includes('trade')
         ){
-          markPrice=tokenPrice;
-          markAt=tokenMarkAt;
-          markSource='token-live-trade';
+          markPrice=marketPrice;
+          markAt=marketMarkAt;
+          markSource=marketMarkSource;
         }else if(
           enginePrice!==null&&
           enginePrice>0&&
@@ -4598,6 +4603,13 @@ if(url.pathname==='/api/ai/decisions'){
             ? ((realized+unrealized)/initialSize)*100
             : null;
 
+        const liveMc=openPositionLiveMarketCap({
+          token,
+          markPriceSol:markPrice,
+          markSource,
+          solUsd:solUsdOracle.get()
+        });
+
         let ageMinutes=null;
 
         try{
@@ -4621,9 +4633,9 @@ if(url.pathname==='/api/ai/decisions'){
             volume5mSol:finite(market?.volume5mSol),
             volume5mUsd:finite(market?.volume5mUsd),
             transactions5m:finite(market?.transactions5m),
-            marketCapSol:finite(market?.marketCapSol),
-            marketCapUsd:finite(market?.marketCapUsd),
-            marketCapSource:market?.marketCapSource||null,
+            marketCapSol:liveMc.marketCapSol,
+            marketCapUsd:liveMc.marketCapUsd,
+            marketCapSource:liveMc.marketCapSource,
             priceChange5mPct:finite(market?.priceChange5mPct),
             pnlReady,
             pnlPct,

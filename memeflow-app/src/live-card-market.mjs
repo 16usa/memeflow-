@@ -255,3 +255,55 @@ export function liveCardMarketSnapshot({
     )
   };
 }
+
+
+// MEMEFLOW_OPEN_POSITION_LIVE_MC_V20
+// OPEN POSITION market cap must come from the same confirmed live trade mark
+// used to value the position. Stored or Pump-reference MC is never accepted.
+export function openPositionLiveMarketCap({
+  token={},
+  markPriceSol=null,
+  markSource=null,
+  solUsd=null
+}={}){
+  const price=finite(markPriceSol);
+  const usd=finite(solUsd);
+  const source=lower(markSource);
+
+  const trustedTradeSource=Boolean(
+    source.includes('trade')
+  );
+
+  const supply=normalizePumpSupplyForCard(token);
+
+  const marketCapSol=
+    trustedTradeSource&&
+    price!==null&&
+    price>0&&
+    supply!==null&&
+    supply>0
+      ? price*supply
+      : null;
+
+  const marketCapUsd=
+    marketCapSol!==null&&
+    marketCapSol>0&&
+    usd!==null&&
+    usd>0
+      ? marketCapSol*usd
+      : null;
+
+  return {
+    marketCapSol,
+    marketCapUsd,
+    marketCapSource:
+      marketCapUsd!==null
+        ? (
+            source.includes('chart')
+              ? 'chart-trade-event-price-x-supply'
+              : 'token-live-trade-price-x-supply'
+          )
+        : null,
+    trustedTradeSource
+  };
+}
