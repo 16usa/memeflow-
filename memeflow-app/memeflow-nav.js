@@ -20,7 +20,7 @@
       sub: 'Live architecture and system state'
     },
     {
-      href: '/trading.html?v=recent-trades-clean-bottom-v1-20260826',
+      href: '/trading.html?v=recent-trades-two-rows-avatar-v3-20260826',
       title: 'Trading Terminal',
       sub: 'Charts, candidates, positions and execution'
     },

@@ -4077,9 +4077,50 @@ function renderTrades() {
     });
   };
 
+  const avatarMarkup = (url, symbol) => {
+    if (url) {
+      return `<span class="trade-token-avatar"><img src="${esc(url)}" alt="${esc(symbol)}"></span>`;
+    }
+
+    const fallback = String(symbol || 'TK').replace(/[^A-Z0-9]/gi, '').slice(0, 2).toUpperCase() || 'TK';
+    return `<span class="trade-token-avatar trade-token-avatar-fallback">${esc(fallback)}</span>`;
+  };
+
   list.innerHTML = rows.map(trade => {
     const side = String(trade.side || '').toUpperCase() || '—';
     const sideClass = side.toLowerCase();
+    const mint = String(trade.mint || '').trim();
+
+    const related =
+      (state.candidates || []).find(item => item?.mint === mint) ||
+      (state.positions || []).find(item => item?.mint === mint) ||
+      null;
+
+    const symbol = String(
+      trade.symbol ||
+      related?.symbol ||
+      (mint ? short(mint) : 'TOKEN')
+    ).trim();
+
+    const tokenName = String(
+      trade.name ||
+      related?.name ||
+      ''
+    ).trim();
+
+    const showName = tokenName && tokenName.toUpperCase() !== symbol.toUpperCase();
+
+    const avatarUrl = String(
+      trade.logoUrl ||
+      trade.imageUrl ||
+      trade.image ||
+      related?.logoUrl ||
+      related?.imageUrl ||
+      related?.image ||
+      related?.icon ||
+      ''
+    ).trim();
+
     const rawTime =
       trade.at ??
       trade.createdAt ??
@@ -4092,9 +4133,6 @@ function renderTrades() {
       'ENGINE'
     ).trim();
 
-    const copyTrade =
-      String(trade.strategySource || '').toLowerCase() === 'copy-trading';
-
     const sizeSol =
       num(trade.valueSol) ??
       num(trade.amountSol) ??
@@ -4104,36 +4142,49 @@ function renderTrades() {
     const pnlText = finite(pnl)
       ? `${pnl >= 0 ? '+' : ''}${fmt(pnl, 5)} SOL`
       : '—';
+
     const pnlClass = finite(pnl)
       ? (pnl >= 0 ? 'pnl-positive' : 'pnl-negative')
       : '';
 
+    const pumpUrl = mint
+      ? `https://pump.fun/coin/${encodeURIComponent(mint)}`
+      : '';
+
     return `
-      <div class="trade-row trade-log-row">
-        <div class="trade-log-primary">
-          <strong class="trade-side ${sideClass}">${esc(side)}</strong>
-          <strong class="trade-log-symbol">${esc(trade.symbol || short(trade.mint))}</strong>
-          ${copyTrade ? '<em class="copy-trade-badge">COPY TRADE</em>' : ''}
-          <time class="trade-log-time">${esc(tradeTime(rawTime))}</time>
+      <article class="trade-row trade-log-row">
+        ${avatarMarkup(avatarUrl, symbol)}
+
+        <div class="trade-log-main">
+          <div class="trade-log-primary">
+            <strong class="trade-side ${sideClass}">${esc(side)}</strong>
+
+            <div class="trade-token">
+              <div class="trade-token-line">
+                <strong class="trade-log-symbol">${esc(symbol)}</strong>
+                ${pumpUrl
+                  ? `<a class="trade-pump-link"
+                        href="${esc(pumpUrl)}"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label="Open ${esc(symbol)} on Pump.fun">Pump &#8599;</a>`
+                  : ''}
+              </div>
+              ${showName
+                ? `<span class="trade-token-name">${esc(tokenName)}</span>`
+                : ''}
+            </div>
+
+            <time class="trade-log-time">${esc(tradeTime(rawTime))}</time>
+          </div>
+
+          <div class="trade-log-secondary">
+            <span><b>SIZE</b><strong>${finite(sizeSol) ? `${fmt(sizeSol, 4)} SOL` : '—'}</strong></span>
+            <span><b>P&amp;L</b><strong class="${pnlClass}">${esc(pnlText)}</strong></span>
+            <span class="trade-log-reason"><b>REASON</b><strong>${esc(reason)}</strong></span>
+          </div>
         </div>
-
-        <div class="trade-log-details">
-          <span>
-            <b>SIZE</b>
-            <strong>${finite(sizeSol) ? `${fmt(sizeSol, 4)} SOL` : '—'}</strong>
-          </span>
-
-          <span>
-            <b>P&amp;L</b>
-            <strong class="${pnlClass}">${esc(pnlText)}</strong>
-          </span>
-
-          <span class="trade-log-reason">
-            <b>REASON</b>
-            <strong>${esc(reason)}</strong>
-          </span>
-        </div>
-      </div>
+      </article>
     `;
   }).join('');
 }
