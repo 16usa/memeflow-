@@ -187,6 +187,9 @@ const state = {
   emptyResponses: 0,
   refreshPending: false,
 
+  // MEMEFLOW_STABLE_POLL_POSITION_STATE_V15
+  positionLoading: false,
+
   // MEMEFLOW_LIVE_TOKEN_FEED_DIAGNOSTICS_V13
   feedReturned: 0,
   feedWorkingSet: 0,
@@ -1482,13 +1485,65 @@ async function loadDiscoveryStatus() {
   }
 }
 
+// MEMEFLOW_OPEN_POSITION_FIXED_POLL_V15
+let __mfLastRealtimeRevision = 0;
+
+async function loadOpenPositionsV15({
+  renderAfter = true
+} = {}) {
+  if (state.positionLoading) {
+    return;
+  }
+
+  state.positionLoading = true;
+
+  try {
+    const response = await fetch(
+      '/api/paper/positions?_=' + Date.now(),
+      {
+        cache: 'no-store',
+        credentials: 'same-origin'
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+
+    const payload = await response.json();
+
+    state.positions =
+      (
+        Array.isArray(payload?.positions)
+          ? payload.positions
+          : []
+      ).filter(
+        position =>
+          position?.mint &&
+          String(position?.status || '').toUpperCase() === 'OPEN'
+      );
+
+    if (renderAfter) {
+      render();
+    }
+  } catch (error) {
+    console.warn(
+      '[token-flow] open-position 3s refresh failed; keeping last snapshot',
+      error
+    );
+  } finally {
+    state.positionLoading = false;
+  }
+}
+
+
 async function loadTokens() {
   if (typeof loadDiscoveryStatus === 'function') {
     void loadDiscoveryStatus();
   }
 
+  // MEMEFLOW_NO_BACK_TO_BACK_REFRESH_V15
   if (state.loading) {
-    state.refreshPending = true;
     return;
   }
 
@@ -1548,36 +1603,8 @@ async function loadTokens() {
       .map(canonicalDecisionRow)
       .filter(row => row?.mint);
 
-    try {
-      const positionsResponse = await fetch(
-        '/api/paper/positions?_=' + Date.now(),
-        {
-          cache: 'no-store',
-          credentials: 'same-origin'
-        }
-      );
-
-      if (positionsResponse.ok) {
-        const positionsPayload =
-          await positionsResponse.json();
-
-        state.positions =
-          (
-            Array.isArray(positionsPayload?.positions)
-              ? positionsPayload.positions
-              : []
-          ).filter(
-            position =>
-              position?.mint &&
-              String(position?.status || '').toUpperCase() === 'OPEN'
-          );
-      }
-    } catch (positionError) {
-      console.warn(
-        '[token-flow] position refresh failed; keeping last snapshot',
-        positionError
-      );
-    }
+    // MEMEFLOW_POSITIONS_DECOUPLED_FROM_TOKEN_FEED_V15
+    // Open positions refresh independently on the same fixed 3s cadence.
 
     // MEMEFLOW_LIVE_TOKEN_TELEMETRY_V9
     const scanned = Number(payload?.rawScannerTokens);
@@ -1640,10 +1667,7 @@ async function loadTokens() {
     $('lastUpdate').textContent = 'Decision feed unavailable';
   } finally {
     state.loading = false;
-    if (state.refreshPending) {
-      state.refreshPending = false;
-      queueMicrotask(loadTokens);
-    }
+    state.refreshPending = false;
   }
 }
 
@@ -1737,430 +1761,48 @@ $('nextPage')
 $('refreshButton')
   .addEventListener(
     'click',
-    loadTokens
+    __mfPollAllV15
   );
 
-loadTokens();
+__mfPollAllV15();
 
-/* MEMEFLOW_SYSTEM_TOKENS_REALTIME_V14
- * Realtime card architecture:
+/* MEMEFLOW_SYSTEM_TOKENS_FIXED_POLL_V15
+ * Stable UI contract:
  *
- * TOKEN mutation:
- *   refresh exactly ONE known card through /api/system/live-token-state.
+ * - one full token-feed refresh every 3 seconds;
+ * - one independent Open Position refresh every 3 seconds;
+ * - no event-burst rendering on this page;
+ * - no SSE-open condition that can silently disable polling;
+ * - no 30-second freeze window.
  *
- * DECISION completion:
- *   refresh that same card after evaluateAll() actually wrote its new
- *   state/score/reasons.
- *
- * CREATE/unknown promotion:
- *   coalesced full snapshot for feed membership/ranking.
- *
- * The old behavior rebuilt an ~800-token working set on every global Pump
- * TradeEvent. V14 removes that unnecessary work while making visible card
- * fields react faster.
+ * Backend scanning/trading remains event-driven. This changes ONLY the browser
+ * presentation cadence, exactly as intended for this page.
  */
-const LIVE_RECONCILE_MS_V14 = 30000;
-const MINT_REFRESH_COALESCE_MS_V14 = 80;
-const POSITION_REFRESH_COALESCE_MS_V14 = 120;
 
-let __mfTokenStateStream = null;
-let __mfRealtimeRefreshTimer = null;
-let __mfLastRealtimeRevision = 0;
-let __mfOpenPositionRefreshTimerV14 = null;
+let __mfFixedPollTimerV15 = null;
 
-const __mfMintRefreshV14 = new Map();
-
-function __mfReadRealtimeEventV14(event) {
-  let payload = {};
-
-  if (event?.data) {
-    try {
-      payload = JSON.parse(event.data) || {};
-    } catch {}
-  }
-
-  const revision = Number(payload?.revision || 0);
-
-  if (
-    Number.isFinite(revision) &&
-    revision > 0
-  ) {
-    if (revision <= __mfLastRealtimeRevision) {
-      return { payload, stale: true };
-    }
-
-    __mfLastRealtimeRevision = revision;
-  }
-
-  return { payload, stale: false };
-}
-
-function __mfScheduleFullSnapshotV14() {
-  if (__mfRealtimeRefreshTimer !== null) {
+function __mfPollAllV15() {
+  if (document.hidden) {
     return;
   }
 
-  __mfRealtimeRefreshTimer = setTimeout(() => {
-    __mfRealtimeRefreshTimer = null;
-    void loadTokens();
-  }, 250);
+  // Run independently/in parallel. A token-feed failure cannot freeze OPEN
+  // POSITION telemetry, and a positions failure cannot freeze scanner cards.
+  void loadTokens();
+  void loadOpenPositionsV15();
 }
 
-function __mfKnownScannerRowV14(mint) {
-  mint = String(mint || '');
-
-  return state.rows.some(
-    row => String(row?.mint || '') === mint
+__mfFixedPollTimerV15 =
+  setInterval(
+    __mfPollAllV15,
+    REFRESH_MS
   );
-}
-
-function __mfKnownOpenPositionV14(mint) {
-  mint = String(mint || '');
-
-  return state.positions.some(
-    position =>
-      String(position?.mint || '') === mint &&
-      String(position?.status || '').toUpperCase() === 'OPEN'
-  );
-}
-
-function __mfReplaceScannerRowV14(row) {
-  const mint = String(row?.mint || '').trim();
-  if (!mint) return false;
-
-  const index = state.rows.findIndex(
-    item => String(item?.mint || '') === mint
-  );
-
-  if (index < 0) {
-    return false;
-  }
-
-  state.rows[index] =
-    canonicalDecisionRow(row);
-
-  return true;
-}
-
-async function __mfRefreshMintNowV14(mint) {
-  mint = String(mint || '').trim();
-  if (!mint) return;
-
-  let slot = __mfMintRefreshV14.get(mint);
-
-  if (!slot) {
-    slot = {
-      timer: null,
-      inflight: false,
-      pending: false
-    };
-    __mfMintRefreshV14.set(mint, slot);
-  }
-
-  if (slot.inflight) {
-    slot.pending = true;
-    return;
-  }
-
-  slot.inflight = true;
-
-  try {
-    do {
-      slot.pending = false;
-
-      const response = await fetch(
-        '/api/system/live-token-state?mint=' +
-          encodeURIComponent(mint) +
-          '&_=' +
-          Date.now(),
-        {
-          cache: 'no-store',
-          credentials: 'same-origin'
-        }
-      );
-
-      if (response.status === 404) {
-        // Membership may have changed. Do not keep a stale row forever.
-        __mfScheduleFullSnapshotV14();
-        return;
-      }
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
-      }
-
-      const payload = await response.json();
-
-      const revision =
-        Number(payload?.liveRevision || 0);
-
-      if (
-        Number.isFinite(revision) &&
-        revision > __mfLastRealtimeRevision
-      ) {
-        __mfLastRealtimeRevision = revision;
-      }
-
-      const row = payload?.row;
-
-      if (!row?.mint) {
-        continue;
-      }
-
-      const replaced =
-        __mfReplaceScannerRowV14(row);
-
-      if (!replaced) {
-        // A promoted token may now belong in the ranked top-200.
-        __mfScheduleFullSnapshotV14();
-        return;
-      }
-
-      render();
-    } while (slot.pending);
-  } catch (error) {
-    console.warn(
-      '[token-flow] one-mint refresh failed',
-      mint,
-      error
-    );
-  } finally {
-    slot.inflight = false;
-
-    if (
-      !slot.pending &&
-      slot.timer === null
-    ) {
-      __mfMintRefreshV14.delete(mint);
-    }
-  }
-}
-
-function __mfScheduleMintRefreshV14(mint) {
-  mint = String(mint || '').trim();
-  if (!mint) return;
-
-  let slot = __mfMintRefreshV14.get(mint);
-
-  if (!slot) {
-    slot = {
-      timer: null,
-      inflight: false,
-      pending: false
-    };
-    __mfMintRefreshV14.set(mint, slot);
-  }
-
-  if (slot.timer !== null) {
-    return;
-  }
-
-  slot.timer = setTimeout(() => {
-    slot.timer = null;
-    void __mfRefreshMintNowV14(mint);
-  }, MINT_REFRESH_COALESCE_MS_V14);
-}
-
-function __mfScheduleOpenPositionRefreshV14() {
-  if (__mfOpenPositionRefreshTimerV14 !== null) {
-    return;
-  }
-
-  __mfOpenPositionRefreshTimerV14 = setTimeout(async () => {
-    __mfOpenPositionRefreshTimerV14 = null;
-
-    try {
-      const response = await fetch(
-        '/api/paper/positions?_=' + Date.now(),
-        {
-          cache: 'no-store',
-          credentials: 'same-origin'
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
-      }
-
-      const payload = await response.json();
-
-      state.positions =
-        (
-          Array.isArray(payload?.positions)
-            ? payload.positions
-            : []
-        ).filter(
-          position =>
-            position?.mint &&
-            String(position?.status || '').toUpperCase() === 'OPEN'
-        );
-
-      render();
-    } catch (error) {
-      console.warn(
-        '[token-flow] open-position realtime refresh failed',
-        error
-      );
-    }
-  }, POSITION_REFRESH_COALESCE_MS_V14);
-}
-
-function __mfHandleTokenEventV14(event) {
-  const { payload, stale } =
-    __mfReadRealtimeEventV14(event);
-
-  if (stale) return;
-
-  const mint =
-    String(payload?.mint || '').trim();
-
-  if (!mint) return;
-
-  // Market/holder/volume/tx/MC/5m data for known feed rows.
-  if (__mfKnownScannerRowV14(mint)) {
-    __mfScheduleMintRefreshV14(mint);
-  }
-
-  // P&L + market strip for OPEN POSITION cards.
-  if (__mfKnownOpenPositionV14(mint)) {
-    __mfScheduleOpenPositionRefreshV14();
-  }
-
-  // Intentionally do NOT full-refresh for every unknown global Pump trade.
-  // If it becomes decision-relevant, the decision event below reconciles it.
-}
-
-function __mfHandleDecisionEventV14(event) {
-  const { payload, stale } =
-    __mfReadRealtimeEventV14(event);
-
-  if (stale) return;
-
-  const mint =
-    String(payload?.mint || '').trim();
-
-  if (!mint) {
-    __mfScheduleFullSnapshotV14();
-    return;
-  }
-
-  if (__mfKnownScannerRowV14(mint)) {
-    __mfScheduleMintRefreshV14(mint);
-  } else {
-    // Promotion/ranking may pull a previously unreturned token into top-200.
-    __mfScheduleFullSnapshotV14();
-  }
-
-  if (__mfKnownOpenPositionV14(mint)) {
-    __mfScheduleOpenPositionRefreshV14();
-  }
-}
-
-function __mfHandleCreateEventV14() {
-  // CREATE changes feed membership. One bounded snapshot is appropriate.
-  __mfScheduleFullSnapshotV14();
-}
-
-function __mfHandleRemovedEventV14(event) {
-  const { payload } =
-    __mfReadRealtimeEventV14(event);
-
-  const mint =
-    String(payload?.mint || '').trim();
-
-  if (!mint) {
-    __mfScheduleFullSnapshotV14();
-    return;
-  }
-
-  const before = state.rows.length;
-
-  state.rows =
-    state.rows.filter(
-      row => String(row?.mint || '') !== mint
-    );
-
-  if (state.rows.length !== before) {
-    render();
-  }
-
-  __mfScheduleFullSnapshotV14();
-}
-
-function __mfConnectTokenStateStream() {
-  if (typeof EventSource === 'undefined') return;
-
-  try {
-    __mfTokenStateStream?.close?.();
-  } catch {}
-
-  const source =
-    new EventSource('/api/system/stream');
-
-  __mfTokenStateStream = source;
-
-  source.addEventListener(
-    'hello',
-    __mfScheduleFullSnapshotV14
-  );
-
-  source.addEventListener(
-    'create',
-    __mfHandleCreateEventV14
-  );
-
-  source.addEventListener(
-    'token',
-    __mfHandleTokenEventV14
-  );
-
-  source.addEventListener(
-    'decision',
-    __mfHandleDecisionEventV14
-  );
-
-  source.addEventListener(
-    'token_removed',
-    __mfHandleRemovedEventV14
-  );
-
-  source.onopen = () => {
-    __mfScheduleFullSnapshotV14();
-  };
-}
-
-__mfConnectTokenStateStream();
-
-// Disconnected-stream safety net: preserve the existing 3s behavior only when
-// SSE is unavailable. No wasteful 3s polling while realtime transport is live.
-setInterval(() => {
-  if (
-    !__mfTokenStateStream ||
-    typeof EventSource === 'undefined' ||
-    __mfTokenStateStream.readyState !== EventSource.OPEN
-  ) {
-    void loadTokens();
-  }
-}, REFRESH_MS);
-
-// Low-frequency structural/time-window reconciliation while SSE is healthy.
-// This updates age/5m-window decay even when a specific token receives no new
-// TradeEvent. It is deliberately 30s, not 3s.
-setInterval(() => {
-  if (
-    __mfTokenStateStream &&
-    typeof EventSource !== 'undefined' &&
-    __mfTokenStateStream.readyState === EventSource.OPEN
-  ) {
-    void loadTokens();
-  }
-}, LIVE_RECONCILE_MS_V14);
 
 document.addEventListener(
   'visibilitychange',
   () => {
     if (!document.hidden) {
-      __mfScheduleFullSnapshotV14();
+      __mfPollAllV15();
     }
   }
 );
@@ -2168,23 +1810,9 @@ document.addEventListener(
 window.addEventListener(
   'beforeunload',
   () => {
-    if (__mfRealtimeRefreshTimer !== null) {
-      clearTimeout(__mfRealtimeRefreshTimer);
+    if (__mfFixedPollTimerV15 !== null) {
+      clearInterval(__mfFixedPollTimerV15);
     }
-
-    if (__mfOpenPositionRefreshTimerV14 !== null) {
-      clearTimeout(__mfOpenPositionRefreshTimerV14);
-    }
-
-    for (const slot of __mfMintRefreshV14.values()) {
-      if (slot?.timer !== null) {
-        clearTimeout(slot.timer);
-      }
-    }
-
-    try {
-      __mfTokenStateStream?.close?.();
-    } catch {}
   },
   { once: true }
 );

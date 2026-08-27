@@ -46,44 +46,41 @@ assert.match(app,/__mfQueueHistoryEvaluation\(hot\)/);
 assert.match(app,/HISTORY_EVAL_INTERVAL_MS/);
 
 
-// Live Token States must be event-driven, and a token mutation must invalidate
-// any per-user response cached before that mutation.
+// MEMEFLOW_STABLE_3S_UI_REFRESH_TEST_V15
+// Backend market/scanner state stays event-driven, but this browser page has a
+// deliberate fixed 3-second presentation cadence. EventSource must not disable
+// or burst the visible-card refresh loop.
 const tokenUi=fs.readFileSync(new URL('../system-tokens.js',import.meta.url),'utf8');
+
 assert.match(app,/let __mfLiveTokenRevision=0;/);
 assert.match(app,/const __liveRevision=\+\+__mfLiveTokenRevision;/);
 assert.match(app,/revision:__liveRevision/);
 assert.match(app,/Number\(_cached\.liveRevision\|\|0\)===__mfLiveTokenRevision/);
 assert.match(app,/liveRevision:__mfLiveTokenRevision/);
-assert.match(tokenUi,/new EventSource\('\/api\/system\/stream'\)/);
 
-// MEMEFLOW_REALTIME_CARD_DELTA_TEST_V14
-assert.match(app,/MEMEFLOW_DECISION_REVISION_EVENT_V14/);
-assert.match(app,/MEMEFLOW_DECISION_COMPLETE_REFRESH_V14/);
-assert.match(app,/MEMEFLOW_ADMISSION_REVISION_EVENT_V14/);
-assert.match(app,/MEMEFLOW_SINGLE_TOKEN_LIVE_ROUTE_V14/);
-assert.match(app,/\/api\/system\/live-token-state/);
-assert.match(app,/liveRevision:__mfLiveTokenRevision/);
-assert.match(tokenUi,/MEMEFLOW_SYSTEM_TOKENS_REALTIME_V14/);
-assert.match(tokenUi,/__mfScheduleMintRefreshV14/);
-assert.match(tokenUi,/__mfHandleTokenEventV14/);
-assert.match(tokenUi,/__mfHandleDecisionEventV14/);
-assert.match(tokenUi,/source\.addEventListener\([\s\S]*?'token',[\s\S]*?__mfHandleTokenEventV14/);
-assert.match(tokenUi,/source\.addEventListener\([\s\S]*?'decision',[\s\S]*?__mfHandleDecisionEventV14/);
-assert.match(tokenUi,/\/api\/system\/live-token-state\?mint=/);
-assert.match(tokenUi,/LIVE_RECONCILE_MS_V14 = 30000/);
-assert.match(tokenUi,/state\.refreshPending = true;/);
-assert.match(tokenUi,/queueMicrotask\(loadTokens\)/);
-assert.match(tokenUi,/readyState !== EventSource\.OPEN/);
+assert.match(tokenUi,/const REFRESH_MS = 3000;/);
+assert.match(tokenUi,/MEMEFLOW_SYSTEM_TOKENS_FIXED_POLL_V15/);
+assert.match(tokenUi,/MEMEFLOW_OPEN_POSITION_FIXED_POLL_V15/);
+assert.match(tokenUi,/MEMEFLOW_POSITIONS_DECOUPLED_FROM_TOKEN_FEED_V15/);
+assert.match(tokenUi,/setInterval\([\s\S]*?__mfPollAllV15,[\s\S]*?REFRESH_MS/);
+assert.match(tokenUi,/void loadTokens\(\)/);
+assert.match(tokenUi,/void loadOpenPositionsV15\(\)/);
+assert.match(tokenUi,/\/api\/paper\/positions/);
+assert.match(tokenUi,/state\.positionLoading/);
+assert.doesNotMatch(tokenUi,/new EventSource\('\/api\/system\/stream'\)/);
+assert.doesNotMatch(tokenUi,/MINT_REFRESH_COALESCE_MS_V14/);
+assert.doesNotMatch(tokenUi,/LIVE_RECONCILE_MS_V14 = 30000/);
+assert.doesNotMatch(tokenUi,/queueMicrotask\(loadTokens\)/);
 
 // MEMEFLOW_LIVE_TOKEN_ASSET_NO_STORE_V1
 assert.match(app,/MEMEFLOW_LIVE_TOKEN_ASSET_NO_STORE_V1/);
 assert.match(app,/url\.pathname==='\/system-tokens\.js'/);
 assert.match(app,/url\.pathname==='\/system-tokens\.css'/);
-assert.match(tokenHtml,/system-tokens\.js\?v=realtime-card-v14-20260827/);
+assert.match(tokenHtml,/system-tokens\.js\?v=stable-poll-v15-20260827/);
 assert.match(tokenHtml,/id="scannerStatus"/);
 assert.match(tokenUi,/MEMEFLOW_SCANNER_STATUS_V9/);
 assert.match(tokenUi,/MEMEFLOW_LIVE_TOKEN_TELEMETRY_V9/);
-assert.match(tokenUi,/MINT_REFRESH_COALESCE_MS_V14 = 80/);
+assert.match(tokenUi,/MEMEFLOW_SYSTEM_TOKENS_FIXED_POLL_V15/);
 assert.match(route,/MEMEFLOW_LIVE_TOKEN_FEED_BRIDGE_V13/);
 assert.match(tokenUi,/MEMEFLOW_LIVE_TOKEN_FEED_DIAGNOSTICS_V13/);
 assert.match(tokenUi,/feed \$\{state\.feedReturned\}\/\$\{state\.feedWorkingSet\}/);
