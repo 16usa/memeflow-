@@ -82,7 +82,7 @@ assert.doesNotMatch(
 
 assert.match(
   html,
-  /system-tokens\.js\?v=gmgn-sort-v25-4-exact-20260827/,
+  /system-tokens\.js\?v=gmgn-sort-v25-5-polish-exact-20260827/,
   'browser cache-bust version is stale'
 );
 
