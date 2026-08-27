@@ -1692,7 +1692,7 @@ async function __mfRefreshOpenPositionsV16({
         render();
       }else if(patchDom){
         for(const mint of afterOpen){
-          __mfPatchMutableCardV16(mint);
+          __mfPatchMutableCardV17(mint);
         }
       }
     }while(__mfPositionRequestPendingV16);
@@ -1707,12 +1707,8 @@ async function __mfRefreshOpenPositionsV16({
 }
 
 
+// MEMEFLOW_ONE_SECOND_SNAPSHOT_APPLY_V17
 async function loadTokens() {
-  if (typeof loadDiscoveryStatus === 'function') {
-    void loadDiscoveryStatus();
-  }
-
-  // MEMEFLOW_NO_BACK_TO_BACK_REFRESH_V15
   if (state.loading) {
     return;
   }
@@ -1727,7 +1723,6 @@ async function loadTokens() {
         Date.now()
       );
 
-    // MEMEFLOW_FULL_SNAPSHOT_REVISION_CLIENT_V14
     const snapshotRevision=Number(payload?.liveRevision||0);
     if(
       Number.isFinite(snapshotRevision) &&
@@ -1736,100 +1731,180 @@ async function loadTokens() {
       __mfLastRealtimeRevision=snapshotRevision;
     }
 
-    const rows = Array.isArray(payload?.decisions)
-      ? payload.decisions
-      : [];
+    const rows =
+      Array.isArray(payload?.decisions)
+        ? payload.decisions
+        : [];
+
+    const previousRows=state.rows;
+    const previousByMint=new Map(
+      previousRows.map(
+        row=>[String(row?.mint||''),row]
+      )
+    );
+
+    const nextRows=
+      rows
+        .map(canonicalDecisionRow)
+        .filter(row=>row?.mint)
+        .map(row=>{
+          const mint=String(row.mint||'');
+          const previous=previousByMint.get(mint);
+
+          return previous
+            ? canonicalDecisionRow(
+                __mfPreserveIdentityV17(
+                  previous,
+                  row
+                )
+              )
+            : row;
+        });
+
+    const previousMints=new Set(
+      previousRows
+        .map(row=>String(row?.mint||''))
+        .filter(Boolean)
+    );
+    const nextMints=new Set(
+      nextRows
+        .map(row=>String(row?.mint||''))
+        .filter(Boolean)
+    );
+
+    const membershipChanged=
+      previousMints.size!==nextMints.size ||
+      [...previousMints].some(
+        mint=>!nextMints.has(mint)
+      );
+
+    const filteredStateChanged=
+      state.filter!=='all' &&
+      nextRows.some(row=>{
+        const mint=String(row?.mint||'');
+        const previous=previousByMint.get(mint);
+        return (
+          previous &&
+          stateKey(previous?.decision?.state)!==
+            stateKey(row?.decision?.state)
+        );
+      });
 
     state.feedReturned =
       Number.isFinite(Number(payload?.returned))
         ? Math.max(0,Number(payload.returned))
-        : rows.length;
+        : nextRows.length;
+
     state.feedWorkingSet =
       Number.isFinite(Number(payload?.uiWorkingSetTokens))
         ? Math.max(0,Number(payload.uiWorkingSetTokens))
         : 0;
+
     state.feedRawScanner =
       Number.isFinite(Number(payload?.rawScannerTokens))
         ? Math.max(0,Number(payload.rawScannerTokens))
         : 0;
+
     state.feedViewErrors =
       Number.isFinite(Number(payload?.viewErrors))
         ? Math.max(0,Number(payload.viewErrors))
         : 0;
+
     state.feedEvaluationErrors =
       Number.isFinite(Number(payload?.evaluationErrors))
         ? Math.max(0,Number(payload.evaluationErrors))
         : 0;
 
-    state.rows = rows
-      .map(canonicalDecisionRow)
-      .filter(row => row?.mint);
+    state.rows=nextRows;
 
     // MEMEFLOW_POSITIONS_DECOUPLED_FROM_TOKEN_FEED_V15
-    // Open positions refresh independently on the same fixed 3s cadence.
+    // OPEN POSITION data is fetched independently in parallel.
 
     // MEMEFLOW_LIVE_TOKEN_TELEMETRY_V9
-    const scanned = Number(payload?.rawScannerTokens);
-    const admitted = Number(payload?.preAdmissionAdmitted);
-    const pending = Number(payload?.preAdmissionPending);
-    const rejected = Number(payload?.preAdmissionRejected);
-    const evalErrors = Number(payload?.evaluationErrors);
-    const viewErrors = Number(payload?.viewErrors);
+    // Preserve scanner/feed telemetry while the visible cards use V17's
+    // one-second mutable-only rendering path.
+    const scanned=Number(payload?.rawScannerTokens);
+    const admitted=Number(payload?.preAdmissionAdmitted);
+    const pending=Number(payload?.preAdmissionPending);
+    const rejected=Number(payload?.preAdmissionRejected);
+    const evalErrors=Number(payload?.evaluationErrors);
+    const viewErrors=Number(payload?.viewErrors);
 
-    const parts = [
+    const parts=[
       `Updated ${new Date().toLocaleTimeString(
         [],
         {
-          hour: '2-digit',
-          minute: '2-digit',
-          second: '2-digit'
+          hour:'2-digit',
+          minute:'2-digit',
+          second:'2-digit'
         }
       )}`
     ];
 
-    if (Number.isFinite(scanned)) {
-      parts.push(`scanner ${Math.max(0, scanned)}`);
+    if(Number.isFinite(scanned)){
+      parts.push(`scanner ${Math.max(0,scanned)}`);
     }
 
-    if (Number.isFinite(admitted)) {
-      parts.push(`admitted ${Math.max(0, admitted)}`);
+    if(Number.isFinite(admitted)){
+      parts.push(`admitted ${Math.max(0,admitted)}`);
     }
 
-    if (
-      Number.isFinite(pending) &&
-      pending > 0
-    ) {
-      parts.push(`waiting ${Math.max(0, pending)}`);
+    if(Number.isFinite(pending)&&pending>0){
+      parts.push(`waiting ${Math.max(0,pending)}`);
     }
 
-    if (
-      Number.isFinite(rejected) &&
-      rejected > 0
-    ) {
-      parts.push(`blocked ${Math.max(0, rejected)}`);
+    if(Number.isFinite(rejected)&&rejected>0){
+      parts.push(`blocked ${Math.max(0,rejected)}`);
     }
 
-    if (
-      (Number.isFinite(evalErrors) && evalErrors > 0) ||
-      (Number.isFinite(viewErrors) && viewErrors > 0)
-    ) {
+    if(
+      (Number.isFinite(evalErrors)&&evalErrors>0) ||
+      (Number.isFinite(viewErrors)&&viewErrors>0)
+    ){
       parts.push(
         `errors ${
-          Math.max(0, evalErrors || 0) +
-          Math.max(0, viewErrors || 0)
+          Math.max(0,evalErrors||0)+
+          Math.max(0,viewErrors||0)
         }`
       );
     }
 
-    $('lastUpdate').textContent =
-      parts.join(' · ');
-    render();
+    $('lastUpdate').textContent=parts.join(' · ');
+
+    const hasCards=
+      document.querySelector(
+        '.flow-token[data-mint]'
+      )!==null;
+
+    if(
+      !hasCards ||
+      membershipChanged ||
+      filteredStateChanged
+    ){
+      // Structural changes only: a token entered/left the 200-card feed or a
+      // non-ALL filter must gain/lose a card. Static identity is still locked.
+      render();
+    }else{
+      // Normal 1-second refresh: ONLY mutable chain/decision fields.
+      for(
+        const card of document.querySelectorAll(
+          '.flow-token[data-mint]'
+        )
+      ){
+        const mint=String(card.dataset.mint||'');
+        if(mint){
+          __mfPatchMutableCardV17(mint);
+        }
+      }
+
+      renderCounts();
+    }
   } catch (error) {
-    console.error('[MEMEFLOW TOKEN FLOW]', error);
-    $('lastUpdate').textContent = 'Decision feed unavailable';
+    console.error('[MEMEFLOW TOKEN FLOW]',error);
+    $('lastUpdate').textContent='Decision feed unavailable';
   } finally {
-    state.loading = false;
-    state.refreshPending = false;
+    state.loading=false;
+    state.refreshPending=false;
   }
 }
 
@@ -1924,89 +1999,29 @@ $('refreshButton')
   .addEventListener(
     'click',
     ()=>{
-      void __mfStructuralRefreshV16();
+      void __mfPollOneSecondV17(true);
     }
   );
 
-// Initial reconciliation starts after the V16 stream state is initialized.
+// MEMEFLOW_ONE_SECOND_MANUAL_REFRESH_V17
+// Initial refresh starts after V17 mutable helpers are initialized.
 
-/* MEMEFLOW_SYSTEM_TOKENS_EVENT_FACT_V16
- * DISPLAY CONTRACT
+/* MEMEFLOW_SYSTEM_TOKENS_ONE_SECOND_V17
+ * UI PRESENTATION CONTRACT
  *
- * Blockchain fact arrives -> update that mint.
- * Decision write completes -> update that mint.
- * Open-position mint trades -> refresh positions immediately.
- * CREATE -> fetch/insert that new mint.
- * REMOVE -> remove that mint.
+ * - canonical scanner/trading backend remains event-driven;
+ * - browser reads the current truth once every 1000 ms;
+ * - token feed + OPEN POSITION refresh independently/in parallel;
+ * - no EventSource burst rendering on this page;
+ * - no name/avatar/Pump.fun-link update in the 1-second mutable path.
  *
- * There is NO 3-second/30-second data polling loop.
- *
- * A 35-second timer exists ONLY as an SSE transport watchdog. It does not
- * refresh token data. The server emits a heartbeat every 15 seconds; missing
- * heartbeats force a stream reconnect and one reconciliation.
+ * Static identity may be created only when feed membership changes or initial
+ * metadata resolves. Normal one-second ticks patch mutable fields in-place.
  */
-const __MF_STREAM_WATCHDOG_MS_V16=35000;
+const __MF_CARD_REFRESH_MS_V17=1000;
+let __mfOneSecondTimerV17=null;
 
-let __mfTokenStateStreamV16=null;
-let __mfStreamWatchdogV16=null;
-let __mfStructuralRefreshActiveV16=false;
-let __mfStructuralRefreshPendingV16=false;
-
-const __mfMintRefreshStateV16=new Map();
-
-function __mfTouchStreamV16(){
-  if(__mfStreamWatchdogV16!==null){
-    clearTimeout(__mfStreamWatchdogV16);
-  }
-
-  __mfStreamWatchdogV16=setTimeout(
-    ()=>{
-      console.warn(
-        '[token-flow] SSE heartbeat stale; reconnecting'
-      );
-
-      try{
-        __mfTokenStateStreamV16?.close?.();
-      }catch{}
-
-      __mfTokenStateStreamV16=null;
-      __mfConnectTokenStateStreamV16();
-    },
-    __MF_STREAM_WATCHDOG_MS_V16
-  );
-}
-
-function __mfEventPayloadV16(event){
-  if(!event?.data){
-    return {};
-  }
-
-  try{
-    return JSON.parse(event.data)||{};
-  }catch{
-    return {};
-  }
-}
-
-function __mfKnownScannerMintV16(mint){
-  mint=String(mint||'');
-
-  return state.rows.some(
-    row=>String(row?.mint||'')===mint
-  );
-}
-
-function __mfKnownOpenMintV16(mint){
-  mint=String(mint||'');
-
-  return state.positions.some(
-    position=>
-      String(position?.mint||'')===mint &&
-      String(position?.status||'').toUpperCase()==='OPEN'
-  );
-}
-
-function __mfPreserveIdentityV16(previous,next){
+function __mfPreserveIdentityV17(previous,next){
   if(!next||typeof next!=='object'){
     return next;
   }
@@ -2024,7 +2039,9 @@ function __mfPreserveIdentityV16(previous,next){
     'imageUrl',
     'logo',
     'logoUrl',
-    'logoURI'
+    'logoURI',
+    'uri',
+    'metadataUri'
   ];
 
   const out={...next};
@@ -2042,7 +2059,7 @@ function __mfPreserveIdentityV16(previous,next){
   return out;
 }
 
-function __mfMutableRowForMintV16(mint){
+function __mfMutableRowForMintV17(mint){
   mint=String(mint||'');
 
   return mergedRows().find(
@@ -2050,7 +2067,7 @@ function __mfMutableRowForMintV16(mint){
   )||null;
 }
 
-function __mfSetStrongByLabelV16(
+function __mfSetStrongByLabelV17(
   card,
   selector,
   label,
@@ -2081,7 +2098,7 @@ function __mfSetStrongByLabelV16(
   return false;
 }
 
-function __mfSetDetailByLabelV16(
+function __mfSetDetailByLabelV17(
   card,
   label,
   value
@@ -2102,12 +2119,12 @@ function __mfSetDetailByLabelV16(
   return false;
 }
 
-// MEMEFLOW_MUTABLE_DOM_ONLY_V16
-function __mfPatchMutableCardV16(mint){
+// MEMEFLOW_ONE_SECOND_MUTABLE_ONLY_V17
+function __mfPatchMutableCardV17(mint){
   mint=String(mint||'').trim();
   if(!mint)return;
 
-  const row=__mfMutableRowForMintV16(mint);
+  const row=__mfMutableRowForMintV17(mint);
   if(!row)return;
 
   const card=[
@@ -2118,15 +2135,17 @@ function __mfPatchMutableCardV16(mint){
     node=>String(node.dataset.mint||'')===mint
   );
 
-  if(!card){
-    // Non-visible pages still get updated in state.rows/state.positions.
-    return;
-  }
+  if(!card)return;
 
   const key=stateKey(row?.decision?.state);
   const label=stateLabel(row?.decision?.state);
 
-  // Update state/border, but NEVER token-name/token-avatar/source links.
+  // IMPORTANT:
+  // Do NOT touch:
+  //   .token-name
+  //   .token-avatar
+  //   .token-pump-link
+  // Those are static identity/source controls.
   for(const stateClass of [
     'open',
     'ready',
@@ -2150,7 +2169,7 @@ function __mfPatchMutableCardV16(mint){
       ? openPositionPnlPct(row?.__openPosition)
       : null;
 
-  __mfSetStrongByLabelV16(
+  __mfSetStrongByLabelV17(
     card,
     '.token-metric',
     key==='open'?'P&L':'Score',
@@ -2162,7 +2181,7 @@ function __mfPatchMutableCardV16(mint){
       : ''
   );
 
-  __mfSetStrongByLabelV16(
+  __mfSetStrongByLabelV17(
     card,
     '.token-metric',
     'Holders',
@@ -2170,7 +2189,7 @@ function __mfPatchMutableCardV16(mint){
   );
 
   const top=top10(row);
-  __mfSetStrongByLabelV16(
+  __mfSetStrongByLabelV17(
     card,
     '.token-metric',
     'Top 10',
@@ -2178,7 +2197,7 @@ function __mfPatchMutableCardV16(mint){
   );
 
   const pressure=buyPressure(row);
-  __mfSetStrongByLabelV16(
+  __mfSetStrongByLabelV17(
     card,
     '.token-metric',
     'Buy pressure',
@@ -2186,7 +2205,7 @@ function __mfPatchMutableCardV16(mint){
   );
 
   const age=tokenAge(row);
-  __mfSetStrongByLabelV16(
+  __mfSetStrongByLabelV17(
     card,
     '.token-metric',
     'Age',
@@ -2194,7 +2213,7 @@ function __mfPatchMutableCardV16(mint){
   );
 
   const price=priceSol(row);
-  __mfSetStrongByLabelV16(
+  __mfSetStrongByLabelV17(
     card,
     '.token-metric',
     'Price SOL',
@@ -2227,21 +2246,21 @@ function __mfPatchMutableCardV16(mint){
         )
       : metrics?.holderCount;
 
-  __mfSetStrongByLabelV16(
+  __mfSetStrongByLabelV17(
     card,
     stripSelector,
     'Age',
     compactTokenAge(stripAge)
   );
 
-  __mfSetStrongByLabelV16(
+  __mfSetStrongByLabelV17(
     card,
     stripSelector,
     'Holders',
     stripHolders??'—'
   );
 
-  __mfSetStrongByLabelV16(
+  __mfSetStrongByLabelV17(
     card,
     stripSelector,
     'Vol 5m',
@@ -2250,7 +2269,7 @@ function __mfPatchMutableCardV16(mint){
       : regularVolumeLabel(metrics)
   );
 
-  __mfSetStrongByLabelV16(
+  __mfSetStrongByLabelV17(
     card,
     stripSelector,
     'Tx 5m',
@@ -2259,7 +2278,7 @@ function __mfPatchMutableCardV16(mint){
       : '—'
   );
 
-  __mfSetStrongByLabelV16(
+  __mfSetStrongByLabelV17(
     card,
     stripSelector,
     'MC',
@@ -2269,7 +2288,7 @@ function __mfPatchMutableCardV16(mint){
   );
 
   const move=metrics?.priceChange5mPct;
-  __mfSetStrongByLabelV16(
+  __mfSetStrongByLabelV17(
     card,
     stripSelector,
     '5m%',
@@ -2277,389 +2296,70 @@ function __mfPatchMutableCardV16(mint){
     marketMoveClass(move)
   );
 
-  __mfSetDetailByLabelV16(
+  __mfSetDetailByLabelV17(
     card,
     'Primary signal',
     tokenReason(row)
   );
 
-  __mfSetDetailByLabelV16(
+  __mfSetDetailByLabelV17(
     card,
     'Risk gates',
     tokenGateSummary(row)
   );
 
   const dev=developer(row);
-  __mfSetDetailByLabelV16(
+  __mfSetDetailByLabelV17(
     card,
     'Developer',
     finite(dev)?`${fmt(dev,2)}%`:'—'
   );
-
-  renderCounts();
-
-  $('lastUpdate').textContent=
-    `Live ${new Date().toLocaleTimeString(
-      [],
-      {
-        hour:'2-digit',
-        minute:'2-digit',
-        second:'2-digit'
-      }
-    )}`;
 }
 
-async function __mfStructuralRefreshV16(){
-  if(__mfStructuralRefreshActiveV16){
-    __mfStructuralRefreshPendingV16=true;
+async function __mfPollOneSecondV17(force=false){
+  if(document.hidden&&!force){
     return;
   }
 
-  __mfStructuralRefreshActiveV16=true;
-
-  try{
-    do{
-      __mfStructuralRefreshPendingV16=false;
-
-      // Positions first so one render of the feed already knows OPEN state.
-      await __mfRefreshOpenPositionsV16({
-        patchDom:false
-      });
-
-      await loadTokens();
-    }while(__mfStructuralRefreshPendingV16);
-  }finally{
-    __mfStructuralRefreshActiveV16=false;
-  }
+  // Exactly two bounded requests per tick:
+  // 1) one ranked token-feed snapshot;
+  // 2) one Open Position snapshot.
+  // Both have their own in-flight guards and request timeouts.
+  await Promise.allSettled([
+    loadTokens(),
+    __mfRefreshOpenPositionsV16()
+  ]);
 }
 
-async function __mfRefreshMintNowV16(
-  mint,
-  {
-    allowInsert=false
-  }={}
-){
-  mint=String(mint||'').trim();
-  if(!mint)return;
-
-  let slot=__mfMintRefreshStateV16.get(mint);
-
-  if(!slot){
-    slot={
-      inflight:false,
-      pending:false,
-      allowInsert:false
-    };
-
-    __mfMintRefreshStateV16.set(mint,slot);
-  }
-
-  slot.allowInsert=
-    slot.allowInsert||allowInsert;
-
-  if(slot.inflight){
-    slot.pending=true;
-    return;
-  }
-
-  slot.inflight=true;
-
-  try{
-    do{
-      slot.pending=false;
-
-      let payload=null;
-
-      try{
-        payload=
-          await __mfFetchJsonV16(
-            '/api/system/live-token-state?mint='+
-            encodeURIComponent(mint)+
-            '&_='+
-            Date.now()
-          );
-      }catch(error){
-        if(error?.status===404){
-          const before=state.rows.length;
-
-          state.rows=state.rows.filter(
-            row=>String(row?.mint||'')!==mint
-          );
-
-          if(state.rows.length!==before){
-            render();
-          }
-
-          return;
-        }
-
-        throw error;
-      }
-
-      const revision=
-        Number(payload?.liveRevision||0);
-
-      if(
-        Number.isFinite(revision) &&
-        revision>__mfLastRealtimeRevision
-      ){
-        __mfLastRealtimeRevision=revision;
-      }
-
-      const incoming=
-        payload?.row
-          ? canonicalDecisionRow(payload.row)
-          : null;
-
-      if(!incoming?.mint){
-        continue;
-      }
-
-      const index=state.rows.findIndex(
-        row=>String(row?.mint||'')===mint
-      );
-
-      if(index>=0){
-        const previous=state.rows[index];
-
-        state.rows[index]=
-          canonicalDecisionRow(
-            __mfPreserveIdentityV16(
-              previous,
-              incoming
-            )
-          );
-
-        __mfPatchMutableCardV16(mint);
-      }else if(slot.allowInsert){
-        state.rows.push(incoming);
-
-        // Keep the browser feed bounded. This is display-only; scanner/trading
-        // inventory remains unchanged.
-        state.rows=
-          sortRows(state.rows).slice(0,200);
-
-        render();
-      }
-    }while(slot.pending);
-  }catch(error){
-    console.warn(
-      '[token-flow] fact refresh failed',
-      mint,
-      error
-    );
-  }finally{
-    slot.inflight=false;
-    slot.allowInsert=false;
-
-    if(!slot.pending){
-      __mfMintRefreshStateV16.delete(mint);
-    }
-  }
+if(typeof loadDiscoveryStatus==='function'){
+  void loadDiscoveryStatus();
 }
 
-function __mfRefreshMintV16(
-  mint,
-  options={}
-){
-  // No delay/coalesce timer. The only coalescing is in-flight backpressure:
-  // if another fact arrives while the GET is active, exactly one follow-up GET
-  // runs immediately after it finishes.
-  void __mfRefreshMintNowV16(
-    mint,
-    options
-  );
-}
+void __mfPollOneSecondV17(true);
 
-function __mfHandleTokenFactV16(event){
-  __mfTouchStreamV16();
-
-  const payload=__mfEventPayloadV16(event);
-  const mint=String(payload?.mint||'').trim();
-
-  if(!mint)return;
-
-  if(__mfKnownScannerMintV16(mint)){
-    __mfRefreshMintV16(mint);
-  }
-
-  if(__mfKnownOpenMintV16(mint)){
-    void __mfRefreshOpenPositionsV16();
-  }
-}
-
-function __mfHandleDecisionFactV16(event){
-  __mfTouchStreamV16();
-
-  const payload=__mfEventPayloadV16(event);
-  const mint=String(payload?.mint||'').trim();
-
-  if(!mint){
-    void __mfStructuralRefreshV16();
-    return;
-  }
-
-  __mfRefreshMintV16(
-    mint,
-    {allowInsert:true}
-  );
-
-  if(__mfKnownOpenMintV16(mint)){
-    void __mfRefreshOpenPositionsV16();
-  }
-}
-
-function __mfHandleCreateFactV16(event){
-  __mfTouchStreamV16();
-
-  const payload=__mfEventPayloadV16(event);
-  const mint=String(payload?.mint||'').trim();
-
-  if(!mint){
-    void __mfStructuralRefreshV16();
-    return;
-  }
-
-  // Server V16 emits CREATE only after canonical ingest, so this GET cannot
-  // race a not-yet-created store row.
-  __mfRefreshMintV16(
-    mint,
-    {allowInsert:true}
-  );
-}
-
-function __mfHandleRemovedFactV16(event){
-  __mfTouchStreamV16();
-
-  const payload=__mfEventPayloadV16(event);
-  const mint=String(payload?.mint||'').trim();
-
-  if(!mint)return;
-
-  const rowsBefore=state.rows.length;
-  const positionsBefore=state.positions.length;
-
-  state.rows=state.rows.filter(
-    row=>String(row?.mint||'')!==mint
-  );
-
-  state.positions=state.positions.filter(
-    position=>String(position?.mint||'')!==mint
-  );
-
-  if(
-    state.rows.length!==rowsBefore ||
-    state.positions.length!==positionsBefore
-  ){
-    render();
-  }
-}
-
-function __mfConnectTokenStateStreamV16(){
-  if(typeof EventSource==='undefined'){
-    console.warn(
-      '[token-flow] EventSource unavailable'
-    );
-    return;
-  }
-
-  try{
-    __mfTokenStateStreamV16?.close?.();
-  }catch{}
-
-  const source=
-    new EventSource('/api/system/stream');
-
-  __mfTokenStateStreamV16=source;
-
-  source.addEventListener(
-    'heartbeat',
+__mfOneSecondTimerV17=
+  setInterval(
     ()=>{
-      __mfTouchStreamV16();
-    }
+      void __mfPollOneSecondV17();
+    },
+    __MF_CARD_REFRESH_MS_V17
   );
-
-  source.addEventListener(
-    'hello',
-    ()=>{
-      __mfTouchStreamV16();
-
-      // One reconciliation after (re)connect recovers any facts missed while
-      // the transport was unavailable. It is NOT periodic polling.
-      void __mfStructuralRefreshV16();
-    }
-  );
-
-  source.addEventListener(
-    'token',
-    __mfHandleTokenFactV16
-  );
-
-  source.addEventListener(
-    'decision',
-    __mfHandleDecisionFactV16
-  );
-
-  source.addEventListener(
-    'create',
-    __mfHandleCreateFactV16
-  );
-
-  source.addEventListener(
-    'token_removed',
-    __mfHandleRemovedFactV16
-  );
-
-  source.onopen=()=>{
-    __mfTouchStreamV16();
-  };
-
-  source.onerror=()=>{
-    // Native EventSource automatically retries. The heartbeat watchdog handles
-    // half-open connections where no error event is delivered.
-    console.warn(
-      '[token-flow] SSE reconnecting'
-    );
-  };
-
-  __mfTouchStreamV16();
-}
-
-__mfConnectTokenStateStreamV16();
-
-// First page snapshot. After this, data changes are fact/event-driven.
-void __mfStructuralRefreshV16();
 
 document.addEventListener(
   'visibilitychange',
   ()=>{
-    if(document.hidden){
-      return;
+    if(!document.hidden){
+      void __mfPollOneSecondV17(true);
     }
-
-    // iOS may suspend sockets while the app is backgrounded. Reconcile once
-    // when returning, then continue by events.
-    if(
-      !__mfTokenStateStreamV16 ||
-      __mfTokenStateStreamV16.readyState===EventSource.CLOSED
-    ){
-      __mfConnectTokenStateStreamV16();
-    }
-
-    void __mfStructuralRefreshV16();
   }
 );
 
 window.addEventListener(
   'beforeunload',
   ()=>{
-    if(__mfStreamWatchdogV16!==null){
-      clearTimeout(__mfStreamWatchdogV16);
+    if(__mfOneSecondTimerV17!==null){
+      clearInterval(__mfOneSecondTimerV17);
     }
-
-    try{
-      __mfTokenStateStreamV16?.close?.();
-    }catch{}
   },
   {once:true}
 );

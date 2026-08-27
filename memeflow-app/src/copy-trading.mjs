@@ -82,6 +82,19 @@ export class CopyTradingManager{
   }
 
   async processUser(user,settings,event,token,sellInfo){
+    // MEMEFLOW_MAYHEM_COPY_BUY_GATE_V17
+    // Existing Mayhem positions may still SELL for safe exit; new/scale-in BUY
+    // actions are always rejected.
+    if(
+      event?.isBuy===true &&
+      (
+        token?.isMayhemMode===true ||
+        String(token?.launchMode||'').trim().toLowerCase()==='mayhem'
+      )
+    ){
+      return this.reject(user.id,event,'MAYHEM_MODE_BLOCKED');
+    }
+
     if(user?.killSwitch===true)return this.reject(user.id,event,'KILL_SWITCH');
     if(String(settings.tradingEnvironment||'paper').toLowerCase()!=='paper'){
       return this.reject(user.id,event,'LIVE_EXECUTION_NOT_READY');

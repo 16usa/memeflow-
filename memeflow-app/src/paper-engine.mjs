@@ -112,6 +112,11 @@ export class PaperEngine {
     const s = this.settings(settings);
     const now = this.clock();
 
+    // MEMEFLOW_MAYHEM_PAPER_GATE_V17
+    const mayhemBlocked =
+      token?.isMayhemMode === true ||
+      lower(token?.launchMode) === 'mayhem';
+
     const price = num(token?.priceSol, NaN);
     const tokenUpdatedAt = Number(token?.updatedAt || token?.lastPriceAt || 0);
 
@@ -158,6 +163,12 @@ export class PaperEngine {
     const killSwitchClear = user?.killSwitch !== true;
 
     const checks = [
+      {
+        key: 'mayhemHardBlock',
+        name: 'Mayhem mode prohibited',
+        pass: !mayhemBlocked,
+        code: 'MAYHEM_MODE_BLOCKED'
+      },
       {
         key: 'validPrice',
         name: 'Valid price',
@@ -263,6 +274,17 @@ export class PaperEngine {
     this.ensureState();
     const settings = this.settings(rawSettings);
     if (!userId || !token?.mint || decision?.state !== 'BUY READY') return { action: 'NONE' };
+
+    // MEMEFLOW_MAYHEM_DECISION_GATE_V17
+    if (
+      token?.isMayhemMode === true ||
+      lower(token?.launchMode) === 'mayhem'
+    ) {
+      return {
+        action: 'REJECTED',
+        reason: 'MAYHEM_MODE_BLOCKED'
+      };
+    }
     if (settings.tradingEnvironment !== 'paper') return { action: 'NONE', reason: 'NOT_PAPER' };
 
     // AUTOMATE + PAPER means automatic paper execution. Repeated BUY READY

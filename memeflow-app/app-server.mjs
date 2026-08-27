@@ -56,8 +56,18 @@ function __mfOpenPositionMints(){
 
 function __mfIsCurrentScannerToken(token,now=Date.now()){
   void now;
-  // Token age is NOT a lifetime rule. A known hot Pump token remains scanner
-  // inventory until RAM cache capacity requires a cold eviction.
+
+  // MEMEFLOW_MAYHEM_HARD_BLOCK_V17
+  // Mayhem is a protocol-level hard exclusion, not a user setting:
+  // never scanner -> never card candidate -> never AI BUY READY -> never entry.
+  const mayhem=
+    token?.isMayhemMode===true ||
+    String(token?.launchMode||'').trim().toLowerCase()==='mayhem';
+
+  if(mayhem)return false;
+
+  // Token age is NOT a lifetime rule. A known hot standard Pump token remains
+  // scanner inventory until RAM cache capacity requires a cold eviction.
   return Boolean(token&&token.wsFirst===true);
 }
 
@@ -2405,6 +2415,13 @@ function __ingestPumpCreateEventDirect(
     return null;
   }
 
+  // MEMEFLOW_MAYHEM_DIRECT_CREATE_DROP_V17
+  if(e?.isMayhemMode===true){
+    discMetrics.mayhemCreateEventsBlocked=
+      Number(discMetrics.mayhemCreateEventsBlocked||0)+1;
+    return null;
+  }
+
   const decimals=6;
 
   const totalSupplyRaw=
@@ -2706,6 +2723,15 @@ function startDiscovery(i=0){
 
         // Critical repair: a valid CreateEvent is sufficient by itself.
         const isCreate=Boolean(directCreateEvent)||instructionCreate;
+
+        // MEMEFLOW_MAYHEM_DISCOVERY_DROP_V17
+        // Official CreateEvent carries the authoritative Mayhem bit.
+        if(directCreateEvent?.isMayhemMode===true){
+          discMetrics.mayhemCreateEventsBlocked=
+            Number(discMetrics.mayhemCreateEventsBlocked||0)+1;
+          discMetrics.eventsFiltered++;
+          return;
+        }
 
         // MEMEFLOW_FRESH_SESSION_SCANNER_V1
 

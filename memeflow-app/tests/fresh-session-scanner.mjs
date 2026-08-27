@@ -81,6 +81,9 @@ const currentScannerFn=app.slice(
   app.indexOf('function __mfLiveScannerTokens(')
 );
 assert.doesNotMatch(currentScannerFn,/token\.dead\s*!==\s*true/);
+assert.match(currentScannerFn,/MEMEFLOW_MAYHEM_HARD_BLOCK_V17/);
+assert.match(currentScannerFn,/token\?\.isMayhemMode===true/);
+assert.match(currentScannerFn,/launchMode/);
 
 const pruneScannerFn=app.slice(
   app.indexOf('function __mfPruneScannerRuntimeState('),
@@ -138,7 +141,10 @@ assert.doesNotMatch(discovery,/getTransaction/);
 assert.doesNotMatch(app,/async function processSignature\s*\(/);
 assert.doesNotMatch(app,/const discQueue=makeDiscoveryQueue\s*\(/);
 assert.doesNotMatch(app,/directCreateFallbackQueued/);
-assert.doesNotMatch(discovery,/EXCLUDE_MAYHEM_MODE/);
+// MEMEFLOW_MAYHEM_HARD_BLOCK_TEST_V17
+assert.match(app,/MEMEFLOW_MAYHEM_HARD_BLOCK_V17/);
+assert.match(discovery,/MEMEFLOW_MAYHEM_DISCOVERY_DROP_V17/);
+assert.match(discovery,/directCreateEvent\?\.isMayhemMode===true/);
 
 const directCreate=app.slice(
   app.indexOf('function __ingestPumpCreateEventDirect('),
@@ -146,6 +152,8 @@ const directCreate=app.slice(
 );
 assert.match(directCreate,/pumpCreatedAt/);
 assert.match(directCreate,/isMayhemMode:e\.isMayhemMode===true/);
+assert.match(directCreate,/MEMEFLOW_MAYHEM_DIRECT_CREATE_DROP_V17/);
+assert.match(directCreate,/if\(e\?\.isMayhemMode===true\)/);
 assert.match(directCreate,/source:'Pump CreateEvent WS'/);
 
 assert.match(holders,/EVENT_HOLDER_LEDGER_PERSIST/);

@@ -46,53 +46,60 @@ assert.match(app,/__mfQueueHistoryEvaluation\(hot\)/);
 assert.match(app,/HISTORY_EVAL_INTERVAL_MS/);
 
 
-// MEMEFLOW_BLOCKCHAIN_FACT_UI_TEST_V16
-// Browser cards update from actual backend facts. There is no token-data polling
-// cadence. The only timer is a transport/request safety mechanism.
+// MEMEFLOW_ONE_SECOND_MUTABLE_UI_TEST_V17
+// Backend remains event-driven, but the page deliberately refreshes current
+// mutable truth every exactly 1000ms. Static token identity/source UI must not
+// be touched by the one-second patcher.
 const tokenUi=fs.readFileSync(new URL('../system-tokens.js',import.meta.url),'utf8');
 
 assert.match(app,/let __mfLiveTokenRevision=0;/);
-assert.match(app,/const __liveRevision=\+\+__mfLiveTokenRevision;/);
-assert.match(app,/revision:__liveRevision/);
 assert.match(app,/MEMEFLOW_DECISION_MICROTASK_EVENT_V16/);
-assert.match(app,/queueMicrotask\(\(\)=>\{/);
-assert.match(app,/MEMEFLOW_CREATE_EVENT_MINT_AFTER_INGEST_V16/);
-assert.match(app,/mint:String\(directToken\.mint\)/);
-assert.match(app,/MEMEFLOW_SYSTEM_SSE_HEARTBEAT_EVENT_V16/);
-assert.match(app,/event: heartbeat/);
 assert.match(app,/MEMEFLOW_SINGLE_TOKEN_LIVE_ROUTE_V14/);
 
-assert.match(tokenUi,/MEMEFLOW_SYSTEM_TOKENS_EVENT_FACT_V16/);
-assert.match(tokenUi,/new EventSource\('\/api\/system\/stream'\)/);
-assert.match(tokenUi,/source\.addEventListener\([\s\S]*?'heartbeat'/);
-assert.match(tokenUi,/source\.addEventListener\([\s\S]*?'token'/);
-assert.match(tokenUi,/source\.addEventListener\([\s\S]*?'decision'/);
-assert.match(tokenUi,/source\.addEventListener\([\s\S]*?'create'/);
-assert.match(tokenUi,/\/api\/system\/live-token-state\?mint=/);
-assert.match(tokenUi,/MEMEFLOW_MUTABLE_DOM_ONLY_V16/);
+assert.match(tokenUi,/MEMEFLOW_SYSTEM_TOKENS_ONE_SECOND_V17/);
+assert.match(tokenUi,/const __MF_CARD_REFRESH_MS_V17=1000/);
+assert.match(tokenUi,/setInterval\([\s\S]*?__mfPollOneSecondV17[\s\S]*?__MF_CARD_REFRESH_MS_V17/);
+assert.match(tokenUi,/Promise\.allSettled\(\[[\s\S]*?loadTokens\(\)[\s\S]*?__mfRefreshOpenPositionsV16\(\)/);
+assert.match(tokenUi,/MEMEFLOW_ONE_SECOND_SNAPSHOT_APPLY_V17/);
+assert.match(tokenUi,/MEMEFLOW_ONE_SECOND_MUTABLE_ONLY_V17/);
 assert.match(tokenUi,/MEMEFLOW_STATIC_TOKEN_IDENTITY_V16/);
 assert.match(tokenUi,/MEMEFLOW_NO_METADATA_POLLING_V16/);
 assert.match(tokenUi,/MEMEFLOW_NO_TOKEN_MEDIA_POLLING_V16/);
-assert.match(tokenUi,/MEMEFLOW_OPEN_POSITION_EVENT_FACT_V16/);
-assert.match(tokenUi,/__mfKnownOpenMintV16/);
-assert.match(tokenUi,/void __mfRefreshOpenPositionsV16\(\)/);
 
-assert.doesNotMatch(tokenUi,/MEMEFLOW_SYSTEM_TOKENS_FIXED_POLL_V15/);
-assert.doesNotMatch(tokenUi,/setInterval\([\s\S]*?loadTokens/);
-assert.doesNotMatch(tokenUi,/setInterval\([\s\S]*?hydrateTokenCardsV16/);
-assert.doesNotMatch(tokenUi,/setInterval\([\s\S]*?hydrateTokenMediaV25/);
-assert.doesNotMatch(tokenUi,/MINT_REFRESH_COALESCE_MS_V14/);
-assert.doesNotMatch(tokenUi,/LIVE_RECONCILE_MS_V14/);
+const mutablePatch=tokenUi.slice(
+  tokenUi.indexOf('function __mfPatchMutableCardV17('),
+  tokenUi.indexOf('async function __mfPollOneSecondV17(')
+);
+
+assert.doesNotMatch(mutablePatch,/querySelector\(['"]\.token-name/);
+assert.doesNotMatch(mutablePatch,/querySelector\(['"]\.token-avatar/);
+assert.doesNotMatch(mutablePatch,/querySelector\(['"]\.token-pump-link/);
+assert.doesNotMatch(mutablePatch,/\.src\s*=/);
+assert.doesNotMatch(mutablePatch,/\.href\s*=/);
+
+assert.doesNotMatch(tokenUi,/MEMEFLOW_SYSTEM_TOKENS_EVENT_FACT_V16/);
+assert.doesNotMatch(tokenUi,/new EventSource\('\/api\/system\/stream'\)/);
+const oneSecondPoll=tokenUi.slice(
+  tokenUi.indexOf('async function __mfPollOneSecondV17('),
+  tokenUi.indexOf("if(typeof loadDiscoveryStatus==='function')")
+);
+
+assert.ok(
+  oneSecondPoll.length>0,
+  'V17 one-second poll function must exist'
+);
+assert.doesNotMatch(oneSecondPoll,/hydrateTokenCardsV16/);
+assert.doesNotMatch(oneSecondPoll,/hydrateTokenMediaV25/);
 
 // MEMEFLOW_LIVE_TOKEN_ASSET_NO_STORE_V1
 assert.match(app,/MEMEFLOW_LIVE_TOKEN_ASSET_NO_STORE_V1/);
 assert.match(app,/url\.pathname==='\/system-tokens\.js'/);
 assert.match(app,/url\.pathname==='\/system-tokens\.css'/);
-assert.match(tokenHtml,/system-tokens\.js\?v=event-fact-v16-20260827/);
+assert.match(tokenHtml,/system-tokens\.js\?v=one-second-mutable-v17-20260827/);
 assert.match(tokenHtml,/id="scannerStatus"/);
 assert.match(tokenUi,/MEMEFLOW_SCANNER_STATUS_V9/);
 assert.match(tokenUi,/MEMEFLOW_LIVE_TOKEN_TELEMETRY_V9/);
-assert.match(tokenUi,/MEMEFLOW_SYSTEM_TOKENS_EVENT_FACT_V16/);
+assert.match(tokenUi,/MEMEFLOW_SYSTEM_TOKENS_ONE_SECOND_V17/);
 assert.match(route,/MEMEFLOW_LIVE_TOKEN_FEED_BRIDGE_V13/);
 assert.match(tokenUi,/MEMEFLOW_LIVE_TOKEN_FEED_DIAGNOSTICS_V13/);
 assert.match(tokenUi,/feed \$\{state\.feedReturned\}\/\$\{state\.feedWorkingSet\}/);
