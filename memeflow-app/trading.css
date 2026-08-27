@@ -647,8 +647,7 @@ button { cursor: pointer; }
   gap: 6px;
 }
 
-.strategy-grid label,
-.strategy-grid .strategy-summary-item {
+.strategy-grid label {
   min-width: 0;
   min-height: 52px;
   padding: 7px 8px;
@@ -661,22 +660,18 @@ button { cursor: pointer; }
   background: rgba(3, 9, 13, .52);
 }
 
-.strategy-grid label > span,
-.strategy-grid .strategy-summary-item > span {
+.strategy-grid label > span {
   color: #5b7480;
   font-size: 7px;
 }
 
-.strategy-grid label > div,
-.strategy-grid .strategy-summary-item > div {
+.strategy-grid label > div {
   display: flex;
   align-items: baseline;
   gap: 4px;
 }
 
-.strategy-grid input[type="number"],
-.strategy-grid .strategy-value {
-  display: block;
+.strategy-grid input[type="number"] {
   width: 100%;
   min-width: 0;
   padding: 0;
@@ -760,8 +755,6 @@ button { cursor: pointer; }
   font-size: 8px;
   font-weight: 800;
 }
-
-.strategy-edit-btn { grid-column: 1 / -1; }
 
 .secondary-btn {
   border: 1px solid rgba(111, 154, 172, .10);
@@ -1681,3 +1674,95 @@ button { cursor: pointer; }
   margin-right: 2px;
 }
 /* ===== /MEMEFLOW_COPY_TRADE_BADGE_V2 ===== */
+
+/* ===== MEMEFLOW_COMPACT_NATIVE_TRADE_STRATEGY_V1 ===== */
+.strategy-summary-panel .panel-head {
+  min-height: 51px;
+}
+
+.strategy-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.strategy-edit-link {
+  min-width: 42px;
+  height: 25px;
+  padding: 0 8px;
+  border: 1px solid rgba(111, 154, 172, .08);
+  border-radius: 7px;
+  background: transparent;
+  color: #718995;
+  font-size: 7px;
+  font-weight: 720;
+}
+
+.strategy-edit-link:active {
+  border-color: rgba(85, 217, 255, .20);
+  color: #a9dce8;
+}
+
+.strategy-summary-list {
+  display: grid;
+}
+
+.strategy-summary-row {
+  min-height: 43px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-bottom: 1px solid rgba(111, 154, 172, .055);
+}
+
+.strategy-summary-row > div {
+  min-width: 0;
+  padding: 7px 10px;
+}
+
+.strategy-summary-row > div + div {
+  border-left: 1px solid rgba(111, 154, 172, .045);
+}
+
+.strategy-summary-row span {
+  display: block;
+  color: #526a75;
+  font-size: 6px;
+  line-height: 1.2;
+}
+
+.strategy-summary-row strong {
+  display: block;
+  margin-top: 4px;
+  overflow: hidden;
+  color: #c8d6dd;
+  font-size: 8px;
+  font-weight: 700;
+  line-height: 1.25;
+  font-variant-numeric: tabular-nums;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.strategy-summary-foot {
+  min-height: 27px;
+  padding: 7px 10px;
+  display: flex;
+  align-items: center;
+  color: #405965;
+  font-size: 6px;
+}
+
+.strategy-summary-panel .control-error {
+  margin: 7px 9px;
+}
+
+@media (max-width: 460px) {
+  .strategy-summary-row > div {
+    padding: 7px 9px;
+  }
+
+  .strategy-summary-row strong {
+    font-size: 8px;
+  }
+}
+/* ===== /MEMEFLOW_COMPACT_NATIVE_TRADE_STRATEGY_V1 ===== */

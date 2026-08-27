@@ -20,7 +20,7 @@
       sub: 'Live architecture and system state'
     },
     {
-      href: '/trading.html?v=single-strategy-editor-v1-20260826',
+      href: '/trading.html?v=compact-native-trade-strategy-v1-20260826',
       title: 'Trading Terminal',
       sub: 'Charts, candidates, positions and execution'
     },

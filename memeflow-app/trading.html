@@ -10,7 +10,7 @@
   <meta name="mf-trading-build" content="remove-mobile-ghost-wallet-v2-20260826">
   <meta name="theme-color" content="#03070a">
   <title>MEMEFLOW Trading Terminal</title>
-  <link rel="stylesheet" href="/trading.css?v=single-strategy-editor-v1-20260826">
+  <link rel="stylesheet" href="/trading.css?v=compact-native-trade-strategy-v1-20260826">
 <link rel="stylesheet" href="/memeflow-brand.css?v=final-v6">
   <!-- MEMEFLOW_TRADING_CHART_RESTORE_SITE_BG_V2 -->
   <!-- MEMEFLOW_TRADING_CHART_MATCH_PANEL_V3 -->
@@ -205,66 +205,66 @@ html[data-mf-chart-unify-all-states="1"] [data-mf-chart-placeholder="1"] {
       </section>
 
       <aside class="panel control-panel strategy-summary-panel">
-        <div class="panel-head">
+        <div class="panel-head compact-head">
           <div>
             <span class="eyebrow">SERVER STRATEGY</span>
             <h2>Trade strategy</h2>
           </div>
-          <span id="modeBadge" class="mode-badge">OBSERVE</span>
+          <div class="strategy-head-actions">
+            <span id="modeBadge" class="mode-badge">OBSERVE</span>
+            <button id="editStrategyBtn" class="strategy-edit-link" type="button">Edit</button>
+          </div>
         </div>
 
-        <section class="control-section">
-          <div class="section-title">Current settings</div>
-          <div class="strategy-grid strategy-summary-grid">
-            <div class="strategy-summary-item">
+        <div class="strategy-summary-list">
+          <div class="strategy-summary-row">
+            <div>
               <span>Position</span>
-              <div><strong id="strategyPosition" class="strategy-value">—</strong></div>
+              <strong id="strategyPosition">—</strong>
             </div>
-
-            <div class="strategy-summary-item">
+            <div>
               <span>Stops</span>
-              <div><strong id="strategyStops" class="strategy-value">—</strong></div>
-            </div>
-
-            <div class="strategy-summary-item">
-              <span>TP1</span>
-              <div><strong id="strategyTp1" class="strategy-value">—</strong></div>
-            </div>
-
-            <div class="strategy-summary-item">
-              <span>TP2</span>
-              <div><strong id="strategyTp2" class="strategy-value">—</strong></div>
-            </div>
-
-            <div class="strategy-summary-item">
-              <span>Runner / hold</span>
-              <div><strong id="strategyRunner" class="strategy-value">—</strong></div>
-            </div>
-
-            <div class="strategy-summary-item">
-              <span>Exit pressure</span>
-              <div><strong id="strategyExitPressure" class="strategy-value">—</strong></div>
-            </div>
-
-            <div class="strategy-summary-item">
-              <span>Daily limits</span>
-              <div><strong id="strategyDailyLimits" class="strategy-value">—</strong></div>
-            </div>
-
-            <div class="strategy-summary-item">
-              <span>Position limits</span>
-              <div><strong id="strategyPositionLimits" class="strategy-value">—</strong></div>
+              <strong id="strategyStops">—</strong>
             </div>
           </div>
-        </section>
+
+          <div class="strategy-summary-row">
+            <div>
+              <span>TP1</span>
+              <strong id="strategyTp1">—</strong>
+            </div>
+            <div>
+              <span>TP2</span>
+              <strong id="strategyTp2">—</strong>
+            </div>
+          </div>
+
+          <div class="strategy-summary-row">
+            <div>
+              <span>Runner / hold</span>
+              <strong id="strategyRunner">—</strong>
+            </div>
+            <div>
+              <span>Exit pressure</span>
+              <strong id="strategyExitPressure">—</strong>
+            </div>
+          </div>
+
+          <div class="strategy-summary-row">
+            <div>
+              <span>Daily limits</span>
+              <strong id="strategyDailyLimits">—</strong>
+            </div>
+            <div>
+              <span>Position limits</span>
+              <strong id="strategyPositionLimits">—</strong>
+            </div>
+          </div>
+        </div>
 
         <div id="controlError" class="control-error" hidden></div>
 
-        <div class="control-actions">
-          <button id="editStrategyBtn" class="secondary-btn strategy-edit-btn" type="button">Edit strategy</button>
-        </div>
-
-        <div class="control-foot">
+        <div class="strategy-summary-foot">
           <span id="saveState">Loading server strategy…</span>
         </div>
       </aside>
@@ -358,7 +358,7 @@ html[data-mf-chart-unify-all-states="1"] [data-mf-chart-placeholder="1"] {
 /* ===== /MEMEFLOW_TRADING_CHART_UNIFY_ALL_STATES_V4 ===== */
 </script>
 
-  <script src="/memeflow-nav.js?v=global-right-drawer-single-strategy-editor-v1-20260826" defer></script>
+  <script src="/memeflow-nav.js?v=global-right-drawer-compact-native-trade-strategy-v1-20260826" defer></script>
 </body>
 </html>
 
