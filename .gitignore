@@ -72,3 +72,6 @@ target/
 **/*keypair*.json
 **/*private-key*
 **/*private_key*
+
+# MEMEFLOW Smart Vault temporary code backups
+**/roundtrip-before-fix*.mjs
