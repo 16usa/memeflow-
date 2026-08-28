@@ -1,0 +1,130 @@
+diff --git a/memeflow-app/src/evaluate.mjs b/memeflow-app/src/evaluate.mjs
+index 9cda8fb..0d9221e 100644
+--- a/memeflow-app/src/evaluate.mjs
++++ b/memeflow-app/src/evaluate.mjs
+@@ -3,7 +3,8 @@ import {evaluateSettingsGate,tokenAgeMinutes} from './settings-gate.mjs';
+ const clampScore = value =>
+   Math.max(0, Math.min(100, Math.round(Number(value) || 0)));
+ 
+-const finite = value => Number.isFinite(Number(value));
++const finite = value =>
++  value !== null && value !== undefined && value !== '' && Number.isFinite(Number(value));
+ 
+ function independentAiScore(token = {}) {
+   let score = 0;
+@@ -74,11 +75,51 @@ function independentAiScore(token = {}) {
+   return {score: clampScore(score), quality};
+ }
+ 
++/*
++ * Decision confidence is recomputed from CURRENT evidence on every evaluation.
++ * token.dataQuality is only an enrichment snapshot and can stay stale while the
++ * WS hot path later fills holder/market fields. Using that snapshot as the live
++ * confidence gate can pin a recovered token at 0% forever.
++ */
++function independentEvidenceConfidence(token = {}) {
++  const components = [
++    {key: 'holders', available: finite(token.holderCount), points: 20},
++    {key: 'top10', available: finite(token.top10Pct), points: 20},
++    {key: 'developer', available: finite(token.developerPct), points: 20},
++    {key: 'buyPressure', available: finite(token.buyPressure), points: 20},
++    {
++      key: 'verifiedPrice',
++      available: finite(token.priceSol) && Number(token.priceSol) > 0,
++      points: 10,
++    },
++    {key: 'freshHolders', available: token.holderFresh === true, points: 10},
++  ];
++
++  const confidence = components.reduce(
++    (sum, component) => sum + (component.available ? component.points : 0),
++    0,
++  );
++
++  return {
++    confidence: clampScore(confidence),
++    components: components.map(component => ({
++      key: component.key,
++      available: component.available,
++      points: component.available ? component.points : 0,
++      maxPoints: component.points,
++    })),
++  };
++}
++
+ export function evaluate(token, s = {}) {
+   // AI quality remains independent from user policy.
+   const ai = independentAiScore(token);
+   const score = ai.score;
+-  const confidence = clampScore((finite(token.dataQuality) ? Number(token.dataQuality) : 0) * 100);
++
++  // MEMEFLOW_V13_LIVE_CONFIDENCE_RECOVERY
++  // Recompute from live fields every time; never gate on stale dataQuality.
++  const evidence = independentEvidenceConfidence(token);
++  const confidence = evidence.confidence;
+ 
+   // One canonical settings gate is shared by the evaluator and the pipeline.
+   // A known FAIL always outranks WAITING so an already-ineligible token cannot
+@@ -170,7 +211,9 @@ export function evaluate(token, s = {}) {
+     aiQuality: {
+       model: 'MEMEFLOW_INDEPENDENT_AI_V1',
+       score,
+-      components: ai.quality
++      confidence,
++      components: ai.quality,
++      confidenceComponents: evidence.components
+     },
+     settingsEvaluation: {
+       state: policy.state,
+diff --git a/memeflow-app/tests/settings-gate.mjs b/memeflow-app/tests/settings-gate.mjs
+index 7e3e355..4a113d6 100644
+--- a/memeflow-app/tests/settings-gate.mjs
++++ b/memeflow-app/tests/settings-gate.mjs
+@@ -57,6 +57,47 @@ const b=evaluate(baseToken,{...settings,minScore:100,minConfidence:100});
+ assert.equal(a.score,b.score);
+ assert.equal(a.confidence,b.confidence);
+ 
++// Regression: stale dataQuality must not pin a fully enriched live token at 0%.
++const staleQuality=evaluate(
++  {...baseToken,dataQuality:0},
++  {...settings,minScore:0,minConfidence:70}
++);
++assert.equal(staleQuality.confidence,100);
++assert.equal(staleQuality.state,'BUY READY');
++assert.equal(staleQuality.reasons.some(x=>String(x).includes('confidence 0%')),false);
++
++// Null/missing fields must not be treated as numeric zero and inflate score/confidence.
++const missingEvidence=evaluate(
++  {priceSol:null,holderFresh:false,dataQuality:0},
++  {minScore:0,minConfidence:70,requireFreshHolderSnapshot:true}
++);
++assert.equal(missingEvidence.score,0);
++assert.equal(missingEvidence.confidence,0);
++assert.equal(missingEvidence.state,'WAITING');
++
++// WS recovery: holder evidence can arrive first; missing market evidence keeps WAITING.
++const holderPhase=evaluate(
++  {...baseToken,buyPressure:null,priceSol:null,dataQuality:0},
++  {...settings,minScore:0,minConfidence:70,minBuyPressure:1.5}
++);
++assert.equal(holderPhase.confidence,70);
++assert.equal(holderPhase.state,'WAITING');
++
++// Once the WS market event fills price + pressure, the same token becomes BUY READY.
++const marketPhase=evaluate(
++  {...baseToken,buyPressure:2,priceSol:0.00001,dataQuality:0},
++  {...settings,minScore:0,minConfidence:70,minBuyPressure:1.5}
++);
++assert.equal(marketPhase.confidence,100);
++assert.equal(marketPhase.state,'BUY READY');
++
++// Risk/policy failures still outrank recovered confidence.
++const riskBlocked=evaluate(
++  {...baseToken,top10Pct:40,dataQuality:0},
++  {...settings,minScore:0,minConfidence:70,maxTop10Pct:25}
++);
++assert.equal(riskBlocked.confidence,100);
++assert.equal(riskBlocked.state,'BLOCKED');
+ 
+ const entries=[
+   {uid:'u1',version:2,settings:{launchPlatforms:['pump'],maxTop10Pct:10}},

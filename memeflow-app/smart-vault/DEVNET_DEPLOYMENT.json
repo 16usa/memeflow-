@@ -1,0 +1,12 @@
+{
+  "environment": "devnet",
+  "rpc": "https://api.devnet.solana.com",
+  "programId": "47tctW8xjfXo3FXZass23k3oaQ8G2AkTUnGCJtzVEpYV",
+  "deployPayer": "6r1DVYcW6Tbr7zRJuzEH9JFdWzj2TAXQWxX3LLQtsXCG",
+  "artifact": "target/deploy/memeflow_smart_vault.so",
+  "artifactSha256": "cf3eda829643322b23a2b4242948a1b658e060b8aa76ea26ba775b7cb117d696",
+  "artifactBytes": 208744,
+  "verifiedAt": "2026-08-28T00:35:56Z",
+  "productionAutoLiveUnlocked": false,
+  "mainnetDeployment": false
+}

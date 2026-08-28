@@ -1,8 +1,8 @@
-run = "cd memeflow-app && exec node app-server.mjs"
+run = "cd memeflow-app && exec node live-bootstrap.mjs"
 modules = ["nodejs-24", "python-base-3.13"]
 
 [deployment]
-run = ["node", "memeflow-app/app-server.mjs"]
+run = ["node", "memeflow-app/live-bootstrap.mjs"]
 deploymentTarget = "autoscale"
 
 [deployment.postBuild]
@@ -19,7 +19,7 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "cd memeflow-app && node app-server.mjs"
+args = "cd memeflow-app && node live-bootstrap.mjs"
 waitForPort = 3000
 
 [workflows.workflow.metadata]

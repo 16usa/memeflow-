@@ -1,0 +1,6 @@
+diff --git a/memeflow-app/trading.html b/memeflow-app/trading.html
+--- a/memeflow-app/trading.html
++++ b/memeflow-app/trading.html
+@@
+-  <script type="module" src="/trading.js?v=v3026-indicators2"></script>
++  <script type="module" src="/trading.js?v=terminal-recovery-20260822-1"></script>

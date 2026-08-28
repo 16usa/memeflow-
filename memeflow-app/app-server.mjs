@@ -825,12 +825,44 @@ const DECISION_RECOVERY_DELAY_MS=Number(process.env.DECISION_RECOVERY_DELAY_MS||
 const DECISION_RECOVERY_TOKEN_LIMIT=Number(process.env.DECISION_RECOVERY_TOKEN_LIMIT||200);
 const DECISION_RECOVERY_ACTIVE_USER_HOURS=Number(process.env.DECISION_RECOVERY_ACTIVE_USER_HOURS||24);
 function cookies(req){return Object.fromEntries((req.headers.cookie||'').split(';').filter(Boolean).map(x=>{const i=x.indexOf('=');return [x.slice(0,i).trim(),decodeURIComponent(x.slice(i+1))]}))}
-function user(req,res){let id=cookies(req).mf_session;if(!id&&ALLOW_ANON){id=sessionId();res.setHeader('Set-Cookie',`mf_session=${encodeURIComponent(id)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=31536000`)}return id?store.user(id):null}
+function user(req,res){
+ let id=cookies(req).mf_session;
+ if(!id&&ALLOW_ANON){
+  id=sessionId();
+  res.setHeader('Set-Cookie',`mf_session=${encodeURIComponent(id)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=31536000`);
+ }
+ if(!id)return null;
+ const local=store.user(id);
+ const alias=String(local?.sessionAliasTo||'').trim();
+ if(alias&&alias!==id){
+  const canonical=store.user(alias);
+  if(canonical)return canonical;
+ }
+ return local;
+}
 function json(res,status,obj){res.statusCode=status;res.setHeader('content-type','application/json; charset=utf-8');res.setHeader('cache-control','no-store');res.end(JSON.stringify(obj))}
 async function rawBody(req,limit=1e6){const chunks=[];let n=0;for await(const c of req){n+=c.length;if(n>limit)throw Error('body too large');chunks.push(c)}return Buffer.concat(chunks).toString('utf8')}
 async function body(req){const s=await rawBody(req);return s?JSON.parse(s):{}}
 function origin(req){if(process.env.APP_URL||process.env.APP_BASE_URL)return (process.env.APP_URL||process.env.APP_BASE_URL).replace(/\/$/,'');const proto=(req.headers['x-forwarded-proto']||'http').split(',')[0].trim();const host=(req.headers['x-forwarded-host']||req.headers.host||'localhost').split(',')[0].trim();return `${proto}://${host}`}
 function hasLiveEntitlement(u){return Boolean(u?.isOwner||u?.liveEntitled)}
+
+// MEMEFLOW_ACCOUNT_HANDOFF_FIX7
+const __mfAccountHandoffs=new Map();
+const __mfAccountHandoffTtlMs=120000;
+
+function __mfPruneAccountHandoffs(){
+ const now=Date.now();
+ for(const [token,row] of __mfAccountHandoffs){
+  if(!row||row.expiresAt<=now)__mfAccountHandoffs.delete(token);
+ }
+}
+
+function __mfSessionFingerprint(req){
+ const raw=String(cookies(req).mf_session||'');
+ if(!raw)return null;
+ return crypto.createHash('sha256').update(raw).digest('hex').slice(0,12);
+}
+// /MEMEFLOW_ACCOUNT_HANDOFF_FIX7
 function billingStatus(u){const owner=Boolean(u.isOwner);const stripe=Boolean(u.liveEntitled);return {plan:owner?'owner':(u.plan||'free'),subscriptionStatus:owner?'owner_grant':(u.subscriptionStatus||'free'),liveEntitled:owner||stripe,entitlementSource:owner?'owner':(stripe?'stripe':'none'),isOwner:owner,price:49.99,currency:'USD',stripeCustomerId:u.stripeCustomerId||null,currentPeriodEnd:owner?null:(u.currentPeriodEnd||null),cancelAtPeriodEnd:owner?false:Boolean(u.cancelAtPeriodEnd)}}
 /* MEMEFLOW_CANONICAL_CANDIDATE_PAYLOAD_V1 */
 /* MEMEFLOW_ALL_TOKEN_MARKET_METRICS_V4
@@ -4496,6 +4528,90 @@ if(url.pathname==='/api/ai/decisions'){
   }
  if(url.pathname==='/api/copy-trading/status'&&req.method==='GET')return json(res,200,copyTrading.status(u.id));
  if(url.pathname==='/api/settings'&&req.method==='GET'){const settings=store.settings(u.id);return json(res,200,{settings,version:u.settingsVersion||1,killSwitchActive:u.killSwitch,capabilities:{liveAutomation:hasLiveEntitlement(u),paperAutomation:true,discoveryPlatforms:['pump'],adaptiveProfile:false},profilePresets:PROFILE_PRESETS})}
+ // MEMEFLOW_ACCOUNT_HANDOFF_ROUTES_FIX7
+ if(url.pathname==='/api/session/handoff-v2/create'&&req.method==='POST'){
+  if(!u)return json(res,401,{error:'AUTH_REQUIRED'});
+  __mfPruneAccountHandoffs();
+  const token=crypto.randomBytes(32).toString('base64url');
+  __mfAccountHandoffs.set(token,{
+   sourceUserId:u.id,
+   expiresAt:Date.now()+__mfAccountHandoffTtlMs
+  });
+  return json(res,200,{
+   token,
+   expiresInMs:__mfAccountHandoffTtlMs,
+   source:{
+    session:__mfSessionFingerprint(req),
+    isOwner:Boolean(u.isOwner),
+    liveEntitled:Boolean(u.liveEntitled),
+    entitled:hasLiveEntitlement(u)
+   }
+  });
+ }
+
+ if(url.pathname==='/api/session/handoff-v2/redeem'&&req.method==='POST'){
+  if(!u)return json(res,401,{error:'AUTH_REQUIRED'});
+  __mfPruneAccountHandoffs();
+  const b=await body(req);
+  const token=String(b.token||'').trim();
+  const row=__mfAccountHandoffs.get(token);
+  if(token)__mfAccountHandoffs.delete(token);
+
+  if(!row||row.expiresAt<=Date.now()){
+   return json(res,410,{
+    error:'SESSION_HANDOFF_EXPIRED',
+    message:'The MEMEFLOW handoff expired. Return to Safari and open Phantom again.'
+   });
+  }
+
+  const source=store.user(row.sourceUserId);
+  if(!source){
+   return json(res,410,{
+    error:'SESSION_HANDOFF_SOURCE_MISSING',
+    message:'The original MEMEFLOW account is no longer available.'
+   });
+  }
+
+  const localSessionId=String(cookies(req).mf_session||'').trim();
+  if(!localSessionId){
+   return json(res,400,{error:'DESTINATION_SESSION_MISSING'});
+  }
+
+  const local=store.user(localSessionId);
+  if(!local){
+   return json(res,400,{error:'DESTINATION_USER_MISSING'});
+  }
+
+  // Link this Phantom-browser cookie to the canonical Safari account.
+  // We do NOT copy/forge Pro or owner flags. Future requests resolve the
+  // canonical source user and therefore follow its CURRENT entitlement.
+  local.sessionAliasTo=source.id;
+  local.sessionAliasLinkedAt=new Date().toISOString();
+  local.sessionAliasSource='phantom_handoff_v2';
+  store.save();
+
+  return json(res,200,{
+   ok:true,
+   destinationSession:__mfSessionFingerprint(req),
+   canonicalUserIdHash:crypto.createHash('sha256').update(source.id).digest('hex').slice(0,12),
+   isOwner:Boolean(source.isOwner),
+   liveEntitled:Boolean(source.liveEntitled),
+   entitled:hasLiveEntitlement(source)
+  });
+ }
+
+ if(url.pathname==='/api/session/status'&&req.method==='GET'){
+  return json(res,200,{
+   session:__mfSessionFingerprint(req),
+   userIdHash:u?crypto.createHash('sha256').update(u.id).digest('hex').slice(0,12):null,
+   isOwner:Boolean(u?.isOwner),
+   liveEntitled:Boolean(u?.liveEntitled),
+   entitled:Boolean(u&&hasLiveEntitlement(u)),
+   entitlementSource:u?.isOwner?'owner':u?.liveEntitled?'pro':'none'
+  });
+ }
+ // /MEMEFLOW_ACCOUNT_HANDOFF_ROUTES_FIX7
+
  if(url.pathname==='/api/settings/audit'&&req.method==='GET')return json(res,200,{history:store.settingsHistory(u.id,Number(url.searchParams.get('limit')||100))});
  if(url.pathname==='/api/settings'&&req.method==='PUT'){const b=await body(req);const checked=validateSettings(b.settings||{});if(!checked.ok)return json(res,400,{error:'INVALID_SETTINGS',message:checked.errors.join(' '),errors:checked.errors});if(checked.settings.tradingEnvironment==='live'&&!hasLiveEntitlement(u))return json(res,403,{error:'LIVE_ENTITLEMENT_REQUIRED',message:'LIVE trading environment requires an active Pro subscription or owner entitlement.'});if(b.version!=null&&Number(b.version)!==Number(u.settingsVersion||1))return json(res,409,{error:'SETTINGS_VERSION_CONFLICT',message:'Settings changed on the server. Reload before saving again.',version:u.settingsVersion||1});const before=JSON.parse(JSON.stringify(store.settings(u.id)));const shadow=checked.settings.shadowValidation?shadowValidateSettings(checked.settings,50):null;if(shadow?.errors?.length)return json(res,400,{error:'SHADOW_VALIDATION_FAILED',message:'Proposed settings could not be evaluated safely.',shadowValidation:shadow});const saved=store.setSettings(u.id,checked.settings);if(saved.changeLog!==false)store.recordSettingsChange(u.id,before,saved,{actor:u.id,source:'settings_put'});const decisionsReevaluated=reevaluateUser(u.id);return json(res,200,{settings:saved,version:u.settingsVersion,decisionsReevaluated,shadowValidation:shadow})}
  if(url.pathname==='/api/settings/defaults'&&req.method==='POST'){const before=JSON.parse(JSON.stringify(store.settings(u.id)));const saved=store.setSettings(u.id,defaults());if(saved.changeLog!==false)store.recordSettingsChange(u.id,before,saved,{actor:u.id,source:'restore_defaults'});const decisionsReevaluated=reevaluateUser(u.id);return json(res,200,{settings:saved,version:u.settingsVersion,decisionsReevaluated})}

@@ -1,0 +1,46 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import {PublicKey} from '@solana/web3.js';
+
+const PUMP='6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P';
+const PUMPSWAP='pAMMBay6oceH9fJKBRHGP5D4bD4sWpmSwMn52FMfXEA';
+const WSOL='So11111111111111111111111111111111111111112';
+
+function disc(name){
+  return [...crypto.createHash('sha256').update(`global:${name}`).digest().subarray(0,8)];
+}
+assert.deepEqual(disc('buy_v2'), [184,23,238,97,103,197,211,61]);
+assert.deepEqual(disc('sell_v2'), [93,246,130,60,231,233,64,178]);
+
+// Solana public keys are 32 bytes encoded as Base58.
+// Their textual Base58 representation is NOT guaranteed to be 44 characters.
+// Validate by decoding them as real Solana public keys instead.
+for (const address of [PUMP,PUMPSWAP,WSOL]) {
+  assert.doesNotThrow(()=>new PublicKey(address));
+}
+assert.equal(new PublicKey(PUMP).toBase58(),PUMP);
+assert.equal(new PublicKey(PUMPSWAP).toBase58(),PUMPSWAP);
+assert.equal(new PublicKey(WSOL).toBase58(),WSOL);
+
+function approveBuy({paused,maxTrade,daily,spent,quoteLimit,actualDebit}){
+  if(paused) return 'PAUSED';
+  if(quoteLimit>maxTrade || actualDebit>maxTrade) return 'PER_TRADE';
+  if(spent+actualDebit>daily) return 'DAILY';
+  return 'OK';
+}
+
+assert.equal(approveBuy({
+  paused:true,maxTrade:10,daily:100,spent:0,quoteLimit:1,actualDebit:1
+}),'PAUSED');
+assert.equal(approveBuy({
+  paused:false,maxTrade:10,daily:100,spent:0,quoteLimit:11,actualDebit:1
+}),'PER_TRADE');
+assert.equal(approveBuy({
+  paused:false,maxTrade:10,daily:100,spent:95,quoteLimit:5,actualDebit:6
+}),'DAILY');
+assert.equal(approveBuy({
+  paused:false,maxTrade:10,daily:100,spent:20,quoteLimit:8,actualDebit:9
+}),'OK');
+
+console.log('smart-vault policy model: OK');
+console.log('Pump v2 BUY/SELL only; PumpSwap intentionally blocked in Phase A.');

@@ -1,0 +1,7 @@
+[workspace]
+members = ["programs/*"]
+resolver = "2"
+
+[workspace.dependencies]
+anchor-lang = "1.0.2"
+solana-program = "3"

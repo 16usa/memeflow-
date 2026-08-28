@@ -1,0 +1,182 @@
+/* MEMEFLOW FLOW V4.2 · NEURAL NETWORK VIEW */
+
+#systemCanvas,
+#memeflowTrue3DHost,
+#labels,
+.scene-hint{
+  opacity:0 !important;
+  pointer-events:none !important;
+}
+
+.viewport-wrap{
+  min-height:520px !important;
+  height:clamp(520px,64vh,760px) !important;
+  background:
+    radial-gradient(ellipse at 50% 52%, rgba(34,120,144,.05), transparent 30%),
+    linear-gradient(180deg,#04090d 0%,#03070a 100%) !important;
+}
+
+.mf-flow-v4{
+  position:absolute;
+  inset:0;
+  z-index:7;
+  overflow:hidden;
+  pointer-events:auto;
+  background:
+    radial-gradient(ellipse at 52% 50%, rgba(48,122,144,.04), transparent 34%);
+}
+
+.mf-flow-v4 canvas{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  display:block;
+  touch-action:none;
+}
+
+.mf-flow-v4-topline{
+  position:absolute;
+  left:14px;
+  right:14px;
+  top:12px;
+  z-index:4;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  pointer-events:none;
+}
+
+.mf-flow-v4-mode{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  color:#7c8f9d;
+  font:800 7px/1 system-ui,-apple-system,sans-serif;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+}
+
+.mf-flow-v4-mode i{
+  width:6px;
+  height:6px;
+  border-radius:50%;
+  background:#4de6a1;
+  box-shadow:0 0 10px rgba(77,230,161,.55);
+}
+
+.mf-flow-v4-rates{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  padding:7px 10px;
+  border:1px solid rgba(130,165,190,.12);
+  border-radius:10px;
+  background:rgba(4,8,12,.54);
+  backdrop-filter:blur(9px);
+  -webkit-backdrop-filter:blur(9px);
+  box-shadow:
+    inset 0 1px rgba(255,255,255,.018),
+    0 10px 26px rgba(0,0,0,.14);
+}
+
+.mf-flow-v4-rate{
+  min-width:72px;
+}
+
+.mf-flow-v4-rate span{
+  display:block;
+  color:#647986;
+  font:800 6px/1 system-ui,-apple-system,sans-serif;
+  letter-spacing:.13em;
+  text-transform:uppercase;
+}
+
+.mf-flow-v4-rate b{
+  display:inline-block;
+  margin-top:4px;
+  color:#e2eef4;
+  font:800 11px/1 system-ui,-apple-system,sans-serif;
+  font-variant-numeric:tabular-nums;
+}
+
+.mf-flow-v4-rate small{
+  margin-left:3px;
+  color:#677a86;
+  font:650 6px/1 system-ui,-apple-system,sans-serif;
+}
+
+.mf-flow-v4-rate.decode b{ color:#59daf5; }
+.mf-flow-v4-rate.share b{ color:#8fa1ac; }
+.mf-flow-v4-rate.queue b{ color:#8fa1ac; }
+
+.mf-flow-v4-foot{
+  position:absolute;
+  left:14px;
+  bottom:12px;
+  z-index:4;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  color:#6c818e;
+  pointer-events:none;
+  font:800 7px/1 system-ui,-apple-system,sans-serif;
+  letter-spacing:.13em;
+  text-transform:uppercase;
+}
+
+.mf-flow-v4-foot i{
+  width:6px;
+  height:6px;
+  border-radius:50%;
+  background:#49e5a0;
+  box-shadow:0 0 10px rgba(73,229,160,.45);
+}
+
+@media(max-width:760px){
+  .viewport-wrap{
+    min-height:520px !important;
+    height:520px !important;
+  }
+
+  .mf-flow-v4-topline{
+    left:9px;
+    right:9px;
+    top:9px;
+  }
+
+  .mf-flow-v4-mode{
+    display:none;
+  }
+
+  .mf-flow-v4-rates{
+    width:100%;
+    justify-content:space-between;
+    gap:5px;
+    padding:7px 8px;
+  }
+
+  .mf-flow-v4-rate{
+    min-width:0;
+  }
+
+  .mf-flow-v4-rate span{
+    font-size:5.5px;
+  }
+
+  .mf-flow-v4-rate b{
+    font-size:10px;
+  }
+
+  .mf-flow-v4-rate small{
+    display:none;
+  }
+
+  .mf-flow-v4-foot{
+    left:10px;
+    bottom:10px;
+    font-size:6px;
+    opacity:.78;
+  }
+}

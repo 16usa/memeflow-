@@ -1,0 +1,18 @@
+[package]
+name = "memeflow-smart-vault"
+version = "0.1.0"
+description = "MEMEFLOW non-custodial policy vault for autonomous Pump.fun execution"
+edition = "2021"
+license = "UNLICENSED"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "memeflow_smart_vault"
+
+[features]
+default = []
+idl-build = ["anchor-lang/idl-build"]
+
+[dependencies]
+anchor-lang = { workspace = true }
+solana-program = { workspace = true }

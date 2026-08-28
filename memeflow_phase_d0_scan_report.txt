@@ -1,0 +1,1228 @@
+MEMEFLOW PHASE D0 SCAN REPORT V3
+Generated UTC: 2026-08-28T00:52:58.543970+00:00
+Files indexed: 9000
+
+== 1) LAUNCH / ROOT CANDIDATES ==
+package.json
+live-bootstrap.mjs
+.phantom-session-handoff-fix6-backup-20260827-230114/live-bootstrap.mjs
+.phantom-session-handoff-fix6-backup-20260827-230045/live-bootstrap.mjs
+.phantom-session-handoff-fix5-backup-20260827-225651/live-bootstrap.mjs
+.phantom-session-handoff-fix5-backup-20260827-225651/package.json
+.phantom-connect-phase1-fix3-backup-20260827-223724/live-bootstrap.mjs
+.phantom-connect-phase1-fix3-backup-20260827-223724/package.json
+.phantom-connect-phase1-fix2-backup-20260827-223114/live-bootstrap.mjs
+.phantom-connect-phase1-fix2-backup-20260827-223114/package.json
+.phantom-connect-phase1-fix-backup-20260827-222814/live-bootstrap.mjs
+.phantom-connect-phase1-fix-backup-20260827-222814/package.json
+.phantom-connect-phase1-backup-20260827-222458/live-bootstrap.mjs
+.phantom-connect-phase1-backup-20260827-222458/package.json
+.live-solana-v1-backup-20260827-212609/package.json
+.memeflow-open-position-mc-v20-backup-20260827-124643/package.json
+.memeflow-mc-v21-1-backup-20260827-130403/package.json
+.patch-backups/v23-4-manual/package.json
+.patch-backups/v23-3-20260827-151311/package.json
+.patch-backups/v23-20260827-150312/package.json
+.patch-backups/v23-2-20260827-151038/package.json
+.patch-backups/v23-1-20260827-150625/package.json
+.patch-backups/v23-1-20260827-150558/package.json
+.patch-backups/gmgn-sort-v25-20260827-171325/package.json
+.patch-backups/gmgn-sort-v25-2-20260827-173527/package.json
+.patch-backups/gmgn-sort-v25-2-20260827-173118/package.json
+.patch-backups/gmgn-sort-v25-1-20260827-172209/package.json
+.patch-backups/gmgn-sort-v25-1-20260827-172027/package.json
+
+== 2) PACKAGE.JSON SUMMARY ==
+name: memeflow-replit-ready
+type: module
+scripts: {
+  "start": "node live-bootstrap.mjs",
+  "test": "node tests/token-sort-style-v25-1.mjs && node tests/token-sort-ui-v25.mjs && node tests/live-ranking-reorder-v23.mjs && node tests/ws-only-preopen-rpc-v1.mjs && node tests/settings-architecture-v2.mjs && node tests/strict-entry-admission.mjs && node tests/feed-ranking.mjs && node tests/opportunity-engine.mjs && node tests/live-policy-performance.mjs && node tests/fresh-session-scanner.mjs && node tests/token-registry.mjs && node tests/realtime-update-path.mjs && node tests/live-market-truth.mjs && node tests/open-position-live-mc-v20.mjs && node tests/ws-first-preopen-rpc.mjs && node tests/settings-gate.mjs && node tests/profile-presets.mjs && node tests/paper-engine-auto.mjs && node tests/integration.mjs && node tests/billing-cycle.mjs && node tests/owner-live.mjs && node tests/copy-trading.mjs && node tests/copy-trading-runtime-v2.mjs && node tests/copy-trading-multi-wallet-v3.mjs && node tests/live-noncustodial-v1.mjs",
+  "benchmark": "node tests/live-policy-performance.mjs && node tests/load-500-users.mjs",
+  "build:phantom-connect": "esbuild phantom-connect-client.mjs --bundle --minify --platform=browser --format=iife --target=es2020 --outfile=phantom-connect-client.bundle.js"
+}
+relevantDependencies: {
+  "@phantom/browser-sdk": "^2.0.2",
+  "@solana/web3.js": "^1.98.4"
+}
+
+== 3) SERVER ENTRYPOINT LOCATIONS ==
+app-server.before-paper-automate.mjs:363
+app-server.mjs:5252
+.phantom-account-handoff-fix7-backup-20260827-230930/app-server.mjs:5136
+.wallet-cluster-risk-v3-backup-20260825-165333/app-server.mjs:3347
+.wallet-cluster-risk-v2-backup-20260825-164446/app-server.mjs:3347
+.realtime-fix-backup-20260827-015005/app-server.mjs:3888
+.patch-backup-all-token-settings-20260826-121536/app-server.mjs:4015
+.memeflow-open-position-mc-v20-backup-20260827-124643/app-server.mjs:4956
+.memeflow-mc-v21-1-backup-20260827-130403/app-server.mjs:5049
+.memeflow-live-token-states-v7-backup-20260823-214047/app-server.mjs:2780
+.memeflow-live-token-states-v6-backup-20260823-204404/app-server.mjs:2780
+.memeflow-live-token-states-v5-backup-20260823-203738/app-server.mjs:2780
+.memeflow-live-system-sse-v4-backup-20260823-202519/app-server.mjs:2701
+.memeflow-live-system-sse-v3-backup-20260823-202017/app-server.mjs:2701
+.backups/v22-open-position-queue-20260827-144912/app-server.mjs:5049
+tests/billing-cycle.mjs:10
+tests/billing-cycle.mjs:20
+backup-before-paper-automate-2026-08-06T05-14-04-646Z/app-server.mjs:363
+.v31-real-web-backup-20260819-135553/app-server.mjs:2202
+.v30-2-core-backup-20260819-043924/app-server.mjs:2202
+.trading-chart-v30-4-backup-20260819-223140/app-server.mjs:2660
+.trading-chart-v30-3-backup-20260819-220611/app-server.mjs:2632
+.trading-chart-v30-3-1-backup-20260819-220827/app-server.mjs:2632
+.trading-chart-v30-2-backup-20260819-214339/app-server.mjs:2425
+.single-v10-backup/2026-08-20T09-40-47-849Z/app-server.mjs:3218
+.scanner-v2-backup/2026-08-20T07-41-07-437Z/app-server.mjs:2954
+.scanner-fix-backup/2026-08-20T05-50-10-230Z/memeflow-app/app-server.mjs:2954
+.scanner-backpressure-backup/2026-08-20T07-35-19-315Z/app-server.mjs:2954
+.pump-dex-v33-backup-20260819-200721/app-server.mjs:2331
+.platform-clean-v5-backup-20260819-175305/app-server.mjs:2301
+.per-user-discovery-v34-backup-20260819-202020/app-server.mjs:2391
+.per-user-discovery-v34-2-backup-20260819-211843/app-server.mjs:2391
+.per-user-discovery-v34-1-backup-20260819-210004/app-server.mjs:2391
+.patch-backups/gmgn-sort-v25-6-from-v25-4-20260827-190507/tests/billing-cycle.mjs:10
+.patch-backups/gmgn-sort-v25-6-from-v25-4-20260827-190507/tests/billing-cycle.mjs:20
+.patch-backups/v23-4-manual/tests/billing-cycle.mjs:10
+.patch-backups/v23-4-manual/tests/billing-cycle.mjs:20
+.patch-backups/live-ranking-20260827-143729/app-server.mjs:5049
+.patch-backups/live-ranking-20260827-125717/app-server.mjs:4968
+.patch-backups/gmgn-sort-v25-5-polish-exact-20260827-185107/tests/billing-cycle.mjs:10
+.patch-backups/gmgn-sort-v25-5-polish-exact-20260827-185107/tests/billing-cycle.mjs:20
+.patch-backups/gmgn-sort-v25-4-exact-20260827-182646/tests/billing-cycle.mjs:10
+.patch-backups/gmgn-sort-v25-4-exact-20260827-182646/tests/billing-cycle.mjs:20
+.patch-backups/gmgn-sort-v25-3-exact-20260827-180748/tests/billing-cycle.mjs:10
+.patch-backups/gmgn-sort-v25-3-exact-20260827-180748/tests/billing-cycle.mjs:20
+.patch-backups/gmgn-sort-v25-20260827-171325/tests/billing-cycle.mjs:10
+.patch-backups/gmgn-sort-v25-20260827-171325/tests/billing-cycle.mjs:20
+.patch-backups/gmgn-sort-v25-2-final4-20260827-175703/tests/billing-cycle.mjs:10
+.patch-backups/gmgn-sort-v25-2-final4-20260827-175703/tests/billing-cycle.mjs:20
+.patch-backups/gmgn-sort-v25-2-final3-20260827-175306/tests/billing-cycle.mjs:10
+.patch-backups/gmgn-sort-v25-2-final3-20260827-175306/tests/billing-cycle.mjs:20
+.patch-backups/gmgn-sort-v25-2-final2-20260827-174636/tests/billing-cycle.mjs:10
+.patch-backups/gmgn-sort-v25-2-final2-20260827-174636/tests/billing-cycle.mjs:20
+.patch-backups/gmgn-sort-v25-2-20260827-173527/tests/billing-cycle.mjs:10
+.patch-backups/gmgn-sort-v25-2-20260827-173527/tests/billing-cycle.mjs:20
+.patch-backups/gmgn-sort-v25-2-20260827-173118/tests/billing-cycle.mjs:10
+.patch-backups/gmgn-sort-v25-2-20260827-173118/tests/billing-cycle.mjs:20
+.patch-backups/gmgn-sort-v25-1-20260827-172209/tests/billing-cycle.mjs:10
+.patch-backups/gmgn-sort-v25-1-20260827-172209/tests/billing-cycle.mjs:20
+.patch-backups/gmgn-sort-v25-1-20260827-172027/tests/billing-cycle.mjs:10
+.patch-backups/gmgn-sort-v25-1-20260827-172027/tests/billing-cycle.mjs:20
+.patch-backups/chart-trade-feed-v2-20260823-220113/app-server.mjs:3007
+.patch-backups/chart-history-restore-v1-20260823-215333/app-server.mjs:2852
+.patch-backups/trading-chart-v30-10-20260820-012549/app-server.mjs:2878
+.memeflow-v58-backup/app-server.mjs:2043
+.memeflow-v51-backup/app-server.mjs:2043
+.memeflow-v49-backup/app-server.mjs:1826
+.memeflow-openai-backup-20260809-090400/app-server.mjs:1750
+.memeflow-openai-backup-20260809-090103/app-server.mjs:1750
+.holders-v9-backup/2026-08-20T09-07-32-697Z/app-server.mjs:3083
+.holders-v8-backup/2026-08-20T08-57-38-563Z/app-server.mjs:2954
+.holders-v7-backup/2026-08-20T08-50-21-610Z/app-server.mjs:2954
+.discovery-router-v1-1-backup-20260819-155158/app-server.mjs:2283
+.dex-flow-v26-backup-20260819-184739/app-server.mjs:2302
+.create-v4-backup/2026-08-20T07-53-41-248Z/app-server.mjs:2954
+
+== 4) LIVE / EXECUTION LOCATIONS ==
+app-server.before-paper-automate.mjs:359
+system.js:84
+system.js:415
+system.js:945
+account-wallet-settings.js:265
+account-wallet-settings.js:274
+app-server.mjs:4783
+live-bootstrap.mjs:71
+live-bootstrap.mjs:161
+live-bootstrap.mjs:165
+live-bootstrap.mjs:166
+live-bootstrap.mjs:171
+live-wallet-execution.js:6
+live-wallet-execution.js:15
+live-wallet-execution.js:26
+live-wallet-execution.js:39
+live-wallet-execution.js:41
+live-wallet-execution.js:44
+live-wallet-execution.js:46
+phantom-connect-client.mjs:588
+phantom-connect-client.mjs:619
+phantom-connect-client.mjs:621
+phantom-connect-client.mjs:673
+phantom-connect-client.mjs:793
+phantom-connect-client.mjs:1047
+phantom-connect-client.mjs:1056
+phantom-connect-client.mjs:1059
+phantom-connect-client.mjs:1076
+phantom-connect-client.mjs:1077
+patch-phantom-phase1.mjs:10
+patch-phantom-phase1.mjs:14
+patch-phantom-phase1.mjs:21
+patch-phantom-phase1.mjs:101
+patch-phantom-phase1.mjs:103
+patch-phantom-phase1-fix.mjs:19
+patch-phantom-phase1-fix.mjs:30
+patch-phantom-phase1-fix.mjs:37
+patch-phantom-phase1-fix.mjs:39
+patch-phantom-phase1-fix.mjs:116
+patch-phantom-phase1-fix.mjs:117
+patch-phantom-fix2.mjs:22
+patch-phantom-fix2.mjs:29
+patch-phantom-fix2.mjs:45
+patch-phantom-fix2.mjs:143
+patch-phantom-fix2.mjs:144
+phantom-connect-client.bundle.js:9
+phantom-connect-client.bundle.js:24
+phantom-connect-client.bundle.js:31
+phantom-connect-client.bundle.js:34
+phantom-connect-client.bundle.js:37
+phantom-connect-client.bundle.js:100
+phantom-connect-client.bundle.js:109
+phantom-connect-client.bundle.js:112
+phantom-connect-client.bundle.js:129
+phantom-connect-client.bundle.js:130
+patch-session-handoff-fix5.mjs:55
+smart-vault/tests/policy-model.mjs:45
+smart-vault/tests/devnet-functional-phase-c.mjs:263
+smart-vault/tests/devnet-functional-phase-c.mjs:550
+smart-vault/scripts/preflight.mjs:11
+.phantom-account-handoff-fix7-backup-20260827-230930/app-server.mjs:4667
+.phantom-account-handoff-fix7-backup-20260827-230930/phantom-connect-client.mjs:588
+.phantom-account-handoff-fix7-backup-20260827-230930/phantom-connect-client.mjs:619
+.phantom-account-handoff-fix7-backup-20260827-230930/phantom-connect-client.mjs:621
+.phantom-account-handoff-fix7-backup-20260827-230930/phantom-connect-client.mjs:673
+.phantom-account-handoff-fix7-backup-20260827-230930/phantom-connect-client.mjs:793
+.phantom-account-handoff-fix7-backup-20260827-230930/phantom-connect-client.mjs:1047
+.phantom-account-handoff-fix7-backup-20260827-230930/phantom-connect-client.mjs:1056
+.phantom-account-handoff-fix7-backup-20260827-230930/phantom-connect-client.mjs:1059
+.phantom-account-handoff-fix7-backup-20260827-230930/phantom-connect-client.mjs:1076
+.phantom-account-handoff-fix7-backup-20260827-230930/phantom-connect-client.mjs:1077
+.phantom-session-handoff-fix6-backup-20260827-230114/live-bootstrap.mjs:71
+.phantom-session-handoff-fix6-backup-20260827-230114/live-bootstrap.mjs:161
+.phantom-session-handoff-fix6-backup-20260827-230114/live-bootstrap.mjs:165
+.phantom-session-handoff-fix6-backup-20260827-230114/live-bootstrap.mjs:166
+.phantom-session-handoff-fix6-backup-20260827-230114/live-bootstrap.mjs:171
+.phantom-session-handoff-fix6-backup-20260827-230045/live-bootstrap.mjs:40
+.phantom-session-handoff-fix6-backup-20260827-230045/live-bootstrap.mjs:129
+.phantom-session-handoff-fix6-backup-20260827-230045/live-bootstrap.mjs:133
+.phantom-session-handoff-fix6-backup-20260827-230045/live-bootstrap.mjs:134
+.phantom-session-handoff-fix6-backup-20260827-230045/live-bootstrap.mjs:139
+.phantom-session-handoff-fix5-backup-20260827-225651/live-bootstrap.mjs:9
+.phantom-session-handoff-fix5-backup-20260827-225651/live-bootstrap.mjs:73
+.phantom-session-handoff-fix5-backup-20260827-225651/live-bootstrap.mjs:77
+.phantom-session-handoff-fix5-backup-20260827-225651/live-bootstrap.mjs:78
+.phantom-session-handoff-fix5-backup-20260827-225651/live-bootstrap.mjs:83
+.phantom-session-handoff-fix5-backup-20260827-225651/phantom-connect-client.mjs:546
+.phantom-session-handoff-fix5-backup-20260827-225651/phantom-connect-client.mjs:577
+.phantom-session-handoff-fix5-backup-20260827-225651/phantom-connect-client.mjs:579
+.phantom-session-handoff-fix5-backup-20260827-225651/phantom-connect-client.mjs:631
+.phantom-session-handoff-fix5-backup-20260827-225651/phantom-connect-client.mjs:751
+.phantom-session-handoff-fix5-backup-20260827-225651/phantom-connect-client.mjs:1005
+.phantom-session-handoff-fix5-backup-20260827-225651/phantom-connect-client.mjs:1014
+.phantom-session-handoff-fix5-backup-20260827-225651/phantom-connect-client.mjs:1017
+.phantom-session-handoff-fix5-backup-20260827-225651/phantom-connect-client.mjs:1034
+.phantom-session-handoff-fix5-backup-20260827-225651/phantom-connect-client.mjs:1035
+.phantom-connect-phase1-fix4-backup-20260827-224537/phantom-connect-client.mjs:715
+.phantom-connect-phase1-fix4-backup-20260827-224537/phantom-connect-client.mjs:724
+.phantom-connect-phase1-fix4-backup-20260827-224537/phantom-connect-client.mjs:726
+.phantom-connect-phase1-fix4-backup-20260827-224537/phantom-connect-client.mjs:743
+.phantom-connect-phase1-fix4-backup-20260827-224537/phantom-connect-client.mjs:744
+.phantom-connect-phase1-fix4-backup-20260827-224537/phantom-connect-client.bundle.js:9
+.phantom-connect-phase1-fix4-backup-20260827-224537/phantom-connect-client.bundle.js:24
+.phantom-connect-phase1-fix4-backup-20260827-224537/phantom-connect-client.bundle.js:31
+.phantom-connect-phase1-fix4-backup-20260827-224537/phantom-connect-client.bundle.js:34
+.phantom-connect-phase1-fix4-backup-20260827-224537/phantom-connect-client.bundle.js:37
+.phantom-connect-phase1-fix4-backup-20260827-224537/phantom-connect-client.bundle.js:114
+.phantom-connect-phase1-fix4-backup-20260827-224537/phantom-connect-client.bundle.js:123
+.phantom-connect-phase1-fix4-backup-20260827-224537/phantom-connect-client.bundle.js:125
+.phantom-connect-phase1-fix4-backup-20260827-224537/phantom-connect-client.bundle.js:142
+.phantom-connect-phase1-fix4-backup-20260827-224537/phantom-connect-client.bundle.js:143
+.phantom-connect-phase1-fix3-backup-20260827-223724/live-bootstrap.mjs:9
+.phantom-connect-phase1-fix3-backup-20260827-223724/live-bootstrap.mjs:73
+.phantom-connect-phase1-fix3-backup-20260827-223724/live-bootstrap.mjs:77
+.phantom-connect-phase1-fix3-backup-20260827-223724/live-bootstrap.mjs:78
+.phantom-connect-phase1-fix3-backup-20260827-223724/live-bootstrap.mjs:83
+.phantom-connect-phase1-fix3-backup-20260827-223724/account-wallet-settings.js:265
+.phantom-connect-phase1-fix3-backup-20260827-223724/account-wallet-settings.js:274
+.phantom-connect-phase1-fix3-backup-20260827-223724/phantom-connect-client.mjs:286
+.phantom-connect-phase1-fix3-backup-20260827-223724/phantom-connect-client.mjs:456
+.phantom-connect-phase1-fix3-backup-20260827-223724/phantom-connect-client.mjs:577
+.phantom-connect-phase1-fix3-backup-20260827-223724/phantom-connect-client.mjs:579
+.phantom-connect-phase1-fix3-backup-20260827-223724/phantom-connect-client.mjs:597
+.phantom-connect-phase1-fix2-backup-20260827-223114/live-bootstrap.mjs:9
+.phantom-connect-phase1-fix2-backup-20260827-223114/live-bootstrap.mjs:67
+.phantom-connect-phase1-fix2-backup-20260827-223114/live-bootstrap.mjs:68
+.phantom-connect-phase1-fix2-backup-20260827-223114/live-bootstrap.mjs:73
+.phantom-connect-phase1-fix2-backup-20260827-223114/account-wallet-settings.js:265
+.phantom-connect-phase1-fix2-backup-20260827-223114/account-wallet-settings.js:274
+.phantom-connect-phase1-fix-backup-20260827-222814/live-bootstrap.mjs:9
+.phantom-connect-phase1-fix-backup-20260827-222814/live-bootstrap.mjs:67
+.phantom-connect-phase1-fix-backup-20260827-222814/live-bootstrap.mjs:68
+.phantom-connect-phase1-fix-backup-20260827-222814/live-bootstrap.mjs:73
+.phantom-connect-phase1-fix-backup-20260827-222814/live-wallet-execution.js:6
+.phantom-connect-phase1-fix-backup-20260827-222814/live-wallet-execution.js:15
+.phantom-connect-phase1-fix-backup-20260827-222814/live-wallet-execution.js:26
+.phantom-connect-phase1-fix-backup-20260827-222814/live-wallet-execution.js:39
+.phantom-connect-phase1-fix-backup-20260827-222814/live-wallet-execution.js:41
+.phantom-connect-phase1-fix-backup-20260827-222814/live-wallet-execution.js:44
+.phantom-connect-phase1-fix-backup-20260827-222814/live-wallet-execution.js:46
+.phantom-connect-phase1-fix-backup-20260827-222814/account-wallet-settings.js:265
+.phantom-connect-phase1-fix-backup-20260827-222814/account-wallet-settings.js:274
+.phantom-connect-phase1-backup-20260827-222458/live-bootstrap.mjs:9
+.phantom-connect-phase1-backup-20260827-222458/live-bootstrap.mjs:67
+.phantom-connect-phase1-backup-20260827-222458/live-bootstrap.mjs:68
+.phantom-connect-phase1-backup-20260827-222458/live-bootstrap.mjs:73
+.phantom-connect-phase1-backup-20260827-222458/live-wallet-execution.js:6
+.phantom-connect-phase1-backup-20260827-222458/live-wallet-execution.js:15
+.phantom-connect-phase1-backup-20260827-222458/live-wallet-execution.js:26
+.phantom-connect-phase1-backup-20260827-222458/live-wallet-execution.js:39
+.phantom-connect-phase1-backup-20260827-222458/live-wallet-execution.js:41
+.phantom-connect-phase1-backup-20260827-222458/live-wallet-execution.js:44
+.phantom-connect-phase1-backup-20260827-222458/live-wallet-execution.js:46
+.phantom-connect-phase1-backup-20260827-222458/account-wallet-settings.js:265
+.phantom-connect-phase1-backup-20260827-222458/account-wallet-settings.js:274
+.live-solana-v1-backup-20260827-212609/account-wallet-settings.js:265
+.live-solana-v1-backup-20260827-212609/account-wallet-settings.js:274
+.wallet-cluster-risk-v3-backup-20260825-165333/app-server.mjs:3097
+.wallet-cluster-risk-v2-backup-20260825-164446/app-server.mjs:3097
+.wallet-cluster-risk-v2-backup-20260825-164446/system.js:83
+.wallet-cluster-risk-v2-backup-20260825-164446/system.js:414
+.wallet-cluster-risk-v2-backup-20260825-164446/system.js:944
+.realtime-fix-backup-20260827-015005/app-server.mjs:3596
+.patch-backup-all-token-settings-20260826-121536/app-server.mjs:3765
+.memeflow-open-position-mc-v20-backup-20260827-124643/app-server.mjs:4505
+.memeflow-mc-v21-1-backup-20260827-130403/app-server.mjs:4587
+.memeflow-live-token-states-v7-backup-20260823-214047/app-server.mjs:2749
+.memeflow-live-token-states-v6-backup-20260823-204404/app-server.mjs:2749
+.memeflow-live-token-states-v5-backup-20260823-203738/app-server.mjs:2749
+.memeflow-live-system-sse-v4-backup-20260823-202519/app-server.mjs:2670
+.memeflow-live-system-sse-v3-backup-20260823-202017/app-server.mjs:2670
+.backups/v22-open-position-queue-20260827-144912/app-server.mjs:4587
+tests/owner-live.mjs:11
+tests/owner-live.mjs:15
+tests/billing-cycle.mjs:33
+tests/integration.mjs:5
+tests/paper.test.mjs:186
+tests/paper.test.mjs:197
+tests/paper.test.mjs:198
+tests/paper.test.mjs:323
+tests/paper.test.mjs:325
+tests/paper.test.mjs:331
+tests/paper.test.mjs:337
+tests/live-noncustodial-v1.mjs:6
+tests/live-noncustodial-v1.mjs:10
+tests/live-noncustodial-v1.mjs:11
+tests/live-noncustodial-v1.mjs:13
+memeflow-3d/layout.js:72
+backup-before-paper-automate-2026-08-06T05-14-04-646Z/app-server.mjs:359
+.v31-real-web-backup-20260819-135553/app-server.mjs:2171
+.v31-real-web-backup-20260819-135553/system.js:82
+.v31-real-web-backup-20260819-135553/system.js:412
+.v31-real-web-backup-20260819-135553/system.js:927
+.v30-trading-backup-20260819-034435/system.js:50
+.v30-trading-backup-20260819-034435/system.js:380
+.v30-trading-backup-20260819-034435/system.js:891
+.v30-3-3d-backup-20260819-052309/system.js:50
+.v30-3-3d-backup-20260819-052309/system.js:380
+.v30-3-3d-backup-20260819-052309/system.js:891
+.v30-3-1-3d-backup-20260819-133234/system.js:50
+.v30-3-1-3d-backup-20260819-133234/system.js:380
+.v30-3-1-3d-backup-20260819-133234/system.js:891
+.v30-2-core-backup-20260819-043924/app-server.mjs:2171
+.trading-chart-v30-4-backup-20260819-223140/app-server.mjs:2629
+.trading-chart-v30-3-backup-20260819-220611/app-server.mjs:2601
+.trading-chart-v30-3-1-backup-20260819-220827/app-server.mjs:2601
+.trading-chart-v30-2-backup-20260819-214339/app-server.mjs:2394
+.top-view-v32-backup-20260819-182436/system.js:82
+.top-view-v32-backup-20260819-182436/system.js:412
+.top-view-v32-backup-20260819-182436/system.js:927
+.single-v10-backup/2026-08-20T09-40-47-849Z/app-server.mjs:3187
+.scanner-v2-backup/2026-08-20T07-41-07-437Z/app-server.mjs:2923
+.scanner-fix-backup/2026-08-20T05-50-10-230Z/memeflow-app/app-server.mjs:2923
+.scanner-backpressure-backup/2026-08-20T07-35-19-315Z/app-server.mjs:2923
+.pump-dex-v33-backup-20260819-200721/app-server.mjs:2300
+.pump-dex-v33-backup-20260819-200721/system.js:82
+.pump-dex-v33-backup-20260819-200721/system.js:413
+.pump-dex-v33-backup-20260819-200721/system.js:928
+.platform-v4-backup-20260819-170822/system.js:82
+.platform-v4-backup-20260819-170822/system.js:412
+
+== 5) EXECUTOR / SIGNER LOCATIONS ==
+live-wallet-execution.js:13
+live-wallet-execution.js:15
+phantom-connect-client.bundle.js:1
+phantom-connect-client.bundle.js:9
+phantom-connect-client.bundle.js:24
+phantom-connect-client.bundle.js:34
+phantom-connect-client.bundle.js:37
+smart-vault/tests/devnet-functional-phase-c.mjs:6
+smart-vault/tests/devnet-functional-phase-c.mjs:10
+smart-vault/tests/devnet-functional-phase-c.mjs:11
+smart-vault/tests/devnet-functional-phase-c.mjs:29
+smart-vault/tests/devnet-functional-phase-c.mjs:30
+smart-vault/tests/devnet-functional-phase-c.mjs:35
+smart-vault/tests/devnet-functional-phase-c.mjs:84
+smart-vault/tests/devnet-functional-phase-c.mjs:96
+smart-vault/tests/devnet-functional-phase-c.mjs:121
+smart-vault/tests/devnet-functional-phase-c.mjs:122
+smart-vault/tests/devnet-functional-phase-c.mjs:123
+smart-vault/tests/devnet-functional-phase-c.mjs:124
+smart-vault/tests/devnet-functional-phase-c.mjs:126
+smart-vault/tests/devnet-functional-phase-c.mjs:127
+smart-vault/tests/devnet-functional-phase-c.mjs:128
+smart-vault/tests/devnet-functional-phase-c.mjs:151
+smart-vault/tests/devnet-functional-phase-c.mjs:182
+smart-vault/tests/devnet-functional-phase-c.mjs:183
+smart-vault/tests/devnet-functional-phase-c.mjs:192
+smart-vault/tests/devnet-functional-phase-c.mjs:200
+smart-vault/tests/devnet-functional-phase-c.mjs:201
+smart-vault/tests/devnet-functional-phase-c.mjs:209
+smart-vault/tests/devnet-functional-phase-c.mjs:218
+smart-vault/tests/devnet-functional-phase-c.mjs:229
+smart-vault/tests/devnet-functional-phase-c.mjs:242
+smart-vault/tests/devnet-functional-phase-c.mjs:255
+smart-vault/tests/devnet-functional-phase-c.mjs:276
+smart-vault/tests/devnet-functional-phase-c.mjs:310
+smart-vault/tests/devnet-functional-phase-c.mjs:316
+smart-vault/tests/devnet-functional-phase-c.mjs:329
+smart-vault/tests/devnet-functional-phase-c.mjs:367
+smart-vault/tests/devnet-functional-phase-c.mjs:376
+smart-vault/tests/devnet-functional-phase-c.mjs:377
+smart-vault/tests/devnet-functional-phase-c.mjs:378
+smart-vault/tests/devnet-functional-phase-c.mjs:380
+smart-vault/tests/devnet-functional-phase-c.mjs:403
+smart-vault/tests/devnet-functional-phase-c.mjs:406
+smart-vault/tests/devnet-functional-phase-c.mjs:413
+smart-vault/tests/devnet-functional-phase-c.mjs:414
+smart-vault/tests/devnet-functional-phase-c.mjs:419
+smart-vault/tests/devnet-functional-phase-c.mjs:420
+smart-vault/tests/devnet-functional-phase-c.mjs:429
+smart-vault/tests/devnet-functional-phase-c.mjs:430
+smart-vault/tests/devnet-functional-phase-c.mjs:439
+smart-vault/tests/devnet-functional-phase-c.mjs:521
+smart-vault/tests/devnet-functional-phase-c.mjs:558
+.phantom-connect-phase1-fix4-backup-20260827-224537/phantom-connect-client.bundle.js:1
+.phantom-connect-phase1-fix4-backup-20260827-224537/phantom-connect-client.bundle.js:9
+.phantom-connect-phase1-fix4-backup-20260827-224537/phantom-connect-client.bundle.js:24
+.phantom-connect-phase1-fix4-backup-20260827-224537/phantom-connect-client.bundle.js:34
+.phantom-connect-phase1-fix4-backup-20260827-224537/phantom-connect-client.bundle.js:37
+.phantom-connect-phase1-fix-backup-20260827-222814/live-wallet-execution.js:13
+.phantom-connect-phase1-fix-backup-20260827-222814/live-wallet-execution.js:15
+.phantom-connect-phase1-backup-20260827-222458/live-wallet-execution.js:13
+.phantom-connect-phase1-backup-20260827-222458/live-wallet-execution.js:15
+
+== 6) SESSION / OWNER / PRO ENTITLEMENT LOCATIONS ==
+app-server.before-paper-automate.mjs:38
+app-server.before-paper-automate.mjs:39
+app-server.before-paper-automate.mjs:234
+app-server.before-paper-automate.mjs:322
+app-server.before-paper-automate.mjs:323
+app-server.before-paper-automate.mjs:359
+app-server.mjs:83
+app-server.mjs:598
+app-server.mjs:699
+app-server.mjs:847
+app-server.mjs:866
+app-server.mjs:3470
+app-server.mjs:4545
+app-server.mjs:4546
+app-server.mjs:4547
+app-server.mjs:4597
+app-server.mjs:4598
+app-server.mjs:4599
+app-server.mjs:4603
+app-server.mjs:4607
+app-server.mjs:4608
+app-server.mjs:4609
+app-server.mjs:4610
+app-server.mjs:4616
+app-server.mjs:4619
+app-server.mjs:4620
+app-server.mjs:4783
+live-bootstrap.mjs:167
+live-bootstrap.mjs:178
+live-wallet-execution.js:38
+live-wallet-execution.js:43
+live-wallet-execution.js:47
+patch-account-handoff-fix7.mjs:44
+patch-account-handoff-fix7.mjs:91
+patch-account-handoff-fix7.mjs:92
+patch-account-handoff-fix7.mjs:93
+patch-account-handoff-fix7.mjs:143
+patch-account-handoff-fix7.mjs:144
+patch-account-handoff-fix7.mjs:145
+patch-account-handoff-fix7.mjs:149
+patch-account-handoff-fix7.mjs:153
+patch-account-handoff-fix7.mjs:154
+patch-account-handoff-fix7.mjs:155
+patch-account-handoff-fix7.mjs:156
+owner-access.js:62
+owner-access.js:94
+owner-access.js:101
+owner-access.js:104
+owner-access.js:171
+.phantom-account-handoff-fix7-backup-20260827-230930/app-server.mjs:83
+.phantom-account-handoff-fix7-backup-20260827-230930/app-server.mjs:598
+.phantom-account-handoff-fix7-backup-20260827-230930/app-server.mjs:699
+.phantom-account-handoff-fix7-backup-20260827-230930/app-server.mjs:833
+.phantom-account-handoff-fix7-backup-20260827-230930/app-server.mjs:834
+.phantom-account-handoff-fix7-backup-20260827-230930/app-server.mjs:3438
+.phantom-account-handoff-fix7-backup-20260827-230930/app-server.mjs:4500
+.phantom-account-handoff-fix7-backup-20260827-230930/app-server.mjs:4503
+.phantom-account-handoff-fix7-backup-20260827-230930/app-server.mjs:4504
+.phantom-account-handoff-fix7-backup-20260827-230930/app-server.mjs:4667
+.phantom-session-handoff-fix6-backup-20260827-230114/live-bootstrap.mjs:167
+.phantom-session-handoff-fix6-backup-20260827-230114/live-bootstrap.mjs:178
+.phantom-session-handoff-fix6-backup-20260827-230045/live-bootstrap.mjs:135
+.phantom-session-handoff-fix6-backup-20260827-230045/live-bootstrap.mjs:146
+.phantom-session-handoff-fix5-backup-20260827-225651/live-bootstrap.mjs:79
+.phantom-session-handoff-fix5-backup-20260827-225651/live-bootstrap.mjs:90
+.phantom-connect-phase1-fix3-backup-20260827-223724/live-bootstrap.mjs:79
+.phantom-connect-phase1-fix3-backup-20260827-223724/live-bootstrap.mjs:90
+.phantom-connect-phase1-fix2-backup-20260827-223114/live-bootstrap.mjs:69
+.phantom-connect-phase1-fix2-backup-20260827-223114/live-bootstrap.mjs:80
+.phantom-connect-phase1-fix-backup-20260827-222814/live-bootstrap.mjs:69
+.phantom-connect-phase1-fix-backup-20260827-222814/live-bootstrap.mjs:80
+.phantom-connect-phase1-fix-backup-20260827-222814/live-wallet-execution.js:38
+.phantom-connect-phase1-fix-backup-20260827-222814/live-wallet-execution.js:43
+.phantom-connect-phase1-fix-backup-20260827-222814/live-wallet-execution.js:47
+.phantom-connect-phase1-backup-20260827-222458/live-bootstrap.mjs:69
+.phantom-connect-phase1-backup-20260827-222458/live-bootstrap.mjs:80
+.phantom-connect-phase1-backup-20260827-222458/live-wallet-execution.js:38
+.phantom-connect-phase1-backup-20260827-222458/live-wallet-execution.js:43
+.phantom-connect-phase1-backup-20260827-222458/live-wallet-execution.js:47
+.wallet-cluster-risk-v3-backup-20260825-165333/app-server.mjs:351
+.wallet-cluster-risk-v3-backup-20260825-165333/app-server.mjs:452
+.wallet-cluster-risk-v3-backup-20260825-165333/app-server.mjs:560
+.wallet-cluster-risk-v3-backup-20260825-165333/app-server.mjs:561
+.wallet-cluster-risk-v3-backup-20260825-165333/app-server.mjs:2084
+.wallet-cluster-risk-v3-backup-20260825-165333/app-server.mjs:2968
+.wallet-cluster-risk-v3-backup-20260825-165333/app-server.mjs:2971
+.wallet-cluster-risk-v3-backup-20260825-165333/app-server.mjs:2972
+.wallet-cluster-risk-v3-backup-20260825-165333/app-server.mjs:3097
+.wallet-cluster-risk-v2-backup-20260825-164446/app-server.mjs:351
+.wallet-cluster-risk-v2-backup-20260825-164446/app-server.mjs:452
+.wallet-cluster-risk-v2-backup-20260825-164446/app-server.mjs:560
+.wallet-cluster-risk-v2-backup-20260825-164446/app-server.mjs:561
+.wallet-cluster-risk-v2-backup-20260825-164446/app-server.mjs:2084
+.wallet-cluster-risk-v2-backup-20260825-164446/app-server.mjs:2968
+.wallet-cluster-risk-v2-backup-20260825-164446/app-server.mjs:2971
+.wallet-cluster-risk-v2-backup-20260825-164446/app-server.mjs:2972
+.wallet-cluster-risk-v2-backup-20260825-164446/app-server.mjs:3097
+.realtime-fix-backup-20260827-015005/app-server.mjs:71
+.realtime-fix-backup-20260827-015005/app-server.mjs:538
+.realtime-fix-backup-20260827-015005/app-server.mjs:639
+.realtime-fix-backup-20260827-015005/app-server.mjs:773
+.realtime-fix-backup-20260827-015005/app-server.mjs:774
+.realtime-fix-backup-20260827-015005/app-server.mjs:2762
+.realtime-fix-backup-20260827-015005/app-server.mjs:3453
+.realtime-fix-backup-20260827-015005/app-server.mjs:3456
+.realtime-fix-backup-20260827-015005/app-server.mjs:3457
+.realtime-fix-backup-20260827-015005/app-server.mjs:3596
+.patch-backup-all-token-settings-20260826-121536/app-server.mjs:75
+.patch-backup-all-token-settings-20260826-121536/app-server.mjs:520
+.patch-backup-all-token-settings-20260826-121536/app-server.mjs:621
+.patch-backup-all-token-settings-20260826-121536/app-server.mjs:729
+.patch-backup-all-token-settings-20260826-121536/app-server.mjs:730
+.patch-backup-all-token-settings-20260826-121536/app-server.mjs:3019
+.patch-backup-all-token-settings-20260826-121536/app-server.mjs:3626
+.patch-backup-all-token-settings-20260826-121536/app-server.mjs:3629
+.patch-backup-all-token-settings-20260826-121536/app-server.mjs:3630
+.patch-backup-all-token-settings-20260826-121536/app-server.mjs:3765
+.memeflow-open-position-mc-v20-backup-20260827-124643/app-server.mjs:82
+.memeflow-open-position-mc-v20-backup-20260827-124643/app-server.mjs:597
+.memeflow-open-position-mc-v20-backup-20260827-124643/app-server.mjs:698
+.memeflow-open-position-mc-v20-backup-20260827-124643/app-server.mjs:832
+.memeflow-open-position-mc-v20-backup-20260827-124643/app-server.mjs:833
+.memeflow-open-position-mc-v20-backup-20260827-124643/app-server.mjs:3276
+.memeflow-open-position-mc-v20-backup-20260827-124643/app-server.mjs:4338
+.memeflow-open-position-mc-v20-backup-20260827-124643/app-server.mjs:4341
+.memeflow-open-position-mc-v20-backup-20260827-124643/app-server.mjs:4342
+.memeflow-open-position-mc-v20-backup-20260827-124643/app-server.mjs:4505
+.memeflow-mc-v21-1-backup-20260827-130403/app-server.mjs:82
+.memeflow-mc-v21-1-backup-20260827-130403/app-server.mjs:597
+.memeflow-mc-v21-1-backup-20260827-130403/app-server.mjs:698
+.memeflow-mc-v21-1-backup-20260827-130403/app-server.mjs:832
+.memeflow-mc-v21-1-backup-20260827-130403/app-server.mjs:833
+.memeflow-mc-v21-1-backup-20260827-130403/app-server.mjs:3358
+.memeflow-mc-v21-1-backup-20260827-130403/app-server.mjs:4420
+.memeflow-mc-v21-1-backup-20260827-130403/app-server.mjs:4423
+.memeflow-mc-v21-1-backup-20260827-130403/app-server.mjs:4424
+.memeflow-mc-v21-1-backup-20260827-130403/app-server.mjs:4587
+.memeflow-live-token-states-v7-backup-20260823-214047/app-server.mjs:228
+.memeflow-live-token-states-v7-backup-20260823-214047/app-server.mjs:329
+.memeflow-live-token-states-v7-backup-20260823-214047/app-server.mjs:437
+.memeflow-live-token-states-v7-backup-20260823-214047/app-server.mjs:438
+.memeflow-live-token-states-v7-backup-20260823-214047/app-server.mjs:1823
+.memeflow-live-token-states-v7-backup-20260823-214047/app-server.mjs:2634
+.memeflow-live-token-states-v7-backup-20260823-214047/app-server.mjs:2637
+.memeflow-live-token-states-v7-backup-20260823-214047/app-server.mjs:2638
+.memeflow-live-token-states-v7-backup-20260823-214047/app-server.mjs:2749
+.memeflow-live-token-states-v6-backup-20260823-204404/app-server.mjs:228
+.memeflow-live-token-states-v6-backup-20260823-204404/app-server.mjs:329
+.memeflow-live-token-states-v6-backup-20260823-204404/app-server.mjs:437
+.memeflow-live-token-states-v6-backup-20260823-204404/app-server.mjs:438
+.memeflow-live-token-states-v6-backup-20260823-204404/app-server.mjs:1823
+.memeflow-live-token-states-v6-backup-20260823-204404/app-server.mjs:2634
+.memeflow-live-token-states-v6-backup-20260823-204404/app-server.mjs:2637
+.memeflow-live-token-states-v6-backup-20260823-204404/app-server.mjs:2638
+.memeflow-live-token-states-v6-backup-20260823-204404/app-server.mjs:2749
+.memeflow-live-token-states-v5-backup-20260823-203738/app-server.mjs:228
+.memeflow-live-token-states-v5-backup-20260823-203738/app-server.mjs:329
+.memeflow-live-token-states-v5-backup-20260823-203738/app-server.mjs:437
+.memeflow-live-token-states-v5-backup-20260823-203738/app-server.mjs:438
+.memeflow-live-token-states-v5-backup-20260823-203738/app-server.mjs:1823
+.memeflow-live-token-states-v5-backup-20260823-203738/app-server.mjs:2634
+.memeflow-live-token-states-v5-backup-20260823-203738/app-server.mjs:2637
+.memeflow-live-token-states-v5-backup-20260823-203738/app-server.mjs:2638
+.memeflow-live-token-states-v5-backup-20260823-203738/app-server.mjs:2749
+.memeflow-live-system-sse-v4-backup-20260823-202519/app-server.mjs:195
+.memeflow-live-system-sse-v4-backup-20260823-202519/app-server.mjs:296
+.memeflow-live-system-sse-v4-backup-20260823-202519/app-server.mjs:404
+.memeflow-live-system-sse-v4-backup-20260823-202519/app-server.mjs:405
+.memeflow-live-system-sse-v4-backup-20260823-202519/app-server.mjs:1777
+.memeflow-live-system-sse-v4-backup-20260823-202519/app-server.mjs:2588
+.memeflow-live-system-sse-v4-backup-20260823-202519/app-server.mjs:2591
+.memeflow-live-system-sse-v4-backup-20260823-202519/app-server.mjs:2592
+.memeflow-live-system-sse-v4-backup-20260823-202519/app-server.mjs:2670
+.memeflow-live-system-sse-v3-backup-20260823-202017/app-server.mjs:195
+.memeflow-live-system-sse-v3-backup-20260823-202017/app-server.mjs:296
+.memeflow-live-system-sse-v3-backup-20260823-202017/app-server.mjs:404
+.memeflow-live-system-sse-v3-backup-20260823-202017/app-server.mjs:405
+.memeflow-live-system-sse-v3-backup-20260823-202017/app-server.mjs:1777
+.memeflow-live-system-sse-v3-backup-20260823-202017/app-server.mjs:2588
+.memeflow-live-system-sse-v3-backup-20260823-202017/app-server.mjs:2591
+.memeflow-live-system-sse-v3-backup-20260823-202017/app-server.mjs:2592
+.memeflow-live-system-sse-v3-backup-20260823-202017/app-server.mjs:2670
+.backups/v22-open-position-queue-20260827-144912/app-server.mjs:82
+.backups/v22-open-position-queue-20260827-144912/app-server.mjs:597
+.backups/v22-open-position-queue-20260827-144912/app-server.mjs:698
+.backups/v22-open-position-queue-20260827-144912/app-server.mjs:832
+.backups/v22-open-position-queue-20260827-144912/app-server.mjs:833
+.backups/v22-open-position-queue-20260827-144912/app-server.mjs:3358
+.backups/v22-open-position-queue-20260827-144912/app-server.mjs:4420
+.backups/v22-open-position-queue-20260827-144912/app-server.mjs:4423
+.backups/v22-open-position-queue-20260827-144912/app-server.mjs:4424
+.backups/v22-open-position-queue-20260827-144912/app-server.mjs:4587
+tests/owner-live.mjs:10
+tests/owner-live.mjs:12
+tests/owner-live.mjs:13
+tests/owner-live.mjs:14
+tests/billing-cycle.mjs:26
+tests/billing-cycle.mjs:31
+tests/billing-cycle.mjs:35
+tests/billing-cycle.mjs:38
+tests/live-policy-performance.mjs:20
+tests/live-noncustodial-v1.mjs:12
+paper-automate-patch/self-test.mjs:11
+backup-before-paper-automate-2026-08-06T05-14-04-646Z/app-server.mjs:38
+backup-before-paper-automate-2026-08-06T05-14-04-646Z/app-server.mjs:39
+backup-before-paper-automate-2026-08-06T05-14-04-646Z/app-server.mjs:234
+backup-before-paper-automate-2026-08-06T05-14-04-646Z/app-server.mjs:322
+backup-before-paper-automate-2026-08-06T05-14-04-646Z/app-server.mjs:323
+backup-before-paper-automate-2026-08-06T05-14-04-646Z/app-server.mjs:359
+backup-before-paper-automate-2026-08-06T05-14-04-646Z/src/store.mjs:17
+backup-before-paper-automate-2026-08-06T05-14-04-646Z/src/store.mjs:21
+backup-before-paper-automate-2026-08-06T05-14-04-646Z/src/store.mjs:22
+.v31-real-web-backup-20260819-135553/app-server.mjs:219
+.v31-real-web-backup-20260819-135553/app-server.mjs:327
+.v31-real-web-backup-20260819-135553/app-server.mjs:328
+.v31-real-web-backup-20260819-135553/app-server.mjs:1497
+.v31-real-web-backup-20260819-135553/app-server.mjs:2128
+.v31-real-web-backup-20260819-135553/app-server.mjs:2131
+.v31-real-web-backup-20260819-135553/app-server.mjs:2132
+.v31-real-web-backup-20260819-135553/app-server.mjs:2171
+
+== 7) PUMP TRADE BUILDER LOCATIONS ==
+paper-automation-ui.js:342
+system.js:3036
+system.js:3037
+settings-page.js:69
+settings-page.js:70
+app-server.mjs:2187
+app-server.mjs:2617
+app-server.mjs:2618
+app-server.mjs:2683
+system-tokens.js:1246
+system-tokens.js:1247
+system-tokens.js:1322
+smart-vault/tests/policy-model.mjs:12
+smart-vault/tests/policy-model.mjs:13
+smart-vault/tests/devnet-functional-phase-c.mjs:424
+smart-vault/tests/devnet-functional-phase-c.mjs:525
+smart-vault/tests/devnet-functional-phase-c.mjs:526
+.phantom-account-handoff-fix7-backup-20260827-230930/app-server.mjs:2155
+.phantom-account-handoff-fix7-backup-20260827-230930/app-server.mjs:2585
+.phantom-account-handoff-fix7-backup-20260827-230930/app-server.mjs:2586
+.phantom-account-handoff-fix7-backup-20260827-230930/app-server.mjs:2651
+.wallet-cluster-risk-v3-backup-20260825-165333/app-server.mjs:1401
+.wallet-cluster-risk-v3-backup-20260825-165333/src/enrich.mjs:407
+.wallet-cluster-risk-v3-backup-20260825-165333/src/settings-gate.mjs:97
+.wallet-cluster-risk-v3-backup-20260825-165333/src/settings-gate.mjs:170
+.wallet-cluster-risk-v3-backup-20260825-165333/src/settings.mjs:5
+.wallet-cluster-risk-v3-backup-20260825-165333/src/settings.mjs:64
+.wallet-cluster-risk-v3-backup-20260825-165333/src/settings.mjs:114
+.wallet-cluster-risk-v3-backup-20260825-165333/src/settings.mjs:124
+.wallet-cluster-risk-v2-backup-20260825-164446/app-server.mjs:1401
+.wallet-cluster-risk-v2-backup-20260825-164446/settings-page.js:62
+.wallet-cluster-risk-v2-backup-20260825-164446/settings-page.js:63
+.wallet-cluster-risk-v2-backup-20260825-164446/system.js:3035
+.wallet-cluster-risk-v2-backup-20260825-164446/system.js:3036
+.wallet-cluster-risk-v2-backup-20260825-164446/src/settings.mjs:5
+.wallet-cluster-risk-v2-backup-20260825-164446/src/settings.mjs:64
+.wallet-cluster-risk-v2-backup-20260825-164446/src/settings.mjs:114
+.wallet-cluster-risk-v2-backup-20260825-164446/src/settings.mjs:124
+.realtime-fix-backup-20260827-015005/app-server.mjs:1658
+.realtime-fix-backup-20260827-015005/app-server.mjs:2081
+.realtime-fix-backup-20260827-015005/app-server.mjs:2082
+.realtime-fix-backup-20260827-015005/app-server.mjs:2147
+.realtime-fix-backup-20260827-015005/system-tokens.js:931
+.realtime-fix-backup-20260827-015005/system-tokens.js:932
+.realtime-fix-backup-20260827-015005/system-tokens.js:1007
+.patch-backup-all-token-settings-20260826-121536/app-server.mjs:1931
+.patch-backup-all-token-settings-20260826-121536/app-server.mjs:2367
+.patch-backup-all-token-settings-20260826-121536/app-server.mjs:2368
+.patch-backup-all-token-settings-20260826-121536/app-server.mjs:2433
+.patch-backup-all-token-settings-20260826-121536/tests/settings-gate.mjs:10
+.patch-backup-all-token-settings-20260826-121536/tests/settings-gate.mjs:20
+.patch-backup-all-token-settings-20260826-121536/tests/settings-gate.mjs:34
+.patch-backup-all-token-settings-20260826-121536/src/settings-gate.mjs:97
+.patch-backup-all-token-settings-20260826-121536/src/settings-gate.mjs:172
+.patch-backup-all-token-settings-20260826-121536/src/settings-gate.mjs:468
+.patch-backup-all-token-settings-20260826-121536/src/settings-gate.mjs:469
+.memeflow-open-position-mc-v20-backup-20260827-124643/app-server.mjs:1993
+.memeflow-open-position-mc-v20-backup-20260827-124643/app-server.mjs:2423
+.memeflow-open-position-mc-v20-backup-20260827-124643/app-server.mjs:2424
+.memeflow-open-position-mc-v20-backup-20260827-124643/app-server.mjs:2489
+.memeflow-open-position-mc-v20-backup-20260827-124643/system-tokens.js:967
+.memeflow-open-position-mc-v20-backup-20260827-124643/system-tokens.js:968
+.memeflow-open-position-mc-v20-backup-20260827-124643/system-tokens.js:1043
+.memeflow-mc-v21-1-backup-20260827-130403/app-server.mjs:2075
+.memeflow-mc-v21-1-backup-20260827-130403/app-server.mjs:2505
+.memeflow-mc-v21-1-backup-20260827-130403/app-server.mjs:2506
+.memeflow-mc-v21-1-backup-20260827-130403/app-server.mjs:2571
+.memeflow-mc-v21-1-backup-20260827-130403/system-tokens.js:967
+.memeflow-mc-v21-1-backup-20260827-130403/system-tokens.js:968
+.memeflow-mc-v21-1-backup-20260827-130403/system-tokens.js:1043
+.memeflow-live-token-states-v7-backup-20260823-214047/app-server.mjs:1155
+.memeflow-live-token-states-v7-backup-20260823-214047/system-tokens.js:384
+.memeflow-live-token-states-v7-backup-20260823-214047/system-tokens.js:385
+.memeflow-live-token-states-v6-backup-20260823-204404/app-server.mjs:1155
+.memeflow-live-token-states-v6-backup-20260823-204404/system-tokens.js:384
+.memeflow-live-token-states-v6-backup-20260823-204404/system-tokens.js:385
+.memeflow-live-token-states-v5-backup-20260823-203738/app-server.mjs:1155
+.memeflow-live-system-sse-v4-backup-20260823-202519/app-server.mjs:1111
+.memeflow-live-system-sse-v3-backup-20260823-202017/app-server.mjs:1111
+.backups/v22-open-position-queue-20260827-144912/app-server.mjs:2075
+.backups/v22-open-position-queue-20260827-144912/app-server.mjs:2505
+.backups/v22-open-position-queue-20260827-144912/app-server.mjs:2506
+.backups/v22-open-position-queue-20260827-144912/app-server.mjs:2571
+.backups/v22-open-position-queue-20260827-144912/system-tokens.js:967
+.backups/v22-open-position-queue-20260827-144912/system-tokens.js:968
+.backups/v22-open-position-queue-20260827-144912/system-tokens.js:1043
+tests/event-first-scanner-v35.mjs:31
+tests/settings-gate.mjs:11
+tests/settings-gate.mjs:21
+tests/settings-gate.mjs:73
+tests/opportunity-engine.mjs:45
+tests/opportunity-engine.mjs:63
+tests/live-policy-performance.mjs:30
+tests/settings-architecture-v2.mjs:63
+tests/settings-architecture-v2.mjs:64
+tests/ws-first-preopen-rpc.mjs:74
+.v31-real-web-backup-20260819-135553/app-server.mjs:920
+.v31-real-web-backup-20260819-135553/system.js:2692
+.v31-real-web-backup-20260819-135553/system.js:2693
+.v30-trading-backup-20260819-034435/system.js:2654
+.v30-trading-backup-20260819-034435/system.js:2655
+.v30-3-3d-backup-20260819-052309/system.js:2654
+.v30-3-3d-backup-20260819-052309/system.js:2655
+.v30-3-1-3d-backup-20260819-133234/system.js:2654
+.v30-3-1-3d-backup-20260819-133234/system.js:2655
+.v30-2-core-backup-20260819-043924/app-server.mjs:920
+.v30-2-core-backup-20260819-043924/src/settings.mjs:3
+.v30-2-core-backup-20260819-043924/src/settings.mjs:29
+.v30-2-core-backup-20260819-043924/src/settings.mjs:79
+.v30-2-core-backup-20260819-043924/src/settings.mjs:89
+.trading-chart-v30-4-backup-20260819-223140/app-server.mjs:1224
+.trading-chart-v30-3-backup-20260819-220611/app-server.mjs:1196
+.trading-chart-v30-3-1-backup-20260819-220827/app-server.mjs:1196
+.trading-chart-v30-2-backup-20260819-214339/app-server.mjs:1044
+.top-view-v32-backup-20260819-182436/system.js:2694
+.top-view-v32-backup-20260819-182436/system.js:2695
+.top-view-v32-backup-20260819-182436/system.js:2840
+.token-flow-v6-backup/2026-08-20T08-27-06-941Z/system-tokens.js:308
+.token-flow-v6-backup/2026-08-20T08-27-06-941Z/system-tokens.js:309
+.token-flow-v5-backup/2026-08-20T08-24-21-243Z/system-tokens.js:308
+.token-flow-v5-backup/2026-08-20T08-24-21-243Z/system-tokens.js:309
+.single-v10-backup/2026-08-20T09-40-47-849Z/app-server.mjs:1753
+.scanner-v2-backup/2026-08-20T07-41-07-437Z/app-server.mjs:1489
+.scanner-fix-backup/2026-08-20T05-50-10-230Z/memeflow-app/app-server.mjs:1489
+.scanner-backpressure-backup/2026-08-20T07-35-19-315Z/app-server.mjs:1489
+.pump-dex-v33-backup-20260819-200721/app-server.mjs:977
+.pump-dex-v33-backup-20260819-200721/system-tokens.js:308
+.pump-dex-v33-backup-20260819-200721/system-tokens.js:309
+.pump-dex-v33-backup-20260819-200721/system.js:2705
+.pump-dex-v33-backup-20260819-200721/system.js:2706
+.pump-dex-v33-backup-20260819-200721/system.js:2851
+.pump-dex-v33-backup-20260819-200721/src/enrich.mjs:390
+.platform-v4-backup-20260819-170822/system.js:2692
+.platform-v4-backup-20260819-170822/system.js:2693
+.platform-v4-2-backup-20260819-172239/system.js:2692
+.platform-v4-2-backup-20260819-172239/system.js:2693
+.platform-v4-1-backup-20260819-171904/system.js:2692
+.platform-v4-1-backup-20260819-171904/system.js:2693
+.platform-clean-v5-backup-20260819-175305/app-server.mjs:977
+.platform-clean-v5-backup-20260819-175305/system.js:2692
+.platform-clean-v5-backup-20260819-175305/system.js:2693
+.platform-clean-v5-backup-20260819-175305/src/evaluate.mjs:75
+.platform-clean-v5-backup-20260819-175305/src/evaluate.mjs:93
+.platform-clean-v5-backup-20260819-175305/src/evaluate.mjs:94
+.platform-before-clean-restore-20260819-165848/system.js:2692
+.platform-before-clean-restore-20260819-165848/system.js:2693
+.per-user-discovery-v34-backup-20260819-202020/app-server.mjs:1036
+.per-user-discovery-v34-backup-20260819-202020/src/settings.mjs:3
+.per-user-discovery-v34-backup-20260819-202020/src/settings.mjs:29
+.per-user-discovery-v34-backup-20260819-202020/src/settings.mjs:80
+.per-user-discovery-v34-backup-20260819-202020/src/settings.mjs:90
+.per-user-discovery-v34-2-backup-20260819-211843/app-server.mjs:1036
+.per-user-discovery-v34-2-backup-20260819-211843/src/settings.mjs:3
+.per-user-discovery-v34-2-backup-20260819-211843/src/settings.mjs:29
+.per-user-discovery-v34-2-backup-20260819-211843/src/settings.mjs:80
+.per-user-discovery-v34-2-backup-20260819-211843/src/settings.mjs:90
+.per-user-discovery-v34-1-backup-20260819-210004/app-server.mjs:1036
+.per-user-discovery-v34-1-backup-20260819-210004/src/settings.mjs:3
+.per-user-discovery-v34-1-backup-20260819-210004/src/settings.mjs:29
+.per-user-discovery-v34-1-backup-20260819-210004/src/settings.mjs:80
+.per-user-discovery-v34-1-backup-20260819-210004/src/settings.mjs:90
+.patch-backups/gmgn-sort-v25-6-from-v25-4-20260827-190507/tests/event-first-scanner-v35.mjs:31
+.patch-backups/gmgn-sort-v25-6-from-v25-4-20260827-190507/tests/settings-gate.mjs:11
+.patch-backups/gmgn-sort-v25-6-from-v25-4-20260827-190507/tests/settings-gate.mjs:21
+.patch-backups/gmgn-sort-v25-6-from-v25-4-20260827-190507/tests/settings-gate.mjs:73
+.patch-backups/gmgn-sort-v25-6-from-v25-4-20260827-190507/tests/opportunity-engine.mjs:45
+.patch-backups/gmgn-sort-v25-6-from-v25-4-20260827-190507/tests/opportunity-engine.mjs:63
+.patch-backups/gmgn-sort-v25-6-from-v25-4-20260827-190507/tests/live-policy-performance.mjs:30
+.patch-backups/gmgn-sort-v25-6-from-v25-4-20260827-190507/tests/settings-architecture-v2.mjs:63
+.patch-backups/gmgn-sort-v25-6-from-v25-4-20260827-190507/tests/settings-architecture-v2.mjs:64
+.patch-backups/gmgn-sort-v25-6-from-v25-4-20260827-190507/tests/ws-first-preopen-rpc.mjs:74
+.patch-backups/v23-4-manual/system-tokens.js:1068
+.patch-backups/v23-4-manual/system-tokens.js:1069
+.patch-backups/v23-4-manual/system-tokens.js:1144
+.patch-backups/v23-4-manual/tests/event-first-scanner-v35.mjs:31
+.patch-backups/v23-4-manual/tests/live-policy-performance.mjs:30
+.patch-backups/v23-4-manual/tests/opportunity-engine.mjs:45
+.patch-backups/v23-4-manual/tests/opportunity-engine.mjs:63
+.patch-backups/v23-4-manual/tests/settings-architecture-v2.mjs:63
+.patch-backups/v23-4-manual/tests/settings-architecture-v2.mjs:64
+.patch-backups/v23-4-manual/tests/settings-gate.mjs:11
+.patch-backups/v23-4-manual/tests/settings-gate.mjs:21
+.patch-backups/v23-4-manual/tests/settings-gate.mjs:73
+.patch-backups/v23-4-manual/tests/ws-first-preopen-rpc.mjs:74
+.patch-backups/v23-3-20260827-151311/system-tokens.js:1068
+.patch-backups/v23-3-20260827-151311/system-tokens.js:1069
+.patch-backups/v23-3-20260827-151311/system-tokens.js:1144
+.patch-backups/v23-20260827-150312/system-tokens.js:1068
+.patch-backups/v23-20260827-150312/system-tokens.js:1069
+.patch-backups/v23-20260827-150312/system-tokens.js:1144
+.patch-backups/v23-2-20260827-151038/system-tokens.js:1068
+.patch-backups/v23-2-20260827-151038/system-tokens.js:1069
+.patch-backups/v23-2-20260827-151038/system-tokens.js:1144
+.patch-backups/v23-1-20260827-150625/system-tokens.js:1068
+.patch-backups/v23-1-20260827-150625/system-tokens.js:1069
+.patch-backups/v23-1-20260827-150625/system-tokens.js:1144
+.patch-backups/v23-1-20260827-150558/system-tokens.js:1068
+.patch-backups/v23-1-20260827-150558/system-tokens.js:1069
+.patch-backups/v23-1-20260827-150558/system-tokens.js:1144
+.patch-backups/live-ranking-20260827-143729/app-server.mjs:2075
+.patch-backups/live-ranking-20260827-143729/app-server.mjs:2505
+.patch-backups/live-ranking-20260827-143729/app-server.mjs:2506
+.patch-backups/live-ranking-20260827-143729/app-server.mjs:2571
+.patch-backups/live-ranking-20260827-125717/app-server.mjs:1994
+.patch-backups/live-ranking-20260827-125717/app-server.mjs:2424
+.patch-backups/live-ranking-20260827-125717/app-server.mjs:2425
+.patch-backups/live-ranking-20260827-125717/app-server.mjs:2490
+.patch-backups/gmgn-sort-v25-5-polish-exact-20260827-185107/tests/event-first-scanner-v35.mjs:31
+.patch-backups/gmgn-sort-v25-5-polish-exact-20260827-185107/tests/live-policy-performance.mjs:30
+.patch-backups/gmgn-sort-v25-5-polish-exact-20260827-185107/tests/opportunity-engine.mjs:45
+.patch-backups/gmgn-sort-v25-5-polish-exact-20260827-185107/tests/opportunity-engine.mjs:63
+.patch-backups/gmgn-sort-v25-5-polish-exact-20260827-185107/tests/settings-architecture-v2.mjs:63
+.patch-backups/gmgn-sort-v25-5-polish-exact-20260827-185107/tests/settings-architecture-v2.mjs:64
+.patch-backups/gmgn-sort-v25-5-polish-exact-20260827-185107/tests/settings-gate.mjs:11
+.patch-backups/gmgn-sort-v25-5-polish-exact-20260827-185107/tests/settings-gate.mjs:21
+.patch-backups/gmgn-sort-v25-5-polish-exact-20260827-185107/tests/settings-gate.mjs:73
+.patch-backups/gmgn-sort-v25-5-polish-exact-20260827-185107/tests/ws-first-preopen-rpc.mjs:74
+.patch-backups/gmgn-sort-v25-4-exact-20260827-182646/tests/event-first-scanner-v35.mjs:31
+.patch-backups/gmgn-sort-v25-4-exact-20260827-182646/tests/live-policy-performance.mjs:30
+.patch-backups/gmgn-sort-v25-4-exact-20260827-182646/tests/opportunity-engine.mjs:45
+
+== 8) LIVE BOOTSTRAP STRUCTURE ==
+1: import {createRequire, syncBuiltinESMExports} from "<LITERAL>";
+2: import {readFile} from "<LITERAL>";
+4: const require=createRequire(import.meta.url);
+5: const http=require("<LITERAL>");
+8: // MEMEFLOW_PHANTOM_SESSION_HANDOFF_FIX5
+9: // One-time, short-lived handoff lets Safari -> Phantom in-app browser keep the
+10: // SAME authenticated MEMEFLOW user/session (owner or Pro entitlement included).
+13: const __mfSessionHandoffs=new Map();
+14: const __mfSessionHandoffTtlMs=120000;
+64:   for(const [token,row] of __mfSessionHandoffs){
+65:     if(!row||row.expiresAt<=now)__mfSessionHandoffs.delete(token);
+68: // /MEMEFLOW_PHANTOM_SESSION_HANDOFF_FIX5
+70: const PUMP_SWAP_API=process.env.PUMP_SWAP_API_URL||"<LITERAL>";
+71: const LIVE_FLAG=/^(1|true|yes|on)$/i.test(String(process.env.LIVE_TRADING_ENABLED||"<LITERAL>"));
+72: const MAX_BUY_SOL=Math.max(0.001,Number(process.env.LIVE_MAX_BUY_SOL||0.5));
+73: const MAX_SLIPPAGE_PCT=Math.min(50,Math.max(0.1,Number(process.env.LIVE_MAX_SLIPPAGE_PCT||10)));
+77:   const explicit=String(process.env.LIVE_SOLANA_RPC_URL||process.env.SOLANA_RPC_URL||"<LITERAL>").trim();
+81: const liveReady=()=>LIVE_FLAG&&Boolean(rpcUrl());
+89:   const chunks=[];let bytes=0;for await(const chunk of req){bytes+=chunk.length;if(bytes>65536)throw Object.assign(Error("<LITERAL>"),{status:413,code:"<LITERAL>"});chunks.push(chunk)}
+90:   if(!chunks.length)return {};try{return JSON.parse(Buffer.concat(chunks).toString("<LITERAL>"))}catch{throw Object.assign(Error("<LITERAL>"),{status:400,code:"<LITERAL>"})}
+95:   try{const r=await fetch(localUrl(pathname),{headers:{accept:"<LITERAL>",cookie:String(req.headers.cookie||"<LITERAL>")},signal:controller.signal});return r.ok?await r.json():null}catch{return null}finally{clearTimeout(timer)}
+98:   const side=String(body.side||body.action||"<LITERAL>").toLowerCase(),mint=String(body.mint||body.tokenMint||body.tokenAddress||"<LITERAL>").trim(),user=String(body.walletAddress||body.user||body.publicKey||"<LITERAL>").trim();
+99:   if(!["<LITERAL>","<LITERAL>"].includes(side))throw Object.assign(Error("<LITERAL>"),{status:400,code:"<LITERAL>"});
+100:   if(!BASE58.test(mint))throw Object.assign(Error("<LITERAL>"),{status:400,code:"<LITERAL>"});
+101:   if(!BASE58.test(user))throw Object.assign(Error("<LITERAL>"),{status:400,code:"<LITERAL>"});
+102:   const requested=Number(body.slippagePct??body.slippage??5);if(!Number.isFinite(requested)||requested<=0)throw Object.assign(Error("<LITERAL>"),{status:400,code:"<LITERAL>"});const slippagePct=Math.min(requested,MAX_SLIPPAGE_PCT);
+104:     let lamports;if(body.amountLamports!=null){try{lamports=BigInt(String(body.amountLamports))}catch{throw Object.assign(Error("<LITERAL>"),{status:400,code:"<LITERAL>"})}}
+105:     else{const sol=Number(body.amountSol??body.amount);if(!Number.isFinite(sol)||sol<=0)throw Object.assign(Error("<LITERAL>"),{status:400,code:"<LITERAL>"});if(sol>MAX_BUY_SOL)throw Object.assign(Error(`Buy exceeds LIVE_MAX_BUY_SOL (${MAX_BUY_SOL} SOL)`),{status:400,code:"<LITER
+106:     if(lamports<=0n||Number(lamports)/1e9>MAX_BUY_SOL)throw Object.assign(Error("<LITERAL>"),{status:400,code:"<LITERAL>"});
+109:   let raw;if(body.amountRaw!=null||body.tokenAmountRaw!=null){try{raw=BigInt(String(body.amountRaw??body.tokenAmountRaw))}catch{throw Object.assign(Error("<LITERAL>"),{status:400,code:"<LITERAL>"})}}
+110:   else{const tokens=Number(body.tokenAmount??body.amount);if(!Number.isFinite(tokens)||tokens<=0)throw Object.assign(Error("<LITERAL>"),{status:400,code:"<LITERAL>"});raw=BigInt(Math.round(tokens*1e6))}
+111:   if(raw<=0n)throw Object.assign(Error("<LITERAL>"),{status:400,code:"<LITERAL>"});
+114: async function buildPumpSwap(swap){
+116:   try{const r=await fetch(PUMP_SWAP_API,{method:"<LITERAL>",headers:{"<LITERAL>":"<LITERAL>",accept:"<LITERAL>"},body:JSON.stringify({inputMint:swap.inputMint,outputMint:swap.outputMint,amount:swap.amount,user:swap.user,feePayer:swap.user,slippagePct:swap.slippagePct,frontRunning
+118: async function confirmSignature(signature){
+120:   try{const r=await fetch(endpoint,{method:"<LITERAL>",headers:{"<LITERAL>":"<LITERAL>"},body:JSON.stringify({jsonrpc:"<LITERAL>",id:1,method:"<LITERAL>",params:[[signature],{searchTransactionHistory:true}]}),signal:controller.signal});const d=await r.json(),s=d?.result?.value?.[
+122: async function serveWeb3(res){try{const bytes=await readFile(new URL("<LITERAL>",import.meta.url));res.writeHead(200,{"<LITERAL>":"<LITERAL>","<LITERAL>":"<LITERAL>"});res.end(bytes)}catch{json(res,503,{error:"<LITERAL>",message:"<LITERAL>"})}}
+124: http.createServer=function patchedCreateServer(listener,...rest){
+125:   if(typeof listener!=="<LITERAL>")return nativeCreateServer.call(http,listener,...rest);
+129:     // MEMEFLOW_PHANTOM_SESSION_HANDOFF_ROUTES_FIX5
+130:     if(req.method==="<LITERAL>"&&pathname==="<LITERAL>"){
+132:       const sessionId=__mfCookieValue(req,"<LITERAL>");
+133:       if(!sessionId)return json(res,401,{error:"<LITERAL>",message:"<LITERAL>"});
+136:       __mfSessionHandoffs.set(token,{sessionId,expiresAt:Date.now()+__mfSessionHandoffTtlMs});
+137:       return json(res,200,{token,expiresInMs:__mfSessionHandoffTtlMs});
+140:     if(req.method==="<LITERAL>"&&pathname==="<LITERAL>"){
+145:       const row=__mfSessionHandoffs.get(token);
+147:       if(token)__mfSessionHandoffs.delete(token);
+148:       if(!row||row.expiresAt<=Date.now())return json(res,410,{error:"<LITERAL>",message:"<LITERAL>"});
+150:       res.setHeader("<LITERAL>",`mf_session=${encodeURIComponent(row.sessionId)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=31536000${secure}`);
+153:     // /MEMEFLOW_PHANTOM_SESSION_HANDOFF_ROUTES_FIX5
+155:     if(req.method==="<LITERAL>"&&pathname==="<LITERAL>"){
+165:     if(req.method==="<LITERAL>"&&pathname==="<LITERAL>")return json(res,200,{enabled:liveReady(),featureFlag:LIVE_FLAG,rpcConfigured:Boolean(rpcUrl()),network:"<LITERAL>",adapter:liveReady()?"<LITERAL>":"<LITERAL>",walletSigning:"<LITERAL>",nonCustodial:true,maxBuySol:MAX_BUY_SOL
+166:     if(req.method==="<LITERAL>"&&pathname==="<LITERAL>"){
+167:       const billing=await localJson(req,"<LITERAL>");if(!billing?.liveEntitled)return json(res,402,{error:"<LITERAL>",message:"<LITERAL>"});
+169:       const signature=String(body.signature||"<LITERAL>").trim();if(!/^[1-9A-HJ-NP-Za-km-z]{80,90}$/.test(signature))return json(res,400,{error:"<LITERAL>",message:"<LITERAL>"});return json(res,200,{signature,...await confirmSignature(signature)});
+171:     if(!(req.method==="<LITERAL>"&&pathname==="<LITERAL>"))return listener(req,res);
+173:     if(!liveReady())return listener(req,res);
+175:       // Re-use MEMEFLOW's authenticated session through its own billing/settings APIs.
+176:       const billing=await localJson(req,"<LITERAL>");
+177:       if(!billing)return json(res,503,{error:"<LITERAL>",message:"<LITERAL>"});
+178:       if(!billing.liveEntitled)return json(res,402,{error:"<LITERAL>",message:"<LITERAL>"});
+179:       const swap=normalizeSwap(await readJson(req)),state=await localJson(req,"<LITERAL>");
+180:       if(!state)return json(res,503,{error:"<LITERAL>",message:"<LITERAL>"});
+181:       if(state.killSwitchActive===true&&swap.side==="<LITERAL>")return json(res,423,{error:"<LITERAL>",message:"<LITERAL>"});
+182:       if(String(state.settings?.tradingEnvironment||"<LITERAL>").toLowerCase()!=="<LITERAL>")return json(res,409,{error:"<LITERAL>",message:"<LITERAL>"});
+183:       const built=await buildPumpSwap(swap);
+184:       return json(res,200,{executed:false,requiresWalletSignature:true,nonCustodial:true,network:"<LITERAL>",adapter:"<LITERAL>",transaction:built.transaction,pumpMintInfo:built.pumpMintInfo||null,intent:{side:swap.side,mint:swap.mint,user:swap.user,amount:swap.amount,slippagePct
+185:     }catch(e){return json(res,e?.status||500,{error:e?.code||"<LITERAL>",message:e?.message||"<LITERAL>"})}
+190: await import("<LITERAL>");
+
+== 9) SMART VAULT DEPLOY RECORD ==
+{
+  "environment": "devnet",
+  "rpc": "https://api.devnet.solana.com",
+  "programId": "47tctW8xjfXo3FXZass23k3oaQ8G2AkTUnGCJtzVEpYV",
+  "deployPayer": "6r1DVYcW6Tbr7zRJuzEH9JFdWzj2TAXQWxX3LLQtsXCG",
+  "artifact": "target/deploy/memeflow_smart_vault.so",
+  "artifactSha256": "cf3eda829643322b23a2b4242948a1b658e060b8aa76ea26ba775b7cb117d696",
+  "artifactBytes": 208744,
+  "verifiedAt": "2026-08-28T00:35:56Z",
+  "productionAutoLiveUnlocked": false,
+  "mainnetDeployment": false
+}
+
+== 10) SMART VAULT IDL SUMMARY ==
+address: 47tctW8xjfXo3FXZass23k3oaQ8G2AkTUnGCJtzVEpYV
+INSTRUCTION deposit
+ accounts: [{"name": "owner", "writable": true, "signer": true, "address": null}, {"name": "policy", "writable": false, "signer": false, "address": null}, {"name": "vault", "writable": true, "signer": false, "address": null}, {"name": "system_program", "writable": false, "signer": false, "address": "11111111111111111111111111111111"}]
+ args: [{"name": "lamports", "type": "u64"}]
+INSTRUCTION execute_pump_v2
+ accounts: [{"name": "policy", "writable": true, "signer": false, "address": null}, {"name": "vault", "writable": true, "signer": false, "address": null}, {"name": "executor", "writable": false, "signer": true, "address": null}]
+ args: [{"name": "instruction_data", "type": "bytes"}]
+INSTRUCTION initialize_policy
+ accounts: [{"name": "owner", "writable": true, "signer": true, "address": null}, {"name": "policy", "writable": true, "signer": false, "address": null}, {"name": "system_program", "writable": false, "signer": false, "address": "11111111111111111111111111111111"}]
+ args: [{"name": "executor", "type": "pubkey"}, {"name": "max_buy_debit_lamports", "type": "u64"}, {"name": "daily_debit_limit_lamports", "type": "u64"}, {"name": "max_exit_overhead_lamports", "type": "u64"}]
+INSTRUCTION set_entries_paused
+ accounts: [{"name": "owner", "writable": false, "signer": true, "address": null}, {"name": "policy", "writable": true, "signer": false, "address": null}]
+ args: [{"name": "paused", "type": "bool"}]
+INSTRUCTION update_policy
+ accounts: [{"name": "owner", "writable": false, "signer": true, "address": null}, {"name": "policy", "writable": true, "signer": false, "address": null}]
+ args: [{"name": "executor", "type": "pubkey"}, {"name": "max_buy_debit_lamports", "type": "u64"}, {"name": "daily_debit_limit_lamports", "type": "u64"}, {"name": "max_exit_overhead_lamports", "type": "u64"}]
+INSTRUCTION withdraw
+ accounts: [{"name": "owner", "writable": true, "signer": true, "address": null}, {"name": "policy", "writable": false, "signer": false, "address": null}, {"name": "vault", "writable": true, "signer": false, "address": null}, {"name": "system_program", "writable": false, "signer": false, "address": "11111111111111111111111111111111"}]
+ args: [{"name": "lamports", "type": "u64"}]
+
+== 11) ENV VAR NAMES ONLY ==
+ALLOW_ANONYMOUS_PAPER
+APP_BASE_URL
+APP_URL
+BACKGROUND_TOKEN_MAX_AGE_MS
+BRIDGE_ITEM_TIMEOUT_MS
+CHART_HISTORY_GET_TRANSACTION_MIN_INTERVAL_MS
+CHART_HISTORY_MAX_MINTS
+CHART_HISTORY_MAX_POINTS
+CHART_HISTORY_MIN_GAP_MS
+CHART_HISTORY_PAGE_SIZE
+CHART_HISTORY_RPC_MIN_INTERVAL_MS
+CHART_HISTORY_RPC_URLS
+CHART_HISTORY_TX_CONCURRENCY
+DATA_DIR
+DECISION_RECOVERY_ACTIVE_USER_HOURS
+DECISION_RECOVERY_BATCH_SIZE
+DECISION_RECOVERY_DELAY_MS
+DECISION_RECOVERY_TOKEN_LIMIT
+DEX_DISCOVERY_CONFIRM_LIFE_MS
+DEX_DISCOVERY_JOB_MAX_AGE_MS
+DEX_DISCOVERY_MAX_CONCURRENT
+DEX_DISCOVERY_PENDING_MAX
+DEX_DISCOVERY_QUEUE_MAX
+DEX_DISCOVERY_TRACK_MAX
+DEX_PAID_MIN_INTERVAL_MS
+DEX_PAID_SWEEP_MS
+DEX_PAID_TIMEOUT_MS
+DEX_VERIFY_PENDING_MAX
+DEX_VERIFY_REQUEST_GAP_MS
+DEX_VERIFY_SEED_LIMIT
+DEX_VERIFY_SEED_MAX_AGE_MS
+DEX_VERIFY_TRACK_MAX
+DEX_VERIFY_TTL_MS
+DISCOVERY_BRIDGE_FULL_RETRY_MS
+DISCOVERY_BRIDGE_HOLDER_RETRY_MS
+DISCOVERY_BRIDGE_MAX_AGE_MS
+DISCOVERY_BRIDGE_MAX_FULL_ATTEMPTS
+DISCOVERY_BRIDGE_MAX_PER_RUN
+DISCOVERY_BRIDGE_MIN_TOKEN_AGE_MS
+DISCOVERY_BRIDGE_TICK_MS
+DISCOVERY_ENABLED
+DISCOVERY_MAX_CONCURRENT
+DISCOVERY_QUEUE_MAX
+DISCOVERY_SIGNATURE_MAX_AGE_MS
+DISCOVERY_SOURCE_MODE
+DISCOVERY_WS_STALE_MS
+DISCOVERY_WS_WATCHDOG_MS
+EVENT_HOLDER_LEDGER_PERSIST
+EVENT_HOLDER_LEDGER_STATE_PATH_V12_20
+EVENT_HOLDER_MAX_AGE_MS
+EVENT_HOLDER_MAX_MINTS
+EVENT_HOLDER_SAVE_INTERVAL_MS
+EXCLUDE_MAYHEM_MODE
+FRESH_PRIORITY_BATCH
+FRESH_PRIORITY_MAX_AGE_MS
+FRESH_PUMP_EVENT_ONLY_MS
+FRESH_SLA_ESCALATE_MS
+FRESH_SLA_MS
+HISTORY_EVAL_INTERVAL_MS
+HOLDER_ADMISSION_ACTIVE_USER_HOURS
+HOLDER_ADMISSION_RETRY_MS
+HOLDER_INITIAL_DELAY_MS
+HOLDER_JOB_TIMEOUT_MS
+HOLDER_MAX_RETRIES
+HOLDER_QUEUE_CONCURRENCY
+HOLDER_QUEUE_MAX
+HOLDER_QUEUE_WATCHDOG_MS
+HOLDER_RETRY_DELAY_MS
+HOLDER_RPC_MAX_CONCURRENCY
+HOLDER_WORKER_TIMEOUT_MS
+HOSTNAME
+LIVE_EVALUATION_ACTIVE_USER_HOURS
+LIVE_EVALUATION_BATCH_SIZE
+LIVE_EVALUATION_DELAY_MS
+LIVE_MAX_BUY_SOL
+LIVE_MAX_SLIPPAGE_PCT
+LIVE_SCANNER_CACHE_MAX_TOKENS
+LIVE_SCANNER_PRUNE_MS
+LIVE_SCANNER_TOKEN_TTL_MS
+LIVE_SOLANA_RPC_URL
+LIVE_STATES_RESPONSE_CACHE_MS
+LIVE_STATES_YIELD_EVERY
+LIVE_TRADING_ENABLED
+MEMEFLOW_SMART_VAULT_PROGRAM_ID
+MF_TEST_PAYER
+MF_TEST_PROGRAM_ID
+MF_TEST_ROOT
+MF_TEST_RPC
+MF_TEST_RUN_DIR
+OPENAI_API_KEY
+OPENAI_CHAT_MODEL
+OPENAI_MODEL
+OPENAI_TIMEOUT_MS
+OWNER_ACCESS_KEY
+OWNER_USER_IDS
+PHANTOM_APP_ID
+POLL_ACTIVE_MS
+PORT
+PREOPEN_SOLANA_RPC_URLS
+PREOPEN_WALLET_RISK_RETRY_MS
+PREOPEN_WALLET_RISK_TTL_MS
+PRE_ADMISSION_SWEEP_MS
+PUMPFUN_HISTORY_ENABLED
+PUMPFUN_HISTORY_INTERVAL_MS
+PUMPFUN_HISTORY_JWT
+PUMPFUN_HISTORY_PAGE_SIZE
+PUMPFUN_HISTORY_RECENT_SYNC_MS
+PUMPFUN_HISTORY_START_DELAY_MS
+PUMPFUN_HISTORY_URL
+PUMP_SWAP_API_URL
+PUMP_TOKEN_SUPPLY_UI
+RECOVERY_BATCH
+REPL_SLUG
+RPC_GET_ACCOUNT_INFO_MIN_INTERVAL_MS
+RPC_GET_PROGRAM_ACCOUNTS_MIN_INTERVAL_MS
+RPC_GET_PROGRAM_ACCOUNTS_TIMEOUT_MS
+RPC_GET_TOKEN_SUPPLY_MIN_INTERVAL_MS
+RPC_GET_TRANSACTION_MIN_INTERVAL_MS
+RPC_GET_TRANSACTION_TIMEOUT_MS
+RPC_MAX_CONCURRENCY
+RPC_MIN_INTERVAL_MS
+RPC_RATE_LIMIT_COOLDOWN_MS
+SETTINGS_GATE_CONTEXT_CACHE_MS
+SETTINGS_GATE_RECHECK_MS
+SETTINGS_REEVALUATE_LIMIT
+SOLANA_COMMITMENT
+SOLANA_RPC_TIMEOUT_MS
+SOLANA_RPC_URL
+SOLANA_RPC_URLS
+SOLANA_WS_URLS
+SOL_USD_ORACLE_INTERVAL_MS
+SOL_USD_ORACLE_MAX_AGE_MS
+SOL_USD_PRICE
+STRIPE_API_BASE
+STRIPE_PRICE_ID
+STRIPE_SECRET_KEY
+STRIPE_WEBHOOK_SECRET
+TOKEN_REGISTRY_CHECKPOINT_BATCH_MAX
+TOKEN_REGISTRY_FLUSH_BATCH_MAX
+TOKEN_REGISTRY_FLUSH_MS
+TOKEN_REGISTRY_WARM_LIMIT
+WALLET_CLUSTER_AFTER_LAUNCH_MS
+WALLET_CLUSTER_AMOUNT_RATIO
+WALLET_CLUSTER_COMMON_FUNDER_MIN_WALLETS
+WALLET_CLUSTER_COMMON_FUNDER_WINDOW_MS
+WALLET_CLUSTER_FUNDING_LOOKBACK_MS
+WALLET_CLUSTER_MAX_WALLETS
+WALLET_CLUSTER_MIN_FUNDING_LAMPORTS
+WALLET_CLUSTER_PRIORITY_YIELD_MS
+WALLET_CLUSTER_RPC_CONCURRENCY
+WALLET_CLUSTER_SIGNATURE_LIMIT
+WALLET_CLUSTER_TX_PER_WALLET
+
+== 12) REPLIT LAUNCH CONFIG ==
+run = "cd memeflow-app && exec node live-bootstrap.mjs"
+modules = ["nodejs-24", "python-base-3.13"]
+
+[deployment]
+run = ["node", "memeflow-app/live-bootstrap.mjs"]
+deploymentTarget = "autoscale"
+
+[deployment.postBuild]
+args = ["pnpm", "store", "prune"]
+env = { "CI" = "true" }
+
+[workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "MEMEFLOW"
+mode = "sequential"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd memeflow-app && node live-bootstrap.mjs"
+waitForPort = 3000
+
+[workflows.workflow.metadata]
+outputType = "webview"
+
+[[workflows.workflow]]
+name = "memeflow web"
+mode = "sequential"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "pnpm run replit-internal-dev"
+cwd = "./runtime-components/memeflow-old"
+
+[[workflows.workflow]]
+name = "API Server"
+mode = "sequential"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "PORT=8080 pnpm run replit-internal-dev"
+cwd = "./runtime-components/api-server"
+
+[[workflows.workflow]]
+name = "mockup-sandbox"
+mode = "sequential"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "PORT=8081 BASE_PATH=/ pnpm run replit-internal-dev"
+cwd = "./runtime-components/mockup-sandbox"
+
+
+
+
+
+
+
+[[workflows.workflow]]
+name = "Project"
+mode = "sequential"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "bash ./run-project.sh"
+
+[[ports]]
+localPort = 3000
+externalPort = 80
+
+[[ports]]
+localPort = 8080
+externalPort = 8080
+
+[[ports]]
+localPort = 8081
+externalPort = 8081
+
+[[ports]]
+localPort = 8082
+externalPort = 3000
+
+[[ports]]
+localPort = 8083
+externalPort = 3001
+
+== 13) LATEST PHASE C SUMMARY ==
+file: /home/runner/workspace/memeflow-app/smart-vault/.devnet-test-runs/20260828T004234Z/phase-c-report.json
+{
+  "environment": "devnet",
+  "programId": "47tctW8xjfXo3FXZass23k3oaQ8G2AkTUnGCJtzVEpYV",
+  "payer": "6r1DVYcW6Tbr7zRJuzEH9JFdWzj2TAXQWxX3LLQtsXCG",
+  "policy": "Fa3UPyNx9WjkEFtxmDPuVhkqTNxvSEkDWLKPvBkbn4vc",
+  "vault": "FZFoBwKeTZFKktdviLHx55snB93kViPxCJii7EvkeHiH",
+  "pumpProgramPresentOnDevnet": true,
+  "pumpProgramExecutableOnDevnet": true,
+  "finalVaultLamports": 0,
+  "passCount": 20,
+  "failed": [],
+  "productionAutoLiveUnlocked": false,
+  "mainnetTouched": false,
+  "realMoneyUsed": false
+}
+
+== END REPORT ==

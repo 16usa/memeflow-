@@ -1,0 +1,1222 @@
+(() => {
+  'use strict';
+
+  if (window.__MEMEFLOW_ORBIT_V3__) return;
+  window.__MEMEFLOW_ORBIT_V3__ = true;
+  window.__MEMEFLOW_ORBIT_V31__ = true;
+  window.__MEMEFLOW_ORBIT_V32__ = true;
+
+  const TAU = Math.PI * 2;
+  const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
+
+  const COLORS = {
+    white:    [221,233,242],
+    core:     [83,222,245],
+    waiting:  [239,192,88],
+    watch:    [84,221,255],
+    blocked:  [255,91,110],
+    ready:    [78,232,165],
+    trading:  [86,241,196],
+    muted:    [84,101,117],
+    neutral:  [125,144,159]
+  };
+
+  const state = {
+    yaw: -0.18,
+    pitch: 0.09,
+    zoom: 1.03,
+    targetYaw: -0.18,
+    targetPitch: 0.09,
+    targetZoom: 1.03,
+    dragging: false,
+    lastX: 0,
+    lastY: 0,
+    width: 1,
+    height: 1,
+    dpr: 1,
+    apiOK: false,
+    hasTelemetry: false,
+    healthOK: false,
+    reducedMotion: window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches || false,
+    counts: {
+      WAITING: 0,
+      WATCH: 0,
+      BLOCKED: 0,
+      'BUY READY': 0,
+      TRADING: 0,
+      TOTAL: 0
+    },
+    particles: [],
+    ambient: [],
+    tokenSignature: '',
+    flow: {
+      lastEvents: null,
+      lastTrades: null,
+      lastSampleAt: 0,
+      lastLiveAt: 0,
+      eventsPerSec: 0,
+      tradesPerSec: 0,
+      rawEventsPerSec: 0,
+      rawTradesPerSec: 0,
+      calibrated: false
+    }
+  };
+
+  const ANCHORS = {
+    input:    {x:-320,y:-8,z:10},
+    waiting:  {x:-145,y:-78,z:22},
+    watch:    {x:8,y:-108,z:18},
+    blocked:  {x:-178,y:104,z:26},
+    ready:    {x:166,y:-24,z:-5},
+    trading:  {x:288,y:72,z:-20}
+  };
+
+  function hash(str){
+    let h = 2166136261;
+    str = String(str || '');
+    for(let i=0;i<str.length;i++){
+      h ^= str.charCodeAt(i);
+      h = Math.imul(h, 16777619);
+    }
+    return h >>> 0;
+  }
+
+  function randFrom(n){
+    n = Math.sin(n * 12.9898 + 78.233) * 43758.5453;
+    return n - Math.floor(n);
+  }
+
+  function visible(el){
+    if (!el) return false;
+    const r = el.getBoundingClientRect();
+    const cs = getComputedStyle(el);
+    return r.width > 140 && r.height > 140 && cs.display !== 'none' && cs.visibility !== 'hidden';
+  }
+
+  function textOf(el){
+    return String(el?.innerText || el?.textContent || '');
+  }
+
+  function findArchitectureSection(){
+    const direct = [
+      '#liveInspector3d',
+      '#live-inspector-3d',
+      '#pipeline3d',
+      '#pipeline-3d',
+      '#pipelineScene',
+      '#pipeline-scene',
+      '#architecture3d',
+      '#architecture-3d',
+      '#threeContainer',
+      '#three-container',
+      '[data-pipeline-3d]',
+      '[data-live-inspector]',
+      '[data-architecture-3d]',
+      '.pipeline-3d',
+      '.live-inspector-3d',
+      '.architecture-3d',
+      '.three-stage',
+      '.three-scene'
+    ];
+
+    for (const selector of direct){
+      const el = document.querySelector(selector);
+      if (visible(el)) return el;
+    }
+
+    const candidates = [
+      ...document.querySelectorAll('section,article,.panel,.card,.inspector,[class*="architecture"],[class*="pipeline"],[class*="inspector"]')
+    ];
+
+    const scored = candidates.map(el => {
+      const t = textOf(el).toUpperCase();
+      let score = 0;
+      if (t.includes('REAL-TIME ARCHITECTURE')) score += 15;
+      if (t.includes('LIVE INSPECTOR')) score += 12;
+      if (t.includes('RESET VIEW')) score += 8;
+      if (t.includes('MEMEFLOW CORE')) score += 6;
+      if (t.includes('WAITING')) score += 2;
+      if (t.includes('BLOCKED')) score += 2;
+      if (t.includes('BUY READY')) score += 2;
+      return { el, score };
+    }).filter(x => x.score > 0).sort((a,b) => b.score - a.score);
+
+    const section = scored[0]?.el;
+    if (!section) return null;
+
+    const canvases = [...section.querySelectorAll('canvas')].filter(visible);
+    if (canvases.length){
+      canvases.sort((a,b) => {
+        const ar = a.getBoundingClientRect();
+        const br = b.getBoundingClientRect();
+        return br.width * br.height - ar.width * ar.height;
+      });
+      return canvases[0].parentElement || section;
+    }
+
+    return [...section.querySelectorAll('div')]
+      .filter(visible)
+      .sort((a,b) => {
+        const ar = a.getBoundingClientRect();
+        const br = b.getBoundingClientRect();
+        return br.width * br.height - ar.width * ar.height;
+      })[0] || section;
+  }
+
+  function makeCanvas(host){
+    host.classList.add('mf-orbit-v2-host');
+
+    for (const old of host.querySelectorAll('canvas')){
+      if (!old.classList.contains('mf-orbit-v2-canvas')){
+        old.classList.add('mf-orbit-v2-original-canvas');
+      }
+    }
+
+    let canvas = host.querySelector('.mf-orbit-v2-canvas');
+    if (!canvas){
+      canvas = document.createElement('canvas');
+      canvas.className = 'mf-orbit-v2-canvas';
+      canvas.setAttribute('aria-label', 'Live MEMEFLOW pipeline visualization');
+      host.appendChild(canvas);
+    }
+
+    let badge = host.querySelector('.mf-orbit-v2-badge');
+    if (!badge){
+      badge = document.createElement('div');
+      badge.className = 'mf-orbit-v2-badge';
+      badge.innerHTML = '<i></i><span>AWAITING TOKEN FLOW</span>';
+      host.appendChild(badge);
+    }
+
+    return canvas;
+  }
+
+  function normalizeState(raw){
+    const s = String(raw || '').trim().toUpperCase();
+    if (s === 'BUY_READY') return 'BUY READY';
+    if (s.includes('BUY') && s.includes('READY')) return 'BUY READY';
+    if (s.includes('WATCH')) return 'WATCH';
+    if (s.includes('TRAD') || s.includes('POSITION') || s.includes('OPEN')) return 'TRADING';
+    if (s.includes('BLOCK') || s.includes('REJECT') || s.includes('EXPIRED') || s.includes('IGNORED') || s.includes('CLOSED')) return 'BLOCKED';
+    return 'WAITING';
+  }
+
+  function updateBadge(host){
+    const badge = host.querySelector('.mf-orbit-v2-badge');
+    if (!badge) return;
+    badge.classList.toggle('waiting', !state.hasTelemetry);
+    badge.innerHTML = state.hasTelemetry
+      ? '<i></i><span>LIVE TOKEN FLOW</span>'
+      : '<i></i><span>AWAITING TOKEN FLOW</span>';
+  }
+
+  function readCounter(id){
+    const el = document.getElementById(id);
+    if (!el) return null;
+    const raw = String(el.textContent || '').replace(/[^0-9.-]/g,'');
+    if (!raw) return null;
+    const n = Number(raw);
+    return Number.isFinite(n) ? n : null;
+  }
+
+  function flowSpeed(){
+    const rate = Math.max(
+      state.flow.eventsPerSec,
+      state.flow.tradesPerSec * 2.4
+    );
+
+    if (!state.flow.calibrated) return .42;
+
+    // 10 events/s ≈ normal speed.
+    // Log scaling prevents 100+ events/s from becoming visually ridiculous.
+    return clamp(
+      .38 + Math.log1p(rate) / Math.log(81) * 1.72,
+      .38,
+      2.35
+    );
+  }
+
+  function flowIntensity(){
+    const rate = Math.max(
+      state.flow.eventsPerSec,
+      state.flow.tradesPerSec * 1.8
+    );
+
+    if (!state.flow.calibrated) return .18;
+
+    return clamp(
+      Math.log1p(rate) / Math.log(101),
+      .10,
+      1
+    );
+  }
+
+  function buildVisualStateSample(rows){
+    const groups = {
+      WAITING: [],
+      WATCH: [],
+      BLOCKED: [],
+      'BUY READY': []
+    };
+
+    for (const row of rows){
+      const normalized = normalizeState(
+        row?.state ??
+        row?.decision?.state ??
+        'WAITING'
+      );
+
+      if (groups[normalized]){
+        groups[normalized].push({
+          ...row,
+          state: normalized
+        });
+      }
+    }
+
+    /*
+      Exact COUNTS remain untouched.
+      Only the number of rendered particles is capped for iPhone performance.
+
+      With 191 BLOCKED tokens we don't need 191 glowing meshes;
+      36 particles visually communicate a heavy blocked lane while
+      the number next to BLOCKED remains the exact 191.
+    */
+    const limits = {
+      'BUY READY': 12,
+      WATCH: 14,
+      WAITING: 20,
+      BLOCKED: 36
+    };
+
+    const output = [];
+
+    for (const name of ['BUY READY','WATCH','WAITING','BLOCKED']){
+      const group = groups[name];
+      const limit = limits[name];
+
+      if (group.length <= limit){
+        output.push(...group);
+        continue;
+      }
+
+      const step = group.length / limit;
+
+      for (let i=0; i<limit; i++){
+        output.push(
+          group[Math.floor(i * step)]
+        );
+      }
+    }
+
+    return output;
+  }
+
+  async function syncAuthoritativeStates(host){
+    try{
+      const response = await fetch(
+        '/api/ai/decisions?scope=all&limit=200',
+        {
+          cache:'no-store',
+          credentials:'same-origin',
+          headers:{accept:'application/json'}
+        }
+      );
+
+      if (!response.ok){
+        throw new Error(
+          'decision feed HTTP ' + response.status
+        );
+      }
+
+      const payload = await response.json();
+
+      const rows =
+        Array.isArray(payload?.decisions)
+          ? payload.decisions
+          : [];
+
+      const counts = {
+        WAITING:0,
+        WATCH:0,
+        BLOCKED:0,
+        'BUY READY':0,
+        TRADING:0,
+        TOTAL:rows.length
+      };
+
+      for (const row of rows){
+        const normalized = normalizeState(
+          row?.state ??
+          row?.decision?.state ??
+          'WAITING'
+        );
+
+        if (normalized === 'WAITING'){
+          counts.WAITING++;
+        } else if (normalized === 'WATCH'){
+          counts.WATCH++;
+        } else if (normalized === 'BLOCKED'){
+          counts.BLOCKED++;
+        } else if (normalized === 'BUY READY'){
+          counts['BUY READY']++;
+        }
+      }
+
+      state.counts = counts;
+
+      const visualRows =
+        buildVisualStateSample(rows);
+
+      const signature = [
+        counts.TOTAL,
+        counts.WAITING,
+        counts.WATCH,
+        counts.BLOCKED,
+        counts['BUY READY'],
+        ...visualRows.map(
+          row =>
+            String(
+              row?.mint ??
+              row?.id ??
+              ''
+            ) +
+            ':' +
+            normalizeState(
+              row?.state ??
+              row?.decision?.state
+            )
+        )
+      ].join('|');
+
+      if (signature !== state.tokenSignature){
+        state.tokenSignature = signature;
+        rebuildParticles(visualRows);
+      }
+
+      /*
+        State telemetry can exist even during a quiet event interval.
+        Throughput live/idle status is handled separately.
+      */
+      if (rows.length > 0){
+        state.hasTelemetry = true;
+      }
+
+      updateBadge(host);
+
+    }catch(error){
+      console.warn(
+        '[MEMEFLOW Orbit V3.2] decision snapshot failed',
+        error
+      );
+    }
+  }
+
+  function updateRateHUD(host){
+    let hud = host.querySelector('.mf-orbit-ratehud');
+
+    if (!hud){
+      hud = document.createElement('div');
+      hud.className = 'mf-orbit-ratehud';
+      hud.innerHTML = `
+        <div><span>INGEST</span><b data-mf-rate-events>—</b><small>events/s</small></div>
+        <div><span>DECODE</span><b data-mf-rate-trades>—</b><small>trades/s</small></div>
+      `;
+      host.appendChild(hud);
+    }
+
+    const e = hud.querySelector('[data-mf-rate-events]');
+    const t = hud.querySelector('[data-mf-rate-trades]');
+
+    if (!state.flow.calibrated){
+      e.textContent = '…';
+      t.textContent = '…';
+      return;
+    }
+
+    const exactEvents =
+      state.flow.rawEventsPerSec;
+
+    const exactTrades =
+      state.flow.rawTradesPerSec;
+
+    e.textContent = exactEvents.toFixed(
+      exactEvents >= 100 ? 0 : 1
+    );
+
+    t.textContent = exactTrades.toFixed(
+      exactTrades >= 100 ? 0 : 1
+    );
+  }
+
+  function updateBadge(host){
+    const badge = host.querySelector('.mf-orbit-v2-badge');
+    if (!badge) return;
+
+    const now = performance.now();
+    const live =
+      state.flow.calibrated &&
+      now - state.flow.lastLiveAt < 9000;
+
+    badge.classList.toggle('waiting', !live);
+
+    if (!state.flow.calibrated){
+      badge.innerHTML =
+        '<i></i><span>CALIBRATING LIVE FLOW</span>';
+    } else if (live){
+      badge.innerHTML =
+        '<i></i><span>LIVE DATA FLOW</span>';
+    } else {
+      badge.innerHTML =
+        '<i></i><span>AWAITING LIVE FLOW</span>';
+    }
+
+    updateRateHUD(host);
+  }
+
+  function sampleRealThroughput(host){
+    const now = performance.now();
+    const events = readCounter('eventCount');
+    const trades = readCounter('tradeCount');
+
+    if (events == null && trades == null){
+      updateBadge(host);
+      return;
+    }
+
+    const f = state.flow;
+
+    if (
+      f.lastEvents == null ||
+      f.lastTrades == null ||
+      !f.lastSampleAt
+    ){
+      f.lastEvents = events ?? 0;
+      f.lastTrades = trades ?? 0;
+      f.lastSampleAt = now;
+      updateBadge(host);
+      return;
+    }
+
+    const eventsChanged =
+      events != null && events !== f.lastEvents;
+
+    const tradesChanged =
+      trades != null && trades !== f.lastTrades;
+
+    // Counters are refreshed by the real system telemetry every ~4s.
+    // Only calculate a rate when a new counter snapshot arrives.
+    if (eventsChanged || tradesChanged){
+      const seconds = Math.max(
+        .25,
+        (now - f.lastSampleAt) / 1000
+      );
+
+      const eventDelta =
+        events == null
+          ? 0
+          : Math.max(0, events - f.lastEvents);
+
+      const tradeDelta =
+        trades == null
+          ? 0
+          : Math.max(0, trades - f.lastTrades);
+
+      const rawEvents = eventDelta / seconds;
+      const rawTrades = tradeDelta / seconds;
+
+      f.rawEventsPerSec = rawEvents;
+      f.rawTradesPerSec = rawTrades;
+
+      // EMA smooths 4-second snapshots without falsifying the measured rate.
+      if (!f.calibrated){
+        f.eventsPerSec = rawEvents;
+        f.tradesPerSec = rawTrades;
+      } else {
+        f.eventsPerSec =
+          f.eventsPerSec * .58 + rawEvents * .42;
+
+        f.tradesPerSec =
+          f.tradesPerSec * .58 + rawTrades * .42;
+      }
+
+      f.calibrated = true;
+      f.lastEvents = events ?? f.lastEvents;
+      f.lastTrades = trades ?? f.lastTrades;
+      f.lastSampleAt = now;
+
+      if (eventDelta > 0 || tradeDelta > 0){
+        f.lastLiveAt = now;
+        state.hasTelemetry = true;
+      }
+    }
+
+    // If the real counters have stopped changing for > 10 seconds,
+    // visually decay to idle instead of pretending data is flowing.
+    if (
+      f.calibrated &&
+      now - f.lastLiveAt > 10000
+    ){
+      f.eventsPerSec *= .94;
+      f.tradesPerSec *= .94;
+
+      if (
+        f.eventsPerSec < .05 &&
+        f.tradesPerSec < .05
+      ){
+        f.eventsPerSec = 0;
+        f.tradesPerSec = 0;
+        state.hasTelemetry =
+          state.counts.TOTAL > 0;
+      }
+    }
+
+    updateBadge(host);
+  }
+
+  function installTelemetrySync(host){
+    sampleRealThroughput(host);
+    syncAuthoritativeStates(host);
+
+    /*
+      Reads DOM counters only.
+      No request every 250ms.
+    */
+    setInterval(
+      () => sampleRealThroughput(host),
+      250
+    );
+
+    /*
+      Exact state snapshot.
+      Same cadence and source used by the View All token page.
+    */
+    setInterval(
+      () => syncAuthoritativeStates(host),
+      3000
+    );
+  }
+
+  function rebuildParticles(rows){
+    const source = Array.isArray(rows) ? rows.slice(0, 180) : [];
+    const next = [];
+
+    for (let i=0;i<source.length;i++){
+      const row = source[i] || {};
+      const key = row.mint || row.tokenMint || row.tokenAddress || row.id || ('row-'+i);
+      const h = hash(key);
+      const s = normalizeState(row.state);
+
+      next.push({
+        id:key,
+        state:s,
+        seed:h,
+        speed:.14 + randFrom(h+11)*.22,
+        size:.85 + randFrom(h+19)*1.7,
+        phase:randFrom(h+31)*TAU,
+        yBand:(randFrom(h+7)-.5)*120,
+        radius:95 + randFrom(h+3)*110
+      });
+    }
+
+    state.particles = next;
+
+    const ambient = [];
+    for (let i=0;i<34;i++){
+      const h = hash('ambient-'+i);
+      ambient.push({
+        seed:h,
+        speed:.12 + randFrom(h+2)*.08,
+        size:.55 + randFrom(h+3)*.95,
+        phase:randFrom(h+5)*TAU,
+        lane:i%3
+      });
+    }
+    state.ambient = ambient;
+  }
+
+  function rotatePoint(p){
+    let x=p.x, y=p.y, z=p.z;
+
+    const cy=Math.cos(state.yaw), sy=Math.sin(state.yaw);
+    const x1=x*cy-z*sy;
+    const z1=x*sy+z*cy;
+
+    const cp=Math.cos(state.pitch), sp=Math.sin(state.pitch);
+    const y1=y*cp-z1*sp;
+    const z2=y*sp+z1*cp;
+
+    return {x:x1,y:y1,z:z2};
+  }
+
+  function project(p){
+    const r = rotatePoint(p);
+    const focal = 700;
+    const camera = 560 / state.zoom;
+    const depth = camera + r.z;
+    const scale = focal / Math.max(160, depth);
+    return {
+      x: state.width*.5 + r.x*scale,
+      y: state.height*.53 + r.y*scale,
+      z: r.z,
+      scale
+    };
+  }
+
+  function rgba(c,a){
+    return `rgba(${c[0]},${c[1]},${c[2]},${a})`;
+  }
+
+  function line3(ctx,a,b,color,alpha=1,width=1){
+    const A = project(a), B = project(b);
+    ctx.beginPath();
+    ctx.moveTo(A.x, A.y);
+    ctx.lineTo(B.x, B.y);
+    ctx.strokeStyle = rgba(color, alpha);
+    ctx.lineWidth = width;
+    ctx.stroke();
+  }
+
+  function dot3(ctx,p,color,size=2,alpha=1,glow=0){
+    const P = project(p);
+    const r = Math.max(.5, size * P.scale);
+    ctx.save();
+    if (glow){
+      ctx.shadowBlur = glow * P.scale;
+      ctx.shadowColor = rgba(color, .72);
+    }
+    ctx.beginPath();
+    ctx.arc(P.x, P.y, r, 0, TAU);
+    ctx.fillStyle = rgba(color, alpha);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function ring3(ctx,radius,y,color,alpha=.16,segments=72){
+    let prev = null;
+    for (let i=0;i<=segments;i++){
+      const a = (i/segments)*TAU;
+      const p = { x:Math.cos(a)*radius, y:y, z:Math.sin(a)*radius };
+      if (prev) line3(ctx, prev, p, color, alpha, 1);
+      prev = p;
+    }
+  }
+
+  function bezier(a,b,c,d,t){
+    const u = 1 - t;
+    return {
+      x: u*u*u*a.x + 3*u*u*t*b.x + 3*u*t*t*c.x + t*t*t*d.x,
+      y: u*u*u*a.y + 3*u*u*t*b.y + 3*u*t*t*c.y + t*t*t*d.y,
+      z: u*u*u*a.z + 3*u*u*t*b.z + 3*u*t*t*c.z + t*t*t*d.z
+    };
+  }
+
+  function pathLine(ctx,a,b,c,d,color,alpha=.18){
+    let prev = a;
+    for (let i=1;i<=32;i++){
+      const p = bezier(a,b,c,d,i/32);
+      line3(ctx, prev, p, color, alpha, 1);
+      prev = p;
+    }
+  }
+
+  function particleColor(s){
+    if (s === 'WATCH') return COLORS.watch;
+    if (s === 'BLOCKED') return COLORS.blocked;
+    if (s === 'BUY READY') return COLORS.ready;
+    if (s === 'TRADING') return COLORS.trading;
+    return COLORS.waiting;
+  }
+
+  function particlePosition(p,t){
+    const tt =
+      t * .001 *
+      p.speed *
+      flowSpeed() +
+      p.phase;
+
+    if (p.state === 'WAITING'){
+      const r = p.radius * 1.12;
+      return {
+        x: Math.cos(tt)*r,
+        y: p.yBand*.28 + Math.sin(tt*1.17)*12,
+        z: Math.sin(tt)*r
+      };
+    }
+
+    if (p.state === 'WATCH'){
+      const r = p.radius * .76;
+      return {
+        x: Math.cos(tt*1.03)*r,
+        y: p.yBand*.18 + Math.sin(tt*1.41)*9,
+        z: Math.sin(tt*1.03)*r
+      };
+    }
+
+    if (p.state === 'BLOCKED'){
+      const progress = (Math.sin(tt*.72)+1)/2;
+      return bezier(
+        {x:-10,y:0,z:0},
+        {x:-72,y:22,z:30},
+        {x:-132,y:92,z:26},
+        ANCHORS.blocked,
+        progress
+      );
+    }
+
+    if (p.state === 'BUY READY'){
+      const progress = (Math.sin(tt*.66)+1)/2;
+      return bezier(
+        {x:12,y:-4,z:0},
+        {x:86,y:-8,z:-12},
+        {x:138,y:-18,z:-8},
+        ANCHORS.ready,
+        progress
+      );
+    }
+
+    if (p.state === 'TRADING'){
+      const progress = (Math.sin(tt*.60)+1)/2;
+      return bezier(
+        ANCHORS.ready,
+        {x:220,y:6,z:-10},
+        {x:253,y:42,z:-20},
+        ANCHORS.trading,
+        progress
+      );
+    }
+
+    return {x:0,y:0,z:0};
+  }
+
+  function drawGrid(ctx){
+    for (let i=-4;i<=4;i++){
+      line3(ctx, {x:-320,y:155,z:i*52}, {x:320,y:155,z:i*52}, COLORS.muted, .05, 1);
+      line3(ctx, {x:i*68,y:155,z:-220}, {x:i*68,y:155,z:220}, COLORS.muted, .05, 1);
+    }
+  }
+
+  function drawAnchor(ctx,p,label,count,color){
+    const P = project(p);
+
+    const active =
+      Number(count || 0) > 0;
+
+    const alpha =
+      active ? .94 : .23;
+
+    const dotSize =
+      active ? 3.9 : 2.0;
+
+    ctx.save();
+
+    if (active){
+      ctx.shadowBlur = 13;
+      ctx.shadowColor = rgba(color,.34);
+    }
+
+    ctx.beginPath();
+    ctx.arc(
+      P.x,
+      P.y,
+      dotSize * P.scale,
+      0,
+      TAU
+    );
+
+    ctx.fillStyle =
+      rgba(color,alpha);
+
+    ctx.fill();
+    ctx.restore();
+
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+
+    ctx.font =
+      active
+        ? '800 8px system-ui,-apple-system,sans-serif'
+        : '750 7px system-ui,-apple-system,sans-serif';
+
+    ctx.fillStyle =
+      rgba(color,alpha);
+
+    ctx.fillText(
+      label,
+      P.x,
+      P.y - 8
+    );
+
+    ctx.textBaseline = 'top';
+    ctx.font =
+      '700 8px system-ui,-apple-system,sans-serif';
+
+    ctx.fillStyle =
+      active
+        ? 'rgba(178,193,204,.82)'
+        : 'rgba(110,126,138,.31)';
+
+    ctx.fillText(
+      String(count || 0),
+      P.x,
+      P.y + 6
+    );
+  }
+
+  function drawCore(ctx,t){
+    const c = project({x:0,y:0,z:0});
+    const r = clamp(42*c.scale, 30, 48);
+
+    const glow = ctx.createRadialGradient(c.x, c.y, 4, c.x, c.y, r*2.2);
+    glow.addColorStop(0, 'rgba(121,243,255,.18)');
+    glow.addColorStop(.32, 'rgba(71,211,236,.09)');
+    glow.addColorStop(1, 'rgba(71,211,236,0)');
+    ctx.beginPath();
+    ctx.arc(c.x, c.y, r*2.2, 0, TAU);
+    ctx.fillStyle = glow;
+    ctx.fill();
+
+    const body = ctx.createRadialGradient(c.x-r*.24, c.y-r*.28, r*.06, c.x, c.y, r);
+    body.addColorStop(0,'rgba(204,249,255,.24)');
+    body.addColorStop(.25,'rgba(61,208,232,.16)');
+    body.addColorStop(.58,'rgba(15,52,63,.26)');
+    body.addColorStop(1,'rgba(5,16,22,.90)');
+
+    ctx.beginPath();
+    ctx.arc(c.x, c.y, r, 0, TAU);
+    ctx.fillStyle = body;
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(95,225,245,.32)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    for (let i=0;i<12;i++){
+      const a = t*.00016 + (i/12)*TAU;
+      const p = {
+        x: Math.cos(a)*36,
+        y: Math.sin(a*1.8)*10,
+        z: Math.sin(a)*36
+      };
+      dot3(ctx, p, COLORS.core, 1.1, .62, 7);
+    }
+
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font = `800 ${clamp(9*c.scale, 9, 12)}px system-ui,-apple-system,sans-serif`;
+    ctx.fillStyle = 'rgba(225,246,250,.92)';
+    ctx.fillText('CORE', c.x, c.y-1);
+
+    ctx.font = `700 ${clamp(6*c.scale, 6, 8)}px system-ui,-apple-system,sans-serif`;
+    ctx.fillStyle = state.hasTelemetry
+      ? 'rgba(80,231,165,.80)'
+      : 'rgba(239,192,88,.75)';
+    const flowText =
+      state.flow.calibrated
+        ? `${state.flow.eventsPerSec.toFixed(1)} EVT/S`
+        : 'CALIBRATING';
+
+    ctx.fillText(
+      flowText,
+      c.x,
+      c.y + 12
+    );
+  }
+
+  function drawInbound(ctx,t){
+    const rate = state.flow.eventsPerSec;
+    const intensity = flowIntensity();
+    const speed = flowSpeed();
+
+    // Packet count follows real throughput.
+    // Hard capped for mobile GPU/CPU safety.
+    const count = state.flow.calibrated
+      ? clamp(Math.round(7 + rate * .32), 7, 34)
+      : 8;
+
+    for (let i=0; i<count; i++){
+      const q =
+        (
+          t * .000115 * speed +
+          i / count
+        ) % 1;
+
+      const spread =
+        8 + intensity * 18;
+
+      const pos = bezier(
+        ANCHORS.input,
+        {
+          x:-255,
+          y:-18 + Math.sin(i * 1.7) * spread,
+          z:28 + Math.cos(i) * 14
+        },
+        {
+          x:-112,
+          y:4,
+          z:-18
+        },
+        {
+          x:-28,
+          y:0,
+          z:0
+        },
+        q
+      );
+
+      dot3(
+        ctx,
+        pos,
+        i % 6 === 0 ? COLORS.white : COLORS.neutral,
+        .72 + intensity * .48,
+        .20 + intensity * .45,
+        2 + intensity * 5
+      );
+    }
+
+    // Decoded trade activity gets its own cyan inner pulse.
+    const tradeRate = state.flow.tradesPerSec;
+    const tradeCount = state.flow.calibrated
+      ? clamp(Math.round(3 + tradeRate * .42), 3, 22)
+      : 3;
+
+    for (let i=0; i<tradeCount; i++){
+      const a =
+        (
+          t * .001 *
+          (.24 + speed * .22) +
+          i / tradeCount
+        ) * TAU;
+
+      const r = 64 + (i % 3) * 9;
+
+      dot3(
+        ctx,
+        {
+          x:Math.cos(a) * r,
+          y:Math.sin(a * 1.43) * 8,
+          z:Math.sin(a) * r
+        },
+        COLORS.watch,
+        .72 + flowIntensity() * .42,
+        .26 + flowIntensity() * .48,
+        3 + flowIntensity() * 5
+      );
+    }
+  }
+
+  function drawAmbient(ctx,t){
+    for (const p of state.ambient){
+      const tt =
+        t * .001 *
+        p.speed *
+        (.55 + flowSpeed() * .45) +
+        p.phase;
+      const radius = 110 + p.lane*28;
+      const pos = {
+        x: Math.cos(tt)*radius,
+        y: -10 + (p.lane-1)*16 + Math.sin(tt*1.7)*7,
+        z: Math.sin(tt)*radius
+      };
+      dot3(ctx, pos, COLORS.neutral, p.size, .17, 0);
+    }
+  }
+
+  function drawScene(ctx,t){
+    ctx.clearRect(0,0,state.width,state.height);
+
+    const bg = ctx.createRadialGradient(
+      state.width*.5, state.height*.48, 8,
+      state.width*.5, state.height*.55,
+      Math.max(state.width,state.height)*.68
+    );
+    bg.addColorStop(0, 'rgba(10,22,28,.20)');
+    bg.addColorStop(.48, 'rgba(5,10,15,.04)');
+    bg.addColorStop(1, 'rgba(0,0,0,.18)');
+    ctx.fillStyle = bg;
+    ctx.fillRect(0,0,state.width,state.height);
+
+    drawGrid(ctx);
+
+    ring3(ctx, 92, 0, COLORS.core, .09);
+    ring3(ctx, 132, 0, COLORS.watch, .06);
+    ring3(ctx, 176, 0, COLORS.waiting, .04);
+
+    pathLine(ctx, ANCHORS.input, {x:-255,y:-28,z:40}, {x:-112,y:6,z:-20}, {x:-28,y:0,z:0}, COLORS.white, .06);
+    if (state.counts.BLOCKED > 0){
+      pathLine(
+        ctx,
+        {x:-8,y:0,z:0},
+        {x:-70,y:24,z:30},
+        {x:-132,y:92,z:26},
+        ANCHORS.blocked,
+        COLORS.blocked,
+        .15
+      );
+    }
+
+    if (state.counts['BUY READY'] > 0){
+      pathLine(
+        ctx,
+        {x:10,y:-2,z:0},
+        {x:82,y:-8,z:-12},
+        {x:136,y:-18,z:-8},
+        ANCHORS.ready,
+        COLORS.ready,
+        .14
+      );
+    }
+
+    drawInbound(ctx,t);
+
+    if (!state.hasTelemetry){
+      drawAmbient(ctx,t);
+    }
+
+    const rows = state.particles
+      .map(p => ({p, pos:particlePosition(p,t)}))
+      .sort((a,b) => a.pos.z - b.pos.z);
+
+    for (const row of rows){
+      const color = particleColor(row.p.state);
+      const glow = row.p.state === 'BLOCKED'
+        ? 6
+        : row.p.state === 'BUY READY' || row.p.state === 'TRADING'
+          ? 8
+          : 4;
+      const alpha = row.p.state === 'WAITING'
+        ? .62
+        : row.p.state === 'WATCH'
+          ? .74
+          : .84;
+      dot3(ctx, row.pos, color, row.p.size, alpha, glow);
+    }
+
+    drawCore(ctx,t);
+
+    drawAnchor(ctx, ANCHORS.waiting, 'WAITING', state.counts.WAITING, COLORS.waiting);
+    drawAnchor(ctx, ANCHORS.watch, 'WATCH', state.counts.WATCH, COLORS.watch);
+    drawAnchor(ctx, ANCHORS.blocked, 'BLOCKED', state.counts.BLOCKED, COLORS.blocked);
+    drawAnchor(ctx, ANCHORS.ready, 'BUY READY', state.counts['BUY READY'], COLORS.ready);
+  }
+
+  function resize(canvas,host){
+    const r = host.getBoundingClientRect();
+    state.width = Math.max(1, Math.round(r.width));
+    state.height = Math.max(1, Math.round(r.height));
+    state.dpr = Math.min(2, window.devicePixelRatio || 1);
+    canvas.width = Math.round(state.width * state.dpr);
+    canvas.height = Math.round(state.height * state.dpr);
+  }
+
+  function resetView(){
+    state.targetYaw = -0.18;
+    state.targetPitch = 0.09;
+    state.targetZoom = 1.03;
+  }
+
+  function connectControls(canvas){
+    canvas.addEventListener('pointerdown', e => {
+      state.dragging = true;
+      state.lastX = e.clientX;
+      state.lastY = e.clientY;
+      canvas.setPointerCapture?.(e.pointerId);
+    });
+
+    canvas.addEventListener('pointermove', e => {
+      if (!state.dragging) return;
+      const dx = e.clientX - state.lastX;
+      const dy = e.clientY - state.lastY;
+      state.lastX = e.clientX;
+      state.lastY = e.clientY;
+      state.targetYaw += dx * .0058;
+      state.targetPitch = clamp(state.targetPitch + dy * .0048, -.65, .65);
+    });
+
+    const stop = e => {
+      state.dragging = false;
+      try { canvas.releasePointerCapture?.(e.pointerId); } catch {}
+    };
+
+    canvas.addEventListener('pointerup', stop);
+    canvas.addEventListener('pointercancel', stop);
+
+    canvas.addEventListener('wheel', e => {
+      e.preventDefault();
+      state.targetZoom = clamp(
+        state.targetZoom * (e.deltaY > 0 ? .92 : 1.09),
+        .70,
+        1.55
+      );
+    }, {passive:false});
+
+    canvas.addEventListener('dblclick', resetView);
+
+    for (const button of document.querySelectorAll('button,[role="button"],a')){
+      if (/reset\s*view/i.test(textOf(button))){
+        button.addEventListener('click', () => setTimeout(resetView, 0));
+      }
+    }
+  }
+
+  function boot(){
+    const host = findArchitectureSection();
+    if (!host){
+      console.warn('[MEMEFLOW Orbit V3] Architecture container not found.');
+      return;
+    }
+
+    const canvas = makeCanvas(host);
+    const ctx = canvas.getContext('2d', {alpha:true});
+    if (!ctx) return;
+
+    resize(canvas, host);
+    connectControls(canvas);
+    rebuildParticles([]);
+    updateBadge(host);
+
+    const ro = new ResizeObserver(() => resize(canvas, host));
+    ro.observe(host);
+
+    installTelemetrySync(host);
+
+    let last = performance.now();
+
+    function frame(t){
+      const dt = Math.min(32, t - last);
+      last = t;
+
+      state.yaw += (state.targetYaw - state.yaw) * .08;
+      state.pitch += (state.targetPitch - state.pitch) * .08;
+      state.zoom += (state.targetZoom - state.zoom) * .08;
+
+      if (!state.dragging && !state.reducedMotion){
+        state.targetYaw += dt * .000010;
+      }
+
+      ctx.setTransform(state.dpr,0,0,state.dpr,0,0);
+      drawScene(ctx, t);
+      requestAnimationFrame(frame);
+    }
+
+    requestAnimationFrame(frame);
+
+    window.MEMEFLOW_ORBIT_V3 = {
+      resetView,
+      refresh: () => sampleRealThroughput(host),
+      getState: () => ({
+        apiOK: state.apiOK,
+        hasTelemetry: state.hasTelemetry,
+        counts: {...state.counts},
+        particles: state.particles.length
+      })
+    };
+
+    console.info('[MEMEFLOW Orbit V3.2 AUTHORITATIVE STATES] installed on', host);
+  }
+
+  if (document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', () => setTimeout(boot, 80), {once:true});
+  } else {
+    setTimeout(boot, 80);
+  }
+})();

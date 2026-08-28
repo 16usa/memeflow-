@@ -1,0 +1,160 @@
+{
+  "environment": "devnet",
+  "rpc": "https://api.devnet.solana.com",
+  "programId": "47tctW8xjfXo3FXZass23k3oaQ8G2AkTUnGCJtzVEpYV",
+  "payer": "6r1DVYcW6Tbr7zRJuzEH9JFdWzj2TAXQWxX3LLQtsXCG",
+  "owner": "5VDPmGtLokmuNx2GXeDcW9dgsJrZHfeLJnign5dntqYr",
+  "executor": "H67KJ3cJQrFUnyCv5asdUkKr2DnHzaVurKYovqDPn41q",
+  "attacker": "D5ERBmWCQEow3KhPTac2Fbu6UoLPUiTD7MCvRnJWjkHK",
+  "policy": "Fa3UPyNx9WjkEFtxmDPuVhkqTNxvSEkDWLKPvBkbn4vc",
+  "vault": "FZFoBwKeTZFKktdviLHx55snB93kViPxCJii7EvkeHiH",
+  "pumpProgramPresentOnDevnet": true,
+  "pumpProgramExecutableOnDevnet": true,
+  "finalPolicy": {
+    "version": 1,
+    "owner": "5VDPmGtLokmuNx2GXeDcW9dgsJrZHfeLJnign5dntqYr",
+    "executor": "H67KJ3cJQrFUnyCv5asdUkKr2DnHzaVurKYovqDPn41q",
+    "maxBuy": "40000000",
+    "daily": "80000000",
+    "exitOverhead": "3000000",
+    "spentToday": "0",
+    "dayIndex": "20693",
+    "entriesPaused": true,
+    "policyBump": 255,
+    "vaultBump": 254
+  },
+  "finalVaultLamports": 0,
+  "results": [
+    {
+      "name": "deployed program is executable",
+      "status": "PASS"
+    },
+    {
+      "name": "ephemeral owner funded with DEVNET SOL",
+      "status": "PASS"
+    },
+    {
+      "name": "initialize_policy writes correct fail-closed state",
+      "status": "PASS",
+      "state": {
+        "version": 1,
+        "owner": "5VDPmGtLokmuNx2GXeDcW9dgsJrZHfeLJnign5dntqYr",
+        "executor": "H67KJ3cJQrFUnyCv5asdUkKr2DnHzaVurKYovqDPn41q",
+        "maxBuy": "50000000",
+        "daily": "100000000",
+        "exitOverhead": "5000000",
+        "spentToday": "0",
+        "dayIndex": "20693",
+        "entriesPaused": true,
+        "policyBump": 255,
+        "vaultBump": 254
+      }
+    },
+    {
+      "name": "invalid policy limits rejected on-chain",
+      "status": "PASS",
+      "rejected": true,
+      "error": "Simulation failed. \nMessage: Transaction simulation failed: Error processing Instruction 0: custom program error: 0x1773. \nLogs: \n[\n  \"Program 47tctW8xjfXo3FXZass23k3oaQ8G2AkTUnGCJtzVEpYV invoke [1]\",\n  \"Program log: Instruction: UpdatePolicy\",\n  \"Program log: AnchorError thrown in programs/memeflow_smart_vault/src/lib.rs:143. Error Code: InvalidLimit. Error Number: 6003. Error Message: Invalid policy limit.\",\n  \"Program 47tctW8xjfXo3FXZass23k3oaQ8G2AkTUnGCJtzVEpYV consumed 5191 of 200000 comput"
+    },
+    {
+      "name": "attacker cannot change owner policy",
+      "status": "PASS",
+      "rejected": true,
+      "error": "Simulation failed. \nMessage: Transaction simulation failed: Error processing Instruction 0: custom program error: 0x7d6. \nLogs: \n[\n  \"Program 47tctW8xjfXo3FXZass23k3oaQ8G2AkTUnGCJtzVEpYV invoke [1]\",\n  \"Program log: Instruction: SetEntriesPaused\",\n  \"Program log: AnchorError caused by account: policy. Error Code: ConstraintSeeds. Error Number: 2006. Error Message: A seeds constraint was violated.\",\n  \"Program 47tctW8xjfXo3FXZass23k3oaQ8G2AkTUnGCJtzVEpYV consumed 4698 of 200000 compute units\",\n  "
+    },
+    {
+      "name": "owner can unpause entries",
+      "status": "PASS"
+    },
+    {
+      "name": "emergency entry lock is stored on-chain",
+      "status": "PASS"
+    },
+    {
+      "name": "owner deposit creates/funds System-owned vault PDA",
+      "status": "PASS",
+      "vaultLamports": 150000000
+    },
+    {
+      "name": "attacker cannot withdraw owner vault",
+      "status": "PASS",
+      "rejected": true,
+      "error": "Simulation failed. \nMessage: Transaction simulation failed: Error processing Instruction 0: custom program error: 0x7d6. \nLogs: \n[\n  \"Program 47tctW8xjfXo3FXZass23k3oaQ8G2AkTUnGCJtzVEpYV invoke [1]\",\n  \"Program log: Instruction: Withdraw\",\n  \"Program log: AnchorError caused by account: policy. Error Code: ConstraintSeeds. Error Number: 2006. Error Message: A seeds constraint was violated.\",\n  \"Program 47tctW8xjfXo3FXZass23k3oaQ8G2AkTUnGCJtzVEpYV consumed 4821 of 200000 compute units\",\n  \"Program"
+    },
+    {
+      "name": "executor cannot withdraw owner vault",
+      "status": "PASS",
+      "rejected": true,
+      "error": "Simulation failed. \nMessage: Transaction simulation failed: Error processing Instruction 0: custom program error: 0x7d6. \nLogs: \n[\n  \"Program 47tctW8xjfXo3FXZass23k3oaQ8G2AkTUnGCJtzVEpYV invoke [1]\",\n  \"Program log: Instruction: Withdraw\",\n  \"Program log: AnchorError caused by account: policy. Error Code: ConstraintSeeds. Error Number: 2006. Error Message: A seeds constraint was violated.\",\n  \"Program log: Left:\",\n  \"Program log: Fa3UPyNx9WjkEFtxmDPuVhkqTNxvSEkDWLKPvBkbn4vc\",\n  \"Program log: Rig"
+    },
+    {
+      "name": "owner-only withdrawal succeeds",
+      "status": "PASS",
+      "vaultLamports": 110000000
+    },
+    {
+      "name": "over-withdraw rejected on-chain",
+      "status": "PASS",
+      "rejected": true,
+      "error": "Simulation failed. \nMessage: Transaction simulation failed: Error processing Instruction 0: custom program error: 0x1782. \nLogs: \n[\n  \"Program 47tctW8xjfXo3FXZass23k3oaQ8G2AkTUnGCJtzVEpYV invoke [1]\",\n  \"Program log: Instruction: Withdraw\",\n  \"Program log: AnchorError thrown in programs/memeflow_smart_vault/src/lib.rs:107. Error Code: InsufficientVaultBalance. Error Number: 6018. Error Message: Vault SOL balance is too low.\",\n  \"Program 47tctW8xjfXo3FXZass23k3oaQ8G2AkTUnGCJtzVEpYV consumed 6948 "
+    },
+    {
+      "name": "unauthorized executor rejected before trade handler",
+      "status": "PASS",
+      "rejected": true,
+      "error": "Simulation failed. \nMessage: Transaction simulation failed: Error processing Instruction 0: custom program error: 0x1771. \nLogs: \n[\n  \"Program 47tctW8xjfXo3FXZass23k3oaQ8G2AkTUnGCJtzVEpYV invoke [1]\",\n  \"Program log: Instruction: ExecutePumpV2\",\n  \"Program log: AnchorError caused by account: policy. Error Code: UnauthorizedExecutor. Error Number: 6001. Error Message: Executor is not authorized by this vault.\",\n  \"Program log: Left:\",\n  \"Program log: H67KJ3cJQrFUnyCv5asdUkKr2DnHzaVurKYovqDPn41q\","
+    },
+    {
+      "name": "malformed trade payload rejected on-chain",
+      "status": "PASS",
+      "rejected": true,
+      "error": "Simulation failed. \nMessage: Transaction simulation failed: Error processing Instruction 0: custom program error: 0x1778. \nLogs: \n[\n  \"Program 47tctW8xjfXo3FXZass23k3oaQ8G2AkTUnGCJtzVEpYV invoke [1]\",\n  \"Program log: Instruction: ExecutePumpV2\",\n  \"Program log: AnchorError thrown in programs/memeflow_smart_vault/src/lib.rs:190. Error Code: MalformedTradeInstruction. Error Number: 6008. Error Message: Malformed Pump trade instruction.\",\n  \"Program 47tctW8xjfXo3FXZass23k3oaQ8G2AkTUnGCJtzVEpYV cons"
+    },
+    {
+      "name": "unapproved Pump instruction discriminator rejected on-chain",
+      "status": "PASS",
+      "rejected": true,
+      "error": "Simulation failed. \nMessage: Transaction simulation failed: Error processing Instruction 0: custom program error: 0x1777. \nLogs: \n[\n  \"Program 47tctW8xjfXo3FXZass23k3oaQ8G2AkTUnGCJtzVEpYV invoke [1]\",\n  \"Program log: Instruction: ExecutePumpV2\",\n  \"Program log: AnchorError thrown in programs/memeflow_smart_vault/src/lib.rs:204. Error Code: UnapprovedInstruction. Error Number: 6007. Error Message: Target Pump instruction is not allowlisted.\",\n  \"Program 47tctW8xjfXo3FXZass23k3oaQ8G2AkTUnGCJtzVEpY"
+    },
+    {
+      "name": "Pump BUY requires exact official account set",
+      "status": "PASS",
+      "rejected": true,
+      "error": "Simulation failed. \nMessage: Transaction simulation failed: Error processing Instruction 0: custom program error: 0x1779. \nLogs: \n[\n  \"Program 47tctW8xjfXo3FXZass23k3oaQ8G2AkTUnGCJtzVEpYV invoke [1]\",\n  \"Program log: Instruction: ExecutePumpV2\",\n  \"Program log: AnchorError thrown in programs/memeflow_smart_vault/src/lib.rs:212. Error Code: WrongPumpAccountCount. Error Number: 6009. Error Message: Wrong account count for Pump v2 instruction.\",\n  \"Program 47tctW8xjfXo3FXZass23k3oaQ8G2AkTUnGCJtzVEp"
+    },
+    {
+      "name": "owner policy-limit update persists on-chain",
+      "status": "PASS",
+      "state": {
+        "version": 1,
+        "owner": "5VDPmGtLokmuNx2GXeDcW9dgsJrZHfeLJnign5dntqYr",
+        "executor": "H67KJ3cJQrFUnyCv5asdUkKr2DnHzaVurKYovqDPn41q",
+        "maxBuy": "40000000",
+        "daily": "80000000",
+        "exitOverhead": "3000000",
+        "spentToday": "0",
+        "dayIndex": "20693",
+        "entriesPaused": true,
+        "policyBump": 255,
+        "vaultBump": 254
+      }
+    },
+    {
+      "name": "per-trade / daily / pause debit model matches policy semantics",
+      "status": "PASS"
+    },
+    {
+      "name": "test vault cleanup complete",
+      "status": "PASS"
+    },
+    {
+      "name": "ephemeral owner balance returned to Devnet payer",
+      "status": "PASS"
+    }
+  ],
+  "productionAutoLiveUnlocked": false,
+  "mainnetTouched": false,
+  "realMoneyUsed": false,
+  "note": "Real Pump CPI BUY/SELL is deliberately not executed in Phase C. This run validates the deployed vault/policy authority and rejection gates on Devnet.",
+  "completedAt": "2026-08-28T00:43:27.316Z"
+}
