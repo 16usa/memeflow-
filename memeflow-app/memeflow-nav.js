@@ -20,6 +20,11 @@
       sub: 'Live architecture and system state'
     },
     {
+      href: '/how-it-works.html',
+      title: 'How It Works',
+      sub: 'Wallet, Smart Vault, automation and withdrawals'
+    },
+    {
       href: '/trading.html?v=recent-trades-true-two-rows-v4-20260826',
       title: 'Trading Terminal',
       sub: 'Charts, candidates, positions and execution'

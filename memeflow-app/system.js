@@ -4476,7 +4476,8 @@ setTimeout(installRealWebV31, 1250);
   const DESTINATIONS = [
     { title: 'Trading Terminal', image: '/memeflow-gallery/trading-terminal.webp?v=page-gallery-v1', href: '/trading.html', slot: 'left' },
     { title: 'System Settings', image: '/memeflow-gallery/system-settings.webp?v=page-gallery-v1', href: '/settings.html', slot: 'center' },
-    { title: 'Real-Time Pipeline', image: '/memeflow-gallery/live-token-states.webp?v=page-gallery-v1', href: '/system-tokens.html', slot: 'right' }
+    { title: 'Real-Time Pipeline', image: '/memeflow-gallery/live-token-states.webp?v=page-gallery-v1', href: '/system-tokens.html', slot: 'right' },
+    { title: 'How It Works', image: '/memeflow-gallery/how-it-works.svg?v=how-it-works-carousel-v1', href: '/how-it-works.html', slot: 'hidden' }
   ];
 
   function stopOldTrue3D() {
@@ -4715,8 +4716,19 @@ setTimeout(installRealWebV31, 1250);
       return (order[a.dataset.slot] ?? 99) - (order[b.dataset.slot] ?? 99);
     });
 
-    let activeIndex = cards.findIndex(card => card.dataset.slot === 'center');
-    if (activeIndex < 0) activeIndex = 1;
+    const howItWorksIndex = cards.findIndex(
+      card => String(card.dataset.href || '').includes('/how-it-works.html')
+    );
+
+    let activeIndex = howItWorksIndex;
+
+    if (activeIndex < 0) {
+      activeIndex = cards.findIndex(card => card.dataset.slot === 'center');
+    }
+
+    if (activeIndex < 0) {
+      activeIndex = Math.max(0, cards.length - 1);
+    }
 
     return {
       gallery,
@@ -4897,19 +4909,24 @@ setTimeout(installRealWebV31, 1250);
 
   const PAGE_META = {
     'Trading Terminal': {
-      index: '01 / 03',
+      index: '01 / 04',
       title: 'TRADING TERMINAL',
       text: 'Live workspace for chart analysis, open positions, signals and trade execution.'
     },
     'System Settings': {
-      index: '02 / 03',
+      index: '02 / 04',
       title: 'SYSTEM SETTINGS',
       text: 'Configure trading mode, AI thresholds, risk filters and execution rules.'
     },
     'Real-Time Pipeline': {
-      index: '03 / 03',
+      index: '03 / 04',
       title: 'REAL-TIME PIPELINE',
       text: 'Monitor live token states, candidates, decisions and active positions.'
+    },
+    'How It Works': {
+      index: '04 / 04',
+      title: 'HOW IT WORKS',
+      text: 'See how your wallet, Smart Vault and executor work together — from deposit to automated trading and withdrawal.'
     }
   };
 
@@ -5142,7 +5159,8 @@ setTimeout(installRealWebV31, 1250);
   const LIVE_PAGES = {
     'Trading Terminal': '/trading.html',
     'System Settings': '/settings.html',
-    'Real-Time Pipeline': '/system-tokens.html'
+    'Real-Time Pipeline': '/system-tokens.html',
+    'How It Works': '/how-it-works.html'
   };
 
   const states = new Map();

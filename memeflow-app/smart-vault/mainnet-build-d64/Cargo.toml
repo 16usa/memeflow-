@@ -1,0 +1,10 @@
+[workspace]
+members = ["memeflow_smart_vault"]
+resolver = "2"
+
+[workspace.dependencies]
+anchor-lang = "1.0.2"
+solana-program = "3"
+
+[profile.release]
+overflow-checks = true
