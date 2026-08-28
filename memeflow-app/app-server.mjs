@@ -4777,7 +4777,105 @@ if(url.pathname==='/api/ai/decisions'){
  }
 
  if(url.pathname==='/api/chart/stream'){const mint=url.searchParams.get('tokenAddress');res.writeHead(200,{'content-type':'text/event-stream','cache-control':'no-cache','connection':'keep-alive'});res.write(`event: snapshot\ndata: ${JSON.stringify({points:[],status:{stale:true,source:'Solana'}})}\n\n`);if(!streams.has(mint))streams.set(mint,new Set());streams.get(mint).add(res);req.on('close',()=>streams.get(mint)?.delete(res));return}
- if(url.pathname==='/api/live/execute'){if(!hasLiveEntitlement(u))return json(res,402,{error:'LIVE_ENTITLEMENT_REQUIRED',message:'An active MEMEFLOW Pro subscription or verified owner entitlement is required.'});return json(res,423,{error:'LIVE_EXECUTION_NOT_READY',message:u.isOwner?'Owner LIVE entitlement is active, but verified wallet and production execution engine are still required.':'Pro is active, but verified wallet and production execution engine are still required.'});}
+ // MEMEFLOW_SMART_VAULT_D5_HTTP_DEVNET_V1
+ if(url.pathname==='/api/live/execute'){
+  if(req.method!=='POST'){
+   return json(res,405,{
+    error:'METHOD_NOT_ALLOWED',
+    message:'POST is required.'
+   });
+  }
+
+  if(!hasLiveEntitlement(u)){
+   return json(res,402,{
+    error:'LIVE_ENTITLEMENT_REQUIRED',
+    message:'An active MEMEFLOW Pro subscription or verified owner entitlement is required.'
+   });
+  }
+
+  const d5DevnetEnabled=
+   process.env.MEMEFLOW_SMART_VAULT_D5_DEVNET==='1' &&
+   process.env.MEMEFLOW_SMART_VAULT_D5_CONFIRM==='RUN DEVNET D5';
+
+  if(!d5DevnetEnabled){
+   return json(res,423,{
+    error:'LIVE_EXECUTION_NOT_READY',
+    message:u.isOwner
+     ?'Owner LIVE entitlement is active, but production execution remains locked. D5 DEVNET gate is not enabled.'
+     :'Pro is active, but production execution remains locked.'
+   });
+  }
+
+  const b=await body(req);
+
+  if(b?.d5Probe!==true){
+   return json(res,423,{
+    error:'D5_DEVNET_PROBE_REQUIRED',
+    message:'Explicit d5Probe=true is required. Production execution remains locked.'
+   });
+  }
+
+  const mint=String(b?.mint||'').trim();
+  const side=String(b?.side||'BUY').trim().toUpperCase();
+  const amountSol=Number(b?.amountSol);
+
+  if(!validPubkey(mint)){
+   return json(res,400,{error:'INVALID_TOKEN_ADDRESS'});
+  }
+
+  if(side!=='BUY'){
+   return json(res,400,{
+    error:'D5_BUY_PROBE_ONLY',
+    message:'D5 starts with BUY and verifies the complete DEVNET BUY -> SELL round-trip.'
+   });
+  }
+
+  if(!Number.isFinite(amountSol)||amountSol<=0){
+   return json(res,400,{
+    error:'INVALID_AMOUNT_SOL',
+    message:'amountSol must be a positive number.'
+   });
+  }
+
+  try{
+   const result=await __mfSmartVaultD4.executeTrade({
+    uid:u.id,
+    mint,
+    side,
+    amountSol,
+    d4Probe:true
+   });
+
+   if(result?.devnetExecuted!==true){
+    return json(res,423,{
+     ...result,
+     phase:'D5',
+     httpBoundary:true,
+     productionExecution:false
+    });
+   }
+
+   return json(res,200,{
+    ...result,
+    phase:'D5',
+    httpBoundary:true,
+    productionExecution:false,
+    productionAutoLiveUnlocked:false,
+    mainnetDeployment:false
+   });
+
+  }catch(e){
+   return json(res,500,{
+    error:e?.code||'D5_DEVNET_EXECUTION_FAILED',
+    message:e?.message||'D5 DEVNET execution failed.',
+    phase:'D5',
+    environment:'devnet',
+    productionExecution:false,
+    productionAutoLiveUnlocked:false,
+    mainnetDeployment:false
+   });
+  }
+ }
  // ── PAPER API routes ──────────────────────────────────────────────────────
  // MEMEFLOW_OPEN_POSITION_LIVE_BATCH_V18
  if(url.pathname==='/api/paper/positions/live'&&req.method==='GET'){
