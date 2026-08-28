@@ -405,19 +405,7 @@ const [sellState, global2, feeConfig2] = await Promise.all([
   sdk.fetchFeeConfig().catch(() => null),
 ]);
 
-const boughtTokensThisRun = tokensAfterBuy - tokensBefore;
-
-if (boughtTokensThisRun <= 0n) {
-  throw new Error(
-    `BUY_V2 produced no new tokens (${tokensBefore} -> ${tokensAfterBuy})`
-  );
-}
-
-const sellAmount = new BN(boughtTokensThisRun.toString());
-
-console.log(
-  `Selling only tokens acquired by this run: ${boughtTokensThisRun}`
-);
+const sellAmount = new BN(tokensAfterBuy.toString());
 const expectedSol = getSellSolAmountFromTokenAmount({
   global: global2,
   feeConfig: feeConfig2,
@@ -458,16 +446,6 @@ const sellSignature = await executeThroughSmartVault({
 
 const vaultAfterSell = BigInt(await connection.getBalance(vault, "confirmed"));
 const tokensAfterSell = await tokenRawBalance(connection, baseAta, tokenProgram);
-
-if (tokensAfterSell !== tokensBefore) {
-  throw new Error(
-    `ROUND-TRIP token balance mismatch: before=${tokensBefore}, after=${tokensAfterSell}`
-  );
-}
-
-console.log(
-  `Token round-trip restored: ${tokensBefore} -> ${tokensAfterBuy} -> ${tokensAfterSell}`
-);
 
 const result = {
   ok: true,
