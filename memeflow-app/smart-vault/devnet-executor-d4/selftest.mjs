@@ -1,0 +1,20 @@
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { readFile } from "node:fs/promises";
+import { createSmartVaultD4Adapter } from "./runtime-adapter.mjs";
+if(process.env.MEMEFLOW_SMART_VAULT_D4_DEVNET!=="1"||process.env.MEMEFLOW_SMART_VAULT_D4_CONFIRM!=="RUN DEVNET D4")throw new Error("D4 confirmation env is missing");
+const HERE=path.dirname(fileURLToPath(import.meta.url));
+const priorReportPath=path.resolve(HERE,"../devnet-executor-d2/.state/d2-roundtrip-report.json");
+let requestedMint="D4_DEVNET_FIXTURE";
+try{const prior=JSON.parse(await readFile(priorReportPath,"utf8"));if(prior?.testMint)requestedMint=prior.testMint;}catch{}
+const adapter=createSmartVaultD4Adapter();
+console.log("D4 adapter status:",adapter.status());
+const result=await adapter.executeTrade({uid:"MEMEFLOW_D4_RUNTIME_SELFTEST",mint:requestedMint,side:"BUY",amountSol:Number(process.env.D4_SELFTEST_SOL||"0.001"),d4Probe:true});
+if(result?.devnetExecuted!==true)throw new Error("D4 DEVNET execution did not complete");
+if(result?.executed!==false)throw new Error("D4 probe must never claim production execution");
+if(result?.productionAutoLiveUnlocked!==false||result?.mainnetDeployment!==false)throw new Error("D4 safety flag changed");
+if(String(result?.fixture?.tokensBefore)!==String(result?.fixture?.tokensAfterSell))throw new Error("D4 fixture token balance was not restored");
+console.log("\n== PHASE D4 MEMEFLOW RUNTIME BOUNDARY PASSED ==");
+console.log("PASS: MEMEFLOW executeTrade contract -> D4 adapter -> D3 server -> Smart Vault -> Pump BUY_V2/SELL_V2");
+console.log("PASS: owner did NOT sign; production AUTO LIVE locked; Mainnet untouched");
+console.log("BUY:",result.fixture.buySignature);console.log("SELL:",result.fixture.sellSignature);

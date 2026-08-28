@@ -20,6 +20,7 @@ import { eventMarketLedger } from './src/event-market-ledger.mjs'; // MEMEFLOW_V
 import { eventHolderLedger } from './src/event-holder-ledger.mjs'; // MEMEFLOW_V12_17_EVENT_HOLDER_LEDGER
 
 import {manualAnalyze} from './src/manual-scan.mjs';
+import {createSmartVaultD4Adapter} from './smart-vault/devnet-executor-d4/runtime-adapter.mjs'; // MEMEFLOW_SMART_VAULT_D4_RUNTIME
 // MEMEFLOW AI ASSISTANT HARD OFF: import disabled
 const root=path.dirname(fileURLToPath(import.meta.url)),dataDir=path.resolve(root,process.env.DATA_DIR||'data'),store=new JsonStore(dataDir);
 const opportunityEngine=createOpportunityEngine(); // MEMEFLOW_OPPORTUNITY_ENGINE_V1
@@ -246,14 +247,10 @@ const __mfChartArchive=new ChartHistoryArchive({dataDir});
 const PUMP='6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P',ALLOW_ANON=process.env.ALLOW_ANONYMOUS_PAPER!=='false';
 const OWNER_ACCESS_KEY=process.env.OWNER_ACCESS_KEY||'';
 const OWNER_USER_IDS=new Set((process.env.OWNER_USER_IDS||'').split(',').map(x=>x.trim()).filter(Boolean));
+const __mfSmartVaultD4=createSmartVaultD4Adapter(); // DEVNET probe-only; production execution stays blocked
 const openaiAI=new OpenAIIntelligence({
   store,
-  executeTrade:async({uid,mint,side,amountSol})=>({
-    executed:false,
-    error:'LIVE_EXECUTION_NOT_READY',
-    message:'AUTO AI reached the execution adapter, but this MEMEFLOW build has no verified production wallet signing/execution engine yet.',
-    uid,mint,side,amountSol
-  })
+  executeTrade:async(args)=>__mfSmartVaultD4.executeTrade(args)
 });
 // MEMEFLOW_DISCOVERY_TRANSPORT_HEALTH_V1
 let discovery={
