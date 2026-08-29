@@ -1,0 +1,570 @@
+/* =========================================================
+   MEMEFLOW_TRADING_AI_CHAT_V1
+   UI-only bridge to the SAME /api/ai/chat backend.
+   No second AI. No duplicate score. No trading logic changes.
+   ========================================================= */
+
+(() => {
+  'use strict';
+
+  if (window.__mfTradingAiChatV1) return;
+  window.__mfTradingAiChatV1 = true;
+
+  const history = [];
+  let busy = false;
+  let opened = false;
+
+  /* MEMEFLOW_AI_GRACEFUL_OFFLINE_V1 */
+
+  function setAiAvailability(mode = 'online') {
+    const drawer = document.getElementById('mfTerminalAiDrawer');
+    const button = document.getElementById('mfTerminalAiButton');
+    const subtitle = drawer?.querySelector('.mf-ai-subtitle');
+    const dot = button?.querySelector('.mf-ai-live-dot');
+
+    if (drawer) {
+      drawer.dataset.aiStatus = mode;
+    }
+
+    if (button) {
+      button.dataset.aiStatus = mode;
+    }
+
+    if (dot) {
+      dot.dataset.aiStatus = mode;
+    }
+
+    if (!subtitle) return;
+
+    if (mode === 'offline') {
+      subtitle.textContent =
+        'AI temporarily offline · trading engine continues normally';
+      return;
+    }
+
+    if (mode === 'connecting') {
+      subtitle.textContent =
+        'Connecting to MEMEFLOW Intelligence…';
+      return;
+    }
+
+    subtitle.textContent =
+      'Trading decisions · system memory · token context';
+  }
+
+  function classifyAiError(error) {
+    const raw = String(
+      error?.message ||
+      error?.payload?.message ||
+      error?.payload?.error ||
+      ''
+    );
+
+    const quotaOrBilling =
+      /no credits remaining/i.test(raw) ||
+      /insufficient[_ -]?quota/i.test(raw) ||
+      /billing/i.test(raw) ||
+      /credit balance/i.test(raw) ||
+      /quota exceeded/i.test(raw) ||
+      /usage limit/i.test(raw);
+
+    if (quotaOrBilling) {
+      return {
+        status: 'offline',
+        text:
+          'MEMEFLOW Intelligence is temporarily offline. ' +
+          'The trading engine, scanner, risk filters and trade management ' +
+          'continue operating normally.'
+      };
+    }
+
+    if (error?.name === 'AbortError') {
+      return {
+        status: 'offline',
+        text:
+          'MEMEFLOW Intelligence did not respond in time. ' +
+          'Trading continues normally without waiting for the chat.'
+      };
+    }
+
+    return {
+      status: 'offline',
+      text:
+        'MEMEFLOW Intelligence is temporarily unavailable. ' +
+        'Trading continues normally. Please try again shortly.'
+    };
+  }
+
+  function shortMint(value) {
+    const v = String(value || '').trim();
+    if (!v) return '';
+    if (v.length <= 18) return v;
+    return `${v.slice(0,7)}…${v.slice(-6)}`;
+  }
+
+  function currentMint() {
+    // trading.js puts the FULL selected mint on tokenAvatar.dataset.mint.
+    const avatar = document.getElementById('tokenAvatar');
+    const fromAvatar = String(avatar?.dataset?.mint || '').trim();
+
+    if (fromAvatar && fromAvatar.length > 20) {
+      return fromAvatar;
+    }
+
+    // Secondary source: active candidate button.
+    const active = document.querySelector(
+      '#candidateList .candidate.active[data-mint], ' +
+      '#candidateList .candidate[data-mint][aria-selected="true"]'
+    );
+
+    const fromCandidate = String(active?.dataset?.mint || '').trim();
+
+    if (fromCandidate && fromCandidate.length > 20) {
+      return fromCandidate;
+    }
+
+    return '';
+  }
+
+  function currentTokenName() {
+    const text = String(
+      document.getElementById('tokenName')?.textContent || ''
+    ).trim();
+
+    if (
+      !text ||
+      /^select a candidate$/i.test(text)
+    ) {
+      return '';
+    }
+
+    return text;
+  }
+
+  function mount() {
+    if (document.getElementById('mfTerminalAiDrawer')) return;
+
+    const overlay = document.createElement('div');
+    overlay.id = 'mfTerminalAiOverlay';
+    overlay.setAttribute('aria-hidden', 'true');
+
+    const button = document.createElement('button');
+    button.id = 'mfTerminalAiButton';
+    button.type = 'button';
+    button.setAttribute('aria-label', 'Open MEMEFLOW AI');
+    button.setAttribute('aria-expanded', 'false');
+    button.innerHTML = `
+      AI
+      <span class="mf-ai-live-dot" aria-hidden="true"></span>
+    `;
+
+    const drawer = document.createElement('section');
+    drawer.id = 'mfTerminalAiDrawer';
+    drawer.setAttribute('role', 'dialog');
+    drawer.setAttribute('aria-label', 'MEMEFLOW AI');
+    drawer.setAttribute('aria-hidden', 'true');
+
+    drawer.innerHTML = `
+      <div class="mf-ai-header">
+        <div class="mf-ai-title-wrap">
+          <div class="mf-ai-eyebrow">MEMEFLOW INTELLIGENCE</div>
+          <div class="mf-ai-title">AI Trading Chat</div>
+          <div class="mf-ai-subtitle">Trading decisions · system memory · token context</div>
+        </div>
+        <button id="mfTerminalAiClose" type="button" aria-label="Close AI chat">×</button>
+      </div>
+
+      <div class="mf-ai-context-row">
+        <span class="mf-ai-context-label">Context</span>
+        <span id="mfTerminalAiContext">SYSTEM</span>
+      </div>
+
+      <div id="mfTerminalAiMessages" aria-live="polite"></div>
+
+      <div class="mf-ai-suggestions">
+        <button class="mf-ai-suggestion" type="button" data-mf-prompt="Why did you buy or consider buying this token?">WHY BUY?</button>
+        <button class="mf-ai-suggestion" type="button" data-mf-prompt="Why did you sell or consider selling this token?">WHY SELL?</button>
+        <button class="mf-ai-suggestion" type="button" data-mf-prompt="What is happening with this token right now and what are the main risks?">WHAT NOW?</button>
+        <button class="mf-ai-suggestion" type="button" data-mf-prompt="Explain the most recent trading decision in the system.">LAST DECISION</button>
+      </div>
+
+      <div class="mf-ai-compose">
+        <div class="mf-ai-input-wrap">
+          <textarea
+            id="mfTerminalAiInput"
+            rows="1"
+            autocomplete="off"
+            autocapitalize="sentences"
+            spellcheck="true"
+            placeholder="Ask about a trade, token or decision…"
+          ></textarea>
+          <button id="mfTerminalAiSend" type="button" aria-label="Send">↑</button>
+        </div>
+        <div class="mf-ai-footnote">Same MEMEFLOW AI · same trading memory</div>
+      </div>
+    `;
+
+    document.body.appendChild(overlay);
+    document.body.appendChild(button);
+    document.body.appendChild(drawer);
+
+    button.addEventListener('click', () => setOpen(!opened));
+    overlay.addEventListener('click', () => setOpen(false));
+    document
+      .getElementById('mfTerminalAiClose')
+      ?.addEventListener('click', () => setOpen(false));
+
+    document
+      .getElementById('mfTerminalAiSend')
+      ?.addEventListener('click', () => send());
+
+    const input = document.getElementById('mfTerminalAiInput');
+
+    input?.addEventListener('keydown', event => {
+      if (
+        event.key === 'Enter' &&
+        !event.shiftKey &&
+        !event.isComposing
+      ) {
+        event.preventDefault();
+        send();
+      }
+    });
+
+    input?.addEventListener('input', autoSizeInput);
+
+    drawer.querySelectorAll('.mf-ai-suggestion').forEach(node => {
+      node.addEventListener('click', () => {
+        const prompt = String(node.dataset.mfPrompt || '');
+        if (!prompt) return;
+
+        const input = document.getElementById('mfTerminalAiInput');
+        if (input) {
+          input.value = prompt;
+          autoSizeInput();
+        }
+
+        send();
+      });
+    });
+
+    document.addEventListener('keydown', event => {
+      if (event.key === 'Escape' && opened) {
+        setOpen(false);
+      }
+    });
+
+    addMessage(
+      'assistant',
+      'Ask me why MEMEFLOW bought, sold, watched or blocked a token. I can also explain the latest trading decision and what the system saw.'
+    );
+
+    watchSelectedToken();
+    updateContext();
+  }
+
+  function setOpen(value) {
+    opened = Boolean(value);
+
+    const drawer = document.getElementById('mfTerminalAiDrawer');
+    const overlay = document.getElementById('mfTerminalAiOverlay');
+    const button = document.getElementById('mfTerminalAiButton');
+
+    drawer?.classList.toggle('mf-ai-open', opened);
+    overlay?.classList.toggle('mf-ai-open', opened);
+
+    drawer?.setAttribute('aria-hidden', opened ? 'false' : 'true');
+    overlay?.setAttribute('aria-hidden', opened ? 'false' : 'true');
+    button?.setAttribute('aria-expanded', opened ? 'true' : 'false');
+
+    if (opened) {
+      updateContext();
+
+      setTimeout(() => {
+        document.getElementById('mfTerminalAiInput')?.focus({
+          preventScroll:true
+        });
+      }, 120);
+    }
+  }
+
+  function updateContext() {
+    const badge = document.getElementById('mfTerminalAiContext');
+    if (!badge) return;
+
+    const mint = currentMint();
+    const name = currentTokenName();
+
+    if (!mint) {
+      badge.textContent = 'SYSTEM';
+      badge.title = 'System-wide trading memory';
+      return;
+    }
+
+    badge.textContent = name
+      ? `${name} · ${shortMint(mint)}`
+      : shortMint(mint);
+
+    badge.title = mint;
+  }
+
+  function watchSelectedToken() {
+    const avatar = document.getElementById('tokenAvatar');
+    const name = document.getElementById('tokenName');
+    const list = document.getElementById('candidateList');
+
+    const observer = new MutationObserver(() => {
+      updateContext();
+    });
+
+    if (avatar) {
+      observer.observe(avatar, {
+        attributes:true,
+        attributeFilter:['data-mint'],
+        childList:true
+      });
+    }
+
+    if (name) {
+      observer.observe(name, {
+        childList:true,
+        subtree:true,
+        characterData:true
+      });
+    }
+
+    if (list) {
+      observer.observe(list, {
+        attributes:true,
+        subtree:true,
+        attributeFilter:['class','aria-selected']
+      });
+    }
+  }
+
+  function addMessage(role, text, options = {}) {
+    const container = document.getElementById('mfTerminalAiMessages');
+    if (!container) return null;
+
+    const wrap = document.createElement('div');
+    wrap.className =
+      `mf-ai-message ${role}` +
+      (options.error ? ' error' : '');
+
+    const label = document.createElement('div');
+    label.className = 'mf-ai-message-label';
+    label.textContent = role === 'user' ? 'YOU' : 'MEMEFLOW AI';
+
+    const bubble = document.createElement('div');
+    bubble.className = 'mf-ai-bubble';
+    bubble.textContent = String(text || '');
+
+    wrap.appendChild(label);
+    wrap.appendChild(bubble);
+    container.appendChild(wrap);
+
+    container.scrollTop = container.scrollHeight;
+    return wrap;
+  }
+
+  function addThinking() {
+    const container = document.getElementById('mfTerminalAiMessages');
+    if (!container) return null;
+
+    const wrap = document.createElement('div');
+    wrap.className = 'mf-ai-message assistant';
+    wrap.dataset.thinking = '1';
+
+    const label = document.createElement('div');
+    label.className = 'mf-ai-message-label';
+    label.textContent = 'MEMEFLOW AI';
+
+    const bubble = document.createElement('div');
+    bubble.className = 'mf-ai-bubble';
+    bubble.innerHTML = `
+      <span class="mf-ai-thinking" aria-label="Thinking">
+        <i></i><i></i><i></i>
+      </span>
+    `;
+
+    wrap.appendChild(label);
+    wrap.appendChild(bubble);
+    container.appendChild(wrap);
+    container.scrollTop = container.scrollHeight;
+
+    return wrap;
+  }
+
+  function normalizeAnswer(payload) {
+    const possible = [
+      payload?.answer,
+      payload?.reply,
+      payload?.text,
+      payload?.output_text,
+      payload?.message,
+      payload?.result?.answer,
+      payload?.result?.reply,
+      payload?.result?.text,
+      payload?.response?.answer,
+      payload?.response?.text,
+      payload?.response?.output_text
+    ];
+
+    for (const value of possible) {
+      if (
+        typeof value === 'string' &&
+        value.trim()
+      ) {
+        return value.trim();
+      }
+    }
+
+    // Responses API-like output fallback
+    const output = payload?.output || payload?.response?.output;
+
+    if (Array.isArray(output)) {
+      const texts = [];
+
+      for (const item of output) {
+        if (!Array.isArray(item?.content)) continue;
+
+        for (const part of item.content) {
+          if (
+            typeof part?.text === 'string' &&
+            part.text.trim()
+          ) {
+            texts.push(part.text.trim());
+          }
+        }
+      }
+
+      if (texts.length) return texts.join('\n\n');
+    }
+
+    return 'The AI response was received, but it did not contain displayable text.';
+  }
+
+  async function send() {
+    if (busy) return;
+
+    const input = document.getElementById('mfTerminalAiInput');
+    const sendButton = document.getElementById('mfTerminalAiSend');
+
+    const message = String(input?.value || '').trim();
+    if (!message) return;
+
+    const mint = currentMint();
+
+    busy = true;
+    if (sendButton) sendButton.disabled = true;
+
+    addMessage('user', message);
+
+    history.push({
+      role:'user',
+      content:message
+    });
+
+    // Keep the conversation bounded; server-side trading journal remains
+    // the persistent system memory.
+    while (history.length > 16) {
+      history.shift();
+    }
+
+    if (input) {
+      input.value = '';
+      autoSizeInput();
+    }
+
+    const thinking = addThinking();
+
+    const controller = new AbortController();
+    const timeout = setTimeout(
+      () => controller.abort(),
+      45000
+    );
+
+    try {
+      setAiAvailability('connecting');
+
+      const response = await fetch('/api/ai/chat', {
+        method:'POST',
+        credentials:'same-origin',
+        cache:'no-store',
+        headers:{
+          'content-type':'application/json',
+          'accept':'application/json'
+        },
+        body:JSON.stringify({
+          message,
+          mint:mint || '',
+          messages:history.slice(-12)
+        }),
+        signal:controller.signal
+      });
+
+      let payload = {};
+
+      try {
+        payload = await response.json();
+      } catch {}
+
+      if (!response.ok) {
+        throw new Error(
+          payload?.message ||
+          payload?.error ||
+          `AI request failed (${response.status})`
+        );
+      }
+
+      const answer = normalizeAnswer(payload);
+
+      setAiAvailability('online');
+
+      thinking?.remove();
+      addMessage('assistant', answer);
+
+      history.push({
+        role:'assistant',
+        content:answer
+      });
+
+      while (history.length > 16) {
+        history.shift();
+      }
+
+    } catch (error) {
+      thinking?.remove();
+
+      const friendly = classifyAiError(error);
+
+      setAiAvailability(friendly.status);
+
+      addMessage(
+        'assistant',
+        friendly.text,
+        {error:true}
+      );
+    } finally {
+      clearTimeout(timeout);
+      busy = false;
+      if (sendButton) sendButton.disabled = false;
+      input?.focus({preventScroll:true});
+    }
+  }
+
+  function autoSizeInput() {
+    const input = document.getElementById('mfTerminalAiInput');
+    if (!input) return;
+
+    input.style.height = 'auto';
+    input.style.height =
+      `${Math.min(112, Math.max(34, input.scrollHeight))}px`;
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', mount, {once:true});
+  } else {
+    mount();
+  }
+})();

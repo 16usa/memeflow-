@@ -601,9 +601,9 @@ function renderPriceModeSummary(livePriceUsd = null) {
 }
 
 function chartHorizonMs(timeframe) {
-  // V30.12 FULL HISTORY:
-  // Timeframe changes OHLC aggregation only. It never discards older trades.
-  // 1s / 1m / 5m / 15m / 1h can all be dragged back to token creation.
+  // V6: timeframe is the OHLC bucket size, NOT a destructive history window.
+  // 1s means 1-second candles from canonical real trades; it must not throw
+  // away the token's older valid trades just because they are >90 seconds old.
   return null;
 }
 
@@ -1332,8 +1332,28 @@ function renderSelected({ redrawChart = true } = {}) {
   $('tokenState').className = `decision-badge ${decisionClass(stateText)}`;
   $('tokenMint').textContent = short(c.mint, 7, 6);
 
-  const price = candidatePrice(c);
-  const priceUsd = usdFromSol(price, c);
+  const chartPoints =
+    typeof rawPoints==='function'
+      ? rawPoints(c.mint)
+      : [];
+  const chartLast =
+    Array.isArray(chartPoints) && chartPoints.length
+      ? chartPoints[chartPoints.length-1]
+      : null;
+
+  let priceUsd=null;
+  try{
+    if(chartLast && typeof pointUsdPrice==='function'){
+      const liveUsd=Number(pointUsdPrice(chartLast));
+      if(liveUsd>0)priceUsd=liveUsd;
+    }
+  }catch{}
+
+  if(!(priceUsd>0)){
+    const price = candidatePrice(c);
+    priceUsd = usdFromSol(price, c);
+  }
+
   renderPriceModeSummary(priceUsd);
 
   $('metricScore').textContent = fmt(c.score, 0);
@@ -1464,35 +1484,43 @@ function addPoint(mint,point,redraw=true) {
   if(!next)return false;
 
   const points=rawPoints(mint);
+
+  // SSE reconnect/snapshot can repeat the newest real event.
+  const recent=points.slice(-64);
+  const duplicate=recent.some(existing=>{
+    if(next.id && existing?.id){
+      return String(existing.id)===String(next.id);
+    }
+    return (
+      Number(existing?.t)===Number(next.t) &&
+      Number(existing?.price)===Number(next.price) &&
+      Boolean(existing?.isBuy)===Boolean(next.isBuy) &&
+      Number(existing?.solAmount||0)===Number(next.solAmount||0) &&
+      Number(existing?.tokenAmount||0)===Number(next.tokenAmount||0)
+    );
+  });
+  if(duplicate)return false;
+
   const last=points[points.length-1];
-
-  if(
-    next.id &&
-    (last?.id===next.id || points.slice(-64).some(item=>item?.id===next.id))
-  ){
-    return false;
-  }
-
-  // Server history already de-duplicates by transaction signature + event index.
-  // Do not rescan the whole browser history on every tick.
-  const late=Boolean(last && next.t<last.t);
+  const late=Boolean(last && Number(next.t)<Number(last.t));
   points.push(next);
 
   if(late){
-    points.sort((a,b)=>a.t-b.t);
+    points.sort((a,b)=>Number(a.t)-Number(b.t));
+  }
+
+  if(points.length>8000){
+    points.splice(0,points.length-8000);
   }
 
   if(redraw){
-    if(late){
-      chartRuntime.dataKey='';
-      scheduleChart();
-    }else{
-      updateRealtimeChart(mint);
-    }
+    chartRuntime.dataKey='';
+    updateRealtimeChart(mint);
   }
 
   return true;
 }
+
 
 function formatTapeAmount(value) {
   const n = Number(value);
@@ -1585,18 +1613,18 @@ function connectChartStream(mint) {
 
   source.addEventListener('update',event=>{
     try{
-      const {payload,incoming}=parseIncoming(event);
-      let changed=false;
-      for(const point of incoming){
-        pushLiveTradeTape(mint, point);
-        changed=addPoint(mint,point,false)||changed;
+      const payload=JSON.parse(event.data||'{}');
+      const point=payload?.point||null;
+      const added=addPoint(mint,point,false);
+
+      if(added && mint===state.selectedMint){
+        chartRuntime.dataKey='';
+        updateRealtimeChart(mint);
       }
-      if(changed)updateRealtimeChart(mint);
-      if(payload?.status?.stale===false || incoming.length){
-        $('feedState').textContent='LIVE';
-      }
+
+      $('feedState').textContent='LIVE';
     }catch(error){
-      console.warn('[MEMEFLOW CHART] update',error);
+      console.warn('[MEMEFLOW CHART] live update',error);
     }
   });
 
@@ -1815,61 +1843,121 @@ function latestCandleFor(points, timeframe) {
 }
 
 function strategyLevels() {
-  if (!state.selectedMint) return [];
+  if(!state.selectedMint)return [];
 
-  const rate = solUsdRate();
-  if (!(rate > 0)) return [];
+  const position=(Array.isArray(state.positions)?state.positions:[])
+    .find(
+      p=>
+        String(p?.status||'').toUpperCase()==='OPEN' &&
+        String(p?.mint||'')===String(state.selectedMint)
+    );
 
-  const position = state.positions.find(
-    p => p.status === 'OPEN' && p.mint === state.selectedMint
+  let entrySol=num(
+    position?.entryPriceSol,
+    position?.entryPrice,
+    null
   );
 
-  let entrySol = num(position?.entryPriceSol);
-
-  if (!(entrySol > 0)) {
-    entrySol = chartRuntime.previewEntrySolByMint.get(state.selectedMint) ?? null;
-
-    if (!(entrySol > 0)) {
-      const points = rawPoints(state.selectedMint);
-      const last = points[points.length - 1];
-      entrySol = num(
-        last?.priceSol ?? last?.price,
-        candidatePrice(state.selected)
-      );
-
-      if (entrySol > 0) {
-        chartRuntime.previewEntrySolByMint.set(
-          state.selectedMint,
-          entrySol
-        );
-      }
+  if(!(entrySol>0)){
+    const entryUsd=num(
+      position?.entryPriceUsd,
+      position?.entryUsd,
+      null
+    );
+    const rate=solUsdRate();
+    if(entryUsd>0 && rate>0){
+      entrySol=entryUsd/rate;
     }
   }
 
-  if (!(entrySol > 0)) return [];
+  if(!(entrySol>0)){
+    entrySol=
+      chartRuntime.previewEntrySolByMint?.get?.(state.selectedMint)
+      ?? null;
+  }
 
-  const entry = chartValueFromUsdPrice(entrySol * rate);
-  if (!(entry > 0)) return [];
+  if(!(entrySol>0)){
+    const points=rawPoints(state.selectedMint);
+    const last=points[points.length-1];
+    entrySol=num(
+      last?.priceSol ?? last?.price,
+      candidatePrice(state.selected),
+      null
+    );
+    if(entrySol>0){
+      chartRuntime.previewEntrySolByMint?.set?.(
+        state.selectedMint,
+        entrySol
+      );
+    }
+  }
 
-  const hard = num($('hardStopPct').value, state.settings?.hardStopPct);
-  const tp1 = num($('tp1Pct').value, state.settings?.tp1Pct);
-  const tp2 = num($('tp2Pct').value, state.settings?.tp2Pct);
-  const tp1Sell = num($('tp1SellPct').value, state.settings?.tp1SellPct);
-  const tp2Sell = num($('tp2SellPct').value, state.settings?.tp2SellPct);
+  if(!(entrySol>0))return [];
 
-  return [
-    { label: 'ENTRY', price: entry, kind: 'entry' },
-    hard > 0
-      ? { label: `SL -${fmt(hard, 1)}%`, price: entry * (1 - hard / 100), kind: 'stop' }
-      : null,
-    tp1 > 0
-      ? { label: `TP1 +${fmt(tp1, 0)}% · SELL ${fmt(tp1Sell, 0)}%`, price: entry * (1 + tp1 / 100), kind: 'tp' }
-      : null,
-    tp2 > 0
-      ? { label: `TP2 +${fmt(tp2, 0)}% · SELL ${fmt(tp2Sell, 0)}%`, price: entry * (1 + tp2 / 100), kind: 'tp2' }
-      : null
-  ].filter(Boolean);
+  const rate=solUsdRate();
+  if(!(rate>0))return [];
+
+  const entry=chartValueFromUsdPrice(entrySol*rate);
+  if(!(entry>0))return [];
+
+  const settings=state.settings||{};
+
+  const fieldOrSetting=(id,key)=>{
+    try{
+      const el=$(id);
+      const value=num(el?.value,null);
+      if(value!==null && Number.isFinite(value))return value;
+    }catch{}
+    return num(settings?.[key],null);
+  };
+
+  const hard=fieldOrSetting('hardStopPct','hardStopPct');
+  const tp1=fieldOrSetting('tp1Pct','tp1Pct');
+  const tp2=fieldOrSetting('tp2Pct','tp2Pct');
+  const tp1Sell=fieldOrSetting('tp1SellPct','tp1SellPct');
+  const tp2Sell=fieldOrSetting('tp2SellPct','tp2SellPct');
+
+  const rows=[
+    {
+      label:'ENTRY',
+      price:entry,
+      kind:'entry'
+    }
+  ];
+
+  if(hard>0 && hard<100){
+    rows.push({
+      label:`SL -${fmt(hard,1)}%`,
+      price:entry*(1-hard/100),
+      kind:'stop'
+    });
+  }
+
+  if(tp1>0){
+    rows.push({
+      label:
+        `TP1 +${fmt(tp1,0)}%`+
+        (tp1Sell>0?` · SELL ${fmt(tp1Sell,0)}%`:''),
+      price:entry*(1+tp1/100),
+      kind:'tp'
+    });
+  }
+
+  if(tp2>0){
+    rows.push({
+      label:
+        `TP2 +${fmt(tp2,0)}%`+
+        (tp2Sell>0?` · SELL ${fmt(tp2Sell,0)}%`:''),
+      price:entry*(1+tp2/100),
+      kind:'tp2'
+    });
+  }
+
+  return rows.filter(
+    row=>Number.isFinite(Number(row?.price)) && Number(row.price)>0
+  );
 }
+
 
 const chartRuntime={
   api:null,
@@ -2980,15 +3068,19 @@ function chartLowerIndicatorPane(candles,padCount,volumeData,ma5,ma10){
 }
 
 function chartLevelInfo(candles){
-  const levels=strategyLevels();
+  const levels=
+    typeof strategyLevels==='function'
+      ? strategyLevels()
+      : [];
+
   if(!candles.length || !levels.length){
     return {visible:[],offscreen:levels};
   }
 
   const basis=
     state.timeframe==='all'
-      ? candles
-      : candles.slice(-Math.min(140,candles.length));
+      ? candles.slice(-Math.min(180,candles.length))
+      : candles.slice(-Math.min(120,candles.length));
 
   const values=basis.flatMap(c=>[
     Number(c.high),
@@ -3001,32 +3093,35 @@ function chartLevelInfo(candles){
 
   const min=Math.min(...values);
   const max=Math.max(...values);
-  const span=Math.max(
+  const rawSpan=Math.max(
     max-min,
-    Math.abs(max||1)*.006
+    Math.abs(max||1)*.008
   );
 
-  const low=Math.max(0,min-span*.30);
-  const high=max+span*.30;
+  const low=Math.max(0,min-rawSpan*.45);
+  const high=max+rawSpan*.45;
 
   return {
-    visible:levels.filter(level=>
-      Number(level?.price)>=low &&
-      Number(level?.price)<=high
-    ),
-    offscreen:levels.filter(level=>
-      Number(level?.price)<low ||
-      Number(level?.price)>high
-    )
+    visible:levels.filter(level=>{
+      const price=Number(level?.price);
+      return Number.isFinite(price) && price>=low && price<=high;
+    }),
+    offscreen:levels.filter(level=>{
+      const price=Number(level?.price);
+      return !Number.isFinite(price) || price<low || price>high;
+    })
   };
 }
+
 
 function levelColor(level){
   if(level?.kind==='stop')return '#ff6679';
   if(level?.kind==='entry')return '#55d9ff';
   if(level?.kind==='tp')return '#4de6a1';
+  if(level?.kind==='tp2')return '#82e9b8';
   return '#a98bff';
 }
+
 
 // V30.23: horizontal overlays are normal line series instead of candlestick
 // markLine. This keeps LIVE / ENTRY / SL / TP identical in PRICE and MARKET CAP,
@@ -3038,8 +3133,17 @@ function chartHorizontalLevelSeries(labels,visibleLevels,liveValue){
   const constantData=value=>
     Array.from({length:count},()=>Number(value));
 
+  const isTouch=
+    typeof chartTouchUi==='function'
+      ? chartTouchUi()
+      : false;
+
   const rows=(Array.isArray(visibleLevels)?visibleLevels:[])
-    .filter(level=>Number.isFinite(Number(level?.price)) && Number(level.price)>0)
+    .filter(
+      level=>
+        Number.isFinite(Number(level?.price)) &&
+        Number(level.price)>0
+    )
     .map((level,index)=>({
       name:`__MF_LEVEL_${index}_${String(level.kind||'level')}`,
       type:'line',
@@ -3056,9 +3160,21 @@ function chartHorizontalLevelSeries(labels,visibleLevels,liveValue){
         color:levelColor(level),
         width:1,
         type:'dashed',
-        opacity:.85
+        opacity:.82
       },
-      z:5
+      endLabel:{
+        show:true,
+        color:levelColor(level),
+        backgroundColor:'rgba(5,12,17,.90)',
+        borderColor:levelColor(level),
+        borderWidth:1,
+        borderRadius:3,
+        padding:isTouch?[2,4]:[3,5],
+        fontSize:isTouch?8:9,
+        formatter:()=>String(level.label||'')
+      },
+      labelLayout:{hideOverlap:false},
+      z:8
     }));
 
   const live=Number(liveValue);
@@ -3079,24 +3195,15 @@ function chartHorizontalLevelSeries(labels,visibleLevels,liveValue){
         color:'#55d9ff',
         width:1,
         type:'dashed',
-        opacity:.82
+        opacity:.55
       },
-      endLabel:{
-        show:true,
-        color:'#021014',
-        backgroundColor:'#55d9ff',
-        borderRadius:2,
-        padding:[2,4],
-        fontSize:9,
-        formatter:()=>formatChartValue(live)
-      },
-      labelLayout:{hideOverlap:false},
-      z:6
+      z:7
     });
   }
 
   return rows;
 }
+
 
 // V30.19: keep sparse timeframes visually dense without inventing candles.
 // These are render-only empty category slots. They never enter OHLC, volume,
@@ -3216,8 +3323,6 @@ function ensureChartEngine(){
     return Boolean(chartRuntime.api);
   }
 
-  chartRuntime.initialized=true;
-
   const EC=window.echarts;
   const host=$('chartCanvas');
 
@@ -3233,14 +3338,26 @@ function ensureChartEngine(){
     return false;
   }
 
-  chartRuntime.api=EC.init(
-    host,
-    null,
-    {
-      renderer:'canvas',
-      useDirtyRect:true
-    }
-  );
+  try{
+    chartRuntime.api=EC.init(
+      host,
+      null,
+      {
+        renderer:'canvas',
+        useDirtyRect:true
+      }
+    );
+    chartRuntime.initialized=true;
+  }catch(error){
+    chartRuntime.api=null;
+    chartRuntime.initialized=false;
+    console.error('[MEMEFLOW_ECHARTS_INIT_V5]',error);
+    $('chartEmpty').style.display='grid';
+    $('chartEmpty').innerHTML=
+      '<strong>Chart renderer unavailable</strong>'+
+      '<span>ECharts initialization failed in this browser.</span>';
+    return false;
+  }
 
   chartRuntime.api.on('datazoom',()=>{
     captureChartViewport();
@@ -3330,491 +3447,699 @@ function scheduleChart(){
 }
 
 function updateRealtimeChart(mint){
-  if(
-    mint!==state.selectedMint ||
-    !ensureChartEngine()
-  ){
-    return;
-  }
+  if(mint!==state.selectedMint)return;
 
   const points=rawPoints(mint);
-  const candles=candlesFor(
-    points,
-    state.timeframe
-  );
+  const lastPoint=points[points.length-1]||null;
 
-  if(
-    Number(state.timeframe)===1000 &&
-    candles.length>=2
-  ){
-    chartRuntime.pendingFx={
-      prev:candles[candles.length-2],
-      curr:candles[candles.length-1],
-      levels:strategyLevels()
-    };
+  if(lastPoint){
+    try{
+      if(typeof __mfChartSyncHeaderV6==='function'){
+        __mfChartSyncHeaderV6(points);
+      }else if(typeof pointUsdPrice==='function'){
+        renderPriceModeSummary(pointUsdPrice(lastPoint));
+      }
+    }catch{}
   }
 
-  // ECharts receives one coalesced rAF redraw. The dataZoom viewport is
-  // preserved by timestamp, so a viewer panned into history is not yanked live.
+  // V6 uses ECharts full-series redraw. Never use a stale LightweightCharts
+  // series.update() path here.
   chartRuntime.dataKey='';
   scheduleChart();
 }
 
-function drawChart(){
-  if(!ensureChartEngine())return;
 
-  if(!state.selectedMint){
-    chartRuntime.api.clear();
-    $('chartEmpty').style.display='grid';
-    $('chartLegend').innerHTML='';
-    return;
-  }
 
-  const points=rawPoints(
-    state.selectedMint
-  );
+function __mfChartVisibleSlotsV6(){
+  return window.innerWidth < 700 ? 48 : 84;
+}
 
-  const candles=candlesFor(
-    points,
-    state.timeframe
-  );
-
-  if(!candles.length){
-    chartRuntime.api.clear();
-    $('chartEmpty').style.display='grid';
-    $('chartEmpty').innerHTML=
-      '<strong>Syncing real trades</strong>'+
-      '<span>Candles use confirmed BUY / SELL events only. History and the live Pump trade stream reconnect automatically.</span>';
-    $('chartLegend').innerHTML='';
-    renderPriceModeSummary();
-    return;
-  }
-
-  $('chartEmpty').style.display='none';
-
-  const display=chartDisplayData(candles);
-  const labels=display.labels;
-  const displayCandles=display.rows;
-
-  const candleData=displayCandles.map(c=>
-    c
-      ? [
-          Number(c.open),
-          Number(c.close),
-          Number(c.low),
-          Number(c.high)
-        ]
-      : '-'
-  );
-
-  const actualVolumeData=candles.map(c=>({
-    value:Math.max(0,Number(c.volumeUsd||0)),
-    itemStyle:{
-      color:
-        Number(c.close)>=Number(c.open)
-          ? 'rgba(77,230,161,.68)'
-          : 'rgba(255,102,121,.64)'
-    }
-  }));
-
-  // V30.22: indicator/volume geometry follows the same left-anchored
-  // real-candle order. Future render slots stay empty on the RIGHT.
-  const futurePad=Array(display.padCount).fill('-');
-  const volumeData=actualVolumeData.concat(futurePad);
-  const ma5=movingAverage(candles,5).concat(futurePad);
-  const ma10=movingAverage(candles,10).concat(futurePad);
-
-  const overlayIndicatorSeries=
-    chartOverlayIndicatorSeries(
-      candles,
-      display.padCount
-    );
-
-  const lowerIndicatorPane=
-    chartLowerIndicatorPane(
-      candles,
-      display.padCount,
-      volumeData,
-      ma5,
-      ma10
-    );
-
-  const lowerIndicatorVisible=Boolean(lowerIndicatorPane);
-  const lowerIndicatorSeries=lowerIndicatorPane?.series || [];
-  const lowerIndicatorLegend=lowerIndicatorPane?.legend || [];
-  const lowerIndicatorAxis=lowerIndicatorPane?.axis || {
-    scale:true,
-    formatter:value=>compactIndicatorValue(value)
-  };
-
-  const levelInfo=chartLevelInfo(candles);
-  chartRuntime.offscreenLevels=levelInfo.offscreen;
-
-  const last=candles[candles.length-1];
-
-  // V30.23: use one shared overlay model for both metrics.
-  const horizontalLevelSeries=chartHorizontalLevelSeries(
-    labels,
-    levelInfo.visible,
-    last.close
-  );
-
-  // V30.23: PRICE <-> MARKET CAP is a Y-axis unit conversion only.
-  // Mint/timeframe changes may refit X; metric changes must preserve X viewport.
-  const xContextChanged=
-    chartRuntime.mint!==state.selectedMint ||
-    chartRuntime.timeframe!==state.timeframe;
-
-  let range=null;
-
+function __mfChartTimeLabelV6(value){
+  const text=String(value ?? '');
   if(
-    chartRuntime.forceFit ||
-    xContextChanged ||
-    !chartRuntime.viewport.startValue ||
-    !chartRuntime.viewport.endValue
+    text.startsWith('__mf_future_') ||
+    text.startsWith('__mf_pad_')
   ){
-    range=chartInitialRange(labels);
-    chartRuntime.viewport.followLatest=true;
-  }else if(chartRuntime.viewport.followLatest){
-    range=chartInitialRange(labels);
-  }else{
-    const startExists=
-      labels.includes(String(chartRuntime.viewport.startValue));
-    const endExists=
-      labels.includes(String(chartRuntime.viewport.endValue));
-
-    range=
-      startExists && endExists
-        ? {
-            startValue:String(chartRuntime.viewport.startValue),
-            endValue:String(chartRuntime.viewport.endValue)
-          }
-        : chartInitialRange(labels);
+    return '';
   }
 
-  const touchUi=chartTouchUi();
-
-  chartRuntime.suppressZoom=true;
-
-  chartRuntime.api.setOption(
-    {
-      animation:false,
-      /* MEMEFLOW_TRADING_CHART_RESTORE_SITE_BG_V2: render logic untouched */
-      /* MEMEFLOW_TRADING_CHART_MATCH_PANEL_V3: match surrounding panel surface */
-      backgroundColor:'#131b23',
-      textStyle:{
-        color:'#536f7b',
-        fontFamily:'ui-monospace, SFMono-Regular, Menlo, monospace',
-        fontSize:9
-      },
-      axisPointer:{
-        // Mobile Safari was interpreting a finger drag as an axis selection.
-        // Touch mode must pan/zoom with no category shadow or raw timestamp label.
-        show:!touchUi,
-        triggerTooltip:!touchUi,
-        link:touchUi ? [] : [{xAxisIndex:'all'}],
-        snap:false,
-        animation:false,
-        label:{
-          show:!touchUi,
-          backgroundColor:'#0b171d',
-          formatter:chartPointerTimeLabel
-        }
-      },
-      tooltip:{
-        show:!touchUi,
-        showContent:!touchUi,
-        trigger:touchUi ? 'none' : 'axis',
-        triggerOn:touchUi ? 'none' : 'mousemove|click',
-        alwaysShowContent:false,
-        confine:true,
-        axisPointer:{
-          show:!touchUi,
-          type:'line',
-          snap:false,
-          lineStyle:{
-            color:'rgba(120,176,195,.30)',
-            width:1,
-            type:'dashed'
-          },
-          label:{
-            show:!touchUi,
-            formatter:chartPointerTimeLabel,
-            backgroundColor:'#0b171d'
-          }
-        },
-        backgroundColor:'rgba(5,12,17,.96)',
-        borderColor:'rgba(111,170,190,.22)',
-        textStyle:{
-          color:'#cfe0e7',
-          fontSize:10
-        },
-        extraCssText:'box-shadow:0 8px 30px rgba(0,0,0,.32);',
-        formatter:params=>{
-          const rows=Array.isArray(params)?params:[];
-          const candleParam=rows.find(row=>row?.seriesName==='Price');
-          const index=Number(candleParam?.dataIndex);
-          const c=Number.isFinite(index)?displayCandles[index]:null;
-          if(!c)return '';
-
-          const time=chartTimeLabel(c.t);
-          return [
-            `<strong>${time}</strong>`,
-            `O ${formatChartValue(c.open)}`,
-            `H ${formatChartValue(c.high)}`,
-            `L ${formatChartValue(c.low)}`,
-            `C ${formatChartValue(c.close)}`,
-            `VOL $${compactVolume(c.volumeUsd)}`
-          ].join('<br>');
-        }
-      },
-      legend:{
-        show:lowerIndicatorVisible,
-        data:lowerIndicatorLegend,
-        left:10,
-        top:'72%',
-        itemWidth:10,
-        itemHeight:6,
-        textStyle:{
-          color:'#718894',
-          fontSize:8
-        },
-        selectedMode:false
-      },
-      grid:[
-        {
-          left:10,
-          right:76,
-          top:42,
-          height:lowerIndicatorVisible ? '55%' : '78%',
-          containLabel:false
-        },
-        {
-          show:lowerIndicatorVisible,
-          left:10,
-          right:76,
-          top:lowerIndicatorVisible ? '77%' : '94%',
-          height:lowerIndicatorVisible ? '15%' : 0,
-          containLabel:false
-        }
-      ],
-      xAxis:[
-        {
-          type:'category',
-          data:labels,
-          gridIndex:0,
-          boundaryGap:true,
-          axisLine:{show:false},
-          axisTick:{show:false},
-          axisLabel:{
-            show:!lowerIndicatorVisible,
-            color:'#536f7b',
-            fontSize:8,
-            hideOverlap:true,
-            formatter:value=>chartTimeLabel(value)
-          },
-          splitLine:{show:false},
-          axisPointer:{
-            show:!touchUi,
-            type:'line',
-            snap:false,
-            label:{show:false}
-          },
-          // V30.20: force the full synthetic category range to exist.
-          // Without this, dataMin/dataMax removes the empty pad slots and
-          // stretches a few real candles across the entire chart.
-          min:0,
-          max:Math.max(0,labels.length-1)
-        },
-        {
-          show:lowerIndicatorVisible,
-          type:'category',
-          data:labels,
-          gridIndex:1,
-          boundaryGap:true,
-          axisLine:{
-            show:lowerIndicatorVisible,
-            lineStyle:{color:'rgba(111,154,172,.10)'}
-          },
-          axisTick:{show:false},
-          axisLabel:{
-            show:lowerIndicatorVisible,
-            color:'#536f7b',
-            fontSize:8,
-            hideOverlap:true,
-            formatter:value=>chartTimeLabel(value)
-          },
-          splitLine:{show:false},
-          axisPointer:{
-            show:!touchUi,
-            type:'line',
-            snap:false,
-            label:{
-              show:!touchUi,
-              formatter:chartPointerTimeLabel,
-              backgroundColor:'#0b171d'
-            }
-          },
-          // V30.20: force the full synthetic category range to exist.
-          // Without this, dataMin/dataMax removes the empty pad slots and
-          // stretches a few real candles across the entire chart.
-          min:0,
-          max:Math.max(0,labels.length-1)
-        }
-      ],
-      yAxis:[
-        {
-          type:'value',
-          gridIndex:0,
-          position:'right',
-          scale:true,
-          axisLine:{show:false},
-          axisTick:{show:false},
-          axisLabel:{
-            color:'#536f7b',
-            fontSize:9,
-            margin:10,
-            formatter:value=>formatChartValue(value)
-          },
-          splitLine:{
-            show:true,
-            lineStyle:{
-              color:'rgba(106,145,162,.07)',
-              width:1
-            }
-          }
-        },
-        {
-          show:lowerIndicatorVisible,
-          type:'value',
-          gridIndex:1,
-          position:'right',
-          scale:lowerIndicatorAxis.scale!==false,
-          min:lowerIndicatorAxis.min,
-          max:lowerIndicatorAxis.max,
-          axisLine:{show:false},
-          axisTick:{show:false},
-          axisLabel:{
-            show:lowerIndicatorVisible,
-            color:'#455c67',
-            fontSize:7,
-            margin:10,
-            formatter:lowerIndicatorAxis.formatter
-          },
-          splitLine:{
-            show:lowerIndicatorVisible,
-            lineStyle:{
-              color:'rgba(106,145,162,.045)',
-              width:1
-            }
-          }
-        }
-      ],
-      dataZoom:[
-        {
-          type:'inside',
-          xAxisIndex:lowerIndicatorVisible ? [0,1] : [0],
-          filterMode:'filter',
-          startValue:range.startValue,
-          endValue:range.endValue,
-          // V30.21: never let pinch/wheel zoom stretch just 1-2 candles
-          // over the whole chart. Keep a professional minimum viewport.
-          minValueSpan:window.innerWidth<700 ? 8 : 12,
-          zoomOnMouseWheel:true,
-          moveOnMouseMove:true,
-          moveOnMouseWheel:true,
-          preventDefaultMouseMove:true,
-          throttle:24,
-          cursorGrab:'grab',
-          cursorGrabbing:'grabbing'
-        }
-      ],
-      series:[
-        {
-          name:'Price',
-          type:'candlestick',
-          xAxisIndex:0,
-          yAxisIndex:0,
-          data:candleData,
-          itemStyle:{
-            color:'#4de6a1',
-            color0:'#ff6679',
-            borderColor:'#4de6a1',
-            borderColor0:'#ff6679',
-            borderWidth:1
-          },
-          // V30.21: candle body tracks category width while zooming.
-          // Percentage width keeps the inter-candle gap proportional instead
-          // of leaving a fixed 14px candle inside an ever-wider category.
-          barWidth:'78%',
-          emphasis:{disabled:true}
-        },
-        ...overlayIndicatorSeries,
-        ...horizontalLevelSeries,
-        ...lowerIndicatorSeries
-      ]
-    },
-    {
-      notMerge:true,
-      lazyUpdate:true
+  try{
+    if(typeof chartTimeLabel==='function'){
+      const formatted=chartTimeLabel(value);
+      if(formatted!==undefined && formatted!==null){
+        return String(formatted);
+      }
     }
-  );
+  }catch{}
 
-  chartRuntime.labels=labels;
-  chartRuntime.lastCandles=candles;
-  chartRuntime.mint=state.selectedMint;
-  chartRuntime.timeframe=state.timeframe;
-  chartRuntime.metric=state.chartMetric;
-  chartRuntime.candleCount=candles.length;
-  chartRuntime.lastCandleTime=last.t;
-  chartRuntime.forceFit=false;
+  const t=Number(value);
+  if(!Number.isFinite(t))return '';
 
-  chartRuntime.viewport.startValue=range.startValue;
-  chartRuntime.viewport.endValue=range.endValue;
-
-  setTimeout(()=>{
-    chartRuntime.suppressZoom=false;
-  },0);
-
-  const totalTicks=candles.reduce(
-    (sum,candle)=>
-      sum+Number(candle.samples||0),
-    0
-  );
-
-  renderLegend(
-    last,
-    candles.length,
-    totalTicks,
-    chartRuntime.offscreenLevels
-  );
-
-  const lastPoint=points[points.length-1];
-  const rawSol=Number(lastPoint?.priceSol ?? lastPoint?.price);
-  renderPriceModeSummary(
-    Number.isFinite(rawSol) && rawSol>0
-      ? rawSol*solUsdRate()
-      : null
-  );
-
-  const fx=chartRuntime.pendingFx;
-  chartRuntime.pendingFx=null;
-
-  if(
-    fx &&
-    Number(state.timeframe)===1000
-  ){
-    requestAnimationFrame(()=>{
-      try{
-        maybeTriggerBullishBreakoutFx(
-          fx.prev,
-          fx.curr,
-          fx.levels
-        );
-      }catch{}
+  try{
+    return new Date(t).toLocaleTimeString([],{
+      hour:'2-digit',
+      minute:'2-digit',
+      second:
+        Number(state?.timeframe)<=1000
+          ? '2-digit'
+          : undefined
     });
+  }catch{
+    return '';
   }
 }
+
+function __mfChartFormatValueV6(value){
+  try{
+    if(typeof formatChartValue==='function'){
+      return formatChartValue(value);
+    }
+  }catch{}
+
+  const n=Number(value);
+  if(!Number.isFinite(n))return '—';
+  if(Math.abs(n)>=1000)return n.toLocaleString(undefined,{maximumFractionDigits:2});
+  if(Math.abs(n)>=1)return n.toFixed(4);
+  return n.toPrecision(6);
+}
+
+function __mfChartDisplayV6(candles){
+  try{
+    if(typeof chartDisplayData==='function'){
+      const display=chartDisplayData(candles);
+      if(
+        display &&
+        Array.isArray(display.labels) &&
+        Array.isArray(display.rows) &&
+        display.labels.length===display.rows.length
+      ){
+        return display;
+      }
+    }
+  }catch(error){
+    console.warn('[MEMEFLOW_CHART_V6_DISPLAY_HELPER]',error);
+  }
+
+  const actual=Array.isArray(candles)?candles:[];
+  const target=__mfChartVisibleSlotsV6();
+  const padCount=Math.max(0,target-actual.length);
+  const futureLabels=Array.from(
+    {length:padCount},
+    (_,index)=>`__mf_future_v6_${index}`
+  );
+
+  return {
+    labels:actual
+      .map(c=>String(Number(c.t)))
+      .concat(futureLabels),
+    rows:actual.concat(Array(padCount).fill(null)),
+    padCount
+  };
+}
+
+function __mfChartLastUsdV6(points){
+  const last=Array.isArray(points)?points[points.length-1]:null;
+  if(!last)return null;
+
+  try{
+    if(typeof pointUsdPrice==='function'){
+      const usd=Number(pointUsdPrice(last));
+      if(Number.isFinite(usd) && usd>0)return usd;
+    }
+  }catch{}
+
+  const sol=Number(last?.priceSol ?? last?.price);
+  if(!(sol>0))return null;
+
+  try{
+    if(typeof solUsdRate==='function'){
+      const rate=Number(solUsdRate());
+      if(rate>0)return sol*rate;
+    }
+  }catch{}
+
+  return null;
+}
+
+function __mfChartSyncHeaderV6(points){
+  try{
+    if(typeof renderPriceModeSummary!=='function')return;
+    const usd=__mfChartLastUsdV6(points);
+    if(usd>0)renderPriceModeSummary(usd);
+  }catch(error){
+    console.warn('[MEMEFLOW_CHART_V6_HEADER_SYNC]',error);
+  }
+}
+
+function drawChart(){
+  try{
+    // MEMEFLOW_CHART_V7_1_TDZ_FIX_DIRTY_SAFE
+    // Must exist before mainXAxis / secondary xAxis / tooltip use it.
+    const touchUi=chartTouchUi();
+    if(!ensureChartEngine())return;
+
+    if(!state.selectedMint){
+      try{chartRuntime.api?.clear?.()}catch{}
+      $('chartEmpty').style.display='grid';
+      $('chartEmpty').innerHTML=
+        '<strong>Live candles</strong>'+
+        '<span>Select a token to load its chart.</span>';
+      $('chartLegend').innerHTML='';
+      return;
+    }
+
+    const points=rawPoints(state.selectedMint);
+    const candles=candlesFor(points,state.timeframe);
+
+    __mfChartSyncHeaderV6(points);
+
+    if(!candles.length){
+      try{chartRuntime.api?.clear?.()}catch{}
+      $('chartEmpty').style.display='grid';
+      $('chartEmpty').innerHTML=
+        '<strong>Syncing real trades</strong>'+
+        '<span>No canonical BUY / SELL candles are available yet.</span>';
+      $('chartLegend').innerHTML='';
+      return;
+    }
+
+    $('chartEmpty').style.display='none';
+
+    const display=__mfChartDisplayV6(candles);
+    const labels=display.labels;
+    const displayCandles=display.rows;
+    const padCount=Math.max(
+      0,
+      Number(display.padCount)||0
+    );
+
+    const candleData=displayCandles.map(c=>
+      c
+        ? [
+            Number(c.open),
+            Number(c.close),
+            Number(c.low),
+            Number(c.high)
+          ]
+        : '-'
+    );
+
+    const futurePad=Array(padCount).fill('-');
+
+    const actualVolumeData=candles.map(c=>({
+      value:Math.max(
+        0,
+        Number(c?.volumeUsd ?? c?.volume ?? 0)
+      ),
+      itemStyle:{
+        color:
+          Number(c.close)>=Number(c.open)
+            ? 'rgba(77,230,161,.55)'
+            : 'rgba(255,102,121,.52)'
+      }
+    }));
+    const volumeData=actualVolumeData.concat(futurePad);
+
+    let ma5=Array(candles.length).fill('-').concat(futurePad);
+    let ma10=Array(candles.length).fill('-').concat(futurePad);
+
+    try{
+      if(typeof movingAverage==='function'){
+        ma5=movingAverage(candles,5).concat(futurePad);
+        ma10=movingAverage(candles,10).concat(futurePad);
+      }
+    }catch(error){
+      console.warn('[MEMEFLOW_CHART_V6_MA]',error);
+    }
+
+    let overlaySeries=[];
+    try{
+      if(typeof chartOverlayIndicatorSeries==='function'){
+        const result=chartOverlayIndicatorSeries(
+          candles,
+          padCount
+        );
+        if(Array.isArray(result))overlaySeries=result;
+      }
+    }catch(error){
+      console.warn('[MEMEFLOW_CHART_V6_OVERLAY_INDICATOR]',error);
+    }
+
+    let lowerPane=null;
+    try{
+      if(typeof chartLowerIndicatorPane==='function'){
+        lowerPane=chartLowerIndicatorPane(
+          candles,
+          padCount,
+          volumeData,
+          ma5,
+          ma10
+        );
+      }
+    }catch(error){
+      console.warn('[MEMEFLOW_CHART_V6_LOWER_INDICATOR]',error);
+      lowerPane=null;
+    }
+
+    const lowerVisible=Boolean(
+      lowerPane &&
+      Array.isArray(lowerPane.series) &&
+      lowerPane.series.length
+    );
+    const lowerSeries=lowerVisible
+      ? lowerPane.series
+      : [];
+    const lowerLegend=lowerVisible
+      ? (Array.isArray(lowerPane.legend)?lowerPane.legend:[])
+      : [];
+    const lowerAxis=lowerVisible
+      ? (lowerPane.axis||{})
+      : {};
+
+    let levelInfo={visible:[],offscreen:[]};
+    try{
+      levelInfo=
+        typeof chartLevelInfo==='function'
+          ? chartLevelInfo(candles)
+          : {visible:[],offscreen:[]};
+
+      chartRuntime.offscreenLevels=
+        Array.isArray(levelInfo?.offscreen)
+          ? levelInfo.offscreen
+          : [];
+    }catch(error){
+      console.warn('[MEMEFLOW_CHART_V7_3_LEVELS]',error);
+      levelInfo={visible:[],offscreen:[]};
+      chartRuntime.offscreenLevels=[];
+    }
+
+    const markLineData=[
+      ...(Array.isArray(levelInfo.visible)?levelInfo.visible:[])
+        .map(level=>({
+          yAxis:Number(level.price),
+          name:String(level.label||''),
+          lineStyle:{
+            color:levelColor(level),
+            width:1,
+            type:'dashed',
+            opacity:.84
+          },
+          label:{
+            show:true,
+            position:'end',
+            color:levelColor(level),
+            backgroundColor:'rgba(5,12,17,.92)',
+            borderColor:levelColor(level),
+            borderWidth:1,
+            borderRadius:3,
+            padding:chartTouchUi()?[2,4]:[3,5],
+            fontSize:chartTouchUi()?8:9,
+            formatter:()=>String(level.label||'')
+          }
+        })),
+      {
+        yAxis:Number(candles[candles.length-1]?.close),
+        name:'LIVE',
+        lineStyle:{
+          color:'#55d9ff',
+          width:1,
+          type:'dashed',
+          opacity:.42
+        },
+        label:{show:false}
+      }
+    ];
+
+    const slots=__mfChartVisibleSlotsV6();
+    let startValue;
+    let endValue;
+
+    const sameXContext=
+      chartRuntime.mint===state.selectedMint &&
+      chartRuntime.timeframe===state.timeframe;
+
+    const userPanned=
+      sameXContext &&
+      chartRuntime.viewport?.followLatest===false &&
+      chartRuntime.viewport?.startValue &&
+      chartRuntime.viewport?.endValue &&
+      labels.includes(String(chartRuntime.viewport.startValue)) &&
+      labels.includes(String(chartRuntime.viewport.endValue));
+
+    if(userPanned){
+      startValue=String(chartRuntime.viewport.startValue);
+      endValue=String(chartRuntime.viewport.endValue);
+    }else if(state.timeframe==='all'){
+      startValue=labels[0];
+      endValue=labels[labels.length-1];
+    }else if(candles.length<slots){
+      startValue=labels[0];
+      endValue=labels[Math.min(labels.length-1,slots-1)];
+    }else{
+      startValue=labels[Math.max(0,candles.length-slots)];
+      endValue=labels[Math.min(labels.length-1,candles.length-1)];
+    }
+
+    const mainXAxis={
+      type:'category',
+      gridIndex:0,
+      data:labels,
+      boundaryGap:true,
+      axisLine:{
+        show:true,
+        lineStyle:{color:'rgba(111,154,172,.15)'}
+      },
+      axisTick:{show:false},
+      axisLabel:{
+        show:!lowerVisible,
+        color:'#536f7b',
+        fontSize:8,
+        hideOverlap:true,
+        formatter:value=>__mfChartTimeLabelV6(value)
+      },
+      splitLine:{show:false},
+      axisPointer:{
+        show:!touchUi,
+        type:'line',
+        snap:false,
+        label:{show:false}
+      }
+    };
+
+    const xAxis=lowerVisible
+      ? [
+          mainXAxis,
+          {
+            type:'category',
+            gridIndex:1,
+            data:labels,
+            boundaryGap:true,
+            axisLine:{
+              show:true,
+              lineStyle:{color:'rgba(111,154,172,.15)'}
+            },
+            axisTick:{show:false},
+            axisLabel:{
+              show:true,
+              color:'#536f7b',
+              fontSize:8,
+              hideOverlap:true,
+              formatter:value=>__mfChartTimeLabelV6(value)
+            },
+            splitLine:{show:false},
+            axisPointer:{
+              show:!touchUi,
+              type:'line',
+              snap:false,
+              label:{show:false}
+            }
+          }
+        ]
+      : [mainXAxis];
+
+    const yAxis=[
+      {
+        type:'value',
+        gridIndex:0,
+        position:'right',
+        scale:true,
+        axisLine:{show:false},
+        axisTick:{show:false},
+        axisLabel:{
+          show:true,
+          color:'#536f7b',
+          fontSize:9,
+          formatter:value=>__mfChartFormatValueV6(value)
+        },
+        splitLine:{
+          show:true,
+          lineStyle:{
+            color:'rgba(106,145,162,.07)',
+            width:1
+          }
+        }
+      }
+    ];
+
+    if(lowerVisible){
+      yAxis.push({
+        type:'value',
+        gridIndex:1,
+        position:'right',
+        scale:lowerAxis?.scale!==false,
+        min:Number.isFinite(Number(lowerAxis?.min))
+          ? Number(lowerAxis.min)
+          : undefined,
+        max:Number.isFinite(Number(lowerAxis?.max))
+          ? Number(lowerAxis.max)
+          : undefined,
+        axisLine:{show:false},
+        axisTick:{show:false},
+        axisLabel:{
+          show:true,
+          color:'#536f7b',
+          fontSize:8,
+          formatter:
+            typeof lowerAxis?.formatter==='function'
+              ? lowerAxis.formatter
+              : value=>__mfChartFormatValueV6(value)
+        },
+        splitLine:{
+          show:true,
+          lineStyle:{
+            color:'rgba(106,145,162,.055)',
+            width:1
+          }
+        }
+      });
+    }
+
+    const grid=lowerVisible
+      ? [
+          {
+            left:10,
+            right:76,
+            top:42,
+            height:'55%',
+            containLabel:false
+          },
+          {
+            left:10,
+            right:76,
+            top:'77%',
+            height:'15%',
+            containLabel:false
+          }
+        ]
+      : [
+          {
+            left:10,
+            right:76,
+            top:42,
+            height:'78%',
+            containLabel:false
+          }
+        ];
+
+    const candleSeries={
+      name:'Price',
+      type:'candlestick',
+      xAxisIndex:0,
+      yAxisIndex:0,
+      data:candleData,
+      // Width is relative to a category slot. With V30.22-style future
+      // slots, one candle stays a normal candle instead of a giant block.
+      barWidth:'78%',
+      itemStyle:{
+        color:'#4de6a1',
+        color0:'#ff6679',
+        borderColor:'#4de6a1',
+        borderColor0:'#ff6679',
+        borderWidth:1
+      },
+      emphasis:{disabled:true},
+      animation:false,
+      markLine:{
+        silent:true,
+        symbol:['none','none'],
+        data:markLineData,
+        animation:false
+      },
+      z:4
+    };
+
+    const series=[
+      candleSeries,
+      ...overlaySeries,
+      ...lowerSeries
+    ];
+
+    
+
+    chartRuntime.suppressZoom=true;
+    chartRuntime.api.clear();
+    chartRuntime.api.setOption(
+      {
+        animation:false,
+        backgroundColor:'transparent',
+        grid,
+        legend:{
+          show:lowerVisible && lowerLegend.length>0,
+          data:lowerLegend,
+          left:10,
+          top:'72%',
+          itemWidth:10,
+          itemHeight:6,
+          textStyle:{
+            color:'#718894',
+            fontSize:8
+          },
+          selectedMode:false
+        },
+        axisPointer:{
+          show:!touchUi,
+          triggerTooltip:!touchUi,
+          snap:false,
+          animation:false,
+          label:{show:false}
+        },
+        tooltip:{
+          show:!touchUi,
+          showContent:!touchUi,
+          trigger:touchUi ? 'none' : 'axis',
+          triggerOn:touchUi ? 'none' : 'mousemove|click',
+          alwaysShowContent:false,
+          confine:true,
+          axisPointer:{
+            show:!touchUi,
+            type:'line',
+            snap:false,
+            label:{show:false},
+            lineStyle:{
+              color:'rgba(120,176,195,.30)',
+              width:1,
+              type:'dashed'
+            }
+          },
+          backgroundColor:'rgba(5,12,17,.96)',
+          borderColor:'rgba(111,170,190,.22)',
+          textStyle:{
+            color:'#cfe0e7',
+            fontSize:10
+          },
+          extraCssText:
+            'box-shadow:0 8px 30px rgba(0,0,0,.32);'+
+            'max-width:220px;',
+          formatter:params=>{
+            const list=Array.isArray(params)?params:[params];
+            const priceRow=list.find(
+              row=>row?.seriesName==='Price'
+            )||list[0];
+            const index=Number(priceRow?.dataIndex);
+            const c=Number.isFinite(index)
+              ? displayCandles[index]
+              : null;
+            if(!c)return '';
+            return [
+              '<strong>'+__mfChartTimeLabelV6(c.t)+'</strong>',
+              'O '+__mfChartFormatValueV6(c.open),
+              'H '+__mfChartFormatValueV6(c.high),
+              'L '+__mfChartFormatValueV6(c.low),
+              'C '+__mfChartFormatValueV6(c.close),
+              Number(c.samples||0)+' trades'
+            ].join('<br>');
+          }
+        },
+        xAxis,
+        yAxis,
+        dataZoom:[
+          {
+            type:'inside',
+            xAxisIndex:lowerVisible?[0,1]:[0],
+            filterMode:'filter',
+            startValue,
+            endValue,
+            minValueSpan:window.innerWidth<700 ? 8 : 12,
+            zoomOnMouseWheel:true,
+            moveOnMouseMove:true,
+            moveOnMouseWheel:true,
+            throttle:32
+          }
+        ],
+        series
+      },
+      {notMerge:true,lazyUpdate:false}
+    );
+    queueMicrotask(()=>{
+      chartRuntime.suppressZoom=false;
+    });
+
+    chartRuntime.labels=labels;
+    chartRuntime.lastCandles=candles;
+    chartRuntime.mint=state.selectedMint;
+    chartRuntime.timeframe=state.timeframe;
+    chartRuntime.metric=state.chartMetric;
+    chartRuntime.candleCount=candles.length;
+    chartRuntime.lastCandleTime=
+      candles[candles.length-1]?.t ?? null;
+    chartRuntime.dataKey=[
+      state.selectedMint,
+      String(state.timeframe),
+      String(state.chartMetric),
+      points.length,
+      candles.length,
+      Number(points[points.length-1]?.t||0),
+      Number(candles[candles.length-1]?.close||0)
+    ].join('|');
+    chartRuntime.forceFit=false;
+
+    const last=candles[candles.length-1];
+    const totalTrades=candles.reduce(
+      (sum,c)=>sum+Number(c?.samples||0),
+      0
+    );
+
+    const legendParts=[
+      '<span>O '+__mfChartFormatValueV6(last.open)+'</span>',
+      '<span>H '+__mfChartFormatValueV6(last.high)+'</span>',
+      '<span>L '+__mfChartFormatValueV6(last.low)+'</span>',
+      '<span>C '+__mfChartFormatValueV6(last.close)+'</span>',
+      '<span>'+candles.length+' candles · '+totalTrades+' trades</span>'
+    ];
+
+    for(const level of (chartRuntime.offscreenLevels||[]).slice(0,3)){
+      const arrow=Number(level?.price)>Number(last.close)?'↑':'↓';
+      legendParts.push(
+        '<span>'+arrow+' '+esc(String(level?.label||''))+'</span>'
+      );
+    }
+
+    $('chartLegend').innerHTML=legendParts.join('');
+
+    try{
+      if(typeof syncChartIndicatorButtons==='function'){
+        syncChartIndicatorButtons();
+      }
+    }catch{}
+
+    requestAnimationFrame(()=>{
+      try{chartRuntime.api?.resize?.()}catch{}
+    });
+
+  }catch(error){
+    console.error('[MEMEFLOW_CHART_V6_RENDER_FATAL]',error);
+    try{
+      $('chartEmpty').style.display='grid';
+      $('chartEmpty').innerHTML=
+        '<strong>Chart render error</strong>'+
+        '<span>'+String(error?.message||error)+'</span>';
+      $('chartLegend').innerHTML='';
+    }catch{}
+  }
+}
+
+/* MEMEFLOW_CHART_SINGLE_ENGINE_RECOVERY_V6_DIRTY_SAFE */
+
 
 function formatPrice(price) {
   if (!finite(price)) return '$—';
@@ -4407,3 +4732,9 @@ init();
 /* MEMEFLOW_TRADING_CHART_V30_24_OPTIONAL_INDICATORS */
 
 /* MEMEFLOW_TRADING_CHART_V30_26_EXTENDED_INDICATORS */
+
+/* MEMEFLOW_CHART_LIVE_TOUCH_RECOVERY_V7_DIRTY_SAFE */
+
+/* MEMEFLOW_CHART_LEVELS_LIVE_V7_2_1_DIRTY_SAFE */
+
+/* MEMEFLOW_CHART_VIEWPORT_LEVELS_V7_3_DIRTY_SAFE */

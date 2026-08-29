@@ -1,6 +1,6 @@
 import http from 'node:http';import fs from 'node:fs';import path from 'node:path';import crypto from 'node:crypto';import zlib from 'node:zlib';import {fileURLToPath} from 'node:url';
 import {JsonStore,sessionId,defaults} from './src/store.mjs';import {RpcPool,validPubkey,decodeCurve,decodeCreateData,decodePumpCreate,decodePumpCreateEventLog} from './src/solana.mjs';import {evaluate,tokenAgeMinutes} from './src/evaluate.mjs';import {evaluateSettingsAdmission,evaluateEntryAdmission,settingsContextSignature} from './src/settings-gate.mjs';import {validateSettings,PROFILE_PRESETS} from './src/settings.mjs';import {StripeBilling} from './src/billing.mjs';
-import {OpenAIIntelligence} from './src/openai-intelligence.mjs';import {PaperEngine} from './src/paper-engine.mjs';import {CopyTradingManager} from './src/copy-trading.mjs'; // MEMEFLOW_COPY_TRADING_V1
+import {OpenAIIntelligence} from './src/openai-intelligence.mjs';import {PaperEngine} from './src/paper-engine.mjs';import {PlatformTradeAnalytics} from './src/platform-trade-analytics.mjs';import {CopyTradingManager} from './src/copy-trading.mjs'; // MEMEFLOW_COPY_TRADING_V1
 import './src/copy-trading-multi-wallet-v3.mjs'; // MEMEFLOW_COPY_TRADING_MULTI_WALLET_V3
 import {makeEnrichDiag,makeHolderMetrics} from './src/enrich.mjs';
 import {makeRecoveryMetrics,startDecisionRecovery,lazyRecoverUser} from './src/recovery.mjs';
@@ -8,7 +8,7 @@ import {makeLiveEvalMetrics,makeEvaluateForActiveUsers} from './src/liveeval.mjs
 import {makeDiscoveryMetrics} from './src/discqueue.mjs';
 import {candidateFeed,candidateVisibilityCounts} from './src/candidate-visibility.mjs';
 import { startPumpLiveTradeFeed } from './src/pump-live-trade-feed.mjs'; // MEMEFLOW_V12_21_LIVE_TRADE_STREAM_HOLDER_FEED
-import { ChartHistoryArchive } from './src/chart-history-archive.mjs'; // MEMEFLOW_CHART_HISTORY_RESTORE_V1
+import { ChartHistoryArchive } from './src/chart-history-archive.mjs'; // MEMEFLOW_CHART_DATA_PATH_FIX_V2_DIRTY_SAFE // MEMEFLOW_CHART_HISTORY_RESTORE_V1
 import {createOpportunityEngine} from './src/opportunity-engine.mjs'; // MEMEFLOW_OPPORTUNITY_ENGINE_V1
 import {createSolUsdOracle} from './src/sol-usd-oracle.mjs'; // MEMEFLOW_OPPORTUNITY_ENGINE_V1
 import {liveCardMarketSnapshot,openPositionLiveMarketCap} from './src/live-card-market.mjs'; // MEMEFLOW_LIVE_CARD_MARKET_TRUTH_V18 / MEMEFLOW_OPEN_POSITION_LIVE_MC_V20
@@ -188,7 +188,39 @@ const __mfScannerPruneTimer=setInterval(
 );
 __mfScannerPruneTimer.unref?.();
 
-const paper=new PaperEngine(store);
+// MEMEFLOW_PLATFORM_LEARNING_V2_SERVER
+const platformAnalytics=
+  new PlatformTradeAnalytics({
+    dir:dataDir,
+    salt:
+      process.env.PLATFORM_ANALYTICS_SALT ||
+      'memeflow-platform-learning-v2'
+  });
+
+// Import already-existing trades from every user.
+// INSERT/UPSERT makes restart/backfill idempotent.
+try{
+  const backfilled=
+    platformAnalytics.backfillState(store);
+
+  console.log(
+    '[PLATFORM ANALYTICS] backfill',
+    backfilled
+  );
+}catch(error){
+  console.error(
+    '[PLATFORM ANALYTICS] backfill error',
+    error?.message||error
+  );
+}
+
+const paper=
+  new PaperEngine(
+    store,
+    {
+      analytics:platformAnalytics
+    }
+  );
 const billing=new StripeBilling({store,secretKey:process.env.STRIPE_SECRET_KEY,priceId:process.env.STRIPE_PRICE_ID,webhookSecret:process.env.STRIPE_WEBHOOK_SECRET,apiBase:process.env.STRIPE_API_BASE});
 const wsUrls=(process.env.SOLANA_WS_URLS||'').split(',').map(x=>x.trim()).filter(Boolean);
 // MEMEFLOW_WS_ONLY_PREOPEN_RPC_V1
@@ -337,6 +369,123 @@ function __systemViewEmitV31(type,payload={}){
 
 const chartTradeStreams=new Map(),chartTradeHistory=new Map();
 
+// MEMEFLOW_CHART_LIVE_TOUCH_RECOVERY_V7_DIRTY_SAFE
+// One canonical live SSE fan-out for the same chartTradeStreams map opened by
+// /api/chart/stream. Display-only: no AI/trading decision logic is changed.
+const __mfChartLiveLastKeyV7=new Map();
+
+function __mfChartBroadcastLiveV7(mint,point){
+  mint=String(mint||'').trim();
+  if(!mint||!point)return false;
+
+  const listeners=chartTradeStreams.get(mint);
+  if(!listeners?.size)return false;
+
+  const price=Number(point?.priceSol ?? point?.price);
+  const at=Number(point?.t);
+  if(!(Number.isFinite(price)&&price>0&&Number.isFinite(at)&&at>0)){
+    return false;
+  }
+
+  const key=
+    String(point?.id||'')+'|'+
+    String(at)+'|'+
+    String(price)+'|'+
+    String(point?.isBuy===true)+'|'+
+    String(Number(point?.solAmount)||0)+'|'+
+    String(Number(point?.tokenAmount)||0);
+
+  if(__mfChartLiveLastKeyV7.get(mint)===key)return false;
+  __mfChartLiveLastKeyV7.set(mint,key);
+
+  const frame=
+    `event: update\n`+
+    `data: ${JSON.stringify({
+      point:{
+        id:point?.id||null,
+        t:at,
+        price,
+        priceSol:price,
+        source:point?.source||'pump-trade-event',
+        isBuy:point?.isBuy===true,
+        solAmount:Number(point?.solAmount)||0,
+        tokenAmount:Number(point?.tokenAmount)||0,
+        markPrice:Number.isFinite(Number(point?.markPrice))
+          ? Number(point.markPrice)
+          : null
+      },
+      status:{
+        stale:false,
+        source:point?.source||'pump-trade-event',
+        live:true,
+        persistentHistory:true
+      }
+    })}\n\n`;
+
+  for(const res of [...listeners]){
+    try{res.write(frame)}
+    catch{listeners.delete(res)}
+  }
+  return true;
+}
+
+
+// MEMEFLOW_CHART_HELPER_SET_FIX_V4_2_DIRTY_SAFE
+
+function __mfValidChartMint(value){
+  return /^[1-9A-HJ-NP-Za-km-z]{32,64}$/.test(String(value||'').trim());
+}
+
+
+function __mfOpenChartStream(req,res,mint){
+  mint=String(mint||'').trim();
+  if(!__mfValidChartMint(mint)){
+    return json(res,400,{error:'INVALID_TOKEN_ADDRESS'});
+  }
+
+  if(!chartTradeStreams.has(mint))chartTradeStreams.set(mint,new Set());
+  if(!chartTradeHistory.has(mint))chartTradeHistory.set(mint,[]);
+
+  res.writeHead(200,{
+    'content-type':'text/event-stream; charset=utf-8',
+    'cache-control':'no-cache, no-store, no-transform',
+    'connection':'keep-alive',
+    'x-accel-buffering':'no'
+  });
+  try{res.flushHeaders?.()}catch{}
+
+  res.write('retry: 1000\n');
+  res.write(
+    `event: snapshot\n`+
+    `data: ${JSON.stringify(__mfChartSnapshotPayload(mint))}\n\n`
+  );
+
+  const listeners=chartTradeStreams.get(mint);
+  listeners.add(res);
+
+  queueMicrotask(()=>{
+    try{__mfEnsureChartBackfill(mint)}catch{}
+  });
+
+  const heartbeat=setInterval(()=>{
+    try{res.write(`: chart ${Date.now()}\n\n`)}catch{}
+  },15000);
+  heartbeat.unref?.();
+
+  let closed=false;
+  const close=()=>{
+    if(closed)return;
+    closed=true;
+    clearInterval(heartbeat);
+    listeners.delete(res);
+  };
+
+  req.on('close',close);
+  res.on('close',close);
+}
+
+
+
 // MEMEFLOW_CHART_HISTORY_RESTORE_V1
 // Trading chart source of truth:
 //   persistent archive + bounded real-time Pump TradeEvent hot cache.
@@ -344,29 +493,20 @@ const chartTradeStreams=new Map(),chartTradeHistory=new Map();
 const __mfChartBackfillJobs=new Map();
 
 function __mfChartSnapshotPayload(mint){
+  mint=String(mint||'').trim();
   const hot=chartTradeHistory.get(mint)||[];
   let points=[];
-
   try{
     points=__mfChartArchive.mergePointsSync(mint,hot);
-  }catch{
+  }catch(error){
+    console.warn('[chart-snapshot]',mint,error?.message||error);
     points=Array.isArray(hot)?hot.slice():[];
   }
 
-  // MEMEFLOW_CHART_TRADE_FEED_V2
-  // REAL-TRADES-ONLY: do not manufacture a candle from a timer/current-price
-  // mark. If history is empty we wait for a canonical BUY/SELL TradeEvent.
-  let archiveStatus={
-    running:false,
-    oldestComplete:false,
-    lastError:null
-  };
-  try{
-    archiveStatus=__mfChartArchive.statusSync(mint);
-  }catch{}
+  let archiveStatus={running:false,oldestComplete:false,lastError:null};
+  try{archiveStatus=__mfChartArchive.statusSync(mint)}catch{}
 
   const last=points[points.length-1]||null;
-
   return {
     points,
     status:{
@@ -379,31 +519,31 @@ function __mfChartSnapshotPayload(mint){
         archiveStatus.running===true ||
         __mfChartBackfillJobs.has(mint),
       fullHistoryReady:archiveStatus.oldestComplete===true,
-      backfillError:archiveStatus.lastError||null
+      backfillError:archiveStatus.lastError||null,
+      persistentHistory:true
     },
     tokenAddress:mint
   };
 }
 
+
 function __mfBroadcastChartSnapshot(mint){
   const listeners=chartTradeStreams.get(mint);
   if(!listeners?.size)return;
-
   const frame=
     `event: snapshot\n`+
     `data: ${JSON.stringify(__mfChartSnapshotPayload(mint))}\n\n`;
-
   for(const res of [...listeners]){
-    try{
-      res.write(frame);
-    }catch{
-      listeners.delete(res);
-    }
+    try{res.write(frame)}
+    catch{listeners.delete(res)}
   }
 }
 
+
 function __mfEnsureChartBackfill(mint){
-  if(!mint||__mfChartBackfillJobs.has(mint))return;
+  mint=String(mint||'').trim();
+  if(!__mfValidChartMint(mint))return;
+  if(__mfChartBackfillJobs.has(mint))return;
 
   try{
     const status=__mfChartArchive.statusSync(mint);
@@ -413,29 +553,21 @@ function __mfEnsureChartBackfill(mint){
   const job=__mfChartArchive.ensureBackfill(mint,{
     onProgress:()=>__mfBroadcastChartSnapshot(mint)
   })
-    .then(()=>{
-      __mfBroadcastChartSnapshot(mint);
-    })
+    .then(()=>__mfBroadcastChartSnapshot(mint))
     .catch(error=>{
-      console.warn(
-        '[chart-history] backfill',
-        mint,
-        error?.message||error
-      );
+      console.warn('[chart-history]',mint,error?.message||error);
       __mfBroadcastChartSnapshot(mint);
     })
     .finally(()=>{
       if(__mfChartBackfillJobs.get(mint)===job){
         __mfChartBackfillJobs.delete(mint);
       }
-      // MEMEFLOW_CHART_TRADE_FEED_V2
-      // One final frame after deleting the job flips HISTORY SYNC to the
-      // final status and exposes the last archived TradeEvents.
       queueMicrotask(()=>__mfBroadcastChartSnapshot(mint));
     });
 
   __mfChartBackfillJobs.set(mint,job);
 }
+
 const priceLifecycleDiag=new Map(); // V10 read-only lifecycle diagnostics
 
 // MEMEFLOW_V12_24_CREATOR_GATE_RECOVERY
@@ -1637,6 +1769,8 @@ const evaluateAll=makeEvaluateForActiveUsers({
   delayMs:LIVE_EVAL_DELAY,
   admissionCheck:__mfLiveEvalAdmissionCheck,
   onDecision:(uid,token,decision)=>{
+    // MEMEFLOW_AI_CHAT_TRADING_MEMORY_V1_ROUTE
+    try{openaiAI.recordDecision(uid,token,decision,{source:'live-evaluate'})}catch{}
     void __mfHandleDecision(uid,token,decision).catch(()=>{});
 
     // MEMEFLOW_DECISION_COMPLETE_REFRESH_V14
@@ -1953,6 +2087,11 @@ function publishTrade(mint,event,tokenOverride=null){
   // Persist accepted real chart ticks independently from the bounded RAM cache.
   try{
     __mfChartArchive.appendPoint(mint,point);
+  // V7.2: send live chart update in the same TradeEvent turn.
+  try{__mfChartBroadcastLiveV7(mint,point)}catch{}
+
+  
+
   }catch{}
 
   if(rows.length>1200){
@@ -3060,6 +3199,7 @@ function reevaluateUser(uid){
       };
 
       store.setDecision(uid,token.mint,saved);
+      try{openaiAI.recordDecision(uid,token,saved,{source:'settings-reevaluate'})}catch{}
       states[d.state]=(states[d.state]||0)+1;
 
       if(d.state==='BUY READY'){
@@ -3405,6 +3545,796 @@ async function mfGetSolUsd(){
   }
 }
 
+
+/* ============================================================
+   MEMEFLOW_OWNER_INTELLIGENCE_V1_HELPERS
+
+   OpenAI is NOT part of the realtime decision loop here.
+   No background OpenAI calls.
+   Only an authenticated OWNER can manually invoke the coach.
+
+   AI -> PROPOSE
+   LOCAL ENGINE -> SHADOW TEST
+   OWNER -> APPLY
+   ============================================================ */
+
+const __MF_OWNER_AI_TUNABLE_SETTINGS=new Set([
+  'minScore',
+  'minConfidence',
+  'minLiquidityUsd',
+  'minBuyPressure',
+
+  'minMarketCapUsd',
+  'maxMarketCapUsd',
+  'minHolders',
+  'maxHolders',
+  'maxBundlePct',
+  'maxTokenAgeMinutes',
+  'maxTop10Pct',
+  'maxDeveloperPct',
+  'maxSniperPct',
+  'maxSuspectedRiskyWalletsPct',
+  'maxInsidersPct',
+
+  'hardStopPct',
+  'trailingStopPct',
+  'tp1Pct',
+  'tp1SellPct',
+  'tp2Pct',
+  'tp2SellPct',
+  'runnerPct',
+  'maxHoldMinutes',
+  'exitBuyPressure',
+  'decisionFreshnessSec'
+]);
+
+function __mfOwnerFinite(value){
+  if(value===null||value===undefined||value==='')return null;
+  const n=Number(value);
+  return Number.isFinite(n)?n:null;
+}
+
+function __mfOwnerRound(value,digits=4){
+  const n=Number(value);
+  if(!Number.isFinite(n))return null;
+  const p=10**digits;
+  return Math.round(n*p)/p;
+}
+
+function __mfOwnerIntelState(uid){
+  store.state.ownerIntelligence||={};
+  store.state.ownerIntelligence[uid]||={
+    reports:[],
+    audit:[],
+    lastAiStatus:'unknown',
+    lastAiError:null,
+    lastAiAt:null
+  };
+  return store.state.ownerIntelligence[uid];
+}
+
+function __mfOwnerTopCounts(values,limit=10){
+  const map=new Map();
+
+  for(const value of values){
+    const key=String(value||'').trim();
+    if(!key)continue;
+    map.set(key,(map.get(key)||0)+1);
+  }
+
+  return [...map.entries()]
+    .sort((a,b)=>b[1]-a[1])
+    .slice(0,limit)
+    .map(([name,count])=>({name,count}));
+}
+
+function __mfOwnerDecisionDigest(uid){
+  const decisions=store.decisions(uid)||[];
+
+  const states={
+    WAITING:0,
+    WATCH:0,
+    'BUY READY':0,
+    BLOCKED:0,
+    EXPIRED:0
+  };
+
+  const scores=[];
+
+  for(const d of decisions){
+    const state=String(d?.state||'WAITING');
+    states[state]=(states[state]||0)+1;
+
+    const score=__mfOwnerFinite(d?.score);
+    if(score!==null)scores.push(score);
+  }
+
+  const avgScore=scores.length
+    ? scores.reduce((a,b)=>a+b,0)/scores.length
+    : null;
+
+  const reasons=__mfOwnerTopCounts(
+    decisions.flatMap(d=>{
+      const out=[];
+      if(d?.primaryReason)out.push(d.primaryReason);
+      if(Array.isArray(d?.reasons))out.push(...d.reasons.slice(0,3));
+      return out;
+    }),
+    12
+  );
+
+  return {
+    currentDecisionCount:decisions.length,
+    states,
+    averageScore:__mfOwnerRound(avgScore,2),
+    topReasons:reasons
+  };
+}
+
+function __mfOwnerPerformanceDigest(uid){
+  const positions=paper.userPositions(uid)||[];
+  const trades=paper.userTrades(uid)||[];
+
+  const open=positions.filter(
+    p=>String(p?.status||'').toUpperCase()==='OPEN'
+  );
+
+  const closed=positions.filter(
+    p=>String(p?.status||'').toUpperCase()==='CLOSED'
+  );
+
+  const wins=closed.filter(p=>Number(p?.realizedPnlSol)>0);
+  const losses=closed.filter(p=>Number(p?.realizedPnlSol)<0);
+  const flat=closed.length-wins.length-losses.length;
+
+  const pnlSol=closed.reduce(
+    (sum,p)=>sum+(Number(p?.realizedPnlSol)||0),
+    0
+  );
+
+  const pnlPcts=closed
+    .map(p=>__mfOwnerFinite(p?.realizedPnlPct))
+    .filter(v=>v!==null);
+
+  const avgPnlPct=pnlPcts.length
+    ? pnlPcts.reduce((a,b)=>a+b,0)/pnlPcts.length
+    : null;
+
+  const holdMinutes=closed
+    .map(p=>{
+      const a=Number(p?.openedAtMs);
+      const b=Number(p?.closedAtMs);
+      if(!(a>0&&b>=a))return null;
+      return (b-a)/60000;
+    })
+    .filter(v=>v!==null);
+
+  const avgHoldMinutes=holdMinutes.length
+    ? holdMinutes.reduce((a,b)=>a+b,0)/holdMinutes.length
+    : null;
+
+  const compactPosition=p=>({
+    mint:p?.mint||null,
+    symbol:p?.symbol||p?.name||null,
+    openedAt:p?.openedAt||null,
+    closedAt:p?.closedAt||null,
+    decisionScore:__mfOwnerFinite(p?.decisionScore),
+    decisionConfidence:__mfOwnerFinite(p?.decisionConfidence),
+    realizedPnlSol:__mfOwnerRound(p?.realizedPnlSol,6),
+    realizedPnlPct:__mfOwnerRound(p?.realizedPnlPct,2),
+    closeReason:p?.closeReason||null,
+    primaryReason:p?.primaryReason||null
+  });
+
+  const recentClosed=closed
+    .slice(0,25)
+    .map(compactPosition);
+
+  const biggestLosses=[...closed]
+    .sort(
+      (a,b)=>
+        (Number(a?.realizedPnlSol)||0)-
+        (Number(b?.realizedPnlSol)||0)
+    )
+    .slice(0,8)
+    .map(compactPosition);
+
+  const biggestWins=[...closed]
+    .sort(
+      (a,b)=>
+        (Number(b?.realizedPnlSol)||0)-
+        (Number(a?.realizedPnlSol)||0)
+    )
+    .slice(0,8)
+    .map(compactPosition);
+
+  return {
+    totalPositions:positions.length,
+    openPositions:open.length,
+    closedPositions:closed.length,
+    wins:wins.length,
+    losses:losses.length,
+    flat,
+    winRatePct:closed.length
+      ? __mfOwnerRound(wins.length/closed.length*100,2)
+      : null,
+    realizedPnlSol:__mfOwnerRound(pnlSol,6),
+    averagePnlPct:__mfOwnerRound(avgPnlPct,2),
+    averageHoldMinutes:__mfOwnerRound(avgHoldMinutes,1),
+    dailyRealizedPnlSol:__mfOwnerRound(
+      paper.dailyRealizedPnl(uid),
+      6
+    ),
+    tradeEvents:trades.length,
+    recentClosed,
+    biggestLosses,
+    biggestWins
+  };
+}
+
+function __mfOwnerCandidateDigest(uid){
+  const decisions=store.decisions(uid)||[];
+
+  return decisions
+    .filter(
+      d=>
+        d?.mint&&
+        ['BUY READY','WATCH'].includes(String(d?.state||''))
+    )
+    .slice(0,20)
+    .map(d=>{
+      const t=store.state.tokens?.[d.mint]||{};
+
+      return {
+        mint:d.mint,
+        symbol:t.symbol||t.name||null,
+        state:d.state,
+        score:__mfOwnerFinite(d.score),
+        confidence:__mfOwnerFinite(d.confidence),
+        primaryReason:d.primaryReason||null,
+        marketCapUsd:__mfOwnerFinite(
+          t.marketCapUsd??t.marketCap
+        ),
+        liquidityUsd:__mfOwnerFinite(t.liquidityUsd),
+        holders:__mfOwnerFinite(
+          t.holderCount??t.holders
+        ),
+        top10Pct:__mfOwnerFinite(
+          t.top10Pct??t.top10
+        ),
+        developerPct:__mfOwnerFinite(
+          t.developerPct??t.developerSharePct
+        ),
+        buyPressure:__mfOwnerFinite(t.buyPressure),
+        bundlePct:__mfOwnerFinite(t.bundlePct),
+        sniperPct:__mfOwnerFinite(t.sniperPct)
+      };
+    });
+}
+
+function __mfOwnerSystemDigest(uid){
+  const now=Date.now();
+
+  return {
+    generatedAt:new Date(now).toISOString(),
+
+    scanner:{
+      connected:discovery?.connected===true,
+      subscribed:discovery?.subscribed===true,
+      lastEventAt:discovery?.lastEventAt||null,
+      lastCreateAt:discovery?.lastCreateAt||null,
+      reconnects:Number(discovery?.reconnects||0),
+      hotTokens:Object.keys(store.state.tokens||{}).length,
+      discovered:Number(store.state.metrics?.discovered||0),
+      scanned:Number(store.state.metrics?.scanned||0),
+      errors:Number(store.state.metrics?.errors||0)
+    },
+
+    execution:{
+      environment:paper.environment(
+        store.settings(uid)
+      ),
+      mode:paper.mode(
+        store.settings(uid)
+      ),
+      preOpenRpcConfigured:
+        Array.isArray(__mfPreOpenRpcUrls)&&
+        __mfPreOpenRpcUrls.length>0,
+      killSwitch:
+        store.user(uid)?.killSwitch===true
+    },
+
+    openai:{
+      configured:Boolean(process.env.OPENAI_API_KEY),
+      model:
+        process.env.OPENAI_OWNER_COACH_MODEL||
+        OPENAI_MODEL||
+        process.env.OPENAI_MODEL||
+        'gpt-5-mini',
+      automaticBackgroundCalls:false,
+      ownerManualOnly:true
+    }
+  };
+}
+
+function __mfOwnerIntelDigest(uid){
+  return {
+    system:
+      __mfOwnerSystemDigest(uid),
+
+    settings:
+      store.settings(uid),
+
+    settingsHistory:
+      store.settingsHistory(uid,12),
+
+    // Owner's own realtime decision view remains available.
+    decisions:
+      __mfOwnerDecisionDigest(uid),
+
+    performance:
+      __mfOwnerPerformanceDigest(uid),
+
+    interestingCandidates:
+      __mfOwnerCandidateDigest(uid),
+
+    // MEMEFLOW_PLATFORM_LEARNING_V2
+    // Aggregated results from ALL users.
+    // No raw user IDs, wallets or emails are exposed.
+    platform:
+      platformAnalytics.summary(30),
+
+    platform7d:
+      platformAnalytics.summary(7),
+
+    platformAnalyticsStatus:
+      platformAnalytics.status()
+  };
+}
+
+const __MF_OWNER_COACH_SCHEMA={
+  type:'object',
+  additionalProperties:false,
+
+  properties:{
+    executiveSummary:{
+      type:'string'
+    },
+
+    healthAssessment:{
+      type:'string'
+    },
+
+    performanceAssessment:{
+      type:'string'
+    },
+
+    findings:{
+      type:'array',
+      items:{
+        type:'object',
+        additionalProperties:false,
+        properties:{
+          title:{type:'string'},
+          evidence:{type:'string'},
+          severity:{
+            type:'string',
+            enum:['INFO','LOW','MEDIUM','HIGH','CRITICAL']
+          }
+        },
+        required:[
+          'title',
+          'evidence',
+          'severity'
+        ]
+      }
+    },
+
+    proposals:{
+      type:'array',
+      items:{
+        type:'object',
+        additionalProperties:false,
+
+        properties:{
+          type:{
+            type:'string',
+            enum:[
+              'SETTING_CHANGE',
+              'LOGIC_CHANGE',
+              'NEW_FUNCTION',
+              'MONITOR'
+            ]
+          },
+
+          title:{type:'string'},
+
+          setting:{
+            type:['string','null']
+          },
+
+          current:{
+            type:[
+              'number',
+              'string',
+              'boolean',
+              'null'
+            ]
+          },
+
+          proposed:{
+            type:[
+              'number',
+              'string',
+              'boolean',
+              'null'
+            ]
+          },
+
+          reason:{type:'string'},
+          evidence:{type:'string'},
+
+          expectedEffect:{
+            type:'string'
+          },
+
+          risk:{
+            type:'string'
+          },
+
+          testPlan:{
+            type:'string'
+          },
+
+          confidence:{
+            type:'integer',
+            minimum:0,
+            maximum:100
+          },
+
+          priority:{
+            type:'string',
+            enum:[
+              'LOW',
+              'MEDIUM',
+              'HIGH'
+            ]
+          }
+        },
+
+        required:[
+          'type',
+          'title',
+          'setting',
+          'current',
+          'proposed',
+          'reason',
+          'evidence',
+          'expectedEffect',
+          'risk',
+          'testPlan',
+          'confidence',
+          'priority'
+        ]
+      }
+    },
+
+    questionsToInvestigate:{
+      type:'array',
+      items:{type:'string'}
+    },
+
+    nextReviewAfterTrades:{
+      type:'integer',
+      minimum:1,
+      maximum:10000
+    }
+  },
+
+  required:[
+    'executiveSummary',
+    'healthAssessment',
+    'performanceAssessment',
+    'findings',
+    'proposals',
+    'questionsToInvestigate',
+    'nextReviewAfterTrades'
+  ]
+};
+
+async function __mfOwnerCoachAnalyze(
+  uid,
+  digest,
+  focus=''
+){
+  const key=process.env.OPENAI_API_KEY||'';
+
+  if(!key){
+    const e=new Error(
+      'OpenAI API is not configured.'
+    );
+    e.status=503;
+    e.code='OPENAI_NOT_CONFIGURED';
+    throw e;
+  }
+
+  const model=
+    process.env.OPENAI_OWNER_COACH_MODEL||
+    OPENAI_MODEL||
+    process.env.OPENAI_MODEL||
+    'gpt-5-mini';
+
+  const compact=JSON.stringify({
+    focus:String(focus||'').slice(0,1200),
+    digest
+  }).slice(0,24000);
+
+  const controller=new AbortController();
+
+  const timer=setTimeout(
+    ()=>controller.abort(),
+    Math.max(
+      10000,
+      Number(
+        process.env.OPENAI_OWNER_COACH_TIMEOUT_MS||
+        45000
+      )
+    )
+  );
+
+  try{
+    const response=await fetch(
+      OPENAI_RESPONSES_URL,
+      {
+        method:'POST',
+
+        headers:{
+          authorization:`Bearer ${key}`,
+          'content-type':'application/json'
+        },
+
+        body:JSON.stringify({
+          model,
+
+          instructions:[
+            'You are MEMEFLOW Owner Strategy Coach.',
+            'You are NOT the realtime trader.',
+            'Analyze the supplied trading-engine telemetry, decisions, settings and completed paper-trade outcomes.',
+            'Use only supplied evidence. Never invent missing measurements.',
+            'Do not promise profit.',
+            'Prefer a small number of high-value changes instead of changing many settings at once.',
+            'Separate correlation from causation.',
+            'SETTING_CHANGE proposals must use an existing MEMEFLOW setting name.',
+            'LOGIC_CHANGE means a change to scoring/risk/decision logic.',
+            'NEW_FUNCTION means a useful new engineering capability or diagnostic the owner should consider implementing.',
+            'MONITOR means collect more evidence before changing behavior.',
+            'Never request private keys.',
+            'Never automatically execute trades.',
+            'Never claim a proposal was applied.',
+            'Every proposed change must include a test plan.',
+            'When evidence is insufficient, say so explicitly.'
+          ].join('\n'),
+
+          input:compact,
+
+          text:{
+            format:{
+              type:'json_schema',
+              name:'memeflow_owner_strategy_coach',
+              strict:true,
+              schema:__MF_OWNER_COACH_SCHEMA
+            }
+          }
+        }),
+
+        signal:controller.signal
+      }
+    );
+
+    const data=await response.json().catch(()=>({}));
+
+    if(!response.ok){
+      const e=new Error(
+        data?.error?.message||
+        `OpenAI HTTP ${response.status}`
+      );
+
+      e.status=response.status;
+      e.code='OPENAI_REQUEST_FAILED';
+      throw e;
+    }
+
+    const raw=openAiText(data);
+
+    if(!raw){
+      const e=new Error(
+        'OpenAI returned no strategy report.'
+      );
+      e.status=502;
+      e.code='OPENAI_EMPTY_RESPONSE';
+      throw e;
+    }
+
+    let result;
+
+    try{
+      result=JSON.parse(raw);
+    }catch{
+      const e=new Error(
+        'OpenAI returned an invalid strategy report.'
+      );
+      e.status=502;
+      e.code='OPENAI_BAD_REPORT';
+      throw e;
+    }
+
+    result.proposals=
+      Array.isArray(result.proposals)
+        ? result.proposals
+            .slice(0,12)
+            .map(p=>({
+              ...p,
+              applyEligible:
+                p?.type==='SETTING_CHANGE' &&
+                typeof p?.setting==='string' &&
+                __MF_OWNER_AI_TUNABLE_SETTINGS.has(
+                  p.setting
+                )
+            }))
+        : [];
+
+    return {
+      result,
+      model:data?.model||model,
+      responseId:data?.id||null,
+      usage:{
+        inputTokens:
+          Number(
+            data?.usage?.input_tokens||
+            0
+          )||null,
+
+        outputTokens:
+          Number(
+            data?.usage?.output_tokens||
+            0
+          )||null,
+
+        totalTokens:
+          Number(
+            data?.usage?.total_tokens||
+            0
+          )||null
+      }
+    };
+
+  }catch(error){
+    if(error?.name==='AbortError'){
+      const e=new Error(
+        'Owner AI Coach timed out.'
+      );
+      e.status=504;
+      e.code='OPENAI_TIMEOUT';
+      throw e;
+    }
+
+    throw error;
+
+  }finally{
+    clearTimeout(timer);
+  }
+}
+
+function __mfOwnerFriendlyAiError(error){
+  const raw=String(
+    error?.message||
+    ''
+  );
+
+  if(
+    /no credits remaining/i.test(raw) ||
+    /insufficient[_ -]?quota/i.test(raw) ||
+    /billing/i.test(raw) ||
+    /credit balance/i.test(raw) ||
+    /quota exceeded/i.test(raw)
+  ){
+    return {
+      status:503,
+      error:'AI_CREDITS_REQUIRED',
+      message:
+        'Owner AI Coach is temporarily offline because the OpenAI API balance is unavailable. MEMEFLOW trading continues normally.'
+    };
+  }
+
+  if(
+    error?.code==='OPENAI_NOT_CONFIGURED'
+  ){
+    return {
+      status:503,
+      error:'AI_NOT_CONFIGURED',
+      message:
+        'Owner AI Coach is not configured. MEMEFLOW trading continues normally.'
+    };
+  }
+
+  if(
+    error?.code==='OPENAI_TIMEOUT'
+  ){
+    return {
+      status:504,
+      error:'AI_TIMEOUT',
+      message:
+        'Owner AI Coach did not respond in time. MEMEFLOW trading continues normally.'
+    };
+  }
+
+  return {
+    status:
+      Number(error?.status)>=400
+        ? Number(error.status)
+        : 503,
+
+    error:'AI_TEMPORARILY_UNAVAILABLE',
+
+    message:
+      'Owner AI Coach is temporarily unavailable. MEMEFLOW trading continues normally.'
+  };
+}
+
+function __mfOwnerProposalFromReport(
+  uid,
+  reportId,
+  proposalIndex
+){
+  const state=__mfOwnerIntelState(uid);
+
+  const report=
+    state.reports.find(
+      r=>r.id===reportId
+    );
+
+  if(!report){
+    return {
+      ok:false,
+      code:'REPORT_NOT_FOUND'
+    };
+  }
+
+  const index=Number(proposalIndex);
+
+  if(
+    !Number.isInteger(index) ||
+    index<0
+  ){
+    return {
+      ok:false,
+      code:'INVALID_PROPOSAL_INDEX'
+    };
+  }
+
+  const proposal=
+    report?.result?.proposals?.[index];
+
+  if(!proposal){
+    return {
+      ok:false,
+      code:'PROPOSAL_NOT_FOUND'
+    };
+  }
+
+  return {
+    ok:true,
+    report,
+    proposal,
+    index
+  };
+}
+
+/* ============================================================
+   /MEMEFLOW_OWNER_INTELLIGENCE_V1_HELPERS
+   ============================================================ */
+
+
 async function handler(req,res){const url=new URL(req.url,'http://x');
  if(url.pathname==='/api/billing/webhook'&&req.method==='POST'){const raw=await rawBody(req);try{billing.verify(raw,req.headers['stripe-signature']);const result=billing.processEvent(JSON.parse(raw));return json(res,200,{received:true,...result})}catch(e){return json(res,e.code==='BAD_SIGNATURE'?400:500,{error:e.code||'WEBHOOK_ERROR',message:e.message})}}
  // Health check — no session or store needed; must respond immediately
@@ -3464,7 +4394,555 @@ async function handler(req,res){const url=new URL(req.url,'http://x');
    }else{fs.createReadStream(f).pipe(res);}
    return;
  }
+ /* MEMEFLOW_PAGE_ACCESS_GATE_V1 */
+ if(url.pathname==='/api/access/page'&&req.method==='GET'){
+   const x=user(req,res);
+   if(x?.isOwner===true)return json(res,200,{tier:'live',owner:true});
+   return json(res,200,{
+     tier:'locked',
+     owner:false,
+     paperUsd:19.99,
+     liveUsd:49.99,
+     tokenConfigured:false
+   });
+ }
  const u=user(req,res);if(u){store.touchUser(u.id);if(OWNER_USER_IDS.has(u.id)&&!u.isOwner)store.grantOwner(u.id,'owner_user_ids');}
+
+
+ /* ============================================================
+    MEMEFLOW_OWNER_INTELLIGENCE_V1_ROUTES
+    OWNER DATA/ACTIONS ONLY
+    ============================================================ */
+
+ if(
+   url.pathname==='/api/owner/intelligence' &&
+   req.method==='GET'
+ ){
+   if(!u){
+     return json(res,401,{
+       error:'AUTH_REQUIRED'
+     });
+   }
+
+   if(u.isOwner!==true){
+     return json(res,403,{
+       error:'OWNER_REQUIRED'
+     });
+   }
+
+   const state=__mfOwnerIntelState(u.id);
+
+   return json(res,200,{
+     ok:true,
+     owner:true,
+     manualAiOnly:true,
+     backgroundOpenAiCalls:false,
+
+     ai:{
+       configured:
+         Boolean(process.env.OPENAI_API_KEY),
+
+       model:
+         process.env.OPENAI_OWNER_COACH_MODEL||
+         OPENAI_MODEL||
+         process.env.OPENAI_MODEL||
+         'gpt-5-mini',
+
+       lastStatus:
+         state.lastAiStatus||'unknown',
+
+       lastError:
+         state.lastAiError||null,
+
+       lastAt:
+         state.lastAiAt||null
+     },
+
+     digest:
+       __mfOwnerIntelDigest(u.id),
+
+     reports:
+       state.reports.slice(0,10),
+
+     audit:
+       state.audit.slice(0,25)
+   });
+ }
+
+
+ if(
+   url.pathname==='/api/owner/intelligence/analyze' &&
+   req.method==='POST'
+ ){
+   if(!u){
+     return json(res,401,{
+       error:'AUTH_REQUIRED'
+     });
+   }
+
+   if(u.isOwner!==true){
+     return json(res,403,{
+       error:'OWNER_REQUIRED'
+     });
+   }
+
+   const state=__mfOwnerIntelState(u.id);
+
+   try{
+     const b=await body(req);
+     const focus=String(b?.focus||'').trim();
+
+     // This is the ONLY OpenAI call in this route.
+     // It runs only because the owner explicitly pressed ANALYZE.
+     const digest=
+       __mfOwnerIntelDigest(u.id);
+
+     const output=
+       await __mfOwnerCoachAnalyze(
+         u.id,
+         digest,
+         focus
+       );
+
+     const report={
+       id:crypto.randomUUID(),
+       at:new Date().toISOString(),
+       settingsSnapshot:{
+         ...store.settings(u.id)
+       },
+       digestSnapshot:{
+         decisions:digest.decisions,
+         performance:digest.performance,
+         system:digest.system
+       },
+       focus,
+       ...output
+     };
+
+     state.reports.unshift(report);
+     state.reports=
+       state.reports.slice(0,30);
+
+     state.lastAiStatus='online';
+     state.lastAiError=null;
+     state.lastAiAt=report.at;
+
+     state.audit.unshift({
+       at:report.at,
+       type:'AI_ANALYSIS',
+       reportId:report.id,
+       proposalCount:
+         report?.result?.proposals?.length||0
+     });
+
+     state.audit=
+       state.audit.slice(0,200);
+
+     store.save();
+
+     return json(res,200,{
+       ok:true,
+       report
+     });
+
+   }catch(error){
+     const friendly=
+       __mfOwnerFriendlyAiError(error);
+
+     state.lastAiStatus='offline';
+     state.lastAiError=friendly.error;
+     state.lastAiAt=
+       new Date().toISOString();
+
+     store.save();
+
+     return json(
+       res,
+       friendly.status,
+       friendly
+     );
+   }
+ }
+
+
+ if(
+   url.pathname==='/api/owner/intelligence/shadow' &&
+   req.method==='POST'
+ ){
+   if(!u){
+     return json(res,401,{
+       error:'AUTH_REQUIRED'
+     });
+   }
+
+   if(u.isOwner!==true){
+     return json(res,403,{
+       error:'OWNER_REQUIRED'
+     });
+   }
+
+   const b=await body(req);
+
+   const selected=
+     __mfOwnerProposalFromReport(
+       u.id,
+       String(b?.reportId||''),
+       b?.proposalIndex
+     );
+
+   if(!selected.ok){
+     return json(res,404,{
+       error:selected.code
+     });
+   }
+
+   const p=selected.proposal;
+
+   if(
+     p.type!=='SETTING_CHANGE' ||
+     !p.applyEligible ||
+     !__MF_OWNER_AI_TUNABLE_SETTINGS.has(
+       p.setting
+     )
+   ){
+     return json(res,400,{
+       error:'PROPOSAL_NOT_SHADOWABLE',
+       message:
+         'Only approved setting-change proposals can run through the local settings shadow test.'
+     });
+   }
+
+   const current={
+     ...store.settings(u.id)
+   };
+
+   const candidate={
+     ...current,
+     [p.setting]:p.proposed
+   };
+
+   const validated=
+     validateSettings(candidate);
+
+   if(!validated.ok){
+     return json(res,400,{
+       error:'PROPOSED_SETTINGS_INVALID',
+       validationErrors:
+         validated.errors
+     });
+   }
+
+   const currentShadow=
+     shadowValidateSettings(
+       current,
+       150
+     );
+
+   const proposedShadow=
+     shadowValidateSettings(
+       validated.settings,
+       150
+     );
+
+   return json(res,200,{
+     ok:true,
+
+     setting:p.setting,
+     current:
+       current[p.setting],
+
+     proposed:
+       validated.settings[p.setting],
+
+     testType:
+       'CURRENT_LIVE_FEED_SHADOW',
+
+     note:
+       'This does not simulate historical P&L. It compares how the current live candidate feed would classify under each setting set.',
+
+     currentShadow,
+     proposedShadow
+   });
+ }
+
+
+ if(
+   url.pathname==='/api/owner/intelligence/apply' &&
+   req.method==='POST'
+ ){
+   if(!u){
+     return json(res,401,{
+       error:'AUTH_REQUIRED'
+     });
+   }
+
+   if(u.isOwner!==true){
+     return json(res,403,{
+       error:'OWNER_REQUIRED'
+     });
+   }
+
+   const b=await body(req);
+
+   if(b?.confirm!=='APPLY'){
+     return json(res,400,{
+       error:'OWNER_CONFIRMATION_REQUIRED'
+     });
+   }
+
+   const selected=
+     __mfOwnerProposalFromReport(
+       u.id,
+       String(b?.reportId||''),
+       b?.proposalIndex
+     );
+
+   if(!selected.ok){
+     return json(res,404,{
+       error:selected.code
+     });
+   }
+
+   const {
+     report,
+     proposal:p,
+     index
+   }=selected;
+
+   if(
+     p.type!=='SETTING_CHANGE' ||
+     !p.applyEligible ||
+     !__MF_OWNER_AI_TUNABLE_SETTINGS.has(
+       p.setting
+     )
+   ){
+     return json(res,400,{
+       error:'PROPOSAL_NOT_APPLICABLE'
+     });
+   }
+
+   const current={
+     ...store.settings(u.id)
+   };
+
+   // Prevent application of a stale AI proposal after the owner
+   // has manually changed that setting since analysis.
+   const expected=
+     report?.settingsSnapshot?.[
+       p.setting
+     ];
+
+   if(
+     JSON.stringify(
+       current[p.setting]
+     )!==
+     JSON.stringify(expected)
+   ){
+     return json(res,409,{
+       error:'SETTING_CHANGED_SINCE_ANALYSIS',
+       setting:p.setting,
+       analyzedValue:expected,
+       currentValue:
+         current[p.setting]
+     });
+   }
+
+   const candidate={
+     ...current,
+     [p.setting]:p.proposed
+   };
+
+   const validated=
+     validateSettings(candidate);
+
+   if(!validated.ok){
+     return json(res,400,{
+       error:'PROPOSED_SETTINGS_INVALID',
+       validationErrors:
+         validated.errors
+     });
+   }
+
+   // Local, free shadow test before mutation.
+   const shadow=
+     shadowValidateSettings(
+       validated.settings,
+       150
+     );
+
+   const before={
+     ...current
+   };
+
+   const after=
+     store.setSettings(
+       u.id,
+       {
+         [p.setting]:
+           validated.settings[p.setting]
+       }
+     );
+
+   store.recordSettingsChange(
+     u.id,
+     before,
+     {...after},
+     {
+       actor:u.id,
+       source:'owner-ai-approved'
+     }
+   );
+
+   const reevaluation=
+     reevaluateUser(u.id);
+
+   const state=
+     __mfOwnerIntelState(u.id);
+
+   const auditRow={
+     at:new Date().toISOString(),
+     type:'OWNER_APPLIED_AI_PROPOSAL',
+     reportId:report.id,
+     proposalIndex:index,
+     setting:p.setting,
+     from:before[p.setting],
+     to:after[p.setting],
+     shadow,
+     reevaluation
+   };
+
+   state.audit.unshift(auditRow);
+   state.audit=
+     state.audit.slice(0,200);
+
+   store.save();
+
+   return json(res,200,{
+     ok:true,
+     applied:true,
+     setting:p.setting,
+     from:before[p.setting],
+     to:after[p.setting],
+     shadow,
+     reevaluation
+   });
+ }
+
+
+ if(
+   url.pathname==='/api/owner/intelligence/chat' &&
+   req.method==='POST'
+ ){
+   if(!u){
+     return json(res,401,{
+       error:'AUTH_REQUIRED'
+     });
+   }
+
+   if(u.isOwner!==true){
+     return json(res,403,{
+       error:'OWNER_REQUIRED'
+     });
+   }
+
+   const b=await body(req);
+   const message=
+     String(b?.message||'').trim();
+
+   if(!message){
+     return json(res,400,{
+       error:'MESSAGE_REQUIRED'
+     });
+   }
+
+   const state=
+     __mfOwnerIntelState(u.id);
+
+   try{
+     const digest=
+       __mfOwnerIntelDigest(u.id);
+
+     const recentReports=
+       state.reports
+         .slice(0,3)
+         .map(r=>({
+           id:r.id,
+           at:r.at,
+           executiveSummary:
+             r?.result?.executiveSummary||null,
+           proposals:
+             (r?.result?.proposals||[])
+               .slice(0,6)
+               .map(p=>({
+                 type:p.type,
+                 title:p.title,
+                 setting:p.setting,
+                 current:p.current,
+                 proposed:p.proposed,
+                 reason:p.reason,
+                 confidence:p.confidence
+               }))
+         }));
+
+     const prompt=[
+       'You are speaking directly to the MEMEFLOW owner.',
+       'Act as a strategy coach and engineering advisor, not as a realtime trader.',
+       'Answer the owner question using only the supplied current engine data and recent coach reports.',
+       'You may recommend settings, tests, diagnostics, scoring changes or new functions.',
+       'Do not claim any setting was changed unless the supplied context explicitly says it was applied.',
+       '',
+       'OWNER QUESTION:',
+       message
+     ].join('\n');
+
+     const output=
+       await callMemeflowOpenAI(
+         prompt,
+         {
+           digest,
+           recentReports
+         },
+         'owner-coach-chat'
+       );
+
+     state.lastAiStatus='online';
+     state.lastAiError=null;
+     state.lastAiAt=
+       new Date().toISOString();
+
+     store.save();
+
+     return json(res,200,{
+       ok:true,
+       text:output.text,
+       model:output.model,
+       responseId:
+         output.responseId||null
+     });
+
+   }catch(error){
+     const friendly=
+       __mfOwnerFriendlyAiError(error);
+
+     state.lastAiStatus='offline';
+     state.lastAiError=friendly.error;
+     state.lastAiAt=
+       new Date().toISOString();
+
+     store.save();
+
+     return json(
+       res,
+       friendly.status,
+       friendly
+     );
+   }
+ }
+
+ /* ============================================================
+    /MEMEFLOW_OWNER_INTELLIGENCE_V1_ROUTES
+    ============================================================ */
+
 
  /* MEMEFLOW_NATIVE_AI_V46_ROUTES_BEGIN */
  if(url.pathname==='/api/openai/status'&&req.method==='GET')return json(res,200,{ok:true,configured:Boolean(process.env.OPENAI_API_KEY),model:OPENAI_MODEL,mode:'read-only'});
@@ -3609,42 +5087,24 @@ if(url.pathname==='/api/system/health'){
  }
 
  
+ // MEMEFLOW_AI_CHAT_TRADING_MEMORY_V1_ROUTE
  if(url.pathname==='/api/ai/chat'&&req.method==='POST'){
    try{
      const b=await body(req);
-
      const message=String(b?.message||'').trim();
-
-     if(!message){
-       return json(res,400,{
-         error:'EMPTY_MESSAGE'
-       });
-     }
-
-     const mint=String(b?.mint||'').trim();
-
-     const candidate=
-       (mint && store.state.tokens[mint])
-         ? store.state.tokens[mint]
-         : {};
-
-     const result=await askMemeflowAssistant({
+     if(!message)return json(res,400,{error:'EMPTY_MESSAGE'});
+     const mint=String(b?.mint||'').trim()||null;
+     const result=await openaiAI.chat(
+       u.id,
        message,
-       candidate,
-       settings:store.settings(u.id),
-       recentMessages:Array.isArray(b?.messages)
-         ? b.messages
-         : []
-     });
-
-     return json(res,200,{
-       ok:true,
-       ...result
-     });
-
+       mint,
+       {messages:Array.isArray(b?.messages)?b.messages:[]}
+     );
+     return json(res,200,{ok:true,...result});
    }catch(e){
-     return json(res,500,{
-       error:'AI_CHAT_FAILED',
+     const status=e?.code==='OPENAI_NOT_CONFIGURED'?503:e?.code==='AI_DISABLED'?403:500;
+     return json(res,status,{
+       error:e?.code||'AI_CHAT_FAILED',
        message:e?.message||'AI Assistant failed'
      });
    }
@@ -4678,59 +6138,19 @@ if(url.pathname==='/api/ai/decisions'){
   });
 }
  if(url.pathname==='/api/chart/config'){const qualified=rankCandidateViews(candidateFeed(store.decisions(u.id),'candidates').map(candidateView));return json(res,200,{chainId:'solana',tokenAddress:qualified[0]?.mint||''});}
- if(url.pathname==='/api/chart/history'){const mint=url.searchParams.get('tokenAddress'),t=store.state.tokens[mint];const pts=t?.priceSol?[{t:t.updatedAt,price:t.priceSol,source:t.source}]:[];return json(res,200,{points:pts,status:{stale:!pts.length,source:t?.source||null,error:t?.scanError||null},tokenAddress:mint})}
- if(url.pathname==='/api/chart/trade-stream'){
+ if(url.pathname==='/api/chart/history'){
   const mint=String(url.searchParams.get('tokenAddress')||'').trim();
-
-  if(!validPubkey(mint)){
+  if(!__mfValidChartMint(mint)){
     return json(res,400,{error:'INVALID_TOKEN_ADDRESS'});
   }
-
-  if(!chartTradeStreams.has(mint)){
-    chartTradeStreams.set(mint,new Set());
-  }
-  if(!chartTradeHistory.has(mint)){
-    chartTradeHistory.set(mint,[]);
-  }
-
-  res.writeHead(200,{
-    'content-type':'text/event-stream; charset=utf-8',
-    'cache-control':'no-cache, no-store, no-transform',
-    'connection':'keep-alive',
-    'x-accel-buffering':'no'
+  const snapshot=__mfChartSnapshotPayload(mint);
+  queueMicrotask(()=>{
+    try{__mfEnsureChartBackfill(mint)}catch{}
   });
-  try{res.flushHeaders?.()}catch{}
-
-  res.write('retry: 1000\n');
-  res.write(
-    `event: snapshot\n`+
-    `data: ${JSON.stringify(__mfChartSnapshotPayload(mint))}\n\n`
-  );
-
-  const listeners=chartTradeStreams.get(mint);
-  listeners.add(res);
-
-  // History sync must never block opening Trading Terminal.
-  queueMicrotask(()=>__mfEnsureChartBackfill(mint));
-
-  const heartbeat=setInterval(()=>{
-    try{
-      res.write(`: chart ${Date.now()}\n\n`);
-    }catch{}
-  },15000);
-  heartbeat.unref?.();
-
-  let closed=false;
-  const closeChartTradeStream=()=>{
-    if(closed)return;
-    closed=true;
-    clearInterval(heartbeat);
-    listeners.delete(res);
-  };
-
-  req.on('close',closeChartTradeStream);
-  res.on('close',closeChartTradeStream);
-  return
+  return json(res,200,snapshot);
+}
+ if(url.pathname==='/api/chart/trade-stream'){
+  return __mfOpenChartStream(req,res,url.searchParams.get('tokenAddress'));
 }
 
  // MEMEFLOW_LIVE_SYSTEM_SSE_BACKEND_V4_ROUTE
@@ -4776,7 +6196,55 @@ if(url.pathname==='/api/ai/decisions'){
   return;
  }
 
- if(url.pathname==='/api/chart/stream'){const mint=url.searchParams.get('tokenAddress');res.writeHead(200,{'content-type':'text/event-stream','cache-control':'no-cache','connection':'keep-alive'});res.write(`event: snapshot\ndata: ${JSON.stringify({points:[],status:{stale:true,source:'Solana'}})}\n\n`);if(!streams.has(mint))streams.set(mint,new Set());streams.get(mint).add(res);req.on('close',()=>streams.get(mint)?.delete(res));return}
+ if(url.pathname==='/api/chart/stream'){
+  return __mfOpenChartStream(req,res,url.searchParams.get('tokenAddress'));
+}
+
+ // MEMEFLOW_SMART_VAULT_STATUS_V1
+ if(url.pathname==='/api/smart-vault/status'&&req.method==='GET'){
+  const owner=String(url.searchParams.get('owner')||'').trim();
+  if(owner&&!validPubkey(owner))
+   return json(res,400,{error:'INVALID_WALLET_ADDRESS'});
+
+  const adapter=__mfSmartVaultD4.status();
+  const entitled=hasLiveEntitlement(u);
+  const settings=store.settings(u.id)||{};
+
+  const programDeployed=adapter.mainnetDeployment===true;
+  const liveReady=
+   programDeployed &&
+   adapter.productionAutoLiveUnlocked===true &&
+   entitled;
+
+  return json(res,200,{
+   ok:true,
+   owner:owner||null,
+   vault:{
+    backendAvailable:true,
+    programDeployed,
+    vaultExists:false,
+    vaultAddress:null,
+    balanceSol:null,
+    availableSol:null,
+    openPositions:null,
+    liveReady,
+    automationActive:false,
+    actions:{
+     create:false,
+     deposit:false,
+     withdraw:false,
+     automation:false
+    }
+   },
+   execution:adapter,
+   entitlement:{
+    live:entitled,
+    source:u.isOwner?'owner':u.liveEntitled?'pro':'none'
+   },
+   tradingEnvironment:settings.tradingEnvironment||'paper'
+  });
+ }
+
  // MEMEFLOW_SMART_VAULT_D5_HTTP_DEVNET_V1
  if(url.pathname==='/api/live/execute'){
   if(req.method!=='POST'){
@@ -5840,6 +7308,7 @@ async function __mfVerifyPreOpenRisk(
     updated.mint,
     saved
   );
+  try{openaiAI.recordDecision(uid,updated,saved,{source:'preopen-risk-final'})}catch{}
 
   if(
     finalDecision.state!=='BUY READY'
@@ -5874,6 +7343,11 @@ async function __mfHandleDecision(
     };
   }
 
+  const finish=(result)=>{
+    try{openaiAI.recordExecution(uid,token,decision,result||{})}catch{}
+    return result;
+  };
+
   const settings=
     store.settings(uid) ||
     {};
@@ -5881,10 +7355,10 @@ async function __mfHandleDecision(
   if(
     paper.environment(settings)!=='paper'
   ){
-    return {
+    return finish({
       action:'NONE',
       reason:'NOT_PAPER'
-    };
+    });
   }
 
   const mode=
@@ -5896,19 +7370,19 @@ async function __mfHandleDecision(
     mode==='observe' ||
     mode==='assist'
   ){
-    return paper.onDecision(
+    return finish(paper.onDecision(
       uid,
       token,
       decision,
       settings
-    );
+    ));
   }
 
   if(mode!=='automate'){
-    return {
+    return finish({
       action:'NONE',
       reason:'UNKNOWN_MODE'
-    };
+    });
   }
 
   if(
@@ -5917,10 +7391,10 @@ async function __mfHandleDecision(
       token.mint
     )
   ){
-    return {
+    return finish({
       action:'NONE',
       reason:'POSITION_EXISTS'
-    };
+    });
   }
 
   // No expensive RPC if normal execution rules already forbid an entry.
@@ -5932,12 +7406,12 @@ async function __mfHandleDecision(
     );
 
   if(!readiness?.ok){
-    return {
+    return finish({
       action:'NONE',
       reason:
         readiness?.code ||
         'ENTRY_NOT_READY'
-    };
+    });
   }
 
   // THIS is the first automatic Solana HTTP RPC stage.
@@ -5950,18 +7424,18 @@ async function __mfHandleDecision(
     );
 
   if(!verified.ok){
-    return {
+    return finish({
       action:'NONE',
       reason:verified.code
-    };
+    });
   }
 
-  return paper.onDecision(
+  return finish(paper.onDecision(
     uid,
     verified.token,
     verified.decision,
     settings
-  );
+  ));
 }
 
 async function __mfApprovePaperProposalWithRisk(
@@ -6039,3 +7513,5 @@ async function __mfApprovePaperProposalWithRisk(
     verified.token
   );
 }
+
+// MEMEFLOW_CHART_LEVELS_LIVE_V7_2_1_DIRTY_SAFE

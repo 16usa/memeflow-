@@ -1,0 +1,382 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta
+    name="viewport"
+    content="width=device-width,initial-scale=1,viewport-fit=cover"
+  >
+  <meta
+    http-equiv="Cache-Control"
+    content="no-cache, no-store, must-revalidate"
+  >
+  <title>MEMEFLOW · Owner Intelligence</title>
+  <link
+    rel="stylesheet"
+    href="/owner-intelligence.css?v=20260829-062530"
+  >
+</head>
+
+<body>
+  <div class="oi-shell">
+
+    <header class="oi-top">
+      <div>
+        <div class="oi-kicker">OWNER ONLY</div>
+        <h1>OWNER INTELLIGENCE</h1>
+        <p>
+          MEMEFLOW Strategy Coach · performance · diagnostics ·
+          shadow validation
+        </p>
+      </div>
+
+      <div class="oi-top-actions">
+        <a
+          class="oi-btn ghost"
+          href="/trading.html"
+        >
+          TRADING TERMINAL
+        </a>
+
+        <button
+          class="oi-btn"
+          id="refreshBtn"
+          type="button"
+        >
+          REFRESH
+        </button>
+      </div>
+    </header>
+
+    <div
+      id="accessError"
+      class="oi-access"
+      hidden
+    >
+      OWNER ACCESS REQUIRED
+    </div>
+
+    <main id="ownerApp" hidden>
+
+      <section class="oi-notice">
+        <div>
+          <strong>
+            OpenAI is not in the realtime trading loop.
+          </strong>
+          <span>
+            API is called only when the owner presses ANALYZE
+            or sends an Owner Chat message.
+          </span>
+        </div>
+
+        <div
+          class="oi-ai-status"
+          id="aiStatus"
+        >
+          AI —
+        </div>
+      </section>
+
+      <section class="oi-grid oi-grid-4">
+        <article class="oi-stat">
+          <span>REALIZED P&L</span>
+          <strong id="pnlValue">—</strong>
+          <small id="pnlSub">—</small>
+        </article>
+
+        <article class="oi-stat">
+          <span>WIN RATE</span>
+          <strong id="winRateValue">—</strong>
+          <small id="winRateSub">—</small>
+        </article>
+
+        <article class="oi-stat">
+          <span>OPEN POSITIONS</span>
+          <strong id="positionsValue">—</strong>
+          <small id="positionsSub">—</small>
+        </article>
+
+        <article class="oi-stat">
+          <span>ENGINE</span>
+          <strong id="engineValue">—</strong>
+          <small id="engineSub">—</small>
+        </article>
+      </section>
+
+      <section class="oi-grid oi-grid-2">
+
+        <article class="oi-panel">
+          <div class="oi-panel-head">
+            <div>
+              <span class="oi-eyebrow">
+                REALTIME ENGINE
+              </span>
+              <h2>Decision state</h2>
+            </div>
+          </div>
+
+          <div
+            id="decisionStats"
+            class="oi-decision-stats"
+          ></div>
+
+          <div class="oi-divider"></div>
+
+          <h3>Top blockers / reasons</h3>
+          <div
+            id="reasonList"
+            class="oi-list"
+          ></div>
+        </article>
+
+        <article class="oi-panel">
+          <div class="oi-panel-head">
+            <div>
+              <span class="oi-eyebrow">
+                SYSTEM
+              </span>
+              <h2>Health</h2>
+            </div>
+          </div>
+
+          <div
+            id="healthList"
+            class="oi-list"
+          ></div>
+        </article>
+
+      </section>
+
+      
+      <!-- MEMEFLOW_PLATFORM_LEARNING_V2_UI -->
+      <section class="oi-panel">
+        <div class="oi-panel-head">
+          <div>
+            <span class="oi-eyebrow">
+              ALL USERS · LOCAL DATASET
+            </span>
+            <h2>Platform Learning</h2>
+            <p>
+              Aggregated trading outcomes from the entire MEMEFLOW platform.
+              No OpenAI API is used to collect or calculate these statistics.
+            </p>
+          </div>
+
+          <span class="oi-ai-status online">
+            LOCAL · FREE
+          </span>
+        </div>
+
+        <div class="oi-grid oi-grid-4">
+          <article class="oi-stat">
+            <span>USERS IN DATASET</span>
+            <strong id="platformUsers">—</strong>
+            <small>anonymous identities</small>
+          </article>
+
+          <article class="oi-stat">
+            <span>CLOSED POSITIONS</span>
+            <strong id="platformPositions">—</strong>
+            <small id="platformTrades">— trade events</small>
+          </article>
+
+          <article class="oi-stat">
+            <span>PLATFORM WIN RATE</span>
+            <strong id="platformWinRate">—</strong>
+            <small id="platformWinsLosses">—</small>
+          </article>
+
+          <article class="oi-stat">
+            <span>PLATFORM P&L</span>
+            <strong id="platformPnl">—</strong>
+            <small>selected 30-day window</small>
+          </article>
+        </div>
+
+        <div class="oi-divider"></div>
+
+        <div class="oi-grid oi-grid-2">
+          <div>
+            <h3>Score → outcome</h3>
+            <div id="platformScoreFactors" class="oi-factor-table"></div>
+          </div>
+
+          <div>
+            <h3>Holders → outcome</h3>
+            <div id="platformHolderFactors" class="oi-factor-table"></div>
+          </div>
+
+          <div>
+            <h3>Top 10 → outcome</h3>
+            <div id="platformTop10Factors" class="oi-factor-table"></div>
+          </div>
+
+          <div>
+            <h3>Buy pressure → outcome</h3>
+            <div id="platformPressureFactors" class="oi-factor-table"></div>
+          </div>
+        </div>
+
+        <div class="oi-divider"></div>
+
+        <div class="oi-grid oi-grid-2">
+          <div>
+            <h3>Exit reasons</h3>
+            <div id="platformExitReasons" class="oi-list"></div>
+          </div>
+
+          <div>
+            <h3>Strategy sources</h3>
+            <div id="platformStrategySources" class="oi-list"></div>
+          </div>
+        </div>
+
+        <div class="oi-privacy-note">
+          Learning dataset stores a one-way anonymous user hash.
+          Raw user IDs, wallet addresses and emails are not stored
+          in the analytics database.
+        </div>
+      </section>
+
+<section class="oi-panel oi-coach">
+
+        <div class="oi-panel-head oi-coach-head">
+          <div>
+            <span class="oi-eyebrow">
+              OPENAI · OWNER ONLY
+            </span>
+            <h2>AI Strategy Coach</h2>
+            <p>
+              Reviews aggregated MEMEFLOW results.
+              Does not trade automatically.
+            </p>
+          </div>
+
+          <button
+            class="oi-btn primary"
+            id="analyzeBtn"
+            type="button"
+          >
+            ANALYZE PERFORMANCE
+          </button>
+        </div>
+
+        <div class="oi-focus">
+          <input
+            id="focusInput"
+            type="text"
+            maxlength="1200"
+            placeholder="Optional: What should OpenAI focus on? Example: Why are we missing winners?"
+          >
+        </div>
+
+        <div
+          id="coachEmpty"
+          class="oi-empty"
+        >
+          No AI report yet. Press ANALYZE PERFORMANCE when
+          you want the owner coach to review the engine.
+        </div>
+
+        <div
+          id="coachReport"
+          hidden
+        >
+          <div class="oi-report-summary">
+            <div>
+              <span>EXECUTIVE SUMMARY</span>
+              <p id="executiveSummary"></p>
+            </div>
+
+            <div>
+              <span>PERFORMANCE</span>
+              <p id="performanceAssessment"></p>
+            </div>
+
+            <div>
+              <span>SYSTEM HEALTH</span>
+              <p id="healthAssessment"></p>
+            </div>
+          </div>
+
+          <h3>Findings</h3>
+          <div
+            id="findingsList"
+            class="oi-findings"
+          ></div>
+
+          <h3>Recommended changes</h3>
+          <div
+            id="proposalList"
+            class="oi-proposals"
+          ></div>
+        </div>
+      </section>
+
+      <section class="oi-grid oi-grid-2">
+
+        <article class="oi-panel">
+          <div class="oi-panel-head">
+            <div>
+              <span class="oi-eyebrow">
+                SETTINGS SAFETY
+              </span>
+              <h2>Owner audit log</h2>
+            </div>
+          </div>
+
+          <div
+            id="auditList"
+            class="oi-list"
+          ></div>
+        </article>
+
+        <article class="oi-panel">
+          <div class="oi-panel-head">
+            <div>
+              <span class="oi-eyebrow">
+                OWNER · OPENAI
+              </span>
+              <h2>Strategy Chat</h2>
+            </div>
+          </div>
+
+          <div
+            id="ownerChat"
+            class="oi-chat"
+          >
+            <div class="oi-chat-message assistant">
+              Ask about engine performance, bad entries,
+              missed opportunities, filters, scoring logic
+              or a new function you should add.
+            </div>
+          </div>
+
+          <div class="oi-chat-compose">
+            <textarea
+              id="chatInput"
+              rows="3"
+              placeholder="Example: Which filter should I investigate first and why?"
+            ></textarea>
+
+            <button
+              class="oi-btn primary"
+              id="chatSendBtn"
+              type="button"
+            >
+              SEND
+            </button>
+          </div>
+        </article>
+
+      </section>
+
+    </main>
+  </div>
+
+  <script
+    type="module"
+    src="/owner-intelligence.js?v=20260829-062530"
+  ></script>
+</body>
+</html>

@@ -72,12 +72,12 @@
 
     if (!walletBtn.dataset.mfSettingsRoute) {
       walletBtn.dataset.mfSettingsRoute = '1';
-      walletBtn.textContent = 'Wallet settings';
-      walletBtn.setAttribute('aria-label','Open Wallet settings');
+      walletBtn.textContent = 'Smart Vault';
+      walletBtn.setAttribute('aria-label','Open Smart Vault');
       walletBtn.addEventListener('click', event => {
         event.preventDefault();
         event.stopImmediatePropagation();
-        location.href = '/settings.html?v=cachefix-c6663c7-20260826-v1#wallet';
+        location.href = '/smart-vault.html';
       }, true);
     }
 
@@ -257,21 +257,13 @@
 
   function walletHtml() {
     return `
-      <summary><span><strong>Wallet</strong><small>Account connection · non-custodial</small></span><i></i></summary>
+      <summary><span><strong>Wallet & Smart Vault</strong><small>Identity · funding · LIVE automation</small></span><i></i></summary>
       <div class="mf293-settings-grid mf-account-grid">
-        <div class="mf293-field mf-account-stat"><small class="mf293-field-label">Provider</small><b id="mfWalletProvider">Not connected</b></div>
+        <div class="mf293-field mf-account-stat"><small class="mf293-field-label">Wallet</small><b id="mfWalletConnection">NOT CONNECTED</b></div>
         <div class="mf293-field mf-account-stat"><small class="mf293-field-label">Network</small><b>Solana Mainnet</b></div>
-        <div class="mf293-field mf-account-stat"><small class="mf293-field-label">Trading mode</small><b>PAPER INDEPENDENT</b></div>
-        <div class="mf293-field mf-account-stat"><small class="mf293-field-label">LIVE execution</small><b class="mf-status-danger">LOCKED</b></div>
-        <div class="mf293-field mf-account-stat wide"><small class="mf293-field-label">Public address</small><b id="mfWalletAddressValue" class="mf-account-address">Connect Phantom or Solflare</b></div>
-        <div class="mf-account-actions">
-          <button id="mfWalletConnect" class="mf293-primary" type="button">Connect wallet</button>
-          <button id="mfWalletCopy" class="mf293-secondary" type="button" disabled>Copy address</button>
-          <button id="mfWalletDisconnect" class="mf293-secondary" type="button" disabled>Disconnect</button>
-        </div>
-        <div class="mf293-field mf293-field-wide mf-account-note"><strong>Non-custodial.</strong> Signing stays inside Phantom or Solflare. MEMEFLOW receives only the public address and signatures you approve. Seed phrases and private keys are never requested or stored.</div>
-        <div class="mf293-field mf293-field-wide mf-account-note"><strong>PAPER trading does not require a wallet.</strong> Connecting a wallet never unlocks real trading by itself.</div>
-        <div class="mf293-field mf293-field-wide mf-account-note danger"><strong>LIVE execution locked.</strong> The backend remains fail-closed with <code>LIVE_EXECUTION_NOT_READY</code> until a verified production signer/execution adapter exists.</div>
+        <div class="mf293-field mf-account-stat wide"><small class="mf293-field-label">Wallet address</small><b id="mfWalletAddressValue">Open Smart Vault to connect</b></div>
+        <div class="mf-account-actions"><button class="mf293-primary" type="button" onclick="location.href='/smart-vault.html'">Open Smart Vault</button></div>
+        <div class="mf293-field mf293-field-wide mf-account-note">Connection, deposits, withdrawals and LIVE automation are managed in Smart Vault.</div>
       </div>`;
   }
 
@@ -361,6 +353,9 @@
 (() => {
   if (window.__MEMEFLOW_NONCUSTODIAL_LIVE_SOLANA_LOADER_V1__) return;
   window.__MEMEFLOW_NONCUSTODIAL_LIVE_SOLANA_LOADER_V1__ = true;
+  if(location.pathname.endsWith('/settings.html')) return;
+/* MF_SETTINGS_NO_LIVE_LOADER */
+if(location.pathname.endsWith('/settings.html')) return;
   const script=document.createElement('script');
   script.src='/live-wallet-execution.js?v=noncustodial-live-solana-v1-20260827';
   script.defer=true;
@@ -376,6 +371,9 @@
   ) return;
 
   window.__MEMEFLOW_PHANTOM_CONNECT_PHASE1_FIX2_LOADER__=true;
+  if(location.pathname.endsWith('/settings.html')) return;
+/* MF_SETTINGS_NO_PHANTOM_LOADER */
+if(location.pathname.endsWith('/settings.html')) return;
 
   const css=
     document.createElement('link');
@@ -397,3 +395,73 @@
   document.head.appendChild(js);
 })();
 /* /MEMEFLOW_PHANTOM_CONNECT_PHASE1_FIX2_LOADER */
+
+/* MEMEFLOW_SETTINGS_SMART_VAULT_CLEAN_V1 */
+(()=>{if(!location.pathname.endsWith('/settings.html'))return;
+const clean=()=>{
+ const g=document.getElementById('mfAccountWalletGroup'); if(!g)return;
+ if(g.dataset.vaultClean)return; g.dataset.vaultClean='1';
+ const p=window.phantom?.solana||window.solana||window.solflare;
+ const connected=!!p?.publicKey;
+ g.innerHTML=`
+ <summary><span><strong>Wallet & Smart Vault</strong><small>Wallet, funding and LIVE automation</small></span><i></i></summary>
+ <div class="mf293-settings-grid mf-account-grid">
+  <div class="mf293-field mf-account-stat"><small class="mf293-field-label">Wallet</small><b>${connected?'CONNECTED':'NOT CONNECTED'}</b></div>
+  <div class="mf293-field mf-account-stat"><small class="mf293-field-label">Smart Vault</small><b>MANAGE IN VAULT</b></div>
+  <div class="mf-account-actions"><button class="mf293-primary" type="button" onclick="location.href='/smart-vault.html'">Open Smart Vault</button></div>
+  <div class="mf293-field mf293-field-wide mf-account-note">Wallet connection, deposits, withdrawals and LIVE automation are managed on the Smart Vault page.</div>
+ </div>`;
+};
+setInterval(clean,200);clean();
+})();
+
+
+/* MEMEFLOW_SMART_VAULT_STATUS_SYNC_V1 */
+(()=>{
+ if(!location.pathname.endsWith('/settings.html'))return;
+
+ const find=(label)=>[...document.querySelectorAll(
+  '#mfAccountWalletGroup .mf-account-stat'
+ )].find(x=>
+  x.querySelector('small')?.textContent.trim().toLowerCase()
+  ===label.toLowerCase()
+ )?.querySelector('b');
+
+ async function sync(){
+  const p=
+   window.phantom?.solana?.isPhantom?window.phantom.solana:
+   window.solana?.isPhantom?window.solana:
+   window.solflare?.isSolflare?window.solflare:null;
+
+  const address=p?.publicKey?.toString?.()||'';
+
+  const w=find('Wallet');
+  if(w){
+   w.textContent=address?'CONNECTED':'NOT CONNECTED';
+   w.classList.toggle('mf-status-ok',!!address);
+  }
+
+  const v=find('Smart Vault');
+  if(!v)return;
+
+  try{
+   const q=address?'?owner='+encodeURIComponent(address):'';
+   const r=await fetch('/api/smart-vault/status'+q,{
+    credentials:'same-origin',cache:'no-store'
+   });
+   const s=await r.json();
+
+   v.textContent=
+    s?.vault?.vaultExists?'ACTIVE':
+    s?.vault?.programDeployed?'NOT CREATED':
+    'PRODUCTION LOCKED';
+
+   v.classList.toggle('mf-status-ok',s?.vault?.vaultExists===true);
+  }catch{
+   v.textContent='STATUS UNAVAILABLE';
+  }
+ }
+
+ sync();
+ setInterval(sync,4000);
+})();

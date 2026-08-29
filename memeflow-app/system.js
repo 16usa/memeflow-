@@ -4477,6 +4477,7 @@ setTimeout(installRealWebV31, 1250);
     { title: 'Trading Terminal', image: '/memeflow-gallery/trading-terminal.webp?v=page-gallery-v1', href: '/trading.html', slot: 'left' },
     { title: 'System Settings', image: '/memeflow-gallery/system-settings.webp?v=page-gallery-v1', href: '/settings.html', slot: 'center' },
     { title: 'Real-Time Pipeline', image: '/memeflow-gallery/live-token-states.webp?v=page-gallery-v1', href: '/system-tokens.html', slot: 'right' },
+    { title: 'Smart Vault', image: '/memeflow-gallery/how-it-works.svg?v=sv5', href: '/smart-vault.html', slot: 'hidden' },
     { title: 'How It Works', image: '/memeflow-gallery/how-it-works.svg?v=how-it-works-carousel-v1', href: '/how-it-works.html', slot: 'hidden' }
   ];
 
@@ -4909,22 +4910,26 @@ setTimeout(installRealWebV31, 1250);
 
   const PAGE_META = {
     'Trading Terminal': {
-      index: '01 / 04',
+      index: '01 / 05',
       title: 'TRADING TERMINAL',
       text: 'Live workspace for chart analysis, open positions, signals and trade execution.'
     },
     'System Settings': {
-      index: '02 / 04',
+      index: '02 / 05',
       title: 'SYSTEM SETTINGS',
       text: 'Configure trading mode, AI thresholds, risk filters and execution rules.'
     },
     'Real-Time Pipeline': {
-      index: '03 / 04',
+      index: '03 / 05',
       title: 'REAL-TIME PIPELINE',
       text: 'Monitor live token states, candidates, decisions and active positions.'
     },
+    'Smart Vault': {
+      index: '04 / 05', title: 'SMART VAULT',
+      text: 'Wallet, funding, withdrawals and LIVE automation.'
+    },
     'How It Works': {
-      index: '04 / 04',
+      index: '05 / 05',
       title: 'HOW IT WORKS',
       text: 'See how your wallet, Smart Vault and executor work together — from deposit to automated trading and withdrawal.'
     }
@@ -5160,6 +5165,7 @@ setTimeout(installRealWebV31, 1250);
     'Trading Terminal': '/trading.html',
     'System Settings': '/settings.html',
     'Real-Time Pipeline': '/system-tokens.html',
+    'Smart Vault': '/smart-vault.html',
     'How It Works': '/how-it-works.html'
   };
 

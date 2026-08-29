@@ -25,6 +25,11 @@
       sub: 'Wallet, Smart Vault, automation and withdrawals'
     },
     {
+      href: '/smart-vault.html',
+      title: 'Smart Vault',
+      sub: 'Personal on-chain trading account'
+    },
+    {
       href: '/trading.html?v=recent-trades-true-two-rows-v4-20260826',
       title: 'Trading Terminal',
       sub: 'Charts, candidates, positions and execution'
@@ -303,7 +308,7 @@
   if (window.__MEMEFLOW_ACCOUNT_WALLET_SETTINGS_LOADER_V1__) return;
   window.__MEMEFLOW_ACCOUNT_WALLET_SETTINGS_LOADER_V1__ = true;
   const script = document.createElement('script');
-  script.src = '/account-wallet-settings.js?v=noncustodial-live-solana-v1-20260827';
+  script.src = '/account-wallet-settings.js?v=smart-vault-clean-v2-20260828';
   script.defer = true;
   document.head.appendChild(script);
 })();

@@ -16,6 +16,12 @@ export class PaperEngine {
     }
     this.store = store;
     this.clock = options.clock || (() => Date.now());
+
+    // MEMEFLOW_PLATFORM_LEARNING_V2
+    // Optional platform-wide anonymized analytics sink.
+    // It NEVER participates in entry/exit decisions.
+    this.analytics = options.analytics || null;
+
     this.ensureState();
   }
 
@@ -402,8 +408,66 @@ export class PaperEngine {
       tp2Executed: false,
       takeProfitHistory: [],
       settingsSnapshot: settings,
+
+      // MEMEFLOW_PLATFORM_LEARNING_V2
+      // Market state frozen at the exact entry moment.
+      entrySnapshot: {
+        marketCapUsd:
+          num(
+            token?.marketCapUsd ??
+            token?.marketCap,
+            null
+          ),
+
+        liquidityUsd:
+          num(token?.liquidityUsd,null),
+
+        holders:
+          num(
+            token?.holderCount ??
+            token?.holders,
+            null
+          ),
+
+        top10Pct:
+          num(
+            token?.top10Pct ??
+            token?.top10,
+            null
+          ),
+
+        developerPct:
+          num(
+            token?.developerPct ??
+            token?.developerSharePct,
+            null
+          ),
+
+        buyPressure:
+          num(token?.buyPressure,null),
+
+        bundlePct:
+          num(token?.bundlePct,null),
+
+        sniperPct:
+          num(token?.sniperPct,null),
+
+        riskyWalletsPct:
+          num(
+            token?.suspectedRiskyWalletsPct,
+            null
+          ),
+
+        insidersPct:
+          num(token?.insidersPct,null)
+      },
     };
+
     this.store.state.paperPositions[position.id] = position;
+
+    try {
+      this.analytics?.recordPosition?.(position);
+    } catch {}
     this.store.state.paperMetrics.entries++;
     this.recordTrade(position, 'BUY', quantity, price, 0, decision?.entryReason || 'AUTOMATIC PAPER ENTRY');
     this.save();
@@ -556,6 +620,12 @@ export class PaperEngine {
     position.unrealizedPnlPct = 0;
     position.realizedPnlPct = position.initialSizeSol > 0 ? position.realizedPnlSol / position.initialSizeSol * 100 : 0;
     this.store.state.paperMetrics.exits++;
+
+    // MEMEFLOW_PLATFORM_LEARNING_V2
+    // Final outcome goes to the shared anonymous learning dataset.
+    try {
+      this.analytics?.recordPosition?.(position);
+    } catch {}
   }
 
   recordTrade(position, side, quantity, price, realizedPnlSol, reason) {
@@ -581,6 +651,15 @@ export class PaperEngine {
       executedAt: new Date(timestamp).toISOString(),
     };
     this.store.state.paperTrades[trade.id] = trade;
+
+    // MEMEFLOW_PLATFORM_LEARNING_V2
+    try {
+      this.analytics?.recordTrade?.(
+        trade,
+        position
+      );
+    } catch {}
+
     return trade;
   }
 

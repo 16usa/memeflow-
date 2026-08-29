@@ -1,0 +1,3458 @@
+diff --git a/memeflow-app/app-server.mjs b/memeflow-app/app-server.mjs
+index adab664..6c8da1d 100644
+--- a/memeflow-app/app-server.mjs
++++ b/memeflow-app/app-server.mjs
+@@ -1,6 +1,6 @@
+ import http from 'node:http';import fs from 'node:fs';import path from 'node:path';import crypto from 'node:crypto';import zlib from 'node:zlib';import {fileURLToPath} from 'node:url';
+ import {JsonStore,sessionId,defaults} from './src/store.mjs';import {RpcPool,validPubkey,decodeCurve,decodeCreateData,decodePumpCreate,decodePumpCreateEventLog} from './src/solana.mjs';import {evaluate,tokenAgeMinutes} from './src/evaluate.mjs';import {evaluateSettingsAdmission,evaluateEntryAdmission,settingsContextSignature} from './src/settings-gate.mjs';import {validateSettings,PROFILE_PRESETS} from './src/settings.mjs';import {StripeBilling} from './src/billing.mjs';
+-import {OpenAIIntelligence} from './src/openai-intelligence.mjs';import {PaperEngine} from './src/paper-engine.mjs';import {CopyTradingManager} from './src/copy-trading.mjs'; // MEMEFLOW_COPY_TRADING_V1
++import {OpenAIIntelligence} from './src/openai-intelligence.mjs';import {PaperEngine} from './src/paper-engine.mjs';import {PlatformTradeAnalytics} from './src/platform-trade-analytics.mjs';import {CopyTradingManager} from './src/copy-trading.mjs'; // MEMEFLOW_COPY_TRADING_V1
+ import './src/copy-trading-multi-wallet-v3.mjs'; // MEMEFLOW_COPY_TRADING_MULTI_WALLET_V3
+ import {makeEnrichDiag,makeHolderMetrics} from './src/enrich.mjs';
+ import {makeRecoveryMetrics,startDecisionRecovery,lazyRecoverUser} from './src/recovery.mjs';
+@@ -8,7 +8,7 @@ import {makeLiveEvalMetrics,makeEvaluateForActiveUsers} from './src/liveeval.mjs
+ import {makeDiscoveryMetrics} from './src/discqueue.mjs';
+ import {candidateFeed,candidateVisibilityCounts} from './src/candidate-visibility.mjs';
+ import { startPumpLiveTradeFeed } from './src/pump-live-trade-feed.mjs'; // MEMEFLOW_V12_21_LIVE_TRADE_STREAM_HOLDER_FEED
+-import { ChartHistoryArchive } from './src/chart-history-archive.mjs'; // MEMEFLOW_CHART_HISTORY_RESTORE_V1
++import { ChartHistoryArchive } from './src/chart-history-archive.mjs'; // MEMEFLOW_CHART_DATA_PATH_FIX_V2_DIRTY_SAFE // MEMEFLOW_CHART_HISTORY_RESTORE_V1
+ import {createOpportunityEngine} from './src/opportunity-engine.mjs'; // MEMEFLOW_OPPORTUNITY_ENGINE_V1
+ import {createSolUsdOracle} from './src/sol-usd-oracle.mjs'; // MEMEFLOW_OPPORTUNITY_ENGINE_V1
+ import {liveCardMarketSnapshot,openPositionLiveMarketCap} from './src/live-card-market.mjs'; // MEMEFLOW_LIVE_CARD_MARKET_TRUTH_V18 / MEMEFLOW_OPEN_POSITION_LIVE_MC_V20
+@@ -188,7 +188,39 @@ const __mfScannerPruneTimer=setInterval(
+ );
+ __mfScannerPruneTimer.unref?.();
+ 
+-const paper=new PaperEngine(store);
++// MEMEFLOW_PLATFORM_LEARNING_V2_SERVER
++const platformAnalytics=
++  new PlatformTradeAnalytics({
++    dir:dataDir,
++    salt:
++      process.env.PLATFORM_ANALYTICS_SALT ||
++      'memeflow-platform-learning-v2'
++  });
++
++// Import already-existing trades from every user.
++// INSERT/UPSERT makes restart/backfill idempotent.
++try{
++  const backfilled=
++    platformAnalytics.backfillState(store);
++
++  console.log(
++    '[PLATFORM ANALYTICS] backfill',
++    backfilled
++  );
++}catch(error){
++  console.error(
++    '[PLATFORM ANALYTICS] backfill error',
++    error?.message||error
++  );
++}
++
++const paper=
++  new PaperEngine(
++    store,
++    {
++      analytics:platformAnalytics
++    }
++  );
+ const billing=new StripeBilling({store,secretKey:process.env.STRIPE_SECRET_KEY,priceId:process.env.STRIPE_PRICE_ID,webhookSecret:process.env.STRIPE_WEBHOOK_SECRET,apiBase:process.env.STRIPE_API_BASE});
+ const wsUrls=(process.env.SOLANA_WS_URLS||'').split(',').map(x=>x.trim()).filter(Boolean);
+ // MEMEFLOW_WS_ONLY_PREOPEN_RPC_V1
+@@ -337,6 +369,123 @@ function __systemViewEmitV31(type,payload={}){
+ 
+ const chartTradeStreams=new Map(),chartTradeHistory=new Map();
+ 
++// MEMEFLOW_CHART_LIVE_TOUCH_RECOVERY_V7_DIRTY_SAFE
++// One canonical live SSE fan-out for the same chartTradeStreams map opened by
++// /api/chart/stream. Display-only: no AI/trading decision logic is changed.
++const __mfChartLiveLastKeyV7=new Map();
++
++function __mfChartBroadcastLiveV7(mint,point){
++  mint=String(mint||'').trim();
++  if(!mint||!point)return false;
++
++  const listeners=chartTradeStreams.get(mint);
++  if(!listeners?.size)return false;
++
++  const price=Number(point?.priceSol ?? point?.price);
++  const at=Number(point?.t);
++  if(!(Number.isFinite(price)&&price>0&&Number.isFinite(at)&&at>0)){
++    return false;
++  }
++
++  const key=
++    String(point?.id||'')+'|'+
++    String(at)+'|'+
++    String(price)+'|'+
++    String(point?.isBuy===true)+'|'+
++    String(Number(point?.solAmount)||0)+'|'+
++    String(Number(point?.tokenAmount)||0);
++
++  if(__mfChartLiveLastKeyV7.get(mint)===key)return false;
++  __mfChartLiveLastKeyV7.set(mint,key);
++
++  const frame=
++    `event: update\n`+
++    `data: ${JSON.stringify({
++      point:{
++        id:point?.id||null,
++        t:at,
++        price,
++        priceSol:price,
++        source:point?.source||'pump-trade-event',
++        isBuy:point?.isBuy===true,
++        solAmount:Number(point?.solAmount)||0,
++        tokenAmount:Number(point?.tokenAmount)||0,
++        markPrice:Number.isFinite(Number(point?.markPrice))
++          ? Number(point.markPrice)
++          : null
++      },
++      status:{
++        stale:false,
++        source:point?.source||'pump-trade-event',
++        live:true,
++        persistentHistory:true
++      }
++    })}\n\n`;
++
++  for(const res of [...listeners]){
++    try{res.write(frame)}
++    catch{listeners.delete(res)}
++  }
++  return true;
++}
++
++
++// MEMEFLOW_CHART_HELPER_SET_FIX_V4_2_DIRTY_SAFE
++
++function __mfValidChartMint(value){
++  return /^[1-9A-HJ-NP-Za-km-z]{32,64}$/.test(String(value||'').trim());
++}
++
++
++function __mfOpenChartStream(req,res,mint){
++  mint=String(mint||'').trim();
++  if(!__mfValidChartMint(mint)){
++    return json(res,400,{error:'INVALID_TOKEN_ADDRESS'});
++  }
++
++  if(!chartTradeStreams.has(mint))chartTradeStreams.set(mint,new Set());
++  if(!chartTradeHistory.has(mint))chartTradeHistory.set(mint,[]);
++
++  res.writeHead(200,{
++    'content-type':'text/event-stream; charset=utf-8',
++    'cache-control':'no-cache, no-store, no-transform',
++    'connection':'keep-alive',
++    'x-accel-buffering':'no'
++  });
++  try{res.flushHeaders?.()}catch{}
++
++  res.write('retry: 1000\n');
++  res.write(
++    `event: snapshot\n`+
++    `data: ${JSON.stringify(__mfChartSnapshotPayload(mint))}\n\n`
++  );
++
++  const listeners=chartTradeStreams.get(mint);
++  listeners.add(res);
++
++  queueMicrotask(()=>{
++    try{__mfEnsureChartBackfill(mint)}catch{}
++  });
++
++  const heartbeat=setInterval(()=>{
++    try{res.write(`: chart ${Date.now()}\n\n`)}catch{}
++  },15000);
++  heartbeat.unref?.();
++
++  let closed=false;
++  const close=()=>{
++    if(closed)return;
++    closed=true;
++    clearInterval(heartbeat);
++    listeners.delete(res);
++  };
++
++  req.on('close',close);
++  res.on('close',close);
++}
++
++
++
+ // MEMEFLOW_CHART_HISTORY_RESTORE_V1
+ // Trading chart source of truth:
+ //   persistent archive + bounded real-time Pump TradeEvent hot cache.
+@@ -344,29 +493,20 @@ const chartTradeStreams=new Map(),chartTradeHistory=new Map();
+ const __mfChartBackfillJobs=new Map();
+ 
+ function __mfChartSnapshotPayload(mint){
++  mint=String(mint||'').trim();
+   const hot=chartTradeHistory.get(mint)||[];
+   let points=[];
+-
+   try{
+     points=__mfChartArchive.mergePointsSync(mint,hot);
+-  }catch{
++  }catch(error){
++    console.warn('[chart-snapshot]',mint,error?.message||error);
+     points=Array.isArray(hot)?hot.slice():[];
+   }
+ 
+-  // MEMEFLOW_CHART_TRADE_FEED_V2
+-  // REAL-TRADES-ONLY: do not manufacture a candle from a timer/current-price
+-  // mark. If history is empty we wait for a canonical BUY/SELL TradeEvent.
+-  let archiveStatus={
+-    running:false,
+-    oldestComplete:false,
+-    lastError:null
+-  };
+-  try{
+-    archiveStatus=__mfChartArchive.statusSync(mint);
+-  }catch{}
++  let archiveStatus={running:false,oldestComplete:false,lastError:null};
++  try{archiveStatus=__mfChartArchive.statusSync(mint)}catch{}
+ 
+   const last=points[points.length-1]||null;
+-
+   return {
+     points,
+     status:{
+@@ -379,31 +519,31 @@ function __mfChartSnapshotPayload(mint){
+         archiveStatus.running===true ||
+         __mfChartBackfillJobs.has(mint),
+       fullHistoryReady:archiveStatus.oldestComplete===true,
+-      backfillError:archiveStatus.lastError||null
++      backfillError:archiveStatus.lastError||null,
++      persistentHistory:true
+     },
+     tokenAddress:mint
+   };
+ }
+ 
++
+ function __mfBroadcastChartSnapshot(mint){
+   const listeners=chartTradeStreams.get(mint);
+   if(!listeners?.size)return;
+-
+   const frame=
+     `event: snapshot\n`+
+     `data: ${JSON.stringify(__mfChartSnapshotPayload(mint))}\n\n`;
+-
+   for(const res of [...listeners]){
+-    try{
+-      res.write(frame);
+-    }catch{
+-      listeners.delete(res);
+-    }
++    try{res.write(frame)}
++    catch{listeners.delete(res)}
+   }
+ }
+ 
++
+ function __mfEnsureChartBackfill(mint){
+-  if(!mint||__mfChartBackfillJobs.has(mint))return;
++  mint=String(mint||'').trim();
++  if(!__mfValidChartMint(mint))return;
++  if(__mfChartBackfillJobs.has(mint))return;
+ 
+   try{
+     const status=__mfChartArchive.statusSync(mint);
+@@ -413,29 +553,21 @@ function __mfEnsureChartBackfill(mint){
+   const job=__mfChartArchive.ensureBackfill(mint,{
+     onProgress:()=>__mfBroadcastChartSnapshot(mint)
+   })
+-    .then(()=>{
+-      __mfBroadcastChartSnapshot(mint);
+-    })
++    .then(()=>__mfBroadcastChartSnapshot(mint))
+     .catch(error=>{
+-      console.warn(
+-        '[chart-history] backfill',
+-        mint,
+-        error?.message||error
+-      );
++      console.warn('[chart-history]',mint,error?.message||error);
+       __mfBroadcastChartSnapshot(mint);
+     })
+     .finally(()=>{
+       if(__mfChartBackfillJobs.get(mint)===job){
+         __mfChartBackfillJobs.delete(mint);
+       }
+-      // MEMEFLOW_CHART_TRADE_FEED_V2
+-      // One final frame after deleting the job flips HISTORY SYNC to the
+-      // final status and exposes the last archived TradeEvents.
+       queueMicrotask(()=>__mfBroadcastChartSnapshot(mint));
+     });
+ 
+   __mfChartBackfillJobs.set(mint,job);
+ }
++
+ const priceLifecycleDiag=new Map(); // V10 read-only lifecycle diagnostics
+ 
+ // MEMEFLOW_V12_24_CREATOR_GATE_RECOVERY
+@@ -1637,6 +1769,8 @@ const evaluateAll=makeEvaluateForActiveUsers({
+   delayMs:LIVE_EVAL_DELAY,
+   admissionCheck:__mfLiveEvalAdmissionCheck,
+   onDecision:(uid,token,decision)=>{
++    // MEMEFLOW_AI_CHAT_TRADING_MEMORY_V1_ROUTE
++    try{openaiAI.recordDecision(uid,token,decision,{source:'live-evaluate'})}catch{}
+     void __mfHandleDecision(uid,token,decision).catch(()=>{});
+ 
+     // MEMEFLOW_DECISION_COMPLETE_REFRESH_V14
+@@ -1953,6 +2087,8 @@ function publishTrade(mint,event,tokenOverride=null){
+   // Persist accepted real chart ticks independently from the bounded RAM cache.
+   try{
+     __mfChartArchive.appendPoint(mint,point);
++  try{__mfChartBroadcastLiveV7(mint,point)}catch{}
++
+   }catch{}
+ 
+   if(rows.length>1200){
+@@ -3060,6 +3196,7 @@ function reevaluateUser(uid){
+       };
+ 
+       store.setDecision(uid,token.mint,saved);
++      try{openaiAI.recordDecision(uid,token,saved,{source:'settings-reevaluate'})}catch{}
+       states[d.state]=(states[d.state]||0)+1;
+ 
+       if(d.state==='BUY READY'){
+@@ -3405,133 +3542,1471 @@ async function mfGetSolUsd(){
+   }
+ }
+ 
+-async function handler(req,res){const url=new URL(req.url,'http://x');
+- if(url.pathname==='/api/billing/webhook'&&req.method==='POST'){const raw=await rawBody(req);try{billing.verify(raw,req.headers['stripe-signature']);const result=billing.processEvent(JSON.parse(raw));return json(res,200,{received:true,...result})}catch(e){return json(res,e.code==='BAD_SIGNATURE'?400:500,{error:e.code||'WEBHOOK_ERROR',message:e.message})}}
+- // Health check — no session or store needed; must respond immediately
+- if(url.pathname==='/api/healthz'||url.pathname==='/api/health')return json(res,200,{ok:true,server:'online',version:'1.0.1-clean',timestamp:new Date().toISOString()});
+- // Static files — served before session creation to avoid blocking store.save() on new users
+- if(url.pathname==='/api/market/sol-usd'&&req.method==='GET'){
+-   try{
+-     const quote=await mfGetSolUsd();
+-     return json(res,200,{
+-       priceUsd:quote.priceUsd,
+-       updatedAt:quote.updatedAt,
+-       source:quote.source,
+-       stale:quote.stale===true
+-     });
+-   }catch(error){
+-     return json(res,503,{
+-       error:'SOL_USD_UNAVAILABLE',
+-       message:error.message
+-     });
+-   }
+- }
+ 
+- if(req.method==='GET'&&!url.pathname.startsWith('/api/')){
+-   const p=url.pathname==='/'?'index.html':url.pathname.slice(1);const f=path.resolve(root,p);
+-   if(!f.startsWith(root)||!fs.existsSync(f)||fs.statSync(f).isDirectory()){console.log('[STATIC] 404',url.pathname);return json(res,404,{error:'NOT_FOUND'})}
+-    const _stt=url.pathname==='/'?Date.now():0;if(_stt)res.on('finish',()=>console.log('[STATIC] GET / '+res.statusCode+' in '+(Date.now()-_stt)+'ms'));
+-   const ext=path.extname(f).toLowerCase();
+-   const MIME={'':' text/plain','html':'text/html; charset=utf-8','htm':'text/html; charset=utf-8','js':'text/javascript; charset=utf-8','mjs':'text/javascript; charset=utf-8','css':'text/css; charset=utf-8','json':'application/json; charset=utf-8','svg':'image/svg+xml','ico':'image/x-icon','png':'image/png','jpg':'image/jpeg','jpeg':'image/jpeg','webp':'image/webp','woff':'font/woff','woff2':'font/woff2','ttf':'font/ttf'};
+-   const mime=MIME[ext.slice(1)]||'application/octet-stream';
+-   const isText=mime.startsWith('text/')||mime.includes('javascript')||mime.includes('json')||mime.includes('svg');
+-   const isHTML=ext==='.html'||ext==='.htm';
++/* ============================================================
++   MEMEFLOW_OWNER_INTELLIGENCE_V1_HELPERS
++
++   OpenAI is NOT part of the realtime decision loop here.
++   No background OpenAI calls.
++   Only an authenticated OWNER can manually invoke the coach.
++
++   AI -> PROPOSE
++   LOCAL ENGINE -> SHADOW TEST
++   OWNER -> APPLY
++   ============================================================ */
++
++const __MF_OWNER_AI_TUNABLE_SETTINGS=new Set([
++  'minScore',
++  'minConfidence',
++  'minLiquidityUsd',
++  'minBuyPressure',
++
++  'minMarketCapUsd',
++  'maxMarketCapUsd',
++  'minHolders',
++  'maxHolders',
++  'maxBundlePct',
++  'maxTokenAgeMinutes',
++  'maxTop10Pct',
++  'maxDeveloperPct',
++  'maxSniperPct',
++  'maxSuspectedRiskyWalletsPct',
++  'maxInsidersPct',
++
++  'hardStopPct',
++  'trailingStopPct',
++  'tp1Pct',
++  'tp1SellPct',
++  'tp2Pct',
++  'tp2SellPct',
++  'runnerPct',
++  'maxHoldMinutes',
++  'exitBuyPressure',
++  'decisionFreshnessSec'
++]);
++
++function __mfOwnerFinite(value){
++  if(value===null||value===undefined||value==='')return null;
++  const n=Number(value);
++  return Number.isFinite(n)?n:null;
++}
+ 
+-   // MEMEFLOW_LIVE_TOKEN_ASSET_NO_STORE_V1
+-   // Live Token States must never execute an hour/day-old JS bundle after a
+-   // deploy. Other versioned/static assets keep the existing fast cache.
+-   const isLiveTokenAsset=
+-     url.pathname==='/system-tokens.js' ||
+-     url.pathname==='/system-tokens.css';
+-   const noStoreAsset=isHTML||isLiveTokenAsset;
++function __mfOwnerRound(value,digits=4){
++  const n=Number(value);
++  if(!Number.isFinite(n))return null;
++  const p=10**digits;
++  return Math.round(n*p)/p;
++}
+ 
+-   res.setHeader('content-type',mime);
+-   res.setHeader(
+-     'cache-control',
+-     noStoreAsset
+-       ? 'no-store, no-cache, must-revalidate'
+-       : 'public, max-age=3600, stale-while-revalidate=86400'
+-   );
+-   if(noStoreAsset){
+-     res.setHeader('pragma','no-cache');
+-     res.setHeader('expires','0');
+-   }
+-   const ae=req.headers['accept-encoding']||'',stat=fs.statSync(f);
+-   if(!isHTML&&isText&&stat.size>512){
+-     if(ae.includes('br')){res.setHeader('content-encoding','br');res.setHeader('vary','Accept-Encoding');fs.createReadStream(f).pipe(zlib.createBrotliCompress({params:{[zlib.constants.BROTLI_PARAM_QUALITY]:4}})).pipe(res);}
+-     else if(ae.includes('gzip')){res.setHeader('content-encoding','gzip');res.setHeader('vary','Accept-Encoding');fs.createReadStream(f).pipe(zlib.createGzip({level:6})).pipe(res);}
+-     else{fs.createReadStream(f).pipe(res);}
+-   }else{fs.createReadStream(f).pipe(res);}
+-   return;
+- }
+- const u=user(req,res);if(u){store.touchUser(u.id);if(OWNER_USER_IDS.has(u.id)&&!u.isOwner)store.grantOwner(u.id,'owner_user_ids');}
++function __mfOwnerIntelState(uid){
++  store.state.ownerIntelligence||={};
++  store.state.ownerIntelligence[uid]||={
++    reports:[],
++    audit:[],
++    lastAiStatus:'unknown',
++    lastAiError:null,
++    lastAiAt:null
++  };
++  return store.state.ownerIntelligence[uid];
++}
+ 
+- /* MEMEFLOW_NATIVE_AI_V46_ROUTES_BEGIN */
+- if(url.pathname==='/api/openai/status'&&req.method==='GET')return json(res,200,{ok:true,configured:Boolean(process.env.OPENAI_API_KEY),model:OPENAI_MODEL,mode:'read-only'});
+- if(url.pathname==='/api/openai/analyze'&&req.method==='POST'){
+-   if(!u)return json(res,401,{error:'AUTH_REQUIRED'});
+-   try{
+-     const b=await body(req),ctx=b.context||{},c=ctx.candidate||{};
+-     const prompt=`Analyze the current MEMEFLOW candidate ${c.symbol||c.name||c.mint||''}. Explain the decision, strongest evidence, blockers, concentration/holder risk, buy pressure and the next safe action.`;
+-     const out=await callMemeflowOpenAI(prompt,ctx,'analyze');
+-     return json(res,200,{ok:true,...out});
+-   }catch(e){return json(res,e.status||500,{error:'OPENAI_ERROR',message:e.message})}
+- }
+- if(url.pathname==='/api/openai/ask'&&req.method==='POST'){
+-   if(!u)return json(res,401,{error:'AUTH_REQUIRED'});
+-   try{
+-     const b=await body(req),prompt=String(b.prompt||'').trim();
+-     if(!prompt)return json(res,400,{error:'PROMPT_REQUIRED',message:'Prompt is required.'});
+-     const out=await callMemeflowOpenAI(prompt,b.context||{},'ask');
+-     return json(res,200,{ok:true,...out});
+-   }catch(e){return json(res,e.status||500,{error:'OPENAI_ERROR',message:e.message})}
+- }
+- /* MEMEFLOW_NATIVE_AI_V46_ROUTES_END */
++function __mfOwnerTopCounts(values,limit=10){
++  const map=new Map();
+ 
+- if(url.pathname==='/api/health')return json(res,200,{ok:true,server:'online',version:'1.0.1-clean',timestamp:new Date().toISOString()});
+- if(url.pathname==='/api/market/status')return json(res,200,{ok:true,backend:'online',database:'online',rpc:__mfPreOpenRpcUrls.length?'preopen_standby':'not_configured',discovery:discovery.connected?'online':(wsUrls.length?'connecting':'not_configured'),decisionEngine:'online',billing:billing.configured?'configured':'not_configured',updatedAt:new Date().toISOString()});/* MEMEFLOW_HEALTH_SECURITY_FIX_V1 */
+-if(url.pathname==='/api/system/health'){
+-  // Do not make extra RPC probe calls here: polling the health panel
+-  // must never increase RPC pressure or create additional 429 responses.
+-  const now=Date.now();
+-  const rpcConfigured=__mfPreOpenRpcUrls.length>0;
+-  const wsConfigured=wsUrls.length>0;
+-  // Pre-open RPC is standby-only here. Health polling must never call it.
+-  const httpOk=rpcConfigured;
+-  const wsLive=discovery.connected===true;
+-  const eventFresh=Boolean(discovery.lastEventAt&&now-discovery.lastEventAt<120000);
+-  const rateLimited=Boolean(
+-    discMetrics.rpcCircuitOpen ||
+-    (enrichDiag.lastEnrichErrorAt&&now-enrichDiag.lastEnrichErrorAt<60000&&/rate limit/i.test(enrichDiag.lastEnrichError||''))
++  for(const value of values){
++    const key=String(value||'').trim();
++    if(!key)continue;
++    map.set(key,(map.get(key)||0)+1);
++  }
++
++  return [...map.entries()]
++    .sort((a,b)=>b[1]-a[1])
++    .slice(0,limit)
++    .map(([name,count])=>({name,count}));
++}
++
++function __mfOwnerDecisionDigest(uid){
++  const decisions=store.decisions(uid)||[];
++
++  const states={
++    WAITING:0,
++    WATCH:0,
++    'BUY READY':0,
++    BLOCKED:0,
++    EXPIRED:0
++  };
++
++  const scores=[];
++
++  for(const d of decisions){
++    const state=String(d?.state||'WAITING');
++    states[state]=(states[state]||0)+1;
++
++    const score=__mfOwnerFinite(d?.score);
++    if(score!==null)scores.push(score);
++  }
++
++  const avgScore=scores.length
++    ? scores.reduce((a,b)=>a+b,0)/scores.length
++    : null;
++
++  const reasons=__mfOwnerTopCounts(
++    decisions.flatMap(d=>{
++      const out=[];
++      if(d?.primaryReason)out.push(d.primaryReason);
++      if(Array.isArray(d?.reasons))out.push(...d.reasons.slice(0,3));
++      return out;
++    }),
++    12
+   );
+-  const primaryOk=rpcConfigured&&httpOk;
+-  const operational=primaryOk&&wsLive;
+-  const overall=!rpcConfigured||!wsConfigured||!operational
+-    ? 'unavailable'
+-    : rateLimited||!eventFresh
+-      ? 'degraded'
+-      : 'healthy';
+-  const hostname=(()=>{try{return __mfPreOpenRpcUrls[0]?new URL(__mfPreOpenRpcUrls[0]).hostname:null}catch{return null}})();
+-  const primary={
+-    role:'primary',
+-    ok:primaryOk,
+-    hostname,
+-    latencyMs:Number.isFinite(rpc.last.latency)?rpc.last.latency:null,
+-    lastHttpStatus:rpc.metrics.lastHttpStatus||null,
+-    error:primaryOk?null:(rpc.last.error||(!rpcConfigured?'Not configured':'Temporarily unavailable'))
++
++  return {
++    currentDecisionCount:decisions.length,
++    states,
++    averageScore:__mfOwnerRound(avgScore,2),
++    topReasons:reasons
+   };
+-  const backups=__mfPreOpenRpcUrls.slice(1).map((raw,i)=>{
+-    let host=null;try{host=new URL(raw).hostname}catch{}
+-    return {role:'backup',ok:false,hostname:host,index:i+1,status:'standby'};
++}
++
++function __mfOwnerPerformanceDigest(uid){
++  const positions=paper.userPositions(uid)||[];
++  const trades=paper.userTrades(uid)||[];
++
++  const open=positions.filter(
++    p=>String(p?.status||'').toUpperCase()==='OPEN'
++  );
++
++  const closed=positions.filter(
++    p=>String(p?.status||'').toUpperCase()==='CLOSED'
++  );
++
++  const wins=closed.filter(p=>Number(p?.realizedPnlSol)>0);
++  const losses=closed.filter(p=>Number(p?.realizedPnlSol)<0);
++  const flat=closed.length-wins.length-losses.length;
++
++  const pnlSol=closed.reduce(
++    (sum,p)=>sum+(Number(p?.realizedPnlSol)||0),
++    0
++  );
++
++  const pnlPcts=closed
++    .map(p=>__mfOwnerFinite(p?.realizedPnlPct))
++    .filter(v=>v!==null);
++
++  const avgPnlPct=pnlPcts.length
++    ? pnlPcts.reduce((a,b)=>a+b,0)/pnlPcts.length
++    : null;
++
++  const holdMinutes=closed
++    .map(p=>{
++      const a=Number(p?.openedAtMs);
++      const b=Number(p?.closedAtMs);
++      if(!(a>0&&b>=a))return null;
++      return (b-a)/60000;
++    })
++    .filter(v=>v!==null);
++
++  const avgHoldMinutes=holdMinutes.length
++    ? holdMinutes.reduce((a,b)=>a+b,0)/holdMinutes.length
++    : null;
++
++  const compactPosition=p=>({
++    mint:p?.mint||null,
++    symbol:p?.symbol||p?.name||null,
++    openedAt:p?.openedAt||null,
++    closedAt:p?.closedAt||null,
++    decisionScore:__mfOwnerFinite(p?.decisionScore),
++    decisionConfidence:__mfOwnerFinite(p?.decisionConfidence),
++    realizedPnlSol:__mfOwnerRound(p?.realizedPnlSol,6),
++    realizedPnlPct:__mfOwnerRound(p?.realizedPnlPct,2),
++    closeReason:p?.closeReason||null,
++    primaryReason:p?.primaryReason||null
+   });
+-  return json(res,200,{
+-    status:overall,
+-    checkedAt:new Date().toISOString(),
+-    solana:{
+-      ok:primaryOk,
+-      discoveryConnected:wsLive,
+-      commitment:process.env.SOLANA_COMMITMENT||'confirmed',
+-      connected:wsLive,
++
++  const recentClosed=closed
++    .slice(0,25)
++    .map(compactPosition);
++
++  const biggestLosses=[...closed]
++    .sort(
++      (a,b)=>
++        (Number(a?.realizedPnlSol)||0)-
++        (Number(b?.realizedPnlSol)||0)
++    )
++    .slice(0,8)
++    .map(compactPosition);
++
++  const biggestWins=[...closed]
++    .sort(
++      (a,b)=>
++        (Number(b?.realizedPnlSol)||0)-
++        (Number(a?.realizedPnlSol)||0)
++    )
++    .slice(0,8)
++    .map(compactPosition);
++
++  return {
++    totalPositions:positions.length,
++    openPositions:open.length,
++    closedPositions:closed.length,
++    wins:wins.length,
++    losses:losses.length,
++    flat,
++    winRatePct:closed.length
++      ? __mfOwnerRound(wins.length/closed.length*100,2)
++      : null,
++    realizedPnlSol:__mfOwnerRound(pnlSol,6),
++    averagePnlPct:__mfOwnerRound(avgPnlPct,2),
++    averageHoldMinutes:__mfOwnerRound(avgHoldMinutes,1),
++    dailyRealizedPnlSol:__mfOwnerRound(
++      paper.dailyRealizedPnl(uid),
++      6
++    ),
++    tradeEvents:trades.length,
++    recentClosed,
++    biggestLosses,
++    biggestWins
++  };
++}
++
++function __mfOwnerCandidateDigest(uid){
++  const decisions=store.decisions(uid)||[];
++
++  return decisions
++    .filter(
++      d=>
++        d?.mint&&
++        ['BUY READY','WATCH'].includes(String(d?.state||''))
++    )
++    .slice(0,20)
++    .map(d=>{
++      const t=store.state.tokens?.[d.mint]||{};
++
++      return {
++        mint:d.mint,
++        symbol:t.symbol||t.name||null,
++        state:d.state,
++        score:__mfOwnerFinite(d.score),
++        confidence:__mfOwnerFinite(d.confidence),
++        primaryReason:d.primaryReason||null,
++        marketCapUsd:__mfOwnerFinite(
++          t.marketCapUsd??t.marketCap
++        ),
++        liquidityUsd:__mfOwnerFinite(t.liquidityUsd),
++        holders:__mfOwnerFinite(
++          t.holderCount??t.holders
++        ),
++        top10Pct:__mfOwnerFinite(
++          t.top10Pct??t.top10
++        ),
++        developerPct:__mfOwnerFinite(
++          t.developerPct??t.developerSharePct
++        ),
++        buyPressure:__mfOwnerFinite(t.buyPressure),
++        bundlePct:__mfOwnerFinite(t.bundlePct),
++        sniperPct:__mfOwnerFinite(t.sniperPct)
++      };
++    });
++}
++
++function __mfOwnerSystemDigest(uid){
++  const now=Date.now();
++
++  return {
++    generatedAt:new Date(now).toISOString(),
++
++    scanner:{
++      connected:discovery?.connected===true,
++      subscribed:discovery?.subscribed===true,
++      lastEventAt:discovery?.lastEventAt||null,
++      lastCreateAt:discovery?.lastCreateAt||null,
++      reconnects:Number(discovery?.reconnects||0),
++      hotTokens:Object.keys(store.state.tokens||{}).length,
++      discovered:Number(store.state.metrics?.discovered||0),
++      scanned:Number(store.state.metrics?.scanned||0),
++      errors:Number(store.state.metrics?.errors||0)
++    },
++
++    execution:{
++      environment:paper.environment(
++        store.settings(uid)
++      ),
++      mode:paper.mode(
++        store.settings(uid)
++      ),
++      preOpenRpcConfigured:
++        Array.isArray(__mfPreOpenRpcUrls)&&
++        __mfPreOpenRpcUrls.length>0,
++      killSwitch:
++        store.user(uid)?.killSwitch===true
++    },
++
++    openai:{
++      configured:Boolean(process.env.OPENAI_API_KEY),
++      model:
++        process.env.OPENAI_OWNER_COACH_MODEL||
++        OPENAI_MODEL||
++        process.env.OPENAI_MODEL||
++        'gpt-5-mini',
++      automaticBackgroundCalls:false,
++      ownerManualOnly:true
++    }
++  };
++}
++
++function __mfOwnerIntelDigest(uid){
++  return {
++    system:
++      __mfOwnerSystemDigest(uid),
++
++    settings:
++      store.settings(uid),
++
++    settingsHistory:
++      store.settingsHistory(uid,12),
++
++    // Owner's own realtime decision view remains available.
++    decisions:
++      __mfOwnerDecisionDigest(uid),
++
++    performance:
++      __mfOwnerPerformanceDigest(uid),
++
++    interestingCandidates:
++      __mfOwnerCandidateDigest(uid),
++
++    // MEMEFLOW_PLATFORM_LEARNING_V2
++    // Aggregated results from ALL users.
++    // No raw user IDs, wallets or emails are exposed.
++    platform:
++      platformAnalytics.summary(30),
++
++    platform7d:
++      platformAnalytics.summary(7),
++
++    platformAnalyticsStatus:
++      platformAnalytics.status()
++  };
++}
++
++const __MF_OWNER_COACH_SCHEMA={
++  type:'object',
++  additionalProperties:false,
++
++  properties:{
++    executiveSummary:{
++      type:'string'
++    },
++
++    healthAssessment:{
++      type:'string'
++    },
++
++    performanceAssessment:{
++      type:'string'
++    },
++
++    findings:{
++      type:'array',
++      items:{
++        type:'object',
++        additionalProperties:false,
++        properties:{
++          title:{type:'string'},
++          evidence:{type:'string'},
++          severity:{
++            type:'string',
++            enum:['INFO','LOW','MEDIUM','HIGH','CRITICAL']
++          }
++        },
++        required:[
++          'title',
++          'evidence',
++          'severity'
++        ]
++      }
++    },
++
++    proposals:{
++      type:'array',
++      items:{
++        type:'object',
++        additionalProperties:false,
++
++        properties:{
++          type:{
++            type:'string',
++            enum:[
++              'SETTING_CHANGE',
++              'LOGIC_CHANGE',
++              'NEW_FUNCTION',
++              'MONITOR'
++            ]
++          },
++
++          title:{type:'string'},
++
++          setting:{
++            type:['string','null']
++          },
++
++          current:{
++            type:[
++              'number',
++              'string',
++              'boolean',
++              'null'
++            ]
++          },
++
++          proposed:{
++            type:[
++              'number',
++              'string',
++              'boolean',
++              'null'
++            ]
++          },
++
++          reason:{type:'string'},
++          evidence:{type:'string'},
++
++          expectedEffect:{
++            type:'string'
++          },
++
++          risk:{
++            type:'string'
++          },
++
++          testPlan:{
++            type:'string'
++          },
++
++          confidence:{
++            type:'integer',
++            minimum:0,
++            maximum:100
++          },
++
++          priority:{
++            type:'string',
++            enum:[
++              'LOW',
++              'MEDIUM',
++              'HIGH'
++            ]
++          }
++        },
++
++        required:[
++          'type',
++          'title',
++          'setting',
++          'current',
++          'proposed',
++          'reason',
++          'evidence',
++          'expectedEffect',
++          'risk',
++          'testPlan',
++          'confidence',
++          'priority'
++        ]
++      }
++    },
++
++    questionsToInvestigate:{
++      type:'array',
++      items:{type:'string'}
++    },
++
++    nextReviewAfterTrades:{
++      type:'integer',
++      minimum:1,
++      maximum:10000
++    }
++  },
++
++  required:[
++    'executiveSummary',
++    'healthAssessment',
++    'performanceAssessment',
++    'findings',
++    'proposals',
++    'questionsToInvestigate',
++    'nextReviewAfterTrades'
++  ]
++};
++
++async function __mfOwnerCoachAnalyze(
++  uid,
++  digest,
++  focus=''
++){
++  const key=process.env.OPENAI_API_KEY||'';
++
++  if(!key){
++    const e=new Error(
++      'OpenAI API is not configured.'
++    );
++    e.status=503;
++    e.code='OPENAI_NOT_CONFIGURED';
++    throw e;
++  }
++
++  const model=
++    process.env.OPENAI_OWNER_COACH_MODEL||
++    OPENAI_MODEL||
++    process.env.OPENAI_MODEL||
++    'gpt-5-mini';
++
++  const compact=JSON.stringify({
++    focus:String(focus||'').slice(0,1200),
++    digest
++  }).slice(0,24000);
++
++  const controller=new AbortController();
++
++  const timer=setTimeout(
++    ()=>controller.abort(),
++    Math.max(
++      10000,
++      Number(
++        process.env.OPENAI_OWNER_COACH_TIMEOUT_MS||
++        45000
++      )
++    )
++  );
++
++  try{
++    const response=await fetch(
++      OPENAI_RESPONSES_URL,
++      {
++        method:'POST',
++
++        headers:{
++          authorization:`Bearer ${key}`,
++          'content-type':'application/json'
++        },
++
++        body:JSON.stringify({
++          model,
++
++          instructions:[
++            'You are MEMEFLOW Owner Strategy Coach.',
++            'You are NOT the realtime trader.',
++            'Analyze the supplied trading-engine telemetry, decisions, settings and completed paper-trade outcomes.',
++            'Use only supplied evidence. Never invent missing measurements.',
++            'Do not promise profit.',
++            'Prefer a small number of high-value changes instead of changing many settings at once.',
++            'Separate correlation from causation.',
++            'SETTING_CHANGE proposals must use an existing MEMEFLOW setting name.',
++            'LOGIC_CHANGE means a change to scoring/risk/decision logic.',
++            'NEW_FUNCTION means a useful new engineering capability or diagnostic the owner should consider implementing.',
++            'MONITOR means collect more evidence before changing behavior.',
++            'Never request private keys.',
++            'Never automatically execute trades.',
++            'Never claim a proposal was applied.',
++            'Every proposed change must include a test plan.',
++            'When evidence is insufficient, say so explicitly.'
++          ].join('\n'),
++
++          input:compact,
++
++          text:{
++            format:{
++              type:'json_schema',
++              name:'memeflow_owner_strategy_coach',
++              strict:true,
++              schema:__MF_OWNER_COACH_SCHEMA
++            }
++          }
++        }),
++
++        signal:controller.signal
++      }
++    );
++
++    const data=await response.json().catch(()=>({}));
++
++    if(!response.ok){
++      const e=new Error(
++        data?.error?.message||
++        `OpenAI HTTP ${response.status}`
++      );
++
++      e.status=response.status;
++      e.code='OPENAI_REQUEST_FAILED';
++      throw e;
++    }
++
++    const raw=openAiText(data);
++
++    if(!raw){
++      const e=new Error(
++        'OpenAI returned no strategy report.'
++      );
++      e.status=502;
++      e.code='OPENAI_EMPTY_RESPONSE';
++      throw e;
++    }
++
++    let result;
++
++    try{
++      result=JSON.parse(raw);
++    }catch{
++      const e=new Error(
++        'OpenAI returned an invalid strategy report.'
++      );
++      e.status=502;
++      e.code='OPENAI_BAD_REPORT';
++      throw e;
++    }
++
++    result.proposals=
++      Array.isArray(result.proposals)
++        ? result.proposals
++            .slice(0,12)
++            .map(p=>({
++              ...p,
++              applyEligible:
++                p?.type==='SETTING_CHANGE' &&
++                typeof p?.setting==='string' &&
++                __MF_OWNER_AI_TUNABLE_SETTINGS.has(
++                  p.setting
++                )
++            }))
++        : [];
++
++    return {
++      result,
++      model:data?.model||model,
++      responseId:data?.id||null,
++      usage:{
++        inputTokens:
++          Number(
++            data?.usage?.input_tokens||
++            0
++          )||null,
++
++        outputTokens:
++          Number(
++            data?.usage?.output_tokens||
++            0
++          )||null,
++
++        totalTokens:
++          Number(
++            data?.usage?.total_tokens||
++            0
++          )||null
++      }
++    };
++
++  }catch(error){
++    if(error?.name==='AbortError'){
++      const e=new Error(
++        'Owner AI Coach timed out.'
++      );
++      e.status=504;
++      e.code='OPENAI_TIMEOUT';
++      throw e;
++    }
++
++    throw error;
++
++  }finally{
++    clearTimeout(timer);
++  }
++}
++
++function __mfOwnerFriendlyAiError(error){
++  const raw=String(
++    error?.message||
++    ''
++  );
++
++  if(
++    /no credits remaining/i.test(raw) ||
++    /insufficient[_ -]?quota/i.test(raw) ||
++    /billing/i.test(raw) ||
++    /credit balance/i.test(raw) ||
++    /quota exceeded/i.test(raw)
++  ){
++    return {
++      status:503,
++      error:'AI_CREDITS_REQUIRED',
++      message:
++        'Owner AI Coach is temporarily offline because the OpenAI API balance is unavailable. MEMEFLOW trading continues normally.'
++    };
++  }
++
++  if(
++    error?.code==='OPENAI_NOT_CONFIGURED'
++  ){
++    return {
++      status:503,
++      error:'AI_NOT_CONFIGURED',
++      message:
++        'Owner AI Coach is not configured. MEMEFLOW trading continues normally.'
++    };
++  }
++
++  if(
++    error?.code==='OPENAI_TIMEOUT'
++  ){
++    return {
++      status:504,
++      error:'AI_TIMEOUT',
++      message:
++        'Owner AI Coach did not respond in time. MEMEFLOW trading continues normally.'
++    };
++  }
++
++  return {
++    status:
++      Number(error?.status)>=400
++        ? Number(error.status)
++        : 503,
++
++    error:'AI_TEMPORARILY_UNAVAILABLE',
++
++    message:
++      'Owner AI Coach is temporarily unavailable. MEMEFLOW trading continues normally.'
++  };
++}
++
++function __mfOwnerProposalFromReport(
++  uid,
++  reportId,
++  proposalIndex
++){
++  const state=__mfOwnerIntelState(uid);
++
++  const report=
++    state.reports.find(
++      r=>r.id===reportId
++    );
++
++  if(!report){
++    return {
++      ok:false,
++      code:'REPORT_NOT_FOUND'
++    };
++  }
++
++  const index=Number(proposalIndex);
++
++  if(
++    !Number.isInteger(index) ||
++    index<0
++  ){
++    return {
++      ok:false,
++      code:'INVALID_PROPOSAL_INDEX'
++    };
++  }
++
++  const proposal=
++    report?.result?.proposals?.[index];
++
++  if(!proposal){
++    return {
++      ok:false,
++      code:'PROPOSAL_NOT_FOUND'
++    };
++  }
++
++  return {
++    ok:true,
++    report,
++    proposal,
++    index
++  };
++}
++
++/* ============================================================
++   /MEMEFLOW_OWNER_INTELLIGENCE_V1_HELPERS
++   ============================================================ */
++
++
++async function handler(req,res){const url=new URL(req.url,'http://x');
++ if(url.pathname==='/api/billing/webhook'&&req.method==='POST'){const raw=await rawBody(req);try{billing.verify(raw,req.headers['stripe-signature']);const result=billing.processEvent(JSON.parse(raw));return json(res,200,{received:true,...result})}catch(e){return json(res,e.code==='BAD_SIGNATURE'?400:500,{error:e.code||'WEBHOOK_ERROR',message:e.message})}}
++ // Health check — no session or store needed; must respond immediately
++ if(url.pathname==='/api/healthz'||url.pathname==='/api/health')return json(res,200,{ok:true,server:'online',version:'1.0.1-clean',timestamp:new Date().toISOString()});
++ // Static files — served before session creation to avoid blocking store.save() on new users
++ if(url.pathname==='/api/market/sol-usd'&&req.method==='GET'){
++   try{
++     const quote=await mfGetSolUsd();
++     return json(res,200,{
++       priceUsd:quote.priceUsd,
++       updatedAt:quote.updatedAt,
++       source:quote.source,
++       stale:quote.stale===true
++     });
++   }catch(error){
++     return json(res,503,{
++       error:'SOL_USD_UNAVAILABLE',
++       message:error.message
++     });
++   }
++ }
++
++ if(req.method==='GET'&&!url.pathname.startsWith('/api/')){
++   const p=url.pathname==='/'?'index.html':url.pathname.slice(1);const f=path.resolve(root,p);
++   if(!f.startsWith(root)||!fs.existsSync(f)||fs.statSync(f).isDirectory()){console.log('[STATIC] 404',url.pathname);return json(res,404,{error:'NOT_FOUND'})}
++    const _stt=url.pathname==='/'?Date.now():0;if(_stt)res.on('finish',()=>console.log('[STATIC] GET / '+res.statusCode+' in '+(Date.now()-_stt)+'ms'));
++   const ext=path.extname(f).toLowerCase();
++   const MIME={'':' text/plain','html':'text/html; charset=utf-8','htm':'text/html; charset=utf-8','js':'text/javascript; charset=utf-8','mjs':'text/javascript; charset=utf-8','css':'text/css; charset=utf-8','json':'application/json; charset=utf-8','svg':'image/svg+xml','ico':'image/x-icon','png':'image/png','jpg':'image/jpeg','jpeg':'image/jpeg','webp':'image/webp','woff':'font/woff','woff2':'font/woff2','ttf':'font/ttf'};
++   const mime=MIME[ext.slice(1)]||'application/octet-stream';
++   const isText=mime.startsWith('text/')||mime.includes('javascript')||mime.includes('json')||mime.includes('svg');
++   const isHTML=ext==='.html'||ext==='.htm';
++
++   // MEMEFLOW_LIVE_TOKEN_ASSET_NO_STORE_V1
++   // Live Token States must never execute an hour/day-old JS bundle after a
++   // deploy. Other versioned/static assets keep the existing fast cache.
++   const isLiveTokenAsset=
++     url.pathname==='/system-tokens.js' ||
++     url.pathname==='/system-tokens.css';
++   const noStoreAsset=isHTML||isLiveTokenAsset;
++
++   res.setHeader('content-type',mime);
++   res.setHeader(
++     'cache-control',
++     noStoreAsset
++       ? 'no-store, no-cache, must-revalidate'
++       : 'public, max-age=3600, stale-while-revalidate=86400'
++   );
++   if(noStoreAsset){
++     res.setHeader('pragma','no-cache');
++     res.setHeader('expires','0');
++   }
++   const ae=req.headers['accept-encoding']||'',stat=fs.statSync(f);
++   if(!isHTML&&isText&&stat.size>512){
++     if(ae.includes('br')){res.setHeader('content-encoding','br');res.setHeader('vary','Accept-Encoding');fs.createReadStream(f).pipe(zlib.createBrotliCompress({params:{[zlib.constants.BROTLI_PARAM_QUALITY]:4}})).pipe(res);}
++     else if(ae.includes('gzip')){res.setHeader('content-encoding','gzip');res.setHeader('vary','Accept-Encoding');fs.createReadStream(f).pipe(zlib.createGzip({level:6})).pipe(res);}
++     else{fs.createReadStream(f).pipe(res);}
++   }else{fs.createReadStream(f).pipe(res);}
++   return;
++ }
++ /* MEMEFLOW_PAGE_ACCESS_GATE_V1 */
++ if(url.pathname==='/api/access/page'&&req.method==='GET'){
++   const x=user(req,res);
++   if(x?.isOwner===true)return json(res,200,{tier:'live',owner:true});
++   return json(res,200,{
++     tier:'locked',
++     owner:false,
++     paperUsd:19.99,
++     liveUsd:49.99,
++     tokenConfigured:false
++   });
++ }
++ const u=user(req,res);if(u){store.touchUser(u.id);if(OWNER_USER_IDS.has(u.id)&&!u.isOwner)store.grantOwner(u.id,'owner_user_ids');}
++
++
++ /* ============================================================
++    MEMEFLOW_OWNER_INTELLIGENCE_V1_ROUTES
++    OWNER DATA/ACTIONS ONLY
++    ============================================================ */
++
++ if(
++   url.pathname==='/api/owner/intelligence' &&
++   req.method==='GET'
++ ){
++   if(!u){
++     return json(res,401,{
++       error:'AUTH_REQUIRED'
++     });
++   }
++
++   if(u.isOwner!==true){
++     return json(res,403,{
++       error:'OWNER_REQUIRED'
++     });
++   }
++
++   const state=__mfOwnerIntelState(u.id);
++
++   return json(res,200,{
++     ok:true,
++     owner:true,
++     manualAiOnly:true,
++     backgroundOpenAiCalls:false,
++
++     ai:{
++       configured:
++         Boolean(process.env.OPENAI_API_KEY),
++
++       model:
++         process.env.OPENAI_OWNER_COACH_MODEL||
++         OPENAI_MODEL||
++         process.env.OPENAI_MODEL||
++         'gpt-5-mini',
++
++       lastStatus:
++         state.lastAiStatus||'unknown',
++
++       lastError:
++         state.lastAiError||null,
++
++       lastAt:
++         state.lastAiAt||null
++     },
++
++     digest:
++       __mfOwnerIntelDigest(u.id),
++
++     reports:
++       state.reports.slice(0,10),
++
++     audit:
++       state.audit.slice(0,25)
++   });
++ }
++
++
++ if(
++   url.pathname==='/api/owner/intelligence/analyze' &&
++   req.method==='POST'
++ ){
++   if(!u){
++     return json(res,401,{
++       error:'AUTH_REQUIRED'
++     });
++   }
++
++   if(u.isOwner!==true){
++     return json(res,403,{
++       error:'OWNER_REQUIRED'
++     });
++   }
++
++   const state=__mfOwnerIntelState(u.id);
++
++   try{
++     const b=await body(req);
++     const focus=String(b?.focus||'').trim();
++
++     // This is the ONLY OpenAI call in this route.
++     // It runs only because the owner explicitly pressed ANALYZE.
++     const digest=
++       __mfOwnerIntelDigest(u.id);
++
++     const output=
++       await __mfOwnerCoachAnalyze(
++         u.id,
++         digest,
++         focus
++       );
++
++     const report={
++       id:crypto.randomUUID(),
++       at:new Date().toISOString(),
++       settingsSnapshot:{
++         ...store.settings(u.id)
++       },
++       digestSnapshot:{
++         decisions:digest.decisions,
++         performance:digest.performance,
++         system:digest.system
++       },
++       focus,
++       ...output
++     };
++
++     state.reports.unshift(report);
++     state.reports=
++       state.reports.slice(0,30);
++
++     state.lastAiStatus='online';
++     state.lastAiError=null;
++     state.lastAiAt=report.at;
++
++     state.audit.unshift({
++       at:report.at,
++       type:'AI_ANALYSIS',
++       reportId:report.id,
++       proposalCount:
++         report?.result?.proposals?.length||0
++     });
++
++     state.audit=
++       state.audit.slice(0,200);
++
++     store.save();
++
++     return json(res,200,{
++       ok:true,
++       report
++     });
++
++   }catch(error){
++     const friendly=
++       __mfOwnerFriendlyAiError(error);
++
++     state.lastAiStatus='offline';
++     state.lastAiError=friendly.error;
++     state.lastAiAt=
++       new Date().toISOString();
++
++     store.save();
++
++     return json(
++       res,
++       friendly.status,
++       friendly
++     );
++   }
++ }
++
++
++ if(
++   url.pathname==='/api/owner/intelligence/shadow' &&
++   req.method==='POST'
++ ){
++   if(!u){
++     return json(res,401,{
++       error:'AUTH_REQUIRED'
++     });
++   }
++
++   if(u.isOwner!==true){
++     return json(res,403,{
++       error:'OWNER_REQUIRED'
++     });
++   }
++
++   const b=await body(req);
++
++   const selected=
++     __mfOwnerProposalFromReport(
++       u.id,
++       String(b?.reportId||''),
++       b?.proposalIndex
++     );
++
++   if(!selected.ok){
++     return json(res,404,{
++       error:selected.code
++     });
++   }
++
++   const p=selected.proposal;
++
++   if(
++     p.type!=='SETTING_CHANGE' ||
++     !p.applyEligible ||
++     !__MF_OWNER_AI_TUNABLE_SETTINGS.has(
++       p.setting
++     )
++   ){
++     return json(res,400,{
++       error:'PROPOSAL_NOT_SHADOWABLE',
++       message:
++         'Only approved setting-change proposals can run through the local settings shadow test.'
++     });
++   }
++
++   const current={
++     ...store.settings(u.id)
++   };
++
++   const candidate={
++     ...current,
++     [p.setting]:p.proposed
++   };
++
++   const validated=
++     validateSettings(candidate);
++
++   if(!validated.ok){
++     return json(res,400,{
++       error:'PROPOSED_SETTINGS_INVALID',
++       validationErrors:
++         validated.errors
++     });
++   }
++
++   const currentShadow=
++     shadowValidateSettings(
++       current,
++       150
++     );
++
++   const proposedShadow=
++     shadowValidateSettings(
++       validated.settings,
++       150
++     );
++
++   return json(res,200,{
++     ok:true,
++
++     setting:p.setting,
++     current:
++       current[p.setting],
++
++     proposed:
++       validated.settings[p.setting],
++
++     testType:
++       'CURRENT_LIVE_FEED_SHADOW',
++
++     note:
++       'This does not simulate historical P&L. It compares how the current live candidate feed would classify under each setting set.',
++
++     currentShadow,
++     proposedShadow
++   });
++ }
++
++
++ if(
++   url.pathname==='/api/owner/intelligence/apply' &&
++   req.method==='POST'
++ ){
++   if(!u){
++     return json(res,401,{
++       error:'AUTH_REQUIRED'
++     });
++   }
++
++   if(u.isOwner!==true){
++     return json(res,403,{
++       error:'OWNER_REQUIRED'
++     });
++   }
++
++   const b=await body(req);
++
++   if(b?.confirm!=='APPLY'){
++     return json(res,400,{
++       error:'OWNER_CONFIRMATION_REQUIRED'
++     });
++   }
++
++   const selected=
++     __mfOwnerProposalFromReport(
++       u.id,
++       String(b?.reportId||''),
++       b?.proposalIndex
++     );
++
++   if(!selected.ok){
++     return json(res,404,{
++       error:selected.code
++     });
++   }
++
++   const {
++     report,
++     proposal:p,
++     index
++   }=selected;
++
++   if(
++     p.type!=='SETTING_CHANGE' ||
++     !p.applyEligible ||
++     !__MF_OWNER_AI_TUNABLE_SETTINGS.has(
++       p.setting
++     )
++   ){
++     return json(res,400,{
++       error:'PROPOSAL_NOT_APPLICABLE'
++     });
++   }
++
++   const current={
++     ...store.settings(u.id)
++   };
++
++   // Prevent application of a stale AI proposal after the owner
++   // has manually changed that setting since analysis.
++   const expected=
++     report?.settingsSnapshot?.[
++       p.setting
++     ];
++
++   if(
++     JSON.stringify(
++       current[p.setting]
++     )!==
++     JSON.stringify(expected)
++   ){
++     return json(res,409,{
++       error:'SETTING_CHANGED_SINCE_ANALYSIS',
++       setting:p.setting,
++       analyzedValue:expected,
++       currentValue:
++         current[p.setting]
++     });
++   }
++
++   const candidate={
++     ...current,
++     [p.setting]:p.proposed
++   };
++
++   const validated=
++     validateSettings(candidate);
++
++   if(!validated.ok){
++     return json(res,400,{
++       error:'PROPOSED_SETTINGS_INVALID',
++       validationErrors:
++         validated.errors
++     });
++   }
++
++   // Local, free shadow test before mutation.
++   const shadow=
++     shadowValidateSettings(
++       validated.settings,
++       150
++     );
++
++   const before={
++     ...current
++   };
++
++   const after=
++     store.setSettings(
++       u.id,
++       {
++         [p.setting]:
++           validated.settings[p.setting]
++       }
++     );
++
++   store.recordSettingsChange(
++     u.id,
++     before,
++     {...after},
++     {
++       actor:u.id,
++       source:'owner-ai-approved'
++     }
++   );
++
++   const reevaluation=
++     reevaluateUser(u.id);
++
++   const state=
++     __mfOwnerIntelState(u.id);
++
++   const auditRow={
++     at:new Date().toISOString(),
++     type:'OWNER_APPLIED_AI_PROPOSAL',
++     reportId:report.id,
++     proposalIndex:index,
++     setting:p.setting,
++     from:before[p.setting],
++     to:after[p.setting],
++     shadow,
++     reevaluation
++   };
++
++   state.audit.unshift(auditRow);
++   state.audit=
++     state.audit.slice(0,200);
++
++   store.save();
++
++   return json(res,200,{
++     ok:true,
++     applied:true,
++     setting:p.setting,
++     from:before[p.setting],
++     to:after[p.setting],
++     shadow,
++     reevaluation
++   });
++ }
++
++
++ if(
++   url.pathname==='/api/owner/intelligence/chat' &&
++   req.method==='POST'
++ ){
++   if(!u){
++     return json(res,401,{
++       error:'AUTH_REQUIRED'
++     });
++   }
++
++   if(u.isOwner!==true){
++     return json(res,403,{
++       error:'OWNER_REQUIRED'
++     });
++   }
++
++   const b=await body(req);
++   const message=
++     String(b?.message||'').trim();
++
++   if(!message){
++     return json(res,400,{
++       error:'MESSAGE_REQUIRED'
++     });
++   }
++
++   const state=
++     __mfOwnerIntelState(u.id);
++
++   try{
++     const digest=
++       __mfOwnerIntelDigest(u.id);
++
++     const recentReports=
++       state.reports
++         .slice(0,3)
++         .map(r=>({
++           id:r.id,
++           at:r.at,
++           executiveSummary:
++             r?.result?.executiveSummary||null,
++           proposals:
++             (r?.result?.proposals||[])
++               .slice(0,6)
++               .map(p=>({
++                 type:p.type,
++                 title:p.title,
++                 setting:p.setting,
++                 current:p.current,
++                 proposed:p.proposed,
++                 reason:p.reason,
++                 confidence:p.confidence
++               }))
++         }));
++
++     const prompt=[
++       'You are speaking directly to the MEMEFLOW owner.',
++       'Act as a strategy coach and engineering advisor, not as a realtime trader.',
++       'Answer the owner question using only the supplied current engine data and recent coach reports.',
++       'You may recommend settings, tests, diagnostics, scoring changes or new functions.',
++       'Do not claim any setting was changed unless the supplied context explicitly says it was applied.',
++       '',
++       'OWNER QUESTION:',
++       message
++     ].join('\n');
++
++     const output=
++       await callMemeflowOpenAI(
++         prompt,
++         {
++           digest,
++           recentReports
++         },
++         'owner-coach-chat'
++       );
++
++     state.lastAiStatus='online';
++     state.lastAiError=null;
++     state.lastAiAt=
++       new Date().toISOString();
++
++     store.save();
++
++     return json(res,200,{
++       ok:true,
++       text:output.text,
++       model:output.model,
++       responseId:
++         output.responseId||null
++     });
++
++   }catch(error){
++     const friendly=
++       __mfOwnerFriendlyAiError(error);
++
++     state.lastAiStatus='offline';
++     state.lastAiError=friendly.error;
++     state.lastAiAt=
++       new Date().toISOString();
++
++     store.save();
++
++     return json(
++       res,
++       friendly.status,
++       friendly
++     );
++   }
++ }
++
++ /* ============================================================
++    /MEMEFLOW_OWNER_INTELLIGENCE_V1_ROUTES
++    ============================================================ */
++
++
++ /* MEMEFLOW_NATIVE_AI_V46_ROUTES_BEGIN */
++ if(url.pathname==='/api/openai/status'&&req.method==='GET')return json(res,200,{ok:true,configured:Boolean(process.env.OPENAI_API_KEY),model:OPENAI_MODEL,mode:'read-only'});
++ if(url.pathname==='/api/openai/analyze'&&req.method==='POST'){
++   if(!u)return json(res,401,{error:'AUTH_REQUIRED'});
++   try{
++     const b=await body(req),ctx=b.context||{},c=ctx.candidate||{};
++     const prompt=`Analyze the current MEMEFLOW candidate ${c.symbol||c.name||c.mint||''}. Explain the decision, strongest evidence, blockers, concentration/holder risk, buy pressure and the next safe action.`;
++     const out=await callMemeflowOpenAI(prompt,ctx,'analyze');
++     return json(res,200,{ok:true,...out});
++   }catch(e){return json(res,e.status||500,{error:'OPENAI_ERROR',message:e.message})}
++ }
++ if(url.pathname==='/api/openai/ask'&&req.method==='POST'){
++   if(!u)return json(res,401,{error:'AUTH_REQUIRED'});
++   try{
++     const b=await body(req),prompt=String(b.prompt||'').trim();
++     if(!prompt)return json(res,400,{error:'PROMPT_REQUIRED',message:'Prompt is required.'});
++     const out=await callMemeflowOpenAI(prompt,b.context||{},'ask');
++     return json(res,200,{ok:true,...out});
++   }catch(e){return json(res,e.status||500,{error:'OPENAI_ERROR',message:e.message})}
++ }
++ /* MEMEFLOW_NATIVE_AI_V46_ROUTES_END */
++
++ if(url.pathname==='/api/health')return json(res,200,{ok:true,server:'online',version:'1.0.1-clean',timestamp:new Date().toISOString()});
++ if(url.pathname==='/api/market/status')return json(res,200,{ok:true,backend:'online',database:'online',rpc:__mfPreOpenRpcUrls.length?'preopen_standby':'not_configured',discovery:discovery.connected?'online':(wsUrls.length?'connecting':'not_configured'),decisionEngine:'online',billing:billing.configured?'configured':'not_configured',updatedAt:new Date().toISOString()});/* MEMEFLOW_HEALTH_SECURITY_FIX_V1 */
++if(url.pathname==='/api/system/health'){
++  // Do not make extra RPC probe calls here: polling the health panel
++  // must never increase RPC pressure or create additional 429 responses.
++  const now=Date.now();
++  const rpcConfigured=__mfPreOpenRpcUrls.length>0;
++  const wsConfigured=wsUrls.length>0;
++  // Pre-open RPC is standby-only here. Health polling must never call it.
++  const httpOk=rpcConfigured;
++  const wsLive=discovery.connected===true;
++  const eventFresh=Boolean(discovery.lastEventAt&&now-discovery.lastEventAt<120000);
++  const rateLimited=Boolean(
++    discMetrics.rpcCircuitOpen ||
++    (enrichDiag.lastEnrichErrorAt&&now-enrichDiag.lastEnrichErrorAt<60000&&/rate limit/i.test(enrichDiag.lastEnrichError||''))
++  );
++  const primaryOk=rpcConfigured&&httpOk;
++  const operational=primaryOk&&wsLive;
++  const overall=!rpcConfigured||!wsConfigured||!operational
++    ? 'unavailable'
++    : rateLimited||!eventFresh
++      ? 'degraded'
++      : 'healthy';
++  const hostname=(()=>{try{return __mfPreOpenRpcUrls[0]?new URL(__mfPreOpenRpcUrls[0]).hostname:null}catch{return null}})();
++  const primary={
++    role:'primary',
++    ok:primaryOk,
++    hostname,
++    latencyMs:Number.isFinite(rpc.last.latency)?rpc.last.latency:null,
++    lastHttpStatus:rpc.metrics.lastHttpStatus||null,
++    error:primaryOk?null:(rpc.last.error||(!rpcConfigured?'Not configured':'Temporarily unavailable'))
++  };
++  const backups=__mfPreOpenRpcUrls.slice(1).map((raw,i)=>{
++    let host=null;try{host=new URL(raw).hostname}catch{}
++    return {role:'backup',ok:false,hostname:host,index:i+1,status:'standby'};
++  });
++  return json(res,200,{
++    status:overall,
++    checkedAt:new Date().toISOString(),
++    solana:{
++      ok:primaryOk,
++      discoveryConnected:wsLive,
++      commitment:process.env.SOLANA_COMMITMENT||'confirmed',
++      connected:wsLive,
+       lastEventAt:discovery.lastEventAt,
+       circuitOpen:Boolean(discMetrics.rpcCircuitOpen),
+       circuitOpenUntil:discMetrics.rpcCircuitOpenUntil||null,
+@@ -3609,42 +5084,24 @@ if(url.pathname==='/api/system/health'){
+  }
+ 
+  
++ // MEMEFLOW_AI_CHAT_TRADING_MEMORY_V1_ROUTE
+  if(url.pathname==='/api/ai/chat'&&req.method==='POST'){
+    try{
+      const b=await body(req);
+-
+      const message=String(b?.message||'').trim();
+-
+-     if(!message){
+-       return json(res,400,{
+-         error:'EMPTY_MESSAGE'
+-       });
+-     }
+-
+-     const mint=String(b?.mint||'').trim();
+-
+-     const candidate=
+-       (mint && store.state.tokens[mint])
+-         ? store.state.tokens[mint]
+-         : {};
+-
+-     const result=await askMemeflowAssistant({
++     if(!message)return json(res,400,{error:'EMPTY_MESSAGE'});
++     const mint=String(b?.mint||'').trim()||null;
++     const result=await openaiAI.chat(
++       u.id,
+        message,
+-       candidate,
+-       settings:store.settings(u.id),
+-       recentMessages:Array.isArray(b?.messages)
+-         ? b.messages
+-         : []
+-     });
+-
+-     return json(res,200,{
+-       ok:true,
+-       ...result
+-     });
+-
++       mint,
++       {messages:Array.isArray(b?.messages)?b.messages:[]}
++     );
++     return json(res,200,{ok:true,...result});
+    }catch(e){
+-     return json(res,500,{
+-       error:'AI_CHAT_FAILED',
++     const status=e?.code==='OPENAI_NOT_CONFIGURED'?503:e?.code==='AI_DISABLED'?403:500;
++     return json(res,status,{
++       error:e?.code||'AI_CHAT_FAILED',
+        message:e?.message||'AI Assistant failed'
+      });
+    }
+@@ -4678,59 +6135,19 @@ if(url.pathname==='/api/ai/decisions'){
+   });
+ }
+  if(url.pathname==='/api/chart/config'){const qualified=rankCandidateViews(candidateFeed(store.decisions(u.id),'candidates').map(candidateView));return json(res,200,{chainId:'solana',tokenAddress:qualified[0]?.mint||''});}
+- if(url.pathname==='/api/chart/history'){const mint=url.searchParams.get('tokenAddress'),t=store.state.tokens[mint];const pts=t?.priceSol?[{t:t.updatedAt,price:t.priceSol,source:t.source}]:[];return json(res,200,{points:pts,status:{stale:!pts.length,source:t?.source||null,error:t?.scanError||null},tokenAddress:mint})}
+- if(url.pathname==='/api/chart/trade-stream'){
++ if(url.pathname==='/api/chart/history'){
+   const mint=String(url.searchParams.get('tokenAddress')||'').trim();
+-
+-  if(!validPubkey(mint)){
++  if(!__mfValidChartMint(mint)){
+     return json(res,400,{error:'INVALID_TOKEN_ADDRESS'});
+   }
+-
+-  if(!chartTradeStreams.has(mint)){
+-    chartTradeStreams.set(mint,new Set());
+-  }
+-  if(!chartTradeHistory.has(mint)){
+-    chartTradeHistory.set(mint,[]);
+-  }
+-
+-  res.writeHead(200,{
+-    'content-type':'text/event-stream; charset=utf-8',
+-    'cache-control':'no-cache, no-store, no-transform',
+-    'connection':'keep-alive',
+-    'x-accel-buffering':'no'
++  const snapshot=__mfChartSnapshotPayload(mint);
++  queueMicrotask(()=>{
++    try{__mfEnsureChartBackfill(mint)}catch{}
+   });
+-  try{res.flushHeaders?.()}catch{}
+-
+-  res.write('retry: 1000\n');
+-  res.write(
+-    `event: snapshot\n`+
+-    `data: ${JSON.stringify(__mfChartSnapshotPayload(mint))}\n\n`
+-  );
+-
+-  const listeners=chartTradeStreams.get(mint);
+-  listeners.add(res);
+-
+-  // History sync must never block opening Trading Terminal.
+-  queueMicrotask(()=>__mfEnsureChartBackfill(mint));
+-
+-  const heartbeat=setInterval(()=>{
+-    try{
+-      res.write(`: chart ${Date.now()}\n\n`);
+-    }catch{}
+-  },15000);
+-  heartbeat.unref?.();
+-
+-  let closed=false;
+-  const closeChartTradeStream=()=>{
+-    if(closed)return;
+-    closed=true;
+-    clearInterval(heartbeat);
+-    listeners.delete(res);
+-  };
+-
+-  req.on('close',closeChartTradeStream);
+-  res.on('close',closeChartTradeStream);
+-  return
++  return json(res,200,snapshot);
++}
++ if(url.pathname==='/api/chart/trade-stream'){
++  return __mfOpenChartStream(req,res,url.searchParams.get('tokenAddress'));
+ }
+ 
+  // MEMEFLOW_LIVE_SYSTEM_SSE_BACKEND_V4_ROUTE
+@@ -4776,7 +6193,55 @@ if(url.pathname==='/api/ai/decisions'){
+   return;
+  }
+ 
+- if(url.pathname==='/api/chart/stream'){const mint=url.searchParams.get('tokenAddress');res.writeHead(200,{'content-type':'text/event-stream','cache-control':'no-cache','connection':'keep-alive'});res.write(`event: snapshot\ndata: ${JSON.stringify({points:[],status:{stale:true,source:'Solana'}})}\n\n`);if(!streams.has(mint))streams.set(mint,new Set());streams.get(mint).add(res);req.on('close',()=>streams.get(mint)?.delete(res));return}
++ if(url.pathname==='/api/chart/stream'){
++  return __mfOpenChartStream(req,res,url.searchParams.get('tokenAddress'));
++}
++
++ // MEMEFLOW_SMART_VAULT_STATUS_V1
++ if(url.pathname==='/api/smart-vault/status'&&req.method==='GET'){
++  const owner=String(url.searchParams.get('owner')||'').trim();
++  if(owner&&!validPubkey(owner))
++   return json(res,400,{error:'INVALID_WALLET_ADDRESS'});
++
++  const adapter=__mfSmartVaultD4.status();
++  const entitled=hasLiveEntitlement(u);
++  const settings=store.settings(u.id)||{};
++
++  const programDeployed=adapter.mainnetDeployment===true;
++  const liveReady=
++   programDeployed &&
++   adapter.productionAutoLiveUnlocked===true &&
++   entitled;
++
++  return json(res,200,{
++   ok:true,
++   owner:owner||null,
++   vault:{
++    backendAvailable:true,
++    programDeployed,
++    vaultExists:false,
++    vaultAddress:null,
++    balanceSol:null,
++    availableSol:null,
++    openPositions:null,
++    liveReady,
++    automationActive:false,
++    actions:{
++     create:false,
++     deposit:false,
++     withdraw:false,
++     automation:false
++    }
++   },
++   execution:adapter,
++   entitlement:{
++    live:entitled,
++    source:u.isOwner?'owner':u.liveEntitled?'pro':'none'
++   },
++   tradingEnvironment:settings.tradingEnvironment||'paper'
++  });
++ }
++
+  // MEMEFLOW_SMART_VAULT_D5_HTTP_DEVNET_V1
+  if(url.pathname==='/api/live/execute'){
+   if(req.method!=='POST'){
+@@ -5840,6 +7305,7 @@ async function __mfVerifyPreOpenRisk(
+     updated.mint,
+     saved
+   );
++  try{openaiAI.recordDecision(uid,updated,saved,{source:'preopen-risk-final'})}catch{}
+ 
+   if(
+     finalDecision.state!=='BUY READY'
+@@ -5874,6 +7340,11 @@ async function __mfHandleDecision(
+     };
+   }
+ 
++  const finish=(result)=>{
++    try{openaiAI.recordExecution(uid,token,decision,result||{})}catch{}
++    return result;
++  };
++
+   const settings=
+     store.settings(uid) ||
+     {};
+@@ -5881,10 +7352,10 @@ async function __mfHandleDecision(
+   if(
+     paper.environment(settings)!=='paper'
+   ){
+-    return {
++    return finish({
+       action:'NONE',
+       reason:'NOT_PAPER'
+-    };
++    });
+   }
+ 
+   const mode=
+@@ -5896,19 +7367,19 @@ async function __mfHandleDecision(
+     mode==='observe' ||
+     mode==='assist'
+   ){
+-    return paper.onDecision(
++    return finish(paper.onDecision(
+       uid,
+       token,
+       decision,
+       settings
+-    );
++    ));
+   }
+ 
+   if(mode!=='automate'){
+-    return {
++    return finish({
+       action:'NONE',
+       reason:'UNKNOWN_MODE'
+-    };
++    });
+   }
+ 
+   if(
+@@ -5917,10 +7388,10 @@ async function __mfHandleDecision(
+       token.mint
+     )
+   ){
+-    return {
++    return finish({
+       action:'NONE',
+       reason:'POSITION_EXISTS'
+-    };
++    });
+   }
+ 
+   // No expensive RPC if normal execution rules already forbid an entry.
+@@ -5932,12 +7403,12 @@ async function __mfHandleDecision(
+     );
+ 
+   if(!readiness?.ok){
+-    return {
++    return finish({
+       action:'NONE',
+       reason:
+         readiness?.code ||
+         'ENTRY_NOT_READY'
+-    };
++    });
+   }
+ 
+   // THIS is the first automatic Solana HTTP RPC stage.
+@@ -5950,18 +7421,18 @@ async function __mfHandleDecision(
+     );
+ 
+   if(!verified.ok){
+-    return {
++    return finish({
+       action:'NONE',
+       reason:verified.code
+-    };
++    });
+   }
+ 
+-  return paper.onDecision(
++  return finish(paper.onDecision(
+     uid,
+     verified.token,
+     verified.decision,
+     settings
+-  );
++  ));
+ }
+ 
+ async function __mfApprovePaperProposalWithRisk(
+diff --git a/memeflow-app/trading.html b/memeflow-app/trading.html
+index 7674c80..448c461 100644
+--- a/memeflow-app/trading.html
++++ b/memeflow-app/trading.html
+@@ -38,6 +38,10 @@ html[data-mf-chart-unify-all-states="1"] [data-mf-chart-placeholder="1"] {
+ 
+   <!-- MEMEFLOW_GLOBAL_RIGHT_DRAWER_NAV_V1 -->
+   <link rel="stylesheet" href="/memeflow-nav.css?v=global-right-drawer-v1">
++<link rel="stylesheet" href="/access-gate.css?v=16">
++
++  <!-- MEMEFLOW_TRADING_AI_CHAT_V1_CSS -->
++  <link rel="stylesheet" href="/trading-ai-chat.css?v=offline-20260829050255">
+ </head>
+ <body>
+   <div class="shell">
+@@ -275,7 +279,7 @@ html[data-mf-chart-unify-all-states="1"] [data-mf-chart-placeholder="1"] {
+   </div>
+ 
+   <script src="https://cdn.jsdelivr.net/npm/echarts@6.1.0/dist/echarts.min.js"></script>
+-  <script type="module" src="/trading.js?v=recent-trades-true-two-rows-v4-20260826"></script>
++  <script type="module" src="/trading.js?v=chart-live-touch-v7-20260829"></script>
+   <!-- MEMEFLOW_TRADING_CHART_V30_4 -->
+   <!-- MEMEFLOW_TRADING_CHART_V30_5_EXECUTION_OHLC -->
+   <!-- MEMEFLOW_TRADING_CHART_V30_6_USD_CURVE_MARK -->
+@@ -362,6 +366,13 @@ html[data-mf-chart-unify-all-states="1"] [data-mf-chart-placeholder="1"] {
+ </script>
+ 
+   <script src="/memeflow-nav.js?v=noncustodial-live-solana-v1-20260827" defer></script>
++<script src="/access-gate.js?v=18"></script>
++
++  <!-- MEMEFLOW_TRADING_AI_CHAT_V1_JS -->
++  <script type="module" src="/trading-ai-chat.js?v=offline-20260829050255"></script>
++
++  <!-- MEMEFLOW_OWNER_INTELLIGENCE_LINK_V1 -->
++  <script src="/owner-intelligence-link.js?v=20260829-062530"></script>
+ </body>
+ </html>
+ 
+diff --git a/memeflow-app/trading.js b/memeflow-app/trading.js
+index 3c74582..50bb1cb 100644
+--- a/memeflow-app/trading.js
++++ b/memeflow-app/trading.js
+@@ -601,9 +601,9 @@ function renderPriceModeSummary(livePriceUsd = null) {
+ }
+ 
+ function chartHorizonMs(timeframe) {
+-  // V30.12 FULL HISTORY:
+-  // Timeframe changes OHLC aggregation only. It never discards older trades.
+-  // 1s / 1m / 5m / 15m / 1h can all be dragged back to token creation.
++  // V6: timeframe is the OHLC bucket size, NOT a destructive history window.
++  // 1s means 1-second candles from canonical real trades; it must not throw
++  // away the token's older valid trades just because they are >90 seconds old.
+   return null;
+ }
+ 
+@@ -1332,8 +1332,28 @@ function renderSelected({ redrawChart = true } = {}) {
+   $('tokenState').className = `decision-badge ${decisionClass(stateText)}`;
+   $('tokenMint').textContent = short(c.mint, 7, 6);
+ 
+-  const price = candidatePrice(c);
+-  const priceUsd = usdFromSol(price, c);
++  const chartPoints =
++    typeof rawPoints==='function'
++      ? rawPoints(c.mint)
++      : [];
++  const chartLast =
++    Array.isArray(chartPoints) && chartPoints.length
++      ? chartPoints[chartPoints.length-1]
++      : null;
++
++  let priceUsd=null;
++  try{
++    if(chartLast && typeof pointUsdPrice==='function'){
++      const liveUsd=Number(pointUsdPrice(chartLast));
++      if(liveUsd>0)priceUsd=liveUsd;
++    }
++  }catch{}
++
++  if(!(priceUsd>0)){
++    const price = candidatePrice(c);
++    priceUsd = usdFromSol(price, c);
++  }
++
+   renderPriceModeSummary(priceUsd);
+ 
+   $('metricScore').textContent = fmt(c.score, 0);
+@@ -1464,36 +1484,44 @@ function addPoint(mint,point,redraw=true) {
+   if(!next)return false;
+ 
+   const points=rawPoints(mint);
+-  const last=points[points.length-1];
+ 
+-  if(
+-    next.id &&
+-    (last?.id===next.id || points.slice(-64).some(item=>item?.id===next.id))
+-  ){
+-    return false;
+-  }
++  // SSE reconnect/snapshot can repeat the newest real event.
++  const recent=points.slice(-64);
++  const duplicate=recent.some(existing=>{
++    if(next.id && existing?.id){
++      return String(existing.id)===String(next.id);
++    }
++    return (
++      Number(existing?.t)===Number(next.t) &&
++      Number(existing?.price)===Number(next.price) &&
++      Boolean(existing?.isBuy)===Boolean(next.isBuy) &&
++      Number(existing?.solAmount||0)===Number(next.solAmount||0) &&
++      Number(existing?.tokenAmount||0)===Number(next.tokenAmount||0)
++    );
++  });
++  if(duplicate)return false;
+ 
+-  // Server history already de-duplicates by transaction signature + event index.
+-  // Do not rescan the whole browser history on every tick.
+-  const late=Boolean(last && next.t<last.t);
++  const last=points[points.length-1];
++  const late=Boolean(last && Number(next.t)<Number(last.t));
+   points.push(next);
+ 
+   if(late){
+-    points.sort((a,b)=>a.t-b.t);
++    points.sort((a,b)=>Number(a.t)-Number(b.t));
++  }
++
++  if(points.length>8000){
++    points.splice(0,points.length-8000);
+   }
+ 
+   if(redraw){
+-    if(late){
+-      chartRuntime.dataKey='';
+-      scheduleChart();
+-    }else{
+-      updateRealtimeChart(mint);
+-    }
++    chartRuntime.dataKey='';
++    updateRealtimeChart(mint);
+   }
+ 
+   return true;
+ }
+ 
++
+ function formatTapeAmount(value) {
+   const n = Number(value);
+   if (!(n > 0)) return '$0';
+@@ -3216,8 +3244,6 @@ function ensureChartEngine(){
+     return Boolean(chartRuntime.api);
+   }
+ 
+-  chartRuntime.initialized=true;
+-
+   const EC=window.echarts;
+   const host=$('chartCanvas');
+ 
+@@ -3233,14 +3259,26 @@ function ensureChartEngine(){
+     return false;
+   }
+ 
+-  chartRuntime.api=EC.init(
+-    host,
+-    null,
+-    {
+-      renderer:'canvas',
+-      useDirtyRect:true
+-    }
+-  );
++  try{
++    chartRuntime.api=EC.init(
++      host,
++      null,
++      {
++        renderer:'canvas',
++        useDirtyRect:true
++      }
++    );
++    chartRuntime.initialized=true;
++  }catch(error){
++    chartRuntime.api=null;
++    chartRuntime.initialized=false;
++    console.error('[MEMEFLOW_ECHARTS_INIT_V5]',error);
++    $('chartEmpty').style.display='grid';
++    $('chartEmpty').innerHTML=
++      '<strong>Chart renderer unavailable</strong>'+
++      '<span>ECharts initialization failed in this browser.</span>';
++    return false;
++  }
+ 
+   chartRuntime.api.on('datazoom',()=>{
+     captureChartViewport();
+@@ -3330,492 +3368,638 @@ function scheduleChart(){
+ }
+ 
+ function updateRealtimeChart(mint){
+-  if(
+-    mint!==state.selectedMint ||
+-    !ensureChartEngine()
+-  ){
+-    return;
+-  }
++  if(mint!==state.selectedMint)return;
+ 
+   const points=rawPoints(mint);
+-  const candles=candlesFor(
+-    points,
+-    state.timeframe
+-  );
++  const lastPoint=points[points.length-1]||null;
+ 
+-  if(
+-    Number(state.timeframe)===1000 &&
+-    candles.length>=2
+-  ){
+-    chartRuntime.pendingFx={
+-      prev:candles[candles.length-2],
+-      curr:candles[candles.length-1],
+-      levels:strategyLevels()
+-    };
++  if(lastPoint){
++    try{
++      if(typeof __mfChartSyncHeaderV6==='function'){
++        __mfChartSyncHeaderV6(points);
++      }else if(typeof pointUsdPrice==='function'){
++        renderPriceModeSummary(pointUsdPrice(lastPoint));
++      }
++    }catch{}
+   }
+ 
+-  // ECharts receives one coalesced rAF redraw. The dataZoom viewport is
+-  // preserved by timestamp, so a viewer panned into history is not yanked live.
++  // V6 uses ECharts full-series redraw. Never use a stale LightweightCharts
++  // series.update() path here.
+   chartRuntime.dataKey='';
+   scheduleChart();
+ }
+ 
+-function drawChart(){
+-  if(!ensureChartEngine())return;
+ 
+-  if(!state.selectedMint){
+-    chartRuntime.api.clear();
+-    $('chartEmpty').style.display='grid';
+-    $('chartLegend').innerHTML='';
+-    return;
++
++function __mfChartVisibleSlotsV6(){
++  return window.innerWidth < 700 ? 48 : 84;
++}
++
++function __mfChartTimeLabelV6(value){
++  const text=String(value ?? '');
++  if(
++    text.startsWith('__mf_future_') ||
++    text.startsWith('__mf_pad_')
++  ){
++    return '';
+   }
+ 
+-  const points=rawPoints(
+-    state.selectedMint
+-  );
++  try{
++    if(typeof chartTimeLabel==='function'){
++      const formatted=chartTimeLabel(value);
++      if(formatted!==undefined && formatted!==null){
++        return String(formatted);
++      }
++    }
++  }catch{}
+ 
+-  const candles=candlesFor(
+-    points,
+-    state.timeframe
+-  );
++  const t=Number(value);
++  if(!Number.isFinite(t))return '';
+ 
+-  if(!candles.length){
+-    chartRuntime.api.clear();
+-    $('chartEmpty').style.display='grid';
+-    $('chartEmpty').innerHTML=
+-      '<strong>Syncing real trades</strong>'+
+-      '<span>Candles use confirmed BUY / SELL events only. History and the live Pump trade stream reconnect automatically.</span>';
+-    $('chartLegend').innerHTML='';
+-    renderPriceModeSummary();
+-    return;
++  try{
++    return new Date(t).toLocaleTimeString([],{
++      hour:'2-digit',
++      minute:'2-digit',
++      second:
++        Number(state?.timeframe)<=1000
++          ? '2-digit'
++          : undefined
++    });
++  }catch{
++    return '';
+   }
++}
+ 
+-  $('chartEmpty').style.display='none';
++function __mfChartFormatValueV6(value){
++  try{
++    if(typeof formatChartValue==='function'){
++      return formatChartValue(value);
++    }
++  }catch{}
+ 
+-  const display=chartDisplayData(candles);
+-  const labels=display.labels;
+-  const displayCandles=display.rows;
++  const n=Number(value);
++  if(!Number.isFinite(n))return '—';
++  if(Math.abs(n)>=1000)return n.toLocaleString(undefined,{maximumFractionDigits:2});
++  if(Math.abs(n)>=1)return n.toFixed(4);
++  return n.toPrecision(6);
++}
+ 
+-  const candleData=displayCandles.map(c=>
+-    c
+-      ? [
+-          Number(c.open),
+-          Number(c.close),
+-          Number(c.low),
+-          Number(c.high)
+-        ]
+-      : '-'
++function __mfChartDisplayV6(candles){
++  try{
++    if(typeof chartDisplayData==='function'){
++      const display=chartDisplayData(candles);
++      if(
++        display &&
++        Array.isArray(display.labels) &&
++        Array.isArray(display.rows) &&
++        display.labels.length===display.rows.length
++      ){
++        return display;
++      }
++    }
++  }catch(error){
++    console.warn('[MEMEFLOW_CHART_V6_DISPLAY_HELPER]',error);
++  }
++
++  const actual=Array.isArray(candles)?candles:[];
++  const target=__mfChartVisibleSlotsV6();
++  const padCount=Math.max(0,target-actual.length);
++  const futureLabels=Array.from(
++    {length:padCount},
++    (_,index)=>`__mf_future_v6_${index}`
+   );
+ 
+-  const actualVolumeData=candles.map(c=>({
+-    value:Math.max(0,Number(c.volumeUsd||0)),
+-    itemStyle:{
+-      color:
+-        Number(c.close)>=Number(c.open)
+-          ? 'rgba(77,230,161,.68)'
+-          : 'rgba(255,102,121,.64)'
++  return {
++    labels:actual
++      .map(c=>String(Number(c.t)))
++      .concat(futureLabels),
++    rows:actual.concat(Array(padCount).fill(null)),
++    padCount
++  };
++}
++
++function __mfChartLastUsdV6(points){
++  const last=Array.isArray(points)?points[points.length-1]:null;
++  if(!last)return null;
++
++  try{
++    if(typeof pointUsdPrice==='function'){
++      const usd=Number(pointUsdPrice(last));
++      if(Number.isFinite(usd) && usd>0)return usd;
+     }
+-  }));
+-
+-  // V30.22: indicator/volume geometry follows the same left-anchored
+-  // real-candle order. Future render slots stay empty on the RIGHT.
+-  const futurePad=Array(display.padCount).fill('-');
+-  const volumeData=actualVolumeData.concat(futurePad);
+-  const ma5=movingAverage(candles,5).concat(futurePad);
+-  const ma10=movingAverage(candles,10).concat(futurePad);
+-
+-  const overlayIndicatorSeries=
+-    chartOverlayIndicatorSeries(
+-      candles,
+-      display.padCount
++  }catch{}
++
++  const sol=Number(last?.priceSol ?? last?.price);
++  if(!(sol>0))return null;
++
++  try{
++    if(typeof solUsdRate==='function'){
++      const rate=Number(solUsdRate());
++      if(rate>0)return sol*rate;
++    }
++  }catch{}
++
++  return null;
++}
++
++function __mfChartSyncHeaderV6(points){
++  try{
++    if(typeof renderPriceModeSummary!=='function')return;
++    const usd=__mfChartLastUsdV6(points);
++    if(usd>0)renderPriceModeSummary(usd);
++  }catch(error){
++    console.warn('[MEMEFLOW_CHART_V6_HEADER_SYNC]',error);
++  }
++}
++
++function drawChart(){
++  try{
++    if(!ensureChartEngine())return;
++
++    if(!state.selectedMint){
++      try{chartRuntime.api?.clear?.()}catch{}
++      $('chartEmpty').style.display='grid';
++      $('chartEmpty').innerHTML=
++        '<strong>Live candles</strong>'+
++        '<span>Select a token to load its chart.</span>';
++      $('chartLegend').innerHTML='';
++      return;
++    }
++
++    const points=rawPoints(state.selectedMint);
++    const candles=candlesFor(points,state.timeframe);
++
++    __mfChartSyncHeaderV6(points);
++
++    if(!candles.length){
++      try{chartRuntime.api?.clear?.()}catch{}
++      $('chartEmpty').style.display='grid';
++      $('chartEmpty').innerHTML=
++        '<strong>Syncing real trades</strong>'+
++        '<span>No canonical BUY / SELL candles are available yet.</span>';
++      $('chartLegend').innerHTML='';
++      return;
++    }
++
++    $('chartEmpty').style.display='none';
++
++    const display=__mfChartDisplayV6(candles);
++    const labels=display.labels;
++    const displayCandles=display.rows;
++    const padCount=Math.max(
++      0,
++      Number(display.padCount)||0
+     );
+ 
+-  const lowerIndicatorPane=
+-    chartLowerIndicatorPane(
+-      candles,
+-      display.padCount,
+-      volumeData,
+-      ma5,
+-      ma10
++    const candleData=displayCandles.map(c=>
++      c
++        ? [
++            Number(c.open),
++            Number(c.close),
++            Number(c.low),
++            Number(c.high)
++          ]
++        : '-'
+     );
+ 
+-  const lowerIndicatorVisible=Boolean(lowerIndicatorPane);
+-  const lowerIndicatorSeries=lowerIndicatorPane?.series || [];
+-  const lowerIndicatorLegend=lowerIndicatorPane?.legend || [];
+-  const lowerIndicatorAxis=lowerIndicatorPane?.axis || {
+-    scale:true,
+-    formatter:value=>compactIndicatorValue(value)
+-  };
++    const futurePad=Array(padCount).fill('-');
+ 
+-  const levelInfo=chartLevelInfo(candles);
+-  chartRuntime.offscreenLevels=levelInfo.offscreen;
++    const actualVolumeData=candles.map(c=>({
++      value:Math.max(
++        0,
++        Number(c?.volumeUsd ?? c?.volume ?? 0)
++      ),
++      itemStyle:{
++        color:
++          Number(c.close)>=Number(c.open)
++            ? 'rgba(77,230,161,.55)'
++            : 'rgba(255,102,121,.52)'
++      }
++    }));
++    const volumeData=actualVolumeData.concat(futurePad);
+ 
+-  const last=candles[candles.length-1];
++    let ma5=Array(candles.length).fill('-').concat(futurePad);
++    let ma10=Array(candles.length).fill('-').concat(futurePad);
+ 
+-  // V30.23: use one shared overlay model for both metrics.
+-  const horizontalLevelSeries=chartHorizontalLevelSeries(
+-    labels,
+-    levelInfo.visible,
+-    last.close
+-  );
++    try{
++      if(typeof movingAverage==='function'){
++        ma5=movingAverage(candles,5).concat(futurePad);
++        ma10=movingAverage(candles,10).concat(futurePad);
++      }
++    }catch(error){
++      console.warn('[MEMEFLOW_CHART_V6_MA]',error);
++    }
+ 
+-  // V30.23: PRICE <-> MARKET CAP is a Y-axis unit conversion only.
+-  // Mint/timeframe changes may refit X; metric changes must preserve X viewport.
+-  const xContextChanged=
+-    chartRuntime.mint!==state.selectedMint ||
+-    chartRuntime.timeframe!==state.timeframe;
++    let overlaySeries=[];
++    try{
++      if(typeof chartOverlayIndicatorSeries==='function'){
++        const result=chartOverlayIndicatorSeries(
++          candles,
++          padCount
++        );
++        if(Array.isArray(result))overlaySeries=result;
++      }
++    }catch(error){
++      console.warn('[MEMEFLOW_CHART_V6_OVERLAY_INDICATOR]',error);
++    }
+ 
+-  let range=null;
++    let lowerPane=null;
++    try{
++      if(typeof chartLowerIndicatorPane==='function'){
++        lowerPane=chartLowerIndicatorPane(
++          candles,
++          padCount,
++          volumeData,
++          ma5,
++          ma10
++        );
++      }
++    }catch(error){
++      console.warn('[MEMEFLOW_CHART_V6_LOWER_INDICATOR]',error);
++      lowerPane=null;
++    }
+ 
+-  if(
+-    chartRuntime.forceFit ||
+-    xContextChanged ||
+-    !chartRuntime.viewport.startValue ||
+-    !chartRuntime.viewport.endValue
+-  ){
+-    range=chartInitialRange(labels);
+-    chartRuntime.viewport.followLatest=true;
+-  }else if(chartRuntime.viewport.followLatest){
+-    range=chartInitialRange(labels);
+-  }else{
+-    const startExists=
+-      labels.includes(String(chartRuntime.viewport.startValue));
+-    const endExists=
+-      labels.includes(String(chartRuntime.viewport.endValue));
+-
+-    range=
+-      startExists && endExists
+-        ? {
+-            startValue:String(chartRuntime.viewport.startValue),
+-            endValue:String(chartRuntime.viewport.endValue)
+-          }
+-        : chartInitialRange(labels);
+-  }
++    const lowerVisible=Boolean(
++      lowerPane &&
++      Array.isArray(lowerPane.series) &&
++      lowerPane.series.length
++    );
++    const lowerSeries=lowerVisible
++      ? lowerPane.series
++      : [];
++    const lowerLegend=lowerVisible
++      ? (Array.isArray(lowerPane.legend)?lowerPane.legend:[])
++      : [];
++    const lowerAxis=lowerVisible
++      ? (lowerPane.axis||{})
++      : {};
+ 
+-  const touchUi=chartTouchUi();
++    let horizontalSeries=[];
++    try{
++      if(
++        typeof chartLevelInfo==='function' &&
++        typeof chartHorizontalLevelSeries==='function'
++      ){
++        const levelInfo=chartLevelInfo(candles);
++        chartRuntime.offscreenLevels=
++          Array.isArray(levelInfo?.offscreen)
++            ? levelInfo.offscreen
++            : [];
++        horizontalSeries=chartHorizontalLevelSeries(
++          labels,
++          Array.isArray(levelInfo?.visible)
++            ? levelInfo.visible
++            : [],
++          Number(candles[candles.length-1]?.close)
++        );
++        if(!Array.isArray(horizontalSeries)){
++          horizontalSeries=[];
++        }
++      }
++    }catch(error){
++      console.warn('[MEMEFLOW_CHART_V6_LEVELS]',error);
++      horizontalSeries=[];
++    }
+ 
+-  chartRuntime.suppressZoom=true;
++    const slots=__mfChartVisibleSlotsV6();
++    let startValue;
++    let endValue;
++
++    if(state.timeframe==='all'){
++      startValue=labels[0];
++      endValue=labels[labels.length-1];
++    }else if(candles.length<slots){
++      // Sparse/newborn token: keep the first real candle on the LEFT
++      // and use render-only empty slots on the RIGHT.
++      startValue=labels[0];
++      endValue=labels[Math.min(labels.length-1,slots-1)];
++    }else{
++      startValue=labels[Math.max(0,candles.length-slots)];
++      endValue=labels[Math.min(labels.length-1,candles.length-1)];
++    }
+ 
+-  chartRuntime.api.setOption(
+-    {
+-      animation:false,
+-      /* MEMEFLOW_TRADING_CHART_RESTORE_SITE_BG_V2: render logic untouched */
+-      /* MEMEFLOW_TRADING_CHART_MATCH_PANEL_V3: match surrounding panel surface */
+-      backgroundColor:'#131b23',
+-      textStyle:{
++    const mainXAxis={
++      type:'category',
++      gridIndex:0,
++      data:labels,
++      boundaryGap:true,
++      axisLine:{
++        show:true,
++        lineStyle:{color:'rgba(111,154,172,.15)'}
++      },
++      axisTick:{show:false},
++      axisLabel:{
++        show:!lowerVisible,
+         color:'#536f7b',
+-        fontFamily:'ui-monospace, SFMono-Regular, Menlo, monospace',
+-        fontSize:9
++        fontSize:8,
++        hideOverlap:true,
++        formatter:value=>__mfChartTimeLabelV6(value)
+       },
++      splitLine:{show:false},
+       axisPointer:{
+-        // Mobile Safari was interpreting a finger drag as an axis selection.
+-        // Touch mode must pan/zoom with no category shadow or raw timestamp label.
+         show:!touchUi,
+-        triggerTooltip:!touchUi,
+-        link:touchUi ? [] : [{xAxisIndex:'all'}],
++        type:'line',
+         snap:false,
+-        animation:false,
+-        label:{
+-          show:!touchUi,
+-          backgroundColor:'#0b171d',
+-          formatter:chartPointerTimeLabel
+-        }
+-      },
+-      tooltip:{
+-        show:!touchUi,
+-        showContent:!touchUi,
+-        trigger:touchUi ? 'none' : 'axis',
+-        triggerOn:touchUi ? 'none' : 'mousemove|click',
+-        alwaysShowContent:false,
+-        confine:true,
+-        axisPointer:{
+-          show:!touchUi,
+-          type:'line',
+-          snap:false,
+-          lineStyle:{
+-            color:'rgba(120,176,195,.30)',
+-            width:1,
+-            type:'dashed'
+-          },
+-          label:{
+-            show:!touchUi,
+-            formatter:chartPointerTimeLabel,
+-            backgroundColor:'#0b171d'
++        label:{show:false}
++      }
++    };
++
++    const xAxis=lowerVisible
++      ? [
++          mainXAxis,
++          {
++            type:'category',
++            gridIndex:1,
++            data:labels,
++            boundaryGap:true,
++            axisLine:{
++              show:true,
++              lineStyle:{color:'rgba(111,154,172,.15)'}
++            },
++            axisTick:{show:false},
++            axisLabel:{
++              show:true,
++              color:'#536f7b',
++              fontSize:8,
++              hideOverlap:true,
++              formatter:value=>__mfChartTimeLabelV6(value)
++            },
++            splitLine:{show:false},
++            axisPointer:{
++              show:!touchUi,
++              type:'line',
++              snap:false,
++              label:{show:false}
++            }
+           }
++        ]
++      : [mainXAxis];
++
++    const yAxis=[
++      {
++        type:'value',
++        gridIndex:0,
++        position:'right',
++        scale:true,
++        axisLine:{show:false},
++        axisTick:{show:false},
++        axisLabel:{
++          show:true,
++          color:'#536f7b',
++          fontSize:9,
++          formatter:value=>__mfChartFormatValueV6(value)
+         },
+-        backgroundColor:'rgba(5,12,17,.96)',
+-        borderColor:'rgba(111,170,190,.22)',
+-        textStyle:{
+-          color:'#cfe0e7',
+-          fontSize:10
+-        },
+-        extraCssText:'box-shadow:0 8px 30px rgba(0,0,0,.32);',
+-        formatter:params=>{
+-          const rows=Array.isArray(params)?params:[];
+-          const candleParam=rows.find(row=>row?.seriesName==='Price');
+-          const index=Number(candleParam?.dataIndex);
+-          const c=Number.isFinite(index)?displayCandles[index]:null;
+-          if(!c)return '';
+-
+-          const time=chartTimeLabel(c.t);
+-          return [
+-            `<strong>${time}</strong>`,
+-            `O ${formatChartValue(c.open)}`,
+-            `H ${formatChartValue(c.high)}`,
+-            `L ${formatChartValue(c.low)}`,
+-            `C ${formatChartValue(c.close)}`,
+-            `VOL $${compactVolume(c.volumeUsd)}`
+-          ].join('<br>');
++        splitLine:{
++          show:true,
++          lineStyle:{
++            color:'rgba(106,145,162,.07)',
++            width:1
++          }
+         }
+-      },
+-      legend:{
+-        show:lowerIndicatorVisible,
+-        data:lowerIndicatorLegend,
+-        left:10,
+-        top:'72%',
+-        itemWidth:10,
+-        itemHeight:6,
+-        textStyle:{
+-          color:'#718894',
+-          fontSize:8
+-        },
+-        selectedMode:false
+-      },
+-      grid:[
+-        {
+-          left:10,
+-          right:76,
+-          top:42,
+-          height:lowerIndicatorVisible ? '55%' : '78%',
+-          containLabel:false
++      }
++    ];
++
++    if(lowerVisible){
++      yAxis.push({
++        type:'value',
++        gridIndex:1,
++        position:'right',
++        scale:lowerAxis?.scale!==false,
++        min:Number.isFinite(Number(lowerAxis?.min))
++          ? Number(lowerAxis.min)
++          : undefined,
++        max:Number.isFinite(Number(lowerAxis?.max))
++          ? Number(lowerAxis.max)
++          : undefined,
++        axisLine:{show:false},
++        axisTick:{show:false},
++        axisLabel:{
++          show:true,
++          color:'#536f7b',
++          fontSize:8,
++          formatter:
++            typeof lowerAxis?.formatter==='function'
++              ? lowerAxis.formatter
++              : value=>__mfChartFormatValueV6(value)
+         },
+-        {
+-          show:lowerIndicatorVisible,
+-          left:10,
+-          right:76,
+-          top:lowerIndicatorVisible ? '77%' : '94%',
+-          height:lowerIndicatorVisible ? '15%' : 0,
+-          containLabel:false
++        splitLine:{
++          show:true,
++          lineStyle:{
++            color:'rgba(106,145,162,.055)',
++            width:1
++          }
+         }
+-      ],
+-      xAxis:[
+-        {
+-          type:'category',
+-          data:labels,
+-          gridIndex:0,
+-          boundaryGap:true,
+-          axisLine:{show:false},
+-          axisTick:{show:false},
+-          axisLabel:{
+-            show:!lowerIndicatorVisible,
+-            color:'#536f7b',
+-            fontSize:8,
+-            hideOverlap:true,
+-            formatter:value=>chartTimeLabel(value)
++      });
++    }
++
++    const grid=lowerVisible
++      ? [
++          {
++            left:10,
++            right:76,
++            top:42,
++            height:'55%',
++            containLabel:false
+           },
+-          splitLine:{show:false},
+-          axisPointer:{
+-            show:!touchUi,
+-            type:'line',
+-            snap:false,
+-            label:{show:false}
++          {
++            left:10,
++            right:76,
++            top:'77%',
++            height:'15%',
++            containLabel:false
++          }
++        ]
++      : [
++          {
++            left:10,
++            right:76,
++            top:42,
++            height:'78%',
++            containLabel:false
++          }
++        ];
++
++    const candleSeries={
++      name:'Price',
++      type:'candlestick',
++      xAxisIndex:0,
++      yAxisIndex:0,
++      data:candleData,
++      // Width is relative to a category slot. With V30.22-style future
++      // slots, one candle stays a normal candle instead of a giant block.
++      barWidth:'70%',
++      itemStyle:{
++        color:'#4de6a1',
++        color0:'#ff6679',
++        borderColor:'#4de6a1',
++        borderColor0:'#ff6679',
++        borderWidth:1
++      },
++      emphasis:{disabled:true},
++      animation:false,
++      z:4
++    };
++
++    const series=[
++      candleSeries,
++      ...horizontalSeries,
++      ...overlaySeries,
++      ...lowerSeries
++    ];
++
++    const touchUi=chartTouchUi();
++
++    chartRuntime.api.clear();
++    chartRuntime.api.setOption(
++      {
++        animation:false,
++        backgroundColor:'transparent',
++        grid,
++        legend:{
++          show:lowerVisible && lowerLegend.length>0,
++          data:lowerLegend,
++          left:10,
++          top:'72%',
++          itemWidth:10,
++          itemHeight:6,
++          textStyle:{
++            color:'#718894',
++            fontSize:8
+           },
+-          // V30.20: force the full synthetic category range to exist.
+-          // Without this, dataMin/dataMax removes the empty pad slots and
+-          // stretches a few real candles across the entire chart.
+-          min:0,
+-          max:Math.max(0,labels.length-1)
++          selectedMode:false
+         },
+-        {
+-          show:lowerIndicatorVisible,
+-          type:'category',
+-          data:labels,
+-          gridIndex:1,
+-          boundaryGap:true,
+-          axisLine:{
+-            show:lowerIndicatorVisible,
+-            lineStyle:{color:'rgba(111,154,172,.10)'}
+-          },
+-          axisTick:{show:false},
+-          axisLabel:{
+-            show:lowerIndicatorVisible,
+-            color:'#536f7b',
+-            fontSize:8,
+-            hideOverlap:true,
+-            formatter:value=>chartTimeLabel(value)
+-          },
+-          splitLine:{show:false},
++        axisPointer:{
++          show:!touchUi,
++          triggerTooltip:!touchUi,
++          snap:false,
++          animation:false,
++          label:{show:false}
++        },
++        tooltip:{
++          show:!touchUi,
++          showContent:!touchUi,
++          trigger:touchUi ? 'none' : 'axis',
++          triggerOn:touchUi ? 'none' : 'mousemove|click',
++          alwaysShowContent:false,
++          confine:true,
+           axisPointer:{
+             show:!touchUi,
+             type:'line',
+             snap:false,
+-            label:{
+-              show:!touchUi,
+-              formatter:chartPointerTimeLabel,
+-              backgroundColor:'#0b171d'
++            label:{show:false},
++            lineStyle:{
++              color:'rgba(120,176,195,.30)',
++              width:1,
++              type:'dashed'
+             }
+           },
+-          // V30.20: force the full synthetic category range to exist.
+-          // Without this, dataMin/dataMax removes the empty pad slots and
+-          // stretches a few real candles across the entire chart.
+-          min:0,
+-          max:Math.max(0,labels.length-1)
+-        }
+-      ],
+-      yAxis:[
+-        {
+-          type:'value',
+-          gridIndex:0,
+-          position:'right',
+-          scale:true,
+-          axisLine:{show:false},
+-          axisTick:{show:false},
+-          axisLabel:{
+-            color:'#536f7b',
+-            fontSize:9,
+-            margin:10,
+-            formatter:value=>formatChartValue(value)
++          backgroundColor:'rgba(5,12,17,.96)',
++          borderColor:'rgba(111,170,190,.22)',
++          textStyle:{
++            color:'#cfe0e7',
++            fontSize:10
+           },
+-          splitLine:{
+-            show:true,
+-            lineStyle:{
+-              color:'rgba(106,145,162,.07)',
+-              width:1
+-            }
++          extraCssText:
++            'box-shadow:0 8px 30px rgba(0,0,0,.32);'+
++            'max-width:220px;',
++          formatter:params=>{
++            const list=Array.isArray(params)?params:[params];
++            const priceRow=list.find(
++              row=>row?.seriesName==='Price'
++            )||list[0];
++            const index=Number(priceRow?.dataIndex);
++            const c=Number.isFinite(index)
++              ? displayCandles[index]
++              : null;
++            if(!c)return '';
++            return [
++              '<strong>'+__mfChartTimeLabelV6(c.t)+'</strong>',
++              'O '+__mfChartFormatValueV6(c.open),
++              'H '+__mfChartFormatValueV6(c.high),
++              'L '+__mfChartFormatValueV6(c.low),
++              'C '+__mfChartFormatValueV6(c.close),
++              Number(c.samples||0)+' trades'
++            ].join('<br>');
+           }
+         },
+-        {
+-          show:lowerIndicatorVisible,
+-          type:'value',
+-          gridIndex:1,
+-          position:'right',
+-          scale:lowerIndicatorAxis.scale!==false,
+-          min:lowerIndicatorAxis.min,
+-          max:lowerIndicatorAxis.max,
+-          axisLine:{show:false},
+-          axisTick:{show:false},
+-          axisLabel:{
+-            show:lowerIndicatorVisible,
+-            color:'#455c67',
+-            fontSize:7,
+-            margin:10,
+-            formatter:lowerIndicatorAxis.formatter
+-          },
+-          splitLine:{
+-            show:lowerIndicatorVisible,
+-            lineStyle:{
+-              color:'rgba(106,145,162,.045)',
+-              width:1
+-            }
++        xAxis,
++        yAxis,
++        dataZoom:[
++          {
++            type:'inside',
++            xAxisIndex:lowerVisible?[0,1]:[0],
++            filterMode:'filter',
++            startValue,
++            endValue,
++            zoomOnMouseWheel:true,
++            moveOnMouseMove:true,
++            moveOnMouseWheel:true,
++            throttle:32
+           }
+-        }
+-      ],
+-      dataZoom:[
+-        {
+-          type:'inside',
+-          xAxisIndex:lowerIndicatorVisible ? [0,1] : [0],
+-          filterMode:'filter',
+-          startValue:range.startValue,
+-          endValue:range.endValue,
+-          // V30.21: never let pinch/wheel zoom stretch just 1-2 candles
+-          // over the whole chart. Keep a professional minimum viewport.
+-          minValueSpan:window.innerWidth<700 ? 8 : 12,
+-          zoomOnMouseWheel:true,
+-          moveOnMouseMove:true,
+-          moveOnMouseWheel:true,
+-          preventDefaultMouseMove:true,
+-          throttle:24,
+-          cursorGrab:'grab',
+-          cursorGrabbing:'grabbing'
+-        }
+-      ],
+-      series:[
+-        {
+-          name:'Price',
+-          type:'candlestick',
+-          xAxisIndex:0,
+-          yAxisIndex:0,
+-          data:candleData,
+-          itemStyle:{
+-            color:'#4de6a1',
+-            color0:'#ff6679',
+-            borderColor:'#4de6a1',
+-            borderColor0:'#ff6679',
+-            borderWidth:1
+-          },
+-          // V30.21: candle body tracks category width while zooming.
+-          // Percentage width keeps the inter-candle gap proportional instead
+-          // of leaving a fixed 14px candle inside an ever-wider category.
+-          barWidth:'78%',
+-          emphasis:{disabled:true}
+-        },
+-        ...overlayIndicatorSeries,
+-        ...horizontalLevelSeries,
+-        ...lowerIndicatorSeries
+-      ]
+-    },
+-    {
+-      notMerge:true,
+-      lazyUpdate:true
+-    }
+-  );
+-
+-  chartRuntime.labels=labels;
+-  chartRuntime.lastCandles=candles;
+-  chartRuntime.mint=state.selectedMint;
+-  chartRuntime.timeframe=state.timeframe;
+-  chartRuntime.metric=state.chartMetric;
+-  chartRuntime.candleCount=candles.length;
+-  chartRuntime.lastCandleTime=last.t;
+-  chartRuntime.forceFit=false;
+-
+-  chartRuntime.viewport.startValue=range.startValue;
+-  chartRuntime.viewport.endValue=range.endValue;
+-
+-  setTimeout(()=>{
+-    chartRuntime.suppressZoom=false;
+-  },0);
+-
+-  const totalTicks=candles.reduce(
+-    (sum,candle)=>
+-      sum+Number(candle.samples||0),
+-    0
+-  );
++        ],
++        series
++      },
++      {notMerge:true,lazyUpdate:false}
++    );
+ 
+-  renderLegend(
+-    last,
+-    candles.length,
+-    totalTicks,
+-    chartRuntime.offscreenLevels
+-  );
++    chartRuntime.labels=labels;
++    chartRuntime.lastCandles=candles;
++    chartRuntime.mint=state.selectedMint;
++    chartRuntime.timeframe=state.timeframe;
++    chartRuntime.metric=state.chartMetric;
++    chartRuntime.candleCount=candles.length;
++    chartRuntime.lastCandleTime=
++      candles[candles.length-1]?.t ?? null;
++    chartRuntime.dataKey=[
++      state.selectedMint,
++      String(state.timeframe),
++      String(state.chartMetric),
++      points.length,
++      candles.length,
++      Number(points[points.length-1]?.t||0),
++      Number(candles[candles.length-1]?.close||0)
++    ].join('|');
++    chartRuntime.forceFit=false;
++
++    const last=candles[candles.length-1];
++    const totalTrades=candles.reduce(
++      (sum,c)=>sum+Number(c?.samples||0),
++      0
++    );
+ 
+-  const lastPoint=points[points.length-1];
+-  const rawSol=Number(lastPoint?.priceSol ?? lastPoint?.price);
+-  renderPriceModeSummary(
+-    Number.isFinite(rawSol) && rawSol>0
+-      ? rawSol*solUsdRate()
+-      : null
+-  );
++    $('chartLegend').innerHTML=[
++      '<span>O '+__mfChartFormatValueV6(last.open)+'</span>',
++      '<span>H '+__mfChartFormatValueV6(last.high)+'</span>',
++      '<span>L '+__mfChartFormatValueV6(last.low)+'</span>',
++      '<span>C '+__mfChartFormatValueV6(last.close)+'</span>',
++      '<span>'+candles.length+' candles · '+totalTrades+' trades</span>'
++    ].join('');
+ 
+-  const fx=chartRuntime.pendingFx;
+-  chartRuntime.pendingFx=null;
++    try{
++      if(typeof syncChartIndicatorButtons==='function'){
++        syncChartIndicatorButtons();
++      }
++    }catch{}
+ 
+-  if(
+-    fx &&
+-    Number(state.timeframe)===1000
+-  ){
+     requestAnimationFrame(()=>{
+-      try{
+-        maybeTriggerBullishBreakoutFx(
+-          fx.prev,
+-          fx.curr,
+-          fx.levels
+-        );
+-      }catch{}
++      try{chartRuntime.api?.resize?.()}catch{}
+     });
++
++  }catch(error){
++    console.error('[MEMEFLOW_CHART_V6_RENDER_FATAL]',error);
++    try{
++      $('chartEmpty').style.display='grid';
++      $('chartEmpty').innerHTML=
++        '<strong>Chart render error</strong>'+
++        '<span>'+String(error?.message||error)+'</span>';
++      $('chartLegend').innerHTML='';
++    }catch{}
+   }
+ }
+ 
++/* MEMEFLOW_CHART_SINGLE_ENGINE_RECOVERY_V6_DIRTY_SAFE */
++
++
+ function formatPrice(price) {
+   if (!finite(price)) return '$—';
+ 
+@@ -4407,3 +4591,5 @@ init();
+ /* MEMEFLOW_TRADING_CHART_V30_24_OPTIONAL_INDICATORS */
+ 
+ /* MEMEFLOW_TRADING_CHART_V30_26_EXTENDED_INDICATORS */
++
++/* MEMEFLOW_CHART_LIVE_TOUCH_RECOVERY_V7_DIRTY_SAFE */

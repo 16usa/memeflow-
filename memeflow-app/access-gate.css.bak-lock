@@ -1,0 +1,171 @@
+#mf-access-gate{position:fixed;inset:0;z-index:99990;display:grid;place-items:center;padding:18px;background:rgba(4,10,15,.16);backdrop-filter:blur(1.5px) brightness(.78);-webkit-backdrop-filter:blur(1.5px) brightness(.78)}
+.mf-ag-card{width:min(390px,100%);padding:20px;border:1px solid rgba(85,217,255,.24);border-radius:20px;background:rgba(12,22,30,.86);box-shadow:0 18px 60px #0007;color:#edf7fa}
+.mf-ag-kicker{font-size:11px;font-weight:800;letter-spacing:.22em;color:#55d9ff}.mf-ag-card h2{margin:10px 0 7px;font-size:27px;line-height:1.05}.mf-ag-card p{margin:0;color:#8fa3af;line-height:1.55}
+.mf-ag-tiers{display:grid;gap:8px;margin:16px 0}.mf-ag-tier{padding:12px 14px;border:1px solid #243540;border-radius:12px;background:rgba(8,16,22,.78)}.mf-ag-tier b{display:block;font-size:15px}.mf-ag-tier span{font-size:12px;color:#80949f}
+.mf-ag-tier.live{border-color:rgba(85,217,255,.28)}.mf-ag-btn{display:flex;justify-content:center;padding:13px;border:1px solid rgba(85,217,255,.45);border-radius:13px;color:#c9f5ff;text-decoration:none;font-weight:800;background:rgba(85,217,255,.07)}
+#mf-access-ribbon{position:fixed;z-index:99980;left:50%;top:14px;transform:translateX(-50%);padding:8px 14px;border:1px solid rgba(85,217,255,.28);border-radius:999px;background:rgba(8,17,24,.88);backdrop-filter:blur(12px);color:#9beaff;font-size:10px;font-weight:800;letter-spacing:.1em}
+
+.mf-ag-foot{margin-top:10px;text-align:center;font-size:11px;line-height:1.45;color:#7f929d}.mf-ag-card p strong{color:#d8f7ff}
+
+/* MEMEFLOW ACCESS GATE V3 */
+#mf-access-gate{
+  background:rgba(3,9,14,.08)!important;
+  backdrop-filter:brightness(.86) saturate(.9)!important;
+  -webkit-backdrop-filter:brightness(.86) saturate(.9)!important;
+  padding:16px!important;
+}
+
+.mf-ag-card{
+  width:min(360px,calc(100vw - 32px))!important;
+  padding:18px!important;
+  border-radius:18px!important;
+  background:rgba(10,19,27,.91)!important;
+  box-shadow:0 16px 55px rgba(0,0,0,.48)!important;
+}
+
+.mf-ag-kicker{
+  font-size:10px!important;
+}
+
+.mf-ag-card h2{
+  font-size:25px!important;
+  margin:9px 0 7px!important;
+}
+
+.mf-ag-card p{
+  font-size:13px!important;
+  line-height:1.45!important;
+}
+
+.mf-ag-tiers{
+  margin:14px 0!important;
+  gap:7px!important;
+}
+
+.mf-ag-tier{
+  padding:11px 13px!important;
+  border-radius:11px!important;
+}
+
+.mf-ag-tier b{
+  font-size:14px!important;
+}
+
+.mf-ag-tier span{
+  font-size:11px!important;
+  line-height:1.4!important;
+}
+
+.mf-ag-btn{
+  padding:11px 12px!important;
+  min-height:44px!important;
+  font-size:12px!important;
+}
+
+.mf-ag-foot{
+  margin-top:8px!important;
+  font-size:10px!important;
+  line-height:1.4!important;
+}
+
+/* MEMEFLOW ACCESS GATE V4 — COMPACT */
+#mf-access-gate{
+  background:rgba(3,9,14,.055)!important;
+  backdrop-filter:brightness(.90) saturate(.94)!important;
+  -webkit-backdrop-filter:brightness(.90) saturate(.94)!important;
+}
+
+.mf-ag-card{
+  width:min(340px,calc(100vw - 34px))!important;
+  padding:16px!important;
+  border-radius:17px!important;
+  background:rgba(9,18,25,.88)!important;
+  box-shadow:0 14px 44px rgba(0,0,0,.42)!important;
+}
+
+.mf-ag-kicker{
+  font-size:9px!important;
+  letter-spacing:.19em!important;
+}
+
+.mf-ag-card h2{
+  font-size:23px!important;
+  line-height:1.03!important;
+  margin:8px 0 7px!important;
+}
+
+.mf-ag-card p{
+  font-size:12px!important;
+  line-height:1.42!important;
+}
+
+.mf-ag-tiers{
+  margin:12px 0!important;
+  gap:6px!important;
+}
+
+.mf-ag-tier{
+  padding:10px 12px!important;
+}
+
+.mf-ag-tier b{
+  font-size:13px!important;
+}
+
+.mf-ag-tier span{
+  display:block!important;
+  margin-top:3px!important;
+  font-size:10.5px!important;
+  line-height:1.35!important;
+}
+
+.mf-ag-btn{
+  min-height:40px!important;
+  padding:10px 10px!important;
+  font-size:10.5px!important;
+  line-height:1.25!important;
+  text-align:center!important;
+}
+
+.mf-ag-foot{
+  max-width:300px!important;
+  margin:7px auto 0!important;
+  font-size:9.5px!important;
+  line-height:1.35!important;
+}
+
+/* MEMEFLOW ACCESS GATE V5 */
+#mf-access-gate{
+  background:rgba(3,9,14,.10)!important;
+  backdrop-filter:blur(3px) brightness(.82) saturate(.90)!important;
+  -webkit-backdrop-filter:blur(3px) brightness(.82) saturate(.90)!important;
+}
+
+/* MEMEFLOW ACCESS GATE V6 — FINAL POLISH */
+.mf-ag-tier span strong{
+  color:#bff5ff!important;
+  font-weight:800!important;
+}
+
+.mf-ag-foot{
+  color:#9badb7!important;
+  opacity:1!important;
+}
+
+/* MEMEFLOW ACCESS GATE V7 — BALANCED BACKGROUND */
+#mf-access-gate{
+  background:rgba(3,9,14,.075)!important;
+  backdrop-filter:blur(2.2px) brightness(.86) saturate(.92)!important;
+  -webkit-backdrop-filter:blur(2.2px) brightness(.86) saturate(.92)!important;
+}
+
+/* MEMEFLOW SMART VAULT ACCESS V8 */
+#mf-ag-wallet-connect{
+  width:100%;
+  cursor:pointer;
+  font-family:inherit;
+}
+
+#mf-ag-wallet-connect:active{
+  transform:translateY(1px);
+}
