@@ -4869,6 +4869,7 @@ setTimeout(installRealWebV31, 1250);
       const horizontal = Math.abs(dx) > Math.abs(dy) + AXIS_LOCK_GAP;
 
       if (horizontal && Math.abs(dx) >= MIN_SWIPE_X) {
+        state.cards.forEach(card => card.classList.remove('is-hovered'));
         state.suppressClickUntil = Date.now() + CLICK_SUPPRESS_MS;
         shift(state, dx < 0 ? 1 : -1);
       }
