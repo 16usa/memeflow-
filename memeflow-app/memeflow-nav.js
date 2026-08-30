@@ -51,28 +51,22 @@
   }
 
   function resolveHeaderHost() {
-    const path = normalizedPath();
+    const unifiedHeader = document.querySelector('.mf-site-header');
 
-    if (path.endsWith('/trading.html')) {
-      return document.querySelector('.topbar .top-actions');
+    if (unifiedHeader) {
+      return (
+        unifiedHeader.querySelector('.top-actions') ||
+        unifiedHeader
+      );
     }
 
-    if (path.endsWith('/settings.html')) {
-      return document.querySelector('.mf-settings-page-header');
-    }
-
-    if (path.endsWith('/system-tokens.html')) {
-      return document.querySelector('.flow-header');
-    }
-
-    if (path.endsWith('/system.html')) {
-      return document.querySelector('.topbar .top-actions');
-    }
-
+    /* Legacy fallback for any page not migrated yet. */
     return (
       document.querySelector('.topbar .top-actions') ||
       document.querySelector('.mf-settings-page-header') ||
-      document.querySelector('.flow-header')
+      document.querySelector('.flow-header') ||
+      document.querySelector('.mf-vault-topbar .top-actions') ||
+      document.querySelector('.mf-hiw-topbar .top-actions')
     );
   }
 

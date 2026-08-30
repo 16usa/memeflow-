@@ -1577,7 +1577,7 @@ body.mf-settings-standalone.mf293-settings-open {
 .mf-settings-page-shell {
   width: min(1180px, 100%);
   margin: 0 auto;
-  padding: max(10px, env(safe-area-inset-top)) 12px 0;
+  padding: 0 12px 0;
 }
 .mf-settings-page-header {
   min-height: 64px;
@@ -1723,7 +1723,7 @@ body.mf-settings-standalone .mf293-settings-footer {
   }
 }
 @media (max-width: 760px) {
-  .mf-settings-page-shell { padding: max(7px, env(safe-area-inset-top)) 7px 0; }
+  .mf-settings-page-shell { padding: 0 7px 0; }
   .mf-settings-page-header { min-height: 58px; padding: 7px 8px; border-radius: 13px; }
   .mf-settings-page-header-left { gap: 8px; }
   .mf-settings-page-back { width: 38px; height: 38px; flex-basis: 38px; }
@@ -1781,10 +1781,7 @@ body.mf-settings-standalone {
 
 body.mf-settings-standalone .mf-settings-page-shell {
   width: min(1180px, 100%);
-  padding:
-    max(10px, env(safe-area-inset-top))
-    12px
-    0;
+  padding: 0 12px 0;
 }
 
 
@@ -2043,10 +2040,7 @@ body.mf-settings-standalone .mf293-settings-error {
 
 @media (max-width: 760px) {
   body.mf-settings-standalone .mf-settings-page-shell {
-    padding:
-      max(7px, env(safe-area-inset-top))
-      7px
-      0;
+    padding: 0 7px 0;
   }
 
   
