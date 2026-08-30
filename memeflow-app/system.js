@@ -4768,37 +4768,14 @@ setTimeout(installRealWebV31, 1250);
 
   function render(state, pulseCard = null) {
     const n = state.cards.length;
-    const ua = String(navigator.userAgent || '');
-    const touchPoints = Number(navigator.maxTouchPoints || 0);
-
-    const tabletLike =
-      touchPoints > 1 &&
-      Math.min(window.screen.width, window.screen.height) >= 768;
-
-    const phone =
-      /iPhone|iPod|Android.*Mobile/i.test(ua) &&
-      !tabletLike;
-
-    const five =
-      n === 5 &&
-      !phone;
-    document.documentElement.classList.toggle('mf-five-desktop', five);
 
     state.cards.forEach((card, index) => {
       const diff = (index - state.activeIndex + n) % n;
       let slot = 'hidden';
 
-      if (five) {
-        if (diff === 0) slot = 'center';
-        else if (diff === 1) slot = 'right';
-        else if (diff === 2) slot = 'far-right';
-        else if (diff === n - 1) slot = 'left';
-        else if (diff === n - 2) slot = 'far-left';
-      } else {
-        if (diff === 0) slot = 'center';
-        else if (diff === 1) slot = 'right';
-        else if (diff === n - 1) slot = 'left';
-      }
+      if (diff === 0) slot = 'center';
+      else if (diff === 1) slot = 'right';
+      else if (diff === n - 1) slot = 'left';
 
       card.dataset.slot = slot;
       card.setAttribute('aria-current', slot === 'center' ? 'true' : 'false');
