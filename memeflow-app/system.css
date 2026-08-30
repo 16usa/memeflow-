@@ -2678,7 +2678,7 @@ html.mf-live-inspector-standalone-layout-v1 {
 
 
 /* Desktop five-card geometry */
-html.mf-five-desktop .mfpg-card[data-slot="far-left"] {
+.mfpg-variant2-clean-v1 .mfpg-card[data-slot="far-left"] {
   z-index:1;
   opacity:.38!important;
   visibility:visible!important;
@@ -2705,7 +2705,7 @@ html.mf-five-desktop .mfpg-card[data-slot="right"] {
     rotateY(-6deg) translateZ(-58px) scale(.86)!important;
 }
 
-html.mf-five-desktop .mfpg-card[data-slot="far-right"] {
+.mfpg-variant2-clean-v1 .mfpg-card[data-slot="far-right"] {
   z-index:1;
   opacity:.38!important;
   visibility:visible!important;
@@ -2730,16 +2730,16 @@ html.mf-five-desktop .mfpg-card[data-slot="right"]:focus-visible {
     rotateY(-4deg) translateZ(-15px) scale(.89)!important;
 }
 
-html.mf-five-desktop .mfpg-card[data-slot="far-left"]:hover,
-html.mf-five-desktop .mfpg-card[data-slot="far-left"]:focus-visible {
+.mfpg-variant2-clean-v1 .mfpg-card[data-slot="far-left"]:hover,
+.mfpg-variant2-clean-v1 .mfpg-card[data-slot="far-left"]:focus-visible {
   opacity:.55!important;
   transform:translate(-50%,-50%)
     translateX(clamp(-600px,-33vw,-275px))
     rotateY(8deg) translateZ(-75px) scale(.77)!important;
 }
 
-html.mf-five-desktop .mfpg-card[data-slot="far-right"]:hover,
-html.mf-five-desktop .mfpg-card[data-slot="far-right"]:focus-visible {
+.mfpg-variant2-clean-v1 .mfpg-card[data-slot="far-right"]:hover,
+.mfpg-variant2-clean-v1 .mfpg-card[data-slot="far-right"]:focus-visible {
   opacity:.55!important;
   transform:translate(-50%,-50%)
     translateX(clamp(275px,33vw,600px))
