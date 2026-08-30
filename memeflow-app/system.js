@@ -4768,13 +4768,9 @@ setTimeout(installRealWebV31, 1250);
 
   function render(state, pulseCard = null) {
     const n = state.cards.length;
-    const ua = String(navigator.userAgent || '');
-    const mobile =
-      /Android|iPhone|iPad|iPod|Mobile/i.test(ua) ||
-      (navigator.platform === 'MacIntel' &&
-       Number(navigator.maxTouchPoints || 0) > 1);
-
-    const five = n === 5 && !mobile;
+    const five =
+      n === 5 &&
+      window.innerWidth >= 901;
     document.documentElement.classList.toggle('mf-five-desktop', five);
 
     state.cards.forEach((card, index) => {
