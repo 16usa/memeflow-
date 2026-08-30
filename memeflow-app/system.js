@@ -4795,29 +4795,13 @@ setTimeout(installRealWebV31, 1250);
     updateDots(state);
   }
 
-  function shift(state, direction, touchSwipe = false) {
-    const outgoingCard = state.cards[state.activeIndex];
-
-    if (touchSwipe) {
-      state.cards.forEach(card => card.classList.remove('is-hovered'));
-      outgoingCard?.classList.add('is-hovered');
-
-      const active = document.activeElement;
-      if (active && state.cards.includes(active) && typeof active.blur === 'function') {
-        active.blur();
-      }
-    }
-
+  function shift(state, direction) {
     state.activeIndex = wrapIndex(state.activeIndex + direction, state.cards.length);
     state.gallery.classList.add('is-swipe-armed');
     render(state, state.cards[state.activeIndex]);
-
     window.setTimeout(() => {
       state.gallery.classList.remove('is-swipe-armed');
-      state.cards.forEach(card => {
-        card.classList.remove('is-selected-pulse');
-        if (touchSwipe) card.classList.remove('is-hovered');
-      });
+      state.cards.forEach(card => card.classList.remove('is-selected-pulse'));
     }, 260);
   }
 
@@ -4894,7 +4878,7 @@ setTimeout(installRealWebV31, 1250);
       if (horizontal && Math.abs(dx) >= MIN_SWIPE_X) {
         state.cards.forEach(card => card.classList.remove('is-hovered'));
         state.suppressClickUntil = Date.now() + CLICK_SUPPRESS_MS;
-        shift(state, dx < 0 ? 1 : -1, true);
+        shift(state, dx < 0 ? 1 : -1);
       }
 
       axis = null;
