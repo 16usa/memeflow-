@@ -2397,7 +2397,7 @@ html.mf-live-inspector-standalone-layout-v1 {
   filter: saturate(.98) brightness(.98);
 }
 
-.mfpg-variant2-clean-v1 .mfpg-card[data-slot="left"]:hover,
+.mfpg-variant2-clean-v1 .mfpg-card[data-slot="left"].is-hovered,
 .mfpg-variant2-clean-v1 .mfpg-card[data-slot="left"]:focus-visible {
   opacity: .79;
   transform:
@@ -2408,7 +2408,7 @@ html.mf-live-inspector-standalone-layout-v1 {
     scale(.89);
 }
 
-.mfpg-variant2-clean-v1 .mfpg-card[data-slot="center"]:hover,
+.mfpg-variant2-clean-v1 .mfpg-card[data-slot="center"].is-hovered,
 .mfpg-variant2-clean-v1 .mfpg-card[data-slot="center"]:focus-visible {
   transform:
     translate(-50%, -50%)
@@ -2416,7 +2416,7 @@ html.mf-live-inspector-standalone-layout-v1 {
     scale(1.07);
 }
 
-.mfpg-variant2-clean-v1 .mfpg-card[data-slot="right"]:hover,
+.mfpg-variant2-clean-v1 .mfpg-card[data-slot="right"].is-hovered,
 .mfpg-variant2-clean-v1 .mfpg-card[data-slot="right"]:focus-visible {
   opacity: .79;
   transform:
