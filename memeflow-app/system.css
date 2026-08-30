@@ -2398,6 +2398,7 @@ html.mf-live-inspector-standalone-layout-v1 {
 }
 
 .mfpg-variant2-clean-v1 .mfpg-card[data-slot="left"]:hover,
+.mfpg-variant2-clean-v1 .mfpg-card[data-slot="left"].is-swipe-retained,
 .mfpg-variant2-clean-v1 .mfpg-card[data-slot="left"]:focus-visible {
   opacity: .79;
   transform:
@@ -2417,6 +2418,7 @@ html.mf-live-inspector-standalone-layout-v1 {
 }
 
 .mfpg-variant2-clean-v1 .mfpg-card[data-slot="right"]:hover,
+.mfpg-variant2-clean-v1 .mfpg-card[data-slot="right"].is-swipe-retained,
 .mfpg-variant2-clean-v1 .mfpg-card[data-slot="right"]:focus-visible {
   opacity: .79;
   transform:
