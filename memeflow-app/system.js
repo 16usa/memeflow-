@@ -4775,14 +4775,7 @@ setTimeout(installRealWebV31, 1250);
 
     const five =
       n === 5 &&
-      !phone &&
-      (
-        window.innerWidth >= 901 ||
-        (
-          window.innerWidth >= 768 &&
-          window.innerWidth > window.innerHeight
-        )
-      );
+      !phone;
     document.documentElement.classList.toggle('mf-five-desktop', five);
 
     state.cards.forEach((card, index) => {
