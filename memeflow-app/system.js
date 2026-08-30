@@ -4768,10 +4768,16 @@ setTimeout(installRealWebV31, 1250);
 
   function render(state, pulseCard = null) {
     const n = state.cards.length;
+    const ua = String(navigator.userAgent || '');
+    const touchPoints = Number(navigator.maxTouchPoints || 0);
+
+    const tabletLike =
+      touchPoints > 1 &&
+      Math.min(window.screen.width, window.screen.height) >= 768;
+
     const phone =
-      /iPhone|iPod|Android.*Mobile/i.test(
-        String(navigator.userAgent || '')
-      );
+      /iPhone|iPod|Android.*Mobile/i.test(ua) &&
+      !tabletLike;
 
     const five =
       n === 5 &&
