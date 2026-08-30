@@ -2915,16 +2915,16 @@ html.mf-live-inspector-standalone-layout-v1 {
 /* ===== MEMEFLOW_GALLERY_RESPONSIVE_WIDTH_V1 ===== */
 
 /*
-  Desktop gallery composition follows the available page width.
-  Center card proportions remain unchanged.
-  Mobile geometry remains unchanged.
+  Responsive gallery spread.
+  Phone layout stays unchanged below 601px.
+  Wider layouts use the available page width.
 */
 
-@media (min-width: 901px) {
+@media (min-width: 601px) {
   .mfpg-variant2-clean-v1 .mfpg-card[data-slot="left"] {
     transform:
       translate(-50%, -50%)
-      translateX(clamp(-600px, -34vw, -306px))
+      translateX(clamp(-720px, -40vw, -320px))
       rotateY(6deg)
       translateZ(-78px)
       scale(.86) !important;
@@ -2933,7 +2933,7 @@ html.mf-live-inspector-standalone-layout-v1 {
   .mfpg-variant2-clean-v1 .mfpg-card[data-slot="right"] {
     transform:
       translate(-50%, -50%)
-      translateX(clamp(306px, 34vw, 600px))
+      translateX(clamp(320px, 40vw, 720px))
       rotateY(-6deg)
       translateZ(-78px)
       scale(.86) !important;
@@ -2943,7 +2943,7 @@ html.mf-live-inspector-standalone-layout-v1 {
   .mfpg-variant2-clean-v1 .mfpg-card[data-slot="left"]:focus-visible {
     transform:
       translate(-50%, -50%)
-      translateX(clamp(-580px, -33vw, -294px))
+      translateX(clamp(-700px, -39vw, -310px))
       rotateY(4deg)
       translateZ(-18px)
       scale(.89) !important;
@@ -2953,7 +2953,7 @@ html.mf-live-inspector-standalone-layout-v1 {
   .mfpg-variant2-clean-v1 .mfpg-card[data-slot="right"]:focus-visible {
     transform:
       translate(-50%, -50%)
-      translateX(clamp(294px, 33vw, 580px))
+      translateX(clamp(310px, 39vw, 700px))
       rotateY(-4deg)
       translateZ(-18px)
       scale(.89) !important;
