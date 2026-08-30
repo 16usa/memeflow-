@@ -2915,48 +2915,48 @@ html.mf-live-inspector-standalone-layout-v1 {
 /* ===== MEMEFLOW_GALLERY_RESPONSIVE_WIDTH_V1 ===== */
 
 /*
-  Responsive gallery spread.
-  Phone layout stays unchanged below 601px.
-  Wider layouts use the available page width.
+  Balanced responsive gallery geometry.
+  Desktop uses more horizontal space without separating the cards too far.
+  Phone layout remains unchanged.
 */
 
 @media (min-width: 601px) {
   .mfpg-variant2-clean-v1 .mfpg-card[data-slot="left"] {
     transform:
       translate(-50%, -50%)
-      translateX(clamp(-720px, -40vw, -320px))
+      translateX(clamp(-470px, -26vw, -270px))
       rotateY(6deg)
-      translateZ(-78px)
-      scale(.86) !important;
+      translateZ(-60px)
+      scale(.90) !important;
   }
 
   .mfpg-variant2-clean-v1 .mfpg-card[data-slot="right"] {
     transform:
       translate(-50%, -50%)
-      translateX(clamp(320px, 40vw, 720px))
+      translateX(clamp(270px, 26vw, 470px))
       rotateY(-6deg)
-      translateZ(-78px)
-      scale(.86) !important;
+      translateZ(-60px)
+      scale(.90) !important;
   }
 
   .mfpg-variant2-clean-v1 .mfpg-card[data-slot="left"]:hover,
   .mfpg-variant2-clean-v1 .mfpg-card[data-slot="left"]:focus-visible {
     transform:
       translate(-50%, -50%)
-      translateX(clamp(-700px, -39vw, -310px))
+      translateX(clamp(-455px, -25vw, -260px))
       rotateY(4deg)
-      translateZ(-18px)
-      scale(.89) !important;
+      translateZ(-10px)
+      scale(.93) !important;
   }
 
   .mfpg-variant2-clean-v1 .mfpg-card[data-slot="right"]:hover,
   .mfpg-variant2-clean-v1 .mfpg-card[data-slot="right"]:focus-visible {
     transform:
       translate(-50%, -50%)
-      translateX(clamp(310px, 39vw, 700px))
+      translateX(clamp(260px, 25vw, 455px))
       rotateY(-4deg)
-      translateZ(-18px)
-      scale(.89) !important;
+      translateZ(-10px)
+      scale(.93) !important;
   }
 }
 
