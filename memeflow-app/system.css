@@ -2390,7 +2390,6 @@ html.mf-live-inspector-standalone-layout-v1 {
     scale(.72) !important;
 }
 
-.mfpg-variant2-clean-v1 .mfpg-card:hover,
 .mfpg-variant2-clean-v1 .mfpg-card:focus-visible,
 .mfpg-variant2-clean-v1 .mfpg-card.is-hovered {
   outline: none;

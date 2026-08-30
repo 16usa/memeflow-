@@ -4536,8 +4536,15 @@ setTimeout(installRealWebV31, 1250);
       <span class="mfpg-pulse" aria-hidden="true"></span>
     `;
 
-    card.addEventListener('pointerenter', () => card.classList.add('is-hovered'));
-    card.addEventListener('pointerleave', () => card.classList.remove('is-hovered'));
+    card.addEventListener('pointerenter', event => {
+      if (event.pointerType === 'mouse') {
+        card.classList.add('is-hovered');
+      }
+    });
+
+    card.addEventListener('pointerleave', () => {
+      card.classList.remove('is-hovered');
+    });
 
     card.addEventListener('click', () => {
       if (card.dataset.busy === '1') return;
