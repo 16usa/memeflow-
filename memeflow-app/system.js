@@ -4768,17 +4768,34 @@ setTimeout(installRealWebV31, 1250);
 
   function render(state, pulseCard = null) {
     const n = state.cards.length;
+    const desktopFiveVisible =
+      n === 5 &&
+      window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+
     state.cards.forEach((card, index) => {
       const diff = (index - state.activeIndex + n) % n;
       let slot = 'hidden';
-      if (diff === 0) slot = 'center';
-      else if (diff === 1) slot = 'right';
-      else if (diff === n - 1) slot = 'left';
+
+      if (desktopFiveVisible) {
+        if (diff === 0) slot = 'center';
+        else if (diff === 1) slot = 'right';
+        else if (diff === 2) slot = 'far-right';
+        else if (diff === n - 1) slot = 'left';
+        else if (diff === n - 2) slot = 'far-left';
+      } else {
+        if (diff === 0) slot = 'center';
+        else if (diff === 1) slot = 'right';
+        else if (diff === n - 1) slot = 'left';
+      }
 
       card.dataset.slot = slot;
       card.setAttribute('aria-current', slot === 'center' ? 'true' : 'false');
-      card.classList.toggle('is-selected-pulse', pulseCard === card && slot === 'center');
+      card.classList.toggle(
+        'is-selected-pulse',
+        pulseCard === card && slot === 'center'
+      );
     });
+
     updateDots(state);
   }
 

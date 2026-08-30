@@ -1787,19 +1787,7 @@ body.mf-settings-standalone .mf-settings-page-shell {
     0;
 }
 
-body.mf-settings-standalone .mf-settings-page-header {
-  min-height: 64px;
-  padding: 8px 12px;
-  border: 1px solid var(--mf-ui-line) !important;
-  border-radius: 15px;
-  background:
-    linear-gradient(
-      180deg,
-      rgba(20, 28, 37, .92),
-      rgba(15, 20, 26, .94)
-    ) !important;
-  box-shadow: none !important;
-}
+
 
 body.mf-settings-standalone .mf-settings-page-back {
   border-color: var(--mf-ui-line) !important;
@@ -2061,11 +2049,7 @@ body.mf-settings-standalone .mf293-settings-error {
       0;
   }
 
-  body.mf-settings-standalone .mf-settings-page-header {
-    min-height: 58px;
-    padding: 7px 8px;
-    border-radius: 13px;
-  }
+  
 
   body.mf-settings-standalone .mf-settings-page-header-left {
     gap: 8px;
@@ -2961,3 +2945,77 @@ html.mf-live-inspector-standalone-layout-v1 {
 }
 
 /* ===== /MEMEFLOW_GALLERY_RESPONSIVE_WIDTH_V1 ===== */
+
+/* ===== MEMEFLOW_GALLERY_SHOW_ALL_FIVE_V1 ===== */
+
+/*
+  Desktop-only five-card composition.
+  Touch and mobile layouts are not modified.
+*/
+
+.mfpg-variant2-clean-v1 .mfpg-card[data-slot="far-left"],
+.mfpg-variant2-clean-v1 .mfpg-card[data-slot="far-right"] {
+  z-index: 0;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+@media (hover: hover) and (pointer: fine) {
+
+  .mfpg-variant2-clean-v1 .mfpg-card[data-slot="far-left"] {
+    z-index: 1;
+    opacity: .34 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+    filter: saturate(.64) brightness(.62);
+    transform:
+      translate(-50%, -50%)
+      translateX(clamp(-650px, -36vw, -470px))
+      rotateY(12deg)
+      translateZ(-135px)
+      scale(.74) !important;
+  }
+
+  .mfpg-variant2-clean-v1 .mfpg-card[data-slot="left"] {
+    z-index: 3;
+    opacity: .62 !important;
+    transform:
+      translate(-50%, -50%)
+      translateX(clamp(-390px, -22vw, -270px))
+      rotateY(6deg)
+      translateZ(-60px)
+      scale(.88) !important;
+  }
+
+  .mfpg-variant2-clean-v1 .mfpg-card[data-slot="center"] {
+    z-index: 6;
+  }
+
+  .mfpg-variant2-clean-v1 .mfpg-card[data-slot="right"] {
+    z-index: 3;
+    opacity: .62 !important;
+    transform:
+      translate(-50%, -50%)
+      translateX(clamp(270px, 22vw, 390px))
+      rotateY(-6deg)
+      translateZ(-60px)
+      scale(.88) !important;
+  }
+
+  .mfpg-variant2-clean-v1 .mfpg-card[data-slot="far-right"] {
+    z-index: 1;
+    opacity: .34 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+    filter: saturate(.64) brightness(.62);
+    transform:
+      translate(-50%, -50%)
+      translateX(clamp(470px, 36vw, 650px))
+      rotateY(-12deg)
+      translateZ(-135px)
+      scale(.74) !important;
+  }
+}
+
+/* ===== /MEMEFLOW_GALLERY_SHOW_ALL_FIVE_V1 ===== */
