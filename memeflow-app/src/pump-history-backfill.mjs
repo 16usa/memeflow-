@@ -76,6 +76,13 @@ function coinToken(coin,{recent=false}={}){
       coin?.holderCount ??
       coin?.holders
     ),
+    // MEMEFLOW_FAST_HOLDER_PREVIEW_V2
+    // Display-only Pump reference. Never canonical/trading holder truth.
+    previewHolderCount:finite(
+      coin?.holder_count ??
+      coin?.holderCount ??
+      coin?.holders
+    ),
     pumpReferenceAt:now,
     complete:coin?.complete===true,
     raydiumPool:coin?.raydium_pool||coin?.raydiumPool||null,

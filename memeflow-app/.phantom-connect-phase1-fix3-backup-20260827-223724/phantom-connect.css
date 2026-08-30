@@ -24,13 +24,13 @@
   display:block;
   margin-top:3px;
   color:var(--muted,#84919f);
-  font-size:9px;
+  font-size:var(--mf-type-meta);
   line-height:1.35
 }
 
 .mf-pc-head i{
   font-style:normal;
-  font-size:8px;
+  font-size:var(--mf-type-micro);
   letter-spacing:.08em;
   color:var(--muted,#84919f)
 }
@@ -55,7 +55,7 @@
 
 .mf-pc-meta b{
   display:block;
-  font-size:10px;
+  font-size:var(--mf-type-ui);
   white-space:nowrap;
   overflow:hidden;
   text-overflow:ellipsis
@@ -114,7 +114,7 @@
   border:1px solid var(--line,#28333e);
   border-radius:9px;
   padding:8px;
-  font-size:9px;
+  font-size:var(--mf-type-meta);
   line-height:1.5;
   color:var(--muted,#84919f)
 }

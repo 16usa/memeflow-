@@ -754,12 +754,38 @@ function isOpenPositionRow(row) {
 }
 
 function holderCount(row) {
-  return (
+  const exact =
     row?.holder?.count ??
     row?.holderCount ??
     row?.holders ??
-    '—'
-  );
+    null;
+
+  if (finite(exact)) {
+    return fmt(exact, 0);
+  }
+
+  // MEMEFLOW_FAST_HOLDER_PREVIEW_V2
+  // Pump history is display-only approximation until canonical RPC arrives.
+  const preview =
+    row?.previewHolderCount ??
+    row?.holder?.previewCount ??
+    null;
+
+  if (finite(preview) && Number(preview) > 0) {
+    return '~' + fmt(preview, 0);
+  }
+
+  const observed =
+    row?.holder?.observedCount ??
+    row?.observedHolderCount ??
+    null;
+
+  // Event ledger is only a strict lower-bound fallback.
+  if (finite(observed) && Number(observed) >= 5) {
+    return fmt(observed, 0) + '+';
+  }
+
+  return '—';
 }
 
 function top10(row) {

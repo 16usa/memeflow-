@@ -69,7 +69,6 @@ author = "agent"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "bash ./run-project.sh"
-
 [[ports]]
 localPort = 3000
 externalPort = 80

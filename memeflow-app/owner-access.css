@@ -26,11 +26,11 @@
   display:block;
   margin-top:3px;
   color:var(--muted,#84919f);
-  font-size:9px
+  font-size:var(--mf-type-meta)
 }
 
 .mf-owner-access-head span{
-  font-size:8px;
+  font-size:var(--mf-type-micro);
   letter-spacing:.08em;
   color:var(--red,#ff6679);
   text-align:right
@@ -73,7 +73,7 @@
 .mf-owner-access-note,
 .mf-owner-access-message{
   margin-top:8px;
-  font-size:9px;
+  font-size:var(--mf-type-meta);
   line-height:1.5;
   color:var(--muted,#84919f)
 }

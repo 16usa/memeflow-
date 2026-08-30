@@ -1,0 +1,651 @@
+diff --git a/memeflow-app/trading.css b/memeflow-app/trading.css
+index 22091d6..334ed80 100644
+--- a/memeflow-app/trading.css
++++ b/memeflow-app/trading.css
+@@ -447,43 +447,20 @@ button { cursor: pointer; }
+   height: 25px;
+ }
+ 
+-.chart-wrap {
+-  position: relative;
+-  height: 380px;
+-  background:
+-    linear-gradient(rgba(111, 154, 172, .025) 1px, transparent 1px),
+-    linear-gradient(90deg, rgba(111, 154, 172, .02) 1px, transparent 1px);
+-  background-size: 100% 64px, 85px 100%;
+-}
+ 
+-#chartCanvas {
+-  display: block;
+-  width: 100%;
+-  height: 100%;
+-}
+ 
+-.chart-empty {
+-  position: absolute;
+-  inset: 0;
+-  display: grid;
+-  place-content: center;
+-  gap: 6px;
+-  text-align: center;
+-  pointer-events: none;
+-}
++
++
++
++
++
++
+ 
+ .chart-empty strong { color: #728a95; font-size: 12px; }
+ .chart-empty span { max-width: 340px; color: #425963; font-size: 8px; line-height: 1.5; }
+ 
+-.chart-legend {
+-  position: absolute;
+-  top: 8px;
+-  left: 10px;
+-  display: flex;
+-  flex-wrap: wrap;
+-  gap: 7px;
+-  pointer-events: none;
+-}
++
++
+ 
+ .chart-legend span {
+   padding: 3px 5px;
+@@ -961,7 +938,8 @@ button { cursor: pointer; }
+   .token-name-row h1 { max-width: 150px; font-size: 11px; }
+   .token-price { font-size: 11px; }
+   .token-market, .token-meta { font-size: 6px; }
+-  .chart-wrap { height: 290px; }
++
++
+ 
+   .selected-metrics div {
+     min-height: 42px;
+@@ -1005,7 +983,8 @@ button { cursor: pointer; }
+     font-size: 8px;
+   }
+ 
+-  .chart-wrap { height: 255px; }
++
++
+   .timeframes { padding: 5px 7px; gap: 3px; }
+   .timeframes button { min-width: 30px; font-size: 6px; }
+   .selected-metrics { grid-template-columns: repeat(5, 1fr); }
+@@ -1021,33 +1000,20 @@ button { cursor: pointer; }
+ 
+ /* MEMEFLOW_TRADING_CHART_V30_4
+    Lightweight Charts host only. No global design overrides. */
+-.chart-wrap {
+-  background: #02070a;
+-}
+ 
+-#chartCanvas {
+-  position: absolute;
+-  inset: 0;
+-  z-index: 1;
+-  display: block;
+-  width: 100%;
+-  height: 100%;
+-  touch-action: pan-y;
+-}
+ 
+-#chartCanvas > div {
+-  width: 100% !important;
+-  height: 100% !important;
+-}
+ 
+-.chart-legend {
+-  z-index: 4;
+-  max-width: calc(100% - 24px);
+-}
+ 
+-.chart-empty {
+-  z-index: 5;
+-}
++
++
++
++
++
++
++
++
++
++
+ 
+ .chart-credit {
+   position: absolute;
+@@ -1135,48 +1101,33 @@ button { cursor: pointer; }
+ /* MEMEFLOW_TRADING_CHART_V30_9_FAST_CONTINUOUS_TAPE_FIXED_LEVELS */
+ /* MEMEFLOW_TRADING_CHART_V30_15_2_GMGN_ECHARTS
+    Apache ECharts price + volume pane. The trading/data engine is unchanged. */
+-.chart-wrap {
+-  height: 455px;
+-  background: #02070a;
+-}
+ 
+-#chartCanvas {
+-  position: absolute;
+-  inset: 0;
+-  z-index: 1;
+-  width: 100%;
+-  height: 100%;
+-  touch-action: pan-y;
+-  -webkit-user-select: none;
+-  user-select: none;
+-}
+ 
+-#chartCanvas canvas {
+-  outline: 0;
+-}
+ 
+-.chart-legend {
+-  z-index: 6;
+-}
+ 
+-.chart-empty {
+-  z-index: 7;
+-}
++
++
++
++
++
++
++
++
++
++
+ 
+ .live-trade-tape {
+   z-index: 6;
+ }
+ 
+ @media (max-width: 820px) {
+-  .chart-wrap {
+-    height: 365px;
+-  }
++
++
+ }
+ 
+ @media (max-width: 430px) {
+-  .chart-wrap {
+-    height: 350px;
+-  }
++
++
+ 
+   .timeframes {
+     overflow-x: auto;
+@@ -1302,16 +1253,12 @@ button { cursor: pointer; }
+ /* MEMEFLOW_TRADING_CHART_V30_25_INDICATOR_TOUCH_LAYER
+    Keep the ECharts/ZRender touch surface inside chart-wrap and guarantee that
+    the sibling indicator toolbar receives taps on iOS Safari. */
+-.chart-wrap {
+-  overflow: hidden;
+-  isolation: isolate;
+-  z-index: 0;
+-}
++
++
+ 
+ #chartCanvas,
+-#chartCanvas > div {
+-  overflow: hidden !important;
+-}
++
++
+ 
+ .indicator-bar {
+   position: relative;
+@@ -1354,7 +1301,8 @@ button { cursor: pointer; }
+   .timeframes { height: 33px; padding: 4px 7px; gap: 3px; }
+   .timeframes button { min-width: 31px; height: 23px; font-size: 6px; }
+ 
+-  .chart-wrap { height: 330px; }
++
++
+   .indicator-bar { height: 31px; }
+   .indicator-scroll { padding: 0 5px; }
+   .indicator-bar button { min-width: 34px; padding: 0 6px; font-size: 6px; }
+@@ -1465,7 +1413,8 @@ button { cursor: pointer; }
+ }
+ 
+ @media (max-width: 430px) {
+-  .chart-wrap { height: 315px; }
++
++
+ }
+ /* MEMEFLOW_COMPACT_TRADING_V4_END */
+ 
+@@ -2106,3 +2055,59 @@ button { cursor: pointer; }
+   }
+ }
+ /* ===== /MEMEFLOW_RECENT_TRADES_TRUE_TWO_ROWS_V4 ===== */
++
++/* MEMEFLOW_CHART_CANONICAL_SURFACE_V10 */
++.chart-wrap {
++  position: relative;
++  height: 455px;
++  overflow: hidden;
++  isolation: isolate;
++  z-index: 0;
++  background: #131b23;
++}
++#chartCanvas {
++  position: absolute;
++  inset: 0;
++  z-index: 1;
++  display: block;
++  width: 100%;
++  height: 100%;
++  overflow: hidden;
++  background: #131b23;
++  touch-action: pan-y;
++  -webkit-user-select: none;
++  user-select: none;
++}
++#chartCanvas > div {
++  width: 100% !important;
++  height: 100% !important;
++  overflow: hidden !important;
++}
++#chartCanvas canvas { outline: 0; }
++.chart-legend {
++  position: absolute;
++  top: 8px;
++  left: 10px;
++  z-index: 6;
++  max-width: calc(100% - 24px);
++  display: flex;
++  flex-wrap: wrap;
++  gap: 7px;
++  pointer-events: none;
++}
++.chart-empty {
++  position: absolute;
++  inset: 0;
++  z-index: 7;
++  display: grid;
++  place-content: center;
++  gap: 6px;
++  text-align: center;
++  pointer-events: none;
++}
++@media (max-width: 820px) {
++  .chart-wrap { height: 365px; }
++}
++@media (max-width: 430px) {
++  .chart-wrap { height: 350px; }
++}
+diff --git a/memeflow-app/trading.html b/memeflow-app/trading.html
+index dfc358d..420fa0a 100644
+--- a/memeflow-app/trading.html
++++ b/memeflow-app/trading.html
+@@ -10,31 +10,12 @@
+   <meta name="mf-trading-build" content="remove-mobile-ghost-wallet-v2-20260826">
+   <meta name="theme-color" content="#03070a">
+   <title>MEMEFLOW Trading Terminal</title>
+-  <link rel="stylesheet" href="/trading.css?v=recent-trades-true-two-rows-v4-20260826">
++  <link rel="stylesheet" href="/trading.css?v=chart-clean-v10-20260829">
+ <link rel="stylesheet" href="/memeflow-brand.css?v=final-v6">
+   <!-- MEMEFLOW_TRADING_CHART_RESTORE_SITE_BG_V2 -->
+   <!-- MEMEFLOW_TRADING_CHART_MATCH_PANEL_V3 -->
+ 
+-<style id="mfTradingChartUnifyAllStatesV4">
+-/* ===== MEMEFLOW_TRADING_CHART_UNIFY_ALL_STATES_V4 ===== */
+-/*
+-  The trading chart should feel like one unified panel in all states.
+-  We use the exact panel surface color already chosen for the live chart.
+-  This is presentation only. No chart rendering logic is touched.
+-*/
+-html[data-mf-chart-unify-all-states="1"] {
+-  --mf-chart-panel-bg: #131b23;
+-}
+-
+-html[data-mf-chart-unify-all-states="1"] #chartCanvas,
+-html[data-mf-chart-unify-all-states="1"] #chartCanvas > div,
+-html[data-mf-chart-unify-all-states="1"] [data-mf-chart-unified="1"],
+-html[data-mf-chart-unify-all-states="1"] [data-mf-chart-placeholder="1"] {
+-  background: var(--mf-chart-panel-bg) !important;
+-  background-color: var(--mf-chart-panel-bg) !important;
+-}
+-/* ===== /MEMEFLOW_TRADING_CHART_UNIFY_ALL_STATES_V4 ===== */
+-</style>
++
+ 
+   <!-- MEMEFLOW_GLOBAL_RIGHT_DRAWER_NAV_V1 -->
+   <link rel="stylesheet" href="/memeflow-nav.css?v=global-right-drawer-v1">
+@@ -279,90 +260,14 @@ html[data-mf-chart-unify-all-states="1"] [data-mf-chart-placeholder="1"] {
+   </div>
+ 
+   <script src="https://cdn.jsdelivr.net/npm/echarts@6.1.0/dist/echarts.min.js"></script>
+-  <script type="module" src="/trading.js?v=chart-v7-3-viewport-levels-20260829"></script>
++  <script type="module" src="/trading.js?v=chart-clean-v10-20260829"></script>
+   <!-- MEMEFLOW_TRADING_CHART_V30_4 -->
+   <!-- MEMEFLOW_TRADING_CHART_V30_5_EXECUTION_OHLC -->
+   <!-- MEMEFLOW_TRADING_CHART_V30_6_USD_CURVE_MARK -->
+ 
+ 
+ <script>
+-/* ===== MEMEFLOW_TRADING_CHART_UNIFY_ALL_STATES_V4 ===== */
+-(() => {
+-  if (window.__mfTradingChartUnifyAllStatesV4) return;
+-  window.__mfTradingChartUnifyAllStatesV4 = true;
+-  document.documentElement.setAttribute('data-mf-chart-unify-all-states', '1');
+-
+-  const BG = '#131b23';
+-  const STATE_MATCHERS = [
+-    /syncing real trades/i,
+-    /live candles/i,
+-    /select a token/i,
+-    /candles use confirmed buy\s*\/\s*sell events only/i,
+-    /history and the live pump trade stream reconnect automatically/i,
+-    /tap the top-right value to switch usd price \/ market cap/i
+-  ];
+-
+-  const paint = (node, kind = 'unified') => {
+-    if (!(node instanceof HTMLElement)) return;
+-    node.style.background = BG;
+-    node.style.backgroundColor = BG;
+-    if (kind === 'placeholder') {
+-      node.setAttribute('data-mf-chart-placeholder', '1');
+-    } else {
+-      node.setAttribute('data-mf-chart-unified', '1');
+-    }
+-  };
+-
+-  const normalizeChartArea = () => {
+-    const chartHost = document.getElementById('chartCanvas');
+-
+-    if (chartHost instanceof HTMLElement) {
+-      paint(chartHost);
+-      if (chartHost.parentElement instanceof HTMLElement) paint(chartHost.parentElement);
+-      if (chartHost.parentElement?.parentElement instanceof HTMLElement) {
+-        paint(chartHost.parentElement.parentElement);
+-      }
+-      chartHost.querySelectorAll(':scope > div').forEach((child) => {
+-        if (child instanceof HTMLElement) paint(child);
+-      });
+-    }
+-
+-    const all = Array.from(document.querySelectorAll('div, section, article'));
+-    for (const el of all) {
+-      if (!(el instanceof HTMLElement)) continue;
+-      const text = (el.textContent || '').replace(/\s+/g, ' ').trim();
+-      if (!text) continue;
+-      if (!STATE_MATCHERS.some((rx) => rx.test(text))) continue;
+-
+-      let target = el;
+-      for (let i = 0; i < 5; i += 1) {
+-        const rect = target.getBoundingClientRect();
+-        if (rect.width >= 240 && rect.height >= 180) break;
+-        if (!(target.parentElement instanceof HTMLElement)) break;
+-        target = target.parentElement;
+-      }
+-
+-      paint(target, 'placeholder');
+-      paint(el, 'placeholder');
+-    }
+-  };
+-
+-  const run = () => {
+-    normalizeChartArea();
+-    setTimeout(normalizeChartArea, 250);
+-    setTimeout(normalizeChartArea, 1200);
+-    setTimeout(normalizeChartArea, 2600);
+-  };
+-
+-  if (document.readyState === 'loading') {
+-    document.addEventListener('DOMContentLoaded', run, { once: true });
+-  } else {
+-    run();
+-  }
+-
+-  window.addEventListener('load', run, { once: true });
+-})();
+-/* ===== /MEMEFLOW_TRADING_CHART_UNIFY_ALL_STATES_V4 ===== */
++
+ </script>
+ 
+   <script src="/memeflow-nav.js?v=noncustodial-live-solana-v1-20260827" defer></script>
+diff --git a/memeflow-app/trading.js b/memeflow-app/trading.js
+index 7eb9c92..7da0c43 100644
+--- a/memeflow-app/trading.js
++++ b/memeflow-app/trading.js
+@@ -1578,7 +1578,7 @@ function connectChartStream(mint) {
+   $('feedState').textContent='CONNECTING';
+ 
+   const source=new EventSource(
+-    `/api/chart/trade-stream?tokenAddress=${encodeURIComponent(mint)}`
++    `/api/chart/stream?tokenAddress=${encodeURIComponent(mint)}`
+   );
+   source.__mint=mint;
+ 
+@@ -1596,12 +1596,14 @@ function connectChartStream(mint) {
+       const changed=replaceChartSnapshot(mint,incoming);
+       $('feedState').textContent=
+         payload?.status?.backfillRunning===true
+-          ? 'HISTORY SYNC'
++          ? `HISTORY SYNC · ${Number(payload?.status?.historyPoints||incoming.length||0)}`
+           : payload?.status?.fullHistoryReady===true
+             ? 'LIVE · FULL HISTORY'
+-            : payload?.status?.stale===false || incoming.length
+-              ? 'LIVE'
+-              : 'WAITING';
++            : payload?.status?.backfillError
++              ? 'LIVE · HISTORY ERROR'
++              : payload?.status?.stale===false || incoming.length
++                ? 'LIVE'
++                : 'WAITING';
+ 
+       // History sync is allowed to redraw only when it supplied new,
+       // canonical BUY/SELL TradeEvents.
+@@ -3077,6 +3079,7 @@ function chartLevelInfo(candles){
+     return {visible:[],offscreen:levels};
+   }
+ 
++  // Scale is defined by recent PRICE ACTION, not TP +100/+200.
+   const basis=
+     state.timeframe==='all'
+       ? candles.slice(-Math.min(180,candles.length))
+@@ -3093,13 +3096,16 @@ function chartLevelInfo(candles){
+ 
+   const min=Math.min(...values);
+   const max=Math.max(...values);
+-  const rawSpan=Math.max(
++  const span=Math.max(
+     max-min,
+     Math.abs(max||1)*.008
+   );
+ 
+-  const low=Math.max(0,min-rawSpan*.45);
+-  const high=max+rawSpan*.45;
++  // Nearby levels are real markLines at their exact price.
++  // Distant levels are rendered as fixed edge indicators so they remain
++  // visible without destroying candle scale.
++  const low=Math.max(0,min-span*.55);
++  const high=max+span*.55;
+ 
+   return {
+     visible:levels.filter(level=>{
+@@ -3114,6 +3120,7 @@ function chartLevelInfo(candles){
+ }
+ 
+ 
++
+ function levelColor(level){
+   if(level?.kind==='stop')return '#ff6679';
+   if(level?.kind==='entry')return '#55d9ff';
+@@ -3471,9 +3478,10 @@ function updateRealtimeChart(mint){
+ 
+ 
+ function __mfChartVisibleSlotsV6(){
+-  return window.innerWidth < 700 ? 48 : 84;
++  return window.innerWidth<700 ? 42 : 76;
+ }
+ 
++
+ function __mfChartTimeLabelV6(value){
+   const text=String(value ?? '');
+   if(
+@@ -3591,6 +3599,91 @@ function __mfChartSyncHeaderV6(points){
+   }
+ }
+ 
++function chartOffscreenLevelGraphicsV8(candles,levels){
++  const rows=(Array.isArray(levels)?levels:[])
++    .filter(level=>Number.isFinite(Number(level?.price)));
++
++  if(!rows.length)return [];
++
++  const host=$('chartCanvas');
++  const width=Math.max(260,Number(host?.clientWidth||0));
++  const height=Math.max(220,Number(host?.clientHeight||0));
++  const last=Number(candles?.[candles.length-1]?.close);
++
++  const above=rows
++    .filter(level=>Number(level.price)>=last)
++    .sort((a,b)=>Number(b.price)-Number(a.price));
++
++  const below=rows
++    .filter(level=>Number(level.price)<last)
++    .sort((a,b)=>Number(a.price)-Number(b.price));
++
++  const make=(level,y,direction,index)=>{
++    const color=levelColor(level);
++    const label=`${direction==='up'?'↑':'↓'} ${String(level?.label||'')}`;
++    const x1=18;
++    const x2=Math.max(150,width-82);
++
++    return {
++      type:'group',
++      id:`mf-offscreen-${direction}-${index}-${String(level?.kind||'level')}`,
++      silent:true,
++      z:30,
++      children:[
++        {
++          type:'line',
++          shape:{x1,y1:y,x2,y2:y},
++          style:{
++            stroke:color,
++            lineWidth:1,
++            lineDash:[6,5],
++            opacity:.72
++          }
++        },
++        {
++          type:'text',
++          x:x2-3,
++          y:y-2,
++          style:{
++            text:label,
++            fill:color,
++            font:chartTouchUi()
++              ? '700 9px ui-sans-serif, system-ui'
++              : '700 10px ui-sans-serif, system-ui',
++            textAlign:'right',
++            textVerticalAlign:'bottom',
++            backgroundColor:'rgba(5,12,17,.94)',
++            borderColor:color,
++            borderWidth:1,
++            borderRadius:4,
++            padding:[3,5]
++          }
++        }
++      ]
++    };
++  };
++
++  const graphics=[];
++
++  above.slice(0,4).forEach((level,index)=>{
++    graphics.push(make(level,58+index*24,'up',index));
++  });
++
++  below.slice(0,4).forEach((level,index)=>{
++    graphics.push(
++      make(
++        level,
++        Math.max(150,height-76-index*24),
++        'down',
++        index
++      )
++    );
++  });
++
++  return graphics;
++}
++
++
+ function drawChart(){
+   try{
+     // MEMEFLOW_CHART_V7_1_TDZ_FIX_DIRTY_SAFE
+@@ -3770,6 +3863,8 @@ function drawChart(){
+       }
+     ];
+ 
++    const offscreenGraphics=[];
++
+     const slots=__mfChartVisibleSlotsV6();
+     let startValue;
+     let endValue;
+@@ -3863,6 +3958,20 @@ function drawChart(){
+         gridIndex:0,
+         position:'right',
+         scale:true,
++        min:value=>{
++          const span=Math.max(
++            Number(value?.max||0)-Number(value?.min||0),
++            Math.abs(Number(value?.max||1))*.01
++          );
++          return Math.max(0,Number(value?.min||0)-span*.08);
++        },
++        max:value=>{
++          const span=Math.max(
++            Number(value?.max||0)-Number(value?.min||0),
++            Math.abs(Number(value?.max||1))*.01
++          );
++          return Number(value?.max||0)+span*.08;
++        },
+         axisLine:{show:false},
+         axisTick:{show:false},
+         axisLabel:{
+@@ -3977,7 +4086,6 @@ function drawChart(){
+     
+ 
+     chartRuntime.suppressZoom=true;
+-    chartRuntime.api.clear();
+     chartRuntime.api.setOption(
+       {
+         animation:false,
+@@ -4107,13 +4215,6 @@ function drawChart(){
+       '<span>'+candles.length+' candles · '+totalTrades+' trades</span>'
+     ];
+ 
+-    for(const level of (chartRuntime.offscreenLevels||[]).slice(0,3)){
+-      const arrow=Number(level?.price)>Number(last.close)?'↑':'↓';
+-      legendParts.push(
+-        '<span>'+arrow+' '+esc(String(level?.label||''))+'</span>'
+-      );
+-    }
+-
+     $('chartLegend').innerHTML=legendParts.join('');
+ 
+     try{
+@@ -4738,3 +4839,11 @@ init();
+ /* MEMEFLOW_CHART_LEVELS_LIVE_V7_2_1_DIRTY_SAFE */
+ 
+ /* MEMEFLOW_CHART_VIEWPORT_LEVELS_V7_3_DIRTY_SAFE */
++
++/* MEMEFLOW_CHART_CLEAN_LIVE_LEVELS_V8_DIRTY_SAFE */
++
++/* MEMEFLOW_CHART_HISTORY_LIVE_LEVELS_V9_1_DIRTY_SAFE */
++
++/* MEMEFLOW_CHART_CANDLE_SCALE_V10 */
++
++/* MEMEFLOW_CHART_CLEANUP_BACKPRESSURE_V10_DIRTY_SAFE */

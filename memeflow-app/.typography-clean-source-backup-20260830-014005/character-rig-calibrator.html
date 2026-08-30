@@ -1,0 +1,406 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+
+<meta
+  name="viewport"
+  content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"
+>
+
+<meta http-equiv="Cache-Control" content="no-store,no-cache,must-revalidate,max-age=0">
+<meta http-equiv="Pragma" content="no-cache">
+
+<title>PEPE Calibrator V8</title>
+
+<style>
+:root{
+  --bg:#020607;
+  --panel:#07100f;
+  --line:#245246;
+  --accent:#7fffc8;
+  --text:#ffffff;
+  --muted:#9bada8;
+}
+
+*{
+  box-sizing:border-box;
+  -webkit-tap-highlight-color:transparent;
+}
+
+html{
+  width:100%;
+  height:100%;
+  background:var(--bg);
+}
+
+body{
+  margin:0;
+
+  width:100%;
+  height:100dvh;
+  min-height:100dvh;
+
+  overflow:hidden;
+
+  padding:
+    max(5px,env(safe-area-inset-top))
+    8px
+    max(5px,env(safe-area-inset-bottom));
+
+  background:var(--bg);
+  color:var(--text);
+
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    "SF Pro Display",
+    sans-serif;
+
+  display:grid;
+
+  grid-template-rows:
+    36px
+    minmax(0,1fr)
+    48px
+    auto
+    48px;
+
+  gap:6px;
+}
+
+
+/* HEADER */
+
+.header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+
+  padding:0 5px;
+}
+
+.title{
+  font-size:15px;
+  font-weight:900;
+  letter-spacing:.01em;
+}
+
+#status{
+  color:var(--accent);
+  font-size:12px;
+  font-weight:900;
+}
+
+
+/* STAGE */
+
+#stage{
+  position:relative;
+
+  width:100%;
+  min-height:0;
+
+  overflow:hidden;
+
+  border:1px solid var(--line);
+  border-radius:17px;
+
+  background:
+    radial-gradient(
+      circle at 50% 43%,
+      #15332c 0%,
+      #071510 55%,
+      #020605 100%
+    );
+}
+
+#stage canvas{
+  position:absolute !important;
+  inset:0 !important;
+
+  display:block !important;
+
+  width:100% !important;
+  height:100% !important;
+}
+
+
+/* LEFT / RIGHT */
+
+.hand-tabs{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:6px;
+}
+
+.hand{
+  border:1px solid var(--line);
+  border-radius:12px;
+
+  background:var(--panel);
+  color:var(--muted);
+
+  font-size:14px;
+  font-weight:900;
+}
+
+.hand.active{
+  background:var(--accent);
+  border-color:var(--accent);
+  color:#00120c;
+}
+
+
+/* ALL CONTROLS */
+
+#controls{
+  display:grid;
+
+  grid-template-columns:
+    repeat(2,minmax(0,1fr));
+
+  grid-template-rows:
+    repeat(4,58px);
+
+  gap:5px;
+}
+
+.control{
+  min-width:0;
+
+  padding:5px 7px;
+
+  border:1px solid #194238;
+  border-radius:11px;
+
+  background:var(--panel);
+}
+
+.control-top{
+  height:17px;
+
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+
+  gap:5px;
+}
+
+.control-name{
+  min-width:0;
+
+  overflow:hidden;
+  white-space:nowrap;
+  text-overflow:ellipsis;
+
+  color:var(--accent);
+
+  font-size:10px;
+  font-weight:900;
+}
+
+.control-value{
+  flex:none;
+
+  min-width:48px;
+
+  text-align:right;
+
+  font:
+    800 11px
+    ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    monospace;
+}
+
+.control-main{
+  display:grid;
+
+  grid-template-columns:
+    32px
+    minmax(0,1fr)
+    32px;
+
+  align-items:center;
+
+  gap:5px;
+}
+
+.nudge{
+  width:32px;
+  height:31px;
+
+  padding:0;
+
+  border:1px solid #286052;
+  border-radius:8px;
+
+  background:#0a1a17;
+  color:white;
+
+  font-size:19px;
+  font-weight:900;
+}
+
+input[type=range]{
+  min-width:0;
+  width:100%;
+
+  height:30px;
+
+  margin:0;
+
+  accent-color:#65efbc;
+}
+
+
+/* ACTIONS */
+
+.actions{
+  display:grid;
+
+  grid-template-columns:
+    1fr
+    1fr
+    1fr;
+
+  gap:6px;
+}
+
+.action{
+  border:1px solid var(--line);
+  border-radius:11px;
+
+  background:#081511;
+  color:white;
+
+  font-size:12px;
+  font-weight:900;
+}
+
+.action.copy{
+  background:var(--accent);
+  border-color:var(--accent);
+  color:#00120c;
+}
+
+
+/* SMALLER IPHONES */
+
+@media(max-height:720px){
+
+  body{
+    grid-template-rows:
+      30px
+      minmax(0,1fr)
+      42px
+      auto
+      42px;
+
+    gap:4px;
+  }
+
+  #controls{
+    grid-template-rows:
+      repeat(4,52px);
+
+    gap:4px;
+  }
+
+  .control{
+    padding:3px 5px;
+  }
+
+  .control-main{
+    grid-template-columns:
+      29px
+      minmax(0,1fr)
+      29px;
+  }
+
+  .nudge{
+    width:29px;
+    height:27px;
+  }
+
+  input[type=range]{
+    height:26px;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div class="header">
+
+  <div class="title">
+    PEPE CALIBRATOR V8
+  </div>
+
+  <div id="status">
+    LOADING
+  </div>
+
+</div>
+
+
+<div id="stage"></div>
+
+
+<div class="hand-tabs">
+
+  <button
+    id="left"
+    class="hand active"
+  >
+    LEFT HAND
+  </button>
+
+  <button
+    id="right"
+    class="hand"
+  >
+    RIGHT HAND
+  </button>
+
+</div>
+
+
+<div id="controls"></div>
+
+
+<div class="actions">
+
+  <button
+    id="resetHand"
+    class="action"
+  >
+    RESET HAND
+  </button>
+
+  <button
+    id="resetAll"
+    class="action"
+  >
+    RESET ALL
+  </button>
+
+  <button
+    id="copy"
+    class="action copy"
+  >
+    COPY VALUES
+  </button>
+
+</div>
+
+
+<script
+  type="module"
+  src="/character-rig-calibrator.js?v=1786672117"
+></script>
+</body>
+</html>

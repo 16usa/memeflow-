@@ -2,7 +2,7 @@ import http from 'node:http';import fs from 'node:fs';import path from 'node:pat
 import {JsonStore,sessionId,defaults} from './src/store.mjs';import {RpcPool,validPubkey,decodeCurve,decodeCreateData,decodePumpCreate,decodePumpCreateEventLog} from './src/solana.mjs';import {evaluate,tokenAgeMinutes} from './src/evaluate.mjs';import {evaluateSettingsAdmission,evaluateEntryAdmission,settingsContextSignature} from './src/settings-gate.mjs';import {validateSettings,PROFILE_PRESETS} from './src/settings.mjs';import {StripeBilling} from './src/billing.mjs';
 import {OpenAIIntelligence} from './src/openai-intelligence.mjs';import {PaperEngine} from './src/paper-engine.mjs';import {PlatformTradeAnalytics} from './src/platform-trade-analytics.mjs';import {CopyTradingManager} from './src/copy-trading.mjs'; // MEMEFLOW_COPY_TRADING_V1
 import './src/copy-trading-multi-wallet-v3.mjs'; // MEMEFLOW_COPY_TRADING_MULTI_WALLET_V3
-import {makeEnrichDiag,makeHolderMetrics} from './src/enrich.mjs';
+import {makeEnrichDiag,makeHolderMetrics,enrichHolders,makeHolderQueue} from './src/enrich.mjs';
 import {makeRecoveryMetrics,startDecisionRecovery,lazyRecoverUser} from './src/recovery.mjs';
 import {makeLiveEvalMetrics,makeEvaluateForActiveUsers} from './src/liveeval.mjs';
 import {makeDiscoveryMetrics} from './src/discqueue.mjs';
@@ -275,7 +275,31 @@ const __mfCopyTradingRpc={
 const copyTrading=new CopyTradingManager({store,paper,rpc:__mfCopyTradingRpc});
 // MEMEFLOW_WS_ONLY_PREOPEN_RPC_V1
 // Chart history is live-WS + local-disk only. Historical Solana HTTP backfill is disabled.
-const __mfChartArchive=new ChartHistoryArchive({dataDir});
+// CHART_HISTORY_RPC_V9_1
+// Read-only historical chart RPC. It is isolated from AI/risk/execution.
+const __mfChartHistoryRpc=
+  __mfPreOpenRpcUrls.length
+    ? {
+        async call(method,args=[]){
+          if(
+            method!=='getSignaturesForAddress' &&
+            method!=='getTransaction'
+          ){
+            const error=new Error('CHART_HISTORY_RPC_METHOD_BLOCKED');
+            error.code='CHART_HISTORY_RPC_METHOD_BLOCKED';
+            throw error;
+          }
+          return __mfPreOpenRpc.call(method,args);
+        }
+      }
+    : null;
+
+const __mfChartArchive=new ChartHistoryArchive({
+  dataDir,
+  rpc:__mfChartHistoryRpc,
+  pageSize:250,
+  txConcurrency:1
+});
 const PUMP='6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P',ALLOW_ANON=process.env.ALLOW_ANONYMOUS_PAPER!=='false';
 const OWNER_ACCESS_KEY=process.env.OWNER_ACCESS_KEY||'';
 const OWNER_USER_IDS=new Set((process.env.OWNER_USER_IDS||'').split(',').map(x=>x.trim()).filter(Boolean));
@@ -917,37 +941,116 @@ const s = {...__holderAdmissionSettings, minBuyPressure: null};
   return {allow:false,drop:false,retryInMs:HOLDER_ADMISSION_RETRY_MS,reason:lastReason};
 }
 
-// MEMEFLOW_WS_ONLY_PREOPEN_RPC_V1
-// WS-only compatibility holder adapter. Holder count, Top10, developer share
-// and holderRiskWallets come from Pump TradeEvent.user in eventHolderLedger.
-const holderQueue={
-  enqueue(mint){
-    try{
-      const snap=eventHolderLedger?.inspect?.(mint);
-      if(!snap)return false;
-      const updated=eventHolderLedger.applyToStore(store,mint);
-      if(!updated)return false;
-      holderMetrics.holderQueued++;
-      holderMetrics.holderSucceeded++;
-      try{Promise.resolve(evaluateAll(updated)).catch(()=>{})}catch{}
-      try{publish(mint)}catch{}
-      return true;
-    }catch(error){
-      holderMetrics.holderFailed++;
-      holderMetrics.lastHolderError=String(error?.message||error);
-      holderMetrics.lastHolderErrorAt=Date.now();
-      return false;
+const holderQueue=makeHolderQueue({maxConcurrent:4,initialDelayMs:500},{holderMetrics,enrichHoldersFn:(mint)=>enrichHolders(mint,{rpc:__mfPreOpenRpc,store,evaluateAll,publish,enrichDiag})});
+// MEMEFLOW_CANONICAL_HOLDER_REFRESH_V5_RELEVANCE
+const HOLDER_REFRESH_MS=15000;
+const HOLDER_REFRESH_MAX_ENQUEUE_PER_TICK=3;
+
+let __mfHolderPriorityTickV5=0;
+
+function __mfHolderRankV5(token){
+  const mint=String(token?.mint||'');
+
+  if(__mfOpenPositionMints().has(mint)){
+    return {lane:0,score:100,refreshMs:15000};
+  }
+
+  let lane=3;
+  let score=Math.max(
+    0,
+    Number(token?.opportunityScore||0),
+    Number(token?.qualityScore||0),
+    Number(token?.score||0)
+  );
+
+  try{
+    for(const index of Object.values(store?._uidDec||{})){
+      const d=index?.get?.(mint);
+      if(!d)continue;
+
+      const state=String(d?.state||'').toUpperCase();
+      const dlane={
+        'BUY READY':1,
+        'WATCH':2,
+        'WAITING':3,
+        'BLOCKED':4
+      }[state]??3;
+
+      lane=Math.min(lane,dlane);
+
+      const ds=Number(d?.score);
+      if(Number.isFinite(ds))score=Math.max(score,ds);
     }
-  },
-  inspect(mint){
-    const fresh=Boolean(eventHolderLedger?.inspect?.(mint));
-    return {pending:false,active:false,attempts:fresh?1:0,wsOnly:true};
-  },
-  get queueDepth(){return 0},
-  get processing(){return 0},
-  get oldestAgeMs(){return null},
-  get nextDueInMs(){return null}
-};
+  }catch{}
+
+  const refreshMs=
+    lane<=1 ? 15000 :
+    lane===2 ? 30000 :
+    lane===3 ? 60000 :
+    180000;
+
+  return {lane,score,refreshMs};
+}
+
+const holderRefreshTimer=setInterval(()=>{
+  const now=Date.now();
+  __mfHolderPriorityTickV5++;
+
+
+  const candidates=Object.values(store.state.tokens||{})
+    .filter(token=>token?.mint)
+    .filter(token=>{
+      const scannedAt=Number(token?.holderScannedAt||0);
+      const rank=__mfHolderRankV5(token);
+      return !scannedAt || now-scannedAt>=rank.refreshMs;
+    })
+    .sort((a,b)=>{
+      const fairness=(__mfHolderPriorityTickV5%10)===0;
+
+      const aa=Number(a?.holderScannedAt||0);
+      const bb=Number(b?.holderScannedAt||0);
+
+      if(fairness){
+        if(aa!==bb)return aa-bb;
+      }
+
+      const ar=__mfHolderRankV5(a);
+      const br=__mfHolderRankV5(b);
+
+      if(ar.lane!==br.lane)return ar.lane-br.lane;
+      if(ar.score!==br.score)return br.score-ar.score;
+
+      const ax=Number(a?.lastMarketActivityAt||a?.lastPriceAt||a?.discoveredAt||0);
+      const bx=Number(b?.lastMarketActivityAt||b?.lastPriceAt||b?.discoveredAt||0);
+
+      if(ax!==bx)return bx-ax;
+
+      return aa-bb;
+    });
+
+  let enqueued=0;
+
+  for(const token of candidates){
+    const scannedAt=Number(token?.holderScannedAt||0);
+
+    token.holderFresh=Boolean(
+      scannedAt &&
+      now-scannedAt < HOLDER_REFRESH_MS
+    );
+
+    const q=holderQueue.inspect?.(token.mint)||null;
+    if(q?.pending || q?.active)continue;
+
+    if(holderQueue.enqueue(token.mint)!==false){
+      enqueued++;
+    }
+
+    if(enqueued>=HOLDER_REFRESH_MAX_ENQUEUE_PER_TICK)break;
+  }
+},5000);
+
+holderRefreshTimer.unref?.();
+
 const recoveryMetrics=makeRecoveryMetrics();
 const DECISION_RECOVERY_BATCH_SIZE=Number(process.env.DECISION_RECOVERY_BATCH_SIZE||25);
 const DECISION_RECOVERY_DELAY_MS=Number(process.env.DECISION_RECOVERY_DELAY_MS||25);
@@ -1026,43 +1129,45 @@ function __mfNormalizePumpSupplyV5(t){
   return pump.includes('pump')?1_000_000_000:null;
 }
 
-function __mfCandidateMarket5mV4(mint,t){
-  // MEMEFLOW_CARD_MARKET_TRUTH_V5
-  // MEMEFLOW_LIVE_CARD_MARKET_TRUTH_V19
-  // IMPORTANT: this function MUST delegate to the tested V19 truth module.
-  // Do not independently fall back to stored marketCapSol/marketCapUsd here.
-  const rows=chartTradeHistory.get(mint)||[];
-  const solUsd=solUsdOracle.get();
 
-  const snapshot=liveCardMarketSnapshot({
-    token:t||{},
-    points:rows,
-    solUsd,
-    now:Date.now(),
-    windowMs:300000
-  });
-
-  const volume5mSol=snapshot.volume5mSol;
-  const volume5mUsd=snapshot.volume5mUsd;
-  const transactions5m=snapshot.transactions5m;
-  const marketCapSol=snapshot.marketCapSol;
-  const marketCapUsd=snapshot.marketCapUsd;
-  const priceChange5mPct=snapshot.priceChange5mPct;
-
+/* MEMEFLOW_PIPELINE_CANONICAL_CHART_MARKET_V26
+ *
+ * Token Flow holder truth policy:
+ * - Pump-reported holder count is authoritative when available.
+ * - An explicitly authoritative stored holder count is accepted.
+ * - WS event-holder-ledger is observation-only / lower-bound.
+ * - A lower-bound is NEVER silently presented as exact holder total.
+ */
+function __mfPipelineHolderTruthV26(token={}, mint="", now=Date.now()){
+  const raw=token?.holderCount;
+  const n=(raw===null||raw===undefined||raw==="") ? NaN : Number(raw);
+  const count=Number.isFinite(n)&&n>=0 ? n : null;
+  const at=Number(token?.holderScannedAt);
+  const updatedAt=Number.isFinite(at)&&at>0 ? at : null;
+  const fresh=count!==null&&updatedAt!==null&&Math.max(0,now-updatedAt)<=90000;
   return {
-    volume5mSol,
-    volume5mUsd,
-    transactions5m,
-    marketCapSol,
-    marketCapUsd,
-    priceChange5mPct,
-    marketCapSource:snapshot.marketCapSource,
-    marketUpdatedAt:snapshot.marketUpdatedAt,
-    latestTradePriceSol:snapshot.latestTradePriceSol,
-    latestTradeAt:snapshot.latestTradeAt,
-    currentPriceSol:snapshot.currentPriceSol,
-    tradeEvidence:snapshot.tradeEvidence
+    count,
+    observed:null,
+    source:count!==null ? "solana-onchain" : null,
+    authoritative:count!==null&&token?.holderCountAuthoritative===true,
+    lowerBound:token?.holderCountIsLowerBound===true,
+    fresh,
+    updatedAt
   };
+}
+function __mfCandidateMarket5mV4(mint,t){
+  // MEMEFLOW_PIPELINE_CANONICAL_CHART_MARKET_V26
+  //
+  // One market-data authority for Token Flow and Trading Terminal:
+  // persistent REAL Pump TradeEvent archive + current hot RAM TradeEvents.
+  //
+  // __mfOpenPositionMarket5mV22 is read-only and already performs exactly
+  // this merge safely once per mint, then follows the hot stream.
+  return __mfOpenPositionMarket5mV22(
+    String(mint||'').trim(),
+    t||{},
+    Date.now()
+  );
 }
 
 // MEMEFLOW_OPEN_POSITION_ARCHIVE_MARKET_V22
@@ -1205,6 +1310,8 @@ function candidateView(d){
   const developerPct=finite(t.developerPct??t.developerSharePct);
   const buyPressure=finite(t.buyPressure??t.momentum);
   const market5m=__mfCandidateMarket5mV4(d.mint,t);
+  const normalizedSupply=__mfNormalizePumpSupplyV5(t);
+  const livePriceSol=finite(market5m.currentPriceSol)??finite(t.priceSol);
   return {
     id:d.mint,
     mint:d.mint,
@@ -1236,8 +1343,11 @@ function candidateView(d){
     source:t.source||'Solana on-chain',
     launchPlatform:t.launchPlatform||null,
     protocol:t.protocol||t.launchPlatform||null,
-    price:t.priceSol??null,
-    priceSol:finite(t.priceSol),
+    price:livePriceSol,
+    priceSol:livePriceSol,
+    totalSupply:normalizedSupply,
+    supply:normalizedSupply,
+    tokenSupply:normalizedSupply,
     // `marketCap` is the generic UI field and the UI renders it with `$`.
     // Therefore it MUST be USD, never SOL or Pump lamports.
     marketCap:market5m.marketCapUsd,
@@ -1248,59 +1358,12 @@ function candidateView(d){
     liquidity:liquiditySol,
     liquiditySol,
     liquidityUsd:finite(t.liquidityUsd),
-    holders:
-      finite(t.pumpReportedHolderCount)!==null &&
-      Date.now()-Number(t.pumpReferenceAt||0)<=90000
-        ? finite(t.pumpReportedHolderCount)
-        : finite(t.holderCount),
-    holderCount:
-      finite(t.pumpReportedHolderCount)!==null &&
-      Date.now()-Number(t.pumpReferenceAt||0)<=90000
-        ? finite(t.pumpReportedHolderCount)
-        : finite(t.holderCount),
-    holderSource:
-      finite(t.pumpReportedHolderCount)!==null &&
-      Date.now()-Number(t.pumpReferenceAt||0)<=90000
-        ? 'pump-reference'
-        : (t.holderSource||t.eventLedgerVersion||'ws-event-ledger'),
-    holderCountAuthoritative:
-      finite(t.pumpReportedHolderCount)!==null &&
-      Date.now()-Number(t.pumpReferenceAt||0)<=90000
-        ? true
-        : t.holderCountAuthoritative===true,
-    holderCountIsLowerBound:
-      !(
-        finite(t.pumpReportedHolderCount)!==null &&
-        Date.now()-Number(t.pumpReferenceAt||0)<=90000
-      ) &&
-      (
-        t.holderCountIsLowerBound===true ||
-        String(t.holderSource||t.eventLedgerVersion||'')
-          .toLowerCase()
-          .includes('event-ledger')
-      ),
-    observedHolderCount:finite(t.observedHolderCount),
-    top10:top10Pct,
-    top10Pct,
-    developer:developerPct,
-    developerPct,
-    developerSharePct:developerPct,
-    buyPressure,
-    momentum:buyPressure,
-    qualityScore:finite(t.qualityScore),
-    opportunityScore:finite(t.opportunityScore),
-    opportunityEvidenceReady:t.opportunityEvidenceReady===true,
-    opportunityTrendHealthy:t.opportunityTrendHealthy===true,
-    uniqueBuyers:finite(t.uniqueBuyers),
-    netFlowSol:finite(t.netFlowSol),
-    recentNetFlowSol:finite(t.recentNetFlowSol),
-    priceMomentumPct:finite(t.priceMomentumPct),
-    drawdownFromPeakPct:finite(t.drawdownFromPeakPct),
-    whaleDominancePct:finite(t.whaleDominancePct),
-    dead:t.dead===true,
-    deadReason:t.deadReason||null,
-    ageMinutes:tokenAgeMinutes(t),
-    volume5mSol:market5m.volume5mSol,
+    holders: finite(t?.holderCount),
+holderCount: finite(t?.holderCount),
+holderSource: t?.holderCountAuthoritative===true ? 'solana-onchain' : null,
+holderCountAuthoritative: t?.holderCountAuthoritative===true,
+holderCountIsLowerBound: t?.holderCountIsLowerBound===true,
+volume5mSol:market5m.volume5mSol,
     volume5mUsd:market5m.volume5mUsd,
     transactions5m:market5m.transactions5m,
     priceChange5mPct:market5m.priceChange5mPct,
@@ -1309,7 +1372,7 @@ function candidateView(d){
       'Price (SOL)':finite(t.priceSol)??'—',
       'Market Cap (SOL)':marketCapSol??'—',
       'Liquidity (SOL)':liquiditySol??'—',
-      'Holders':finite(t.holderCount)??'—',
+      'Holders':holderTruth.count??'—',
       'Top 10':top10Pct!=null?top10Pct.toFixed(2)+'%':'—',
       'Developer':developerPct!=null?developerPct.toFixed(2)+'%':'—',
       'Buy pressure':buyPressure!=null?buyPressure.toFixed(2)+'×':'—',
@@ -1489,27 +1552,21 @@ function __mfLiveCardViewV14(token,decision){
   const marketCapUsd=
     finite(market5m?.marketCapUsd);
 
-  const pumpHolderCount=
-    finite(t?.pumpReportedHolderCount)!==null &&
-    Date.now()-Number(t?.pumpReferenceAt||0)<=90_000
-      ? finite(t?.pumpReportedHolderCount)
-      : null;
+  const holderTruth=
+    __mfPipelineHolderTruthV26(
+      t,
+      mint,
+      Date.now()
+    );
 
   const holderCount=
-    pumpHolderCount ?? finite(t?.holderCount??t?.holders);
+    holderTruth.count;
 
   const holderCountAuthoritative=
-    pumpHolderCount!==null ||
-    t?.holderCountAuthoritative===true;
+    holderTruth.authoritative===true;
 
   const holderCountIsLowerBound=
-    pumpHolderCount===null &&
-    (
-      t?.holderCountIsLowerBound===true ||
-      String(t?.holderSource||t?.eventLedgerVersion||'')
-        .toLowerCase()
-        .includes('event-ledger')
-    );
+    holderTruth.lowerBound===true;
 
   const top10Pct=
     finite(t?.top10Pct??t?.top10);
@@ -1603,16 +1660,16 @@ function __mfLiveCardViewV14(token,decision){
     marketCapUpdatedAt:
       finite(market5m?.marketUpdatedAt??t?.marketCapUpdatedAt),
 
-    holders:holderCount,
-    holderCount,
-    observedHolderCount:finite(t?.observedHolderCount),
-    holderCountAuthoritative,
-    holderCountIsLowerBound,
-    holderSource:
-      pumpHolderCount!==null
-        ? 'pump-reference'
-        : (t?.holderSource||t?.eventLedgerVersion||'ws-event-ledger'),
-    holderFresh:t?.holderFresh===true,
+    holders:holderTruth.count,
+    holderCount:holderTruth.count,
+    observedHolderCount: finite(t?.observedHolderCount),
+        previewHolderCount: finite(t?.previewHolderCount),
+    holderCountAuthoritative:holderTruth.authoritative===true,
+    holderCountIsLowerBound: false,
+    holderSource:holderTruth.source,
+    holderFresh:holderTruth.fresh===true,
+    holderUpdatedAt:holderTruth.updatedAt,
+
     top10:top10Pct,
     top10Pct,
     developer:developerPct,
@@ -2028,26 +2085,35 @@ function __mfPrepareTrackedCopyTrade(event){
 function publishTrade(mint,event,tokenOverride=null){
   if(!mint||!event)return;
 
-  // MEMEFLOW_COPY_TRADING_V1 — reuse the canonical, already-deduplicated Pump TradeEvent.
-  try{Promise.resolve(copyTrading.onTradeEvent(event,tokenOverride||store.state.tokens[mint])).catch(e=>console.warn('[copy-trading]',e?.message||e))}catch(e){console.warn('[copy-trading]',e?.message||e)}
-
-  // Keep a bounded rolling buffer of REAL Pump TradeEvents before
-  // the token is opened in Trading Terminal. No synthetic/timer points.
+  // Keep copy trading on the same already-deduplicated canonical Pump event.
+  try{
+    Promise
+      .resolve(
+        copyTrading.onTradeEvent(
+          event,
+          tokenOverride||store.state.tokens[mint]
+        )
+      )
+      .catch(
+        error=>console.warn(
+          '[copy-trading]',
+          error?.message||error
+        )
+      );
+  }catch(error){
+    console.warn('[copy-trading]',error?.message||error);
+  }
 
   const token=tokenOverride||store.state.tokens[mint];
-
-  // MEMEFLOW_SCAN_DISPLAY_TRADE_SPLIT_V1
-  // Keep real Pump TradeEvent evidence for EVERY scanned token.
-  // User settings are checked later by evaluateAll()/trading execution.
-
   const price=Number(token?.priceSol);
   if(!(price>0))return;
 
   const isBuy=
-    event.isBuy===true ? true :
-    event.isBuy===false ? false :
-    null;
-
+    event.isBuy===true
+      ? true
+      : event.isBuy===false
+        ? false
+        : null;
   if(isBuy===null)return;
 
   const solAmount=
@@ -2063,70 +2129,92 @@ function publishTrade(mint,event,tokenOverride=null){
   if(!(solAmount>0||tokenAmount>0))return;
 
   let at=Number(event.timestamp);
-
   if(Number.isFinite(at)&&at>0){
     if(at<1e12)at*=1000;
   }else{
     at=Date.now();
   }
 
+  const id=
+    event.signature
+      ? [
+          String(event.signature),
+          String(at),
+          isBuy?'B':'S',
+          String(solAmount),
+          String(tokenAmount)
+        ].join(':')
+      : null;
+
   const point={
+    id,
     t:at,
     price,
     priceSol:price,
+    markPrice:price,
     source:'pump-trade-event',
     isBuy,
     solAmount,
     tokenAmount
   };
 
+  // 1) RAM hot history is updated first so any reconnecting snapshot
+  //    immediately sees the same canonical event.
   const rows=chartTradeHistory.get(mint)||[];
   rows.push(point);
-
-  // MEMEFLOW_CHART_HISTORY_RESTORE_V1
-  // Persist accepted real chart ticks independently from the bounded RAM cache.
-  try{
-    __mfChartArchive.appendPoint(mint,point);
-  // V7.2: send live chart update in the same TradeEvent turn.
-  try{__mfChartBroadcastLiveV7(mint,point)}catch{}
-
-  
-
-  }catch{}
 
   if(rows.length>1200){
     rows.splice(0,rows.length-1200);
   }
 
-  // Refresh insertion order so this map behaves as a bounded LRU.
   chartTradeHistory.delete(mint);
   chartTradeHistory.set(mint,rows);
 
-  // Bound memory while keeping recent real-trade history for active tokens.
-  while(chartTradeHistory.size > 250){
-    const oldest = chartTradeHistory.keys().next().value;
-    if(oldest === undefined) break;
+  while(chartTradeHistory.size>250){
+    const oldest=chartTradeHistory.keys().next().value;
+    if(oldest===undefined)break;
     chartTradeHistory.delete(oldest);
   }
 
+  // 2) LIVE FIRST. Exactly one SSE frame per accepted Pump TradeEvent.
+  //    This is intentionally independent of archive IO.
   const listeners=chartTradeStreams.get(mint);
-  if(!listeners||listeners.size===0)return;
+  if(listeners?.size){
+    const frame=
+      `event: update\n`+
+      `data: ${JSON.stringify({
+        point,
+        status:{
+          stale:false,
+          source:'pump-trade-event',
+          live:true,
+          persistentHistory:true
+        }
+      })}\n\n`;
 
-  const payload=`event: update
-data: ${JSON.stringify({
-    point,
-    status:{
-      stale:false,
-      source:'pump-trade-event'
+    for(const res of [...listeners]){
+      try{
+        res.write(frame);
+        try{res.flush?.()}catch{}
+      }catch{
+        listeners.delete(res);
+      }
     }
-  })}
+  }
 
-`;
-
-  for(const res of listeners){
-    try{res.write(payload)}catch{}
+  // 3) Persistence happens after the live frame, so disk/archive work can
+  //    never delay or suppress the open Trading Terminal.
+  try{
+    __mfChartArchive.appendPoint(mint,point);
+  }catch(error){
+    console.warn(
+      '[chart-history-append]',
+      mint,
+      error?.message||error
+    );
   }
 }
+
 
 function publish(mint){
   // MEMEFLOW_LIVE_TOKEN_REVISION_V1
@@ -4373,7 +4461,14 @@ async function handler(req,res){const url=new URL(req.url,'http://x');
    const isLiveTokenAsset=
      url.pathname==='/system-tokens.js' ||
      url.pathname==='/system-tokens.css';
-   const noStoreAsset=isHTML||isLiveTokenAsset;
+
+   // MEMEFLOW_TRADING_NO_STORE_V10
+   const isTradingDevAsset=
+     url.pathname==='/trading.html' ||
+     url.pathname==='/trading.js' ||
+     url.pathname==='/trading.css';
+
+   const noStoreAsset=isHTML||isLiveTokenAsset||isTradingDevAsset;
 
    res.setHeader('content-type',mime);
    res.setHeader(
@@ -5766,6 +5861,15 @@ if(url.pathname==='/api/ai/decisions'){
         lastScannedAt:token.lastScannedAt||null,
         holderFresh:Boolean(token.holderFresh),
         holderCount:token.holderCount??null,
+        previewHolderCount:token.previewHolderCount??null,
+        pumpReportedHolderCount:token.pumpReportedHolderCount??null,
+        observedHolderCount:token.observedHolderCount??null,
+        eventObservedHolderCount:(()=>{
+          try{
+            const h=eventHolderLedger?.inspect?.(mint);
+            return h?.observedHolderCount ?? h?.holderCount ?? null;
+          }catch{return null}
+        })(),
         top10Pct:token.top10Pct??null,
         developerPct:token.developerPct??token.developerSharePct??null,
         holderScannedAt:token.holderScannedAt||null,
@@ -6471,10 +6575,34 @@ if(url.pathname==='/api/ai/decisions'){
             null,
           tokenMetrics:{
             ageMinutes,
-            // MEMEFLOW_OPEN_POSITION_HOLDER_FALLBACK_V22
+            // MEMEFLOW_PIPELINE_CANONICAL_CHART_MARKET_V26
+            // Never treat event-ledger observation as exact total holders.
             holderCount:
-              finite(token.holderCount) ??
-              finite(eventHolderLedger?.inspect?.(mint)?.holderCount),
+              __mfPipelineHolderTruthV26(
+                token,
+                mint,
+                now
+              ).count,
+            holderObservedCount:
+              __mfPipelineHolderTruthV26(
+                token,
+                mint,
+                now
+              ).observed,
+            holderSource:
+              __mfPipelineHolderTruthV26(
+                token,
+                mint,
+                now
+              ).source,
+            holderCountAuthoritative:
+              __mfPipelineHolderTruthV26(
+                token,
+                mint,
+                now
+              ).authoritative===true,
+            holderCountIsLowerBound: false,
+
             volume5mSol:finite(market?.volume5mSol),
             volume5mUsd:finite(market?.volume5mUsd),
             transactions5m:finite(market?.transactions5m),
@@ -6836,15 +6964,18 @@ const server=http.createServer((req,res)=>handler(req,res).catch(e=>json(res,500
 
       if(current?.wsFirst===true){
         const referencePatch={
-          pumpReferenceAt:Number(token?.pumpReferenceAt||Date.now())
+          pumpReferenceAt:Number(token?.pumpReferenceAt||Date.now()),
+          // MEMEFLOW_FAST_HOLDER_PREVIEW_V2
+          previewHolderCount:
+            Number.isFinite(Number(token?.previewHolderCount))
+              ? Number(token.previewHolderCount)
+              : null
         };
 
         if(Number.isFinite(Number(token?.marketCapUsd))){
           referencePatch.pumpReportedMarketCapUsd=Number(token.marketCapUsd);
         }
-        if(Number.isFinite(Number(token?.pumpReportedHolderCount))){
-          referencePatch.pumpReportedHolderCount=Number(token.pumpReportedHolderCount);
-        }
+        
 
         store.setToken(token.mint,referencePatch);
         try{publish(token.mint)}catch{}
@@ -7515,3 +7646,9 @@ async function __mfApprovePaperProposalWithRisk(
 }
 
 // MEMEFLOW_CHART_LEVELS_LIVE_V7_2_1_DIRTY_SAFE
+
+// MEMEFLOW_CHART_CLEAN_LIVE_LEVELS_V8_DIRTY_SAFE
+
+// MEMEFLOW_CHART_HISTORY_LIVE_LEVELS_V9_1_DIRTY_SAFE
+
+// MEMEFLOW_CHART_CLEANUP_BACKPRESSURE_V10_DIRTY_SAFE

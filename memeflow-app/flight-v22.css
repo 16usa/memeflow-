@@ -140,7 +140,7 @@ body.flight-v12 .launch-panel{
 
   gap:4px!important;
 
-  font-size:5.5px!important;
+  font-size:var(--mf-type-micro);
   line-height:1.05!important;
 }
 
@@ -170,7 +170,7 @@ body.flight-v12 .launch-panel .risk-deck > p{
 }
 
 body.flight-v12 .launch-panel .panel-title small{
-  font-size:5.3px!important;
+  font-size:var(--mf-type-micro);
   letter-spacing:.11em!important;
 }
 
@@ -182,7 +182,7 @@ body.flight-v12 .launch-panel .paper-badge{
   display:flex!important;
   align-items:center!important;
 
-  font-size:4.8px!important;
+  font-size:var(--mf-type-micro);
 }
 
 
@@ -207,7 +207,7 @@ body.flight-v12 .launch-panel .game-utility{
 }
 
 body.flight-v12 .launch-panel .game-balance small{
-  font-size:4.6px!important;
+  font-size:var(--mf-type-micro);
 }
 
 body.flight-v12 .launch-panel .game-balance b{
@@ -215,12 +215,12 @@ body.flight-v12 .launch-panel .game-balance b{
 
   margin-top:2px!important;
 
-  font-size:10px!important;
+  font-size:var(--mf-type-ui);
   line-height:1!important;
 }
 
 body.flight-v12 .launch-panel .stream-utility{
-  font-size:3.8px!important;
+  font-size:var(--mf-type-micro);
 }
 
 body.flight-v12 .launch-panel .stream-utility small{
@@ -265,7 +265,7 @@ body.flight-v12 .launch-panel .stake-input{
 }
 
 body.flight-v12 .launch-panel .stake-input span{
-  font-size:7px!important;
+  font-size:var(--mf-type-micro);
 }
 
 body.flight-v12 .launch-panel .stake-input input{
@@ -274,7 +274,7 @@ body.flight-v12 .launch-panel .stake-input input{
 
   padding:0!important;
 
-  font-size:12px!important;
+  font-size:12px;
 }
 
 
@@ -304,7 +304,7 @@ body.flight-v12 .launch-panel .quick-bets button{
 
   border-radius:7px!important;
 
-  font-size:4.8px!important;
+  font-size:var(--mf-type-micro);
 }
 
 
@@ -338,7 +338,7 @@ body.flight-v12 .launch-panel .select-grid label{
 }
 
 body.flight-v12 .launch-panel .select-grid label > span{
-  font-size:4.1px!important;
+  font-size:var(--mf-type-micro);
 }
 
 body.flight-v12 .launch-panel .select-grid select{
@@ -350,7 +350,7 @@ body.flight-v12 .launch-panel .select-grid select{
 
   border-radius:7px!important;
 
-  font-size:6px!important;
+  font-size:var(--mf-type-micro);
 }
 
 
@@ -379,7 +379,7 @@ body.flight-v12 .launch-panel .risk-head{
 
 body.flight-v12 .launch-panel .risk-head span,
 body.flight-v12 .launch-panel .risk-head b{
-  font-size:4.2px!important;
+  font-size:var(--mf-type-micro);
 }
 
 body.flight-v12 .launch-panel .risk-metrics{
@@ -400,7 +400,7 @@ body.flight-v12 .launch-panel .risk-metrics > div{
 }
 
 body.flight-v12 .launch-panel .risk-metrics small{
-  font-size:3.6px!important;
+  font-size:var(--mf-type-micro);
 }
 
 body.flight-v12 .launch-panel .risk-metrics b{
@@ -408,7 +408,7 @@ body.flight-v12 .launch-panel .risk-metrics b{
 
   margin-top:2px!important;
 
-  font-size:5.8px!important;
+  font-size:var(--mf-type-micro);
 }
 
 body.flight-v12 .launch-panel .risk-track{
@@ -500,7 +500,7 @@ body.flight-v12 .token-panel .panel-row{
   align-items:center!important;
   justify-content:space-between!important;
 
-  font-size:4.8px!important;
+  font-size:var(--mf-type-micro);
 
   letter-spacing:.08em!important;
 }
@@ -547,7 +547,7 @@ body.flight-v12 .token-panel .token-avatar img{
 body.flight-v12 .token-panel .token-head b{
   display:block!important;
 
-  font-size:7px!important;
+  font-size:var(--mf-type-micro);
 
   white-space:nowrap!important;
   overflow:hidden!important;
@@ -559,7 +559,7 @@ body.flight-v12 .token-panel .token-head small{
 
   margin-top:2px!important;
 
-  font-size:3.8px!important;
+  font-size:var(--mf-type-micro);
 
   opacity:.72!important;
 
@@ -576,7 +576,7 @@ body.flight-v12 .token-panel .quality-line{
   display:flex!important;
   align-items:center!important;
 
-  font-size:3.7px!important;
+  font-size:var(--mf-type-micro);
 
   white-space:nowrap!important;
   overflow:hidden!important;
@@ -610,7 +610,7 @@ body.flight-v12 .token-panel .token-metrics > div{
 }
 
 body.flight-v12 .token-panel .token-metrics small{
-  font-size:3.5px!important;
+  font-size:var(--mf-type-micro);
 
   letter-spacing:.04em!important;
 }
@@ -620,7 +620,7 @@ body.flight-v12 .token-panel .token-metrics b{
 
   margin-top:2px!important;
 
-  font-size:6.4px!important;
+  font-size:var(--mf-type-micro);
 }
 
 body.flight-v12 .token-panel .telemetry{
@@ -649,14 +649,14 @@ body.flight-v12 .token-panel .telemetry span{
 
   gap:2px!important;
 
-  font-size:2.8px!important;
+  font-size:var(--mf-type-micro);
 
   white-space:nowrap!important;
   overflow:hidden!important;
 }
 
 body.flight-v12 .token-panel .telemetry b{
-  font-size:3.5px!important;
+  font-size:var(--mf-type-micro);
 }
 
 
@@ -684,13 +684,13 @@ body.flight-v12 .history-panel > summary{
   display:flex!important;
   align-items:center!important;
 
-  font-size:4.8px!important;
+  font-size:var(--mf-type-micro);
 
   letter-spacing:.08em!important;
 }
 
 body.flight-v12 .history-panel > summary b{
-  font-size:4px!important;
+  font-size:var(--mf-type-micro);
 }
 
 body.flight-v12 .history-toolbar{
@@ -703,7 +703,7 @@ body.flight-v12 .history-toolbar{
   align-items:center!important;
   justify-content:space-between!important;
 
-  font-size:3.5px!important;
+  font-size:var(--mf-type-micro);
 
   border-top:
     1px solid
@@ -717,7 +717,7 @@ body.flight-v12 .history-toolbar{
 body.flight-v12 .history-toolbar button{
   padding:2px 4px!important;
 
-  font-size:3.5px!important;
+  font-size:var(--mf-type-micro);
 }
 
 body.flight-v12 .history-panel .history{
@@ -745,7 +745,7 @@ body.flight-v12 .history-panel .history-row:nth-child(n){
   margin:0!important;
   padding:3px!important;
 
-  font-size:4px!important;
+  font-size:var(--mf-type-micro);
   line-height:1.05!important;
 
   border-bottom:
@@ -756,7 +756,7 @@ body.flight-v12 .history-panel .history-row:nth-child(n){
 body.flight-v12 .history-panel .history-empty{
   padding:7px 5px!important;
 
-  font-size:4px!important;
+  font-size:var(--mf-type-micro);
 }
 
 
@@ -785,7 +785,7 @@ body.flight-v12 .stats-panel .panel-row{
   align-items:center!important;
   justify-content:space-between!important;
 
-  font-size:4.8px!important;
+  font-size:var(--mf-type-micro);
 
   letter-spacing:.08em!important;
 }
@@ -813,7 +813,7 @@ body.flight-v12 .stats-panel .stats-grid > div{
 }
 
 body.flight-v12 .stats-panel .stats-grid small{
-  font-size:3.7px!important;
+  font-size:var(--mf-type-micro);
 
   letter-spacing:.04em!important;
 }
@@ -823,7 +823,7 @@ body.flight-v12 .stats-panel .stats-grid b{
 
   margin-top:3px!important;
 
-  font-size:7.2px!important;
+  font-size:var(--mf-type-micro);
 }
 
 body.flight-v12 .stats-panel .safety-note{
@@ -914,7 +914,7 @@ body.flight-v12 #v12ActionDock > #mfAutoLoopBtn{
 }
 
 body.flight-v12 #v12ActionDock button b{
-  font-size:8px!important;
+  font-size:var(--mf-type-micro);
   line-height:1!important;
 
   letter-spacing:.10em!important;
@@ -925,7 +925,7 @@ body.flight-v12 #v12ActionDock button small{
 
   margin-top:2px!important;
 
-  font-size:4.5px!important;
+  font-size:var(--mf-type-micro);
   line-height:1!important;
 }
 
@@ -980,7 +980,7 @@ body.flight-v12 #v12ActionDock::after{
   color:
     rgba(220,235,242,.90)!important;
 
-  font-size:6.5px!important;
+  font-size:var(--mf-type-micro);
   font-weight:800!important;
   line-height:1.45!important;
 

@@ -1,11 +1,11 @@
 #mf-access-gate{position:fixed;inset:0;z-index:99990;display:grid;place-items:center;padding:18px;background:rgba(4,10,15,.16);backdrop-filter:blur(1.5px) brightness(.78);-webkit-backdrop-filter:blur(1.5px) brightness(.78)}
 .mf-ag-card{width:min(390px,100%);padding:20px;border:1px solid rgba(85,217,255,.24);border-radius:20px;background:rgba(12,22,30,.86);box-shadow:0 18px 60px #0007;color:#edf7fa}
-.mf-ag-kicker{font-size:11px;font-weight:800;letter-spacing:.22em;color:#55d9ff}.mf-ag-card h2{margin:10px 0 7px;font-size:27px;line-height:1.05}.mf-ag-card p{margin:0;color:#8fa3af;line-height:1.55}
-.mf-ag-tiers{display:grid;gap:8px;margin:16px 0}.mf-ag-tier{padding:12px 14px;border:1px solid #243540;border-radius:12px;background:rgba(8,16,22,.78)}.mf-ag-tier b{display:block;font-size:15px}.mf-ag-tier span{font-size:12px;color:#80949f}
+.mf-ag-kicker{font-size:var(--mf-type-body);font-weight:800;letter-spacing:.22em;color:#55d9ff}.mf-ag-card h2{margin:10px 0 7px;font-size:27px;line-height:1.05}.mf-ag-card p{margin:0;color:#8fa3af;line-height:1.55}
+.mf-ag-tiers{display:grid;gap:8px;margin:16px 0}.mf-ag-tier{padding:12px 14px;border:1px solid #243540;border-radius:12px;background:rgba(8,16,22,.78)}.mf-ag-tier b{display:block;font-size:var(--mf-type-title)}.mf-ag-tier span{font-size:12px;color:#80949f}
 .mf-ag-tier.live{border-color:rgba(85,217,255,.28)}.mf-ag-btn{display:flex;justify-content:center;padding:13px;border:1px solid rgba(85,217,255,.45);border-radius:13px;color:#c9f5ff;text-decoration:none;font-weight:800;background:rgba(85,217,255,.07)}
-#mf-access-ribbon{position:fixed;z-index:99980;left:50%;top:14px;transform:translateX(-50%);padding:8px 14px;border:1px solid rgba(85,217,255,.28);border-radius:999px;background:rgba(8,17,24,.88);backdrop-filter:blur(12px);color:#9beaff;font-size:10px;font-weight:800;letter-spacing:.1em}
+#mf-access-ribbon{position:fixed;z-index:99980;left:50%;top:14px;transform:translateX(-50%);padding:8px 14px;border:1px solid rgba(85,217,255,.28);border-radius:999px;background:rgba(8,17,24,.88);backdrop-filter:blur(12px);color:#9beaff;font-size:var(--mf-type-ui);font-weight:800;letter-spacing:.1em}
 
-.mf-ag-foot{margin-top:10px;text-align:center;font-size:11px;line-height:1.45;color:#7f929d}.mf-ag-card p strong{color:#d8f7ff}
+.mf-ag-foot{margin-top:10px;text-align:center;font-size:var(--mf-type-body);line-height:1.45;color:#7f929d}.mf-ag-card p strong{color:#d8f7ff}
 
 /* MEMEFLOW ACCESS GATE V3 */
 #mf-access-gate{
@@ -24,7 +24,7 @@
 }
 
 .mf-ag-kicker{
-  font-size:10px!important;
+  font-size:var(--mf-type-ui);
 }
 
 .mf-ag-card h2{
@@ -33,7 +33,7 @@
 }
 
 .mf-ag-card p{
-  font-size:13px!important;
+  font-size:var(--mf-type-panel);
   line-height:1.45!important;
 }
 
@@ -48,23 +48,23 @@
 }
 
 .mf-ag-tier b{
-  font-size:14px!important;
+  font-size:14px;
 }
 
 .mf-ag-tier span{
-  font-size:11px!important;
+  font-size:var(--mf-type-body);
   line-height:1.4!important;
 }
 
 .mf-ag-btn{
   padding:11px 12px!important;
   min-height:44px!important;
-  font-size:12px!important;
+  font-size:12px;
 }
 
 .mf-ag-foot{
   margin-top:8px!important;
-  font-size:10px!important;
+  font-size:var(--mf-type-ui);
   line-height:1.4!important;
 }
 
@@ -84,7 +84,7 @@
 }
 
 .mf-ag-kicker{
-  font-size:9px!important;
+  font-size:var(--mf-type-meta);
   letter-spacing:.19em!important;
 }
 
@@ -95,7 +95,7 @@
 }
 
 .mf-ag-card p{
-  font-size:12px!important;
+  font-size:12px;
   line-height:1.42!important;
 }
 
@@ -109,20 +109,20 @@
 }
 
 .mf-ag-tier b{
-  font-size:13px!important;
+  font-size:var(--mf-type-panel);
 }
 
 .mf-ag-tier span{
   display:block!important;
   margin-top:3px!important;
-  font-size:10.5px!important;
+  font-size:10.5px;
   line-height:1.35!important;
 }
 
 .mf-ag-btn{
   min-height:40px!important;
   padding:10px 10px!important;
-  font-size:10.5px!important;
+  font-size:10.5px;
   line-height:1.25!important;
   text-align:center!important;
 }
@@ -130,7 +130,7 @@
 .mf-ag-foot{
   max-width:300px!important;
   margin:7px auto 0!important;
-  font-size:9.5px!important;
+  font-size:9.5px;
   line-height:1.35!important;
 }
 

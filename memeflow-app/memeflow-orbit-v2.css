@@ -158,7 +158,7 @@
   }
 
   .mf-orbit-ratehud b{
-    font-size:10px;
+    font-size:var(--mf-type-ui);
   }
 }
 
@@ -169,10 +169,10 @@
   }
 
   .mf-orbit-ratehud span{
-    font-size:5.8px;
+    font-size:var(--mf-type-micro);
   }
 
   .mf-orbit-ratehud small{
-    font-size:5.5px;
+    font-size:var(--mf-type-micro);
   }
 }

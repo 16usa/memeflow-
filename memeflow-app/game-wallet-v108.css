@@ -188,7 +188,7 @@
 
   color:#6ddcff;
 
-  font-size:7px;
+  font-size:var(--mf-type-micro);
   font-weight:850;
 
   letter-spacing:.17em;
@@ -235,7 +235,7 @@
 
   color:#91dff2;
 
-  font-size:7px;
+  font-size:var(--mf-type-micro);
   font-weight:800;
 
   letter-spacing:.09em;
@@ -317,7 +317,7 @@
 
   color:#82909b;
 
-  font-size:8px;
+  font-size:var(--mf-type-micro);
   line-height:1.35;
 }
 
@@ -391,7 +391,7 @@
 
   color:#778791;
 
-  font-size:9px;
+  font-size:var(--mf-type-meta);
   letter-spacing:.11em;
 }
 
@@ -472,7 +472,7 @@
 
   .mf-game-wallet-state{
     max-width:110px;
-    font-size:6px;
+    font-size:var(--mf-type-micro);
   }
 
   .mf-game-wallet-close{
@@ -487,7 +487,7 @@
       7px
       11px;
 
-    font-size:7px;
+    font-size:var(--mf-type-micro);
   }
 }
 
@@ -546,13 +546,13 @@
   }
 
   .mf-game-wallet-title small{
-    font-size:5px;
+    font-size:var(--mf-type-micro);
   }
 
   .mf-game-wallet-title b{
     margin-top:1px;
 
-    font-size:13px;
+    font-size:var(--mf-type-panel);
   }
 
   .mf-game-wallet-state{
@@ -560,7 +560,7 @@
       4px
       7px;
 
-    font-size:5px;
+    font-size:var(--mf-type-micro);
   }
 
   .mf-game-wallet-close{
@@ -569,7 +569,7 @@
 
     border-radius:8px;
 
-    font-size:15px;
+    font-size:var(--mf-type-title);
   }
 
   .mf-game-wallet-info{
@@ -579,7 +579,7 @@
       4px
       9px;
 
-    font-size:5.5px;
+    font-size:var(--mf-type-micro);
   }
 }
 

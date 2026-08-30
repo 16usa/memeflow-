@@ -1,0 +1,421 @@
+/* MEMEFLOW BRAND FINAL V6 — single canonical layer
+   One master geometry everywhere. Dark/light differ only in color processing.
+*/
+:root{
+  --mf-logo-dark:url("/brand/memeflow-dragonfly-dark.png?v=final-v5");
+  --mf-logo-light:url("/brand/memeflow-dragonfly-light.png?v=final-v5");
+}
+.mf-brand-img{display:block;object-fit:contain;filter:drop-shadow(0 3px 8px rgba(0,229,240,.18));}
+.logo{
+  width:40px!important;height:40px!important;min-width:40px!important;flex:0 0 40px!important;
+  display:inline-block!important;border:0!important;border-radius:0!important;box-shadow:none!important;
+  background:var(--mf-logo-dark) center/contain no-repeat!important;
+}
+.logo::before,.logo::after{content:none!important;display:none!important;}
+.brand-mark{
+  width:58px!important;height:42px!important;min-width:58px!important;flex:0 0 58px!important;
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  padding:0!important;margin:0!important;border:0!important;border-radius:0!important;
+  background:none!important;box-shadow:none!important;color:transparent!important;font-size:0!important;line-height:0!important;
+}
+.brand-mark>span,.brand-mark>i,.brand-mark::before,.brand-mark::after{display:none!important;content:none!important;}
+.brand-mark .mf-brand-img{width:56px!important;height:38px!important;}
+html[data-theme="light"] .logo, body.light .logo, .theme-light .logo{background-image:var(--mf-logo-light)!important;}
+html[data-theme="light"] .mf-brand-img, body.light .mf-brand-img, .theme-light .mf-brand-img{content:url("/brand/memeflow-dragonfly-light.png?v=final-v5");}
+@media (prefers-color-scheme:light){
+  html:not([data-theme="dark"]) .logo{background-image:var(--mf-logo-light)!important;}
+}
+@media(max-width:820px){
+  .brand-mark{width:54px!important;height:40px!important;min-width:54px!important;flex-basis:54px!important;}
+  .brand-mark .mf-brand-img{width:52px!important;height:36px!important;}
+}
+
+/* MEMEFLOW LOADER FINAL V9 — pinned wing roots, clean mobile loader */
+.boot-mark{
+  width:144px!important;
+  height:112px!important;
+  min-width:144px!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  border:0!important;
+  border-radius:0!important;
+  background:none!important;
+  box-shadow:none!important;
+  overflow:visible!important;
+}
+.boot-mark>i,.boot-mark::before,.boot-mark::after{
+  display:none!important;
+  content:none!important;
+}
+
+.mf-loader-v9{
+  position:relative;
+  width:140px;
+  height:108px;
+  display:block;
+  overflow:visible;
+  transform:translateZ(0);
+  filter:drop-shadow(0 8px 20px rgba(0,225,240,.24));
+  animation:mfV9Float 1.9s ease-in-out infinite;
+}
+.mf-loader-v9 img{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  pointer-events:none;
+  will-change:transform,opacity,filter;
+}
+.mf-loader-v9 .mf-v9-glow{
+  z-index:1;
+  animation:mfV9Glow 1.2s ease-in-out infinite alternate;
+}
+.mf-loader-v9 .mf-v9-ul{
+  z-index:2;
+  transform-origin:46.2% 40.6%;
+  animation:mfV9UL .64s cubic-bezier(.42,0,.58,1) infinite alternate;
+}
+.mf-loader-v9 .mf-v9-ur{
+  z-index:2;
+  transform-origin:53.8% 40.6%;
+  animation:mfV9UR .64s cubic-bezier(.42,0,.58,1) infinite alternate;
+}
+.mf-loader-v9 .mf-v9-ll{
+  z-index:3;
+  transform-origin:46.2% 42.8%;
+  animation:mfV9LL .78s cubic-bezier(.42,0,.58,1) .08s infinite alternate;
+}
+.mf-loader-v9 .mf-v9-lr{
+  z-index:3;
+  transform-origin:53.8% 42.8%;
+  animation:mfV9LR .78s cubic-bezier(.42,0,.58,1) .08s infinite alternate;
+}
+.mf-loader-v9 .mf-v9-body{
+  z-index:5;
+  animation:mfV9Body 1.45s ease-in-out infinite;
+}
+
+/* Roots stay pinned; motion comes mainly from wing foreshortening. */
+@keyframes mfV9UL{
+  0%{transform:scaleY(.72) rotate(-1.2deg);opacity:.82}
+  100%{transform:scaleY(1.03) rotate(.8deg);opacity:1}
+}
+@keyframes mfV9UR{
+  0%{transform:scaleY(.72) rotate(1.2deg);opacity:.82}
+  100%{transform:scaleY(1.03) rotate(-.8deg);opacity:1}
+}
+@keyframes mfV9LL{
+  0%{transform:scaleY(.83) rotate(-.7deg);opacity:.78}
+  100%{transform:scaleY(1.015) rotate(.5deg);opacity:.96}
+}
+@keyframes mfV9LR{
+  0%{transform:scaleY(.83) rotate(.7deg);opacity:.78}
+  100%{transform:scaleY(1.015) rotate(-.5deg);opacity:.96}
+}
+@keyframes mfV9Glow{
+  from{opacity:.22;transform:scale(.97)}
+  to{opacity:.60;transform:scale(1.045)}
+}
+@keyframes mfV9Body{
+  0%,100%{filter:brightness(.98)}
+  50%{filter:brightness(1.10)}
+}
+@keyframes mfV9Float{
+  0%,100%{transform:translateY(2px)}
+  50%{transform:translateY(-3px)}
+}
+
+@media (prefers-reduced-motion:reduce){
+  .mf-loader-v9{animation:mfV9Float 2.8s ease-in-out infinite!important}
+  .mf-loader-v9 .mf-v9-ul,.mf-loader-v9 .mf-v9-ur{animation-duration:1.2s!important}
+  .mf-loader-v9 .mf-v9-ll,.mf-loader-v9 .mf-v9-lr{animation-duration:1.4s!important}
+}
+
+/* MF_UNIFIED_APP_THEME_START */
+/* MEMEFLOW UNIFIED APP THEME V1
+   Mission Control is the visual source of truth for every application view.
+   Presentation only: no state, navigation, trading or API behavior changes.
+*/
+:root{
+  --mf-app-bg:#0f141a;
+  --mf-app-surface:#111820;
+  --mf-app-surface-2:#141c25;
+  --mf-app-surface-3:#18222d;
+  --mf-app-panel-top:rgba(20,28,37,.94);
+  --mf-app-panel-bottom:rgba(15,20,26,.97);
+  --mf-app-line:rgba(145,166,190,.15);
+  --mf-app-line-strong:rgba(145,166,190,.26);
+  --mf-app-soft:rgba(255,255,255,.018);
+  --mf-app-soft-hover:rgba(255,255,255,.032);
+  --mf-app-text:#f7f9fc;
+  --mf-app-muted:#8d99a8;
+  --mf-app-cyan:#61dfff;
+  --mf-app-green:#58e4ad;
+  --mf-app-yellow:#f2c668;
+  --mf-app-red:#ff6c7b;
+  --mf-app-radius:18px;
+  --mf-app-radius-sm:12px;
+
+  --bg:var(--mf-app-bg)!important;
+  --surface:var(--mf-app-surface)!important;
+  --surface2:var(--mf-app-surface-2)!important;
+  --surface3:var(--mf-app-surface-3)!important;
+  --line:var(--mf-app-line)!important;
+  --line2:var(--mf-app-line-strong)!important;
+  --text:var(--mf-app-text)!important;
+  --muted:var(--mf-app-muted)!important;
+  --cyan:var(--mf-app-cyan)!important;
+  --green:var(--mf-app-green)!important;
+  --yellow:var(--mf-app-yellow)!important;
+  --red:var(--mf-app-red)!important;
+  --radius:var(--mf-app-radius)!important;
+}
+
+html,body{
+  background:#0f141a!important;
+  color:var(--mf-app-text)!important;
+}
+
+/* Persistent chrome */
+.sidebar{
+  background:rgba(15,20,26,.90)!important;
+  border-color:rgba(41,57,74,.72)!important;
+  box-shadow:0 10px 30px rgba(0,0,0,.18),inset 0 1px 0 rgba(255,255,255,.025)!important;
+  backdrop-filter:blur(22px) saturate(120%)!important;
+  -webkit-backdrop-filter:blur(22px) saturate(120%)!important;
+}
+.topbar{
+  background:rgba(15,20,26,.90)!important;
+  border-color:var(--mf-app-line)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.022)!important;
+  backdrop-filter:blur(24px) saturate(130%)!important;
+  -webkit-backdrop-filter:blur(24px) saturate(130%)!important;
+}
+.sidebar .nav a,.nav-item{
+  background:transparent!important;
+  border-color:transparent!important;
+  color:#bdc7d4!important;
+}
+.sidebar .nav a:hover,.sidebar .nav a:focus-visible,
+.nav-item:hover,.nav-item:focus-visible{
+  background:rgba(255,255,255,.045)!important;
+  border-color:rgba(97,223,255,.14)!important;
+  color:#fff!important;
+}
+.sidebar .nav a.active,.nav-item.active{
+  background:linear-gradient(90deg,rgba(97,223,255,.10),rgba(255,255,255,.035))!important;
+  border-color:rgba(97,223,255,.22)!important;
+  color:#fff!important;
+  box-shadow:inset 3px 0 0 rgba(97,223,255,.72),inset 0 1px 0 rgba(255,255,255,.04)!important;
+}
+
+/* Mission geometry = canonical geometry on every screen */
+.panel,
+#positions>.panel,
+#positions>#wallet,
+#wallet,
+#system,
+#billing,
+#settings,
+.execution-preview,
+.advanced-intelligence{
+  border:1px solid var(--mf-app-line)!important;
+  border-radius:var(--mf-app-radius)!important;
+  background:linear-gradient(180deg,var(--mf-app-panel-top),var(--mf-app-panel-bottom))!important;
+  box-shadow:none!important;
+}
+.panel:hover,#positions>.panel:hover,#wallet:hover,#system:hover,#billing:hover,#settings:hover{
+  border-color:rgba(97,223,255,.23)!important;
+}
+#positions,#wallet,#system,#billing,#settings{
+  background-image:none!important;
+}
+
+.panel-head,.execution-head,.wallet-dialog-head,.sheet-top{
+  min-height:52px;
+  padding:12px 14px!important;
+  border-color:var(--mf-app-line)!important;
+  background:transparent!important;
+}
+.panel-head h2,.execution-head h2,.wallet-dialog-head h2,.sheet-top h2{
+  margin:0!important;
+  color:var(--mf-app-text)!important;
+  font-size:13px!important;
+  line-height:1.2!important;
+  letter-spacing:-.02em!important;
+}
+.panel-body{padding:14px!important;}
+
+/* Low-noise nested surfaces */
+.wallet-card,.wallet-security,.wallet-stat,.wallet-session-note,.wallet-rule,
+.subscription-metric,.plan-card,.live-lock,.system-health-summary>div,.data-row,
+.settings-summary>div,.settings-context,.settings-group,.mode-option label,
+.profile-option label,.setting-field input,.setting-field select,.toggle-row,
+.execution-readiness,.primary-blocker,.signal-explainer,.execution-check-list,
+.wallet-note,.wallet-network,.wallet-option,.mobile-wallet-card,.explain-step,
+.production-empty{
+  border-color:var(--mf-app-line)!important;
+  background:var(--mf-app-soft)!important;
+  box-shadow:none!important;
+}
+
+.wallet-card,.wallet-security,.plan-card,.settings-group,.settings-context,
+.execution-readiness,.primary-blocker,.wallet-note,.wallet-network{
+  border-radius:14px!important;
+}
+.wallet-stat,.subscription-metric,.system-health-summary>div,.settings-summary>div,.data-row{
+  border-radius:10px!important;
+}
+.wallet-stat:hover,.subscription-metric:hover,.plan-card:hover,.settings-group:hover,.data-row:hover{
+  background:var(--mf-app-soft-hover)!important;
+}
+
+/* Billing stays in the same visual family */
+.plan-card.featured{
+  border-color:rgba(97,223,255,.30)!important;
+  background:linear-gradient(180deg,rgba(97,223,255,.045),rgba(255,255,255,.016))!important;
+  box-shadow:inset 0 1px 0 rgba(97,223,255,.045)!important;
+}
+.plan-ribbon{
+  background:rgba(97,223,255,.10)!important;
+  border-color:rgba(97,223,255,.22)!important;
+  color:var(--mf-app-cyan)!important;
+  box-shadow:none!important;
+}
+.plan-price,.plan-name{color:var(--mf-app-text)!important;}
+.plan-copy,.feature.locked,.muted{color:var(--mf-app-muted)!important;}
+
+/* Settings */
+.settings-hero{
+  border-color:var(--mf-app-line)!important;
+  background:transparent!important;
+}
+.settings-group>summary{
+  background:transparent!important;
+  border-color:var(--mf-app-line)!important;
+}
+.settings-group[open]>summary{border-bottom:1px solid var(--mf-app-line)!important;}
+.settings-group-body{background:transparent!important;}
+.mode-option label,.profile-option label,.setting-field input,.setting-field select{
+  color:var(--mf-app-text)!important;
+}
+.mode-option input:checked+label,.profile-option input:checked+label{
+  border-color:rgba(97,223,255,.42)!important;
+  background:rgba(97,223,255,.055)!important;
+  box-shadow:inset 2px 0 0 var(--mf-app-cyan)!important;
+}
+.setting-field input:focus,.setting-field select:focus{
+  border-color:rgba(97,223,255,.55)!important;
+  box-shadow:0 0 0 3px rgba(97,223,255,.07)!important;
+}
+.settings-footer{
+  border-color:var(--mf-app-line)!important;
+  background:rgba(15,20,26,.94)!important;
+  box-shadow:none!important;
+}
+
+/* Wallet / System */
+.wallet-overview,.wallet-grid,.wallet-session-note,.wallet-rules,
+.system-health-summary,.billing-grid,.subscription-summary{
+  gap:8px!important;
+}
+.wallet-avatar{
+  border-color:var(--mf-app-line-strong)!important;
+  background:var(--mf-app-surface-2)!important;
+  color:var(--mf-app-muted)!important;
+  box-shadow:none!important;
+}
+.wallet-security h3,.wallet-title b{color:var(--mf-app-text)!important;}
+.wallet-security p,.wallet-title small,.wallet-compact-note{color:var(--mf-app-muted)!important;}
+
+/* Buttons, chips, states */
+button,.btn,a.btn{
+  border-radius:12px!important;
+  box-shadow:none!important;
+  font-weight:760!important;
+}
+.btn:not(.primary){
+  background:#141c25!important;
+  border-color:var(--mf-app-line)!important;
+  color:#eaf0f6!important;
+}
+.btn:not(.primary):hover,.btn:not(.primary):focus-visible{
+  border-color:rgba(97,223,255,.45)!important;
+  background:#151f2b!important;
+}
+.btn.primary{
+  background:var(--mf-app-cyan)!important;
+  border-color:var(--mf-app-cyan)!important;
+  color:#031017!important;
+  box-shadow:none!important;
+}
+.btn.red{
+  color:var(--mf-app-red)!important;
+  border-color:rgba(255,108,123,.30)!important;
+  background:rgba(255,108,123,.035)!important;
+}
+.chip,.badge,.status-pill,.state,.top-plan-badge{box-shadow:none!important;}
+
+/* Typography / numeric rhythm */
+h1,h2,h3{
+  color:var(--mf-app-text)!important;
+  letter-spacing:-.035em!important;
+}
+.eyebrow,.kicker,.label,.settings-group>summary small,.wallet-stat small,
+.subscription-metric small,.system-health-summary small{
+  letter-spacing:.13em!important;
+  text-transform:uppercase!important;
+}
+.wallet-stat b,.subscription-metric b,.system-health-summary b,.settings-summary b,
+.plan-price,.big-score,.metric-value,.score,.big-number{
+  font-variant-numeric:tabular-nums!important;
+}
+
+/* Modals and mobile sheets */
+.wallet-modal,.explain-overlay{
+  background:rgba(2,4,7,.72)!important;
+  backdrop-filter:blur(10px)!important;
+  -webkit-backdrop-filter:blur(10px)!important;
+}
+.wallet-dialog,.explain-dialog,.mobile-sheet{
+  border-color:var(--mf-app-line)!important;
+  background:rgba(8,12,17,.96)!important;
+  box-shadow:0 24px 70px rgba(0,0,0,.34)!important;
+}
+.mobile-nav{
+  border-color:var(--mf-app-line)!important;
+  background:rgba(5,7,10,.84)!important;
+  backdrop-filter:blur(22px) saturate(120%)!important;
+  -webkit-backdrop-filter:blur(22px) saturate(120%)!important;
+}
+.mobile-nav button{
+  background:transparent!important;
+  color:var(--mf-app-muted)!important;
+  box-shadow:none!important;
+}
+.mobile-nav button.active{
+  color:#fff!important;
+  background:rgba(97,223,255,.09)!important;
+  box-shadow:inset 2px 0 var(--mf-app-cyan)!important;
+}
+
+@media(max-width:820px){
+  .panel,#wallet,#system,#billing,#settings,.execution-preview{border-radius:16px!important;}
+  .panel-head,.execution-head{min-height:48px!important;padding:10px 12px!important;}
+  .panel-body{padding:11px 12px!important;}
+  .settings-hero{padding:14px!important;}
+  .settings-body{padding:10px!important;}
+  .wallet-card,.wallet-security,.plan-card,.settings-group{border-radius:12px!important;}
+}
+@media(max-width:430px){
+  .panel-head h2,.execution-head h2{font-size:12px!important;}
+  .wallet-actions,.settings-footer-actions{gap:7px!important;}
+}
+@media(prefers-reduced-motion:reduce){
+  .panel,.plan-card,.settings-group,.wallet-stat,.data-row,button,.btn,a.btn{
+    transition:none!important;
+  }
+}
+/* MF_UNIFIED_APP_THEME_END */

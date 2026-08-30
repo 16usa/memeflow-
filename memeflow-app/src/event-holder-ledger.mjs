@@ -304,7 +304,23 @@ export class EventHolderLedger{
   applyToStore(store,m){
     const s=this.snapshot(m);
     if(!s||!store?.setToken)return null;
-    try{return store.setToken(m,s)||s}
+
+    const observed={
+      observedHolderCount:s.observedHolderCount??null,
+      holderRiskWallets:s.holderRiskWallets??[],
+      holderRiskWalletsKey:s.holderRiskWalletsKey??null,
+      holderRiskWalletsScannedAt:s.holderRiskWalletsScannedAt??null,
+      eventLedgerVersion:s.eventLedgerVersion??null,
+      eventLedgerLastUser:s.eventLedgerLastUser??null,
+      eventLedgerTxCount:s.eventLedgerTxCount??null,
+      eventLedgerCreator:s.eventLedgerCreator??null,
+      eventLedgerTrackedSupplyRaw:s.eventLedgerTrackedSupplyRaw??null,
+      eventLedgerTotalSupplyRaw:s.eventLedgerTotalSupplyRaw??null,
+      eventLedgerDecimals:s.eventLedgerDecimals??null,
+      eventLedgerCoveragePct:s.eventLedgerCoveragePct??null
+    };
+
+    try{return store.setToken(m,observed)||observed}
     catch(e){
       this.metrics.lastError=String(e?.message||e);
       return null;

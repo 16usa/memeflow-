@@ -141,12 +141,13 @@ function fallbackKey(point) {
 }
 
 export class ChartHistoryArchive {
-  constructor({ dataDir, rpc, pageSize = 1000, txConcurrency = 3 } = {}) {
+  constructor({ dataDir, rpc, pageSize = 1000, txConcurrency = 1 } = {}) {
     this.root = path.join(String(dataDir || 'data'), 'chart-history-v30-10');
     this.rpc = rpc;
     this.pageSize = Math.max(100, Math.min(1000, Number(pageSize) || 1000));
     this.txConcurrency = Math.max(1, Math.min(6, Number(txConcurrency) || 3));
     this.inFlight = new Map();
+    this.backfillQueue = Promise.resolve();
     fs.mkdirSync(this.root, { recursive: true });
   }
 
@@ -268,12 +269,35 @@ export class ChartHistoryArchive {
     return true;
   }
 
+  async _rpcCallWithRetry(method, args = [], {
+    attempts = 6,
+    baseDelayMs = 350
+  } = {}) {
+    let lastError = null;
+    for (let attempt = 0; attempt < attempts; attempt++) {
+      try {
+        return await this.rpc.call(method, args);
+      } catch (error) {
+        lastError = error;
+        const message = String(error?.message || error || '');
+        const limited =
+          /429|too many requests|rate limit|specific RPC call/i.test(message);
+        if (!limited || attempt >= attempts - 1) throw error;
+        const delay =
+          Math.min(6000, baseDelayMs * Math.pow(2, attempt)) +
+          Math.floor(Math.random() * 180);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+    throw lastError || new Error('chart history RPC failed');
+  }
+
   _transactionPoints(mint, signatureRow) {
     return (async () => {
       const signature = String(signatureRow?.signature || '');
       if (!signature) return [];
 
-      const tx = await this.rpc.call('getTransaction', [
+      const tx = await this._rpcCallWithRetry('getTransaction', [
         signature,
         {
           encoding: 'json',
@@ -331,11 +355,46 @@ export class ChartHistoryArchive {
 
   ensureBackfill(mint, { onProgress = null } = {}) {
     const safe = cleanMint(mint);
-    if (!safe) return Promise.reject(new Error('invalid chart history mint'));
+    if (!safe) {
+      return Promise.reject(new Error('invalid chart history mint'));
+    }
+
     const status = this.statusSync(safe);
-    const result = {...status,mint:safe,wsOnly:true,backfillDisabled:true};
-    if (typeof onProgress === 'function') { try { onProgress(result); } catch {} }
-    return Promise.resolve(result);
+
+    if (status.oldestComplete === true) {
+      const result = {
+        ...status,
+        mint: safe,
+        backfillDisabled: false,
+        cached: true
+      };
+      if (typeof onProgress === 'function') {
+        try { onProgress(result); } catch {}
+      }
+      return Promise.resolve(result);
+    }
+
+    const existing = this.inFlight.get(safe);
+    if (existing) return existing;
+
+    if (!this.rpc || typeof this.rpc.call !== 'function') {
+      const error = new Error('CHART_HISTORY_RPC_UNAVAILABLE');
+      error.code = 'CHART_HISTORY_RPC_UNAVAILABLE';
+      return Promise.reject(error);
+    }
+
+    const job = this.backfillQueue
+      .catch(() => {})
+      .then(() => this._runBackfill(safe, onProgress))
+      .finally(() => {
+        if (this.inFlight.get(safe) === job) {
+          this.inFlight.delete(safe);
+        }
+      });
+
+    this.backfillQueue = job.catch(() => {});
+    this.inFlight.set(safe, job);
+    return job;
   }
 
   async _runBackfill(mint, onProgress) {
@@ -373,7 +432,7 @@ export class ChartHistoryArchive {
         };
         if (before) config.before = before;
 
-        const rows = await this.rpc.call('getSignaturesForAddress', [
+        const rows = await this._rpcCallWithRetry('getSignaturesForAddress', [
           mint,
           config
         ]);
@@ -540,3 +599,7 @@ export class ChartHistoryArchive {
     }
   }
 }
+
+// MEMEFLOW_CHART_HISTORY_LIVE_LEVELS_V9_1_DIRTY_SAFE
+
+// MEMEFLOW_CHART_CLEANUP_BACKPRESSURE_V10_DIRTY_SAFE

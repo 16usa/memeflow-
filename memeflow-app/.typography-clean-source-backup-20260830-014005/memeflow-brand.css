@@ -1,0 +1,789 @@
+/* MEMEFLOW BRAND FINAL V6 — single canonical layer
+   One master geometry everywhere. Dark/light differ only in color processing.
+*/
+:root{
+  --mf-logo-dark:url("/brand/memeflow-dragonfly-dark.png?v=final-v5");
+  --mf-logo-light:url("/brand/memeflow-dragonfly-light.png?v=final-v5");
+}
+.mf-brand-img{display:block;object-fit:contain;filter:drop-shadow(0 3px 8px rgba(0,229,240,.18));}
+.logo{
+  width:40px!important;height:40px!important;min-width:40px!important;flex:0 0 40px!important;
+  display:inline-block!important;border:0!important;border-radius:0!important;box-shadow:none!important;
+  background:var(--mf-logo-dark) center/contain no-repeat!important;
+}
+.logo::before,.logo::after{content:none!important;display:none!important;}
+.brand-mark{
+  width:58px!important;height:42px!important;min-width:58px!important;flex:0 0 58px!important;
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  padding:0!important;margin:0!important;border:0!important;border-radius:0!important;
+  background:none!important;box-shadow:none!important;color:transparent!important;font-size:0!important;line-height:0!important;
+}
+.brand-mark>span,.brand-mark>i,.brand-mark::before,.brand-mark::after{display:none!important;content:none!important;}
+.brand-mark .mf-brand-img{width:56px!important;height:38px!important;}
+html[data-theme="light"] .logo, body.light .logo, .theme-light .logo{background-image:var(--mf-logo-light)!important;}
+html[data-theme="light"] .mf-brand-img, body.light .mf-brand-img, .theme-light .mf-brand-img{content:url("/brand/memeflow-dragonfly-light.png?v=final-v5");}
+@media (prefers-color-scheme:light){
+  html:not([data-theme="dark"]) .logo{background-image:var(--mf-logo-light)!important;}
+}
+@media(max-width:820px){
+  .brand-mark{width:54px!important;height:40px!important;min-width:54px!important;flex-basis:54px!important;}
+  .brand-mark .mf-brand-img{width:52px!important;height:36px!important;}
+}
+
+/* MEMEFLOW LOADER FINAL V9 — pinned wing roots, clean mobile loader */
+.boot-mark{
+  width:144px!important;
+  height:112px!important;
+  min-width:144px!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  border:0!important;
+  border-radius:0!important;
+  background:none!important;
+  box-shadow:none!important;
+  overflow:visible!important;
+}
+.boot-mark>i,.boot-mark::before,.boot-mark::after{
+  display:none!important;
+  content:none!important;
+}
+
+.mf-loader-v9{
+  position:relative;
+  width:140px;
+  height:108px;
+  display:block;
+  overflow:visible;
+  transform:translateZ(0);
+  filter:drop-shadow(0 8px 20px rgba(0,225,240,.24));
+  animation:mfV9Float 1.9s ease-in-out infinite;
+}
+.mf-loader-v9 img{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  pointer-events:none;
+  will-change:transform,opacity,filter;
+}
+.mf-loader-v9 .mf-v9-glow{
+  z-index:1;
+  animation:mfV9Glow 1.2s ease-in-out infinite alternate;
+}
+.mf-loader-v9 .mf-v9-ul{
+  z-index:2;
+  transform-origin:46.2% 40.6%;
+  animation:mfV9UL .64s cubic-bezier(.42,0,.58,1) infinite alternate;
+}
+.mf-loader-v9 .mf-v9-ur{
+  z-index:2;
+  transform-origin:53.8% 40.6%;
+  animation:mfV9UR .64s cubic-bezier(.42,0,.58,1) infinite alternate;
+}
+.mf-loader-v9 .mf-v9-ll{
+  z-index:3;
+  transform-origin:46.2% 42.8%;
+  animation:mfV9LL .78s cubic-bezier(.42,0,.58,1) .08s infinite alternate;
+}
+.mf-loader-v9 .mf-v9-lr{
+  z-index:3;
+  transform-origin:53.8% 42.8%;
+  animation:mfV9LR .78s cubic-bezier(.42,0,.58,1) .08s infinite alternate;
+}
+.mf-loader-v9 .mf-v9-body{
+  z-index:5;
+  animation:mfV9Body 1.45s ease-in-out infinite;
+}
+
+/* Roots stay pinned; motion comes mainly from wing foreshortening. */
+@keyframes mfV9UL{
+  0%{transform:scaleY(.72) rotate(-1.2deg);opacity:.82}
+  100%{transform:scaleY(1.03) rotate(.8deg);opacity:1}
+}
+@keyframes mfV9UR{
+  0%{transform:scaleY(.72) rotate(1.2deg);opacity:.82}
+  100%{transform:scaleY(1.03) rotate(-.8deg);opacity:1}
+}
+@keyframes mfV9LL{
+  0%{transform:scaleY(.83) rotate(-.7deg);opacity:.78}
+  100%{transform:scaleY(1.015) rotate(.5deg);opacity:.96}
+}
+@keyframes mfV9LR{
+  0%{transform:scaleY(.83) rotate(.7deg);opacity:.78}
+  100%{transform:scaleY(1.015) rotate(-.5deg);opacity:.96}
+}
+@keyframes mfV9Glow{
+  from{opacity:.22;transform:scale(.97)}
+  to{opacity:.60;transform:scale(1.045)}
+}
+@keyframes mfV9Body{
+  0%,100%{filter:brightness(.98)}
+  50%{filter:brightness(1.10)}
+}
+@keyframes mfV9Float{
+  0%,100%{transform:translateY(2px)}
+  50%{transform:translateY(-3px)}
+}
+
+@media (prefers-reduced-motion:reduce){
+  .mf-loader-v9{animation:mfV9Float 2.8s ease-in-out infinite!important}
+  .mf-loader-v9 .mf-v9-ul,.mf-loader-v9 .mf-v9-ur{animation-duration:1.2s!important}
+  .mf-loader-v9 .mf-v9-ll,.mf-loader-v9 .mf-v9-lr{animation-duration:1.4s!important}
+}
+
+/* MF_UNIFIED_APP_THEME_START */
+/* MEMEFLOW UNIFIED APP THEME V1
+   Mission Control is the visual source of truth for every application view.
+   Presentation only: no state, navigation, trading or API behavior changes.
+*/
+:root{
+  --mf-app-bg:#0f141a;
+  --mf-app-surface:#111820;
+  --mf-app-surface-2:#141c25;
+  --mf-app-surface-3:#18222d;
+  --mf-app-panel-top:rgba(20,28,37,.94);
+  --mf-app-panel-bottom:rgba(15,20,26,.97);
+  --mf-app-line:rgba(145,166,190,.15);
+  --mf-app-line-strong:rgba(145,166,190,.26);
+  --mf-app-soft:rgba(255,255,255,.018);
+  --mf-app-soft-hover:rgba(255,255,255,.032);
+  --mf-app-text:#f7f9fc;
+  --mf-app-muted:#8d99a8;
+  --mf-app-cyan:#61dfff;
+  --mf-app-green:#58e4ad;
+  --mf-app-yellow:#f2c668;
+  --mf-app-red:#ff6c7b;
+  --mf-app-radius:18px;
+  --mf-app-radius-sm:12px;
+
+  --bg:var(--mf-app-bg)!important;
+  --surface:var(--mf-app-surface)!important;
+  --surface2:var(--mf-app-surface-2)!important;
+  --surface3:var(--mf-app-surface-3)!important;
+  --line:var(--mf-app-line)!important;
+  --line2:var(--mf-app-line-strong)!important;
+  --text:var(--mf-app-text)!important;
+  --muted:var(--mf-app-muted)!important;
+  --cyan:var(--mf-app-cyan)!important;
+  --green:var(--mf-app-green)!important;
+  --yellow:var(--mf-app-yellow)!important;
+  --red:var(--mf-app-red)!important;
+  --radius:var(--mf-app-radius)!important;
+}
+
+html,body{
+  background:#0f141a!important;
+  color:var(--mf-app-text)!important;
+}
+
+/* Persistent chrome */
+.sidebar{
+  background:rgba(15,20,26,.90)!important;
+  border-color:rgba(41,57,74,.72)!important;
+  box-shadow:0 10px 30px rgba(0,0,0,.18),inset 0 1px 0 rgba(255,255,255,.025)!important;
+  backdrop-filter:blur(22px) saturate(120%)!important;
+  -webkit-backdrop-filter:blur(22px) saturate(120%)!important;
+}
+.topbar{
+  background:rgba(15,20,26,.90)!important;
+  border-color:var(--mf-app-line)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.022)!important;
+  backdrop-filter:blur(24px) saturate(130%)!important;
+  -webkit-backdrop-filter:blur(24px) saturate(130%)!important;
+}
+.sidebar .nav a,.nav-item{
+  background:transparent!important;
+  border-color:transparent!important;
+  color:#bdc7d4!important;
+}
+.sidebar .nav a:hover,.sidebar .nav a:focus-visible,
+.nav-item:hover,.nav-item:focus-visible{
+  background:rgba(255,255,255,.045)!important;
+  border-color:rgba(97,223,255,.14)!important;
+  color:#fff!important;
+}
+.sidebar .nav a.active,.nav-item.active{
+  background:linear-gradient(90deg,rgba(97,223,255,.10),rgba(255,255,255,.035))!important;
+  border-color:rgba(97,223,255,.22)!important;
+  color:#fff!important;
+  box-shadow:inset 3px 0 0 rgba(97,223,255,.72),inset 0 1px 0 rgba(255,255,255,.04)!important;
+}
+
+/* Mission geometry = canonical geometry on every screen */
+.panel,
+#positions>.panel,
+#positions>#wallet,
+#wallet,
+#system,
+#billing,
+#settings,
+.execution-preview,
+.advanced-intelligence{
+  border:1px solid var(--mf-app-line)!important;
+  border-radius:var(--mf-app-radius)!important;
+  background:linear-gradient(180deg,var(--mf-app-panel-top),var(--mf-app-panel-bottom))!important;
+  box-shadow:none!important;
+}
+.panel:hover,#positions>.panel:hover,#wallet:hover,#system:hover,#billing:hover,#settings:hover{
+  border-color:rgba(97,223,255,.23)!important;
+}
+#positions,#wallet,#system,#billing,#settings{
+  background-image:none!important;
+}
+
+.panel-head,.execution-head,.wallet-dialog-head,.sheet-top{
+  min-height:52px;
+  padding:12px 14px!important;
+  border-color:var(--mf-app-line)!important;
+  background:transparent!important;
+}
+.panel-head h2,.execution-head h2,.wallet-dialog-head h2,.sheet-top h2{
+  margin:0!important;
+  color:var(--mf-app-text)!important;
+  font-size:13px!important;
+  line-height:1.2!important;
+  letter-spacing:-.02em!important;
+}
+.panel-body{padding:14px!important;}
+
+/* Low-noise nested surfaces */
+.wallet-card,.wallet-security,.wallet-stat,.wallet-session-note,.wallet-rule,
+.subscription-metric,.plan-card,.live-lock,.system-health-summary>div,.data-row,
+.settings-summary>div,.settings-context,.settings-group,.mode-option label,
+.profile-option label,.setting-field input,.setting-field select,.toggle-row,
+.execution-readiness,.primary-blocker,.signal-explainer,.execution-check-list,
+.wallet-note,.wallet-network,.wallet-option,.mobile-wallet-card,.explain-step,
+.production-empty{
+  border-color:var(--mf-app-line)!important;
+  background:var(--mf-app-soft)!important;
+  box-shadow:none!important;
+}
+
+.wallet-card,.wallet-security,.plan-card,.settings-group,.settings-context,
+.execution-readiness,.primary-blocker,.wallet-note,.wallet-network{
+  border-radius:14px!important;
+}
+.wallet-stat,.subscription-metric,.system-health-summary>div,.settings-summary>div,.data-row{
+  border-radius:10px!important;
+}
+.wallet-stat:hover,.subscription-metric:hover,.plan-card:hover,.settings-group:hover,.data-row:hover{
+  background:var(--mf-app-soft-hover)!important;
+}
+
+/* Billing stays in the same visual family */
+.plan-card.featured{
+  border-color:rgba(97,223,255,.30)!important;
+  background:linear-gradient(180deg,rgba(97,223,255,.045),rgba(255,255,255,.016))!important;
+  box-shadow:inset 0 1px 0 rgba(97,223,255,.045)!important;
+}
+.plan-ribbon{
+  background:rgba(97,223,255,.10)!important;
+  border-color:rgba(97,223,255,.22)!important;
+  color:var(--mf-app-cyan)!important;
+  box-shadow:none!important;
+}
+.plan-price,.plan-name{color:var(--mf-app-text)!important;}
+.plan-copy,.feature.locked,.muted{color:var(--mf-app-muted)!important;}
+
+/* Settings */
+.settings-hero{
+  border-color:var(--mf-app-line)!important;
+  background:transparent!important;
+}
+.settings-group>summary{
+  background:transparent!important;
+  border-color:var(--mf-app-line)!important;
+}
+.settings-group[open]>summary{border-bottom:1px solid var(--mf-app-line)!important;}
+.settings-group-body{background:transparent!important;}
+.mode-option label,.profile-option label,.setting-field input,.setting-field select{
+  color:var(--mf-app-text)!important;
+}
+.mode-option input:checked+label,.profile-option input:checked+label{
+  border-color:rgba(97,223,255,.42)!important;
+  background:rgba(97,223,255,.055)!important;
+  box-shadow:inset 2px 0 0 var(--mf-app-cyan)!important;
+}
+.setting-field input:focus,.setting-field select:focus{
+  border-color:rgba(97,223,255,.55)!important;
+  box-shadow:0 0 0 3px rgba(97,223,255,.07)!important;
+}
+.settings-footer{
+  border-color:var(--mf-app-line)!important;
+  background:rgba(15,20,26,.94)!important;
+  box-shadow:none!important;
+}
+
+/* Wallet / System */
+.wallet-overview,.wallet-grid,.wallet-session-note,.wallet-rules,
+.system-health-summary,.billing-grid,.subscription-summary{
+  gap:8px!important;
+}
+.wallet-avatar{
+  border-color:var(--mf-app-line-strong)!important;
+  background:var(--mf-app-surface-2)!important;
+  color:var(--mf-app-muted)!important;
+  box-shadow:none!important;
+}
+.wallet-security h3,.wallet-title b{color:var(--mf-app-text)!important;}
+.wallet-security p,.wallet-title small,.wallet-compact-note{color:var(--mf-app-muted)!important;}
+
+/* Buttons, chips, states */
+button,.btn,a.btn{
+  border-radius:12px!important;
+  box-shadow:none!important;
+  font-weight:760!important;
+}
+.btn:not(.primary){
+  background:#141c25!important;
+  border-color:var(--mf-app-line)!important;
+  color:#eaf0f6!important;
+}
+.btn:not(.primary):hover,.btn:not(.primary):focus-visible{
+  border-color:rgba(97,223,255,.45)!important;
+  background:#151f2b!important;
+}
+.btn.primary{
+  background:var(--mf-app-cyan)!important;
+  border-color:var(--mf-app-cyan)!important;
+  color:#031017!important;
+  box-shadow:none!important;
+}
+.btn.red{
+  color:var(--mf-app-red)!important;
+  border-color:rgba(255,108,123,.30)!important;
+  background:rgba(255,108,123,.035)!important;
+}
+.chip,.badge,.status-pill,.state,.top-plan-badge{box-shadow:none!important;}
+
+/* Typography / numeric rhythm */
+h1,h2,h3{
+  color:var(--mf-app-text)!important;
+  letter-spacing:-.035em!important;
+}
+.eyebrow,.kicker,.label,.settings-group>summary small,.wallet-stat small,
+.subscription-metric small,.system-health-summary small{
+  letter-spacing:.13em!important;
+  text-transform:uppercase!important;
+}
+.wallet-stat b,.subscription-metric b,.system-health-summary b,.settings-summary b,
+.plan-price,.big-score,.metric-value,.score,.big-number{
+  font-variant-numeric:tabular-nums!important;
+}
+
+/* Modals and mobile sheets */
+.wallet-modal,.explain-overlay{
+  background:rgba(2,4,7,.72)!important;
+  backdrop-filter:blur(10px)!important;
+  -webkit-backdrop-filter:blur(10px)!important;
+}
+.wallet-dialog,.explain-dialog,.mobile-sheet{
+  border-color:var(--mf-app-line)!important;
+  background:rgba(8,12,17,.96)!important;
+  box-shadow:0 24px 70px rgba(0,0,0,.34)!important;
+}
+.mobile-nav{
+  border-color:var(--mf-app-line)!important;
+  background:rgba(5,7,10,.84)!important;
+  backdrop-filter:blur(22px) saturate(120%)!important;
+  -webkit-backdrop-filter:blur(22px) saturate(120%)!important;
+}
+.mobile-nav button{
+  background:transparent!important;
+  color:var(--mf-app-muted)!important;
+  box-shadow:none!important;
+}
+.mobile-nav button.active{
+  color:#fff!important;
+  background:rgba(97,223,255,.09)!important;
+  box-shadow:inset 2px 0 var(--mf-app-cyan)!important;
+}
+
+@media(max-width:820px){
+  .panel,#wallet,#system,#billing,#settings,.execution-preview{border-radius:16px!important;}
+  .panel-head,.execution-head{min-height:48px!important;padding:10px 12px!important;}
+  .panel-body{padding:11px 12px!important;}
+  .settings-hero{padding:14px!important;}
+  .settings-body{padding:10px!important;}
+  .wallet-card,.wallet-security,.plan-card,.settings-group{border-radius:12px!important;}
+}
+@media(max-width:430px){
+  .panel-head h2,.execution-head h2{font-size:12px!important;}
+  .wallet-actions,.settings-footer-actions{gap:7px!important;}
+}
+@media(prefers-reduced-motion:reduce){
+  .panel,.plan-card,.settings-group,.wallet-stat,.data-row,button,.btn,a.btn{
+    transition:none!important;
+  }
+}
+/* MF_UNIFIED_APP_THEME_END */
+
+/* ===== MEMEFLOW_CANONICAL_TYPOGRAPHY_V1_START ===== */
+/*
+  Canonical MEMEFLOW typography scale.
+  Presentation only. No trading, scanner, API, wallet, chart or state logic.
+  Loaded after page-specific CSS so obsolete compact/mobile font patches
+  cannot shrink normal UI text to 4–6px.
+*/
+:root{
+  --mf-type-micro:8px;
+  --mf-type-meta:9px;
+  --mf-type-ui:10px;
+  --mf-type-body:11px;
+  --mf-type-panel:13px;
+  --mf-type-title:15px;
+}
+
+html{font-size:16px!important}
+
+/* Shared semantic roles */
+.eyebrow{font-size:var(--mf-type-micro)!important}
+.panel-head h2,
+.execution-head h2,
+.wallet-dialog-head h2,
+.sheet-top h2{
+  font-size:var(--mf-type-panel)!important;
+  line-height:1.2!important;
+}
+.btn{font-size:var(--mf-type-body)!important}
+
+/* SYSTEM / REAL-TIME 3D */
+.system-shell .brand{font-size:12px!important}
+.system-shell .subtitle{font-size:var(--mf-type-micro)!important}
+.system-shell .status-chip span{font-size:var(--mf-type-micro)!important}
+.system-shell .status-chip b{font-size:var(--mf-type-ui)!important}
+.system-shell .tool-btn{font-size:var(--mf-type-meta)!important}
+.system-shell .node-label strong{font-size:var(--mf-type-meta)!important}
+.system-shell .node-label small{font-size:var(--mf-type-micro)!important}
+.system-shell .scene-title .eyebrow{font-size:var(--mf-type-micro)!important}
+.system-shell .legend span,
+.system-shell .scene-hint{font-size:var(--mf-type-micro)!important}
+.system-shell .inspector h2{
+  font-size:var(--mf-type-panel)!important;
+  line-height:1.15!important;
+}
+.system-shell .inspector .eyebrow,
+.system-shell .state-pill{font-size:var(--mf-type-micro)!important}
+.system-shell .inspector-summary{font-size:var(--mf-type-meta)!important}
+.system-shell .metric-card span,
+.system-shell .reason-block span{font-size:var(--mf-type-micro)!important}
+.system-shell .metric-card strong{font-size:var(--mf-type-body)!important}
+.system-shell .reason-block p{
+  font-size:var(--mf-type-meta)!important;
+  line-height:1.4!important;
+}
+.system-shell .gate{font-size:var(--mf-type-meta)!important}
+.system-shell .gate b,
+.system-shell .inspector-foot span,
+.system-shell .inspector-foot button{font-size:var(--mf-type-micro)!important}
+.system-shell .telemetry-item span,
+.system-shell .telemetry-item small,
+.system-shell .telemetry.mf-telemetry-standalone-v3 .telemetry-item span,
+.system-shell .telemetry.mf-telemetry-standalone-v3 .telemetry-item small{
+  font-size:var(--mf-type-micro)!important;
+}
+.system-shell .telemetry-item strong,
+.system-shell .telemetry.mf-telemetry-standalone-v3 .telemetry-item strong{
+  font-size:12px!important;
+}
+.system-shell .activity-head h2{font-size:var(--mf-type-panel)!important}
+.system-shell .live-badge,
+.system-shell .token-state,
+.system-shell .token-card-meta span,
+.system-shell .token-card-meta b{font-size:var(--mf-type-micro)!important}
+.system-shell .token-symbol{font-size:var(--mf-type-ui)!important}
+
+/* TOKEN FLOW */
+.flow-page .header-title span{font-size:12px!important}
+.flow-page .header-title strong{font-size:var(--mf-type-micro)!important}
+.flow-page .live-status{font-size:var(--mf-type-micro)!important}
+.flow-page .flow-hero .eyebrow{font-size:var(--mf-type-micro)!important}
+.flow-page .flow-hero p{font-size:var(--mf-type-body)!important}
+.flow-page .hero-counter span,
+.flow-page .summary-card span{font-size:var(--mf-type-micro)!important}
+.flow-page .search-wrap input{font-size:var(--mf-type-ui)!important}
+.flow-page .refresh-info span{font-size:var(--mf-type-micro)!important}
+.flow-page .refresh-info button,
+.flow-page .pagination button,
+.flow-page .page-state{font-size:var(--mf-type-micro)!important}
+.flow-page .token-mint{font-size:var(--mf-type-panel)!important}
+.flow-page .token-state{
+  font-size:var(--mf-type-micro)!important;
+  line-height:1!important;
+}
+.flow-page .token-full-mint{font-size:var(--mf-type-micro)!important}
+.flow-page .token-metric span{
+  font-size:var(--mf-type-micro)!important;
+  line-height:1.15!important;
+}
+.flow-page .token-metric strong{
+  font-size:var(--mf-type-body)!important;
+  line-height:1.15!important;
+}
+.flow-page .details-button{font-size:var(--mf-type-micro)!important}
+.flow-page .detail-block span{font-size:var(--mf-type-micro)!important}
+.flow-page .detail-block p{
+  font-size:var(--mf-type-meta)!important;
+  line-height:1.45!important;
+}
+.flow-page .token-name{font-size:var(--mf-type-ui)!important}
+.flow-page .token-meta{
+  font-size:var(--mf-type-meta)!important;
+  line-height:1.15!important;
+}
+.flow-page .token-pump-link{font-size:var(--mf-type-micro)!important}
+
+/* TRADING TERMINAL */
+.terminal .eyebrow{font-size:var(--mf-type-micro)!important}
+.shell > .topbar .brand-title{font-size:12px!important}
+.shell > .topbar .brand-sub{font-size:var(--mf-type-micro)!important}
+.shell > .topbar .status-pill,
+.shell > .topbar .ghost-btn,
+.shell > .topbar .wallet-btn{font-size:var(--mf-type-meta)!important}
+.terminal .panel-head h2{font-size:var(--mf-type-panel)!important}
+.terminal .tiny-state,
+.terminal .mode-badge{font-size:var(--mf-type-micro)!important}
+.terminal .candidate-filter button,
+.terminal .timeframes button,
+.terminal .indicator-bar button{font-size:var(--mf-type-micro)!important}
+.terminal .candidate-name strong{font-size:var(--mf-type-ui)!important}
+.terminal .candidate-name span,
+.terminal .candidate-bottom,
+.terminal .candidate-price{font-size:var(--mf-type-micro)!important}
+.terminal .state-dot,
+.terminal .decision-badge{font-size:var(--mf-type-micro)!important}
+.terminal .token-meta,
+.terminal .token-meta button,
+.terminal .token-market{font-size:var(--mf-type-micro)!important}
+.terminal .selected-metrics span,
+.terminal .pnl-summary span,
+.terminal .position-row span,
+.terminal .trade-log-time,
+.terminal .trade-log-details b{font-size:var(--mf-type-micro)!important}
+.terminal .selected-metrics strong,
+.terminal .pnl-summary strong,
+.terminal .position-row strong,
+.terminal .trade-log-symbol,
+.terminal .trade-log-details strong,
+.terminal .trade-side{font-size:var(--mf-type-meta)!important}
+.terminal .position-symbol{font-size:var(--mf-type-ui)!important}
+.terminal .close-position,
+.terminal .section-title,
+.terminal .row-title > span:last-child,
+.terminal .field-hint,
+.terminal .strategy-grid label > span,
+.terminal .strategy-grid b,
+.terminal .live-warning strong,
+.terminal .live-warning span,
+.terminal .control-error{font-size:var(--mf-type-micro)!important}
+.terminal .control-actions button{font-size:var(--mf-type-meta)!important}
+.terminal .empty{font-size:var(--mf-type-meta)!important}
+
+/* DASHBOARD / SETTINGS */
+#settings .setting-field label,
+#settings .setting-field > span{font-size:var(--mf-type-ui)!important}
+#settings .setting-field small,
+#settings .toggle-copy span,
+#settings .settings-footer p{font-size:var(--mf-type-ui)!important}
+#settings .toggle-copy b{font-size:var(--mf-type-body)!important}
+#settings .settings-group > summary small{font-size:var(--mf-type-micro)!important}
+#settings .settings-group > summary em{font-size:var(--mf-type-meta)!important}
+
+/* Phone: keep compact geometry, restore readable type floor. */
+@media(max-width:760px){
+  .system-shell .scene-title .eyebrow,
+  .system-shell .legend span,
+  .system-shell .metric-card span,
+  .system-shell .reason-block span,
+  .system-shell .telemetry-item span,
+  .system-shell .telemetry-item small,
+  .system-shell .telemetry.mf-telemetry-standalone-v3 .telemetry-item span,
+  .system-shell .telemetry.mf-telemetry-standalone-v3 .telemetry-item small{
+    font-size:var(--mf-type-micro)!important;
+  }
+
+  .flow-page .summary-card span,
+  .flow-page .token-state,
+  .flow-page .token-metric span,
+  .flow-page .details-button,
+  .flow-page .detail-block span{
+    font-size:var(--mf-type-micro)!important;
+  }
+  .flow-page .token-metric strong,
+  .flow-page .detail-block p{font-size:var(--mf-type-meta)!important}
+
+  .terminal .token-name-row h1{font-size:12px!important}
+  .terminal .decision-badge,
+  .terminal .token-meta,
+  .terminal .token-market,
+  .terminal .timeframes button,
+  .terminal .indicator-bar button,
+  .terminal .selected-metrics span,
+  .terminal .field-hint,
+  .terminal .strategy-grid label > span,
+  .terminal .strategy-grid b,
+  .terminal .positions-panel .eyebrow,
+  .terminal .history-panel .eyebrow,
+  .terminal .candidates-panel .eyebrow,
+  .terminal .candidate-filter button,
+  .terminal .candidate-name span,
+  .terminal .candidate-bottom,
+  .terminal .state-dot,
+  .terminal .compact-wallet-panel .wallet-address,
+  .terminal .compact-wallet-panel .live-warning strong,
+  .terminal .compact-wallet-panel .live-warning span{
+    font-size:var(--mf-type-micro)!important;
+  }
+  .terminal .selected-metrics strong,
+  .terminal .position-row strong,
+  .terminal .candidate-name strong,
+  .terminal .candidate-price{font-size:var(--mf-type-meta)!important}
+  .terminal .trade-row{font-size:var(--mf-type-micro)!important}
+
+  #settings .setting-field label,
+  #settings .setting-field > span,
+  #settings .toggle-copy span{font-size:var(--mf-type-meta)!important}
+  #settings .toggle-copy b{font-size:var(--mf-type-ui)!important}
+}
+
+@media(max-width:430px){
+  .panel-head h2,
+  .execution-head h2{font-size:12px!important}
+
+  .flow-page .header-title strong,
+  .flow-page .live-status,
+  .flow-page .hero-counter span,
+  .flow-page .summary-card span,
+  .flow-page .refresh-info button,
+  .flow-page .token-state,
+  .flow-page .token-metric span,
+  .flow-page .details-button,
+  .flow-page .detail-block span,
+  .flow-page .pagination button,
+  .flow-page .page-state{
+    font-size:var(--mf-type-micro)!important;
+  }
+}
+/* ===== MEMEFLOW_CANONICAL_TYPOGRAPHY_V1_END ===== */
+
+/* ===== MEMEFLOW_TYPOGRAPHY_POLISH_V2_START ===== */
+/*
+  Final visual polish after device screenshots.
+  Scope:
+    1) Trading Terminal micro technical copy only.
+    2) System Settings accordion titles only.
+  Explicitly NOT touched:
+    - Token Flow typography
+    - global drawer / memeflow-nav.css
+    - hero/page titles
+    - trading logic, chart logic, API, data, wallet or scanner behavior
+*/
+
+/* --------------------------------------------------------------- */
+/* TRADING TERMINAL — tiny chart telemetry                         */
+/* --------------------------------------------------------------- */
+
+/*
+  OHLC / candles / trades / SL / TP chips above the chart.
+  trading.css had these at 6px, which stayed visibly undersized
+  after V1 because chart-legend is a separate technical layer.
+*/
+.terminal .chart-legend span{
+  font-size:8px!important;
+  line-height:1.2!important;
+}
+
+/* Bottom chart metrics: Score / Holders / Top 10 / Developer / Liquidity. */
+.terminal .selected-metrics span{
+  font-size:9px!important;
+  line-height:1.2!important;
+}
+.terminal .selected-metrics strong{
+  font-size:10px!important;
+  line-height:1.2!important;
+}
+
+/* Recent trades — secondary detail row only. */
+.terminal .trade-log-details b{
+  font-size:9px!important;
+  line-height:1.2!important;
+}
+.terminal .trade-log-details strong{
+  font-size:10px!important;
+  line-height:1.25!important;
+}
+
+/* Keep timestamps and tiny execution-log hint readable but secondary. */
+.terminal .trade-log-time,
+.terminal .trade-log-hint{
+  font-size:8px!important;
+}
+
+/* --------------------------------------------------------------- */
+/* SYSTEM SETTINGS — slightly calmer section hierarchy             */
+/* --------------------------------------------------------------- */
+
+/*
+  Accordion section names such as:
+  Wallet & Smart Vault / Execution & safety / Logic /
+  Trading / Copy trading / Entry filters.
+  Reduce only the section heading weight/size; values and field copy stay V1.
+*/
+#settings .settings-group > summary b{
+  font-size:14px!important;
+  line-height:1.18!important;
+  font-weight:760!important;
+  letter-spacing:-.01em!important;
+}
+
+/* Common newer settings shell aliases, if present in the running build. */
+#settings .settings-section > summary b,
+#settings .settings-accordion > details > summary b{
+  font-size:14px!important;
+  line-height:1.18!important;
+  font-weight:760!important;
+  letter-spacing:-.01em!important;
+}
+
+/*
+  If the standalone/mobile settings renderer uses headings rather than <b>,
+  constrain only headings inside accordion summaries.
+*/
+#settings details > summary h2,
+#settings details > summary h3{
+  font-size:14px!important;
+  line-height:1.18!important;
+  font-weight:760!important;
+  letter-spacing:-.01em!important;
+}
+
+/* Phone stays exactly the same scale — no additional shrink. */
+@media(max-width:760px){
+  .terminal .chart-legend span{
+    font-size:8px!important;
+  }
+  .terminal .selected-metrics span{
+    font-size:9px!important;
+  }
+  .terminal .selected-metrics strong{
+    font-size:10px!important;
+  }
+  .terminal .trade-log-details b{
+    font-size:9px!important;
+  }
+  .terminal .trade-log-details strong{
+    font-size:10px!important;
+  }
+
+  #settings .settings-group > summary b,
+  #settings .settings-section > summary b,
+  #settings .settings-accordion > details > summary b,
+  #settings details > summary h2,
+  #settings details > summary h3{
+    font-size:14px!important;
+    font-weight:760!important;
+  }
+}
+/* ===== MEMEFLOW_TYPOGRAPHY_POLISH_V2_END ===== */

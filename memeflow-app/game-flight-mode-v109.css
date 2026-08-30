@@ -240,6 +240,6 @@ body.mf-flight-mode #mfFlightModeExit{
   #mfFlightModeExit{
     height:30px;
     padding:0 8px;
-    font-size:7px;
+    font-size:var(--mf-type-micro);
   }
 }

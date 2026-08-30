@@ -430,13 +430,17 @@ export async function enrichHolders(mint,deps){
 
   const updated=store.setToken(mint,{
     holderFresh:true,
+    holderCountAuthoritative:true,
+    holderCountIsLowerBound:false,
     holderCount,
+    holderCountAuthoritative:true,
+    holderCountIsLowerBound:false,
     holderRiskWallets,
     holderRiskWalletsScannedAt:Date.now(),
     top10Pct,
     developerPct,
     developerSharePct:developerPct,
-    holderSource:'Solana getProgramAccounts unique-wallet scan',
+    holderSource:'solana-getProgramAccounts-unique-wallet-authority',
     holderTokenProgram:programUsed,
     holderScannedAt:Date.now(),
     marketCap:token.marketCapSol??token.marketCap??null,

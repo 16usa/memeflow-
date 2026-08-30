@@ -164,7 +164,7 @@ button {
 
   color: #dfe9ef;
 
-  font-size: 11px;
+  font-size: var(--mf-type-body);
   font-weight: 900;
   letter-spacing: .14em;
 }
@@ -176,7 +176,7 @@ button {
 
   color: #708491;
 
-  font-size: 7px;
+  font-size: var(--mf-type-micro);
   letter-spacing: .13em;
   text-transform: uppercase;
 }
@@ -188,7 +188,7 @@ button {
 
   color: var(--green);
 
-  font-size: 8px;
+  font-size: var(--mf-type-micro);
   font-weight: 800;
   letter-spacing: .12em;
 }
@@ -230,7 +230,7 @@ button {
 .eyebrow {
   color: var(--cyan);
 
-  font-size: 8px;
+  
   font-weight: 900;
   letter-spacing: .19em;
 }
@@ -249,7 +249,7 @@ button {
 
   color: var(--muted);
 
-  font-size: 11px;
+  font-size: var(--mf-type-body);
 }
 
 .hero-counter {
@@ -263,7 +263,7 @@ button {
 
   color: var(--muted);
 
-  font-size: 7px;
+  font-size: var(--mf-type-micro);
   text-transform: uppercase;
   letter-spacing: .12em;
 }
@@ -308,7 +308,7 @@ button {
 
   color: var(--muted);
 
-  font-size: 7px;
+  font-size: var(--mf-type-micro);
   font-weight: 800;
 
   letter-spacing: .08em;
@@ -448,7 +448,7 @@ button {
   background: transparent;
   color: var(--text);
 
-  font-size: 10px;
+  font-size: var(--mf-type-ui);
 }
 
 .search-wrap input::placeholder {
@@ -464,7 +464,7 @@ button {
 .refresh-info span {
   color: #627681;
 
-  font-size: 7px;
+  font-size: var(--mf-type-micro);
 }
 
 .refresh-info button {
@@ -480,7 +480,7 @@ button {
 
   cursor: pointer;
 
-  font-size: 8px;
+  font-size: var(--mf-type-micro);
 }
 
 .token-list {
@@ -606,7 +606,7 @@ button {
   text-overflow: ellipsis;
   white-space: nowrap;
 
-  font-size: 13px;
+  font-size: var(--mf-type-panel);
   font-weight: 850;
 }
 
@@ -618,7 +618,7 @@ button {
   border: 1px solid currentColor;
   border-radius: 6px;
 
-  font-size: 6px;
+  font-size: var(--mf-type-micro);
   font-weight: 900;
   letter-spacing: .07em;
 }
@@ -654,7 +654,7 @@ button {
     Menlo,
     monospace;
 
-  font-size: 7px;
+  font-size: var(--mf-type-micro);
 }
 
 .token-metric {
@@ -670,7 +670,7 @@ button {
 
   color: #637682;
 
-  font-size: 6px;
+  font-size: var(--mf-type-micro);
   letter-spacing: .09em;
   text-transform: uppercase;
 }
@@ -684,7 +684,7 @@ button {
   text-overflow: ellipsis;
   white-space: nowrap;
 
-  font-size: 11px;
+  font-size: var(--mf-type-body);
 }
 
 .details-button {
@@ -701,7 +701,7 @@ button {
 
   cursor: pointer;
 
-  font-size: 7px;
+  font-size: var(--mf-type-micro);
 }
 
 .token-details {
@@ -739,7 +739,7 @@ button {
 
   color: #607480;
 
-  font-size: 6px;
+  font-size: var(--mf-type-micro);
   letter-spacing: .10em;
   text-transform: uppercase;
 }
@@ -749,7 +749,7 @@ button {
 
   color: #aebcc5;
 
-  font-size: 9px;
+  font-size: var(--mf-type-meta);
   line-height: 1.45;
 
   word-break: break-word;
@@ -776,7 +776,7 @@ button {
 
   color: var(--muted);
 
-  font-size: 9px;
+  font-size: var(--mf-type-meta);
 }
 
 .pagination {
@@ -810,7 +810,7 @@ button {
 
   cursor: pointer;
 
-  font-size: 8px;
+  font-size: var(--mf-type-micro);
 }
 
 .pagination button:disabled {
@@ -825,7 +825,7 @@ button {
 
   color: #70838f;
 
-  font-size: 8px;
+  font-size: var(--mf-type-micro);
 }
 
 .page-state strong {
@@ -858,7 +858,7 @@ button {
   }
 
   .header-title span {
-    font-size: 10px;
+    font-size: var(--mf-type-ui);
   }
 
   .flow-hero {
@@ -903,11 +903,11 @@ button {
   }
 
   .summary-card span {
-    font-size: 5px;
+    font-size: var(--mf-type-micro);
   }
 
   .summary-card strong {
-    font-size: 13px;
+    font-size: var(--mf-type-panel);
   }
 
   .flow-toolbar {
@@ -973,11 +973,11 @@ button {
   }
 
   .token-metric span {
-    font-size: 5px;
+    font-size: var(--mf-type-micro);
   }
 
   .token-metric strong {
-    font-size: 9px;
+    font-size: var(--mf-type-meta);
   }
 
   .details-button {
@@ -989,7 +989,7 @@ button {
     min-width: 55px;
     height: 26px;
 
-    font-size: 6px;
+    font-size: var(--mf-type-micro);
   }
 
   .token-top {
@@ -1001,7 +1001,7 @@ button {
   }
 
   .detail-block p {
-    font-size: 8px;
+    font-size: var(--mf-type-micro);
   }
 
   .pagination {
@@ -1021,7 +1021,7 @@ button {
   .pagination button {
     height: 32px;
     padding: 0 9px;
-    font-size: 7px;
+    font-size: var(--mf-type-micro);
   }
 }
 
@@ -1058,7 +1058,7 @@ button {
 
     border-radius: 8px;
 
-    font-size: 15px;
+    font-size: var(--mf-type-title);
   }
 
   .brand-mark {
@@ -1069,20 +1069,20 @@ button {
   }
 
   .header-title span {
-    font-size: 9px;
+    font-size: var(--mf-type-meta);
     letter-spacing: .13em;
   }
 
   .header-title strong {
     margin-top: 0;
 
-    font-size: 5px;
+    font-size: var(--mf-type-micro);
   }
 
   .live-status {
     gap: 4px;
 
-    font-size: 6px;
+    font-size: var(--mf-type-micro);
   }
 
   .live-status i {
@@ -1105,7 +1105,7 @@ button {
   }
 
   .eyebrow {
-    font-size: 5px;
+    
     letter-spacing: .16em;
   }
 
@@ -1125,7 +1125,7 @@ button {
   }
 
   .hero-counter span {
-    font-size: 5px;
+    font-size: var(--mf-type-micro);
   }
 
   .hero-counter strong {
@@ -1155,7 +1155,7 @@ button {
   }
 
   .summary-card span {
-    font-size: 4.5px;
+    font-size: var(--mf-type-micro);
 
     letter-spacing: .06em;
   }
@@ -1187,11 +1187,11 @@ button {
   }
 
   .search-wrap span {
-    font-size: 11px;
+    font-size: var(--mf-type-body);
   }
 
   .search-wrap input {
-    font-size: 8px;
+    font-size: var(--mf-type-micro);
   }
 
   .refresh-info button {
@@ -1201,7 +1201,7 @@ button {
 
     border-radius: 7px;
 
-    font-size: 6px;
+    font-size: var(--mf-type-micro);
   }
 
   /* TOKEN LIST */
@@ -1253,7 +1253,7 @@ button {
   }
 
   .token-mint {
-    font-size: 10px;
+    font-size: var(--mf-type-ui);
     line-height: 1;
   }
 
@@ -1262,7 +1262,7 @@ button {
 
     border-radius: 5px;
 
-    font-size: 5px;
+    font-size: var(--mf-type-micro);
   }
 
   .details-button {
@@ -1275,7 +1275,7 @@ button {
 
     border-radius: 6px;
 
-    font-size: 5px;
+    font-size: var(--mf-type-micro);
   }
 
   .token-metric {
@@ -1289,7 +1289,7 @@ button {
   }
 
   .token-metric span {
-    font-size: 4.5px;
+    font-size: var(--mf-type-micro);
 
     letter-spacing: .07em;
   }
@@ -1297,7 +1297,7 @@ button {
   .token-metric strong {
     margin-top: 2px;
 
-    font-size: 8px;
+    font-size: var(--mf-type-micro);
   }
 
   /*
@@ -1335,13 +1335,13 @@ button {
   }
 
   .detail-block span {
-    font-size: 4.5px;
+    font-size: var(--mf-type-micro);
   }
 
   .detail-block p {
     margin-top: 3px;
 
-    font-size: 6.5px;
+    font-size: var(--mf-type-micro);
     line-height: 1.35;
   }
 
@@ -1375,13 +1375,13 @@ button {
 
     border-radius: 6px;
 
-    font-size: 6px;
+    font-size: var(--mf-type-micro);
   }
 
   .page-state {
     gap: 3px;
 
-    font-size: 6px;
+    font-size: var(--mf-type-micro);
   }
 
 }
@@ -1443,7 +1443,7 @@ button {
 
   color: #d9e8ef;
 
-  font-size: 11px;
+  font-size: var(--mf-type-body);
   font-weight: 900;
   letter-spacing: .05em;
 }
@@ -1493,7 +1493,7 @@ button {
   }
 
   .token-avatar span {
-    font-size: 8px;
+    font-size: var(--mf-type-micro);
   }
 
 }
@@ -1556,7 +1556,7 @@ button {
 
   color: #d9e8ef;
 
-  font-size: 11px;
+  font-size: var(--mf-type-body);
   font-weight: 900;
   letter-spacing: .04em;
 }
@@ -1616,7 +1616,7 @@ button {
   }
 
   .token-avatar span {
-    font-size: 8px;
+    font-size: var(--mf-type-micro);
   }
 
 }
@@ -1659,7 +1659,7 @@ button {
 
   text-decoration: none;
 
-  font-size: 9px;
+  font-size: var(--mf-type-meta);
   font-weight: 800;
 
   transition:
@@ -1681,7 +1681,7 @@ button {
 @media (max-width:760px) {
 
   .token-name {
-    font-size: 10px !important;
+    font-size: var(--mf-type-ui);
   }
 
   .token-pump-link {
@@ -1690,7 +1690,7 @@ button {
 
     border-radius: 5px;
 
-    font-size: 8px;
+    font-size: var(--mf-type-micro);
   }
 
   .token-avatar {
@@ -1786,7 +1786,7 @@ button {
   }
 
   .token-avatar span {
-    font-size: 8px !important;
+    font-size: var(--mf-type-micro);
   }
 
   .token-meta {
@@ -1823,7 +1823,7 @@ button {
     text-overflow: ellipsis !important;
     white-space: nowrap !important;
 
-    font-size: 9px !important;
+    font-size: var(--mf-type-meta);
     font-weight: 750 !important;
 
     line-height: 1 !important;
@@ -1851,7 +1851,7 @@ button {
 
     border-radius: 6px !important;
 
-    font-size: 8px !important;
+    font-size: var(--mf-type-micro);
   }
 
 
@@ -1875,7 +1875,7 @@ button {
 
     border-radius: 6px !important;
 
-    font-size: 4.8px !important;
+    font-size: var(--mf-type-micro);
     font-weight: 800 !important;
 
     line-height: 1 !important;
@@ -1923,7 +1923,7 @@ button {
   .token-metric span {
     margin: 0 !important;
 
-    font-size: 4px !important;
+    font-size: var(--mf-type-micro);
 
     line-height: 1 !important;
 
@@ -1937,7 +1937,7 @@ button {
   .token-metric strong {
     margin: 0 !important;
 
-    font-size: 8px !important;
+    font-size: var(--mf-type-micro);
     font-weight: 750 !important;
 
     line-height: 1 !important;
@@ -1963,7 +1963,7 @@ button {
 
     border-radius: 7px !important;
 
-    font-size: 5px !important;
+    font-size: var(--mf-type-micro);
 
     line-height: 1 !important;
   }
@@ -2025,7 +2025,7 @@ button {
   .token-mint {
     max-width: 88px !important;
 
-    font-size: 8.3px !important;
+    font-size: 8.3px;
   }
 
   .token-state {
@@ -2033,7 +2033,7 @@ button {
       0
       5px !important;
 
-    font-size: 4.3px !important;
+    font-size: var(--mf-type-micro);
   }
 
   .token-metric span {
@@ -2041,7 +2041,7 @@ button {
   }
 
   .token-metric strong {
-    font-size: 7.5px !important;
+    font-size: var(--mf-type-micro);
   }
 
   .details-button {
@@ -2104,7 +2104,7 @@ button {
   .token-mint {
     max-width: 118px !important;
 
-    font-size: 9.2px !important;
+    font-size: 9.2px;
     font-weight: 760 !important;
 
     letter-spacing: -.01em !important;
@@ -2124,19 +2124,19 @@ button {
       0
       6px !important;
 
-    font-size: 4.8px !important;
+    font-size: var(--mf-type-micro);
   }
 
   .token-metric span {
     display: block !important;
 
-    font-size: 4.2px !important;
+    font-size: var(--mf-type-micro);
 
     letter-spacing: .08em !important;
   }
 
   .token-metric strong {
-    font-size: 8.8px !important;
+    font-size: 8.8px;
     font-weight: 780 !important;
   }
 
@@ -2145,7 +2145,7 @@ button {
     min-width: 48px !important;
     height: 28px !important;
 
-    font-size: 5px !important;
+    font-size: var(--mf-type-micro);
   }
 
 }
@@ -2155,15 +2155,15 @@ button {
   .token-name,
   .token-mint {
     max-width: 94px !important;
-    font-size: 8.6px !important;
+    font-size: 8.6px;
   }
 
   .token-metric span {
-    font-size: 3.8px !important;
+    font-size: var(--mf-type-micro);
   }
 
   .token-metric strong {
-    font-size: 8px !important;
+    font-size: var(--mf-type-micro);
   }
 
 }
@@ -2254,7 +2254,7 @@ button {
 .mf-open-market-stat span {
   display: block;
   color: #637682;
-  font-size: 6px;
+  font-size: var(--mf-type-micro);
   font-weight: 700;
   line-height: 1;
   letter-spacing: .075em;
@@ -2268,7 +2268,7 @@ button {
   margin-top: 4px;
   overflow: hidden;
   color: #dfe9ef;
-  font-size: 10px;
+  font-size: var(--mf-type-ui);
   font-variant-numeric: tabular-nums;
   line-height: 1.05;
   text-overflow: ellipsis;
@@ -2314,13 +2314,13 @@ button {
   }
 
   .mf-open-market-stat span {
-    font-size: 4.2px;
+    font-size: var(--mf-type-micro);
     letter-spacing: .045em;
   }
 
   .mf-open-market-stat strong {
     margin-top: 3px;
-    font-size: 7px;
+    font-size: var(--mf-type-micro);
   }
 
   .flow-token.open > .mf-open-pnl-slot {
@@ -2338,11 +2338,11 @@ button {
   }
 
   .mf-open-market-stat span {
-    font-size: 3.9px;
+    font-size: var(--mf-type-micro);
   }
 
   .mf-open-market-stat strong {
-    font-size: 6.6px;
+    font-size: var(--mf-type-micro);
   }
 }
 
@@ -2371,7 +2371,7 @@ button {
 .mf-regular-market-stat span {
   display: block;
   color: #637682;
-  font-size: 6px;
+  font-size: var(--mf-type-micro);
   font-weight: 700;
   line-height: 1;
   letter-spacing: .075em;
@@ -2385,7 +2385,7 @@ button {
   margin-top: 4px;
   overflow: hidden;
   color: #dfe9ef;
-  font-size: 10px;
+  font-size: var(--mf-type-ui);
   font-variant-numeric: tabular-nums;
   line-height: 1.05;
   text-overflow: ellipsis;
@@ -2435,13 +2435,13 @@ button {
   }
 
   .mf-regular-market-stat span {
-    font-size: 4.2px;
+    font-size: var(--mf-type-micro);
     letter-spacing: .045em;
   }
 
   .mf-regular-market-stat strong {
     margin-top: 3px;
-    font-size: 7px;
+    font-size: var(--mf-type-micro);
   }
 }
 
@@ -2455,11 +2455,11 @@ button {
   }
 
   .mf-regular-market-stat span {
-    font-size: 3.9px;
+    font-size: var(--mf-type-micro);
   }
 
   .mf-regular-market-stat strong {
-    font-size: 6.6px;
+    font-size: var(--mf-type-micro);
   }
 }
 
@@ -2562,7 +2562,7 @@ button {
   white-space: nowrap;
   text-transform: none;
   letter-spacing: .025em;
-  font-size: 6px;
+  font-size: var(--mf-type-micro);
   line-height: 1.25;
 }
 
@@ -2587,7 +2587,7 @@ button {
 @media (max-width: 640px) {
   .hero-counter .scanner-status {
     max-width: 150px;
-    font-size: 5px;
+    font-size: var(--mf-type-micro);
   }
 }
 
@@ -2607,7 +2607,7 @@ button {
   background:rgba(9,17,23,.72);
   color:#93a8b4;
   font:inherit;
-  font-size:10px;
+  font-size:var(--mf-type-ui);
   font-weight:800;
   letter-spacing:.12em;
   text-align:left;
@@ -2717,7 +2717,7 @@ body.mf-sort-sheet-open-v25 {
   background:transparent;
   color:#718995;
   font:inherit;
-  font-size:9px;
+  font-size:var(--mf-type-meta);
   font-weight:800;
   letter-spacing:.08em;
   cursor:pointer;
@@ -2746,7 +2746,7 @@ body.mf-sort-sheet-open-v25 {
   background:rgba(13,24,31,.88);
   color:#e8f0f4;
   font:inherit;
-  font-size:13px;
+  font-size:var(--mf-type-panel);
   font-weight:750;
   text-align:left;
   cursor:pointer;

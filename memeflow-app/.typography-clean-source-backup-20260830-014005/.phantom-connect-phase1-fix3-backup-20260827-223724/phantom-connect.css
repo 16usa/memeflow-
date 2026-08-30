@@ -1,0 +1,136 @@
+.mf-pc-panel{
+  grid-column:1/-1;
+  border:1px solid var(--line,#28333e);
+  border-radius:13px;
+  padding:11px;
+  margin-top:4px;
+  background:rgba(255,255,255,.012)
+}
+
+.mf-pc-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:8px
+}
+
+.mf-pc-head b{
+  display:block;
+  font-size:12px
+}
+
+.mf-pc-head small,
+.mf-pc-panel small{
+  display:block;
+  margin-top:3px;
+  color:var(--muted,#84919f);
+  font-size:9px;
+  line-height:1.35
+}
+
+.mf-pc-head i{
+  font-style:normal;
+  font-size:8px;
+  letter-spacing:.08em;
+  color:var(--muted,#84919f)
+}
+
+.mf-pc-head i.ok{
+  color:var(--green,#51e7a8)
+}
+
+.mf-pc-meta{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:6px;
+  margin-top:9px
+}
+
+.mf-pc-meta>span{
+  border:1px solid var(--line,#28333e);
+  border-radius:9px;
+  padding:8px;
+  min-width:0
+}
+
+.mf-pc-meta b{
+  display:block;
+  font-size:10px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis
+}
+
+.mf-pc-actions{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:6px;
+  margin-top:7px
+}
+
+.mf-pc-actions button,
+.mf-pc-autoconfirm{
+  min-height:35px;
+  border:1px solid var(--line,#28333e);
+  border-radius:9px;
+  background:transparent;
+  color:var(--text,#eef4f8)
+}
+
+.mf-pc-modes{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:6px;
+  margin-top:8px
+}
+
+.mf-pc-modes button{
+  text-align:left;
+  min-height:62px;
+  padding:9px;
+  border:1px solid var(--line,#28333e);
+  border-radius:10px;
+  background:transparent;
+  color:var(--text,#eef4f8)
+}
+
+.mf-pc-modes button.selected{
+  border-color:rgba(91,202,232,.5);
+  background:rgba(91,202,232,.06)
+}
+
+.mf-pc-modes button:disabled{
+  opacity:.52
+}
+
+.mf-pc-autoconfirm{
+  width:100%;
+  margin-top:7px
+}
+
+.mf-pc-note,
+.mf-pc-msg{
+  margin-top:7px;
+  border:1px solid var(--line,#28333e);
+  border-radius:9px;
+  padding:8px;
+  font-size:9px;
+  line-height:1.5;
+  color:var(--muted,#84919f)
+}
+
+.mf-pc-note b{
+  color:var(--text,#eef4f8)
+}
+
+.mf-pc-msg.bad{
+  color:var(--red,#ff6679)
+}
+
+@media(max-width:520px){
+  .mf-pc-meta,
+  .mf-pc-actions,
+  .mf-pc-modes{
+    grid-template-columns:1fr
+  }
+}

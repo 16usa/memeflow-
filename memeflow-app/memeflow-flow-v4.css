@@ -163,11 +163,11 @@
   }
 
   .mf-flow-v4-rate span{
-    font-size:5.5px;
+    font-size:var(--mf-type-micro);
   }
 
   .mf-flow-v4-rate b{
-    font-size:10px;
+    font-size:var(--mf-type-ui);
   }
 
   .mf-flow-v4-rate small{
@@ -177,7 +177,7 @@
   .mf-flow-v4-foot{
     left:10px;
     bottom:10px;
-    font-size:6px;
+    font-size:var(--mf-type-micro);
     opacity:.78;
   }
 }
@@ -197,7 +197,7 @@
 
 @media(max-width:760px){
   .mf-flow-v4-foot{
-    font-size:5.2px;
+    font-size:var(--mf-type-micro);
     letter-spacing:.06em;
   }
 }
@@ -244,7 +244,7 @@
 
   opacity:.48 !important;
 
-  font-size:5.2px !important;
+  font-size:var(--mf-type-micro);
 
   letter-spacing:.055em !important;
 }

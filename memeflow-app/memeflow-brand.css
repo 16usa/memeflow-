@@ -242,7 +242,7 @@ html,body{
 .panel-head h2,.execution-head h2,.wallet-dialog-head h2,.sheet-top h2{
   margin:0!important;
   color:var(--mf-app-text)!important;
-  font-size:13px!important;
+  font-size:var(--mf-type-panel);
   line-height:1.2!important;
   letter-spacing:-.02em!important;
 }
@@ -410,7 +410,7 @@ h1,h2,h3{
   .wallet-card,.wallet-security,.plan-card,.settings-group{border-radius:12px!important;}
 }
 @media(max-width:430px){
-  .panel-head h2,.execution-head h2{font-size:12px!important;}
+  .panel-head h2,.execution-head h2{font-size:12px;}
   .wallet-actions,.settings-footer-actions{gap:7px!important;}
 }
 @media(prefers-reduced-motion:reduce){
@@ -419,3 +419,34 @@ h1,h2,h3{
   }
 }
 /* MF_UNIFIED_APP_THEME_END */
+
+/* ===== MEMEFLOW_TYPOGRAPHY_FOUNDATION_START ===== */
+/*
+  MEMEFLOW typography foundation.
+  Single source of truth for shared text sizes.
+  Page CSS owns component layout; it must not create sub-8px UI text.
+*/
+:root{
+  --mf-type-micro:8px;
+  --mf-type-meta:9px;
+  --mf-type-ui:10px;
+  --mf-type-body:11px;
+  --mf-type-panel:13px;
+  --mf-type-title:15px;
+}
+
+/* Shared semantic roles live here once, not on every page. */
+.eyebrow{
+  font-size:var(--mf-type-micro);
+}
+.panel-head h2,
+.execution-head h2,
+.wallet-dialog-head h2,
+.sheet-top h2{
+  font-size:var(--mf-type-panel);
+  line-height:1.2;
+}
+.btn{
+  font-size:var(--mf-type-body);
+}
+/* ===== MEMEFLOW_TYPOGRAPHY_FOUNDATION_END ===== */

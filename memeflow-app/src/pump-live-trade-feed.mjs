@@ -306,8 +306,23 @@ export function startPumpLiveTradeFeed(opts={}){
           ? liveMarketCapSol*Number(solUsd)
           : null;
 
+      const holderObservedPatch=holderSnap?{
+        observedHolderCount:holderSnap.observedHolderCount??null,
+        holderRiskWallets:holderSnap.holderRiskWallets??[],
+        holderRiskWalletsKey:holderSnap.holderRiskWalletsKey??null,
+        holderRiskWalletsScannedAt:holderSnap.holderRiskWalletsScannedAt??null,
+        eventLedgerVersion:holderSnap.eventLedgerVersion??null,
+        eventLedgerLastUser:holderSnap.eventLedgerLastUser??null,
+        eventLedgerTxCount:holderSnap.eventLedgerTxCount??null,
+        eventLedgerCreator:holderSnap.eventLedgerCreator??null,
+        eventLedgerTrackedSupplyRaw:holderSnap.eventLedgerTrackedSupplyRaw??null,
+        eventLedgerTotalSupplyRaw:holderSnap.eventLedgerTotalSupplyRaw??null,
+        eventLedgerDecimals:holderSnap.eventLedgerDecimals??null,
+        eventLedgerCoveragePct:holderSnap.eventLedgerCoveragePct??null
+      }:{};
+
       const patch={
-        ...(holderSnap||{}),
+        ...holderObservedPatch,
         ...opp,
         marketSource:'ws-direct-trade-event-v13',
         lastPriceAt:Date.now(),

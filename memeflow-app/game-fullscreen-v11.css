@@ -115,14 +115,14 @@ body{
   display:block;
   margin-bottom:5px;
   color:#7cecff;
-  font-size:11px;
+  font-size:var(--mf-type-body);
   letter-spacing:.16em;
 }
 
 .mf-v11-loading small{
   display:block;
   color:#95a5b2;
-  font-size:11px;
+  font-size:var(--mf-type-body);
 }
 
 .mf-v11-dot{
@@ -156,7 +156,7 @@ body{
   .mf-v11-top-actions button{
     min-height:34px;
     padding:0 10px;
-    font-size:8px;
+    font-size:var(--mf-type-micro);
   }
 
   .mf-v11-top-actions button span:last-child{

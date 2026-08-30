@@ -150,7 +150,7 @@
 
   color:#6ddcff;
 
-  font-size:7px;
+  font-size:var(--mf-type-micro);
   font-weight:850;
 
   letter-spacing:.17em;
@@ -194,7 +194,7 @@
 
   color:#8eeab5;
 
-  font-size:7px;
+  font-size:var(--mf-type-micro);
   font-weight:800;
 
   letter-spacing:.09em;
@@ -267,7 +267,7 @@
 
   color:#82909b;
 
-  font-size:8px;
+  font-size:var(--mf-type-micro);
   line-height:1.35;
 }
 
@@ -341,7 +341,7 @@
 
   color:#778791;
 
-  font-size:9px;
+  font-size:var(--mf-type-meta);
   letter-spacing:.11em;
 }
 
@@ -421,7 +421,7 @@
 
   .mf-game-settings-state{
     max-width:120px;
-    font-size:6px;
+    font-size:var(--mf-type-micro);
   }
 
   .mf-game-settings-close{
@@ -436,7 +436,7 @@
       7px
       11px;
 
-    font-size:7px;
+    font-size:var(--mf-type-micro);
   }
 }
 
@@ -455,7 +455,7 @@
 
     border-radius:8px!important;
 
-    font-size:12px!important;
+    font-size:12px;
   }
 
   .mf-game-settings-overlay{
@@ -484,17 +484,17 @@
   }
 
   .mf-game-settings-title small{
-    font-size:5px;
+    font-size:var(--mf-type-micro);
   }
 
   .mf-game-settings-title b{
     margin-top:1px;
-    font-size:13px;
+    font-size:var(--mf-type-panel);
   }
 
   .mf-game-settings-state{
     padding:4px 7px;
-    font-size:5px;
+    font-size:var(--mf-type-micro);
   }
 
   .mf-game-settings-close{
@@ -503,7 +503,7 @@
 
     border-radius:8px;
 
-    font-size:15px;
+    font-size:var(--mf-type-title);
   }
 
   .mf-game-settings-info{
@@ -513,7 +513,7 @@
       4px
       9px;
 
-    font-size:5.5px;
+    font-size:var(--mf-type-micro);
   }
 }
 

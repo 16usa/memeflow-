@@ -1,0 +1,1085 @@
+/* =========================================================
+   MEMEFLOW FLIGHT V22 — APPROVED MOCKUP
+   FINAL PORTRAIT HUD OVERRIDE
+
+   UNTOUCHED:
+   - top LIVE / FEED / TIME
+   - multiplier
+   - rocket / world
+   - bottom STAKE / PAPER VALUE / P&L / STAGE / PRICE AGE
+   ========================================================= */
+
+@media (orientation:portrait){
+
+body.flight-v12{
+  --v22-edge:6px;
+  --v22-gap:5px;
+  --v22-base:calc(var(--v12-bottom) + 32px);
+
+  --v22-launch-h:15.2dvh;
+  --v22-info-h:13.6dvh;
+  --v22-action-h:6.9dvh;
+
+  --v22-col:
+    calc(
+      (
+        100vw -
+        (var(--v22-edge) * 2) -
+        (var(--v22-gap) * 2)
+      ) / 3
+    );
+}
+
+
+/* ---------------------------------------------------------
+   RESET ONLY LOWER COCKPIT
+   --------------------------------------------------------- */
+
+body.flight-v12 .launch-panel,
+body.flight-v12 .token-panel,
+body.flight-v12 .history-panel,
+body.flight-v12 .stats-panel,
+body.flight-v12 #v12ActionDock{
+  box-sizing:border-box!important;
+  margin:0!important;
+  min-width:0!important;
+  min-height:0!important;
+  max-width:none!important;
+  max-height:none!important;
+
+  zoom:1!important;
+  transform:none!important;
+}
+
+body.flight-v12 .launch-panel *,
+body.flight-v12 .token-panel *,
+body.flight-v12 .history-panel *,
+body.flight-v12 .stats-panel *,
+body.flight-v12 #v12ActionDock *{
+  box-sizing:border-box!important;
+  min-width:0!important;
+}
+
+
+/* ---------------------------------------------------------
+   GLASS CARDS
+   --------------------------------------------------------- */
+
+body.flight-v12 .launch-panel,
+body.flight-v12 .token-panel,
+body.flight-v12 .history-panel,
+body.flight-v12 .stats-panel{
+  z-index:68!important;
+
+  border:
+    1px solid
+    rgba(116,188,209,.20)!important;
+
+  border-radius:13px!important;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(5,14,21,.94),
+      rgba(2,9,15,.91)
+    )!important;
+
+  box-shadow:
+    0 12px 30px
+    rgba(0,0,0,.28)!important;
+
+  backdrop-filter:
+    blur(14px)
+    saturate(1.05)!important;
+
+  -webkit-backdrop-filter:
+    blur(14px)
+    saturate(1.05)!important;
+
+  overflow:hidden!important;
+}
+
+
+/* =========================================================
+   1. LAUNCH CONTROL
+   ========================================================= */
+
+body.flight-v12 .launch-panel{
+  position:fixed!important;
+
+  left:var(--v22-edge)!important;
+  right:var(--v22-edge)!important;
+  top:auto!important;
+
+  bottom:
+    calc(
+      var(--v22-base) +
+      var(--v22-action-h) +
+      var(--v22-info-h) +
+      (var(--v22-gap) * 2)
+    )!important;
+
+  width:auto!important;
+
+  height:var(--v22-launch-h)!important;
+
+  padding:6px!important;
+
+  display:grid!important;
+
+  grid-template-columns:
+    1.12fr
+    .90fr
+    .96fr
+    1.14fr!important;
+
+  grid-template-rows:
+    14px
+    minmax(0,1fr)
+    26px!important;
+
+  gap:4px!important;
+
+  font-size:5.5px!important;
+  line-height:1.05!important;
+}
+
+
+/* title */
+
+body.flight-v12 .launch-panel .panel-title{
+  grid-column:1/-1!important;
+  grid-row:1!important;
+
+  height:14px!important;
+
+  margin:0!important;
+  padding:0 2px!important;
+
+  display:flex!important;
+  align-items:center!important;
+  justify-content:space-between!important;
+}
+
+body.flight-v12 .launch-panel .panel-title h1,
+body.flight-v12 .launch-panel > .lead,
+body.flight-v12 .launch-panel > .field-title,
+body.flight-v12 .launch-panel .target-presets,
+body.flight-v12 .launch-panel .risk-deck > p{
+  display:none!important;
+}
+
+body.flight-v12 .launch-panel .panel-title small{
+  font-size:5.3px!important;
+  letter-spacing:.11em!important;
+}
+
+body.flight-v12 .launch-panel .paper-badge{
+  height:14px!important;
+
+  padding:0 6px!important;
+
+  display:flex!important;
+  align-items:center!important;
+
+  font-size:4.8px!important;
+}
+
+
+/* balance */
+
+body.flight-v12 .launch-panel .game-utility{
+  grid-column:1!important;
+  grid-row:2/4!important;
+
+  height:100%!important;
+
+  margin:0!important;
+  padding:5px!important;
+
+  display:flex!important;
+  flex-direction:column!important;
+  justify-content:space-between!important;
+
+  gap:2px!important;
+
+  overflow:hidden!important;
+}
+
+body.flight-v12 .launch-panel .game-balance small{
+  font-size:4.6px!important;
+}
+
+body.flight-v12 .launch-panel .game-balance b{
+  display:block!important;
+
+  margin-top:2px!important;
+
+  font-size:10px!important;
+  line-height:1!important;
+}
+
+body.flight-v12 .launch-panel .stream-utility{
+  font-size:3.8px!important;
+}
+
+body.flight-v12 .launch-panel .stream-utility small{
+  display:none!important;
+}
+
+body.flight-v12 .launch-panel .utility-actions{
+  display:flex!important;
+
+  gap:4px!important;
+
+  margin:0!important;
+}
+
+body.flight-v12 .launch-panel .utility-actions > button,
+body.flight-v12 .launch-panel .utility-actions > a{
+  width:24px!important;
+  height:24px!important;
+
+  min-width:24px!important;
+  min-height:24px!important;
+
+  padding:0!important;
+
+  border-radius:8px!important;
+}
+
+
+/* stake */
+
+body.flight-v12 .launch-panel .stake-input{
+  grid-column:2!important;
+  grid-row:2!important;
+
+  width:100%!important;
+  height:42px!important;
+
+  margin:0!important;
+  padding:3px 6px!important;
+
+  align-self:start!important;
+}
+
+body.flight-v12 .launch-panel .stake-input span{
+  font-size:7px!important;
+}
+
+body.flight-v12 .launch-panel .stake-input input{
+  width:100%!important;
+  height:28px!important;
+
+  padding:0!important;
+
+  font-size:12px!important;
+}
+
+
+/* quick stake */
+
+body.flight-v12 .launch-panel .quick-bets{
+  grid-column:2!important;
+  grid-row:3!important;
+
+  height:26px!important;
+
+  margin:0!important;
+
+  display:grid!important;
+
+  grid-template-columns:
+    repeat(4,minmax(0,1fr))!important;
+
+  gap:2px!important;
+}
+
+body.flight-v12 .launch-panel .quick-bets button{
+  height:26px!important;
+  min-height:26px!important;
+
+  padding:0!important;
+
+  border-radius:7px!important;
+
+  font-size:4.8px!important;
+}
+
+
+/* auto + stop */
+
+body.flight-v12 .launch-panel .select-grid{
+  grid-column:3!important;
+  grid-row:2/4!important;
+
+  width:100%!important;
+  height:100%!important;
+
+  margin:0!important;
+
+  display:grid!important;
+
+  grid-template-columns:1fr!important;
+  grid-template-rows:1fr 1fr!important;
+
+  gap:4px!important;
+}
+
+body.flight-v12 .launch-panel .select-grid label{
+  display:grid!important;
+
+  grid-template-rows:
+    9px
+    minmax(0,1fr)!important;
+
+  gap:1px!important;
+}
+
+body.flight-v12 .launch-panel .select-grid label > span{
+  font-size:4.1px!important;
+}
+
+body.flight-v12 .launch-panel .select-grid select{
+  width:100%!important;
+  height:28px!important;
+  min-height:28px!important;
+
+  padding:0 5px!important;
+
+  border-radius:7px!important;
+
+  font-size:6px!important;
+}
+
+
+/* flight plan */
+
+body.flight-v12 .launch-panel .risk-deck{
+  grid-column:4!important;
+  grid-row:2/4!important;
+
+  width:100%!important;
+  height:100%!important;
+
+  margin:0!important;
+  padding:5px!important;
+
+  overflow:hidden!important;
+}
+
+body.flight-v12 .launch-panel .risk-head{
+  height:11px!important;
+
+  display:flex!important;
+  align-items:center!important;
+  justify-content:space-between!important;
+}
+
+body.flight-v12 .launch-panel .risk-head span,
+body.flight-v12 .launch-panel .risk-head b{
+  font-size:4.2px!important;
+}
+
+body.flight-v12 .launch-panel .risk-metrics{
+  height:calc(100% - 14px)!important;
+
+  margin-top:2px!important;
+
+  display:grid!important;
+
+  grid-template-columns:1fr 1fr!important;
+  grid-template-rows:1fr 1fr!important;
+}
+
+body.flight-v12 .launch-panel .risk-metrics > div{
+  padding:2px 4px!important;
+
+  overflow:hidden!important;
+}
+
+body.flight-v12 .launch-panel .risk-metrics small{
+  font-size:3.6px!important;
+}
+
+body.flight-v12 .launch-panel .risk-metrics b{
+  display:block!important;
+
+  margin-top:2px!important;
+
+  font-size:5.8px!important;
+}
+
+body.flight-v12 .launch-panel .risk-track{
+  display:none!important;
+}
+
+
+/* =========================================================
+   2. THREE CARDS
+   ========================================================= */
+
+body.flight-v12 .token-panel,
+body.flight-v12 .history-panel,
+body.flight-v12 .stats-panel{
+  position:fixed!important;
+
+  top:auto!important;
+
+  bottom:
+    calc(
+      var(--v22-base) +
+      var(--v22-action-h) +
+      var(--v22-gap)
+    )!important;
+
+  width:var(--v22-col)!important;
+
+  height:var(--v22-info-h)!important;
+}
+
+
+/* LEFT */
+
+body.flight-v12 .token-panel{
+  left:var(--v22-edge)!important;
+  right:auto!important;
+}
+
+
+/* CENTER */
+
+body.flight-v12 .history-panel{
+  left:
+    calc(
+      var(--v22-edge) +
+      var(--v22-col) +
+      var(--v22-gap)
+    )!important;
+
+  right:auto!important;
+}
+
+
+/* RIGHT */
+
+body.flight-v12 .stats-panel{
+  left:auto!important;
+  right:var(--v22-edge)!important;
+}
+
+
+/* =========================================================
+   SELECTED LAUNCH
+   ========================================================= */
+
+body.flight-v12 .token-panel{
+  padding:5px!important;
+
+  display:grid!important;
+
+  grid-template-rows:
+    13px
+    28px
+    12px
+    minmax(0,1fr)
+    17px!important;
+
+  gap:2px!important;
+
+  line-height:1.02!important;
+}
+
+body.flight-v12 .token-panel .panel-row{
+  height:13px!important;
+
+  margin:0!important;
+
+  display:flex!important;
+  align-items:center!important;
+  justify-content:space-between!important;
+
+  font-size:4.8px!important;
+
+  letter-spacing:.08em!important;
+}
+
+body.flight-v12 .token-panel .token-head{
+  height:28px!important;
+
+  margin:0!important;
+
+  display:grid!important;
+
+  grid-template-columns:
+    27px
+    minmax(0,1fr)!important;
+
+  gap:5px!important;
+
+  align-items:center!important;
+}
+
+body.flight-v12 .token-panel .token-avatar{
+  width:27px!important;
+  height:27px!important;
+
+  min-width:27px!important;
+  min-height:27px!important;
+
+  overflow:hidden!important;
+
+  border-radius:50%!important;
+}
+
+body.flight-v12 .token-panel .token-avatar img{
+  width:100%!important;
+  height:100%!important;
+
+  display:block!important;
+
+  object-fit:cover!important;
+
+  border-radius:inherit!important;
+}
+
+body.flight-v12 .token-panel .token-head b{
+  display:block!important;
+
+  font-size:7px!important;
+
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+}
+
+body.flight-v12 .token-panel .token-head small{
+  display:block!important;
+
+  margin-top:2px!important;
+
+  font-size:3.8px!important;
+
+  opacity:.72!important;
+
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+}
+
+body.flight-v12 .token-panel .quality-line{
+  height:12px!important;
+
+  margin:0!important;
+
+  display:flex!important;
+  align-items:center!important;
+
+  font-size:3.7px!important;
+
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+}
+
+body.flight-v12 .token-panel .token-metrics{
+  width:100%!important;
+  height:100%!important;
+
+  margin:0!important;
+
+  display:grid!important;
+
+  grid-template-columns:1fr 1fr!important;
+  grid-template-rows:1fr 1fr!important;
+
+  gap:0!important;
+
+  overflow:hidden!important;
+}
+
+body.flight-v12 .token-panel .token-metrics > div{
+  padding:3px 4px!important;
+
+  display:flex!important;
+  flex-direction:column!important;
+  justify-content:center!important;
+
+  overflow:hidden!important;
+}
+
+body.flight-v12 .token-panel .token-metrics small{
+  font-size:3.5px!important;
+
+  letter-spacing:.04em!important;
+}
+
+body.flight-v12 .token-panel .token-metrics b{
+  display:block!important;
+
+  margin-top:2px!important;
+
+  font-size:6.4px!important;
+}
+
+body.flight-v12 .token-panel .telemetry{
+  height:17px!important;
+
+  margin:0!important;
+  padding:4px 0 0!important;
+
+  display:grid!important;
+
+  grid-template-columns:
+    repeat(5,minmax(0,1fr))!important;
+
+  gap:2px!important;
+
+  overflow:hidden!important;
+
+  border-top:
+    1px solid
+    rgba(132,185,199,.14)!important;
+}
+
+body.flight-v12 .token-panel .telemetry span{
+  display:flex!important;
+  flex-direction:column!important;
+
+  gap:2px!important;
+
+  font-size:2.8px!important;
+
+  white-space:nowrap!important;
+  overflow:hidden!important;
+}
+
+body.flight-v12 .token-panel .telemetry b{
+  font-size:3.5px!important;
+}
+
+
+/* =========================================================
+   ROUND HISTORY
+   ========================================================= */
+
+body.flight-v12 .history-panel{
+  padding:0!important;
+
+  display:grid!important;
+
+  grid-template-rows:
+    19px
+    16px
+    minmax(0,1fr)!important;
+}
+
+body.flight-v12 .history-panel > summary{
+  height:19px!important;
+  min-height:19px!important;
+
+  padding:0 6px!important;
+
+  display:flex!important;
+  align-items:center!important;
+
+  font-size:4.8px!important;
+
+  letter-spacing:.08em!important;
+}
+
+body.flight-v12 .history-panel > summary b{
+  font-size:4px!important;
+}
+
+body.flight-v12 .history-toolbar{
+  height:16px!important;
+  min-height:16px!important;
+
+  padding:0 6px!important;
+
+  display:flex!important;
+  align-items:center!important;
+  justify-content:space-between!important;
+
+  font-size:3.5px!important;
+
+  border-top:
+    1px solid
+    rgba(133,190,206,.12)!important;
+
+  border-bottom:
+    1px solid
+    rgba(133,190,206,.12)!important;
+}
+
+body.flight-v12 .history-toolbar button{
+  padding:2px 4px!important;
+
+  font-size:3.5px!important;
+}
+
+body.flight-v12 .history-panel .history{
+  width:100%!important;
+  height:100%!important;
+
+  min-height:0!important;
+
+  padding:2px 4px 4px!important;
+
+  overflow-x:hidden!important;
+  overflow-y:auto!important;
+
+  -webkit-overflow-scrolling:touch!important;
+
+  overscroll-behavior:contain!important;
+}
+
+body.flight-v12 .history-panel .history-row,
+body.flight-v12 .history-panel .history-row:nth-child(n){
+  display:grid!important;
+
+  min-height:22px!important;
+
+  margin:0!important;
+  padding:3px!important;
+
+  font-size:4px!important;
+  line-height:1.05!important;
+
+  border-bottom:
+    1px solid
+    rgba(133,190,206,.09)!important;
+}
+
+body.flight-v12 .history-panel .history-empty{
+  padding:7px 5px!important;
+
+  font-size:4px!important;
+}
+
+
+/* =========================================================
+   FLIGHT RECORD
+   ========================================================= */
+
+body.flight-v12 .stats-panel{
+  padding:5px!important;
+
+  display:grid!important;
+
+  grid-template-rows:
+    14px
+    minmax(0,1fr)!important;
+
+  gap:3px!important;
+}
+
+body.flight-v12 .stats-panel .panel-row{
+  height:14px!important;
+
+  margin:0!important;
+
+  display:flex!important;
+  align-items:center!important;
+  justify-content:space-between!important;
+
+  font-size:4.8px!important;
+
+  letter-spacing:.08em!important;
+}
+
+body.flight-v12 .stats-panel .stats-grid{
+  width:100%!important;
+  height:100%!important;
+
+  margin:0!important;
+
+  display:grid!important;
+
+  grid-template-columns:1fr 1fr!important;
+  grid-template-rows:1fr 1fr!important;
+
+  overflow:hidden!important;
+}
+
+body.flight-v12 .stats-panel .stats-grid > div{
+  padding:5px!important;
+
+  display:flex!important;
+  flex-direction:column!important;
+  justify-content:center!important;
+}
+
+body.flight-v12 .stats-panel .stats-grid small{
+  font-size:3.7px!important;
+
+  letter-spacing:.04em!important;
+}
+
+body.flight-v12 .stats-panel .stats-grid b{
+  display:block!important;
+
+  margin-top:3px!important;
+
+  font-size:7.2px!important;
+}
+
+body.flight-v12 .stats-panel .safety-note{
+  display:none!important;
+}
+
+
+/* =========================================================
+   3. THREE ACTION BUTTONS
+   ========================================================= */
+
+body.flight-v12 #v12ActionDock{
+  position:fixed!important;
+
+  z-index:74!important;
+
+  left:var(--v22-edge)!important;
+  right:var(--v22-edge)!important;
+  top:auto!important;
+
+  bottom:var(--v22-base)!important;
+
+  width:auto!important;
+
+  height:var(--v22-action-h)!important;
+
+  padding:0!important;
+
+  display:grid!important;
+
+  grid-template-columns:
+    repeat(3,minmax(0,1fr))!important;
+
+  grid-template-rows:
+    minmax(0,1fr)!important;
+
+  gap:var(--v22-gap)!important;
+
+  overflow:visible!important;
+
+  border:0!important;
+
+  background:none!important;
+
+  box-shadow:none!important;
+
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+}
+
+
+/* Real current round button */
+
+body.flight-v12 #v12ActionDock > #startBtn,
+body.flight-v12 #v12ActionDock > #cashoutBtn{
+  grid-column:1!important;
+  grid-row:1!important;
+}
+
+
+/* Real AUTO button */
+
+body.flight-v12 #v12ActionDock > #mfAutoLoopBtn{
+  grid-column:2!important;
+  grid-row:1!important;
+}
+
+
+body.flight-v12 #v12ActionDock > #startBtn,
+body.flight-v12 #v12ActionDock > #cashoutBtn,
+body.flight-v12 #v12ActionDock > #mfAutoLoopBtn{
+  width:100%!important;
+  height:100%!important;
+
+  min-width:0!important;
+  min-height:0!important;
+
+  margin:0!important;
+  padding:4px 7px!important;
+
+  border-radius:12px!important;
+
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+
+  overflow:hidden!important;
+}
+
+body.flight-v12 #v12ActionDock button b{
+  font-size:8px!important;
+  line-height:1!important;
+
+  letter-spacing:.10em!important;
+}
+
+body.flight-v12 #v12ActionDock button small{
+  display:block!important;
+
+  margin-top:2px!important;
+
+  font-size:4.5px!important;
+  line-height:1!important;
+}
+
+body.flight-v12 #v12ActionDock > [hidden]{
+  display:none!important;
+}
+
+
+/* ---------------------------------------------------------
+   THIRD MOCKUP BUTTON — VISUAL STUB ONLY
+   No click handler. No game logic.
+   --------------------------------------------------------- */
+
+body.flight-v12 #v12ActionDock::after{
+  content:"TOGGLE AUTO\A COMING SOON";
+
+  grid-column:3!important;
+  grid-row:1!important;
+
+  width:100%!important;
+  height:100%!important;
+
+  padding:4px 7px!important;
+
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+
+  text-align:center!important;
+
+  white-space:pre!important;
+
+  border:
+    1px solid
+    rgba(126,184,201,.24)!important;
+
+  border-radius:12px!important;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(12,27,36,.95),
+      rgba(5,15,22,.95)
+    )!important;
+
+  box-shadow:
+    inset 0 1px 0
+    rgba(255,255,255,.03),
+    0 8px 18px
+    rgba(0,0,0,.18)!important;
+
+  color:
+    rgba(220,235,242,.90)!important;
+
+  font-size:6.5px!important;
+  font-weight:800!important;
+  line-height:1.45!important;
+
+  letter-spacing:.08em!important;
+
+  pointer-events:none!important;
+}
+
+
+/* Mockup has no duplicate FLIGHT POSITION card */
+
+body.flight-v12 #flightPositionHud{
+  display:none!important;
+}
+
+
+/* ---------------------------------------------------------
+   IMPORTANT:
+   NO RULES BELOW TARGET:
+   .stage-head
+   .multiplier-hud
+   #world
+   rocket
+   .position-strip
+   --------------------------------------------------------- */
+
+}
+
+
+/* === SELECTED LAUNCH AVATAR FINAL BLOCK START === */
+
+/*
+  FINAL rule intentionally lives in the LAST loaded stylesheet.
+  Only Selected Launch avatar is affected.
+*/
+
+html body.flight-v12 .cockpit .token-panel
+.token-head #tokenAvatar.token-avatar{
+  width:30px!important;
+  height:30px!important;
+
+  min-width:30px!important;
+  min-height:30px!important;
+  max-width:30px!important;
+  max-height:30px!important;
+
+  border-radius:7px!important;
+
+  clip-path:inset(0 round 7px)!important;
+  -webkit-clip-path:inset(0 round 7px)!important;
+
+  overflow:hidden!important;
+
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+
+  flex:0 0 30px!important;
+
+  border:
+    1px solid
+    rgba(125,187,205,.24)!important;
+
+  background:
+    rgba(7,18,27,.96)!important;
+
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.035),
+    0 3px 9px rgba(0,0,0,.20)!important;
+}
+
+
+html body.flight-v12 .cockpit .token-panel
+.token-head #tokenAvatar.token-avatar > img{
+  width:100%!important;
+  height:100%!important;
+
+  min-width:100%!important;
+  min-height:100%!important;
+  max-width:100%!important;
+  max-height:100%!important;
+
+  display:block!important;
+
+  object-fit:cover!important;
+
+  border-radius:6px!important;
+
+  clip-path:inset(0 round 6px)!important;
+  -webkit-clip-path:inset(0 round 6px)!important;
+}
+
+
+/*
+  Make the first token-head column match the new avatar.
+*/
+html body.flight-v12 .cockpit .token-panel .token-head{
+  grid-template-columns:
+    30px minmax(0,1fr)!important;
+}
+
+/* === SELECTED LAUNCH AVATAR FINAL BLOCK END === */

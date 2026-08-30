@@ -1,0 +1,318 @@
+MEMEFLOW SMART VAULT TYPOGRAPHY REPORT
+=============================================
+Project root : /home/runner/workspace
+Smart Vault  : memeflow-app/smart-vault.html
+
+Linked/local CSS sources actually found:
+  - memeflow-app/memeflow-brand.css  [linked]
+  - memeflow-app/memeflow-nav.css  [linked]
+  - memeflow-app/access-gate.css  [linked]
+  - smart-vault.html::<style #1>  [inline <style>]
+
+Distinct explicit px font sizes (count of declarations):
+      6px : 1
+      7px : 6
+      8px : 8
+      9px : 9
+    9.5px : 1
+     10px : 9
+   10.5px : 2
+     11px : 4
+     12px : 12
+     13px : 4
+     14px : 8
+     15px : 2
+     16px : 2
+     17px : 1
+     23px : 1
+     25px : 1
+     27px : 1
+     35px : 1
+     39px : 1
+     40px : 1
+
+SEMANTIC ROLE SUMMARY
+---------------------------------------------
+
+[BRAND]
+  font-size values: 12px!important (2x), 0!important (1x), 14px (1x), 13px (1x)
+  .brand-mark  =>  font-size: 0!important; line-height: 0!important  [base]  <memeflow-app/memeflow-brand.css>
+  .mf-vault-brand-copy strong  =>  font-size: 14px; font-weight: 900; letter-spacing: .16em  [base]  <smart-vault.html::<style #1>>
+  .mf-vault-brand-copy strong  =>  font-size: 13px  [(max-width:480px)]  <smart-vault.html::<style #1>>
+  .shell > .topbar .brand-title  =>  font-size: 12px!important  [base]  <memeflow-app/memeflow-brand.css>
+  .system-shell .brand  =>  font-size: 12px!important  [base]  <memeflow-app/memeflow-brand.css>
+
+[PAGE_TITLE]
+  font-size values: 12px!important (1x), clamp(38px,7vw,76px) (1x), 39px (1x)
+  .mf-vault-hero h1  =>  font-size: clamp(38px,7vw,76px); line-height: .94; font-weight: 950; letter-spacing: -.045em  [base]  <smart-vault.html::<style #1>>
+  .mf-vault-hero h1  =>  font-size: 39px  [(max-width:480px)]  <smart-vault.html::<style #1>>
+  .terminal .token-name-row h1  =>  font-size: 12px!important  [(max-width:760px)]  <memeflow-app/memeflow-brand.css>
+
+[SECTION_TITLE]
+  font-size values: var(--mf-type-panel)!important (4x), 12px!important (2x), 14px!important (2x), 13px!important (1x), 27px (1x), 25px!important (1x), 23px!important (1x), 16px (1x)
+  #settings .settings-group > summary b, #settings .settings-section > summary b, #settings .settings-accordion > details > summary b, #settings details > summary h2, #settings details > summary h3  =>  font-size: 14px!important; font-weight: 760!important  [(max-width:760px)]  <memeflow-app/memeflow-brand.css>
+  #settings details > summary h2, #settings details > summary h3  =>  font-size: 14px!important; line-height: 1.18!important; font-weight: 760!important; letter-spacing: -.01em!important  [base]  <memeflow-app/memeflow-brand.css>
+  .mf-ag-card h2  =>  font-size: 27px; line-height: 1.05  [base]  <memeflow-app/access-gate.css>
+  .mf-ag-card h2  =>  font-size: 25px!important  [base]  <memeflow-app/access-gate.css>
+  .mf-ag-card h2  =>  font-size: 23px!important; line-height: 1.03!important  [base]  <memeflow-app/access-gate.css>
+  .mf-vault-card-head h2  =>  font-size: 16px; line-height: 1.1; font-weight: 900; letter-spacing: -.015em  [base]  <smart-vault.html::<style #1>>
+  .panel-head h2, .execution-head h2  =>  font-size: 12px!important  [(max-width:430px)]  <memeflow-app/memeflow-brand.css>
+  .panel-head h2, .execution-head h2, .wallet-dialog-head h2, .sheet-top h2  =>  font-size: var(--mf-type-panel)!important; line-height: 1.2!important  [base]  <memeflow-app/memeflow-brand.css>
+  .panel-head h2,.execution-head h2  =>  font-size: 12px!important  [(max-width:430px)]  <memeflow-app/memeflow-brand.css>
+  .panel-head h2,.execution-head h2,.wallet-dialog-head h2,.sheet-top h2  =>  font-size: 13px!important; line-height: 1.2!important; letter-spacing: -.02em!important  [base]  <memeflow-app/memeflow-brand.css>
+  .system-shell .activity-head h2  =>  font-size: var(--mf-type-panel)!important  [base]  <memeflow-app/memeflow-brand.css>
+  .system-shell .inspector h2  =>  font-size: var(--mf-type-panel)!important; line-height: 1.15!important  [base]  <memeflow-app/memeflow-brand.css>
+  .terminal .panel-head h2  =>  font-size: var(--mf-type-panel)!important  [base]  <memeflow-app/memeflow-brand.css>
+
+[LABEL_META]
+  font-size values: var(--mf-type-micro)!important (10x), var(--mf-type-meta)!important (2x), 8px (2x), 8px!important (1x), 11px (1x), 10px!important (1x), 9px!important (1x), 7px (1x)
+  #settings .settings-group > summary small  =>  font-size: var(--mf-type-micro)!important  [base]  <memeflow-app/memeflow-brand.css>
+  .eyebrow  =>  font-size: var(--mf-type-micro)!important  [base]  <memeflow-app/memeflow-brand.css>
+  .flow-page .flow-hero .eyebrow  =>  font-size: var(--mf-type-micro)!important  [base]  <memeflow-app/memeflow-brand.css>
+  .flow-page .token-meta  =>  font-size: var(--mf-type-meta)!important; line-height: 1.15!important  [base]  <memeflow-app/memeflow-brand.css>
+  .mf-ag-kicker  =>  font-size: 11px; font-weight: 800; letter-spacing: .22em  [base]  <memeflow-app/access-gate.css>
+  .mf-ag-kicker  =>  font-size: 10px!important  [base]  <memeflow-app/access-gate.css>
+  .mf-ag-kicker  =>  font-size: 9px!important; letter-spacing: .19em!important  [base]  <memeflow-app/access-gate.css>
+  .mf-vault-checklist small  =>  font-size: 8px; line-height: 1.45  [base]  <smart-vault.html::<style #1>>
+  .mf-vault-kicker,.mf-vault-eyebrow  =>  font-size: 8px; line-height: 1.3; font-weight: 900; letter-spacing: .20em  [base]  <smart-vault.html::<style #1>>
+  .mf-vault-stat small,.mf-vault-balance small,.mf-vault-control-row small  =>  font-size: 7px; font-weight: 800; letter-spacing: .10em  [base]  <smart-vault.html::<style #1>>
+  .system-shell .legend span, .system-shell .scene-hint  =>  font-size: var(--mf-type-micro)!important  [base]  <memeflow-app/memeflow-brand.css>
+  .system-shell .node-label small  =>  font-size: var(--mf-type-micro)!important  [base]  <memeflow-app/memeflow-brand.css>
+  .system-shell .node-label strong  =>  font-size: var(--mf-type-meta)!important  [base]  <memeflow-app/memeflow-brand.css>
+  .system-shell .scene-title .eyebrow  =>  font-size: var(--mf-type-micro)!important  [base]  <memeflow-app/memeflow-brand.css>
+  .system-shell .scene-title .eyebrow, .system-shell .legend span, .system-shell .metric-card span, .system-shell .reason-block span, .system-shell .telemetry-item span, .system-shell .telemetry-item small, .system-shell .telemetry.mf-telemetry-standalone-v3 .telemetry-item span, .system-shell .telemetry.mf-telemetry-standalone-v3 .telemetry-item small  =>  font-size: var(--mf-type-micro)!important  [(max-width:760px)]  <memeflow-app/memeflow-brand.css>
+  .system-shell .subtitle  =>  font-size: var(--mf-type-micro)!important  [base]  <memeflow-app/memeflow-brand.css>
+  .system-shell .telemetry-item span, .system-shell .telemetry-item small, .system-shell .telemetry.mf-telemetry-standalone-v3 .telemetry-item span, .system-shell .telemetry.mf-telemetry-standalone-v3 .telemetry-item small  =>  font-size: var(--mf-type-micro)!important  [base]  <memeflow-app/memeflow-brand.css>
+  .terminal .eyebrow  =>  font-size: var(--mf-type-micro)!important  [base]  <memeflow-app/memeflow-brand.css>
+
+[BADGE_STATUS]
+  font-size values: var(--mf-type-micro)!important (5x), 9px (2x), var(--mf-type-ui)!important (1x), var(--mf-type-meta)!important (1x), 8px (1x), 7px (1x), 6px (1x)
+  .flow-page .live-status  =>  font-size: var(--mf-type-micro)!important  [base]  <memeflow-app/memeflow-brand.css>
+  .flow-page .token-state  =>  font-size: var(--mf-type-micro)!important; line-height: 1!important  [base]  <memeflow-app/memeflow-brand.css>
+  .mf-vault-badge  =>  font-size: 7px; font-weight: 900; letter-spacing: .09em  [base]  <smart-vault.html::<style #1>>
+  .mf-vault-hero-state  =>  font-size: 8px; font-weight: 900; letter-spacing: .11em  [base]  <smart-vault.html::<style #1>>
+  .mf-vault-status-copy p  =>  font-size: 9px; line-height: 1.55  [base]  <smart-vault.html::<style #1>>
+  .mf-vault-status-flow b  =>  font-size: 9px  [base]  <smart-vault.html::<style #1>>
+  .mf-vault-status-flow span  =>  font-size: 6px; font-weight: 900; letter-spacing: .08em  [base]  <smart-vault.html::<style #1>>
+  .shell > .topbar .status-pill, .shell > .topbar .ghost-btn, .shell > .topbar .wallet-btn  =>  font-size: var(--mf-type-meta)!important  [base]  <memeflow-app/memeflow-brand.css>
+  .system-shell .status-chip b  =>  font-size: var(--mf-type-ui)!important  [base]  <memeflow-app/memeflow-brand.css>
+  .system-shell .status-chip span  =>  font-size: var(--mf-type-micro)!important  [base]  <memeflow-app/memeflow-brand.css>
+  .terminal .state-dot, .terminal .decision-badge  =>  font-size: var(--mf-type-micro)!important  [base]  <memeflow-app/memeflow-brand.css>
+  .terminal .tiny-state, .terminal .mode-badge  =>  font-size: var(--mf-type-micro)!important  [base]  <memeflow-app/memeflow-brand.css>
+
+[BUTTON]
+  font-size values: var(--mf-type-micro)!important (3x), var(--mf-type-body)!important (1x), var(--mf-type-meta)!important (1x)
+  .btn  =>  font-size: var(--mf-type-body)!important  [base]  <memeflow-app/memeflow-brand.css>
+  .flow-page .details-button  =>  font-size: var(--mf-type-micro)!important  [base]  <memeflow-app/memeflow-brand.css>
+  .system-shell .gate b, .system-shell .inspector-foot span, .system-shell .inspector-foot button  =>  font-size: var(--mf-type-micro)!important  [base]  <memeflow-app/memeflow-brand.css>
+  .terminal .candidate-filter button, .terminal .timeframes button, .terminal .indicator-bar button  =>  font-size: var(--mf-type-micro)!important  [base]  <memeflow-app/memeflow-brand.css>
+  .terminal .control-actions button  =>  font-size: var(--mf-type-meta)!important  [base]  <memeflow-app/memeflow-brand.css>
+  button,.btn,a.btn  =>  font-weight: 760!important  [base]  <memeflow-app/memeflow-brand.css>
+
+[FORM]
+  font-size values: var(--mf-type-meta)!important (2x), 9px!important (2x), 10px!important (2x), var(--mf-type-ui)!important (1x), var(--mf-type-micro)!important (1x)
+  .flow-page .search-wrap input  =>  font-size: var(--mf-type-ui)!important  [base]  <memeflow-app/memeflow-brand.css>
+  .terminal .selected-metrics span  =>  font-size: 9px!important; line-height: 1.2!important  [base]  <memeflow-app/memeflow-brand.css>
+  .terminal .selected-metrics span  =>  font-size: 9px!important  [(max-width:760px)]  <memeflow-app/memeflow-brand.css>
+  .terminal .selected-metrics span, .terminal .pnl-summary span, .terminal .position-row span, .terminal .trade-log-time, .terminal .trade-log-details b  =>  font-size: var(--mf-type-micro)!important  [base]  <memeflow-app/memeflow-brand.css>
+  .terminal .selected-metrics strong  =>  font-size: 10px!important; line-height: 1.2!important  [base]  <memeflow-app/memeflow-brand.css>
+  .terminal .selected-metrics strong  =>  font-size: 10px!important  [(max-width:760px)]  <memeflow-app/memeflow-brand.css>
+  .terminal .selected-metrics strong, .terminal .pnl-summary strong, .terminal .position-row strong, .terminal .trade-log-symbol, .terminal .trade-log-details strong, .terminal .trade-side  =>  font-size: var(--mf-type-meta)!important  [base]  <memeflow-app/memeflow-brand.css>
+  .terminal .selected-metrics strong, .terminal .position-row strong, .terminal .candidate-name strong, .terminal .candidate-price  =>  font-size: var(--mf-type-meta)!important  [(max-width:760px)]  <memeflow-app/memeflow-brand.css>
+
+[NAV]
+  font-size values: 17px (1x), 12px (1x), 14px (1x), 8px (1x), 7px (1x)
+  .mf-nav-drawer-title  =>  font-size: 17px; line-height: 1; font-weight: 850; letter-spacing: -.025em  [base]  <memeflow-app/memeflow-nav.css>
+  .mf-nav-foot span  =>  font-size: 7px; line-height: 1.4  [base]  <memeflow-app/memeflow-nav.css>
+  .mf-nav-foot strong  =>  font-size: 8px; line-height: 1.2; font-weight: 750; letter-spacing: .12em  [base]  <memeflow-app/memeflow-nav.css>
+  .mf-nav-link-arrow  =>  font-size: 14px; line-height: 1  [base]  <memeflow-app/memeflow-nav.css>
+  .mf-nav-link-title  =>  font-size: 12px; line-height: 1.2; font-weight: 760; letter-spacing: .012em  [base]  <memeflow-app/memeflow-nav.css>
+
+[OTHER]
+  font-size values: var(--mf-type-micro)!important (10x), var(--mf-type-meta)!important (8x), var(--mf-type-ui)!important (5x), var(--mf-type-body)!important (4x), 12px!important (4x), 10px!important (3x), 14px!important (3x), 10px (3x), 8px!important (2x), 9px!important (2x), 12px (2x), 11px (2x), 13px!important (2x), 10.5px!important (2x), 9px (2x), 16px!important (1x), var(--mf-type-panel)!important (1x), 15px (1x), 11px!important (1x), 9.5px!important (1x), 14px (1x), 40px (1x), 7px (1x), 35px (1x)
+  #mf-access-ribbon  =>  font-size: 10px; font-weight: 800; letter-spacing: .1em  [base]  <memeflow-app/access-gate.css>
+  #settings .settings-group > summary b  =>  font-size: 14px!important; line-height: 1.18!important; font-weight: 760!important; letter-spacing: -.01em!important  [base]  <memeflow-app/memeflow-brand.css>
+  #settings .settings-group > summary em  =>  font-size: var(--mf-type-meta)!important  [base]  <memeflow-app/memeflow-brand.css>
+  #settings .settings-section > summary b, #settings .settings-accordion > details > summary b  =>  font-size: 14px!important; line-height: 1.18!important; font-weight: 760!important; letter-spacing: -.01em!important  [base]  <memeflow-app/memeflow-brand.css>
+  #settings .toggle-copy b  =>  font-size: var(--mf-type-body)!important  [base]  <memeflow-app/memeflow-brand.css>
+  #settings .toggle-copy b  =>  font-size: var(--mf-type-ui)!important  [(max-width:760px)]  <memeflow-app/memeflow-brand.css>
+  .flow-page .detail-block p  =>  font-size: var(--mf-type-meta)!important; line-height: 1.45!important  [base]  <memeflow-app/memeflow-brand.css>
+  .flow-page .detail-block span  =>  font-size: var(--mf-type-micro)!important  [base]  <memeflow-app/memeflow-brand.css>
+  .flow-page .flow-hero p  =>  font-size: var(--mf-type-body)!important  [base]  <memeflow-app/memeflow-brand.css>
+  .flow-page .header-title span  =>  font-size: 12px!important  [base]  <memeflow-app/memeflow-brand.css>
+  .flow-page .header-title strong  =>  font-size: var(--mf-type-micro)!important  [base]  <memeflow-app/memeflow-brand.css>
+  .flow-page .hero-counter span, .flow-page .summary-card span  =>  font-size: var(--mf-type-micro)!important  [base]  <memeflow-app/memeflow-brand.css>
+  .flow-page .refresh-info span  =>  font-size: var(--mf-type-micro)!important  [base]  <memeflow-app/memeflow-brand.css>
+  .flow-page .token-full-mint  =>  font-size: var(--mf-type-micro)!important  [base]  <memeflow-app/memeflow-brand.css>
+  .flow-page .token-metric span  =>  font-size: var(--mf-type-micro)!important; line-height: 1.15!important  [base]  <memeflow-app/memeflow-brand.css>
+  .flow-page .token-metric strong  =>  font-size: var(--mf-type-body)!important; line-height: 1.15!important  [base]  <memeflow-app/memeflow-brand.css>
+  .flow-page .token-metric strong, .flow-page .detail-block p  =>  font-size: var(--mf-type-meta)!important  [(max-width:760px)]  <memeflow-app/memeflow-brand.css>
+  .flow-page .token-mint  =>  font-size: var(--mf-type-panel)!important  [base]  <memeflow-app/memeflow-brand.css>
+
+ALL TYPOGRAPHY RULES
+---------------------------------------------
+[base] .brand-mark { font-size: 0!important; line-height: 0!important }  <memeflow-app/memeflow-brand.css>
+[base] .panel-head h2,.execution-head h2,.wallet-dialog-head h2,.sheet-top h2 { font-size: 13px!important; line-height: 1.2!important; letter-spacing: -.02em!important }  <memeflow-app/memeflow-brand.css>
+[base] button,.btn,a.btn { font-weight: 760!important }  <memeflow-app/memeflow-brand.css>
+[base] h1,h2,h3 { letter-spacing: -.035em!important }  <memeflow-app/memeflow-brand.css>
+[base] .eyebrow,.kicker,.label,.settings-group>summary small,.wallet-stat small, .subscription-metric small,.system-health-summary small { letter-spacing: .13em!important }  <memeflow-app/memeflow-brand.css>
+[(max-width:430px)] .panel-head h2,.execution-head h2 { font-size: 12px!important }  <memeflow-app/memeflow-brand.css>
+[base] html { font-size: 16px!important }  <memeflow-app/memeflow-brand.css>
+[base] .eyebrow { font-size: var(--mf-type-micro)!important }  <memeflow-app/memeflow-brand.css>
+[base] .panel-head h2, .execution-head h2, .wallet-dialog-head h2, .sheet-top h2 { font-size: var(--mf-type-panel)!important; line-height: 1.2!important }  <memeflow-app/memeflow-brand.css>
+[base] .btn { font-size: var(--mf-type-body)!important }  <memeflow-app/memeflow-brand.css>
+[base] .system-shell .brand { font-size: 12px!important }  <memeflow-app/memeflow-brand.css>
+[base] .system-shell .subtitle { font-size: var(--mf-type-micro)!important }  <memeflow-app/memeflow-brand.css>
+[base] .system-shell .status-chip span { font-size: var(--mf-type-micro)!important }  <memeflow-app/memeflow-brand.css>
+[base] .system-shell .status-chip b { font-size: var(--mf-type-ui)!important }  <memeflow-app/memeflow-brand.css>
+[base] .system-shell .tool-btn { font-size: var(--mf-type-meta)!important }  <memeflow-app/memeflow-brand.css>
+[base] .system-shell .node-label strong { font-size: var(--mf-type-meta)!important }  <memeflow-app/memeflow-brand.css>
+[base] .system-shell .node-label small { font-size: var(--mf-type-micro)!important }  <memeflow-app/memeflow-brand.css>
+[base] .system-shell .scene-title .eyebrow { font-size: var(--mf-type-micro)!important }  <memeflow-app/memeflow-brand.css>
+[base] .system-shell .legend span, .system-shell .scene-hint { font-size: var(--mf-type-micro)!important }  <memeflow-app/memeflow-brand.css>
+[base] .system-shell .inspector h2 { font-size: var(--mf-type-panel)!important; line-height: 1.15!important }  <memeflow-app/memeflow-brand.css>
+[base] .system-shell .inspector .eyebrow, .system-shell .state-pill { font-size: var(--mf-type-micro)!important }  <memeflow-app/memeflow-brand.css>
+[base] .system-shell .inspector-summary { font-size: var(--mf-type-meta)!important }  <memeflow-app/memeflow-brand.css>
+[base] .system-shell .metric-card span, .system-shell .reason-block span { font-size: var(--mf-type-micro)!important }  <memeflow-app/memeflow-brand.css>
+[base] .system-shell .metric-card strong { font-size: var(--mf-type-body)!important }  <memeflow-app/memeflow-brand.css>
+[base] .system-shell .reason-block p { font-size: var(--mf-type-meta)!important; line-height: 1.4!important }  <memeflow-app/memeflow-brand.css>
+[base] .system-shell .gate { font-size: var(--mf-type-meta)!important }  <memeflow-app/memeflow-brand.css>
+[base] .system-shell .gate b, .system-shell .inspector-foot span, .system-shell .inspector-foot button { font-size: var(--mf-type-micro)!important }  <memeflow-app/memeflow-brand.css>
+[base] .system-shell .telemetry-item span, .system-shell .telemetry-item small, .system-shell .telemetry.mf-telemetry-standalone-v3 .telemetry-item span, .system-shell .telemetry.mf-telemetry-standalone-v3 .telemetry-item small { font-size: var(--mf-type-micro)!important }  <memeflow-app/memeflow-brand.css>
+[base] .system-shell .telemetry-item strong, .system-shell .telemetry.mf-telemetry-standalone-v3 .telemetry-item strong { font-size: 12px!important }  <memeflow-app/memeflow-brand.css>
+[base] .system-shell .activity-head h2 { font-size: var(--mf-type-panel)!important }  <memeflow-app/memeflow-brand.css>
+[base] .system-shell .live-badge, .system-shell .token-state, .system-shell .token-card-meta span, .system-shell .token-card-meta b { font-size: var(--mf-type-micro)!important }  <memeflow-app/memeflow-brand.css>
+[base] .system-shell .token-symbol { font-size: var(--mf-type-ui)!important }  <memeflow-app/memeflow-brand.css>
+[base] .flow-page .header-title span { font-size: 12px!important }  <memeflow-app/memeflow-brand.css>
+[base] .flow-page .header-title strong { font-size: var(--mf-type-micro)!important }  <memeflow-app/memeflow-brand.css>
+[base] .flow-page .live-status { font-size: var(--mf-type-micro)!important }  <memeflow-app/memeflow-brand.css>
+[base] .flow-page .flow-hero .eyebrow { font-size: var(--mf-type-micro)!important }  <memeflow-app/memeflow-brand.css>
+[base] .flow-page .flow-hero p { font-size: var(--mf-type-body)!important }  <memeflow-app/memeflow-brand.css>
+[base] .flow-page .hero-counter span, .flow-page .summary-card span { font-size: var(--mf-type-micro)!important }  <memeflow-app/memeflow-brand.css>
+[base] .flow-page .search-wrap input { font-size: var(--mf-type-ui)!important }  <memeflow-app/memeflow-brand.css>
+[base] .flow-page .refresh-info span { font-size: var(--mf-type-micro)!important }  <memeflow-app/memeflow-brand.css>
+[base] .flow-page .refresh-info button, .flow-page .pagination button, .flow-page .page-state { font-size: var(--mf-type-micro)!important }  <memeflow-app/memeflow-brand.css>
+[base] .flow-page .token-mint { font-size: var(--mf-type-panel)!important }  <memeflow-app/memeflow-brand.css>
+[base] .flow-page .token-state { font-size: var(--mf-type-micro)!important; line-height: 1!important }  <memeflow-app/memeflow-brand.css>
+[base] .flow-page .token-full-mint { font-size: var(--mf-type-micro)!important }  <memeflow-app/memeflow-brand.css>
+[base] .flow-page .token-metric span { font-size: var(--mf-type-micro)!important; line-height: 1.15!important }  <memeflow-app/memeflow-brand.css>
+[base] .flow-page .token-metric strong { font-size: var(--mf-type-body)!important; line-height: 1.15!important }  <memeflow-app/memeflow-brand.css>
+[base] .flow-page .details-button { font-size: var(--mf-type-micro)!important }  <memeflow-app/memeflow-brand.css>
+[base] .flow-page .detail-block span { font-size: var(--mf-type-micro)!important }  <memeflow-app/memeflow-brand.css>
+[base] .flow-page .detail-block p { font-size: var(--mf-type-meta)!important; line-height: 1.45!important }  <memeflow-app/memeflow-brand.css>
+[base] .flow-page .token-name { font-size: var(--mf-type-ui)!important }  <memeflow-app/memeflow-brand.css>
+[base] .flow-page .token-meta { font-size: var(--mf-type-meta)!important; line-height: 1.15!important }  <memeflow-app/memeflow-brand.css>
+[base] .flow-page .token-pump-link { font-size: var(--mf-type-micro)!important }  <memeflow-app/memeflow-brand.css>
+[base] .terminal .eyebrow { font-size: var(--mf-type-micro)!important }  <memeflow-app/memeflow-brand.css>
+[base] .shell > .topbar .brand-title { font-size: 12px!important }  <memeflow-app/memeflow-brand.css>
+[base] .shell > .topbar .brand-sub { font-size: var(--mf-type-micro)!important }  <memeflow-app/memeflow-brand.css>
+[base] .shell > .topbar .status-pill, .shell > .topbar .ghost-btn, .shell > .topbar .wallet-btn { font-size: var(--mf-type-meta)!important }  <memeflow-app/memeflow-brand.css>
+[base] .terminal .panel-head h2 { font-size: var(--mf-type-panel)!important }  <memeflow-app/memeflow-brand.css>
+[base] .terminal .tiny-state, .terminal .mode-badge { font-size: var(--mf-type-micro)!important }  <memeflow-app/memeflow-brand.css>
+[base] .terminal .candidate-filter button, .terminal .timeframes button, .terminal .indicator-bar button { font-size: var(--mf-type-micro)!important }  <memeflow-app/memeflow-brand.css>
+[base] .terminal .candidate-name strong { font-size: var(--mf-type-ui)!important }  <memeflow-app/memeflow-brand.css>
+[base] .terminal .candidate-name span, .terminal .candidate-bottom, .terminal .candidate-price { font-size: var(--mf-type-micro)!important }  <memeflow-app/memeflow-brand.css>
+[base] .terminal .state-dot, .terminal .decision-badge { font-size: var(--mf-type-micro)!important }  <memeflow-app/memeflow-brand.css>
+[base] .terminal .token-meta, .terminal .token-meta button, .terminal .token-market { font-size: var(--mf-type-micro)!important }  <memeflow-app/memeflow-brand.css>
+[base] .terminal .selected-metrics span, .terminal .pnl-summary span, .terminal .position-row span, .terminal .trade-log-time, .terminal .trade-log-details b { font-size: var(--mf-type-micro)!important }  <memeflow-app/memeflow-brand.css>
+[base] .terminal .selected-metrics strong, .terminal .pnl-summary strong, .terminal .position-row strong, .terminal .trade-log-symbol, .terminal .trade-log-details strong, .terminal .trade-side { font-size: var(--mf-type-meta)!important }  <memeflow-app/memeflow-brand.css>
+[base] .terminal .position-symbol { font-size: var(--mf-type-ui)!important }  <memeflow-app/memeflow-brand.css>
+[base] .terminal .close-position, .terminal .section-title, .terminal .row-title > span:last-child, .terminal .field-hint, .terminal .strategy-grid label > span, .terminal .strategy-grid b, .terminal .live-warning strong, .terminal .live-warning span, .terminal .control-error { font-size: var(--mf-type-micro)!important }  <memeflow-app/memeflow-brand.css>
+[base] .terminal .control-actions button { font-size: var(--mf-type-meta)!important }  <memeflow-app/memeflow-brand.css>
+[base] .terminal .empty { font-size: var(--mf-type-meta)!important }  <memeflow-app/memeflow-brand.css>
+[base] #settings .setting-field label, #settings .setting-field > span { font-size: var(--mf-type-ui)!important }  <memeflow-app/memeflow-brand.css>
+[base] #settings .setting-field small, #settings .toggle-copy span, #settings .settings-footer p { font-size: var(--mf-type-ui)!important }  <memeflow-app/memeflow-brand.css>
+[base] #settings .toggle-copy b { font-size: var(--mf-type-body)!important }  <memeflow-app/memeflow-brand.css>
+[base] #settings .settings-group > summary small { font-size: var(--mf-type-micro)!important }  <memeflow-app/memeflow-brand.css>
+[base] #settings .settings-group > summary em { font-size: var(--mf-type-meta)!important }  <memeflow-app/memeflow-brand.css>
+[(max-width:760px)] .system-shell .scene-title .eyebrow, .system-shell .legend span, .system-shell .metric-card span, .system-shell .reason-block span, .system-shell .telemetry-item span, .system-shell .telemetry-item small, .system-shell .telemetry.mf-telemetry-standalone-v3 .telemetry-item span, .system-shell .telemetry.mf-telemetry-standalone-v3 .telemetry-item small { font-size: var(--mf-type-micro)!important }  <memeflow-app/memeflow-brand.css>
+[(max-width:760px)] .flow-page .summary-card span, .flow-page .token-state, .flow-page .token-metric span, .flow-page .details-button, .flow-page .detail-block span { font-size: var(--mf-type-micro)!important }  <memeflow-app/memeflow-brand.css>
+[(max-width:760px)] .flow-page .token-metric strong, .flow-page .detail-block p { font-size: var(--mf-type-meta)!important }  <memeflow-app/memeflow-brand.css>
+[(max-width:760px)] .terminal .token-name-row h1 { font-size: 12px!important }  <memeflow-app/memeflow-brand.css>
+[(max-width:760px)] .terminal .decision-badge, .terminal .token-meta, .terminal .token-market, .terminal .timeframes button, .terminal .indicator-bar button, .terminal .selected-metrics span, .terminal .field-hint, .terminal .strategy-grid label > span, .terminal .strategy-grid b, .terminal .positions-panel .eyebrow, .terminal .history-panel .eyebrow, .terminal .candidates-panel .eyebrow, .terminal .candidate-filter button, .terminal .candidate-name span, .terminal .candidate-bottom, .terminal .state-dot, .terminal .compact-wallet-panel .wallet-address, .terminal .compact-wallet-panel .live-warning strong, .terminal .compact-wallet-panel .live-warning span { font-size: var(--mf-type-micro)!important }  <memeflow-app/memeflow-brand.css>
+[(max-width:760px)] .terminal .selected-metrics strong, .terminal .position-row strong, .terminal .candidate-name strong, .terminal .candidate-price { font-size: var(--mf-type-meta)!important }  <memeflow-app/memeflow-brand.css>
+[(max-width:760px)] .terminal .trade-row { font-size: var(--mf-type-micro)!important }  <memeflow-app/memeflow-brand.css>
+[(max-width:760px)] #settings .setting-field label, #settings .setting-field > span, #settings .toggle-copy span { font-size: var(--mf-type-meta)!important }  <memeflow-app/memeflow-brand.css>
+[(max-width:760px)] #settings .toggle-copy b { font-size: var(--mf-type-ui)!important }  <memeflow-app/memeflow-brand.css>
+[(max-width:430px)] .panel-head h2, .execution-head h2 { font-size: 12px!important }  <memeflow-app/memeflow-brand.css>
+[(max-width:430px)] .flow-page .header-title strong, .flow-page .live-status, .flow-page .hero-counter span, .flow-page .summary-card span, .flow-page .refresh-info button, .flow-page .token-state, .flow-page .token-metric span, .flow-page .details-button, .flow-page .detail-block span, .flow-page .pagination button, .flow-page .page-state { font-size: var(--mf-type-micro)!important }  <memeflow-app/memeflow-brand.css>
+[(max-width:430px)] .terminal .chart-legend span { font-size: 8px!important; line-height: 1.2!important }  <memeflow-app/memeflow-brand.css>
+[base] .terminal .selected-metrics span { font-size: 9px!important; line-height: 1.2!important }  <memeflow-app/memeflow-brand.css>
+[base] .terminal .selected-metrics strong { font-size: 10px!important; line-height: 1.2!important }  <memeflow-app/memeflow-brand.css>
+[base] .terminal .trade-log-details b { font-size: 9px!important; line-height: 1.2!important }  <memeflow-app/memeflow-brand.css>
+[base] .terminal .trade-log-details strong { font-size: 10px!important; line-height: 1.25!important }  <memeflow-app/memeflow-brand.css>
+[base] .terminal .trade-log-time, .terminal .trade-log-hint { font-size: 8px!important }  <memeflow-app/memeflow-brand.css>
+[base] #settings .settings-group > summary b { font-size: 14px!important; line-height: 1.18!important; font-weight: 760!important; letter-spacing: -.01em!important }  <memeflow-app/memeflow-brand.css>
+[base] #settings .settings-section > summary b, #settings .settings-accordion > details > summary b { font-size: 14px!important; line-height: 1.18!important; font-weight: 760!important; letter-spacing: -.01em!important }  <memeflow-app/memeflow-brand.css>
+[base] #settings details > summary h2, #settings details > summary h3 { font-size: 14px!important; line-height: 1.18!important; font-weight: 760!important; letter-spacing: -.01em!important }  <memeflow-app/memeflow-brand.css>
+[(max-width:760px)] .terminal .chart-legend span { font-size: 8px!important }  <memeflow-app/memeflow-brand.css>
+[(max-width:760px)] .terminal .selected-metrics span { font-size: 9px!important }  <memeflow-app/memeflow-brand.css>
+[(max-width:760px)] .terminal .selected-metrics strong { font-size: 10px!important }  <memeflow-app/memeflow-brand.css>
+[(max-width:760px)] .terminal .trade-log-details b { font-size: 9px!important }  <memeflow-app/memeflow-brand.css>
+[(max-width:760px)] .terminal .trade-log-details strong { font-size: 10px!important }  <memeflow-app/memeflow-brand.css>
+[(max-width:760px)] #settings .settings-group > summary b, #settings .settings-section > summary b, #settings .settings-accordion > details > summary b, #settings details > summary h2, #settings details > summary h3 { font-size: 14px!important; font-weight: 760!important }  <memeflow-app/memeflow-brand.css>
+[base] .mf-nav-kicker { font-size: 7px; line-height: 1; font-weight: 850; letter-spacing: .18em }  <memeflow-app/memeflow-nav.css>
+[base] .mf-nav-drawer-title { font-size: 17px; line-height: 1; font-weight: 850; letter-spacing: -.025em }  <memeflow-app/memeflow-nav.css>
+[base] .mf-nav-link-title { font-size: 12px; line-height: 1.2; font-weight: 760; letter-spacing: .012em }  <memeflow-app/memeflow-nav.css>
+[base] .mf-nav-link-sub { font-size: 8px; line-height: 1.35; font-weight: 550; letter-spacing: .02em }  <memeflow-app/memeflow-nav.css>
+[base] .mf-nav-link-arrow { font-size: 14px; line-height: 1 }  <memeflow-app/memeflow-nav.css>
+[base] .mf-nav-foot strong { font-size: 8px; line-height: 1.2; font-weight: 750; letter-spacing: .12em }  <memeflow-app/memeflow-nav.css>
+[base] .mf-nav-foot span { font-size: 7px; line-height: 1.4 }  <memeflow-app/memeflow-nav.css>
+[base] .mf-ag-kicker { font-size: 11px; font-weight: 800; letter-spacing: .22em }  <memeflow-app/access-gate.css>
+[base] .mf-ag-card h2 { font-size: 27px; line-height: 1.05 }  <memeflow-app/access-gate.css>
+[base] .mf-ag-card p { line-height: 1.55 }  <memeflow-app/access-gate.css>
+[base] .mf-ag-tier b { font-size: 15px }  <memeflow-app/access-gate.css>
+[base] .mf-ag-tier span { font-size: 12px }  <memeflow-app/access-gate.css>
+[base] .mf-ag-btn { font-weight: 800 }  <memeflow-app/access-gate.css>
+[base] #mf-access-ribbon { font-size: 10px; font-weight: 800; letter-spacing: .1em }  <memeflow-app/access-gate.css>
+[base] .mf-ag-foot { font-size: 11px; line-height: 1.45 }  <memeflow-app/access-gate.css>
+[base] .mf-ag-kicker { font-size: 10px!important }  <memeflow-app/access-gate.css>
+[base] .mf-ag-card h2 { font-size: 25px!important }  <memeflow-app/access-gate.css>
+[base] .mf-ag-card p { font-size: 13px!important; line-height: 1.45!important }  <memeflow-app/access-gate.css>
+[base] .mf-ag-tier b { font-size: 14px!important }  <memeflow-app/access-gate.css>
+[base] .mf-ag-tier span { font-size: 11px!important; line-height: 1.4!important }  <memeflow-app/access-gate.css>
+[base] .mf-ag-btn { font-size: 12px!important }  <memeflow-app/access-gate.css>
+[base] .mf-ag-foot { font-size: 10px!important; line-height: 1.4!important }  <memeflow-app/access-gate.css>
+[base] .mf-ag-kicker { font-size: 9px!important; letter-spacing: .19em!important }  <memeflow-app/access-gate.css>
+[base] .mf-ag-card h2 { font-size: 23px!important; line-height: 1.03!important }  <memeflow-app/access-gate.css>
+[base] .mf-ag-card p { font-size: 12px!important; line-height: 1.42!important }  <memeflow-app/access-gate.css>
+[base] .mf-ag-tier b { font-size: 13px!important }  <memeflow-app/access-gate.css>
+[base] .mf-ag-tier span { font-size: 10.5px!important; line-height: 1.35!important }  <memeflow-app/access-gate.css>
+[base] .mf-ag-btn { font-size: 10.5px!important; line-height: 1.25!important }  <memeflow-app/access-gate.css>
+[base] .mf-ag-foot { font-size: 9.5px!important; line-height: 1.35!important }  <memeflow-app/access-gate.css>
+[base] .mf-ag-tier span strong { font-weight: 800!important }  <memeflow-app/access-gate.css>
+[base] #mf-ag-wallet-connect { font-family: inherit }  <memeflow-app/access-gate.css>
+[base] body { font-family: Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif }  <smart-vault.html::<style #1>>
+[base] .mf-vault-brand-copy strong { font-size: 14px; font-weight: 900; letter-spacing: .16em }  <smart-vault.html::<style #1>>
+[base] .mf-vault-brand-copy small { font-size: 7px; font-weight: 750; letter-spacing: .20em }  <smart-vault.html::<style #1>>
+[base] .mf-vault-kicker,.mf-vault-eyebrow { font-size: 8px; line-height: 1.3; font-weight: 900; letter-spacing: .20em }  <smart-vault.html::<style #1>>
+[base] .mf-vault-hero h1 { font-size: clamp(38px,7vw,76px); line-height: .94; font-weight: 950; letter-spacing: -.045em }  <smart-vault.html::<style #1>>
+[base] .mf-vault-hero p { font-size: 14px; line-height: 1.65 }  <smart-vault.html::<style #1>>
+[base] .mf-vault-hero-state { font-size: 8px; font-weight: 900; letter-spacing: .11em }  <smart-vault.html::<style #1>>
+[base] .mf-vault-card-head h2 { font-size: 16px; line-height: 1.1; font-weight: 900; letter-spacing: -.015em }  <smart-vault.html::<style #1>>
+[base] .mf-vault-badge { font-size: 7px; font-weight: 900; letter-spacing: .09em }  <smart-vault.html::<style #1>>
+[base] .mf-vault-stat small,.mf-vault-balance small,.mf-vault-control-row small { font-size: 7px; font-weight: 800; letter-spacing: .10em }  <smart-vault.html::<style #1>>
+[base] .mf-vault-stat strong { font-size: 11px; line-height: 1.4; font-weight: 700 }  <smart-vault.html::<style #1>>
+[base] .mf-vault-mono { font-family: ui-monospace,SFMono-Regular,Menlo,monospace }  <smart-vault.html::<style #1>>
+[base] .mf-vault-balance strong { font-size: 40px; line-height: 1; font-weight: 900; letter-spacing: -.04em }  <smart-vault.html::<style #1>>
+[base] .mf-vault-balance span { font-size: 9px }  <smart-vault.html::<style #1>>
+[base] .mf-vault-btn { font-size: 7px; font-weight: 900; letter-spacing: .09em }  <smart-vault.html::<style #1>>
+[base] .mf-vault-note { font-size: 9px; line-height: 1.55 }  <smart-vault.html::<style #1>>
+[base] .mf-vault-control-row strong { font-size: 12px }  <smart-vault.html::<style #1>>
+[base] .mf-vault-checklist strong { font-size: 10px }  <smart-vault.html::<style #1>>
+[base] .mf-vault-checklist small { font-size: 8px; line-height: 1.45 }  <smart-vault.html::<style #1>>
+[base] .mf-vault-status-copy h2 { font-size: 15px }  <smart-vault.html::<style #1>>
+[base] .mf-vault-status-copy p { font-size: 9px; line-height: 1.55 }  <smart-vault.html::<style #1>>
+[base] .mf-vault-status-flow span { font-size: 6px; font-weight: 900; letter-spacing: .08em }  <smart-vault.html::<style #1>>
+[base] .mf-vault-status-flow b { font-size: 9px }  <smart-vault.html::<style #1>>
+[base] .mf-vault-toast { font-size: 10px; line-height: 1.45 }  <smart-vault.html::<style #1>>
+[(max-width:480px)] .mf-vault-brand-copy strong { font-size: 13px }  <smart-vault.html::<style #1>>
+[(max-width:480px)] .mf-vault-hero h1 { font-size: 39px }  <smart-vault.html::<style #1>>
+[(max-width:480px)] .mf-vault-balance strong { font-size: 35px }  <smart-vault.html::<style #1>>
+
+NOTES
+---------------------------------------------
+* This audit is READ-ONLY; it changed no project files.
+* External CDN stylesheets are intentionally not downloaded.
+* The final canonical layer should be built from semantic roles, not by forcing every selector to one size.
+* memeflow-nav.css can remain excluded from the final migration.
