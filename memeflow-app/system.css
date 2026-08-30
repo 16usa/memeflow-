@@ -2197,10 +2197,6 @@ html.mf-live-inspector-standalone-layout-v1 {
   touch-action: pan-y pinch-zoom !important;
 }
 
-.system-shell.mf-system-page-flow-v2 > .topbar {
-  margin: 0 !important;
-}
-
 .system-shell.mf-system-page-flow-v2
 > .viewport-wrap.mfpg-variant2-clean-v1 {
   position: relative !important;
@@ -2680,6 +2676,76 @@ html.mf-live-inspector-standalone-layout-v1 {
   }
 }
 
+
+/* Desktop five-card geometry */
+html.mf-five-desktop .mfpg-card[data-slot="far-left"] {
+  z-index:1;
+  opacity:.38!important;
+  visibility:visible!important;
+  pointer-events:auto!important;
+  filter:saturate(.64) brightness(.62);
+  transform:translate(-50%,-50%)
+    translateX(calc(-1 * clamp(430px,37vw,620px)))
+    rotateY(11deg) translateZ(-125px) scale(.74)!important;
+}
+
+html.mf-five-desktop .mfpg-card[data-slot="left"] {
+  z-index:3;
+  opacity:.62!important;
+  transform:translate(-50%,-50%)
+    translateX(calc(-1 * clamp(220px,19vw,320px)))
+    rotateY(6deg) translateZ(-58px) scale(.86)!important;
+}
+
+html.mf-five-desktop .mfpg-card[data-slot="right"] {
+  z-index:3;
+  opacity:.62!important;
+  transform:translate(-50%,-50%)
+    translateX(clamp(220px,19vw,320px))
+    rotateY(-6deg) translateZ(-58px) scale(.86)!important;
+}
+
+html.mf-five-desktop .mfpg-card[data-slot="far-right"] {
+  z-index:1;
+  opacity:.38!important;
+  visibility:visible!important;
+  pointer-events:auto!important;
+  filter:saturate(.64) brightness(.62);
+  transform:translate(-50%,-50%)
+    translateX(clamp(430px,37vw,620px))
+    rotateY(-11deg) translateZ(-125px) scale(.74)!important;
+}
+
+html.mf-five-desktop .mfpg-card[data-slot="left"]:hover,
+html.mf-five-desktop .mfpg-card[data-slot="left"]:focus-visible {
+  transform:translate(-50%,-50%)
+    translateX(calc(-1 * clamp(210px,18vw,305px)))
+    rotateY(4deg) translateZ(-15px) scale(.89)!important;
+}
+
+html.mf-five-desktop .mfpg-card[data-slot="right"]:hover,
+html.mf-five-desktop .mfpg-card[data-slot="right"]:focus-visible {
+  transform:translate(-50%,-50%)
+    translateX(clamp(210px,18vw,305px))
+    rotateY(-4deg) translateZ(-15px) scale(.89)!important;
+}
+
+html.mf-five-desktop .mfpg-card[data-slot="far-left"]:hover,
+html.mf-five-desktop .mfpg-card[data-slot="far-left"]:focus-visible {
+  opacity:.55!important;
+  transform:translate(-50%,-50%)
+    translateX(calc(-1 * clamp(415px,36vw,600px)))
+    rotateY(8deg) translateZ(-75px) scale(.77)!important;
+}
+
+html.mf-five-desktop .mfpg-card[data-slot="far-right"]:hover,
+html.mf-five-desktop .mfpg-card[data-slot="far-right"]:focus-visible {
+  opacity:.55!important;
+  transform:translate(-50%,-50%)
+    translateX(clamp(415px,36vw,600px))
+    rotateY(-8deg) translateZ(-75px) scale(.77)!important;
+}
+
 @media (max-width: 900px) {
   html {
     width: 100% !important;
@@ -2890,126 +2956,6 @@ html.mf-live-inspector-standalone-layout-v1 {
   }
 }
 
-/* ===== MEMEFLOW_GALLERY_RESPONSIVE_WIDTH_V1 ===== */
 
-/*
-  Balanced responsive gallery geometry.
-  Desktop uses more horizontal space without separating the cards too far.
-  Phone layout remains unchanged.
-*/
 
-@media (min-width: 601px) {
-  .mfpg-variant2-clean-v1 .mfpg-card[data-slot="left"] {
-    transform:
-      translate(-50%, -50%)
-      translateX(clamp(-470px, -26vw, -270px))
-      rotateY(6deg)
-      translateZ(-60px)
-      scale(.90) !important;
-  }
 
-  .mfpg-variant2-clean-v1 .mfpg-card[data-slot="right"] {
-    transform:
-      translate(-50%, -50%)
-      translateX(clamp(270px, 26vw, 470px))
-      rotateY(-6deg)
-      translateZ(-60px)
-      scale(.90) !important;
-  }
-
-  .mfpg-variant2-clean-v1 .mfpg-card[data-slot="left"]:hover,
-  .mfpg-variant2-clean-v1 .mfpg-card[data-slot="left"]:focus-visible {
-    transform:
-      translate(-50%, -50%)
-      translateX(clamp(-455px, -25vw, -260px))
-      rotateY(4deg)
-      translateZ(-10px)
-      scale(.93) !important;
-  }
-
-  .mfpg-variant2-clean-v1 .mfpg-card[data-slot="right"]:hover,
-  .mfpg-variant2-clean-v1 .mfpg-card[data-slot="right"]:focus-visible {
-    transform:
-      translate(-50%, -50%)
-      translateX(clamp(260px, 25vw, 455px))
-      rotateY(-4deg)
-      translateZ(-10px)
-      scale(.93) !important;
-  }
-}
-
-/* ===== /MEMEFLOW_GALLERY_RESPONSIVE_WIDTH_V1 ===== */
-
-/* ===== MEMEFLOW_GALLERY_SHOW_ALL_FIVE_V1 ===== */
-
-/*
-  Desktop-only five-card composition.
-  Touch and mobile layouts are not modified.
-*/
-
-.mfpg-variant2-clean-v1 .mfpg-card[data-slot="far-left"],
-.mfpg-variant2-clean-v1 .mfpg-card[data-slot="far-right"] {
-  z-index: 0;
-  opacity: 0 !important;
-  visibility: hidden !important;
-  pointer-events: none !important;
-}
-
-@media (hover: hover) and (pointer: fine) {
-
-  .mfpg-variant2-clean-v1 .mfpg-card[data-slot="far-left"] {
-    z-index: 1;
-    opacity: .34 !important;
-    visibility: visible !important;
-    pointer-events: auto !important;
-    filter: saturate(.64) brightness(.62);
-    transform:
-      translate(-50%, -50%)
-      translateX(clamp(-650px, -36vw, -470px))
-      rotateY(12deg)
-      translateZ(-135px)
-      scale(.74) !important;
-  }
-
-  .mfpg-variant2-clean-v1 .mfpg-card[data-slot="left"] {
-    z-index: 3;
-    opacity: .62 !important;
-    transform:
-      translate(-50%, -50%)
-      translateX(clamp(-390px, -22vw, -270px))
-      rotateY(6deg)
-      translateZ(-60px)
-      scale(.88) !important;
-  }
-
-  .mfpg-variant2-clean-v1 .mfpg-card[data-slot="center"] {
-    z-index: 6;
-  }
-
-  .mfpg-variant2-clean-v1 .mfpg-card[data-slot="right"] {
-    z-index: 3;
-    opacity: .62 !important;
-    transform:
-      translate(-50%, -50%)
-      translateX(clamp(270px, 22vw, 390px))
-      rotateY(-6deg)
-      translateZ(-60px)
-      scale(.88) !important;
-  }
-
-  .mfpg-variant2-clean-v1 .mfpg-card[data-slot="far-right"] {
-    z-index: 1;
-    opacity: .34 !important;
-    visibility: visible !important;
-    pointer-events: auto !important;
-    filter: saturate(.64) brightness(.62);
-    transform:
-      translate(-50%, -50%)
-      translateX(clamp(470px, 36vw, 650px))
-      rotateY(-12deg)
-      translateZ(-135px)
-      scale(.74) !important;
-  }
-}
-
-/* ===== /MEMEFLOW_GALLERY_SHOW_ALL_FIVE_V1 ===== */

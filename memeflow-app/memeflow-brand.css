@@ -324,7 +324,7 @@ html,body{
 .wallet-security p,.wallet-title small,.wallet-compact-note{color:var(--mf-app-muted)!important;}
 
 /* Buttons, chips, states */
-button,.btn,a.btn{
+button:not(.mfpg-card),.btn,a.btn{
   border-radius:12px!important;
   box-shadow:none!important;
   font-weight:760!important;
