@@ -2685,7 +2685,7 @@ html.mf-five-desktop .mfpg-card[data-slot="far-left"] {
   pointer-events:auto!important;
   filter:saturate(.64) brightness(.62);
   transform:translate(-50%,-50%)
-    translateX(calc(-1 * clamp(430px,37vw,620px)))
+    translateX(clamp(-620px,-34vw,-290px))
     rotateY(11deg) translateZ(-125px) scale(.74)!important;
 }
 
@@ -2693,7 +2693,7 @@ html.mf-five-desktop .mfpg-card[data-slot="left"] {
   z-index:3;
   opacity:.62!important;
   transform:translate(-50%,-50%)
-    translateX(calc(-1 * clamp(220px,19vw,320px)))
+    translateX(clamp(-320px,-18vw,-150px))
     rotateY(6deg) translateZ(-58px) scale(.86)!important;
 }
 
@@ -2701,7 +2701,7 @@ html.mf-five-desktop .mfpg-card[data-slot="right"] {
   z-index:3;
   opacity:.62!important;
   transform:translate(-50%,-50%)
-    translateX(clamp(220px,19vw,320px))
+    translateX(clamp(150px,18vw,320px))
     rotateY(-6deg) translateZ(-58px) scale(.86)!important;
 }
 
@@ -2712,21 +2712,21 @@ html.mf-five-desktop .mfpg-card[data-slot="far-right"] {
   pointer-events:auto!important;
   filter:saturate(.64) brightness(.62);
   transform:translate(-50%,-50%)
-    translateX(clamp(430px,37vw,620px))
+    translateX(clamp(290px,34vw,620px))
     rotateY(-11deg) translateZ(-125px) scale(.74)!important;
 }
 
 html.mf-five-desktop .mfpg-card[data-slot="left"]:hover,
 html.mf-five-desktop .mfpg-card[data-slot="left"]:focus-visible {
   transform:translate(-50%,-50%)
-    translateX(calc(-1 * clamp(210px,18vw,305px)))
+    translateX(clamp(-305px,-17vw,-145px))
     rotateY(4deg) translateZ(-15px) scale(.89)!important;
 }
 
 html.mf-five-desktop .mfpg-card[data-slot="right"]:hover,
 html.mf-five-desktop .mfpg-card[data-slot="right"]:focus-visible {
   transform:translate(-50%,-50%)
-    translateX(clamp(210px,18vw,305px))
+    translateX(clamp(145px,17vw,305px))
     rotateY(-4deg) translateZ(-15px) scale(.89)!important;
 }
 
@@ -2734,7 +2734,7 @@ html.mf-five-desktop .mfpg-card[data-slot="far-left"]:hover,
 html.mf-five-desktop .mfpg-card[data-slot="far-left"]:focus-visible {
   opacity:.55!important;
   transform:translate(-50%,-50%)
-    translateX(calc(-1 * clamp(415px,36vw,600px)))
+    translateX(clamp(-600px,-33vw,-275px))
     rotateY(8deg) translateZ(-75px) scale(.77)!important;
 }
 
@@ -2742,7 +2742,7 @@ html.mf-five-desktop .mfpg-card[data-slot="far-right"]:hover,
 html.mf-five-desktop .mfpg-card[data-slot="far-right"]:focus-visible {
   opacity:.55!important;
   transform:translate(-50%,-50%)
-    translateX(clamp(415px,36vw,600px))
+    translateX(clamp(275px,33vw,600px))
     rotateY(-8deg) translateZ(-75px) scale(.77)!important;
 }
 
