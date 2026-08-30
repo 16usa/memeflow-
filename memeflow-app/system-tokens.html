@@ -1,6 +1,20 @@
 <!doctype html>
 <html lang="en">
 <head>
+<!-- MEMEFLOW_LIGHT_THEME_BOOT_V1 -->
+<script id="mfThemeBootV1">
+(() => {
+  try {
+    const value = localStorage.getItem('memeflow.theme.v1');
+    const theme = value === 'light' ? 'light' : 'dark';
+    document.documentElement.dataset.theme = theme;
+    document.documentElement.style.colorScheme = theme;
+  } catch {
+    document.documentElement.dataset.theme = 'dark';
+  }
+})();
+</script>
+<!-- /MEMEFLOW_LIGHT_THEME_BOOT_V1 -->
   <meta charset="utf-8" />
 
   <meta
@@ -17,12 +31,16 @@
 
   <link
     rel="stylesheet"
-    href="/system-tokens.css?v=sort-conflict-fix-v1-20260827"
+    href="/system-tokens.css?v=token-flow-toolbar-fixed-lock-v2-20260830"
   />
 <link rel="stylesheet" href="/memeflow-brand.css?v=typography-clean-source-v1-20260830">
   <!-- MEMEFLOW_GLOBAL_RIGHT_DRAWER_NAV_V1 -->
   <link rel="stylesheet" href="/memeflow-nav.css?v=global-right-drawer-frameless-v2-20260829">
   <link rel="stylesheet" href="/memeflow-header.css?v=canonical-header-v1-7-20260830">
+<!-- MEMEFLOW_LIGHT_THEME_ASSETS_V1 -->
+<link rel="stylesheet" href="/memeflow-theme.css?v=token-flow-sort-sheet-premium-light-v1-20260830">
+<script src="/memeflow-theme.js?v=light-theme-v1-20260830" defer></script>
+<!-- /MEMEFLOW_LIGHT_THEME_ASSETS_V1 -->
 </head>
 
 <body>
@@ -200,7 +218,7 @@
 
   <script
     type="module"
-    src="/system-tokens.js?v=canonical-chart-market-v26-20260829"
+    src="/system-tokens.js?v=token-flow-toolbar-fixed-lock-v2-20260830"
   ></script>
 <script src="/memeflow-nav.js?v=global-right-drawer-v2-how-it-works" defer></script>
 </body>

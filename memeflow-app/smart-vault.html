@@ -1,6 +1,20 @@
 <!doctype html>
 <html lang="en">
 <head>
+<!-- MEMEFLOW_LIGHT_THEME_BOOT_V1 -->
+<script id="mfThemeBootV1">
+(() => {
+  try {
+    const value = localStorage.getItem('memeflow.theme.v1');
+    const theme = value === 'light' ? 'light' : 'dark';
+    document.documentElement.dataset.theme = theme;
+    document.documentElement.style.colorScheme = theme;
+  } catch {
+    document.documentElement.dataset.theme = 'dark';
+  }
+})();
+</script>
+<!-- /MEMEFLOW_LIGHT_THEME_BOOT_V1 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="color-scheme" content="dark">
@@ -472,6 +486,10 @@ button{color:inherit}
 </style>
 <link rel="stylesheet" href="/access-gate.css?v=16">
   <link rel="stylesheet" href="/memeflow-header.css?v=canonical-header-v1-7-20260830">
+<!-- MEMEFLOW_LIGHT_THEME_ASSETS_V1 -->
+<link rel="stylesheet" href="/memeflow-theme.css?v=light-theme-v1-smart-vault-primary-cta-v1-20260830">
+<script src="/memeflow-theme.js?v=light-theme-v1-20260830" defer></script>
+<!-- /MEMEFLOW_LIGHT_THEME_ASSETS_V1 -->
 </head>
 
 <body>

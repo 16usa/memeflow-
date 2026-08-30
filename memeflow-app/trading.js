@@ -3463,6 +3463,66 @@ function updateRealtimeChart(mint){
   scheduleChart();
 }
 
+/* ===== MEMEFLOW_TRADING_LIGHT_CHART_V2 ===== */
+function mfTradingChartPaletteV2(){
+  const light =
+    document.documentElement.getAttribute('data-theme') === 'light';
+
+  if(light){
+    return {
+      background:'#f6f9fb',
+      text:'#607783',
+      pointerLabelBg:'#ffffff',
+      pointerLabelText:'#263b47',
+      pointerLine:'rgba(52,94,113,.30)',
+      tooltipBg:'rgba(255,255,255,.985)',
+      tooltipBorder:'rgba(55,93,111,.20)',
+      tooltipText:'#263b47',
+      tooltipShadow:'box-shadow:0 10px 28px rgba(27,42,53,.12);',
+      legend:'#607783',
+      axis:'#607783',
+      lowerAxis:'#7a8f99',
+      axisLine:'rgba(55,79,94,.14)',
+      grid:'rgba(55,79,94,.10)',
+      lowerGrid:'rgba(55,79,94,.07)'
+    };
+  }
+
+  return {
+    background:'#131b23',
+    text:'#536f7b',
+    pointerLabelBg:'#0b171d',
+    pointerLabelText:'#cfe0e7',
+    pointerLine:'rgba(120,176,195,.30)',
+    tooltipBg:'rgba(5,12,17,.96)',
+    tooltipBorder:'rgba(111,170,190,.22)',
+    tooltipText:'#cfe0e7',
+    tooltipShadow:'box-shadow:0 8px 30px rgba(0,0,0,.32);',
+    legend:'#718894',
+    axis:'#536f7b',
+    lowerAxis:'#455c67',
+    axisLine:'rgba(111,154,172,.10)',
+    grid:'rgba(106,145,162,.07)',
+    lowerGrid:'rgba(106,145,162,.045)'
+  };
+}
+
+if(!window.__mfTradingLightChartThemeObserverV2){
+  window.__mfTradingLightChartThemeObserverV2 = true;
+
+  try{
+    new MutationObserver(mutations=>{
+      if(!mutations.some(m=>m.attributeName==='data-theme'))return;
+      chartRuntime.dataKey='';
+      scheduleChart();
+    }).observe(
+      document.documentElement,
+      {attributes:true,attributeFilter:['data-theme']}
+    );
+  }catch{}
+}
+/* ===== /MEMEFLOW_TRADING_LIGHT_CHART_V2 ===== */
+
 function drawChart(){
   try {
     if(!ensureChartEngine())return;
@@ -3597,6 +3657,7 @@ function drawChart(){
   }
 
   const touchUi=chartTouchUi();
+  const chartTheme=mfTradingChartPaletteV2();
 
   chartRuntime.suppressZoom=true;
 
@@ -3605,9 +3666,9 @@ function drawChart(){
       animation:false,
       /* MEMEFLOW_TRADING_CHART_RESTORE_SITE_BG_V2: render logic untouched */
       /* MEMEFLOW_TRADING_CHART_MATCH_PANEL_V3: match surrounding panel surface */
-      backgroundColor:'#131b23',
+      backgroundColor:chartTheme.background,
       textStyle:{
-        color:'#536f7b',
+        color:chartTheme.text,
         fontFamily:'ui-monospace, SFMono-Regular, Menlo, monospace',
         fontSize:9
       },
@@ -3621,7 +3682,8 @@ function drawChart(){
         animation:false,
         label:{
           show:!touchUi,
-          backgroundColor:'#0b171d',
+          backgroundColor:chartTheme.pointerLabelBg,
+          color:chartTheme.pointerLabelText,
           formatter:chartPointerTimeLabel
         }
       },
@@ -3637,23 +3699,24 @@ function drawChart(){
           type:'line',
           snap:false,
           lineStyle:{
-            color:'rgba(120,176,195,.30)',
+            color:chartTheme.pointerLine,
             width:1,
             type:'dashed'
           },
           label:{
             show:!touchUi,
             formatter:chartPointerTimeLabel,
-            backgroundColor:'#0b171d'
+            backgroundColor:chartTheme.pointerLabelBg,
+            color:chartTheme.pointerLabelText
           }
         },
-        backgroundColor:'rgba(5,12,17,.96)',
-        borderColor:'rgba(111,170,190,.22)',
+        backgroundColor:chartTheme.tooltipBg,
+        borderColor:chartTheme.tooltipBorder,
         textStyle:{
-          color:'#cfe0e7',
+          color:chartTheme.tooltipText,
           fontSize:10
         },
-        extraCssText:'box-shadow:0 8px 30px rgba(0,0,0,.32);',
+        extraCssText:chartTheme.tooltipShadow,
         formatter:params=>{
           const rows=Array.isArray(params)?params:[];
           const candleParam=rows.find(row=>row?.seriesName==='Price');
@@ -3680,7 +3743,7 @@ function drawChart(){
         itemWidth:10,
         itemHeight:6,
         textStyle:{
-          color:'#718894',
+          color:chartTheme.legend,
           fontSize:8
         },
         selectedMode:false
@@ -3712,7 +3775,7 @@ function drawChart(){
           axisTick:{show:false},
           axisLabel:{
             show:!lowerIndicatorVisible,
-            color:'#536f7b',
+            color:chartTheme.axis,
             fontSize:8,
             hideOverlap:true,
             formatter:value=>chartTimeLabel(value)
@@ -3738,12 +3801,12 @@ function drawChart(){
           boundaryGap:true,
           axisLine:{
             show:lowerIndicatorVisible,
-            lineStyle:{color:'rgba(111,154,172,.10)'}
+            lineStyle:{color:chartTheme.axisLine}
           },
           axisTick:{show:false},
           axisLabel:{
             show:lowerIndicatorVisible,
-            color:'#536f7b',
+            color:chartTheme.axis,
             fontSize:8,
             hideOverlap:true,
             formatter:value=>chartTimeLabel(value)
@@ -3756,7 +3819,8 @@ function drawChart(){
             label:{
               show:!touchUi,
               formatter:chartPointerTimeLabel,
-              backgroundColor:'#0b171d'
+              backgroundColor:chartTheme.pointerLabelBg,
+              color:chartTheme.pointerLabelText
             }
           },
           // V30.20: force the full synthetic category range to exist.
@@ -3775,7 +3839,7 @@ function drawChart(){
           axisLine:{show:false},
           axisTick:{show:false},
           axisLabel:{
-            color:'#536f7b',
+            color:chartTheme.axis,
             fontSize:9,
             margin:10,
             formatter:value=>formatChartValue(value)
@@ -3783,7 +3847,7 @@ function drawChart(){
           splitLine:{
             show:true,
             lineStyle:{
-              color:'rgba(106,145,162,.07)',
+              color:chartTheme.grid,
               width:1
             }
           }
@@ -3800,7 +3864,7 @@ function drawChart(){
           axisTick:{show:false},
           axisLabel:{
             show:lowerIndicatorVisible,
-            color:'#455c67',
+            color:chartTheme.lowerAxis,
             fontSize:7,
             margin:10,
             formatter:lowerIndicatorAxis.formatter
@@ -3808,7 +3872,7 @@ function drawChart(){
           splitLine:{
             show:lowerIndicatorVisible,
             lineStyle:{
-              color:'rgba(106,145,162,.045)',
+              color:chartTheme.lowerGrid,
               width:1
             }
           }

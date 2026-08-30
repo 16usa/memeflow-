@@ -1,0 +1,1017 @@
+<!doctype html>
+<html lang="en">
+<head>
+<!-- MEMEFLOW_LIGHT_THEME_BOOT_V1 -->
+<script id="mfThemeBootV1">
+(() => {
+  try {
+    const value = localStorage.getItem('memeflow.theme.v1');
+    const theme = value === 'light' ? 'light' : 'dark';
+    document.documentElement.dataset.theme = theme;
+    document.documentElement.style.colorScheme = theme;
+  } catch {
+    document.documentElement.dataset.theme = 'dark';
+  }
+})();
+</script>
+<!-- /MEMEFLOW_LIGHT_THEME_BOOT_V1 -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<meta name="description" content="MEMEFLOW Smart Vault — your personal on-chain trading account.">
+<title>MEMEFLOW · Smart Vault</title>
+
+<link rel="stylesheet" href="/memeflow-brand.css?v=typography-clean-source-v1-20260830">
+<link rel="stylesheet" href="/memeflow-nav.css?v=global-right-drawer-frameless-v2-20260829">
+
+<style>
+:root{
+  --v-bg:#0d1218;
+  --v-panel:rgba(17,24,32,.78);
+  --v-panel2:rgba(20,28,37,.92);
+  --v-line:rgba(145,188,216,.105);
+  --v-line2:rgba(145,188,216,.18);
+  --v-text:#eef5fa;
+  --v-muted:#758895;
+  --v-muted2:#93a4af;
+  --v-cyan:#55d9ff;
+  --v-green:#4de6a1;
+  --v-red:#ff6679;
+  --v-radius:18px;
+}
+*{box-sizing:border-box}
+html{background:var(--v-bg)}
+body{
+  margin:0;
+  min-height:100vh;
+  overflow-x:hidden;
+  color:var(--v-text);
+  background:
+    radial-gradient(circle at 50% 5%,rgba(52,110,139,.18),transparent 25%),
+    radial-gradient(circle at 5% 42%,rgba(85,217,255,.035),transparent 26%),
+    linear-gradient(180deg,#0c1117 0%,#0f141a 46%,#0c1116 100%);
+  font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+}
+button,a{font:inherit}
+button{color:inherit}
+
+.mf-vault-shell{
+  width:min(1240px,calc(100% - 24px));
+  margin:0 auto;
+  padding:12px 0 54px;
+}
+
+/* HEADER */
+.mf-vault-topbar{
+  min-height:70px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:18px;
+  padding:10px 14px;
+  position:sticky;
+  top:10px;
+  z-index:50;
+  border:1px solid var(--v-line);
+  border-radius:16px;
+  background:linear-gradient(180deg,rgba(18,26,35,.94),rgba(13,19,25,.93));
+  box-shadow:0 16px 44px rgba(0,0,0,.20);
+  -webkit-backdrop-filter:blur(18px);
+  backdrop-filter:blur(18px);
+}
+.mf-vault-brand{
+  display:inline-flex;
+  align-items:center;
+  gap:11px;
+  color:inherit;
+  text-decoration:none;
+}
+.mf-vault-brand-mark{
+  width:40px;height:40px;
+  display:grid;place-items:center;
+}
+.mf-vault-brand-mark img{
+  width:38px;height:38px;
+  object-fit:contain;
+  filter:drop-shadow(0 0 12px rgba(85,217,255,.18));
+}
+.mf-vault-brand-copy{display:grid;gap:2px}
+.mf-vault-brand-copy strong{
+  font-size:14px;font-weight:900;
+  letter-spacing:.16em;color:#f5f8fa;
+}
+.mf-vault-brand-copy small{
+  color:#647885;font-size:var(--mf-type-micro);
+  font-weight:750;letter-spacing:.20em;
+}
+.mf-vault-topbar .top-actions{
+  margin-left:auto;
+  display:flex;
+  align-items:center;
+}
+
+/* HERO */
+.mf-vault-hero{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  align-items:end;
+  gap:28px;
+  padding:68px 22px 34px;
+}
+.mf-vault-kicker,.mf-vault-eyebrow{
+  color:var(--v-cyan);
+  font-size:var(--mf-type-micro);
+  line-height:1.3;
+  font-weight:900;
+  letter-spacing:.20em;
+}
+.mf-vault-hero h1{
+  margin:10px 0 12px;
+  color:#f3f7fa;
+  font-size:clamp(38px,7vw,76px);
+  line-height:.94;
+  letter-spacing:-.045em;
+  font-weight:950;
+}
+.mf-vault-hero p{
+  max-width:720px;
+  margin:0;
+  color:#81939f;
+  font-size:14px;
+  line-height:1.65;
+}
+.mf-vault-hero-state{
+  min-height:36px;
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:0 12px;
+  border:1px solid rgba(255,102,121,.17);
+  border-radius:10px;
+  background:rgba(255,102,121,.035);
+  color:#b4848d;
+  font-size:var(--mf-type-micro);
+  font-weight:900;
+  letter-spacing:.11em;
+  white-space:nowrap;
+}
+.mf-vault-hero-state i{
+  width:6px;height:6px;border-radius:50%;
+  background:var(--v-red);
+  box-shadow:0 0 10px rgba(255,102,121,.35);
+}
+
+/* GRID */
+.mf-vault-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px;
+}
+.mf-vault-card{
+  min-width:0;
+  padding:18px;
+  border:1px solid var(--v-line);
+  border-radius:var(--v-radius);
+  background:
+    radial-gradient(circle at 94% 0,rgba(85,217,255,.035),transparent 28%),
+    linear-gradient(180deg,rgba(18,26,35,.82),rgba(13,19,25,.78));
+  box-shadow:0 18px 54px rgba(0,0,0,.16);
+}
+.mf-vault-card-head{
+  min-height:44px;
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+  padding-bottom:14px;
+  border-bottom:1px solid var(--v-line);
+}
+.mf-vault-card-head h2{
+  margin:5px 0 0;
+  font-size:16px;
+  line-height:1.1;
+  font-weight:900;
+  letter-spacing:-.015em;
+}
+.mf-vault-badge{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:25px;
+  padding:0 8px;
+  border:1px solid rgba(145,188,216,.14);
+  border-radius:999px;
+  color:#8499a7;
+  background:rgba(255,255,255,.018);
+  font-size:var(--mf-type-micro);
+  font-weight:900;
+  letter-spacing:.09em;
+  white-space:nowrap;
+}
+.mf-vault-badge.is-connected,
+.mf-vault-badge.is-safe{
+  color:#6fc9a1;
+  border-color:rgba(77,230,161,.18);
+  background:rgba(77,230,161,.04);
+}
+.mf-vault-badge.is-locked{
+  color:#b48189;
+  border-color:rgba(255,102,121,.16);
+}
+
+/* STATS */
+.mf-vault-stat-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:7px;
+  margin-top:12px;
+}
+.mf-vault-stat{
+  min-width:0;
+  min-height:66px;
+  padding:10px;
+  border:1px solid rgba(145,188,216,.065);
+  border-radius:10px;
+  background:rgba(0,0,0,.055);
+}
+.mf-vault-stat-wide{grid-column:1/-1}
+.mf-vault-stat small,.mf-vault-balance small,.mf-vault-control-row small{
+  display:block;
+  color:#607481;
+  font-size:var(--mf-type-micro);
+  font-weight:800;
+  letter-spacing:.10em;
+  text-transform:uppercase;
+}
+.mf-vault-stat strong{
+  display:block;
+  margin-top:7px;
+  color:#dbe5ea;
+  font-size:var(--mf-type-body);
+  line-height:1.4;
+  font-weight:700;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.mf-vault-mono{
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+  word-break:break-all;
+  white-space:normal!important;
+}
+
+/* BALANCE */
+.mf-vault-balance{
+  padding:22px 2px 12px;
+}
+.mf-vault-balance strong{
+  display:block;
+  margin-top:5px;
+  color:#f3f8fb;
+  font-size:40px;
+  line-height:1;
+  letter-spacing:-.04em;
+  font-weight:900;
+}
+.mf-vault-balance span{
+  display:block;
+  margin-top:8px;
+  color:#687d89;
+  font-size:var(--mf-type-meta);
+}
+
+/* BUTTONS */
+.mf-vault-actions{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:7px;
+  margin-top:12px;
+}
+.mf-vault-actions-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.mf-vault-btn{
+  min-height:40px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:0 10px;
+  border:1px solid var(--v-line);
+  border-radius:9px;
+  background:rgba(255,255,255,.018);
+  color:#9babb5;
+  text-decoration:none;
+  text-align:center;
+  cursor:pointer;
+  font-size:var(--mf-type-micro);
+  font-weight:900;
+  letter-spacing:.09em;
+}
+.mf-vault-btn-primary{
+  border-color:rgba(85,217,255,.24);
+  background:rgba(85,217,255,.075);
+  color:#cdf5ff;
+}
+.mf-vault-btn:not(:disabled):hover{
+  border-color:rgba(85,217,255,.30);
+  color:#eafaff;
+}
+.mf-vault-btn:disabled{
+  cursor:not-allowed;
+  opacity:.42;
+}
+.mf-vault-note{
+  margin:12px 2px 0;
+  color:#687b87;
+  font-size:var(--mf-type-meta);
+  line-height:1.55;
+}
+
+/* AUTOMATION */
+.mf-vault-control-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  min-height:76px;
+  margin-top:12px;
+  padding:12px;
+  border:1px solid rgba(145,188,216,.065);
+  border-radius:10px;
+  background:rgba(0,0,0,.055);
+}
+.mf-vault-control-row strong{
+  display:block;
+  margin-top:6px;
+  font-size:12px;
+}
+.mf-vault-switch{
+  width:44px;height:24px;
+  flex:0 0 44px;
+  padding:2px;
+  border:1px solid var(--v-line2);
+  border-radius:999px;
+  background:rgba(255,255,255,.025);
+}
+.mf-vault-switch span{
+  display:block;
+  width:18px;height:18px;
+  border-radius:50%;
+  background:#52636d;
+}
+
+/* SECURITY */
+.mf-vault-checklist{
+  display:grid;
+  gap:8px;
+  margin-top:12px;
+}
+.mf-vault-checklist>div{
+  display:flex;
+  gap:10px;
+  align-items:flex-start;
+  padding:11px;
+  border:1px solid rgba(145,188,216,.06);
+  border-radius:10px;
+}
+.mf-vault-checklist i{
+  width:7px;height:7px;
+  margin-top:4px;
+  flex:0 0 7px;
+  border-radius:50%;
+  background:var(--v-green);
+  box-shadow:0 0 10px rgba(77,230,161,.28);
+}
+.mf-vault-checklist span{display:grid;gap:3px}
+.mf-vault-checklist strong{
+  color:#cbd7dd;
+  font-size:var(--mf-type-ui);
+}
+.mf-vault-checklist small{
+  color:#667984;
+  font-size:var(--mf-type-micro);
+  line-height:1.45;
+}
+
+/* STATUS */
+.mf-vault-status-panel{
+  margin-top:12px;
+  padding:18px;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  align-items:center;
+  gap:24px;
+  border:1px solid var(--v-line);
+  border-radius:var(--v-radius);
+  background:rgba(14,21,28,.76);
+}
+.mf-vault-status-copy h2{
+  margin:5px 0 8px;
+  font-size:var(--mf-type-title);
+}
+.mf-vault-status-copy p{
+  max-width:720px;
+  margin:0;
+  color:#718591;
+  font-size:var(--mf-type-meta);
+  line-height:1.55;
+}
+.mf-vault-status-flow{
+  display:flex;
+  align-items:center;
+  gap:7px;
+}
+.mf-vault-status-flow span{
+  min-height:28px;
+  display:flex;
+  align-items:center;
+  padding:0 8px;
+  border:1px solid rgba(145,188,216,.08);
+  border-radius:8px;
+  color:#536671;
+  font-size:var(--mf-type-micro);
+  font-weight:900;
+  letter-spacing:.08em;
+  white-space:nowrap;
+}
+.mf-vault-status-flow span.is-ready{
+  color:#72b99b;
+  border-color:rgba(77,230,161,.14);
+}
+.mf-vault-status-flow b{
+  color:#465863;
+  font-size:var(--mf-type-meta);
+}
+
+/* TOAST */
+.mf-vault-toast{
+  position:fixed;
+  left:50%;
+  bottom:calc(18px + env(safe-area-inset-bottom));
+  z-index:100;
+  width:min(440px,calc(100% - 28px));
+  transform:translateX(-50%);
+  padding:12px 14px;
+  border:1px solid rgba(85,217,255,.18);
+  border-radius:11px;
+  background:rgba(14,22,29,.96);
+  color:#b9cbd4;
+  box-shadow:0 18px 50px rgba(0,0,0,.35);
+  font-size:var(--mf-type-ui);
+  line-height:1.45;
+}
+
+/* RESPONSIVE */
+@media(max-width:760px){
+  .mf-vault-shell{width:min(100% - 20px,1240px)}
+  .mf-vault-hero{
+    grid-template-columns:1fr;
+    align-items:start;
+    padding:48px 10px 26px;
+  }
+  .mf-vault-hero-state{justify-self:start}
+  .mf-vault-grid{grid-template-columns:1fr}
+  .mf-vault-status-panel{grid-template-columns:1fr}
+  .mf-vault-status-flow{
+    width:100%;
+    overflow-x:auto;
+    padding-bottom:2px;
+  }
+}
+@media(max-width:480px){
+  .mf-vault-topbar{min-height:66px}
+  .mf-vault-brand-copy strong{font-size:var(--mf-type-panel)}
+  .mf-vault-actions,
+  .mf-vault-actions-3{grid-template-columns:1fr}
+  .mf-vault-hero h1{font-size:39px}
+  .mf-vault-balance strong{font-size:35px}
+}
+</style>
+<link rel="stylesheet" href="/access-gate.css?v=16">
+  <link rel="stylesheet" href="/memeflow-header.css?v=canonical-header-v1-7-20260830">
+<!-- MEMEFLOW_LIGHT_THEME_ASSETS_V1 -->
+<link rel="stylesheet" href="/memeflow-theme.css?v=light-theme-v1-global-header-v2-20260830">
+<script src="/memeflow-theme.js?v=light-theme-v1-20260830" defer></script>
+<!-- /MEMEFLOW_LIGHT_THEME_ASSETS_V1 -->
+</head>
+
+<body>
+<main class="mf-vault-shell">
+
+<header class="topbar mf-vault-topbar mf-site-header">
+  <a class="mf-vault-brand" href="/system.html">
+    <span class="mf-vault-brand-mark">
+      <img src="/brand/memeflow-dragonfly-dark.png?v=final-v5" alt="">
+    </span>
+    <span class="mf-vault-brand-copy">
+      <strong>MEMEFLOW</strong>
+      <small>SMART VAULT</small>
+    </span>
+  </a>
+  <div class="top-actions"></div>
+</header>
+
+<section class="mf-vault-hero">
+  <div>
+    <span class="mf-vault-kicker">PERSONAL ON-CHAIN TRADING ACCOUNT</span>
+    <h1>YOUR SMART VAULT</h1>
+    <p>
+      Connect your Solana wallet to manage the dedicated on-chain account used
+      by MEMEFLOW automation. Your wallet remains your identity and signing authority.
+    </p>
+  </div>
+  <div class="mf-vault-hero-state" id="vaultHeroState">
+    <i></i><span>PRODUCTION LOCK ACTIVE</span>
+  </div>
+</section>
+
+<section class="mf-vault-grid">
+
+<article class="mf-vault-card">
+  <div class="mf-vault-card-head">
+    <div>
+      <span class="mf-vault-eyebrow">01 · IDENTITY</span>
+      <h2>CONNECTED WALLET</h2>
+    </div>
+    <span class="mf-vault-badge" id="walletBadge">NOT CONNECTED</span>
+  </div>
+
+  <div class="mf-vault-stat-grid">
+    <div class="mf-vault-stat">
+      <small>Provider</small>
+      <strong id="providerValue">Not connected</strong>
+    </div>
+    <div class="mf-vault-stat">
+      <small>Network</small>
+      <strong>Solana Mainnet</strong>
+    </div>
+    <div class="mf-vault-stat mf-vault-stat-wide">
+      <small>Public address</small>
+      <strong class="mf-vault-mono" id="walletAddress">
+        Connect Phantom or Solflare
+      </strong>
+    </div>
+  </div>
+
+  <div class="mf-vault-actions mf-vault-actions-3">
+    <button class="mf-vault-btn mf-vault-btn-primary" id="connectBtn">
+      CONNECT WALLET
+    </button>
+    <button class="mf-vault-btn" id="copyBtn" disabled>
+      COPY ADDRESS
+    </button>
+    <button class="mf-vault-btn" id="disconnectBtn" disabled>
+      DISCONNECT
+    </button>
+  </div>
+
+  <p class="mf-vault-note">
+    Signing stays inside Phantom or Solflare. MEMEFLOW does not request
+    or store your seed phrase or connected-wallet private key.
+  </p>
+</article>
+
+<article class="mf-vault-card">
+  <div class="mf-vault-card-head">
+    <div>
+      <span class="mf-vault-eyebrow">02 · ON-CHAIN ACCOUNT</span>
+      <h2>SMART VAULT</h2>
+    </div>
+    <span class="mf-vault-badge" id="vaultBadge">NOT CREATED</span>
+  </div>
+
+  <div class="mf-vault-balance">
+    <small>VAULT BALANCE</small>
+    <strong id="vaultBalance">—</strong>
+    <span id="fundingState">Connect wallet to check status</span>
+  </div>
+
+  <div class="mf-vault-stat-grid">
+    <div class="mf-vault-stat">
+      <small>Available for trading</small>
+      <strong id="availableValue">—</strong>
+    </div>
+    <div class="mf-vault-stat">
+      <small>Open positions</small>
+      <strong id="positionsValue">—</strong>
+    </div>
+    <div class="mf-vault-stat mf-vault-stat-wide">
+      <small>Vault address</small>
+      <strong class="mf-vault-mono" id="vaultAddress">Not created</strong>
+    </div>
+  </div>
+
+  <div class="mf-vault-actions">
+    <button class="mf-vault-btn mf-vault-btn-primary" id="createBtn" disabled>
+      CREATE SMART VAULT
+    </button>
+    <button class="mf-vault-btn" id="depositBtn" disabled>
+      + DEPOSIT SOL
+    </button>
+    <button class="mf-vault-btn" id="withdrawBtn" disabled>
+      WITHDRAW
+    </button>
+  </div>
+</article>
+
+<article class="mf-vault-card">
+  <div class="mf-vault-card-head">
+    <div>
+      <span class="mf-vault-eyebrow">03 · AUTOMATION</span>
+      <h2>TRADING CONTROL</h2>
+    </div>
+    <span class="mf-vault-badge is-locked" id="automationBadge">LOCKED</span>
+  </div>
+
+  <div class="mf-vault-control-row">
+    <div>
+      <small>Automation</small>
+      <strong id="automationValue">Not available</strong>
+    </div>
+    <button class="mf-vault-switch" id="automationToggle"
+            role="switch" aria-checked="false" disabled>
+      <span></span>
+    </button>
+  </div>
+
+  <div class="mf-vault-stat-grid">
+    <div class="mf-vault-stat">
+      <small>Executor</small>
+      <strong id="executorValue">Production locked</strong>
+    </div>
+    <div class="mf-vault-stat">
+      <small>Live execution</small>
+      <strong id="liveValue">NOT READY</strong>
+    </div>
+  </div>
+
+  <div class="mf-vault-actions">
+    <a class="mf-vault-btn" href="/settings.html#trading">
+      OPEN TRADING SETTINGS
+    </a>
+    <a class="mf-vault-btn" href="/how-it-works.html">
+      HOW IT WORKS
+    </a>
+  </div>
+</article>
+
+<article class="mf-vault-card">
+  <div class="mf-vault-card-head">
+    <div>
+      <span class="mf-vault-eyebrow">04 · SECURITY</span>
+      <h2>CONTROL BOUNDARY</h2>
+    </div>
+    <span class="mf-vault-badge is-safe">NON-CUSTODIAL</span>
+  </div>
+
+  <div class="mf-vault-checklist">
+    <div>
+      <i></i>
+      <span>
+        <strong>Wallet key stays with you</strong>
+        <small>Your connected wallet signs user-authorized actions.</small>
+      </span>
+    </div>
+    <div>
+      <i></i>
+      <span>
+        <strong>Dedicated account per user</strong>
+        <small>Each Smart Vault belongs to one wallet identity.</small>
+      </span>
+    </div>
+    <div>
+      <i></i>
+      <span>
+        <strong>Fail-closed production state</strong>
+        <small>Funding and LIVE actions stay disabled until verified Mainnet support is available.</small>
+      </span>
+    </div>
+    <div>
+      <i></i>
+      <span>
+        <strong>No fake balances</strong>
+        <small>Unknown on-chain values stay unavailable instead of showing demo data.</small>
+      </span>
+    </div>
+  </div>
+</article>
+
+</section>
+
+<section class="mf-vault-status-panel">
+  <div class="mf-vault-status-copy">
+    <span class="mf-vault-eyebrow">CURRENT PRODUCTION STATE</span>
+    <h2 id="statusTitle">READY UI · ON-CHAIN ACTIONS REMAIN LOCKED</h2>
+    <p id="statusMessage">
+      Connect a wallet to establish your identity. Create Vault, Deposit,
+      Withdraw and automated LIVE execution remain fail-closed until the
+      production Smart Vault backend reports those actions as available.
+    </p>
+  </div>
+
+  <div class="mf-vault-status-flow">
+    <span class="is-ready" id="flowWallet">CONNECT WALLET</span>
+    <b>→</b>
+    <span id="flowCreate">CREATE VAULT</span>
+    <b>→</b>
+    <span id="flowFund">FUND</span>
+    <b>→</b>
+    <span id="flowAuto">AUTOMATE</span>
+  </div>
+</section>
+
+<div class="mf-vault-toast" id="toast" hidden></div>
+
+</main>
+
+<script src="/memeflow-nav.js?v=smart-vault-page-v1-20260828" defer></script>
+
+<script id="mfVaultApp">
+(() => {
+  'use strict';
+
+  const $ = id => document.getElementById(id);
+
+  const state = {
+    provider: null,
+    address: null,
+    vault: null
+  };
+
+  let toastTimer = null;
+
+  function walletProvider() {
+    if (window.phantom?.solana?.isPhantom) return window.phantom.solana;
+    if (window.solana?.isPhantom) return window.solana;
+    if (window.solflare?.isSolflare) return window.solflare;
+    return null;
+  }
+
+  function providerName(p) {
+    if (p?.isPhantom) return 'Phantom';
+    if (p?.isSolflare) return 'Solflare';
+    return p ? 'Solana wallet' : 'Not connected';
+  }
+
+  function showToast(text) {
+    const node = $('toast');
+    if (!node) return;
+
+    window.clearTimeout(toastTimer);
+    node.textContent = text;
+    node.hidden = false;
+
+    toastTimer = window.setTimeout(() => {
+      node.hidden = true;
+    }, 3600);
+  }
+
+  function sol(value) {
+    const n = Number(value);
+    return Number.isFinite(n) ? `${n.toFixed(6)} SOL` : '—';
+  }
+
+  function renderWallet() {
+    const connected = Boolean(state.provider && state.address);
+
+    $('providerValue').textContent =
+      connected ? providerName(state.provider) : 'Not connected';
+
+    $('walletAddress').textContent =
+      state.address || 'Connect Phantom or Solflare';
+
+    $('walletBadge').textContent =
+      connected ? 'CONNECTED' : 'NOT CONNECTED';
+
+    $('walletBadge').classList.toggle('is-connected', connected);
+
+    $('connectBtn').textContent =
+      connected ? 'RECONNECT WALLET' : 'CONNECT WALLET';
+
+    $('copyBtn').disabled = !connected;
+    $('disconnectBtn').disabled = !connected;
+
+    $('flowWallet').classList.toggle('is-ready', connected);
+  }
+
+  function lockedVaultState() {
+    state.vault = {
+      backendAvailable: false,
+      programDeployed: false,
+      vaultExists: false,
+      liveReady: false
+    };
+    renderVault();
+  }
+
+  function renderVault() {
+    const v = state.vault || {};
+    const exists = v.vaultExists === true;
+    const deployed = v.programDeployed === true;
+    const live = v.liveReady === true;
+
+    $('vaultBadge').textContent =
+      exists ? 'ACTIVE' : deployed ? 'NOT CREATED' : 'PRODUCTION LOCKED';
+
+    $('vaultBadge').classList.toggle('is-connected', exists);
+
+    $('vaultBalance').textContent =
+      exists ? sol(v.balanceSol) : '—';
+
+    $('availableValue').textContent =
+      exists ? sol(v.availableSol) : '—';
+
+    $('positionsValue').textContent =
+      exists && Number.isFinite(Number(v.openPositions))
+        ? String(v.openPositions)
+        : '—';
+
+    $('vaultAddress').textContent =
+      exists && v.vaultAddress ? String(v.vaultAddress) : 'Not created';
+
+    $('fundingState').textContent =
+      !state.address
+        ? 'Connect wallet to check status'
+        : !deployed
+          ? 'Mainnet Smart Vault deployment pending'
+          : !exists
+            ? 'Ready to create when production action is enabled'
+            : 'On-chain account detected';
+
+    /* Important: no button becomes active just because the UI exists.
+       The production backend must explicitly advertise the capability. */
+    $('createBtn').disabled =
+      !(state.address && v.actions?.create === true);
+
+    $('depositBtn').disabled =
+      !(state.address && exists && v.actions?.deposit === true);
+
+    $('withdrawBtn').disabled =
+      !(state.address && exists && v.actions?.withdraw === true);
+
+    $('automationToggle').disabled =
+      !(state.address && exists && v.actions?.automation === true);
+
+    $('automationValue').textContent =
+      v.automationActive === true
+        ? 'Active'
+        : live ? 'Paused' : 'Not available';
+
+    $('automationBadge').textContent =
+      v.automationActive === true ? 'ACTIVE' : live ? 'PAUSED' : 'LOCKED';
+
+    $('automationBadge').classList.toggle(
+      'is-connected',
+      v.automationActive === true
+    );
+
+    $('executorValue').textContent =
+      live ? 'Production ready' : 'Production locked';
+
+    $('liveValue').textContent =
+      live ? 'READY' : 'NOT READY';
+
+    $('flowCreate').classList.toggle('is-ready', exists);
+    $('flowFund').classList.toggle(
+      'is-ready',
+      exists && Number(v.balanceSol) > 0
+    );
+    $('flowAuto').classList.toggle(
+      'is-ready',
+      v.automationActive === true
+    );
+
+    $('vaultHeroState').querySelector('span').textContent =
+      live ? 'LIVE INFRASTRUCTURE READY' : 'PRODUCTION LOCK ACTIVE';
+
+    $('statusTitle').textContent =
+      live
+        ? 'SMART VAULT PRODUCTION SERVICES AVAILABLE'
+        : 'READY UI · ON-CHAIN ACTIONS REMAIN LOCKED';
+  }
+
+  async function loadVaultStatus() {
+    if (!state.address) {
+      lockedVaultState();
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `/api/smart-vault/status?owner=${encodeURIComponent(state.address)}`,
+        {
+          credentials: 'same-origin',
+          cache: 'no-store',
+          headers: { accept: 'application/json' }
+        }
+      );
+
+      if (response.status === 404 || response.status === 501) {
+        lockedVaultState();
+        return;
+      }
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const body = await response.json();
+      state.vault = body?.vault || body || {};
+      renderVault();
+    } catch {
+      lockedVaultState();
+    }
+  }
+
+  async function connectWallet(options = {}) {
+    const p = walletProvider();
+
+    if (!p) {
+      showToast(
+        'Phantom or Solflare was not detected. Open MEMEFLOW inside a compatible Solana wallet browser.'
+      );
+      return;
+    }
+
+    try {
+      const result = await p.connect(options);
+      const key = result?.publicKey || p.publicKey;
+
+      if (!key) throw new Error('No public key');
+
+      state.provider = p;
+      state.address = String(key.toString());
+
+      renderWallet();
+      await loadVaultStatus();
+    } catch (error) {
+      if (!options.onlyIfTrusted) {
+        showToast(error?.message || 'Wallet connection failed.');
+      }
+    }
+  }
+
+  async function disconnectWallet() {
+    try {
+      await state.provider?.disconnect?.();
+    } catch {}
+
+    state.provider = null;
+    state.address = null;
+    state.vault = null;
+
+    renderWallet();
+    lockedVaultState();
+  }
+
+  async function copyAddress() {
+    if (!state.address) return;
+
+    try {
+      await navigator.clipboard.writeText(state.address);
+      showToast('Wallet address copied.');
+    } catch {
+      showToast('Could not copy wallet address.');
+    }
+  }
+
+  function lockedAction(label) {
+    showToast(
+      `${label} is not enabled yet. Production Smart Vault execution remains fail-closed until Mainnet deployment and backend verification are complete.`
+    );
+  }
+
+  $('connectBtn').addEventListener('click', () => connectWallet());
+  $('disconnectBtn').addEventListener('click', disconnectWallet);
+  $('copyBtn').addEventListener('click', copyAddress);
+
+  $('createBtn').addEventListener('click', () => lockedAction('Create Smart Vault'));
+  $('depositBtn').addEventListener('click', () => lockedAction('Deposit'));
+  $('withdrawBtn').addEventListener('click', () => lockedAction('Withdraw'));
+  $('automationToggle').addEventListener('click', () => lockedAction('Automation'));
+
+  renderWallet();
+  lockedVaultState();
+
+  const p = walletProvider();
+
+  if (p) {
+    p.on?.('accountChanged', async key => {
+      state.provider = p;
+      state.address = key ? String(key.toString()) : null;
+      renderWallet();
+      await loadVaultStatus();
+    });
+
+    p.on?.('disconnect', () => {
+      state.provider = null;
+      state.address = null;
+      renderWallet();
+      lockedVaultState();
+    });
+
+    connectWallet({ onlyIfTrusted: true });
+  }
+})();
+</script>
+
+<script src="/access-gate.js?v=18"></script>
+</body>
+</html>

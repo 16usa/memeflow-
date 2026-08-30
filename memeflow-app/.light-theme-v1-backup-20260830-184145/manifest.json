@@ -1,0 +1,14 @@
+{
+  "version": "MEMEFLOW_LIGHT_THEME_V1",
+  "created_at": "20260830-184145",
+  "html": [
+    "system.html",
+    "trading.html",
+    "settings.html",
+    "system-tokens.html",
+    "smart-vault.html",
+    "how-it-works.html"
+  ],
+  "preexisting_theme_css": false,
+  "preexisting_theme_js": false
+}

@@ -1,6 +1,20 @@
 <!doctype html>
 <html lang="en">
 <head>
+<!-- MEMEFLOW_LIGHT_THEME_BOOT_V1 -->
+<script id="mfThemeBootV1">
+(() => {
+  try {
+    const value = localStorage.getItem('memeflow.theme.v1');
+    const theme = value === 'light' ? 'light' : 'dark';
+    document.documentElement.dataset.theme = theme;
+    document.documentElement.style.colorScheme = theme;
+  } catch {
+    document.documentElement.dataset.theme = 'dark';
+  }
+})();
+</script>
+<!-- /MEMEFLOW_LIGHT_THEME_BOOT_V1 -->
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <!-- MEMEFLOW_TRADING_GHOST_WALLET_REMOVAL_V2 -->
@@ -39,6 +53,10 @@ html[data-mf-chart-unify-all-states="1"] [data-mf-chart-placeholder="1"] {
   <!-- MEMEFLOW_GLOBAL_RIGHT_DRAWER_NAV_V1 -->
   <link rel="stylesheet" href="/memeflow-nav.css?v=global-right-drawer-frameless-v2-20260829">
   <link rel="stylesheet" href="/memeflow-header.css?v=canonical-header-v1-7-20260830">
+<!-- MEMEFLOW_LIGHT_THEME_ASSETS_V1 -->
+<link rel="stylesheet" href="/memeflow-theme.css?v=light-theme-v1-open-position-pipeline-v3-20260830">
+<script src="/memeflow-theme.js?v=light-theme-v1-20260830" defer></script>
+<!-- /MEMEFLOW_LIGHT_THEME_ASSETS_V1 -->
 </head>
 <body>
   <div class="shell">
@@ -276,7 +294,7 @@ html[data-mf-chart-unify-all-states="1"] [data-mf-chart-placeholder="1"] {
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/echarts@6.1.0/dist/echarts.min.js"></script>
-  <script type="module" src="/trading.js?v=canonical-trade-price-v31-20260829"></script>
+  <script type="module" src="/trading.js?v=light-chart-v2-20260830"></script>
   <!-- MEMEFLOW_TRADING_CHART_V30_4 -->
   <!-- MEMEFLOW_TRADING_CHART_V30_5_EXECUTION_OHLC -->
   <!-- MEMEFLOW_TRADING_CHART_V30_6_USD_CURVE_MARK -->
@@ -363,6 +381,8 @@ html[data-mf-chart-unify-all-states="1"] [data-mf-chart-placeholder="1"] {
 </script>
 
   <script src="/memeflow-nav.js?v=noncustodial-live-solana-v1-20260827" defer></script>
+
+<script src="/open-position-pipeline-v3.js?v=20260830-v3"></script>
 </body>
 </html>
 

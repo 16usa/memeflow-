@@ -4312,3 +4312,219 @@ async function hydrateTokenMediaV25() {
 // MEMEFLOW_DEX_TOKEN_FLOW_V26
 
 // MEMEFLOW_LIVE_TOKEN_STATES_V7
+
+/* ===== MEMEFLOW_TOKEN_FLOW_TOOLBAR_FIXED_LOCK_V2 ===== */
+(() => {
+  const TOOLBAR_SELECTOR = '.flow-toolbar';
+  const FIXED_CLASS = 'mf-token-flow-toolbar-fixed-v2';
+  const PLACEHOLDER_CLASS = 'mf-token-flow-toolbar-placeholder-v2';
+
+  let toolbar = null;
+  let placeholder = null;
+  let homeParent = null;
+  let homeNextSibling = null;
+  let fixed = false;
+  let raf = 0;
+  let reservedSpace = 0;
+
+  const numberPx = (value) => {
+    const parsed = Number.parseFloat(value);
+    return Number.isFinite(parsed) ? parsed : 0;
+  };
+
+  function updatePlaceholderHeight() {
+    if (!toolbar || !placeholder || !fixed) return;
+
+    placeholder.style.height =
+      `${Math.ceil(toolbar.getBoundingClientRect().height + reservedSpace)}px`;
+  }
+
+  function syncFixedGeometry() {
+    if (!toolbar || !placeholder || !fixed) return;
+
+    const rect = placeholder.getBoundingClientRect();
+
+    toolbar.style.setProperty(
+      '--mf-token-flow-toolbar-left-v2',
+      `${Math.round(rect.left)}px`
+    );
+
+    toolbar.style.setProperty(
+      '--mf-token-flow-toolbar-width-v2',
+      `${Math.round(rect.width)}px`
+    );
+
+    updatePlaceholderHeight();
+  }
+
+  function lockToolbar() {
+    if (!toolbar || !placeholder || fixed) return;
+
+    const rect = toolbar.getBoundingClientRect();
+    const style = window.getComputedStyle(toolbar);
+
+    reservedSpace =
+      numberPx(style.marginTop) +
+      numberPx(style.marginBottom);
+
+    placeholder.style.height =
+      `${Math.ceil(rect.height + reservedSpace)}px`;
+
+    const holderRect = placeholder.getBoundingClientRect();
+
+    toolbar.style.setProperty(
+      '--mf-token-flow-toolbar-left-v2',
+      `${Math.round(holderRect.left)}px`
+    );
+
+    toolbar.style.setProperty(
+      '--mf-token-flow-toolbar-width-v2',
+      `${Math.round(holderRect.width)}px`
+    );
+
+    /*
+      Move the real interactive toolbar to body.
+      Inputs, Refresh and SORT listeners stay attached to the same DOM node.
+      This bypasses any ancestor overflow/transform containing block.
+    */
+    document.body.appendChild(toolbar);
+    toolbar.classList.add(FIXED_CLASS);
+
+    fixed = true;
+
+    requestAnimationFrame(syncFixedGeometry);
+  }
+
+  function unlockToolbar() {
+    if (!toolbar || !placeholder || !fixed) return;
+
+    toolbar.classList.remove(FIXED_CLASS);
+
+    toolbar.style.removeProperty('--mf-token-flow-toolbar-left-v2');
+    toolbar.style.removeProperty('--mf-token-flow-toolbar-width-v2');
+
+    if (
+      homeNextSibling &&
+      homeNextSibling.parentNode === homeParent
+    ) {
+      homeParent.insertBefore(toolbar, homeNextSibling);
+    } else {
+      homeParent.appendChild(toolbar);
+    }
+
+    placeholder.style.height = '0px';
+
+    fixed = false;
+    reservedSpace = 0;
+  }
+
+  function update() {
+    raf = 0;
+
+    if (!toolbar || !placeholder) return;
+
+    const triggerTop =
+      placeholder.getBoundingClientRect().top;
+
+    if (!fixed && triggerTop <= 0) {
+      lockToolbar();
+      return;
+    }
+
+    if (fixed && triggerTop > 0) {
+      unlockToolbar();
+      return;
+    }
+
+    if (fixed) {
+      syncFixedGeometry();
+    }
+  }
+
+  function scheduleUpdate() {
+    if (raf) return;
+    raf = requestAnimationFrame(update);
+  }
+
+  function init() {
+    toolbar = document.querySelector(TOOLBAR_SELECTOR);
+
+    if (!toolbar) {
+      console.warn(
+        '[TOKEN FLOW TOOLBAR FIXED LOCK V2] .flow-toolbar not found'
+      );
+      return;
+    }
+
+    if (toolbar.dataset.mfFixedLockV2 === '1') {
+      return;
+    }
+
+    homeParent = toolbar.parentNode;
+    homeNextSibling = toolbar.nextSibling;
+
+    if (!homeParent) return;
+
+    placeholder = document.createElement('div');
+    placeholder.className = PLACEHOLDER_CLASS;
+    placeholder.setAttribute('aria-hidden', 'true');
+
+    homeParent.insertBefore(placeholder, toolbar);
+
+    toolbar.dataset.mfFixedLockV2 = '1';
+
+    window.addEventListener(
+      'scroll',
+      scheduleUpdate,
+      { passive: true }
+    );
+
+    window.addEventListener(
+      'resize',
+      scheduleUpdate,
+      { passive: true }
+    );
+
+    window.addEventListener(
+      'orientationchange',
+      scheduleUpdate,
+      { passive: true }
+    );
+
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener(
+        'resize',
+        scheduleUpdate,
+        { passive: true }
+      );
+    }
+
+    if ('ResizeObserver' in window) {
+      const observer = new ResizeObserver(() => {
+        if (fixed) {
+          syncFixedGeometry();
+        }
+      });
+
+      observer.observe(toolbar);
+      observer.observe(placeholder);
+    }
+
+    scheduleUpdate();
+
+    console.info(
+      '[TOKEN FLOW TOOLBAR FIXED LOCK V2] ready'
+    );
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener(
+      'DOMContentLoaded',
+      () => requestAnimationFrame(init),
+      { once: true }
+    );
+  } else {
+    requestAnimationFrame(init);
+  }
+})();
+/* ===== /MEMEFLOW_TOKEN_FLOW_TOOLBAR_FIXED_LOCK_V2 ===== */

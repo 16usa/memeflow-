@@ -1,0 +1,505 @@
+<!doctype html>
+<html lang="en">
+<head>
+<!-- MEMEFLOW_LIGHT_THEME_BOOT_V1 -->
+<script id="mfThemeBootV1">
+(() => {
+  try {
+    const value = localStorage.getItem('memeflow.theme.v1');
+    const theme = value === 'light' ? 'light' : 'dark';
+    document.documentElement.dataset.theme = theme;
+    document.documentElement.style.colorScheme = theme;
+  } catch {
+    document.documentElement.dataset.theme = 'dark';
+  }
+})();
+</script>
+<!-- /MEMEFLOW_LIGHT_THEME_BOOT_V1 -->
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="description" content="Learn how MEMEFLOW connects your Solana wallet, Smart Vault, trading policy and automated execution." />
+  <title>MEMEFLOW · How It Works</title>
+
+  <link rel="stylesheet" href="/memeflow-brand.css?v=typography-clean-source-v1-20260830">
+  <link rel="stylesheet" href="/memeflow-nav.css?v=global-right-drawer-frameless-v2-20260829">
+  <link rel="stylesheet" href="/how-it-works.css?v=smart-vault-guide-v1">
+  <link rel="stylesheet" href="/memeflow-header.css?v=canonical-header-v1-7-20260830">
+<!-- MEMEFLOW_LIGHT_THEME_ASSETS_V1 -->
+<link rel="stylesheet" href="/memeflow-theme.css?v=light-theme-v1-hiw-buttons-v1-20260830">
+<script src="/memeflow-theme.js?v=light-theme-v1-20260830" defer></script>
+<!-- /MEMEFLOW_LIGHT_THEME_ASSETS_V1 -->
+</head>
+<body class="mf-hiw-page">
+  <main class="mf-hiw-shell">
+    <header class="topbar mf-hiw-topbar mf-site-header" aria-label="MEMEFLOW header">
+      <a class="mf-hiw-brand" href="/system.html" aria-label="MEMEFLOW System Overview">
+        <span class="mf-hiw-brand-mark" aria-hidden="true">
+          <img src="/brand/memeflow-dragonfly-dark.png?v=final-v5" alt="">
+        </span>
+        <span class="mf-hiw-brand-copy">
+          <strong>MEMEFLOW</strong>
+          <small>HOW IT WORKS</small>
+        </span>
+      </a>
+
+      <div class="top-actions" aria-label="Page actions"></div>
+    </header>
+
+    <section class="mf-hiw-hero" aria-labelledby="mfHiwTitle">
+      <div class="mf-hiw-hero-copy">
+        <span class="mf-hiw-kicker">SMART VAULT EXPLAINER</span>
+        <h1 id="mfHiwTitle">YOUR WALLET.<br><span>YOUR RULES.</span><br>AUTOMATED EXECUTION.</h1>
+        <p>
+          MEMEFLOW is designed so your connected wallet remains your identity and signing authority,
+          while a dedicated Smart Vault handles rule-based automated trading on Solana.
+        </p>
+
+        <div class="mf-hiw-hero-actions">
+          <a class="mf-hiw-btn mf-hiw-btn-primary" href="#architecture">EXPLORE THE FLOW</a>
+          <a class="mf-hiw-btn mf-hiw-btn-ghost" href="/trading.html">OPEN TRADING TERMINAL</a>
+        </div>
+
+        <div class="mf-hiw-trust-row" aria-label="Architecture highlights">
+          <span><i></i> CONNECTED WALLET KEY STAYS WITH YOU</span>
+          <span><i></i> ON-CHAIN POLICY GATES</span>
+          <span><i></i> USER-AUTHORIZED FUNDING</span>
+        </div>
+      </div>
+
+      <aside class="mf-hiw-status-card" aria-label="Control model">
+        <div class="mf-hiw-status-head">
+          <span>CONTROL MODEL</span>
+          <b><i></i> NON-CUSTODIAL FLOW</b>
+        </div>
+
+        <div class="mf-hiw-status-stack">
+          <div>
+            <small>CONNECTED WALLET</small>
+            <strong>Signs deposits & withdrawals</strong>
+          </div>
+          <div>
+            <small>SMART VAULT PROGRAM</small>
+            <strong>Enforces approved rules</strong>
+          </div>
+          <div>
+            <small>MEMEFLOW EXECUTOR</small>
+            <strong>Submits allowed trade instructions</strong>
+          </div>
+        </div>
+
+        <p>
+          Automation does not require handing MEMEFLOW the private key of your connected wallet.
+        </p>
+      </aside>
+    </section>
+
+    <section id="architecture" class="mf-hiw-section mf-hiw-architecture" aria-labelledby="architectureTitle">
+      <div class="mf-hiw-section-head">
+        <div>
+          <span class="mf-hiw-kicker">INTERACTIVE ARCHITECTURE</span>
+          <h2 id="architectureTitle">WHO TALKS TO WHAT?</h2>
+        </div>
+        <p>Tap any module to see its role in the system.</p>
+      </div>
+
+      <div class="mf-hiw-map-shell">
+        <div class="mf-hiw-map" aria-label="MEMEFLOW Smart Vault architecture">
+          <svg class="mf-hiw-links" viewBox="0 0 1000 460" preserveAspectRatio="none" aria-hidden="true">
+            <defs>
+              <linearGradient id="mfHiwFlow" x1="0" x2="1">
+                <stop offset="0%" stop-color="#55d9ff" stop-opacity=".20"/>
+                <stop offset="50%" stop-color="#55d9ff" stop-opacity=".88"/>
+                <stop offset="100%" stop-color="#4de6a1" stop-opacity=".30"/>
+              </linearGradient>
+              <filter id="mfHiwGlow" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur stdDeviation="3" result="blur"/>
+                <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+              </filter>
+            </defs>
+            <path class="mf-hiw-link mf-hiw-link-main" d="M180 230 C290 230 350 230 450 230"/>
+            <path class="mf-hiw-link" d="M500 180 C500 145 500 125 500 90"/>
+            <path class="mf-hiw-link" d="M500 280 C500 320 500 335 500 375"/>
+            <path class="mf-hiw-link mf-hiw-link-main" d="M820 145 C720 145 660 180 555 215"/>
+            <path class="mf-hiw-link mf-hiw-link-main" d="M555 245 C665 278 720 325 820 330"/>
+            <path class="mf-hiw-link mf-hiw-withdraw-link" d="M455 392 C330 420 205 390 150 290"/>
+          </svg>
+
+          <button class="mf-hiw-node mf-hiw-node-wallet is-active" type="button"
+                  data-node="wallet" aria-pressed="true">
+            <span class="mf-hiw-node-icon">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.8 6.8A2.8 2.8 0 0 1 6.6 4h10.6a2.8 2.8 0 0 1 2.8 2.8v10.4a2.8 2.8 0 0 1-2.8 2.8H6.6a2.8 2.8 0 0 1-2.8-2.8V6.8Zm11.7 3.1h4.1v4.2h-4.1a2.1 2.1 0 1 1 0-4.2Z"/></svg>
+            </span>
+            <span>
+              <small>01 · USER</small>
+              <strong>YOUR WALLET</strong>
+              <em>Identity + signatures</em>
+            </span>
+          </button>
+
+          <button class="mf-hiw-node mf-hiw-node-program" type="button"
+                  data-node="program" aria-pressed="false">
+            <span class="mf-hiw-node-icon">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8 20 7v10l-8 4.2L4 17V7l8-4.2Zm0 4.3L8 9.2v5.6l4 2.1 4-2.1V9.2l-4-2.1Z"/></svg>
+            </span>
+            <span>
+              <small>02 · ON-CHAIN GATE</small>
+              <strong>SMART VAULT PROGRAM</strong>
+              <em>Validates every allowed action</em>
+            </span>
+          </button>
+
+          <button class="mf-hiw-node mf-hiw-node-policy" type="button"
+                  data-node="policy" aria-pressed="false">
+            <span class="mf-hiw-node-icon">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10a2 2 0 0 1 2 2v14l-7-3-7 3V5a2 2 0 0 1 2-2Zm2.2 4.2v2h5.6v-2H9.2Zm0 4v2h5.6v-2H9.2Z"/></svg>
+            </span>
+            <span>
+              <small>RULES</small>
+              <strong>POLICY PDA</strong>
+              <em>Limits & permissions</em>
+            </span>
+          </button>
+
+          <button class="mf-hiw-node mf-hiw-node-vault" type="button"
+                  data-node="vault" aria-pressed="false">
+            <span class="mf-hiw-node-icon">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6.2A2.2 2.2 0 0 1 6.2 4h11.6A2.2 2.2 0 0 1 20 6.2v11.6a2.2 2.2 0 0 1-2.2 2.2H6.2A2.2 2.2 0 0 1 4 17.8V6.2Zm4.2 3.1a2.7 2.7 0 1 0 5.4 0 2.7 2.7 0 0 0-5.4 0Zm2.7 4.7c-2.5 0-4.4 1.3-4.4 2.8h8.8c0-1.5-1.9-2.8-4.4-2.8Z"/></svg>
+            </span>
+            <span>
+              <small>FUNDS</small>
+              <strong>VAULT PDA</strong>
+              <em>Dedicated trading balance</em>
+            </span>
+          </button>
+
+          <button class="mf-hiw-node mf-hiw-node-executor" type="button"
+                  data-node="executor" aria-pressed="false">
+            <span class="mf-hiw-node-icon">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3h8v3h3v5h-3V9H8v6h8v-2h3v5h-3v3H8v-3H5v-5h3v2h8V9H8v2H5V6h3V3Z"/></svg>
+            </span>
+            <span>
+              <small>03 · AUTOMATION</small>
+              <strong>MEMEFLOW EXECUTOR</strong>
+              <em>Signal → allowed instruction</em>
+            </span>
+          </button>
+
+          <button class="mf-hiw-node mf-hiw-node-market" type="button"
+                  data-node="market" aria-pressed="false">
+            <span class="mf-hiw-node-icon">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 18.5h16v2H4v-2Zm1-3.2 3.2-4.1 3 2.3 4.6-6.1 3.2 2.4-1.2 1.6-1.6-1.2-4.6 6.1-3-2.3-2 2.5L5 15.3Z"/></svg>
+            </span>
+            <span>
+              <small>04 · EXECUTION</small>
+              <strong>SOLANA MARKET</strong>
+              <em>Trade settlement</em>
+            </span>
+          </button>
+        </div>
+
+        <div class="mf-hiw-map-detail" aria-live="polite">
+          <div class="mf-hiw-detail-index" id="mfHiwDetailIndex">01</div>
+          <div>
+            <span id="mfHiwDetailTag">YOUR AUTHORITY</span>
+            <h3 id="mfHiwDetailTitle">Your wallet starts the relationship.</h3>
+            <p id="mfHiwDetailText">
+              You connect your Solana wallet and approve actions that require your signature.
+              The connected wallet private key is not handed to MEMEFLOW.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="mf-hiw-section" aria-labelledby="flowTitle">
+      <div class="mf-hiw-section-head">
+        <div>
+          <span class="mf-hiw-kicker">USER JOURNEY</span>
+          <h2 id="flowTitle">FROM CONNECT TO AUTO-TRADE</h2>
+        </div>
+        <p>Six clear steps. No hidden custody handoff.</p>
+      </div>
+
+      <div class="mf-hiw-steps">
+        <article class="mf-hiw-step">
+          <span>01</span>
+          <div class="mf-hiw-step-icon">⌁</div>
+          <h3>CONNECT WALLET</h3>
+          <p>Your wallet identifies you. It remains the place where user-authorized signatures happen.</p>
+          <small>NO PRIVATE KEY UPLOAD</small>
+        </article>
+
+        <article class="mf-hiw-step">
+          <span>02</span>
+          <div class="mf-hiw-step-icon">◫</div>
+          <h3>SET YOUR RULES</h3>
+          <p>Choose strategy limits, position sizing, risk controls, filters and exit behavior.</p>
+          <small>POLICY PDA</small>
+        </article>
+
+        <article class="mf-hiw-step">
+          <span>03</span>
+          <div class="mf-hiw-step-icon">◇</div>
+          <h3>OPEN YOUR VAULT</h3>
+          <p>The Smart Vault Program links your on-chain policy with a dedicated Vault PDA.</p>
+          <small>PROGRAM-CONTROLLED ACCOUNT</small>
+        </article>
+
+        <article class="mf-hiw-step">
+          <span>04</span>
+          <div class="mf-hiw-step-icon">↓</div>
+          <h3>FUND THE VAULT</h3>
+          <p>You approve the deposit. Funds allocated to automation move into the Vault PDA.</p>
+          <small>USER-SIGNED FUNDING</small>
+        </article>
+
+        <article class="mf-hiw-step">
+          <span>05</span>
+          <div class="mf-hiw-step-icon">↯</div>
+          <h3>AUTO-TRADE</h3>
+          <p>The executor reacts to signals and submits actions through the Smart Vault Program.</p>
+          <small>POLICY-GATED EXECUTION</small>
+        </article>
+
+        <article class="mf-hiw-step">
+          <span>06</span>
+          <div class="mf-hiw-step-icon">↑</div>
+          <h3>PAUSE OR WITHDRAW</h3>
+          <p>Your control path remains separate from the executor. Withdrawals follow the owner-authorized program flow.</p>
+          <small>YOU STAY IN CONTROL</small>
+        </article>
+      </div>
+    </section>
+
+    <section class="mf-hiw-section mf-hiw-control" aria-labelledby="controlTitle">
+      <div class="mf-hiw-section-head">
+        <div>
+          <span class="mf-hiw-kicker">CONTROL BOUNDARIES</span>
+          <h2 id="controlTitle">WHO CONTROLS WHAT?</h2>
+        </div>
+        <p>The safety model is separation of authority.</p>
+      </div>
+
+      <div class="mf-hiw-control-grid">
+        <article class="mf-hiw-control-card mf-hiw-control-user">
+          <div class="mf-hiw-control-label">YOU</div>
+          <h3>Owner authority</h3>
+          <ul>
+            <li><span>✓</span> Connect your wallet</li>
+            <li><span>✓</span> Approve funding actions</li>
+            <li><span>✓</span> Choose trading limits</li>
+            <li><span>✓</span> Pause automation</li>
+            <li><span>✓</span> Authorize withdrawals</li>
+          </ul>
+        </article>
+
+        <article class="mf-hiw-control-card">
+          <div class="mf-hiw-control-label">SMART VAULT</div>
+          <h3>On-chain gatekeeper</h3>
+          <ul>
+            <li><span>✓</span> Reads the active policy</li>
+            <li><span>✓</span> Verifies allowed instructions</li>
+            <li><span>✓</span> Controls Vault PDA actions</li>
+            <li><span>✓</span> Separates owner and executor roles</li>
+            <li><span>✓</span> Rejects unauthorized paths</li>
+          </ul>
+        </article>
+
+        <article class="mf-hiw-control-card">
+          <div class="mf-hiw-control-label">EXECUTOR</div>
+          <h3>Automation engine</h3>
+          <ul>
+            <li><span>✓</span> Watches MEMEFLOW signals</li>
+            <li><span>✓</span> Builds trading instructions</li>
+            <li><span>✓</span> Acts inside approved rules</li>
+            <li><span>×</span> Does not become your wallet</li>
+            <li><span>×</span> Cannot bypass program rules</li>
+          </ul>
+        </article>
+      </div>
+    </section>
+
+    <section class="mf-hiw-money">
+      <div class="mf-hiw-money-copy">
+        <span class="mf-hiw-kicker">IMPORTANT DISTINCTION</span>
+        <h2>FUNDING YOUR VAULT IS NOT THE SAME AS PAYING MEMEFLOW.</h2>
+        <p>
+          Trading capital is allocated to your Vault PDA after a transaction you authorize.
+          It is separate from the one-time infrastructure cost of deploying the Smart Vault Program.
+          Users do not redeploy the program every time they use MEMEFLOW.
+        </p>
+      </div>
+
+      <div class="mf-hiw-money-flow" aria-label="Money flow">
+        <div><small>YOUR WALLET</small><strong>SOL / TOKENS</strong></div>
+        <span>USER SIGNS →</span>
+        <div class="is-vault"><small>YOUR VAULT PDA</small><strong>TRADING CAPITAL</strong></div>
+      </div>
+
+      <p class="mf-hiw-network-note">
+        Solana network fees and account-rent requirements can still apply to on-chain transactions and account creation.
+      </p>
+    </section>
+
+    <section class="mf-hiw-section mf-hiw-faq" aria-labelledby="faqTitle">
+      <div class="mf-hiw-section-head">
+        <div>
+          <span class="mf-hiw-kicker">FAQ</span>
+          <h2 id="faqTitle">COMMON QUESTIONS</h2>
+        </div>
+        <p>The short version, without blockchain jargon.</p>
+      </div>
+
+      <div class="mf-hiw-faq-list">
+        <details>
+          <summary>Is a Vault PDA another normal wallet?</summary>
+          <p>
+            No. A PDA is a Solana program-derived account. It does not work like a normal wallet with its own seed phrase.
+            It is controlled through the Smart Vault Program.
+          </p>
+        </details>
+
+        <details>
+          <summary>Does MEMEFLOW get my connected wallet private key?</summary>
+          <p>
+            No. Your connected-wallet private key stays in your wallet. MEMEFLOW can request a signature,
+            but it does not need you to upload that private key.
+          </p>
+        </details>
+
+        <details>
+          <summary>Why move trading funds into a Vault PDA?</summary>
+          <p>
+            It creates a clear boundary between your normal wallet and the balance allocated to automation,
+            while allowing the on-chain program to enforce the permissions of that automated balance.
+          </p>
+        </details>
+
+        <details>
+          <summary>Can the executor ignore my rules?</summary>
+          <p>
+            The executor is designed to submit instructions through the Smart Vault Program.
+            The program is the enforcement layer: an instruction that does not satisfy the permitted path should be rejected.
+          </p>
+        </details>
+
+        <details>
+          <summary>Do users pay the Smart Vault deployment cost every time?</summary>
+          <p>
+            No. The program is platform infrastructure and is deployed separately.
+            A user may still incur normal Solana transaction fees or account-rent costs when their own on-chain accounts are created or used.
+          </p>
+        </details>
+
+        <details>
+          <summary>Does this remove trading risk?</summary>
+          <p>
+            No. The architecture controls permissions and execution paths; it cannot remove market volatility,
+            token risk, slippage or losses from trading.
+          </p>
+        </details>
+      </div>
+    </section>
+
+    <section class="mf-hiw-cta">
+      <div>
+        <span class="mf-hiw-kicker">READY TO USE MEMEFLOW?</span>
+        <h2>SET THE RULES. FUND THE VAULT. LET THE SYSTEM WORK.</h2>
+      </div>
+      <div class="mf-hiw-cta-actions">
+        <a class="mf-hiw-btn mf-hiw-btn-primary" href="/settings.html">OPEN SYSTEM SETTINGS</a>
+        <a class="mf-hiw-btn mf-hiw-btn-ghost" href="/system.html">VIEW SYSTEM OVERVIEW</a>
+      </div>
+    </section>
+
+    <footer class="mf-hiw-footer">
+      <span>MEMEFLOW</span>
+      <p>Non-custodial automated trading architecture · Solana</p>
+    </footer>
+  </main>
+
+  <script src="/memeflow-nav.js?v=global-right-drawer-v2-how-it-works" defer></script>
+  <script>
+  (() => {
+    const detail = {
+      wallet: {
+        index: "01",
+        tag: "YOUR AUTHORITY",
+        title: "Your wallet starts the relationship.",
+        text: "You connect your Solana wallet and approve actions that require your signature. The connected wallet private key is not handed to MEMEFLOW."
+      },
+      program: {
+        index: "02",
+        tag: "ON-CHAIN ENFORCEMENT",
+        title: "The Smart Vault Program is the gatekeeper.",
+        text: "Trading and vault actions flow through the on-chain program. It validates the account relationships and the permitted execution path before an instruction can affect the vault."
+      },
+      policy: {
+        index: "P",
+        tag: "YOUR RULES",
+        title: "Policy PDA stores the automation boundaries.",
+        text: "The policy represents the limits and permissions the Smart Vault Program uses when deciding whether an executor instruction is allowed."
+      },
+      vault: {
+        index: "V",
+        tag: "DEDICATED BALANCE",
+        title: "Vault PDA holds funds allocated to automation.",
+        text: "After you authorize funding, the trading balance sits in a program-controlled Vault PDA instead of being handed to the executor as a normal wallet private key."
+      },
+      executor: {
+        index: "03",
+        tag: "AUTOMATION",
+        title: "The executor reacts to MEMEFLOW signals.",
+        text: "The executor can submit trade instructions, but the Smart Vault Program remains between the executor and the vault. Automation is intentionally separated from owner authority."
+      },
+      market: {
+        index: "04",
+        tag: "SETTLEMENT",
+        title: "Allowed trades settle on Solana.",
+        text: "When the program accepts an allowed action, the trade is routed to the supported market path and settles on-chain. Market risk and network costs still exist."
+      }
+    };
+
+    const nodes = [...document.querySelectorAll(".mf-hiw-node")];
+    const index = document.getElementById("mfHiwDetailIndex");
+    const tag = document.getElementById("mfHiwDetailTag");
+    const title = document.getElementById("mfHiwDetailTitle");
+    const text = document.getElementById("mfHiwDetailText");
+
+    nodes.forEach(node => {
+      node.addEventListener("click", () => {
+        const key = node.dataset.node;
+        const row = detail[key];
+        if (!row) return;
+
+        nodes.forEach(item => {
+          const active = item === node;
+          item.classList.toggle("is-active", active);
+          item.setAttribute("aria-pressed", active ? "true" : "false");
+        });
+
+        index.textContent = row.index;
+        tag.textContent = row.tag;
+        title.textContent = row.title;
+        text.textContent = row.text;
+      });
+    });
+
+    if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      const reveal = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("is-visible");
+            reveal.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.12 });
+
+      document.querySelectorAll(".mf-hiw-step, .mf-hiw-control-card, .mf-hiw-money, .mf-hiw-faq details")
+        .forEach(el => reveal.observe(el));
+    }
+  })();
+  </script>
+</body>
+</html>

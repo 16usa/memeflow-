@@ -2887,6 +2887,173 @@ html.mf-live-inspector-standalone-layout-v1 {
   }
 }
 
+/* ===== MEMEFLOW_SETTINGS_LIGHT_SURFACES_V1 ===== */
+/*
+  System Settings · Light mode only.
+  Fixes only surfaces that still inherit Dark-theme colors:
+  - LIVE CONFIGURATION title
+  - Platform / AI Policy / Kill Switch summary cells
+  - opened accordion/group containers
+  No layout, spacing, settings logic, switches, field geometry or Dark-theme changes.
+*/
 
+/* LIVE CONFIGURATION / System Settings heading */
+html[data-theme="light"] body.mf-settings-standalone .mf293-settings-head h2 {
+  color: #172733 !important;
+}
 
+/* Top summary cards: Platform / AI Policy / Kill Switch (+ any same meta cell) */
+html[data-theme="light"] body.mf-settings-standalone .mf293-settings-meta > span,
+html[data-theme="light"] body.mf-settings-standalone .mf293-settings-meta > label {
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255,255,255,.94),
+      rgba(244,248,250,.96)
+    ) !important;
+  border-color: rgba(91,113,126,.15) !important;
+  box-shadow: none !important;
+}
 
+html[data-theme="light"] body.mf-settings-standalone .mf293-settings-meta span,
+html[data-theme="light"] body.mf-settings-standalone .mf293-dex-filter-meta {
+  color: #6b808c !important;
+}
+
+html[data-theme="light"] body.mf-settings-standalone .mf293-settings-meta strong,
+html[data-theme="light"] body.mf-settings-standalone .mf293-dex-filter-meta strong,
+html[data-theme="light"] body.mf-settings-standalone .mf293-settings-meta select {
+  color: #20323e !important;
+}
+
+/* Opened sections only — collapsed sections are already correct in Light. */
+html[data-theme="light"] body.mf-settings-standalone .mf293-settings-group[open] {
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255,255,255,.94),
+      rgba(245,248,250,.97)
+    ) !important;
+  border-color: rgba(91,113,126,.16) !important;
+  box-shadow: 0 10px 28px rgba(27,42,53,.035) !important;
+}
+
+/* Open section heading and description */
+html[data-theme="light"] body.mf-settings-standalone
+.mf293-settings-group[open] summary strong {
+  color: #172733 !important;
+}
+
+html[data-theme="light"] body.mf-settings-standalone
+.mf293-settings-group[open] summary small {
+  color: #71858f !important;
+}
+
+html[data-theme="light"] body.mf-settings-standalone
+.mf293-settings-group[open] summary i {
+  border-color: #6f8792 !important;
+}
+
+/*
+  Keep the existing Light field cards, but make sure no open-parent rule
+  washes their labels/value text back toward Dark-theme colors.
+*/
+html[data-theme="light"] body.mf-settings-standalone
+.mf293-settings-group[open] .mf293-field-label {
+  color: #70848f !important;
+}
+
+html[data-theme="light"] body.mf-settings-standalone
+.mf293-settings-group[open] .mf293-field input:not([type="checkbox"]),
+html[data-theme="light"] body.mf-settings-standalone
+.mf293-settings-group[open] .mf293-field select,
+html[data-theme="light"] body.mf-settings-standalone
+.mf293-settings-group[open] .mf293-field textarea {
+  color: #182833 !important;
+}
+/* ===== /MEMEFLOW_SETTINGS_LIGHT_SURFACES_V1 ===== */
+
+/* ===== MEMEFLOW_SETTINGS_LIGHT_ACTIONS_V1 ===== */
+/*
+  System Settings · Light mode only.
+  Fixes only these visible controls:
+    - Review manually
+    - Pause new entries
+    - Emergency entry lock · OFF
+    - Restore defaults
+  No behavior, disabled state, layout, spacing, or Dark-theme changes.
+*/
+
+html[data-theme="light"] body.mf-settings-standalone
+[data-mf-settings-action-light="neutral-disabled"] {
+  background: rgba(239,243,246,.96) !important;
+  border: 1px solid rgba(91,113,126,.16) !important;
+  color: #6f858f !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body.mf-settings-standalone
+[data-mf-settings-action-light="neutral-disabled"]:disabled {
+  opacity: 1 !important;
+  cursor: default !important;
+}
+
+html[data-theme="light"] body.mf-settings-standalone
+[data-mf-settings-action-light="emergency-off"] {
+  background: rgba(255,102,121,.055) !important;
+  border: 1px solid rgba(255,102,121,.20) !important;
+  color: #d45f70 !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body.mf-settings-standalone
+#mf293RestoreDefaults {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.94), rgba(242,246,248,.97)) !important;
+  border: 1px solid rgba(91,113,126,.17) !important;
+  color: #667d88 !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body.mf-settings-standalone
+#mf293RestoreDefaults:disabled {
+  opacity: .58 !important;
+}
+/* ===== /MEMEFLOW_SETTINGS_LIGHT_ACTIONS_V1 ===== */
+
+/* ===== MEMEFLOW_SETTINGS_LIGHT_PAGE_BG_V1 ===== */
+/*
+  System Settings · Light mode only.
+  Unifies the page canvas with the rest of MEMEFLOW Light pages.
+  Only the rear/page background is changed.
+  Header, settings panel, cards, fields, layout and logic are untouched.
+*/
+
+html[data-theme="light"] {
+  background: #eef4f7 !important;
+}
+
+html[data-theme="light"] body.mf-settings-standalone {
+  --mf-ui-bg: #eef4f7;
+
+  background:
+    radial-gradient(
+      circle at 50% -6%,
+      rgba(85, 217, 255, .055),
+      transparent 31%
+    ),
+    linear-gradient(
+      180deg,
+      #f3f8fa 0%,
+      #eef5f7 32%,
+      #edf4f7 100%
+    ) !important;
+
+  background-color: #eef4f7 !important;
+}
+
+html[data-theme="light"] body.mf-settings-standalone .mf-settings-page-shell,
+html[data-theme="light"] body.mf-settings-standalone .mf293-settings-backdrop {
+  background: transparent !important;
+}
+/* ===== /MEMEFLOW_SETTINGS_LIGHT_PAGE_BG_V1 ===== */
