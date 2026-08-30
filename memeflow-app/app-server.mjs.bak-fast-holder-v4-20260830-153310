@@ -1052,138 +1052,24 @@ const holderRefreshTimer=setInterval(()=>{
 holderRefreshTimer.unref?.();
 
 
-// MEMEFLOW_FAST_HOLDER_PREVIEW_V4_VISIBLE_FIRST
-//
-// DISPLAY ONLY.
-// Never writes canonical holderCount.
-// Never affects Score, BUY READY, holder gates or trading decisions.
-//
-// Priority:
-//   1. Visible cards from /api/system/live-token-card-batch
-//   2. Remaining tokens by canonical V5 relevance:
-//      OPEN POSITION > BUY READY > WATCH > WAITING > BLOCKED
-//   3. Higher Score first inside the same lane.
-//
-// getTokenLargestAccounts is only a FAST preview:
-//   <20 accounts -> "N"
-//   20 accounts  -> "20+"
-// Exact getProgramAccounts holderCount remains authoritative.
+// MEMEFLOW_FAST_HOLDER_PREVIEW_V3
+// Lightweight display-only holder preview.
+// NEVER writes canonical holderCount and NEVER affects trading decisions.
+const __mfFastHolderPreviewAtV3=new Map();
+let __mfFastHolderPreviewBusyV3=false;
 
-const __mfVisibleHolderMintsV4=new Map();
-const __mfFastHolderAttemptAtV4=new Map();
-const __mfFastHolderActiveV4=new Set();
+const __mfFastHolderPreviewTimerV3=setInterval(async()=>{
+  if(__mfFastHolderPreviewBusyV3)return;
 
-const FAST_HOLDER_VISIBLE_TTL_MS_V4=10000;
-const FAST_HOLDER_RETRY_MS_V4=5000;
-const FAST_HOLDER_REFRESH_MS_V4=60000;
-const FAST_HOLDER_MAX_CONCURRENT_V4=3;
-
-function __mfTouchVisibleHolderMintsV4(mints=[]){
   const now=Date.now();
 
-  for(let i=0;i<mints.length;i++){
-    const mint=String(mints[i]||'').trim();
-    if(!mint)continue;
-
-    __mfVisibleHolderMintsV4.set(
-      mint,
-      {seenAt:now,order:i}
-    );
-  }
-
-  for(const [mint,row] of __mfVisibleHolderMintsV4){
-    if(
-      !row ||
-      now-Number(row.seenAt||0)>FAST_HOLDER_VISIBLE_TTL_MS_V4
-    ){
-      __mfVisibleHolderMintsV4.delete(mint);
-    }
-  }
-}
-
-function __mfFastHolderEligibleV4(token,visible,now){
-  if(!token?.mint)return false;
-
-  const exact=Number(token?.holderCount);
-
-  if(
-    token?.holderCount!==null &&
-    token?.holderCount!==undefined &&
-    token?.holderCount!=='' &&
-    Number.isFinite(exact)
-  ){
-    return false;
-  }
-
-  if(__mfFastHolderActiveV4.has(token.mint)){
-    return false;
-  }
-
-  const lastAttempt=
-    Number(__mfFastHolderAttemptAtV4.get(token.mint)||0);
-
-  const lastSuccess=
-    Number(token?.fastHolderPreviewAt||0);
-
-  const hasPreview=
-    typeof token?.fastHolderPreviewDisplay==='string' &&
-    token.fastHolderPreviewDisplay.length>0;
-
-  if(
-    hasPreview &&
-    lastSuccess &&
-    now-lastSuccess<FAST_HOLDER_REFRESH_MS_V4
-  ){
-    return false;
-  }
-
-  const retryMs=
-    visible
-      ? FAST_HOLDER_RETRY_MS_V4
-      : FAST_HOLDER_REFRESH_MS_V4;
-
-  return !lastAttempt || now-lastAttempt>=retryMs;
-}
-
-function __mfFastHolderCandidatesV4(){
-  const now=Date.now();
-  const tokens=Object.values(store.state.tokens||{});
-  const visible=[];
-
-  for(const [mint,meta] of __mfVisibleHolderMintsV4){
-    if(
-      now-Number(meta?.seenAt||0)>
-      FAST_HOLDER_VISIBLE_TTL_MS_V4
-    ){
-      continue;
-    }
-
-    const token=store.state.tokens?.[mint]||null;
-
-    if(
-      token &&
-      __mfFastHolderEligibleV4(token,true,now)
-    ){
-      visible.push({token,meta});
-    }
-  }
-
-  visible.sort((a,b)=>{
-    const ar=__mfHolderRankV5(a.token);
-    const br=__mfHolderRankV5(b.token);
-
-    if(ar.lane!==br.lane)return ar.lane-br.lane;
-    if(ar.score!==br.score)return br.score-ar.score;
-
-    return Number(a.meta?.order||0)-Number(b.meta?.order||0);
-  });
-
-  if(visible.length){
-    return visible.map(x=>x.token);
-  }
-
-  return tokens
-    .filter(token=>__mfFastHolderEligibleV4(token,false,now))
+  const candidates=Object.values(store.state.tokens||{})
+    .filter(t=>t?.mint)
+    .filter(t=>!Number.isFinite(Number(t?.holderCount)))
+    .filter(t=>{
+      const last=Number(__mfFastHolderPreviewAtV3.get(t.mint)||0);
+      return now-last>=60000;
+    })
     .sort((a,b)=>{
       const ar=__mfHolderRankV5(a);
       const br=__mfHolderRankV5(b);
@@ -1191,83 +1077,45 @@ function __mfFastHolderCandidatesV4(){
       if(ar.lane!==br.lane)return ar.lane-br.lane;
       if(ar.score!==br.score)return br.score-ar.score;
 
-      const ax=Number(
-        a?.lastMarketActivityAt ||
-        a?.lastPriceAt ||
-        a?.discoveredAt ||
-        0
-      );
-
-      const bx=Number(
-        b?.lastMarketActivityAt ||
-        b?.lastPriceAt ||
-        b?.discoveredAt ||
-        0
-      );
-
-      return bx-ax;
+      return Number(b?.lastMarketActivityAt||0)-
+             Number(a?.lastMarketActivityAt||0);
     });
-}
 
-async function __mfRunFastHolderPreviewV4(token){
-  const mint=String(token?.mint||'').trim();
-  if(!mint)return;
+  const token=candidates[0];
+  if(!token)return;
 
-  __mfFastHolderActiveV4.add(mint);
-  __mfFastHolderAttemptAtV4.set(mint,Date.now());
+  __mfFastHolderPreviewAtV3.set(token.mint,now);
+  __mfFastHolderPreviewBusyV3=true;
 
   try{
-    const result=await __mfPreOpenRpc.call(
+    const r=await __mfPreOpenRpc.call(
       'getTokenLargestAccounts',
-      [
-        mint,
-        {commitment:'confirmed'}
-      ]
+      [token.mint,{commitment:'confirmed'}]
     );
 
-    const vals=(result?.value||[])
-      .map(row=>Number(row?.uiAmountString))
-      .filter(value=>Number.isFinite(value)&&value>0);
-
-    if(!vals.length)return;
+    const vals=(r?.value||[])
+      .map(x=>Number(x?.uiAmountString))
+      .filter(x=>Number.isFinite(x)&&x>0);
 
     const display=
-      vals.length>=20
-        ? '20+'
-        : String(vals.length);
+      vals.length===0 ? null :
+      vals.length<20 ? String(vals.length) :
+      '20+';
 
-    store.setToken(
-      mint,
-      {
-        fastHolderPreviewDisplay:display,
-        fastHolderPreviewAt:Date.now(),
-        fastHolderPreviewSource:
-          'getTokenLargestAccounts-v4-visible-first'
-      }
-    );
+    store.setToken(token.mint,{
+      fastHolderPreviewDisplay:display,
+      fastHolderPreviewAt:Date.now(),
+      fastHolderPreviewSource:'getTokenLargestAccounts'
+    });
 
-    try{publish(mint)}catch{}
+    try{publish(token.mint)}catch{}
   }catch{}
   finally{
-    __mfFastHolderActiveV4.delete(mint);
+    __mfFastHolderPreviewBusyV3=false;
   }
-}
+},2500);
 
-const __mfFastHolderPreviewTimerV4=setInterval(()=>{
-  const free=
-    FAST_HOLDER_MAX_CONCURRENT_V4-
-    __mfFastHolderActiveV4.size;
-
-  if(free<=0)return;
-
-  const candidates=__mfFastHolderCandidatesV4();
-
-  for(const token of candidates.slice(0,free)){
-    void __mfRunFastHolderPreviewV4(token);
-  }
-},500);
-
-__mfFastHolderPreviewTimerV4.unref?.();
+__mfFastHolderPreviewTimerV3.unref?.();
 
 const recoveryMetrics=makeRecoveryMetrics();
 const DECISION_RECOVERY_BATCH_SIZE=Number(process.env.DECISION_RECOVERY_BATCH_SIZE||25);
@@ -5484,8 +5332,6 @@ if(false && url.pathname==='/api/ai/assistant' &&req.method==='POST'){
     )
   ].slice(0,200);
 
-  __mfTouchVisibleHolderMintsV4(mints);
-
   const settings=store.settings(u.id)||{};
   const openMints=__mfOpenPositionMints();
   const rows=[];
@@ -6083,8 +5929,6 @@ if(url.pathname==='/api/ai/decisions'){
         holderFresh:Boolean(token.holderFresh),
         holderCount:token.holderCount??null,
         previewHolderCount:token.previewHolderCount??null,
-        fastHolderPreviewDisplay:token.fastHolderPreviewDisplay??null,
-        fastHolderPreviewAt:token.fastHolderPreviewAt??null,
         pumpReportedHolderCount:token.pumpReportedHolderCount??null,
         observedHolderCount:token.observedHolderCount??null,
         eventObservedHolderCount:(()=>{

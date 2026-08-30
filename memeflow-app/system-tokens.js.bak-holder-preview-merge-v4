@@ -2244,12 +2244,6 @@ function __mfMergeMutableRowV18(previous,incoming){
     'entryAdmissionReasons',
     'holderCount',
     'holders',
-
-    // MEMEFLOW_HOLDER_PREVIEW_MERGE_V4
-    'observedHolderCount',
-    'previewHolderCount',
-    'fastHolderPreviewDisplay',
-
     'top10Pct',
     'top10',
     'developerPct',

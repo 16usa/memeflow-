@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="description" content="MEMEFLOW Live System View — real-time 3D visualization of discovery, market, holder, evaluation and paper trading pipelines." />
+  <title>MEMEFLOW · Live System View</title>
+  <link rel="stylesheet" href="/system.css?v=swipe-retained-1788110211" />
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.185.1/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.185.1/examples/jsm/"
+    }
+  }
+  </script>
+<link rel="stylesheet" href="/memeflow-brand.css?v=five-clean-1788095919">
+<script>window.__MEMEFLOW_TRUE_3D_ACTIVE__=true;</script>
+  <!-- MEMEFLOW_GLOBAL_RIGHT_DRAWER_NAV_V1 -->
+  <link rel="stylesheet" href="/memeflow-nav.css?v=global-right-drawer-frameless-v2-20260829">
+  <!-- MEMEFLOW_SYSTEM_REMOVE_TRADING_SETTINGS_HEADER_BUTTONS_V1 -->
+  <!-- MEMEFLOW_SYSTEM_GALLERY_VARIANT2_CLEAN_V1 -->
+
+  <!-- MEMEFLOW_HEADER_TAGLINE_V1 -->
+
+
+  <link rel="stylesheet" href="/memeflow-header.css?v=canonical-header-v1-7-20260830">
+</head>
+<body>
+  <div id="boot" class="boot" aria-live="polite">
+    <div class="boot-mark"><span class="mf-loader-v9"><img class="mf-v9-glow" src="/brand/loader-v9/glow.png?v=v9" alt=""><img class="mf-v9-ul" src="/brand/loader-v9/wing-upper-left.png?v=v9" alt=""><img class="mf-v9-ur" src="/brand/loader-v9/wing-upper-right.png?v=v9" alt=""><img class="mf-v9-ll" src="/brand/loader-v9/wing-lower-left.png?v=v9" alt=""><img class="mf-v9-lr" src="/brand/loader-v9/wing-lower-right.png?v=v9" alt=""><img class="mf-v9-body" src="/brand/loader-v9/body.png?v=v9" alt=""></span></div>
+    <strong>MEMEFLOW SYSTEM VIEW</strong>
+    <span>Initializing real-time topology…</span>
+  </div>
+
+  <main class="system-shell mf-system-page-flow-v2">
+    <header class="topbar glass mf-site-header">
+      <div class="brand-block">
+        <a class="back" href="/" aria-label="Back to dashboard">←</a>
+        <div class="brand-mark" aria-hidden="true"><img class="mf-brand-img" src="/brand/memeflow-dragonfly-dark.png?v=final-v5" alt=""></div>
+        <div>
+          <div class="brand">MEMEFLOW</div>
+          <div class="subtitle">AI-POWERED ON-CHAIN TRADING</div>
+        </div>
+      </div>
+
+      <div class="system-chips" aria-label="System status">
+        <div class="status-chip"><i id="wsDot" class="dot idle"></i><span>Discovery</span><b id="wsStatus">Connecting</b></div>
+        <div class="status-chip"><i id="rpcDot" class="dot idle"></i><span>Pre-open RPC</span><b id="rpcStatus">Ready gate</b></div>
+        <div class="status-chip"><i id="aiDot" class="dot idle"></i><span>OpenAI</span><b id="aiStatus">Checking</b></div>
+        <div class="status-chip execution"><i class="dot warning"></i><span>Live execution</span><b>Not verified</b></div>
+      </div>
+
+      <div class="top-actions">
+        <button id="autoRotateBtn" class="tool-btn active" type="button">Auto orbit</button>
+        <button id="resetViewBtn" class="tool-btn" type="button">Reset view</button>
+      </div>
+    </header>
+
+<!-- MEMEFLOW_REALTIME_PAGE_GALLERY_TOP_V5_1 -->
+<section class="viewport-wrap mf-true3d-clean-v3 mf-page-gallery-host mf-page-gallery-clean-v2 mfpg-variant2-clean-v1">
+      <canvas id="systemCanvas" aria-label="Interactive 3D MEMEFLOW system topology"></canvas>
+      <div id="memeflowTrue3DHost" aria-label="MEMEFLOW true 3D renderer"></div>
+      <div id="labels" class="scene-labels" aria-hidden="true"></div>
+
+<div class="scene-hint glass">Drag to orbit · Wheel / pinch to zoom · Tap a token or module</div>
+
+      <aside id="inspector" class="inspector glass mf-live-inspector-removed-v3" hidden aria-hidden="true">
+        <div class="inspector-head">
+          <div>
+            <span class="eyebrow">LIVE INSPECTOR</span>
+            <h2 id="inspectorTitle">MEMEFLOW Core</h2>
+          </div>
+          <span id="inspectorState" class="state-pill neutral">SYSTEM</span>
+        </div>
+        <p id="inspectorSummary" class="inspector-summary">Select a token or architecture module to inspect its live state.</p>
+        <div id="metricGrid" class="metric-grid"></div>
+        <div class="reason-block">
+          <span>PRIMARY SIGNAL</span>
+          <p id="primaryReason">Waiting for telemetry.</p>
+        </div>
+        <div id="gateList" class="gate-list"></div>
+        <div class="inspector-foot">
+          <span id="inspectorMint">Live architecture</span>
+          <button id="focusBtn" type="button">Focus</button>
+        </div>
+      </aside>
+
+</section>
+
+<!-- MEMEFLOW_REALTIME_PAGE_GALLERY_CAPTION_V6 -->
+<section id="mfPageCaption" class="mfpg-caption" aria-live="polite" aria-atomic="true">
+  <div class="mfpg-caption-inner">
+    <span id="mfPageCaptionIndex" class="mfpg-caption-index">04 / 04</span>
+    <h2 id="mfPageCaptionTitle" class="mfpg-caption-title">HOW IT WORKS</h2>
+    <p id="mfPageCaptionText" class="mfpg-caption-text">Configure trading mode, AI thresholds, risk filters and execution rules.</p>
+
+  </div>
+</section>
+<div class="mf-infra">
+  <span class="mf-infra-title">INFRASTRUCTURE &amp; INTEGRATIONS</span>
+  <div class="mf-infra-row">
+    <span><i>≋</i>SOLANA</span>
+    <span><i>◌</i>PHANTOM</span>
+    <span><i>●</i>PUMP.FUN</span>
+    <span><i>✣</i>OPENAI</span>
+  </div>
+</div>
+
+</main>
+
+  <div id="fatal" class="fatal" hidden>
+    <strong>3D renderer unavailable</strong>
+    <span>The system telemetry panel can still update, but WebGL/Three.js could not start.</span>
+  </div>
+
+  <script src="/copy-trading-wallets-v3.js?v=multi-wallet-v3-20260827"></script>
+  <script type="module" src="/system.js?v=swipe-retained-1788110211"></script>
+<script src="/memeflow-nav.js?v=global-right-drawer-v2-how-it-works" defer></script>
+</body>
+</html>

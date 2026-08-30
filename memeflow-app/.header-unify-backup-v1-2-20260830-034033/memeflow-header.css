@@ -1,0 +1,222 @@
+/* ===== MEMEFLOW_CANONICAL_HEADER_V1 =====
+   One header geometry for application pages.
+   Trading Terminal is the only sticky header.
+   No priority overrides are used in this layer.
+*/
+
+:root {
+  --mf-header-height: 62px;
+  --mf-header-mobile-height: 58px;
+  --mf-header-bg: rgba(15, 20, 26, .94);
+  --mf-header-line: rgba(111, 154, 172, .075);
+  --mf-header-text: #edf5f8;
+  --mf-header-muted: #718894;
+}
+
+.mf-site-header {
+  position: relative;
+  top: auto;
+  z-index: 50;
+
+  width: 100vw;
+  max-width: 100vw;
+  min-height: var(--mf-header-height);
+  height: var(--mf-header-height);
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
+
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  padding-left: max(16px, env(safe-area-inset-left));
+  padding-right: max(16px, env(safe-area-inset-right));
+
+  border: 0;
+  border-bottom: 1px solid var(--mf-header-line);
+  border-radius: 0;
+
+  background: var(--mf-header-bg);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .018);
+
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.mf-site-header--sticky {
+  position: sticky;
+  top: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+}
+
+.mf-site-header .brand,
+.mf-site-header .brand-block,
+.mf-site-header .header-left,
+.mf-site-header .mf-settings-page-header-left,
+.mf-site-header .mf-vault-brand,
+.mf-site-header .mf-hiw-brand {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.mf-site-header:not(.mf-site-header--sticky) .brand,
+.mf-site-header:not(.mf-site-header--sticky) .brand-block,
+.mf-site-header:not(.mf-site-header--sticky) .header-left,
+.mf-site-header:not(.mf-site-header--sticky) .mf-settings-page-header-left,
+.mf-site-header:not(.mf-site-header--sticky) .mf-vault-brand,
+.mf-site-header:not(.mf-site-header--sticky) .mf-hiw-brand {
+  margin-right: auto;
+}
+
+.mf-site-header .mf-settings-page-brand-mark,
+.mf-site-header .mf-vault-brand-mark,
+.mf-site-header .mf-hiw-brand-mark {
+  width: 58px;
+  height: 42px;
+  min-width: 58px;
+  flex: 0 0 58px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+
+.mf-site-header .mf-settings-page-brand-mark img,
+.mf-site-header .mf-vault-brand-mark img,
+.mf-site-header .mf-hiw-brand-mark img {
+  width: 56px;
+  height: 38px;
+  display: block;
+  object-fit: contain;
+}
+
+.mf-site-header .brand-title,
+.mf-site-header .brand-block .brand,
+.mf-site-header .header-title > span,
+.mf-site-header .mf-settings-page-title > span,
+.mf-site-header .mf-vault-brand-copy > strong,
+.mf-site-header .mf-hiw-brand-copy > strong {
+  display: block;
+  margin: 0;
+  color: var(--mf-header-text);
+  font-size: 12px;
+  line-height: 1;
+  font-weight: 820;
+  letter-spacing: .08em;
+}
+
+.mf-site-header .brand-sub,
+.mf-site-header .brand-block .subtitle,
+.mf-site-header .header-title > strong,
+.mf-site-header .mf-settings-page-title > strong,
+.mf-site-header .mf-vault-brand-copy > small,
+.mf-site-header .mf-hiw-brand-copy > small {
+  display: block;
+  margin: 2px 0 0;
+  color: var(--mf-header-muted);
+  font-size: 8px;
+  line-height: 1.2;
+  font-weight: 720;
+  letter-spacing: .12em;
+  white-space: nowrap;
+}
+
+.mf-site-header .top-actions {
+  min-width: 0;
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 7px;
+}
+
+.mf-site-header--sticky .top-actions {
+  margin-left: 0;
+}
+
+.mf-site-header > .mf-nav-host {
+  margin-left: 8px;
+}
+
+.mf-site-header .live-status,
+.mf-site-header .mf-settings-page-live {
+  min-height: 28px;
+  height: 28px;
+  padding: 0 9px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--mf-header-line);
+  border-radius: 999px;
+  background: rgba(17, 24, 32, .78);
+  color: #9eb2bc;
+  font-size: 8px;
+  line-height: 1;
+  font-weight: 760;
+  letter-spacing: .08em;
+}
+
+.mf-site-header .engine-strip,
+.mf-site-header .system-chips {
+  flex: 0 1 auto;
+}
+
+.mf-site-header .back {
+  display: none;
+}
+
+@media (max-width: 760px) {
+  .mf-site-header {
+    min-height: var(--mf-header-mobile-height);
+    height: var(--mf-header-mobile-height);
+    gap: 8px;
+    padding-left: max(10px, env(safe-area-inset-left));
+    padding-right: max(10px, env(safe-area-inset-right));
+  }
+
+  .mf-site-header .mf-settings-page-brand-mark,
+  .mf-site-header .mf-vault-brand-mark,
+  .mf-site-header .mf-hiw-brand-mark {
+    width: 54px;
+    height: 40px;
+    min-width: 54px;
+    flex-basis: 54px;
+  }
+
+  .mf-site-header .mf-settings-page-brand-mark img,
+  .mf-site-header .mf-vault-brand-mark img,
+  .mf-site-header .mf-hiw-brand-mark img {
+    width: 52px;
+    height: 36px;
+  }
+
+  .mf-site-header .brand-title,
+  .mf-site-header .brand-block .brand,
+  .mf-site-header .header-title > span,
+  .mf-site-header .mf-settings-page-title > span,
+  .mf-site-header .mf-vault-brand-copy > strong,
+  .mf-site-header .mf-hiw-brand-copy > strong {
+    font-size: 11px;
+  }
+
+  .mf-site-header .brand-sub,
+  .mf-site-header .brand-block .subtitle,
+  .mf-site-header .header-title > strong,
+  .mf-site-header .mf-settings-page-title > strong,
+  .mf-site-header .mf-vault-brand-copy > small,
+  .mf-site-header .mf-hiw-brand-copy > small {
+    font-size: 8px;
+    letter-spacing: .10em;
+  }
+}
+
+/* ===== /MEMEFLOW_CANONICAL_HEADER_V1 ===== */
