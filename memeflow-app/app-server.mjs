@@ -802,8 +802,13 @@ function settingsGateCheck(token){
   return admission;
 }
 
+// MEMEFLOW_CANONICAL_HOLDER_LEGACY_ADMISSION_UNUSED_V34
+// LEGACY / UNUSED. Do NOT connect this function to makeHolderQueue.
+// It predates the current event-ledger lower-bound semantics and contains
+// historical "event_holder_authoritative" branches. V34 scheduler gating above
+// is the current safe admission mechanism for canonical holder RPC.
 function holderAdmissionForActiveUsers(mint){
-  // MEMEFLOW_V12_24_CREATOR_GATE_RECOVERY: event-holder snapshot remains authoritative even after fresh window.
+  // MEMEFLOW_V12_24_CREATOR_GATE_RECOVERY: historical logic only.
   try{
     if(__v1224HasEventHolder(mint)){
       __v1224LinkCreator(mint,__v1223Token(mint));
@@ -1041,14 +1046,54 @@ function __mfHolderRankV5(token,decisionFloor=__mfHolderDecisionFloorV33()){
   };
 }
 
+// MEMEFLOW_CANONICAL_HOLDER_STABLE_GATE_V34
+//
+// Exact getProgramAccounts holder work is useful only while at least one
+// active user's Entry Admission can still benefit from that evidence.
+// Stable failures (age/platform/keyword/etc.) do not need holder RPC.
+//
+// This is NOT a permanent exclusion. The scheduler re-evaluates current
+// users/settings every tick, so changing settings automatically makes the
+// token eligible again.
+function __mfCanonicalHolderNeededV34(
+  token,
+  now=Date.now(),
+  openMints=__mfOpenPositionMints(),
+  activeUserIds=__mfActiveScannerUserIds(now)
+){
+  const mint=String(token?.mint||'').trim();
+  if(!mint)return false;
+
+  // Open positions keep their exact holder telemetry regardless of admission.
+  if(openMints.has(mint))return true;
+
+  // No trading/observer user currently needs background exact-holder work.
+  if(!activeUserIds.length)return false;
+
+  // Only skip when EVERY active user is already blocked by a stable Entry
+  // failure. Missing/retryable holder/market evidence continues to refresh.
+  return !__mfAllActiveUsersStableBlocked(mint,now);
+}
+
 const holderRefreshTimer=setInterval(()=>{
   const now=Date.now();
   const decisionFloor=__mfHolderDecisionFloorV33();
+  const openMints=__mfOpenPositionMints();
+  const activeUserIds=__mfActiveScannerUserIds(now);
   __mfHolderPriorityTickV5++;
 
 
   const candidates=Object.values(store.state.tokens||{})
     .filter(token=>token?.mint)
+    .filter(
+      token=>
+        __mfCanonicalHolderNeededV34(
+          token,
+          now,
+          openMints,
+          activeUserIds
+        )
+    )
     .filter(token=>{
       const scannedAt=Number(token?.holderScannedAt||0);
       const rank=__mfHolderRankV5(token,decisionFloor);
