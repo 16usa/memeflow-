@@ -1071,7 +1071,8 @@ function mergedCandidates() {
       ? state.liveWatchCandidates
       : [];
 
-  // Strict trading decision owns a mint whenever both feeds contain it.
+  // Strict row owns data/execution whenever both feeds contain a mint.
+  // Pipeline WATCH may overlay display classification for strict WAITING only.
   const byMint = new Map(
     candidates
       .filter(candidate => candidate?.mint)
@@ -1080,12 +1081,40 @@ function mergedCandidates() {
 
   for (const watch of pipelineWatch) {
     const mint = String(watch?.mint || '').trim();
-    if (!mint || byMint.has(mint)) continue;
+    if (!mint) continue;
+
+    const strict = byMint.get(mint) || null;
+
+    if (strict) {
+      const strictState =
+        String(strict?.state || '').trim().toUpperCase();
+
+      // MEMEFLOW_TERMINAL_WATCH_DUPLICATE_MERGE_V37
+      //
+      // Keep every strict field as the data/execution authority. Overlay ONLY
+      // the terminal display classification when strict is still WAITING.
+      if (
+        strictState === 'WAITING' &&
+        strict?.tradeEligible !== true
+      ) {
+        byMint.set(mint, {
+          ...strict,
+          state: 'WATCH',
+          displayState: 'WATCH',
+          tradeEligible: false,
+          __strictState: strictState,
+          __pipelineWatch: true
+        });
+      }
+
+      // BUY READY / BLOCKED / WATCH / OPEN and all other strict states win.
+      continue;
+    }
 
     byMint.set(mint, {
       ...watch,
 
-      // Terminal display classification only.
+      // Pipeline-only row: terminal display classification only.
       state: 'WATCH',
       displayState: 'WATCH',
 
