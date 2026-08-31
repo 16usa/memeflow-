@@ -63,7 +63,12 @@ assert.match(
 assert.match(app,/MEMEFLOW_WS_HOLDER_PREVIEW_RPC_CLEANUP_V32/);
 assert.match(app,/MEMEFLOW_CANONICAL_HOLDER_SCHEDULER_V33/);
 assert.match(app,/MEMEFLOW_CANONICAL_HOLDER_STABLE_GATE_V34/);
-assert.match(app,/MEMEFLOW_CANONICAL_HOLDER_LEGACY_ADMISSION_UNUSED_V34/);
+
+// MEMEFLOW_REMOVE_LEGACY_HOLDER_ADMISSION_TEST_V36_3
+assert.match(app,/MEMEFLOW_CANONICAL_HOLDER_LEGACY_REMOVED_V36_3/);
+assert.doesNotMatch(app,/function holderAdmissionForActiveUsers\(/);
+assert.doesNotMatch(app,/function __v1224HasEventHolder\(/);
+assert.doesNotMatch(app,/reason:'event_holder_authoritative'/);
 
 const holderQueueConstruction=
   app.match(/const holderQueue=makeHolderQueue\([^\n]+/)?.[0]||'';

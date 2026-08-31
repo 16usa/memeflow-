@@ -606,12 +606,6 @@ function __v1224LinkCreator(mint,token){
     return c||null;
   }catch{return null}
 }
-function __v1224HasEventHolder(mint){
-  try{
-    const s=eventHolderLedger?.inspect?.(mint);
-    return !!(s && s.holderFresh===true && s.eventLedgerVersion);
-  }catch{return false}
-}
 function __v1224GateForMint(mint,settings){
   try{
     const t=__v1223Token(mint);
@@ -802,149 +796,10 @@ function settingsGateCheck(token){
   return admission;
 }
 
-// MEMEFLOW_CANONICAL_HOLDER_LEGACY_ADMISSION_UNUSED_V34
-// LEGACY / UNUSED. Do NOT connect this function to makeHolderQueue.
-// It predates the current event-ledger lower-bound semantics and contains
-// historical "event_holder_authoritative" branches. V34 scheduler gating above
-// is the current safe admission mechanism for canonical holder RPC.
-function holderAdmissionForActiveUsers(mint){
-  // MEMEFLOW_V12_24_CREATOR_GATE_RECOVERY: historical logic only.
-  try{
-    if(__v1224HasEventHolder(mint)){
-      __v1224LinkCreator(mint,__v1223Token(mint));
-      return {allow:false,drop:true,reason:'event_holder_authoritative',source:'ws-direct'};
-    }
-  }catch{}
-
-  // MEMEFLOW_V12_23_FRESH_WARMING_GATE_DIAGNOSTICS: WS-direct V12.22 is authoritative for the fresh Pump hot path.
-  // Never send a fresh Pump token to legacy getProgramAccounts holder RPC.
-  try{
-    if(__v1223FreshPump(mint)){
-      const __eventHolder=eventHolderLedger?.inspect?.(mint)||null;
-      if(__eventHolder){
-        const __u=(__v1224LinkCreator(mint,__v1223Token(mint)),eventHolderLedger?.applyToStore?.(store,mint));
-        if(__u){
-          try{Promise.resolve(evaluateAI(__u)).catch(()=>{})}catch{}
-          try{publish(mint)}catch{}
-        }
-        return {allow:false,drop:true,reason:'fresh_pump_event_holder_ready',source:'ws-direct'};
-      }
-      return {allow:false,drop:true,reason:'fresh_pump_holder_warming',source:'ws-direct'};
-    }
-  }catch(__e){}
-
-  try{const __h=eventHolderLedger.inspect(mint);if(__h){const __u=eventHolderLedger.applyToStore(store,mint);if(__u){try{Promise.resolve(evaluateAI(__u)).catch(()=>{})}catch{}try{publish(mint)}catch{}}return {allow:false,drop:true,reason:'event_holder_ledger_ready',source:'event-ledger'}}}catch{}
-
-  const token=store.state.tokens[mint];
-  if(!token)return {allow:false,drop:true,reason:'token_missing'};
-
-  const settingsAdmission=settingsGateCheck(token);
-  if(settingsAdmission?.allow===false){
-    const retryable=settingsAdmission.retryable===true;
-    return {
-      allow:false,
-      drop:!retryable,
-      retryInMs:retryable?Math.max(1000,Number(settingsAdmission.recheckAt||0)-Date.now()):undefined,
-      reason:'settings_rejected',
-      settingsReason:settingsAdmission.reason||null
-    };
-  }
-
-  const now=Date.now();
-  const cutoff=now-HOLDER_ADMISSION_ACTIVE_HOURS*3600000;
-  const users=Object.keys(store.state.users||{}).filter(uid=>{
-    const u=store.state.users[uid]||{};
-    return u.isOwner || (u.lastActiveAt&&u.lastActiveAt>=cutoff);
-  });
-
-  // No active user context: fail open. Recovery/owner flows must not be broken.
-  if(!users.length)return {allow:true,reason:'no_active_users_fail_open'};
-
-  const platform=String(token.launchPlatform||token.protocol||token.source||'').toLowerCase();
-  const discovered=Number(token.discoveredAt||token.createdAt||0);
-  const ageMinutes=discovered>0?Math.max(0,(now-discovered)/60000):null;
-  const price=v128Finite(token.priceSol);
-  const pressure=v128Finite(token.buyPressure??token.momentum);
-  const marketCapUsd=v128Finite(token.marketCapUsd??token.marketCapUSD);
-  const liquidityUsd=v128Finite(token.liquidityUsd??token.liquidityUSD);
-
-  let anyPotential=false;
-  let anyReady=false;
-  let lastReason='cheap_market_data_pending';
-
-  for(const uid of users){
-    /* MEMEFLOW_V12_12_HOLDER_ADMISSION_FIX
- * Admission-only settings view: minBuyPressure must not block holder enrichment.
- * The stored user setting remains unchanged and evaluateAll() still enforces it.
- */
-const __holderAdmissionSettings = store.settings(uid) || {};
-const s = {...__holderAdmissionSettings, minBuyPressure: null};
-
-    // Stable hard filters: safe to rule this user out permanently.
-    if(Array.isArray(s.launchPlatforms)&&s.launchPlatforms.length){
-      if(!platform || !s.launchPlatforms.some(p=>platform.includes(String(p).replace('_',' ').toLowerCase()))){
-        lastReason='launch_platform_mismatch';
-        continue;
-      }
-    }
-    if(ageMinutes!==null && v128Enabled(s.maxTokenAgeMinutes) &&
-       ageMinutes>Number(s.maxTokenAgeMinutes)){
-      lastReason='token_age_exceeded';
-      continue;
-    }
-
-    anyPotential=true;
-
-    // MEMEFLOW_V12_13_HOLDER_ADMISSION_PRICE_GATE_FIX
-    // Do NOT require priceSol merely to admit holder enrichment.
-    // Price-dependent user filters below remain authoritative:
-    // market-cap/liquidity gates defer independently when enabled.
-    // evaluateAll() continues to enforce the user's real trading settings.
-    // Dynamic/cheap gates: DEFER only when an ENABLED user filter needs them.
-    if(v128Enabled(s.minBuyPressure) && Number(s.minBuyPressure)>0){
-      if(pressure===null){
-        lastReason='buy_pressure_pending';
-        continue;
-      }
-      if(pressure<Number(s.minBuyPressure)){
-        lastReason='buy_pressure_below_user_min';
-        continue;
-      }
-    }
-    if(v128Enabled(s.minMarketCapUsd) && Number(s.minMarketCapUsd)>0){
-      if(marketCapUsd===null){
-        lastReason='market_cap_usd_pending';
-        continue;
-      }
-      if(marketCapUsd<Number(s.minMarketCapUsd)){
-        lastReason='market_cap_below_user_min';
-        continue;
-      }
-    }
-    if(v128Enabled(s.maxMarketCapUsd) && Number(s.maxMarketCapUsd)>0 &&
-       marketCapUsd!==null && marketCapUsd>Number(s.maxMarketCapUsd)){
-      lastReason='market_cap_above_user_max';
-      continue;
-    }
-    if(v128Enabled(s.minLiquidityUsd) && Number(s.minLiquidityUsd)>0){
-      if(liquidityUsd===null){
-        lastReason='liquidity_usd_pending';
-        continue;
-      }
-      if(liquidityUsd<Number(s.minLiquidityUsd)){
-        lastReason='liquidity_below_user_min';
-        continue;
-      }
-    }
-
-    anyReady=true;
-    break;
-  }
-
-  if(anyReady)return {allow:true,reason:'at_least_one_active_user_ready'};
-  if(!anyPotential)return {allow:false,drop:true,reason:lastReason||'no_active_user_hard_match'};
-  return {allow:false,drop:false,retryInMs:HOLDER_ADMISSION_RETRY_MS,reason:lastReason};
-}
+// MEMEFLOW_CANONICAL_HOLDER_LEGACY_REMOVED_V36_3
+// Dead holderAdmissionForActiveUsers() was removed.
+// WS event-holder evidence remains observation-only / lower-bound.
+// Canonical holder scheduling starts immediately below and is unchanged.
 
 const holderQueue=makeHolderQueue({maxConcurrent:4,initialDelayMs:500},{holderMetrics,enrichHoldersFn:(mint)=>enrichHolders(mint,{rpc:__mfPreOpenRpc,store,evaluateAll,publish,enrichDiag})});
 // MEMEFLOW_CANONICAL_HOLDER_REFRESH_V5_RELEVANCE
