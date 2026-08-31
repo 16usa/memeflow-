@@ -13,6 +13,12 @@ const state = {
   capabilities: null,
   killSwitchActive: false,
   candidates: [],
+
+  // MEMEFLOW_TERMINAL_WATCH_SYNC_V29
+  // UI-only WATCH rows from Real-Time Pipeline.
+  // Strict trading decisions remain in state.candidates.
+  liveWatchCandidates: [],
+
   selectedMint: null,
   selected: null,
   filter: 'all',
@@ -1055,12 +1061,40 @@ function positionAsCandidate(position) {
 }
 
 function mergedCandidates() {
-  const candidates = Array.isArray(state.candidates) ? state.candidates : [];
+  const candidates =
+    Array.isArray(state.candidates)
+      ? state.candidates
+      : [];
+
+  const pipelineWatch =
+    Array.isArray(state.liveWatchCandidates)
+      ? state.liveWatchCandidates
+      : [];
+
+  // Strict trading decision owns a mint whenever both feeds contain it.
   const byMint = new Map(
     candidates
       .filter(candidate => candidate?.mint)
       .map(candidate => [candidate.mint, candidate])
   );
+
+  for (const watch of pipelineWatch) {
+    const mint = String(watch?.mint || '').trim();
+    if (!mint || byMint.has(mint)) continue;
+
+    byMint.set(mint, {
+      ...watch,
+
+      // Terminal display classification only.
+      state: 'WATCH',
+      displayState: 'WATCH',
+
+      // Never let a pipeline-only display row become executable.
+      tradeEligible: false,
+      __pipelineWatch: true
+    });
+  }
+
   const pinned = [];
 
   for (const position of state.positions || []) {
@@ -1090,6 +1124,25 @@ function displayStateForCandidate(candidate) {
   return isMintOpen(candidate?.mint)
     ? 'OPEN POSITION'
     : String(candidate?.state || 'WAITING').toUpperCase();
+}
+
+function terminalHolderLabel(candidate) {
+  const exact =
+    candidate?.holderCount ??
+    candidate?.holders;
+
+  if (finite(exact)) {
+    return fmt(exact, 0);
+  }
+
+  const observed =
+    candidate?.observedHolderCount;
+
+  if (finite(observed) && Number(observed) > 0) {
+    return `${fmt(observed, 0)}+`;
+  }
+
+  return '—';
 }
 
 function updateCandidateCount() {
@@ -1310,7 +1363,7 @@ function renderCandidates() {
 
           <div class="candidate-bottom">
             <span>
-              Score ${fmt(item.score, 0)} · Holders ${fmt(item.holderCount ?? item.holders, 0)}
+              Score ${fmt(item.score, 0)} · Holders ${terminalHolderLabel(item)}
             </span>
             <span class="candidate-price">
               ${price ? formatPrice(usdFromSol(price, item)) : '$—'}
@@ -1329,35 +1382,81 @@ function renderCandidates() {
 }
 
 async function loadCandidates({ redrawChart = true } = {}) {
-  const payload =
-    await api('/api/ai/decisions?scope=all&limit=100');
+  const [payload, livePayload] =
+    await Promise.all([
+      // STRICT trading feed. This remains authoritative for BUY READY.
+      api('/api/ai/decisions?scope=all&limit=100'),
+
+      // MEMEFLOW_TERMINAL_WATCH_SYNC_V29
+      // Supplemental UI-only WATCH feed from Real-Time Pipeline.
+      // A transient failure here must not break the strict trading feed.
+      api('/api/system/live-token-states?limit=200')
+        .catch(() => null)
+    ]);
 
   state.candidates =
     Array.isArray(payload.decisions)
       ? payload.decisions
       : [];
 
+  if (Array.isArray(livePayload?.decisions)) {
+    state.liveWatchCandidates =
+      livePayload.decisions
+        .filter(item => {
+          if (!item?.mint) return false;
+
+          const liveState =
+            String(
+              item?.displayState ??
+              item?.state ??
+              ''
+            )
+              .trim()
+              .toUpperCase();
+
+          return liveState === 'WATCH';
+        })
+        .map(item => ({
+          ...item,
+
+          // UI state only. Never execution authority.
+          state: 'WATCH',
+          displayState: 'WATCH',
+          tradeEligible: false,
+          __pipelineWatch: true
+        }));
+  }
+
+  const rows = mergedCandidates();
+
   $('candidateCount').textContent =
-    `${mergedCandidates().length} candidates`;
+    `${rows.length} candidates`;
 
   if(
     !state.selectedMint &&
-    state.candidates.length
+    rows.length
   ){
     const ready =
-      state.candidates.find(
+      rows.find(
         item =>
-          String(item.state).toUpperCase()===
+          String(item?.state || '').toUpperCase() ===
           'BUY READY'
       );
 
+    const watch =
+      rows.find(
+        item =>
+          String(item?.state || '').toUpperCase() ===
+          'WATCH'
+      );
+
     state.selectedMint =
-      (ready||state.candidates[0]).mint;
+      (ready || watch || rows[0]).mint;
   }
 
   if(state.selectedMint){
     const current =
-      state.candidates.find(
+      rows.find(
         item =>
           item.mint===state.selectedMint
       );
@@ -1599,7 +1698,7 @@ function renderSelected({ redrawChart = true } = {}) {
   renderPriceModeSummary(priceUsd);
 
   $('metricScore').textContent = fmt(c.score, 0);
-  $('metricHolders').textContent = fmt(c.holderCount ?? c.holders, 0);
+  $('metricHolders').textContent = terminalHolderLabel(c);
   $('metricTop10').textContent = finite(c.top10Pct ?? c.top10) ? `${fmt(c.top10Pct ?? c.top10, 1)}%` : '—';
   $('metricDev').textContent = finite(c.developerPct ?? c.developer) ? `${fmt(c.developerPct ?? c.developer, 1)}%` : '—';
 
