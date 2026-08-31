@@ -1135,6 +1135,93 @@ function filteredCandidates() {
   );
 }
 
+/* MEMEFLOW_CANDIDATES_RECENT_TRADES_LAYOUT_V1
+ * Candidate rows use the same compact information hierarchy and
+ * 28x28 token-avatar treatment as Recent trades.
+ * Candidate selection, filters and trading behavior are unchanged.
+ */
+function candidateImageUrl(candidate) {
+  if (!candidate) return '';
+
+  const direct = String(
+    candidate.logoUrl ||
+    candidate.imageUrl ||
+    candidate.image ||
+    candidate.icon ||
+    candidate.__openPosition?.logoUrl ||
+    candidate.__openPosition?.imageUrl ||
+    candidate.__openPosition?.image ||
+    candidate.__openPosition?.icon ||
+    ''
+  ).trim();
+
+  if (direct) {
+    const normalized = tokenImageCandidates(direct);
+    return normalized[0] || direct;
+  }
+
+  const mint = String(candidate.mint || '').trim();
+  if (!mint) return '';
+
+  const relatedTrade = (state.trades || []).find(trade => {
+    if (String(trade?.mint || '') !== mint) return false;
+    return Boolean(
+      trade?.logoUrl ||
+      trade?.imageUrl ||
+      trade?.image ||
+      trade?.icon
+    );
+  });
+
+  const tradeImage = String(
+    relatedTrade?.logoUrl ||
+    relatedTrade?.imageUrl ||
+    relatedTrade?.image ||
+    relatedTrade?.icon ||
+    ''
+  ).trim();
+
+  if (!tradeImage) return '';
+
+  const normalized = tokenImageCandidates(tradeImage);
+  return normalized[0] || tradeImage;
+}
+
+function candidateAvatarMarkup(candidate) {
+  const symbol = String(
+    candidate?.symbol ||
+    candidate?.name ||
+    'TK'
+  ).trim();
+
+  const fallback = symbol
+    .replace(/[^A-Z0-9]/gi, '')
+    .slice(0, 2)
+    .toUpperCase() || 'TK';
+
+  const url = candidateImageUrl(candidate);
+
+  if (url) {
+    return `
+      <span class="trade-token-avatar candidate-token-avatar">
+        <img
+          src="${esc(url)}"
+          alt="${esc(symbol)}"
+          loading="lazy"
+          onerror="this.parentElement.classList.add('is-fallback');this.remove();"
+        >
+        <span class="trade-avatar-fallback-text">${esc(fallback)}</span>
+      </span>
+    `;
+  }
+
+  return `
+    <span class="trade-token-avatar candidate-token-avatar is-fallback">
+      <span class="trade-avatar-fallback-text">${esc(fallback)}</span>
+    </span>
+  `;
+}
+
 function renderCandidates() {
   const list = $('candidateList');
   const rows = filteredCandidates();
@@ -1147,18 +1234,38 @@ function renderCandidates() {
   list.innerHTML = rows.map(item => {
     const price = candidatePrice(item);
     const stateText = displayStateForCandidate(item);
+
     return `
-      <button class="candidate ${item.mint === state.selectedMint ? 'selected' : ''}" data-mint="${esc(item.mint)}" type="button">
-        <div class="candidate-top">
-          <div class="candidate-name">
-            <strong>${esc(item.symbol || item.name || short(item.mint))}${String(item.strategySource || '').toLowerCase() === 'copy-trading' ? ' <em class="copy-trade-badge">COPY TRADE</em>' : ''}</strong>
-            <span>${esc(item.name || short(item.mint))}</span>
+      <button
+        class="candidate ${item.mint === state.selectedMint ? 'selected' : ''}"
+        data-mint="${esc(item.mint)}"
+        type="button"
+      >
+        ${candidateAvatarMarkup(item)}
+
+        <div class="candidate-main">
+          <div class="candidate-top">
+            <div class="candidate-name">
+              <strong>
+                ${esc(item.symbol || item.name || short(item.mint))}
+                ${String(item.strategySource || '').toLowerCase() === 'copy-trading'
+                  ? ' <em class="copy-trade-badge">COPY TRADE</em>'
+                  : ''}
+              </strong>
+              <span>${esc(item.name || short(item.mint))}</span>
+            </div>
+
+            <span class="state-dot ${decisionClass(stateText)}">${esc(stateText)}</span>
           </div>
-          <span class="state-dot ${decisionClass(stateText)}">${esc(stateText)}</span>
-        </div>
-        <div class="candidate-bottom">
-          <span>Score ${fmt(item.score, 0)} · Holders ${fmt(item.holderCount ?? item.holders, 0)}</span>
-          <span class="candidate-price">${price ? formatPrice(usdFromSol(price, item)) : '$—'}</span>
+
+          <div class="candidate-bottom">
+            <span>
+              Score ${fmt(item.score, 0)} · Holders ${fmt(item.holderCount ?? item.holders, 0)}
+            </span>
+            <span class="candidate-price">
+              ${price ? formatPrice(usdFromSol(price, item)) : '$—'}
+            </span>
+          </div>
         </div>
       </button>
     `;
@@ -3470,7 +3577,7 @@ function mfTradingChartPaletteV2(){
 
   if(light){
     return {
-      background:'#f6f9fb',
+      background:'transparent',
       text:'#607783',
       pointerLabelBg:'#ffffff',
       pointerLabelText:'#263b47',
@@ -3489,7 +3596,7 @@ function mfTradingChartPaletteV2(){
   }
 
   return {
-    background:'#131b23',
+    background:'transparent',
     text:'#536f7b',
     pointerLabelBg:'#0b171d',
     pointerLabelText:'#cfe0e7',

@@ -320,7 +320,6 @@ html[data-theme="light"] .terminal .panel {
   border-color: rgba(38,59,74,.10) !important;
   box-shadow: 0 10px 30px rgba(42,59,72,.05) !important;
 }
-html[data-theme="light"] .candidate,
 html[data-theme="light"] .metric,
 html[data-theme="light"] .position-row,
 html[data-theme="light"] .approval-row,
@@ -330,6 +329,15 @@ html[data-theme="light"] .control-section {
   border-color: rgba(38,59,74,.08) !important;
   color: #17222c !important;
 }
+/* MEMEFLOW_CANDIDATES_RECENT_TRADES_LAYOUT_V1
+   Unselected Candidates share the continuous Recent-trades list surface.
+   The existing blue selected/hover rule below remains authoritative. */
+html[data-theme="light"] .candidate {
+  background: transparent !important;
+  border-color: rgba(38,59,74,.08) !important;
+  color: #17222c !important;
+}
+
 html[data-theme="light"] .candidate:hover,
 html[data-theme="light"] .candidate.selected {
   background: rgba(56,145,177,.055) !important;
