@@ -7336,7 +7336,23 @@ const server=http.createServer((req,res)=>handler(req,res).catch(e=>json(res,500
     }
   });
 
-  startDecisionRecovery({store,metrics:recoveryMetrics,getLiveState:()=>({queueDepth:0,processing:0}),batchSize:DECISION_RECOVERY_BATCH_SIZE,delayMs:DECISION_RECOVERY_DELAY_MS,tokenLimit:DECISION_RECOVERY_TOKEN_LIMIT,activeUserHoursMs:DECISION_RECOVERY_ACTIVE_USER_HOURS*3600000})
+  // MEMEFLOW_RECOVERY_LIVE_PRIORITY_V38
+  // Startup recovery is background work. Real WS/live evaluation has priority.
+  startDecisionRecovery({
+    store,
+    metrics:recoveryMetrics,
+    getLiveState:()=>({
+      queueDepth:
+        Number(discMetrics.freshQueueDepth||0)+
+        Number(discMetrics.retryQueueDepth||0),
+      processing:
+        Number(liveEvalMetrics.liveEvaluationInflightMints||0)
+    }),
+    batchSize:DECISION_RECOVERY_BATCH_SIZE,
+    delayMs:DECISION_RECOVERY_DELAY_MS,
+    tokenLimit:DECISION_RECOVERY_TOKEN_LIMIT,
+    activeUserHoursMs:DECISION_RECOVERY_ACTIVE_USER_HOURS*3600000
+  })
     .then(()=>{const ms=recoveryMetrics.decisionRecoveryCompletedAt-listenAt;console.log(`[RECOVERY] complete in ${ms}ms — ${recoveryMetrics.decisionRecoveryTokensProcessed} tokens, ${recoveryMetrics.decisionRecoveryDecisionsCreated} decisions, ${recoveryMetrics.decisionRecoveryErrors} errors`)})
     .catch(e=>console.error('[RECOVERY] error',e.message));
 });

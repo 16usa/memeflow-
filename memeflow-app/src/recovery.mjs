@@ -37,6 +37,43 @@ export function makeRecoveryMetrics() {
 // Per-user lazy recovery deduplication: uid → Promise
 const _lazyInProgress = new Map();
 
+// MEMEFLOW_RECOVERY_LIVE_PRIORITY_V38
+// Recovery is never authoritative over a decision that the live path has
+// already produced for the same user+mint.
+export function recoveryCurrentToken(store,tokenSnapshot){
+  const mint=String(tokenSnapshot?.mint||'').trim();
+  if(!mint)return tokenSnapshot||null;
+  return (
+    store.getToken?.(mint) ||
+    store.state?.tokens?.[mint] ||
+    tokenSnapshot ||
+    null
+  );
+}
+
+export function recoveryDecisionExists(store,uid,mint){
+  const key=String(uid||'')+':'+String(mint||'');
+  return Boolean(store.state?.decisions?.[key]);
+}
+
+export function recoveryLiveStateBusy(getLiveState){
+  if(typeof getLiveState!=='function')return false;
+  const state=getLiveState()||{};
+  return (
+    Number(state.queueDepth||0)>0 ||
+    Number(state.processing||0)>0
+  );
+}
+
+async function waitForLiveIdle(getLiveState,metrics,delayMs){
+  while(recoveryLiveStateBusy(getLiveState)){
+    metrics.decisionRecoveryPausedForLiveWork++;
+    await new Promise(
+      r=>setTimeout(r,Math.max(1,Number(delayMs)||1))
+    );
+  }
+}
+
 /**
  * @param {object} deps
  * @param {object} deps.store            JsonStore instance
@@ -50,18 +87,23 @@ const _lazyInProgress = new Map();
 export async function startDecisionRecovery({
   store, metrics, getLiveState,
   batchSize = 25, delayMs = 25, tokenLimit = 200, activeUserHoursMs = 86400000,
+  evaluateFn = evaluate,
 }) {
   const now = Date.now();
   const cutoff = now - activeUserHoursMs;
 
-  // Newest tokenLimit tokens (store.tokens() already returns desc by discoveredAt)
+  // Keep only mint ordering from the startup snapshot. The token object itself
+  // is re-read immediately before evaluate() so WS updates cannot go stale.
   const allTokens = store.tokens();
   const tokens = allTokens.slice(0, tokenLimit);
 
-  // Only users active within the configured window
+  // Match the live evaluator: owner is always active.
   const activeUids = Object.keys(store.state.users).filter(uid => {
-    const u = store.state.users[uid];
-    return u.lastActiveAt != null && u.lastActiveAt >= cutoff;
+    const u = store.state.users[uid] || {};
+    return (
+      u.isOwner === true ||
+      (u.lastActiveAt != null && u.lastActiveAt >= cutoff)
+    );
   });
 
   metrics.decisionRecoveryStatus = 'running';
@@ -70,33 +112,63 @@ export async function startDecisionRecovery({
   metrics.decisionRecoveryTokensLimit = tokenLimit;
   metrics.decisionRecoveryUsersTotal = activeUids.length;
 
-  for (let i = 0; i < tokens.length; i += batchSize) {
-    // Pause for live discovery work — live events must always have priority
-    if (getLiveState) {
-      let ls = getLiveState();
-      while (ls.queueDepth > 0 || ls.processing > 0) {
-        metrics.decisionRecoveryPausedForLiveWork++;
-        await new Promise(r => setTimeout(r, delayMs));
-        ls = getLiveState();
-      }
-    }
+  const safeBatchSize=Math.max(1,Number(batchSize)||1);
 
-    const batch = tokens.slice(i, i + batchSize);
-    for (const token of batch) {
+  for (let i = 0; i < tokens.length; i += safeBatchSize) {
+    // Recovery may begin only while live work is idle.
+    await waitForLiveIdle(getLiveState,metrics,delayMs);
+
+    const batch = tokens.slice(i, i + safeBatchSize);
+
+    for (const tokenSnapshot of batch) {
+      // Yield before EVERY recovered token so a WS event can land and become
+      // visible to getLiveState/recoveryDecisionExists before recovery writes.
+      await new Promise(r => setImmediate(r));
+      await waitForLiveIdle(getLiveState,metrics,delayMs);
+
+      const token=recoveryCurrentToken(store,tokenSnapshot);
+      const mint=String(token?.mint||'').trim();
+
+      if(!mint){
+        metrics.decisionRecoveryTokensProcessed++;
+        continue;
+      }
+
       for (const uid of activeUids) {
         try {
-          const d = evaluate(token, store.settings(uid));
-          store.setDecision(uid, token.mint, { ...d, primaryReason: d.primaryReason });
+          // Fresh/live/current decision is authoritative. Recovery fills only
+          // missing gaps; it never downgrades WATCH/BUY READY/score.
+          if(recoveryDecisionExists(store,uid,mint))continue;
+
+          const d = evaluateFn(token, store.settings(uid));
+
+          // evaluateFn is synchronous today. Keep a second adjacent guard so a
+          // future async/refactor cannot silently reintroduce this overwrite.
+          if(recoveryDecisionExists(store,uid,mint))continue;
+
+          store.setDecision(
+            uid,
+            mint,
+            {
+              ...d,
+              primaryReason:d.primaryReason,
+              recoverySource:'startup'
+            }
+          );
+
           metrics.decisionRecoveryEvaluationsPerformed++;
         } catch (_) {
           metrics.decisionRecoveryErrors++;
         }
       }
+
       metrics.decisionRecoveryTokensProcessed++;
     }
 
-    if (i + batchSize < tokens.length) {
-      await new Promise(r => setTimeout(r, delayMs));
+    if (i + safeBatchSize < tokens.length) {
+      await new Promise(
+        r=>setTimeout(r,Math.max(1,Number(delayMs)||1))
+      );
     }
   }
 
@@ -120,22 +192,46 @@ export async function startDecisionRecovery({
  * @param {number} [deps.tokenLimit=200]
  * @returns {Promise<void>}
  */
-export function lazyRecoverUser({ store, uid, metrics, tokenLimit = 200 }) {
+export function lazyRecoverUser({
+  store, uid, metrics, tokenLimit = 200, evaluateFn = evaluate,
+}) {
   if (_lazyInProgress.has(uid)) return _lazyInProgress.get(uid);
 
   metrics.lazyRecoveryUsersRunning++;
 
-  const p = Promise.resolve().then(() => {
-    const tokens = store.tokens().slice(0, tokenLimit);
-    for (const token of tokens) {
+  const p = Promise.resolve().then(async () => {
+    // Snapshots define ordering only. Re-read every token immediately before
+    // evaluation so lazy recovery also respects current WS state.
+    const snapshots = store.tokens().slice(0, tokenLimit);
+
+    for (const tokenSnapshot of snapshots) {
+      await new Promise(r => setImmediate(r));
+
+      const token=recoveryCurrentToken(store,tokenSnapshot);
+      const mint=String(token?.mint||'').trim();
+
+      if(!mint || recoveryDecisionExists(store,uid,mint))continue;
+
       try {
-        const d = evaluate(token, store.settings(uid));
-        store.setDecision(uid, token.mint, { ...d, primaryReason: d.primaryReason });
+        const d = evaluateFn(token, store.settings(uid));
+
+        if(recoveryDecisionExists(store,uid,mint))continue;
+
+        store.setDecision(
+          uid,
+          mint,
+          {
+            ...d,
+            primaryReason:d.primaryReason,
+            recoverySource:'lazy'
+          }
+        );
       } catch (_) { /* skip individual failures */ }
     }
   }).finally(() => {
     _lazyInProgress.delete(uid);
-    metrics.lazyRecoveryUsersRunning = Math.max(0, metrics.lazyRecoveryUsersRunning - 1);
+    metrics.lazyRecoveryUsersRunning =
+      Math.max(0, metrics.lazyRecoveryUsersRunning - 1);
     metrics.lazyRecoveryCompleted++;
   });
 
