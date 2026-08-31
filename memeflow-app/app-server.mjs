@@ -946,9 +946,38 @@ const holderQueue=makeHolderQueue({maxConcurrent:4,initialDelayMs:500},{holderMe
 const HOLDER_REFRESH_MS=15000;
 const HOLDER_REFRESH_MAX_ENQUEUE_PER_TICK=3;
 
+// MEMEFLOW_CANONICAL_HOLDER_SCHEDULER_V33
+// Keep exact holder RPC hot only for tokens that can realistically become a
+// decision now. Cold WAITING/BLOCKED rows still receive periodic canonical
+// refreshes; they are slowed, never permanently excluded.
+const HOLDER_NEAR_SCORE_MARGIN_V33=10;
+const HOLDER_COLD_WAITING_REFRESH_MS_V33=120000;
+const HOLDER_BLOCKED_REFRESH_MS_V33=300000;
+
+function __mfHolderDecisionFloorV33(){
+  const context=settingsGateContext(Date.now());
+  const scores=(context?.entries||[])
+    .map(entry=>Number(entry?.settings?.minScore))
+    .filter(Number.isFinite);
+
+  if(!scores.length){
+    return Math.max(
+      0,
+      Number(defaultSettings?.()?.minScore ?? 72) -
+      HOLDER_NEAR_SCORE_MARGIN_V33
+    );
+  }
+
+  return Math.max(
+    0,
+    Math.min(...scores) -
+    HOLDER_NEAR_SCORE_MARGIN_V33
+  );
+}
+
 let __mfHolderPriorityTickV5=0;
 
-function __mfHolderRankV5(token){
+function __mfHolderRankV5(token,decisionFloor=__mfHolderDecisionFloorV33()){
   const mint=String(token?.mint||'');
 
   if(__mfOpenPositionMints().has(mint)){
@@ -983,17 +1012,38 @@ function __mfHolderRankV5(token){
     }
   }catch{}
 
-  const refreshMs=
-    lane<=1 ? 15000 :
-    lane===2 ? 30000 :
-    lane===3 ? 60000 :
-    180000;
+  const nearDecision=
+    Number.isFinite(Number(decisionFloor)) &&
+    score>=Number(decisionFloor);
 
-  return {lane,score,refreshMs};
+  // holderFresh becomes stale after HOLDER_REFRESH_MS (15s). Therefore every
+  // token that is already WATCH/BUY READY or close enough to the active-user
+  // score floor must also refresh canonical holder evidence on that cadence.
+  const refreshMs=
+    lane<=2
+      ? HOLDER_REFRESH_MS
+      : (
+          lane===3 && nearDecision
+            ? HOLDER_REFRESH_MS
+            : (
+                lane===3
+                  ? HOLDER_COLD_WAITING_REFRESH_MS_V33
+                  : HOLDER_BLOCKED_REFRESH_MS_V33
+              )
+        );
+
+  return {
+    lane,
+    score,
+    refreshMs,
+    nearDecision,
+    decisionFloor
+  };
 }
 
 const holderRefreshTimer=setInterval(()=>{
   const now=Date.now();
+  const decisionFloor=__mfHolderDecisionFloorV33();
   __mfHolderPriorityTickV5++;
 
 
@@ -1001,7 +1051,7 @@ const holderRefreshTimer=setInterval(()=>{
     .filter(token=>token?.mint)
     .filter(token=>{
       const scannedAt=Number(token?.holderScannedAt||0);
-      const rank=__mfHolderRankV5(token);
+      const rank=__mfHolderRankV5(token,decisionFloor);
       return !scannedAt || now-scannedAt>=rank.refreshMs;
     })
     .sort((a,b)=>{
@@ -1014,8 +1064,17 @@ const holderRefreshTimer=setInterval(()=>{
         if(aa!==bb)return aa-bb;
       }
 
-      const ar=__mfHolderRankV5(a);
-      const br=__mfHolderRankV5(b);
+      const ar=__mfHolderRankV5(a,decisionFloor);
+      const br=__mfHolderRankV5(b,decisionFloor);
+
+      // Inside WAITING, near-decision tokens outrank cold WAITING before score.
+      if(
+        ar.lane===3 &&
+        br.lane===3 &&
+        ar.nearDecision!==br.nearDecision
+      ){
+        return ar.nearDecision?-1:1;
+      }
 
       if(ar.lane!==br.lane)return ar.lane-br.lane;
       if(ar.score!==br.score)return br.score-ar.score;
