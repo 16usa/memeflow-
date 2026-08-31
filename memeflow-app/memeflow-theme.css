@@ -95,8 +95,8 @@ html[data-theme="light"] {
   --line2: rgba(38,59,74,.17) !important;
   --line-strong: rgba(38,59,74,.17) !important;
   --text: #17222c !important;
-  --muted: #566b76 !important;
-  --faint: #718590 !important;
+  --muted: #667782 !important;
+  --faint: #91a0a9 !important;
 
   --mf-app-bg: #f4f6f8 !important;
   --mf-app-surface: #ffffff !important;
@@ -109,10 +109,7 @@ html[data-theme="light"] {
   --mf-app-soft: rgba(27,47,61,.025) !important;
   --mf-app-soft-hover: rgba(27,47,61,.05) !important;
   --mf-app-text: #17222c !important;
-  --mf-app-muted: #566b76 !important;
-  --mf-type-text-primary: #17222c !important;
-  --mf-type-text-secondary: #506875 !important;
-  --mf-type-text-tertiary: #718590 !important;
+  --mf-app-muted: #667782 !important;
 
   --mf-nav-bg: #f4f6f8 !important;
   --mf-nav-surface: rgba(248,250,252,.985) !important;
