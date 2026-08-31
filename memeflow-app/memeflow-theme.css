@@ -1355,3 +1355,52 @@ html[data-theme="light"] .mf-age-list-v25 .mf-sort-row-v25 {
   background: transparent !important;
 }
 /* ===== /MEMEFLOW_TOKEN_FLOW_SORT_SHEET_PREMIUM_LIGHT_V1 ===== */
+
+/* === MEMEFLOW SYSTEM OVERVIEW SURFACE: START === */
+/*
+  Source of truth: System Overview light page.
+  This layer changes ONLY:
+  1) page canvas background
+  2) global site header surface
+
+  It does NOT change typography, spacing, dimensions, sticky/fixed
+  behavior, cards, panels, buttons, charts, borders or component layout.
+*/
+
+/* Exact light canvas used by System Overview */
+html[data-theme="light"] body,
+html[data-theme="light"] body.mf-trading-terminal,
+html[data-theme="light"] body.mf-hiw-page,
+html[data-theme="light"] body:has(.mf-vault-shell) {
+  background-color: #f4f6f8 !important;
+  background-image:
+    radial-gradient(circle at 52% -8%, rgba(103, 202, 226, 0.14), transparent 31%),
+    linear-gradient(180deg, #fbfcfd 0%, #f4f6f8 54%, #edf1f4 100%) !important;
+  background-attachment: fixed !important;
+}
+
+/*
+  Normal header stays transparent so the SAME page canvas continues
+  through it, exactly like System Overview.
+*/
+html[data-theme="light"] .mf-site-header:not(.mf-site-header--sticky) {
+  background-color: transparent !important;
+  background-image: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+/*
+  Sticky Trading Terminal header cannot stay transparent because content
+  scrolls underneath it. Give it the same System Overview surface without
+  changing its position, size or sticky behavior.
+*/
+html[data-theme="light"] .mf-site-header.mf-site-header--sticky {
+  background-color: #f4f6f8 !important;
+  background-image:
+    radial-gradient(circle at 52% -8%, rgba(103, 202, 226, 0.14), transparent 31%),
+    linear-gradient(180deg, #fbfcfd 0%, #f4f6f8 54%, #edf1f4 100%) !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+/* === MEMEFLOW SYSTEM OVERVIEW SURFACE: END === */
