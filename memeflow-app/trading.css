@@ -264,6 +264,7 @@ button { cursor: pointer; }
 }
 
 /* MEMEFLOW_CANDIDATES_RECENT_TRADES_LAYOUT_V1 */
+/* MEMEFLOW_CANDIDATES_SEPARATOR_MATCH_RECENT_TRADES_V1 */
 .candidate {
   width: 100%;
   min-height: 64px;
@@ -275,7 +276,7 @@ button { cursor: pointer; }
   gap: 8px;
   border: 0;
   border-bottom: 1px solid rgba(111, 154, 172, .06);
-  border-radius: 0;
+  border-radius: 0 !important;
   background: transparent;
   color: inherit;
   text-align: left;
@@ -297,7 +298,6 @@ button { cursor: pointer; }
 }
 
 .candidate:hover, .candidate.selected {
-  border-color: rgba(85, 217, 255, .14);
   background: rgba(85, 217, 255, .035);
 }
 
