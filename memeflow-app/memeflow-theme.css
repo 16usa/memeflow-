@@ -151,7 +151,6 @@ html[data-theme="light"] body {
 }
 
 html[data-theme="light"] .mf-site-header {
-  background: rgba(248,250,252,.97) !important;
   border-bottom-color: rgba(38,59,74,.09) !important;
   box-shadow: none !important;
 }
@@ -361,16 +360,6 @@ html[data-theme="light"] .indicator-bar button[aria-pressed="true"] {
   border-color: rgba(56,145,177,.22) !important;
   background: rgba(56,145,177,.075) !important;
 }
-html[data-theme="light"] .chart-wrap,
-html[data-theme="light"] #chartCanvas,
-html[data-theme="light"] #chartCanvas > div,
-html[data-theme="light"][data-mf-chart-unify-all-states="1"] #chartCanvas,
-html[data-theme="light"][data-mf-chart-unify-all-states="1"] [data-mf-chart-unified="1"],
-html[data-theme="light"][data-mf-chart-unify-all-states="1"] [data-mf-chart-placeholder="1"] {
-  background: #131b23 !important;
-  background-color: #131b23 !important;
-}
-
 html[data-theme="light"] .flow-page { color: #17222c !important; }
 html[data-theme="light"] .flow-hero,
 html[data-theme="light"] .summary-card,
@@ -521,10 +510,12 @@ html[data-theme="light"] .state-pill.watch { color: #315fc0 !important; }
 
 /* ===== MEMEFLOW_GLOBAL_LIGHT_HEADER_MATCH_V2 ===== */
 /*
-  Global Light header alignment:
-  - normal-flow headers inherit the page background
-  - Trading Terminal sticky header stays opaque while matching the Light canvas
-  Dark theme is untouched.
+  System Overview is the Light-mode visual source of truth.
+
+  Trading Terminal uses the exact same page background and the exact
+  same background in its sticky header.
+
+  Sticky geometry/navigation are unchanged.
 */
 html[data-theme="light"] .mf-site-header:not(.mf-site-header--sticky) {
   background: transparent !important;
@@ -532,10 +523,25 @@ html[data-theme="light"] .mf-site-header:not(.mf-site-header--sticky) {
   box-shadow: none !important;
 }
 
-html[data-theme="light"] .mf-site-header.mf-site-header--sticky {
-  background: rgba(244, 246, 248, .97) !important;
-  background-image: none !important;
+html[data-theme="light"] body.mf-trading-terminal {
+  background-color: #f4f6f8 !important;
+  background-image:
+    radial-gradient(circle at 52% -8%, rgba(70,150,178,.08), transparent 31%),
+    linear-gradient(180deg,#f7f9fb 0%,#f4f6f8 48%,#f1f4f6 100%) !important;
+  background-attachment: fixed !important;
+}
+
+html[data-theme="light"] body.mf-trading-terminal
+.mf-site-header.mf-site-header--sticky {
+  background-color: #f4f6f8 !important;
+  background-image:
+    radial-gradient(circle at 52% -8%, rgba(70,150,178,.08), transparent 31%),
+    linear-gradient(180deg,#f7f9fb 0%,#f4f6f8 48%,#f1f4f6 100%) !important;
+  background-attachment: fixed !important;
+  background-position: 0 0 !important;
   box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
 /* ===== /MEMEFLOW_GLOBAL_LIGHT_HEADER_MATCH_V2 ===== */
 
@@ -799,45 +805,41 @@ html[data-theme="light"] #createBtn:disabled {
 
 /* ===== MEMEFLOW_TRADING_LIGHT_CHART_V2 ===== */
 /*
-  Trading Terminal · Light mode only.
-  Full chart workspace becomes a native Light-theme surface.
-  Dark theme, chart data, candles, TP/SL logic, zoom/pan and trading behavior are untouched.
+  CANONICAL TRADING LIGHT THEME
+
+  .panel owns the complete card surface.
+
+  Chart header, timeframe area, chart host, indicators and
+  Score/Holders/Top10/Developer/Liquidity do NOT own surfaces.
+  They remain transparent and show the same .panel underneath.
+
+  ECharts' pixel background is controlled in trading.js.
 */
 
-html[data-theme="light"] .chart-panel,
-html[data-theme="light"][data-mf-chart-unify-all-states="1"] .chart-panel,
-html[data-theme="light"][data-mf-chart-unify-all-states="1"] #chartCanvas,
-html[data-theme="light"][data-mf-chart-unify-all-states="1"] #chartCanvas > div,
-html[data-theme="light"][data-mf-chart-unify-all-states="1"] [data-mf-chart-unified="1"],
-html[data-theme="light"][data-mf-chart-unify-all-states="1"] [data-mf-chart-placeholder="1"] {
-  background: #f6f9fb !important;
-  background-color: #f6f9fb !important;
-}
-
-html[data-theme="light"] .chart-panel {
-  border-color: rgba(55, 79, 94, .12) !important;
-  box-shadow: 0 14px 34px rgba(27, 42, 53, .045) !important;
+html[data-theme="light"] .chart-panel .chart-head,
+html[data-theme="light"] .chart-panel .timeframes,
+html[data-theme="light"] .chart-panel .chart-wrap,
+html[data-theme="light"] .chart-panel #chartCanvas,
+html[data-theme="light"] .chart-panel #chartCanvas > div,
+html[data-theme="light"] .chart-panel .indicator-bar,
+html[data-theme="light"] .chart-panel .indicator-scroll,
+html[data-theme="light"] .chart-panel .selected-metrics,
+html[data-theme="light"] .chart-panel .selected-metrics > div {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
 }
 
 html[data-theme="light"] .chart-panel .chart-head,
 html[data-theme="light"] .chart-panel .timeframes,
 html[data-theme="light"] .chart-panel .indicator-bar,
 html[data-theme="light"] .chart-panel .selected-metrics {
-  background: #f6f9fb !important;
-  border-color: rgba(55, 79, 94, .10) !important;
-}
-
-html[data-theme="light"] .chart-panel .chart-wrap {
-  background:
-    linear-gradient(rgba(59, 88, 103, .055) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(59, 88, 103, .04) 1px, transparent 1px),
-    #f6f9fb !important;
-  background-size: 100% 64px, 85px 100% !important;
+  border-color: rgba(55,79,94,.10) !important;
 }
 
 html[data-theme="light"] .chart-panel .token-avatar {
-  background: rgba(38, 74, 92, .035) !important;
-  border-color: rgba(47, 84, 102, .16) !important;
+  background: rgba(38,74,92,.035) !important;
+  border-color: rgba(47,84,102,.16) !important;
   color: #5d7682 !important;
 }
 
@@ -857,20 +859,20 @@ html[data-theme="light"] .chart-panel .token-price {
 
 html[data-theme="light"] .chart-panel .decision-badge {
   color: #607783 !important;
-  border-color: rgba(55, 79, 94, .16) !important;
+  border-color: rgba(55,79,94,.16) !important;
   background: rgba(255,255,255,.44) !important;
 }
 
 html[data-theme="light"] .chart-panel .timeframes button {
   color: #607783 !important;
-  border-color: rgba(55, 79, 94, .08) !important;
+  border-color: rgba(55,79,94,.08) !important;
   background: transparent !important;
 }
 
 html[data-theme="light"] .chart-panel .timeframes button.active {
   color: #176f88 !important;
-  border-color: rgba(32, 155, 188, .28) !important;
-  background: rgba(85, 217, 255, .10) !important;
+  border-color: rgba(32,155,188,.28) !important;
+  background: rgba(85,217,255,.10) !important;
 }
 
 html[data-theme="light"] .chart-panel .chart-empty strong {
@@ -917,7 +919,7 @@ html[data-theme="light"] .chart-panel .selected-metrics strong {
   color: #334b57 !important;
 }
 
-/* Keep the surrounding Light panels readable too. */
+/* Existing surrounding-panel readability rules. */
 html[data-theme="light"] .strategy-summary-row strong {
   color: #6d818c !important;
 }

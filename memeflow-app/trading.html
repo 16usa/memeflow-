@@ -24,7 +24,7 @@
   <meta name="mf-trading-build" content="remove-mobile-ghost-wallet-v2-20260826">
   <meta name="theme-color" content="#03070a">
   <title>MEMEFLOW Trading Terminal</title>
-  <link rel="stylesheet" href="/trading.css?v=surface-final-v8-20260831">
+  <link rel="stylesheet" href="/trading.css?v=canonical-surface-clean-v1-20260831">
 <link rel="stylesheet" href="/memeflow-brand.css?v=typography-clean-source-v1-20260830">
   <!-- MEMEFLOW_TRADING_CHART_RESTORE_SITE_BG_V2 -->
   <!-- MEMEFLOW_TRADING_CHART_MATCH_PANEL_V3 -->
@@ -32,110 +32,11 @@
   <link rel="stylesheet" href="/memeflow-nav.css?v=global-right-drawer-frameless-v2-20260829">
   <link rel="stylesheet" href="/memeflow-header.css?v=canonical-header-v1-7-20260830">
 <!-- MEMEFLOW_LIGHT_THEME_ASSETS_V1 -->
-<link rel="stylesheet" href="/memeflow-theme.css?v=light-theme-v1-open-position-pipeline-v3-20260830">
+<link rel="stylesheet" href="/memeflow-theme.css?v=trading-system-overview-match-v1-20260831">
 <script src="/memeflow-theme.js?v=light-theme-v1-20260830" defer></script>
 <!-- /MEMEFLOW_LIGHT_THEME_ASSETS_V1 -->
-
-<style id="mfTradingSurfaceFinalV8">
-/* ========================================================
-   MEMEFLOW TRADING SURFACE FINAL V8
-
-   Presentation only.
-   No chart data, trading, indicators or execution logic.
-   ======================================================== */
-
-/* --------------------------------------------------------
-   HEADER
-   The Trading header uses the page background itself.
-   No separate tinted header surface.
-   -------------------------------------------------------- */
-body .topbar.mf-site-header {
-    background: var(--mf-trading-page-surface) !important;
-    background-image: none !important;
-
-    box-shadow: none !important;
-
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-}
-
-/* --------------------------------------------------------
-   ENTIRE CHART CARD
-   One continuous visual surface.
-   -------------------------------------------------------- */
-.chart-panel {
-    background: var(--mf-trading-panel-surface) !important;
-    background-image: none !important;
-}
-
-/* Header inside the token card */
-.chart-panel .chart-head,
-
-/* Timeframe strip */
-.chart-panel .timeframes,
-
-/* Actual chart host */
-.chart-panel .chart-wrap,
-.chart-panel #chartCanvas,
-.chart-panel #chartCanvas > div,
-.chart-panel #chartCanvas canvas,
-
-/* Empty/loading state */
-.chart-panel .chart-empty,
-
-/* Indicator toolbar */
-.chart-panel .indicator-bar,
-.chart-panel .indicator-scroll,
-
-/* Bottom token metrics */
-.chart-panel .selected-metrics,
-.chart-panel .selected-metrics > div {
-    background: transparent !important;
-    background-color: transparent !important;
-    background-image: none !important;
-}
-
-/* Do not allow old chart canvas fills to visually leak through */
-.chart-panel .chart-wrap {
-    isolation: isolate;
-}
-
-/* Keep separators, but not different surface colors */
-.chart-panel .selected-metrics > div {
-    box-shadow: none !important;
-}
-
-/* ECharts generated wrappers */
-.chart-panel #chartCanvas > div {
-    background: transparent !important;
-}
-
-/* --------------------------------------------------------
-   LIGHT MODE
-   The browser screenshot shows the active page surface as
-   the pale neutral MEMEFLOW background. These variables are
-   also synchronized by JS below from the rendered page.
-   -------------------------------------------------------- */
-html {
-    --mf-trading-page-surface: #f6f9fb;
-    --mf-trading-panel-surface: #f6f9fb;
-}
-
-/* Dark fallback */
-html[data-theme="dark"],
-body.dark,
-.theme-dark {
-    --mf-trading-page-surface: #0f141a;
-    --mf-trading-panel-surface: #111820;
-}
-
-/* ========================================================
-   /MEMEFLOW TRADING SURFACE FINAL V8
-   ======================================================== */
-</style>
-
 </head>
-<body>
+<body class="mf-trading-terminal">
   <div class="shell">
     <header class="topbar mf-site-header mf-site-header--sticky">
       <div class="brand">
@@ -371,171 +272,13 @@ body.dark,
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/echarts@6.1.0/dist/echarts.min.js"></script>
-  <script type="module" src="/trading.js?v=surface-final-v8-20260831"></script>
+  <script type="module" src="/trading.js?v=canonical-surface-clean-v1-20260831"></script>
   <!-- MEMEFLOW_TRADING_CHART_V30_4 -->
   <!-- MEMEFLOW_TRADING_CHART_V30_5_EXECUTION_OHLC -->
   <!-- MEMEFLOW_TRADING_CHART_V30_6_USD_CURVE_MARK -->
 <script src="/memeflow-nav.js?v=noncustodial-live-solana-v1-20260827" defer></script>
 
 <script src="/open-position-pipeline-v3.js?v=20260830-v3"></script>
-
-<script id="mfTradingSurfaceFinalScriptV8">
-/* ========================================================
-   MEMEFLOW TRADING SURFACE FINAL V8
-   ======================================================== */
-(() => {
-    if (window.__mfTradingSurfaceFinalV8) return;
-    window.__mfTradingSurfaceFinalV8 = true;
-
-    const root = document.documentElement;
-
-    const visibleColor = (el) => {
-        if (!(el instanceof HTMLElement)) return null;
-
-        const c = getComputedStyle(el).backgroundColor;
-
-        if (
-            !c ||
-            c === 'transparent' ||
-            c === 'rgba(0, 0, 0, 0)'
-        ) {
-            return null;
-        }
-
-        return c;
-    };
-
-    const syncSurfaces = () => {
-        /*
-         * Page reference:
-         * use the actual rendered application background.
-         */
-        const pageCandidates = [
-            document.body,
-            document.querySelector('.shell'),
-            root
-        ];
-
-        let pageColor = null;
-
-        for (const el of pageCandidates) {
-            pageColor = visibleColor(el);
-            if (pageColor) break;
-        }
-
-        /*
-         * Panel reference:
-         * Pending approvals is an ordinary MEMEFLOW panel and
-         * therefore serves as the visual source of truth.
-         */
-        const referencePanel =
-            document.getElementById('approvalsPanel') ||
-            document.querySelector('.approvals-panel') ||
-            document.querySelector('.panel:not(.chart-panel)');
-
-        let panelColor = visibleColor(referencePanel);
-
-        if (!pageColor) {
-            pageColor = '#f6f9fb';
-        }
-
-        if (!panelColor) {
-            panelColor = pageColor;
-        }
-
-        root.style.setProperty(
-            '--mf-trading-page-surface',
-            pageColor
-        );
-
-        root.style.setProperty(
-            '--mf-trading-panel-surface',
-            panelColor
-        );
-
-        /*
-         * The chart itself must always be transparent so the
-         * exact same panel surface is visible behind ECharts.
-         */
-        const host = document.getElementById('chartCanvas');
-
-        if (
-            host &&
-            window.echarts &&
-            typeof window.echarts.getInstanceByDom === 'function'
-        ) {
-            const chart = window.echarts.getInstanceByDom(host);
-
-            if (chart) {
-                chart.setOption(
-                    {
-                        backgroundColor: 'transparent'
-                    },
-                    {
-                        lazyUpdate: true
-                    }
-                );
-            }
-        }
-    };
-
-    const run = () => {
-        syncSurfaces();
-
-        setTimeout(syncSurfaces, 100);
-        setTimeout(syncSurfaces, 500);
-        setTimeout(syncSurfaces, 1500);
-    };
-
-    if (document.readyState === 'loading') {
-        document.addEventListener(
-            'DOMContentLoaded',
-            run,
-            { once: true }
-        );
-    } else {
-        run();
-    }
-
-    window.addEventListener(
-        'load',
-        run,
-        { once: true }
-    );
-
-    /*
-     * ECharts may be initialized after this script.
-     * Reapply transparency after creation.
-     */
-    const timer = setInterval(syncSurfaces, 500);
-
-    setTimeout(() => {
-        clearInterval(timer);
-        syncSurfaces();
-    }, 5000);
-
-    /*
-     * Re-sync if theme/class changes.
-     */
-    const observer = new MutationObserver(syncSurfaces);
-
-    observer.observe(root, {
-        attributes: true,
-        attributeFilter: ['class', 'data-theme']
-    });
-
-    if (document.body) {
-        observer.observe(document.body, {
-            attributes: true,
-            attributeFilter: ['class', 'data-theme']
-        });
-    }
-})();
-/* ========================================================
-   /MEMEFLOW TRADING SURFACE FINAL V8
-   ======================================================== */
-</script>
-
 </body>
 </html>
 
