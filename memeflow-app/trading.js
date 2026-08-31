@@ -1222,6 +1222,56 @@ function candidateAvatarMarkup(candidate) {
   `;
 }
 
+/* MEMEFLOW_EXACT_THREE_VISIBLE_ROWS_V1
+ * Candidates, Open positions and Recent trades show at most three COMPLETE rows.
+ * Height is measured from the actual rendered rows, not a hardcoded pixel guess.
+ */
+const MF_VISIBLE_LIST_ROWS = 3;
+let mfVisibleRowsResizeRaf = 0;
+
+function fitListToVisibleRows(list, rowSelector, visibleRows = MF_VISIBLE_LIST_ROWS) {
+  if (!list) return;
+
+  const rows = Array.from(list.querySelectorAll(rowSelector));
+
+  if (!rows.length) {
+    list.style.height = '';
+    list.style.maxHeight = '';
+    list.style.overflowY = 'hidden';
+    return;
+  }
+
+  requestAnimationFrame(() => {
+    const liveRows = Array.from(list.querySelectorAll(rowSelector));
+    const visible = liveRows.slice(0, visibleRows);
+    if (!visible.length) return;
+
+    const exactHeight = visible.reduce(
+      (sum, row) => sum + row.getBoundingClientRect().height,
+      0
+    );
+
+    const px = `${Math.round(exactHeight * 100) / 100}px`;
+    list.style.height = px;
+    list.style.maxHeight = px;
+    list.style.overflowY = liveRows.length > visibleRows ? 'auto' : 'hidden';
+  });
+}
+
+function refreshThreeRowListViewports() {
+  cancelAnimationFrame(mfVisibleRowsResizeRaf);
+  mfVisibleRowsResizeRaf = requestAnimationFrame(() => {
+    fitListToVisibleRows($('candidateList'), '.candidate');
+    fitListToVisibleRows($('positionsList'), '.position-row');
+    fitListToVisibleRows($('tradeHistory'), '.trade-row.trade-log-row');
+  });
+}
+
+window.addEventListener('resize', refreshThreeRowListViewports, { passive: true });
+if (document.fonts?.ready) {
+  document.fonts.ready.then(refreshThreeRowListViewports).catch(() => {});
+}
+
 function renderCandidates() {
   const list = $('candidateList');
   const rows = filteredCandidates();
@@ -1270,6 +1320,8 @@ function renderCandidates() {
       </button>
     `;
   }).join('');
+
+  fitListToVisibleRows(list, '.candidate');
 
   list.querySelectorAll('.candidate').forEach(button => {
     button.addEventListener('click', () => selectCandidate(button.dataset.mint));
@@ -4436,6 +4488,8 @@ function renderPositions() {
     `;
   }).join('');
 
+  fitListToVisibleRows(list, '.position-row');
+
   list.querySelectorAll('.close-position').forEach(button => {
     button.addEventListener('click', async () => {
       if (!window.confirm('Close this PAPER position at the engine current price?')) return;
@@ -4603,6 +4657,8 @@ function renderTrades() {
       </article>
     `;
   }).join('');
+
+  fitListToVisibleRows(list, '.trade-row.trade-log-row');
 }
 
 function openWalletSettings() {

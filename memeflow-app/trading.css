@@ -163,6 +163,7 @@ button { cursor: pointer; }
     var(--panel);
   box-shadow: 0 14px 40px rgba(0, 0, 0, .10);
   overflow: hidden;
+  scroll-snap-align: start;
 }
 
 .candidates-panel, .control-panel {
@@ -257,9 +258,13 @@ button { cursor: pointer; }
   color: #b5edfa;
 }
 
+/* MEMEFLOW_EXACT_THREE_VISIBLE_ROWS_V1 */
 .candidate-list {
   min-height: 0;
   overflow-y: auto;
+  overscroll-behavior: contain;
+  scroll-snap-type: y proximity;
+  -webkit-overflow-scrolling: touch;
   padding: 0;
 }
 
@@ -536,7 +541,14 @@ button { cursor: pointer; }
 .pnl-summary span { display: block; color: #506874; font-size: var(--mf-type-micro); }
 .pnl-summary strong { display: block; margin-top: 3px; font-size: var(--mf-type-ui); font-variant-numeric: tabular-nums; }
 
-.positions-list { padding: 0; }
+.positions-list {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scroll-snap-type: y proximity;
+  -webkit-overflow-scrolling: touch;
+  padding: 0;
+}
 
 /* MEMEFLOW_OPEN_POSITIONS_TRADE_ROW_LAYOUT_V1 */
 .position-row {
@@ -553,6 +565,7 @@ button { cursor: pointer; }
   border-radius: 0;
   background: transparent;
   color: #6d8590;
+  scroll-snap-align: start;
 }
 
 .position-row:last-child {
@@ -642,7 +655,7 @@ button { cursor: pointer; }
 
 .trade-history {
   padding: 0;
-  max-height: 420px;
+  max-height: none;
   overflow-y: auto;
   overscroll-behavior: contain;
 }
@@ -1035,7 +1048,7 @@ button { cursor: pointer; }
   .bottom-history-panel { order: 6; width: 100%; }
 
   .candidate-list {
-    max-height: 240px;
+    max-height: none;
   }
 
   .chart-panel { min-height: 0; }
@@ -1544,7 +1557,7 @@ button { cursor: pointer; }
 
   .candidate-filter { padding: 5px 7px; }
   .candidate-filter button { min-height: 24px; padding: 0 7px; font-size: var(--mf-type-micro); }
-  .candidate-list { max-height: 185px; padding: 0; }
+  .candidate-list { max-height: none; padding: 0; }
   .candidate { min-height: 62px; margin-bottom: 0; padding: 8px 9px; gap: 7px; border-radius: 0; }
   .candidate-name strong { font-size: var(--mf-type-micro); }
   .candidate-name span, .candidate-bottom { font-size: var(--mf-type-micro); }
@@ -2015,9 +2028,9 @@ button { cursor: pointer; }
 
 .bottom-history-panel .trade-history {
   display: block;
-  height: 128px;
-  min-height: 128px;
-  max-height: 128px;
+  height: auto;
+  min-height: 0;
+  max-height: none;
   padding: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
