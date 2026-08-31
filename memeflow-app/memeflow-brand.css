@@ -150,7 +150,7 @@ html[data-theme="light"] .mf-brand-img, body.light .mf-brand-img, .theme-light .
   --mf-app-soft:rgba(255,255,255,.018);
   --mf-app-soft-hover:rgba(255,255,255,.032);
   --mf-app-text:#f7f9fc;
-  --mf-app-muted:#8d99a8;
+  --mf-app-muted:#9aa9b5;
   --mf-app-cyan:#61dfff;
   --mf-app-green:#58e4ad;
   --mf-app-yellow:#f2c668;
@@ -403,7 +403,7 @@ h1,h2,h3{
   .wallet-card,.wallet-security,.plan-card,.settings-group{border-radius:12px!important;}
 }
 @media(max-width:430px){
-  .panel-head h2,.execution-head h2{font-size:12px;}
+  .panel-head h2,.execution-head h2{font-size:var(--mf-type-panel);}
   .wallet-actions,.settings-footer-actions{gap:7px!important;}
 }
 @media(prefers-reduced-motion:reduce){
@@ -416,21 +416,29 @@ h1,h2,h3{
 /* ===== MEMEFLOW_TYPOGRAPHY_FOUNDATION_START ===== */
 /*
   MEMEFLOW typography foundation.
-  Single source of truth for shared text sizes.
-  Page CSS owns component layout; it must not create sub-8px UI text.
+  Single source of truth for shared sizes and readable contrast.
+  Micro stays compact; readable roles step up without inflating layout.
 */
+/* MEMEFLOW_TYPOGRAPHY_CLARITY_V4 */
 :root{
   --mf-type-micro:8px;
-  --mf-type-meta:9px;
-  --mf-type-ui:10px;
-  --mf-type-body:11px;
-  --mf-type-panel:13px;
-  --mf-type-title:15px;
+  --mf-type-meta:10px;
+  --mf-type-ui:11px;
+  --mf-type-body:12px;
+  --mf-type-panel:14px;
+  --mf-type-title:16px;
+  --mf-type-text-primary:#f2f6f8;
+  --mf-type-text-secondary:#a8b5bf;
+  --mf-type-text-tertiary:#7f929e;
 }
 
 /* Shared semantic roles live here once, not on every page. */
 .eyebrow{
+  color:var(--mf-type-text-tertiary);
   font-size:var(--mf-type-micro);
+  font-weight:760;
+  line-height:1.2;
+  letter-spacing:.12em;
 }
 .panel-head h2,
 .execution-head h2,
