@@ -1485,21 +1485,38 @@ button { cursor: pointer; }
   .positions-panel .eyebrow {  }
   .pnl-summary span { font-size: var(--mf-type-micro); }
   .pnl-summary strong { margin-top: 1px; font-size: var(--mf-type-micro); }
-  .positions-list { padding: 4px 6px 6px; }
+  /* MEMEFLOW_OPEN_POSITIONS_MOBILE_CONFLICT_FIX_V1
+     Keep the canonical 28px avatar + info + Close row on small screens.
+     Do not hide spans: the avatar itself is a span and the data line uses spans. */
+  .positions-list { padding: 0; }
 
   .position-row {
-    min-height: 34px;
-    margin-bottom: 3px;
-    padding: 5px 7px;
-    grid-template-columns: minmax(86px, 1.2fr) minmax(55px, .7fr) minmax(56px, .7fr) auto;
-    gap: 5px;
-    border-radius: 7px;
+    min-height: 62px;
+    margin: 0;
+    padding: 8px 9px;
+    grid-template-columns: 28px minmax(0, 1fr) auto;
+    gap: 7px;
+    border-radius: 0;
   }
-  .position-row > div:nth-child(4), .position-row > div:nth-child(5) { display: none; }
-  .position-row span { display: none; }
-  .position-row strong { margin-top: 0; font-size: var(--mf-type-micro); }
-  .position-symbol { font-size: var(--mf-type-micro); }
-  .close-position { height: 25px; padding: 0 7px; font-size: var(--mf-type-micro); }
+
+  .position-main {
+    min-width: 0;
+  }
+
+  .position-bottomline {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px 5px;
+  }
+
+  .position-token-avatar {
+    display: grid;
+  }
+
+  .close-position {
+    align-self: center;
+    justify-self: end;
+  }
 
   .history-panel .panel-head { min-height: 39px; padding: 7px 9px; }
   .history-panel .panel-head > div { display: flex; align-items: baseline; gap: 7px; }
