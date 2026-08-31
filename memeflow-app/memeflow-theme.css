@@ -361,9 +361,6 @@ html[data-theme="light"] .indicator-bar button[aria-pressed="true"] {
   background: rgba(56,145,177,.075) !important;
 }
 html[data-theme="light"] .flow-page { color: #17222c !important; }
-html[data-theme="light"] .flow-hero,
-html[data-theme="light"] .summary-card,
-html[data-theme="light"] .flow-toolbar,
 html[data-theme="light"] .token-row,
 html[data-theme="light"] .token-card-expanded,
 html[data-theme="light"] .scanner-card {
@@ -1210,6 +1207,26 @@ html[data-theme="light"] .page-state {
 html[data-theme="light"] .page-state strong {
   color: #405762 !important;
 }
+
+/* CANONICAL TOKEN FLOW CARD SURFACE
+   Source of truth: Trading Terminal Light .panel.
+   Page background and header are intentionally untouched. */
+html[data-theme="light"] .flow-hero,
+html[data-theme="light"] .summary-card,
+html[data-theme="light"] .summary-card.active,
+html[data-theme="light"] .flow-toolbar,
+html[data-theme="light"] .flow-token,
+html[data-theme="light"] .flow-token.open,
+html[data-theme="light"] .flow-token.ready,
+html[data-theme="light"] .flow-token.watch,
+html[data-theme="light"] .flow-token.waiting,
+html[data-theme="light"] .flow-token.blocked,
+html[data-theme="light"] .flow-token .detail-block,
+html[data-theme="light"] .empty-state,
+html[data-theme="light"] .pagination {
+  background: linear-gradient(180deg,#ffffff,#f8fafb) !important;
+}
+
 /* ===== /MEMEFLOW_TOKEN_FLOW_LIGHT_SURFACES_V2 ===== */
 
 /* ===== MEMEFLOW_TOKEN_FLOW_SORT_SHEET_LIGHT_V1 ===== */
@@ -1343,67 +1360,6 @@ html[data-theme="light"] .mf-age-list-v25 {
   color: #263943 !important;
 }
 /* ===== /MEMEFLOW_TOKEN_FLOW_SORT_SHEET_LIGHT_V1 ===== */
-
-/* ===== MEMEFLOW_TOKEN_FLOW_SURFACES_MATCH_PAGE_BG_V1 ===== */
-/*
-  Token Flow · Light theme only.
-  Experiment: white surfaces use the exact page background by becoming transparent.
-  IMPORTANT:
-  - borders untouched
-  - shadows untouched
-  - geometry untouched
-  - OPEN POSITION untouched
-  - Dark theme untouched
-*/
-
-/* Main top content surfaces */
-html[data-theme="light"] .flow-hero,
-html[data-theme="light"] .summary-card,
-html[data-theme="light"] .flow-toolbar,
-html[data-theme="light"] .search-wrap,
-html[data-theme="light"] .refresh-info button,
-html[data-theme="light"] .mf-sort-trigger-v25,
-html[data-theme="light"] .mf-sort-trigger-v25.is-active,
-
-/* Token cards and their light nested surfaces */
-html[data-theme="light"] .flow-token,
-html[data-theme="light"] .flow-token .token-avatar,
-html[data-theme="light"] .flow-token .details-button,
-html[data-theme="light"] .flow-token .detail-block,
-
-/* Bottom pagination */
-html[data-theme="light"] .pagination,
-html[data-theme="light"] .pagination button {
-  background: transparent !important;
-}
-
-/*
-  Preserve the canonical OPEN POSITION semantic fill exactly.
-  This is intentionally NOT part of the transparent-surface experiment.
-*/
-html[data-theme="light"] .flow-token .token-state.open {
-  color: #4de6a1 !important;
-  border-color: rgba(77, 230, 161, .72) !important;
-  background: rgba(77, 230, 161, .07) !important;
-}
-
-/* Preserve active semantic status backgrounds only where the page needs them. */
-html[data-theme="light"] .summary-card.ready.active {
-  background: rgba(239, 198, 106, .065) !important;
-}
-
-html[data-theme="light"] .summary-card.watch.active {
-  background: rgba(92, 141, 255, .065) !important;
-}
-
-html[data-theme="light"] .summary-card.waiting.active {
-  background: rgba(163, 180, 192, .045) !important;
-}
-
-html[data-theme="light"] .summary-card.blocked.active {
-  background: rgba(255, 102, 121, .06) !important;
-}
-/* ===== /MEMEFLOW_TOKEN_FLOW_SURFACES_MATCH_PAGE_BG_V1 ===== */
 
 /* ===== MEMEFLOW_TOKEN_FLOW_SORT_SHEET_PREMIUM_LIGHT_V1 ===== */
 /*
