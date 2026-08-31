@@ -1144,8 +1144,7 @@ html[data-theme="light"] .flow-toolbar {
 }
 
 html[data-theme="light"] .search-wrap {
-  background:
-    linear-gradient(180deg, #f7fafb 0%, #f0f5f7 100%) !important;
+  background: linear-gradient(180deg,#ffffff,#f8fafb) !important;
   border-color: rgba(55, 79, 94, .12) !important;
 }
 
@@ -1162,7 +1161,7 @@ html[data-theme="light"] .search-wrap input::placeholder {
 }
 
 html[data-theme="light"] .refresh-info button {
-  background: #ffffff !important;
+  background: linear-gradient(180deg,#ffffff,#f8fafb) !important;
   border-color: rgba(55, 79, 94, .12) !important;
   color: #405762 !important;
 }
@@ -1170,8 +1169,7 @@ html[data-theme="light"] .refresh-info button {
 /* SORT · SMART trigger */
 html[data-theme="light"] .mf-sort-trigger-v25,
 html[data-theme="light"] .mf-sort-trigger-v25.is-active {
-  background:
-    linear-gradient(180deg, #f5f9fa 0%, #edf4f6 100%) !important;
+  background: linear-gradient(180deg,#ffffff,#f8fafb) !important;
   border-color: rgba(77, 230, 161, .24) !important;
   color: #647b86 !important;
   box-shadow: none !important;
@@ -1229,138 +1227,6 @@ html[data-theme="light"] .pagination {
 
 /* ===== /MEMEFLOW_TOKEN_FLOW_LIGHT_SURFACES_V2 ===== */
 
-/* ===== MEMEFLOW_TOKEN_FLOW_SORT_SHEET_LIGHT_V1 ===== */
-/*
-  Real-Time Pipeline / Token Flow
-  SORT · SMART bottom sheet — Light theme only.
-  Geometry, behavior, scrolling, sort logic and Dark theme are untouched.
-*/
-
-html[data-theme="light"] .mf-sort-overlay-v25 {
-  background: rgba(224, 233, 238, .22) !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-}
-
-html[data-theme="light"] .mf-sort-sheet-v25 {
-  background:
-    linear-gradient(
-      180deg,
-      rgba(255,255,255,.985),
-      rgba(244,249,251,.992)
-    ) !important;
-
-  border-color: rgba(55,79,94,.14) !important;
-  color: #172733 !important;
-
-  box-shadow:
-    0 -10px 30px rgba(27,42,53,.10) !important;
-}
-
-html[data-theme="light"] .mf-sort-handle-v25 {
-  background: rgba(91,113,126,.28) !important;
-}
-
-html[data-theme="light"] .mf-sort-sheet-head-v25 h2 {
-  color: #172733 !important;
-}
-
-html[data-theme="light"] .mf-sort-back-v25 {
-  background: transparent !important;
-  color: #71858f !important;
-}
-
-html[data-theme="light"] .mf-sort-direction-v25 {
-  background:
-    linear-gradient(
-      180deg,
-      #f3f7f9,
-      #edf3f6
-    ) !important;
-
-  border-color: rgba(55,79,94,.12) !important;
-}
-
-html[data-theme="light"] .mf-sort-direction-v25 button {
-  background: transparent !important;
-  border-color: transparent !important;
-  color: #71858f !important;
-  box-shadow: none !important;
-}
-
-html[data-theme="light"] .mf-sort-direction-v25 button.is-active {
-  background: #ffffff !important;
-  border-color: rgba(85,217,255,.66) !important;
-  color: #25404c !important;
-
-  box-shadow:
-    0 1px 4px rgba(27,42,53,.05) !important;
-}
-
-html[data-theme="light"] .mf-sort-list-shell-v252 {
-  background:
-    linear-gradient(
-      180deg,
-      rgba(255,255,255,.98),
-      rgba(247,250,252,.99)
-    ) !important;
-
-  border-color: rgba(55,79,94,.12) !important;
-  box-shadow: none !important;
-}
-
-html[data-theme="light"] .mf-sort-row-v25 {
-  background: transparent !important;
-  color: #263943 !important;
-  box-shadow: none !important;
-}
-
-html[data-theme="light"] .mf-sort-row-v25 + .mf-sort-row-v25::before {
-  background: rgba(55,79,94,.09) !important;
-}
-
-html[data-theme="light"] .mf-sort-row-v25:active {
-  background: rgba(85,217,255,.055) !important;
-}
-
-html[data-theme="light"] .mf-sort-option-label-v251 {
-  color: #263943 !important;
-}
-
-html[data-theme="light"] .mf-sort-option-icon-v251 {
-  color: #71858f !important;
-}
-
-html[data-theme="light"] .mf-sort-row-chevron-v251 {
-  color: #71858f !important;
-}
-
-html[data-theme="light"] .mf-sort-radio-v25 {
-  border-color: #8da1ab !important;
-  background: transparent !important;
-  box-shadow: none !important;
-}
-
-html[data-theme="light"] .mf-sort-radio-v25.is-active {
-  border-color: #55d9ff !important;
-
-  background:
-    radial-gradient(
-      circle at center,
-      #55d9ff 0 2.1px,
-      transparent 2.45px
-    ) !important;
-
-  box-shadow: none !important;
-}
-
-/* Keep age drill-in on the same Light surface. */
-html[data-theme="light"] .mf-age-list-v25 {
-  background: transparent !important;
-  color: #263943 !important;
-}
-/* ===== /MEMEFLOW_TOKEN_FLOW_SORT_SHEET_LIGHT_V1 ===== */
-
 /* ===== MEMEFLOW_TOKEN_FLOW_SORT_SHEET_PREMIUM_LIGHT_V1 ===== */
 /*
   Token Flow · SORT BY bottom sheet · Light theme only.
@@ -1375,7 +1241,7 @@ html[data-theme="light"] .mf-sort-overlay-v25 {
 }
 
 html[data-theme="light"] .mf-sort-sheet-v25 {
-  background: #eef4f7 !important;
+  background: linear-gradient(180deg,#ffffff,#f8fafb) !important;
   border: 1px solid rgba(70, 92, 105, .13) !important;
   color: #172733 !important;
 
@@ -1406,7 +1272,7 @@ html[data-theme="light"] .mf-sort-back-v25 {
 
 /* Segmented HIGH → LOW / LOW → HIGH */
 html[data-theme="light"] .mf-sort-direction-v25 {
-  background: rgba(224, 233, 237, .56) !important;
+  background: linear-gradient(180deg,#ffffff,#f8fafb) !important;
   border: 1px solid rgba(70, 92, 105, .10) !important;
   box-shadow: none !important;
 }
@@ -1419,7 +1285,7 @@ html[data-theme="light"] .mf-sort-direction-v25 button {
 }
 
 html[data-theme="light"] .mf-sort-direction-v25 button.is-active {
-  background: rgba(255,255,255,.52) !important;
+  background: linear-gradient(180deg,#ffffff,#f8fafb) !important;
   border-color: rgba(85, 217, 255, .72) !important;
   color: #203946 !important;
   box-shadow: none !important;
@@ -1427,7 +1293,7 @@ html[data-theme="light"] .mf-sort-direction-v25 button.is-active {
 
 /* One continuous list surface */
 html[data-theme="light"] .mf-sort-list-shell-v252 {
-  background: transparent !important;
+  background: linear-gradient(180deg,#ffffff,#f8fafb) !important;
   border: 1px solid rgba(70, 92, 105, .11) !important;
   box-shadow: none !important;
   overflow: hidden !important;
@@ -1475,7 +1341,7 @@ html[data-theme="light"] .mf-sort-radio-v25.is-active {
 
 /* Age drill-down inherits same visual language */
 html[data-theme="light"] .mf-age-list-v25 {
-  background: transparent !important;
+  background: linear-gradient(180deg,#ffffff,#f8fafb) !important;
   color: #263943 !important;
 }
 
