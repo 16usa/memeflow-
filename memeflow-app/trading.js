@@ -1382,20 +1382,30 @@ function renderCandidates() {
 }
 
 async function loadCandidates({ redrawChart = true } = {}) {
-  const [payload, livePayload] =
-    await Promise.all([
-      // STRICT trading feed. This remains authoritative for BUY READY.
+  // MEMEFLOW_TERMINAL_WATCH_RESILIENT_V30
+  //
+  // Strict trading decisions and Pipeline WATCH are two independent feeds.
+  // A failure in one must not suppress a healthy other feed.
+  const [strictResult, liveResult] =
+    await Promise.allSettled([
       api('/api/ai/decisions?scope=all&limit=100'),
-
-      // MEMEFLOW_TERMINAL_WATCH_SYNC_V29
-      // Supplemental UI-only WATCH feed from Real-Time Pipeline.
-      // A transient failure here must not break the strict trading feed.
       api('/api/system/live-token-states?limit=200')
-        .catch(() => null)
     ]);
 
+  const payload =
+    strictResult.status === 'fulfilled'
+      ? strictResult.value
+      : null;
+
+  const livePayload =
+    liveResult.status === 'fulfilled'
+      ? liveResult.value
+      : null;
+
+  // IMPORTANT:
+  // Never retain stale BUY READY rows when strict trading feed is unavailable.
   state.candidates =
-    Array.isArray(payload.decisions)
+    Array.isArray(payload?.decisions)
       ? payload.decisions
       : [];
 
@@ -1425,6 +1435,22 @@ async function loadCandidates({ redrawChart = true } = {}) {
           tradeEligible: false,
           __pipelineWatch: true
         }));
+  } else if (liveResult.status === 'fulfilled') {
+    // Healthy live endpoint with no rows means there are no current WATCH rows.
+    state.liveWatchCandidates = [];
+  }
+
+  // If both candidate sources are unavailable, propagate a real candidate-feed
+  // failure to the outer poll. If either source is healthy, render what is safe.
+  if (
+    strictResult.status === 'rejected' &&
+    liveResult.status === 'rejected'
+  ) {
+    throw (
+      strictResult.reason ||
+      liveResult.reason ||
+      new Error('Candidate feeds unavailable')
+    );
   }
 
   const rows = mergedCandidates();
@@ -4895,12 +4921,38 @@ function bind() {
 async function poll({ redrawChart = false } = {}) {
   if (state.polling) return;
   state.polling = true;
+
   try {
-    // Polling may refresh cards/paper state, but it is not chart market data.
-    await loadPaper({ redrawChart });
-    await loadCandidates({ redrawChart });
-  } catch (error) {
-    $('feedState').textContent = 'DEGRADED';
+    // MEMEFLOW_TERMINAL_WATCH_RESILIENT_V30
+    //
+    // Paper state and candidate feeds are independent UI domains.
+    // A paper endpoint problem must never prevent Pipeline WATCH from rendering.
+    const [paperResult, candidateResult] =
+      await Promise.allSettled([
+        loadPaper({ redrawChart }),
+        loadCandidates({ redrawChart })
+      ]);
+
+    if (
+      paperResult.status === 'rejected' ||
+      candidateResult.status === 'rejected'
+    ) {
+      $('feedState').textContent = 'DEGRADED';
+
+      if (paperResult.status === 'rejected') {
+        console.warn(
+          '[MEMEFLOW TERMINAL] paper refresh degraded',
+          paperResult.reason
+        );
+      }
+
+      if (candidateResult.status === 'rejected') {
+        console.warn(
+          '[MEMEFLOW TERMINAL] candidate refresh degraded',
+          candidateResult.reason
+        );
+      }
+    }
   } finally {
     state.polling = false;
   }
