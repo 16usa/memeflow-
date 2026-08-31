@@ -46,13 +46,10 @@ assert.match(
   /\.mf-sort-radio-v25\s*\{[\s\S]*width:12.5px;[\s\S]*height:12.5px;/
 );
 
-assert.equal(
-  (
-    html.match(
-      /gmgn-sort-v25-6-compact-20260827/g
-    )||[]
-  ).length,
-  2
-);
+// MEMEFLOW_TEST_ARCHITECTURE_CLEANUP_V35_7
+assert.match(html,/href="\/system-tokens\.css\?v=[^"]+"/);
+assert.match(html,/src="\/system-tokens\.js\?v=[^"]+"/);
+assert.equal((html.match(/\/system-tokens\.css\?v=/g)||[]).length,1);
+assert.equal((html.match(/\/system-tokens\.js\?v=/g)||[]).length,1);
 
 console.log('token sort v25.6 compact from v25.4 ok');

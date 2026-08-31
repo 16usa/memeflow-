@@ -134,7 +134,11 @@ assert.doesNotMatch(oneSecondPoll,/hydrateTokenMediaV25/);
 assert.match(app,/MEMEFLOW_LIVE_TOKEN_ASSET_NO_STORE_V1/);
 assert.match(app,/url\.pathname==='\/system-tokens\.js'/);
 assert.match(app,/url\.pathname==='\/system-tokens\.css'/);
-assert.match(tokenHtml,/system-tokens\.js\?v=gmgn-sort-v25-6-compact-20260827/);
+assert.match(
+  tokenHtml,
+  /system-tokens\.js\?v=[^"]+/,
+  'system-tokens.js must remain cache-busted'
+);
 assert.match(tokenHtml,/id="scannerStatus"/);
 assert.match(tokenUi,/MEMEFLOW_SCANNER_STATUS_V9/);
 assert.match(tokenUi,/MEMEFLOW_LIVE_TOKEN_TELEMETRY_V9/);

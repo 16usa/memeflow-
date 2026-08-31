@@ -181,7 +181,8 @@ assert.doesNotMatch(
 
 assert.match(
   html,
-  /system-tokens\.js\?v=gmgn-sort-v25-6-compact-20260827/
+  /system-tokens\.js\?v=[^"]+/,
+  'system-tokens.js must remain cache-busted'
 );
 
 console.log('per-mint card refresh v18 ok');

@@ -30,21 +30,93 @@ assert.match(candidate,/marketCapSol:market5m\.marketCapSol/);
 assert.match(candidate,/marketCapUsd:market5m\.marketCapUsd/);
 assert.doesNotMatch(candidate,/marketCap:marketCapSol/);
 
-// 5m card volume/transactions come from real chart TradeEvents.
-const market=app.slice(
-  app.indexOf('function __mfCandidateMarket5mV4('),
-  app.indexOf('function candidateView(d){')
+// MEMEFLOW_LIVE_MARKET_SHARED_HELPER_TEST_V35_7
+//
+// 5m market truth is shared. Candidate market calculation delegates to the
+// same helper used by OPEN POSITION instead of duplicating volume logic.
+const candidateMarketStart=
+  app.indexOf('function __mfCandidateMarket5mV4(');
+const candidateViewStart=
+  app.indexOf('function candidateView(d){',candidateMarketStart);
+
+assert.ok(
+  candidateMarketStart>=0&&candidateViewStart>candidateMarketStart,
+  '__mfCandidateMarket5mV4 block missing'
 );
-assert.match(market,/chartTradeHistory\.get\(mint\)/);
-assert.match(market,/volume5mSol/);
-assert.match(market,/transactions5m/);
-assert.match(market,/solUsdOracle\.get\(\)/);
-assert.match(market,/MEMEFLOW_LIVE_CARD_MARKET_TRUTH_V19/);
-assert.match(market,/liveCardMarketSnapshot\(\{/);
-assert.doesNotMatch(market,/storedMcSol/);
+
+const candidateMarket=
+  app.slice(candidateMarketStart,candidateViewStart);
+
+// Current production intentionally calls the shared helper across multiple
+// lines and passes a third `now` argument. The invariant is delegation itself,
+// not exact argument spelling or formatting.
+assert.match(
+  candidateMarket,
+  /return\s+__mfOpenPositionMarket5mV22\s*\(/s,
+  'candidate market helper must delegate to shared V22 market truth'
+);
+
+// Extract the shared helper by its OWN boundaries. Do not assume whether it
+// appears before or after __mfCandidateMarket5mV4 in app-server.mjs.
+const sharedMarketMatch=app.match(
+  /function\s+__mfOpenPositionMarket5mV22\s*\(\s*mint\s*,\s*t\s*,\s*now\s*=\s*Date\.now\(\)\s*\)\s*\{[\s\S]*?return\s+snapshot\s*;\s*\}/
+);
+
+assert.ok(
+  sharedMarketMatch,
+  '__mfOpenPositionMarket5mV22 block missing'
+);
+
+const sharedMarket=sharedMarketMatch[0];
+
+assert.match(sharedMarket,/chartTradeHistory\.get\(mint\)/);
+assert.match(sharedMarket,/solUsdOracle\.get\(\)/);
+assert.match(sharedMarket,/liveCardMarketSnapshot\(\{/);
+assert.doesNotMatch(sharedMarket,/storedMcSol/);
+
+// Candidate API must surface the shared snapshot fields.
+assert.match(candidate,/volume5mSol:market5m\.volume5mSol/);
+assert.match(candidate,/volume5mUsd:market5m\.volume5mUsd/);
+assert.match(candidate,/transactions5m:market5m\.transactions5m/);
+assert.match(candidate,/priceChange5mPct:market5m\.priceChange5mPct/);
+
 assert.match(app,/MEMEFLOW_LIVE_CARD_MARKET_TRUTH_V18/);
 assert.match(app,/MEMEFLOW_OPEN_POSITION_MC_TRUTH_V18/);
 assert.match(app,/MEMEFLOW_OPEN_POSITION_LIVE_BATCH_V18/);
+
+// Functional proof that the shared implementation computes the fields.
+{
+  const now=Date.now();
+  const snapshot=liveCardMarketSnapshot({
+    token:{
+      launchPlatform:'pump',
+      totalSupply:1_000_000_000
+    },
+    points:[
+      {
+        t:now-2000,
+        priceSol:0.000001,
+        solAmount:1.25
+      },
+      {
+        t:now-1000,
+        priceSol:0.0000015,
+        solAmount:2.75
+      }
+    ],
+    solUsd:100,
+    now,
+    windowMs:300000
+  });
+
+  assert.equal(snapshot.volume5mSol,4);
+  assert.equal(snapshot.volume5mUsd,400);
+  assert.equal(snapshot.transactions5m,2);
+  assert.ok(
+    Math.abs(snapshot.priceChange5mPct-50)<1e-9,
+    `expected 50% move, got ${snapshot.priceChange5mPct}`
+  );
+}
 
 // Reference HTTP sync may refresh display/reference holders but cannot replace
 // live WS price/reserve state.

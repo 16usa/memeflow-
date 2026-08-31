@@ -30,15 +30,15 @@ assert.doesNotMatch(app,/enqueue\(String\(sig\)\)/);
 assert.doesNotMatch(app,/directCreateFallbackQueued/);
 assert.doesNotMatch(discoveryMetrics,/directCreateFallbackQueued/);
 
-// The automatic scanner has no legacy HTTP holder/discovery/price poll engine.
+// MEMEFLOW_TEST_ARCHITECTURE_CLEANUP_V35_7
+//
+// Live discovery/market observation stays WS-only. Canonical holder evidence
+// and DISPLAY-ONLY chart history are bounded users of the ONE protected pool.
 for(const obsolete of [
-  'makeHolderQueue',
-  'enrichHolders',
   'enrichToken',
   'makeDiscoveryQueue',
   'discQueue',
   'processSignature(sig)',
-  'getProgramAccounts(holder scan)',
   'dexPaidVerifier',
   'createDexPaidVerifier',
   '__mfDexPaid'
@@ -46,13 +46,36 @@ for(const obsolete of [
   assert.equal(app.includes(obsolete),false,`obsolete runtime path remains: ${obsolete}`);
 }
 
-// Exactly one real RpcPool may exist in the application runtime,
-// and it is the dedicated BUY READY -> pre-open wallet-cluster verifier.
 const rpcPools=[...app.matchAll(/new RpcPool\s*\(/g)];
-assert.equal(rpcPools.length,1,'only the final pre-open RpcPool may exist');
+assert.equal(rpcPools.length,1,'exactly one protected RpcPool may exist');
 assert.match(app,/const __mfPreOpenRpc[\s\S]*?new RpcPool\s*\(/);
+
+// Final wallet-risk verification stays on the protected pool.
 assert.match(app,/scanWalletClusterRisk\(\{\s*rpc:__mfPreOpenRpc,\s*token\s*\}\)/s);
 assert.match(app,/THIS is the first automatic Solana HTTP RPC stage/);
+
+// Canonical exact holders are allowed only with the current pressure controls.
+assert.match(app,/const holderQueue=makeHolderQueue\(/);
+assert.match(
+  app,
+  /enrichHolders\(mint,\{rpc:__mfPreOpenRpc,store,evaluateAll,publish,enrichDiag\}\)/
+);
+assert.match(app,/MEMEFLOW_WS_HOLDER_PREVIEW_RPC_CLEANUP_V32/);
+assert.match(app,/MEMEFLOW_CANONICAL_HOLDER_SCHEDULER_V33/);
+assert.match(app,/MEMEFLOW_CANONICAL_HOLDER_STABLE_GATE_V34/);
+assert.match(app,/MEMEFLOW_CANONICAL_HOLDER_LEGACY_ADMISSION_UNUSED_V34/);
+
+const holderQueueConstruction=
+  app.match(/const holderQueue=makeHolderQueue\([^\n]+/)?.[0]||'';
+assert.ok(holderQueueConstruction,'holderQueue construction missing');
+assert.doesNotMatch(holderQueueConstruction,/admissionFn/);
+
+// Historical chart backfill is read-only DISPLAY work on the same pool.
+assert.match(app,/const __mfChartHistoryRpc=/);
+assert.match(app,/method!=='getSignaturesForAddress'/);
+assert.match(app,/method!=='getTransaction'/);
+assert.match(app,/new ChartHistoryArchive\(\{/);
+assert.match(app,/rpc:__mfChartHistoryRpc/);
 
 // Generic legacy callers remain fail-fast. Copy Trading is the only additional
 // consumer of the existing protected pool, and its wrapper permits only exact
@@ -63,15 +86,28 @@ assert.match(app,/new CopyTradingManager\(\{store,paper,rpc:__mfCopyTradingRpc\}
 assert.match(app,/MEMEFLOW_COPY_TRADING_RPC_RECONCILIATION_V2/);
 assert.match(app,/method!=='getTransaction'&&method!=='getTokenAccountsByOwner'/);
 
-// Price/holder scanner evidence now comes from WebSocket TradeEvents only.
+// Fast market + holder OBSERVATION comes from WebSocket TradeEvents.
+// Validate actual semantics, not a disposable source-code comment.
 assert.match(app,/function ensurePriceTimer\(\)\{\s*return false;\s*\}/s);
-assert.match(app,/WS-only compatibility holder adapter/);
 assert.match(holders,/ingestTradeEventDirect/);
 assert.match(holders,/holderRiskWallets/);
 assert.match(holders,/setCreateState/);
+assert.match(holders,/holderCountAuthoritative:false/);
+assert.match(holders,/holderCountIsLowerBound:true/);
+assert.match(app,/observedHolderCount/);
+assert.match(app,/holderCountIsLowerBound/);
 
-// Chart keeps live/disk history, but historical HTTP RPC backfill is disabled.
-assert.match(chart,/backfillDisabled:true/);
+// Live chart ticks remain TradeEvent-driven. Persistent historical chart
+// backfill may use the restricted read-only wrapper and is explicitly excluded
+// from AI/risk/execution decisions.
+assert.match(chart,/ensureBackfill\(mint,/);
+assert.match(chart,/getSignaturesForAddress/);
+assert.match(chart,/getTransaction/);
+assert.match(chart,/source: 'pump-history-backfill'/);
+assert.match(
+  chart,
+  /history is never used for AI\/risk\/execution decisions/
+);
 
 // DEX Paid is fully inactive/removed. settings.mjs retains one cleanup-only
 // delete so stale saved user objects cannot resurrect the old key.

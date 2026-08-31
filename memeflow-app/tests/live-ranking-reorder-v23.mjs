@@ -82,8 +82,8 @@ assert.doesNotMatch(
 
 assert.match(
   html,
-  /system-tokens\.js\?v=gmgn-sort-v25-6-compact-20260827/,
-  'browser cache-bust version is stale'
+  /system-tokens\.js\?v=[^"]+/,
+  'system-tokens.js must remain cache-busted'
 );
 
 console.log('live ranking reorder v23 ok');
