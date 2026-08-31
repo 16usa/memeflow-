@@ -1104,6 +1104,16 @@ function __mfTouchVisibleHolderMintsV4(mints=[]){
 function __mfFastHolderEligibleV4(token,visible,now){
   if(!token?.mint)return false;
 
+  // MEMEFLOW_WS_HOLDER_PREVIEW_RPC_CLEANUP_V32
+  //
+  // Automatic WS-first Pump tokens already expose event-ledger
+  // observedHolderCount as an explicit lower-bound (N+). The old
+  // getTokenLargestAccounts preview was DISPLAY ONLY and therefore became
+  // redundant after V28. Never spend the PREOPEN RPC pool on that preview.
+  //
+  // Canonical exact holder enrichment is intentionally NOT changed here.
+  if(token?.wsFirst===true)return false;
+
   const exact=Number(token?.holderCount);
 
   if(
@@ -1212,6 +1222,10 @@ function __mfFastHolderCandidatesV4(){
 async function __mfRunFastHolderPreviewV4(token){
   const mint=String(token?.mint||'').trim();
   if(!mint)return;
+
+  // V32 defense-in-depth: even if a future caller bypasses the candidate
+  // selector, a WS-first scanner token still cannot consume preview RPC.
+  if(token?.wsFirst===true)return;
 
   __mfFastHolderActiveV4.add(mint);
   __mfFastHolderAttemptAtV4.set(mint,Date.now());
