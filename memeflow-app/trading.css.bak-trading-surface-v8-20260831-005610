@@ -1022,7 +1022,7 @@ button { cursor: pointer; }
 /* MEMEFLOW_TRADING_CHART_V30_4
    Lightweight Charts host only. No global design overrides. */
 .chart-wrap {
-  background: transparent;
+  background: #02070a;
 }
 
 #chartCanvas {
@@ -1137,7 +1137,7 @@ button { cursor: pointer; }
    Apache ECharts price + volume pane. The trading/data engine is unchanged. */
 .chart-wrap {
   height: 455px;
-  background: transparent;
+  background: #02070a;
 }
 
 #chartCanvas {
@@ -1197,7 +1197,7 @@ button { cursor: pointer; }
   align-items: center;
   overflow: hidden;
   border-top: 1px solid rgba(111, 154, 172, .08);
-  background: transparent;
+  background: rgba(2, 7, 10, .72);
 }
 
 .indicator-scroll {
