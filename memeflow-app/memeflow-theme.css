@@ -321,7 +321,6 @@ html[data-theme="light"] .terminal .panel {
   box-shadow: 0 10px 30px rgba(42,59,72,.05) !important;
 }
 html[data-theme="light"] .metric,
-html[data-theme="light"] .position-row,
 html[data-theme="light"] .approval-row,
 html[data-theme="light"] .selected-metrics > div,
 html[data-theme="light"] .control-section {

@@ -4295,6 +4295,88 @@ function renderProposals() {
   });
 }
 
+/* MEMEFLOW_OPEN_POSITIONS_TRADE_ROW_LAYOUT_V1
+ * Open positions use the same row hierarchy/avatar treatment as Candidates
+ * and Recent trades. Position data and Close behavior are unchanged.
+ */
+function positionImageUrl(position) {
+  if (!position) return '';
+
+  const mint = String(position.mint || '').trim();
+
+  const relatedCandidate =
+    (state.candidates || []).find(item => String(item?.mint || '') === mint) ||
+    null;
+
+  const relatedTrade =
+    (state.trades || []).find(trade =>
+      String(trade?.mint || '') === mint &&
+      Boolean(
+        trade?.logoUrl ||
+        trade?.imageUrl ||
+        trade?.image ||
+        trade?.icon
+      )
+    ) ||
+    null;
+
+  const raw = String(
+    position.logoUrl ||
+    position.imageUrl ||
+    position.image ||
+    position.icon ||
+    relatedCandidate?.logoUrl ||
+    relatedCandidate?.imageUrl ||
+    relatedCandidate?.image ||
+    relatedCandidate?.icon ||
+    relatedTrade?.logoUrl ||
+    relatedTrade?.imageUrl ||
+    relatedTrade?.image ||
+    relatedTrade?.icon ||
+    ''
+  ).trim();
+
+  if (!raw) return '';
+
+  const normalized = tokenImageCandidates(raw);
+  return normalized[0] || raw;
+}
+
+function positionAvatarMarkup(position) {
+  const symbol = String(
+    position?.symbol ||
+    position?.name ||
+    'TK'
+  ).trim();
+
+  const fallback = symbol
+    .replace(/[^A-Z0-9]/gi, '')
+    .slice(0, 2)
+    .toUpperCase() || 'TK';
+
+  const url = positionImageUrl(position);
+
+  if (url) {
+    return `
+      <span class="trade-token-avatar position-token-avatar">
+        <img
+          src="${esc(url)}"
+          alt="${esc(symbol)}"
+          loading="lazy"
+          onerror="this.parentElement.classList.add('is-fallback');this.remove();"
+        >
+        <span class="trade-avatar-fallback-text">${esc(fallback)}</span>
+      </span>
+    `;
+  }
+
+  return `
+    <span class="trade-token-avatar position-token-avatar is-fallback">
+      <span class="trade-avatar-fallback-text">${esc(fallback)}</span>
+    </span>
+  `;
+}
+
 function renderPositions() {
   const rows = state.positions.filter(p => p.status === 'OPEN');
   const list = $('positionsList');
@@ -4307,15 +4389,49 @@ function renderPositions() {
   list.innerHTML = rows.map(position => {
     const pnl = num(position.unrealizedPnlPct, 0);
     const settings = position.settingsSnapshot || {};
-    const copyTrade = String(position.strategySource || '').toLowerCase() === 'copy-trading';
+    const copyTrade =
+      String(position.strategySource || '').toLowerCase() === 'copy-trading';
+
+    const size =
+      `${fmt(position.remainingSizeSol ?? position.initialSizeSol, 4)} SOL`;
+
+    const pnlText =
+      `${pnl >= 0 ? '+' : ''}${fmt(pnl, 2)}%`;
+
     return `
       <div class="position-row">
-        <div><span>TOKEN</span><strong class="position-symbol">${esc(position.symbol || short(position.mint))}${copyTrade ? ' <em class="copy-trade-badge">COPY TRADE</em>' : ''}</strong></div>
-        <div><span>SIZE</span><strong>${fmt(position.remainingSizeSol ?? position.initialSizeSol, 4)} SOL</strong></div>
-        <div><span>P&L</span><strong class="${pnl >= 0 ? 'pnl-positive' : 'pnl-negative'}">${pnl >= 0 ? '+' : ''}${fmt(pnl, 2)}%</strong></div>
-        <div><span>SL</span><strong>${fmt(settings.hardStopPct, 1)}%</strong></div>
-        <div><span>TP1 / TP2</span><strong>${fmt(settings.tp1Pct, 0)}% / ${fmt(settings.tp2Pct, 0)}%</strong></div>
-        <button class="close-position" data-id="${esc(position.id)}" type="button">Close</button>
+        ${positionAvatarMarkup(position)}
+
+        <div class="position-main">
+          <div class="position-topline">
+            <strong class="position-symbol">
+              ${esc(position.symbol || short(position.mint))}
+              ${copyTrade
+                ? ' <em class="copy-trade-badge">COPY TRADE</em>'
+                : ''}
+            </strong>
+          </div>
+
+          <div class="position-bottomline">
+            <span class="position-size">${esc(size)}</span>
+            <i>·</i>
+            <strong class="position-pnl ${pnl >= 0 ? 'pnl-positive' : 'pnl-negative'}">
+              ${esc(pnlText)}
+            </strong>
+            <i>·</i>
+            <span>SL ${fmt(settings.hardStopPct, 1)}%</span>
+            <i>·</i>
+            <span>TP1 ${fmt(settings.tp1Pct, 0)}%</span>
+            <i>·</i>
+            <span>TP2 ${fmt(settings.tp2Pct, 0)}%</span>
+          </div>
+        </div>
+
+        <button
+          class="close-position"
+          data-id="${esc(position.id)}"
+          type="button"
+        >Close</button>
       </div>
     `;
   }).join('');
@@ -4325,7 +4441,10 @@ function renderPositions() {
       if (!window.confirm('Close this PAPER position at the engine current price?')) return;
       button.disabled = true;
       try {
-        await api(`/api/paper/positions/${encodeURIComponent(button.dataset.id)}/close`, { method: 'POST' });
+        await api(
+          `/api/paper/positions/${encodeURIComponent(button.dataset.id)}/close`,
+          { method: 'POST' }
+        );
         await loadPaper();
       } catch (error) {
         showError(error.message);
