@@ -1357,18 +1357,60 @@ function __mfNormalizePumpSupplyV5(t){
  * - A lower-bound is NEVER silently presented as exact holder total.
  */
 function __mfPipelineHolderTruthV26(token={}, mint="", now=Date.now()){
+  void mint;
+
   const raw=token?.holderCount;
   const n=(raw===null||raw===undefined||raw==="") ? NaN : Number(raw);
   const count=Number.isFinite(n)&&n>=0 ? n : null;
-  const at=Number(token?.holderScannedAt);
-  const updatedAt=Number.isFinite(at)&&at>0 ? at : null;
-  const fresh=count!==null&&updatedAt!==null&&Math.max(0,now-updatedAt)<=90000;
+
+  const observedRaw=token?.observedHolderCount;
+  const observedNumber=
+    (observedRaw===null||observedRaw===undefined||observedRaw==="")
+      ? NaN
+      : Number(observedRaw);
+  const observed=
+    Number.isFinite(observedNumber)&&observedNumber>=0
+      ? observedNumber
+      : null;
+
+  const exactAt=Number(token?.holderScannedAt);
+  const observedAt=Number(
+    token?.holderRiskWalletsScannedAt ??
+    token?.holderObservedAt
+  );
+
+  const updatedAt=
+    count!==null && Number.isFinite(exactAt) && exactAt>0
+      ? exactAt
+      : (
+          observed!==null &&
+          Number.isFinite(observedAt) &&
+          observedAt>0
+            ? observedAt
+            : null
+        );
+
+  const fresh=
+    updatedAt!==null &&
+    Math.max(0,now-updatedAt)<=90000;
+
   return {
     count,
-    observed:null,
-    source:count!==null ? "solana-onchain" : null,
-    authoritative:count!==null&&token?.holderCountAuthoritative===true,
-    lowerBound:token?.holderCountIsLowerBound===true,
+    observed,
+    source:
+      count!==null
+        ? "solana-onchain"
+        : (
+            observed!==null
+              ? "event-ledger-lower-bound"
+              : null
+          ),
+    authoritative:
+      count!==null &&
+      token?.holderCountAuthoritative===true,
+    lowerBound:
+      count===null &&
+      observed!==null,
     fresh,
     updatedAt
   };
@@ -1613,6 +1655,77 @@ volume5mSol:market5m.volume5mSol,
     quoteAgeMs:t.lastPriceAt?Math.max(0,Date.now()-t.lastPriceAt):null,
     slippagePct:null
   };
+}
+
+// MEMEFLOW_LIVE_WATCH_HOLDERS_V28
+// DISPLAY ONLY. Entry Admission / tradeEligible / BUY READY remain unchanged.
+function __mfLiveDisplayStateV28(view,settings={}){
+  if(!view||typeof view!=='object')return view;
+
+  const state=String(view?.state||'WAITING').trim().toUpperCase();
+  const admission=
+    String(view?.entryAdmissionState||'').trim().toUpperCase();
+
+  if(
+    state!=='WAITING' ||
+    admission!=='PENDING' ||
+    view?.tradeEligible===true ||
+    view?.dead===true
+  ){
+    return view;
+  }
+
+  const configured=Number(settings?.minScore);
+  const threshold=
+    Number.isFinite(configured)&&configured>0
+      ? Math.max(0,Math.min(100,configured))
+      : 72;
+
+  const score=Number(
+    view?.relevanceScore ??
+    view?.feedScore ??
+    view?.score
+  );
+
+  const tx=Number(view?.transactions5m);
+  const volumeUsd=Number(view?.volume5mUsd);
+  const volumeSol=Number(view?.volume5mSol);
+  const move=Number(view?.priceChange5mPct);
+
+  const active=
+    (Number.isFinite(tx)&&tx>=4) ||
+    (Number.isFinite(volumeUsd)&&volumeUsd>=250) ||
+    (Number.isFinite(volumeSol)&&volumeSol>=0.5);
+
+  const positiveMove=Number.isFinite(move)&&move>0;
+
+  if(
+    !Number.isFinite(score) ||
+    score<threshold ||
+    !active ||
+    !positiveMove
+  ){
+    return view;
+  }
+
+  return {
+    ...view,
+    state:'WATCH',
+    displayState:'WATCH',
+    underlyingState:'WAITING',
+    watchPendingAdmission:true
+  };
+}
+
+function __mfRankLiveDisplayV28(view,settings={}){
+  if(!view)return view;
+
+  let ranked=view;
+  try{
+    ranked=rankCandidateViews([view])[0]||view;
+  }catch{}
+
+  return __mfLiveDisplayStateV28(ranked,settings);
 }
 
 // MEMEFLOW_SINGLE_TOKEN_LIVE_VIEW_V14
@@ -1884,7 +1997,7 @@ function __mfLiveCardViewV14(token,decision){
         previewHolderCount: finite(t?.previewHolderCount),
         fastHolderPreviewDisplay: t?.fastHolderPreviewDisplay||null,
     holderCountAuthoritative:holderTruth.authoritative===true,
-    holderCountIsLowerBound: false,
+    holderCountIsLowerBound:holderTruth.lowerBound===true,
     holderSource:holderTruth.source,
     holderFresh:holderTruth.fresh===true,
     holderUpdatedAt:holderTruth.updatedAt,
@@ -5517,15 +5630,18 @@ if(false && url.pathname==='/api/ai/assistant' &&req.method==='POST'){
       decision=null;
     }
 
-    const row=__mfLiveCardViewV14(
-      token,
-      decision||{
-        mint,
-        state:'WAITING',
-        score:0,
-        primaryReason:'Live data pending',
-        reasons:['Live data pending']
-      }
+    const row=__mfRankLiveDisplayV28(
+      __mfLiveCardViewV14(
+        token,
+        decision||{
+          mint,
+          state:'WAITING',
+          score:0,
+          primaryReason:'Live data pending',
+          reasons:['Live data pending']
+        }
+      ),
+      settings
     );
 
     if(row){
@@ -5581,9 +5697,12 @@ if(false && url.pathname==='/api/ai/assistant' &&req.method==='POST'){
     settings
   );
 
-  const row=__mfLiveCardViewV14(
-    token,
-    decision
+  const row=__mfRankLiveDisplayV28(
+    __mfLiveCardViewV14(
+      token,
+      decision
+    ),
+    settings
   );
 
   if(!row){
@@ -5820,6 +5939,12 @@ if(false && url.pathname==='/api/ai/assistant' &&req.method==='POST'){
     }
 
     const _age=tokenAgeMinutes(_token);
+    const _holderTruth=
+      __mfPipelineHolderTruthV26(
+        _token,
+        _mint,
+        Date.now()
+      );
 
     _safeViews.push({
       id:_mint,
@@ -5881,8 +6006,14 @@ if(false && url.pathname==='/api/ai/assistant' &&req.method==='POST'){
               .slice(0,20)
           : [],
 
-      holderCount:_finite(_token?.holderCount??_token?.holders),
-      holders:_finite(_token?.holderCount??_token?.holders),
+      holderCount:_holderTruth.count,
+      holders:_holderTruth.count,
+      observedHolderCount:_holderTruth.observed,
+      holderSource:_holderTruth.source,
+      holderCountAuthoritative:_holderTruth.authoritative===true,
+      holderCountIsLowerBound:_holderTruth.lowerBound===true,
+      holderFresh:_holderTruth.fresh===true,
+      holderUpdatedAt:_holderTruth.updatedAt,
       top10Pct:_finite(_token?.top10Pct??_token?.top10),
       developerPct:
         _finite(_token?.developerPct??_token?.developerSharePct),
@@ -5947,7 +6078,9 @@ if(false && url.pathname==='/api/ai/assistant' &&req.method==='POST'){
   // _unrankedViews name as an explicit alias so the ranking contract/test and
   // the new safe-view bridge describe the same stage of the pipeline.
   const _unrankedViews=_safeViews;
-  const _rankedViews=rankCandidateViews(_unrankedViews);
+  const _rankedViews=
+    rankCandidateViews(_unrankedViews)
+      .map(row=>__mfLiveDisplayStateV28(row,_settings));
   const _views=_rankedViews.slice(0,_limit);
 
   const _payload={

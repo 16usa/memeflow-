@@ -117,7 +117,12 @@ export function candidateRelevanceScore(view = {}) {
   const score = clamp01((number(view.score) ?? 0) / 100);
   const opportunity = clamp01((number(view.opportunityScore) ?? 0) / 100);
   const quality = clamp01((number(view.qualityScore) ?? 0) / 100);
-  const holders = logSaturation(view.holderCount ?? view.holders, 120);
+  const holders = logSaturation(
+    view.holderCount ??
+    view.holders ??
+    view.observedHolderCount,
+    120
+  );
   const holdersWeight = view.holderCountIsLowerBound === true ? 3 : 8;
   const volume = volumeQuality(view);
   const tx = transactionQuality(view);
@@ -200,8 +205,16 @@ export function compareCandidateViews(a = {}, b = {}) {
   const bmc = number(b.marketCapUsd) ?? number(b.marketCapSol ?? b.marketCap) ?? 0;
   if (bmc !== amc) return bmc - amc;
 
-  const ah = number(a.holderCount ?? a.holders) ?? 0;
-  const bh = number(b.holderCount ?? b.holders) ?? 0;
+  const ah = number(
+    a.holderCount ??
+    a.holders ??
+    a.observedHolderCount
+  ) ?? 0;
+  const bh = number(
+    b.holderCount ??
+    b.holders ??
+    b.observedHolderCount
+  ) ?? 0;
   if (bh !== ah) return bh - ah;
 
   const aq = number(a.quoteAgeMs) ?? Number.MAX_SAFE_INTEGER;

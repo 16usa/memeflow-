@@ -789,7 +789,7 @@ function holderCount(row) {
     null;
 
   // Event ledger is only a strict lower-bound fallback.
-  if (finite(observed) && Number(observed) >= 5) {
+  if (finite(observed) && Number(observed) > 0) {
     return fmt(observed, 0) + '+';
   }
 
