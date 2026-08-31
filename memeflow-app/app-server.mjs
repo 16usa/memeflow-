@@ -1572,6 +1572,17 @@ function candidateView(d){
   const market5m=__mfCandidateMarket5mV4(d.mint,t);
   const normalizedSupply=__mfNormalizePumpSupplyV5(t);
   const livePriceSol=finite(market5m.currentPriceSol)??finite(t.priceSol);
+
+  // MEMEFLOW_TERMINAL_CANDIDATE_VIEW_RUNTIME_V31
+  // candidateView() is used directly by /api/ai/decisions and /api/chart/config.
+  // Keep its evidence fields bound to the same canonical market/holder helpers
+  // instead of referencing undeclared identifiers.
+  const marketCapSol=finite(market5m?.marketCapSol);
+  const holderTruth=__mfPipelineHolderTruthV26(
+    t,
+    d.mint,
+    Date.now()
+  );
   return {
     id:d.mint,
     mint:d.mint,
