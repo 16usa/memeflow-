@@ -445,9 +445,7 @@ html[data-theme="light"] .mf-hiw-map::before {
 
 html[data-theme="light"] .mf293-settings-backdrop { background: rgba(226,232,236,.70) !important; }
 html[data-theme="light"] .mf293-settings-panel {
-  background:
-    radial-gradient(circle at 50% 0%,rgba(72,180,205,.08),transparent 30%),
-    #f5f7f9 !important;
+  background: var(--mf-app-surface, #ffffff) !important;
   border-color: rgba(38,59,74,.10) !important;
   box-shadow: -20px 0 60px rgba(41,57,68,.10) !important;
   color: #17222c !important;
