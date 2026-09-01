@@ -87,10 +87,31 @@ function __mfLiveScannerTokens(now=Date.now()){
 }
 
 function __mfActiveScannerUserIds(now=Date.now()){
-  const cutoff=now-(Number(process.env.LIVE_EVALUATION_ACTIVE_USER_HOURS||24)*3600000);
-  return Object.entries(store.state.users||{})
-    .filter(([,u])=>u?.isOwner===true||(Number(u?.lastActiveAt||0)>0&&Number(u.lastActiveAt)>=cutoff))
-    .map(([uid])=>uid);
+  const cutoff=
+    now-(
+      Number(
+        process.env.LIVE_EVALUATION_ACTIVE_USER_HOURS||24
+      )*3600000
+    );
+
+  // MEMEFLOW_ACTIVE_USER_IDS_HOTPATH_V77
+  // Preserve exact Object.entries() order while avoiding the intermediate
+  // filtered-entry array and the second map pass.
+  const active=[];
+
+  for(const [uid,u] of Object.entries(store.state.users||{})){
+    if(
+      u?.isOwner===true ||
+      (
+        Number(u?.lastActiveAt||0)>0 &&
+        Number(u.lastActiveAt)>=cutoff
+      )
+    ){
+      active.push(uid);
+    }
+  }
+
+  return active;
 }
 
 function __mfAllActiveUsersStableBlocked(
