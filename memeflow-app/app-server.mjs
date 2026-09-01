@@ -8083,6 +8083,58 @@ async function __mfVerifyPreOpenRisk(
     };
   }
 
+  // MEMEFLOW_PREOPEN_ADMISSION_RECHECK_V46
+  //
+  // Wallet-risk RPC can take seconds. The V40 guard above protects the
+  // settings revision, but Entry Admission also depends on mutable token facts
+  // (MC, holders, concentration, buy pressure, age/freshness, etc.).
+  // Re-check the canonical admission gate on the newest token immediately
+  // before final BUY READY evaluation and before any entry side effect.
+  const finalAdmission=
+    __mfEntryAdmissionForUser(
+      updated,
+      uid,
+      settings,
+      Date.now()
+    );
+
+  const finalAdmissionOk=
+    finalAdmission?.admitted===true;
+
+  const finalAdmissionKey=
+    String(uid||'')+':'+
+    String(updated?.mint||token?.mint||'');
+
+  if(finalAdmissionKey!==':'){
+    __mfEntryAdmissionState.set(
+      finalAdmissionKey,
+      finalAdmissionOk
+    );
+  }
+
+  if(!finalAdmissionOk){
+    __mfClearDecisionForUserMint(
+      uid,
+      updated.mint
+    );
+
+    __mfQueueDecisionRefreshV14(
+      updated.mint
+    );
+
+    return {
+      ok:false,
+      code:
+        String(finalAdmission?.state||'')
+          .toUpperCase()==='REJECTED'
+          ? 'PREOPEN_ENTRY_REJECTED'
+          : 'PREOPEN_ENTRY_PENDING',
+      token:updated,
+      decision:null,
+      admission:finalAdmission||null
+    };
+  }
+
   const finalDecision=evaluate(
     updated,
     settings,
