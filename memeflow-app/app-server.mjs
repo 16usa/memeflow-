@@ -10,6 +10,7 @@ import {candidateFeed,candidateVisibilityCounts} from './src/candidate-visibilit
 import {buildAdmittedScannerInventoryV60} from './src/admitted-scanner-inventory-v60.mjs'; // MEMEFLOW_AI_DECISIONS_INVENTORY_HOTPATH_V60
 import {selectNewestCurrentTokensV61} from './src/live-states-prefix-v61.mjs'; // MEMEFLOW_LIVE_STATES_PREFIX_HOTPATH_V61
 import {selectDiscoveryBridgeWorkV66} from './src/discovery-bridge-selector-v66.mjs'; // MEMEFLOW_DISCOVERY_BRIDGE_HOTPATH_V66
+import {selectHolderRefreshPrefixV67} from './src/holder-refresh-selector-v67.mjs'; // MEMEFLOW_HOLDER_REFRESH_HOTPATH_V67
 import { startPumpLiveTradeFeed } from './src/pump-live-trade-feed.mjs'; // MEMEFLOW_V12_21_LIVE_TRADE_STREAM_HOLDER_FEED
 import { ChartHistoryArchive } from './src/chart-history-archive.mjs'; // MEMEFLOW_CHART_DATA_PATH_FIX_V2_DIRTY_SAFE // MEMEFLOW_CHART_HISTORY_RESTORE_V1
 import {createOpportunityEngine} from './src/opportunity-engine.mjs'; // MEMEFLOW_OPPORTUNITY_ENGINE_V1
@@ -985,10 +986,14 @@ function __mfHolderDecisionFloorV33(){
 
 let __mfHolderPriorityTickV5=0;
 
-function __mfHolderRankV5(token,decisionFloor=__mfHolderDecisionFloorV33()){
+function __mfHolderRankV5(
+  token,
+  decisionFloor=__mfHolderDecisionFloorV33(),
+  openMints=__mfOpenPositionMints()
+){
   const mint=String(token?.mint||'');
 
-  if(__mfOpenPositionMints().has(mint)){
+  if(openMints.has(mint)){
     return {lane:0,score:100,refreshMs:15000};
   }
 
@@ -1086,59 +1091,71 @@ const holderRefreshTimer=setInterval(()=>{
   __mfHolderPriorityTickV5++;
 
 
-  const candidates=Object.values(store.state.tokens||{})
-    .filter(token=>token?.mint)
-    .filter(
-      token=>
-        __mfCanonicalHolderNeededV34(
-          token,
-          now,
-          openMints,
-          activeUserIds
-        )
-    )
-    .filter(token=>{
-      const scannedAt=Number(token?.holderScannedAt||0);
-      const rank=__mfHolderRankV5(token,decisionFloor);
-      return !scannedAt || now-scannedAt>=rank.refreshMs;
-    })
-    .sort((a,b)=>{
-      const fairness=(__mfHolderPriorityTickV5%10)===0;
+  // MEMEFLOW_HOLDER_REFRESH_HOTPATH_V67
+  // Rank is computed once per eligible token. We retain only the exact sorted
+  // prefix needed to produce max successful enqueues, plus enough rows to
+  // preserve traversal across jobs that are already pending/active.
+  const fairness=(__mfHolderPriorityTickV5%10)===0;
+  const candidateRows=[];
+  let candidateOrder=0;
 
-      const aa=Number(a?.holderScannedAt||0);
-      const bb=Number(b?.holderScannedAt||0);
+  for(const token of Object.values(store.state.tokens||{})){
+    if(!token?.mint)continue;
 
-      if(fairness){
-        if(aa!==bb)return aa-bb;
-      }
+    if(
+      !__mfCanonicalHolderNeededV34(
+        token,
+        now,
+        openMints,
+        activeUserIds
+      )
+    ){
+      continue;
+    }
 
-      const ar=__mfHolderRankV5(a,decisionFloor);
-      const br=__mfHolderRankV5(b,decisionFloor);
+    const scannedAt=Number(token?.holderScannedAt||0);
+    const rank=__mfHolderRankV5(
+      token,
+      decisionFloor,
+      openMints
+    );
 
-      // Inside WAITING, near-decision tokens outrank cold WAITING before score.
-      if(
-        ar.lane===3 &&
-        br.lane===3 &&
-        ar.nearDecision!==br.nearDecision
-      ){
-        return ar.nearDecision?-1:1;
-      }
+    if(
+      scannedAt &&
+      now-scannedAt<rank.refreshMs
+    ){
+      continue;
+    }
 
-      if(ar.lane!==br.lane)return ar.lane-br.lane;
-      if(ar.score!==br.score)return br.score-ar.score;
+    const q=holderQueue.inspect?.(token.mint)||null;
 
-      const ax=Number(a?.lastMarketActivityAt||a?.lastPriceAt||a?.discoveredAt||0);
-      const bx=Number(b?.lastMarketActivityAt||b?.lastPriceAt||b?.discoveredAt||0);
+    candidateRows.push({
+      token,
+      rank,
+      scannedAt,
+      activityAt:Number(
+        token?.lastMarketActivityAt ||
+        token?.lastPriceAt ||
+        token?.discoveredAt ||
+        0
+      ),
+      busy:Boolean(q?.pending||q?.active),
+      order:candidateOrder++
+    });
+  }
 
-      if(ax!==bx)return bx-ax;
-
-      return aa-bb;
+  const candidates=
+    selectHolderRefreshPrefixV67({
+      rows:candidateRows,
+      fairness,
+      maxEnqueue:HOLDER_REFRESH_MAX_ENQUEUE_PER_TICK
     });
 
   let enqueued=0;
 
-  for(const token of candidates){
-    const scannedAt=Number(token?.holderScannedAt||0);
+  for(const row of candidates){
+    const token=row.token;
+    const scannedAt=row.scannedAt;
 
     token.holderFresh=Boolean(
       scannedAt &&
