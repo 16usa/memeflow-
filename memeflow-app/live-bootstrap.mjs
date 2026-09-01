@@ -162,27 +162,42 @@ http.createServer=function patchedCreateServer(listener,...rest){
       });
     }
 
-    if(req.method==='GET'&&pathname==='/api/live/status')return json(res,200,{enabled:liveReady(),featureFlag:LIVE_FLAG,rpcConfigured:Boolean(rpcUrl()),network:'mainnet-beta',adapter:liveReady()?'pump.fun-agents-swap':'disabled',walletSigning:'required',nonCustodial:true,maxBuySol:MAX_BUY_SOL,maxSlippagePct:MAX_SLIPPAGE_PCT});
+    if(req.method==='GET'&&pathname==='/api/live/status')return json(res,200,{
+      // MEMEFLOW_LIVE_MAINNET_BYPASS_GUARD_V51
+      // Configuration is observable, but configuration alone must never make
+      // the legacy unsigned-mainnet builder an executable trading path.
+      enabled:false,
+      featureFlag:LIVE_FLAG,
+      rpcConfigured:Boolean(rpcUrl()),
+      network:'mainnet-beta',
+      adapter:'disabled',
+      walletSigning:'required',
+      nonCustodial:true,
+      productionExecutionReady:false,
+      legacyMainnetBuilderBlocked:true,
+      blockedReason:'FINAL_PREOPEN_AND_LIVE_LEDGER_REQUIRED',
+      maxBuySol:MAX_BUY_SOL,
+      maxSlippagePct:MAX_SLIPPAGE_PCT
+    });
     if(req.method==='POST'&&pathname==='/api/live/confirm'){
       const billing=await localJson(req,'/api/billing/status');if(!billing?.liveEntitled)return json(res,402,{error:'LIVE_ENTITLEMENT_REQUIRED',message:'LIVE confirmation requires Pro or owner entitlement.'});
       const body=await __mfReadJson(req).catch(error=>({__error:error}));if(body.__error)return json(res,body.__error.status||400,{error:body.__error.code||'INVALID_REQUEST',message:body.__error.message});
       const signature=String(body.signature||'').trim();if(!/^[1-9A-HJ-NP-Za-km-z]{80,90}$/.test(signature))return json(res,400,{error:'INVALID_SIGNATURE',message:'A valid Solana transaction signature is required.'});return json(res,200,{signature,...await confirmSignature(signature)});
     }
     if(!(req.method==='POST'&&pathname==='/api/live/execute'))return listener(req,res);
-    // Preserve the original fail-closed route until the production flag + RPC are ready.
-    if(!liveReady())return listener(req,res);
-    try{
-      // Re-use MEMEFLOW's authenticated session through its own billing/settings APIs.
-      const billing=await localJson(req,'/api/billing/status');
-      if(!billing)return json(res,503,{error:'LIVE_BILLING_UNAVAILABLE',message:'Could not verify LIVE entitlement.'});
-      if(!billing.liveEntitled)return json(res,402,{error:'LIVE_ENTITLEMENT_REQUIRED',message:'LIVE trading requires Pro or owner entitlement.'});
-      const swap=normalizeSwap(await readJson(req)),state=await localJson(req,'/api/settings');
-      if(!state)return json(res,503,{error:'LIVE_SETTINGS_UNAVAILABLE',message:'Could not verify LIVE safety settings.'});
-      if(state.killSwitchActive===true&&swap.side==='buy')return json(res,423,{error:'EMERGENCY_ENTRY_LOCK',message:'Emergency entry lock blocks new LIVE buys. Existing positions may still be sold.'});
-      if(String(state.settings?.tradingEnvironment||'paper').toLowerCase()!=='live')return json(res,409,{error:'LIVE_MODE_NOT_ARMED',message:'Switch Trading mode to LIVE in System Settings before submitting a real transaction.'});
-      const built=await buildPumpSwap(swap);
-      return json(res,200,{executed:false,requiresWalletSignature:true,nonCustodial:true,network:'mainnet-beta',adapter:'pump.fun-agents-swap',transaction:built.transaction,pumpMintInfo:built.pumpMintInfo||null,intent:{side:swap.side,mint:swap.mint,user:swap.user,amount:swap.amount,slippagePct:swap.slippagePct,createdAt:new Date().toISOString()}});
-    }catch(e){return json(res,e?.status||500,{error:e?.code||'LIVE_EXECUTION_BUILD_FAILED',message:e?.message||'Unable to build LIVE transaction.'})}
+
+    // MEMEFLOW_LIVE_MAINNET_BYPASS_GUARD_V51
+    //
+    // NEVER build a production mainnet transaction in this bootstrap wrapper.
+    //
+    // This wrapper does not own the canonical Entry Admission / BUY READY /
+    // final pre-open verification pipeline, and the project does not yet have
+    // a trustworthy LIVE position/trade ledger for enforcing execution limits.
+    //
+    // Delegate to app-server.mjs. Its current production execution route is
+    // intentionally fail-closed; the separately confirmed D4/D5 path remains
+    // DEVNET probe-only.
+    return listener(req,res);
   };
   return nativeCreateServer.call(http,wrapped,...rest);
 };
