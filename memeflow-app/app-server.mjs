@@ -14,6 +14,7 @@ import {selectHolderRefreshPrefixV67} from './src/holder-refresh-selector-v67.mj
 import {selectOldestScannerEvictionsV68} from './src/scanner-capacity-selector-v68.mjs'; // MEMEFLOW_SCANNER_CAPACITY_HOTPATH_V68
 import {selectFastHolderPreviewPrefixV69} from './src/fast-holder-preview-selector-v69.mjs'; // MEMEFLOW_FAST_HOLDER_PREVIEW_HOTPATH_V69
 import {buildHolderActiveUserContextV70} from './src/holder-active-user-context-v70.mjs'; // MEMEFLOW_HOLDER_ACTIVE_USER_CONTEXT_V70
+import {createHistoryEvalFifoV72} from './src/history-eval-fifo-v72.mjs'; // MEMEFLOW_HISTORY_EVAL_QUEUE_HOTPATH_V72
 import { startPumpLiveTradeFeed } from './src/pump-live-trade-feed.mjs'; // MEMEFLOW_V12_21_LIVE_TRADE_STREAM_HOLDER_FEED
 import { ChartHistoryArchive } from './src/chart-history-archive.mjs'; // MEMEFLOW_CHART_DATA_PATH_FIX_V2_DIRTY_SAFE // MEMEFLOW_CHART_HISTORY_RESTORE_V1
 import {createOpportunityEngine} from './src/opportunity-engine.mjs'; // MEMEFLOW_OPPORTUNITY_ENGINE_V1
@@ -7724,7 +7725,8 @@ process.on('unhandledRejection',r=>{console.error('[MEMEFLOW] unhandledRejection
 // MEMEFLOW_HISTORY_LOW_PRIORITY_EVAL_V1
 // Historical/gap recovery must never compete with current Pump TradeEvents.
 // At most one recovered token is evaluated per interval.
-const __mfHistoryEvalQueue=[];
+const __mfHistoryEvalQueue=
+  createHistoryEvalFifoV72();
 const __mfHistoryEvalQueued=new Set();
 let __mfHistoryEvalTimer=null;
 
@@ -7832,7 +7834,7 @@ function __mfStopBackgroundWorkV52(){
       clearInterval(__mfHistoryEvalTimer);
       __mfHistoryEvalTimer=null;
     }
-    __mfHistoryEvalQueue.length=0;
+    __mfHistoryEvalQueue.clear();
     __mfHistoryEvalQueued.clear();
   }catch{}
 }
