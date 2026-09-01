@@ -221,7 +221,27 @@ const liveStatesRoute=app.slice(
 );
 assert.match(liveStatesRoute,/MEMEFLOW_LIVE_TOKEN_VISIBILITY_V8_CLEAN_WORKTREE/);
 assert.match(liveStatesRoute,/MEMEFLOW_REALTIME_UI_FAIRNESS_V1_ROUTE/);
-assert.match(liveStatesRoute,/const _rawTokens=__mfLiveScannerTokens\(\)/);
+// MEMEFLOW_LIVE_STATES_PREFIX_HOTPATH_V61
+assert.match(
+  liveStatesRoute,
+  /MEMEFLOW_LIVE_STATES_PREFIX_HOTPATH_V61/
+);
+assert.match(
+  liveStatesRoute,
+  /selectNewestCurrentTokensV61/
+);
+assert.match(
+  liveStatesRoute,
+  /Object\.values\(store\.state\.tokens\|\|\{\}\)/
+);
+assert.match(
+  liveStatesRoute,
+  /rawScannerTokens:_liveStatesInventoryV61\.liveCount/
+);
+assert.doesNotMatch(
+  liveStatesRoute,
+  /const _rawTokens=__mfLiveScannerTokens\(\)/
+);
 assert.match(liveStatesRoute,/state:_blocked\?'BLOCKED':'WAITING'/);
 assert.match(liveStatesRoute,/preAdmissionPending:_pending/);
 assert.match(liveStatesRoute,/preAdmissionRejected:_rejected/);

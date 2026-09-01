@@ -8,6 +8,7 @@ import {makeLiveEvalMetrics,makeEvaluateForActiveUsers} from './src/liveeval.mjs
 import {makeDiscoveryMetrics} from './src/discqueue.mjs';
 import {candidateFeed,candidateVisibilityCounts} from './src/candidate-visibility.mjs';
 import {buildAdmittedScannerInventoryV60} from './src/admitted-scanner-inventory-v60.mjs'; // MEMEFLOW_AI_DECISIONS_INVENTORY_HOTPATH_V60
+import {selectNewestCurrentTokensV61} from './src/live-states-prefix-v61.mjs'; // MEMEFLOW_LIVE_STATES_PREFIX_HOTPATH_V61
 import { startPumpLiveTradeFeed } from './src/pump-live-trade-feed.mjs'; // MEMEFLOW_V12_21_LIVE_TRADE_STREAM_HOLDER_FEED
 import { ChartHistoryArchive } from './src/chart-history-archive.mjs'; // MEMEFLOW_CHART_DATA_PATH_FIX_V2_DIRTY_SAFE // MEMEFLOW_CHART_HISTORY_RESTORE_V1
 import {createOpportunityEngine} from './src/opportunity-engine.mjs'; // MEMEFLOW_OPPORTUNITY_ENGINE_V1
@@ -6009,13 +6010,14 @@ if(false && url.pathname==='/api/ai/assistant' &&req.method==='POST'){
       : 200;
 
   const _settings=store.settings(u.id);
-  const _rawTokens=__mfLiveScannerTokens();
   const _openMints=__mfOpenPositionMints();
 
   // MEMEFLOW_REALTIME_UI_FAIRNESS_V1_ROUTE
-  // The raw scanner is newest-first. Evaluate enough rows to cover roughly
-  // 15–25 minutes at normal Pump launch rates while keeping the HTTP/SSE path
-  // predictably bounded.
+  // MEMEFLOW_LIVE_STATES_PREFIX_HOTPATH_V61
+  // Preserve the exact newest-first UI working prefix without globally
+  // sorting the entire hot scanner cache on every Terminal poll. Evaluate
+  // enough rows to cover roughly 15–25 minutes at normal Pump launch rates
+  // while keeping the HTTP/SSE path predictably bounded.
   const _workingLimit=Math.max(
     _limit,
     Math.min(
@@ -6024,7 +6026,19 @@ if(false && url.pathname==='/api/ai/assistant' &&req.method==='POST'){
     )
   );
 
-  const _workingTokens=_rawTokens.slice(0,_workingLimit);
+  const _liveStatesNowV61=Date.now();
+  const _liveStatesInventoryV61=
+    selectNewestCurrentTokensV61({
+      tokens:Object.values(store.state.tokens||{}),
+      limit:_workingLimit,
+      isCurrent:token=>
+        __mfIsCurrentScannerToken(
+          token,
+          _liveStatesNowV61
+        )
+    });
+
+  const _workingTokens=_liveStatesInventoryV61.tokens;
   const _workingMints=new Set(
     _workingTokens.map(t=>String(t?.mint||'')).filter(Boolean)
   );
@@ -6356,7 +6370,7 @@ if(false && url.pathname==='/api/ai/assistant' &&req.method==='POST'){
     source:'system-live-token-states-transparent-v8',
     feedVersion:'MEMEFLOW_LIVE_TOKEN_FEED_BRIDGE_V13',
 
-    rawScannerTokens:_rawTokens.length,
+    rawScannerTokens:_liveStatesInventoryV61.liveCount,
     uiWorkingSetTokens:_workingTokens.length,
     displayRows:_displayRows.length,
     safeViews:_safeViews.length,

@@ -31,7 +31,23 @@ const liveRoute=app.slice(
 );
 assert.match(liveRoute,/MEMEFLOW_LIVE_TOKEN_VISIBILITY_V8_CLEAN_WORKTREE/);
 assert.match(liveRoute,/MEMEFLOW_REALTIME_UI_FAIRNESS_V1_ROUTE/);
-assert.match(liveRoute,/const _rawTokens=__mfLiveScannerTokens\(\)/);
+// MEMEFLOW_LIVE_STATES_PREFIX_HOTPATH_V61
+assert.match(
+  liveRoute,
+  /MEMEFLOW_LIVE_STATES_PREFIX_HOTPATH_V61/
+);
+assert.match(
+  liveRoute,
+  /selectNewestCurrentTokensV61/
+);
+assert.match(
+  liveRoute,
+  /Object\.values\(store\.state\.tokens\|\|\{\}\)/
+);
+assert.doesNotMatch(
+  liveRoute,
+  /const _rawTokens=__mfLiveScannerTokens\(\)/
+);
 assert.match(liveRoute,/state:_blocked\?'BLOCKED':'WAITING'/);
 assert.match(liveRoute,/preAdmissionPending:_pending/);
 assert.match(liveRoute,/preAdmissionRejected:_rejected/);
@@ -49,7 +65,14 @@ assert.doesNotMatch(liveRoute,/_rawTokens\.slice\(0,_lim\)/);
 // recent, JSON-safe observability window.
 assert.match(liveRoute,/MEMEFLOW_LIVE_TOKEN_FEED_BRIDGE_V13/);
 assert.match(liveRoute,/const _workingLimit=Math\.max/);
-assert.match(liveRoute,/_rawTokens\.slice\(0,_workingLimit\)/);
+assert.match(
+  liveRoute,
+  /const _workingTokens=_liveStatesInventoryV61\.tokens/
+);
+assert.match(
+  liveRoute,
+  /rawScannerTokens:_liveStatesInventoryV61\.liveCount/
+);
 assert.match(liveRoute,/uiWorkingSetTokens:_workingTokens\.length/);
 assert.match(liveRoute,/safeViews:_safeViews\.length/);
 assert.match(liveRoute,/feedVersion:'MEMEFLOW_LIVE_TOKEN_FEED_BRIDGE_V13'/);
