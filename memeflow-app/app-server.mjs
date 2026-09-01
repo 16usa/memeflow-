@@ -2308,10 +2308,21 @@ const __mfPreAdmissionSweepMs=Math.max(
   Number(process.env.PRE_ADMISSION_SWEEP_MS||2000)
 );
 
+// MEMEFLOW_PRE_ADMISSION_SWEEP_HOTPATH_V62_4
+// Membership-only sweep: discoveredAt ordering is irrelevant here.
+// Avoid the globally sorted scanner-list accessor on this membership-only path.
 const __mfPreAdmissionSweepTimer=setInterval(()=>{
   try{
     const now=Date.now();
-    const tokens=__mfLiveScannerTokens(now);
+    const tokens=
+      Object.values(store.state.tokens||{})
+        .filter(
+          token=>
+            __mfIsCurrentScannerToken(
+              token,
+              now
+            )
+        );
     const uids=__mfActiveScannerUserIds(now);
 
     if(!tokens.length||!uids.length)return;
