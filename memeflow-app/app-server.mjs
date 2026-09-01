@@ -7942,7 +7942,11 @@ async function __mfVerifyPreOpenRisk(
     };
   }
 
-  const finalDecision=evaluate(updated,settings);
+  const finalDecision=evaluate(
+    updated,
+    settings,
+    {includePreOpenRisk:true}
+  );
   const settingsVersion=preOpenSettingsVersion;
 
   const saved={

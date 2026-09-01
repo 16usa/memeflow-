@@ -34,9 +34,11 @@ const guard=block.indexOf(
 const staleCode=block.indexOf(
   "code:'PREOPEN_SETTINGS_CHANGED'"
 );
-const finalEval=block.indexOf(
-  'const finalDecision=evaluate(updated,settings)'
-);
+// V43 makes the final evaluate call explicit about FINAL-only pre-open
+// policy. Keep the V40 race-order regression focused on call ordering rather
+// than a brittle one-line function-call spelling.
+const finalEvalMatch=/const finalDecision=evaluate\(\s*updated,\s*settings(?:,\s*\{[\s\S]*?\})?\s*\);/.exec(block);
+const finalEval=finalEvalMatch?.index??-1;
 const savedRevision=block.indexOf(
   'const settingsVersion=preOpenSettingsVersion'
 );

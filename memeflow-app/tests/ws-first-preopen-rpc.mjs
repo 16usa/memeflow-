@@ -132,6 +132,18 @@ assert.equal(
 
 assert.equal(
   before.walletRiskPending,
+  false
+);
+
+const beforeFinal=
+  evaluate(
+    token,
+    settings,
+    {includePreOpenRisk:true}
+  );
+
+assert.equal(
+  beforeFinal.walletRiskPending,
   true
 );
 
@@ -152,6 +164,22 @@ const after=
 
 assert.equal(
   after.state,
+  'BUY READY'
+);
+
+const afterFinal=
+  evaluate(
+    {
+      ...token,
+      suspectedRiskyWalletsPct:40,
+      insidersPct:0
+    },
+    settings,
+    {includePreOpenRisk:true}
+  );
+
+assert.equal(
+  afterFinal.state,
   'BLOCKED'
 );
 

@@ -135,7 +135,10 @@ function metric(token,key){
   return firstFinite(token,METRICS[key]||[]);
 }
 
-export function evaluateSettingsGate(token={},settings={}){
+// MEMEFLOW_PREOPEN_WALLET_RISK_ISOLATION_V43
+export function evaluateSettingsGate(token={},settings={},options={}){
+  const includePreOpenRisk=
+    options?.includePreOpenRisk===true;
   const gates=[];
   let blocked=false;
   let waiting=false;
@@ -205,49 +208,70 @@ export function evaluateSettingsGate(token={},settings={}){
   range('Sniper share','sniperPct','minSniperPct','maxSniperPct');
 
   // MEMEFLOW_WS_FIRST_PREOPEN_RPC_V1
-  // Final pre-open policy. Missing RPC evidence is intentionally absent from
-  // the fast scanner. Once known, excess linked-wallet risk is hard BLOCKED.
-  const maxRiskyWallets=settingNumber(settings,'maxSuspectedRiskyWalletsPct');
-
-  if(maxRiskyWallets!==null){
-    const value=metric(token,'suspectedRiskyWalletsPct');
-
-    if(value!==null){
-      add(
-        'Suspected risky wallets maximum',
-        value<=maxRiskyWallets,
-        `suspected risky wallets above ${maxRiskyWallets}%`,
-        {
-          key:'maxSuspectedRiskyWalletsPct',
-          value,
-          threshold:maxRiskyWallets,
-          operator:'<=',
-          retryable:false,
-          source:'suspectedRiskyWalletsPct'
-        }
+  // FINAL-ONLY wallet-risk policy.
+  //
+  // Ordinary live evaluation MUST ignore these gates even when a previous
+  // pre-open scan has already persisted shared on-chain evidence on the token.
+  // They are activated only by the final BUY READY -> OPEN verification path.
+  if(includePreOpenRisk){
+    const maxRiskyWallets=
+      settingNumber(
+        settings,
+        'maxSuspectedRiskyWalletsPct'
       );
+
+    if(maxRiskyWallets!==null){
+      const value=
+        metric(
+          token,
+          'suspectedRiskyWalletsPct'
+        );
+
+      if(value!==null){
+        add(
+          'Suspected risky wallets maximum',
+          value<=maxRiskyWallets,
+          `suspected risky wallets above ${maxRiskyWallets}%`,
+          {
+            key:'maxSuspectedRiskyWalletsPct',
+            value,
+            threshold:maxRiskyWallets,
+            operator:'<=',
+            retryable:false,
+            source:'suspectedRiskyWalletsPct'
+          }
+        );
+      }
     }
-  }
 
-  const maxInsiders=settingNumber(settings,'maxInsidersPct');
-
-  if(maxInsiders!==null){
-    const value=metric(token,'insidersPct');
-
-    if(value!==null){
-      add(
-        'Insiders maximum',
-        value<=maxInsiders,
-        `creator-linked wallets above ${maxInsiders}%`,
-        {
-          key:'maxInsidersPct',
-          value,
-          threshold:maxInsiders,
-          operator:'<=',
-          retryable:false,
-          source:'insidersPct'
-        }
+    const maxInsiders=
+      settingNumber(
+        settings,
+        'maxInsidersPct'
       );
+
+    if(maxInsiders!==null){
+      const value=
+        metric(
+          token,
+          'insidersPct'
+        );
+
+      if(value!==null){
+        add(
+          'Insiders maximum',
+          value<=maxInsiders,
+          `creator-linked wallets above ${maxInsiders}%`,
+          {
+            key:'maxInsidersPct',
+            value,
+            threshold:maxInsiders,
+            operator:'<=',
+            retryable:false,
+            source:'insidersPct'
+          }
+        );
+      }
     }
   }
 

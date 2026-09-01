@@ -19,7 +19,10 @@ const SCANNER_POLICY_KEYS=[
   'minTotalTransactions','maxTotalTransactions','minHolders','maxHolders',
   'minBundlePct','maxBundlePct','minTokenAgeMinutes','maxTokenAgeMinutes',
   'minTop10Pct','maxTop10Pct','minDeveloperPct','maxDeveloperPct',
-  'minSniperPct','maxSniperPct','maxSuspectedRiskyWalletsPct','maxInsidersPct',
+  'minSniperPct','maxSniperPct',
+  // MEMEFLOW_PREOPEN_WALLET_RISK_ISOLATION_V43
+  // maxSuspectedRiskyWalletsPct / maxInsidersPct are FINAL-only and must not
+  // split ordinary live evaluate() policy groups.
   'minLiquidityUsd','minBuyPressure','developerBlacklistWallets',
   'requireTwitter','requireWebsite','requireTelegram','requireAnySocial',
   'requireWebsiteOrX','requireFreshHolderSnapshot','minScore','minConfidence'

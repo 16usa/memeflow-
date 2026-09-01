@@ -158,6 +158,22 @@ assert.equal(
 
 assert.equal(
   buyCandidateWithRiskPending.walletRiskPending,
+  false
+);
+
+// FINAL-only pre-open evaluation still reports missing wallet-risk evidence.
+const buyCandidateWithRiskPendingFinal=evaluate(
+  {
+    ...baseToken,
+    suspectedRiskyWalletsPct:null,
+    insidersPct:null
+  },
+  walletRiskSettings,
+  {includePreOpenRisk:true}
+);
+
+assert.equal(
+  buyCandidateWithRiskPendingFinal.walletRiskPending,
   true
 );
 
@@ -190,13 +206,28 @@ assert.equal(
   'BUY READY'
 );
 
-const walletClusterBlocked=evaluate(
+const walletClusterOrdinary=evaluate(
   {
     ...baseToken,
     suspectedRiskyWalletsPct:40,
     insidersPct:0
   },
   walletRiskSettings
+);
+
+assert.equal(
+  walletClusterOrdinary.state,
+  'BUY READY'
+);
+
+const walletClusterBlocked=evaluate(
+  {
+    ...baseToken,
+    suspectedRiskyWalletsPct:40,
+    insidersPct:0
+  },
+  walletRiskSettings,
+  {includePreOpenRisk:true}
 );
 
 assert.equal(

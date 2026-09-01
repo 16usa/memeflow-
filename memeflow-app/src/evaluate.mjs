@@ -20,8 +20,14 @@ function independentEvidenceConfidence(token={}){
   };
 }
 
-export function evaluate(token,s={}){
-  const policy=evaluateSettingsGate(token,s);
+export function evaluate(token,s={},options={}){
+  const includePreOpenRisk=
+    options?.includePreOpenRisk===true;
+  const policy=evaluateSettingsGate(
+    token,
+    s,
+    {includePreOpenRisk}
+  );
   const reasons=[...policy.reasons];
 
   const qualityScore=finite(token.qualityScore)
@@ -49,8 +55,10 @@ export function evaluate(token,s={}){
   if(minimumConfidence!==null&&!confidencePass)reasons.push(`confidence ${confidence}% below configured minimum ${minimumConfidence}%`);
 
   const walletRiskPending=
-    (finite(s.maxSuspectedRiskyWalletsPct)&&!finite(token.suspectedRiskyWalletsPct))||
-    (finite(s.maxInsidersPct)&&!finite(token.insidersPct));
+    includePreOpenRisk && (
+      (finite(s.maxSuspectedRiskyWalletsPct)&&!finite(token.suspectedRiskyWalletsPct))||
+      (finite(s.maxInsidersPct)&&!finite(token.insidersPct))
+    );
 
   const dead=token.dead===true||Boolean(token.deadReason);
   const opportunityReady=token.opportunityEvidenceReady===true;
