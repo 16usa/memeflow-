@@ -466,6 +466,10 @@ let discovery={
   startedAt:Date.now()
 },ws=null,wsTimer=null,wsReconnectAttempt=0;
 
+// MEMEFLOW_GRACEFUL_SHUTDOWN_PERSISTENCE_V52
+let __mfShutdownRequestedV52=false;
+let __mfStartupRecoveryPromiseV52=null;
+
 const DISCOVERY_WS_STALE_MS=Math.max(
   20000,
   Number(process.env.DISCOVERY_WS_STALE_MS||45000)
@@ -3445,6 +3449,8 @@ function __ingestPumpCreateEventDirect(
 }
 
 function startDiscovery(i=0){
+  if(__mfShutdownRequestedV52)return;
+
   // MEMEFLOW_CREATE_EVENT_DISCRIMINATOR_FIRST_V1
   if(process.env.DISCOVERY_ENABLED==='false'||!wsUrls.length){
     discovery.connected=false;
@@ -7566,7 +7572,223 @@ function __mfQueueHistoryEvaluation(token){
   return true;
 }
 
-const server=http.createServer((req,res)=>handler(req,res).catch(e=>json(res,500,{error:'SERVER_ERROR',message:e.message})));server.listen(Number(process.env.PORT||3000),'0.0.0.0',()=>{
+const server=http.createServer((req,res)=>handler(req,res).catch(e=>json(res,500,{error:'SERVER_ERROR',message:e.message})));
+
+// MEMEFLOW_GRACEFUL_SHUTDOWN_PERSISTENCE_V52
+const __mfShutdownHttpTimeoutMsV52=Math.max(
+  500,
+  Number(
+    process.env.MEMEFLOW_SHUTDOWN_HTTP_TIMEOUT_MS||
+    1800
+  )
+);
+
+const __mfShutdownBackgroundTimeoutMsV52=Math.max(
+  100,
+  Number(
+    process.env.MEMEFLOW_SHUTDOWN_BACKGROUND_TIMEOUT_MS||
+    1200
+  )
+);
+
+let __mfShutdownPromiseV52=null;
+
+function __mfStopBackgroundWorkV52(){
+  __mfShutdownRequestedV52=true;
+
+  try{
+    clearTimeout(wsTimer);
+    wsTimer=null;
+  }catch{}
+
+  try{
+    clearInterval(__mfDiscoveryWsWatchdog);
+  }catch{}
+
+  try{
+    const socket=ws;
+    ws=null;
+    socket?.close?.();
+  }catch{}
+
+  try{
+    discovery.connected=false;
+    discovery.subscribed=false;
+  }catch{}
+
+  try{solUsdOracle.stop()}catch{}
+  try{__pumpLiveTradeFeed?.stop?.()}catch{}
+  try{holderQueue?.close?.()}catch{}
+
+  for(const timer of [
+    __mfScannerPruneTimer,
+    holderRefreshTimer,
+    __mfFastHolderPreviewTimerV4,
+    __mfPreAdmissionSweepTimer
+  ]){
+    try{clearInterval(timer)}catch{}
+  }
+
+  try{
+    if(bridgeTimer){
+      clearInterval(bridgeTimer);
+      bridgeTimer=null;
+    }
+  }catch{}
+
+  try{
+    if(__mfHistoryEvalTimer){
+      clearInterval(__mfHistoryEvalTimer);
+      __mfHistoryEvalTimer=null;
+    }
+    __mfHistoryEvalQueue.length=0;
+    __mfHistoryEvalQueued.clear();
+  }catch{}
+}
+
+function __mfCloseHttpServerV52(){
+  return new Promise(resolve=>{
+    if(!server.listening){
+      resolve();
+      return;
+    }
+
+    let settled=false;
+
+    const finish=()=>{
+      if(settled)return;
+      settled=true;
+      clearTimeout(forceTimer);
+      resolve();
+    };
+
+    const forceTimer=setTimeout(()=>{
+      try{server.closeAllConnections?.()}catch{}
+      finish();
+    },__mfShutdownHttpTimeoutMsV52);
+
+    forceTimer.unref?.();
+
+    try{
+      server.close(finish);
+      server.closeIdleConnections?.();
+    }catch{
+      finish();
+    }
+  });
+}
+
+async function __mfWaitForCriticalBackgroundV52(){
+  const deadline=
+    Date.now()+
+    __mfShutdownBackgroundTimeoutMsV52;
+
+  while(Date.now()<deadline){
+    const busy=
+      bridgeRunActive===true ||
+      __mfScannerPruneInFlightV44===true ||
+      Number(holderQueue?.activeCount||0)>0 ||
+      Number(__mfFastHolderActiveV4?.size||0)>0 ||
+      Number(
+        liveEvalMetrics?.liveEvaluationInflightMints||
+        0
+      )>0;
+
+    if(!busy)return true;
+
+    await new Promise(
+      resolve=>setTimeout(resolve,20)
+    );
+  }
+
+  return false;
+}
+
+async function __mfGracefulShutdownV52(signal){
+  if(__mfShutdownPromiseV52){
+    return __mfShutdownPromiseV52;
+  }
+
+  __mfShutdownPromiseV52=(async()=>{
+    let exitCode=0;
+
+    console.log(
+      `[shutdown] ${signal}: quiescing MEMEFLOW`
+    );
+
+    // 1. Stop every source that can create NEW background work.
+    __mfStopBackgroundWorkV52();
+
+    // 2. Stop accepting requests and allow already-running HTTP work to finish.
+    await __mfCloseHttpServerV52();
+
+    // 3. Let already-started holder/scanner/live-eval work settle, but never
+    //    hang shutdown forever on a provider/RPC.
+    const quiesced=
+      await __mfWaitForCriticalBackgroundV52();
+
+    if(!quiesced){
+      console.warn(
+        '[shutdown] background quiescence timed out; flushing newest state'
+      );
+    }
+
+    // 4. V50 owns state.json serialization. Force any pending <200ms debounce
+    //    snapshot to disk and wait for every serialized write pass.
+    try{
+      const flushed=
+        await store.flushStateSave();
+
+      if(flushed?.ok===false){
+        exitCode=1;
+        console.error(
+          '[shutdown] state flush failed',
+          flushed.error||''
+        );
+      }
+    }catch(error){
+      exitCode=1;
+      console.error(
+        '[shutdown] state flush threw',
+        error?.message||error
+      );
+    }
+
+    // 5. JsonStore.close() drains TokenRegistry pending SQLite writes and
+    //    checkpoints synchronously before closing the database.
+    try{
+      store.close();
+    }catch(error){
+      exitCode=1;
+      console.error(
+        '[shutdown] store close failed',
+        error?.message||error
+      );
+    }
+
+    console.log(
+      `[shutdown] complete (${signal}), exit=${exitCode}`
+    );
+
+    return exitCode;
+  })();
+
+  return __mfShutdownPromiseV52;
+}
+
+for(const signal of ['SIGTERM','SIGINT']){
+  process.once(signal,()=>{
+    void __mfGracefulShutdownV52(signal)
+      .then(code=>process.exit(code))
+      .catch(error=>{
+        console.error(
+          '[shutdown] fatal',
+          error?.message||error
+        );
+        process.exit(1);
+      });
+  });
+}server.listen(Number(process.env.PORT||3000),'0.0.0.0',()=>{
   const listenAt=Date.now();
   console.log(`MEMEFLOW listening on ${process.env.PORT||3000}`);
 
@@ -7624,7 +7846,7 @@ const server=http.createServer((req,res)=>handler(req,res).catch(e=>json(res,500
 
   // MEMEFLOW_RECOVERY_LIVE_PRIORITY_V38
   // Startup recovery is background work. Real WS/live evaluation has priority.
-  startDecisionRecovery({
+  __mfStartupRecoveryPromiseV52=startDecisionRecovery({
     store,
     metrics:recoveryMetrics,
     getLiveState:()=>({

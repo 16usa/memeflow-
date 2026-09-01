@@ -500,6 +500,7 @@ export function makeHolderQueue(config,deps){
   let wakeAt=0;
   let leaseSeq=0;
   let draining=false;
+  let stopped=false; // MEMEFLOW_HOLDER_QUEUE_SHUTDOWN_V52
 
   // Metrics are additive: older diagnostics remain compatible.
   holderMetrics.holderWorkerTimeouts ??= 0;
@@ -553,6 +554,15 @@ export function makeHolderQueue(config,deps){
   }
 
   function scheduleWake(){
+    if(stopped){
+      if(wakeTimer){
+        clearTimeout(wakeTimer);
+        wakeTimer=null;
+      }
+      wakeAt=0;
+      return;
+    }
+
     if(!pending.size){
       if(wakeTimer){ clearTimeout(wakeTimer); wakeTimer=null; }
       wakeAt=0;
@@ -775,7 +785,7 @@ export function makeHolderQueue(config,deps){
   }
 
   function drain(){
-    if(draining)return;
+    if(stopped||draining)return;
     draining=true;
     holderMetrics.holderDrainRuns++;
 
@@ -802,12 +812,13 @@ export function makeHolderQueue(config,deps){
   }
 
   function kickDrain(){
+    if(stopped)return;
     holderMetrics.holderDrainKicks++;
     queueMicrotask(drain);
   }
 
   function enqueue(mint){
-    if(!mint||pending.has(mint)||active.has(mint))return false;
+    if(stopped||!mint||pending.has(mint)||active.has(mint))return false;
     if(pending.size>=queueMax)dropOldest();
 
     const now=Date.now();
@@ -870,9 +881,26 @@ export function makeHolderQueue(config,deps){
   },watchdogMs);
   watchdog.unref?.();
 
+  function close(){
+    if(stopped)return;
+    stopped=true;
+
+    pending.clear();
+
+    if(wakeTimer){
+      clearTimeout(wakeTimer);
+      wakeTimer=null;
+    }
+
+    wakeAt=0;
+    clearInterval(watchdog);
+  }
+
   return {
     enqueue,
     drain:()=>kickDrain(),
+    close,
+    get closed(){return stopped;},
     get queueDepth(){return pending.size},
     get processing(){return active.size},
     get activeCount(){return active.size},
