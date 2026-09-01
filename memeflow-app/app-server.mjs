@@ -2426,12 +2426,23 @@ const __mfPreAdmissionSweepTimer=setInterval(()=>{
     }
 
     if(__mfEntryAdmissionState.size>50000){
+      // MEMEFLOW_PRE_ADMISSION_STATE_CLEANUP_V73
+      // Delete while iterating the Map directly: ECMAScript Map iterators
+      // remain valid when the current entry is deleted. This preserves exact
+      // membership semantics without cloning 50k+ keys on every oversized
+      // 2-second sweep.
       const active=new Set(uids);
-      const live=new Set(tokens.map(t=>String(t?.mint||'')));
-      for(const key of [...__mfEntryAdmissionState.keys()]){
+      const live=new Set();
+
+      for(const token of tokens){
+        live.add(String(token?.mint||''));
+      }
+
+      for(const key of __mfEntryAdmissionState.keys()){
         const cut=String(key).lastIndexOf(':');
         const uid=cut>=0?String(key).slice(0,cut):'';
         const mint=cut>=0?String(key).slice(cut+1):'';
+
         if(!active.has(uid)||!live.has(mint)){
           __mfEntryAdmissionState.delete(key);
         }
