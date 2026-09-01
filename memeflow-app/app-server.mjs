@@ -8158,7 +8158,19 @@ async function __mfVerifyPreOpenRisk(
     return {ok:false,code:'PREOPEN_TOKEN_DEAD_OR_REMOVED',token:latest||updated,decision};
   }
   const currentSampleKey=__mfWalletRiskSampleKey(latest);
-  if(latest.walletClusterRiskSampleKey&&currentSampleKey&&latest.walletClusterRiskSampleKey!==currentSampleKey){
+
+  // MEMEFLOW_WALLET_RISK_DISABLED_SAMPLE_GUARD_V49
+  //
+  // A stored wallet-risk sample key is relevant only when wallet-risk is
+  // currently enabled for this user. When both wallet-risk gates are disabled,
+  // V47 intentionally skips wallet-risk RPC but MUST still continue through
+  // common V40/V46 Entry Admission + final BUY READY verification.
+  if(
+    __mfWalletRiskRequiredV47 &&
+    latest.walletClusterRiskSampleKey &&
+    currentSampleKey &&
+    latest.walletClusterRiskSampleKey!==currentSampleKey
+  ){
     try{store.setToken(latest.mint,{preOpenRiskStatus:'HOLDER_SAMPLE_CHANGED'})}catch{}
     return {ok:false,code:'WALLET_RISK_SAMPLE_CHANGED',token:latest,decision};
   }
