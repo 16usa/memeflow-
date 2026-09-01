@@ -1602,3 +1602,12 @@ html[data-theme="light"]
 }
 
 /* ===== /MEMEFLOW_CANONICAL_PAGE_CANVAS_V1 ===== */
+
+/* ===== MEMEFLOW_DARK_HEADER_TRANSPARENT_V1 ===== */
+html:not([data-theme="light"]) .mf-site-header,
+html[data-theme="dark"] .mf-site-header {
+  background: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+/* ===== /MEMEFLOW_DARK_HEADER_TRANSPARENT_V1 ===== */
