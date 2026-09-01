@@ -7376,6 +7376,16 @@ if(url.pathname==='/api/ai/decisions'){
               : null;
         }catch{}
 
+        // MEMEFLOW_TERMINAL_HOLDER_TRUTH_HOTPATH_V71
+        // __mfPipelineHolderTruthV26 is pure for this token/mint/now snapshot.
+        // Compute it once and reuse all canonical holder fields below.
+        const holderTruth=
+          __mfPipelineHolderTruthV26(
+            token,
+            mint,
+            now
+          );
+
         return {
           ...position,
           currentPriceSol:
@@ -7387,30 +7397,11 @@ if(url.pathname==='/api/ai/decisions'){
             ageMinutes,
             // MEMEFLOW_PIPELINE_CANONICAL_CHART_MARKET_V26
             // Never treat event-ledger observation as exact total holders.
-            holderCount:
-              __mfPipelineHolderTruthV26(
-                token,
-                mint,
-                now
-              ).count,
-            holderObservedCount:
-              __mfPipelineHolderTruthV26(
-                token,
-                mint,
-                now
-              ).observed,
-            holderSource:
-              __mfPipelineHolderTruthV26(
-                token,
-                mint,
-                now
-              ).source,
+            holderCount:holderTruth.count,
+            holderObservedCount:holderTruth.observed,
+            holderSource:holderTruth.source,
             holderCountAuthoritative:
-              __mfPipelineHolderTruthV26(
-                token,
-                mint,
-                now
-              ).authoritative===true,
+              holderTruth.authoritative===true,
             holderCountIsLowerBound: false,
 
             volume5mSol:finite(market?.volume5mSol),
