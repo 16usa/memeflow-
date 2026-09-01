@@ -3570,53 +3570,182 @@ function shadowValidateSettings(settings,limit=50){
   };
 }
 
+// MEMEFLOW_SETTINGS_REEVALUATE_LIVE_PRIORITY_V42
+const __mfSettingsReevaluationQueueV42=new Map();
+
+function __mfSettingsRevisionV42(uid){
+  const user=store.user(uid)||{};
+  return (
+    user.settingsVersion ||
+    user.updatedAt ||
+    user.createdAt ||
+    0
+  );
+}
+
+function __mfSettingsSnapshotV42(uid){
+  return JSON.parse(
+    JSON.stringify(store.settings(uid)||{})
+  );
+}
+
 function reevaluateUser(uid){
-  const settings=store.settings(uid);
-  const tokens=__mfLiveScannerTokens();
-  const settingsVersion=
-    store.user(uid)?.settingsVersion||
-    store.user(uid)?.updatedAt||
-    Date.now();
+  // Capture BOTH policy and revision before entering the per-user queue.
+  // If another settings write happens before this pass starts, the pass exits
+  // immediately and the newer queued revision becomes authoritative.
+  const settings=__mfSettingsSnapshotV42(uid);
+  const settingsVersion=__mfSettingsRevisionV42(uid);
 
-  let count=0,errors=0,hidden=0;
-  const states={WAITING:0,WATCH:0,BLOCKED:0,'BUY READY':0,EXPIRED:0};
+  const previous=
+    __mfSettingsReevaluationQueueV42.get(uid) ||
+    Promise.resolve();
 
-  for(const token of tokens){
-    try{
-      const admission=__mfEntryAdmissionForUser(token,uid,settings);
+  let current=null;
 
-      if(admission?.admitted!==true){
-        __mfClearDecisionForUserMint(uid,token.mint);
-        __mfEntryAdmissionState.set(uid+':'+token.mint,false);
-        hidden++;
-        continue;
-      }
+  const run=async()=>{
+    const tokens=__mfLiveScannerTokens();
+    const yieldEvery=Math.max(
+      1,
+      Math.floor(
+        Number(
+          process.env.SETTINGS_REEVALUATE_YIELD_EVERY || 25
+        )
+      ) || 25
+    );
 
-      __mfEntryAdmissionState.set(uid+':'+token.mint,true);
+    let count=0,errors=0,hidden=0;
+    let yields=0;
+    const states={
+      WAITING:0,
+      WATCH:0,
+      BLOCKED:0,
+      'BUY READY':0,
+      EXPIRED:0
+    };
 
-      const d=evaluate(token,settings);
-      const saved={
-        ...d,
-        primaryReason:d.primaryReason,
-        settingsVersion,
-        reevaluatedAt:Date.now()
-      };
+    const staleResult=()=>({
+      count,
+      hidden,
+      errors,
+      states,
+      settingsVersion,
+      stale:true,
+      aborted:true,
+      yields
+    });
 
-      store.setDecision(uid,token.mint,saved);
-      try{openaiAI.recordDecision(uid,token,saved,{source:'settings-reevaluate'})}catch{}
-      states[d.state]=(states[d.state]||0)+1;
-
-      if(d.state==='BUY READY'){
-        void __mfHandleDecision(uid,token,saved).catch(()=>{});
-      }
-
-      count++;
-    }catch(_){
-      errors++;
+    // A newer settings write may have arrived while this revision waited
+    // behind an older in-flight pass.
+    if(__mfSettingsRevisionV42(uid)!==settingsVersion){
+      return staleResult();
     }
-  }
 
-  return {count,hidden,errors,states,settingsVersion};
+    for(let index=0;index<tokens.length;index++){
+      if(index>0 && index%yieldEvery===0){
+        await __mfYieldToEventLoop();
+        yields++;
+
+        // Settings can change only while JS yielded. Check BEFORE processing
+        // the next token so the old revision cannot perform another write.
+        if(__mfSettingsRevisionV42(uid)!==settingsVersion){
+          return staleResult();
+        }
+      }
+
+      const token=tokens[index];
+
+      try{
+        const admission=
+          __mfEntryAdmissionForUser(
+            token,
+            uid,
+            settings
+          );
+
+        if(admission?.admitted!==true){
+          __mfClearDecisionForUserMint(uid,token.mint);
+          __mfEntryAdmissionState.set(
+            uid+':'+token.mint,
+            false
+          );
+          hidden++;
+          continue;
+        }
+
+        __mfEntryAdmissionState.set(
+          uid+':'+token.mint,
+          true
+        );
+
+        const d=evaluate(token,settings);
+        const saved={
+          ...d,
+          primaryReason:d.primaryReason,
+          settingsVersion,
+          reevaluatedAt:Date.now()
+        };
+
+        store.setDecision(
+          uid,
+          token.mint,
+          saved
+        );
+
+        try{
+          openaiAI.recordDecision(
+            uid,
+            token,
+            saved,
+            {source:'settings-reevaluate'}
+          );
+        }catch{}
+
+        states[d.state]=(states[d.state]||0)+1;
+
+        if(d.state==='BUY READY'){
+          void __mfHandleDecision(
+            uid,
+            token,
+            saved
+          ).catch(()=>{});
+        }
+
+        count++;
+      }catch(_){
+        errors++;
+      }
+    }
+
+    return {
+      count,
+      hidden,
+      errors,
+      states,
+      settingsVersion,
+      stale:false,
+      aborted:false,
+      yields
+    };
+  };
+
+  current=
+    previous
+      .catch(()=>{})
+      .then(run);
+
+  __mfSettingsReevaluationQueueV42.set(
+    uid,
+    current
+  );
+
+  return current.finally(()=>{
+    if(
+      __mfSettingsReevaluationQueueV42.get(uid)===
+      current
+    ){
+      __mfSettingsReevaluationQueueV42.delete(uid);
+    }
+  });
 }
 
 /* MEMEFLOW_NATIVE_AI_V46_BEGIN */
@@ -5205,7 +5334,7 @@ async function handler(req,res){const url=new URL(req.url,'http://x');
    );
 
    const reevaluation=
-     reevaluateUser(u.id);
+     await reevaluateUser(u.id);
 
    const state=
      __mfOwnerIntelState(u.id);
@@ -6530,8 +6659,8 @@ if(url.pathname==='/api/ai/decisions'){
  // /MEMEFLOW_ACCOUNT_HANDOFF_ROUTES_FIX7
 
  if(url.pathname==='/api/settings/audit'&&req.method==='GET')return json(res,200,{history:store.settingsHistory(u.id,Number(url.searchParams.get('limit')||100))});
- if(url.pathname==='/api/settings'&&req.method==='PUT'){const b=await body(req);const checked=validateSettings(b.settings||{});if(!checked.ok)return json(res,400,{error:'INVALID_SETTINGS',message:checked.errors.join(' '),errors:checked.errors});if(checked.settings.tradingEnvironment==='live'&&!hasLiveEntitlement(u))return json(res,403,{error:'LIVE_ENTITLEMENT_REQUIRED',message:'LIVE trading environment requires an active Pro subscription or owner entitlement.'});if(b.version!=null&&Number(b.version)!==Number(u.settingsVersion||1))return json(res,409,{error:'SETTINGS_VERSION_CONFLICT',message:'Settings changed on the server. Reload before saving again.',version:u.settingsVersion||1});const before=JSON.parse(JSON.stringify(store.settings(u.id)));const shadow=checked.settings.shadowValidation?shadowValidateSettings(checked.settings,50):null;if(shadow?.errors?.length)return json(res,400,{error:'SHADOW_VALIDATION_FAILED',message:'Proposed settings could not be evaluated safely.',shadowValidation:shadow});const saved=store.setSettings(u.id,checked.settings);if(saved.changeLog!==false)store.recordSettingsChange(u.id,before,saved,{actor:u.id,source:'settings_put'});const decisionsReevaluated=reevaluateUser(u.id);return json(res,200,{settings:saved,version:u.settingsVersion,decisionsReevaluated,shadowValidation:shadow})}
- if(url.pathname==='/api/settings/defaults'&&req.method==='POST'){const before=JSON.parse(JSON.stringify(store.settings(u.id)));const saved=store.setSettings(u.id,defaults());if(saved.changeLog!==false)store.recordSettingsChange(u.id,before,saved,{actor:u.id,source:'restore_defaults'});const decisionsReevaluated=reevaluateUser(u.id);return json(res,200,{settings:saved,version:u.settingsVersion,decisionsReevaluated})}
+ if(url.pathname==='/api/settings'&&req.method==='PUT'){const b=await body(req);const checked=validateSettings(b.settings||{});if(!checked.ok)return json(res,400,{error:'INVALID_SETTINGS',message:checked.errors.join(' '),errors:checked.errors});if(checked.settings.tradingEnvironment==='live'&&!hasLiveEntitlement(u))return json(res,403,{error:'LIVE_ENTITLEMENT_REQUIRED',message:'LIVE trading environment requires an active Pro subscription or owner entitlement.'});if(b.version!=null&&Number(b.version)!==Number(u.settingsVersion||1))return json(res,409,{error:'SETTINGS_VERSION_CONFLICT',message:'Settings changed on the server. Reload before saving again.',version:u.settingsVersion||1});const before=JSON.parse(JSON.stringify(store.settings(u.id)));const shadow=checked.settings.shadowValidation?shadowValidateSettings(checked.settings,50):null;if(shadow?.errors?.length)return json(res,400,{error:'SHADOW_VALIDATION_FAILED',message:'Proposed settings could not be evaluated safely.',shadowValidation:shadow});const saved=store.setSettings(u.id,checked.settings);if(saved.changeLog!==false)store.recordSettingsChange(u.id,before,saved,{actor:u.id,source:'settings_put'});const decisionsReevaluated=await reevaluateUser(u.id);return json(res,200,{settings:saved,version:u.settingsVersion,decisionsReevaluated,shadowValidation:shadow})}
+ if(url.pathname==='/api/settings/defaults'&&req.method==='POST'){const before=JSON.parse(JSON.stringify(store.settings(u.id)));const saved=store.setSettings(u.id,defaults());if(saved.changeLog!==false)store.recordSettingsChange(u.id,before,saved,{actor:u.id,source:'restore_defaults'});const decisionsReevaluated=await reevaluateUser(u.id);return json(res,200,{settings:saved,version:u.settingsVersion,decisionsReevaluated})}
  if(url.pathname==='/api/settings/kill-switch'&&req.method==='POST'){u.killSwitch=true;store.save();return json(res,200,{active:true})}
  if(url.pathname==='/api/owner/status')return json(res,200,{isOwner:Boolean(u.isOwner),entitlementSource:u.isOwner?'owner':'none'});
  if(url.pathname==='/api/owner/claim'&&req.method==='POST'){console.log('[OWNER_CLAIM_ROUTE_HIT] method=POST content-type='+req.headers['content-type']);if(!OWNER_ACCESS_KEY){console.log('[OWNER_CLAIM] status=503 reason=not_configured');return json(res,503,{error:'OWNER_ACCESS_NOT_CONFIGURED'});}const b=await body(req);const supplied=String(b.ownerAccessKey||b.accessKey||'').trim();const configured=String(process.env.OWNER_ACCESS_KEY||'').trim();console.log('[OWNER_CLAIM] supplied_len='+supplied.length+' configured_len='+configured.length);if(!supplied){console.log('[OWNER_CLAIM] status=400 reason=missing');return json(res,400,{error:'OWNER_KEY_MISSING'});}const a=Buffer.from(configured),c=Buffer.from(supplied);if(a.length!==c.length||!crypto.timingSafeEqual(a,c)){console.log('[OWNER_CLAIM] status=403 reason=invalid');return json(res,403,{error:'INVALID_OWNER_ACCESS_KEY'});}store.grantOwner(u.id,'owner_access_key');console.log('[OWNER_CLAIM] status=200 uid='+u.id);return json(res,200,{ok:true,code:'OWNER_ACCESS_ACTIVATED',isOwner:true,liveEntitled:true,entitlementSource:'owner'});}
