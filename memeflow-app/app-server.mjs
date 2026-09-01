@@ -8168,49 +8168,57 @@ function __mfWalletRiskSampleKey(token={}){
       ''
     ).trim();
 
+  // MEMEFLOW_WALLET_RISK_SAMPLE_HOTPATH_V75
+  // Preserve the exact "first 10 valid normalized rows" semantics, but stop
+  // scanning once those 10 valid rows have been produced.
+  const holderParts=[];
+  const holderRiskRows=
+    Array.isArray(token.holderRiskWallets)
+      ? token.holderRiskWallets
+      : [];
+
+  for(const row of holderRiskRows){
+    let wallet='';
+    let pct;
+
+    if(typeof row==='string'){
+      wallet=row.trim();
+      pct=undefined;
+    }else if(Array.isArray(row)){
+      wallet=String(row[0]||'').trim();
+      pct=row[1];
+    }else{
+      wallet=
+        String(
+          row?.wallet ||
+          row?.address ||
+          row?.owner ||
+          ''
+        ).trim();
+
+      pct=
+        row?.pct ??
+        row?.percentage ??
+        row?.sharePct;
+    }
+
+    if(!wallet){
+      continue;
+    }
+
+    holderParts.push(
+      wallet +
+      '@' +
+      pctKey(pct)
+    );
+
+    if(holderParts.length>=10){
+      break;
+    }
+  }
+
   const holderRows=
-    (
-      Array.isArray(token.holderRiskWallets)
-        ? token.holderRiskWallets
-        : []
-    )
-      .map(row=>{
-        let wallet='';
-        let pct;
-
-        if(typeof row==='string'){
-          wallet=row.trim();
-          pct=undefined;
-        }else if(Array.isArray(row)){
-          wallet=String(row[0]||'').trim();
-          pct=row[1];
-        }else{
-          wallet=
-            String(
-              row?.wallet ||
-              row?.address ||
-              row?.owner ||
-              ''
-            ).trim();
-
-          pct=
-            row?.pct ??
-            row?.percentage ??
-            row?.sharePct;
-        }
-
-        if(!wallet)return '';
-
-        return (
-          wallet +
-          '@' +
-          pctKey(pct)
-        );
-      })
-      .filter(Boolean)
-      // scanWalletClusterRisk hard-caps maxWallets at 10.
-      .slice(0,10)
-      .join('|');
+    holderParts.join('|');
 
   const creator=
     String(
