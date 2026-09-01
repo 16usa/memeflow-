@@ -28,9 +28,19 @@ assert.match(
   route,
   /MEMEFLOW_AI_DECISIONS_LAZY_RECOVERY_V41/
 );
+// V60 keeps V41 lazy-recovery semantics but replaces the globally sorted
+// admitted-scanner array with a linear inventory object.
 assert.match(
   route,
-  /const _admittedScannerTokens=\s*__mfAdmittedScannerTokensForUser\(u\.id\)/
+  /MEMEFLOW_AI_DECISIONS_INVENTORY_HOTPATH_V60/
+);
+assert.match(
+  route,
+  /const _decisionInventoryV60=\s*buildAdmittedScannerInventoryV60\(\{[\s\S]*?tokens:Object\.values\(store\.state\.tokens\|\|\{\}\)[\s\S]*?evaluateAdmission:token=>[\s\S]*?__mfEntryAdmissionForUser\([\s\S]*?\)\s*\}\)/
+);
+assert.match(
+  route,
+  /const _recoveryTokens=\s*_decisionInventoryV60\.recoveryTokens/
 );
 assert.match(
   route,
@@ -42,7 +52,40 @@ assert.match(
 );
 assert.match(
   route,
-  /const _liveMintSet=new Set\(\s*_admittedScannerTokens/
+  /const _liveMintSet=\s*_decisionInventoryV60\.admittedMints/
+);
+
+// The removed globally-sorted implementation must not return to the V60
+// inventory block.
+const inventoryStart=route.indexOf(
+  'const _decisionInventoryV60='
+);
+const inventoryEnd=route.indexOf(
+  'const _raw=',
+  inventoryStart
+);
+
+assert.ok(
+  inventoryStart>=0 && inventoryEnd>inventoryStart,
+  'V60 inventory boundary missing'
+);
+
+const inventoryBlock=route.slice(
+  inventoryStart,
+  inventoryEnd
+);
+
+assert.doesNotMatch(
+  inventoryBlock,
+  /__mfAdmittedScannerTokensForUser\(u\.id\)/
+);
+assert.doesNotMatch(
+  inventoryBlock,
+  /__mfLiveScannerTokens\(/
+);
+assert.doesNotMatch(
+  inventoryBlock,
+  /store\.tokens\(/
 );
 
 // The old third recovery implementation must be gone from this endpoint.

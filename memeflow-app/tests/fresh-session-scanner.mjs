@@ -128,7 +128,33 @@ const aiDecisionRoute=app.slice(
   app.indexOf("if(url.pathname==='/api/ai/decisions'"),
   app.indexOf("if(url.pathname==='/api/debug/filter-pipeline'")
 );
-assert.match(aiDecisionRoute,/__mfAdmittedScannerTokensForUser\(u\.id\)/);
+
+// MEMEFLOW_AI_DECISIONS_INVENTORY_HOTPATH_V60
+// The trading route must still run strict per-user Entry Admission, but V60
+// no longer requires the globally sorted admitted-scanner helper.
+assert.match(
+  aiDecisionRoute,
+  /MEMEFLOW_AI_DECISIONS_INVENTORY_HOTPATH_V60/
+);
+assert.match(
+  aiDecisionRoute,
+  /buildAdmittedScannerInventoryV60/
+);
+assert.match(
+  aiDecisionRoute,
+  /evaluateAdmission:token=>[\s\S]*?__mfEntryAdmissionForUser/
+);
+assert.match(
+  aiDecisionRoute,
+  /const _liveMintSet=\s*_decisionInventoryV60\.admittedMints/
+);
+assert.doesNotMatch(
+  aiDecisionRoute.slice(
+    aiDecisionRoute.indexOf('const _decisionInventoryV60='),
+    aiDecisionRoute.indexOf('const _raw=')
+  ),
+  /__mfAdmittedScannerTokensForUser\(u\.id\)/
+);
 
 assert.doesNotMatch(
   app,

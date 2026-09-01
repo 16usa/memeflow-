@@ -7,6 +7,7 @@ import {makeRecoveryMetrics,startDecisionRecovery,lazyRecoverUser} from './src/r
 import {makeLiveEvalMetrics,makeEvaluateForActiveUsers} from './src/liveeval.mjs';
 import {makeDiscoveryMetrics} from './src/discqueue.mjs';
 import {candidateFeed,candidateVisibilityCounts} from './src/candidate-visibility.mjs';
+import {buildAdmittedScannerInventoryV60} from './src/admitted-scanner-inventory-v60.mjs'; // MEMEFLOW_AI_DECISIONS_INVENTORY_HOTPATH_V60
 import { startPumpLiveTradeFeed } from './src/pump-live-trade-feed.mjs'; // MEMEFLOW_V12_21_LIVE_TRADE_STREAM_HOLDER_FEED
 import { ChartHistoryArchive } from './src/chart-history-archive.mjs'; // MEMEFLOW_CHART_DATA_PATH_FIX_V2_DIRTY_SAFE // MEMEFLOW_CHART_HISTORY_RESTORE_V1
 import {createOpportunityEngine} from './src/opportunity-engine.mjs'; // MEMEFLOW_OPPORTUNITY_ENGINE_V1
@@ -6397,17 +6398,34 @@ if(url.pathname==='/api/ai/decisions'){
   const _lim=Math.min(200,Math.max(1,Number(url.searchParams.get('limit')||50)));
   const _off=Math.max(0,Number(url.searchParams.get('offset')||0));
   const _scope=String(url.searchParams.get('scope')||'candidates').toLowerCase();
+  const _decisionSettingsV60=store.settings(u.id)||{};
   // MEMEFLOW_FRESH_SESSION_SCANNER_V1
   // MEMEFLOW_AI_DECISIONS_LAZY_RECOVERY_V41
   //
   // Build Entry-admitted scanner inventory once. Trading-feed membership is
   // unchanged; only the missing-decision recovery mechanism is unified.
-  const _admittedScannerTokens=
-    __mfAdmittedScannerTokensForUser(u.id);
+  //
+  // MEMEFLOW_AI_DECISIONS_INVENTORY_HOTPATH_V60
+  // Do NOT call __mfLiveScannerTokens() here: that helper intentionally returns
+  // newest-first order by globally sorting store.tokens(). The decisions route
+  // needs full admitted membership plus only a bounded newest recovery prefix.
+  // Admission itself is still evaluated for every current token on every poll.
+  const _decisionInventoryV60=
+    buildAdmittedScannerInventoryV60({
+      tokens:Object.values(store.state.tokens||{}),
+      recoveryLimit:DECISION_RECOVERY_TOKEN_LIMIT,
+      isCurrent:token=>
+        __mfIsCurrentScannerToken(token),
+      evaluateAdmission:token=>
+        __mfEntryAdmissionForUser(
+          token,
+          u.id,
+          _decisionSettingsV60
+        )
+    });
 
   const _recoveryTokens=
-    _admittedScannerTokens
-      .slice(0,DECISION_RECOVERY_TOKEN_LIMIT);
+    _decisionInventoryV60.recoveryTokens;
 
   const _needsLazyRecovery=
     _recoveryTokens.some(_token=>{
@@ -6426,10 +6444,8 @@ if(url.pathname==='/api/ai/decisions'){
     });
   }
 
-  const _liveMintSet=new Set(
-    _admittedScannerTokens
-      .map(t=>String(t?.mint||''))
-  );
+  const _liveMintSet=
+    _decisionInventoryV60.admittedMints;
   const _raw=store.decisions(u.id).filter(d=>_liveMintSet.has(String(d?.mint||'')));
   const _all=_raw;
   const _selected=candidateFeed(_all,_scope);
