@@ -11,6 +11,7 @@ import {buildAdmittedScannerInventoryV60} from './src/admitted-scanner-inventory
 import {selectNewestCurrentTokensV61} from './src/live-states-prefix-v61.mjs'; // MEMEFLOW_LIVE_STATES_PREFIX_HOTPATH_V61
 import {selectDiscoveryBridgeWorkV66} from './src/discovery-bridge-selector-v66.mjs'; // MEMEFLOW_DISCOVERY_BRIDGE_HOTPATH_V66
 import {selectHolderRefreshPrefixV67} from './src/holder-refresh-selector-v67.mjs'; // MEMEFLOW_HOLDER_REFRESH_HOTPATH_V67
+import {selectOldestScannerEvictionsV68} from './src/scanner-capacity-selector-v68.mjs'; // MEMEFLOW_SCANNER_CAPACITY_HOTPATH_V68
 import { startPumpLiveTradeFeed } from './src/pump-live-trade-feed.mjs'; // MEMEFLOW_V12_21_LIVE_TRADE_STREAM_HOLDER_FEED
 import { ChartHistoryArchive } from './src/chart-history-archive.mjs'; // MEMEFLOW_CHART_DATA_PATH_FIX_V2_DIRTY_SAFE // MEMEFLOW_CHART_HISTORY_RESTORE_V1
 import {createOpportunityEngine} from './src/opportunity-engine.mjs'; // MEMEFLOW_OPPORTUNITY_ENGINE_V1
@@ -181,32 +182,15 @@ async function __mfPruneScannerRuntimeState(now=Date.now()){
         scannerRows.length-
         __mfScannerCacheMaxTokens;
 
+      // MEMEFLOW_SCANNER_CAPACITY_HOTPATH_V68
+      // Exact oldest-first eviction prefix without globally sorting all
+      // evictable current tokens. OPEN-position protection is unchanged.
       const evictable=
-        scannerRows
-          .filter(
-            token=>
-              !open.has(
-                String(token?.mint||'')
-              )
-          )
-          .sort((a,b)=>{
-            const at=Number(
-              a?.lastMarketActivityAt ??
-              a?.lastPriceAt ??
-              a?.updatedAt ??
-              a?.discoveredAt ??
-              0
-            );
-            const bt=Number(
-              b?.lastMarketActivityAt ??
-              b?.lastPriceAt ??
-              b?.updatedAt ??
-              b?.discoveredAt ??
-              0
-            );
-            return at-bt;
-          })
-          .slice(0,excess);
+        selectOldestScannerEvictionsV68({
+          scannerRows,
+          openMints:open,
+          limit:excess
+        });
 
       const evictedMints=[];
 
