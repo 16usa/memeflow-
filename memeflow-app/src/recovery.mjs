@@ -193,16 +193,35 @@ export async function startDecisionRecovery({
  * @returns {Promise<void>}
  */
 export function lazyRecoverUser({
-  store, uid, metrics, tokenLimit = 200, evaluateFn = evaluate,
+  store,
+  uid,
+  metrics,
+  tokenLimit = 200,
+  evaluateFn = evaluate,
+  tokenProvider = null,
 }) {
   if (_lazyInProgress.has(uid)) return _lazyInProgress.get(uid);
 
   metrics.lazyRecoveryUsersRunning++;
 
   const p = Promise.resolve().then(async () => {
+    // MEMEFLOW_AI_DECISIONS_LAZY_RECOVERY_V41
+    // A caller may constrain the recovery inventory (for example the strict
+    // Entry-admitted scanner set used by /api/ai/decisions). The default stays
+    // store.tokens() for existing callers.
+    const provided =
+      typeof tokenProvider==='function'
+        ? tokenProvider()
+        : store.tokens();
+
+    const sourceTokens=
+      Array.isArray(provided)
+        ? provided
+        : [];
+
     // Snapshots define ordering only. Re-read every token immediately before
-    // evaluation so lazy recovery also respects current WS state.
-    const snapshots = store.tokens().slice(0, tokenLimit);
+    // evaluation so V38 freshness/non-overwrite behavior remains intact.
+    const snapshots = sourceTokens.slice(0, tokenLimit);
 
     for (const tokenSnapshot of snapshots) {
       await new Promise(r => setImmediate(r));

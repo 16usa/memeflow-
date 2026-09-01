@@ -6122,20 +6122,36 @@ if(url.pathname==='/api/ai/decisions'){
   const _off=Math.max(0,Number(url.searchParams.get('offset')||0));
   const _scope=String(url.searchParams.get('scope')||'candidates').toLowerCase();
   // MEMEFLOW_FRESH_SESSION_SCANNER_V1
-  // Never rebuild the live candidate feed from persisted pre-restart tokens.
-  if(!store._uidDec[u.id]?.size){
-    const _fresh=__mfAdmittedScannerTokensForUser(u.id)
+  // MEMEFLOW_AI_DECISIONS_LAZY_RECOVERY_V41
+  //
+  // Build Entry-admitted scanner inventory once. Trading-feed membership is
+  // unchanged; only the missing-decision recovery mechanism is unified.
+  const _admittedScannerTokens=
+    __mfAdmittedScannerTokensForUser(u.id);
+
+  const _recoveryTokens=
+    _admittedScannerTokens
       .slice(0,DECISION_RECOVERY_TOKEN_LIMIT);
-    const _settings=store.settings(u.id);
-    for(const _token of _fresh){
-      try{
-        const _decision=evaluate(_token,_settings);
-        store.setDecision(u.id,_token.mint,{..._decision,primaryReason:_decision.primaryReason});
-      }catch{}
-    }
+
+  const _needsLazyRecovery=
+    _recoveryTokens.some(_token=>{
+      const _mint=String(_token?.mint||'').trim();
+      if(!_mint)return false;
+      return !store.state.decisions?.[u.id+':'+_mint];
+    });
+
+  if(_needsLazyRecovery){
+    await lazyRecoverUser({
+      store,
+      uid:u.id,
+      metrics:recoveryMetrics,
+      tokenLimit:DECISION_RECOVERY_TOKEN_LIMIT,
+      tokenProvider:()=>_recoveryTokens
+    });
   }
+
   const _liveMintSet=new Set(
-    __mfAdmittedScannerTokensForUser(u.id)
+    _admittedScannerTokens
       .map(t=>String(t?.mint||''))
   );
   const _raw=store.decisions(u.id).filter(d=>_liveMintSet.has(String(d?.mint||'')));
