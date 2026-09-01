@@ -3693,8 +3693,27 @@ function startDiscovery(i=0){
 }
 
 function shadowValidateSettings(settings,limit=50){
-  const rows=__mfLiveScannerTokens()
-    .slice(0,Math.max(1,Math.min(200,limit)));
+  // MEMEFLOW_SHADOW_VALIDATION_HOTPATH_V65
+  // Shadow validation needs the exact newest-first prefix only. Reuse the V61
+  // bounded selector instead of globally sorting every current scanner token.
+  const shadowLimit=Math.max(
+    1,
+    Math.min(
+      200,
+      Number(limit)||50
+    )
+  );
+  const shadowNow=Date.now();
+  const rows=
+    selectNewestCurrentTokensV61({
+      tokens:Object.values(store.state.tokens||{}),
+      limit:shadowLimit,
+      isCurrent:token=>
+        __mfIsCurrentScannerToken(
+          token,
+          shadowNow
+        )
+    }).tokens;
 
   const counts={
     WAITING:0,
