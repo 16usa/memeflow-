@@ -7631,6 +7631,16 @@ async function __mfVerifyPreOpenRisk(
   decision,
   settings
 ){
+  // MEMEFLOW_PREOPEN_SETTINGS_REVISION_GUARD_V40
+  // This settings object was captured synchronously by the caller immediately
+  // before pre-open verification. Record the matching revision before any RPC
+  // await so a later settings mutation can never masquerade as this result.
+  const preOpenSettingsVersion=
+    store.state.users?.[uid]?.settingsVersion ||
+    store.state.users?.[uid]?.updatedAt ||
+    store.state.users?.[uid]?.createdAt ||
+    0;
+
   // User disabled both wallet-risk gates.
   if(!__mfWalletRiskRequired(settings)){
     return {
@@ -7764,12 +7774,31 @@ async function __mfVerifyPreOpenRisk(
     return {ok:false,code:'WALLET_RISK_SAMPLE_CHANGED',token:latest,decision};
   }
   updated=latest;
-  const finalDecision=evaluate(updated,settings);
 
-  const settingsVersion=
+  // Wallet-risk RPC can take seconds. If settings changed while it was
+  // running, the old settings object is no longer authoritative. Abort this
+  // pass; the normal settings reevaluation/live path will issue a fresh pass.
+  const currentSettingsVersion=
     store.state.users?.[uid]?.settingsVersion ||
     store.state.users?.[uid]?.updatedAt ||
-    Date.now();
+    store.state.users?.[uid]?.createdAt ||
+    0;
+
+  if(currentSettingsVersion!==preOpenSettingsVersion){
+    return {
+      ok:false,
+      code:'PREOPEN_SETTINGS_CHANGED',
+      token:updated,
+      decision:
+        store.state.decisions?.[
+          uid+':'+String(updated?.mint||token?.mint||'')
+        ] ||
+        decision
+    };
+  }
+
+  const finalDecision=evaluate(updated,settings);
+  const settingsVersion=preOpenSettingsVersion;
 
   const saved={
     ...finalDecision,
