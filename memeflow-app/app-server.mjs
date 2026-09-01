@@ -3763,7 +3763,21 @@ function reevaluateUser(uid){
   let current=null;
 
   const run=async()=>{
-    const tokens=__mfLiveScannerTokens();
+    // MEMEFLOW_SETTINGS_REEVALUATE_HOTPATH_V64
+    // Settings reevaluation needs membership only. Ordering cannot change the
+    // final per-token admission/evaluation result, so do not globally sort the
+    // full scanner cache before this full pass.
+    const now=Date.now();
+    const tokens=
+      Object.values(store.state.tokens||{})
+        .filter(
+          token=>
+            __mfIsCurrentScannerToken(
+              token,
+              now
+            )
+        );
+
     const yieldEvery=Math.max(
       1,
       Math.floor(

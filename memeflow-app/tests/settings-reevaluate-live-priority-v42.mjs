@@ -52,6 +52,21 @@ assert.match(
   /settingsVersion,[\s\S]*?reevaluatedAt:Date\.now\(\)/
 );
 
+// V64: reevaluateUser is a membership-only full pass and must not invoke the
+// globally sorted scanner accessor.
+assert.match(
+  block,
+  /MEMEFLOW_SETTINGS_REEVALUATE_HOTPATH_V64/
+);
+assert.match(
+  block,
+  /Object\.values\(store\.state\.tokens\|\|\{\}\)[\s\S]*?__mfIsCurrentScannerToken/
+);
+assert.doesNotMatch(
+  block,
+  /const tokens=__mfLiveScannerTokens\(\)/
+);
+
 const yieldAt=block.indexOf(
   'await __mfYieldToEventLoop()'
 );
