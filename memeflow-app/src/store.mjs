@@ -7,6 +7,9 @@ import {TokenRegistry} from './token-registry.mjs';
 export class JsonStore {
   constructor(dir){
     this.dir=dir;this.file=path.join(dir,'state.json');
+    this.backupFile=path.join(dir,'state.json.bak'); // MEMEFLOW_CRASH_SAFE_STATE_RECOVERY_V53
+    this._stateLoadSource='defaults';
+    this._stateLoadRecovery=null;
     this.state={users:{},tokens:{},decisions:{},positions:{},stripeEvents:{},metrics:{discovered:0,scanned:0,errors:0},paperPositions:{},paperTrades:{},paperProposals:{},paperProcessed:{},paperMetrics:{entries:0,exits:0,errors:0},settingsAudit:{}};
     this._uidDec={}; // uid → Map<key,updatedAt> — in-memory only, not persisted
 
@@ -24,7 +27,12 @@ export class JsonStore {
     // state.json remains compact; every discovered/scanned token is persisted
     // independently in SQLite with WAL + batched writes.
     this.tokenRegistry=new TokenRegistry(dir);
-    this.load();
+    try{
+      this.load();
+    }catch(error){
+      try{this.tokenRegistry?.close?.()}catch{}
+      throw error;
+    }
 
     const warmLimit=Math.max(
       1000,
@@ -41,7 +49,296 @@ export class JsonStore {
       };
     }
   }
-  load(){try{const d=JSON.parse(fs.readFileSync(this.file,'utf8'));this.state={...this.state,...d};if(!this.state.decisions)this.state.decisions={}}catch(_){}}
+  _validateStateSnapshotV53(value,file){
+    if(
+      !value ||
+      typeof value!=='object' ||
+      Array.isArray(value)
+    ){
+      const error=new Error(
+        'state snapshot root must be an object: '+file
+      );
+      error.code='STATE_SNAPSHOT_INVALID';
+      throw error;
+    }
+
+    // Only validate persisted container SHAPES. Missing containers remain
+    // backward-compatible and are supplied by constructor defaults.
+    for(const key of [
+      'users',
+      'tokens',
+      'positions',
+      'stripeEvents',
+      'metrics',
+      'paperPositions',
+      'paperTrades',
+      'paperProposals',
+      'paperProcessed',
+      'paperMetrics',
+      'settingsAudit'
+    ]){
+      if(
+        value[key]!==undefined &&
+        (
+          value[key]===null ||
+          typeof value[key]!=='object' ||
+          Array.isArray(value[key])
+        )
+      ){
+        const error=new Error(
+          'invalid state container "'+key+'" in '+file
+        );
+        error.code='STATE_SNAPSHOT_INVALID';
+        throw error;
+      }
+    }
+
+    return value;
+  }
+
+  _readStateSnapshotV53(file){
+    let text;
+
+    try{
+      text=fs.readFileSync(file,'utf8');
+    }catch(error){
+      if(error?.code==='ENOENT'){
+        return {
+          exists:false,
+          ok:false,
+          file,
+          error:null,
+          text:null,
+          value:null
+        };
+      }
+
+      return {
+        exists:true,
+        ok:false,
+        file,
+        error,
+        text:null,
+        value:null
+      };
+    }
+
+    try{
+      const value=
+        this._validateStateSnapshotV53(
+          JSON.parse(text),
+          file
+        );
+
+      return {
+        exists:true,
+        ok:true,
+        file,
+        error:null,
+        text,
+        value
+      };
+    }catch(error){
+      return {
+        exists:true,
+        ok:false,
+        file,
+        error,
+        text,
+        value:null
+      };
+    }
+  }
+
+  _applyStateSnapshotV53(snapshot,source){
+    this.state={
+      ...this.state,
+      ...snapshot
+    };
+
+    if(!this.state.decisions){
+      this.state.decisions={};
+    }
+
+    this._stateLoadSource=source;
+  }
+
+  _syncDirV53(){
+    let fd=null;
+
+    try{
+      fd=fs.openSync(this.dir,'r');
+      fs.fsyncSync(fd);
+    }catch{
+      // Some filesystems/platforms do not permit directory fsync.
+      // File fsync + atomic rename remain the primary durability contract.
+    }finally{
+      if(fd!==null){
+        try{fs.closeSync(fd)}catch{}
+      }
+    }
+  }
+
+  _writeDurableSyncV53(file,text){
+    const tmp=
+      file+
+      '.tmp.'+
+      process.pid+
+      '.recover';
+
+    let fd=null;
+
+    try{
+      fd=fs.openSync(tmp,'w',0o600);
+      fs.writeFileSync(fd,text,'utf8');
+      fs.fsyncSync(fd);
+    }finally{
+      if(fd!==null){
+        try{fs.closeSync(fd)}catch{}
+      }
+    }
+
+    fs.renameSync(tmp,file);
+    this._syncDirV53();
+  }
+
+  _cleanupStateTempsV53(){
+    let names=[];
+
+    try{
+      names=fs.readdirSync(this.dir);
+    }catch{
+      return;
+    }
+
+    const primaryPrefix=
+      path.basename(this.file)+'.tmp.';
+
+    const backupPrefix=
+      path.basename(this.backupFile)+'.tmp.';
+
+    for(const name of names){
+      if(
+        !name.startsWith(primaryPrefix) &&
+        !name.startsWith(backupPrefix)
+      ){
+        continue;
+      }
+
+      try{
+        fs.rmSync(
+          path.join(this.dir,name),
+          {force:true}
+        );
+      }catch{}
+    }
+  }
+
+  load(){
+    const primary=
+      this._readStateSnapshotV53(
+        this.file
+      );
+
+    if(primary.ok){
+      this._applyStateSnapshotV53(
+        primary.value,
+        'primary'
+      );
+
+      this._cleanupStateTempsV53();
+      return {
+        source:'primary',
+        recovered:false
+      };
+    }
+
+    const backup=
+      this._readStateSnapshotV53(
+        this.backupFile
+      );
+
+    if(backup.ok){
+      this._applyStateSnapshotV53(
+        backup.value,
+        'backup'
+      );
+
+      this._stateLoadRecovery={
+        at:Date.now(),
+        primaryExists:primary.exists,
+        primaryError:
+          primary.error?.message||
+          (
+            primary.exists
+              ? 'STATE_PRIMARY_INVALID'
+              : 'STATE_PRIMARY_MISSING'
+          ),
+        backupFile:this.backupFile
+      };
+
+      // Re-establish a valid canonical primary before the rest of startup.
+      this._writeDurableSyncV53(
+        this.file,
+        backup.text
+      );
+
+      this._cleanupStateTempsV53();
+
+      console.warn(
+        '[state-load] recovered state.json from last-known-good backup'
+      );
+
+      return {
+        source:'backup',
+        recovered:true
+      };
+    }
+
+    // A genuinely brand-new data directory is valid: no state has ever been
+    // committed, so constructor defaults are authoritative.
+    if(!primary.exists && !backup.exists){
+      this._stateLoadSource='defaults';
+      this._cleanupStateTempsV53();
+
+      return {
+        source:'defaults',
+        recovered:false
+      };
+    }
+
+    // Existing-but-untrustworthy durable state must NEVER silently turn into
+    // an empty trading state.
+    const error=
+      new Error(
+        'MEMEFLOW state recovery failed: no trustworthy state snapshot'
+      );
+
+    error.code='STATE_RECOVERY_FAILED';
+    error.primary={
+      exists:primary.exists,
+      message:
+        primary.error?.message||
+        (
+          primary.exists
+            ? 'STATE_PRIMARY_INVALID'
+            : 'STATE_PRIMARY_MISSING'
+        )
+    };
+    error.backup={
+      exists:backup.exists,
+      message:
+        backup.error?.message||
+        (
+          backup.exists
+            ? 'STATE_BACKUP_INVALID'
+            : 'STATE_BACKUP_MISSING'
+        )
+    };
+
+    throw error;
+  }
+
   // MEMEFLOW_FRESH_SESSION_SCANNER_V1
   // Scanner tokens are runtime state. Persist only snapshots needed by an OPEN
   // position. Decisions remain memory-only and are never restored as live.
@@ -111,11 +408,77 @@ export class JsonStore {
             'utf8'
           );
 
+          // fs.promises.writeFile is retained so V50's serialized-writer
+          // regression continues to observe the exact physical state write.
+          let stateHandle=null;
+
+          try{
+            stateHandle=
+              await fs.promises.open(
+                tmp,
+                'r'
+              );
+
+            await stateHandle.sync();
+          }finally{
+            try{await stateHandle?.close?.()}catch{}
+          }
+
+          // Preserve the PREVIOUS valid committed state as last-known-good.
+          // Never overwrite a good backup with malformed primary contents.
+          const primary=
+            this._readStateSnapshotV53(
+              this.file
+            );
+
+          if(primary.ok){
+            const backupTmp=
+              this.backupFile+
+              '.tmp.'+
+              process.pid+
+              '.'+
+              job.sequence;
+
+            let backupHandle=null;
+
+            try{
+              await fs.promises.writeFile(
+                backupTmp,
+                primary.text,
+                'utf8'
+              );
+
+              backupHandle=
+                await fs.promises.open(
+                  backupTmp,
+                  'r'
+                );
+
+              await backupHandle.sync();
+              await backupHandle.close();
+              backupHandle=null;
+
+              await fs.promises.rename(
+                backupTmp,
+                this.backupFile
+              );
+            }finally{
+              try{await backupHandle?.close?.()}catch{}
+              try{
+                await fs.promises.rm(
+                  backupTmp,
+                  {force:true}
+                );
+              }catch{}
+            }
+          }
+
           await fs.promises.rename(
             tmp,
             this.file
           );
 
+          this._syncDirV53();
           this._lastStateSaveError=null;
         }catch(error){
           this._lastStateSaveError={
