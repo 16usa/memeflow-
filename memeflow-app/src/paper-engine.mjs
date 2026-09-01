@@ -174,6 +174,69 @@ export class PaperEngine {
       .sort((a, b) => b.createdAtMs - a.createdAtMs);
   }
 
+  // MEMEFLOW_ENTRY_READINESS_HOTPATH_V57
+  // Readiness needs aggregates, not sorted history. Keep public history helpers
+  // unchanged for UI/API callers, but compute the pre-entry snapshot in one
+  // linear positions pass + one linear trades pass.
+  _entryReadinessSnapshotV57(userId, mint, timestamp = this.clock()) {
+    const day = new Date(timestamp).toISOString().slice(0, 10);
+
+    const openPositions = [];
+    let existingPosition = null;
+    let dailyEntries = 0;
+    let dailySpent = 0;
+    let deployed = 0;
+
+    for (const position of Object.values(this.store.state.paperPositions || {})) {
+      if (position?.userId !== userId) continue;
+
+      const openedDay = String(position?.openedAt || '').slice(0, 10);
+
+      if (openedDay === day) {
+        dailyEntries += 1;
+        dailySpent += num(position?.initialSizeSol);
+      }
+
+      if (position?.status !== 'OPEN') continue;
+
+      openPositions.push(position);
+      deployed += num(position?.remainingSizeSol);
+
+      if (position?.mint === mint) {
+        const candidateOpenedAt = num(position?.openedAtMs);
+        const currentOpenedAt = num(existingPosition?.openedAtMs, -Infinity);
+
+        if (
+          !existingPosition ||
+          candidateOpenedAt > currentOpenedAt
+        ) {
+          existingPosition = position;
+        }
+      }
+    }
+
+    let dailyRealizedPnl = 0;
+
+    for (const trade of Object.values(this.store.state.paperTrades || {})) {
+      if (trade?.userId !== userId) continue;
+
+      const executedDay = String(trade?.executedAt || '').slice(0, 10);
+
+      if (executedDay === day) {
+        dailyRealizedPnl += num(trade?.realizedPnlSol);
+      }
+    }
+
+    return {
+      openPositions,
+      existingPosition,
+      dailyEntries,
+      dailySpent,
+      dailyRealizedPnl,
+      deployed
+    };
+  }
+
   dailyEntries(userId, timestamp = this.clock()) {
     const day = new Date(timestamp).toISOString().slice(0, 10);
     return this.userPositions(userId).filter(p => p.openedAt.slice(0, 10) === day).length;
@@ -209,15 +272,21 @@ export class PaperEngine {
     const price = num(token?.priceSol, NaN);
     const tokenUpdatedAt = Number(token?.updatedAt || token?.lastPriceAt || 0);
 
-    const openPositions = this.userPositions(userId, 'OPEN');
-    const existingPosition = this.openForMint(userId, token?.mint);
-    const dailyEntries = this.dailyEntries(userId, now);
-    const dailySpent = this.dailySpent(userId, now);
-    const dailyRealizedPnl = this.dailyRealizedPnl(userId, now);
-    const deployed = openPositions.reduce(
-      (sum, position) => sum + num(position.remainingSizeSol),
-      0
-    );
+    const readinessSnapshot =
+      this._entryReadinessSnapshotV57(
+        userId,
+        token?.mint,
+        now
+      );
+
+    const {
+      openPositions,
+      existingPosition,
+      dailyEntries,
+      dailySpent,
+      dailyRealizedPnl,
+      deployed
+    } = readinessSnapshot;
 
     const priceReady = Number.isFinite(price) && price > 0;
 
