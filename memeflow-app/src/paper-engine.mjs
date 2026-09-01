@@ -37,6 +37,28 @@ export class PaperEngine {
       )
     );
     this._lastPositionCheckpointAtV55 = this.clock();
+
+    // MEMEFLOW_PAPER_PROCESSED_RUNTIME_V56
+    // paperProcessed stays an object for compatibility with the existing
+    // PaperEngine API, but is a bounded same-runtime replay cache only.
+    this.paperProcessedMaxEntries = Math.max(
+      16,
+      Math.floor(
+        num(
+          options.paperProcessedMaxEntries ??
+          process.env.PAPER_PROCESSED_MAX_ENTRIES,
+          20000
+        )
+      )
+    );
+
+    this.paperProcessedTrimTo = Math.max(
+      8,
+      Math.min(
+        this.paperProcessedMaxEntries - 1,
+        Math.floor(this.paperProcessedMaxEntries * 0.75)
+      )
+    );
   }
 
   ensureState() {
@@ -67,6 +89,37 @@ export class PaperEngine {
     this._lastPositionCheckpointAtV55 = now;
     this.save();
     return true;
+  }
+
+  _recordPaperProcessedV56(key, value) {
+    const cache = this.store.state.paperProcessed;
+    cache[key] = value;
+
+    const entries = Object.entries(cache);
+
+    if (entries.length <= this.paperProcessedMaxEntries) {
+      return value;
+    }
+
+    // Trimming happens only when capacity is crossed, then removes a full
+    // quarter of the cache so hot traffic cannot trigger an O(N log N) sort on
+    // every following decision.
+    entries.sort((a, b) => {
+      const at = Date.parse(a[1]?.at || '') || 0;
+      const bt = Date.parse(b[1]?.at || '') || 0;
+      return at - bt;
+    });
+
+    const removeCount = Math.max(
+      0,
+      entries.length - this.paperProcessedTrimTo
+    );
+
+    for (let i = 0; i < removeCount; i++) {
+      delete cache[entries[i][0]];
+    }
+
+    return value;
   }
 
   mode(settings = {}) {
@@ -371,19 +424,29 @@ export class PaperEngine {
         primaryReason: decision.primaryReason || null,
       };
       this.store.state.paperProposals[proposal.id] = proposal;
-      this.store.state.paperProcessed[key] = { result: 'PROPOSED', proposalId: proposal.id, at: nowIso() };
+      this._recordPaperProcessedV56(
+        key,
+        {
+          result: 'PROPOSED',
+          proposalId: proposal.id,
+          at: nowIso()
+        }
+      );
       this.save();
       return { action: 'PROPOSED', proposal };
     }
 
     if (settings.operatingMode === 'automate') {
       const result = this.openPosition(userId, token, decision, settings, key);
-      this.store.state.paperProcessed[key] = {
-        result: result.ok ? 'OPENED' : 'REJECTED',
-        code: result.code || null,
-        positionId: result.position?.id || null,
-        at: nowIso(),
-      };
+      this._recordPaperProcessedV56(
+        key,
+        {
+          result: result.ok ? 'OPENED' : 'REJECTED',
+          code: result.code || null,
+          positionId: result.position?.id || null,
+          at: nowIso(),
+        }
+      );
       this.save();
       return result.ok ? { action: 'OPENED', position: result.position } : { action: 'REJECTED', reason: result.code };
     }

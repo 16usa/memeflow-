@@ -166,6 +166,13 @@ export class JsonStore {
       this.state.decisions={};
     }
 
+    // MEMEFLOW_PAPER_PROCESSED_RUNTIME_V56
+    // paperProcessed protects replay only inside the current evaluator runtime.
+    // Decisions themselves are runtime-only, OPEN positions already prevent a
+    // duplicate automated entry, and PENDING proposals have their own duplicate
+    // check. Never restore stale revision-cache rows across a process restart.
+    this.state.paperProcessed={};
+
     this._stateLoadSource=source;
   }
 
@@ -373,6 +380,9 @@ export class JsonStore {
   // MEMEFLOW_FRESH_SESSION_SCANNER_V1
   // Scanner tokens are runtime state. Persist only snapshots needed by an OPEN
   // position. Decisions remain memory-only and are never restored as live.
+  //
+  // V56: paperProcessed is also runtime-only. It is an evaluator revision
+  // idempotency cache, NOT user trading history.
   _statePersistPayload(){
     const openMints=new Set();
 
@@ -405,6 +415,7 @@ export class JsonStore {
     const {
       decisions:_d,
       tokens:_tokens,
+      paperProcessed:_paperProcessed,
       ...rest
     }=this.state;
 
