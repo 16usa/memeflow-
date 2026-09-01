@@ -198,19 +198,54 @@ export class JsonStore {
     m.set(key,now);
     if(m.size>250){let ok=null,ot=Infinity;for(const[k,t]of m)if(t<ot){ot=t;ok=k};if(ok){m.delete(ok);delete this.state.decisions[ok]}}
   }
-  removeToken(mint){
-    mint=String(mint||'');
-    if(!mint)return false;
-    delete this.state.tokens[mint];
-    for(const [key,d] of Object.entries(this.state.decisions||{})){
-      if(String(d?.mint||'')===mint)delete this.state.decisions[key];
+  // MEMEFLOW_SCANNER_PRUNE_LIVE_PRIORITY_V44
+  // Bulk removal preserves removeToken() semantics but cleans the decision
+  // table/index only once for a capacity-eviction batch.
+  removeTokens(mints){
+    const target=new Set(
+      (Array.isArray(mints)?mints:[mints])
+        .map(mint=>String(mint||'').trim())
+        .filter(Boolean)
+    );
+
+    if(!target.size)return 0;
+
+    let removed=0;
+
+    for(const mint of target){
+      if(
+        Object.prototype.hasOwnProperty.call(
+          this.state.tokens||{},
+          mint
+        )
+      ){
+        delete this.state.tokens[mint];
+        removed++;
+      }
     }
+
+    for(const [key,d] of Object.entries(this.state.decisions||{})){
+      if(target.has(String(d?.mint||''))){
+        delete this.state.decisions[key];
+      }
+    }
+
     for(const [uid,index] of Object.entries(this._uidDec||{})){
       for(const key of [...index.keys()]){
-        if(!this.state.decisions?.[key])index.delete(key);
+        if(!this.state.decisions?.[key]){
+          index.delete(key);
+        }
       }
       if(!index.size)delete this._uidDec[uid];
     }
+
+    return removed;
+  }
+
+  removeToken(mint){
+    mint=String(mint||'').trim();
+    if(!mint)return false;
+    this.removeTokens([mint]);
     return true;
   }
   registryStatus(){return this.tokenRegistry?.status?.()||null}

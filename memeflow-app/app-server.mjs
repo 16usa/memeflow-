@@ -101,12 +101,19 @@ function __mfAllActiveUsersStableBlocked(mint,now=Date.now()){
   return true;
 }
 
-function __mfDropScannerToken(mint,reason='PRUNED'){
+function __mfDropScannerToken(
+  mint,
+  reason='PRUNED',
+  {skipStoreRemoval=false}={}
+){
   mint=String(mint||'');
   if(!mint)return false;
   if(__mfOpenPositionMints().has(mint))return false;
 
-  try{store.removeToken?.(mint)}catch{}
+  if(skipStoreRemoval!==true){
+    try{store.removeToken?.(mint)}catch{}
+  }
+
   try{eventHolderLedger?.dropMint?.(mint)}catch{}
   try{opportunityEngine?.dropMint?.(mint)}catch{}
   try{__pumpLiveTradeFeed?.dropMint?.(mint)}catch{}
@@ -122,69 +129,203 @@ function __mfDropScannerToken(mint,reason='PRUNED'){
       if(String(key).endsWith(':'+mint))__mfEntryAdmissionState.delete(key);
     }
   }catch{}
-  try{__systemViewEmitV31('token_removed',{mint,reason,ts:Date.now()})}catch{}
+  try{
+    __systemViewEmitV31(
+      'token_removed',
+      {mint,reason,ts:Date.now()}
+    )
+  }catch{}
   return true;
 }
 
-function __mfPruneScannerRuntimeState(now=Date.now()){
+// MEMEFLOW_SCANNER_PRUNE_LIVE_PRIORITY_V44
+let __mfScannerPruneInFlightV44=false;
+
+const __mfScannerPruneYieldEveryV44=Math.max(
+  25,
+  Number(process.env.LIVE_SCANNER_PRUNE_YIELD_EVERY||250)
+);
+
+const __mfScannerPruneYieldV44=()=>new Promise(
+  resolve=>setImmediate(resolve)
+);
+
+async function __mfPruneScannerRuntimeState(now=Date.now()){
   // MEMEFLOW_PERMANENT_TOKEN_REGISTRY_V1
   // No age TTL and no settings-based deletion. This function is RAM hygiene
   // only; SQLite remains the permanent source of truth.
-  const open=__mfOpenPositionMints();
-  const scannerRows=Object.values(store.state.tokens||{})
-    .filter(token=>__mfIsCurrentScannerToken(token,now));
-
-  if(scannerRows.length>__mfScannerCacheMaxTokens){
-    const excess=scannerRows.length-__mfScannerCacheMaxTokens;
-
-    const evictable=scannerRows
-      .filter(token=>!open.has(String(token?.mint||'')))
-      .sort((a,b)=>{
-        const at=Number(
-          a?.lastMarketActivityAt ??
-          a?.lastPriceAt ??
-          a?.updatedAt ??
-          a?.discoveredAt ??
-          0
-        );
-        const bt=Number(
-          b?.lastMarketActivityAt ??
-          b?.lastPriceAt ??
-          b?.updatedAt ??
-          b?.discoveredAt ??
-          0
-        );
-        return at-bt;
-      })
-      .slice(0,excess);
-
-    for(const token of evictable){
-      __mfDropScannerToken(token.mint,'HOT_CACHE_CAPACITY_EVICTED');
-    }
+  if(__mfScannerPruneInFlightV44){
+    return {skipped:true,reason:'PRUNE_ALREADY_RUNNING'};
   }
 
-  const liveMints=new Set(
-    __mfLiveScannerTokens(now)
-      .map(token=>String(token?.mint||''))
-      .filter(Boolean)
-  );
+  __mfScannerPruneInFlightV44=true;
 
-  for(const [key,d] of Object.entries(store.state.decisions||{})){
-    const mint=String(d?.mint||'');
-    if(mint&&!liveMints.has(mint)&&!open.has(mint))delete store.state.decisions[key];
-  }
+  try{
+    const open=__mfOpenPositionMints();
+    const scannerRows=
+      Object.values(store.state.tokens||{})
+        .filter(
+          token=>
+            __mfIsCurrentScannerToken(
+              token,
+              now
+            )
+        );
 
-  for(const [uid,index] of Object.entries(store._uidDec||{})){
-    for(const key of [...index.keys()]){
-      if(!store.state.decisions?.[key])index.delete(key);
+    if(scannerRows.length>__mfScannerCacheMaxTokens){
+      const excess=
+        scannerRows.length-
+        __mfScannerCacheMaxTokens;
+
+      const evictable=
+        scannerRows
+          .filter(
+            token=>
+              !open.has(
+                String(token?.mint||'')
+              )
+          )
+          .sort((a,b)=>{
+            const at=Number(
+              a?.lastMarketActivityAt ??
+              a?.lastPriceAt ??
+              a?.updatedAt ??
+              a?.discoveredAt ??
+              0
+            );
+            const bt=Number(
+              b?.lastMarketActivityAt ??
+              b?.lastPriceAt ??
+              b?.updatedAt ??
+              b?.discoveredAt ??
+              0
+            );
+            return at-bt;
+          })
+          .slice(0,excess);
+
+      const evictedMints=[];
+
+      for(let i=0;i<evictable.length;i++){
+        const token=evictable[i];
+
+        if(
+          __mfDropScannerToken(
+            token.mint,
+            'HOT_CACHE_CAPACITY_EVICTED',
+            {skipStoreRemoval:true}
+          )
+        ){
+          evictedMints.push(
+            String(token.mint)
+          );
+        }
+
+        if(
+          i>0 &&
+          i%__mfScannerPruneYieldEveryV44===0
+        ){
+          await __mfScannerPruneYieldV44();
+        }
+      }
+
+      if(evictedMints.length){
+        store.removeTokens?.(evictedMints);
+      }
     }
-    if(!index.size)delete store._uidDec[uid];
+
+    // Do NOT invoke the store's sorted token-list accessor here.
+    // Pruning needs membership only, not display/recovery ordering.
+    const liveMints=new Set(
+      Object.values(store.state.tokens||{})
+        .filter(
+          token=>
+            __mfIsCurrentScannerToken(
+              token,
+              now
+            )
+        )
+        .map(
+          token=>String(token?.mint||'')
+        )
+        .filter(Boolean)
+    );
+
+    const decisionRows=
+      Object.entries(
+        store.state.decisions||{}
+      );
+
+    for(let i=0;i<decisionRows.length;i++){
+      const [key,d]=decisionRows[i];
+      const mint=String(d?.mint||'');
+
+      if(
+        mint &&
+        !liveMints.has(mint) &&
+        !open.has(mint)
+      ){
+        delete store.state.decisions[key];
+      }
+
+      if(
+        i>0 &&
+        i%__mfScannerPruneYieldEveryV44===0
+      ){
+        await __mfScannerPruneYieldV44();
+      }
+    }
+
+    const userIndexes=
+      Object.entries(store._uidDec||{});
+
+    for(let i=0;i<userIndexes.length;i++){
+      const [uid,index]=userIndexes[i];
+
+      for(const key of [...index.keys()]){
+        if(!store.state.decisions?.[key]){
+          index.delete(key);
+        }
+      }
+
+      if(!index.size){
+        delete store._uidDec[uid];
+      }
+
+      if(
+        i>0 &&
+        i%__mfScannerPruneYieldEveryV44===0
+      ){
+        await __mfScannerPruneYieldV44();
+      }
+    }
+
+    return {
+      skipped:false,
+      liveMints:liveMints.size
+    };
+  }finally{
+    __mfScannerPruneInFlightV44=false;
   }
 }
 
 const __mfScannerPruneTimer=setInterval(
-  ()=>__mfPruneScannerRuntimeState(),
-  Math.max(1000,Number(process.env.LIVE_SCANNER_PRUNE_MS||5000))
+  ()=>{
+    void __mfPruneScannerRuntimeState()
+      .catch(error=>{
+        console.warn(
+          '[scanner-prune]',
+          error?.message||error
+        );
+      });
+  },
+  Math.max(
+    1000,
+    Number(
+      process.env.LIVE_SCANNER_PRUNE_MS||
+      5000
+    )
+  )
 );
 __mfScannerPruneTimer.unref?.();
 
