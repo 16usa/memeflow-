@@ -49,6 +49,7 @@ export function makeLiveEvalMetrics(){
     livePolicyGroups:0,
     liveEvaluationCoalesced:0,
     liveEvaluationInflightMints:0,
+    liveEvaluationStaleSettingsSkipped:0,
     entryAdmissionUsersChecked:0,
     entryAdmissionUsersPassed:0,
     entryAdmissionUsersHidden:0,
@@ -59,12 +60,17 @@ export function makeLiveEvalMetrics(){
 
 export function makeEvaluateForActiveUsers({
   store,metrics,activeUserHoursMs=86400000,batchSize=25,delayMs=0,
-  onDecision=null,admissionCheck=null
+  onDecision=null,admissionCheck=null,evaluateFn=evaluate
 }){
   let lastEvictAt=0;
   const settingsCache=new Map();
   const inflight=new Map();
   const pending=new Map();
+
+  function currentSettingsVersion(uid){
+    const u=store.state.users?.[uid]||{};
+    return u.settingsVersion||u.updatedAt||u.createdAt||0;
+  }
 
   function recordError(e){
     const msg=safeError(e);
@@ -74,8 +80,7 @@ export function makeEvaluateForActiveUsers({
     metrics.liveEvaluationErrorReasons[msg]=(metrics.liveEvaluationErrorReasons[msg]||0)+1;
   }
   function cachedSettings(uid){
-    const u=store.state.users?.[uid]||{};
-    const version=u.settingsVersion||u.updatedAt||u.createdAt||0;
+    const version=currentSettingsVersion(uid);
     const cached=settingsCache.get(uid);
     if(cached&&cached.version===version)return cached;
     const settings=store.settings(uid);
@@ -112,11 +117,13 @@ export function makeEvaluateForActiveUsers({
     metrics.activeEvaluationUsers=activeUids.length;
 
     const groups=new Map();
+    const settingsVersionByUid=new Map();
     let admittedUserCount=0;
 
     for(const uid of activeUids){
       try{
         const c=cachedSettings(uid);
+        settingsVersionByUid.set(uid,c.version);
 
         if(typeof admissionCheck==='function'){
           metrics.entryAdmissionUsersChecked++;
@@ -152,7 +159,7 @@ export function makeEvaluateForActiveUsers({
       for(const group of batch){
         let d;
         try{
-          d=evaluate(token,group.settings);
+          d=evaluateFn(token,group.settings);
           metrics.liveUniquePolicyEvaluations++;
         }catch(e){
           recordError(e);
@@ -160,9 +167,24 @@ export function makeEvaluateForActiveUsers({
         }
         for(const uid of group.uids){
           try{
-            const u=store.state.users?.[uid]||{};
-            const settingsVersion=u.settingsVersion||u.updatedAt||Date.now();
-            const savedDecision={...d,primaryReason:d.primaryReason,settingsVersion,reevaluatedAt:Date.now()};
+            const evaluatedSettingsVersion=
+              settingsVersionByUid.get(uid)??0;
+            const currentVersion=currentSettingsVersion(uid);
+
+            // MEMEFLOW_LIVE_SETTINGS_REVISION_GUARD_V39
+            // Never write a decision calculated under an older settings
+            // revision after a newer settings revision became authoritative.
+            if(currentVersion!==evaluatedSettingsVersion){
+              metrics.liveEvaluationStaleSettingsSkipped++;
+              continue;
+            }
+
+            const savedDecision={
+              ...d,
+              primaryReason:d.primaryReason,
+              settingsVersion:evaluatedSettingsVersion,
+              reevaluatedAt:Date.now()
+            };
             store.setDecision(uid,token.mint,savedDecision);
             if(onDecision)onDecision(uid,token,savedDecision);
             metrics.liveEvaluationsPerformed++;
