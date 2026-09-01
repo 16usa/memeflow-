@@ -5982,13 +5982,30 @@ if(false && url.pathname==='/api/ai/assistant' &&req.method==='POST'){
       ? requestBody.mints
       : [];
 
-  const mints=[
-    ...new Set(
-      requested
-        .map(mint=>String(mint||'').trim())
-        .filter(Boolean)
-    )
-  ].slice(0,200);
+  // MEMEFLOW_LIVE_CARD_BATCH_MINT_HOTPATH_V76
+  // Exact first-200 unique normalized semantics without normalizing/spreading
+  // the rest of an oversized request.
+  const mints=[];
+  const seenMints=new Set();
+
+  for(const rawMint of requested){
+    const mint=
+      String(rawMint||'').trim();
+
+    if(
+      !mint ||
+      seenMints.has(mint)
+    ){
+      continue;
+    }
+
+    seenMints.add(mint);
+    mints.push(mint);
+
+    if(mints.length>=200){
+      break;
+    }
+  }
 
   __mfTouchVisibleHolderMintsV4(mints);
 
