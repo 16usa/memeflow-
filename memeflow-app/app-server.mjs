@@ -199,6 +199,20 @@ async function __mfPruneScannerRuntimeState(now=Date.now()){
             )
         );
 
+    // MEMEFLOW_SCANNER_PRUNE_MEMBERSHIP_HOTPATH_V74
+    // scannerRows already is the exact current-token membership for this
+    // prune snapshot. Build liveMints from it once; successful capacity
+    // evictions remove their mint below so decision pruning sees the same
+    // post-eviction membership the old second full-cache scan produced.
+    const liveMints=new Set();
+
+    for(const token of scannerRows){
+      const mint=String(token?.mint||'');
+      if(mint){
+        liveMints.add(mint);
+      }
+    }
+
     if(scannerRows.length>__mfScannerCacheMaxTokens){
       const excess=
         scannerRows.length-
@@ -226,8 +240,15 @@ async function __mfPruneScannerRuntimeState(now=Date.now()){
             {skipStoreRemoval:true}
           )
         ){
+          const evictedMint=
+            String(token.mint);
+
           evictedMints.push(
-            String(token.mint)
+            evictedMint
+          );
+
+          liveMints.delete(
+            evictedMint
           );
         }
 
@@ -246,20 +267,7 @@ async function __mfPruneScannerRuntimeState(now=Date.now()){
 
     // Do NOT invoke the store's sorted token-list accessor here.
     // Pruning needs membership only, not display/recovery ordering.
-    const liveMints=new Set(
-      Object.values(store.state.tokens||{})
-        .filter(
-          token=>
-            __mfIsCurrentScannerToken(
-              token,
-              now
-            )
-        )
-        .map(
-          token=>String(token?.mint||'')
-        )
-        .filter(Boolean)
-    );
+    // V74 reuses the exact current-token Set built from scannerRows above.
 
     const decisionRows=
       Object.entries(
