@@ -7701,29 +7701,132 @@ function __mfWalletRiskRequired(settings={}){
 }
 
 function __mfWalletRiskSampleKey(token={}){
-  if(token.holderRiskWalletsKey){
-    return String(
-      token.holderRiskWalletsKey
-    );
-  }
+  // MEMEFLOW_WALLET_RISK_FINGERPRINT_V48
+  //
+  // This key is the cache identity for scanWalletClusterRisk V3. It must
+  // include every bounded input capable of changing that scan's result.
+  const pctKey=value=>{
+    if(
+      value===null ||
+      value===undefined ||
+      value===''
+    )return '?';
 
-  return (
-    Array.isArray(token.holderRiskWallets)
-      ? token.holderRiskWallets
-      : []
-  )
-    .map(
-      x=>
-        String(
-          x?.wallet ||
-          x?.address ||
-          x ||
-          ''
-        ).trim()
+    const n=Number(value);
+    if(!Number.isFinite(n))return '?';
+
+    const clamped=
+      Math.max(
+        0,
+        Math.min(100,n)
+      );
+
+    // wallet-cluster-risk.mjs rounds exposure to 0.001%, so finer changes
+    // cannot alter its persisted result and should not create RPC churn.
+    return (
+      Math.round(clamped*1000)/1000
+    ).toFixed(3);
+  };
+
+  const sourceKey=
+    String(
+      token.holderRiskWalletsKey ||
+      ''
+    ).trim();
+
+  const holderRows=
+    (
+      Array.isArray(token.holderRiskWallets)
+        ? token.holderRiskWallets
+        : []
     )
-    .filter(Boolean)
-    .slice(0,8)
-    .join('|');
+      .map(row=>{
+        let wallet='';
+        let pct;
+
+        if(typeof row==='string'){
+          wallet=row.trim();
+          pct=undefined;
+        }else if(Array.isArray(row)){
+          wallet=String(row[0]||'').trim();
+          pct=row[1];
+        }else{
+          wallet=
+            String(
+              row?.wallet ||
+              row?.address ||
+              row?.owner ||
+              ''
+            ).trim();
+
+          pct=
+            row?.pct ??
+            row?.percentage ??
+            row?.sharePct;
+        }
+
+        if(!wallet)return '';
+
+        return (
+          wallet +
+          '@' +
+          pctKey(pct)
+        );
+      })
+      .filter(Boolean)
+      // scanWalletClusterRisk hard-caps maxWallets at 10.
+      .slice(0,10)
+      .join('|');
+
+  const creator=
+    String(
+      token.creator ||
+      token.creatorWallet ||
+      token.developerWallet ||
+      token.devWallet ||
+      ''
+    ).trim();
+
+  const creatorExposure=
+    creator
+      ? creator+'@'+pctKey(token.developerPct)
+      : '';
+
+  const launchAt=
+    String(
+      token.pumpCreatedAt ??
+      token.discoveredAt ??
+      token.createdAt ??
+      token.firstSeenAt ??
+      ''
+    );
+
+  // Scanner configuration is process-stable, but data/state survives deploys.
+  // Including it prevents a persisted result produced under old parameters
+  // from being reused after a configuration change.
+  const configKey=[
+    process.env.WALLET_CLUSTER_MAX_WALLETS ?? '5',
+    process.env.WALLET_CLUSTER_SIGNATURE_LIMIT ?? '3',
+    process.env.WALLET_CLUSTER_TX_PER_WALLET ?? '2',
+    process.env.WALLET_CLUSTER_RPC_CONCURRENCY ?? '1',
+    process.env.WALLET_CLUSTER_FUNDING_LOOKBACK_MS ?? String(30*60_000),
+    process.env.WALLET_CLUSTER_AFTER_LAUNCH_MS ?? String(5*60_000),
+    process.env.WALLET_CLUSTER_COMMON_FUNDER_WINDOW_MS ?? '180000',
+    process.env.WALLET_CLUSTER_AMOUNT_RATIO ?? '2.5',
+    process.env.WALLET_CLUSTER_COMMON_FUNDER_MIN_WALLETS ?? '3',
+    process.env.WALLET_CLUSTER_MIN_FUNDING_LAMPORTS ?? String(0.02*1_000_000_000)
+  ].join(',');
+
+  return [
+    'V48:V3_ONE_HOP_COMMON_FUNDER',
+    sourceKey
+      ? 'source='+sourceKey
+      : 'source=',
+    'holders='+holderRows,
+    'creator='+creatorExposure,
+    'launch='+launchAt,
+    'config='+configKey
+  ].join('||');
 }
 
 function __mfWalletRiskCacheFresh(
