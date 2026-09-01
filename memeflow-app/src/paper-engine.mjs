@@ -871,17 +871,59 @@ export class PaperEngine {
     return trade;
   }
 
+  // MEMEFLOW_PAPER_STATUS_HOTPATH_V58
+  // Terminal polls status frequently. Status needs aggregates only, never sorted
+  // history, so compute it with one positions pass + one proposals pass.
+  _statusSnapshotV58(userId) {
+    let openPositions = 0;
+    let closedPositions = 0;
+    let pendingProposals = 0;
+    let realizedPnlSol = 0;
+
+    for (const position of Object.values(this.store.state.paperPositions || {})) {
+      if (position?.userId !== userId) continue;
+
+      if (position?.status === 'OPEN') {
+        openPositions += 1;
+      } else if (position?.status === 'CLOSED') {
+        closedPositions += 1;
+      }
+
+      realizedPnlSol += num(position?.realizedPnlSol);
+    }
+
+    for (const proposal of Object.values(this.store.state.paperProposals || {})) {
+      if (
+        proposal?.userId === userId &&
+        proposal?.status === 'PENDING'
+      ) {
+        pendingProposals += 1;
+      }
+    }
+
+    return {
+      openPositions,
+      closedPositions,
+      pendingProposals,
+      realizedPnlSol
+    };
+  }
+
   status(userId) {
     const user = this.store.state.users[userId];
     const settings = this.settings(user?.settings || {});
+    const snapshot = this._statusSnapshotV58(userId);
+
     return {
       environment: settings.tradingEnvironment,
       operatingMode: settings.operatingMode,
-      paperAutomationActive: settings.tradingEnvironment === 'paper' && settings.operatingMode === 'automate',
-      openPositions: this.userPositions(userId, 'OPEN').length,
-      closedPositions: this.userPositions(userId, 'CLOSED').length,
-      pendingProposals: this.userProposals(userId).filter(p => p.status === 'PENDING').length,
-      realizedPnlSol: this.userPositions(userId).reduce((sum, p) => sum + num(p.realizedPnlSol), 0),
+      paperAutomationActive:
+        settings.tradingEnvironment === 'paper' &&
+        settings.operatingMode === 'automate',
+      openPositions: snapshot.openPositions,
+      closedPositions: snapshot.closedPositions,
+      pendingProposals: snapshot.pendingProposals,
+      realizedPnlSol: snapshot.realizedPnlSol,
       simulated: true,
       walletRequired: false,
       proRequired: false,
