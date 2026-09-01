@@ -9,6 +9,15 @@ export class JsonStore {
     this.dir=dir;this.file=path.join(dir,'state.json');
     this.state={users:{},tokens:{},decisions:{},positions:{},stripeEvents:{},metrics:{discovered:0,scanned:0,errors:0},paperPositions:{},paperTrades:{},paperProposals:{},paperProcessed:{},paperMetrics:{entries:0,exits:0,errors:0},settingsAudit:{}};
     this._uidDec={}; // uid → Map<key,updatedAt> — in-memory only, not persisted
+
+    // MEMEFLOW_STATE_SAVE_SERIALIZATION_V50
+    // A single drain owns state.json writes. New snapshots replace only the
+    // not-yet-written pending snapshot; an in-flight write is never overlapped.
+    this._stateSavePending=null;
+    this._stateSaveDrainPromise=null;
+    this._stateSaveSequence=0;
+    this._lastStateSaveError=null;
+
     fs.mkdirSync(dir,{recursive:true});
 
     // MEMEFLOW_PERMANENT_TOKEN_REGISTRY_V1
@@ -36,27 +45,169 @@ export class JsonStore {
   // MEMEFLOW_FRESH_SESSION_SCANNER_V1
   // Scanner tokens are runtime state. Persist only snapshots needed by an OPEN
   // position. Decisions remain memory-only and are never restored as live.
+  _statePersistPayload(){
+    const openMints=new Set();
+
+    for(const p of Object.values(this.state.paperPositions||{})){
+      if(
+        String(p?.status||'').toUpperCase()==='OPEN' &&
+        p?.mint
+      ){
+        openMints.add(String(p.mint));
+      }
+    }
+
+    for(const p of Object.values(this.state.positions||{})){
+      if(
+        String(p?.status||'').toUpperCase()==='OPEN' &&
+        p?.mint
+      ){
+        openMints.add(String(p.mint));
+      }
+    }
+
+    const persistedTokens=Object.fromEntries(
+      Object.entries(this.state.tokens||{})
+        .filter(
+          ([mint])=>
+            openMints.has(String(mint))
+        )
+    );
+
+    const {
+      decisions:_d,
+      tokens:_tokens,
+      ...rest
+    }=this.state;
+
+    return JSON.stringify({
+      ...rest,
+      tokens:persistedTokens
+    });
+  }
+
+  _scheduleStateSaveDrainV50(){
+    if(this._stateSaveDrainPromise)return;
+
+    const drain=async()=>{
+      while(this._stateSavePending){
+        // Take ownership of the newest pending snapshot. save() calls that
+        // happen while the await below is in flight replace only the pending
+        // slot and are written on the next loop iteration.
+        const job=this._stateSavePending;
+        this._stateSavePending=null;
+
+        const tmp=
+          this.file+
+          '.tmp.'+
+          process.pid+
+          '.'+
+          job.sequence;
+
+        try{
+          await fs.promises.writeFile(
+            tmp,
+            job.payload,
+            'utf8'
+          );
+
+          await fs.promises.rename(
+            tmp,
+            this.file
+          );
+
+          this._lastStateSaveError=null;
+        }catch(error){
+          this._lastStateSaveError={
+            at:Date.now(),
+            sequence:job.sequence,
+            code:error?.code||null,
+            message:String(
+              error?.message||
+              error||
+              'STATE_SAVE_FAILED'
+            )
+          };
+
+          console.error(
+            '[state-save]',
+            this._lastStateSaveError.message
+          );
+
+          try{
+            await fs.promises.rm(
+              tmp,
+              {force:true}
+            );
+          }catch{}
+        }
+      }
+    };
+
+    this._stateSaveDrainPromise=
+      drain().finally(()=>{
+        this._stateSaveDrainPromise=null;
+
+        // Defensive handoff: if anything queued between the final loop check
+        // and promise finalization, start a fresh drain immediately.
+        if(this._stateSavePending){
+          this._scheduleStateSaveDrainV50();
+        }
+      });
+  }
+
   save(){
     clearTimeout(this._st);
+
     this._st=setTimeout(()=>{
       this._st=null;
-      const openMints=new Set();
-      for(const p of Object.values(this.state.paperPositions||{})){
-        if(String(p?.status||'').toUpperCase()==='OPEN'&&p?.mint)openMints.add(String(p.mint));
+
+      this._stateSavePending={
+        sequence:
+          ++this._stateSaveSequence,
+        payload:
+          this._statePersistPayload()
+      };
+
+      this._scheduleStateSaveDrainV50();
+    },200);
+  }
+
+  async flushStateSave(){
+    // Primarily useful for controlled shutdown/tests. Preserve normal save()
+    // debounce behavior, but allow callers to explicitly force the currently
+    // pending in-memory state to disk and wait for every serialized pass.
+    if(this._st){
+      clearTimeout(this._st);
+      this._st=null;
+
+      this._stateSavePending={
+        sequence:
+          ++this._stateSaveSequence,
+        payload:
+          this._statePersistPayload()
+      };
+    }
+
+    if(this._stateSavePending){
+      this._scheduleStateSaveDrainV50();
+    }
+
+    while(
+      this._stateSaveDrainPromise ||
+      this._stateSavePending
+    ){
+      if(this._stateSaveDrainPromise){
+        await this._stateSaveDrainPromise;
+      }else{
+        this._scheduleStateSaveDrainV50();
       }
-      for(const p of Object.values(this.state.positions||{})){
-        if(String(p?.status||'').toUpperCase()==='OPEN'&&p?.mint)openMints.add(String(p.mint));
-      }
-      const persistedTokens=Object.fromEntries(
-        Object.entries(this.state.tokens||{}).filter(([mint])=>openMints.has(String(mint)))
-      );
-      const {decisions:_d,tokens:_tokens,...rest}=this.state;
-      const persist={...rest,tokens:persistedTokens};
-      const tmp=this.file+'.tmp';
-      fs.promises.writeFile(tmp,JSON.stringify(persist),'utf8')
-        .then(()=>fs.promises.rename(tmp,this.file))
-        .catch(()=>{});
-    },200)
+    }
+
+    return {
+      ok:!this._lastStateSaveError,
+      error:this._lastStateSaveError
+    };
   }
   user(id){if(!this.state.users[id]){this.state.users[id]={id,createdAt:new Date().toISOString(),settings:defaults(),plan:'free',liveEntitled:false,subscriptionStatus:'free',stripeCustomerId:null,stripeSubscriptionId:null,currentPeriodEnd:null,cancelAtPeriodEnd:false,killSwitch:false,isOwner:false,ownerGrantedAt:null,ownerGrantSource:null};this.save()}return this.state.users[id]}
   settings(id){
