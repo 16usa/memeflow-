@@ -12,6 +12,7 @@ import {selectNewestCurrentTokensV61} from './src/live-states-prefix-v61.mjs'; /
 import {selectDiscoveryBridgeWorkV66} from './src/discovery-bridge-selector-v66.mjs'; // MEMEFLOW_DISCOVERY_BRIDGE_HOTPATH_V66
 import {selectHolderRefreshPrefixV67} from './src/holder-refresh-selector-v67.mjs'; // MEMEFLOW_HOLDER_REFRESH_HOTPATH_V67
 import {selectOldestScannerEvictionsV68} from './src/scanner-capacity-selector-v68.mjs'; // MEMEFLOW_SCANNER_CAPACITY_HOTPATH_V68
+import {selectFastHolderPreviewPrefixV69} from './src/fast-holder-preview-selector-v69.mjs'; // MEMEFLOW_FAST_HOLDER_PREVIEW_HOTPATH_V69
 import { startPumpLiveTradeFeed } from './src/pump-live-trade-feed.mjs'; // MEMEFLOW_V12_21_LIVE_TRADE_STREAM_HOLDER_FEED
 import { ChartHistoryArchive } from './src/chart-history-archive.mjs'; // MEMEFLOW_CHART_DATA_PATH_FIX_V2_DIRTY_SAFE // MEMEFLOW_CHART_HISTORY_RESTORE_V1
 import {createOpportunityEngine} from './src/opportunity-engine.mjs'; // MEMEFLOW_OPPORTUNITY_ENGINE_V1
@@ -1263,10 +1264,23 @@ function __mfFastHolderEligibleV4(token,visible,now){
   return !lastAttempt || now-lastAttempt>=retryMs;
 }
 
-function __mfFastHolderCandidatesV4(){
+function __mfFastHolderCandidatesV4(limit=FAST_HOLDER_MAX_CONCURRENT_V4){
+  // MEMEFLOW_FAST_HOLDER_PREVIEW_HOTPATH_V69
   const now=Date.now();
-  const tokens=Object.values(store.state.tokens||{});
-  const visible=[];
+  const k=Math.max(
+    0,
+    Math.min(
+      FAST_HOLDER_MAX_CONCURRENT_V4,
+      Math.floor(Number(limit)||0)
+    )
+  );
+
+  if(k<=0)return [];
+
+  const decisionFloor=__mfHolderDecisionFloorV33();
+  const openMints=__mfOpenPositionMints();
+  const visibleRows=[];
+  let visibleOrder=0;
 
   for(const [mint,meta] of __mfVisibleHolderMintsV4){
     if(
@@ -1279,52 +1293,66 @@ function __mfFastHolderCandidatesV4(){
     const token=store.state.tokens?.[mint]||null;
 
     if(
-      token &&
-      __mfFastHolderEligibleV4(token,true,now)
+      !token ||
+      !__mfFastHolderEligibleV4(token,true,now)
     ){
-      visible.push({token,meta});
+      continue;
     }
-  }
 
-  visible.sort((a,b)=>{
-    const ar=__mfHolderRankV5(a.token);
-    const br=__mfHolderRankV5(b.token);
-
-    if(ar.lane!==br.lane)return ar.lane-br.lane;
-    if(ar.score!==br.score)return br.score-ar.score;
-
-    return Number(a.meta?.order||0)-Number(b.meta?.order||0);
-  });
-
-  if(visible.length){
-    return visible.map(x=>x.token);
-  }
-
-  return tokens
-    .filter(token=>__mfFastHolderEligibleV4(token,false,now))
-    .sort((a,b)=>{
-      const ar=__mfHolderRankV5(a);
-      const br=__mfHolderRankV5(b);
-
-      if(ar.lane!==br.lane)return ar.lane-br.lane;
-      if(ar.score!==br.score)return br.score-ar.score;
-
-      const ax=Number(
-        a?.lastMarketActivityAt ||
-        a?.lastPriceAt ||
-        a?.discoveredAt ||
-        0
-      );
-
-      const bx=Number(
-        b?.lastMarketActivityAt ||
-        b?.lastPriceAt ||
-        b?.discoveredAt ||
-        0
-      );
-
-      return bx-ax;
+    visibleRows.push({
+      token,
+      rank:__mfHolderRankV5(
+        token,
+        decisionFloor,
+        openMints
+      ),
+      visibleOrder:Number(meta?.order||0),
+      activityAt:0,
+      order:visibleOrder++
     });
+  }
+
+  // Visible-card priority remains absolute. If at least one visible eligible
+  // row exists, the fallback inventory is intentionally not considered.
+  if(visibleRows.length){
+    return selectFastHolderPreviewPrefixV69({
+      rows:visibleRows,
+      limit:k,
+      visible:true
+    }).map(row=>row.token);
+  }
+
+  const fallbackRows=[];
+  let fallbackOrder=0;
+
+  for(const token of Object.values(store.state.tokens||{})){
+    if(!__mfFastHolderEligibleV4(token,false,now)){
+      continue;
+    }
+
+    fallbackRows.push({
+      token,
+      rank:__mfHolderRankV5(
+        token,
+        decisionFloor,
+        openMints
+      ),
+      visibleOrder:0,
+      activityAt:Number(
+        token?.lastMarketActivityAt ||
+        token?.lastPriceAt ||
+        token?.discoveredAt ||
+        0
+      ),
+      order:fallbackOrder++
+    });
+  }
+
+  return selectFastHolderPreviewPrefixV69({
+    rows:fallbackRows,
+    limit:k,
+    visible:false
+  }).map(row=>row.token);
 }
 
 async function __mfRunFastHolderPreviewV4(token){
@@ -1382,9 +1410,9 @@ const __mfFastHolderPreviewTimerV4=setInterval(()=>{
 
   if(free<=0)return;
 
-  const candidates=__mfFastHolderCandidatesV4();
+  const candidates=__mfFastHolderCandidatesV4(free);
 
-  for(const token of candidates.slice(0,free)){
+  for(const token of candidates){
     void __mfRunFastHolderPreviewV4(token);
   }
 },500);
