@@ -7927,19 +7927,21 @@ async function __mfVerifyPreOpenRisk(
     store.state.users?.[uid]?.createdAt ||
     0;
 
-  // User disabled both wallet-risk gates.
-  if(!__mfWalletRiskRequired(settings)){
-    return {
-      ok:true,
-      token,
-      decision:{
-        ...decision,
-        preOpenRiskVerified:true
-      }
-    };
-  }
+  // MEMEFLOW_PREOPEN_COMMON_FINALIZE_V47
+  //
+  // Wallet-risk RPC is optional, but the FINAL token/settings/admission/
+  // BUY READY verification is not. In particular, ASSIST proposals may be
+  // approved later than they were created, so disabling wallet-risk must never
+  // bypass V40/V46 or reuse an old BUY READY decision.
+  const __mfWalletRiskRequiredV47=
+    __mfWalletRiskRequired(settings);
 
-  const wallets=
+  let updated=
+    store.state.tokens?.[token.mint] ||
+    token;
+
+  if(__mfWalletRiskRequiredV47){
+    const wallets=
     Array.isArray(token?.holderRiskWallets)
       ? token.holderRiskWallets
       : [];
@@ -7967,10 +7969,6 @@ async function __mfVerifyPreOpenRisk(
 
   const sampleKey=
     __mfWalletRiskSampleKey(token);
-
-  let updated=
-    store.state.tokens?.[token.mint] ||
-    token;
 
   if(
     !__mfWalletRiskCacheFresh(
@@ -8046,6 +8044,8 @@ async function __mfVerifyPreOpenRisk(
 
     updated=
       scanned.token;
+  }
+
   }
 
   // MEMEFLOW_OPPORTUNITY_ENGINE_V1
