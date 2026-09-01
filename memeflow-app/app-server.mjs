@@ -6857,6 +6857,47 @@ if(url.pathname==='/api/ai/decisions'){
  if(url.pathname==='/api/billing/portal'&&req.method==='POST'){if(!billing.configured)return json(res,503,{error:'BILLING_NOT_CONFIGURED'});try{const session=await billing.createPortal(u,origin(req));return json(res,200,{url:session.url})}catch(e){return json(res,e.status||502,{error:e.code||'STRIPE_ERROR',message:e.message})}}
  if(url.pathname==='/api/discovery/status'){
   let wsHostname=null;try{wsHostname=discovery.url?new URL(discovery.url).hostname:null}catch{}
+
+  // MEMEFLOW_DISCOVERY_STATUS_HOTPATH_V63
+  // Status needs counts only. Do one linear membership/admission pass instead
+  // of repeatedly invoking globally sorted scanner-list accessors.
+  const __mfDiscoveryStatusNowV63=Date.now();
+  const __mfDiscoveryStatusSettingsV63=store.settings(u.id)||{};
+  let __mfDiscoveryStatusTotalV63=0;
+  let __mfDiscoveryStatusCurrentV63=0;
+  let __mfDiscoveryStatusAdmittedV63=0;
+
+  for(const __mfDiscoveryStatusTokenV63 of Object.values(store.state.tokens||{})){
+    __mfDiscoveryStatusTotalV63++;
+
+    if(
+      __mfIsCurrentScannerToken(
+        __mfDiscoveryStatusTokenV63,
+        __mfDiscoveryStatusNowV63
+      )!==true
+    ){
+      continue;
+    }
+
+    __mfDiscoveryStatusCurrentV63++;
+
+    if(
+      __mfEntryAdmissionForUser(
+        __mfDiscoveryStatusTokenV63,
+        u.id,
+        __mfDiscoveryStatusSettingsV63,
+        __mfDiscoveryStatusNowV63
+      )?.admitted===true
+    ){
+      __mfDiscoveryStatusAdmittedV63++;
+    }
+  }
+
+  const __mfDiscoveryStatusHiddenV63=Math.max(
+    0,
+    __mfDiscoveryStatusCurrentV63-__mfDiscoveryStatusAdmittedV63
+  );
+
   return json(res,200,{
     scannerRuntimeVersion:'live-scanner-v9',
     connected:discovery.connected,
@@ -6895,13 +6936,10 @@ if(url.pathname==='/api/ai/decisions'){
     rpcActiveHostname:rpc.activeHostname,
     processing:0,
     metrics:store.state.metrics,
-    tokens:store.tokens().length,
-    freshScannerTokens:__mfLiveScannerTokens().length,
-    admittedScannerTokensForUser:__mfAdmittedScannerTokensForUser(u.id).length,
-    preAdmissionHiddenForUser:Math.max(
-      0,
-      __mfLiveScannerTokens().length-__mfAdmittedScannerTokensForUser(u.id).length
-    ),
+    tokens:__mfDiscoveryStatusTotalV63,
+    freshScannerTokens:__mfDiscoveryStatusCurrentV63,
+    admittedScannerTokensForUser:__mfDiscoveryStatusAdmittedV63,
+    preAdmissionHiddenForUser:__mfDiscoveryStatusHiddenV63,
     scannerSessionStartedAt:__mfScannerRuntimeStartedAt,
     scannerTokenTtlMs:null,
     scannerTokenLifetime:'permanent-registry',

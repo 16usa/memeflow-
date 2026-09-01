@@ -15,7 +15,43 @@ assert.match(app,/MEMEFLOW_PERMANENT_TOKEN_REGISTRY_V1/);
 assert.match(app,/MEMEFLOW_RESTART_CONTINUITY_V1/);
 assert.match(app,/__mfScannerRuntimeStartedAt/);
 assert.match(app,/__mfLiveScannerTokens/);
-assert.match(app,/freshScannerTokens:__mfLiveScannerTokens\(\)\.length/);
+const discoveryStatusRouteV63=app.slice(
+  app.indexOf("if(url.pathname==='/api/discovery/status'"),
+  app.indexOf("if(url.pathname==='/api/chart/config')")
+);
+
+assert.match(
+  discoveryStatusRouteV63,
+  /MEMEFLOW_DISCOVERY_STATUS_HOTPATH_V63/
+);
+assert.match(
+  discoveryStatusRouteV63,
+  /freshScannerTokens:__mfDiscoveryStatusCurrentV63/
+);
+assert.match(
+  discoveryStatusRouteV63,
+  /admittedScannerTokensForUser:__mfDiscoveryStatusAdmittedV63/
+);
+assert.match(
+  discoveryStatusRouteV63,
+  /preAdmissionHiddenForUser:__mfDiscoveryStatusHiddenV63/
+);
+
+const discoveryStatusExecutableV63=
+  discoveryStatusRouteV63.replace(/\/\/[^\n]*/g,'');
+
+assert.doesNotMatch(
+  discoveryStatusExecutableV63,
+  /\bstore\.tokens\s*\(\s*\)/
+);
+assert.doesNotMatch(
+  discoveryStatusExecutableV63,
+  /__mfLiveScannerTokens\s*\(\s*\)/
+);
+assert.doesNotMatch(
+  discoveryStatusExecutableV63,
+  /__mfAdmittedScannerTokensForUser\s*\(/
+);
 assert.match(app,/scannerTokenLifetime:'permanent-registry'/);
 assert.match(app,/scannerCacheMaxTokens:__mfScannerCacheMaxTokens/);
 assert.doesNotMatch(app,/LIVE_SCANNER_TOKEN_TTL_MS/);

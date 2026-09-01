@@ -209,7 +209,38 @@ const app=fs.readFileSync(
 
 assert.match(app,/MEMEFLOW_STRICT_ENTRY_ADMISSION_V1/);
 assert.match(app,/admissionCheck:__mfLiveEvalAdmissionCheck/);
-assert.match(app,/__mfAdmittedScannerTokensForUser\(u\.id\)/);
+// V63 keeps strict Entry Admission, but /api/discovery/status no longer
+// materializes/sorts the admitted scanner list just to obtain counts.
+assert.match(
+  app,
+  /function __mfAdmittedScannerTokensForUser\(uid,now=Date\.now\(\)\)/
+);
+
+const discoveryStatusRouteStrictV63=app.slice(
+  app.indexOf("if(url.pathname==='/api/discovery/status'"),
+  app.indexOf("if(url.pathname==='/api/chart/config')")
+);
+
+assert.match(
+  discoveryStatusRouteStrictV63,
+  /MEMEFLOW_DISCOVERY_STATUS_HOTPATH_V63/
+);
+assert.match(
+  discoveryStatusRouteStrictV63,
+  /__mfEntryAdmissionForUser\([\s\S]*?u\.id/
+);
+assert.match(
+  discoveryStatusRouteStrictV63,
+  /admittedScannerTokensForUser:__mfDiscoveryStatusAdmittedV63/
+);
+
+const discoveryStatusStrictExecutableV63=
+  discoveryStatusRouteStrictV63.replace(/\/\/[^\n]*/g,'');
+
+assert.doesNotMatch(
+  discoveryStatusStrictExecutableV63,
+  /__mfAdmittedScannerTokensForUser\s*\(/
+);
 assert.match(app,/preAdmissionHidden:/);
 assert.match(app,/preAdmissionHiddenForUser:/);
 
