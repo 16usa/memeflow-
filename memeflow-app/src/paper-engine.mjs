@@ -174,6 +174,126 @@ export class PaperEngine {
       .sort((a, b) => b.createdAtMs - a.createdAtMs);
   }
 
+  // MEMEFLOW_TERMINAL_PAPER_POLL_HOTPATH_V59
+  // Trading Terminal only renders the newest 40 trade rows. Select a bounded
+  // top-K directly from durable history instead of sorting every historical
+  // trade every 1.8 seconds. Public userTrades() semantics stay unchanged.
+  userTradesRecentV59(userId, limit = 40) {
+    const max = Math.max(
+      1,
+      Math.min(
+        200,
+        Math.floor(num(limit, 40))
+      )
+    );
+
+    const rows = [];
+
+    const timestamp = trade => {
+      const direct = Number(trade?.executedAtMs);
+      if (Number.isFinite(direct)) return direct;
+
+      const parsed = Date.parse(trade?.executedAt || '');
+      return Number.isFinite(parsed) ? parsed : 0;
+    };
+
+    for (const trade of Object.values(this.store.state.paperTrades || {})) {
+      if (trade?.userId !== userId) continue;
+
+      const at = timestamp(trade);
+      let insertAt = rows.length;
+
+      for (let i = 0; i < rows.length; i++) {
+        if (at > timestamp(rows[i])) {
+          insertAt = i;
+          break;
+        }
+      }
+
+      if (
+        rows.length >= max &&
+        insertAt >= max
+      ) {
+        continue;
+      }
+
+      rows.splice(insertAt, 0, trade);
+
+      if (rows.length > max) {
+        rows.pop();
+      }
+    }
+
+    return rows;
+  }
+
+  // The Terminal approval panel only consumes fresh PENDING proposals and,
+  // for duplicate revisions of one mint, only the newest revision. Scan the
+  // durable proposal history once; sort only the small actionable result set.
+  userActionableProposalsV59(
+    userId,
+    freshnessSec = 60,
+    timestamp = this.clock()
+  ) {
+    const freshSec = Math.max(
+      5,
+      num(freshnessSec, 60)
+    );
+
+    const cutoff =
+      Number(timestamp) -
+      freshSec * 1000;
+
+    const proposalTimestamp = proposal => {
+      const direct = Number(proposal?.createdAtMs);
+      if (Number.isFinite(direct) && direct > 0) {
+        return direct;
+      }
+
+      const parsed = Date.parse(proposal?.createdAt || '');
+      return Number.isFinite(parsed) ? parsed : 0;
+    };
+
+    const latestByMint = new Map();
+
+    for (const proposal of Object.values(this.store.state.paperProposals || {})) {
+      if (
+        proposal?.userId !== userId ||
+        String(proposal?.status || '').toUpperCase() !== 'PENDING'
+      ) {
+        continue;
+      }
+
+      const createdAtMs = proposalTimestamp(proposal);
+
+      if (
+        createdAtMs > 0 &&
+        createdAtMs < cutoff
+      ) {
+        continue;
+      }
+
+      const mint = String(proposal?.mint || '').trim();
+      if (!mint) continue;
+
+      const existing = latestByMint.get(mint);
+
+      if (
+        !existing ||
+        proposalTimestamp(existing) < createdAtMs
+      ) {
+        latestByMint.set(mint, proposal);
+      }
+    }
+
+    return [...latestByMint.values()]
+      .sort(
+        (a, b) =>
+          proposalTimestamp(b) -
+          proposalTimestamp(a)
+      );
+  }
+
   // MEMEFLOW_ENTRY_READINESS_HOTPATH_V57
   // Readiness needs aggregates, not sorted history. Keep public history helpers
   // unchanged for UI/API callers, but compute the pre-entry snapshot in one

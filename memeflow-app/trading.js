@@ -4351,10 +4351,13 @@ function formatPrice(price) {
 }
 
 async function loadPaper({ redrawChart = true } = {}) {
+  // MEMEFLOW_TERMINAL_PAPER_POLL_HOTPATH_V59_UI
+  // Keep the existing 1.8s visual freshness, but never download/sort durable
+  // paper history that this screen does not render.
   const [positionsPayload, tradesPayload, proposalsPayload, statusPayload] = await Promise.all([
-    api('/api/paper/positions'),
-    api('/api/paper/trades'),
-    api('/api/paper/proposals'),
+    api('/api/paper/positions/live'),
+    api('/api/paper/trades?limit=40'),
+    api('/api/paper/proposals?actionable=1'),
     api('/api/paper/status')
   ]);
 

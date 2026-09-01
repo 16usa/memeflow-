@@ -7091,14 +7091,13 @@ if(url.pathname==='/api/ai/decisions'){
     return Number.isFinite(n)?n:null;
   };
 
+  // MEMEFLOW_TERMINAL_PAPER_POLL_HOTPATH_V59_SERVER
+  // Filter OPEN before sorting. maxOpenPositions keeps this result naturally
+  // small; historical CLOSED positions never enter the live-terminal hot path.
   const positions=
     paper
-      .userPositions(u.id)
-      .filter(
-        position=>
-          String(position?.status||'').toUpperCase()==='OPEN'&&
-          position?.mint
-      )
+      .userPositions(u.id,'OPEN')
+      .filter(position=>position?.mint)
       .map(position=>{
         const mint=String(position.mint);
         const token=store.state.tokens?.[mint]||{};
@@ -7502,8 +7501,30 @@ if(url.pathname==='/api/ai/decisions'){
 
   return json(res,200,{positions:_positions});
  }
- if(url.pathname==='/api/paper/trades'&&req.method==='GET')return json(res,200,{trades:paper.userTrades(u.id)});
- if(url.pathname==='/api/paper/proposals'&&req.method==='GET')return json(res,200,{proposals:paper.userProposals(u.id)});
+ if(url.pathname==='/api/paper/trades'&&req.method==='GET'){
+  const _limitRaw=Number(url.searchParams.get('limit'));
+  const _limit=Number.isFinite(_limitRaw)
+    ?Math.max(1,Math.min(200,Math.floor(_limitRaw)))
+    :null;
+
+  return json(res,200,{
+    trades:_limit
+      ?paper.userTradesRecentV59(u.id,_limit)
+      :paper.userTrades(u.id)
+  });
+ }
+ if(url.pathname==='/api/paper/proposals'&&req.method==='GET'){
+  const _actionable=url.searchParams.get('actionable')==='1';
+
+  return json(res,200,{
+    proposals:_actionable
+      ?paper.userActionableProposalsV59(
+          u.id,
+          store.settings(u.id)?.decisionFreshnessSec
+        )
+      :paper.userProposals(u.id)
+  });
+ }
  if(url.pathname==='/api/paper/readiness'&&req.method==='GET'){
   const mint=String(url.searchParams.get('mint')||'').trim();
   if(!mint)return json(res,400,{error:'MINT_REQUIRED'});
