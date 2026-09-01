@@ -1,1 +1,2 @@
 - [Decision recovery job](decision-recovery.md) — startup job re-evaluates persisted tokens for all users; decisions never persisted to disk; evaluateAll passed as dep from app-server.mjs.
+- [Smart Vault deployment artifacts](smart-vault-deployment-artifacts.md) — generated toolchains/builds can inflate publish layers despite Git ignore rules; clean only regenerable artifacts before republishing.
