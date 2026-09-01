@@ -9,6 +9,7 @@ import {makeDiscoveryMetrics} from './src/discqueue.mjs';
 import {candidateFeed,candidateVisibilityCounts} from './src/candidate-visibility.mjs';
 import {buildAdmittedScannerInventoryV60} from './src/admitted-scanner-inventory-v60.mjs'; // MEMEFLOW_AI_DECISIONS_INVENTORY_HOTPATH_V60
 import {selectNewestCurrentTokensV61} from './src/live-states-prefix-v61.mjs'; // MEMEFLOW_LIVE_STATES_PREFIX_HOTPATH_V61
+import {selectDiscoveryBridgeWorkV66} from './src/discovery-bridge-selector-v66.mjs'; // MEMEFLOW_DISCOVERY_BRIDGE_HOTPATH_V66
 import { startPumpLiveTradeFeed } from './src/pump-live-trade-feed.mjs'; // MEMEFLOW_V12_21_LIVE_TRADE_STREAM_HOLDER_FEED
 import { ChartHistoryArchive } from './src/chart-history-archive.mjs'; // MEMEFLOW_CHART_DATA_PATH_FIX_V2_DIRTY_SAFE // MEMEFLOW_CHART_HISTORY_RESTORE_V1
 import {createOpportunityEngine} from './src/opportunity-engine.mjs'; // MEMEFLOW_OPPORTUNITY_ENGINE_V1
@@ -3035,46 +3036,52 @@ async function runDiscoveryBridge(){
     // MEMEFLOW_SCAN_DISPLAY_TRADE_SPLIT_V1
     // Recovery inventory is the raw Pump scanner inventory, never a
     // user-settings subset.
-    const all=Object.values(store?.state?.tokens||{})
-      .filter(t=>bridgeIsPump(t)&&bridgeAgeMs(t,now)<=BRIDGE_MAX_AGE_MS&&bridgeAgeMs(t,now)>=BRIDGE_MIN_TOKEN_AGE_MS);
+    // MEMEFLOW_DISCOVERY_BRIDGE_HOTPATH_V66
+    // One linear pass computes the exact old scheduler membership/metrics and
+    // retains only the tiny oldest-first prefixes the bridge can consume.
+    const bridgeSelectionV66=
+      selectDiscoveryBridgeWorkV66({
+        tokens:Object.values(store?.state?.tokens||{}),
+        now,
+        maxAgeMs:BRIDGE_MAX_AGE_MS,
+        minAgeMs:BRIDGE_MIN_TOKEN_AGE_MS,
+        freshMaxAgeMs:FRESH_PRIORITY_MAX_AGE_MS,
+        freshBatch:FRESH_PRIORITY_BATCH,
+        recoveryBatch:RECOVERY_BATCH,
+        slaEscalateMs:FRESH_SLA_ESCALATE_MS,
+        slaMs:FRESH_SLA_MS,
+        isPump:bridgeIsPump,
+        ageMs:bridgeAgeMs,
+        needsFastStart:bridgeNeedsFastStart
+      });
 
-    const freshWindow=all.filter(t=>bridgeAgeMs(t,now)<=FRESH_PRIORITY_MAX_AGE_MS);
-    const freshUnprocessed=freshWindow
-      .filter(bridgeNeedsFastStart)
-      .sort((a,b)=>Number(a?.discoveredAt||0)-Number(b?.discoveredAt||0)); // OLDEST FIRST
+    const fresh=bridgeSelectionV66.fresh;
+    const recovery=bridgeSelectionV66.recovery;
 
-    const urgent=freshUnprocessed.filter(t=>bridgeAgeMs(t,now)>=FRESH_SLA_ESCALATE_MS);
+    bridgeMetrics.currentFreshBacklog=
+      bridgeSelectionV66.currentFreshBacklog;
+    bridgeMetrics.currentUrgentFreshBacklog=
+      bridgeSelectionV66.currentUrgentFreshBacklog;
+    bridgeMetrics.oldestFreshUnprocessedAgeMs=
+      bridgeSelectionV66.oldestFreshUnprocessedAgeMs;
+    bridgeMetrics.slaMissesCurrent=
+      bridgeSelectionV66.slaMissesCurrent;
 
-    bridgeMetrics.currentFreshBacklog=freshUnprocessed.length;
-    bridgeMetrics.currentUrgentFreshBacklog=urgent.length;
-    bridgeMetrics.oldestFreshUnprocessedAgeMs=freshUnprocessed.length
-      ? Math.max(...freshUnprocessed.map(t=>bridgeAgeMs(t,now)))
-      : 0;
-    bridgeMetrics.slaMissesCurrent=freshUnprocessed.filter(t=>bridgeAgeMs(t,now)>FRESH_SLA_MS).length;
     if(bridgeMetrics.slaMissesCurrent>0){
       bridgeMetrics.slaMisses15s+=bridgeMetrics.slaMissesCurrent;
     }
 
-    // SLA lane:
-    // 1) oldest unprocessed tokens first;
-    // 2) tokens nearing/missing SLA are automatically ahead of newer arrivals.
-    const fresh=freshUnprocessed.slice(0,FRESH_PRIORITY_BATCH);
-    if(fresh.some(t=>bridgeAgeMs(t,now)>=FRESH_SLA_ESCALATE_MS)){
+    if(bridgeSelectionV66.hasFreshEscalation){
       bridgeMetrics.slaEscalations++;
     }
 
-    const freshMints=new Set(fresh.map(bridgeMint));
-
-    // Recovery lane remains old-first, but never steals a slot from an
-    // unprocessed fresh token selected above.
-    const recovery=all
-      .filter(t=>!freshMints.has(bridgeMint(t)))
-      .filter(t=>!freshWindow.includes(t) || !bridgeNeedsFastStart(t))
-      .sort((a,b)=>Number(a?.discoveredAt||0)-Number(b?.discoveredAt||0))
-      .slice(0,RECOVERY_BATCH);
-
     bridgeMetrics.freshPriorityRuns++;
-    bridgeMetrics.tokensDeferred+=Math.max(0,all.length-fresh.length-recovery.length);
+    bridgeMetrics.tokensDeferred+=Math.max(
+      0,
+      bridgeSelectionV66.eligibleCount-
+        fresh.length-
+        recovery.length
+    );
 
     for(const token of fresh){
       bridgeMetrics.freshPriorityStarted++;
