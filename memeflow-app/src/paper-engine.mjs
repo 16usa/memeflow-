@@ -23,6 +23,20 @@ export class PaperEngine {
     this.analytics = options.analytics || null;
 
     this.ensureState();
+
+    // MEMEFLOW_PAPER_POSITION_CHECKPOINT_V55
+    // Price/PnL/high/trailing remain live in memory on every TradeEvent.
+    // Ordinary mark-to-market persistence is bounded so an active position
+    // cannot drive full state.json durability on every hot market tick.
+    this.positionCheckpointMs = Math.max(
+      250,
+      num(
+        options.positionCheckpointMs ??
+        process.env.PAPER_POSITION_CHECKPOINT_MS,
+        1000
+      )
+    );
+    this._lastPositionCheckpointAtV55 = this.clock();
   }
 
   ensureState() {
@@ -37,6 +51,22 @@ export class PaperEngine {
   save() {
     this.ensureState();
     this.store.save();
+  }
+
+  _checkpointOpenPositionStateV55(force = false) {
+    const now = this.clock();
+
+    if (
+      force !== true &&
+      now - this._lastPositionCheckpointAtV55 <
+        this.positionCheckpointMs
+    ) {
+      return false;
+    }
+
+    this._lastPositionCheckpointAtV55 = now;
+    this.save();
+    return true;
   }
 
   mode(settings = {}) {
@@ -513,14 +543,32 @@ export class PaperEngine {
     if (!mint || !token) return;
     const price = num(token.priceSol, NaN);
     if (!Number.isFinite(price) || price <= 0) return;
-    const open = Object.values(this.store.state.paperPositions).filter(p => p.status === 'OPEN' && p.mint === mint);
-    for (const position of open) this.updatePosition(position, token);
-    if (open.length) this.save();
+
+    const open = Object.values(this.store.state.paperPositions).filter(
+      p => p.status === 'OPEN' && p.mint === mint
+    );
+
+    let durableMutation = false;
+
+    for (const position of open) {
+      const result = this.updatePosition(position, token);
+      if (result?.durable === true) durableMutation = true;
+    }
+
+    // Irreversible simulated execution state is scheduled for durability
+    // immediately. Pure MTM/high/trailing changes are checkpointed.
+    if (durableMutation) {
+      this._checkpointOpenPositionStateV55(true);
+    } else if (open.length) {
+      this._checkpointOpenPositionStateV55(false);
+    }
   }
 
   updatePosition(position, token) {
     const price = num(token.priceSol);
     const settings = this.settings(position.settingsSnapshot || {});
+    let durableMutation = false;
+
     position.currentPriceSol = price;
     position.highestPriceSol = Math.max(num(position.highestPriceSol, price), price);
     position.unrealizedPnlSol = position.remainingTokenQuantity * (price - position.entryPriceSol);
@@ -534,45 +582,68 @@ export class PaperEngine {
     if (!position.tp1Executed && profitPct >= settings.tp1Pct) {
       const qty = Math.min(position.remainingTokenQuantity, position.initialTokenQuantity * settings.tp1SellPct / 100);
       if (qty > 0) {
-        this.partialExit(position, qty, price, 'TP1');
-        position.tp1Executed = true;
+        if (this.partialExit(position, qty, price, 'TP1')) {
+          position.tp1Executed = true;
+          durableMutation = true;
+        }
       }
     }
 
     if (position.status === 'OPEN' && !position.tp2Executed && profitPct >= settings.tp2Pct) {
       const qty = Math.min(position.remainingTokenQuantity, position.initialTokenQuantity * settings.tp2SellPct / 100);
       if (qty > 0) {
-        this.partialExit(position, qty, price, 'TP2');
-        position.tp2Executed = true;
+        if (this.partialExit(position, qty, price, 'TP2')) {
+          position.tp2Executed = true;
+          durableMutation = true;
+        }
       }
     }
 
-    if (position.status !== 'OPEN') return;
+    if (position.status !== 'OPEN') {
+      return { durable: durableMutation };
+    }
 
     if (profitPct <= -settings.hardStopPct) {
-      this.closePositionInternal(position, price, 'HARD STOP');
-      return;
+      durableMutation =
+        this.closePositionInternal(position, price, 'HARD STOP') ||
+        durableMutation;
+
+      return { durable: durableMutation };
     }
 
     if (position.trailingStopPriceSol && price <= position.trailingStopPriceSol) {
-      this.closePositionInternal(position, price, 'TRAILING STOP');
-      return;
+      durableMutation =
+        this.closePositionInternal(position, price, 'TRAILING STOP') ||
+        durableMutation;
+
+      return { durable: durableMutation };
     }
 
     const heldMinutes = (this.clock() - position.openedAtMs) / 60000;
     if (heldMinutes >= settings.maxHoldMinutes) {
-      this.closePositionInternal(position, price, 'MAX HOLD TIME');
-      return;
+      durableMutation =
+        this.closePositionInternal(position, price, 'MAX HOLD TIME') ||
+        durableMutation;
+
+      return { durable: durableMutation };
     }
 
     const pressure = Number(token.buyPressure);
-    if (settings.exitOnWeakBuyPressure && Number.isFinite(pressure) && pressure < settings.exitBuyPressure) {
-      this.closePositionInternal(position, price, 'BUY PRESSURE EXIT');
+    if (
+      settings.exitOnWeakBuyPressure &&
+      Number.isFinite(pressure) &&
+      pressure < settings.exitBuyPressure
+    ) {
+      durableMutation =
+        this.closePositionInternal(position, price, 'BUY PRESSURE EXIT') ||
+        durableMutation;
     }
+
+    return { durable: durableMutation };
   }
 
   partialExit(position, quantity, price, reason) {
-    if (position.status !== 'OPEN' || quantity <= 0) return;
+    if (position.status !== 'OPEN' || quantity <= 0) return false;
     quantity = Math.min(quantity, position.remainingTokenQuantity);
     const cost = quantity * position.entryPriceSol;
     const value = quantity * price;
@@ -583,7 +654,11 @@ export class PaperEngine {
     position.realizedPnlPct = position.initialSizeSol > 0 ? position.realizedPnlSol / position.initialSizeSol * 100 : 0;
     position.takeProfitHistory.push({ reason, price, quantity, valueSol: value, realizedPnlSol: pnl, at: nowIso() });
     this.recordTrade(position, 'SELL', quantity, price, pnl, reason);
-    if (position.remainingTokenQuantity <= 1e-15) this.finalizePosition(position, price, reason);
+    if (position.remainingTokenQuantity <= 1e-15) {
+      this.finalizePosition(position, price, reason);
+    }
+
+    return true;
   }
 
   closePosition(userId, positionId, reason = 'MANUAL PAPER CLOSE') {
@@ -597,7 +672,7 @@ export class PaperEngine {
   }
 
   closePositionInternal(position, price, reason) {
-    if (position.status !== 'OPEN') return;
+    if (position.status !== 'OPEN') return false;
     const qty = position.remainingTokenQuantity;
     if (qty > 0) {
       const pnl = qty * (price - position.entryPriceSol);
@@ -607,6 +682,7 @@ export class PaperEngine {
     position.remainingTokenQuantity = 0;
     position.remainingSizeSol = 0;
     this.finalizePosition(position, price, reason);
+    return true;
   }
 
   finalizePosition(position, price, reason) {
