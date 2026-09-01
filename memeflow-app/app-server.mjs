@@ -13,6 +13,7 @@ import {selectDiscoveryBridgeWorkV66} from './src/discovery-bridge-selector-v66.
 import {selectHolderRefreshPrefixV67} from './src/holder-refresh-selector-v67.mjs'; // MEMEFLOW_HOLDER_REFRESH_HOTPATH_V67
 import {selectOldestScannerEvictionsV68} from './src/scanner-capacity-selector-v68.mjs'; // MEMEFLOW_SCANNER_CAPACITY_HOTPATH_V68
 import {selectFastHolderPreviewPrefixV69} from './src/fast-holder-preview-selector-v69.mjs'; // MEMEFLOW_FAST_HOLDER_PREVIEW_HOTPATH_V69
+import {buildHolderActiveUserContextV70} from './src/holder-active-user-context-v70.mjs'; // MEMEFLOW_HOLDER_ACTIVE_USER_CONTEXT_V70
 import { startPumpLiveTradeFeed } from './src/pump-live-trade-feed.mjs'; // MEMEFLOW_V12_21_LIVE_TRADE_STREAM_HOLDER_FEED
 import { ChartHistoryArchive } from './src/chart-history-archive.mjs'; // MEMEFLOW_CHART_DATA_PATH_FIX_V2_DIRTY_SAFE // MEMEFLOW_CHART_HISTORY_RESTORE_V1
 import {createOpportunityEngine} from './src/opportunity-engine.mjs'; // MEMEFLOW_OPPORTUNITY_ENGINE_V1
@@ -91,15 +92,34 @@ function __mfActiveScannerUserIds(now=Date.now()){
     .map(([uid])=>uid);
 }
 
-function __mfAllActiveUsersStableBlocked(mint,now=Date.now()){
+function __mfAllActiveUsersStableBlocked(
+  mint,
+  now=Date.now(),
+  activeUserContext=null
+){
   const token=store.state.tokens?.[mint]||null;
   if(!token)return true;
 
-  const uids=__mfActiveScannerUserIds(now);
-  if(!uids.length)return false;
+  // MEMEFLOW_HOLDER_ACTIVE_USER_CONTEXT_V70
+  // Holder scheduler supplies a per-tick immutable user/settings snapshot.
+  // Other callers retain the legacy fallback and therefore identical behavior.
+  const users=
+    Array.isArray(activeUserContext)
+      ? activeUserContext
+      : buildHolderActiveUserContextV70({
+          uids:__mfActiveScannerUserIds(now),
+          getSettings:uid=>store.settings(uid)||{}
+        });
 
-  for(const uid of uids){
-    const admission=__mfEntryAdmissionForUser(token,uid,null,now);
+  if(!users.length)return false;
+
+  for(const row of users){
+    const admission=__mfEntryAdmissionForUser(
+      token,
+      row.uid,
+      row.settings,
+      now
+    );
     if(admission?.admitted===true)return false;
     if(admission?.hasStableFailure!==true)return false;
   }
@@ -1052,7 +1072,8 @@ function __mfCanonicalHolderNeededV34(
   token,
   now=Date.now(),
   openMints=__mfOpenPositionMints(),
-  activeUserIds=__mfActiveScannerUserIds(now)
+  activeUserIds=__mfActiveScannerUserIds(now),
+  activeUserContext=null
 ){
   const mint=String(token?.mint||'').trim();
   if(!mint)return false;
@@ -1065,7 +1086,11 @@ function __mfCanonicalHolderNeededV34(
 
   // Only skip when EVERY active user is already blocked by a stable Entry
   // failure. Missing/retryable holder/market evidence continues to refresh.
-  return !__mfAllActiveUsersStableBlocked(mint,now);
+  return !__mfAllActiveUsersStableBlocked(
+    mint,
+    now,
+    activeUserContext
+  );
 }
 
 const holderRefreshTimer=setInterval(()=>{
@@ -1073,6 +1098,11 @@ const holderRefreshTimer=setInterval(()=>{
   const decisionFloor=__mfHolderDecisionFloorV33();
   const openMints=__mfOpenPositionMints();
   const activeUserIds=__mfActiveScannerUserIds(now);
+  const activeUserContext=
+    buildHolderActiveUserContextV70({
+      uids:activeUserIds,
+      getSettings:uid=>store.settings(uid)||{}
+    });
   __mfHolderPriorityTickV5++;
 
 
@@ -1092,7 +1122,8 @@ const holderRefreshTimer=setInterval(()=>{
         token,
         now,
         openMints,
-        activeUserIds
+        activeUserIds,
+        activeUserContext
       )
     ){
       continue;
