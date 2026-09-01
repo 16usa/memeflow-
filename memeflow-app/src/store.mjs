@@ -21,6 +21,12 @@ export class JsonStore {
     this._stateSaveSequence=0;
     this._lastStateSaveError=null;
 
+    // MEMEFLOW_STATE_BACKUP_HOTPATH_V54
+    // Exact text of the last successfully loaded/committed canonical state.
+    // Normal saves use this trusted in-memory payload for .bak rotation instead
+    // of synchronously reading+parsing the previous state.json on the event loop.
+    this._lastCommittedStatePayloadV54=null;
+
     fs.mkdirSync(dir,{recursive:true});
 
     // MEMEFLOW_PERMANENT_TOKEN_REGISTRY_V1
@@ -179,7 +185,26 @@ export class JsonStore {
     }
   }
 
-  _writeDurableSyncV53(file,text){
+  async _syncDirAsyncV54(){
+    let handle=null;
+
+    try{
+      handle=
+        await fs.promises.open(
+          this.dir,
+          'r'
+        );
+
+      await handle.sync();
+    }catch{
+      // Same portability rule as V53 startup recovery: directory fsync is
+      // best-effort where the hosting filesystem permits it.
+    }finally{
+      try{await handle?.close?.()}catch{}
+    }
+  }
+
+    _writeDurableSyncV53(file,text){
     const tmp=
       file+
       '.tmp.'+
@@ -246,6 +271,9 @@ export class JsonStore {
         'primary'
       );
 
+      this._lastCommittedStatePayloadV54=
+        primary.text;
+
       this._cleanupStateTempsV53();
       return {
         source:'primary',
@@ -282,6 +310,9 @@ export class JsonStore {
         this.file,
         backup.text
       );
+
+      this._lastCommittedStatePayloadV54=
+        backup.text;
 
       this._cleanupStateTempsV53();
 
@@ -424,14 +455,13 @@ export class JsonStore {
             try{await stateHandle?.close?.()}catch{}
           }
 
-          // Preserve the PREVIOUS valid committed state as last-known-good.
-          // Never overwrite a good backup with malformed primary contents.
-          const primary=
-            this._readStateSnapshotV53(
-              this.file
-            );
+          // V54: the previous canonical payload was already validated when
+          // loaded/recovered and becomes trusted only after a successful primary
+          // commit. Do not synchronously read+JSON.parse state.json here.
+          const previousPayload=
+            this._lastCommittedStatePayloadV54;
 
-          if(primary.ok){
+          if(typeof previousPayload==='string'){
             const backupTmp=
               this.backupFile+
               '.tmp.'+
@@ -444,7 +474,7 @@ export class JsonStore {
             try{
               await fs.promises.writeFile(
                 backupTmp,
-                primary.text,
+                previousPayload,
                 'utf8'
               );
 
@@ -478,7 +508,13 @@ export class JsonStore {
             this.file
           );
 
-          this._syncDirV53();
+          await this._syncDirAsyncV54();
+
+          // Advance the in-memory durable baseline ONLY after the new canonical
+          // primary has completed the writer's durability sequence.
+          this._lastCommittedStatePayloadV54=
+            job.payload;
+
           this._lastStateSaveError=null;
         }catch(error){
           this._lastStateSaveError={
