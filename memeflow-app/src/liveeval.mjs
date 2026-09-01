@@ -53,6 +53,7 @@ export function makeLiveEvalMetrics(){
     liveEvaluationCoalesced:0,
     liveEvaluationInflightMints:0,
     liveEvaluationStaleSettingsSkipped:0,
+    liveEvaluationSupersededSkipped:0,
     entryAdmissionUsersChecked:0,
     entryAdmissionUsersPassed:0,
     entryAdmissionUsersHidden:0,
@@ -69,6 +70,12 @@ export function makeEvaluateForActiveUsers({
   const settingsCache=new Map();
   const inflight=new Map();
   const pending=new Map();
+
+  // MEMEFLOW_LIVE_SNAPSHOT_REVISION_GUARD_V45
+  // A newer same-mint snapshot must invalidate all side effects from an older
+  // in-flight evaluation before that older result reaches setDecision/onDecision.
+  const latestRevisionByMint=new Map();
+  let nextSnapshotRevision=0;
 
   function currentSettingsVersion(uid){
     const u=store.state.users?.[uid]||{};
@@ -93,7 +100,8 @@ export function makeEvaluateForActiveUsers({
     return row;
   }
 
-  async function _run(token){
+  async function _run(token,tokenRevision){
+    const tokenMint=String(token?.mint||'');
     const now=Date.now();
     const cutoff=now-activeUserHoursMs;
     const allUids=Object.keys(store.state.users||{});
@@ -156,6 +164,7 @@ export function makeEvaluateForActiveUsers({
     metrics.entryAdmissionLastPassedUsers=admittedUserCount;
     metrics.livePolicyGroups=groups.size;
 
+    const stagedWrites=[];
     const rows=[...groups.values()];
     for(let i=0;i<rows.length;i+=Math.max(1,batchSize)){
       const batch=rows.slice(i,i+Math.max(1,batchSize));
@@ -188,9 +197,10 @@ export function makeEvaluateForActiveUsers({
               settingsVersion:evaluatedSettingsVersion,
               reevaluatedAt:Date.now()
             };
-            store.setDecision(uid,token.mint,savedDecision);
-            if(onDecision)onDecision(uid,token,savedDecision);
-            metrics.liveEvaluationsPerformed++;
+            stagedWrites.push({
+              uid,
+              savedDecision
+            });
           }catch(e){recordError(e)}
         }
       }
@@ -200,30 +210,105 @@ export function makeEvaluateForActiveUsers({
       }
     }
 
+    // Give already-arrived WS/TradeEvent work one chance to publish a newer
+    // same-mint snapshot before any decision side effect is committed.
+    await new Promise(resolve=>setImmediate(resolve));
+
+    if(
+      latestRevisionByMint.get(tokenMint)!==tokenRevision
+    ){
+      metrics.liveEvaluationSupersededSkipped+=
+        stagedWrites.length;
+
+      metrics.liveEvaluationTokensProcessed++;
+      metrics.lastLiveEvaluationAt=Date.now();
+      metrics.decisionsInMemoryByActiveUsers=
+        activeUids.reduce(
+          (s,uid)=>s+(store._uidDec[uid]?.size||0),
+          0
+        );
+
+      return {
+        decisionLike:true,
+        superseded:true,
+        activeUsers:activeUids.length,
+        admittedUsers:admittedUserCount,
+        evaluationsPerformed:0,
+        policyGroups:groups.size
+      };
+    }
+
+    let committed=0;
+
+    for(const row of stagedWrites){
+      const evaluatedSettingsVersion=
+        row.savedDecision?.settingsVersion??0;
+      const currentVersion=
+        currentSettingsVersion(row.uid);
+
+      // Re-check V39 at the actual side-effect boundary because settings may
+      // have changed during the final event-loop yield.
+      if(currentVersion!==evaluatedSettingsVersion){
+        metrics.liveEvaluationStaleSettingsSkipped++;
+        continue;
+      }
+
+      store.setDecision(
+        row.uid,
+        tokenMint,
+        row.savedDecision
+      );
+
+      if(onDecision){
+        onDecision(
+          row.uid,
+          token,
+          row.savedDecision
+        );
+      }
+
+      metrics.liveEvaluationsPerformed++;
+      committed++;
+    }
+
     metrics.liveEvaluationTokensProcessed++;
     metrics.lastLiveEvaluationAt=Date.now();
-    metrics.decisionsInMemoryByActiveUsers=activeUids.reduce((s,uid)=>s+(store._uidDec[uid]?.size||0),0);
+    metrics.decisionsInMemoryByActiveUsers=
+      activeUids.reduce(
+        (s,uid)=>s+(store._uidDec[uid]?.size||0),
+        0
+      );
+
     return {
       decisionLike:true,
+      superseded:false,
       activeUsers:activeUids.length,
       admittedUsers:admittedUserCount,
-      evaluationsPerformed:admittedUserCount,
+      evaluationsPerformed:committed,
       policyGroups:groups.size
     };
   }
 
   async function drain(mint,first){
-    let token=first,result=null;
+    let item=first,result=null;
+
     try{
-      while(token){
+      while(item){
         pending.delete(mint);
-        result=await _run(token);
-        token=pending.get(mint)||null;
+
+        result=await _run(
+          item.token,
+          item.revision
+        );
+
+        item=pending.get(mint)||null;
       }
+
       return result;
     }finally{
       inflight.delete(mint);
       pending.delete(mint);
+      latestRevisionByMint.delete(mint);
       metrics.liveEvaluationInflightMints=inflight.size;
     }
   }
@@ -231,13 +316,34 @@ export function makeEvaluateForActiveUsers({
   return function evaluateForActiveUsers(token){
     const mint=String(token?.mint||'');
     if(!mint)return Promise.resolve(null);
+
+    const revision=++nextSnapshotRevision;
+
+    latestRevisionByMint.set(
+      mint,
+      revision
+    );
+
+    const item={
+      token,
+      revision
+    };
+
     const existing=inflight.get(mint);
+
     if(existing){
-      pending.set(mint,token);
+      pending.set(mint,item);
       metrics.liveEvaluationCoalesced++;
       return existing;
     }
-    const job=drain(mint,token).catch(e=>{recordError(e);return null});
+
+    const job=
+      drain(mint,item)
+        .catch(e=>{
+          recordError(e);
+          return null;
+        });
+
     inflight.set(mint,job);
     metrics.liveEvaluationInflightMints=inflight.size;
     return job;
