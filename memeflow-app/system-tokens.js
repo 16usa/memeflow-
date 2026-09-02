@@ -2620,17 +2620,46 @@ document
     }
   );
 
+// MEMEFLOW_TOKEN_SCAN_INPUT_FIX_V27_1
+// The field is now an analyzer input, not a local list filter.
+let __mfTokenScanInputTimerV271=null;
+
 $('tokenSearch')
   .addEventListener(
     'input',
     (event) => {
-      state.query =
-        event.target.value || '';
+      const value=String(
+        event.target.value||''
+      ).trim();
 
-      state.page = 1;
-
+      // Never hide the scanner list while the user is entering an external mint.
+      state.query='';
+      state.page=1;
       render();
-      __mfKickCardClockV19();
+
+      if(__mfTokenScanInputTimerV271!==null){
+        clearTimeout(__mfTokenScanInputTimerV271);
+        __mfTokenScanInputTimerV271=null;
+      }
+
+      if(!value){
+        const host=$('tokenScanResult');
+        if(host){
+          host.hidden=true;
+          host.innerHTML='';
+        }
+        __mfKickCardClockV19();
+        return;
+      }
+
+      // Paste/type a mint or Pump.fun URL -> analyze automatically after input settles.
+      __mfTokenScanInputTimerV271=setTimeout(
+        ()=>{
+          __mfTokenScanInputTimerV271=null;
+          void __mfAnalyzeTokenV27();
+        },
+        550
+      );
     }
   );
 
