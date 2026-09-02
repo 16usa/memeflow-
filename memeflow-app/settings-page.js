@@ -1,6 +1,129 @@
 
-/* MEMEFLOW_PUBLIC_AGENT_ENTITY_V1_UI */
-async function mfPublicAgentInstall(){let owner=false;try{const r=await fetch('/api/owner/status',{credentials:'same-origin',cache:'no-store'}),p=await r.json();owner=r.ok&&p?.isOwner===true}catch{}if(!owner)return;const body=document.getElementById('mf293SettingsBody');if(!body||document.getElementById('mfPublicAgentGroup'))return;const sec=document.createElement('details');sec.id='mfPublicAgentGroup';sec.className='mf293-settings-group';sec.innerHTML=`<summary><span><strong>Public Agent</strong><small>Owner only · entity + future X publisher</small></span><i></i></summary><div class="mf293-settings-grid"><label class="mf293-field mf293-field-switch"><span class="mf293-field-label">Enable entity</span><span class="mf293-switch"><input id="mfEntityEnabled" type="checkbox"><span class="mf293-switch-track"></span></span></label><label class="mf293-field"><span class="mf293-field-label">Mode</span><select id="mfEntityMode"><option value="off">Off</option><option value="approval">Approval</option><option value="autonomous">Autonomous</option></select></label><label class="mf293-field"><span class="mf293-field-label">Display name</span><input id="mfEntityName" placeholder="Choose later"></label><label class="mf293-field"><span class="mf293-field-label">Voice</span><select id="mfEntityVoice"><option value="terminal">Terminal</option><option value="minimal">Minimal</option></select></label><label class="mf293-field"><span class="mf293-field-label">X connection</span><input value="Not connected · V1 safe mode" disabled></label><div class="mf293-field mf293-field-wide"><span class="mf293-field-label">Publication queue</span><div id="mfEntityQueue">Loading…</div></div><button id="mfEntitySave" class="mf293-primary" type="button">Save Public Agent</button></div>`;body.prepend(sec);async function load(){const r=await fetch('/api/owner/public-agent',{credentials:'same-origin',cache:'no-store'});if(!r.ok)return;const p=await r.json(),c=p.config||{};mfEntityEnabled.checked=c.enabled===true;mfEntityMode.value=c.mode||'approval';mfEntityName.value=c.displayName||'';mfEntityVoice.value=c.voice||'terminal';mfEntityQueue.textContent=(p.queue||[]).length?(p.queue||[]).slice(0,8).map(x=>`${x.status} · ${x.eventType} · ${x.symbol||x.mint.slice(0,6)} · ${x.text.replace(/\n/g,' / ')}`).join('\n'):'No drafts yet.';mfEntityQueue.style.whiteSpace='pre-wrap'}mfEntitySave.addEventListener('click',async()=>{const r=await fetch('/api/owner/public-agent/config',{method:'PUT',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({enabled:mfEntityEnabled.checked,mode:mfEntityMode.value,displayName:mfEntityName.value,voice:mfEntityVoice.value})});if(!r.ok){mf293Error('Public Agent settings could not be saved.');return}mf293Status('Public Agent saved','saved');await load()});await load()}
+
+/* MEMEFLOW_PUBLIC_AGENT_ENTITY_V2_UI */
+async function mfPublicAgentInstall(){
+  let owner=false;
+  try{const r=await fetch('/api/owner/status',{credentials:'same-origin',cache:'no-store'}),p=await r.json();owner=r.ok&&p?.isOwner===true}catch{}
+  if(!owner)return;
+  const body=document.getElementById('mf293SettingsBody');
+  if(!body||document.getElementById('mfPublicAgentGroup'))return;
+
+  if(!document.getElementById('mfPublicAgentV2Styles')){
+    const style=document.createElement('style');
+    style.id='mfPublicAgentV2Styles';
+    style.textContent=`
+      #mfPublicAgentGroup .mf-agent-wide{grid-column:1/-1}
+      #mfPublicAgentGroup .mf-agent-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+      #mfPublicAgentGroup .mf-agent-save{width:auto;min-height:38px;padding:8px 14px}
+      #mfPublicAgentGroup .mf-agent-note{font-size:11px;line-height:1.45;color:var(--muted)}
+      #mfPublicAgentGroup .mf-agent-list{display:grid;gap:8px;margin-top:7px}
+      #mfPublicAgentGroup .mf-agent-item{border:1px solid var(--line);border-radius:10px;padding:9px;background:rgba(127,127,127,.035)}
+      #mfPublicAgentGroup .mf-agent-item-top{display:flex;gap:8px;align-items:center;justify-content:space-between}
+      #mfPublicAgentGroup .mf-agent-item b{font-size:12px}
+      #mfPublicAgentGroup .mf-agent-status{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+      #mfPublicAgentGroup .mf-agent-copy{white-space:pre-wrap;font-size:12px;line-height:1.45;margin-top:6px}
+      #mfPublicAgentGroup .mf-agent-review{display:flex;gap:6px;margin-top:8px}
+      #mfPublicAgentGroup .mf-agent-review button{min-height:32px;padding:6px 10px;border-radius:8px;border:1px solid var(--line);background:transparent}
+      #mfPublicAgentGroup .mf-agent-events{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+      #mfPublicAgentGroup .mf-agent-event{display:flex;align-items:center;justify-content:space-between;gap:8px;border:1px solid var(--line);border-radius:10px;padding:9px}
+      #mfPublicAgentGroup .mf-agent-history{font-size:11px;line-height:1.5;color:var(--muted);white-space:pre-wrap}
+      @media(max-width:620px){#mfPublicAgentGroup .mf-agent-events{grid-template-columns:1fr}}
+    `;
+    document.head.appendChild(style);
+  }
+
+  const sec=document.createElement('details');
+  sec.id='mfPublicAgentGroup';
+  sec.className='mf293-settings-group';
+  sec.innerHTML=`<summary><span><strong>Public Agent</strong><small>Owner only · entity + future X publisher</small></span><i></i></summary>
+  <div class="mf293-settings-grid">
+    <label class="mf293-field mf293-field-switch"><span class="mf293-field-label">Enable entity</span><span class="mf293-switch"><input id="mfEntityEnabled" type="checkbox"><span class="mf293-switch-track"></span></span></label>
+    <label class="mf293-field"><span class="mf293-field-label">Mode</span><select id="mfEntityMode"><option value="off">Off</option><option value="approval">Approval</option><option value="autonomous">Autonomous</option></select></label>
+    <label class="mf293-field"><span class="mf293-field-label">Display name</span><input id="mfEntityName" type="text" maxlength="40" placeholder="Choose later"></label>
+    <label class="mf293-field"><span class="mf293-field-label">Voice</span><select id="mfEntityVoice"><option value="terminal">Terminal</option><option value="minimal">Minimal</option></select></label>
+    <label class="mf293-field mf-agent-wide"><span class="mf293-field-label">X connection</span><input value="Not connected · publishing physically disabled" disabled></label>
+    <div class="mf293-field mf-agent-wide"><span class="mf293-field-label">Events the entity may speak about</span>
+      <div class="mf-agent-events">
+        <label class="mf-agent-event"><span>WATCH</span><input id="mfEntityEventWatch" type="checkbox"></label>
+        <label class="mf-agent-event"><span>BUY READY</span><input id="mfEntityEventBuyReady" type="checkbox"></label>
+        <label class="mf-agent-event"><span>OPEN / EXIT</span><input id="mfEntityEventPositions" type="checkbox"></label>
+        <label class="mf-agent-event"><span>REJECT / RISK</span><input id="mfEntityEventRisk" type="checkbox"></label>
+      </div>
+    </div>
+    <div class="mf293-field mf-agent-wide"><span class="mf293-field-label">Publication queue</span><div id="mfEntityQueue" class="mf-agent-list">Loading…</div></div>
+    <div class="mf293-field mf-agent-wide"><span class="mf293-field-label">Entity history</span><div id="mfEntityHistory" class="mf-agent-history">Loading…</div></div>
+    <div class="mf-agent-wide mf-agent-actions"><button id="mfEntitySave" class="mf293-primary mf-agent-save" type="button">Save Public Agent</button><button id="mfEntityRefresh" class="mf293-secondary" type="button">Refresh queue</button><span class="mf-agent-note">Approved drafts remain READY until X is connected.</span></div>
+  </div>`;
+  body.prepend(sec);
+
+  const el=id=>document.getElementById(id);
+
+  async function review(id,action){
+    const r=await fetch(`/api/owner/public-agent/queue/${encodeURIComponent(id)}/${action}`,{method:'POST',credentials:'same-origin'});
+    const p=await r.json().catch(()=>({}));
+    if(!r.ok){mf293Error(p?.error||'Draft review failed.');return}
+    mf293Status(action==='approve'?'Draft approved':'Draft rejected','saved');
+    await load();
+  }
+
+  function renderQueue(rows){
+    const q=el('mfEntityQueue');q.innerHTML='';
+    if(!rows?.length){q.textContent='No drafts yet.';return}
+    for(const item of rows.slice(0,10)){
+      const wrap=document.createElement('div');wrap.className='mf-agent-item';
+      const top=document.createElement('div');top.className='mf-agent-item-top';
+      const title=document.createElement('b');title.textContent=`${item.eventType} · ${item.symbol||String(item.mint||'').slice(0,6)}`;
+      const status=document.createElement('span');status.className='mf-agent-status';status.textContent=item.status||'PENDING';
+      top.append(title,status);
+      const copy=document.createElement('div');copy.className='mf-agent-copy';copy.textContent=item.text||'';
+      wrap.append(top,copy);
+      if(item.status==='PENDING'){
+        const actions=document.createElement('div');actions.className='mf-agent-review';
+        const approve=document.createElement('button');approve.type='button';approve.textContent='Approve';approve.addEventListener('click',()=>review(item.id,'approve'));
+        const reject=document.createElement('button');reject.type='button';reject.textContent='Reject';reject.addEventListener('click',()=>review(item.id,'reject'));
+        actions.append(approve,reject);wrap.appendChild(actions);
+      }
+      q.appendChild(wrap);
+    }
+  }
+
+  function renderHistory(rows){
+    const h=el('mfEntityHistory');
+    if(!rows?.length){h.textContent='No entity activity yet.';return}
+    h.textContent=rows.slice(0,12).map(x=>`${x.at?new Date(x.at).toLocaleString():'—'} · ${x.type}${x.eventType?` · ${x.eventType}`:''}`).join('\n');
+  }
+
+  async function load(){
+    const r=await fetch('/api/owner/public-agent',{credentials:'same-origin',cache:'no-store'});
+    if(!r.ok)return;
+    const p=await r.json(),c=p.config||{},e=c.events||{};
+    el('mfEntityEnabled').checked=c.enabled===true;
+    el('mfEntityMode').value=c.mode||'approval';
+    el('mfEntityName').value=c.displayName||'';
+    el('mfEntityVoice').value=c.voice||'terminal';
+    el('mfEntityEventWatch').checked=e.watch!==false;
+    el('mfEntityEventBuyReady').checked=e.buyReady!==false;
+    el('mfEntityEventPositions').checked=e.positions!==false;
+    el('mfEntityEventRisk').checked=e.risk!==false;
+    renderQueue(p.queue||[]);renderHistory(p.audit||[]);
+  }
+
+  el('mfEntitySave').addEventListener('click',async()=>{
+    const r=await fetch('/api/owner/public-agent/config',{method:'PUT',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+      enabled:el('mfEntityEnabled').checked,
+      mode:el('mfEntityMode').value,
+      displayName:el('mfEntityName').value,
+      voice:el('mfEntityVoice').value,
+      events:{watch:el('mfEntityEventWatch').checked,buyReady:el('mfEntityEventBuyReady').checked,positions:el('mfEntityEventPositions').checked,risk:el('mfEntityEventRisk').checked}
+    })});
+    const p=await r.json().catch(()=>({}));
+    if(!r.ok){mf293Error(p?.error||'Public Agent settings could not be saved.');return}
+    mf293Status('Public Agent saved','saved');await load();
+  });
+  el('mfEntityRefresh').addEventListener('click',load);
+  await load();
+}
+
 
 /* MEMEFLOW_WS_ONLY_PREOPEN_RPC_V1 */
 /* MEMEFLOW_STANDALONE_SETTINGS_PAGE_V1 */
