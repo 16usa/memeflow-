@@ -377,21 +377,25 @@ const platformAnalytics=
       'memeflow-platform-learning-v2'
   });
 
-// Import already-existing trades from every user.
-// INSERT/UPSERT makes restart/backfill idempotent.
-try{
-  const backfilled=
-    platformAnalytics.backfillState(store);
-
-  console.log(
-    '[PLATFORM ANALYTICS] backfill',
-    backfilled
-  );
-}catch(error){
-  console.error(
-    '[PLATFORM ANALYTICS] backfill error',
-    error?.message||error
-  );
+// MEMEFLOW_COLD_START_V3_ANALYTICS
+// Historical import is idempotent but synchronous, so it must not block listen.
+function __mfDeferredPlatformAnalyticsBackfillV3(){
+  try{
+    const started=Date.now();
+    const backfilled=platformAnalytics.backfillState(store);
+    console.log(
+      '[PLATFORM ANALYTICS] deferred backfill',
+      backfilled,
+      'in',
+      Date.now()-started,
+      'ms'
+    );
+  }catch(error){
+    console.error(
+      '[PLATFORM ANALYTICS] deferred backfill error',
+      error?.message||error
+    );
+  }
 }
 
 const paper=
@@ -3221,7 +3225,8 @@ function startDiscoveryBridge(){
   bridgeTimer=setInterval(()=>void runDiscoveryBridge(),BRIDGE_TICK_MS);
   bridgeTimer.unref?.();
 }
-startDiscoveryBridge();
+// MEMEFLOW_COLD_START_V3_BRIDGE_DEFER
+// Heavy bridge is started shortly after HTTP begins listening.
 
 
 // MEMEFLOW_WS_FIRST_PREOPEN_RPC_V1
@@ -5201,12 +5206,17 @@ async function handler(req,res){const url=new URL(req.url,'http://x');
    const isText=mime.startsWith('text/')||mime.includes('javascript')||mime.includes('json')||mime.includes('svg');
    const isHTML=ext==='.html'||ext==='.htm';
 
-   // MEMEFLOW_LIVE_TOKEN_ASSET_NO_STORE_V1
-   // Live Token States must never execute an hour/day-old JS bundle after a
-   // deploy. Other versioned/static assets keep the existing fast cache.
+   // MEMEFLOW_LOAD_PERF_V1_CACHE
+   // Live Token States uses explicit ?v=... asset versions in HTML.
+   // Versioned CSS/JS can therefore be cached aggressively without risking
+   // an old bundle after deploy. Unversioned live-token assets remain no-store.
    const isLiveTokenAsset=
      url.pathname==='/system-tokens.js' ||
      url.pathname==='/system-tokens.css';
+
+   const isVersionedLiveTokenAsset=
+     isLiveTokenAsset &&
+     Boolean(url.searchParams.get('v'));
 
    // MEMEFLOW_TRADING_NO_STORE_V10
    const isTradingDevAsset=
@@ -5214,14 +5224,19 @@ async function handler(req,res){const url=new URL(req.url,'http://x');
      url.pathname==='/trading.js' ||
      url.pathname==='/trading.css';
 
-   const noStoreAsset=isHTML||isLiveTokenAsset||isTradingDevAsset;
+   const noStoreAsset=
+     isHTML ||
+     isTradingDevAsset ||
+     (isLiveTokenAsset&&!isVersionedLiveTokenAsset);
 
    res.setHeader('content-type',mime);
    res.setHeader(
      'cache-control',
      noStoreAsset
        ? 'no-store, no-cache, must-revalidate'
-       : 'public, max-age=3600, stale-while-revalidate=86400'
+       : isVersionedLiveTokenAsset
+         ? 'public, max-age=31536000, immutable'
+         : 'public, max-age=3600, stale-while-revalidate=86400'
    );
    if(noStoreAsset){
      res.setHeader('pragma','no-cache');
@@ -5234,6 +5249,23 @@ async function handler(req,res){const url=new URL(req.url,'http://x');
      else{fs.createReadStream(f).pipe(res);}
    }else{fs.createReadStream(f).pipe(res);}
    return;
+ }
+
+ /* MEMEFLOW_PUBLIC_AGENT_PERFORMANCE_V1_ROUTE */
+ if(url.pathname==='/api/platform/performance'&&req.method==='GET'){
+   const requested=Number(url.searchParams.get('days')||30);
+   const days=[7,30,90].includes(requested)?requested:30;
+   const cache=globalThis.__mfPublicAgentPerformanceCacheV1||=new Map();
+   const key=String(days),now=Date.now(),cached=cache.get(key);
+   if(cached&&now-Number(cached.at||0)<15000)return json(res,200,cached.payload);
+   try{
+     const dataset=platformAnalytics.summary(days);
+     const payload={ok:true,public:true,aggregateOnly:true,dataset,engine:{connected:discovery?.connected===true,subscribed:discovery?.subscribed===true}};
+     cache.set(key,{at:now,payload});
+     return json(res,200,payload);
+   }catch(error){
+     return json(res,503,{ok:false,error:'PLATFORM_PERFORMANCE_UNAVAILABLE',message:'Aggregated performance data is temporarily unavailable.'});
+   }
  }
  /* MEMEFLOW_PAGE_ACCESS_GATE_V1 */
  if(url.pathname==='/api/access/page'&&req.method==='GET'){
@@ -8044,6 +8076,29 @@ for(const signal of ['SIGTERM','SIGINT']){
 
   // Priority #1: live WebSocket starts immediately.
   startDiscovery();
+
+  // MEMEFLOW_COLD_START_V3_POST_LISTEN
+  // First allow the deployment to answer HTML/CSS/JS; then start non-critical
+  // pre-listen work that was moved here.
+  const __mfStartLaterV3=(delay,fn)=>{
+    const timer=setTimeout(()=>{
+      try{fn()}catch(error){
+        console.error('[COLD START V3]',error?.message||error);
+      }
+    },delay);
+    timer.unref?.();
+    return timer;
+  };
+
+  __mfStartLaterV3(
+    Math.max(500,Number(process.env.DISCOVERY_BRIDGE_START_DELAY_MS||1200)),
+    ()=>startDiscoveryBridge()
+  );
+
+  __mfStartLaterV3(
+    Math.max(1500,Number(process.env.PLATFORM_ANALYTICS_START_DELAY_MS||3500)),
+    ()=>__mfDeferredPlatformAnalyticsBackfillV3()
+  );
 
   // Priority #2: low-rate history/gap sync starts in the background. It never
   // blocks the live scanner and never consumes Solana RPC capacity.

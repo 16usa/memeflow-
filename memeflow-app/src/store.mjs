@@ -40,9 +40,11 @@ export class JsonStore {
       throw error;
     }
 
+    // MEMEFLOW_COLD_START_V3_WARM_LIMIT
+    // Bounded cold boot; permanent SQLite token registry remains intact.
     const warmLimit=Math.max(
-      1000,
-      Number(process.env.TOKEN_REGISTRY_WARM_LIMIT||5000)
+      250,
+      Number(process.env.TOKEN_REGISTRY_WARM_LIMIT||750)
     );
 
     for(const token of this.tokenRegistry.loadHot(warmLimit)){

@@ -43,6 +43,12 @@
       href: '/system-tokens.html',
       title: 'Real-Time Pipeline',
       sub: 'Live token states and decision flow'
+    },
+    // MEMEFLOW_PUBLIC_AGENT_PERFORMANCE_V1_NAV
+    {
+      href: '/agent-performance.html',
+      title: 'Agent Performance',
+      sub: 'Public platform results and outcome analytics'
     }
   ];
 
