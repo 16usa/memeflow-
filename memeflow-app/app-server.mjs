@@ -2372,6 +2372,14 @@ function __mfAnyActiveEntryAdmitted(token,now=Date.now()){
   return false;
 }
 
+
+/* MEMEFLOW_PUBLIC_AGENT_ENTITY_V1 — owner-only, read-only toward trading */
+const __mfPublicAgentByOwner=new Map();
+function __mfPublicAgentState(uid){let x=__mfPublicAgentByOwner.get(uid);if(!x){x={config:{enabled:false,mode:'approval',displayName:'',voice:'terminal',xConnected:false},lastDecision:new Map(),queue:[],audit:[]};__mfPublicAgentByOwner.set(uid,x)}return x}
+function __mfPublicAgentSafe(v,n=80){return String(v??'').replace(/[^\x20-\x7E]/g,' ').replace(/\s+/g,' ').trim().slice(0,n)}
+function __mfPublicAgentDraft(type,t,d){const sym=__mfPublicAgentSafe(t?.symbol||t?.name||'UNKNOWN',24).toUpperCase();const sc=Number.isFinite(Number(d?.score))?Math.round(Number(d.score)):null;const cf=Number.isFinite(Number(d?.confidence))?Math.round(Number(d.confidence)):null;const a=[type==='WATCH'?'SIGNAL DETECTED.':'ENTRY CONDITIONS DETECTED.',`$${sym}`];if(sc!==null)a.push(`Score: ${sc}`);if(cf!==null)a.push(`Confidence: ${cf}%`);a.push(type==='WATCH'?'I am watching.':'The market is becoming interesting.');return a.join('\n').slice(0,270)}
+function __mfPublicAgentDecision(uid,t,d){if(!uid||store.user(uid)?.isOwner!==true||!t?.mint||!d)return;const st=__mfPublicAgentState(uid);if(!st.config.enabled||st.config.mode==='off')return;const mint=String(t.mint),next=String(d.state||'').toUpperCase(),prev=st.lastDecision.get(mint)||null;st.lastDecision.set(mint,next);if(prev===next||!['WATCH','BUY READY'].includes(next))return;const item={id:crypto.randomUUID(),createdAt:new Date().toISOString(),status:st.config.mode==='autonomous'?'READY':'PENDING',eventType:next,mint,symbol:__mfPublicAgentSafe(t.symbol||t.name||'',24),score:Number.isFinite(Number(d.score))?Number(d.score):null,confidence:Number.isFinite(Number(d.confidence))?Number(d.confidence):null,text:__mfPublicAgentDraft(next,t,d)};st.queue.unshift(item);st.queue=st.queue.slice(0,100);st.audit.unshift({at:item.createdAt,type:'DRAFT_CREATED',id:item.id,eventType:next});st.audit=st.audit.slice(0,200)}
+
 const liveEvalMetrics=makeLiveEvalMetrics();
 const LIVE_EVAL_HOURS=Number(process.env.LIVE_EVALUATION_ACTIVE_USER_HOURS||24);
 const LIVE_EVAL_BATCH=Number(process.env.LIVE_EVALUATION_BATCH_SIZE||25);
@@ -2386,6 +2394,7 @@ const evaluateAll=makeEvaluateForActiveUsers({
   onDecision:(uid,token,decision)=>{
     // MEMEFLOW_AI_CHAT_TRADING_MEMORY_V1_ROUTE
     try{openaiAI.recordDecision(uid,token,decision,{source:'live-evaluate'})}catch{}
+    try{__mfPublicAgentDecision(uid,token,decision)}catch{}
     void __mfHandleDecision(uid,token,decision).catch(()=>{});
 
     // MEMEFLOW_DECISION_COMPLETE_REFRESH_V14
@@ -5281,6 +5290,12 @@ async function handler(req,res){const url=new URL(req.url,'http://x');
  }
  const u=user(req,res);if(u){store.touchUser(u.id);if(OWNER_USER_IDS.has(u.id)&&!u.isOwner)store.grantOwner(u.id,'owner_user_ids');}
 
+
+
+ /* MEMEFLOW_PUBLIC_AGENT_ENTITY_V1_ROUTES */
+ if(url.pathname==='/api/owner/public-agent'&&req.method==='GET'){if(!u)return json(res,401,{error:'AUTH_REQUIRED'});if(u.isOwner!==true)return json(res,403,{error:'OWNER_REQUIRED'});const st=__mfPublicAgentState(u.id);return json(res,200,{ok:true,owner:true,config:st.config,queue:st.queue.slice(0,50),audit:st.audit.slice(0,50),x:{connected:false,transport:'disabled-v1'}})}
+ if(url.pathname==='/api/owner/public-agent/config'&&req.method==='PUT'){if(!u)return json(res,401,{error:'AUTH_REQUIRED'});if(u.isOwner!==true)return json(res,403,{error:'OWNER_REQUIRED'});const b=await body(req),st=__mfPublicAgentState(u.id),mode=String(b?.mode||st.config.mode||'approval').toLowerCase();if(!['off','approval','autonomous'].includes(mode))return json(res,400,{error:'INVALID_MODE'});st.config={...st.config,enabled:b?.enabled===true,mode,displayName:__mfPublicAgentSafe(b?.displayName??st.config.displayName,40),voice:['terminal','minimal'].includes(String(b?.voice))?String(b.voice):st.config.voice,xConnected:false};return json(res,200,{ok:true,config:st.config})}
+ {const m=url.pathname.match(/^\/api\/owner\/public-agent\/queue\/([^/]+)\/(approve|reject)$/);if(m&&req.method==='POST'){if(!u)return json(res,401,{error:'AUTH_REQUIRED'});if(u.isOwner!==true)return json(res,403,{error:'OWNER_REQUIRED'});const st=__mfPublicAgentState(u.id),item=st.queue.find(x=>x.id===m[1]);if(!item)return json(res,404,{error:'DRAFT_NOT_FOUND'});item.status=m[2]==='approve'?'READY':'REJECTED';item.reviewedAt=new Date().toISOString();return json(res,200,{ok:true,item,xPosted:false})}}
 
  /* ============================================================
     MEMEFLOW_OWNER_INTELLIGENCE_V1_ROUTES
