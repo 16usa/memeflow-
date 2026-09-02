@@ -3117,14 +3117,358 @@ if(document.readyState==='loading'){
 }
 
 
+// MEMEFLOW_TOKEN_SCAN_V27
+let __mfTokenScanBusyV27=false;
+
+function __mfScanNumberV27(value,digits=2){
+  if(!finite(value))return '—';
+  return Number(value).toLocaleString(
+    undefined,
+    {maximumFractionDigits:digits}
+  );
+}
+
+function __mfScanCompactUsdV27(value){
+  if(!finite(value))return '—';
+  return '$'+compactMetricNumber(Number(value),1);
+}
+
+function __mfScanMintFromInputV27(value){
+  const text=String(value||'').trim();
+  if(!text)return '';
+  const matches=text.match(/[1-9A-HJ-NP-Za-km-z]{32,44}/g)||[];
+  return matches.find(mint=>mint.length>=32&&mint.length<=44)||'';
+}
+
+function __mfScanStateClassV27(value){
+  const key=stateKey(value);
+  return key==='ready'?'ready':
+    key==='watch'?'watch':
+    key==='blocked'?'blocked':
+    key==='open'?'open':'waiting';
+}
+
+function __mfScanDecisionV27(scan,liveRow){
+  if(liveRow){
+    return {
+      state:liveRow?.decision?.state||liveRow?.state||'WAITING',
+      score:liveRow?.decision?.score??liveRow?.score??null,
+      confidence:liveRow?.decision?.confidence??liveRow?.confidence??null,
+      primaryReason:liveRow?.decision?.primaryReason??liveRow?.primaryReason??null,
+      reasons:liveRow?.decision?.reasons??liveRow?.reasons??[]
+    };
+  }
+  return scan?.evaluation||{};
+}
+
+async function __mfScanFetchV27(path,options={}){
+  const response=await fetch(path,{
+    cache:'no-store',
+    credentials:'same-origin',
+    ...options
+  });
+  let payload={};
+  try{payload=await response.json();}catch{}
+  if(!response.ok){
+    const error=new Error(
+      payload?.message||payload?.error||`HTTP ${response.status}`
+    );
+    error.status=response.status;
+    error.payload=payload;
+    throw error;
+  }
+  return payload;
+}
+
+async function __mfTrackedLiveRowV27(mint){
+  if(!mint)return null;
+  try{
+    const payload=await __mfScanFetchV27(
+      '/api/system/live-token-state?mint='+
+      encodeURIComponent(mint)+'&_='+Date.now()
+    );
+    return payload?.row||null;
+  }catch(error){
+    if(error?.status===404)return null;
+    throw error;
+  }
+}
+
+async function __mfBuyContextV27(mint,decision){
+  const result={readiness:null,proposal:null};
+  if(!mint||stateKey(decision?.state)!=='ready')return result;
+
+  try{
+    const [readyPayload,proposalPayload]=await Promise.all([
+      __mfScanFetchV27(
+        '/api/paper/readiness?mint='+encodeURIComponent(mint)+'&_='+Date.now()
+      ),
+      __mfScanFetchV27('/api/paper/proposals?_='+Date.now())
+    ]);
+
+    result.readiness=readyPayload;
+    const proposals=Array.isArray(proposalPayload?.proposals)
+      ? proposalPayload.proposals : [];
+
+    result.proposal=proposals
+      .filter(p=>
+        String(p?.mint||'')===mint &&
+        String(p?.status||'').toUpperCase()==='PENDING'
+      )
+      .sort((a,b)=>
+        Number(b?.createdAtMs||Date.parse(b?.createdAt||'')||0)-
+        Number(a?.createdAtMs||Date.parse(a?.createdAt||'')||0)
+      )[0]||null;
+  }catch(error){
+    console.debug('[token-scan] buy context unavailable',error);
+  }
+  return result;
+}
+
+function __mfScanRenderV27({scan,liveRow,buyContext}){
+  const host=$('tokenScanResult');
+  if(!host)return;
+
+  const tracked=Boolean(liveRow);
+  const decision=__mfScanDecisionV27(scan,liveRow);
+  const mint=String(scan?.mint||liveRow?.mint||'');
+  const name=scan?.name||liveRow?.name||liveRow?.symbol||shortMint(mint);
+  const symbol=scan?.symbol||liveRow?.symbol||'';
+  const market=scan?.market||{};
+  const chain=scan?.onchain||{};
+  const stateText=stateLabel(decision?.state||'WAITING');
+  const stateClass=__mfScanStateClassV27(decision?.state);
+
+  const reasons=[
+    decision?.primaryReason,
+    ...(Array.isArray(decision?.reasons)?decision.reasons:[])
+  ].filter(Boolean);
+
+  const warnings=Array.isArray(scan?.warnings)?scan.warnings:[];
+
+  const canApproveBuy=Boolean(
+    tracked &&
+    stateKey(decision?.state)==='ready' &&
+    buyContext?.readiness?.ok===true &&
+    buyContext?.proposal?.id
+  );
+
+  const buyTitle=!tracked
+    ? 'Manual scans cannot bypass the canonical trading pipeline.'
+    : stateKey(decision?.state)!=='ready'
+      ? `Buy unavailable while state is ${stateText}.`
+      : buyContext?.readiness?.ok!==true
+        ? 'Canonical entry readiness is not passing.'
+        : !buyContext?.proposal?.id
+          ? 'No pending ASSIST proposal is available. AUTOMATE mode handles entry itself.'
+          : 'Approve the current canonical MEMEFLOW proposal.';
+
+  host.hidden=false;
+  host.innerHTML=`
+    <div class="mf-scan-card">
+      <div class="mf-scan-head">
+        <div class="mf-scan-title">
+          <span class="mf-scan-kicker">
+            ${tracked?'TRACKED BY MEMEFLOW':'MANUAL TOKEN SCAN'}
+          </span>
+          <strong>${escapeHtml(symbol?`${symbol} · ${name}`:name)}</strong>
+          <span class="mf-scan-mint">${escapeHtml(mint)}</span>
+        </div>
+        <span class="mf-scan-state ${stateClass}">
+          ${escapeHtml(stateText)}
+        </span>
+      </div>
+
+      <div class="mf-scan-grid">
+        <div class="mf-scan-metric"><span>Score</span><strong>${escapeHtml(__mfScanNumberV27(decision?.score,0))}</strong></div>
+        <div class="mf-scan-metric"><span>Holders</span><strong>${escapeHtml(chain?.holderCountDisplay??chain?.holderCount??holderCount(liveRow||{}))}</strong></div>
+        <div class="mf-scan-metric"><span>Top 10</span><strong>${finite(chain?.top10Pct)?escapeHtml(__mfScanNumberV27(chain.top10Pct,1)+'%'):'—'}</strong></div>
+        <div class="mf-scan-metric"><span>Dev</span><strong>${finite(chain?.developerPct)?escapeHtml(__mfScanNumberV27(chain.developerPct,1)+'%'):'—'}</strong></div>
+        <div class="mf-scan-metric"><span>MC</span><strong>${escapeHtml(__mfScanCompactUsdV27(market?.marketCapUsd))}</strong></div>
+        <div class="mf-scan-metric"><span>Buy pressure</span><strong>${finite(market?.buyPressure)?escapeHtml(__mfScanNumberV27(market.buyPressure,2)+'×'):'—'}</strong></div>
+      </div>
+
+      <p class="mf-scan-reason">
+        ${escapeHtml(reasons[0]||(
+          tracked
+            ? 'Current canonical MEMEFLOW live state.'
+            : 'Independent scan completed with the current MEMEFLOW evaluator.'
+        ))}
+      </p>
+
+      <div class="mf-scan-actions">
+        <button type="button" data-mf-scan-details>Full analysis</button>
+        ${tracked?'<button type="button" data-mf-scan-open-card>Open card</button>':''}
+        <button
+          type="button"
+          class="mf-scan-buy"
+          data-mf-scan-buy
+          ${canApproveBuy?'':'disabled'}
+          title="${escapeHtml(buyTitle)}"
+        >Buy</button>
+        <a
+          href="https://pump.fun/coin/${encodeURIComponent(mint)}"
+          target="_blank"
+          rel="noopener noreferrer"
+        >Pump.fun</a>
+      </div>
+
+      <div class="mf-scan-details" data-mf-scan-details-panel hidden>
+        <div class="mf-scan-detail-grid">
+          <div class="mf-scan-detail"><span>Liquidity</span><strong>${escapeHtml(__mfScanCompactUsdV27(market?.liquidityUsd))}</strong></div>
+          <div class="mf-scan-detail"><span>Vol 5m</span><strong>${escapeHtml(__mfScanCompactUsdV27(market?.volume5mUsd))}</strong></div>
+          <div class="mf-scan-detail"><span>5m buys / sells</span><strong>${escapeHtml(`${__mfScanNumberV27(market?.buys5m,0)} / ${__mfScanNumberV27(market?.sells5m,0)}`)}</strong></div>
+          <div class="mf-scan-detail"><span>Mint authority</span><strong>${escapeHtml(chain?.mintAuthority?'ACTIVE':'NONE')}</strong></div>
+          <div class="mf-scan-detail"><span>Freeze authority</span><strong>${escapeHtml(chain?.freezeAuthority?'ACTIVE':'NONE')}</strong></div>
+          <div class="mf-scan-detail"><span>Sources</span><strong>${escapeHtml((scan?.sources||[]).join(' · ')||'MEMEFLOW live')}</strong></div>
+        </div>
+
+        ${reasons.length>1
+          ? `<ul class="mf-scan-notes">${reasons.slice(1,8).map(r=>`<li>${escapeHtml(r)}</li>`).join('')}</ul>`
+          : ''}
+        ${warnings.length
+          ? `<ul class="mf-scan-notes">${warnings.slice(0,8).map(w=>`<li>${escapeHtml(w)}</li>`).join('')}</ul>`
+          : ''}
+      </div>
+    </div>
+  `;
+
+  host.querySelector('[data-mf-scan-details]')?.addEventListener(
+    'click',
+    event=>{
+      const panel=host.querySelector('[data-mf-scan-details-panel]');
+      if(!panel)return;
+      panel.hidden=!panel.hidden;
+      event.currentTarget.textContent=panel.hidden?'Full analysis':'Hide analysis';
+    }
+  );
+
+  host.querySelector('[data-mf-scan-open-card]')?.addEventListener(
+    'click',
+    ()=>{
+      const card=[...document.querySelectorAll('.flow-token[data-mint]')]
+        .find(node=>String(node.dataset.mint||'')===mint);
+      if(card){
+        card.scrollIntoView({behavior:'smooth',block:'center'});
+        card.classList.add('expanded');
+        const button=card.querySelector('.details-button');
+        if(button)button.textContent='Close';
+      }
+    }
+  );
+
+  const buyButton=host.querySelector('[data-mf-scan-buy]');
+  if(canApproveBuy&&buyButton){
+    buyButton.addEventListener('click',async ()=>{
+      buyButton.disabled=true;
+      buyButton.textContent='Buying…';
+      try{
+        await __mfScanFetchV27(
+          '/api/paper/proposals/'+
+          encodeURIComponent(buyContext.proposal.id)+
+          '/approve',
+          {method:'POST'}
+        );
+        buyButton.textContent='Approved';
+        void __mfRefreshOpenPositionsV16({patchDom:true});
+        void __mfLoadStructureV18();
+      }catch(error){
+        buyButton.disabled=false;
+        buyButton.textContent='Buy';
+        buyButton.title=error?.message||'Buy approval failed';
+      }
+    });
+  }
+}
+
+async function __mfAnalyzeTokenV27(){
+  const input=String($('tokenSearch')?.value||'').trim();
+  const host=$('tokenScanResult');
+  const button=$('refreshButton');
+
+  if(!input){
+    state.query='';
+    state.page=1;
+    render();
+    if(host){
+      host.hidden=true;
+      host.innerHTML='';
+    }
+    void __mfLoadStructureV18().finally(()=>__mfKickCardClockV19());
+    return;
+  }
+
+  if(__mfTokenScanBusyV27)return;
+  __mfTokenScanBusyV27=true;
+
+  if(button){
+    button.disabled=true;
+    button.textContent='Scanning…';
+  }
+  if(host){
+    host.hidden=false;
+    host.innerHTML='<div class="mf-scan-loading">Running full MEMEFLOW token analysis…</div>';
+  }
+
+  try{
+    const hintedMint=__mfScanMintFromInputV27(input);
+    let liveRow=hintedMint
+      ? await __mfTrackedLiveRowV27(hintedMint)
+      : null;
+
+    const payload=await __mfScanFetchV27(
+      '/api/ai/standalone-scan',
+      {
+        method:'POST',
+        headers:{'content-type':'application/json'},
+        body:JSON.stringify({input})
+      }
+    );
+
+    const scan=payload?.scan||null;
+    if(!scan?.mint)throw new Error('Token scan returned no mint.');
+
+    if(!liveRow||String(liveRow?.mint||'')!==String(scan.mint)){
+      liveRow=await __mfTrackedLiveRowV27(scan.mint);
+    }
+
+    const decision=__mfScanDecisionV27(scan,liveRow);
+    const buyContext=await __mfBuyContextV27(scan.mint,decision);
+
+    state.query=liveRow?String(scan.mint):'';
+    state.page=1;
+    render();
+
+    __mfScanRenderV27({scan,liveRow,buyContext});
+  }catch(error){
+    if(host){
+      host.hidden=false;
+      host.innerHTML=`<div class="mf-scan-error">${escapeHtml(error?.message||'Token analysis failed.')}</div>`;
+    }
+  }finally{
+    __mfTokenScanBusyV27=false;
+    if(button){
+      button.disabled=false;
+      button.textContent='Analyze';
+    }
+    __mfKickCardClockV19();
+  }
+}
+
 $('refreshButton')
   .addEventListener(
     'click',
-    ()=>{
-      void __mfLoadStructureV18()
-        .finally(
-          ()=>__mfKickCardClockV19()
-        );
+    ()=>{ void __mfAnalyzeTokenV27(); }
+  );
+
+$('tokenSearch')
+  ?.addEventListener(
+    'keydown',
+    event=>{
+      if(event.key==='Enter'){
+        event.preventDefault();
+        void __mfAnalyzeTokenV27();
+      }
     }
   );
 

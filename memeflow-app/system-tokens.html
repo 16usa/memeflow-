@@ -190,7 +190,8 @@
           autocomplete="off"
           autocapitalize="off"
           spellcheck="false"
-          placeholder="Search mint"
+          placeholder="Paste Pump.fun URL or mint"
+          aria-label="Paste Pump.fun URL or Solana mint to analyze"
         />
       </div>
 
@@ -202,12 +203,20 @@
         <button
           id="refreshButton"
           type="button"
+          aria-label="Analyze token"
         >
-          Refresh
+          Analyze
         </button>
       </div>
 
     </section>
+
+    <section
+      id="tokenScanResult"
+      class="mf-token-scan-result"
+      aria-live="polite"
+      hidden
+    ></section>
 
     <section
       id="tokenList"
