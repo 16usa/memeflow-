@@ -872,6 +872,78 @@ textarea{
 }
 
 /* ==========================================================
+   MEMEFLOW_SHADOW_ERROR_PATTERN_LEARNER_V23_17
+   ========================================================== */
+
+.oi-error-pattern-list{
+  display:grid;
+  gap:8px;
+  margin-top:9px;
+}
+
+.oi-error-pattern-row{
+  padding:10px 11px;
+  border:1px solid rgba(38,56,69,.68);
+  border-radius:11px;
+  background:rgba(255,255,255,.012);
+}
+
+.oi-error-pattern-row.medium{
+  border-color:rgba(239,200,106,.24);
+}
+
+.oi-error-pattern-row.high{
+  border-color:rgba(255,104,120,.28);
+  background:rgba(255,104,120,.025);
+}
+
+.oi-error-pattern-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:10px;
+}
+
+.oi-error-pattern-head>strong{
+  color:var(--muted);
+  font-size:var(--mf-type-micro);
+}
+
+.oi-error-pattern-row.medium
+.oi-error-pattern-head>strong{
+  color:var(--amber);
+}
+
+.oi-error-pattern-row.high
+.oi-error-pattern-head>strong{
+  color:#ff9daa;
+}
+
+.oi-error-pattern-tags{
+  display:flex;
+  flex-wrap:wrap;
+  gap:5px;
+}
+
+.oi-error-pattern-tags span{
+  padding:4px 6px;
+  border:1px solid rgba(87,220,255,.16);
+  border-radius:999px;
+  color:#9fdff0;
+  font-size:var(--mf-type-micro);
+  font-weight:800;
+}
+
+.oi-error-pattern-metrics{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  margin-top:8px;
+  color:var(--muted);
+  font-size:var(--mf-type-micro);
+}
+
+/* ==========================================================
    MEMEFLOW_SHADOW_PROMOTION_REPORT_V23_14
    ========================================================== */
 

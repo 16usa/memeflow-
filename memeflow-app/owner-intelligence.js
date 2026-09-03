@@ -800,6 +800,127 @@ async function loadOutcomeReviews(){
   }
 }
 
+/* MEMEFLOW_SHADOW_ERROR_PATTERN_LEARNER_V23_17_UI_JS */
+function renderErrorPatterns(payload={}){
+  const report=payload?.report||{};
+  const patterns=
+    Array.isArray(report?.patterns)
+      ? report.patterns
+      : [];
+
+  const badge=$('errorPatternStatus');
+
+  if(badge){
+    badge.className=
+      'oi-ai-status '+
+      (
+        Number(report?.maturePatterns||0)>0
+          ? 'online'
+          : ''
+      );
+
+    badge.textContent=
+      Number(report?.scoredRows||0)>=12
+        ? 'LEARNING'
+        : 'COLD START';
+  }
+
+  $('errorPatternScored').textContent=
+    num(report?.scoredRows,0);
+
+  $('errorPatternBaseline').textContent=
+    pct(report?.globalMissRatePct);
+
+  $('errorPatternMature').textContent=
+    num(report?.maturePatterns,0);
+
+  $('errorPatternHigh').textContent=
+    num(report?.highRiskPatterns,0);
+
+  $('errorPatternList').innerHTML=
+    patterns.length
+      ? patterns.slice(0,20).map(row=>`
+          <div
+            class="oi-error-pattern-row ${String(row?.severity||'watch').toLowerCase()}"
+          >
+            <div class="oi-error-pattern-head">
+              <div class="oi-error-pattern-tags">
+                ${
+                  (Array.isArray(row?.tags)?row.tags:[])
+                    .map(tag=>`
+                      <span>
+                        ${esc(String(tag).replaceAll('_',' '))}
+                      </span>
+                    `)
+                    .join('')
+                }
+              </div>
+
+              <strong>
+                ${esc(String(row?.severity||'WATCH'))}
+              </strong>
+            </div>
+
+            <div class="oi-error-pattern-metrics">
+              <span>
+                support ${num(row?.support,0)}
+              </span>
+              <span>
+                misses ${num(row?.misses,0)}
+              </span>
+              <span>
+                posterior ${pct(row?.posteriorMissRatePct)}
+              </span>
+              <span>
+                lower bound ${pct(row?.lowerBoundMissRatePct)}
+              </span>
+              <span>
+                lift ${Number.isFinite(Number(row?.missLift))
+                  ? `${num(row.missLift,2)}×`
+                  : '—'}
+              </span>
+              <span>
+                FP/FN ${num(row?.falsePositives,0)} / ${num(row?.falseNegatives,0)}
+              </span>
+            </div>
+          </div>
+        `).join('')
+      : `
+          <div class="oi-empty">
+            No mature recurring error patterns yet.
+            V23.17 needs repeated directional 5m outcomes before
+            declaring an association mature.
+          </div>
+        `;
+}
+
+async function loadErrorPatterns(){
+  try{
+    const payload=await api(
+      '/api/owner/intelligence/error-patterns?limit=25&horizonMs=300000'
+    );
+
+    renderErrorPatterns(payload);
+  }catch(error){
+    const badge=$('errorPatternStatus');
+
+    if(badge){
+      badge.className='oi-ai-status offline';
+      badge.textContent='UNAVAILABLE';
+    }
+
+    const list=$('errorPatternList');
+
+    if(list){
+      list.innerHTML=`
+        <div class="oi-empty">
+          ${esc(error.message)}
+        </div>
+      `;
+    }
+  }
+}
+
 /* MEMEFLOW_SHADOW_PROMOTION_REPORT_V23_14_UI_JS */
 function promotionTone(status=''){
   const s=String(status||'').toUpperCase();
@@ -1711,7 +1832,8 @@ async function load(
     await Promise.all([
       loadPromotionReport(),
       loadTokenScorecards(),
-      loadOutcomeReviews()
+      loadOutcomeReviews(),
+      loadErrorPatterns()
     ]);
 
     if(previous){

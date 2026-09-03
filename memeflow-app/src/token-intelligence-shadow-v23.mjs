@@ -45,6 +45,9 @@ import {
 import {
   createShadowOutcomeReviewV23_16
 } from './shadow-outcome-review-v23_16.mjs';
+import {
+  createShadowErrorPatternLearnerV23_17
+} from './shadow-error-pattern-learner-v23_17.mjs';
 
 // MEMEFLOW_TOKEN_INTELLIGENCE_NETWORK_V23
 //
@@ -825,6 +828,11 @@ export function createTokenIntelligenceShadowV23({
       dataDir
     });
 
+  const shadowErrorPatternLearner=
+    createShadowErrorPatternLearnerV23_17({
+      dataDir
+    });
+
   const metrics={
     observations:0,
     cellsCreated:0,
@@ -996,10 +1004,17 @@ export function createTokenIntelligenceShadowV23({
           outcome
         });
 
-        shadowOutcomeReview.recordOutcome({
-          anchor:cell.anchor,
-          outcome
-        });
+        const outcomeReview=
+          shadowOutcomeReview.recordOutcome({
+            anchor:cell.anchor,
+            outcome
+          });
+
+        if(outcomeReview){
+          shadowErrorPatternLearner.observeReview(
+            outcomeReview
+          );
+        }
       }
 
       metrics.labels+=labels.length;
@@ -1316,7 +1331,7 @@ export function createTokenIntelligenceShadowV23({
     }
 
     return {
-      version:'MEMEFLOW_TOKEN_INTELLIGENCE_NETWORK_V23_16',
+      version:'MEMEFLOW_TOKEN_INTELLIGENCE_NETWORK_V23_17',
       shadowOnly:true,
       specialists:[
         'FLOW',
@@ -1349,7 +1364,8 @@ export function createTokenIntelligenceShadowV23({
       shadowPromotionGate:shadowPromotionGate.status(),
       shadowPromotionReport:shadowPromotionReport.status(),
       tokenIntelligenceScorecard:tokenIntelligenceScorecard.status(),
-      shadowOutcomeReview:shadowOutcomeReview.status()
+      shadowOutcomeReview:shadowOutcomeReview.status(),
+      shadowErrorPatternLearner:shadowErrorPatternLearner.status()
     };
   }
 
@@ -1442,6 +1458,12 @@ export function createTokenIntelligenceShadowV23({
       options=>shadowOutcomeReview.recent(options),
     flushOutcomeReviews:
       ()=>shadowOutcomeReview.flush(),
+    errorPatternLearnerStatus:
+      ()=>shadowErrorPatternLearner.status(),
+    errorPatternReport:
+      options=>shadowErrorPatternLearner.patternReport(options),
+    flushErrorPatternLearner:
+      ()=>shadowErrorPatternLearner.flush(),
     status
   };
 }

@@ -435,6 +435,72 @@
         </div>
       </section>
 
+      <!-- MEMEFLOW_SHADOW_ERROR_PATTERN_LEARNER_V23_17_UI -->
+      <section
+        id="errorPatternMonitor"
+        class="oi-panel oi-error-pattern-monitor"
+      >
+        <div class="oi-panel-head">
+          <div>
+            <span class="oi-eyebrow">
+              RECURRING MISS STRUCTURE · SHADOW
+            </span>
+            <h2>V23 Error Pattern Learner</h2>
+            <p>
+              Finds repeated pre-outcome evidence combinations that
+              occur disproportionately in V23 misses. Bayesian
+              shrinkage and minimum support reduce fake certainty.
+              Associations are not causal proof.
+            </p>
+          </div>
+
+          <span
+            id="errorPatternStatus"
+            class="oi-ai-status"
+          >
+            LOADING
+          </span>
+        </div>
+
+        <div class="oi-grid oi-grid-4">
+          <article class="oi-stat">
+            <span>SCORED 5M</span>
+            <strong id="errorPatternScored">—</strong>
+            <small>hit + miss observations</small>
+          </article>
+
+          <article class="oi-stat">
+            <span>BASE MISS RATE</span>
+            <strong id="errorPatternBaseline">—</strong>
+            <small>all directional 5m rows</small>
+          </article>
+
+          <article class="oi-stat">
+            <span>MATURE PATTERNS</span>
+            <strong id="errorPatternMature">—</strong>
+            <small>support + Bayesian gate</small>
+          </article>
+
+          <article class="oi-stat">
+            <span>HIGH RISK</span>
+            <strong id="errorPatternHigh">—</strong>
+            <small>strongest recurring associations</small>
+          </article>
+        </div>
+
+        <div class="oi-divider"></div>
+
+        <div class="oi-promotion-check-head">
+          <h3>Top recurring miss associations</h3>
+          <span>diagnostic only · no auto-correction</span>
+        </div>
+
+        <div
+          id="errorPatternList"
+          class="oi-error-pattern-list"
+        ></div>
+      </section>
+
       <!-- MEMEFLOW_PLATFORM_LEARNING_V2_UI -->
       <section class="oi-panel">
         <div class="oi-panel-head">
