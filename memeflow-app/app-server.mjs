@@ -1954,61 +1954,13 @@ volume5mSol:market5m.volume5mSol,
 // MEMEFLOW_LIVE_WATCH_HOLDERS_V28
 // DISPLAY ONLY. Entry Admission / tradeEligible / BUY READY remain unchanged.
 function __mfLiveDisplayStateV28(view,settings={}){
-  if(!view||typeof view!=='object')return view;
-
-  const state=String(view?.state||'WAITING').trim().toUpperCase();
-  const admission=
-    String(view?.entryAdmissionState||'').trim().toUpperCase();
-
-  if(
-    state!=='WAITING' ||
-    admission!=='PENDING' ||
-    view?.tradeEligible===true ||
-    view?.dead===true
-  ){
-    return view;
-  }
-
-  const configured=Number(settings?.minScore);
-  const threshold=
-    Number.isFinite(configured)&&configured>0
-      ? Math.max(0,Math.min(100,configured))
-      : 72;
-
-  const score=Number(
-    view?.relevanceScore ??
-    view?.feedScore ??
-    view?.score
-  );
-
-  const tx=Number(view?.transactions5m);
-  const volumeUsd=Number(view?.volume5mUsd);
-  const volumeSol=Number(view?.volume5mSol);
-  const move=Number(view?.priceChange5mPct);
-
-  const active=
-    (Number.isFinite(tx)&&tx>=4) ||
-    (Number.isFinite(volumeUsd)&&volumeUsd>=250) ||
-    (Number.isFinite(volumeSol)&&volumeSol>=0.5);
-
-  const positiveMove=Number.isFinite(move)&&move>0;
-
-  if(
-    !Number.isFinite(score) ||
-    score<threshold ||
-    !active ||
-    !positiveMove
-  ){
-    return view;
-  }
-
-  return {
-    ...view,
-    state:'WATCH',
-    displayState:'WATCH',
-    underlyingState:'WAITING',
-    watchPendingAdmission:true
-  };
+  // MEMEFLOW_CANONICAL_SCORE_STATE_V20_7
+  // Deleted: display-only WAITING -> WATCH mutation.
+  //
+  // relevanceScore/feedScore remain ranking/sorting signals only.
+  // The visible state must be the canonical decision state.
+  void settings;
+  return view;
 }
 
 function __mfRankLiveDisplayV28(view,settings={}){
@@ -2166,18 +2118,33 @@ function __mfLiveDecisionForUserV14(uid,token,settingsOverride=null){
   }
 
   const __v20truth=__mfCurrentEntryTruthV20_2(token,{isOpen});
+  // MEMEFLOW_CANONICAL_SCORE_STATE_V20_7
+  // Live eligibility may force WAITING, but it must never destroy the
+  // evaluator's AI score/confidence. Score describes token quality;
+  // liveTruthBlocked/tradeEligible describe execution readiness.
   if(!isOpen&&__v20truth.pass!==true){
     const reason=__v20truth.reason||'Fresh live market evidence is unavailable';
+
+    const priorReasons=Array.isArray(decision?.reasons)
+      ? decision.reasons.filter(Boolean)
+      : [];
+
+    const reasons=[
+      ...priorReasons,
+      ...(priorReasons.includes(reason)?[]:[reason])
+    ];
+
     decision={
       ...(decision||{}),
       state:'WAITING',
       displayState:'WAITING',
-      score:0,
-      confidence:0,
-      primaryReason:reason,
-      reasons:[reason],
+      primaryReason:
+        decision?.primaryReason||
+        reason,
+      reasons,
       terminal:false,
-      liveTruthBlocked:true
+      liveTruthBlocked:true,
+      liveTruthReason:reason
     };
   }
 
