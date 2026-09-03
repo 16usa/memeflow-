@@ -30,6 +30,9 @@ import {
 import {
   createShadowOutcomeCalibrationV23_11
 } from './shadow-outcome-calibration-v23_11.mjs';
+import {
+  createShadowChampionBenchmarkV23_12
+} from './shadow-champion-benchmark-v23_12.mjs';
 
 // MEMEFLOW_TOKEN_INTELLIGENCE_NETWORK_V23
 //
@@ -778,6 +781,11 @@ export function createTokenIntelligenceShadowV23({
       dataDir
     });
 
+  const shadowChampionBenchmark=
+    createShadowChampionBenchmarkV23_12({
+      dataDir
+    });
+
   const metrics={
     observations:0,
     cellsCreated:0,
@@ -940,6 +948,11 @@ export function createTokenIntelligenceShadowV23({
         });
 
         shadowOutcomeCalibration.recordOutcome({
+          anchor:cell.anchor,
+          outcome
+        });
+
+        shadowChampionBenchmark.recordOutcome({
           anchor:cell.anchor,
           outcome
         });
@@ -1259,7 +1272,7 @@ export function createTokenIntelligenceShadowV23({
     }
 
     return {
-      version:'MEMEFLOW_TOKEN_INTELLIGENCE_NETWORK_V23_11',
+      version:'MEMEFLOW_TOKEN_INTELLIGENCE_NETWORK_V23_12',
       shadowOnly:true,
       specialists:[
         'FLOW',
@@ -1287,7 +1300,8 @@ export function createTokenIntelligenceShadowV23({
       shadowTokenTrajectory:shadowTokenTrajectory.status(),
       shadowTokenPatternMemory:shadowTokenPatternMemory.status(),
       shadowEvidenceSynthesis:shadowEvidenceSynthesis.status(),
-      shadowOutcomeCalibration:shadowOutcomeCalibration.status()
+      shadowOutcomeCalibration:shadowOutcomeCalibration.status(),
+      shadowChampionBenchmark:shadowChampionBenchmark.status()
     };
   }
 
@@ -1350,6 +1364,16 @@ export function createTokenIntelligenceShadowV23({
       options=>shadowOutcomeCalibration.listRecent(options),
     flushOutcomeCalibration:
       ()=>shadowOutcomeCalibration.flush(),
+    championBenchmarkStatus:
+      ()=>shadowChampionBenchmark.status(),
+    championBenchmarkReport:
+      options=>shadowChampionBenchmark.report(options),
+    championBenchmarkHorizonReport:
+      ()=>shadowChampionBenchmark.horizonReport(),
+    listChampionBenchmarkRows:
+      options=>shadowChampionBenchmark.listRecent(options),
+    flushChampionBenchmark:
+      ()=>shadowChampionBenchmark.flush(),
     status
   };
 }
