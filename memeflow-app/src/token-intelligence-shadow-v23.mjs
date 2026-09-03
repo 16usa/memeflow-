@@ -12,6 +12,9 @@ import {
 import {
   createShadowModelArenaV23_5
 } from './shadow-model-arena-v23_5.mjs';
+import {
+  createShadowDriftRegimeV23_6
+} from './shadow-drift-regime-v23_6.mjs';
 
 // MEMEFLOW_TOKEN_INTELLIGENCE_NETWORK_V23
 //
@@ -733,6 +736,11 @@ export function createTokenIntelligenceShadowV23({
       learningDataset
     });
 
+  const shadowDriftRegime=
+    createShadowDriftRegimeV23_6({
+      learningDataset
+    });
+
   const metrics={
     observations:0,
     cellsCreated:0,
@@ -794,6 +802,14 @@ export function createTokenIntelligenceShadowV23({
       // Calibrated model-comparison probability is diagnostic only.
       snapshot.shadowModelArena=
         shadowModelArena.predict(
+          snapshot,
+          {mint}
+        );
+
+      // MEMEFLOW_DRIFT_REGIME_V23_6
+      // Drift/regime diagnostics are shadow-only and do not mutate V22.
+      snapshot.shadowDriftRegime=
+        shadowDriftRegime.predict(
           snapshot,
           {mint}
         );
@@ -925,6 +941,24 @@ export function createTokenIntelligenceShadowV23({
               snap?.specialists?.coordination
                 ?.sameSlotBuySharePct??0
           },
+          shadowDriftRegime:{
+            status:
+              snap?.shadowDriftRegime?.status||'COLD_START',
+            driftStatus:
+              snap?.shadowDriftRegime?.driftStatus||'COLD_START',
+            currentRegime:
+              snap?.shadowDriftRegime?.currentRegime||'UNKNOWN',
+            regimeModelReady:
+              snap?.shadowDriftRegime?.regimeModelReady===true,
+            regimeModelValidated:
+              snap?.shadowDriftRegime?.regimeModelValidated===true,
+            probabilityPositivePct:
+              snap?.shadowDriftRegime
+                ?.probabilityPositivePct??null,
+            modelConfidencePct:
+              snap?.shadowDriftRegime
+                ?.modelConfidencePct??0
+          },
           shadowModelArena:{
             status:
               snap?.shadowModelArena?.status||'COLD_START',
@@ -990,7 +1024,7 @@ export function createTokenIntelligenceShadowV23({
     }
 
     return {
-      version:'MEMEFLOW_TOKEN_INTELLIGENCE_NETWORK_V23_5',
+      version:'MEMEFLOW_TOKEN_INTELLIGENCE_NETWORK_V23_6',
       shadowOnly:true,
       specialists:[
         'FLOW',
@@ -1012,7 +1046,8 @@ export function createTokenIntelligenceShadowV23({
       walletReputation:walletReputation.status(),
       learningDataset:learningDataset.status(),
       shadowMathBrain:shadowMathBrain.status(),
-      shadowModelArena:shadowModelArena.status()
+      shadowModelArena:shadowModelArena.status(),
+      shadowDriftRegime:shadowDriftRegime.status()
     };
   }
 
@@ -1041,6 +1076,10 @@ export function createTokenIntelligenceShadowV23({
       ()=>shadowModelArena.status(),
     listShadowModelArenaPredictions:
       options=>shadowModelArena.listRecent(options),
+    shadowDriftRegimeStatus:
+      ()=>shadowDriftRegime.status(),
+    listShadowDriftRegimePredictions:
+      options=>shadowDriftRegime.listRecent(options),
     status
   };
 }
