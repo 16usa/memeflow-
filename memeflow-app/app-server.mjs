@@ -440,6 +440,43 @@ const __mfPreOpenRpc=
     process.env.SOLANA_COMMITMENT||'confirmed'
   );
 
+// MEMEFLOW_MANUAL_FULL_ANALYSIS_RPC_V1
+// Manual/standalone scans are explicit authenticated user actions. They may
+// reuse the single pre-open RpcPool for READ-ONLY evidence collection without
+// re-enabling generic HTTP RPC in the automatic scanner/runtime.
+const __mfManualAnalysisRpcMethods=new Set([
+  'getTokenSupply',
+  'getSignaturesForAddress',
+  'getTransaction',
+  'getProgramAccounts',
+  'getAccountInfo',
+  'getTokenAccountsByOwner',
+  'getTokenLargestAccounts'
+]);
+const __mfManualAnalysisRpc={
+  get last(){return __mfPreOpenRpc.last},
+  get metrics(){return __mfPreOpenRpc.metrics},
+  get activeHostname(){return __mfPreOpenRpc.activeHostname},
+  async call(method,args=[]){
+    if(!__mfManualAnalysisRpcMethods.has(method)){
+      const e=new Error('MANUAL_ANALYSIS_RPC_METHOD_BLOCKED');
+      e.code='MANUAL_ANALYSIS_RPC_METHOD_BLOCKED';
+      e.permanent=true;
+      throw e;
+    }
+    return __mfPreOpenRpc.call(method,args);
+  },
+  async callOnce(method,args=[]){
+    if(!__mfManualAnalysisRpcMethods.has(method)){
+      const e=new Error('MANUAL_ANALYSIS_RPC_METHOD_BLOCKED');
+      e.code='MANUAL_ANALYSIS_RPC_METHOD_BLOCKED';
+      e.permanent=true;
+      throw e;
+    }
+    return __mfPreOpenRpc.callOnce(method,args);
+  }
+};
+
 /* MEMEFLOW_COPY_TRADING_RPC_RECONCILIATION_V2
  * Keep exactly ONE RpcPool in the runtime. The scanner remains WebSocket-only.
  * Copy Trading may reuse this already-configured pool asynchronously ONLY to
@@ -2379,11 +2416,189 @@ const __mfPublicAgentRuntimeByOwner=new Map();
 function __mfPublicAgentRuntime(uid){let x=__mfPublicAgentRuntimeByOwner.get(uid);if(!x){x={lastDecision:new Map(),recent:new Map()};__mfPublicAgentRuntimeByOwner.set(uid,x)}return x}
 function __mfPublicAgentState(uid){store.state.publicAgent||={};let x=store.state.publicAgent[uid];if(!x||typeof x!=='object'){x={config:{enabled:false,mode:'approval',displayName:'',voice:'terminal',xConnected:false,events:{watch:true,buyReady:true,positions:true,risk:true}},queue:[],audit:[]};store.state.publicAgent[uid]=x}x.config||={};x.config.events||={};x.config={enabled:x.config.enabled===true,mode:['off','approval','autonomous'].includes(String(x.config.mode))?String(x.config.mode):'approval',displayName:String(x.config.displayName||'').slice(0,40),voice:['terminal','minimal'].includes(String(x.config.voice))?String(x.config.voice):'terminal',xConnected:false,events:{watch:x.config.events.watch!==false,buyReady:x.config.events.buyReady!==false,positions:x.config.events.positions!==false,risk:x.config.events.risk!==false}};if(!Array.isArray(x.queue))x.queue=[];if(!Array.isArray(x.audit))x.audit=[];return x}
 function __mfPublicAgentSafe(v,n=80){return String(v??'').replace(/[^\x20-\x7E]/g,' ').replace(/\s+/g,' ').trim().slice(0,n)}
+function __mfPublicAgentLabel(t,meta={}){
+  const symbol=__mfPublicAgentSafe(t?.symbol||meta?.symbol||'',24);
+  if(symbol)return symbol.toUpperCase();
+
+  const name=__mfPublicAgentSafe(t?.name||meta?.name||'',24);
+  if(name&&name.toUpperCase()!=='UNKNOWN')return name.toUpperCase();
+
+  const mint=String(t?.mint||meta?.mint||meta?.position?.mint||'').trim();
+  if(mint)return mint.slice(0,6).toUpperCase();
+
+  return 'TOKEN';
+}
+function __mfPublicAgentIsTestItem(item){
+  if(!item||typeof item!=='object')return false;
+  if(item.test===true)return true;
+  if(String(item.mint||'').startsWith('TEST_PUBLIC_AGENT_'))return true;
+  if(String(item.symbol||'').toUpperCase()==='TEST')return true;
+  return false;
+}
+function __mfPublicAgentPublishable(item){
+  return Boolean(item&&item.status==='READY'&&!__mfPublicAgentIsTestItem(item));
+}
 function __mfPublicAgentRiskClass(reason){const x=String(reason||'').toUpperCase();if(/WALLET|RISK|INSIDER|MAYHEM/.test(x))return'RISK';if(/KILL|LOSS|SAFETY/.test(x))return'SAFETY';if(/STALE|EXPIRED/.test(x))return'STALE';if(/MAX_|LIMIT|CAPITAL|SPEND|POSITION_SIZE/.test(x))return'LIMIT';return'REJECT'}
 function __mfPublicAgentPublicReason(reason){switch(__mfPublicAgentRiskClass(reason)){case'RISK':return'Risk verification rejected the entry.';case'SAFETY':return'A safety control blocked execution.';case'STALE':return'The signal expired before execution.';case'LIMIT':return'Execution constraints rejected the entry.';default:return'Entry conditions changed before execution.'}}
 function __mfPublicAgentAllowed(st,type){const e=st?.config?.events||{};if(type==='WATCH')return e.watch!==false;if(type==='BUY READY')return e.buyReady!==false;if(type==='OPEN POSITION'||type==='EXIT')return e.positions!==false;if(type==='RISK'||type==='REJECT')return e.risk!==false;return false}
-function __mfPublicAgentDraft(type,t,meta={}){const sym=__mfPublicAgentSafe(t?.symbol||t?.name||meta?.symbol||'UNKNOWN',24).toUpperCase(),d=meta?.decision||{},p=meta?.position||{};const sc=Number.isFinite(Number(d?.score??meta?.score))?Math.round(Number(d?.score??meta?.score)):null,cf=Number.isFinite(Number(d?.confidence??meta?.confidence))?Math.round(Number(d?.confidence??meta?.confidence)):null,pnl=Number.isFinite(Number(p?.realizedPnlPct))?Number(p.realizedPnlPct):null;const out=[];if(type==='WATCH'){out.push('SIGNAL DETECTED.',`$${sym}`);if(sc!==null)out.push(`Score: ${sc}`);if(cf!==null)out.push(`Confidence: ${cf}%`);out.push('I am watching.')}else if(type==='BUY READY'){out.push('ENTRY CONDITIONS DETECTED.',`$${sym}`);if(sc!==null)out.push(`Score: ${sc}`);if(cf!==null)out.push(`Confidence: ${cf}%`);out.push('The market is becoming interesting.')}else if(type==='OPEN POSITION'){out.push('POSITION OPEN.',`$${sym}`);if(sc!==null)out.push(`Signal: ${sc}`);out.push('Execution confirmed.')}else if(type==='EXIT'){out.push('POSITION CLOSED.',`$${sym}`);if(pnl!==null)out.push(`Realized: ${pnl>=0?'+':''}${pnl.toFixed(2)}%`);out.push('The position is no longer active.')}else if(type==='RISK'){out.push('RISK DETECTED.',`$${sym}`,__mfPublicAgentPublicReason(meta?.reason))}else{out.push('ENTRY REJECTED.',`$${sym}`,__mfPublicAgentPublicReason(meta?.reason))}return out.join('\n').slice(0,270)}
-function __mfPublicAgentQueue(uid,type,t,meta={}){if(!uid||store.user(uid)?.isOwner!==true)return null;const st=__mfPublicAgentState(uid);if(!st.config.enabled||st.config.mode==='off'||!__mfPublicAgentAllowed(st,type))return null;const mint=String(t?.mint||meta?.position?.mint||'').trim();if(!mint)return null;const rt=__mfPublicAgentRuntime(uid),fp=[type,mint,meta?.position?.id||'',__mfPublicAgentRiskClass(meta?.reason||''),Math.round(Number(meta?.decision?.score??meta?.score??0))].join(':'),now=Date.now(),last=Number(rt.recent.get(fp)||0);if(last&&now-last<60000)return null;rt.recent.set(fp,now);const item={id:crypto.randomUUID(),createdAt:new Date(now).toISOString(),status:st.config.mode==='autonomous'?'READY':'PENDING',eventType:type,mint,symbol:__mfPublicAgentSafe(t?.symbol||t?.name||meta?.position?.symbol||'',24),score:Number.isFinite(Number(meta?.decision?.score??meta?.score))?Number(meta?.decision?.score??meta?.score):null,confidence:Number.isFinite(Number(meta?.decision?.confidence??meta?.confidence))?Number(meta?.decision?.confidence??meta?.confidence):null,reasonClass:(type==='RISK'||type==='REJECT')?__mfPublicAgentRiskClass(meta?.reason):null,text:__mfPublicAgentDraft(type,t,meta)};st.queue.unshift(item);st.queue=st.queue.slice(0,100);st.audit.unshift({at:item.createdAt,type:'DRAFT_CREATED',id:item.id,eventType:type,status:item.status});st.audit=st.audit.slice(0,200);store.save();return item}
+function __mfPublicAgentDraft(type,t,meta={}){
+  const sym=__mfPublicAgentLabel(t,meta);
+  const d=meta?.decision||{},p=meta?.position||{};
+  const sc=Number.isFinite(Number(d?.score??meta?.score))?Math.round(Number(d?.score??meta?.score)):null;
+  const cf=Number.isFinite(Number(d?.confidence??meta?.confidence))?Math.round(Number(d?.confidence??meta?.confidence)):null;
+  const pnl=Number.isFinite(Number(p?.realizedPnlPct))?Number(p.realizedPnlPct):null;
+  const out=[];
+
+  if(type==='WATCH'){
+    out.push('SIGNAL DETECTED.',`$${sym}`);
+    if(sc!==null)out.push(`Score: ${sc}`);
+    if(cf!==null)out.push(`Confidence: ${cf}%`);
+    out.push('I am watching.');
+  }else if(type==='BUY READY'){
+    out.push('ENTRY CONDITIONS DETECTED.',`$${sym}`);
+    if(sc!==null)out.push(`Score: ${sc}`);
+    if(cf!==null)out.push(`Confidence: ${cf}%`);
+    out.push('The market is becoming interesting.');
+  }else if(type==='OPEN POSITION'){
+    out.push('POSITION OPEN.',`$${sym}`);
+    if(sc!==null)out.push(`Signal: ${sc}`);
+    out.push('Execution confirmed.');
+  }else if(type==='EXIT'){
+    out.push('POSITION CLOSED.',`$${sym}`);
+    if(pnl!==null)out.push(`Realized: ${pnl>=0?'+':''}${pnl.toFixed(2)}%`);
+    out.push('The position is no longer active.');
+  }else if(type==='RISK'){
+    out.push('RISK DETECTED.',`$${sym}`,__mfPublicAgentPublicReason(meta?.reason));
+  }else{
+    out.push('ENTRY REJECTED.',`$${sym}`,__mfPublicAgentPublicReason(meta?.reason));
+  }
+
+  return out.join('\n').slice(0,270);
+}
+function __mfPublicAgentQueue(uid,type,t,meta={}){
+  if(!uid||store.user(uid)?.isOwner!==true)return null;
+
+  const st=__mfPublicAgentState(uid);
+  if(!st.config.enabled||st.config.mode==='off'||!__mfPublicAgentAllowed(st,type))return null;
+
+  const mint=String(t?.mint||meta?.position?.mint||'').trim();
+  if(!mint)return null;
+
+  const isTest=
+    String(mint).startsWith('TEST_PUBLIC_AGENT_') ||
+    String(t?.symbol||'').toUpperCase()==='TEST' ||
+    meta?.test===true;
+
+  const symbol=__mfPublicAgentLabel(t,{
+    mint,
+    symbol:meta?.position?.symbol||meta?.symbol,
+    name:meta?.position?.name||meta?.name
+  });
+
+  const score=Number.isFinite(Number(meta?.decision?.score??meta?.score))
+    ? Number(meta?.decision?.score??meta?.score)
+    : null;
+
+  const confidence=Number.isFinite(Number(meta?.decision?.confidence??meta?.confidence))
+    ? Number(meta?.decision?.confidence??meta?.confidence)
+    : null;
+
+  /*
+   * One mint + one event type = one active draft.
+   *
+   * PENDING:
+   *   live score/confidence/text are refreshed in-place instead of creating spam.
+   *
+   * READY:
+   *   frozen after owner approval. New matching events are ignored until archived.
+   *
+   * TEST and real drafts never coalesce with one another.
+   */
+  const active=st.queue.find(item=>
+    item?.mint===mint &&
+    item?.eventType===type &&
+    ['PENDING','READY'].includes(String(item?.status||'')) &&
+    __mfPublicAgentIsTestItem(item)===isTest
+  );
+
+  if(active){
+    if(active.status==='PENDING'){
+      const nextText=__mfPublicAgentDraft(type,t,meta);
+      const changed=
+        active.symbol!==symbol ||
+        active.score!==score ||
+        active.confidence!==confidence ||
+        active.text!==nextText;
+
+      if(changed){
+        active.symbol=symbol;
+        active.score=score;
+        active.confidence=confidence;
+        active.text=nextText;
+        active.updatedAt=new Date().toISOString();
+        active.test=isTest;
+        store.save();
+      }
+    }
+    return active;
+  }
+
+  const runtime=__mfPublicAgentRuntime(uid);
+
+  /*
+   * Cooldown stops a token from immediately re-creating the same event
+   * after archive/review churn. State changes still pass because eventType
+   * is part of the key (WATCH -> BUY READY is a new event).
+   */
+  const positionKey=meta?.position?.id||'';
+  const cooldownKey=[type,mint,positionKey,isTest?'TEST':'LIVE'].join(':');
+  const now=Date.now();
+  const last=Number(runtime.recent.get(cooldownKey)||0);
+  const cooldownMs=(type==='OPEN POSITION'||type==='EXIT') ? 60000 : 600000;
+
+  if(last&&now-last<cooldownMs)return null;
+
+  runtime.recent.set(cooldownKey,now);
+
+  if(runtime.recent.size>500){
+    for(const [k,at] of runtime.recent){
+      if(now-Number(at)>3600000)runtime.recent.delete(k);
+      if(runtime.recent.size<=300)break;
+    }
+  }
+
+  const item={
+    id:crypto.randomUUID(),
+    createdAt:new Date(now).toISOString(),
+    status:st.config.mode==='autonomous'?'READY':'PENDING',
+    eventType:type,
+    mint,
+    symbol,
+    score,
+    confidence,
+    reasonClass:(type==='RISK'||type==='REJECT')
+      ? __mfPublicAgentRiskClass(meta?.reason)
+      : null,
+    text:__mfPublicAgentDraft(type,t,meta),
+    test:isTest
+  };
+
+  st.queue.unshift(item);
+  st.queue=st.queue.slice(0,100);
+
+  st.audit.unshift({
+    at:item.createdAt,
+    type:'DRAFT_CREATED',
+    id:item.id,
+    eventType:type,
+    status:item.status,
+    test:isTest
+  });
+  st.audit=st.audit.slice(0,200);
+
+  store.save();
+  return item;
+}
 function __mfPublicAgentDecision(uid,t,d){if(!uid||store.user(uid)?.isOwner!==true||!t?.mint||!d)return;const rt=__mfPublicAgentRuntime(uid),mint=String(t.mint),next=String(d.state||'').toUpperCase(),prev=rt.lastDecision.get(mint)||null;rt.lastDecision.set(mint,next);if(prev===next||!['WATCH','BUY READY'].includes(next))return;__mfPublicAgentQueue(uid,next,t,{decision:d})}
 function __mfPublicAgentExecution(uid,t,d,result){if(!result)return;const reason=result?.reason||result?.code||null,action=String(result?.action||'').toUpperCase();if(['OBSERVED','PROPOSED','PROPOSAL_EXISTS','OPENED'].includes(action))return;if(['NONE',''].includes(action)&&['NOT_PAPER','POSITION_EXISTS','IDEMPOTENT','UNKNOWN_MODE'].includes(String(reason||'')))return;if(!reason&&action!=='REJECTED')return;const type=__mfPublicAgentRiskClass(reason)==='RISK'?'RISK':'REJECT';__mfPublicAgentQueue(uid,type,t,{decision:d,reason})}
 const __mfPublicAgentOpenPositionOriginal=paper.openPosition.bind(paper);
@@ -4182,7 +4397,7 @@ function mf49TxnWindow(pair){
 async function mf49DeveloperPct(creator,mint,total){
  if(!creator||!validPubkey(creator)||!total)return null;
  try{
-  const r=await rpc.call('getTokenAccountsByOwner',[creator,{mint},{encoding:'jsonParsed',commitment:'confirmed'}]);
+  const r=await __mfManualAnalysisRpc.call('getTokenAccountsByOwner',[creator,{mint},{encoding:'jsonParsed',commitment:'confirmed'}]);
   let held=0;
   for(const row of r?.value||[]){
    const v=row?.account?.data?.parsed?.info?.tokenAmount?.uiAmountString;
@@ -4196,24 +4411,44 @@ async function mf49StandaloneScan(raw,u){
  const known=store.state.tokens[mint]||{};
  const warnings=[],sources=new Set();
 
- let supplyInfo=null,largestInfo=null,mintInfo=null;
- const rpcJobs=await Promise.allSettled([
-  rpc.call('getTokenSupply',[mint,{commitment:'confirmed'}]),
-  rpc.call('getTokenLargestAccounts',[mint,{commitment:'confirmed'}]),
-  rpc.call('getAccountInfo',[mint,{encoding:'jsonParsed',commitment:'confirmed'}])
- ]);
- if(rpcJobs[0].status==='fulfilled'){supplyInfo=rpcJobs[0].value;sources.add('Solana RPC')}else warnings.push(`Supply: ${rpcJobs[0].reason?.message||'unavailable'}`);
- if(rpcJobs[1].status==='fulfilled'){largestInfo=rpcJobs[1].value;sources.add('Solana RPC')}else warnings.push(`Holders: ${rpcJobs[1].reason?.message||'unavailable'}`);
- if(rpcJobs[2].status==='fulfilled')mintInfo=rpcJobs[2].value;
+ let canonicalManual=null,mintInfo=null;
+ try{
+  canonicalManual=await manualAnalyze({
+   mint,
+   rpc:__mfManualAnalysisRpc,
+   existing:known,
+   settings:u.settings,
+   evaluate
+  });
+  if(canonicalManual?.evidence?.rpcAvailable)sources.add('Solana RPC');
+  if(canonicalManual?.evidence?.holderScanAvailable)sources.add('MEMEFLOW holder engine');
+  if(canonicalManual?.evidence?.holderScanError){
+   warnings.push(`Holders: ${canonicalManual.evidence.holderScanError}`);
+  }
+  if(canonicalManual?.evidence?.rpcError){
+   warnings.push(`RPC: ${canonicalManual.evidence.rpcError}`);
+  }
+ }catch(e){
+  warnings.push(`Full on-chain analysis: ${e?.message||'unavailable'}`);
+ }
 
- const decimals=supplyInfo?.value?.decimals??known.decimals??null;
- const total=mf49Num(supplyInfo?.value?.uiAmountString)??mf49Num(known.totalSupply);
- const vals=(largestInfo?.value||[]).map(x=>mf49Num(x.uiAmountString)).filter(x=>x!=null&&x>0);
- const top10=total&&vals.length?vals.slice(0,10).reduce((a,b)=>a+b,0)/total*100:(mf49Num(known.top10Pct));
- const holderFresh=Boolean(largestInfo);
- const holderCountKnown=mf49Num(known.holderCount);
- const holderCount=holderCountKnown!=null?holderCountKnown:(vals.length&&vals.length<20?vals.length:null);
- const holderCountDisplay=holderCount!=null?String(Math.round(holderCount)):(vals.length>=20?'20+':null);
+ try{
+  mintInfo=await __mfManualAnalysisRpc.call(
+   'getAccountInfo',
+   [mint,{encoding:'jsonParsed',commitment:'confirmed'}]
+  );
+  sources.add('Solana RPC');
+ }catch(e){
+  warnings.push(`Mint account: ${e?.message||'unavailable'}`);
+ }
+
+ const canonicalToken=canonicalManual?.token||{};
+ const decimals=mf49Num(canonicalToken.decimals)??mf49Num(known.decimals);
+ const total=mf49Num(canonicalToken.totalSupply)??mf49Num(known.totalSupply);
+ const top10=mf49Num(canonicalToken.top10Pct)??mf49Num(known.top10Pct);
+ const holderFresh=canonicalToken.holderFresh===true;
+ const holderCount=mf49Num(canonicalToken.holderCount);
+ const holderCountDisplay=holderCount!=null?String(Math.round(holderCount)):null;
 
  let pair=resolved.pair||null;
  if(!pair){
@@ -4223,17 +4458,17 @@ async function mf49StandaloneScan(raw,u){
 
  const side=pair?mf49PairToken(pair,mint):null;
  const name=side?.name||known.name||null,symbol=side?.symbol||known.symbol||null;
- const priceUsd=mf49Num(pair?.priceUsd);
- const liquidityUsd=mf49Num(pair?.liquidity?.usd);
- const marketCapUsd=mf49Num(pair?.marketCap)??mf49Num(pair?.fdv)??(priceUsd!=null&&total!=null?priceUsd*total:null);
+ const priceUsd=mf49Num(pair?.priceUsd)??mf49Num(canonicalToken.priceUsd);
+ const liquidityUsd=mf49Num(pair?.liquidity?.usd)??mf49Num(canonicalToken.liquidityUsd);
+ const marketCapUsd=mf49Num(pair?.marketCap)??mf49Num(pair?.fdv)??mf49Num(canonicalToken.marketCapUsd)??(priceUsd!=null&&total!=null?priceUsd*total:null);
  const volume5mUsd=mf49Num(pair?.volume?.m5);
  const tx5=pair?.txns?.m5||null;
  const buys5m=mf49Num(tx5?.buys),sells5m=mf49Num(tx5?.sells);
 
- let priceSol=mf49Num(known.priceSol),liquiditySol=mf49Num(known.liquiditySol);
+ let priceSol=mf49Num(canonicalToken.priceSol)??mf49Num(known.priceSol),liquiditySol=mf49Num(canonicalToken.liquiditySol)??mf49Num(known.liquiditySol);
  if(known.curve&&validPubkey(known.curve)){
   try{
-   const r=await rpc.call('getAccountInfo',[known.curve,{encoding:'base64',commitment:'confirmed'}]);
+   const r=await __mfManualAnalysisRpc.call('getAccountInfo',[known.curve,{encoding:'base64',commitment:'confirmed'}]);
    if(r?.value?.data?.[0]){
     const c=decodeCurve(r.value.data[0],decimals||6);
     priceSol=mf49Num(c.priceSol)??priceSol;
@@ -4243,7 +4478,7 @@ async function mf49StandaloneScan(raw,u){
   }catch(e){warnings.push(`Curve: ${e.message}`)}
  }
 
- let buyPressure=mf49Num(known.buyPressure);
+ let buyPressure=mf49Num(canonicalToken.buyPressure)??mf49Num(known.buyPressure);
  const tw=tradeWindows.get(mint);
  if(tw&&(tw.buy||tw.sell)){
   buyPressure=tw.sell?tw.buy/tw.sell:(tw.buy||null);
@@ -4255,8 +4490,8 @@ async function mf49StandaloneScan(raw,u){
   }
  }
 
- const creator=known.creator||null;
- let developerPct=mf49Num(known.developerPct);
+ const creator=canonicalToken.creator||known.creator||null;
+ let developerPct=mf49Num(canonicalToken.developerPct)??mf49Num(known.developerPct);
  if(developerPct==null&&creator&&total)developerPct=await mf49DeveloperPct(creator,mint,total);
 
  const mintParsed=mintInfo?.value?.data?.parsed?.info||{};
@@ -4288,7 +4523,7 @@ async function mf49StandaloneScan(raw,u){
  if(typeof mf49Evaluate!=='function')throw mf49Err('src/evaluate.mjs does not export evaluate().',500,'EVALUATOR_NOT_AVAILABLE');
  const evaluation=mf49Evaluate(evalToken,u.settings);
 
- if(holderCount==null&&holderCountDisplay==='20+')warnings.push('Exact holder count is not available from standard Solana RPC; evaluator keeps the holder gate waiting.');
+ if(holderCount==null)warnings.push('Exact holder count is unavailable because the canonical holder scan did not complete.');
  if(developerPct==null)warnings.push('Developer holding is unavailable unless the creator is known.');
  if(!pair&&priceSol==null)warnings.push('No DEX or bonding-curve price was available.');
 
@@ -5305,9 +5540,162 @@ async function handler(req,res){const url=new URL(req.url,'http://x');
 
 
 /* MEMEFLOW_PUBLIC_AGENT_ENTITY_V2_ROUTES */
- if(url.pathname==='/api/owner/public-agent'&&req.method==='GET'){if(!u)return json(res,401,{error:'AUTH_REQUIRED'});if(u.isOwner!==true)return json(res,403,{error:'OWNER_REQUIRED'});const st=__mfPublicAgentState(u.id);return json(res,200,{ok:true,owner:true,config:st.config,queue:st.queue.slice(0,50),audit:st.audit.slice(0,50),x:{connected:false,transport:'disabled-v2'}})}
+ if(url.pathname==='/api/owner/public-agent'&&req.method==='GET'){if(!u)return json(res,401,{error:'AUTH_REQUIRED'});if(u.isOwner!==true)return json(res,403,{error:'OWNER_REQUIRED'});const st=__mfPublicAgentState(u.id);return json(res,200,{ok:true,owner:true,config:st.config,queue:st.queue.slice(0,50),audit:st.audit.slice(0,50),x:{connected:false,transport:'disabled-v2'},safety:{testDraftsNeverPublish:true}})}
  if(url.pathname==='/api/owner/public-agent/config'&&req.method==='PUT'){if(!u)return json(res,401,{error:'AUTH_REQUIRED'});if(u.isOwner!==true)return json(res,403,{error:'OWNER_REQUIRED'});const b=await body(req),st=__mfPublicAgentState(u.id),mode=String(b?.mode||st.config.mode||'approval').toLowerCase();if(!['off','approval','autonomous'].includes(mode))return json(res,400,{error:'INVALID_MODE'});const e=b?.events&&typeof b.events==='object'?b.events:{};st.config={...st.config,enabled:b?.enabled===true,mode,displayName:__mfPublicAgentSafe(b?.displayName??st.config.displayName,40),voice:['terminal','minimal'].includes(String(b?.voice))?String(b.voice):st.config.voice,xConnected:false,events:{watch:e.watch!==false,buyReady:e.buyReady!==false,positions:e.positions!==false,risk:e.risk!==false}};const at=new Date().toISOString();st.audit.unshift({at,type:'CONFIG_UPDATED',mode:st.config.mode,enabled:st.config.enabled});st.audit=st.audit.slice(0,200);store.save();return json(res,200,{ok:true,config:st.config})}
- {const m=url.pathname.match(/^\/api\/owner\/public-agent\/queue\/([^/]+)\/(approve|reject)$/);if(m&&req.method==='POST'){if(!u)return json(res,401,{error:'AUTH_REQUIRED'});if(u.isOwner!==true)return json(res,403,{error:'OWNER_REQUIRED'});const st=__mfPublicAgentState(u.id),item=st.queue.find(x=>x.id===m[1]);if(!item)return json(res,404,{error:'DRAFT_NOT_FOUND'});item.status=m[2]==='approve'?'READY':'REJECTED';item.reviewedAt=new Date().toISOString();st.audit.unshift({at:item.reviewedAt,type:m[2]==='approve'?'DRAFT_APPROVED':'DRAFT_REJECTED',id:item.id,eventType:item.eventType});st.audit=st.audit.slice(0,200);store.save();return json(res,200,{ok:true,item,xPosted:false,xConnected:false})}}
+ {const m=url.pathname.match(/^\/api\/owner\/public-agent\/queue\/([^/]+)\/(approve|reject)$/);
+  if(m&&req.method==='POST'){
+    if(!u)return json(res,401,{error:'AUTH_REQUIRED'});
+    if(u.isOwner!==true)return json(res,403,{error:'OWNER_REQUIRED'});
+    const st=__mfPublicAgentState(u.id),item=st.queue.find(x=>x.id===m[1]);
+    if(!item)return json(res,404,{error:'DRAFT_NOT_FOUND'});
+
+    const target=m[2]==='approve'?'READY':'REJECTED';
+
+    // Idempotent review: repeat taps must not create duplicate audit rows.
+    if(item.status===target){
+      return json(res,200,{
+        ok:true,
+        item,
+        unchanged:true,
+        xPosted:false,
+        xConnected:false,
+        publishable:__mfPublicAgentPublishable(item)
+      });
+    }
+
+    // Once resolved, do not allow opposite review without creating a new draft.
+    if(item.status!=='PENDING'){
+      return json(res,409,{
+        error:'DRAFT_ALREADY_RESOLVED',
+        status:item.status
+      });
+    }
+
+    item.status=target;
+    item.reviewedAt=new Date().toISOString();
+    st.audit.unshift({
+      at:item.reviewedAt,
+      type:m[2]==='approve'?'DRAFT_APPROVED':'DRAFT_REJECTED',
+      id:item.id,
+      eventType:item.eventType,
+      test:__mfPublicAgentIsTestItem(item)
+    });
+    st.audit=st.audit.slice(0,200);
+    store.save();
+
+    return json(res,200,{
+      ok:true,
+      item,
+      unchanged:false,
+      xPosted:false,
+      xConnected:false,
+      publishable:__mfPublicAgentPublishable(item)
+    });
+  }
+ }
+
+ {const m=url.pathname.match(/^\/api\/owner\/public-agent\/queue\/([^/]+)\/archive$/);
+  if(m&&req.method==='POST'){
+    if(!u)return json(res,401,{error:'AUTH_REQUIRED'});
+    if(u.isOwner!==true)return json(res,403,{error:'OWNER_REQUIRED'});
+
+    const st=__mfPublicAgentState(u.id);
+    const index=st.queue.findIndex(x=>x.id===m[1]);
+    if(index<0)return json(res,404,{error:'DRAFT_NOT_FOUND'});
+
+    const item=st.queue[index];
+    if(item.status==='PENDING'){
+      return json(res,409,{error:'PENDING_DRAFT_CANNOT_ARCHIVE'});
+    }
+
+    st.queue.splice(index,1);
+    const at=new Date().toISOString();
+    st.audit.unshift({
+      at,
+      type:'DRAFT_ARCHIVED',
+      id:item.id,
+      eventType:item.eventType,
+      finalStatus:item.status,
+      test:__mfPublicAgentIsTestItem(item)
+    });
+    st.audit=st.audit.slice(0,200);
+    store.save();
+
+    return json(res,200,{ok:true,archivedId:item.id});
+  }
+ }
+
+ if(url.pathname==='/api/owner/public-agent/queue/clear-tests'&&req.method==='POST'){
+   if(!u)return json(res,401,{error:'AUTH_REQUIRED'});
+   if(u.isOwner!==true)return json(res,403,{error:'OWNER_REQUIRED'});
+
+   const st=__mfPublicAgentState(u.id);
+   const before=st.queue.length;
+   st.queue=st.queue.filter(item=>!__mfPublicAgentIsTestItem(item));
+   const removed=before-st.queue.length;
+
+   if(removed>0){
+     const at=new Date().toISOString();
+     st.audit.unshift({at,type:'TEST_DRAFTS_CLEARED',removed});
+     st.audit=st.audit.slice(0,200);
+     store.save();
+   }
+
+   return json(res,200,{ok:true,removed});
+ }
+
+
+ /* MEMEFLOW_PUBLIC_AGENT_TEST_V21
+  * Owner-only dry-run generator. Never touches trading state or X.
+  */
+ if(url.pathname==='/api/owner/public-agent/test'&&req.method==='POST'){
+   if(!u)return json(res,401,{error:'AUTH_REQUIRED'});
+   if(u.isOwner!==true)return json(res,403,{error:'OWNER_REQUIRED'});
+
+   const st=__mfPublicAgentState(u.id);
+   if(!st.config.enabled||st.config.mode==='off'){
+     return json(res,409,{error:'ENTITY_DISABLED',message:'Enable Public Agent first.'});
+   }
+
+   const b=await body(req);
+   const type=String(b?.type||'WATCH').toUpperCase();
+   if(!['WATCH','BUY READY','OPEN POSITION','EXIT','RISK','REJECT'].includes(type)){
+     return json(res,400,{error:'INVALID_TEST_EVENT'});
+   }
+
+   const token={
+     mint:'TEST_PUBLIC_AGENT_000000000000000000000000000000',
+     symbol:'TEST',
+     name:'Public Agent Test'
+   };
+   const meta={
+     decision:{score:91,confidence:88},
+     reason:type==='RISK'?'WALLET_RISK_BLOCKED':'ENTRY_NOT_READY',
+     position:{
+       id:'TEST_POSITION',
+       mint:token.mint,
+       symbol:'TEST',
+       realizedPnlPct:37.42
+     }
+   };
+
+   const item=__mfPublicAgentQueue(u.id,type,token,meta);
+   if(item)item.test=true;
+   if(!item){
+     return json(res,409,{error:'EVENT_NOT_QUEUED',message:'That event type may be disabled or recently generated.'});
+   }
+
+   st.audit.unshift({
+     at:new Date().toISOString(),
+     type:'OWNER_TEST_EVENT',
+     eventType:type,
+     id:item.id
+   });
+   st.audit=st.audit.slice(0,200);
+   store.save();
+
+   return json(res,200,{ok:true,item,xPosted:false,test:true});
+ }
 
  /* ============================================================
     MEMEFLOW_OWNER_INTELLIGENCE_V1_ROUTES
@@ -5971,7 +6359,7 @@ if(url.pathname==='/api/system/health'){
 
      const result=await manualAnalyze({
        mint,
-       rpc,
+       rpc:__mfManualAnalysisRpc,
        existing:store.state.tokens[mint]||{},
        settings:store.settings(u.id),
        evaluate
