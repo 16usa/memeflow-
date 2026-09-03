@@ -1,6 +1,7 @@
 import crypto from 'node:crypto';
 import {calculateAdaptivePositionSize} from './adaptive-position-sizing.mjs';
 import {evaluateSettingsGate} from './settings-gate.mjs';
+import {evaluatePositionDecision} from './position-decision.mjs';
 
 // MEMEFLOW_PAPER_CANONICAL_ADAPTIVE_SIZING_V21
 // MEMEFLOW_PAPER_EXECUTION_GATE_RECHECK_V21_3
@@ -792,6 +793,10 @@ export class PaperEngine {
       decisionConfidence: decision?.confidence ?? null,
       sourceDecisionId: decision?.id || token.mint,
       primaryReason: decision?.primaryReason || null,
+      currentDecisionScore: decision?.score ?? null,
+      currentDecisionState: decision?.state || null,
+      scoreDeltaFromEntry: 0,
+      lifecycleDecision: null,
       strategySource: decision?.strategySource || null,
       copyTradingWallet: decision?.copyTradingWallet || null,
       copyTradingSource: decision?.copyTradingSource || null,
@@ -865,26 +870,71 @@ export class PaperEngine {
     return { ok: true, position };
   }
 
-  approveProposal(userId, proposalId, token) {
+  approveProposal(userId, proposalId, token, verifiedDecision = null) {
     const proposal = this.store.state.paperProposals[proposalId];
     if (!proposal || proposal.userId !== userId) return { ok: false, code: 'NOT_FOUND' };
     if (proposal.status !== 'PENDING') return { ok: false, code: 'PROPOSAL_NOT_PENDING' };
+
     const user = this.store.state.users[userId];
     const settings = this.settings(user?.settings || {});
-    if (settings.decisionFreshnessSec > 0 && this.clock() - Number(proposal.createdAtMs || 0) > settings.decisionFreshnessSec * 1000) {
-      proposal.status = 'EXPIRED';proposal.resolvedAt = nowIso();this.save();return { ok: false, code: 'STALE_PROPOSAL' };
+
+    if (
+      settings.decisionFreshnessSec > 0 &&
+      this.clock() - Number(proposal.createdAtMs || 0) > settings.decisionFreshnessSec * 1000
+    ) {
+      proposal.status = 'EXPIRED';
+      proposal.resolvedAt = nowIso();
+      this.save();
+      return { ok: false, code: 'STALE_PROPOSAL' };
     }
+
     const liveToken = token || this.store.state.tokens[proposal.mint];
-    const result = this.openPosition(userId, liveToken, {
-      state: 'BUY READY',
-      score: proposal.decisionScore,
-      confidence: proposal.decisionConfidence,
-      primaryReason: proposal.primaryReason,
-    }, settings, proposal.idempotencyKey);
+
+    // MEMEFLOW_ASSIST_FRESH_DECISION_V22
+    // app-server performs the final admission/RPC/evaluate() pass immediately
+    // before approval. If that decision is supplied, it is the execution
+    // authority. Never size/open from the stale proposal-time Score.
+    if (
+      verifiedDecision &&
+      String(verifiedDecision?.state || '').toUpperCase() !== 'BUY READY'
+    ) {
+      return {
+        ok: false,
+        code: 'DECISION_NOT_BUY_READY',
+        decision: verifiedDecision
+      };
+    }
+
+    const executionDecision =
+      verifiedDecision && typeof verifiedDecision === 'object'
+        ? verifiedDecision
+        : {
+            state: 'BUY READY',
+            score: proposal.decisionScore,
+            confidence: proposal.decisionConfidence,
+            primaryReason: proposal.primaryReason
+          };
+
+    const result = this.openPosition(
+      userId,
+      liveToken,
+      executionDecision,
+      settings,
+      proposal.idempotencyKey
+    );
+
     if (!result.ok) return result;
+
     proposal.status = 'APPROVED';
     proposal.resolvedAt = nowIso();
     proposal.positionId = result.position.id;
+    proposal.proposedDecisionScore = proposal.decisionScore ?? null;
+    proposal.approvedDecisionScore = executionDecision?.score ?? null;
+    proposal.approvedDecisionConfidence = executionDecision?.confidence ?? null;
+    proposal.approvedDecisionState = executionDecision?.state || null;
+    proposal.approvedDecisionSource =
+      verifiedDecision ? 'preopen-fresh-evaluate' : 'proposal-compatibility';
+
     this.save();
     return result;
   }
@@ -930,77 +980,98 @@ export class PaperEngine {
     const settings = this.settings(position.settingsSnapshot || {});
     let durableMutation = false;
 
+    // MEMEFLOW_UNIFIED_POSITION_EXECUTION_V22
+    // Decision logic lives in position-decision.mjs. PaperEngine only executes
+    // the returned lifecycle command(s).
+    const lifecycle = evaluatePositionDecision({
+      position,
+      token,
+      settings,
+      now: this.clock()
+    });
+
+    const metrics = lifecycle?.metrics || {};
+
     position.currentPriceSol = price;
-    position.highestPriceSol = Math.max(num(position.highestPriceSol, price), price);
-    position.unrealizedPnlSol = position.remainingTokenQuantity * (price - position.entryPriceSol);
-    position.unrealizedPnlPct = position.entryPriceSol > 0 ? ((price / position.entryPriceSol) - 1) * 100 : 0;
+    position.highestPriceSol =
+      num(metrics.highestPriceSol, Math.max(num(position.highestPriceSol, price), price));
 
-    const profitPct = position.unrealizedPnlPct;
-    if (profitPct > 0 && settings.trailingStopPct > 0) {
-      position.trailingStopPriceSol = position.highestPriceSol * (1 - settings.trailingStopPct / 100);
-    }
+    position.trailingStopPriceSol =
+      metrics.trailingStopPriceSol === null ||
+      metrics.trailingStopPriceSol === undefined
+        ? null
+        : num(metrics.trailingStopPriceSol, null);
 
-    if (!position.tp1Executed && profitPct >= settings.tp1Pct) {
-      const qty = Math.min(position.remainingTokenQuantity, position.initialTokenQuantity * settings.tp1SellPct / 100);
-      if (qty > 0) {
-        if (this.partialExit(position, qty, price, 'TP1')) {
-          position.tp1Executed = true;
+    position.unrealizedPnlSol =
+      position.remainingTokenQuantity * (price - position.entryPriceSol);
+
+    position.unrealizedPnlPct =
+      position.entryPriceSol > 0
+        ? ((price / position.entryPriceSol) - 1) * 100
+        : 0;
+
+    position.currentDecisionScore =
+      metrics.currentScore ?? null;
+
+    position.currentDecisionState =
+      metrics.currentState || null;
+
+    position.scoreDeltaFromEntry =
+      metrics.scoreDeltaFromEntry ?? null;
+
+    position.lifecycleDecision = {
+      version: lifecycle?.version || 'MEMEFLOW_POSITION_DECISION_V22',
+      action: lifecycle?.action || 'HOLD',
+      reason: lifecycle?.reason || 'HOLD',
+      code: lifecycle?.code || 'HOLD',
+      priority: Number(lifecycle?.priority) || 0,
+      atMs: this.clock(),
+      metrics: {
+        profitPct: metrics.profitPct ?? null,
+        heldMinutes: metrics.heldMinutes ?? null,
+        entryScore: metrics.entryScore ?? null,
+        currentScore: metrics.currentScore ?? null,
+        scoreDeltaFromEntry: metrics.scoreDeltaFromEntry ?? null,
+        currentState: metrics.currentState || null,
+        scoreFresh: metrics.scoreFresh === true,
+        scoreSource: metrics.scoreSource || null,
+        buyPressure: metrics.buyPressure ?? null,
+        recentNetFlowSol: metrics.recentNetFlowSol ?? null,
+        drawdownFromPeakPct: metrics.drawdownFromPeakPct ?? null
+      }
+    };
+
+    for (const command of Array.isArray(lifecycle?.actions) ? lifecycle.actions : []) {
+      if (position.status !== 'OPEN') break;
+
+      if (command?.type === 'PARTIAL_EXIT') {
+        const pct = Math.max(0, Math.min(100, num(command.percentOfInitial)));
+        const qty = Math.min(
+          position.remainingTokenQuantity,
+          position.initialTokenQuantity * pct / 100
+        );
+
+        if (qty > 0 && this.partialExit(position, qty, price, command.reason || 'PARTIAL EXIT')) {
+          if (command.code === 'TP1') position.tp1Executed = true;
+          if (command.code === 'TP2') position.tp2Executed = true;
           durableMutation = true;
         }
+
+        continue;
+      }
+
+      if (command?.type === 'CLOSE') {
+        durableMutation =
+          this.closePositionInternal(
+            position,
+            price,
+            command.reason || lifecycle?.reason || 'LIFECYCLE EXIT'
+          ) || durableMutation;
+        break;
       }
     }
 
-    if (position.status === 'OPEN' && !position.tp2Executed && profitPct >= settings.tp2Pct) {
-      const qty = Math.min(position.remainingTokenQuantity, position.initialTokenQuantity * settings.tp2SellPct / 100);
-      if (qty > 0) {
-        if (this.partialExit(position, qty, price, 'TP2')) {
-          position.tp2Executed = true;
-          durableMutation = true;
-        }
-      }
-    }
-
-    if (position.status !== 'OPEN') {
-      return { durable: durableMutation };
-    }
-
-    if (profitPct <= -settings.hardStopPct) {
-      durableMutation =
-        this.closePositionInternal(position, price, 'HARD STOP') ||
-        durableMutation;
-
-      return { durable: durableMutation };
-    }
-
-    if (position.trailingStopPriceSol && price <= position.trailingStopPriceSol) {
-      durableMutation =
-        this.closePositionInternal(position, price, 'TRAILING STOP') ||
-        durableMutation;
-
-      return { durable: durableMutation };
-    }
-
-    const heldMinutes = (this.clock() - position.openedAtMs) / 60000;
-    if (heldMinutes >= settings.maxHoldMinutes) {
-      durableMutation =
-        this.closePositionInternal(position, price, 'MAX HOLD TIME') ||
-        durableMutation;
-
-      return { durable: durableMutation };
-    }
-
-    const pressure = Number(token.buyPressure);
-    if (
-      settings.exitOnWeakBuyPressure &&
-      Number.isFinite(pressure) &&
-      pressure < settings.exitBuyPressure
-    ) {
-      durableMutation =
-        this.closePositionInternal(position, price, 'BUY PRESSURE EXIT') ||
-        durableMutation;
-    }
-
-    return { durable: durableMutation };
+    return { durable: durableMutation, lifecycle };
   }
 
   partialExit(position, quantity, price, reason) {

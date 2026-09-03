@@ -9723,10 +9723,12 @@ async function __mfApprovePaperProposalWithRisk(
     };
   }
 
+  // MEMEFLOW_ASSIST_FRESH_DECISION_V22
   return paper.approveProposal(
     uid,
     proposalId,
-    verified.token
+    verified.token,
+    verified.decision
   );
 }
 
