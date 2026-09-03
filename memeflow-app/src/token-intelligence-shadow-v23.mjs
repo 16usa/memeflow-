@@ -15,6 +15,9 @@ import {
 import {
   createShadowDriftRegimeV23_6
 } from './shadow-drift-regime-v23_6.mjs';
+import {
+  createShadowConfidenceGovernorV23_7
+} from './shadow-confidence-governor-v23_7.mjs';
 
 // MEMEFLOW_TOKEN_INTELLIGENCE_NETWORK_V23
 //
@@ -741,6 +744,9 @@ export function createTokenIntelligenceShadowV23({
       learningDataset
     });
 
+  const shadowConfidenceGovernor=
+    createShadowConfidenceGovernorV23_7();
+
   const metrics={
     observations:0,
     cellsCreated:0,
@@ -810,6 +816,14 @@ export function createTokenIntelligenceShadowV23({
       // Drift/regime diagnostics are shadow-only and do not mutate V22.
       snapshot.shadowDriftRegime=
         shadowDriftRegime.predict(
+          snapshot,
+          {mint}
+        );
+
+      // MEMEFLOW_SHADOW_CONFIDENCE_GOVERNOR_V23_7
+      // Meta-confidence only. No evaluate()/V22/execution authority.
+      snapshot.shadowConfidenceGovernor=
+        shadowConfidenceGovernor.predict(
           snapshot,
           {mint}
         );
@@ -959,6 +973,33 @@ export function createTokenIntelligenceShadowV23({
               snap?.shadowDriftRegime
                 ?.modelConfidencePct??0
           },
+          shadowConfidenceGovernor:{
+            status:
+              snap?.shadowConfidenceGovernor?.status||'COLD_START',
+            ready:
+              snap?.shadowConfidenceGovernor?.ready===true,
+            consensusProbabilityPositivePct:
+              snap?.shadowConfidenceGovernor
+                ?.consensusProbabilityPositivePct??null,
+            ensembleConfidencePct:
+              snap?.shadowConfidenceGovernor
+                ?.ensembleConfidencePct??0,
+            disagreementPct:
+              snap?.shadowConfidenceGovernor
+                ?.disagreementPct??null,
+            agreementPct:
+              snap?.shadowConfidenceGovernor
+                ?.agreementPct??null,
+            sourceCount:
+              snap?.shadowConfidenceGovernor
+                ?.sourceCount??0,
+            validatedSourceCount:
+              snap?.shadowConfidenceGovernor
+                ?.validatedSourceCount??0,
+            effectiveSourceCount:
+              snap?.shadowConfidenceGovernor
+                ?.effectiveSourceCount??0
+          },
           shadowModelArena:{
             status:
               snap?.shadowModelArena?.status||'COLD_START',
@@ -1024,7 +1065,7 @@ export function createTokenIntelligenceShadowV23({
     }
 
     return {
-      version:'MEMEFLOW_TOKEN_INTELLIGENCE_NETWORK_V23_6',
+      version:'MEMEFLOW_TOKEN_INTELLIGENCE_NETWORK_V23_7',
       shadowOnly:true,
       specialists:[
         'FLOW',
@@ -1047,7 +1088,8 @@ export function createTokenIntelligenceShadowV23({
       learningDataset:learningDataset.status(),
       shadowMathBrain:shadowMathBrain.status(),
       shadowModelArena:shadowModelArena.status(),
-      shadowDriftRegime:shadowDriftRegime.status()
+      shadowDriftRegime:shadowDriftRegime.status(),
+      shadowConfidenceGovernor:shadowConfidenceGovernor.status()
     };
   }
 
@@ -1080,6 +1122,10 @@ export function createTokenIntelligenceShadowV23({
       ()=>shadowDriftRegime.status(),
     listShadowDriftRegimePredictions:
       options=>shadowDriftRegime.listRecent(options),
+    shadowConfidenceGovernorStatus:
+      ()=>shadowConfidenceGovernor.status(),
+    listShadowConfidenceGovernorPredictions:
+      options=>shadowConfidenceGovernor.listRecent(options),
     status
   };
 }
