@@ -21,6 +21,9 @@ import {
 import {
   createShadowTokenTrajectoryMemoryV23_8
 } from './shadow-token-trajectory-v23_8.mjs';
+import {
+  createShadowTokenPatternMemoryV23_9
+} from './shadow-token-pattern-memory-v23_9.mjs';
 
 // MEMEFLOW_TOKEN_INTELLIGENCE_NETWORK_V23
 //
@@ -756,6 +759,11 @@ export function createTokenIntelligenceShadowV23({
       maxMints:maxCells
     });
 
+  const shadowTokenPatternMemory=
+    createShadowTokenPatternMemoryV23_9({
+      dataDir
+    });
+
   const metrics={
     observations:0,
     cellsCreated:0,
@@ -852,6 +860,17 @@ export function createTokenIntelligenceShadowV23({
           {mint}
         );
 
+      // MEMEFLOW_TOKEN_PATTERN_MEMORY_V23_9
+      // Similar-history probability only; no evaluate()/V22 authority.
+      snapshot.shadowTokenPattern=
+        shadowTokenPatternMemory.predict(
+          snapshot,
+          {
+            mint,
+            at:snapshot.observedAt
+          }
+        );
+
       if(cell.maybeAnchor(token,snapshot,journal)){
         metrics.anchors++;
       }
@@ -873,6 +892,11 @@ export function createTokenIntelligenceShadowV23({
         });
 
         shadowTokenTrajectory.recordOutcome({
+          anchor:cell.anchor,
+          outcome
+        });
+
+        shadowTokenPatternMemory.recordOutcome({
           anchor:cell.anchor,
           outcome
         });
@@ -1060,6 +1084,24 @@ export function createTokenIntelligenceShadowV23({
               snap?.shadowTokenTrajectory
                 ?.forecastQuality||null
           },
+          shadowTokenPattern:{
+            status:
+              snap?.shadowTokenPattern?.status||'PATTERN_COLD_START',
+            ready:
+              snap?.shadowTokenPattern?.ready===true,
+            historicalExamples:
+              snap?.shadowTokenPattern?.historicalExamples??0,
+            neighbourCount:
+              snap?.shadowTokenPattern?.neighbourCount??0,
+            patternProbabilityPositivePct:
+              snap?.shadowTokenPattern?.patternProbabilityPositivePct??null,
+            matchConfidencePct:
+              snap?.shadowTokenPattern?.matchConfidencePct??0,
+            meanSimilarityPct:
+              snap?.shadowTokenPattern?.meanSimilarityPct??0,
+            nearestSimilarityPct:
+              snap?.shadowTokenPattern?.nearestSimilarityPct??null
+          },
           shadowModelArena:{
             status:
               snap?.shadowModelArena?.status||'COLD_START',
@@ -1125,7 +1167,7 @@ export function createTokenIntelligenceShadowV23({
     }
 
     return {
-      version:'MEMEFLOW_TOKEN_INTELLIGENCE_NETWORK_V23_8',
+      version:'MEMEFLOW_TOKEN_INTELLIGENCE_NETWORK_V23_9',
       shadowOnly:true,
       specialists:[
         'FLOW',
@@ -1150,7 +1192,8 @@ export function createTokenIntelligenceShadowV23({
       shadowModelArena:shadowModelArena.status(),
       shadowDriftRegime:shadowDriftRegime.status(),
       shadowConfidenceGovernor:shadowConfidenceGovernor.status(),
-      shadowTokenTrajectory:shadowTokenTrajectory.status()
+      shadowTokenTrajectory:shadowTokenTrajectory.status(),
+      shadowTokenPatternMemory:shadowTokenPatternMemory.status()
     };
   }
 
@@ -1193,6 +1236,12 @@ export function createTokenIntelligenceShadowV23({
       mint=>shadowTokenTrajectory.inspect(mint),
     flushTokenTrajectories:
       ()=>shadowTokenTrajectory.flush(),
+    listTokenPatternPredictions:
+      options=>shadowTokenPatternMemory.listRecent(options),
+    listTokenPatternExamples:
+      options=>shadowTokenPatternMemory.listExamples(options),
+    flushTokenPatternMemory:
+      ()=>shadowTokenPatternMemory.flush(),
     status
   };
 }
