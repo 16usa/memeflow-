@@ -1817,6 +1817,145 @@ async function loadV23Readiness(){
   }
 }
 
+/* MEMEFLOW_V24_CONTROLLED_POLICY_BRIDGE_V24_0_UI_JS */
+function renderV24PolicyBridge(payload={}){
+  const bridge=payload?.bridge||{};
+  const readiness=payload?.readiness||{};
+  const v24=readiness?.v24||{};
+
+  const badge=$('v24PolicyBridgeStatus');
+
+  if(badge){
+    const mode=String(bridge?.mode||'OFF').toUpperCase();
+    const killed=bridge?.killSwitch===true;
+
+    badge.className=
+      'oi-ai-status '+
+      (
+        mode==='ENFORCE' && !killed
+          ? 'online'
+          : ''
+      );
+
+    badge.textContent=
+      killed
+        ? 'KILLED'
+        : mode;
+  }
+
+  $('v24PolicyBridgeMode').textContent=
+    bridge?.mode||'OFF';
+
+  $('v24PolicyBridgeKill').textContent=
+    bridge?.killSwitch===true
+      ? 'ON'
+      : 'OFF';
+
+  $('v24PolicyBridgeShadowCount').textContent=
+    num(
+      bridge?.shadowWouldDowngrade,
+      0
+    );
+
+  $('v24PolicyBridgeEnforcedCount').textContent=
+    num(
+      bridge?.enforcedDowngrades,
+      0
+    );
+
+  $('v24PolicyBridgeContract').innerHTML=[
+    ['Allowed mutation','BUY READY → WATCH only'],
+    ['Can upgrade','NO'],
+    ['Can execute trade','NO'],
+    ['Score mutation','NO'],
+    ['Settings mutation','NO'],
+    ['Forecast mutation','NO'],
+    ['Automatic promotion','NO']
+  ].map(([name,value])=>`
+    <div class="oi-row">
+      <span>${esc(name)}</span>
+      <strong>${esc(value)}</strong>
+    </div>
+  `).join('');
+
+  $('v24PolicyBridgeReadiness').innerHTML=[
+    [
+      'Architecture frozen',
+      readiness?.architecture?.structuralReady===true
+        ? 'YES'
+        : 'NO'
+    ],
+    [
+      'Controlled activation eligible',
+      v24?.controlledActivationEligible===true
+        ? 'YES'
+        : 'NO'
+    ],
+    [
+      'Evidence',
+      readiness?.evidence?.status||'—'
+    ],
+    [
+      'Policy review',
+      readiness?.evidence?.policyReviewStatus||'—'
+    ]
+  ].map(([name,value])=>`
+    <div class="oi-row">
+      <span>${esc(name)}</span>
+      <strong>${esc(String(value).replaceAll('_',' '))}</strong>
+    </div>
+  `).join('');
+
+  const verdict=$('v24PolicyBridgeVerdict');
+
+  if(verdict){
+    const active=
+      bridge?.mode==='ENFORCE' &&
+      bridge?.killSwitch!==true &&
+      v24?.controlledActivationEligible===true;
+
+    verdict.dataset.state=
+      active
+        ? 'ready'
+        : 'blocked';
+
+    verdict.textContent=
+      active
+        ? 'V24 BRIDGE ENFORCEMENT IS ACTIVE. It remains one-way: only BUY READY → WATCH.'
+        : (
+            bridge?.mode==='SHADOW' &&
+            bridge?.killSwitch!==true
+              ? 'V24 BRIDGE IS IN SHADOW MODE. It records would-downgrade decisions but cannot change live state.'
+              : 'V24 BRIDGE IS SAFE/INACTIVE. V22 decisions remain unchanged.'
+          );
+  }
+}
+
+async function loadV24PolicyBridge(){
+  try{
+    const payload=await api(
+      '/api/owner/intelligence/v24-policy-bridge'
+    );
+
+    renderV24PolicyBridge(payload);
+  }catch(error){
+    const badge=$('v24PolicyBridgeStatus');
+
+    if(badge){
+      badge.className='oi-ai-status offline';
+      badge.textContent='UNAVAILABLE';
+    }
+
+    const verdict=$('v24PolicyBridgeVerdict');
+
+    if(verdict){
+      verdict.dataset.state='blocked';
+      verdict.textContent=
+        `V24 policy bridge unavailable: ${error.message}`;
+    }
+  }
+}
+
 /* MEMEFLOW_SHADOW_PROMOTION_REPORT_V23_14_UI_JS */
 function promotionTone(status=''){
   const s=String(status||'').toUpperCase();
@@ -2735,7 +2874,8 @@ async function load(
       loadPolicyCandidate(),
       loadPolicySimulation(),
       loadPolicyReview(),
-      loadV23Readiness()
+      loadV23Readiness(),
+      loadV24PolicyBridge()
     ]);
 
     if(previous){

@@ -962,6 +962,85 @@
         </div>
       </section>
 
+      <!-- MEMEFLOW_V24_CONTROLLED_POLICY_BRIDGE_V24_0_UI -->
+      <section
+        id="v24PolicyBridgeMonitor"
+        class="oi-panel oi-v24-policy-bridge"
+      >
+        <div class="oi-panel-head">
+          <div>
+            <span class="oi-eyebrow">
+              V24 CONTROLLED INTEGRATION
+            </span>
+            <h2>V24.0 Policy Bridge</h2>
+            <p>
+              First one-way bridge from frozen V23 intelligence into the
+              V22 decision path. It can only downgrade BUY READY to WATCH.
+              Default mode is OFF and the bridge kill switch defaults ON.
+            </p>
+          </div>
+
+          <span
+            id="v24PolicyBridgeStatus"
+            class="oi-ai-status"
+          >
+            LOADING
+          </span>
+        </div>
+
+        <div class="oi-grid oi-grid-4">
+          <article class="oi-stat">
+            <span>MODE</span>
+            <strong id="v24PolicyBridgeMode">—</strong>
+            <small>OFF / SHADOW / ENFORCE</small>
+          </article>
+
+          <article class="oi-stat">
+            <span>KILL SWITCH</span>
+            <strong id="v24PolicyBridgeKill">—</strong>
+            <small>bridge-local control</small>
+          </article>
+
+          <article class="oi-stat">
+            <span>WOULD DOWNGRADE</span>
+            <strong id="v24PolicyBridgeShadowCount">—</strong>
+            <small>shadow observations</small>
+          </article>
+
+          <article class="oi-stat">
+            <span>ENFORCED</span>
+            <strong id="v24PolicyBridgeEnforcedCount">—</strong>
+            <small>BUY READY → WATCH</small>
+          </article>
+        </div>
+
+        <div class="oi-grid oi-grid-2">
+          <div>
+            <h3>Bridge contract</h3>
+            <div
+              id="v24PolicyBridgeContract"
+              class="oi-list"
+            ></div>
+          </div>
+
+          <div>
+            <h3>Readiness</h3>
+            <div
+              id="v24PolicyBridgeReadiness"
+              class="oi-list"
+            ></div>
+          </div>
+        </div>
+
+        <div
+          id="v24PolicyBridgeVerdict"
+          class="oi-promotion-blocker"
+          data-state="blocked"
+        >
+          Loading controlled integration status.
+        </div>
+      </section>
+
       <!-- MEMEFLOW_PLATFORM_LEARNING_V2_UI -->
       <section class="oi-panel">
         <div class="oi-panel-head">

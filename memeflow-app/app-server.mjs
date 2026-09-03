@@ -19,6 +19,7 @@ import { startPumpLiveTradeFeed } from './src/pump-live-trade-feed.mjs'; // MEME
 import { ChartHistoryArchive } from './src/chart-history-archive.mjs'; // MEMEFLOW_CHART_DATA_PATH_FIX_V2_DIRTY_SAFE // MEMEFLOW_CHART_HISTORY_RESTORE_V1
 import {createOpportunityEngine} from './src/opportunity-engine.mjs'; // MEMEFLOW_OPPORTUNITY_ENGINE_V1
 import {createTokenIntelligenceShadowV23} from './src/token-intelligence-shadow-v23.mjs'; // MEMEFLOW_TOKEN_INTELLIGENCE_NETWORK_V23
+import {createV24ControlledPolicyBridgeV24_0} from './src/controlled-policy-bridge-v24_0.mjs'; // MEMEFLOW_V24_CONTROLLED_POLICY_BRIDGE_V24_0
 import {createSolUsdOracle} from './src/sol-usd-oracle.mjs'; // MEMEFLOW_OPPORTUNITY_ENGINE_V1
 import {liveCardMarketSnapshot,openPositionLiveMarketCap} from './src/live-card-market.mjs'; // MEMEFLOW_LIVE_CARD_MARKET_TRUTH_V18 / MEMEFLOW_OPEN_POSITION_LIVE_MC_V20
 import {rankCandidateViews} from './src/feed-ranking.mjs'; // MEMEFLOW_FEED_RELEVANCE_RANKING_V1
@@ -33,7 +34,29 @@ import {createSmartVaultD4Adapter} from './smart-vault/devnet-executor-d4/runtim
 // MEMEFLOW AI ASSISTANT HARD OFF: import disabled
 const root=path.dirname(fileURLToPath(import.meta.url)),dataDir=path.resolve(root,process.env.DATA_DIR||'data'),store=new JsonStore(dataDir);
 const opportunityEngine=createOpportunityEngine(); // MEMEFLOW_OPPORTUNITY_ENGINE_V1
-const tokenIntelligenceShadowV23=createTokenIntelligenceShadowV23({dataDir}); // SHADOW ONLY: never feeds evaluate()/execution
+const tokenIntelligenceShadowV23=createTokenIntelligenceShadowV23({dataDir}); // Frozen V23 intelligence
+const v24ControlledPolicyBridge=createV24ControlledPolicyBridgeV24_0({
+  dataDir,
+  mode:process.env.MEMEFLOW_V24_POLICY_BRIDGE_MODE||'OFF',
+  killSwitch:
+    String(
+      process.env.MEMEFLOW_V24_POLICY_BRIDGE_KILL_SWITCH??'true'
+    ).toLowerCase()!=='false',
+  readinessProvider:
+    ()=>tokenIntelligenceShadowV23.auditV23ReadinessFreeze(),
+  candidateProvider:
+    ()=>tokenIntelligenceShadowV23.buildPolicyCandidate(),
+  tokenIntelligenceProvider:
+    mint=>tokenIntelligenceShadowV23.inspect(mint)
+}); // V24.0 defaults OFF + killed; only BUY READY -> WATCH can ever be enforced
+
+function __mfApplyV24PolicyBridge(uid,token,decision){
+  return v24ControlledPolicyBridge.apply({
+    uid,
+    token,
+    decision
+  });
+}
 const solUsdOracle=createSolUsdOracle(); // one shared quote, never per-token RPC
 solUsdOracle.start();
 // MEMEFLOW_PERMANENT_TOKEN_REGISTRY_V1
@@ -2106,6 +2129,14 @@ function __mfLiveDecisionForUserV14(uid,token,settingsOverride=null,admissionOve
     const reason=liveTruth.reason||'Fresh live market evidence is unavailable';
     const prior=Array.isArray(decision?.reasons)?decision.reasons.filter(Boolean):[];
     decision={...decision,state:'WAITING',displayState:'WAITING',primaryReason:decision?.primaryReason||reason,reasons:[...prior,...(prior.includes(reason)?[]:[reason])],terminal:false,liveTruthBlocked:true,liveTruthReason:reason};
+  }
+
+  if(!isOpen){
+    decision=__mfApplyV24PolicyBridge(
+      uid,
+      token,
+      decision
+    );
   }
 
   return {
@@ -4253,7 +4284,12 @@ function reevaluateUser(uid){
           true
         );
 
-        const d=evaluate(token,settings);
+        const rawDecision=evaluate(token,settings);
+        const d=__mfApplyV24PolicyBridge(
+          uid,
+          token,
+          rawDecision
+        );
         const saved={
           ...d,
           primaryReason:d.primaryReason,
@@ -7094,6 +7130,43 @@ async function handler(req,res){const url=new URL(req.url,'http://x');
      automaticPromotion:false,
      applyEndpointExists:false,
      result
+   });
+ }
+
+/* MEMEFLOW_V24_CONTROLLED_POLICY_BRIDGE_MONITOR_V24_0
+ * Owner-only diagnostics. Runtime mode comes from environment/configuration;
+ * there is intentionally NO enable/apply HTTP endpoint in V24.0.
+ */
+ if(
+   url.pathname==='/api/owner/intelligence/v24-policy-bridge' &&
+   req.method==='GET'
+ ){
+   if(!u)return json(res,401,{error:'AUTH_REQUIRED'});
+   if(u.isOwner!==true)return json(res,403,{error:'OWNER_REQUIRED'});
+
+   const limit=Math.max(
+     1,
+     Math.min(
+       200,
+       Number(
+         url.searchParams.get('limit')||50
+       )
+     )
+   );
+
+   return json(res,200,{
+     ok:true,
+     owner:true,
+     controlledIntegration:true,
+     bridge:
+       v24ControlledPolicyBridge.status(),
+     recent:
+       v24ControlledPolicyBridge.listRecent({
+         limit
+       }),
+     readiness:
+       tokenIntelligenceShadowV23
+         .auditV23ReadinessFreeze()
    });
  }
 
