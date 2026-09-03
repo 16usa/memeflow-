@@ -3,6 +3,9 @@ import path from 'node:path';
 import {
   createWalletReputationMemoryV23_2
 } from './wallet-reputation-shadow-v23_2.mjs';
+import {
+  createLearningDatasetShadowV23_3
+} from './learning-dataset-shadow-v23_3.mjs';
 
 // MEMEFLOW_TOKEN_INTELLIGENCE_NETWORK_V23
 //
@@ -709,6 +712,11 @@ export function createTokenIntelligenceShadowV23({
       dataDir
     });
 
+  const learningDataset=
+    createLearningDatasetShadowV23_3({
+      dataDir
+    });
+
   const metrics={
     observations:0,
     cellsCreated:0,
@@ -765,6 +773,14 @@ export function createTokenIntelligenceShadowV23({
 
       for(const outcome of labels){
         walletReputation.recordOutcome({
+          anchor:cell.anchor,
+          outcome
+        });
+
+        // MEMEFLOW_LEARNING_DATASET_V23_3
+        // Anchor features are frozen before the outcome exists. This avoids
+        // future-data leakage into the learning dataset.
+        learningDataset.recordOutcome({
           anchor:cell.anchor,
           outcome
         });
@@ -911,7 +927,7 @@ export function createTokenIntelligenceShadowV23({
     }
 
     return {
-      version:'MEMEFLOW_TOKEN_INTELLIGENCE_NETWORK_V23_2',
+      version:'MEMEFLOW_TOKEN_INTELLIGENCE_NETWORK_V23_3',
       shadowOnly:true,
       specialists:[
         'FLOW',
@@ -930,7 +946,8 @@ export function createTokenIntelligenceShadowV23({
       stages,
       ...metrics,
       journal:journal.status(),
-      walletReputation:walletReputation.status()
+      walletReputation:walletReputation.status(),
+      learningDataset:learningDataset.status()
     };
   }
 
@@ -945,6 +962,12 @@ export function createTokenIntelligenceShadowV23({
       wallet=>walletReputation.inspect(wallet),
     flushWalletReputation:
       ()=>walletReputation.flush(),
+    listLearningRows:
+      options=>learningDataset.recent(options),
+    learningFeatureReport:
+      options=>learningDataset.featureReport(options),
+    flushLearningDataset:
+      ()=>learningDataset.flush(),
     status
   };
 }
