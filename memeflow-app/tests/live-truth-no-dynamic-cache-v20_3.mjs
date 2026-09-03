@@ -14,7 +14,15 @@ assert.match(ui,/MEMEFLOW_NO_DYNAMIC_CACHE_V20_2/);
 assert.match(ui,/__mfInvalidateDynamicRowV20_2/);
 assert.match(app,/MEMEFLOW_MANUAL_NO_DYNAMIC_CACHE_V20_2/);
 assert.match(app,/MEMEFLOW_FINAL_ACTIVITY_GATE_V20_2/);
-assert.match(app,/tradeEligible:isOpen\?true:eligible&&liveTruth\.pass===true/);
+assert.match(app,/MEMEFLOW_TRADE_ELIGIBLE_CANONICAL_STATE_V21/);
+assert.match(
+  app,
+  /eligible &&\s*liveTruth\.pass===true &&\s*String\(decision\?\.state\|\|''\)\.toUpperCase\(\)==='BUY READY'/
+);
+assert.doesNotMatch(
+  app,
+  /tradeEligible:isOpen\?true:eligible&&liveTruth\.pass===true/
+);
 assert.match(html,/system-tokens\.js\?v=[^\"']+/);
 
 const ms=ui.indexOf('function __mfMergeMutableRowV18(');

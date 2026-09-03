@@ -111,7 +111,10 @@ const missingEvidence=evaluate(
   {priceSol:null,holderFresh:false,dataQuality:0},
   {minScore:0,minConfidence:70,requireFreshHolderSnapshot:true}
 );
-assert.equal(missingEvidence.score,0);
+assert.equal(missingEvidence.score,null);
+assert.equal(missingEvidence.scoreAvailable,false);
+assert.equal(missingEvidence.scoreFresh,false);
+assert.equal(missingEvidence.scoreSource,'unavailable');
 assert.equal(missingEvidence.confidence,0);
 assert.equal(missingEvidence.state,'WAITING');
 

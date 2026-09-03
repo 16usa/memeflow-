@@ -1953,7 +1953,7 @@ function __mfLiveDisplayStateV28(view,settings={}){
   // MEMEFLOW_CANONICAL_SCORE_STATE_V20_7
   // Deleted: display-only WAITING -> WATCH mutation.
   //
-  // relevanceScore/feedScore remain ranking/sorting signals only.
+  // Canonical Score is the only numerical ranking signal.
   // The visible state must be the canonical decision state.
   void settings;
   return view;
@@ -2030,6 +2030,59 @@ function __mfLiveDecisionForUserV14(uid,token,settingsOverride=null,admissionOve
   let decision=fresh&&typeof fresh==='object'
     ? {...fresh,...operational}
     : {...operational,state:'WAITING',score:null,confidence:null,primaryReason:'Fresh evaluator data is unavailable',reasons:['Fresh evaluator data is unavailable'],terminal:false};
+
+  // MEMEFLOW_LAST_CONFIRMED_SCORE_V21_7
+  // Never turn "unknown right now" into Score 0. If evaluate() has no fresh
+  // numerical Score, a previously confirmed canonical Score may remain visible
+  // while the CURRENT state stays WAITING. It is display/ranking continuity
+  // only and cannot make tradeEligible true.
+  const freshState=String(decision?.state||'').toUpperCase();
+  const freshScoreKnown=
+    decision?.score!==null &&
+    decision?.score!==undefined &&
+    decision?.score!=='' &&
+    Number.isFinite(Number(decision.score));
+
+  const persistedScoreKnown=
+    persisted?.score!==null &&
+    persisted?.score!==undefined &&
+    persisted?.score!=='' &&
+    Number.isFinite(Number(persisted.score));
+
+  if(
+    !isOpen &&
+    freshState==='WAITING' &&
+    !freshScoreKnown &&
+    persistedScoreKnown &&
+    String(persisted?.scoreAuthority||'evaluate')==='evaluate'
+  ){
+    const lastScore=Math.max(
+      0,
+      Math.min(100,Math.round(Number(persisted.score)))
+    );
+
+    decision={
+      ...decision,
+      score:lastScore,
+      scoreAvailable:false,
+      scoreFresh:false,
+      scoreSource:'persisted-last-confirmed',
+      scoreAuthority:'evaluate',
+      scoreBeforeWalletRisk:lastScore,
+      aiQuality:{
+        ...(decision?.aiQuality&&typeof decision.aiQuality==='object'
+          ? decision.aiQuality
+          : {}),
+        score:lastScore
+      }
+    };
+  }else if(freshScoreKnown){
+    decision={
+      ...decision,
+      scoreFresh:true,
+      scoreSource:'evaluate-live'
+    };
+  }
 
   if(isOpen){
     decision={...decision,state:'OPEN POSITION',displayState:'OPEN POSITION'};
@@ -2172,6 +2225,12 @@ function __mfLiveCardViewV14(token,decision){
 
     state:String(decision?.state||'WAITING'),
     score:finite(decision?.score),
+    scoreAvailable:decision?.scoreAvailable===true,
+    scoreFresh:decision?.scoreFresh===true,
+    scoreSource:
+      typeof decision?.scoreSource==='string'
+        ? decision.scoreSource
+        : null,
     confidence:finite(decision?.confidence),
     primaryReason:
       typeof decision?.primaryReason==='string'

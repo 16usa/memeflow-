@@ -2546,8 +2546,6 @@ function __mfInvalidateDynamicRowV20_2(previous){
       priceChange5mPct:null,
       buyPressure:null,
       momentum:null,
-      qualityScore:null,
-      opportunityScore:null,
       opportunityEvidenceReady:false,
       opportunityTrendHealthy:false,
 

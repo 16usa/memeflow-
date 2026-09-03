@@ -21,6 +21,12 @@ assert.match(decisionBlock,/liveTruthReason:reason/);
 assert.doesNotMatch(decisionBlock,/score:0/);
 assert.doesNotMatch(decisionBlock,/confidence:0/);
 
+assert.match(decisionBlock,/MEMEFLOW_LAST_CONFIRMED_SCORE_V21_7/);
+assert.match(decisionBlock,/scoreSource:'persisted-last-confirmed'/);
+assert.match(decisionBlock,/freshState==='WAITING'/);
+assert.match(decisionBlock,/!freshScoreKnown/);
+assert.match(decisionBlock,/persistedScoreKnown/);
+
 // V28 must no longer convert canonical WAITING into a display-only WATCH.
 const ws=app.indexOf('function __mfLiveDisplayStateV28(view,settings={}){');
 const we=app.indexOf('function __mfRankLiveDisplayV28(view,settings={}){',ws);

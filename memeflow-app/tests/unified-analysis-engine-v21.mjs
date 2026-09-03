@@ -36,6 +36,26 @@ assert.equal('opportunityScore' in d,false);
 assert.equal('opportunityFloor' in d,false);
 assert.equal(d.settingsEvaluation.gates.some(g=>g.name==='Opportunity safety floor'),false);
 
+const noEvidence=evaluate(
+  {
+    ...base,
+    opportunityScore:null,
+    opportunityEvidenceReady:false,
+    opportunityTrendHealthy:false,
+    opportunityEventCount:0
+  },
+  settings
+);
+
+assert.equal(noEvidence.state,'WAITING');
+assert.equal(noEvidence.score,null);
+assert.equal(noEvidence.scoreAvailable,false);
+assert.equal(noEvidence.scoreFresh,false);
+assert.equal(noEvidence.scoreSource,'unavailable');
+assert.equal(noEvidence.scoreBeforeWalletRisk,null);
+assert.equal(noEvidence.aiQuality.score,null);
+assert.match(noEvidence.reasons.join(' · '),/waiting for canonical Score evidence/);
+
 const ranked=rankCandidateViews([
   {mint:'A',state:'WAITING',score:null,transactions5m:999},
   {mint:'B',state:'WATCH',score:76,transactions5m:1}

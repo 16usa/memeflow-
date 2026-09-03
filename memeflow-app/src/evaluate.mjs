@@ -36,10 +36,21 @@ export function evaluate(token,s={},options={}){
     :qualityScoreFromToken(token).score;
   const opportunitySignal=finite(token.opportunityScore)
     ?clampScore(token.opportunityScore)
-    :0;
+    :null;
+
+  // MEMEFLOW_CANONICAL_NULL_SCORE_V21_7
+  // A numerical Score exists only after the opportunity engine has enough
+  // event evidence AND produced its signal. Missing evidence is UNKNOWN,
+  // never synthetic zero.
+  const scoreAvailable=
+    token.opportunityEvidenceReady===true &&
+    opportunitySignal!==null;
 
   // THE ONE SCORE.
-  const score=clampScore(qualitySignal*0.60+opportunitySignal*0.40);
+  const score=
+    scoreAvailable
+      ? clampScore(qualitySignal*0.60+opportunitySignal*0.40)
+      : null;
 
   const evidence=evidenceCompleteness(token);
   const dataCompleteness=evidence.value;
@@ -54,10 +65,18 @@ export function evaluate(token,s={},options={}){
 
   const minimumScore=finite(s.minScore)?Number(s.minScore):null;
   const minimumDataCompleteness=finite(s.minConfidence)?Number(s.minConfidence):null;
-  const scorePass=minimumScore===null?true:score>=minimumScore;
-  const dataPass=minimumDataCompleteness===null?true:dataCompleteness>=minimumDataCompleteness;
+  const scorePass=
+    scoreAvailable &&
+    (minimumScore===null||score>=minimumScore);
 
-  if(minimumScore!==null&&!scorePass){
+  const dataPass=
+    minimumDataCompleteness===null
+      ? true
+      : dataCompleteness>=minimumDataCompleteness;
+
+  if(!scoreAvailable){
+    reasons.push('waiting for canonical Score evidence');
+  }else if(minimumScore!==null&&!scorePass){
     reasons.push(`Score ${score} below configured minimum ${minimumScore}`);
   }
   if(minimumDataCompleteness!==null&&!dataPass){
@@ -84,7 +103,7 @@ export function evaluate(token,s={},options={}){
   let state;
   if(dead||stablePolicyFail||priceBlocked){
     state='BLOCKED';
-  }else if(policy.waiting||priceWaiting||!opportunityReady){
+  }else if(policy.waiting||priceWaiting||!opportunityReady||!scoreAvailable){
     state='WAITING';
   }else if(retryablePolicyFail||!trendHealthy){
     state='WATCH';
@@ -115,7 +134,8 @@ export function evaluate(token,s={},options={}){
     },
     {
       name:'Minimum Score',key:'minScore',
-      status:scorePass?'PASS':'FAIL',pass:scorePass,
+      status:scoreAvailable?(scorePass?'PASS':'FAIL'):'WAITING',
+      pass:scorePass,
       value:score,threshold:minimumScore,operator:'>=',
       retryable:true,source:'evaluate'
     },
@@ -132,6 +152,9 @@ export function evaluate(token,s={},options={}){
     scoreAuthority:'evaluate',
     state,
     score,
+    scoreAvailable,
+    scoreFresh:scoreAvailable,
+    scoreSource:scoreAvailable?'evaluate-live':'unavailable',
 
     // MEMEFLOW_CANONICAL_SCORE_COMPAT_ALIASES_V21_4
     // Historical fields are preserved as aliases only. They never calculate
