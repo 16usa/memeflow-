@@ -788,6 +788,90 @@ textarea{
 }
 
 /* ==========================================================
+   MEMEFLOW_SHADOW_OUTCOME_REVIEW_V23_16
+   ========================================================== */
+
+.oi-outcome-review-list{
+  display:grid;
+  gap:7px;
+}
+
+.oi-outcome-review-row{
+  padding:9px 10px;
+  border:1px solid rgba(38,56,69,.64);
+  border-radius:10px;
+  background:rgba(255,255,255,.012);
+}
+
+.oi-outcome-review-row.hit{
+  border-color:rgba(81,231,168,.18);
+}
+
+.oi-outcome-review-row.miss{
+  border-color:rgba(255,104,120,.22);
+}
+
+.oi-outcome-review-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+}
+
+.oi-outcome-review-head strong{
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  font-size:var(--mf-type-meta);
+}
+
+.oi-outcome-review-head span{
+  color:var(--muted);
+  font-size:var(--mf-type-micro);
+  font-weight:800;
+}
+
+.oi-outcome-review-row.hit
+.oi-outcome-review-head span{
+  color:var(--green);
+}
+
+.oi-outcome-review-row.miss
+.oi-outcome-review-head span{
+  color:#ff9daa;
+}
+
+.oi-outcome-review-metrics{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  margin-top:6px;
+  color:var(--muted);
+  font-size:var(--mf-type-micro);
+}
+
+.oi-outcome-review-tags{
+  display:flex;
+  flex-wrap:wrap;
+  gap:5px;
+  margin-top:7px;
+}
+
+.oi-outcome-review-tags span{
+  padding:4px 6px;
+  border:1px solid rgba(255,104,120,.16);
+  border-radius:999px;
+  color:#ff9daa;
+  font-size:var(--mf-type-micro);
+}
+
+.oi-outcome-review-tags span.clear{
+  border-color:rgba(81,231,168,.18);
+  color:var(--green);
+}
+
+/* ==========================================================
    MEMEFLOW_SHADOW_PROMOTION_REPORT_V23_14
    ========================================================== */
 

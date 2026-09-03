@@ -42,6 +42,9 @@ import {
 import {
   createTokenIntelligenceScorecardV23_15
 } from './token-intelligence-scorecard-v23_15.mjs';
+import {
+  createShadowOutcomeReviewV23_16
+} from './shadow-outcome-review-v23_16.mjs';
 
 // MEMEFLOW_TOKEN_INTELLIGENCE_NETWORK_V23
 //
@@ -817,6 +820,11 @@ export function createTokenIntelligenceShadowV23({
       listTokenCells:options=>listCells(options)
     });
 
+  const shadowOutcomeReview=
+    createShadowOutcomeReviewV23_16({
+      dataDir
+    });
+
   const metrics={
     observations:0,
     cellsCreated:0,
@@ -984,6 +992,11 @@ export function createTokenIntelligenceShadowV23({
         });
 
         shadowChampionBenchmark.recordOutcome({
+          anchor:cell.anchor,
+          outcome
+        });
+
+        shadowOutcomeReview.recordOutcome({
           anchor:cell.anchor,
           outcome
         });
@@ -1303,7 +1316,7 @@ export function createTokenIntelligenceShadowV23({
     }
 
     return {
-      version:'MEMEFLOW_TOKEN_INTELLIGENCE_NETWORK_V23_15',
+      version:'MEMEFLOW_TOKEN_INTELLIGENCE_NETWORK_V23_16',
       shadowOnly:true,
       specialists:[
         'FLOW',
@@ -1335,7 +1348,8 @@ export function createTokenIntelligenceShadowV23({
       shadowChampionBenchmark:shadowChampionBenchmark.status(),
       shadowPromotionGate:shadowPromotionGate.status(),
       shadowPromotionReport:shadowPromotionReport.status(),
-      tokenIntelligenceScorecard:tokenIntelligenceScorecard.status()
+      tokenIntelligenceScorecard:tokenIntelligenceScorecard.status(),
+      shadowOutcomeReview:shadowOutcomeReview.status()
     };
   }
 
@@ -1420,6 +1434,14 @@ export function createTokenIntelligenceShadowV23({
       options=>tokenIntelligenceScorecard.list(options),
     inspectTokenScorecard:
       mint=>tokenIntelligenceScorecard.inspect(mint),
+    outcomeReviewStatus:
+      ()=>shadowOutcomeReview.status(),
+    outcomeReviewSummary:
+      options=>shadowOutcomeReview.summary(options),
+    listOutcomeReviews:
+      options=>shadowOutcomeReview.recent(options),
+    flushOutcomeReviews:
+      ()=>shadowOutcomeReview.flush(),
     status
   };
 }

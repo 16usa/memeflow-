@@ -640,6 +640,166 @@ async function inspectTokenScorecard(mint=null){
   }
 }
 
+/* MEMEFLOW_SHADOW_OUTCOME_REVIEW_V23_16_UI_JS */
+function outcomeReviewTone(type=''){
+  const t=String(type||'').toUpperCase();
+
+  if(
+    t==='TRUE_POSITIVE' ||
+    t==='TRUE_NEGATIVE'
+  ){
+    return 'hit';
+  }
+
+  if(
+    t==='FALSE_POSITIVE' ||
+    t==='FALSE_NEGATIVE'
+  ){
+    return 'miss';
+  }
+
+  return 'neutral';
+}
+
+function renderOutcomeReviews(payload={}){
+  const summary=payload?.summary||{};
+  const reviews=
+    Array.isArray(payload?.reviews)
+      ? payload.reviews
+      : [];
+
+  const badge=$('outcomeReviewStatus');
+
+  if(badge){
+    badge.className=
+      'oi-ai-status '+
+      (Number(summary?.scored||0)>0
+        ? 'online'
+        : '');
+
+    badge.textContent=
+      Number(summary?.scored||0)>0
+        ? 'LEARNING'
+        : 'COLD START';
+  }
+
+  $('outcomeReviewScored').textContent=
+    num(summary?.scored,0);
+
+  $('outcomeReviewHitRate').textContent=
+    pct(summary?.hitRatePct);
+
+  $('outcomeReviewErrors').textContent=
+    `${num(summary?.falsePositives,0)} / ${num(summary?.falseNegatives,0)}`;
+
+  $('outcomeReviewHighMiss').textContent=
+    num(summary?.highConfidenceMisses,0);
+
+  const tags=
+    Array.isArray(summary?.topMissTags)
+      ? summary.topMissTags
+      : [];
+
+  $('outcomeReviewTags').innerHTML=
+    tags.length
+      ? tags.map(row=>`
+          <div class="oi-row">
+            <span>
+              ${esc(String(row?.tag||'UNKNOWN').replaceAll('_',' '))}
+            </span>
+            <strong>${esc(row?.count??0)}</strong>
+          </div>
+        `).join('')
+      : `
+          <div class="oi-row">
+            <span>No miss associations yet</span>
+            <strong>—</strong>
+          </div>
+        `;
+
+  $('outcomeReviewList').innerHTML=
+    reviews.length
+      ? reviews.slice(0,12).map(row=>{
+          const tags=
+            Array.isArray(row?.attributionTags)
+              ? row.attributionTags.slice(0,3)
+              : [];
+
+          return `
+            <div class="oi-outcome-review-row ${outcomeReviewTone(row?.resultType)}">
+              <div class="oi-outcome-review-head">
+                <strong>${esc(row?.mint||'UNKNOWN')}</strong>
+                <span>
+                  ${esc(String(row?.resultType||'UNKNOWN').replaceAll('_',' '))}
+                </span>
+              </div>
+
+              <div class="oi-outcome-review-metrics">
+                <span>
+                  P+ ${Number.isFinite(Number(row?.forecast?.probabilityPositivePct))
+                    ? `${num(row.forecast.probabilityPositivePct,1)}%`
+                    : '—'}
+                </span>
+                <span>
+                  conf ${Number.isFinite(Number(row?.forecast?.confidencePct))
+                    ? `${num(row.forecast.confidencePct,1)}%`
+                    : '—'}
+                </span>
+                <span>
+                  return ${Number.isFinite(Number(row?.outcome?.returnPct))
+                    ? `${num(row.outcome.returnPct,1)}%`
+                    : '—'}
+                </span>
+              </div>
+
+              <div class="oi-outcome-review-tags">
+                ${
+                  tags.length
+                    ? tags.map(tag=>`
+                        <span>
+                          ${esc(String(tag).replaceAll('_',' '))}
+                        </span>
+                      `).join('')
+                    : '<span class="clear">NO ASSOCIATION TAGS</span>'
+                }
+              </div>
+            </div>
+          `;
+        }).join('')
+      : `
+          <div class="oi-empty">
+            No completed 5m shadow reviews yet.
+          </div>
+        `;
+}
+
+async function loadOutcomeReviews(){
+  try{
+    const payload=await api(
+      '/api/owner/intelligence/outcome-reviews?limit=30&horizonMs=300000'
+    );
+
+    renderOutcomeReviews(payload);
+  }catch(error){
+    const badge=$('outcomeReviewStatus');
+
+    if(badge){
+      badge.className='oi-ai-status offline';
+      badge.textContent='UNAVAILABLE';
+    }
+
+    const list=$('outcomeReviewList');
+
+    if(list){
+      list.innerHTML=`
+        <div class="oi-empty">
+          ${esc(error.message)}
+        </div>
+      `;
+    }
+  }
+}
+
 /* MEMEFLOW_SHADOW_PROMOTION_REPORT_V23_14_UI_JS */
 function promotionTone(status=''){
   const s=String(status||'').toUpperCase();
@@ -1550,7 +1710,8 @@ async function load(
 
     await Promise.all([
       loadPromotionReport(),
-      loadTokenScorecards()
+      loadTokenScorecards(),
+      loadOutcomeReviews()
     ]);
 
     if(previous){

@@ -364,6 +364,77 @@
         ></div>
       </section>
 
+      <!-- MEMEFLOW_SHADOW_OUTCOME_REVIEW_V23_16_UI -->
+      <section
+        id="outcomeReviewMonitor"
+        class="oi-panel oi-outcome-review"
+      >
+        <div class="oi-panel-head">
+          <div>
+            <span class="oi-eyebrow">
+              5M POSTMORTEM · SHADOW ONLY
+            </span>
+            <h2>V23 Outcome Review</h2>
+            <p>
+              Shows where the shadow forecast was right or wrong and
+              which evidence was present at the frozen anchor.
+              Attribution tags are diagnostic hints, not causal proof.
+            </p>
+          </div>
+
+          <span
+            id="outcomeReviewStatus"
+            class="oi-ai-status"
+          >
+            LOADING
+          </span>
+        </div>
+
+        <div class="oi-grid oi-grid-4">
+          <article class="oi-stat">
+            <span>REVIEWED 5M</span>
+            <strong id="outcomeReviewScored">—</strong>
+            <small>directional outcomes</small>
+          </article>
+
+          <article class="oi-stat">
+            <span>HIT RATE</span>
+            <strong id="outcomeReviewHitRate">—</strong>
+            <small>shadow forecast only</small>
+          </article>
+
+          <article class="oi-stat">
+            <span>FALSE + / FALSE −</span>
+            <strong id="outcomeReviewErrors">—</strong>
+            <small>miss type balance</small>
+          </article>
+
+          <article class="oi-stat">
+            <span>HIGH-CONF MISSES</span>
+            <strong id="outcomeReviewHighMiss">—</strong>
+            <small>priority review queue</small>
+          </article>
+        </div>
+
+        <div class="oi-grid oi-grid-2">
+          <div>
+            <h3>Top miss associations</h3>
+            <div
+              id="outcomeReviewTags"
+              class="oi-list"
+            ></div>
+          </div>
+
+          <div>
+            <h3>Recent 5m reviews</h3>
+            <div
+              id="outcomeReviewList"
+              class="oi-outcome-review-list"
+            ></div>
+          </div>
+        </div>
+      </section>
+
       <!-- MEMEFLOW_PLATFORM_LEARNING_V2_UI -->
       <section class="oi-panel">
         <div class="oi-panel-head">
