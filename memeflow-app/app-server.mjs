@@ -18,6 +18,7 @@ import {createHistoryEvalFifoV72} from './src/history-eval-fifo-v72.mjs'; // MEM
 import { startPumpLiveTradeFeed } from './src/pump-live-trade-feed.mjs'; // MEMEFLOW_V12_21_LIVE_TRADE_STREAM_HOLDER_FEED
 import { ChartHistoryArchive } from './src/chart-history-archive.mjs'; // MEMEFLOW_CHART_DATA_PATH_FIX_V2_DIRTY_SAFE // MEMEFLOW_CHART_HISTORY_RESTORE_V1
 import {createOpportunityEngine} from './src/opportunity-engine.mjs'; // MEMEFLOW_OPPORTUNITY_ENGINE_V1
+import {createTokenIntelligenceShadowV23} from './src/token-intelligence-shadow-v23.mjs'; // MEMEFLOW_TOKEN_INTELLIGENCE_NETWORK_V23
 import {createSolUsdOracle} from './src/sol-usd-oracle.mjs'; // MEMEFLOW_OPPORTUNITY_ENGINE_V1
 import {liveCardMarketSnapshot,openPositionLiveMarketCap} from './src/live-card-market.mjs'; // MEMEFLOW_LIVE_CARD_MARKET_TRUTH_V18 / MEMEFLOW_OPEN_POSITION_LIVE_MC_V20
 import {rankCandidateViews} from './src/feed-ranking.mjs'; // MEMEFLOW_FEED_RELEVANCE_RANKING_V1
@@ -32,6 +33,7 @@ import {createSmartVaultD4Adapter} from './smart-vault/devnet-executor-d4/runtim
 // MEMEFLOW AI ASSISTANT HARD OFF: import disabled
 const root=path.dirname(fileURLToPath(import.meta.url)),dataDir=path.resolve(root,process.env.DATA_DIR||'data'),store=new JsonStore(dataDir);
 const opportunityEngine=createOpportunityEngine(); // MEMEFLOW_OPPORTUNITY_ENGINE_V1
+const tokenIntelligenceShadowV23=createTokenIntelligenceShadowV23({dataDir}); // SHADOW ONLY: never feeds evaluate()/execution
 const solUsdOracle=createSolUsdOracle(); // one shared quote, never per-token RPC
 solUsdOracle.start();
 // MEMEFLOW_PERMANENT_TOKEN_REGISTRY_V1
@@ -172,6 +174,7 @@ function __mfDropScannerToken(
     priceTimers?.delete?.(mint);
   }catch{}
   try{tradeWindows?.delete?.(mint)}catch{}
+  try{tokenIntelligenceShadowV23?.dropMint?.(mint,reason)}catch{}
   try{
     for(const key of __mfEntryAdmissionState?.keys?.()||[]){
       if(String(key).endsWith(':'+mint))__mfEntryAdmissionState.delete(key);
@@ -2991,6 +2994,19 @@ function publishTrade(mint,event,tokenOverride=null){
     solAmount,
     tokenAmount
   };
+
+  // MEMEFLOW_TOKEN_INTELLIGENCE_SHADOW_WIRE_V23
+  // Observation only. Never block chart/publish, never mutate Score/State,
+  // and never enter the trading execution path.
+  setImmediate(()=>{
+    try{
+      tokenIntelligenceShadowV23.observeTrade({
+        mint,
+        event,
+        token
+      });
+    }catch{}
+  });
 
   // 1) RAM hot history is updated first so any reconnecting snapshot
   //    immediately sees the same canonical event.
