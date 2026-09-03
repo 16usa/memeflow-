@@ -244,7 +244,7 @@ function safeTokenView(token, decision, selection = null) {
       selection?.token,
       selection?.decision
     ),
-    score: finite(decision?.score ?? decision?.aiScore),
+    score: finite(decision?.score),
     confidence: finite(decision?.confidence),
     holderCount: finite(token?.holderCount ?? token?.holders ?? decision?.holderCount),
     top10Pct: finite(token?.top10Pct ?? token?.top10 ?? decision?.top10Pct),
@@ -469,7 +469,8 @@ export class GameEngine {
       const price = tokenPrice(token);
       if (price === null) { diag.noPrice++; continue; }
 
-      const score = finite(decision?.score ?? decision?.aiScore ?? decision?.priority) ?? 0;
+      const score=finite(decision?.score);
+      if(score===null)continue;
       const dAt = decisionAt(decision);
       const pAt = tokenPriceAt(token);
       const hAt = holderAt(token);

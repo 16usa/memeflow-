@@ -1105,12 +1105,10 @@ function __mfHolderRankV5(
   }
 
   let lane=3;
-  let score=Math.max(
-    0,
-    Number(token?.opportunityScore||0),
-    Number(token?.qualityScore||0),
-    Number(token?.score||0)
-  );
+
+  // MEMEFLOW_HOLDER_CANONICAL_SCORE_PRIORITY_V21
+  // Scheduler priority uses only canonical stored decision Score.
+  let score=0;
 
   try{
     for(const index of Object.values(store?._uidDec||{})){
@@ -2044,13 +2042,33 @@ function __mfLiveDecisionForUserV14(uid,token,settingsOverride=null,admissionOve
   }
 
   const liveTruth=__mfCurrentEntryTruthV20_2(token,{isOpen});
-  if(!isOpen&&liveTruth.pass!==true){
+  if(
+    !isOpen &&
+    String(decision?.state||'').toUpperCase()!=='BLOCKED' &&
+    liveTruth.pass!==true
+  ){
     const reason=liveTruth.reason||'Fresh live market evidence is unavailable';
     const prior=Array.isArray(decision?.reasons)?decision.reasons.filter(Boolean):[];
     decision={...decision,state:'WAITING',displayState:'WAITING',primaryReason:decision?.primaryReason||reason,reasons:[...prior,...(prior.includes(reason)?[]:[reason])],terminal:false,liveTruthBlocked:true,liveTruthReason:reason};
   }
 
-  return {...decision,mint,tradeEligible:isOpen?true:eligible&&liveTruth.pass===true,displayOnly:!eligible&&!isOpen,openPositionOverride:isOpen&&!eligible,entryAdmissionState:admissionState,entryAdmissionReasons:admissionReasons.slice(0,20)};
+  return {
+    ...decision,
+    mint,
+    // MEMEFLOW_TRADE_ELIGIBLE_CANONICAL_STATE_V21
+    tradeEligible:
+      isOpen
+        ? true
+        : (
+            eligible &&
+            liveTruth.pass===true &&
+            String(decision?.state||'').toUpperCase()==='BUY READY'
+          ),
+    displayOnly:!eligible&&!isOpen,
+    openPositionOverride:isOpen&&!eligible,
+    entryAdmissionState:admissionState,
+    entryAdmissionReasons:admissionReasons.slice(0,20)
+  };
 }
 
 function __mfLiveCardViewV14(token,decision){
@@ -2219,8 +2237,10 @@ function __mfLiveCardViewV14(token,decision){
     transactions5m,
     priceChange5mPct,
 
-    qualityScore:finite(t?.qualityScore),
-    opportunityScore:finite(t?.opportunityScore),
+    // MEMEFLOW_ONE_PUBLIC_SCORE_V21
+    scoreAuthority:decision?.scoreAuthority||'evaluate',
+    analysisVersion:decision?.analysisVersion||'MEMEFLOW_UNIFIED_ANALYSIS_V21',
+    dataCompleteness:finite(decision?.dataCompleteness??decision?.confidence),
     opportunityEvidenceReady:t?.opportunityEvidenceReady===true,
     opportunityTrendHealthy:t?.opportunityTrendHealthy===true,
     uniqueBuyers:finite(t?.uniqueBuyers),

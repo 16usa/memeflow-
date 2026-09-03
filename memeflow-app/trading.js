@@ -1060,93 +1060,33 @@ function positionAsCandidate(position) {
   };
 }
 
+// MEMEFLOW_TERMINAL_CANONICAL_CANDIDATE_FEED_V21
+// One candidate authority. No client-side WAITING -> WATCH mutation.
 function mergedCandidates() {
-  const candidates =
-    Array.isArray(state.candidates)
-      ? state.candidates
-      : [];
-
-  const pipelineWatch =
-    Array.isArray(state.liveWatchCandidates)
-      ? state.liveWatchCandidates
-      : [];
-
-  // Strict row owns data/execution whenever both feeds contain a mint.
-  // Pipeline WATCH may overlay display classification for strict WAITING only.
-  const byMint = new Map(
-    candidates
-      .filter(candidate => candidate?.mint)
-      .map(candidate => [candidate.mint, candidate])
+  const byMint=new Map(
+    (Array.isArray(state.candidates)?state.candidates:[])
+      .filter(candidate=>candidate?.mint)
+      .map(candidate=>[String(candidate.mint),candidate])
   );
 
-  for (const watch of pipelineWatch) {
-    const mint = String(watch?.mint || '').trim();
-    if (!mint) continue;
-
-    const strict = byMint.get(mint) || null;
-
-    if (strict) {
-      const strictState =
-        String(strict?.state || '').trim().toUpperCase();
-
-      // MEMEFLOW_TERMINAL_WATCH_DUPLICATE_MERGE_V37
-      //
-      // Keep every strict field as the data/execution authority. Overlay ONLY
-      // the terminal display classification when strict is still WAITING.
-      if (
-        strictState === 'WAITING' &&
-        strict?.tradeEligible !== true
-      ) {
-        byMint.set(mint, {
-          ...strict,
-          state: 'WATCH',
-          displayState: 'WATCH',
-          tradeEligible: false,
-          __strictState: strictState,
-          __pipelineWatch: true
-        });
-      }
-
-      // BUY READY / BLOCKED / WATCH / OPEN and all other strict states win.
-      continue;
-    }
-
-    byMint.set(mint, {
-      ...watch,
-
-      // Pipeline-only row: terminal display classification only.
-      state: 'WATCH',
-      displayState: 'WATCH',
-
-      // Never let a pipeline-only display row become executable.
-      tradeEligible: false,
-      __pipelineWatch: true
-    });
-  }
-
-  const pinned = [];
-
-  for (const position of state.positions || []) {
-    if (
-      !position?.mint ||
-      String(position.status || '').toUpperCase() !== 'OPEN'
-    ) continue;
-
-    const existing = byMint.get(position.mint);
-    if (existing) {
+  const pinned=[];
+  for(const position of state.positions||[]){
+    if(!position?.mint||String(position.status||'').toUpperCase()!=='OPEN')continue;
+    const mint=String(position.mint);
+    const existing=byMint.get(mint);
+    if(existing){
       pinned.push({
         ...existing,
-        strategySource: position.strategySource || existing.strategySource || null,
-        copyTradingWallet: position.copyTradingWallet || existing.copyTradingWallet || null,
-        __openPosition: position
+        strategySource:position.strategySource||existing.strategySource||null,
+        copyTradingWallet:position.copyTradingWallet||existing.copyTradingWallet||null,
+        __openPosition:position
       });
-      byMint.delete(position.mint);
-    } else {
+      byMint.delete(mint);
+    }else{
       pinned.push(positionAsCandidate(position));
     }
   }
-
-  return [...pinned, ...byMint.values()];
+  return [...pinned,...byMint.values()];
 }
 
 function displayStateForCandidate(candidate) {
@@ -1411,124 +1351,37 @@ function renderCandidates() {
 }
 
 async function loadCandidates({ redrawChart = true } = {}) {
-  // MEMEFLOW_TERMINAL_WATCH_RESILIENT_V30
-  //
-  // Strict trading decisions and Pipeline WATCH are two independent feeds.
-  // A failure in one must not suppress a healthy other feed.
-  const [strictResult, liveResult] =
-    await Promise.allSettled([
-      api('/api/ai/decisions?scope=all&limit=100'),
-      api('/api/system/live-token-states?limit=200')
-    ]);
+  // MEMEFLOW_TERMINAL_ONE_MECHANISM_V21
+  const payload=await api('/api/system/live-token-states?limit=200');
+  const allowedStates=new Set(['BUY READY','WATCH','WAITING']);
 
-  const payload =
-    strictResult.status === 'fulfilled'
-      ? strictResult.value
-      : null;
+  state.candidates=
+    (Array.isArray(payload?.decisions)?payload.decisions:[])
+      .filter(item=>{
+        if(!item?.mint)return false;
+        return allowedStates.has(String(item?.state||'').trim().toUpperCase());
+      });
 
-  const livePayload =
-    liveResult.status === 'fulfilled'
-      ? liveResult.value
-      : null;
+  state.liveWatchCandidates=[];
 
-  // IMPORTANT:
-  // Never retain stale BUY READY rows when strict trading feed is unavailable.
-  state.candidates =
-    Array.isArray(payload?.decisions)
-      ? payload.decisions
-      : [];
+  const rows=mergedCandidates();
+  $('candidateCount').textContent=`${rows.length} candidates`;
 
-  if (Array.isArray(livePayload?.decisions)) {
-    state.liveWatchCandidates =
-      livePayload.decisions
-        .filter(item => {
-          if (!item?.mint) return false;
-
-          const liveState =
-            String(
-              item?.displayState ??
-              item?.state ??
-              ''
-            )
-              .trim()
-              .toUpperCase();
-
-          return liveState === 'WATCH';
-        })
-        .map(item => ({
-          ...item,
-
-          // UI state only. Never execution authority.
-          state: 'WATCH',
-          displayState: 'WATCH',
-          tradeEligible: false,
-          __pipelineWatch: true
-        }));
-  } else if (liveResult.status === 'fulfilled') {
-    // Healthy live endpoint with no rows means there are no current WATCH rows.
-    state.liveWatchCandidates = [];
-  }
-
-  // If both candidate sources are unavailable, propagate a real candidate-feed
-  // failure to the outer poll. If either source is healthy, render what is safe.
-  if (
-    strictResult.status === 'rejected' &&
-    liveResult.status === 'rejected'
-  ) {
-    throw (
-      strictResult.reason ||
-      liveResult.reason ||
-      new Error('Candidate feeds unavailable')
-    );
-  }
-
-  const rows = mergedCandidates();
-
-  $('candidateCount').textContent =
-    `${rows.length} candidates`;
-
-  if(
-    !state.selectedMint &&
-    rows.length
-  ){
-    const ready =
-      rows.find(
-        item =>
-          String(item?.state || '').toUpperCase() ===
-          'BUY READY'
-      );
-
-    const watch =
-      rows.find(
-        item =>
-          String(item?.state || '').toUpperCase() ===
-          'WATCH'
-      );
-
-    state.selectedMint =
-      (ready || watch || rows[0]).mint;
+  if(!state.selectedMint&&rows.length){
+    const ready=rows.find(item=>String(item?.state||'').toUpperCase()==='BUY READY');
+    const watch=rows.find(item=>String(item?.state||'').toUpperCase()==='WATCH');
+    state.selectedMint=(ready||watch||rows[0]).mint;
   }
 
   if(state.selectedMint){
-    const current =
-      rows.find(
-        item =>
-          item.mint===state.selectedMint
-      );
-
-    if(current){
-      state.selected=current;
-    }
+    const current=rows.find(item=>item.mint===state.selectedMint);
+    if(current)state.selected=current;
   }
 
   syncSelectedCandidate();
   updateCandidateCount();
-
-  // IMPORTANT V30.3.1:
-  // candidate/decision prices never enter raw chart history.
-  // /api/chart/stream is the one chart-data authority.
   renderCandidates();
-  renderSelected({ redrawChart });
+  renderSelected({redrawChart});
 }
 
 function selectCandidate(mint) {
@@ -4473,7 +4326,6 @@ function renderProposals() {
       ? new Date(createdAtMs).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})
       : '—';
     const score = finite(proposal.decisionScore) ? fmt(proposal.decisionScore, 0) : '—';
-    const confidence = finite(proposal.decisionConfidence) ? `${fmt(proposal.decisionConfidence, 0)}%` : '—';
     const price = finite(proposal.proposedPriceSol) ? `${fmt(proposal.proposedPriceSol, 9)} SOL` : '—';
     const size = finite(proposal.proposedSizeSol) ? `${fmt(proposal.proposedSizeSol, 4)} SOL` : '—';
 
@@ -4486,7 +4338,6 @@ function renderProposals() {
         <div class="approval-stats">
           <span><b>SIZE</b><strong>${size}</strong></span>
           <span><b>SCORE</b><strong>${score}</strong></span>
-          <span><b>CONF</b><strong>${confidence}</strong></span>
           <span><b>PRICE</b><strong>${price}</strong></span>
         </div>
         <div class="approval-actions">

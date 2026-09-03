@@ -325,9 +325,16 @@ function legacyInventory(tokens,limit,evaluateAdmission){
       'utf8'
     );
 
-  assert.match(
+  // MEMEFLOW_TERMINAL_ONE_MECHANISM_REGRESSION_V21_6
+  // V21 intentionally removed the second /api/ai/decisions feed.
+  assert.doesNotMatch(
     source,
     /\/api\/ai\/decisions\?scope=all&limit=100/
+  );
+
+  assert.match(
+    source,
+    /\/api\/system\/live-token-states\?limit=200/
   );
 
   assert.match(

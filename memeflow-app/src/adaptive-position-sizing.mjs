@@ -82,10 +82,18 @@ export function calculateAdaptivePositionSize({ token = {}, decision = {}, setti
   }
 
   const score = clamp(finite(decision.score) ?? 0, 0, 100);
-  const confidence = clamp(finite(decision.confidence) ?? finite(decision.dataConfidence) ?? 0, 0, 100);
+  const dataCompleteness = clamp(
+    finite(decision.dataCompleteness) ??
+    finite(decision.confidence) ??
+    finite(decision.dataConfidence) ??
+    0,
+    0,
+    100
+  );
 
-  // Quality is deterministic: 60% MEMEFLOW score, 40% data confidence.
-  const quality = 0.60 * (score / 100) + 0.40 * (confidence / 100);
+  // MEMEFLOW_ADAPTIVE_CANONICAL_SCORE_V21
+  // Canonical Score selects the tier. Evidence can only reduce exposure.
+  const quality = score / 100;
 
   let qualityMultiplier;
   let qualityTier;
@@ -120,10 +128,19 @@ export function calculateAdaptivePositionSize({ token = {}, decision = {}, setti
   const holders = firstFinite(token.holderCount, token.holders, token.holder?.count);
 
   const reasons = [
-    `${qualityTier} deterministic quality (${Math.round(quality * 100)}/100)`
+    `${qualityTier} canonical Score (${Math.round(score)}/100)`
   ];
 
-  let riskMultiplier = 1;
+  const evidenceMultiplier=
+    dataCompleteness>=90 ? 1 :
+    dataCompleteness>=80 ? 0.90 :
+    dataCompleteness>=70 ? 0.75 : 0.60;
+
+  if(evidenceMultiplier<1){
+    reasons.push(`Data completeness ${Math.round(dataCompleteness)}% reduces position size`);
+  }
+
+  let riskMultiplier = evidenceMultiplier;
   riskMultiplier *= riskAgainstMaximum(
     top10Pct,
     settings.maxTop10Pct,
@@ -172,14 +189,16 @@ export function calculateAdaptivePositionSize({ token = {}, decision = {}, setti
     amountSol,
     maxBudgetSol,
     multiplier: round(multiplier),
-    qualityScore: Math.round(quality * 100),
+    // Compatibility alias: exactly canonical Score.
+    qualityScore: Math.round(score),
+    canonicalScore: Math.round(score),
     qualityTier,
     qualityMultiplier: round(qualityMultiplier),
     riskMultiplier: round(riskMultiplier),
     reasons,
     components: {
       score,
-      confidence,
+      dataCompleteness,
       top10Pct,
       developerPct,
       buyPressure,

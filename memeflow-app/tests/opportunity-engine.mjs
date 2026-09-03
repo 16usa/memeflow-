@@ -87,8 +87,10 @@ assert.equal(gate.waitingGates.length,0);
 
 const decision=evaluate(liveToken,allSettings);
 assert.equal(decision.state,'BUY READY');
-assert.ok(decision.qualityScore>=70);
-assert.ok(decision.opportunityScore>=60);
+assert.ok(Number.isFinite(decision.score));
+assert.equal(decision.scoreAuthority,'evaluate');
+assert.equal('qualityScore' in decision,false);
+assert.equal('opportunityScore' in decision,false);
 
 // Whale-driven flow should score materially lower than distributed demand.
 const whale=createOpportunityEngine();

@@ -213,7 +213,8 @@ function legacyPrefix(tokens,limit,isCurrent){
       'utf8'
     );
 
-  assert.match(
+  // MEMEFLOW_TERMINAL_ONE_MECHANISM_REGRESSION_V21_6
+  assert.doesNotMatch(
     trading,
     /\/api\/ai\/decisions\?scope=all&limit=100/
   );

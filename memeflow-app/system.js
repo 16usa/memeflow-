@@ -466,7 +466,7 @@ function renderTokenInspector(row) {
   $('inspectorState').className = `state-pill ${key}`;
 
   $('metricGrid').innerHTML = [
-    ['AI score', d.score ?? '—'],
+    ['Score', d.score ?? '—'],
     ['Holders', h.count ?? '—'],
     ['Top 10', finite(h.top10Pct) ? `${fmt(h.top10Pct, 2)}%` : '—'],
     ['Developer', finite(h.developerPct) ? `${fmt(h.developerPct, 2)}%` : '—'],
@@ -2998,8 +2998,8 @@ const MF293_GROUPS = [
     ['operatingMode', 'Operating mode', 'select', [['observe','Observe'],['assist','Assist'],['automate','Automate']]],
     ['tradingEnvironment', 'Trading environment', 'select', [['paper','Paper'],['live','Live']]],
     ['profile', 'Profile', 'select', [['conservative','Conservative'],['balanced','Balanced'],['aggressive','Aggressive']]],
-    ['minScore', 'Minimum AI score', 'number', 0, 100, 1],
-    ['minConfidence', 'Minimum confidence %', 'number', 0, 100, 1],
+    ['minScore', 'Minimum Score', 'number', 0, 100, 1],
+    ['minConfidence', 'Minimum data completeness %', 'number', 0, 100, 1],
     ['minBuyPressure', 'Minimum buy pressure', 'number', 0, null, 0.01],
     ['decisionFreshnessSec', 'Decision freshness sec', 'integer', 5, 3600, 1],
     ['requireFreshHolderSnapshot', 'Require fresh holder snapshot', 'boolean'],

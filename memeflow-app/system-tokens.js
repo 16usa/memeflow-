@@ -1090,15 +1090,8 @@ function __mfSmartSortRowsV25(rows) {
           return stateDiff;
         }
 
-        // MEMEFLOW_SMART_HIDDEN_FEED_RANK_V20_8_8
-        const feedA=finite(a?.feedScore??a?.relevanceScore)?Number(a?.feedScore??a?.relevanceScore):null;
-        const feedB=finite(b?.feedScore??b?.relevanceScore)?Number(b?.feedScore??b?.relevanceScore):null;
-        if(feedA!==null||feedB!==null){
-          const rankA=feedA??Number.NEGATIVE_INFINITY;
-          const rankB=feedB??Number.NEGATIVE_INFINITY;
-          if(rankA!==rankB)return rankB-rankA;
-        }
-
+        // MEMEFLOW_SMART_CANONICAL_SCORE_RANK_V21
+        // Canonical Score is the only numeric ranking authority.
         const scoreA = Number(tokenScore(a) ?? -1);
         const scoreB = Number(tokenScore(b) ?? -1);
         if (scoreA !== scoreB) return scoreB - scoreA;
@@ -1981,7 +1974,6 @@ async function __mfRunCardAnalysisV13(card){
         <span>${tracked?'Live':'Fresh'}</span>
         <strong>${escapeHtml(freshState)}</strong>
         <span>Score <b>${escapeHtml(scoreLabel)}</b></span>
-        <span>Conf <b>${escapeHtml(confidenceLabel)}</b></span>
       </div>
       <div class="mf-analysis-strip-v15">
         <div><span>Holders</span><strong>${escapeHtml(holders)}</strong></div>

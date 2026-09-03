@@ -125,8 +125,8 @@ export function validateSettings(raw={}){
  for(const k of ['minBondingCurvePct','maxBondingCurvePct','minBundlePct','maxBundlePct','minTop10Pct','maxTop10Pct','minDeveloperPct','maxDeveloperPct','minSniperPct','maxSniperPct','maxSuspectedRiskyWalletsPct','maxInsidersPct'])
    if(s[k]!==null&&s[k]>100)errors.push(`${k} cannot exceed 100%.`);
 
- if(s.minScore<0||s.minScore>100)errors.push('Minimum AI score must be between 0 and 100.');
- if(s.minConfidence<0||s.minConfidence>100)errors.push('Minimum confidence must be between 0 and 100.');
+ if(s.minScore<0||s.minScore>100)errors.push('Minimum Score must be between 0 and 100.');
+ if(s.minConfidence<0||s.minConfidence>100)errors.push('Minimum data completeness must be between 0 and 100.');
  if(s.minLiquidityUsd<0)errors.push('Minimum liquidity cannot be negative.');
  if(s.minBuyPressure<0)errors.push('Minimum buy pressure cannot be negative.');
 

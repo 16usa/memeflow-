@@ -79,6 +79,10 @@ const qualified = calculateAdaptivePositionSize({
   settings
 });
 assert.equal(qualified.ok, true);
+assert.equal(qualified.qualityScore,76);
+assert.equal(qualified.canonicalScore,76);
+assert.equal(qualified.components.score,76);
+assert.equal(qualified.components.dataCompleteness,80);
 assert(qualified.amountSol > 0);
 assert(qualified.amountSol < strong.amountSol);
 assert(qualified.amountSol <= settings.positionSize);

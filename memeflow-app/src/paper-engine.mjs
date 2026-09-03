@@ -1,4 +1,9 @@
 import crypto from 'node:crypto';
+import {calculateAdaptivePositionSize} from './adaptive-position-sizing.mjs';
+import {evaluateSettingsGate} from './settings-gate.mjs';
+
+// MEMEFLOW_PAPER_CANONICAL_ADAPTIVE_SIZING_V21
+// MEMEFLOW_PAPER_EXECUTION_GATE_RECHECK_V21_3
 
 const num = (value, fallback = 0) => {
   const parsed = Number(value);
@@ -645,11 +650,114 @@ export class PaperEngine {
 
   openPosition(userId, token, decision, rawSettings = {}, idempotencyKey = null) {
     const settings = this.settings(rawSettings);
+
+    const strategySource=
+      String(decision?.strategySource||'')
+        .trim()
+        .toLowerCase();
+
+    const isCopyTrading=
+      strategySource==='copy-trading';
+
+    // MEMEFLOW_STRATEGY_AWARE_EXECUTION_V21_5
+    // There is still ONE PaperEngine. The difference is decision authority:
+    // - normal scanner/AI entries: evaluate() Score + current settings-gate recheck;
+    // - copy-trading entries: tracked-wallet event is the entry signal, so scanner
+    //   score/holder gates must NOT be fabricated from missing scanner evidence.
+    // Both paths still share PaperEngine price/freshness/capital/position/kill-switch
+    // controls through canEnter().
+    if(String(decision?.state||'').toUpperCase()!=='BUY READY'){
+      return {
+        ok:false,
+        code:'DECISION_NOT_BUY_READY',
+        decision
+      };
+    }
+
+    const executionPolicy=
+      isCopyTrading
+        ? {
+            state:'PASS',
+            reasons:[],
+            gates:[],
+            failedGates:[],
+            waitingGates:[],
+            strategySource:'copy-trading',
+            authority:'tracked-wallet-event'
+          }
+        : evaluateSettingsGate(
+            token,
+            settings,
+            {includePreOpenRisk:true}
+          );
+
+    if(executionPolicy.state!=='PASS'){
+      const checkedDecision={
+        ...decision,
+        state:executionPolicy.state==='BLOCKED'?'BLOCKED':'WAITING',
+        reasons:[
+          ...(Array.isArray(decision?.reasons)?decision.reasons:[]),
+          ...(Array.isArray(executionPolicy.reasons)?executionPolicy.reasons:[])
+        ],
+        primaryReason:
+          executionPolicy.reasons?.[0]||
+          decision?.primaryReason||
+          'Execution safety gate rejected the current token state',
+        settingsEvaluation:executionPolicy,
+        scoreAuthority:decision?.scoreAuthority||'evaluate'
+      };
+
+      return {
+        ok:false,
+        code:'DECISION_NOT_BUY_READY',
+        decision:checkedDecision,
+        executionPolicy
+      };
+    }
+
     const gate = this.canEnter(userId, token, settings);
     if (!gate.ok) return gate;
 
     const price = num(token.priceSol);
-    const size = settings.positionSize;
+
+    // MEMEFLOW_PAPER_CANONICAL_ADAPTIVE_SIZING_V21
+    // Execution consumes the same canonical Score. Adaptive sizing may only
+    // reduce the user's configured budget and never invent a second decision.
+    const positionSizing=
+      isCopyTrading
+        ? {
+            ok:settings.positionSize>0,
+            mode:'copy-fixed',
+            amountSol:settings.positionSize,
+            maxBudgetSol:settings.positionSize,
+            canonicalScore:
+              Number.isFinite(Number(decision?.score))
+                ? Number(decision.score)
+                : null,
+            scoreAuthority:
+              Number.isFinite(Number(decision?.score))
+                ? 'evaluate'
+                : 'tracked-wallet-event',
+            strategySource:'copy-trading'
+          }
+        : calculateAdaptivePositionSize({
+            token,
+            decision,
+            settings
+          });
+
+    if(!positionSizing.ok){
+      return {
+        ok:false,
+        code:
+          isCopyTrading
+            ? 'INVALID_COPY_BUY_SIZE'
+            : (positionSizing.code||'ADAPTIVE_SIZE_ZERO'),
+        positionSizing
+      };
+    }
+
+    const size=positionSizing.amountSol;
     const quantity = size / price;
     const timestamp = this.clock();
     const position = {
@@ -670,6 +778,7 @@ export class PaperEngine {
       exitPriceSol: null,
       initialSizeSol: size,
       remainingSizeSol: size,
+      positionSizing,
       initialTokenQuantity: quantity,
       remainingTokenQuantity: quantity,
       realizedPnlSol: 0,

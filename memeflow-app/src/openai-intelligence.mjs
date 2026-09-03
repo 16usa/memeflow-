@@ -79,7 +79,8 @@ export class OpenAIIntelligence {
         'Return concise factual analysis, not hype.',
         'This user is isolated: never infer or mention another user, account, wallet, memory, strategy, or trade.',
         cfg.personalInstructions?`User-specific instruction: ${safeText(cfg.personalInstructions,1500)}`:'',
-        'Missing evidence must reduce confidence.'
+        'Missing evidence must reduce confidence.',
+        'Never recalculate MEMEFLOW Score. ruleDecision.score is the only Score authority.'
       ].filter(Boolean).join('\n'),
       input:JSON.stringify({purpose,snapshot,extra:safeText(extra,3000)}),
       text:{format:{type:'json_schema',name:'memeflow_token_analysis',strict:true,schema:analysisSchema()}}
@@ -92,7 +93,13 @@ export class OpenAIIntelligence {
     } finally {clearTimeout(timer)}
     if(!r.ok)throw Object.assign(new Error(data?.error?.message||`OpenAI HTTP ${r.status}`),{code:'OPENAI_REQUEST_FAILED'});
     let out;try{out=JSON.parse(parseOutputText(data))}catch{throw Object.assign(new Error('OpenAI returned invalid structured output'),{code:'OPENAI_BAD_OUTPUT'})}
-    out.aiScore=clamp(out.aiScore,0,100);out.confidence=clamp(out.confidence,0,100);
+    // MEMEFLOW_OPENAI_CANONICAL_SCORE_V21
+    const canonicalScore=Number(snapshot?.ruleDecision?.score);
+    out.aiScore=Number.isFinite(canonicalScore)
+      ?Math.max(0,Math.min(100,Math.round(canonicalScore)))
+      :null;
+    out.scoreAuthority='evaluate';
+    out.confidence=clamp(out.confidence,0,100);
     out.suggestedPositionSol=Math.max(0,Number(out.suggestedPositionSol)||0);
     out.model=body.model;out.responseId=data?.id||null;out.generatedAt=now();return out;
   }
@@ -316,7 +323,7 @@ export class OpenAIIntelligence {
         mint:m,available:true,name:t.name||null,symbol:t.symbol||null,source:t.source||null,launchPlatform:t.launchPlatform||t.protocol||null,
         priceSol:t.priceSol??null,marketCapSol:t.marketCapSol??null,marketCapUsd:t.marketCapUsd??null,liquiditySol:t.liquiditySol??null,liquidityUsd:t.liquidityUsd??null,
         holderCount:t.holderCount??null,top10Pct:t.top10Pct??null,developerPct:t.developerPct??t.developerSharePct??null,buyPressure:t.buyPressure??t.momentum??null,
-        qualityScore:t.qualityScore??null,opportunityScore:t.opportunityScore??null,uniqueBuyers:t.uniqueBuyers??null,netFlowSol:t.netFlowSol??null,recentNetFlowSol:t.recentNetFlowSol??null,
+        uniqueBuyers:t.uniqueBuyers??null,netFlowSol:t.netFlowSol??null,recentNetFlowSol:t.recentNetFlowSol??null,
         priceMomentumPct:t.priceMomentumPct??null,drawdownFromPeakPct:t.drawdownFromPeakPct??null,whaleDominancePct:t.whaleDominancePct??null,
         dead:t.dead===true,deadReason:t.deadReason||null,complete:t.complete??null,holderFresh:t.holderFresh===true,dataQuality:t.dataQuality??null,
         preOpenRiskStatus:t.preOpenRiskStatus||null,suspectedRiskyWalletsPct:t.suspectedRiskyWalletsPct??null,insidersPct:t.insidersPct??null,
