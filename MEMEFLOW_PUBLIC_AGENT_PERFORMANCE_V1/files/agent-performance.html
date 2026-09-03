@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<title>MEMEFLOW · Agent Performance</title>
+<link rel="stylesheet" href="/memeflow-brand.css?v=typography-clean-source-v1-20260830">
+<link rel="stylesheet" href="/memeflow-nav.css?v=global-right-drawer-frameless-v2-20260829">
+<link rel="stylesheet" href="/memeflow-header.css?v=canonical-header-v1-7-20260830">
+<link rel="stylesheet" href="/agent-performance.css?v=public-agent-performance-v1">
+</head>
+<body>
+<!-- MEMEFLOW_PUBLIC_AGENT_PERFORMANCE_V1 -->
+<main class="ap-page">
+<header class="ap-header mf-site-header">
+  <div class="header-left">
+    <div class="brand-mark" aria-hidden="true"><img class="mf-brand-img" src="/brand/memeflow-dragonfly-dark.png?v=final-v5" alt=""></div>
+    <div class="header-title"><span>MEMEFLOW</span><strong>Agent Performance</strong></div>
+  </div>
+  <div class="ap-live-pill" id="enginePill"><i></i><span>DATA</span></div>
+</header>
+
+<section class="ap-hero">
+  <div>
+    <span class="ap-eyebrow">ALL USERS · LOCAL DATASET</span>
+    <h1>Agent Performance</h1>
+    <p>Recorded MEMEFLOW trading outcomes across the platform, shown in a simple public format. Strategy sources are separated so MEMEFLOW activity is not silently mixed with copy trading.</p>
+  </div>
+  <div class="ap-source"><span>DATA SOURCE</span><strong>Local analytics</strong><small id="updatedAt">Loading…</small></div>
+</section>
+
+<section class="ap-controls">
+  <div class="ap-periods">
+    <button data-days="7">7D</button>
+    <button data-days="30" class="active">30D</button>
+    <button data-days="90">90D</button>
+  </div>
+  <button id="refreshBtn" class="ap-refresh">Refresh</button>
+</section>
+
+<div id="errorBox" class="ap-error" hidden></div>
+
+<section class="ap-kpis">
+  <article><span>USERS IN DATASET</span><strong id="usersValue">—</strong><small>anonymous identities</small></article>
+  <article><span>CLOSED POSITIONS</span><strong id="positionsValue">—</strong><small id="tradesValue">— trade events</small></article>
+  <article class="primary"><span>WIN RATE</span><strong id="winRateValue">—</strong><small id="recordValue">—</small></article>
+  <article><span>NET P&amp;L</span><strong id="pnlValue">—</strong><small id="pnlWindow">selected window</small></article>
+</section>
+
+<section class="ap-grid">
+  <article class="ap-panel">
+    <div class="ap-head"><div><span class="ap-eyebrow">RESULT AT A GLANCE</span><h2>Recorded outcomes</h2></div><b id="datasetMode">LOCAL DATA</b></div>
+    <div class="ap-outcome">
+      <div class="ap-donut-box">
+        <div class="ap-donut" id="outcomeDonut"><div><strong id="evaluableValue">—</strong><span>evaluable</span></div></div>
+        <div class="ap-legend"><span><i class="win"></i>Wins <b id="winsLegend">—</b></span><span><i class="loss"></i>Losses <b id="lossesLegend">—</b></span><span><i class="flat"></i>Flat <b id="flatLegend">—</b></span></div>
+      </div>
+      <div class="ap-summary">
+        <div><span>Average P&amp;L</span><strong id="avgPnlValue">—</strong></div>
+        <div><span>Average time in trade</span><strong id="holdValue">—</strong></div>
+        <div><span>Outcome coverage</span><strong id="coverageValue">—</strong></div>
+        <div><span>Unknown historical outcomes</span><strong id="unknownValue">—</strong></div>
+      </div>
+    </div>
+    <p class="ap-note"><strong>How to read this:</strong> win rate uses only closed positions with known realized P&amp;L. Flat trades are separate. Historical rows without a final P&amp;L are not counted as losses.</p>
+  </article>
+
+  <article class="ap-panel">
+    <div class="ap-head"><div><span class="ap-eyebrow">OUTCOME MIX</span><h2>Wins vs losses</h2></div></div>
+    <div class="ap-bars">
+      <div><span>Wins</span><em><i id="winsBar"></i></em><strong id="winsPct">—</strong></div>
+      <div class="loss"><span>Losses</span><em><i id="lossesBar"></i></em><strong id="lossesPct">—</strong></div>
+      <div class="flat"><span>Flat</span><em><i id="flatBar"></i></em><strong id="flatPct">—</strong></div>
+    </div>
+    <div class="ap-engine"><span>ENGINE</span><strong id="engineStatus">—</strong><small id="engineSub">live scanner status</small></div>
+  </article>
+</section>
+
+<section class="ap-factors">
+  <article class="ap-panel"><div class="ap-head"><div><span class="ap-eyebrow">ENTRY QUALITY</span><h2>Score → outcome</h2></div></div><div id="scoreFactors"></div></article>
+  <article class="ap-panel"><div class="ap-head"><div><span class="ap-eyebrow">MARKET DEPTH</span><h2>Holders → outcome</h2></div></div><div id="holderFactors"></div></article>
+  <article class="ap-panel"><div class="ap-head"><div><span class="ap-eyebrow">CONCENTRATION</span><h2>Top 10 → outcome</h2></div></div><div id="top10Factors"></div></article>
+  <article class="ap-panel"><div class="ap-head"><div><span class="ap-eyebrow">MOMENTUM</span><h2>Buy pressure → outcome</h2></div></div><div id="pressureFactors"></div></article>
+</section>
+
+<section class="ap-bottom">
+  <article class="ap-panel"><div class="ap-head"><div><span class="ap-eyebrow">WHY TRADES ENDED</span><h2>Exit reasons</h2></div></div><div id="exitReasons"></div></article>
+  <article class="ap-panel"><div class="ap-head"><div><span class="ap-eyebrow">WHERE RESULTS CAME FROM</span><h2>Strategy sources</h2></div></div><div id="strategySources"></div><p class="ap-note">This shows how many recorded positions came from MEMEFLOW, copy trading, or another strategy source.</p></article>
+</section>
+
+<section class="ap-privacy"><b>✓</b><p><strong>Aggregate statistics only.</strong> The analytics dataset stores a one-way anonymous user hash. Raw user IDs, wallet addresses and emails are not stored in this analytics database. OpenAI is not used to calculate these statistics.</p></section>
+<footer><span>MEMEFLOW · Public performance transparency</span><a href="/trading.html">Open Trading Terminal →</a></footer>
+</main>
+<script src="/memeflow-nav.js?v=global-right-drawer-v1" defer></script>
+<script src="/agent-performance.js?v=public-agent-performance-v1" defer></script>
+</body>
+</html>

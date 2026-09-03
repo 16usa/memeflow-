@@ -12,13 +12,6 @@ async function fetchJson(url,timeoutMs=4000){
   }finally{clearTimeout(t)}
 }
 
-function fromDexScreener(data){
-  const pairs=Array.isArray(data?.pairs)?data.pairs:[];
-  const rows=pairs.filter(p=>p?.chainId==='solana'&&finite(p?.priceUsd));
-  rows.sort((a,b)=>Number(b?.liquidity?.usd||0)-Number(a?.liquidity?.usd||0));
-  const p=rows[0];
-  return p&&finite(p.priceUsd)?Number(p.priceUsd):null;
-}
 function fromCoinGecko(data){
   const n=data?.solana?.usd;
   return finite(n)?Number(n):null;
@@ -35,7 +28,6 @@ export function createSolUsdOracle(options={}){
     if(inflight)return inflight;
     inflight=(async()=>{
       const attempts=[
-        async()=>['dexscreener',fromDexScreener(await fetchJson('https://api.dexscreener.com/latest/dex/search?q=SOL%20USDC'))],
         async()=>['coingecko',fromCoinGecko(await fetchJson('https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd'))]
       ];
       let err=null;

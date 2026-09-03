@@ -3253,8 +3253,22 @@ function __mfScanRenderV27({scan,liveRow,buyContext}){
   const symbol=scan?.symbol||liveRow?.symbol||'';
   const market=scan?.market||{};
   const chain=scan?.onchain||{};
-  const stateText=stateLabel(decision?.state||'WAITING');
-  const stateClass=__mfScanStateClassV27(decision?.state);
+  const manualDataIncomplete=
+    !tracked &&
+    scan?.analysisStatus &&
+    scan.analysisStatus!=='READY';
+  const stateText=
+    manualDataIncomplete
+      ? 'DATA INCOMPLETE'
+      : stateLabel(decision?.state||'WAITING');
+  const stateClass=
+    manualDataIncomplete
+      ? 'waiting'
+      : __mfScanStateClassV27(decision?.state);
+  const scoreText=
+    manualDataIncomplete
+      ? '—'
+      : __mfScanNumberV27(decision?.score,0);
 
   const reasons=[
     decision?.primaryReason,
@@ -3297,7 +3311,7 @@ function __mfScanRenderV27({scan,liveRow,buyContext}){
       </div>
 
       <div class="mf-scan-grid">
-        <div class="mf-scan-metric"><span>Score</span><strong>${escapeHtml(__mfScanNumberV27(decision?.score,0))}</strong></div>
+        <div class="mf-scan-metric"><span>Score</span><strong>${escapeHtml(scoreText)}</strong></div>
         <div class="mf-scan-metric"><span>Holders</span><strong>${escapeHtml(chain?.holderCountDisplay??chain?.holderCount??holderCount(liveRow||{}))}</strong></div>
         <div class="mf-scan-metric"><span>Top 10</span><strong>${chain?.top10PctDisplay?escapeHtml(chain.top10PctDisplay):(finite(chain?.top10Pct)?escapeHtml(__mfScanNumberV27(chain.top10Pct,1)+'%'):'—')}</strong></div>
         <div class="mf-scan-metric"><span>Dev</span><strong>${chain?.developerPctDisplay?escapeHtml(chain.developerPctDisplay):(finite(chain?.developerPct)?escapeHtml(__mfScanNumberV27(chain.developerPct,1)+'%'):'—')}</strong></div>
@@ -3306,11 +3320,15 @@ function __mfScanRenderV27({scan,liveRow,buyContext}){
       </div>
 
       <p class="mf-scan-reason">
-        ${escapeHtml(reasons[0]||(
-          tracked
-            ? 'Current canonical MEMEFLOW live state.'
-            : 'Independent scan completed with the current MEMEFLOW evaluator.'
-        ))}
+        ${escapeHtml(
+          manualDataIncomplete
+            ? (scan?.analysisMessage||'Token data is incomplete.')
+            : reasons[0]||(
+                tracked
+                  ? 'Current canonical MEMEFLOW live state.'
+                  : 'Independent scan completed with the current MEMEFLOW evaluator.'
+              )
+        )}
       </p>
 
       <div class="mf-scan-actions">
@@ -3335,8 +3353,8 @@ function __mfScanRenderV27({scan,liveRow,buyContext}){
           <div class="mf-scan-detail"><span>Liquidity</span><strong>${escapeHtml(__mfScanCompactUsdV27(market?.liquidityUsd))}</strong></div>
           <div class="mf-scan-detail"><span>Vol 5m</span><strong>${escapeHtml(__mfScanCompactUsdV27(market?.volume5mUsd))}</strong></div>
           <div class="mf-scan-detail"><span>5m buys / sells</span><strong>${escapeHtml(`${__mfScanNumberV27(market?.buys5m,0)} / ${__mfScanNumberV27(market?.sells5m,0)}`)}</strong></div>
-          <div class="mf-scan-detail"><span>Mint authority</span><strong>${escapeHtml(chain?.mintAuthority?'ACTIVE':'NONE')}</strong></div>
-          <div class="mf-scan-detail"><span>Freeze authority</span><strong>${escapeHtml(chain?.freezeAuthority?'ACTIVE':'NONE')}</strong></div>
+          <div class="mf-scan-detail"><span>Mint authority</span><strong>${escapeHtml(chain?.mintAuthorityStatus??(chain?.mintAuthority?'ACTIVE':'UNKNOWN'))}</strong></div>
+          <div class="mf-scan-detail"><span>Freeze authority</span><strong>${escapeHtml(chain?.freezeAuthorityStatus??(chain?.freezeAuthority?'ACTIVE':'UNKNOWN'))}</strong></div>
           <div class="mf-scan-detail"><span>Sources</span><strong>${escapeHtml((scan?.sources||[]).join(' · ')||'MEMEFLOW live')}</strong></div>
         </div>
 

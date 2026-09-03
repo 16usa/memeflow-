@@ -4384,8 +4384,54 @@ async function mf49DeveloperPct(creator,mint,total){
 }
 async function mf49StandaloneScan(raw,u){
  const resolved=await mf49ResolveInput(raw),mint=resolved.mint;
- const known=store.state.tokens[mint]||{};
+ const stored=store.state.tokens[mint]||{};
  const warnings=[],sources=new Set();
+
+ // MEMEFLOW_MANUAL_INDEXED_DATA_PLANE_V7
+ // GMGN-style behavior: the click path reads MEMEFLOW's already-indexed facts
+ // first. Deep RPC is verification/enrichment only and must never be the sole
+ // source of the visible result.
+ let marketLedger=null;
+ let holderLedger=null;
+ try{marketLedger=eventMarketLedger?.inspect?.(mint)||null}catch{}
+ try{holderLedger=eventHolderLedger?.inspect?.(mint)||null}catch{}
+
+ const inferredPump=
+  String(stored?.launchPlatform||stored?.protocol||'').toLowerCase().includes('pump') ||
+  mint.toLowerCase().endsWith('pump') ||
+  resolved.inputKind==='pump-fun';
+
+ const observedSeed=[
+  mf49Num(stored?.observedHolderCount),
+  mf49Num(holderLedger?.observedHolderCount),
+  mf49Num(holderLedger?.holderCount)
+ ].filter(v=>v!=null&&v>0);
+
+ const known={
+  ...stored,
+  launchPlatform:
+   stored?.launchPlatform ||
+   (inferredPump?'pump':null),
+  protocol:
+   stored?.protocol ||
+   (inferredPump?'pump':null),
+  priceSol:
+   mf49Num(marketLedger?.priceSol) ??
+   mf49Num(stored?.priceSol),
+  liquiditySol:
+   mf49Num(marketLedger?.liquiditySol) ??
+   mf49Num(stored?.liquiditySol),
+  buyPressure:
+   mf49Num(marketLedger?.buyPressure) ??
+   mf49Num(stored?.buyPressure),
+  observedHolderCount:
+   observedSeed.length
+    ? Math.max(...observedSeed)
+    : null
+ };
+
+ if(marketLedger)sources.add('MEMEFLOW live market ledger');
+ if(holderLedger?.observedHolderCount>0)sources.add('MEMEFLOW live holder ledger');
 
  const deadlineMs=9000;
  const deadlineAt=Date.now()+deadlineMs;
@@ -4442,7 +4488,11 @@ async function mf49StandaloneScan(raw,u){
    warnings.push(`RPC: ${canonicalManual.evidence.rpcError}`);
   }
  }else{
-  warnings.push(`Full on-chain analysis: ${manualSettled.reason?.message||'unavailable'}`);
+  if(manualSettled.reason?.code==='MANUAL_ANALYSIS_DEADLINE'){
+   warnings.push('Deep on-chain verification did not finish within the bounded scan window; indexed MEMEFLOW data is shown instead.');
+  }else{
+   warnings.push(`Full on-chain analysis: ${manualSettled.reason?.message||'unavailable'}`);
+  }
  }
 
  if(mintSettled.status==='fulfilled'){
@@ -4460,9 +4510,6 @@ async function mf49StandaloneScan(raw,u){
  // Exact getProgramAccounts remains authoritative. If it misses the bounded
  // manual-analysis deadline, reuse MEMEFLOW's already-running WS holder ledger
  // as an explicitly labelled lower-bound instead of rendering false zeroes.
- let holderLedger=null;
- try{holderLedger=eventHolderLedger?.inspect?.(mint)||null}catch{}
-
  const knownHolderTruth=__mfPipelineHolderTruthV26(
   known,
   mint,
@@ -4489,7 +4536,7 @@ async function mf49StandaloneScan(raw,u){
   mf49Num(knownHolderTruth?.observed),
   mf49Num(holderLedger?.observedHolderCount),
   mf49Num(holderLedger?.holderCount)
- ].filter(v=>v!=null&&v>=0);
+ ].filter(v=>v!=null&&v>0);
 
  const observedHolderCount=
   observedCandidates.length
@@ -4550,22 +4597,82 @@ async function mf49StandaloneScan(raw,u){
 
  const name=canonicalToken.name||known.name||known.symbol||null;
  const symbol=canonicalToken.symbol||known.symbol||null;
- const priceUsd=mf49Num(canonicalToken.priceUsd)??mf49Num(known.priceUsd);
- const liquidityUsd=mf49Num(canonicalToken.liquidityUsd)??mf49Num(known.liquidityUsd);
- const marketCapUsd=mf49Num(canonicalToken.marketCapUsd)??mf49Num(known.marketCapUsd);
- const volume5mUsd=mf49Num(known?.market?.volume5mUsd)??mf49Num(known.volume5mUsd);
- const buys5m=mf49Num(known?.market?.buys5m)??mf49Num(known.buys5m);
- const sells5m=mf49Num(known?.market?.sells5m)??mf49Num(known.sells5m);
 
- let priceSol=mf49Num(canonicalToken.priceSol)??mf49Num(known.priceSol),liquiditySol=mf49Num(canonicalToken.liquiditySol)??mf49Num(known.liquiditySol);
- if(priceSol!=null||liquiditySol!=null)sources.add('Pump curve');
+ const solUsd=mf49Num(solUsdOracle?.get?.());
 
- let buyPressure=mf49Num(canonicalToken.buyPressure)??mf49Num(known.buyPressure);
+ let priceSol=
+  mf49Num(canonicalToken.priceSol) ??
+  mf49Num(marketLedger?.priceSol) ??
+  mf49Num(known.priceSol);
+
+ let liquiditySol=
+  mf49Num(canonicalToken.liquiditySol) ??
+  mf49Num(marketLedger?.liquiditySol) ??
+  mf49Num(known.liquiditySol);
+
+ const priceUsd=
+  mf49Num(canonicalToken.priceUsd) ??
+  mf49Num(known.priceUsd) ??
+  (
+   priceSol!=null && solUsd!=null
+    ? priceSol*solUsd
+    : null
+  );
+
+ const marketCapUsd=
+  mf49Num(canonicalToken.marketCapUsd) ??
+  mf49Num(known.marketCapUsd) ??
+  (
+   priceSol!=null && total!=null && solUsd!=null
+    ? priceSol*total*solUsd
+    : null
+  );
+
+ const liquidityUsd=
+  mf49Num(canonicalToken.liquidityUsd) ??
+  mf49Num(known.liquidityUsd) ??
+  (
+   liquiditySol!=null && solUsd!=null
+    ? liquiditySol*solUsd
+    : null
+  );
+
+ const volume5mSol=
+  mf49Num(known?.market?.volume5mSol) ??
+  mf49Num(known.volume5mSol);
+
+ const volume5mUsd=
+  mf49Num(known?.market?.volume5mUsd) ??
+  mf49Num(known.volume5mUsd) ??
+  (
+   volume5mSol!=null && solUsd!=null
+    ? volume5mSol*solUsd
+    : null
+  );
+
+ let buyPressure=
+  mf49Num(canonicalToken.buyPressure) ??
+  mf49Num(marketLedger?.buyPressure) ??
+  mf49Num(known.buyPressure);
+
  const tw=tradeWindows.get(mint);
+ const buys5m=
+  mf49Num(known?.market?.buys5m) ??
+  mf49Num(known.buys5m) ??
+  mf49Num(tw?.buy);
+
+ const sells5m=
+  mf49Num(known?.market?.sells5m) ??
+  mf49Num(known.sells5m) ??
+  mf49Num(tw?.sell);
+
  if(tw&&(tw.buy||tw.sell)){
   buyPressure=tw.sell?tw.buy/tw.sell:(tw.buy||null);
-  sources.add('Live flow')
+  sources.add('MEMEFLOW live flow');
  }
+
+ if(priceSol!=null||liquiditySol!=null)sources.add('Pump curve / live reserves');
+ if(solUsd!=null)sources.add('SOL/USD oracle');
 
  const creator=canonicalToken.creator||known.creator||holderLedger?.eventLedgerCreator||null;
  let developerPct=
@@ -4576,8 +4683,22 @@ async function mf49StandaloneScan(raw,u){
      )
    : null;
 
- const mintParsed=mintInfo?.value?.data?.parsed?.info||{};
- const mintAuthority=mintParsed.mintAuthority??null,freezeAuthority=mintParsed.freezeAuthority??null;
+ const mintParsed=mintInfo?.value?.data?.parsed?.info||null;
+ const authorityKnown=Boolean(mintParsed);
+ const mintAuthority=authorityKnown?(mintParsed.mintAuthority??null):null;
+ const freezeAuthority=authorityKnown?(mintParsed.freezeAuthority??null):null;
+ const mintAuthorityStatus=
+  !authorityKnown
+   ? 'UNKNOWN'
+   : mintAuthority
+     ? 'ACTIVE'
+     : 'NONE';
+ const freezeAuthorityStatus=
+  !authorityKnown
+   ? 'UNKNOWN'
+   : freezeAuthority
+     ? 'ACTIVE'
+     : 'NONE';
 
  const priceAvailable=priceSol!=null||priceUsd!=null;
  const dataQuality=[total,top10,priceAvailable?1:null].filter(x=>x!=null).length/3;
@@ -4605,6 +4726,40 @@ async function mf49StandaloneScan(raw,u){
  if(typeof mf49Evaluate!=='function')throw mf49Err('src/evaluate.mjs does not export evaluate().',500,'EVALUATOR_NOT_AVAILABLE');
  const evaluation=mf49Evaluate(evalToken,u.settings);
 
+ // MEMEFLOW_MANUAL_ANALYSIS_STATE_SEMANTICS_V7
+ // WAITING is a trading decision, not an error code for absent evidence.
+ // A standalone scan receives a trading state only after the minimum evidence
+ // needed to make that state meaningful is present.
+ const evidenceFlags={
+  price:priceAvailable,
+  marketCap:marketCapUsd!=null,
+  holders:holderCount!=null||observedHolderCount!=null,
+  activity:
+   buyPressure!=null ||
+   volume5mUsd!=null ||
+   buys5m!=null ||
+   sells5m!=null,
+  tokenAccount:authorityKnown
+ };
+ const evidenceCount=Object.values(evidenceFlags).filter(Boolean).length;
+ const decisionEvidenceReady=
+  evidenceFlags.price &&
+  evidenceFlags.marketCap &&
+  evidenceFlags.holders &&
+  evidenceFlags.activity;
+ const analysisStatus=
+  decisionEvidenceReady
+   ? 'READY'
+   : evidenceCount>=2
+     ? 'PARTIAL'
+     : 'INSUFFICIENT_DATA';
+ const analysisMessage=
+  analysisStatus==='READY'
+   ? 'MEMEFLOW has enough current evidence for a trading-state evaluation.'
+   : analysisStatus==='PARTIAL'
+     ? 'Partial token data is available; no trading state is assigned until core market and holder evidence is complete.'
+     : 'Insufficient token data; MEMEFLOW will not label this token WAITING or score it as a trading candidate.';
+
  if(holderCount==null&&observedHolderCount!=null){
   warnings.push(`Exact holder total is unavailable; ${Math.round(observedHolderCount)}+ is the live MEMEFLOW lower bound.`);
  }else if(holderCount==null){
@@ -4621,7 +4776,7 @@ async function mf49StandaloneScan(raw,u){
    marketCapUsd,
    marketCapSol:priceSol!=null&&total!=null?priceSol*total:null,
    liquidityUsd,liquiditySol,
-   buyPressure,volume5mUsd,buys5m,sells5m,
+   buyPressure,volume5mSol,volume5mUsd,buys5m,sells5m,
    priceChange5mPct:mf49Num(known?.market?.priceChange5mPct)??mf49Num(known.priceChange5mPct)
   },
   onchain:{
@@ -4643,8 +4798,14 @@ async function mf49StandaloneScan(raw,u){
    creator,
    mintAuthority,
    freezeAuthority,
+   mintAuthorityStatus,
+   freezeAuthorityStatus,
    holderFresh
   },
+  analysisStatus,
+  analysisMessage,
+  evidenceFlags,
+  evidenceCount,
   settingsApplied:{
    minScore:u.settings?.minScore,maxTop10Pct:u.settings?.maxTop10Pct,
    maxDeveloperPct:u.settings?.maxDeveloperPct,minBuyPressure:u.settings?.minBuyPressure,

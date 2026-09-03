@@ -4478,7 +4478,9 @@ setTimeout(installRealWebV31, 1250);
     { title: 'System Settings', image: '/memeflow-gallery/system-settings.webp?v=page-gallery-v1', href: '/settings.html', slot: 'center' },
     { title: 'Real-Time Pipeline', image: '/memeflow-gallery/live-token-states.webp?v=page-gallery-v1', href: '/system-tokens.html', slot: 'right' },
     { title: 'Smart Vault', image: '/memeflow-gallery/how-it-works.svg?v=sv5', href: '/smart-vault.html', slot: 'hidden' },
-    { title: 'How It Works', image: '/memeflow-gallery/how-it-works.svg?v=how-it-works-carousel-v1', href: '/how-it-works.html', slot: 'hidden' }
+    { title: 'How It Works', image: '/memeflow-gallery/how-it-works.svg?v=how-it-works-carousel-v1', href: '/how-it-works.html', slot: 'hidden' },
+    // MEMEFLOW_SYSTEM_OVERVIEW_AGENT_PERFORMANCE_V1
+    { title: 'Agent Performance', image: '/memeflow-gallery/agent-performance.svg?v=agent-performance-gallery-v1', href: '/agent-performance.html', slot: 'hidden' }
   ];
 
   function stopOldTrue3D() {
@@ -4924,28 +4926,33 @@ setTimeout(installRealWebV31, 1250);
 
   const PAGE_META = {
     'Trading Terminal': {
-      index: '01 / 05',
+      index: '01 / 06',
       title: 'TRADING TERMINAL',
       text: 'Live workspace for chart analysis, open positions, signals and trade execution.'
     },
     'System Settings': {
-      index: '02 / 05',
+      index: '02 / 06',
       title: 'SYSTEM SETTINGS',
       text: 'Configure trading mode, AI thresholds, risk filters and execution rules.'
     },
     'Real-Time Pipeline': {
-      index: '03 / 05',
+      index: '03 / 06',
       title: 'REAL-TIME PIPELINE',
       text: 'Monitor live token states, candidates, decisions and active positions.'
     },
     'Smart Vault': {
-      index: '04 / 05', title: 'SMART VAULT',
+      index: '04 / 06', title: 'SMART VAULT',
       text: 'Wallet, funding, withdrawals and LIVE automation.'
     },
     'How It Works': {
-      index: '05 / 05',
+      index: '05 / 06',
       title: 'HOW IT WORKS',
       text: 'See how your wallet, Smart Vault and executor work together — from deposit to automated trading and withdrawal.'
+    },
+    'Agent Performance': {
+      index: '06 / 06',
+      title: 'AGENT PERFORMANCE',
+      text: 'Review aggregated platform outcomes, win rate, P&L and the factors that correlate with trading results.'
     }
   };
 
@@ -4968,6 +4975,7 @@ setTimeout(installRealWebV31, 1250);
     if (href.includes('/trading.html')) return 'Trading Terminal';
     if (href.includes('/settings.html') || href.includes('mfOpenSettings=1')) return 'System Settings';
     if (href.includes('/system-tokens.html')) return 'Real-Time Pipeline';
+    if (href.includes('/agent-performance.html')) return 'Agent Performance';
 
     return title;
   }
@@ -5180,7 +5188,8 @@ setTimeout(installRealWebV31, 1250);
     'System Settings': '/settings.html',
     'Real-Time Pipeline': '/system-tokens.html',
     'Smart Vault': '/smart-vault.html',
-    'How It Works': '/how-it-works.html'
+    'How It Works': '/how-it-works.html',
+    'Agent Performance': '/agent-performance.html'
   };
 
   const states = new Map();
