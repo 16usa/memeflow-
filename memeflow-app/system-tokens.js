@@ -1619,32 +1619,10 @@ function tokenTemplate(row, index) {
           <div data-mf-card-analysis-body></div>
         </div>
 
-        <div class="detail-block">
-          <span>Primary signal</span>
-          <p>
-            ${escapeHtml(tokenReason(row))}
-          </p>
-        </div>
-
-        <div class="detail-block">
-          <span>Risk gates</span>
-          <p>
-            ${escapeHtml(tokenGateSummary(row))}
-          </p>
-        </div>
-
-        <div class="detail-block">
-          <span>Developer</span>
-          <p>
-            ${finite(dev) ? `${fmt(dev, 2)}%` : '—'}
-          </p>
-        </div>
-
-        <div class="detail-block">
-          <span>Mint</span>
-          <p>
-            ${escapeHtml(row?.mint || '—')}
-          </p>
+        <div class="mf-card-static-context-v14">
+          <div class="mf-card-context-row-v14"><span>Primary signal</span><strong>${escapeHtml(tokenReason(row))}</strong></div>
+          <div class="mf-card-context-row-v14"><span>Risk gates</span><strong>${escapeHtml(tokenGateSummary(row))}</strong></div>
+          <div class="mf-card-context-row-v14"><span>Mint</span><strong class="mf-card-mint-v14">${escapeHtml(row?.mint || '—')}</strong></div>
         </div>
 
       </div>
@@ -1785,8 +1763,17 @@ async function __mfRunCardAnalysisV13(card){
       ? 'Fresh analysis complete · data incomplete'
       : 'Fresh analysis complete';
 
+    const scoreLabel=finite(decision?.score)?fmt(decision.score,0):'—';
+    const confidenceLabel=finite(decision?.confidence)?fmt(decision.confidence,0)+'%':'—';
+    const freshState=decision?.state||scan?.analysisStatus||'—';
+
     body.innerHTML=`
-      <div class="mf-card-analysis-grid">
+      <div class="mf-card-analysis-summary-v14">
+        <div><span>State</span><strong>${escapeHtml(freshState)}</strong></div>
+        <div><span>Score</span><strong>${escapeHtml(scoreLabel)}</strong></div>
+        <div><span>Confidence</span><strong>${escapeHtml(confidenceLabel)}</strong></div>
+      </div>
+      <div class="mf-card-analysis-grid mf-card-analysis-grid-v14">
         <div class="detail-block"><span>Holders</span><p>${escapeHtml(holders)}</p></div>
         <div class="detail-block"><span>Top 10</span><p>${escapeHtml(finite(onchain?.top10Pct)?fmt(onchain.top10Pct,2)+'%':'—')}</p></div>
         <div class="detail-block"><span>DEV</span><p>${escapeHtml(finite(onchain?.developerPct)?fmt(onchain.developerPct,2)+'%':'—')}</p></div>
@@ -1795,10 +1782,8 @@ async function __mfRunCardAnalysisV13(card){
         <div class="detail-block"><span>Buy pressure</span><p>${escapeHtml(finite(market?.buyPressure)?fmt(market.buyPressure,2)+'×':'—')}</p></div>
         <div class="detail-block"><span>Volume 5m</span><p>${escapeHtml(__mfScanCompactUsdV27(market?.volume5mUsd))}</p></div>
         <div class="detail-block"><span>Tx 5m</span><p>${escapeHtml(finite(market?.transactions5m)?fmt(market.transactions5m,0):'—')}</p></div>
-        <div class="detail-block"><span>Mint authority</span><p>${escapeHtml(yn(onchain?.mintAuthorityPresent))}</p></div>
-        <div class="detail-block"><span>Freeze authority</span><p>${escapeHtml(yn(onchain?.freezeAuthorityPresent))}</p></div>
-        <div class="detail-block"><span>Analysis state</span><p>${escapeHtml(decision?.state||scan?.analysisStatus||'—')}</p></div>
-        <div class="detail-block"><span>Score / confidence</span><p>${escapeHtml(finite(decision?.score)?fmt(decision.score,0)+' / '+(finite(decision?.confidence)?fmt(decision.confidence,0)+'%':'—'):'—')}</p></div>
+        <div class="detail-block"><span>Mint auth</span><p>${escapeHtml(yn(onchain?.mintAuthorityPresent))}</p></div>
+        <div class="detail-block"><span>Freeze auth</span><p>${escapeHtml(yn(onchain?.freezeAuthorityPresent))}</p></div>
       </div>`;
   }catch(error){
     if(card.dataset.mfAnalysisRequest!==requestId)return;
