@@ -921,6 +921,131 @@ async function loadErrorPatterns(){
   }
 }
 
+/* MEMEFLOW_SHADOW_ERROR_AWARE_CONFIDENCE_V23_18_UI_JS */
+function renderErrorAwareConfidence(payload={}){
+  const status=payload?.status||{};
+  const recent=
+    Array.isArray(payload?.recent)
+      ? payload.recent
+      : [];
+
+  const badge=$('errorAwareConfidenceStatus');
+
+  if(badge){
+    badge.className=
+      'oi-ai-status '+
+      (
+        Number(status?.penaltiesApplied||0)>0
+          ? 'online'
+          : ''
+      );
+
+    badge.textContent=
+      Number(status?.predictions||0)>0
+        ? 'ACTIVE'
+        : 'COLD START';
+  }
+
+  $('errorAwarePredictions').textContent=
+    num(status?.predictions,0);
+
+  $('errorAwarePenalized').textContent=
+    num(status?.penaltiesApplied,0);
+
+  $('errorAwareMeanPenalty').textContent=
+    pct(status?.meanAppliedPenaltyPct);
+
+  $('errorAwareMaxPenalty').textContent=
+    pct(status?.maxPenaltySeenPct);
+
+  $('errorAwareConfidenceList').innerHTML=
+    recent.length
+      ? recent.slice(0,15).map(row=>{
+          const selected=
+            Array.isArray(row?.selectedPatterns)
+              ? row.selectedPatterns
+              : [];
+
+          return `
+            <div
+              class="oi-error-aware-row ${Number(row?.penaltyPct||0)>0?'penalized':''}"
+            >
+              <div class="oi-error-aware-head">
+                <strong>${esc(row?.mint||'UNKNOWN')}</strong>
+                <span>${esc(String(row?.status||'UNKNOWN').replaceAll('_',' '))}</span>
+              </div>
+
+              <div class="oi-error-aware-metrics">
+                <span>
+                  P+ ${Number.isFinite(Number(row?.probabilityPositivePct))
+                    ? `${num(row.probabilityPositivePct,1)}%`
+                    : '—'}
+                </span>
+                <span>
+                  confidence ${pct(row?.rawConfidencePct)}
+                  → ${pct(row?.adjustedConfidencePct)}
+                </span>
+                <span>
+                  penalty ${pct(row?.penaltyPct)}
+                </span>
+              </div>
+
+              <div class="oi-error-aware-patterns">
+                ${
+                  selected.length
+                    ? selected.map(pattern=>`
+                        <span>
+                          ${esc(
+                            (Array.isArray(pattern?.tags)
+                              ? pattern.tags
+                              : []
+                            )
+                              .map(x=>String(x).replaceAll('_',' '))
+                              .join(' + ')
+                          )}
+                          · ${num(pattern?.missLift,2)}×
+                        </span>
+                      `).join('')
+                    : '<span class="clear">NO MATURE ERROR MATCH</span>'
+                }
+              </div>
+            </div>
+          `;
+        }).join('')
+      : `
+          <div class="oi-empty">
+            No V23.18 confidence observations yet.
+          </div>
+        `;
+}
+
+async function loadErrorAwareConfidence(){
+  try{
+    const payload=await api(
+      '/api/owner/intelligence/error-aware-confidence?limit=30'
+    );
+
+    renderErrorAwareConfidence(payload);
+  }catch(error){
+    const badge=$('errorAwareConfidenceStatus');
+
+    if(badge){
+      badge.className='oi-ai-status offline';
+      badge.textContent='UNAVAILABLE';
+    }
+
+    const list=$('errorAwareConfidenceList');
+
+    if(list){
+      list.innerHTML=`
+        <div class="oi-empty">
+          ${esc(error.message)}
+        </div>
+      `;
+    }
+  }
+}
+
 /* MEMEFLOW_SHADOW_PROMOTION_REPORT_V23_14_UI_JS */
 function promotionTone(status=''){
   const s=String(status||'').toUpperCase();
@@ -1833,7 +1958,8 @@ async function load(
       loadPromotionReport(),
       loadTokenScorecards(),
       loadOutcomeReviews(),
-      loadErrorPatterns()
+      loadErrorPatterns(),
+      loadErrorAwareConfidence()
     ]);
 
     if(previous){

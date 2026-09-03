@@ -501,6 +501,71 @@
         ></div>
       </section>
 
+      <!-- MEMEFLOW_SHADOW_ERROR_AWARE_CONFIDENCE_V23_18_UI -->
+      <section
+        id="errorAwareConfidenceMonitor"
+        class="oi-panel oi-error-aware-monitor"
+      >
+        <div class="oi-panel-head">
+          <div>
+            <span class="oi-eyebrow">
+              ERROR-AWARE TRUST · SHADOW ONLY
+            </span>
+            <h2>V23 Confidence Penalty</h2>
+            <p>
+              Mature V23.17 miss associations can reduce confidence
+              in the current shadow forecast. Probability is unchanged;
+              V22 remains the only trading authority.
+            </p>
+          </div>
+
+          <span
+            id="errorAwareConfidenceStatus"
+            class="oi-ai-status"
+          >
+            LOADING
+          </span>
+        </div>
+
+        <div class="oi-grid oi-grid-4">
+          <article class="oi-stat">
+            <span>PREDICTIONS</span>
+            <strong id="errorAwarePredictions">—</strong>
+            <small>evaluated for known error patterns</small>
+          </article>
+
+          <article class="oi-stat">
+            <span>PENALIZED</span>
+            <strong id="errorAwarePenalized">—</strong>
+            <small>matched mature patterns</small>
+          </article>
+
+          <article class="oi-stat">
+            <span>MEAN PENALTY</span>
+            <strong id="errorAwareMeanPenalty">—</strong>
+            <small>confidence haircut only</small>
+          </article>
+
+          <article class="oi-stat">
+            <span>MAX PENALTY</span>
+            <strong id="errorAwareMaxPenalty">—</strong>
+            <small>hard cap 40%</small>
+          </article>
+        </div>
+
+        <div class="oi-divider"></div>
+
+        <div class="oi-promotion-check-head">
+          <h3>Recent error-aware confidence</h3>
+          <span>probability unchanged · no auto-correction</span>
+        </div>
+
+        <div
+          id="errorAwareConfidenceList"
+          class="oi-error-aware-list"
+        ></div>
+      </section>
+
       <!-- MEMEFLOW_PLATFORM_LEARNING_V2_UI -->
       <section class="oi-panel">
         <div class="oi-panel-head">

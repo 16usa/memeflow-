@@ -944,6 +944,83 @@ textarea{
 }
 
 /* ==========================================================
+   MEMEFLOW_SHADOW_ERROR_AWARE_CONFIDENCE_V23_18
+   ========================================================== */
+
+.oi-error-aware-list{
+  display:grid;
+  gap:8px;
+  margin-top:9px;
+}
+
+.oi-error-aware-row{
+  padding:10px 11px;
+  border:1px solid rgba(38,56,69,.68);
+  border-radius:11px;
+  background:rgba(255,255,255,.012);
+}
+
+.oi-error-aware-row.penalized{
+  border-color:rgba(239,200,106,.24);
+  background:rgba(239,200,106,.02);
+}
+
+.oi-error-aware-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+}
+
+.oi-error-aware-head strong{
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  font-size:var(--mf-type-meta);
+}
+
+.oi-error-aware-head span{
+  color:var(--muted);
+  font-size:var(--mf-type-micro);
+  font-weight:800;
+}
+
+.oi-error-aware-row.penalized
+.oi-error-aware-head span{
+  color:var(--amber);
+}
+
+.oi-error-aware-metrics{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  margin-top:7px;
+  color:var(--muted);
+  font-size:var(--mf-type-micro);
+}
+
+.oi-error-aware-patterns{
+  display:flex;
+  flex-wrap:wrap;
+  gap:5px;
+  margin-top:7px;
+}
+
+.oi-error-aware-patterns span{
+  padding:4px 6px;
+  border:1px solid rgba(239,200,106,.18);
+  border-radius:999px;
+  color:var(--amber);
+  font-size:var(--mf-type-micro);
+}
+
+.oi-error-aware-patterns span.clear{
+  border-color:rgba(81,231,168,.18);
+  color:var(--green);
+}
+
+/* ==========================================================
    MEMEFLOW_SHADOW_PROMOTION_REPORT_V23_14
    ========================================================== */
 

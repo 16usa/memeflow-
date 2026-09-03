@@ -48,6 +48,9 @@ import {
 import {
   createShadowErrorPatternLearnerV23_17
 } from './shadow-error-pattern-learner-v23_17.mjs';
+import {
+  createShadowErrorAwareConfidenceV23_18
+} from './shadow-error-aware-confidence-v23_18.mjs';
 
 // MEMEFLOW_TOKEN_INTELLIGENCE_NETWORK_V23
 //
@@ -833,6 +836,12 @@ export function createTokenIntelligenceShadowV23({
       dataDir
     });
 
+  const shadowErrorAwareConfidence=
+    createShadowErrorAwareConfidenceV23_18({
+      errorPatternLearner:
+        shadowErrorPatternLearner
+    });
+
   const metrics={
     observations:0,
     cellsCreated:0,
@@ -961,6 +970,19 @@ export function createTokenIntelligenceShadowV23({
           {
             mint,
             at:snapshot.observedAt
+          }
+        );
+
+      // MEMEFLOW_SHADOW_ERROR_AWARE_CONFIDENCE_V23_18
+      // Mature V23.17 miss associations may reduce SHADOW confidence only.
+      // Probability, V22 Score/State and BUY/SELL remain untouched.
+      snapshot.shadowErrorAwareConfidence=
+        shadowErrorAwareConfidence.predict(
+          snapshot,
+          {
+            mint,
+            at:snapshot.observedAt,
+            stage:cell.stage
           }
         );
 
@@ -1266,6 +1288,32 @@ export function createTokenIntelligenceShadowV23({
               snap?.shadowOutcomeCalibration
                 ?.globalBrier??null
           },
+          shadowErrorAwareConfidence:{
+            status:
+              snap?.shadowErrorAwareConfidence
+                ?.status||'NO_FORECAST',
+            probabilityPositivePct:
+              snap?.shadowErrorAwareConfidence
+                ?.probabilityPositivePct??null,
+            rawConfidencePct:
+              snap?.shadowErrorAwareConfidence
+                ?.rawConfidencePct??0,
+            adjustedConfidencePct:
+              snap?.shadowErrorAwareConfidence
+                ?.adjustedConfidencePct??0,
+            penaltyPct:
+              snap?.shadowErrorAwareConfidence
+                ?.penaltyPct??0,
+            forecastSource:
+              snap?.shadowErrorAwareConfidence
+                ?.forecastSource||'NONE',
+            matchedPatterns:
+              snap?.shadowErrorAwareConfidence
+                ?.matchedPatterns||[],
+            selectedPatterns:
+              snap?.shadowErrorAwareConfidence
+                ?.selectedPatterns||[]
+          },
           shadowModelArena:{
             status:
               snap?.shadowModelArena?.status||'COLD_START',
@@ -1331,7 +1379,7 @@ export function createTokenIntelligenceShadowV23({
     }
 
     return {
-      version:'MEMEFLOW_TOKEN_INTELLIGENCE_NETWORK_V23_17',
+      version:'MEMEFLOW_TOKEN_INTELLIGENCE_NETWORK_V23_18',
       shadowOnly:true,
       specialists:[
         'FLOW',
@@ -1365,7 +1413,8 @@ export function createTokenIntelligenceShadowV23({
       shadowPromotionReport:shadowPromotionReport.status(),
       tokenIntelligenceScorecard:tokenIntelligenceScorecard.status(),
       shadowOutcomeReview:shadowOutcomeReview.status(),
-      shadowErrorPatternLearner:shadowErrorPatternLearner.status()
+      shadowErrorPatternLearner:shadowErrorPatternLearner.status(),
+      shadowErrorAwareConfidence:shadowErrorAwareConfidence.status()
     };
   }
 
@@ -1464,6 +1513,10 @@ export function createTokenIntelligenceShadowV23({
       options=>shadowErrorPatternLearner.patternReport(options),
     flushErrorPatternLearner:
       ()=>shadowErrorPatternLearner.flush(),
+    errorAwareConfidenceStatus:
+      ()=>shadowErrorAwareConfidence.status(),
+    listErrorAwareConfidence:
+      options=>shadowErrorAwareConfidence.listRecent(options),
     status
   };
 }
