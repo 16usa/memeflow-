@@ -1612,6 +1612,13 @@ function tokenTemplate(row, index) {
 
       <div class="token-details">
 
+        <div class="mf-card-analysis-v13" data-mf-card-analysis>
+          <div class="mf-card-analysis-status" data-mf-card-analysis-status>
+            Open Details to run a fresh on-demand analysis.
+          </div>
+          <div data-mf-card-analysis-body></div>
+        </div>
+
         <div class="detail-block">
           <span>Primary signal</span>
           <p>
@@ -1731,12 +1738,74 @@ function render() {
               expanded
                 ? 'Close'
                 : 'Details';
+
+            if(expanded){
+              void __mfRunCardAnalysisV13(card);
+            }
           }
         );
       }
     );
 }
 
+
+// MEMEFLOW_CARD_ON_DEMAND_ANALYSIS_V13
+async function __mfRunCardAnalysisV13(card){
+  const mint=String(card?.dataset?.mint||'').trim();
+  if(!mint)return;
+  const status=card.querySelector('[data-mf-card-analysis-status]');
+  const body=card.querySelector('[data-mf-card-analysis-body]');
+  if(!status||!body)return;
+
+  const requestId=String(Number(card.dataset.mfAnalysisRequest||0)+1);
+  card.dataset.mfAnalysisRequest=requestId;
+  status.textContent='Analyzing fresh token data…';
+  body.innerHTML='';
+
+  try{
+    const response=await fetch('/api/ai/standalone-scan',{
+      method:'POST',
+      cache:'no-store',
+      credentials:'same-origin',
+      headers:{'content-type':'application/json'},
+      body:JSON.stringify({input:mint})
+    });
+    const payload=await response.json().catch(()=>null);
+    if(!response.ok)throw new Error(payload?.error||payload?.message||('HTTP '+response.status));
+    if(card.dataset.mfAnalysisRequest!==requestId)return;
+
+    const scan=payload?.scan||payload;
+    const market=scan?.market||{};
+    const onchain=scan?.onchain||{};
+    const decision=scan?.displayEvaluation||scan?.evaluation||{};
+    const holders=onchain?.holderCountDisplay||(finite(onchain?.holderCount)?fmt(onchain.holderCount,0):'—');
+    const yn=v=>v===true?'Yes':v===false?'No':'—';
+
+    status.textContent=scan?.decisionEligible===false
+      ? 'Fresh analysis complete · data incomplete'
+      : 'Fresh analysis complete';
+
+    body.innerHTML=`
+      <div class="mf-card-analysis-grid">
+        <div class="detail-block"><span>Holders</span><p>${escapeHtml(holders)}</p></div>
+        <div class="detail-block"><span>Top 10</span><p>${escapeHtml(finite(onchain?.top10Pct)?fmt(onchain.top10Pct,2)+'%':'—')}</p></div>
+        <div class="detail-block"><span>DEV</span><p>${escapeHtml(finite(onchain?.developerPct)?fmt(onchain.developerPct,2)+'%':'—')}</p></div>
+        <div class="detail-block"><span>Market cap</span><p>${escapeHtml(__mfScanCompactUsdV27(market?.marketCapUsd))}</p></div>
+        <div class="detail-block"><span>Liquidity</span><p>${escapeHtml(scan?.migrated===true&&Number(market?.liquidityUsd)===0?'—':__mfScanCompactUsdV27(market?.liquidityUsd))}</p></div>
+        <div class="detail-block"><span>Buy pressure</span><p>${escapeHtml(finite(market?.buyPressure)?fmt(market.buyPressure,2)+'×':'—')}</p></div>
+        <div class="detail-block"><span>Volume 5m</span><p>${escapeHtml(__mfScanCompactUsdV27(market?.volume5mUsd))}</p></div>
+        <div class="detail-block"><span>Tx 5m</span><p>${escapeHtml(finite(market?.transactions5m)?fmt(market.transactions5m,0):'—')}</p></div>
+        <div class="detail-block"><span>Mint authority</span><p>${escapeHtml(yn(onchain?.mintAuthorityPresent))}</p></div>
+        <div class="detail-block"><span>Freeze authority</span><p>${escapeHtml(yn(onchain?.freezeAuthorityPresent))}</p></div>
+        <div class="detail-block"><span>Analysis state</span><p>${escapeHtml(decision?.state||scan?.analysisStatus||'—')}</p></div>
+        <div class="detail-block"><span>Score / confidence</span><p>${escapeHtml(finite(decision?.score)?fmt(decision.score,0)+' / '+(finite(decision?.confidence)?fmt(decision.confidence,0)+'%':'—'):'—')}</p></div>
+      </div>`;
+  }catch(error){
+    if(card.dataset.mfAnalysisRequest!==requestId)return;
+    status.textContent='Analysis failed: '+String(error?.message||error);
+    body.innerHTML='';
+  }
+}
 
 // MEMEFLOW_KEYED_CARD_RECONCILE_V18_3
 // Background structure sync is keyed by mint. Existing cards are MOVED/PATCHED,
@@ -1759,6 +1828,10 @@ function __mfBindDetailsButtonV183(card){
         expanded
           ? 'Close'
           : 'Details';
+
+      if(expanded){
+        void __mfRunCardAnalysisV13(card);
+      }
     }
   );
 }
