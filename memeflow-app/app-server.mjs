@@ -20,6 +20,7 @@ import { ChartHistoryArchive } from './src/chart-history-archive.mjs'; // MEMEFL
 import {createOpportunityEngine} from './src/opportunity-engine.mjs'; // MEMEFLOW_OPPORTUNITY_ENGINE_V1
 import {createTokenIntelligenceShadowV23} from './src/token-intelligence-shadow-v23.mjs'; // MEMEFLOW_TOKEN_INTELLIGENCE_NETWORK_V23
 import {createV24ControlledPolicyBridgeV24_0} from './src/controlled-policy-bridge-v24_0.mjs'; // MEMEFLOW_V24_CONTROLLED_POLICY_BRIDGE_V24_0
+import {createV24ProbationTelemetryV24_1} from './src/v24-probation-telemetry-v24_1.mjs'; // MEMEFLOW_V24_PROBATION_TELEMETRY_V24_1
 import {createSolUsdOracle} from './src/sol-usd-oracle.mjs'; // MEMEFLOW_OPPORTUNITY_ENGINE_V1
 import {liveCardMarketSnapshot,openPositionLiveMarketCap} from './src/live-card-market.mjs'; // MEMEFLOW_LIVE_CARD_MARKET_TRUTH_V18 / MEMEFLOW_OPEN_POSITION_LIVE_MC_V20
 import {rankCandidateViews} from './src/feed-ranking.mjs'; // MEMEFLOW_FEED_RELEVANCE_RANKING_V1
@@ -57,6 +58,15 @@ function __mfApplyV24PolicyBridge(uid,token,decision){
     decision
   });
 }
+const v24ProbationTelemetry=createV24ProbationTelemetryV24_1({
+  dataDir,
+  bridgeStatusProvider:
+    ()=>v24ControlledPolicyBridge.status(),
+  bridgeRecentProvider:
+    options=>v24ControlledPolicyBridge.listRecent(options),
+  outcomeRecentProvider:
+    options=>tokenIntelligenceShadowV23.listOutcomeReviews(options)
+}); // V24.1 read-only impact telemetry; no runtime authority
 const solUsdOracle=createSolUsdOracle(); // one shared quote, never per-token RPC
 solUsdOracle.start();
 // MEMEFLOW_PERMANENT_TOKEN_REGISTRY_V1
@@ -7167,6 +7177,34 @@ async function handler(req,res){const url=new URL(req.url,'http://x');
      readiness:
        tokenIntelligenceShadowV23
          .auditV23ReadinessFreeze()
+   });
+ }
+
+/* MEMEFLOW_V24_PROBATION_TELEMETRY_MONITOR_V24_1
+ * Owner-only, read-only measured impact of V24.0 against completed 5m outcomes.
+ * No enable/apply/tune endpoint exists here.
+ */
+ if(
+   url.pathname==='/api/owner/intelligence/v24-probation' &&
+   req.method==='GET'
+ ){
+   if(!u)return json(res,401,{error:'AUTH_REQUIRED'});
+   if(u.isOwner!==true)return json(res,403,{error:'OWNER_REQUIRED'});
+
+   const limit=Math.max(
+     1,
+     Math.min(
+       5000,
+       Number(url.searchParams.get('limit')||500)
+     )
+   );
+
+   return json(res,200,{
+     ok:true,
+     owner:true,
+     readOnly:true,
+     telemetry:
+       v24ProbationTelemetry.report({limit})
    });
  }
 
