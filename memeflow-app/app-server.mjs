@@ -4440,6 +4440,8 @@ async function mf49PumpReference(mint){
    coin.createdAt
   );
 
+  const complete=coin.complete===true;
+
   return {
    mint,
    name:coin.name||null,
@@ -4458,7 +4460,12 @@ async function mf49PumpReference(mint){
    marketCapSol,
    marketCapUsd:mf49Num(coin.usd_market_cap??coin.marketCapUsd),
    priceSol:reservePriceSol??capPriceSol,
-   liquiditySol:realSolRaw!=null?realSolRaw/1e9:null,
+   liquiditySol:
+    !complete&&realSolRaw!=null&&realSolRaw>0
+     ? realSolRaw/1e9
+     : null,
+   complete,
+   migrated:complete,
    previewHolderCount:holderRef!=null&&holderRef>0?holderRef:null,
    twitterUrl:coin.twitter||null,
    telegramUrl:coin.telegram||null,
@@ -4568,6 +4575,12 @@ async function mf49StandaloneScan(raw,u){
   marketCapSol:
    mf49Num(stored?.marketCapSol) ??
    mf49Num(pumpReference?.marketCapSol),
+  complete:
+   stored?.complete===true||
+   pumpReference?.complete===true,
+  migrated:
+   stored?.migrated===true||
+   pumpReference?.migrated===true,
   priceSol:
    mf49Num(marketLedger?.priceSol) ??
    mf49Num(stored?.priceSol) ??
@@ -4931,12 +4944,46 @@ async function mf49StandaloneScan(raw,u){
    : evidenceCount>=2
      ? 'PARTIAL'
      : 'INSUFFICIENT_DATA';
+
+ // MEMEFLOW_COMPLETENESS_VERDICT_GATE_V12_1
+ // Evaluator output remains useful diagnostic evidence, but it is NOT a
+ // trading verdict until the core fact set is complete.
+ const decisionEligible=analysisStatus==='READY';
+
  const analysisMessage=
-  analysisStatus==='READY'
+  decisionEligible
    ? 'MEMEFLOW has enough current evidence for a trading-state evaluation.'
    : analysisStatus==='PARTIAL'
-     ? 'Partial token data is available; no trading state is assigned until core market and holder evidence is complete.'
-     : 'Insufficient token data; MEMEFLOW will not label this token WAITING or score it as a trading candidate.';
+     ? 'Partial token data is available. Known facts are shown, but no trading verdict or AI score is assigned until core market, activity and holder evidence is complete.'
+     : 'Insufficient token data. MEMEFLOW will not assign WAITING, WATCH, BUY READY, BLOCKED or an AI score from incomplete evidence.';
+
+ const knownPolicyFailures=
+  Array.isArray(evaluation?.settingsEvaluation?.failedGates)
+   ? evaluation.settingsEvaluation.failedGates
+      .filter(g=>g?.status==='FAIL')
+      .map(g=>({
+       key:g.key||null,
+       name:g.name||null,
+       reason:g.reason||null,
+       value:g.value??null,
+       threshold:g.threshold??null,
+       retryable:g.retryable===true
+      }))
+   : [];
+
+ const displayEvaluation=
+  decisionEligible
+   ? evaluation
+   : {
+      state:'DATA INCOMPLETE',
+      score:null,
+      confidence:null,
+      primaryReason:analysisMessage,
+      reasons:[],
+      diagnosticState:evaluation?.state||null,
+      diagnosticScore:evaluation?.score??null,
+      diagnosticConfidence:evaluation?.confidence??null
+     };
 
  if(holderCount==null&&observedHolderCount!=null){
   warnings.push(`Exact holder total is unavailable; ${Math.round(observedHolderCount)}+ is the live MEMEFLOW lower bound.`);
@@ -4983,6 +5030,10 @@ async function mf49StandaloneScan(raw,u){
   },
   analysisStatus,
   analysisMessage,
+  decisionEligible,
+  displayEvaluation,
+  knownPolicyFailures,
+  migrated:known.migrated===true,
   evidenceFlags,
   evidenceCount,
   settingsApplied:{

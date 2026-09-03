@@ -3198,6 +3198,15 @@ function __mfScanLiveEvidenceReadyV11(row){
 }
 
 function __mfScanDecisionV27(scan,liveRow){
+  if(scan?.decisionEligible===false){
+    return scan?.displayEvaluation||{
+      state:'DATA INCOMPLETE',
+      score:null,
+      confidence:null,
+      reasons:[]
+    };
+  }
+
   if(liveRow&&__mfScanLiveEvidenceReadyV11(liveRow)){
     return {
       state:liveRow?.decision?.state||liveRow?.state||'WAITING',
@@ -3207,7 +3216,8 @@ function __mfScanDecisionV27(scan,liveRow){
       reasons:liveRow?.decision?.reasons??liveRow?.reasons??[]
     };
   }
-  return scan?.evaluation||{};
+
+  return scan?.displayEvaluation||scan?.evaluation||{};
 }
 
 async function __mfScanFetchV27(path,options={}){
@@ -3286,9 +3296,12 @@ function __mfScanRenderV27({scan,liveRow,buyContext}){
   const market=scan?.market||{};
   const chain=scan?.onchain||{};
   const manualDataIncomplete=
-    scan?.analysisStatus &&
-    scan.analysisStatus!=='READY' &&
-    !__mfScanLiveEvidenceReadyV11(liveRow);
+    scan?.decisionEligible===false ||
+    (
+      scan?.analysisStatus &&
+      scan.analysisStatus!=='READY' &&
+      !__mfScanLiveEvidenceReadyV11(liveRow)
+    );
   const stateText=
     manualDataIncomplete
       ? 'DATA INCOMPLETE'
@@ -3384,7 +3397,11 @@ function __mfScanRenderV27({scan,liveRow,buyContext}){
 
       <div class="mf-scan-details" data-mf-scan-details-panel hidden>
         <div class="mf-scan-detail-grid">
-          <div class="mf-scan-detail"><span>Liquidity</span><strong>${escapeHtml(__mfScanCompactUsdV27(market?.liquidityUsd))}</strong></div>
+          <div class="mf-scan-detail"><span>Liquidity</span><strong>${escapeHtml(
+            scan?.migrated===true&&Number(market?.liquidityUsd)===0
+              ? '—'
+              : __mfScanCompactUsdV27(market?.liquidityUsd)
+          )}</strong></div>
           <div class="mf-scan-detail"><span>Vol 5m</span><strong>${escapeHtml(__mfScanCompactUsdV27(market?.volume5mUsd))}</strong></div>
           <div class="mf-scan-detail"><span>5m buys / sells</span><strong>${escapeHtml(`${__mfScanNumberV27(market?.buys5m,0)} / ${__mfScanNumberV27(market?.sells5m,0)}`)}</strong></div>
           <div class="mf-scan-detail"><span>Mint authority</span><strong>${escapeHtml(chain?.mintAuthorityStatus??(chain?.mintAuthority?'ACTIVE':'UNKNOWN'))}</strong></div>
@@ -3392,9 +3409,11 @@ function __mfScanRenderV27({scan,liveRow,buyContext}){
           <div class="mf-scan-detail"><span>Sources</span><strong>${escapeHtml((scan?.sources||[]).join(' · ')||'MEMEFLOW live')}</strong></div>
         </div>
 
-        ${reasons.length>1
-          ? `<ul class="mf-scan-notes">${reasons.slice(1,8).map(r=>`<li>${escapeHtml(r)}</li>`).join('')}</ul>`
-          : ''}
+        ${manualDataIncomplete&&Array.isArray(scan?.knownPolicyFailures)&&scan.knownPolicyFailures.length
+          ? `<div class="mf-scan-note-label">Known settings checks</div><ul class="mf-scan-notes">${scan.knownPolicyFailures.slice(0,6).map(g=>`<li>${escapeHtml(g?.reason||g?.name||'Known settings failure')}</li>`).join('')}</ul>`
+          : reasons.length>1
+            ? `<ul class="mf-scan-notes">${reasons.slice(1,8).map(r=>`<li>${escapeHtml(r)}</li>`).join('')}</ul>`
+            : ''}
         ${warnings.length
           ? `<ul class="mf-scan-notes">${warnings.slice(0,8).map(w=>`<li>${escapeHtml(w)}</li>`).join('')}</ul>`
           : ''}
