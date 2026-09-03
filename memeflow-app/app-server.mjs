@@ -4329,70 +4329,15 @@ async function callMemeflowOpenAI(prompt,context,mode='ask'){
 
 /* MEMEFLOW_AI_STANDALONE_V49_BEGIN */
 const MF48_KEY_RE=/[1-9A-HJ-NP-Za-km-z]{32,44}/g;
-const MF48_NATIVE_SYMBOLS=new Set(['SOL','WSOL','USDC','USDT']);
 function mf49Num(v){const n=Number(v);return Number.isFinite(n)?n:null}
 function mf49Err(message,status=400,code='STANDALONE_SCAN_ERROR'){const e=Error(message);e.status=status;e.code=code;return e}
-async function mf49FetchJson(url,timeoutMs=8000){
- const c=new AbortController(),t=setTimeout(()=>c.abort(),timeoutMs);
- try{
-  const r=await fetch(url,{headers:{accept:'application/json','user-agent':'MEMEFLOW/1.0'},signal:c.signal});
-  const j=await r.json().catch(()=>null);
-  if(!r.ok)throw mf49Err(`Market data HTTP ${r.status}`,502,'MARKET_DATA_ERROR');
-  return j
- }catch(e){
-  if(e?.name==='AbortError')throw mf49Err('Market data request timed out.',504,'MARKET_DATA_TIMEOUT');
-  throw e
- }finally{clearTimeout(t)}
-}
-function mf49PairToken(pair,mint=null){
- const base=pair?.baseToken||{},quote=pair?.quoteToken||{};
- if(mint&&base.address===mint)return base;
- if(mint&&quote.address===mint)return quote;
- const bSym=String(base.symbol||'').toUpperCase(),qSym=String(quote.symbol||'').toUpperCase();
- if(MF48_NATIVE_SYMBOLS.has(bSym)&&!MF48_NATIVE_SYMBOLS.has(qSym))return quote;
- return base
-}
 async function mf49ResolveInput(raw){
  const input=String(raw||'').trim();
- if(!input)throw mf49Err('Paste a Solana mint, Pump.fun link or DexScreener link.',400,'TOKEN_INPUT_REQUIRED');
-
- try{
-  const u=new URL(input);
-  if(/(^|\.)dexscreener\.com$/i.test(u.hostname)){
-   const parts=u.pathname.split('/').filter(Boolean);
-   const pairId=(parts.at(-1)||'').match(MF48_KEY_RE)?.[0]||'';
-   if(pairId&&validPubkey(pairId)){
-    const d=await mf49FetchJson(`https://api.dexscreener.com/latest/dex/pairs/solana/${encodeURIComponent(pairId)}`);
-    const pair=(d?.pairs||[]).find(x=>x?.chainId==='solana')||d?.pairs?.[0]||null;
-    if(pair){
-     const side=mf49PairToken(pair);
-     if(side?.address&&validPubkey(side.address))return {mint:side.address,pair,inputKind:'dexscreener-pair'}
-    }
-   }
-  }
- }catch(e){
-  if(e?.code&&e.code!=='ERR_INVALID_URL')throw e
- }
-
+ if(!input)throw mf49Err('Paste a Solana mint or Pump.fun link.',400,'TOKEN_INPUT_REQUIRED');
  const matches=input.match(MF48_KEY_RE)||[];
  const mint=matches.find(x=>validPubkey(x));
  if(!mint)throw mf49Err('A valid Solana mint address was not found in that value.',400,'INVALID_SOLANA_MINT');
- return {mint,pair:null,inputKind:/pump\.fun/i.test(input)?'pump-fun':'mint'}
-}
-async function mf49DexPairForMint(mint){
- const rows=await mf49FetchJson(`https://api.dexscreener.com/token-pairs/v1/solana/${encodeURIComponent(mint)}`);
- const pairs=Array.isArray(rows)?rows:[];
- const exact=pairs.filter(p=>p?.baseToken?.address===mint||p?.quoteToken?.address===mint);
- const pool=exact.length?exact:pairs;
- return pool.sort((a,b)=>(mf49Num(b?.liquidity?.usd)||0)-(mf49Num(a?.liquidity?.usd)||0))[0]||null
-}
-function mf49TxnWindow(pair){
- const tx=pair?.txns||{};
- for(const key of ['m5','h1','h6','h24']){
-  const x=tx[key];
-  if(x&&(mf49Num(x.buys)!=null||mf49Num(x.sells)!=null))return {key,buys:mf49Num(x.buys)||0,sells:mf49Num(x.sells)||0}
- }
- return {key:null,buys:null,sells:null}
+ return {mint,inputKind:/pump\.fun/i.test(input)?'pump-fun':'mint'}
 }
 async function mf49DeveloperPct(creator,mint,total){
  if(!creator||!validPubkey(creator)||!total)return null;
@@ -4450,20 +4395,14 @@ async function mf49StandaloneScan(raw,u){
  const holderCount=mf49Num(canonicalToken.holderCount);
  const holderCountDisplay=holderCount!=null?String(Math.round(holderCount)):null;
 
- let pair=resolved.pair||null;
- if(!pair){
-  try{pair=await mf49DexPairForMint(mint);if(pair)sources.add('DexScreener')}
-  catch(e){warnings.push(`DEX: ${e.message}`)}
- }else sources.add('DexScreener');
-
- const side=pair?mf49PairToken(pair,mint):null;
- const name=side?.name||known.name||null,symbol=side?.symbol||known.symbol||null;
- const priceUsd=mf49Num(pair?.priceUsd)??mf49Num(canonicalToken.priceUsd);
- const liquidityUsd=mf49Num(pair?.liquidity?.usd)??mf49Num(canonicalToken.liquidityUsd);
- const marketCapUsd=mf49Num(pair?.marketCap)??mf49Num(pair?.fdv)??mf49Num(canonicalToken.marketCapUsd)??(priceUsd!=null&&total!=null?priceUsd*total:null);
- const volume5mUsd=mf49Num(pair?.volume?.m5);
- const tx5=pair?.txns?.m5||null;
- const buys5m=mf49Num(tx5?.buys),sells5m=mf49Num(tx5?.sells);
+ const name=canonicalToken.name||known.name||known.symbol||null;
+ const symbol=canonicalToken.symbol||known.symbol||null;
+ const priceUsd=mf49Num(canonicalToken.priceUsd)??mf49Num(known.priceUsd);
+ const liquidityUsd=mf49Num(canonicalToken.liquidityUsd)??mf49Num(known.liquidityUsd);
+ const marketCapUsd=mf49Num(canonicalToken.marketCapUsd)??mf49Num(known.marketCapUsd);
+ const volume5mUsd=mf49Num(known?.market?.volume5mUsd)??mf49Num(known.volume5mUsd);
+ const buys5m=mf49Num(known?.market?.buys5m)??mf49Num(known.buys5m);
+ const sells5m=mf49Num(known?.market?.sells5m)??mf49Num(known.sells5m);
 
  let priceSol=mf49Num(canonicalToken.priceSol)??mf49Num(known.priceSol),liquiditySol=mf49Num(canonicalToken.liquiditySol)??mf49Num(known.liquiditySol);
  if(known.curve&&validPubkey(known.curve)){
@@ -4483,11 +4422,6 @@ async function mf49StandaloneScan(raw,u){
  if(tw&&(tw.buy||tw.sell)){
   buyPressure=tw.sell?tw.buy/tw.sell:(tw.buy||null);
   sources.add('Live flow')
- }else if(buyPressure==null&&pair){
-  const w=mf49TxnWindow(pair);
-  if(w.buys!=null||w.sells!=null){
-   buyPressure=w.sells?w.buys/w.sells:(w.buys||null)
-  }
  }
 
  const creator=canonicalToken.creator||known.creator||null;
@@ -4507,10 +4441,10 @@ async function mf49StandaloneScan(raw,u){
   buyPressure,
   liquidityUsd,
   marketCapUsd,
-  volume24hUsd:mf49Num(pair?.volume?.h24),
-  buyTransactions:mf49Num(pair?.txns?.h24?.buys)??buys5m,
-  sellTransactions:mf49Num(pair?.txns?.h24?.sells)??sells5m,
-  totalTransactions:(()=>{const b=mf49Num(pair?.txns?.h24?.buys)??buys5m,s=mf49Num(pair?.txns?.h24?.sells)??sells5m;return b!=null&&s!=null?b+s:null})(),
+  volume24hUsd:mf49Num(known?.market?.volume24hUsd)??mf49Num(known.volume24hUsd),
+  buyTransactions:mf49Num(known?.market?.buyTransactions)??mf49Num(known.buyTransactions)??buys5m,
+  sellTransactions:mf49Num(known?.market?.sellTransactions)??mf49Num(known.sellTransactions)??sells5m,
+  totalTransactions:(()=>{const b=mf49Num(known?.market?.buyTransactions)??mf49Num(known.buyTransactions)??buys5m,s=mf49Num(known?.market?.sellTransactions)??mf49Num(known.sellTransactions)??sells5m;return b!=null&&s!=null?b+s:null})(),
   // evaluate() requires a positive SOL price. Do not fake 0 from a USD-only quote;
   // USD-only data remains WAITING for the verified-price execution gate.
   priceSol,
@@ -4525,7 +4459,7 @@ async function mf49StandaloneScan(raw,u){
 
  if(holderCount==null)warnings.push('Exact holder count is unavailable because the canonical holder scan did not complete.');
  if(developerPct==null)warnings.push('Developer holding is unavailable unless the creator is known.');
- if(!pair&&priceSol==null)warnings.push('No DEX or bonding-curve price was available.');
+ if(priceSol==null&&priceUsd==null)warnings.push('No MEMEFLOW or bonding-curve price was available.');
 
  return {
   mint,name,symbol,inputKind:resolved.inputKind,
@@ -4536,10 +4470,7 @@ async function mf49StandaloneScan(raw,u){
    marketCapSol:priceSol!=null&&total!=null?priceSol*total:null,
    liquidityUsd,liquiditySol,
    buyPressure,volume5mUsd,buys5m,sells5m,
-   priceChange5mPct:mf49Num(pair?.priceChange?.m5),
-   pairAddress:pair?.pairAddress||null,
-   dexId:pair?.dexId||null,
-   pairUrl:pair?.url||null
+   priceChange5mPct:mf49Num(known?.market?.priceChange5mPct)??mf49Num(known.priceChange5mPct)
   },
   onchain:{
    decimals,totalSupply:total,holderCount,holderCountDisplay,top10Pct:top10,

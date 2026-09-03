@@ -1,5 +1,5 @@
 import { enrichHolders } from './enrich.mjs';
-import { decodePumpCreate } from './solana.mjs';
+import { decodeCurve, decodePumpCreate } from './solana.mjs';
 
 const finite = value => {
   if (value === null || value === undefined || value === '') return null;
@@ -201,55 +201,6 @@ async function resolvePumpCreator(mint, rpc) {
   };
 }
 
-async function dexToken(mint) {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 7000);
-
-  try {
-    const r = await fetch(
-      `https://api.dexscreener.com/latest/dex/tokens/${encodeURIComponent(mint)}`,
-      {
-        headers: { accept: 'application/json' },
-        signal: controller.signal
-      }
-    );
-
-    if (!r.ok) return null;
-
-    const data = await r.json();
-
-    return (Array.isArray(data?.pairs) ? data.pairs : [])
-      .filter(p => String(p?.chainId || '').toLowerCase() === 'solana')
-      .sort(
-        (a, b) =>
-          Number(b?.liquidity?.usd || 0) -
-          Number(a?.liquidity?.usd || 0)
-      )[0] || null;
-
-  } catch {
-    return null;
-  } finally {
-    clearTimeout(timer);
-  }
-}
-
-function dexBuyPressure(pair) {
-  if (!pair) return null;
-
-  for (const window of ['m5', 'h1', 'h6', 'h24']) {
-    const buys = finite(pair?.txns?.[window]?.buys);
-    const sells = finite(pair?.txns?.[window]?.sells);
-
-    if (buys === null || sells === null) continue;
-
-    if (sells > 0) return buys / sells;
-    if (buys > 0) return buys;
-    return 0;
-  }
-
-  return null;
-}
-
 export async function manualAnalyze({
   mint,
   rpc,
@@ -273,7 +224,6 @@ export async function manualAnalyze({
       'Solana RPC supply lookup unavailable';
   }
 
-  const pair = await dexToken(mint);
 
   /*
    * Reuse creator if MEMEFLOW already knows it.
@@ -331,38 +281,37 @@ export async function manualAnalyze({
     existing.totalSupply
   );
 
-  const liquidityUsd = firstFinite(
-    pair?.liquidity?.usd,
-    existing.liquidityUsd
-  );
-
-  const marketCapUsd = firstFinite(
-    pair?.marketCap,
-    pair?.fdv,
-    existing.marketCapUsd
-  );
-
-  const priceUsd = firstFinite(
-    pair?.priceUsd,
-    existing.priceUsd
-  );
+  const liquidityUsd = firstFinite(existing.liquidityUsd);
+  const marketCapUsd = firstFinite(existing.marketCapUsd);
+  const priceUsd = firstFinite(existing.priceUsd);
 
   let priceSol = firstFinite(existing.priceSol);
+  let liquiditySol = firstFinite(existing.liquiditySol, existing.liquidity);
 
-  const quoteSymbol =
-    String(pair?.quoteToken?.symbol || '').toUpperCase();
+  const curveAddress =
+    creatorResolution.curve ||
+    existing.curve ||
+    existing.bondingCurve ||
+    null;
 
-  if (
-    priceSol === null &&
-    (quoteSymbol === 'SOL' || quoteSymbol === 'WSOL')
-  ) {
-    priceSol = firstFinite(pair?.priceNative);
+  if (curveAddress) {
+    try {
+      const curveInfo = await rpc.call(
+        'getAccountInfo',
+        [curveAddress, { encoding: 'base64', commitment: 'confirmed' }]
+      );
+
+      if (curveInfo?.value?.data?.[0]) {
+        const decodedCurve = decodeCurve(curveInfo.value.data[0], decimals);
+        priceSol = firstFinite(decodedCurve?.priceSol, priceSol);
+        liquiditySol = firstFinite(decodedCurve?.liquiditySol, liquiditySol);
+      }
+    } catch {
+      // Optional curve evidence; holder/supply analysis continues.
+    }
   }
 
-  const buyPressure = firstFinite(
-    existing.buyPressure,
-    dexBuyPressure(pair)
-  );
+  const buyPressure = firstFinite(existing.buyPressure);
 
   /*
    * IMPORTANT:
@@ -399,24 +348,23 @@ export async function manualAnalyze({
       null,
 
     name:
-      pair?.baseToken?.name ||
       existing.name ||
       existing.symbol ||
       mint.slice(0, 8),
 
     symbol:
-      pair?.baseToken?.symbol ||
       existing.symbol ||
       'TOKEN',
 
     source:
-      pair
-        ? 'Solana RPC + MEMEFLOW holder engine + DexScreener'
+      curveAddress
+        ? 'Solana RPC + MEMEFLOW holder engine + Pump curve'
         : 'Solana RPC + MEMEFLOW holder engine',
 
     priceSol,
     priceUsd,
     liquidityUsd,
+    liquiditySol,
     marketCapUsd,
 
     buyPressure,
@@ -577,7 +525,6 @@ export async function manualAnalyze({
       rpcAvailable: !rpcError,
       rpcError,
 
-      dexAvailable: Boolean(pair),
 
       holderScanAvailable:
         holderFresh === true,

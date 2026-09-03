@@ -1323,7 +1323,6 @@ function safeExternalUrl(value) {
 
 function tokenExternalLinks(row) {
   const mint = String(row?.mint || '').trim();
-  const dex = safeExternalUrl(row?.dexUrl ?? row?.market?.dexUrl);
   let pump = safeExternalUrl(row?.pumpUrl);
 
   if (!pump && mint) {
@@ -1332,24 +1331,13 @@ function tokenExternalLinks(row) {
     const isPump = launch === 'pump' || source.includes('pump create') || mint.toLowerCase().endsWith('pump');
     if (isPump) pump = `https://pump.fun/coin/${encodeURIComponent(mint)}`;
   }
-  return { dex, pump };
+  return { pump };
 }
 
 function tokenSourceLinksTemplate(row) {
   const links = tokenExternalLinks(row);
   const out = [];
 
-  if (links.dex) {
-    out.push(`
-      <a class="token-source-link dex" href="${escapeHtml(links.dex)}" target="_blank"
-         rel="noopener noreferrer" aria-label="Open on DexScreener" title="DexScreener">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <circle cx="10" cy="10" r="5.1"></circle>
-          <path d="M13.8 13.8L19 19"></path>
-          <path d="M7.2 11.2L9.2 9.1L10.8 10.2L13 7.5"></path>
-        </svg>
-      </a>`);
-  }
 
   if (links.pump) {
     out.push(`
