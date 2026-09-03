@@ -39,6 +39,9 @@ import {
 import {
   createShadowPromotionReportV23_14
 } from './shadow-promotion-report-v23_14.mjs';
+import {
+  createTokenIntelligenceScorecardV23_15
+} from './token-intelligence-scorecard-v23_15.mjs';
 
 // MEMEFLOW_TOKEN_INTELLIGENCE_NETWORK_V23
 //
@@ -808,6 +811,12 @@ export function createTokenIntelligenceShadowV23({
       evidenceSynthesis:shadowEvidenceSynthesis
     });
 
+  const tokenIntelligenceScorecard=
+    createTokenIntelligenceScorecardV23_15({
+      inspectToken:mint=>inspect(mint),
+      listTokenCells:options=>listCells(options)
+    });
+
   const metrics={
     observations:0,
     cellsCreated:0,
@@ -1294,7 +1303,7 @@ export function createTokenIntelligenceShadowV23({
     }
 
     return {
-      version:'MEMEFLOW_TOKEN_INTELLIGENCE_NETWORK_V23_14',
+      version:'MEMEFLOW_TOKEN_INTELLIGENCE_NETWORK_V23_15',
       shadowOnly:true,
       specialists:[
         'FLOW',
@@ -1325,7 +1334,8 @@ export function createTokenIntelligenceShadowV23({
       shadowOutcomeCalibration:shadowOutcomeCalibration.status(),
       shadowChampionBenchmark:shadowChampionBenchmark.status(),
       shadowPromotionGate:shadowPromotionGate.status(),
-      shadowPromotionReport:shadowPromotionReport.status()
+      shadowPromotionReport:shadowPromotionReport.status(),
+      tokenIntelligenceScorecard:tokenIntelligenceScorecard.status()
     };
   }
 
@@ -1404,6 +1414,12 @@ export function createTokenIntelligenceShadowV23({
       ()=>shadowPromotionReport.status(),
     promotionReport:
       ()=>shadowPromotionReport.report(),
+    tokenScorecardStatus:
+      ()=>tokenIntelligenceScorecard.status(),
+    listTokenScorecards:
+      options=>tokenIntelligenceScorecard.list(options),
+    inspectTokenScorecard:
+      mint=>tokenIntelligenceScorecard.inspect(mint),
     status
   };
 }

@@ -530,6 +530,264 @@ textarea{
 }
 
 /* ==========================================================
+   MEMEFLOW_TOKEN_INTELLIGENCE_SCORECARD_V23_15
+   ========================================================== */
+
+.oi-scorecard-search{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  gap:8px;
+  margin-bottom:12px;
+}
+
+.oi-scorecard-search input{
+  min-width:0;
+  min-height:40px;
+  padding:9px 11px;
+  border:1px solid var(--line2);
+  border-radius:10px;
+  outline:none;
+  background:#090f14;
+  color:var(--text);
+}
+
+.oi-scorecard-search input:focus{
+  border-color:rgba(87,220,255,.55);
+}
+
+.oi-scorecard-list{
+  display:grid;
+  grid-template-columns:
+    repeat(2,minmax(0,1fr));
+  gap:8px;
+  margin-top:9px;
+}
+
+.oi-scorecard-card{
+  min-width:0;
+  padding:11px;
+  border:1px solid rgba(38,56,69,.72);
+  border-radius:12px;
+  background:rgba(255,255,255,.012);
+  color:var(--text);
+  text-align:left;
+  cursor:pointer;
+}
+
+.oi-scorecard-card:hover{
+  border-color:rgba(87,220,255,.40);
+}
+
+.oi-scorecard-card.positive{
+  border-color:rgba(81,231,168,.24);
+}
+
+.oi-scorecard-card.negative,
+.oi-scorecard-card.warn{
+  border-color:rgba(255,104,120,.20);
+}
+
+.oi-scorecard-card-head,
+.oi-scorecard-card-foot{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+}
+
+.oi-scorecard-card-head strong{
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  font-size:var(--mf-type-ui);
+}
+
+.oi-scorecard-card-head span,
+.oi-scorecard-card-foot{
+  color:var(--muted);
+  font-size:var(--mf-type-micro);
+}
+
+.oi-scorecard-card-main{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:7px;
+  margin:10px 0;
+}
+
+.oi-scorecard-card-main div{
+  padding:8px;
+  border:1px solid rgba(38,56,69,.55);
+  border-radius:9px;
+}
+
+.oi-scorecard-card-main small{
+  display:block;
+  color:var(--muted);
+  font-size:var(--mf-type-micro);
+}
+
+.oi-scorecard-card-main b{
+  display:block;
+  margin-top:4px;
+  font-size:15px;
+}
+
+.oi-scorecard-detail{
+  margin-bottom:12px;
+  padding:12px;
+  border:1px solid rgba(87,220,255,.18);
+  border-radius:13px;
+  background:rgba(87,220,255,.025);
+}
+
+.oi-scorecard-detail-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+}
+
+.oi-scorecard-detail-head h3{
+  margin:4px 0 0;
+  max-width:580px;
+  overflow-wrap:anywhere;
+  color:var(--text);
+  font-size:14px;
+  text-transform:none;
+  letter-spacing:0;
+}
+
+.oi-scorecard-direction{
+  padding:6px 9px;
+  border:1px solid var(--line2);
+  border-radius:999px;
+  color:var(--muted);
+  font-size:var(--mf-type-meta);
+  font-weight:900;
+}
+
+.oi-scorecard-direction.positive{
+  color:var(--green);
+  border-color:rgba(81,231,168,.25);
+}
+
+.oi-scorecard-direction.negative,
+.oi-scorecard-direction.warn{
+  color:#ff9daa;
+  border-color:rgba(255,104,120,.25);
+}
+
+.oi-scorecard-detail-metrics{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:7px;
+  margin-top:10px;
+}
+
+.oi-scorecard-detail-metrics>div{
+  padding:9px;
+  border:1px solid rgba(38,56,69,.62);
+  border-radius:10px;
+  background:rgba(0,0,0,.08);
+}
+
+.oi-scorecard-detail-metrics span,
+.oi-scorecard-detail-metrics small{
+  display:block;
+  color:var(--muted);
+  font-size:var(--mf-type-micro);
+}
+
+.oi-scorecard-detail-metrics strong{
+  display:block;
+  margin:4px 0;
+  font-size:17px;
+}
+
+.oi-scorecard-factor-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:7px;
+  margin-top:10px;
+}
+
+.oi-scorecard-factor{
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  padding:9px 10px;
+  border:1px solid rgba(38,56,69,.58);
+  border-radius:10px;
+  background:rgba(255,255,255,.01);
+}
+
+.oi-scorecard-factor.caution{
+  border-color:rgba(255,104,120,.20);
+}
+
+.oi-scorecard-factor strong,
+.oi-scorecard-factor b{
+  display:block;
+  font-size:var(--mf-type-meta);
+}
+
+.oi-scorecard-factor small{
+  display:block;
+  margin-top:3px;
+  color:var(--muted);
+  font-size:var(--mf-type-micro);
+}
+
+.oi-scorecard-factor>div:last-child{
+  text-align:right;
+}
+
+.oi-scorecard-blockers{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+  margin-top:10px;
+}
+
+.oi-scorecard-blockers span{
+  padding:5px 7px;
+  border:1px solid rgba(255,104,120,.20);
+  border-radius:999px;
+  color:#ff9daa;
+  font-size:var(--mf-type-micro);
+  font-weight:800;
+}
+
+.oi-scorecard-blockers span.clear{
+  border-color:rgba(81,231,168,.20);
+  color:var(--green);
+}
+
+@media(max-width:900px){
+  .oi-scorecard-detail-metrics{
+    grid-template-columns:repeat(2,1fr);
+  }
+}
+
+@media(max-width:650px){
+  .oi-scorecard-search,
+  .oi-scorecard-list,
+  .oi-scorecard-factor-grid{
+    grid-template-columns:1fr;
+  }
+
+  .oi-scorecard-search .oi-btn{
+    width:100%;
+  }
+
+  .oi-scorecard-card-main{
+    grid-template-columns:repeat(3,1fr);
+  }
+}
+
+/* ==========================================================
    MEMEFLOW_SHADOW_PROMOTION_REPORT_V23_14
    ========================================================== */
 

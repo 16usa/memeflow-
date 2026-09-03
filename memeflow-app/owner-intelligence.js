@@ -305,6 +305,341 @@ function renderPlatform(platform={}){
         `;
 }
 
+/* MEMEFLOW_TOKEN_INTELLIGENCE_SCORECARD_V23_15_UI_JS */
+function scorecardTone(card={}){
+  const blockers=
+    Array.isArray(card?.blockers)
+      ? card.blockers
+      : [];
+
+  if(blockers.length){
+    return 'warn';
+  }
+
+  const p=Number(card?.probabilityPositivePct);
+  const c=Number(card?.confidencePct);
+
+  if(
+    Number.isFinite(p) &&
+    Number.isFinite(c) &&
+    p>=62 &&
+    c>=50
+  ){
+    return 'positive';
+  }
+
+  if(
+    Number.isFinite(p) &&
+    p<=38
+  ){
+    return 'negative';
+  }
+
+  return 'neutral';
+}
+
+function scorecardCardHtml(card={}){
+  const blockers=
+    Array.isArray(card?.blockers)
+      ? card.blockers
+      : [];
+
+  const probability=
+    Number(card?.probabilityPositivePct);
+
+  const confidence=
+    Number(card?.confidencePct);
+
+  return `
+    <button
+      type="button"
+      class="oi-scorecard-card ${scorecardTone(card)}"
+      data-scorecard-mint="${esc(card?.mint||'')}"
+    >
+      <div class="oi-scorecard-card-head">
+        <strong>${esc(card?.mint||'UNKNOWN')}</strong>
+        <span>${esc(String(card?.stage||'—'))}</span>
+      </div>
+
+      <div class="oi-scorecard-card-main">
+        <div>
+          <small>V23 probability</small>
+          <b>
+            ${
+              Number.isFinite(probability)
+                ? `${num(probability,1)}%`
+                : '—'
+            }
+          </b>
+        </div>
+
+        <div>
+          <small>confidence</small>
+          <b>
+            ${
+              Number.isFinite(confidence)
+                ? `${num(confidence,1)}%`
+                : '—'
+            }
+          </b>
+        </div>
+
+        <div>
+          <small>evidence</small>
+          <b>${num(card?.evidenceReadinessPct,1)}%</b>
+        </div>
+      </div>
+
+      <div class="oi-scorecard-card-foot">
+        <span>
+          ${esc(String(card?.direction||'UNKNOWN'))}
+          · ${esc(String(card?.trajectory?.state||'COLD'))}
+        </span>
+        <span>
+          ${
+            blockers.length
+              ? `${blockers.length} blocker${blockers.length===1?'':'s'}`
+              : 'clear'
+          }
+        </span>
+      </div>
+    </button>
+  `;
+}
+
+function renderTokenScorecardDetail(card={}){
+  const node=$('tokenScorecardDetail');
+  if(!node)return;
+
+  const factors=
+    Array.isArray(card?.factorRows)
+      ? card.factorRows
+      : [];
+
+  const blockers=
+    Array.isArray(card?.blockers)
+      ? card.blockers
+      : [];
+
+  node.hidden=false;
+
+  node.innerHTML=`
+    <div class="oi-scorecard-detail-head">
+      <div>
+        <span class="oi-eyebrow">TOKEN INTELLIGENCE</span>
+        <h3>${esc(card?.mint||'UNKNOWN')}</h3>
+      </div>
+
+      <span class="oi-scorecard-direction ${scorecardTone(card)}">
+        ${esc(String(card?.direction||'UNKNOWN'))}
+      </span>
+    </div>
+
+    <div class="oi-scorecard-detail-metrics">
+      <div>
+        <span>V23 probability</span>
+        <strong>
+          ${
+            Number.isFinite(Number(card?.probabilityPositivePct))
+              ? `${num(card.probabilityPositivePct,2)}%`
+              : '—'
+          }
+        </strong>
+        <small>${esc(card?.probabilitySource||'NONE')}</small>
+      </div>
+
+      <div>
+        <span>Confidence</span>
+        <strong>${pct(card?.confidencePct)}</strong>
+        <small>${esc(card?.confidenceBand||'UNKNOWN')}</small>
+      </div>
+
+      <div>
+        <span>Evidence ready</span>
+        <strong>${pct(card?.evidenceReadinessPct)}</strong>
+        <small>${esc(card?.regime||'UNKNOWN')} regime</small>
+      </div>
+
+      <div>
+        <span>Canonical Score</span>
+        <strong>${num(card?.canonicalScore,2)}</strong>
+        <small>V22 source signal · unchanged</small>
+      </div>
+    </div>
+
+    <div class="oi-scorecard-factor-grid">
+      ${
+        factors.map(row=>`
+          <div
+            class="oi-scorecard-factor ${row?.caution===true?'caution':''}"
+          >
+            <div>
+              <strong>${esc(row?.label||row?.key||'FACTOR')}</strong>
+              <small>${esc(String(row?.status||'UNKNOWN').replaceAll('_',' '))}</small>
+            </div>
+            <div>
+              <b>
+                ${
+                  Number.isFinite(Number(row?.value))
+                    ? num(row.value,2)
+                    : '—'
+                }
+              </b>
+              <small>${esc(row?.detail||'')}</small>
+            </div>
+          </div>
+        `).join('')
+      }
+    </div>
+
+    <div class="oi-scorecard-blockers">
+      ${
+        blockers.length
+          ? blockers.map(x=>`
+              <span>${esc(String(x).replaceAll('_',' '))}</span>
+            `).join('')
+          : '<span class="clear">NO ACTIVE SHADOW BLOCKERS</span>'
+      }
+    </div>
+  `;
+}
+
+function bindTokenScorecardRows(){
+  document
+    .querySelectorAll('[data-scorecard-mint]')
+    .forEach(button=>{
+      button.addEventListener(
+        'click',
+        ()=>{
+          const mint=
+            String(
+              button.dataset.scorecardMint||''
+            );
+
+          if(mint){
+            $('tokenScorecardMint').value=mint;
+            inspectTokenScorecard(mint);
+          }
+        }
+      );
+    });
+}
+
+function renderTokenScorecards(payload={}){
+  const status=payload?.status||{};
+  const rows=
+    Array.isArray(payload?.scorecards)
+      ? payload.scorecards
+      : [];
+
+  $('tokenScorecardStatus').className=
+    'oi-ai-status '+
+    (rows.length?'online':'');
+
+  $('tokenScorecardStatus').textContent=
+    rows.length
+      ? 'LIVE'
+      : 'LEARNING';
+
+  $('tokenScorecardTracked').textContent=
+    num(status?.tracked,0);
+
+  $('tokenScorecardProbable').textContent=
+    num(status?.withProbability,0);
+
+  $('tokenScorecardReady').textContent=
+    num(status?.highReadiness,0);
+
+  $('tokenScorecardAverage').textContent=
+    pct(status?.averageReadinessPct);
+
+  $('tokenScorecardListSummary').textContent=
+    `${rows.length} shown`;
+
+  $('tokenScorecardList').innerHTML=
+    rows.length
+      ? rows.map(scorecardCardHtml).join('')
+      : `
+          <div class="oi-empty">
+            No active Token Intelligence scorecards yet.
+            The shadow network needs live token events.
+          </div>
+        `;
+
+  bindTokenScorecardRows();
+}
+
+async function loadTokenScorecards(){
+  try{
+    const payload=await api(
+      '/api/owner/intelligence/token-scorecards?limit=20'
+    );
+
+    renderTokenScorecards(payload);
+  }catch(error){
+    const badge=$('tokenScorecardStatus');
+
+    if(badge){
+      badge.className='oi-ai-status offline';
+      badge.textContent='UNAVAILABLE';
+    }
+
+    const list=$('tokenScorecardList');
+
+    if(list){
+      list.innerHTML=`
+        <div class="oi-empty">
+          ${esc(error.message)}
+        </div>
+      `;
+    }
+  }
+}
+
+async function inspectTokenScorecard(mint=null){
+  mint=String(
+    mint||
+    $('tokenScorecardMint')?.value||
+    ''
+  ).trim();
+
+  if(!mint)return;
+
+  const button=$('tokenScorecardInspectBtn');
+
+  if(button){
+    button.disabled=true;
+    button.textContent='INSPECTING…';
+  }
+
+  try{
+    const payload=await api(
+      '/api/owner/intelligence/token-scorecard?mint='+
+      encodeURIComponent(mint)
+    );
+
+    renderTokenScorecardDetail(
+      payload?.scorecard||{}
+    );
+  }catch(error){
+    const node=$('tokenScorecardDetail');
+
+    if(node){
+      node.hidden=false;
+      node.innerHTML=`
+        <div class="oi-empty">
+          ${esc(error.message)}
+        </div>
+      `;
+    }
+  }finally{
+    if(button){
+      button.disabled=false;
+      button.textContent='INSPECT TOKEN';
+    }
+  }
+}
+
 /* MEMEFLOW_SHADOW_PROMOTION_REPORT_V23_14_UI_JS */
 function promotionTone(status=''){
   const s=String(status||'').toUpperCase();
@@ -1212,7 +1547,11 @@ async function load(
         : null;
 
     renderOverview(data);
-    await loadPromotionReport();
+
+    await Promise.all([
+      loadPromotionReport(),
+      loadTokenScorecards()
+    ]);
 
     if(previous){
       renderReport(previous);
@@ -1245,6 +1584,26 @@ $('refreshBtn')
   .addEventListener(
     'click',
     ()=>load()
+  );
+
+$('tokenScorecardInspectBtn')
+  ?.addEventListener(
+    'click',
+    ()=>inspectTokenScorecard()
+  );
+
+$('tokenScorecardMint')
+  ?.addEventListener(
+    'keydown',
+    event=>{
+      if(
+        event.key==='Enter' &&
+        !event.isComposing
+      ){
+        event.preventDefault();
+        inspectTokenScorecard();
+      }
+    }
   );
 
 $('analyzeBtn')

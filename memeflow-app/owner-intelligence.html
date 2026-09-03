@@ -275,6 +275,95 @@
         </div>
       </section>
 
+      <!-- MEMEFLOW_TOKEN_INTELLIGENCE_SCORECARD_V23_15_UI -->
+      <section
+        id="tokenScorecardMonitor"
+        class="oi-panel oi-scorecard-monitor"
+      >
+        <div class="oi-panel-head">
+          <div>
+            <span class="oi-eyebrow">
+              PER TOKEN · V23 SHADOW
+            </span>
+            <h2>Token Intelligence Scorecards</h2>
+            <p>
+              Explainability view only — probability, confidence,
+              wallets, trajectory, patterns, calibration and blockers.
+              This is not a second MEMEFLOW Score.
+            </p>
+          </div>
+
+          <span
+            id="tokenScorecardStatus"
+            class="oi-ai-status"
+          >
+            LOADING
+          </span>
+        </div>
+
+        <div class="oi-grid oi-grid-4">
+          <article class="oi-stat">
+            <span>TRACKED</span>
+            <strong id="tokenScorecardTracked">—</strong>
+            <small>active scorecards</small>
+          </article>
+
+          <article class="oi-stat">
+            <span>WITH PROBABILITY</span>
+            <strong id="tokenScorecardProbable">—</strong>
+            <small>usable shadow forecast</small>
+          </article>
+
+          <article class="oi-stat">
+            <span>HIGH READINESS</span>
+            <strong id="tokenScorecardReady">—</strong>
+            <small>≥75% evidence ready</small>
+          </article>
+
+          <article class="oi-stat">
+            <span>AVG READINESS</span>
+            <strong id="tokenScorecardAverage">—</strong>
+            <small>diagnostic only</small>
+          </article>
+        </div>
+
+        <div class="oi-scorecard-search">
+          <input
+            id="tokenScorecardMint"
+            type="text"
+            autocomplete="off"
+            autocapitalize="off"
+            spellcheck="false"
+            placeholder="Paste token mint to inspect"
+          >
+          <button
+            id="tokenScorecardInspectBtn"
+            class="oi-btn"
+            type="button"
+          >
+            INSPECT TOKEN
+          </button>
+        </div>
+
+        <div
+          id="tokenScorecardDetail"
+          class="oi-scorecard-detail"
+          hidden
+        ></div>
+
+        <div class="oi-divider"></div>
+
+        <div class="oi-promotion-check-head">
+          <h3>Tracked token evidence</h3>
+          <span id="tokenScorecardListSummary">—</span>
+        </div>
+
+        <div
+          id="tokenScorecardList"
+          class="oi-scorecard-list"
+        ></div>
+      </section>
+
       <!-- MEMEFLOW_PLATFORM_LEARNING_V2_UI -->
       <section class="oi-panel">
         <div class="oi-panel-head">
