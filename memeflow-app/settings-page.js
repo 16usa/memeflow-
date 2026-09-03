@@ -27,9 +27,6 @@ async function mfPublicAgentInstall(){
       #mfPublicAgentGroup .mf-agent-events{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
       #mfPublicAgentGroup .mf-agent-event{display:flex;align-items:center;justify-content:space-between;gap:8px;border:1px solid var(--line);border-radius:10px;padding:9px}
       #mfPublicAgentGroup .mf-agent-history{font-size:11px;line-height:1.5;color:var(--muted);white-space:pre-wrap}
-      #mfPublicAgentGroup .mf-agent-test{min-height:36px;padding:7px 12px;border:1px solid rgba(0,145,255,.38);border-radius:999px;background:rgba(0,145,255,.06);color:var(--text);font-weight:650;opacity:1;cursor:pointer}
-      #mfPublicAgentGroup .mf-agent-test:active{transform:translateY(1px)}
-      #mfPublicAgentGroup .mf-agent-test:disabled{border-color:var(--line);background:rgba(127,127,127,.08);color:var(--muted);opacity:.46;cursor:not-allowed}
       @media(max-width:620px){#mfPublicAgentGroup .mf-agent-events{grid-template-columns:1fr}}
     `;
     document.head.appendChild(style);
@@ -53,20 +50,9 @@ async function mfPublicAgentInstall(){
         <label class="mf-agent-event"><span>REJECT / RISK</span><input id="mfEntityEventRisk" type="checkbox"></label>
       </div>
     </div>
-    <div class="mf293-field mf-agent-wide">
-      <span class="mf293-field-label">Test entity</span>
-      <div class="mf-agent-actions">
-        <button type="button" class="mf-agent-test" data-mf-agent-test="WATCH">Test WATCH</button>
-        <button type="button" class="mf-agent-test" data-mf-agent-test="BUY READY">Test BUY READY</button>
-        <button type="button" class="mf-agent-test" data-mf-agent-test="OPEN POSITION">Test OPEN</button>
-        <button type="button" class="mf-agent-test" data-mf-agent-test="EXIT">Test EXIT</button>
-        <button type="button" class="mf-agent-test" data-mf-agent-test="RISK">Test RISK</button>
-      </div>
-      <span class="mf-agent-note">Dry-run only. Does not trade and cannot post to X.</span>
-    </div>
     <div class="mf293-field mf-agent-wide"><span class="mf293-field-label">Publication queue</span><div id="mfEntityQueue" class="mf-agent-list">Loading…</div></div>
     <div class="mf293-field mf-agent-wide"><span class="mf293-field-label">Entity history</span><div id="mfEntityHistory" class="mf-agent-history">Loading…</div></div>
-    <div class="mf-agent-wide mf-agent-actions"><button id="mfEntitySave" class="mf293-primary mf-agent-save" type="button">Save Public Agent</button><button id="mfEntityRefresh" class="mf293-secondary" type="button">Refresh queue</button><button id="mfEntityClearTests" class="mf293-secondary" type="button">Clear TEST drafts</button><span class="mf-agent-note">Approved drafts remain READY until X is connected. TEST drafts can never be published.</span></div>
+    <div class="mf-agent-wide mf-agent-actions"><button id="mfEntitySave" class="mf293-primary mf-agent-save" type="button">Save Public Agent</button><button id="mfEntityRefresh" class="mf293-secondary" type="button">Refresh queue</button><span class="mf-agent-note">Approved drafts remain READY until X is connected.</span></div>
   </div>`;
   body.prepend(sec);
 
@@ -76,60 +62,27 @@ async function mfPublicAgentInstall(){
     const r=await fetch(`/api/owner/public-agent/queue/${encodeURIComponent(id)}/${action}`,{method:'POST',credentials:'same-origin'});
     const p=await r.json().catch(()=>({}));
     if(!r.ok){mf293Error(p?.error||'Draft review failed.');return}
-    mf293Status(
-      p?.unchanged
-        ? (action==='approve'?'Already approved':'Already rejected')
-        : (action==='approve'?'Draft approved':'Draft rejected'),
-      'saved'
-    );
+    mf293Status(action==='approve'?'Draft approved':'Draft rejected','saved');
     await load();
   }
 
   function renderQueue(rows){
     const q=el('mfEntityQueue');q.innerHTML='';
     if(!rows?.length){q.textContent='No drafts yet.';return}
-    for(const item of rows.slice(0,12)){
-      const isTest=item.test===true||String(item.mint||'').startsWith('TEST_PUBLIC_AGENT_')||String(item.symbol||'').toUpperCase()==='TEST';
+    for(const item of rows.slice(0,10)){
       const wrap=document.createElement('div');wrap.className='mf-agent-item';
       const top=document.createElement('div');top.className='mf-agent-item-top';
-      const title=document.createElement('b');
-      title.textContent=`${item.eventType} · ${item.symbol||String(item.mint||'').slice(0,6)}${isTest?' · TEST':''}`;
+      const title=document.createElement('b');title.textContent=`${item.eventType} · ${item.symbol||String(item.mint||'').slice(0,6)}`;
       const status=document.createElement('span');status.className='mf-agent-status';status.textContent=item.status||'PENDING';
       top.append(title,status);
-
       const copy=document.createElement('div');copy.className='mf-agent-copy';copy.textContent=item.text||'';
       wrap.append(top,copy);
-
-      const actions=document.createElement('div');
-      actions.className='mf-agent-review';
-
       if(item.status==='PENDING'){
-        const approve=document.createElement('button');
-        approve.type='button';approve.textContent='Approve';
-        approve.addEventListener('click',()=>review(item.id,'approve'));
-
-        const reject=document.createElement('button');
-        reject.type='button';reject.textContent='Reject';
-        reject.addEventListener('click',()=>review(item.id,'reject'));
-
-        actions.append(approve,reject);
-      }else{
-        const archive=document.createElement('button');
-        archive.type='button';archive.textContent='Archive';
-        archive.addEventListener('click',async()=>{
-          const r=await fetch(`/api/owner/public-agent/queue/${encodeURIComponent(item.id)}/archive`,{
-            method:'POST',
-            credentials:'same-origin'
-          });
-          const p=await r.json().catch(()=>({}));
-          if(!r.ok){mf293Error(p?.error||'Archive failed.');return}
-          mf293Status('Draft archived','saved');
-          await load();
-        });
-        actions.append(archive);
+        const actions=document.createElement('div');actions.className='mf-agent-review';
+        const approve=document.createElement('button');approve.type='button';approve.textContent='Approve';approve.addEventListener('click',()=>review(item.id,'approve'));
+        const reject=document.createElement('button');reject.type='button';reject.textContent='Reject';reject.addEventListener('click',()=>review(item.id,'reject'));
+        actions.append(approve,reject);wrap.appendChild(actions);
       }
-
-      if(actions.childNodes.length)wrap.appendChild(actions);
       q.appendChild(wrap);
     }
   }
@@ -152,11 +105,6 @@ async function mfPublicAgentInstall(){
     el('mfEntityEventBuyReady').checked=e.buyReady!==false;
     el('mfEntityEventPositions').checked=e.positions!==false;
     el('mfEntityEventRisk').checked=e.risk!==false;
-    const testsEnabled=c.enabled===true&&c.mode!=='off';
-    document.querySelectorAll('[data-mf-agent-test]').forEach(button=>{
-      button.disabled=!testsEnabled;
-      button.setAttribute('aria-disabled',testsEnabled?'false':'true');
-    });
     renderQueue(p.queue||[]);renderHistory(p.audit||[]);
   }
 
@@ -172,36 +120,6 @@ async function mfPublicAgentInstall(){
     if(!r.ok){mf293Error(p?.error||'Public Agent settings could not be saved.');return}
     mf293Status('Public Agent saved','saved');await load();
   });
-  document.querySelectorAll('[data-mf-agent-test]').forEach(button=>{
-    button.addEventListener('click',async()=>{
-      const type=button.getAttribute('data-mf-agent-test');
-      const r=await fetch('/api/owner/public-agent/test',{
-        method:'POST',
-        credentials:'same-origin',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({type})
-      });
-      const p=await r.json().catch(()=>({}));
-      if(!r.ok){
-        mf293Error(p?.message||p?.error||'Test event failed.');
-        return;
-      }
-      mf293Status(`Test ${type} created`,'saved');
-      await load();
-    });
-  });
-
-  el('mfEntityClearTests').addEventListener('click',async()=>{
-    const r=await fetch('/api/owner/public-agent/queue/clear-tests',{
-      method:'POST',
-      credentials:'same-origin'
-    });
-    const p=await r.json().catch(()=>({}));
-    if(!r.ok){mf293Error(p?.error||'Could not clear TEST drafts.');return}
-    mf293Status(`Cleared ${Number(p?.removed||0)} TEST drafts`,'saved');
-    await load();
-  });
-
   el('mfEntityRefresh').addEventListener('click',load);
   await load();
 }
