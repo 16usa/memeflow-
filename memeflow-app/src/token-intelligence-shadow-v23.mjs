@@ -36,6 +36,9 @@ import {
 import {
   createShadowPromotionGateV23_13
 } from './shadow-promotion-gate-v23_13.mjs';
+import {
+  createShadowPromotionReportV23_14
+} from './shadow-promotion-report-v23_14.mjs';
 
 // MEMEFLOW_TOKEN_INTELLIGENCE_NETWORK_V23
 //
@@ -796,6 +799,15 @@ export function createTokenIntelligenceShadowV23({
       driftRegime:shadowDriftRegime
     });
 
+  const shadowPromotionReport=
+    createShadowPromotionReportV23_14({
+      promotionGate:shadowPromotionGate,
+      championBenchmark:shadowChampionBenchmark,
+      outcomeCalibration:shadowOutcomeCalibration,
+      driftRegime:shadowDriftRegime,
+      evidenceSynthesis:shadowEvidenceSynthesis
+    });
+
   const metrics={
     observations:0,
     cellsCreated:0,
@@ -1282,7 +1294,7 @@ export function createTokenIntelligenceShadowV23({
     }
 
     return {
-      version:'MEMEFLOW_TOKEN_INTELLIGENCE_NETWORK_V23_13',
+      version:'MEMEFLOW_TOKEN_INTELLIGENCE_NETWORK_V23_14',
       shadowOnly:true,
       specialists:[
         'FLOW',
@@ -1312,7 +1324,8 @@ export function createTokenIntelligenceShadowV23({
       shadowEvidenceSynthesis:shadowEvidenceSynthesis.status(),
       shadowOutcomeCalibration:shadowOutcomeCalibration.status(),
       shadowChampionBenchmark:shadowChampionBenchmark.status(),
-      shadowPromotionGate:shadowPromotionGate.status()
+      shadowPromotionGate:shadowPromotionGate.status(),
+      shadowPromotionReport:shadowPromotionReport.status()
     };
   }
 
@@ -1387,6 +1400,10 @@ export function createTokenIntelligenceShadowV23({
       ()=>shadowChampionBenchmark.flush(),
     promotionGateStatus:
       ()=>shadowPromotionGate.status(),
+    promotionReportStatus:
+      ()=>shadowPromotionReport.status(),
+    promotionReport:
+      ()=>shadowPromotionReport.report(),
     status
   };
 }

@@ -305,6 +305,251 @@ function renderPlatform(platform={}){
         `;
 }
 
+/* MEMEFLOW_SHADOW_PROMOTION_REPORT_V23_14_UI_JS */
+function promotionTone(status=''){
+  const s=String(status||'').toUpperCase();
+
+  if(s==='PROMOTION_CANDIDATE'){
+    return 'online';
+  }
+
+  if(
+    s==='PROMOTION_BLOCKED' ||
+    s==='PROMOTION_GATE_ERROR' ||
+    s==='PROMOTION_REPORT_ERROR'
+  ){
+    return 'offline';
+  }
+
+  return '';
+}
+
+function renderPromotionReport(payload={}){
+  const report=payload?.report||{};
+  const sample=report?.sample||{};
+  const benchmark=report?.benchmark||{};
+  const calibration=report?.calibration||{};
+  const drift=report?.drift||{};
+  const gate=report?.gate||{};
+
+  const status=
+    String(report?.status||'NOT READY');
+
+  const badge=$('promotionStatusBadge');
+
+  if(badge){
+    badge.className=
+      'oi-ai-status '+
+      promotionTone(status);
+
+    badge.textContent=
+      String(
+        report?.statusLabel||
+        status
+      );
+  }
+
+  const readiness=
+    Number(report?.readinessPct);
+
+  $('promotionReadiness').textContent=
+    Number.isFinite(readiness)
+      ? `${num(readiness,1)}%`
+      : '—';
+
+  $('promotionReadinessSub').textContent=
+    report?.candidateForManualReview===true
+      ? 'candidate · manual approval required'
+      : 'shadow evidence only';
+
+  $('promotionPaired').textContent=
+    `${num(sample?.paired5m,0)} / ${num(sample?.requiredPaired5m||100,0)}`;
+
+  $('promotionPairedSub').textContent=
+    `${num(report?.progress?.paired5mPct,1)}% of paired target`;
+
+  $('promotionBalance').textContent=
+    `${num(sample?.positive5m,0)} / ${num(sample?.negative5m,0)}`;
+
+  $('promotionVerdict').textContent=
+    String(
+      benchmark?.verdict||
+      '—'
+    ).replaceAll('_',' ');
+
+  $('promotionAuthority').textContent=
+    `${String(report?.tradingAuthority||'V22')} trading authority`;
+
+  const fill=$('promotionMeterFill');
+
+  if(fill){
+    fill.style.width=
+      `${Math.max(0,Math.min(100,readiness||0))}%`;
+  }
+
+  const v22=benchmark?.v22||{};
+  const v23=benchmark?.v23||{};
+  const delta=benchmark?.delta||{};
+
+  $('promotionBenchmark').innerHTML=[
+    [
+      'V22 Brier',
+      num(v22?.meanBrier,6)
+    ],
+    [
+      'V23 Brier',
+      num(v23?.meanBrier,6)
+    ],
+    [
+      'Brier Δ',
+      num(delta?.brier,6)
+    ],
+    [
+      'V22 Log-loss',
+      num(v22?.meanLogLoss,6)
+    ],
+    [
+      'V23 Log-loss',
+      num(v23?.meanLogLoss,6)
+    ],
+    [
+      'Log-loss Δ',
+      num(delta?.logLoss,6)
+    ],
+    [
+      'Accuracy Δ',
+      Number.isFinite(
+        Number(delta?.accuracyPct)
+      )
+        ? `${num(delta.accuracyPct,2)}%`
+        : '—'
+    ]
+  ].map(([name,value])=>`
+    <div class="oi-row">
+      <span>${esc(name)}</span>
+      <strong>${esc(value)}</strong>
+    </div>
+  `).join('');
+
+  $('promotionHealth').innerHTML=[
+    [
+      'Calibration',
+      String(calibration?.status||'—')
+        .replaceAll('_',' ')
+    ],
+    [
+      'Calibration rows',
+      num(calibration?.scoredRows,0)
+    ],
+    [
+      'ECE',
+      Number.isFinite(
+        Number(calibration?.ecePct)
+      )
+        ? `${num(calibration.ecePct,2)}%`
+        : '—'
+    ],
+    [
+      'Calibration Brier',
+      num(calibration?.brier,6)
+    ],
+    [
+      'Drift',
+      String(drift?.status||'—')
+        .replaceAll('_',' ')
+    ],
+    [
+      'Automatic promotion',
+      report?.automaticPromotion===true
+        ? 'ENABLED'
+        : 'DISABLED'
+    ]
+  ].map(([name,value])=>`
+    <div class="oi-row">
+      <span>${esc(name)}</span>
+      <strong>${esc(value)}</strong>
+    </div>
+  `).join('');
+
+  const checks=
+    Array.isArray(gate?.checks)
+      ? gate.checks
+      : [];
+
+  $('promotionGateSummary').textContent=
+    `${num(gate?.passedChecks,0)} / ${num(gate?.totalChecks,0)} passed`;
+
+  $('promotionChecks').innerHTML=
+    checks.length
+      ? checks.map(row=>`
+          <div
+            class="oi-promotion-check ${row?.pass===true?'pass':'fail'}"
+          >
+            <span class="oi-promotion-check-dot"></span>
+            <div>
+              <strong>
+                ${esc(String(row?.name||'CHECK').replaceAll('_',' '))}
+              </strong>
+              <small>
+                actual ${esc(row?.actual??'—')} ·
+                required ${esc(row?.required??'—')}
+              </small>
+            </div>
+          </div>
+        `).join('')
+      : `
+          <div class="oi-empty">
+            No promotion gate evidence yet.
+          </div>
+        `;
+
+  const blocker=$('promotionBlocker');
+
+  if(blocker){
+    const primary=
+      gate?.primaryBlocker;
+
+    blocker.dataset.state=
+      report?.candidateForManualReview===true
+        ? 'ready'
+        : 'blocked';
+
+    blocker.textContent=
+      report?.candidateForManualReview===true
+        ? 'V23 passed every shadow gate. Manual owner review is now allowed; nothing was promoted automatically.'
+        : (
+            primary
+              ? `NEXT BLOCKER · ${String(primary).replaceAll('_',' ')}`
+              : 'Waiting for additional shadow evidence.'
+          );
+  }
+}
+
+async function loadPromotionReport(){
+  try{
+    const payload=await api(
+      '/api/owner/intelligence/promotion-report'
+    );
+
+    renderPromotionReport(payload);
+  }catch(error){
+    const badge=$('promotionStatusBadge');
+
+    if(badge){
+      badge.className='oi-ai-status offline';
+      badge.textContent='UNAVAILABLE';
+    }
+
+    const blocker=$('promotionBlocker');
+
+    if(blocker){
+      blocker.dataset.state='blocked';
+      blocker.textContent=
+        `Promotion monitor unavailable: ${error.message}`;
+    }
+  }
+}
+
 function renderOverview(data){
   ownerData=data;
 
@@ -967,6 +1212,7 @@ async function load(
         : null;
 
     renderOverview(data);
+    await loadPromotionReport();
 
     if(previous){
       renderReport(previous);

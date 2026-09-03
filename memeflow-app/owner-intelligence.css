@@ -529,6 +529,134 @@ textarea{
   margin-top:8px;
 }
 
+/* ==========================================================
+   MEMEFLOW_SHADOW_PROMOTION_REPORT_V23_14
+   ========================================================== */
+
+.oi-promotion-monitor{
+  overflow:hidden;
+}
+
+.oi-promotion-meter{
+  height:7px;
+  margin:
+    -2px
+    0
+    14px;
+  overflow:hidden;
+  border-radius:999px;
+  background:rgba(255,255,255,.045);
+}
+
+.oi-promotion-meter-fill{
+  width:0;
+  height:100%;
+  border-radius:inherit;
+  background:var(--cyan);
+  transition:width .28s ease;
+}
+
+.oi-promotion-details{
+  margin-top:0;
+}
+
+.oi-promotion-check-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+}
+
+.oi-promotion-check-head h3{
+  margin:0;
+}
+
+.oi-promotion-check-head span{
+  color:var(--muted);
+  font-size:var(--mf-type-meta);
+}
+
+.oi-promotion-checks{
+  display:grid;
+  grid-template-columns:
+    repeat(2,minmax(0,1fr));
+  gap:7px;
+  margin-top:9px;
+}
+
+.oi-promotion-check{
+  display:grid;
+  grid-template-columns:
+    8px
+    minmax(0,1fr);
+  gap:9px;
+  align-items:start;
+  min-width:0;
+  padding:9px 10px;
+  border:
+    1px solid
+    rgba(38,56,69,.65);
+  border-radius:10px;
+  background:rgba(255,255,255,.012);
+}
+
+.oi-promotion-check-dot{
+  width:7px;
+  height:7px;
+  margin-top:5px;
+  border-radius:50%;
+  background:var(--amber);
+}
+
+.oi-promotion-check.pass
+.oi-promotion-check-dot{
+  background:var(--green);
+}
+
+.oi-promotion-check.fail
+.oi-promotion-check-dot{
+  background:var(--red);
+}
+
+.oi-promotion-check strong{
+  display:block;
+  overflow-wrap:anywhere;
+  color:#dbe5ea;
+  font-size:var(--mf-type-meta);
+}
+
+.oi-promotion-check small{
+  display:block;
+  margin-top:3px;
+  overflow-wrap:anywhere;
+  color:var(--muted);
+  font-size:var(--mf-type-micro);
+}
+
+.oi-promotion-blocker{
+  margin-top:10px;
+  padding:10px 11px;
+  border:
+    1px solid
+    rgba(239,200,106,.22);
+  border-radius:10px;
+  background:rgba(239,200,106,.035);
+  color:var(--amber);
+  font-size:var(--mf-type-meta);
+  font-weight:800;
+  line-height:1.45;
+}
+
+.oi-promotion-blocker[data-state="ready"]{
+  border-color:rgba(81,231,168,.22);
+  background:rgba(81,231,168,.035);
+  color:var(--green);
+}
+
+.oi-promotion-blocker[data-state="blocked"]{
+  border-color:rgba(255,104,120,.18);
+}
+
 @media(max-width:900px){
   .oi-grid-4{
     grid-template-columns:repeat(2,1fr);
@@ -541,6 +669,10 @@ textarea{
 }
 
 @media(max-width:650px){
+  .oi-promotion-checks{
+    grid-template-columns:1fr;
+  }
+
   .oi-shell{
     padding:
       14px
