@@ -1349,6 +1349,143 @@ async function loadPolicyCandidate(){
   }
 }
 
+/* MEMEFLOW_SHADOW_POLICY_SIMULATOR_V23_21_UI_JS */
+function renderPolicySimulation(payload={}){
+  const result=payload?.result||{};
+  const metrics=result?.metrics||{};
+  const gates=
+    Array.isArray(result?.gates)
+      ? result.gates
+      : [];
+
+  const badge=$('policySimulationStatus');
+
+  if(badge){
+    badge.className=
+      'oi-ai-status '+
+      (
+        result?.verdict?.pass===true
+          ? 'online'
+          : (
+              result?.status==='SIMULATION_DOES_NOT_PASS'
+                ? 'offline'
+                : ''
+            )
+      );
+
+    badge.textContent=
+      String(
+        result?.status||'UNKNOWN'
+      ).replaceAll('_',' ');
+  }
+
+  $('policySimulationEvaluable').textContent=
+    num(metrics?.evaluableRows,0);
+
+  $('policySimulationAffected').textContent=
+    num(metrics?.affectedRows,0);
+
+  $('policySimulationNegativeBlocked').textContent=
+    num(metrics?.preventedNegative,0);
+
+  $('policySimulationPositiveMissed').textContent=
+    num(metrics?.missedPositiveOpportunity,0);
+
+  $('policySimulationImpact').innerHTML=[
+    [
+      'Affected rate',
+      pct(metrics?.affectedRatePct)
+    ],
+    [
+      'Negative precision',
+      pct(metrics?.negativePrecisionPct)
+    ],
+    [
+      'Negative block rate',
+      pct(metrics?.negativeBlockRatePct)
+    ],
+    [
+      'Positive opportunity cost',
+      pct(metrics?.positiveOpportunityCostPct)
+    ],
+    [
+      'Positive preservation',
+      pct(metrics?.positivePreservationPct)
+    ],
+    [
+      'Net protected - missed',
+      num(metrics?.netProtectedMinusMissed,0)
+    ]
+  ].map(([name,value])=>`
+    <div class="oi-row">
+      <span>${esc(name)}</span>
+      <strong>${esc(value)}</strong>
+    </div>
+  `).join('');
+
+  $('policySimulationGates').innerHTML=
+    gates.length
+      ? gates.map(row=>`
+          <div class="oi-promotion-check ${row?.pass===true?'pass':'fail'}">
+            <span class="oi-promotion-check-dot"></span>
+            <div>
+              <strong>${esc(row?.label||row?.id||'Gate')}</strong>
+              <small>
+                actual ${esc(String(row?.actual??'—'))}
+                · required ${esc(String(row?.required??'—'))}
+              </small>
+            </div>
+          </div>
+        `).join('')
+      : `
+          <div class="oi-empty">
+            Simulation gates unavailable.
+          </div>
+        `;
+
+  const verdict=$('policySimulationVerdict');
+
+  if(verdict){
+    verdict.dataset.state=
+      result?.verdict?.reviewEligible===true
+        ? 'ready'
+        : 'blocked';
+
+    verdict.textContent=
+      result?.verdict?.reviewEligible===true
+        ? 'V23.21 SHADOW SIMULATION PASSED THE REVIEW GATE. Candidate remains unapplied; manual review is still required.'
+        : String(
+            result?.verdict?.reason||
+            'Waiting for enough simulation evidence.'
+          ).replaceAll('_',' ');
+  }
+}
+
+async function loadPolicySimulation(){
+  try{
+    const payload=await api(
+      '/api/owner/intelligence/policy-simulation'
+    );
+
+    renderPolicySimulation(payload);
+  }catch(error){
+    const badge=$('policySimulationStatus');
+
+    if(badge){
+      badge.className='oi-ai-status offline';
+      badge.textContent='UNAVAILABLE';
+    }
+
+    const verdict=$('policySimulationVerdict');
+
+    if(verdict){
+      verdict.dataset.state='blocked';
+      verdict.textContent=
+        `Policy simulation unavailable: ${error.message}`;
+    }
+  }
+}
+
 /* MEMEFLOW_SHADOW_PROMOTION_REPORT_V23_14_UI_JS */
 function promotionTone(status=''){
   const s=String(status||'').toUpperCase();
@@ -2264,7 +2401,8 @@ async function load(
       loadErrorPatterns(),
       loadErrorAwareConfidence(),
       loadErrorAwareBenchmark(),
-      loadPolicyCandidate()
+      loadPolicyCandidate(),
+      loadPolicySimulation()
     ]);
 
     if(previous){

@@ -1049,6 +1049,20 @@ textarea{
 }
 
 /* ==========================================================
+   MEMEFLOW_SHADOW_POLICY_SIMULATOR_V23_21
+   ========================================================== */
+
+.oi-policy-simulation
+.oi-grid-2{
+  margin-top:12px;
+}
+
+.oi-policy-simulation
+.oi-list{
+  margin-top:7px;
+}
+
+/* ==========================================================
    MEMEFLOW_SHADOW_PROMOTION_REPORT_V23_14
    ========================================================== */
 

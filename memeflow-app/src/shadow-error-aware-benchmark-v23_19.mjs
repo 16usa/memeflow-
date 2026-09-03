@@ -1024,6 +1024,41 @@ export function createShadowErrorAwareBenchmarkV23_19({
       );
   }
 
+  function listRows({
+    limit=5000,
+    horizonMs=null,
+    penalizedOnly=false
+  }={}){
+    const safe=
+      Math.max(
+        1,
+        Math.min(
+          10_000,
+          Number(limit)||5000
+        )
+      );
+
+    const horizon=
+      horizonMs===null
+        ? null
+        : Number(horizonMs);
+
+    return rows
+      .filter(
+        row=>
+          (
+            horizon===null ||
+            row.horizonMs===horizon
+          ) &&
+          (
+            penalizedOnly!==true ||
+            Number(row?.penaltyPct||0)>0
+          )
+      )
+      .slice(-safe)
+      .reverse();
+  }
+
   function status(){
     const target=
       report({
@@ -1080,6 +1115,7 @@ export function createShadowErrorAwareBenchmarkV23_19({
     report,
     horizonReport,
     listRecent,
+    listRows,
     status,
     flush
   };

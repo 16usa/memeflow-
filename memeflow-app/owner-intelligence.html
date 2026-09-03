@@ -724,6 +724,85 @@
         </div>
       </section>
 
+      <!-- MEMEFLOW_SHADOW_POLICY_SIMULATOR_V23_21_UI -->
+      <section
+        id="policySimulationMonitor"
+        class="oi-panel oi-policy-simulation"
+      >
+        <div class="oi-panel-head">
+          <div>
+            <span class="oi-eyebrow">
+              POLICY IMPACT · SHADOW SIMULATION
+            </span>
+            <h2>V23.21 Policy Simulator</h2>
+            <p>
+              Replays the V23.20 candidate against completed frozen 5m
+              outcomes. Measures protection versus opportunity cost.
+              Nothing is applied to live trading.
+            </p>
+          </div>
+
+          <span
+            id="policySimulationStatus"
+            class="oi-ai-status"
+          >
+            LOADING
+          </span>
+        </div>
+
+        <div class="oi-grid oi-grid-4">
+          <article class="oi-stat">
+            <span>EVALUABLE</span>
+            <strong id="policySimulationEvaluable">—</strong>
+            <small>completed directional 5m rows</small>
+          </article>
+
+          <article class="oi-stat">
+            <span>AFFECTED</span>
+            <strong id="policySimulationAffected">—</strong>
+            <small>rows candidate would downgrade</small>
+          </article>
+
+          <article class="oi-stat">
+            <span>NEGATIVE BLOCKED</span>
+            <strong id="policySimulationNegativeBlocked">—</strong>
+            <small>bad outcomes intercepted</small>
+          </article>
+
+          <article class="oi-stat">
+            <span>POSITIVE MISSED</span>
+            <strong id="policySimulationPositiveMissed">—</strong>
+            <small>opportunity cost</small>
+          </article>
+        </div>
+
+        <div class="oi-grid oi-grid-2">
+          <div>
+            <h3>Impact</h3>
+            <div
+              id="policySimulationImpact"
+              class="oi-list"
+            ></div>
+          </div>
+
+          <div>
+            <h3>Review gates</h3>
+            <div
+              id="policySimulationGates"
+              class="oi-promotion-checks"
+            ></div>
+          </div>
+        </div>
+
+        <div
+          id="policySimulationVerdict"
+          class="oi-promotion-blocker"
+          data-state="blocked"
+        >
+          Waiting for a V23.20 candidate and completed outcomes.
+        </div>
+      </section>
+
       <!-- MEMEFLOW_PLATFORM_LEARNING_V2_UI -->
       <section class="oi-panel">
         <div class="oi-panel-head">
