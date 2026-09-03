@@ -4431,7 +4431,12 @@ async function mf49StandaloneScan(raw,u){
   if(canonicalManual?.evidence?.rpcAvailable)sources.add('Solana RPC');
   if(canonicalManual?.evidence?.holderScanAvailable)sources.add('MEMEFLOW holder engine');
   if(canonicalManual?.evidence?.holderScanError){
-   warnings.push(`Holders: ${canonicalManual.evidence.holderScanError}`);
+   const holderMessage=String(canonicalManual.evidence.holderScanError||'');
+   if(/MANUAL_ANALYSIS_RPC_TIMEOUT:getProgramAccounts/i.test(holderMessage)){
+    warnings.push('Exact holder RPC timed out; MEMEFLOW live holder fallback will be used when available.');
+   }else{
+    warnings.push(`Holders: ${holderMessage}`);
+   }
   }
   if(canonicalManual?.evidence?.rpcError){
    warnings.push(`RPC: ${canonicalManual.evidence.rpcError}`);
@@ -4450,10 +4455,98 @@ async function mf49StandaloneScan(raw,u){
  const canonicalToken=canonicalManual?.token||{};
  const decimals=mf49Num(canonicalToken.decimals)??mf49Num(known.decimals);
  const total=mf49Num(canonicalToken.totalSupply)??mf49Num(known.totalSupply);
- const top10=mf49Num(canonicalToken.top10Pct)??mf49Num(known.top10Pct);
- const holderFresh=canonicalToken.holderFresh===true;
- const holderCount=mf49Num(canonicalToken.holderCount);
- const holderCountDisplay=holderCount!=null?String(Math.round(holderCount)):null;
+
+ // MEMEFLOW_MANUAL_HOLDER_LIVE_FALLBACK_V6
+ // Exact getProgramAccounts remains authoritative. If it misses the bounded
+ // manual-analysis deadline, reuse MEMEFLOW's already-running WS holder ledger
+ // as an explicitly labelled lower-bound instead of rendering false zeroes.
+ let holderLedger=null;
+ try{holderLedger=eventHolderLedger?.inspect?.(mint)||null}catch{}
+
+ const knownHolderTruth=__mfPipelineHolderTruthV26(
+  known,
+  mint,
+  Date.now()
+ );
+
+ const canonicalExactHolder=
+  canonicalToken?.holderCountAuthoritative===true &&
+  canonicalToken?.holderFresh===true
+   ? mf49Num(canonicalToken.holderCount)
+   : null;
+
+ const storedExactHolder=
+  knownHolderTruth?.authoritative===true
+   ? mf49Num(knownHolderTruth.count)
+   : null;
+
+ const holderCount=
+  canonicalExactHolder ??
+  storedExactHolder;
+
+ const observedCandidates=[
+  mf49Num(canonicalToken.observedHolderCount),
+  mf49Num(knownHolderTruth?.observed),
+  mf49Num(holderLedger?.observedHolderCount),
+  mf49Num(holderLedger?.holderCount)
+ ].filter(v=>v!=null&&v>=0);
+
+ const observedHolderCount=
+  observedCandidates.length
+   ? Math.max(...observedCandidates)
+   : null;
+
+ const holderCountIsLowerBound=
+  holderCount==null &&
+  observedHolderCount!=null;
+
+ const holderCountDisplay=
+  holderCount!=null
+   ? String(Math.round(holderCount))
+   : observedHolderCount!=null
+     ? String(Math.round(observedHolderCount))+'+'
+     : null;
+
+ const exactHolderEvidence=holderCount!=null;
+
+ const top10=
+  exactHolderEvidence
+   ? (
+      mf49Num(canonicalToken.top10Pct) ??
+      mf49Num(known.top10Pct)
+     )
+   : null;
+
+ const top10PctApprox=
+  !exactHolderEvidence
+   ? mf49Num(holderLedger?.top10Pct)
+   : null;
+
+ const developerPctApprox=
+  !exactHolderEvidence
+   ? mf49Num(holderLedger?.developerPct)
+   : null;
+
+ const top10PctDisplay=
+  top10!=null
+   ? null
+   : top10PctApprox!=null
+     ? '~'+String(Math.round(top10PctApprox*10)/10)+'%'
+     : null;
+
+ const developerPctDisplayFallback=
+  developerPctApprox!=null
+   ? '~'+String(Math.round(developerPctApprox*10)/10)+'%'
+   : null;
+
+ const holderFresh=
+  canonicalToken.holderFresh===true ||
+  knownHolderTruth?.fresh===true ||
+  Boolean(holderLedger?.holderFresh);
+
+ if(holderCountIsLowerBound){
+  sources.add('MEMEFLOW live holder ledger');
+ }
 
  const name=canonicalToken.name||known.name||known.symbol||null;
  const symbol=canonicalToken.symbol||known.symbol||null;
@@ -4474,8 +4567,14 @@ async function mf49StandaloneScan(raw,u){
   sources.add('Live flow')
  }
 
- const creator=canonicalToken.creator||known.creator||null;
- let developerPct=mf49Num(canonicalToken.developerPct)??mf49Num(known.developerPct);
+ const creator=canonicalToken.creator||known.creator||holderLedger?.eventLedgerCreator||null;
+ let developerPct=
+  exactHolderEvidence
+   ? (
+      mf49Num(canonicalToken.developerPct) ??
+      mf49Num(known.developerPct)
+     )
+   : null;
 
  const mintParsed=mintInfo?.value?.data?.parsed?.info||{};
  const mintAuthority=mintParsed.mintAuthority??null,freezeAuthority=mintParsed.freezeAuthority??null;
@@ -4506,7 +4605,11 @@ async function mf49StandaloneScan(raw,u){
  if(typeof mf49Evaluate!=='function')throw mf49Err('src/evaluate.mjs does not export evaluate().',500,'EVALUATOR_NOT_AVAILABLE');
  const evaluation=mf49Evaluate(evalToken,u.settings);
 
- if(holderCount==null)warnings.push('Exact holder count is unavailable because the canonical holder scan did not complete.');
+ if(holderCount==null&&observedHolderCount!=null){
+  warnings.push(`Exact holder total is unavailable; ${Math.round(observedHolderCount)}+ is the live MEMEFLOW lower bound.`);
+ }else if(holderCount==null){
+  warnings.push('Exact holder count is unavailable because the canonical holder scan did not complete.');
+ }
  if(developerPct==null)warnings.push('Developer holding is unavailable unless the creator is known.');
  if(priceSol==null&&priceUsd==null)warnings.push('No MEMEFLOW or bonding-curve price was available.');
 
@@ -4522,8 +4625,25 @@ async function mf49StandaloneScan(raw,u){
    priceChange5mPct:mf49Num(known?.market?.priceChange5mPct)??mf49Num(known.priceChange5mPct)
   },
   onchain:{
-   decimals,totalSupply:total,holderCount,holderCountDisplay,top10Pct:top10,
-   developerPct,creator,mintAuthority,freezeAuthority,holderFresh
+   decimals,
+   totalSupply:total,
+   holderCount,
+   holderCountDisplay,
+   observedHolderCount,
+   holderCountIsLowerBound,
+   top10Pct:top10,
+   top10PctApprox,
+   top10PctDisplay,
+   developerPct,
+   developerPctApprox,
+   developerPctDisplay:
+    developerPct!=null
+     ? null
+     : developerPctDisplayFallback,
+   creator,
+   mintAuthority,
+   freezeAuthority,
+   holderFresh
   },
   settingsApplied:{
    minScore:u.settings?.minScore,maxTop10Pct:u.settings?.maxTop10Pct,

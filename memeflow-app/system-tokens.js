@@ -3299,8 +3299,8 @@ function __mfScanRenderV27({scan,liveRow,buyContext}){
       <div class="mf-scan-grid">
         <div class="mf-scan-metric"><span>Score</span><strong>${escapeHtml(__mfScanNumberV27(decision?.score,0))}</strong></div>
         <div class="mf-scan-metric"><span>Holders</span><strong>${escapeHtml(chain?.holderCountDisplay??chain?.holderCount??holderCount(liveRow||{}))}</strong></div>
-        <div class="mf-scan-metric"><span>Top 10</span><strong>${finite(chain?.top10Pct)?escapeHtml(__mfScanNumberV27(chain.top10Pct,1)+'%'):'—'}</strong></div>
-        <div class="mf-scan-metric"><span>Dev</span><strong>${finite(chain?.developerPct)?escapeHtml(__mfScanNumberV27(chain.developerPct,1)+'%'):'—'}</strong></div>
+        <div class="mf-scan-metric"><span>Top 10</span><strong>${chain?.top10PctDisplay?escapeHtml(chain.top10PctDisplay):(finite(chain?.top10Pct)?escapeHtml(__mfScanNumberV27(chain.top10Pct,1)+'%'):'—')}</strong></div>
+        <div class="mf-scan-metric"><span>Dev</span><strong>${chain?.developerPctDisplay?escapeHtml(chain.developerPctDisplay):(finite(chain?.developerPct)?escapeHtml(__mfScanNumberV27(chain.developerPct,1)+'%'):'—')}</strong></div>
         <div class="mf-scan-metric"><span>MC</span><strong>${escapeHtml(__mfScanCompactUsdV27(market?.marketCapUsd))}</strong></div>
         <div class="mf-scan-metric"><span>Buy pressure</span><strong>${finite(market?.buyPressure)?escapeHtml(__mfScanNumberV27(market.buyPressure,2)+'×'):'—'}</strong></div>
       </div>
