@@ -1046,6 +1046,135 @@ async function loadErrorAwareConfidence(){
   }
 }
 
+/* MEMEFLOW_SHADOW_ERROR_AWARE_BENCHMARK_V23_19_UI_JS */
+function renderErrorAwareBenchmark(payload={}){
+  const report=payload?.report||{};
+  const raw=report?.raw||{};
+  const challenger=report?.challenger||{};
+  const delta=report?.delta||{};
+  const verdict=report?.verdict||{};
+
+  const badge=$('errorAwareBenchmarkVerdict');
+
+  if(badge){
+    const status=
+      String(verdict?.status||'COLD START');
+
+    badge.className=
+      'oi-ai-status '+
+      (
+        status==='ERROR_AWARE_CHALLENGER_WINS'
+          ? 'online'
+          : (
+              status==='RAW_V23_WINS'
+                ? 'offline'
+                : ''
+            )
+      );
+
+    badge.textContent=
+      status.replaceAll('_',' ');
+  }
+
+  $('errorAwareBenchmarkPaired').textContent=
+    `${num(report?.pairedRows,0)} / ${num(report?.requirements?.paired5m||100,0)}`;
+
+  $('errorAwareBenchmarkBalance').textContent=
+    `${num(report?.positive,0)} / ${num(report?.negative,0)}`;
+
+  $('errorAwareBenchmarkBrier').textContent=
+    num(delta?.brier,6);
+
+  $('errorAwareBenchmarkLogLoss').textContent=
+    num(delta?.logLoss,6);
+
+  $('errorAwareBenchmarkRaw').innerHTML=[
+    ['Brier',num(raw?.meanBrier,6)],
+    ['Log-loss',num(raw?.meanLogLoss,6)],
+    ['Accuracy',pct(raw?.accuracyPct)],
+    ['ECE',pct(raw?.ecePct)],
+    [
+      'High-conf miss rate',
+      pct(raw?.highConfidenceMissRatePct)
+    ],
+    [
+      'FP / FN',
+      `${num(raw?.falsePositives,0)} / ${num(raw?.falseNegatives,0)}`
+    ]
+  ].map(([name,value])=>`
+    <div class="oi-row">
+      <span>${esc(name)}</span>
+      <strong>${esc(value)}</strong>
+    </div>
+  `).join('');
+
+  $('errorAwareBenchmarkChallenger').innerHTML=[
+    ['Brier',num(challenger?.meanBrier,6)],
+    ['Log-loss',num(challenger?.meanLogLoss,6)],
+    ['Accuracy',pct(challenger?.accuracyPct)],
+    ['ECE',pct(challenger?.ecePct)],
+    [
+      'High-conf miss rate',
+      pct(challenger?.highConfidenceMissRatePct)
+    ],
+    [
+      'FP / FN',
+      `${num(challenger?.falsePositives,0)} / ${num(challenger?.falseNegatives,0)}`
+    ],
+    [
+      'Paired wins',
+      `${num(report?.pairedWins?.challenger,0)} / ${num(report?.pairedWins?.raw,0)}`
+    ]
+  ].map(([name,value])=>`
+    <div class="oi-row">
+      <span>${esc(name)}</span>
+      <strong>${esc(value)}</strong>
+    </div>
+  `).join('');
+
+  const reason=$('errorAwareBenchmarkReason');
+
+  if(reason){
+    reason.dataset.state=
+      verdict?.reviewEligible===true
+        ? 'ready'
+        : 'blocked';
+
+    reason.textContent=
+      verdict?.reviewEligible===true
+        ? 'ERROR-AWARE CHALLENGER PASSED THE PAIRED SHADOW BENCHMARK. Manual review only; no automatic promotion occurred.'
+        : String(
+            verdict?.reason||
+            'Waiting for additional paired evidence.'
+          ).replaceAll('_',' ');
+  }
+}
+
+async function loadErrorAwareBenchmark(){
+  try{
+    const payload=await api(
+      '/api/owner/intelligence/error-aware-benchmark?horizonMs=300000'
+    );
+
+    renderErrorAwareBenchmark(payload);
+  }catch(error){
+    const badge=$('errorAwareBenchmarkVerdict');
+
+    if(badge){
+      badge.className='oi-ai-status offline';
+      badge.textContent='UNAVAILABLE';
+    }
+
+    const reason=$('errorAwareBenchmarkReason');
+
+    if(reason){
+      reason.dataset.state='blocked';
+      reason.textContent=
+        `Benchmark unavailable: ${error.message}`;
+    }
+  }
+}
+
 /* MEMEFLOW_SHADOW_PROMOTION_REPORT_V23_14_UI_JS */
 function promotionTone(status=''){
   const s=String(status||'').toUpperCase();
@@ -1959,7 +2088,8 @@ async function load(
       loadTokenScorecards(),
       loadOutcomeReviews(),
       loadErrorPatterns(),
-      loadErrorAwareConfidence()
+      loadErrorAwareConfidence(),
+      loadErrorAwareBenchmark()
     ]);
 
     if(previous){

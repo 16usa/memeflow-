@@ -6944,6 +6944,57 @@ async function handler(req,res){const url=new URL(req.url,'http://x');
    });
  }
 
+/* MEMEFLOW_SHADOW_ERROR_AWARE_BENCHMARK_MONITOR_V23_19
+ * Owner-only paired validation of raw V23 vs benchmark-only
+ * confidence-shrunk challenger. No live probability mutation.
+ */
+ if(
+   url.pathname==='/api/owner/intelligence/error-aware-benchmark' &&
+   req.method==='GET'
+ ){
+   if(!u)return json(res,401,{error:'AUTH_REQUIRED'});
+   if(u.isOwner!==true)return json(res,403,{error:'OWNER_REQUIRED'});
+
+   const horizonMs=Math.max(
+     1,
+     Number(
+       url.searchParams.get('horizonMs')||300000
+     )
+   );
+
+   const limit=Math.max(
+     1,
+     Math.min(
+       200,
+       Number(
+         url.searchParams.get('limit')||30
+       )
+     )
+   );
+
+   return json(res,200,{
+     ok:true,
+     owner:true,
+     shadowOnly:true,
+     liveProbabilityMutation:false,
+     benchmarkDerivedProbabilityOnly:true,
+     autoPromotion:false,
+     status:
+       tokenIntelligenceShadowV23
+         .errorAwareBenchmarkStatus(),
+     report:
+       tokenIntelligenceShadowV23
+         .errorAwareBenchmarkReport({
+           horizonMs
+         }),
+     recent:
+       tokenIntelligenceShadowV23
+         .listErrorAwareBenchmarkRows({
+           limit
+         })
+   });
+ }
+
 /* MEMEFLOW_PUBLIC_AGENT_ENTITY_V2_ROUTES */
  if(url.pathname==='/api/owner/public-agent'&&req.method==='GET'){if(!u)return json(res,401,{error:'AUTH_REQUIRED'});if(u.isOwner!==true)return json(res,403,{error:'OWNER_REQUIRED'});const st=__mfPublicAgentState(u.id);return json(res,200,{ok:true,owner:true,config:st.config,queue:st.queue.slice(0,50),audit:st.audit.slice(0,50),x:{connected:false,transport:'disabled-v2'},safety:{testDraftsNeverPublish:true}})}
  if(url.pathname==='/api/owner/public-agent/config'&&req.method==='PUT'){if(!u)return json(res,401,{error:'AUTH_REQUIRED'});if(u.isOwner!==true)return json(res,403,{error:'OWNER_REQUIRED'});const b=await body(req),st=__mfPublicAgentState(u.id),mode=String(b?.mode||st.config.mode||'approval').toLowerCase();if(!['off','approval','autonomous'].includes(mode))return json(res,400,{error:'INVALID_MODE'});const e=b?.events&&typeof b.events==='object'?b.events:{};st.config={...st.config,enabled:b?.enabled===true,mode,displayName:__mfPublicAgentSafe(b?.displayName??st.config.displayName,40),voice:['terminal','minimal'].includes(String(b?.voice))?String(b.voice):st.config.voice,xConnected:false,events:{watch:e.watch!==false,buyReady:e.buyReady!==false,positions:e.positions!==false,risk:e.risk!==false}};const at=new Date().toISOString();st.audit.unshift({at,type:'CONFIG_UPDATED',mode:st.config.mode,enabled:st.config.enabled});st.audit=st.audit.slice(0,200);store.save();return json(res,200,{ok:true,config:st.config})}

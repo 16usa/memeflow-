@@ -51,6 +51,9 @@ import {
 import {
   createShadowErrorAwareConfidenceV23_18
 } from './shadow-error-aware-confidence-v23_18.mjs';
+import {
+  createShadowErrorAwareBenchmarkV23_19
+} from './shadow-error-aware-benchmark-v23_19.mjs';
 
 // MEMEFLOW_TOKEN_INTELLIGENCE_NETWORK_V23
 //
@@ -842,6 +845,11 @@ export function createTokenIntelligenceShadowV23({
         shadowErrorPatternLearner
     });
 
+  const shadowErrorAwareBenchmark=
+    createShadowErrorAwareBenchmarkV23_19({
+      dataDir
+    });
+
   const metrics={
     observations:0,
     cellsCreated:0,
@@ -1022,6 +1030,14 @@ export function createTokenIntelligenceShadowV23({
         });
 
         shadowChampionBenchmark.recordOutcome({
+          anchor:cell.anchor,
+          outcome
+        });
+
+        // MEMEFLOW_SHADOW_ERROR_AWARE_BENCHMARK_V23_19
+        // Paired benchmark only. Challenger probability is derived
+        // inside the benchmark from frozen V23.18 confidence.
+        shadowErrorAwareBenchmark.recordOutcome({
           anchor:cell.anchor,
           outcome
         });
@@ -1379,7 +1395,7 @@ export function createTokenIntelligenceShadowV23({
     }
 
     return {
-      version:'MEMEFLOW_TOKEN_INTELLIGENCE_NETWORK_V23_18',
+      version:'MEMEFLOW_TOKEN_INTELLIGENCE_NETWORK_V23_19',
       shadowOnly:true,
       specialists:[
         'FLOW',
@@ -1414,7 +1430,8 @@ export function createTokenIntelligenceShadowV23({
       tokenIntelligenceScorecard:tokenIntelligenceScorecard.status(),
       shadowOutcomeReview:shadowOutcomeReview.status(),
       shadowErrorPatternLearner:shadowErrorPatternLearner.status(),
-      shadowErrorAwareConfidence:shadowErrorAwareConfidence.status()
+      shadowErrorAwareConfidence:shadowErrorAwareConfidence.status(),
+      shadowErrorAwareBenchmark:shadowErrorAwareBenchmark.status()
     };
   }
 
@@ -1517,6 +1534,16 @@ export function createTokenIntelligenceShadowV23({
       ()=>shadowErrorAwareConfidence.status(),
     listErrorAwareConfidence:
       options=>shadowErrorAwareConfidence.listRecent(options),
+    errorAwareBenchmarkStatus:
+      ()=>shadowErrorAwareBenchmark.status(),
+    errorAwareBenchmarkReport:
+      options=>shadowErrorAwareBenchmark.report(options),
+    errorAwareBenchmarkHorizonReport:
+      ()=>shadowErrorAwareBenchmark.horizonReport(),
+    listErrorAwareBenchmarkRows:
+      options=>shadowErrorAwareBenchmark.listRecent(options),
+    flushErrorAwareBenchmark:
+      ()=>shadowErrorAwareBenchmark.flush(),
     status
   };
 }

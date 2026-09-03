@@ -1021,6 +1021,20 @@ textarea{
 }
 
 /* ==========================================================
+   MEMEFLOW_SHADOW_ERROR_AWARE_BENCHMARK_V23_19
+   ========================================================== */
+
+.oi-error-aware-benchmark
+.oi-grid-2{
+  margin-top:12px;
+}
+
+.oi-error-aware-benchmark
+.oi-list{
+  margin-top:7px;
+}
+
+/* ==========================================================
    MEMEFLOW_SHADOW_PROMOTION_REPORT_V23_14
    ========================================================== */
 

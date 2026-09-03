@@ -566,6 +566,85 @@
         ></div>
       </section>
 
+      <!-- MEMEFLOW_SHADOW_ERROR_AWARE_BENCHMARK_V23_19_UI -->
+      <section
+        id="errorAwareBenchmarkMonitor"
+        class="oi-panel oi-error-aware-benchmark"
+      >
+        <div class="oi-panel-head">
+          <div>
+            <span class="oi-eyebrow">
+              PAIRED 5M VALIDATION · SHADOW
+            </span>
+            <h2>V23.18 Challenger Benchmark</h2>
+            <p>
+              Raw V23 is compared against a benchmark-only probability
+              shrunk toward 50% according to V23.18 confidence.
+              The live V23 probability is never changed.
+            </p>
+          </div>
+
+          <span
+            id="errorAwareBenchmarkVerdict"
+            class="oi-ai-status"
+          >
+            LOADING
+          </span>
+        </div>
+
+        <div class="oi-grid oi-grid-4">
+          <article class="oi-stat">
+            <span>PAIRED 5M</span>
+            <strong id="errorAwareBenchmarkPaired">—</strong>
+            <small>target 100</small>
+          </article>
+
+          <article class="oi-stat">
+            <span>CLASS BALANCE</span>
+            <strong id="errorAwareBenchmarkBalance">—</strong>
+            <small>positive / negative</small>
+          </article>
+
+          <article class="oi-stat">
+            <span>BRIER Δ</span>
+            <strong id="errorAwareBenchmarkBrier">—</strong>
+            <small>positive favors challenger</small>
+          </article>
+
+          <article class="oi-stat">
+            <span>LOG-LOSS Δ</span>
+            <strong id="errorAwareBenchmarkLogLoss">—</strong>
+            <small>positive favors challenger</small>
+          </article>
+        </div>
+
+        <div class="oi-grid oi-grid-2">
+          <div>
+            <h3>Raw V23</h3>
+            <div
+              id="errorAwareBenchmarkRaw"
+              class="oi-list"
+            ></div>
+          </div>
+
+          <div>
+            <h3>Error-aware challenger</h3>
+            <div
+              id="errorAwareBenchmarkChallenger"
+              class="oi-list"
+            ></div>
+          </div>
+        </div>
+
+        <div
+          id="errorAwareBenchmarkReason"
+          class="oi-promotion-blocker"
+          data-state="blocked"
+        >
+          Waiting for paired 5m outcomes.
+        </div>
+      </section>
+
       <!-- MEMEFLOW_PLATFORM_LEARNING_V2_UI -->
       <section class="oi-panel">
         <div class="oi-panel-head">
