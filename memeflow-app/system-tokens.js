@@ -1619,10 +1619,19 @@ function tokenTemplate(row, index) {
           <div data-mf-card-analysis-body></div>
         </div>
 
-        <div class="mf-card-static-context-v14">
-          <div class="mf-card-context-row-v14"><span>Primary signal</span><strong>${escapeHtml(tokenReason(row))}</strong></div>
-          <div class="mf-card-context-row-v14"><span>Risk gates</span><strong>${escapeHtml(tokenGateSummary(row))}</strong></div>
-          <div class="mf-card-context-row-v14"><span>Mint</span><strong class="mf-card-mint-v14">${escapeHtml(row?.mint || '—')}</strong></div>
+        <div class="mf-card-static-context-v15">
+          <div class="mf-card-context-row-v15">
+            <span>Signal</span>
+            <strong>${escapeHtml(tokenReason(row))}</strong>
+          </div>
+          <div class="mf-card-context-row-v15">
+            <span>Risk</span>
+            <strong>${escapeHtml(tokenGateSummary(row))}</strong>
+          </div>
+          <div class="mf-card-context-row-v15">
+            <span>Mint</span>
+            <strong class="mf-card-mint-v15">${escapeHtml(shortMint(row?.mint || ''))}</strong>
+          </div>
         </div>
 
       </div>
@@ -1768,22 +1777,23 @@ async function __mfRunCardAnalysisV13(card){
     const freshState=decision?.state||scan?.analysisStatus||'—';
 
     body.innerHTML=`
-      <div class="mf-card-analysis-summary-v14">
-        <div><span>State</span><strong>${escapeHtml(freshState)}</strong></div>
-        <div><span>Score</span><strong>${escapeHtml(scoreLabel)}</strong></div>
-        <div><span>Confidence</span><strong>${escapeHtml(confidenceLabel)}</strong></div>
+      <div class="mf-analysis-head-v15">
+        <span>Fresh</span>
+        <strong>${escapeHtml(freshState)}</strong>
+        <span>Score <b>${escapeHtml(scoreLabel)}</b></span>
+        <span>Conf <b>${escapeHtml(confidenceLabel)}</b></span>
       </div>
-      <div class="mf-card-analysis-grid mf-card-analysis-grid-v14">
-        <div class="detail-block"><span>Holders</span><p>${escapeHtml(holders)}</p></div>
-        <div class="detail-block"><span>Top 10</span><p>${escapeHtml(finite(onchain?.top10Pct)?fmt(onchain.top10Pct,2)+'%':'—')}</p></div>
-        <div class="detail-block"><span>DEV</span><p>${escapeHtml(finite(onchain?.developerPct)?fmt(onchain.developerPct,2)+'%':'—')}</p></div>
-        <div class="detail-block"><span>Market cap</span><p>${escapeHtml(__mfScanCompactUsdV27(market?.marketCapUsd))}</p></div>
-        <div class="detail-block"><span>Liquidity</span><p>${escapeHtml(scan?.migrated===true&&Number(market?.liquidityUsd)===0?'—':__mfScanCompactUsdV27(market?.liquidityUsd))}</p></div>
-        <div class="detail-block"><span>Buy pressure</span><p>${escapeHtml(finite(market?.buyPressure)?fmt(market.buyPressure,2)+'×':'—')}</p></div>
-        <div class="detail-block"><span>Volume 5m</span><p>${escapeHtml(__mfScanCompactUsdV27(market?.volume5mUsd))}</p></div>
-        <div class="detail-block"><span>Tx 5m</span><p>${escapeHtml(finite(market?.transactions5m)?fmt(market.transactions5m,0):'—')}</p></div>
-        <div class="detail-block"><span>Mint auth</span><p>${escapeHtml(yn(onchain?.mintAuthorityPresent))}</p></div>
-        <div class="detail-block"><span>Freeze auth</span><p>${escapeHtml(yn(onchain?.freezeAuthorityPresent))}</p></div>
+      <div class="mf-analysis-strip-v15">
+        <div><span>Holders</span><strong>${escapeHtml(holders)}</strong></div>
+        <div><span>Top 10</span><strong>${escapeHtml(finite(onchain?.top10Pct)?fmt(onchain.top10Pct,2)+'%':'—')}</strong></div>
+        <div><span>DEV</span><strong>${escapeHtml(finite(onchain?.developerPct)?fmt(onchain.developerPct,2)+'%':'—')}</strong></div>
+        <div><span>MC</span><strong>${escapeHtml(__mfScanCompactUsdV27(market?.marketCapUsd))}</strong></div>
+        <div><span>Liq</span><strong>${escapeHtml(scan?.migrated===true&&Number(market?.liquidityUsd)===0?'—':__mfScanCompactUsdV27(market?.liquidityUsd))}</strong></div>
+        <div><span>Buy ×</span><strong>${escapeHtml(finite(market?.buyPressure)?fmt(market.buyPressure,2)+'×':'—')}</strong></div>
+        <div><span>Vol 5m</span><strong>${escapeHtml(__mfScanCompactUsdV27(market?.volume5mUsd))}</strong></div>
+        <div><span>Tx 5m</span><strong>${escapeHtml(finite(market?.transactions5m)?fmt(market.transactions5m,0):'—')}</strong></div>
+        <div><span>Mint A</span><strong>${escapeHtml(yn(onchain?.mintAuthorityPresent))}</strong></div>
+        <div><span>Freeze</span><strong>${escapeHtml(yn(onchain?.freezeAuthorityPresent))}</strong></div>
       </div>`;
   }catch(error){
     if(card.dataset.mfAnalysisRequest!==requestId)return;
