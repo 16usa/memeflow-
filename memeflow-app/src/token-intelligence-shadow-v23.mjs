@@ -60,6 +60,9 @@ import {
 import {
   createShadowPolicySimulatorV23_21
 } from './shadow-policy-simulator-v23_21.mjs';
+import {
+  createShadowPolicyReviewGateV23_22
+} from './shadow-policy-review-gate-v23_22.mjs';
 
 // MEMEFLOW_TOKEN_INTELLIGENCE_NETWORK_V23
 //
@@ -872,6 +875,20 @@ export function createTokenIntelligenceShadowV23({
         shadowErrorAwareBenchmark
     });
 
+  const shadowPolicyReviewGate=
+    createShadowPolicyReviewGateV23_22({
+      policyCandidateBuilder:
+        shadowPolicyCandidateBuilder,
+      policySimulator:
+        shadowPolicySimulator,
+      errorAwareBenchmark:
+        shadowErrorAwareBenchmark,
+      outcomeCalibration:
+        shadowOutcomeCalibration,
+      driftRegime:
+        shadowDriftRegime
+    });
+
   const metrics={
     observations:0,
     cellsCreated:0,
@@ -1417,7 +1434,7 @@ export function createTokenIntelligenceShadowV23({
     }
 
     return {
-      version:'MEMEFLOW_TOKEN_INTELLIGENCE_NETWORK_V23_21',
+      version:'MEMEFLOW_TOKEN_INTELLIGENCE_NETWORK_V23_22',
       shadowOnly:true,
       specialists:[
         'FLOW',
@@ -1455,7 +1472,8 @@ export function createTokenIntelligenceShadowV23({
       shadowErrorAwareConfidence:shadowErrorAwareConfidence.status(),
       shadowErrorAwareBenchmark:shadowErrorAwareBenchmark.status(),
       shadowPolicyCandidateBuilder:shadowPolicyCandidateBuilder.status(),
-      shadowPolicySimulator:shadowPolicySimulator.status()
+      shadowPolicySimulator:shadowPolicySimulator.status(),
+      shadowPolicyReviewGate:shadowPolicyReviewGate.status()
     };
   }
 
@@ -1576,6 +1594,10 @@ export function createTokenIntelligenceShadowV23({
       ()=>shadowPolicySimulator.status(),
     runPolicySimulation:
       ()=>shadowPolicySimulator.simulate(),
+    policyReviewGateStatus:
+      ()=>shadowPolicyReviewGate.status(),
+    evaluatePolicyReviewGate:
+      ()=>shadowPolicyReviewGate.evaluate(),
     status
   };
 }

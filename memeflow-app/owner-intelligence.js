@@ -1486,6 +1486,170 @@ async function loadPolicySimulation(){
   }
 }
 
+/* MEMEFLOW_SHADOW_POLICY_REVIEW_GATE_V23_22_UI_JS */
+function renderPolicyReview(payload={}){
+  const result=payload?.result||{};
+  const metrics=
+    result?.simulation?.metrics||{};
+  const gates=
+    Array.isArray(result?.gates)
+      ? result.gates
+      : [];
+
+  const badge=$('policyReviewStatus');
+
+  if(badge){
+    badge.className=
+      'oi-ai-status '+
+      (
+        result?.candidateForManualReview===true
+          ? 'online'
+          : (
+              result?.status==='POLICY_REVIEW_BLOCKED'
+                ? 'offline'
+                : ''
+            )
+      );
+
+    badge.textContent=
+      String(
+        result?.status||'UNKNOWN'
+      ).replaceAll('_',' ');
+  }
+
+  $('policyReviewEvaluable').textContent=
+    num(metrics?.evaluableRows,0);
+
+  $('policyReviewAffected').textContent=
+    num(metrics?.affectedRows,0);
+
+  $('policyReviewPrecision').textContent=
+    pct(metrics?.negativePrecisionPct);
+
+  $('policyReviewOpportunityCost').textContent=
+    pct(metrics?.positiveOpportunityCostPct);
+
+  $('policyReviewGates').innerHTML=
+    gates.length
+      ? gates.map(row=>`
+          <div class="oi-promotion-check ${row?.pass===true?'pass':'fail'}">
+            <span class="oi-promotion-check-dot"></span>
+            <div>
+              <strong>${esc(row?.label||row?.id||'Gate')}</strong>
+              <small>
+                ${esc(row?.kind||'QUALITY')}
+                · actual ${esc(String(row?.actual??'—'))}
+                · required ${esc(String(row?.required??'—'))}
+              </small>
+            </div>
+          </div>
+        `).join('')
+      : `
+          <div class="oi-empty">
+            Final review gates unavailable.
+          </div>
+        `;
+
+  const packet=$('policyReviewPacket');
+
+  if(packet){
+    packet.innerHTML=[
+      [
+        'Candidate',
+        result?.candidate?.candidateId||'—'
+      ],
+      [
+        'Mode',
+        result?.candidate?.mode||'—'
+      ],
+      [
+        'Recommendation',
+        String(
+          result?.reviewPacket
+            ?.recommendation||'—'
+        ).replaceAll('_',' ')
+      ],
+      [
+        'Calibration',
+        result?.calibration?.status||'—'
+      ],
+      [
+        'Calibration ECE',
+        pct(result?.calibration?.ecePct)
+      ],
+      [
+        'Drift',
+        result?.drift?.status||'—'
+      ],
+      [
+        'Brier Δ',
+        num(
+          result?.benchmark
+            ?.brierDelta,
+          6
+        )
+      ],
+      [
+        'Log-loss Δ',
+        num(
+          result?.benchmark
+            ?.logLossDelta,
+          6
+        )
+      ]
+    ].map(([name,value])=>`
+      <div class="oi-row">
+        <span>${esc(name)}</span>
+        <strong>${esc(value)}</strong>
+      </div>
+    `).join('');
+  }
+
+  const verdict=$('policyReviewVerdict');
+
+  if(verdict){
+    verdict.dataset.state=
+      result?.candidateForManualReview===true
+        ? 'ready'
+        : 'blocked';
+
+    verdict.textContent=
+      result?.candidateForManualReview===true
+        ? 'CANDIDATE FOR MANUAL OWNER REVIEW. No live policy changed, no automatic promotion occurred, and no apply endpoint exists.'
+        : (
+            Array.isArray(result?.blockers) &&
+            result.blockers.length
+          )
+            ? `Blocked: ${result.blockers.join(', ').replaceAll('_',' ')}`
+            : 'Not eligible for manual policy review yet.';
+  }
+}
+
+async function loadPolicyReview(){
+  try{
+    const payload=await api(
+      '/api/owner/intelligence/policy-review'
+    );
+
+    renderPolicyReview(payload);
+  }catch(error){
+    const badge=$('policyReviewStatus');
+
+    if(badge){
+      badge.className='oi-ai-status offline';
+      badge.textContent='UNAVAILABLE';
+    }
+
+    const verdict=$('policyReviewVerdict');
+
+    if(verdict){
+      verdict.dataset.state='blocked';
+      verdict.textContent=
+        `Policy review gate unavailable: ${error.message}`;
+    }
+  }
+}
+
 /* MEMEFLOW_SHADOW_PROMOTION_REPORT_V23_14_UI_JS */
 function promotionTone(status=''){
   const s=String(status||'').toUpperCase();
@@ -2402,7 +2566,8 @@ async function load(
       loadErrorAwareConfidence(),
       loadErrorAwareBenchmark(),
       loadPolicyCandidate(),
-      loadPolicySimulation()
+      loadPolicySimulation(),
+      loadPolicyReview()
     ]);
 
     if(previous){

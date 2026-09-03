@@ -803,6 +803,86 @@
         </div>
       </section>
 
+      <!-- MEMEFLOW_SHADOW_POLICY_REVIEW_GATE_V23_22_UI -->
+      <section
+        id="policyReviewMonitor"
+        class="oi-panel oi-policy-review"
+      >
+        <div class="oi-panel-head">
+          <div>
+            <span class="oi-eyebrow">
+              FINAL READINESS · MANUAL REVIEW ONLY
+            </span>
+            <h2>V23.22 Policy Review Gate</h2>
+            <p>
+              Combines the V23.20 candidate, V23.21 simulation,
+              V23.19 forecast benchmark, calibration and drift into
+              one final owner review-readiness verdict. There is no
+              apply endpoint and nothing can auto-promote.
+            </p>
+          </div>
+
+          <span
+            id="policyReviewStatus"
+            class="oi-ai-status"
+          >
+            LOADING
+          </span>
+        </div>
+
+        <div class="oi-grid oi-grid-4">
+          <article class="oi-stat">
+            <span>EVALUABLE</span>
+            <strong id="policyReviewEvaluable">—</strong>
+            <small>review gate target 150</small>
+          </article>
+
+          <article class="oi-stat">
+            <span>AFFECTED</span>
+            <strong id="policyReviewAffected">—</strong>
+            <small>review gate target 20</small>
+          </article>
+
+          <article class="oi-stat">
+            <span>NEG PRECISION</span>
+            <strong id="policyReviewPrecision">—</strong>
+            <small>target ≥65%</small>
+          </article>
+
+          <article class="oi-stat">
+            <span>OPPORTUNITY COST</span>
+            <strong id="policyReviewOpportunityCost">—</strong>
+            <small>target ≤10%</small>
+          </article>
+        </div>
+
+        <div class="oi-grid oi-grid-2">
+          <div>
+            <h3>Final gates</h3>
+            <div
+              id="policyReviewGates"
+              class="oi-promotion-checks"
+            ></div>
+          </div>
+
+          <div>
+            <h3>Review packet</h3>
+            <div
+              id="policyReviewPacket"
+              class="oi-list"
+            ></div>
+          </div>
+        </div>
+
+        <div
+          id="policyReviewVerdict"
+          class="oi-promotion-blocker"
+          data-state="blocked"
+        >
+          Not eligible for manual policy review yet.
+        </div>
+      </section>
+
       <!-- MEMEFLOW_PLATFORM_LEARNING_V2_UI -->
       <section class="oi-panel">
         <div class="oi-panel-head">
