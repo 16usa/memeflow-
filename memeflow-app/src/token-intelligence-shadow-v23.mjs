@@ -6,6 +6,9 @@ import {
 import {
   createLearningDatasetShadowV23_3
 } from './learning-dataset-shadow-v23_3.mjs';
+import {
+  createShadowMathBrainV23_4
+} from './shadow-math-brain-v23_4.mjs';
 
 // MEMEFLOW_TOKEN_INTELLIGENCE_NETWORK_V23
 //
@@ -717,6 +720,11 @@ export function createTokenIntelligenceShadowV23({
       dataDir
     });
 
+  const shadowMathBrain=
+    createShadowMathBrainV23_4({
+      learningDataset
+    });
+
   const metrics={
     observations:0,
     cellsCreated:0,
@@ -764,6 +772,15 @@ export function createTokenIntelligenceShadowV23({
       }
 
       const snapshot=cell.observe(event,token,Date.now(),walletReputation);
+
+      // MEMEFLOW_SHADOW_MATH_BRAIN_V23_4
+      // Diagnostic probability only. It is intentionally attached AFTER
+      // canonical evidence generation and cannot alter evaluate()/V22.
+      snapshot.shadowMathBrain=
+        shadowMathBrain.predict(
+          snapshot,
+          {mint}
+        );
 
       if(cell.maybeAnchor(token,snapshot,journal)){
         metrics.anchors++;
@@ -892,6 +909,20 @@ export function createTokenIntelligenceShadowV23({
               snap?.specialists?.coordination
                 ?.sameSlotBuySharePct??0
           },
+          shadowMathBrain:{
+            status:
+              snap?.shadowMathBrain?.status||'COLD_START',
+            modelReady:
+              snap?.shadowMathBrain?.modelReady===true,
+            validated:
+              snap?.shadowMathBrain?.validated===true,
+            probabilityPositivePct:
+              snap?.shadowMathBrain
+                ?.probabilityPositivePct??null,
+            modelConfidencePct:
+              snap?.shadowMathBrain
+                ?.modelConfidencePct??0
+          },
           smartMoneyMemory:{
             reputationReady:
               snap?.specialists?.smartMoneyMemory
@@ -927,7 +958,7 @@ export function createTokenIntelligenceShadowV23({
     }
 
     return {
-      version:'MEMEFLOW_TOKEN_INTELLIGENCE_NETWORK_V23_3',
+      version:'MEMEFLOW_TOKEN_INTELLIGENCE_NETWORK_V23_4',
       shadowOnly:true,
       specialists:[
         'FLOW',
@@ -947,7 +978,8 @@ export function createTokenIntelligenceShadowV23({
       ...metrics,
       journal:journal.status(),
       walletReputation:walletReputation.status(),
-      learningDataset:learningDataset.status()
+      learningDataset:learningDataset.status(),
+      shadowMathBrain:shadowMathBrain.status()
     };
   }
 
@@ -968,6 +1000,10 @@ export function createTokenIntelligenceShadowV23({
       options=>learningDataset.featureReport(options),
     flushLearningDataset:
       ()=>learningDataset.flush(),
+    shadowBrainStatus:
+      ()=>shadowMathBrain.status(),
+    listShadowBrainPredictions:
+      options=>shadowMathBrain.listRecent(options),
     status
   };
 }

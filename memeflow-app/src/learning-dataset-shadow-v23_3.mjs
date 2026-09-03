@@ -665,6 +665,27 @@ export function createLearningDatasetShadowV23_3({
       .slice(0,safeLimit);
   }
 
+  function trainingRows({
+    limit=1200,
+    horizonMs=300_000
+  }={}){
+    const safeLimit=Math.max(
+      1,
+      Math.min(5000,Number(limit)||1200)
+    );
+
+    const wantedHorizon=finite(horizonMs);
+
+    return rows
+      .filter(row=>row.quality?.clean===true)
+      .filter(
+        row=>
+          wantedHorizon===null ||
+          Number(row.horizonMs)===wantedHorizon
+      )
+      .slice(-safeLimit);
+  }
+
   function status(){
     const horizons=[...horizonStats.values()]
       .sort((a,b)=>a.horizonMs-b.horizonMs)
@@ -716,6 +737,9 @@ export function createLearningDatasetShadowV23_3({
     recordOutcome,
     featureReport,
     recent,
+    // Internal model-training view. Owner HTTP routes do not expose an
+    // unbounded dataset dump.
+    trainingRows,
     status,
     flush
   };
