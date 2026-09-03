@@ -1737,66 +1737,273 @@ function render() {
 
 
 // MEMEFLOW_CARD_ON_DEMAND_ANALYSIS_V13
+// MEMEFLOW_CARD_DETAILS_LIVE_AUTHORITY_V20_5
+// One token -> one mutable truth.
+//
+// For a tracked card, State / Score / Confidence / Holders / Top10 / Dev /
+// Market Cap / Liquidity / Buy Pressure / Volume 5m / Tx 5m all prefer the
+// SAME canonical live-row endpoint used by the card itself.
+//
+// The standalone scan remains useful only as deep enrichment / fallback
+// (mint authority, freeze authority, and facts absent from the live row).
+// It is never allowed to overwrite a known live-row trading verdict.
 async function __mfRunCardAnalysisV13(card){
   const mint=String(card?.dataset?.mint||'').trim();
   if(!mint)return;
+
   const status=card.querySelector('[data-mf-card-analysis-status]');
   const body=card.querySelector('[data-mf-card-analysis-body]');
   if(!status||!body)return;
 
   const requestId=String(Number(card.dataset.mfAnalysisRequest||0)+1);
   card.dataset.mfAnalysisRequest=requestId;
+
   status.hidden=false;
   status.textContent='Analyzing fresh token data…';
   body.innerHTML='';
 
+  const localRow=Array.isArray(state?.rows)
+    ? state.rows.find(row=>String(row?.mint||'')===mint)||null
+    : null;
+
   try{
-    const response=await fetch('/api/ai/standalone-scan',{
-      method:'POST',
-      cache:'no-store',
-      credentials:'same-origin',
-      headers:{'content-type':'application/json'},
-      body:JSON.stringify({input:mint})
-    });
-    const payload=await response.json().catch(()=>null);
-    if(!response.ok)throw new Error(payload?.error||payload?.message||('HTTP '+response.status));
+    const [scanSettled,liveSettled]=await Promise.allSettled([
+      fetch('/api/ai/standalone-scan',{
+        method:'POST',
+        cache:'no-store',
+        credentials:'same-origin',
+        headers:{'content-type':'application/json'},
+        body:JSON.stringify({input:mint})
+      }).then(async response=>{
+        const payload=await response.json().catch(()=>null);
+        if(!response.ok){
+          throw new Error(
+            payload?.error||
+            payload?.message||
+            ('HTTP '+response.status)
+          );
+        }
+        return payload?.scan||payload;
+      }),
+      __mfTrackedLiveRowV27(mint)
+    ]);
+
     if(card.dataset.mfAnalysisRequest!==requestId)return;
 
-    const scan=payload?.scan||payload;
-    const market=scan?.market||{};
-    const onchain=scan?.onchain||{};
-    const decision=scan?.displayEvaluation||scan?.evaluation||{};
-    const holders=onchain?.holderCountDisplay||(finite(onchain?.holderCount)?fmt(onchain.holderCount,0):'—');
-    const yn=v=>v===true?'Yes':v===false?'No':'—';
+    const scan=
+      scanSettled.status==='fulfilled'
+        ? (scanSettled.value||{})
+        : {};
 
-    // MEMEFLOW_CARD_DETAILS_COMPACT_V16
-    // Completion is represented by the compact Fresh/State/Score/Conf line below.
+    const fetchedLive=
+      liveSettled.status==='fulfilled'
+        ? liveSettled.value
+        : null;
+
+    const liveRow=fetchedLive||localRow||null;
+    const tracked=Boolean(liveRow);
+
+    const scanMarket=scan?.market||{};
+    const scanOnchain=scan?.onchain||{};
+    const liveMarket=liveRow?.market||{};
+    const liveHolder=liveRow?.holder||{};
+
+    const firstFinite=(...values)=>{
+      for(const value of values){
+        if(finite(value))return Number(value);
+      }
+      return null;
+    };
+
+    const firstPositive=(...values)=>{
+      for(const value of values){
+        if(finite(value)&&Number(value)>0)return Number(value);
+      }
+      return null;
+    };
+
+    const liveDecision=tracked
+      ? {
+          state:
+            liveRow?.decision?.state ??
+            liveRow?.state ??
+            'WAITING',
+          score:
+            liveRow?.decision?.score ??
+            liveRow?.score ??
+            null,
+          confidence:
+            liveRow?.decision?.confidence ??
+            liveRow?.confidence ??
+            null,
+          primaryReason:
+            liveRow?.decision?.primaryReason ??
+            liveRow?.primaryReason ??
+            null,
+          reasons:
+            liveRow?.decision?.reasons ??
+            liveRow?.reasons ??
+            []
+        }
+      : (
+          scan?.displayEvaluation ??
+          scan?.evaluation ??
+          {}
+        );
+
+    const liveHolderCount=firstPositive(
+      liveRow?.holderCount,
+      liveRow?.holders,
+      liveHolder?.holderCount,
+      liveHolder?.holders
+    );
+
+    const liveObservedHolder=firstPositive(
+      liveRow?.observedHolderCount,
+      liveHolder?.observedHolderCount
+    );
+
+    const scanHolderCount=firstPositive(
+      scanOnchain?.holderCount
+    );
+
+    const scanObservedHolder=firstPositive(
+      scanOnchain?.observedHolderCount
+    );
+
+    const holdersValue=tracked
+      ? (
+          liveHolderCount ??
+          liveObservedHolder
+        )
+      : (
+          scanHolderCount ??
+          scanObservedHolder
+        );
+
+    const holdersLowerBound=tracked
+      ? (
+          liveHolderCount==null &&
+          liveObservedHolder!=null
+        )
+      : (
+          scanHolderCount==null &&
+          scanObservedHolder!=null
+        );
+
+    const holders=holdersValue!=null
+      ? fmt(holdersValue,0)+(holdersLowerBound?'+':'')
+      : '—';
+
+    const marketCapUsd=tracked
+      ? firstFinite(
+          liveRow?.marketCapUsd,
+          liveMarket?.marketCapUsd
+        )
+      : firstFinite(scanMarket?.marketCapUsd);
+
+    const liquidityUsd=tracked
+      ? firstFinite(
+          liveRow?.liquidityUsd,
+          liveMarket?.liquidityUsd,
+          scanMarket?.liquidityUsd
+        )
+      : firstFinite(scanMarket?.liquidityUsd);
+
+    const buyPressure=tracked
+      ? firstFinite(
+          liveRow?.buyPressure,
+          liveMarket?.buyPressure,
+          scanMarket?.buyPressure
+        )
+      : firstFinite(scanMarket?.buyPressure);
+
+    const volume5mUsd=tracked
+      ? firstFinite(
+          liveRow?.volume5mUsd,
+          liveMarket?.volume5mUsd
+        )
+      : firstFinite(scanMarket?.volume5mUsd);
+
+    const transactions5m=tracked
+      ? firstFinite(
+          liveRow?.transactions5m,
+          liveMarket?.transactions5m
+        )
+      : firstFinite(scanMarket?.transactions5m);
+
+    const top10Pct=tracked
+      ? firstFinite(
+          liveRow?.top10Pct,
+          liveRow?.top10,
+          liveHolder?.top10Pct,
+          scanOnchain?.top10Pct
+        )
+      : firstFinite(scanOnchain?.top10Pct);
+
+    const developerPct=tracked
+      ? firstFinite(
+          liveRow?.developerPct,
+          liveRow?.developerSharePct,
+          liveHolder?.developerPct,
+          scanOnchain?.developerPct
+        )
+      : firstFinite(scanOnchain?.developerPct);
+
+    const yn=value=>
+      value===true
+        ? 'Yes'
+        : value===false
+          ? 'No'
+          : '—';
+
+    const scoreLabel=finite(liveDecision?.score)
+      ? fmt(liveDecision.score,0)
+      : '—';
+
+    const confidenceLabel=finite(liveDecision?.confidence)
+      ? fmt(liveDecision.confidence,0)+'%'
+      : '—';
+
+    const freshState=
+      liveDecision?.state ??
+      scan?.analysisStatus ??
+      '—';
+
     status.textContent='';
     status.hidden=true;
 
-    const scoreLabel=finite(decision?.score)?fmt(decision.score,0):'—';
-    const confidenceLabel=finite(decision?.confidence)?fmt(decision.confidence,0)+'%':'—';
-    const freshState=decision?.state||scan?.analysisStatus||'—';
-
     body.innerHTML=`
       <div class="mf-analysis-head-v15">
-        <span>Fresh</span>
+        <span>${tracked?'Live':'Fresh'}</span>
         <strong>${escapeHtml(freshState)}</strong>
         <span>Score <b>${escapeHtml(scoreLabel)}</b></span>
         <span>Conf <b>${escapeHtml(confidenceLabel)}</b></span>
       </div>
       <div class="mf-analysis-strip-v15">
         <div><span>Holders</span><strong>${escapeHtml(holders)}</strong></div>
-        <div><span>Top 10</span><strong>${escapeHtml(finite(onchain?.top10Pct)?fmt(onchain.top10Pct,2)+'%':'—')}</strong></div>
-        <div><span>DEV</span><strong>${escapeHtml(finite(onchain?.developerPct)?fmt(onchain.developerPct,2)+'%':'—')}</strong></div>
-        <div><span>MC</span><strong>${escapeHtml(__mfScanCompactUsdV27(market?.marketCapUsd))}</strong></div>
-        <div><span>Liq</span><strong>${escapeHtml(scan?.migrated===true&&Number(market?.liquidityUsd)===0?'—':__mfScanCompactUsdV27(market?.liquidityUsd))}</strong></div>
-        <div><span>Buy ×</span><strong>${escapeHtml(finite(market?.buyPressure)?fmt(market.buyPressure,2)+'×':'—')}</strong></div>
-        <div><span>Vol 5m</span><strong>${escapeHtml(__mfScanCompactUsdV27(market?.volume5mUsd))}</strong></div>
-        <div><span>Tx 5m</span><strong>${escapeHtml(finite(market?.transactions5m)?fmt(market.transactions5m,0):'—')}</strong></div>
-        <div><span>Mint A</span><strong>${escapeHtml(yn(onchain?.mintAuthorityPresent))}</strong></div>
-        <div><span>Freeze</span><strong>${escapeHtml(yn(onchain?.freezeAuthorityPresent))}</strong></div>
+        <div><span>Top 10</span><strong>${escapeHtml(top10Pct!=null?fmt(top10Pct,2)+'%':'—')}</strong></div>
+        <div><span>DEV</span><strong>${escapeHtml(developerPct!=null?fmt(developerPct,2)+'%':'—')}</strong></div>
+        <div><span>MC</span><strong>${escapeHtml(__mfScanCompactUsdV27(marketCapUsd))}</strong></div>
+        <div><span>Liq</span><strong>${escapeHtml(
+          scan?.migrated===true&&Number(liquidityUsd)===0
+            ? '—'
+            : __mfScanCompactUsdV27(liquidityUsd)
+        )}</strong></div>
+        <div><span>Buy ×</span><strong>${escapeHtml(buyPressure!=null?fmt(buyPressure,2)+'×':'—')}</strong></div>
+        <div><span>Vol 5m</span><strong>${escapeHtml(__mfScanCompactUsdV27(volume5mUsd))}</strong></div>
+        <div><span>Tx 5m</span><strong>${escapeHtml(transactions5m!=null?fmt(transactions5m,0):'—')}</strong></div>
+        <div><span>Mint A</span><strong>${escapeHtml(yn(scanOnchain?.mintAuthorityPresent))}</strong></div>
+        <div><span>Freeze</span><strong>${escapeHtml(yn(scanOnchain?.freezeAuthorityPresent))}</strong></div>
       </div>`;
+
+    if(
+      tracked &&
+      scanSettled.status==='rejected'
+    ){
+      status.hidden=false;
+      status.textContent='Deep on-chain enrichment unavailable; live card data is current.';
+    }
   }catch(error){
     if(card.dataset.mfAnalysisRequest!==requestId)return;
     status.hidden=false;

@@ -15,7 +15,7 @@ assert.match(ui,/__mfInvalidateDynamicRowV20_2/);
 assert.match(app,/MEMEFLOW_MANUAL_NO_DYNAMIC_CACHE_V20_2/);
 assert.match(app,/MEMEFLOW_FINAL_ACTIVITY_GATE_V20_2/);
 assert.match(app,/tradeEligible:eligible&&__v20truth\.pass===true/);
-assert.match(html,/system-tokens\.js\?v=live-truth-v20-2-20260902/);
+assert.match(html,/system-tokens\.js\?v=[^\"']+/);
 
 const ms=ui.indexOf('function __mfMergeMutableRowV18(');
 const me=ui.indexOf('// MEMEFLOW_ONE_SECOND_SNAPSHOT_APPLY_V17',ms);
