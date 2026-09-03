@@ -1,5 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import {
+  createWalletReputationMemoryV23_2
+} from './wallet-reputation-shadow-v23_2.mjs';
 
 // MEMEFLOW_TOKEN_INTELLIGENCE_NETWORK_V23
 //
@@ -286,9 +289,24 @@ function coordinationSpecialist(rows=[]){
   };
 }
 
-function specialistEvidence(rows=[],token={}){
+function specialistEvidence(rows=[],token={},walletReputation=null){
   const wallet=walletSpecialist(rows);
   const coordination=coordinationSpecialist(rows);
+  const smartMoneyMemory=
+    walletReputation?.evidenceForCandidates?.(
+      wallet.candidateWallets
+    ) || {
+      shadowOnly:true,
+      reputationReady:false,
+      candidateWallets:wallet.candidateWallets.length,
+      knownWallets:0,
+      readyWallets:0,
+      strongWallets:0,
+      strongWalletSharePct:0,
+      weightedPositiveProbabilityPct:null,
+      historicalConfidencePct:null,
+      histories:[]
+    };
 
   return {
     shadowOnly:true,
@@ -306,12 +324,15 @@ function specialistEvidence(rows=[],token={}){
     },
     coordination,
     smartMoneySeed:{
-      // Reputation is intentionally NOT guessed yet.
-      // We only retain wallet cohorts + future outcome labels so V23.x can
-      // learn reputation from MEMEFLOW's own history.
+      // Backward-compatible V23.1 seed contract.
+      // Historical reputation now lives in smartMoneyMemory below, so the
+      // seed itself must remain explicitly "not reputation-ready".
       reputationReady:false,
       candidateWallets:wallet.candidateWallets
     },
+    // MEMEFLOW_SMART_MONEY_MEMORY_V23_2
+    // Historical evidence only. Never a second Score or trade authority.
+    smartMoneyMemory,
     externalRiskContext:{
       suspectedRiskyWalletsPct:
         finite(token.suspectedRiskyWalletsPct),
@@ -443,7 +464,7 @@ class TokenCellV23{
     this.lastSnapshot=null;
   }
 
-  observe(event,token,now=Date.now()){
+  observe(event,token,now=Date.now(),walletReputation=null){
     const t=eventMs(event?.timestamp,now);
     const price=finite(token?.priceSol);
 
@@ -481,7 +502,7 @@ class TokenCellV23{
     }
 
     this.stage=this._stage(token);
-    this.lastSnapshot=this.features(token,now);
+    this.lastSnapshot=this.features(token,now,walletReputation);
     return this.lastSnapshot;
   }
 
@@ -507,7 +528,7 @@ class TokenCellV23{
     return 'ACTIVE';
   }
 
-  features(token={},now=Date.now()){
+  features(token={},now=Date.now(),walletReputation=null){
     const latestT=this.events.at(-1)?.t??now;
     const windows={};
 
@@ -536,7 +557,7 @@ class TokenCellV23{
       observedAt:now,
       eventCount:this.events.length,
       windows,
-      specialists:specialistEvidence(rows15,token),
+      specialists:specialistEvidence(rows15,token,walletReputation),
       evidence:{
         flowAcceleration:{
           tradesPerSecond1s:w1.flow.tradesPerSecond,
@@ -683,6 +704,11 @@ export function createTokenIntelligenceShadowV23({
       : null
   );
 
+  const walletReputation=
+    createWalletReputationMemoryV23_2({
+      dataDir
+    });
+
   const metrics={
     observations:0,
     cellsCreated:0,
@@ -729,13 +755,21 @@ export function createTokenIntelligenceShadowV23({
         metrics.cellsCreated++;
       }
 
-      const snapshot=cell.observe(event,token,Date.now());
+      const snapshot=cell.observe(event,token,Date.now(),walletReputation);
 
       if(cell.maybeAnchor(token,snapshot,journal)){
         metrics.anchors++;
       }
 
       const labels=cell.maybeLabels(token,journal);
+
+      for(const outcome of labels){
+        walletReputation.recordOutcome({
+          anchor:cell.anchor,
+          outcome
+        });
+      }
+
       metrics.labels+=labels.length;
       metrics.observations++;
       metrics.lastMint=mint;
@@ -841,6 +875,29 @@ export function createTokenIntelligenceShadowV23({
             sameSlotBuySharePct:
               snap?.specialists?.coordination
                 ?.sameSlotBuySharePct??0
+          },
+          smartMoneyMemory:{
+            reputationReady:
+              snap?.specialists?.smartMoneyMemory
+                ?.reputationReady===true,
+            knownWallets:
+              snap?.specialists?.smartMoneyMemory
+                ?.knownWallets??0,
+            readyWallets:
+              snap?.specialists?.smartMoneyMemory
+                ?.readyWallets??0,
+            strongWallets:
+              snap?.specialists?.smartMoneyMemory
+                ?.strongWallets??0,
+            strongWalletSharePct:
+              snap?.specialists?.smartMoneyMemory
+                ?.strongWalletSharePct??0,
+            weightedPositiveProbabilityPct:
+              snap?.specialists?.smartMoneyMemory
+                ?.weightedPositiveProbabilityPct??null,
+            historicalConfidencePct:
+              snap?.specialists?.smartMoneyMemory
+                ?.historicalConfidencePct??null
           }
         };
       });
@@ -854,7 +911,7 @@ export function createTokenIntelligenceShadowV23({
     }
 
     return {
-      version:'MEMEFLOW_TOKEN_INTELLIGENCE_NETWORK_V23_1',
+      version:'MEMEFLOW_TOKEN_INTELLIGENCE_NETWORK_V23_2',
       shadowOnly:true,
       specialists:[
         'FLOW',
@@ -865,13 +922,15 @@ export function createTokenIntelligenceShadowV23({
         'WALLET',
         'COORDINATION',
         'SMART_MONEY_SEED',
+        'SMART_MONEY_MEMORY',
         'RISK',
         'DATA_QUALITY'
       ],
       cells:cells.size,
       stages,
       ...metrics,
-      journal:journal.status()
+      journal:journal.status(),
+      walletReputation:walletReputation.status()
     };
   }
 
@@ -880,6 +939,12 @@ export function createTokenIntelligenceShadowV23({
     dropMint,
     inspect,
     listCells,
+    listWalletReputations:
+      options=>walletReputation.list(options),
+    inspectWalletReputation:
+      wallet=>walletReputation.inspect(wallet),
+    flushWalletReputation:
+      ()=>walletReputation.flush(),
     status
   };
 }

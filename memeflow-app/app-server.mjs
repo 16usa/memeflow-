@@ -6119,6 +6119,82 @@ async function handler(req,res){const url=new URL(req.url,'http://x');
    });
  }
 
+/* MEMEFLOW_WALLET_REPUTATION_MONITOR_V23_2
+ * Owner-only, read-only Smart Money memory.
+ * No endpoint below can mutate Score/State/Settings or execute a trade.
+ */
+ if(
+   url.pathname==='/api/owner/intelligence/wallet-reputations' &&
+   req.method==='GET'
+ ){
+   if(!u)return json(res,401,{error:'AUTH_REQUIRED'});
+   if(u.isOwner!==true)return json(res,403,{error:'OWNER_REQUIRED'});
+
+   const limit=Math.max(
+     1,
+     Math.min(200,Number(url.searchParams.get('limit')||50))
+   );
+
+   const readyRaw=String(
+     url.searchParams.get('ready')||''
+   ).trim().toLowerCase();
+
+   const ready=
+     readyRaw==='true'||readyRaw==='1'
+       ? true
+       : readyRaw==='false'||readyRaw==='0'
+         ? false
+         : null;
+
+   return json(res,200,{
+     ok:true,
+     shadowOnly:true,
+     memory:
+       tokenIntelligenceShadowV23
+         .status()
+         .walletReputation,
+     wallets:
+       tokenIntelligenceShadowV23
+         .listWalletReputations({
+           limit,
+           ready
+         })
+   });
+ }
+
+ if(
+   url.pathname==='/api/owner/intelligence/wallet-reputation' &&
+   req.method==='GET'
+ ){
+   if(!u)return json(res,401,{error:'AUTH_REQUIRED'});
+   if(u.isOwner!==true)return json(res,403,{error:'OWNER_REQUIRED'});
+
+   const wallet=String(
+     url.searchParams.get('wallet')||''
+   ).trim();
+
+   if(!wallet){
+     return json(res,400,{error:'WALLET_REQUIRED'});
+   }
+
+   const reputation=
+     tokenIntelligenceShadowV23
+       .inspectWalletReputation(wallet);
+
+   if(!reputation){
+     return json(res,404,{
+       error:'WALLET_REPUTATION_NOT_FOUND',
+       wallet
+     });
+   }
+
+   return json(res,200,{
+     ok:true,
+     shadowOnly:true,
+     reputation
+   });
+ }
+
 /* MEMEFLOW_PUBLIC_AGENT_ENTITY_V2_ROUTES */
  if(url.pathname==='/api/owner/public-agent'&&req.method==='GET'){if(!u)return json(res,401,{error:'AUTH_REQUIRED'});if(u.isOwner!==true)return json(res,403,{error:'OWNER_REQUIRED'});const st=__mfPublicAgentState(u.id);return json(res,200,{ok:true,owner:true,config:st.config,queue:st.queue.slice(0,50),audit:st.audit.slice(0,50),x:{connected:false,transport:'disabled-v2'},safety:{testDraftsNeverPublish:true}})}
  if(url.pathname==='/api/owner/public-agent/config'&&req.method==='PUT'){if(!u)return json(res,401,{error:'AUTH_REQUIRED'});if(u.isOwner!==true)return json(res,403,{error:'OWNER_REQUIRED'});const b=await body(req),st=__mfPublicAgentState(u.id),mode=String(b?.mode||st.config.mode||'approval').toLowerCase();if(!['off','approval','autonomous'].includes(mode))return json(res,400,{error:'INVALID_MODE'});const e=b?.events&&typeof b.events==='object'?b.events:{};st.config={...st.config,enabled:b?.enabled===true,mode,displayName:__mfPublicAgentSafe(b?.displayName??st.config.displayName,40),voice:['terminal','minimal'].includes(String(b?.voice))?String(b.voice):st.config.voice,xConnected:false,events:{watch:e.watch!==false,buyReady:e.buyReady!==false,positions:e.positions!==false,risk:e.risk!==false}};const at=new Date().toISOString();st.audit.unshift({at,type:'CONFIG_UPDATED',mode:st.config.mode,enabled:st.config.enabled});st.audit=st.audit.slice(0,200);store.save();return json(res,200,{ok:true,config:st.config})}
