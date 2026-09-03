@@ -1650,6 +1650,173 @@ async function loadPolicyReview(){
   }
 }
 
+/* MEMEFLOW_V23_E2E_READINESS_FREEZE_V23_23_UI_JS */
+function renderV23Readiness(payload={}){
+  const result=payload?.result||{};
+  const architecture=result?.architecture||{};
+  const evidence=result?.evidence||{};
+  const v24=result?.v24||{};
+  const freeze=result?.freeze||{};
+
+  const badge=$('v23ReadinessStatus');
+
+  if(badge){
+    badge.className=
+      'oi-ai-status '+
+      (
+        architecture?.structuralReady===true
+          ? 'online'
+          : 'offline'
+      );
+
+    badge.textContent=
+      architecture?.structuralReady===true
+        ? 'V23 ARCHITECTURE FROZEN'
+        : 'FREEZE BLOCKED';
+  }
+
+  $('v23ReadinessComponents').textContent=
+    `${num(architecture?.presentComponents,0)} / ${num(architecture?.expectedComponents,0)}`;
+
+  $('v23ReadinessArchitecture').textContent=
+    architecture?.structuralReady===true
+      ? 'FROZEN'
+      : 'BLOCKED';
+
+  $('v23ReadinessEvidence').textContent=
+    evidence?.ready===true
+      ? 'READY'
+      : (
+          String(
+            evidence?.status||''
+          ).includes('BLOCKED')
+            ? 'BLOCKED'
+            : 'BUILDING'
+        );
+
+  $('v23ReadinessNext').textContent='V24';
+
+  const checks=[
+    [
+      'Freeze manifest',
+      architecture?.manifestContractOk===true
+    ],
+    [
+      'All V23 components present',
+      Number(architecture?.presentComponents||0)===
+        Number(architecture?.expectedComponents||-1)
+    ],
+    [
+      'All component status calls healthy',
+      Array.isArray(architecture?.statusErrors) &&
+      architecture.statusErrors.length===0
+    ],
+    [
+      'V22 is only trading authority',
+      result?.controls?.v22OnlyTradingAuthority===true
+    ],
+    [
+      'No live apply capability',
+      result?.controls?.applicationAllowed===false &&
+      result?.controls?.applyEndpointExists===false
+    ]
+  ];
+
+  $('v23ReadinessChecks').innerHTML=
+    checks.map(([label,pass])=>`
+      <div class="oi-promotion-check ${pass?'pass':'fail'}">
+        <span class="oi-promotion-check-dot"></span>
+        <div>
+          <strong>${esc(label)}</strong>
+          <small>${pass?'PASS':'FAIL'}</small>
+        </div>
+      </div>
+    `).join('');
+
+  $('v23ReadinessHandoff').innerHTML=[
+    [
+      'Frozen range',
+      freeze?.frozenRange||'—'
+    ],
+    [
+      'Freeze rule',
+      freeze?.rule||'—'
+    ],
+    [
+      'V24 code may begin',
+      v24?.integrationCodeMayBegin===true
+        ? 'YES'
+        : 'NO'
+    ],
+    [
+      'V24 activation eligible',
+      v24?.controlledActivationEligible===true
+        ? 'YES'
+        : 'NO'
+    ],
+    [
+      'Policy review',
+      evidence?.policyReviewStatus||'—'
+    ],
+    [
+      'Calibration',
+      evidence?.calibrationStatus||'—'
+    ],
+    [
+      'Drift',
+      evidence?.driftStatus||'—'
+    ]
+  ].map(([name,value])=>`
+    <div class="oi-row">
+      <span>${esc(name)}</span>
+      <strong>${esc(String(value).replaceAll('_',' '))}</strong>
+    </div>
+  `).join('');
+
+  const verdict=$('v23ReadinessVerdict');
+
+  if(verdict){
+    verdict.dataset.state=
+      architecture?.structuralReady===true
+        ? 'ready'
+        : 'blocked';
+
+    verdict.textContent=
+      architecture?.structuralReady===true
+        ? (
+            evidence?.ready===true
+              ? 'V23 ARCHITECTURE IS FROZEN AND REAL EVIDENCE IS READY FOR V24 CONTROLLED ACTIVATION.'
+              : 'V23 ARCHITECTURE IS FROZEN. V24 CODE MAY BEGIN, BUT CONTROLLED ACTIVATION REMAINS LOCKED UNTIL REAL EVIDENCE PASSES V23.22.'
+          )
+        : 'V23 FREEZE BLOCKED: architecture or contract checks failed.';
+  }
+}
+
+async function loadV23Readiness(){
+  try{
+    const payload=await api(
+      '/api/owner/intelligence/v23-readiness'
+    );
+
+    renderV23Readiness(payload);
+  }catch(error){
+    const badge=$('v23ReadinessStatus');
+
+    if(badge){
+      badge.className='oi-ai-status offline';
+      badge.textContent='UNAVAILABLE';
+    }
+
+    const verdict=$('v23ReadinessVerdict');
+
+    if(verdict){
+      verdict.dataset.state='blocked';
+      verdict.textContent=
+        `V23 readiness unavailable: ${error.message}`;
+    }
+  }
+}
+
 /* MEMEFLOW_SHADOW_PROMOTION_REPORT_V23_14_UI_JS */
 function promotionTone(status=''){
   const s=String(status||'').toUpperCase();
@@ -2567,7 +2734,8 @@ async function load(
       loadErrorAwareBenchmark(),
       loadPolicyCandidate(),
       loadPolicySimulation(),
-      loadPolicyReview()
+      loadPolicyReview(),
+      loadV23Readiness()
     ]);
 
     if(previous){
