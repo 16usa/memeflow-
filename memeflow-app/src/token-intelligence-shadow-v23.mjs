@@ -9,6 +9,9 @@ import {
 import {
   createShadowMathBrainV23_4
 } from './shadow-math-brain-v23_4.mjs';
+import {
+  createShadowModelArenaV23_5
+} from './shadow-model-arena-v23_5.mjs';
 
 // MEMEFLOW_TOKEN_INTELLIGENCE_NETWORK_V23
 //
@@ -725,6 +728,11 @@ export function createTokenIntelligenceShadowV23({
       learningDataset
     });
 
+  const shadowModelArena=
+    createShadowModelArenaV23_5({
+      learningDataset
+    });
+
   const metrics={
     observations:0,
     cellsCreated:0,
@@ -778,6 +786,14 @@ export function createTokenIntelligenceShadowV23({
       // canonical evidence generation and cannot alter evaluate()/V22.
       snapshot.shadowMathBrain=
         shadowMathBrain.predict(
+          snapshot,
+          {mint}
+        );
+
+      // MEMEFLOW_SHADOW_MODEL_ARENA_V23_5
+      // Calibrated model-comparison probability is diagnostic only.
+      snapshot.shadowModelArena=
+        shadowModelArena.predict(
           snapshot,
           {mint}
         );
@@ -909,6 +925,22 @@ export function createTokenIntelligenceShadowV23({
               snap?.specialists?.coordination
                 ?.sameSlotBuySharePct??0
           },
+          shadowModelArena:{
+            status:
+              snap?.shadowModelArena?.status||'COLD_START',
+            modelReady:
+              snap?.shadowModelArena?.modelReady===true,
+            validated:
+              snap?.shadowModelArena?.validated===true,
+            champion:
+              snap?.shadowModelArena?.champion||null,
+            calibratedProbabilityPositivePct:
+              snap?.shadowModelArena
+                ?.calibratedProbabilityPositivePct??null,
+            modelConfidencePct:
+              snap?.shadowModelArena
+                ?.modelConfidencePct??0
+          },
           shadowMathBrain:{
             status:
               snap?.shadowMathBrain?.status||'COLD_START',
@@ -958,7 +990,7 @@ export function createTokenIntelligenceShadowV23({
     }
 
     return {
-      version:'MEMEFLOW_TOKEN_INTELLIGENCE_NETWORK_V23_4',
+      version:'MEMEFLOW_TOKEN_INTELLIGENCE_NETWORK_V23_5',
       shadowOnly:true,
       specialists:[
         'FLOW',
@@ -979,7 +1011,8 @@ export function createTokenIntelligenceShadowV23({
       journal:journal.status(),
       walletReputation:walletReputation.status(),
       learningDataset:learningDataset.status(),
-      shadowMathBrain:shadowMathBrain.status()
+      shadowMathBrain:shadowMathBrain.status(),
+      shadowModelArena:shadowModelArena.status()
     };
   }
 
@@ -1004,6 +1037,10 @@ export function createTokenIntelligenceShadowV23({
       ()=>shadowMathBrain.status(),
     listShadowBrainPredictions:
       options=>shadowMathBrain.listRecent(options),
+    shadowModelArenaStatus:
+      ()=>shadowModelArena.status(),
+    listShadowModelArenaPredictions:
+      options=>shadowModelArena.listRecent(options),
     status
   };
 }
