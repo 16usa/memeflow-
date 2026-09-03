@@ -27,6 +27,9 @@ import {
 import {
   createShadowEvidenceSynthesisV23_10
 } from './shadow-evidence-synthesis-v23_10.mjs';
+import {
+  createShadowOutcomeCalibrationV23_11
+} from './shadow-outcome-calibration-v23_11.mjs';
 
 // MEMEFLOW_TOKEN_INTELLIGENCE_NETWORK_V23
 //
@@ -770,6 +773,11 @@ export function createTokenIntelligenceShadowV23({
   const shadowEvidenceSynthesis=
     createShadowEvidenceSynthesisV23_10();
 
+  const shadowOutcomeCalibration=
+    createShadowOutcomeCalibrationV23_11({
+      dataDir
+    });
+
   const metrics={
     observations:0,
     cellsCreated:0,
@@ -889,6 +897,18 @@ export function createTokenIntelligenceShadowV23({
           }
         );
 
+      // MEMEFLOW_OUTCOME_CALIBRATION_V23_11
+      // Historical reliability only. Computed after V23.10 and before the
+      // anchor freezes this forecast for later outcome auditing.
+      snapshot.shadowOutcomeCalibration=
+        shadowOutcomeCalibration.predict(
+          snapshot,
+          {
+            mint,
+            at:snapshot.observedAt
+          }
+        );
+
       if(cell.maybeAnchor(token,snapshot,journal)){
         metrics.anchors++;
       }
@@ -915,6 +935,11 @@ export function createTokenIntelligenceShadowV23({
         });
 
         shadowTokenPatternMemory.recordOutcome({
+          anchor:cell.anchor,
+          outcome
+        });
+
+        shadowOutcomeCalibration.recordOutcome({
           anchor:cell.anchor,
           outcome
         });
@@ -1143,6 +1168,32 @@ export function createTokenIntelligenceShadowV23({
               snap?.shadowEvidenceSynthesis
                 ?.blockers||[]
           },
+          shadowOutcomeCalibration:{
+            status:
+              snap?.shadowOutcomeCalibration
+                ?.status||'CALIBRATION_COLD_START',
+            ready:
+              snap?.shadowOutcomeCalibration
+                ?.ready===true,
+            rawProbabilityPositivePct:
+              snap?.shadowOutcomeCalibration
+                ?.rawProbabilityPositivePct??null,
+            calibratedProbabilityPositivePct:
+              snap?.shadowOutcomeCalibration
+                ?.calibratedProbabilityPositivePct??null,
+            calibratedConfidencePct:
+              snap?.shadowOutcomeCalibration
+                ?.calibratedConfidencePct??0,
+            reliabilitySampleCount:
+              snap?.shadowOutcomeCalibration
+                ?.reliabilitySampleCount??0,
+            globalEcePct:
+              snap?.shadowOutcomeCalibration
+                ?.globalEcePct??null,
+            globalBrier:
+              snap?.shadowOutcomeCalibration
+                ?.globalBrier??null
+          },
           shadowModelArena:{
             status:
               snap?.shadowModelArena?.status||'COLD_START',
@@ -1208,7 +1259,7 @@ export function createTokenIntelligenceShadowV23({
     }
 
     return {
-      version:'MEMEFLOW_TOKEN_INTELLIGENCE_NETWORK_V23_10',
+      version:'MEMEFLOW_TOKEN_INTELLIGENCE_NETWORK_V23_11',
       shadowOnly:true,
       specialists:[
         'FLOW',
@@ -1235,7 +1286,8 @@ export function createTokenIntelligenceShadowV23({
       shadowConfidenceGovernor:shadowConfidenceGovernor.status(),
       shadowTokenTrajectory:shadowTokenTrajectory.status(),
       shadowTokenPatternMemory:shadowTokenPatternMemory.status(),
-      shadowEvidenceSynthesis:shadowEvidenceSynthesis.status()
+      shadowEvidenceSynthesis:shadowEvidenceSynthesis.status(),
+      shadowOutcomeCalibration:shadowOutcomeCalibration.status()
     };
   }
 
@@ -1288,6 +1340,16 @@ export function createTokenIntelligenceShadowV23({
       ()=>shadowEvidenceSynthesis.status(),
     listEvidenceSynthesisPredictions:
       options=>shadowEvidenceSynthesis.listRecent(options),
+    outcomeCalibrationStatus:
+      ()=>shadowOutcomeCalibration.status(),
+    outcomeCalibrationHorizonReport:
+      ()=>shadowOutcomeCalibration.horizonReport(),
+    outcomeCalibrationBucketReport:
+      options=>shadowOutcomeCalibration.bucketReport(options),
+    listOutcomeCalibrationPredictions:
+      options=>shadowOutcomeCalibration.listRecent(options),
+    flushOutcomeCalibration:
+      ()=>shadowOutcomeCalibration.flush(),
     status
   };
 }
