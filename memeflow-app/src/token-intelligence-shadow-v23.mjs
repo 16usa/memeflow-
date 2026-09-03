@@ -123,6 +123,205 @@ function flowStats(rows=[],windowMs=1_000){
   };
 }
 
+// MEMEFLOW_TOKEN_SPECIALISTS_V23_1
+// These are raw evidence extractors. They are explicitly NOT independent
+// scoring authorities and never produce BUY/SELL decisions.
+
+function walletSpecialist(rows=[]){
+  const buys=rows.filter(
+    x=>x.isBuy===true&&x.user
+  );
+
+  const byWallet=new Map();
+
+  for(const row of buys){
+    const prev=byWallet.get(row.user)||{
+      wallet:row.user,
+      buys:0,
+      buySol:0
+    };
+
+    prev.buys++;
+    prev.buySol+=Math.max(0,Number(row.solAmount)||0);
+    byWallet.set(row.user,prev);
+  }
+
+  const wallets=[...byWallet.values()]
+    .sort((a,b)=>b.buySol-a.buySol);
+
+  const totalBuySol=wallets.reduce(
+    (sum,row)=>sum+row.buySol,
+    0
+  );
+
+  const shares=
+    totalBuySol>0
+      ? wallets.map(row=>row.buySol/totalBuySol)
+      : [];
+
+  const repeatBuyerWallets=wallets.filter(
+    row=>row.buys>1
+  ).length;
+
+  return {
+    uniqueBuyerWallets:wallets.length,
+    repeatBuyerWallets,
+    repeatBuyerWalletRatioPct:
+      wallets.length
+        ? repeatBuyerWallets/wallets.length*100
+        : 0,
+    topBuyerSolSharePct:
+      shares.length
+        ? shares[0]*100
+        : null,
+    buyerConcentrationHhi:
+      shares.length
+        ? shares.reduce((sum,share)=>sum+share*share,0)
+        : null,
+    largestBuyerSol:
+      wallets.length
+        ? wallets[0].buySol
+        : null,
+    candidateWallets:wallets
+      .slice(0,12)
+      .map(row=>({
+        wallet:row.wallet,
+        buys:row.buys,
+        buySol:row.buySol
+      }))
+  };
+}
+
+function coordinationSpecialist(rows=[]){
+  const buys=rows
+    .filter(x=>x.isBuy===true&&x.user)
+    .sort((a,b)=>a.t-b.t);
+
+  if(!buys.length){
+    return {
+      sameSlotBuySharePct:0,
+      maxDistinctBuyers250ms:0,
+      similarAmountBuySharePct:0,
+      suspectedCoordination:false
+    };
+  }
+
+  const bySlot=new Map();
+
+  for(const row of buys){
+    if(!Number.isFinite(row.slot))continue;
+
+    const list=bySlot.get(row.slot)||[];
+    list.push(row);
+    bySlot.set(row.slot,list);
+  }
+
+  let sameSlotRows=0;
+
+  for(const list of bySlot.values()){
+    const wallets=new Set(
+      list.map(x=>x.user).filter(Boolean)
+    );
+
+    if(wallets.size>=2){
+      sameSlotRows+=list.length;
+    }
+  }
+
+  let maxDistinctBuyers250ms=0;
+
+  for(let i=0;i<buys.length;i++){
+    const wallets=new Set();
+
+    for(let j=i;j<buys.length;j++){
+      if(buys[j].t-buys[i].t>250)break;
+      wallets.add(buys[j].user);
+    }
+
+    maxDistinctBuyers250ms=Math.max(
+      maxDistinctBuyers250ms,
+      wallets.size
+    );
+  }
+
+  let similarAmountRows=0;
+
+  for(let i=0;i<buys.length;i++){
+    const a=Math.max(0,Number(buys[i].solAmount)||0);
+    if(!(a>0))continue;
+
+    let matched=false;
+
+    for(let j=0;j<buys.length;j++){
+      if(i===j||buys[i].user===buys[j].user)continue;
+
+      const b=Math.max(0,Number(buys[j].solAmount)||0);
+      if(!(b>0))continue;
+
+      const relative=Math.abs(a-b)/Math.max(a,b);
+
+      if(relative<=0.05){
+        matched=true;
+        break;
+      }
+    }
+
+    if(matched)similarAmountRows++;
+  }
+
+  const sameSlotBuySharePct=
+    sameSlotRows/buys.length*100;
+
+  const similarAmountBuySharePct=
+    similarAmountRows/buys.length*100;
+
+  return {
+    sameSlotBuySharePct,
+    maxDistinctBuyers250ms,
+    similarAmountBuySharePct,
+    suspectedCoordination:
+      sameSlotBuySharePct>=40 &&
+      maxDistinctBuyers250ms>=3 &&
+      similarAmountBuySharePct>=40
+  };
+}
+
+function specialistEvidence(rows=[],token={}){
+  const wallet=walletSpecialist(rows);
+  const coordination=coordinationSpecialist(rows);
+
+  return {
+    shadowOnly:true,
+    wallet:{
+      uniqueBuyerWallets:wallet.uniqueBuyerWallets,
+      repeatBuyerWallets:wallet.repeatBuyerWallets,
+      repeatBuyerWalletRatioPct:
+        wallet.repeatBuyerWalletRatioPct,
+      topBuyerSolSharePct:
+        wallet.topBuyerSolSharePct,
+      buyerConcentrationHhi:
+        wallet.buyerConcentrationHhi,
+      largestBuyerSol:
+        wallet.largestBuyerSol
+    },
+    coordination,
+    smartMoneySeed:{
+      // Reputation is intentionally NOT guessed yet.
+      // We only retain wallet cohorts + future outcome labels so V23.x can
+      // learn reputation from MEMEFLOW's own history.
+      reputationReady:false,
+      candidateWallets:wallet.candidateWallets
+    },
+    externalRiskContext:{
+      suspectedRiskyWalletsPct:
+        finite(token.suspectedRiskyWalletsPct),
+      insidersPct:finite(token.insidersPct),
+      sniperPct:finite(token.sniperPct),
+      bundlePct:finite(token.bundlePct)
+    }
+  };
+}
+
 function holderStats(rows=[],token={}){
   const values=rows
     .map(x=>x.holderCount)
@@ -252,6 +451,8 @@ class TokenCellV23{
       t,
       isBuy:event?.isBuy===true,
       user:String(event?.user||''),
+      slot:finite(event?.slot),
+      signature:event?.signature?String(event.signature):null,
       solAmount:Math.max(0,solAmount(event?.solAmount)),
       priceSol:price,
       holderCount:finite(token?.holderCount),
@@ -323,6 +524,9 @@ class TokenCellV23{
     const w5=windows['5000'];
     const w15=windows['15000'];
     const w60=windows['60000'];
+    const rows15=this.events.filter(
+      x=>x.t>=latestT-15_000
+    );
 
     return {
       version:'MEMEFLOW_TOKEN_CELL_V23',
@@ -332,6 +536,7 @@ class TokenCellV23{
       observedAt:now,
       eventCount:this.events.length,
       windows,
+      specialists:specialistEvidence(rows15,token),
       evidence:{
         flowAcceleration:{
           tradesPerSecond1s:w1.flow.tradesPerSecond,
@@ -402,6 +607,9 @@ class TokenCellV23{
       // Training context only. This is NOT a second trading Score.
       canonicalScore:finite(token.canonicalScore??token.score),
       opportunityScore:finite(token.opportunityScore),
+      walletCohort:
+        snapshot?.specialists?.smartMoneySeed?.candidateWallets
+          ?.slice?.(0,12) || [],
       features:snapshot
     };
 
@@ -581,6 +789,63 @@ export function createTokenIntelligenceShadowV23({
     };
   }
 
+  function listCells({limit=50,stage=null}={}){
+    const safeLimit=Math.max(
+      1,
+      Math.min(100,Number(limit)||50)
+    );
+
+    const wanted=
+      stage===null||stage===undefined||stage===''
+        ? null
+        : String(stage).toUpperCase();
+
+    return [...cells.values()]
+      .filter(cell=>!wanted||cell.stage===wanted)
+      .sort(
+        (a,b)=>
+          Number(b.lastObservedAt||0)-
+          Number(a.lastObservedAt||0)
+      )
+      .slice(0,safeLimit)
+      .map(cell=>{
+        const snap=cell.lastSnapshot||{};
+        return {
+          shadowOnly:true,
+          mint:cell.mint,
+          stage:cell.stage,
+          eventCount:cell.events.length,
+          lastObservedAt:cell.lastObservedAt||null,
+          anchorAt:cell.anchor?.at||null,
+          labelsCompleted:[...cell.labels],
+          regime:snap?.evidence?.regime||null,
+          dataCompletenessPct:
+            snap?.evidence?.dataQuality?.completenessPct??null,
+          canonicalScore:
+            snap?.evidence?.sourceSignals?.canonicalScore??null,
+          opportunityEvidenceReady:
+            snap?.evidence?.sourceSignals
+              ?.opportunityEvidenceReady===true,
+          wallet:{
+            uniqueBuyerWallets:
+              snap?.specialists?.wallet
+                ?.uniqueBuyerWallets??0,
+            topBuyerSolSharePct:
+              snap?.specialists?.wallet
+                ?.topBuyerSolSharePct??null
+          },
+          coordination:{
+            suspected:
+              snap?.specialists?.coordination
+                ?.suspectedCoordination===true,
+            sameSlotBuySharePct:
+              snap?.specialists?.coordination
+                ?.sameSlotBuySharePct??0
+          }
+        };
+      });
+  }
+
   function status(){
     const stages={LIGHT:0,ACTIVE:0,DEEP:0};
 
@@ -589,8 +854,20 @@ export function createTokenIntelligenceShadowV23({
     }
 
     return {
-      version:'MEMEFLOW_TOKEN_INTELLIGENCE_NETWORK_V23',
+      version:'MEMEFLOW_TOKEN_INTELLIGENCE_NETWORK_V23_1',
       shadowOnly:true,
+      specialists:[
+        'FLOW',
+        'REGIME',
+        'HOLDER',
+        'CREATOR',
+        'LIQUIDITY',
+        'WALLET',
+        'COORDINATION',
+        'SMART_MONEY_SEED',
+        'RISK',
+        'DATA_QUALITY'
+      ],
       cells:cells.size,
       stages,
       ...metrics,
@@ -602,6 +879,7 @@ export function createTokenIntelligenceShadowV23({
     observeTrade,
     dropMint,
     inspect,
+    listCells,
     status
   };
 }
