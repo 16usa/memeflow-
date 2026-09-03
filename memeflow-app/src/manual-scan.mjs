@@ -326,6 +326,14 @@ export async function manualAnalyze({
 
     mint,
 
+    launchPlatform:
+      existing.launchPlatform ||
+      (creatorResolution.curve ? 'pump' : null),
+
+    protocol:
+      existing.protocol ||
+      (creatorResolution.curve ? 'pump' : null),
+
     decimals,
     totalSupply,
 

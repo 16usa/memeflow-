@@ -3165,8 +3165,40 @@ function __mfScanStateClassV27(value){
     key==='open'?'open':'waiting';
 }
 
+// MEMEFLOW_MANUAL_DECISION_EVIDENCE_V11_1
+function __mfScanLiveEvidenceReadyV11(row){
+  if(!row)return false;
+
+  const holderKnown=
+    (finite(row?.holderCount)&&Number(row.holderCount)>0) ||
+    (finite(row?.holders)&&Number(row.holders)>0);
+
+  const marketCapKnown=
+    (finite(row?.marketCapUsd)&&Number(row.marketCapUsd)>0) ||
+    (finite(row?.market?.marketCapUsd)&&Number(row.market.marketCapUsd)>0);
+
+  const priceKnown=
+    (finite(row?.priceSol)&&Number(row.priceSol)>0) ||
+    (finite(row?.market?.priceSol)&&Number(row.market.priceSol)>0);
+
+  const activityKnown=
+    finite(row?.buyPressure) ||
+    finite(row?.market?.buyPressure) ||
+    finite(row?.volume5mUsd) ||
+    finite(row?.market?.volume5mUsd) ||
+    finite(row?.transactions5m) ||
+    finite(row?.market?.transactions5m);
+
+  return Boolean(
+    holderKnown &&
+    marketCapKnown &&
+    priceKnown &&
+    activityKnown
+  );
+}
+
 function __mfScanDecisionV27(scan,liveRow){
-  if(liveRow){
+  if(liveRow&&__mfScanLiveEvidenceReadyV11(liveRow)){
     return {
       state:liveRow?.decision?.state||liveRow?.state||'WAITING',
       score:liveRow?.decision?.score??liveRow?.score??null,
@@ -3254,9 +3286,9 @@ function __mfScanRenderV27({scan,liveRow,buyContext}){
   const market=scan?.market||{};
   const chain=scan?.onchain||{};
   const manualDataIncomplete=
-    !tracked &&
     scan?.analysisStatus &&
-    scan.analysisStatus!=='READY';
+    scan.analysisStatus!=='READY' &&
+    !__mfScanLiveEvidenceReadyV11(liveRow);
   const stateText=
     manualDataIncomplete
       ? 'DATA INCOMPLETE'
@@ -3270,10 +3302,12 @@ function __mfScanRenderV27({scan,liveRow,buyContext}){
       ? '—'
       : __mfScanNumberV27(decision?.score,0);
 
-  const reasons=[
-    decision?.primaryReason,
-    ...(Array.isArray(decision?.reasons)?decision.reasons:[])
-  ].filter(Boolean);
+  const reasons=manualDataIncomplete
+    ? []
+    : [
+        decision?.primaryReason,
+        ...(Array.isArray(decision?.reasons)?decision.reasons:[])
+      ].filter(Boolean);
 
   const warnings=Array.isArray(scan?.warnings)?scan.warnings:[];
 

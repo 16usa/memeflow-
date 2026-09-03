@@ -4360,8 +4360,119 @@ async function callMemeflowOpenAI(prompt,context,mode='ask'){
 
 /* MEMEFLOW_AI_STANDALONE_V49_BEGIN */
 const MF48_KEY_RE=/[1-9A-HJ-NP-Za-km-z]{32,44}/g;
-function mf49Num(v){const n=Number(v);return Number.isFinite(n)?n:null}
+// MEMEFLOW_FACT_SEMANTICS_V11_1
+function mf49Num(v){
+ if(v===null||v===undefined||v===''||typeof v==='boolean')return null;
+ const n=Number(v);
+ return Number.isFinite(n)?n:null
+}
 function mf49Err(message,status=400,code='STANDALONE_SCAN_ERROR'){const e=Error(message);e.status=status;e.code=code;return e}
+
+async function mf49PumpReference(mint){
+ const base=String(
+  process.env.PUMPFUN_HISTORY_URL||
+  'https://frontend-api-v3.pump.fun/coins'
+ ).trim().replace(/\/+$/,'');
+ const controller=new AbortController();
+ const timer=setTimeout(()=>controller.abort(),1800);
+ timer.unref?.();
+ try{
+  const headers={
+   accept:'application/json',
+   origin:'https://pump.fun',
+   'user-agent':'MEMEFLOW/1.0 token-reference'
+  };
+  const jwt=String(process.env.PUMPFUN_HISTORY_JWT||'').trim();
+  if(jwt)headers.authorization=`Bearer ${jwt}`;
+
+  const response=await fetch(
+   base+'/'+encodeURIComponent(mint)+'?sync=true',
+   {headers,signal:controller.signal}
+  );
+  if(!response.ok)return null;
+
+  const body=await response.json().catch(()=>null);
+  const coin=
+   body?.data&&typeof body.data==='object'&&!Array.isArray(body.data)
+    ? body.data
+    : body?.coin||body;
+  if(!coin||typeof coin!=='object')return null;
+
+  const returnedMint=String(coin.mint||coin.address||'').trim();
+  if(returnedMint&&returnedMint!==mint)return null;
+
+  const decimals=Math.max(0,Math.min(12,Math.floor(mf49Num(coin.decimals)??6)));
+  const rawSupply=mf49Num(coin.total_supply);
+  const totalSupply=
+   rawSupply!=null
+    ? rawSupply/(10**decimals)
+    : mf49Num(coin.totalSupply);
+
+  const rawMc=mf49Num(coin.market_cap);
+  const marketCapSol=
+   rawMc!=null
+    ? rawMc/1e9
+    : mf49Num(coin.marketCapSol??coin.marketCap);
+
+  const virtualSolRaw=mf49Num(coin.virtual_sol_reserves??coin.virtualSolReserves);
+  const virtualTokenRaw=mf49Num(coin.virtual_token_reserves??coin.virtualTokenReserves);
+  const realSolRaw=mf49Num(coin.real_sol_reserves??coin.realSolReserves);
+
+  const virtualSol=virtualSolRaw!=null?virtualSolRaw/1e9:null;
+  const virtualToken=virtualTokenRaw!=null?virtualTokenRaw/(10**decimals):null;
+  const reservePriceSol=
+   virtualSol!=null&&virtualToken!=null&&virtualToken>0
+    ? virtualSol/virtualToken
+    : null;
+  const capPriceSol=
+   marketCapSol!=null&&totalSupply!=null&&totalSupply>0
+    ? marketCapSol/totalSupply
+    : null;
+
+  const holderRef=mf49Num(
+   coin.holder_count??coin.holderCount??coin.holders
+  );
+
+  const createdRaw=mf49Num(
+   coin.created_timestamp??
+   coin.createdTimestamp??
+   coin.created_at??
+   coin.createdAt
+  );
+
+  return {
+   mint,
+   name:coin.name||null,
+   symbol:coin.symbol||null,
+   uri:coin.metadata_uri||coin.metadataUri||coin.uri||null,
+   creator:coin.creator||null,
+   curve:coin.bonding_curve||coin.bondingCurve||null,
+   associatedBondingCurve:
+    coin.associated_bonding_curve||coin.associatedBondingCurve||null,
+   pumpCreatedAt:
+    createdRaw!=null&&createdRaw>0
+     ? (createdRaw<1e12?createdRaw*1000:createdRaw)
+     : null,
+   decimals,
+   totalSupply,
+   marketCapSol,
+   marketCapUsd:mf49Num(coin.usd_market_cap??coin.marketCapUsd),
+   priceSol:reservePriceSol??capPriceSol,
+   liquiditySol:realSolRaw!=null?realSolRaw/1e9:null,
+   previewHolderCount:holderRef!=null&&holderRef>0?holderRef:null,
+   twitterUrl:coin.twitter||null,
+   telegramUrl:coin.telegram||null,
+   websiteUrl:coin.website||null,
+   launchPlatform:'pump',
+   protocol:'pump',
+   pumpReferenceAt:Date.now()
+  };
+ }catch{
+  return null;
+ }finally{
+  clearTimeout(timer)
+ }
+}
 async function mf49ResolveInput(raw){
  const input=String(raw||'').trim();
  if(!input)throw mf49Err('Paste a Solana mint or Pump.fun link.',400,'TOKEN_INPUT_REQUIRED');
@@ -4387,6 +4498,12 @@ async function mf49StandaloneScan(raw,u){
  const stored=store.state.tokens[mint]||{};
  const warnings=[],sources=new Set();
 
+ let pumpReference=null;
+ try{
+  pumpReference=await mf49PumpReference(mint);
+  if(pumpReference)sources.add('Pump token reference');
+ }catch{}
+
  // MEMEFLOW_MANUAL_INDEXED_DATA_PLANE_V7
  // GMGN-style behavior: the click path reads MEMEFLOW's already-indexed facts
  // first. Deep RPC is verification/enrichment only and must never be the sole
@@ -4397,6 +4514,7 @@ async function mf49StandaloneScan(raw,u){
  try{holderLedger=eventHolderLedger?.inspect?.(mint)||null}catch{}
 
  const inferredPump=
+  Boolean(pumpReference) ||
   String(stored?.launchPlatform||stored?.protocol||'').toLowerCase().includes('pump') ||
   mint.toLowerCase().endsWith('pump') ||
   resolved.inputKind==='pump-fun';
@@ -4409,21 +4527,65 @@ async function mf49StandaloneScan(raw,u){
 
  const known={
   ...stored,
+  name:stored?.name||pumpReference?.name||null,
+  symbol:stored?.symbol||pumpReference?.symbol||null,
+  uri:stored?.uri||pumpReference?.uri||null,
+  creator:stored?.creator||pumpReference?.creator||null,
+  curve:
+   stored?.curve||
+   stored?.bondingCurve||
+   pumpReference?.curve||
+   null,
+  bondingCurve:
+   stored?.bondingCurve||
+   stored?.curve||
+   pumpReference?.curve||
+   null,
+  associatedBondingCurve:
+   stored?.associatedBondingCurve||
+   pumpReference?.associatedBondingCurve||
+   null,
+  pumpCreatedAt:
+   mf49Num(stored?.pumpCreatedAt) ??
+   mf49Num(pumpReference?.pumpCreatedAt),
   launchPlatform:
    stored?.launchPlatform ||
+   pumpReference?.launchPlatform ||
    (inferredPump?'pump':null),
   protocol:
    stored?.protocol ||
+   pumpReference?.protocol ||
    (inferredPump?'pump':null),
+  decimals:
+   mf49Num(stored?.decimals) ??
+   mf49Num(pumpReference?.decimals),
+  totalSupply:
+   mf49Num(stored?.totalSupply) ??
+   mf49Num(pumpReference?.totalSupply),
+  marketCapUsd:
+   mf49Num(stored?.marketCapUsd) ??
+   mf49Num(pumpReference?.marketCapUsd),
+  marketCapSol:
+   mf49Num(stored?.marketCapSol) ??
+   mf49Num(pumpReference?.marketCapSol),
   priceSol:
    mf49Num(marketLedger?.priceSol) ??
-   mf49Num(stored?.priceSol),
+   mf49Num(stored?.priceSol) ??
+   mf49Num(pumpReference?.priceSol),
   liquiditySol:
    mf49Num(marketLedger?.liquiditySol) ??
-   mf49Num(stored?.liquiditySol),
+   mf49Num(stored?.liquiditySol) ??
+   mf49Num(pumpReference?.liquiditySol),
   buyPressure:
    mf49Num(marketLedger?.buyPressure) ??
    mf49Num(stored?.buyPressure),
+  previewHolderCount:
+   mf49Num(stored?.previewHolderCount) ??
+   mf49Num(stored?.pumpReportedHolderCount) ??
+   mf49Num(pumpReference?.previewHolderCount),
+  twitterUrl:stored?.twitterUrl||pumpReference?.twitterUrl||null,
+  telegramUrl:stored?.telegramUrl||pumpReference?.telegramUrl||null,
+  websiteUrl:stored?.websiteUrl||pumpReference?.websiteUrl||null,
   observedHolderCount:
    observedSeed.length
     ? Math.max(...observedSeed)
@@ -4547,12 +4709,16 @@ async function mf49StandaloneScan(raw,u){
   holderCount==null &&
   observedHolderCount!=null;
 
+ const referenceHolderCount=mf49Num(known.previewHolderCount);
+
  const holderCountDisplay=
   holderCount!=null
    ? String(Math.round(holderCount))
    : observedHolderCount!=null
      ? String(Math.round(observedHolderCount))+'+'
-     : null;
+     : referenceHolderCount!=null&&referenceHolderCount>0
+       ? String(Math.round(referenceHolderCount))+' ref'
+       : null;
 
  const exactHolderEvidence=holderCount!=null;
 
@@ -4674,6 +4840,11 @@ async function mf49StandaloneScan(raw,u){
  if(priceSol!=null||liquiditySol!=null)sources.add('Pump curve / live reserves');
  if(solUsd!=null)sources.add('SOL/USD oracle');
 
+ const pumpIdentityResolved=
+  inferredPump ||
+  Boolean(canonicalToken?.curve) ||
+  Boolean(canonicalManual?.evidence?.createSignature);
+
  const creator=canonicalToken.creator||known.creator||holderLedger?.eventLedgerCreator||null;
  let developerPct=
   exactHolderEvidence
@@ -4704,6 +4875,12 @@ async function mf49StandaloneScan(raw,u){
  const dataQuality=[total,top10,priceAvailable?1:null].filter(x=>x!=null).length/3;
  const evalToken={
   ...known,
+  launchPlatform:
+   known.launchPlatform||
+   (pumpIdentityResolved?'pump':null),
+  protocol:
+   known.protocol||
+   (pumpIdentityResolved?'pump':null),
   holderCount,
   top10Pct:top10,
   developerPct,
@@ -4734,6 +4911,7 @@ async function mf49StandaloneScan(raw,u){
   price:priceAvailable,
   marketCap:marketCapUsd!=null,
   holders:holderCount!=null||observedHolderCount!=null,
+  holderReference:referenceHolderCount!=null&&referenceHolderCount>0,
   activity:
    buyPressure!=null ||
    volume5mUsd!=null ||
@@ -4785,6 +4963,7 @@ async function mf49StandaloneScan(raw,u){
    holderCount,
    holderCountDisplay,
    observedHolderCount,
+   referenceHolderCount,
    holderCountIsLowerBound,
    top10Pct:top10,
    top10PctApprox,
