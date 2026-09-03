@@ -42,7 +42,7 @@ assert.doesNotMatch(details,/const decision=scan\?\.displayEvaluation/);
 
 assert.match(
   html,
-  /system-tokens\.js\?v=card-live-authority-v20-5-20260902/
+  /system-tokens\.js\?v=[^\"']+/
 );
 
 console.log('CARD_DETAILS_LIVE_AUTHORITY_V20_5_OK');

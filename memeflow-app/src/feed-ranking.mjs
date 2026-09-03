@@ -4,9 +4,9 @@
 // 1) OPEN POSITION stays first, BUY READY stays next, BLOCKED stays last.
 // 2) WATCH and WAITING are one live-candidate pool and are ordered by CURRENT
 //    market quality, not by the label alone.
-// 3) The card score for WATCH/WAITING is a live feed score. The original
-//    decision score is preserved as decisionScore and trading eligibility is
-//    not changed here.
+// 3) Visible Score is always the canonical evaluator score. Feed/relevance
+//    is a separate hidden ranking signal and never replaces the AI score used
+//    by minScore, Signal or Risk.
 
 const STATE_PRIORITY = Object.freeze({
   'OPEN POSITION': 500,
@@ -231,10 +231,12 @@ export function rankCandidateViews(views = []) {
       const decisionScore = number(view.score) ?? 0;
       const relevanceScore = candidateRelevanceScore(view);
       const liveCandidate = isLiveCandidateState(view.state);
+      void liveCandidate;
       return {
         ...view,
         decisionScore,
-        score: liveCandidate ? Math.round(relevanceScore) : decisionScore,
+        // MEMEFLOW_CANONICAL_VISIBLE_AI_SCORE_V20_8_8
+        score: decisionScore,
         feedScore: relevanceScore,
         relevanceScore,
         statePriority: statePriority(view.state)

@@ -1090,15 +1090,18 @@ function __mfSmartSortRowsV25(rows) {
           return stateDiff;
         }
 
-        const scoreA =
-          Number(tokenScore(a) ?? -1);
-
-        const scoreB =
-          Number(tokenScore(b) ?? -1);
-
-        if (scoreA !== scoreB) {
-          return scoreB - scoreA;
+        // MEMEFLOW_SMART_HIDDEN_FEED_RANK_V20_8_8
+        const feedA=finite(a?.feedScore??a?.relevanceScore)?Number(a?.feedScore??a?.relevanceScore):null;
+        const feedB=finite(b?.feedScore??b?.relevanceScore)?Number(b?.feedScore??b?.relevanceScore):null;
+        if(feedA!==null||feedB!==null){
+          const rankA=feedA??Number.NEGATIVE_INFINITY;
+          const rankB=feedB??Number.NEGATIVE_INFINITY;
+          if(rankA!==rankB)return rankB-rankA;
         }
+
+        const scoreA = Number(tokenScore(a) ?? -1);
+        const scoreB = Number(tokenScore(b) ?? -1);
+        if (scoreA !== scoreB) return scoreB - scoreA;
 
         // MEMEFLOW_SCORE_FIRST_TIEBREAK_V22
         // Score is authoritative inside WATCH+WAITING. Only when Score ties do
@@ -2493,12 +2496,9 @@ async function __mfPostJsonV18(
 
 // MEMEFLOW_NO_DYNAMIC_CACHE_V20_2
 const __MF_TOKEN_IDENTITY_KEYS_V20_2=[
+  // MEMEFLOW_STATIC_IDENTITY_ONLY_V20_8_8
   'name','metadataName','symbol','metadataSymbol',
-  'image','imageUrl','imageUri','logo','logoUrl','logoURI',
-  'uri','metadataUri','twitterUrl','telegramUrl','websiteUrl',
-  'creator','curve','bondingCurve','associatedBondingCurve',
-  'pumpCreatedAt','createdAt','decimals','totalSupply',
-  'launchPlatform','protocol'
+  'image','imageUrl','imageUri','logo','logoUrl','logoURI'
 ];
 
 function __mfKeepTokenIdentityV20_2(previous,incoming){
@@ -2521,8 +2521,8 @@ function __mfInvalidateDynamicRowV20_2(previous){
     __mfKeepTokenIdentityV20_2(previous,{
       mint:previous?.mint,
       state:'WAITING',
-      score:0,
-      confidence:0,
+      score:null,
+      confidence:null,
       primaryReason:reason,
       reasons:[reason],
       tradeEligible:false,
@@ -2560,7 +2560,7 @@ function __mfInvalidateDynamicRowV20_2(previous){
       opportunityTrendHealthy:false,
 
       decision:{
-        state:'WAITING',score:0,confidence:0,
+        state:'WAITING',score:null,confidence:null,
         primaryReason:reason,reasons:[reason],tradeEligible:false
       },
       market:{},
@@ -2785,10 +2785,15 @@ async function loadTokens(){
       )
     );
 
+    // MEMEFLOW_VISIBLE_INVALIDATION_SCOPE_V20_8_8
+    const requestedMints=new Set(mints);
+
     state.rows=
       state.rows.map(previous=>{
         const mint=String(previous?.mint||'');
         const incoming=incomingByMint.get(mint);
+
+        if(!requestedMints.has(mint))return previous;
 
         return incoming
           ? __mfMergeMutableRowV18(previous,incoming)

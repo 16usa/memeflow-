@@ -1798,10 +1798,8 @@ const __mfLiveStatesYieldEvery=Math.max(
   20,
   Number(process.env.LIVE_STATES_YIELD_EVERY||75)
 );
-const __mfLiveStatesResponseCacheMs=Math.max(
-  100,
-  Number(process.env.LIVE_STATES_RESPONSE_CACHE_MS||350)
-);
+// MEMEFLOW_NO_DYNAMIC_RESPONSE_CACHE_V20_8_8
+const __mfLiveStatesResponseCacheMs=0;
 const __mfLiveStatesResponseCache=new Map();
 // MEMEFLOW_LIVE_TOKEN_REVISION_V1 — every canonical token mutation advances
 // the revision so the event-driven UI can never receive a cached pre-event snapshot.
@@ -2010,156 +2008,49 @@ function __mfCurrentEntryTruthV20_2(token,{isOpen=false}={}){
   return {pass:true,reason:null};
 }
 
-function __mfLiveDecisionForUserV14(uid,token,settingsOverride=null){
+// MEMEFLOW_CANONICAL_LIVE_DECISION_V20_8_8
+function __mfLiveDecisionForUserV14(uid,token,settingsOverride=null,admissionOverride=null){
   const mint=String(token?.mint||'').trim();
   if(!mint)return null;
-
-  const settings=
-    settingsOverride && typeof settingsOverride==='object'
-      ? settingsOverride
-      : (store.settings(uid)||{});
-
-  const admission=__mfEntryAdmissionForUser(
-    token,
-    uid,
-    settings
-  );
-
+  const settings=settingsOverride&&typeof settingsOverride==='object'?settingsOverride:(store.settings(uid)||{});
+  const admission=admissionOverride&&typeof admissionOverride==='object'?admissionOverride:__mfEntryAdmissionForUser(token,uid,settings);
   const eligible=admission?.admitted===true;
   const isOpen=__mfOpenPositionMints().has(mint);
-  const admissionState=String(
-    admission?.state || (eligible?'ADMITTED':'PENDING')
-  ).trim().toUpperCase();
+  const admissionState=String(admission?.state||(eligible?'ADMITTED':'PENDING')).trim().toUpperCase();
+  const admissionReasons=Array.isArray(admission?.reasons)?admission.reasons.filter(x=>typeof x==='string'&&x.trim()).map(x=>x.trim()):[];
 
-  let decision=null;
+  const persisted=store.state.decisions?.[uid+':'+mint]||null;
+  const operational={};
+  if(persisted&&typeof persisted==='object'){
+    for(const key of ['preOpenRiskVerified','walletRiskPending','walletRisk','preOpenRiskStatus','updatedAt','reevaluatedAt']){
+      if(Object.prototype.hasOwnProperty.call(persisted,key))operational[key]=persisted[key];
+    }
+  }
 
-  if(!eligible&&!isOpen){
-    const reasons=
-      Array.isArray(admission?.reasons)
-        ? admission.reasons
-            .filter(x=>typeof x==='string'&&x.trim())
-            .map(x=>x.trim())
-        : [];
+  let fresh=null;
+  try{fresh=evaluate(token,settings)}catch{}
+  let decision=fresh&&typeof fresh==='object'
+    ? {...fresh,...operational}
+    : {...operational,state:'WAITING',score:null,confidence:null,primaryReason:'Fresh evaluator data is unavailable',reasons:['Fresh evaluator data is unavailable'],terminal:false};
 
+  if(isOpen){
+    decision={...decision,state:'OPEN POSITION',displayState:'OPEN POSITION'};
+  }else if(!eligible){
     const blocked=admissionState==='REJECTED';
-    const fallbackReason=
-      blocked
-        ? 'Entry filters rejected this token'
-        : 'Waiting for entry-filter data';
-
-    if(blocked){
-      decision={
-        state:'BLOCKED',
-        score:0,
-        confidence:0,
-        primaryReason:reasons[0]||fallbackReason,
-        reasons:reasons.length?reasons:[fallbackReason],
-        terminal:false
-      };
-    }else{
-      // MEMEFLOW_WAITING_PREVIEW_SCORE_V21
-      // WAITING is a trade-admission state, not a quality score. Calculate a
-      // read-only preview score from the evidence already present so a moving
-      // token is not displayed as "0" merely because one gate is still pending.
-      let preview=null;
-      try{preview=evaluate(token,settings)}catch{}
-
-      const numeric=v=>{
-        const n=Number(v);
-        return Number.isFinite(n)?n:0;
-      };
-      const previewScore=Math.max(
-        numeric(preview?.score),
-        numeric(token?.opportunityScore),
-        numeric(token?.qualityScore)
-      );
-      const previewConfidence=Math.max(
-        numeric(preview?.confidence),
-        numeric(token?.dataQuality)*100
-      );
-
-      decision={
-        ...(preview&&typeof preview==='object'?preview:{}),
-        state:'WAITING',
-        score:Math.max(0,Math.min(100,Math.round(previewScore))),
-        confidence:Math.max(0,Math.min(100,Math.round(previewConfidence))),
-        primaryReason:
-          reasons[0]||
-          preview?.primaryReason||
-          fallbackReason,
-        reasons:
-          reasons.length
-            ? reasons
-            : (
-                Array.isArray(preview?.reasons)&&preview.reasons.length
-                  ? preview.reasons
-                  : [fallbackReason]
-              ),
-        terminal:false
-      };
-    }
-  }else{
-    decision=store.state.decisions?.[uid+':'+mint]||null;
-
-    if(!decision){
-      try{
-        decision=evaluate(token,settings);
-      }catch{
-        decision={
-          state:'WAITING',
-          score:0,
-          confidence:0,
-          primaryReason:'Scanner data is still being collected',
-          reasons:['Scanner data is still being collected'],
-          terminal:false
-        };
-      }
-    }
+    const fallback=blocked?'Entry filters rejected this token':'Waiting for entry-filter data';
+    const evaluatorReasons=Array.isArray(decision?.reasons)?decision.reasons.filter(Boolean):[];
+    const reasons=[...admissionReasons,...evaluatorReasons].filter((v,i,x)=>v&&x.indexOf(v)===i);
+    decision={...decision,state:blocked?'BLOCKED':'WAITING',displayState:blocked?'BLOCKED':'WAITING',primaryReason:admissionReasons[0]||decision?.primaryReason||fallback,reasons:reasons.length?reasons:[fallback],terminal:false};
   }
 
-  const __v20truth=__mfCurrentEntryTruthV20_2(token,{isOpen});
-  // MEMEFLOW_CANONICAL_SCORE_STATE_V20_7
-  // Live eligibility may force WAITING, but it must never destroy the
-  // evaluator's AI score/confidence. Score describes token quality;
-  // liveTruthBlocked/tradeEligible describe execution readiness.
-  if(!isOpen&&__v20truth.pass!==true){
-    const reason=__v20truth.reason||'Fresh live market evidence is unavailable';
-
-    const priorReasons=Array.isArray(decision?.reasons)
-      ? decision.reasons.filter(Boolean)
-      : [];
-
-    const reasons=[
-      ...priorReasons,
-      ...(priorReasons.includes(reason)?[]:[reason])
-    ];
-
-    decision={
-      ...(decision||{}),
-      state:'WAITING',
-      displayState:'WAITING',
-      primaryReason:
-        decision?.primaryReason||
-        reason,
-      reasons,
-      terminal:false,
-      liveTruthBlocked:true,
-      liveTruthReason:reason
-    };
+  const liveTruth=__mfCurrentEntryTruthV20_2(token,{isOpen});
+  if(!isOpen&&liveTruth.pass!==true){
+    const reason=liveTruth.reason||'Fresh live market evidence is unavailable';
+    const prior=Array.isArray(decision?.reasons)?decision.reasons.filter(Boolean):[];
+    decision={...decision,state:'WAITING',displayState:'WAITING',primaryReason:decision?.primaryReason||reason,reasons:[...prior,...(prior.includes(reason)?[]:[reason])],terminal:false,liveTruthBlocked:true,liveTruthReason:reason};
   }
 
-  return {
-    ...decision,
-    mint,
-    tradeEligible:eligible&&__v20truth.pass===true,
-    displayOnly:!eligible&&!isOpen,
-    openPositionOverride:isOpen&&!eligible,
-    entryAdmissionState:admissionState,
-    entryAdmissionReasons:
-      Array.isArray(admission?.reasons)
-        ? admission.reasons.filter(x=>typeof x==='string').slice(0,20)
-        : []
-  };
+  return {...decision,mint,tradeEligible:isOpen?true:eligible&&liveTruth.pass===true,displayOnly:!eligible&&!isOpen,openPositionOverride:isOpen&&!eligible,entryAdmissionState:admissionState,entryAdmissionReasons:admissionReasons.slice(0,20)};
 }
 
 function __mfLiveCardViewV14(token,decision){
@@ -7206,7 +7097,7 @@ if(false && url.pathname==='/api/ai/assistant' &&req.method==='POST'){
     '|work:'+String(_workingLimit);
   const _cacheKey=String(u.id||'anon')+'|'+_cacheScope;
   const _settingsVersion=Number(store.user(u.id)?.settingsVersion||0);
-  const _cached=__mfLiveStatesResponseCache.get(_cacheKey);
+  const _cached=null;
 
   if(
     _cached &&
@@ -7259,66 +7150,13 @@ if(false && url.pathname==='/api/ai/assistant' &&req.method==='POST'){
 
     if(_isOpen&&!_eligible)_openOverride++;
 
-    const _key=u.id+':'+_mint;
     let _decision=null;
-
-    if(!_eligible&&!_isOpen){
-      const _reasons=
-        Array.isArray(_admission?.reasons)
-          ? _admission.reasons
-              .filter(x=>typeof x==='string'&&x.trim())
-              .map(x=>x.trim())
-          : [];
-
-      const _blocked=_admissionState==='REJECTED';
-      const _fallbackReason=
-        _blocked
-          ? 'Entry filters rejected this token'
-          : 'Waiting for entry-filter data';
-
-      _decision={
-        state:_blocked?'BLOCKED':'WAITING',
-        score:0,
-        confidence:0,
-        primaryReason:_reasons[0]||_fallbackReason,
-        reasons:_reasons.length?_reasons:[_fallbackReason],
-        terminal:false
-      };
-    }else{
-      _decision=store.state.decisions?.[_key]||null;
-
-      if(!_decision){
-        try{
-          _decision=evaluate(_token,_settings);
-        }catch(_error){
-          _evalErrors++;
-          _decision={
-            state:'WAITING',
-            score:0,
-            confidence:0,
-            primaryReason:'Scanner data is still being collected',
-            reasons:['Scanner data is still being collected'],
-            terminal:false
-          };
-        }
-      }
+    try{_decision=__mfLiveDecisionForUserV14(u.id,_token,_settings,_admission)}catch(_error){
+      _evalErrors++;
+      _decision={mint:_mint,state:'WAITING',score:null,confidence:null,primaryReason:'Fresh evaluator data is unavailable',reasons:['Fresh evaluator data is unavailable'],tradeEligible:false,displayOnly:!_isOpen,openPositionOverride:_isOpen,entryAdmissionState:_admissionState,entryAdmissionReasons:Array.isArray(_admission?.reasons)?_admission.reasons.filter(x=>typeof x==='string'):[]};
     }
+    _displayRows.push({token:_token,decision:_decision});
 
-    _displayRows.push({
-      token:_token,
-      decision:{
-        ..._decision,
-        mint:_mint,
-        tradeEligible:_eligible,
-        displayOnly:!_eligible&&!_isOpen,
-        openPositionOverride:_isOpen&&!_eligible,
-        entryAdmissionState:_admissionState,
-        entryAdmissionReasons:
-          Array.isArray(_admission?.reasons)
-            ? _admission.reasons.filter(x=>typeof x==='string')
-            : []
-      }
-    });
   }
 
   const _flatDecisions=_displayRows.map(row=>row.decision);
@@ -7333,167 +7171,18 @@ if(false && url.pathname==='/api/ai/assistant' &&req.method==='POST'){
     _stateCounts[_state]=(_stateCounts[_state]||0)+1;
   }
 
-  // Build a JSON-safe Live Token States view directly from canonical token
-  // state. No timeline/raw BigInt/event objects are sent on this page.
-  const _rowsByMint=new Map(
-    _displayRows.map(row=>[String(row?.decision?.mint||''),row])
-  );
+  // MEMEFLOW_UNIFIED_FULL_LIVE_VIEW_V20_8_8
+  const _rowsByMint=new Map(_displayRows.map(row=>[String(row?.decision?.mint||''),row]));
   const _safeViews=[];
-
-  const _finite=v=>{
-    if(v===null||v===undefined||v==='')return null;
-    const n=Number(v);
-    return Number.isFinite(n)?n:null;
-  };
-
   for(const _decision of _selected){
     const _mint=String(_decision?.mint||'').trim();
     if(!_mint)continue;
-
-    const _row=_rowsByMint.get(_mint);
-    const _token=_row?.token||store.state.tokens?.[_mint]||{};
-
-    let _market5m=null;
+    const _token=_rowsByMint.get(_mint)?.token||store.state.tokens?.[_mint]||null;
+    if(!_token)continue;
     try{
-      _market5m=__mfCandidateMarket5mV4(_mint,_token);
-    }catch(_error){
-      _viewErrors++;
-      _market5m=null;
-    }
-
-    const _age=tokenAgeMinutes(_token);
-    const _holderTruth=
-      __mfPipelineHolderTruthV26(
-        _token,
-        _mint,
-        Date.now()
-      );
-
-    _safeViews.push({
-      id:_mint,
-      mint:_mint,
-      tokenMint:_mint,
-      tokenAddress:_mint,
-
-      name:
-        _token?.name ||
-        _token?.metadataName ||
-        _token?.symbol ||
-        _mint.slice(0,6),
-      symbol:_token?.symbol||_token?.metadataSymbol||'TOKEN',
-
-      launchPlatform:_token?.launchPlatform||_token?.protocol||'pump',
-      protocol:_token?.protocol||_token?.launchPlatform||'pump',
-      source:_token?.source||null,
-
-      uri:_token?.uri||_token?.metadataUrl||null,
-      imageUrl:
-        _token?.imageUrl ||
-        _token?.image ||
-        _token?.logoUrl ||
-        null,
-      image:
-        _token?.imageUrl ||
-        _token?.image ||
-        _token?.logoUrl ||
-        null,
-      logoUrl:
-        _token?.logoUrl ||
-        _token?.imageUrl ||
-        _token?.image ||
-        null,
-
-      state:String(_decision?.state||'WAITING'),
-      score:_finite(_decision?.score),
-      confidence:_finite(_decision?.confidence),
-      primaryReason:
-        typeof _decision?.primaryReason==='string'
-          ? _decision.primaryReason
-          : null,
-      reasons:
-        Array.isArray(_decision?.reasons)
-          ? _decision.reasons
-              .filter(x=>typeof x==='string')
-              .slice(0,20)
-          : [],
-
-      tradeEligible:_decision?.tradeEligible===true,
-      displayOnly:_decision?.displayOnly===true,
-      openPositionOverride:_decision?.openPositionOverride===true,
-      entryAdmissionState:
-        String(_decision?.entryAdmissionState||'PENDING'),
-      entryAdmissionReasons:
-        Array.isArray(_decision?.entryAdmissionReasons)
-          ? _decision.entryAdmissionReasons
-              .filter(x=>typeof x==='string')
-              .slice(0,20)
-          : [],
-
-      holderCount:_holderTruth.count,
-      holders:_holderTruth.count,
-      observedHolderCount:_holderTruth.observed,
-      holderSource:_holderTruth.source,
-      holderCountAuthoritative:_holderTruth.authoritative===true,
-      holderCountIsLowerBound:_holderTruth.lowerBound===true,
-      holderFresh:_holderTruth.fresh===true,
-      holderUpdatedAt:_holderTruth.updatedAt,
-      top10Pct:_finite(_token?.top10Pct??_token?.top10),
-      developerPct:
-        _finite(_token?.developerPct??_token?.developerSharePct),
-      buyPressure:_finite(_token?.buyPressure??_token?.momentum),
-
-      priceSol:_finite(_token?.priceSol??_token?.price),
-      liquiditySol:_finite(_token?.liquiditySol??_token?.liquidity),
-      marketCapSol:
-        _finite(
-          _market5m?.marketCapSol ??
-          _token?.marketCapSol ??
-          _token?.marketCap
-        ),
-      marketCapUsd:
-        _finite(
-          _market5m?.marketCapUsd ??
-          _token?.marketCapUsd
-        ),
-
-      ageMinutes:_age===null?null:_finite(_age),
-      volume5mSol:
-        _finite(
-          _market5m?.volume5mSol ??
-          _token?.volume5mSol
-        ),
-      volume5mUsd:
-        _finite(
-          _market5m?.volume5mUsd ??
-          _token?.volume5mUsd
-        ),
-      transactions5m:
-        _finite(
-          _market5m?.transactions5m ??
-          _token?.transactions5m
-        ),
-      priceChange5mPct:
-        _finite(
-          _market5m?.priceChange5mPct ??
-          _token?.priceChange5mPct
-        ),
-
-      qualityScore:_finite(_token?.qualityScore),
-      opportunityScore:_finite(_token?.opportunityScore),
-      opportunityEvidenceReady:
-        _token?.opportunityEvidenceReady===true,
-      opportunityTrendHealthy:
-        _token?.opportunityTrendHealthy===true,
-      dead:_token?.dead===true,
-      deadReason:
-        typeof _token?.deadReason==='string'
-          ? _token.deadReason
-          : null,
-      quoteAgeMs:
-        _token?.lastPriceAt
-          ? Math.max(0,Date.now()-Number(_token.lastPriceAt))
-          : null
-    });
+      const _view=__mfLiveCardViewV14(_token,_decision);
+      if(_view)_safeViews.push(_view);else _viewErrors++;
+    }catch{_viewErrors++}
   }
 
   // MEMEFLOW_FEED_RANKING_COMPAT_V13
@@ -7539,17 +7228,9 @@ if(false && url.pathname==='/api/ai/assistant' &&req.method==='POST'){
     counts:_counts
   };
 
-  __mfLiveStatesResponseCache.set(_cacheKey,{
-    at:Date.now(),
-    settingsVersion:_settingsVersion,
-    liveRevision:__mfLiveTokenRevision,
-    payload:_payload
-  });
+  // MEMEFLOW_NO_DYNAMIC_RESPONSE_CACHE_V20_8_8
+  // Intentionally no live-state response cache write.
 
-  if(__mfLiveStatesResponseCache.size>2000){
-    const oldest=__mfLiveStatesResponseCache.keys().next().value;
-    if(oldest!==undefined)__mfLiveStatesResponseCache.delete(oldest);
-  }
 
   return json(res,200,_payload);
  }

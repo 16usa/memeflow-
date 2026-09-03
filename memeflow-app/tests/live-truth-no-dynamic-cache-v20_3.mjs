@@ -14,7 +14,7 @@ assert.match(ui,/MEMEFLOW_NO_DYNAMIC_CACHE_V20_2/);
 assert.match(ui,/__mfInvalidateDynamicRowV20_2/);
 assert.match(app,/MEMEFLOW_MANUAL_NO_DYNAMIC_CACHE_V20_2/);
 assert.match(app,/MEMEFLOW_FINAL_ACTIVITY_GATE_V20_2/);
-assert.match(app,/tradeEligible:eligible&&__v20truth\.pass===true/);
+assert.match(app,/tradeEligible:isOpen\?true:eligible&&liveTruth\.pass===true/);
 assert.match(html,/system-tokens\.js\?v=[^\"']+/);
 
 const ms=ui.indexOf('function __mfMergeMutableRowV18(');
@@ -26,7 +26,7 @@ assert.doesNotMatch(merge,/previous\?\.market/);
 assert.doesNotMatch(merge,/previous\?\.holder/);
 
 // Exact regression for the screenshot class: current 5m zero activity must
-// force WAITING/0 and cannot remain BUY READY because of an old decision.
+// force WAITING and cannot remain BUY READY because of an old decision.
 const gateStart=app.indexOf('function __mfCurrentEntryTruthV20_2(');
 const gateEnd=app.indexOf('function __mfLiveDecisionForUserV14(',gateStart);
 const gate=app.slice(gateStart,gateEnd);

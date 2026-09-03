@@ -101,9 +101,11 @@ const rizztek={
 const screenshotRegression=rankCandidateViews([milo,rizztek]);
 assert.equal(screenshotRegression[0].mint,'rizztek');
 assert.ok(
-  screenshotRegression[0].score > screenshotRegression[1].score,
-  'live feed score must agree with live ordering'
+  screenshotRegression[0].feedScore > screenshotRegression[1].feedScore,
+  'hidden feed score must agree with live ordering'
 );
+assert.equal(screenshotRegression[0].score,0);
+assert.equal(screenshotRegression[1].score,74);
 assert.equal(screenshotRegression[0].decisionScore,0);
 assert.equal(screenshotRegression[1].decisionScore,74);
 
@@ -163,7 +165,7 @@ const aiSlice=app.slice(aiStart,debugStart);
 
 assert.match(liveSlice,/rankCandidateViews\(_unrankedViews\)/);
 assert.match(aiSlice,/rankCandidateViews\(_selected\.map\(candidateView\)\)/);
-assert.match(app,/MEMEFLOW_WAITING_PREVIEW_SCORE_V21/);
+assert.match(app,/MEMEFLOW_CANONICAL_LIVE_DECISION_V20_8_8/);
 assert.match(app,/MEMEFLOW_LIVE_CARD_STALE_MC_FIX_V21/);
 
 console.log('feed relevance ranking v2 ok');

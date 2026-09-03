@@ -6,10 +6,10 @@ const app=fs.readFileSync(
   'utf8'
 );
 
-assert.match(app,/MEMEFLOW_CANONICAL_SCORE_STATE_V20_7/);
+assert.match(app,/MEMEFLOW_CANONICAL_LIVE_DECISION_V20_8_8/);
 
 // The live safety gate may force WAITING but must not zero the evaluator score.
-const ds=app.indexOf('const __v20truth=__mfCurrentEntryTruthV20_2');
+const ds=app.indexOf('// MEMEFLOW_CANONICAL_LIVE_DECISION_V20_8_8');
 const de=app.indexOf('function __mfLiveCardViewV14(',ds);
 assert.ok(ds>=0&&de>ds);
 

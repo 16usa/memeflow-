@@ -33,7 +33,7 @@ const route=app.slice(
 );
 assert.match(route,/MEMEFLOW_REALTIME_UI_FAIRNESS_V1_ROUTE/);
 assert.match(route,/await __mfYieldToEventLoop\(\)/);
-assert.match(app,/LIVE_STATES_RESPONSE_CACHE_MS/);
+assert.match(app,/MEMEFLOW_NO_DYNAMIC_RESPONSE_CACHE_V20_8_8/);
 assert.doesNotMatch(route,/tokenRegistry\?\.count\?\.\(\)/);
 
 // Historical HTTP sync cannot overwrite an already-live WS snapshot and its
@@ -130,8 +130,11 @@ assert.ok(
 assert.doesNotMatch(oneSecondPoll,/hydrateTokenCardsV16/);
 assert.doesNotMatch(oneSecondPoll,/hydrateTokenMediaV25/);
 
-// MEMEFLOW_LIVE_TOKEN_ASSET_NO_STORE_V1
-assert.match(app,/MEMEFLOW_LIVE_TOKEN_ASSET_NO_STORE_V1/);
+// MEMEFLOW_VERSIONED_LIVE_TOKEN_ASSET_CACHE_V20_8_8
+assert.match(app,/MEMEFLOW_LOAD_PERF_V1_CACHE/);
+assert.match(app,/const isVersionedLiveTokenAsset=/);
+assert.match(app,/isLiveTokenAsset&&!isVersionedLiveTokenAsset/);
+assert.match(app,/public, max-age=31536000, immutable/);
 assert.match(app,/url\.pathname==='\/system-tokens\.js'/);
 assert.match(app,/url\.pathname==='\/system-tokens\.css'/);
 assert.match(

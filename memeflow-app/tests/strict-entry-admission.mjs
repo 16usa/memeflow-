@@ -273,7 +273,7 @@ assert.doesNotMatch(
   liveStatesRoute,
   /const _rawTokens=__mfLiveScannerTokens\(\)/
 );
-assert.match(liveStatesRoute,/state:_blocked\?'BLOCKED':'WAITING'/);
+assert.match(liveStatesRoute,/__mfLiveDecisionForUserV14\(/);
 assert.match(liveStatesRoute,/preAdmissionPending:_pending/);
 assert.match(liveStatesRoute,/preAdmissionRejected:_rejected/);
 assert.match(liveStatesRoute,/preAdmissionHidden:0/);
