@@ -6405,6 +6405,74 @@ async function handler(req,res){const url=new URL(req.url,'http://x');
    });
  }
 
+/* MEMEFLOW_TOKEN_TRAJECTORY_MONITOR_V23_8
+ * Owner-only, read-only temporal Token Intelligence memory.
+ */
+ if(
+   url.pathname==='/api/owner/intelligence/token-trajectories' &&
+   req.method==='GET'
+ ){
+   if(!u)return json(res,401,{error:'AUTH_REQUIRED'});
+   if(u.isOwner!==true)return json(res,403,{error:'OWNER_REQUIRED'});
+
+   const limit=Math.max(
+     1,
+     Math.min(100,Number(url.searchParams.get('limit')||50))
+   );
+
+   const state=String(
+     url.searchParams.get('state')||''
+   ).trim().toUpperCase();
+
+   return json(res,200,{
+     ok:true,
+     shadowOnly:true,
+     memory:
+       tokenIntelligenceShadowV23
+         .status()
+         .shadowTokenTrajectory,
+     trajectories:
+       tokenIntelligenceShadowV23
+         .listTokenTrajectories({
+           limit,
+           state:state||null
+         })
+   });
+ }
+
+ if(
+   url.pathname==='/api/owner/intelligence/token-trajectory' &&
+   req.method==='GET'
+ ){
+   if(!u)return json(res,401,{error:'AUTH_REQUIRED'});
+   if(u.isOwner!==true)return json(res,403,{error:'OWNER_REQUIRED'});
+
+   const mint=String(
+     url.searchParams.get('mint')||''
+   ).trim();
+
+   if(!mint){
+     return json(res,400,{error:'MINT_REQUIRED'});
+   }
+
+   const trajectory=
+     tokenIntelligenceShadowV23
+       .inspectTokenTrajectory(mint);
+
+   if(!trajectory){
+     return json(res,404,{
+       error:'TOKEN_TRAJECTORY_NOT_FOUND',
+       mint
+     });
+   }
+
+   return json(res,200,{
+     ok:true,
+     shadowOnly:true,
+     trajectory
+   });
+ }
+
 /* MEMEFLOW_PUBLIC_AGENT_ENTITY_V2_ROUTES */
  if(url.pathname==='/api/owner/public-agent'&&req.method==='GET'){if(!u)return json(res,401,{error:'AUTH_REQUIRED'});if(u.isOwner!==true)return json(res,403,{error:'OWNER_REQUIRED'});const st=__mfPublicAgentState(u.id);return json(res,200,{ok:true,owner:true,config:st.config,queue:st.queue.slice(0,50),audit:st.audit.slice(0,50),x:{connected:false,transport:'disabled-v2'},safety:{testDraftsNeverPublish:true}})}
  if(url.pathname==='/api/owner/public-agent/config'&&req.method==='PUT'){if(!u)return json(res,401,{error:'AUTH_REQUIRED'});if(u.isOwner!==true)return json(res,403,{error:'OWNER_REQUIRED'});const b=await body(req),st=__mfPublicAgentState(u.id),mode=String(b?.mode||st.config.mode||'approval').toLowerCase();if(!['off','approval','autonomous'].includes(mode))return json(res,400,{error:'INVALID_MODE'});const e=b?.events&&typeof b.events==='object'?b.events:{};st.config={...st.config,enabled:b?.enabled===true,mode,displayName:__mfPublicAgentSafe(b?.displayName??st.config.displayName,40),voice:['terminal','minimal'].includes(String(b?.voice))?String(b.voice):st.config.voice,xConnected:false,events:{watch:e.watch!==false,buyReady:e.buyReady!==false,positions:e.positions!==false,risk:e.risk!==false}};const at=new Date().toISOString();st.audit.unshift({at,type:'CONFIG_UPDATED',mode:st.config.mode,enabled:st.config.enabled});st.audit=st.audit.slice(0,200);store.save();return json(res,200,{ok:true,config:st.config})}

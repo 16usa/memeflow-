@@ -18,6 +18,9 @@ import {
 import {
   createShadowConfidenceGovernorV23_7
 } from './shadow-confidence-governor-v23_7.mjs';
+import {
+  createShadowTokenTrajectoryMemoryV23_8
+} from './shadow-token-trajectory-v23_8.mjs';
 
 // MEMEFLOW_TOKEN_INTELLIGENCE_NETWORK_V23
 //
@@ -747,6 +750,12 @@ export function createTokenIntelligenceShadowV23({
   const shadowConfidenceGovernor=
     createShadowConfidenceGovernorV23_7();
 
+  const shadowTokenTrajectory=
+    createShadowTokenTrajectoryMemoryV23_8({
+      dataDir,
+      maxMints:maxCells
+    });
+
   const metrics={
     observations:0,
     cellsCreated:0,
@@ -772,6 +781,12 @@ export function createTokenIntelligenceShadowV23({
       }
 
       if(oldestKey===null)break;
+
+      shadowTokenTrajectory.markTerminal(
+        oldestKey,
+        'CELL_EVICTED'
+      );
+
       cells.delete(oldestKey);
       metrics.cellsEvicted++;
     }
@@ -828,6 +843,15 @@ export function createTokenIntelligenceShadowV23({
           {mint}
         );
 
+      // MEMEFLOW_TOKEN_TRAJECTORY_MEMORY_V23_8
+      // Temporal memory only. It observes existing shadow diagnostics and
+      // cannot mutate evaluate()/V22 or trading state.
+      snapshot.shadowTokenTrajectory=
+        shadowTokenTrajectory.observe(
+          snapshot,
+          {mint}
+        );
+
       if(cell.maybeAnchor(token,snapshot,journal)){
         metrics.anchors++;
       }
@@ -844,6 +868,11 @@ export function createTokenIntelligenceShadowV23({
         // Anchor features are frozen before the outcome exists. This avoids
         // future-data leakage into the learning dataset.
         learningDataset.recordOutcome({
+          anchor:cell.anchor,
+          outcome
+        });
+
+        shadowTokenTrajectory.recordOutcome({
           anchor:cell.anchor,
           outcome
         });
@@ -869,6 +898,11 @@ export function createTokenIntelligenceShadowV23({
     mint=String(mint||'');
     const cell=cells.get(mint);
     if(!cell)return false;
+
+    shadowTokenTrajectory.markTerminal(
+      mint,
+      reason
+    );
 
     if(cell.anchor){
       journal.append({
@@ -1000,6 +1034,32 @@ export function createTokenIntelligenceShadowV23({
               snap?.shadowConfidenceGovernor
                 ?.effectiveSourceCount??0
           },
+          shadowTokenTrajectory:{
+            trajectoryState:
+              snap?.shadowTokenTrajectory
+                ?.trajectoryState||'COLD',
+            stateStreak:
+              snap?.shadowTokenTrajectory
+                ?.stateStreak??1,
+            turningPoint:
+              snap?.shadowTokenTrajectory
+                ?.turningPoint===true,
+            probabilityDeltaWindow:
+              snap?.shadowTokenTrajectory
+                ?.probabilityDeltaWindow??null,
+            confidenceDeltaWindow:
+              snap?.shadowTokenTrajectory
+                ?.confidenceDeltaWindow??null,
+            turningPoints:
+              snap?.shadowTokenTrajectory
+                ?.turningPoints??0,
+            regimeSwitches:
+              snap?.shadowTokenTrajectory
+                ?.regimeSwitches??0,
+            forecastQuality:
+              snap?.shadowTokenTrajectory
+                ?.forecastQuality||null
+          },
           shadowModelArena:{
             status:
               snap?.shadowModelArena?.status||'COLD_START',
@@ -1065,7 +1125,7 @@ export function createTokenIntelligenceShadowV23({
     }
 
     return {
-      version:'MEMEFLOW_TOKEN_INTELLIGENCE_NETWORK_V23_7',
+      version:'MEMEFLOW_TOKEN_INTELLIGENCE_NETWORK_V23_8',
       shadowOnly:true,
       specialists:[
         'FLOW',
@@ -1089,7 +1149,8 @@ export function createTokenIntelligenceShadowV23({
       shadowMathBrain:shadowMathBrain.status(),
       shadowModelArena:shadowModelArena.status(),
       shadowDriftRegime:shadowDriftRegime.status(),
-      shadowConfidenceGovernor:shadowConfidenceGovernor.status()
+      shadowConfidenceGovernor:shadowConfidenceGovernor.status(),
+      shadowTokenTrajectory:shadowTokenTrajectory.status()
     };
   }
 
@@ -1126,6 +1187,12 @@ export function createTokenIntelligenceShadowV23({
       ()=>shadowConfidenceGovernor.status(),
     listShadowConfidenceGovernorPredictions:
       options=>shadowConfidenceGovernor.listRecent(options),
+    listTokenTrajectories:
+      options=>shadowTokenTrajectory.list(options),
+    inspectTokenTrajectory:
+      mint=>shadowTokenTrajectory.inspect(mint),
+    flushTokenTrajectories:
+      ()=>shadowTokenTrajectory.flush(),
     status
   };
 }
