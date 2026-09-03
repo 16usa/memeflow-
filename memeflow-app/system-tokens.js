@@ -1746,6 +1746,7 @@ async function __mfRunCardAnalysisV13(card){
 
   const requestId=String(Number(card.dataset.mfAnalysisRequest||0)+1);
   card.dataset.mfAnalysisRequest=requestId;
+  status.hidden=false;
   status.textContent='Analyzing fresh token data…';
   body.innerHTML='';
 
@@ -1768,9 +1769,10 @@ async function __mfRunCardAnalysisV13(card){
     const holders=onchain?.holderCountDisplay||(finite(onchain?.holderCount)?fmt(onchain.holderCount,0):'—');
     const yn=v=>v===true?'Yes':v===false?'No':'—';
 
-    status.textContent=scan?.decisionEligible===false
-      ? 'Fresh analysis complete · data incomplete'
-      : 'Fresh analysis complete';
+    // MEMEFLOW_CARD_DETAILS_COMPACT_V16
+    // Completion is represented by the compact Fresh/State/Score/Conf line below.
+    status.textContent='';
+    status.hidden=true;
 
     const scoreLabel=finite(decision?.score)?fmt(decision.score,0):'—';
     const confidenceLabel=finite(decision?.confidence)?fmt(decision.confidence,0)+'%':'—';
@@ -1797,6 +1799,7 @@ async function __mfRunCardAnalysisV13(card){
       </div>`;
   }catch(error){
     if(card.dataset.mfAnalysisRequest!==requestId)return;
+    status.hidden=false;
     status.textContent='Analysis failed: '+String(error?.message||error);
     body.innerHTML='';
   }
