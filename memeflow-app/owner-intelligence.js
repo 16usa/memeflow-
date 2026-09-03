@@ -1175,6 +1175,180 @@ async function loadErrorAwareBenchmark(){
   }
 }
 
+/* MEMEFLOW_SHADOW_POLICY_CANDIDATE_BUILDER_V23_20_UI_JS */
+function renderPolicyCandidate(payload={}){
+  const result=payload?.result||{};
+  const candidate=result?.candidate||null;
+  const gates=
+    Array.isArray(result?.gates)
+      ? result.gates
+      : [];
+
+  const badge=$('policyCandidateStatus');
+
+  if(badge){
+    badge.className=
+      'oi-ai-status '+
+      (
+        result?.ready===true
+          ? 'online'
+          : ''
+      );
+
+    badge.textContent=
+      result?.ready===true
+        ? 'READY FOR SIMULATION'
+        : 'BLOCKED';
+  }
+
+  $('policyCandidateMode').textContent=
+    candidate?.mode||'—';
+
+  $('policyCandidateMinPenalty').textContent=
+    candidate
+      ? pct(
+          candidate?.trigger
+            ?.minPenaltyPct
+        )
+      : '—';
+
+  $('policyCandidateMaxConfidence').textContent=
+    candidate
+      ? pct(
+          candidate?.trigger
+            ?.maxAdjustedConfidencePct
+        )
+      : '—';
+
+  $('policyCandidatePatterns').textContent=
+    candidate
+      ? num(
+          candidate?.patternEvidence
+            ?.maturePatterns,
+          0
+        )
+      : '—';
+
+  $('policyCandidateGates').innerHTML=
+    gates.length
+      ? gates.map(row=>`
+          <div class="oi-promotion-check ${row?.pass===true?'pass':'fail'}">
+            <span class="oi-promotion-check-dot"></span>
+            <div>
+              <strong>${esc(row?.label||row?.id||'Gate')}</strong>
+              <small>
+                actual ${esc(String(row?.actual??'—'))}
+                · required ${esc(String(row?.required??'—'))}
+              </small>
+            </div>
+          </div>
+        `).join('')
+      : `
+          <div class="oi-empty">
+            Candidate gates unavailable.
+          </div>
+        `;
+
+  const spec=$('policyCandidateSpec');
+
+  if(spec){
+    if(candidate){
+      spec.innerHTML=[
+        [
+          'Action',
+          String(
+            candidate?.proposedAction||'—'
+          ).replaceAll('_',' ')
+        ],
+        [
+          'Scope',
+          String(
+            candidate?.scope||'—'
+          ).replaceAll('_',' ')
+        ],
+        [
+          'Brier Δ',
+          num(
+            candidate?.benchmarkEvidence
+              ?.brierDelta,
+            6
+          )
+        ],
+        [
+          'Log-loss Δ',
+          num(
+            candidate?.benchmarkEvidence
+              ?.logLossDelta,
+            6
+          )
+        ],
+        [
+          'Next stage',
+          String(
+            candidate?.simulatorRequirements
+              ?.nextStage||'—'
+          ).replaceAll('_',' ')
+        ]
+      ].map(([name,value])=>`
+        <div class="oi-row">
+          <span>${esc(name)}</span>
+          <strong>${esc(value)}</strong>
+        </div>
+      `).join('');
+    }else{
+      spec.innerHTML=`
+        <div class="oi-empty">
+          No candidate until every gate passes.
+        </div>
+      `;
+    }
+  }
+
+  const blocker=$('policyCandidateBlocker');
+
+  if(blocker){
+    blocker.dataset.state=
+      result?.ready===true
+        ? 'ready'
+        : 'blocked';
+
+    blocker.textContent=
+      result?.ready===true
+        ? 'CANDIDATE READY FOR V23.21 SHADOW SIMULATION. Nothing has been applied to live trading.'
+        : (
+            Array.isArray(result?.blockers) &&
+            result.blockers.length
+          )
+            ? `Blocked: ${result.blockers.join(', ').replaceAll('_',' ')}`
+            : 'Waiting for V23.19 evidence.';
+  }
+}
+
+async function loadPolicyCandidate(){
+  try{
+    const payload=await api(
+      '/api/owner/intelligence/policy-candidate'
+    );
+
+    renderPolicyCandidate(payload);
+  }catch(error){
+    const badge=$('policyCandidateStatus');
+
+    if(badge){
+      badge.className='oi-ai-status offline';
+      badge.textContent='UNAVAILABLE';
+    }
+
+    const blocker=$('policyCandidateBlocker');
+
+    if(blocker){
+      blocker.dataset.state='blocked';
+      blocker.textContent=
+        `Policy candidate unavailable: ${error.message}`;
+    }
+  }
+}
+
 /* MEMEFLOW_SHADOW_PROMOTION_REPORT_V23_14_UI_JS */
 function promotionTone(status=''){
   const s=String(status||'').toUpperCase();
@@ -2089,7 +2263,8 @@ async function load(
       loadOutcomeReviews(),
       loadErrorPatterns(),
       loadErrorAwareConfidence(),
-      loadErrorAwareBenchmark()
+      loadErrorAwareBenchmark(),
+      loadPolicyCandidate()
     ]);
 
     if(previous){

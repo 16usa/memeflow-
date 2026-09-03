@@ -645,6 +645,85 @@
         </div>
       </section>
 
+      <!-- MEMEFLOW_SHADOW_POLICY_CANDIDATE_BUILDER_V23_20_UI -->
+      <section
+        id="policyCandidateMonitor"
+        class="oi-panel oi-policy-candidate"
+      >
+        <div class="oi-panel-head">
+          <div>
+            <span class="oi-eyebrow">
+              POLICY CANDIDATE · SHADOW ONLY
+            </span>
+            <h2>V23.20 Policy Candidate</h2>
+            <p>
+              Converts a validated V23.19 benchmark win into a concrete
+              rule for the next shadow simulator. Nothing is applied to
+              V22, Settings, State, Score, BUY or SELL.
+            </p>
+          </div>
+
+          <span
+            id="policyCandidateStatus"
+            class="oi-ai-status"
+          >
+            LOADING
+          </span>
+        </div>
+
+        <div class="oi-grid oi-grid-4">
+          <article class="oi-stat">
+            <span>MODE</span>
+            <strong id="policyCandidateMode">—</strong>
+            <small>conservative / balanced</small>
+          </article>
+
+          <article class="oi-stat">
+            <span>MIN PENALTY</span>
+            <strong id="policyCandidateMinPenalty">—</strong>
+            <small>required V23.18 haircut</small>
+          </article>
+
+          <article class="oi-stat">
+            <span>MAX ADJ CONF</span>
+            <strong id="policyCandidateMaxConfidence">—</strong>
+            <small>candidate guard threshold</small>
+          </article>
+
+          <article class="oi-stat">
+            <span>MATURE PATTERNS</span>
+            <strong id="policyCandidatePatterns">—</strong>
+            <small>V23.17 support</small>
+          </article>
+        </div>
+
+        <div class="oi-grid oi-grid-2">
+          <div>
+            <h3>Readiness gates</h3>
+            <div
+              id="policyCandidateGates"
+              class="oi-promotion-checks"
+            ></div>
+          </div>
+
+          <div>
+            <h3>Candidate specification</h3>
+            <div
+              id="policyCandidateSpec"
+              class="oi-list"
+            ></div>
+          </div>
+        </div>
+
+        <div
+          id="policyCandidateBlocker"
+          class="oi-promotion-blocker"
+          data-state="blocked"
+        >
+          Waiting for V23.19 evidence.
+        </div>
+      </section>
+
       <!-- MEMEFLOW_PLATFORM_LEARNING_V2_UI -->
       <section class="oi-panel">
         <div class="oi-panel-head">

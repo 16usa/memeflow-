@@ -1035,6 +1035,20 @@ textarea{
 }
 
 /* ==========================================================
+   MEMEFLOW_SHADOW_POLICY_CANDIDATE_BUILDER_V23_20
+   ========================================================== */
+
+.oi-policy-candidate
+.oi-grid-2{
+  margin-top:12px;
+}
+
+.oi-policy-candidate
+.oi-list{
+  margin-top:7px;
+}
+
+/* ==========================================================
    MEMEFLOW_SHADOW_PROMOTION_REPORT_V23_14
    ========================================================== */
 
