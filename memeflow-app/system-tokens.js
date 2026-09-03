@@ -2284,101 +2284,100 @@ async function __mfPostJsonV18(
   }
 }
 
-function __mfMergeMutableRowV18(previous,incoming){
-  if(!previous)return incoming;
-  if(!incoming)return previous;
+// MEMEFLOW_NO_DYNAMIC_CACHE_V20_2
+const __MF_TOKEN_IDENTITY_KEYS_V20_2=[
+  'name','metadataName','symbol','metadataSymbol',
+  'image','imageUrl','imageUri','logo','logoUrl','logoURI',
+  'uri','metadataUri','twitterUrl','telegramUrl','websiteUrl',
+  'creator','curve','bondingCurve','associatedBondingCurve',
+  'pumpCreatedAt','createdAt','decimals','totalSupply',
+  'launchPlatform','protocol'
+];
 
-  const out={...previous};
+function __mfKeepTokenIdentityV20_2(previous,incoming){
+  const out={...(incoming&&typeof incoming==='object'?incoming:{})};
+  if(!out.mint&&previous?.mint)out.mint=previous.mint;
 
-  const mutableTopLevel=[
-    'state',
-    'score',
-    'confidence',
-    'primaryReason',
-    'reasons',
-    'tradeEligible',
-    'displayOnly',
-    'openPositionOverride',
-    'entryAdmissionState',
-    'entryAdmissionReasons',
-    'holderCount',
-    'holders',
-
-    // MEMEFLOW_HOLDER_PREVIEW_MERGE_V4
-    'observedHolderCount',
-    'previewHolderCount',
-    'fastHolderPreviewDisplay',
-
-    'top10Pct',
-    'top10',
-    'developerPct',
-    'developerSharePct',
-    'developer',
-    'buyPressure',
-    'momentum',
-    'price',
-    'priceSol',
-    'liquidity',
-    'liquiditySol',
-    'liquidityUsd',
-    'marketCap',
-    'marketCapSol',
-    'marketCapUsd',
-    'marketCapSource',
-    'marketCapUpdatedAt',
-    'ageMinutes',
-    'volume5mSol',
-    'volume5mUsd',
-    'transactions5m',
-    'priceChange5mPct',
-    'qualityScore',
-    'opportunityScore',
-    'opportunityEvidenceReady',
-    'opportunityTrendHealthy',
-    'uniqueBuyers',
-    'netFlowSol',
-    'recentNetFlowSol',
-    'priceMomentumPct',
-    'drawdownFromPeakPct',
-    'whaleDominancePct',
-    'dead',
-    'deadReason',
-    'riskApproved',
-    'walletRiskPending',
-    'preOpenRiskStatus',
-    'routeApproved',
-    'quoteAgeMs',
-    'tokenUpdatedAt',
-    'decisionUpdatedAt',
-    'snapshotAt'
-  ];
-
-  for(const key of mutableTopLevel){
-    if(
-      Object.prototype.hasOwnProperty.call(
-        incoming,
-        key
-      )
-    ){
-      out[key]=incoming[key];
-    }
+  for(const key of __MF_TOKEN_IDENTITY_KEYS_V20_2){
+    if(out[key]!==null&&out[key]!==undefined&&out[key]!=='')continue;
+    const old=previous?.[key];
+    if(old!==null&&old!==undefined&&old!=='')out[key]=old;
   }
+  return out;
+}
 
-  out.decision={
-    ...(previous?.decision||{}),
-    ...(incoming?.decision||{})
-  };
+function __mfInvalidateDynamicRowV20_2(previous){
+  if(!previous)return previous;
+  const reason='Fresh live snapshot unavailable';
 
-  out.holder={
-    ...(previous?.holder||{}),
-    ...(incoming?.holder||{})
-  };
+  return canonicalDecisionRow(
+    __mfKeepTokenIdentityV20_2(previous,{
+      mint:previous?.mint,
+      state:'WAITING',
+      score:0,
+      confidence:0,
+      primaryReason:reason,
+      reasons:[reason],
+      tradeEligible:false,
+      displayOnly:true,
 
-  out.market={
-    ...(previous?.market||{}),
-    ...(incoming?.market||{})
-  };
+      holderCount:null,
+      holders:null,
+      observedHolderCount:null,
+      top10Pct:null,
+      top10:null,
+      developerPct:null,
+      developerSharePct:null,
+      developer:null,
 
+      price:null,
+      priceSol:null,
+      priceUsd:null,
+      liquidity:null,
+      liquiditySol:null,
+      liquidityUsd:null,
+      marketCap:null,
+      marketCapSol:null,
+      marketCapUsd:null,
+      marketCapSource:null,
+      marketCapUpdatedAt:null,
+      volume5mSol:null,
+      volume5mUsd:null,
+      transactions5m:null,
+      priceChange5mPct:null,
+      buyPressure:null,
+      momentum:null,
+      qualityScore:null,
+      opportunityScore:null,
+      opportunityEvidenceReady:false,
+      opportunityTrendHealthy:false,
+
+      decision:{
+        state:'WAITING',score:0,confidence:0,
+        primaryReason:reason,reasons:[reason],tradeEligible:false
+      },
+      market:{},
+      holder:{},
+      snapshotAt:Date.now()
+    })
+  );
+}
+
+function __mfMergeMutableRowV18(previous,incoming){
+  if(!incoming)return __mfInvalidateDynamicRowV20_2(previous);
+
+  // The incoming live snapshot is authoritative for every mutable fact.
+  // Never deep-merge previous decision/market/holder values.
+  const out=__mfKeepTokenIdentityV20_2(previous,incoming);
+  out.decision=incoming?.decision&&typeof incoming.decision==='object'
+    ? {...incoming.decision}
+    : {};
+  out.market=incoming?.market&&typeof incoming.market==='object'
+    ? {...incoming.market}
+    : {};
+  out.holder=incoming?.holder&&typeof incoming.holder==='object'
+    ? {...incoming.holder}
+    : {};
   return canonicalDecisionRow(out);
 }
 
@@ -2585,11 +2584,8 @@ async function loadTokens(){
         const incoming=incomingByMint.get(mint);
 
         return incoming
-          ? __mfMergeMutableRowV18(
-              previous,
-              incoming
-            )
-          : previous;
+          ? __mfMergeMutableRowV18(previous,incoming)
+          : __mfInvalidateDynamicRowV20_2(previous);
       });
 
     // MEMEFLOW_INSTANT_SCORE_RANK_REORDER_V23

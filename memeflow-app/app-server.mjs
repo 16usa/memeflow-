@@ -2023,6 +2023,41 @@ function __mfRankLiveDisplayV28(view,settings={}){
 }
 
 // MEMEFLOW_SINGLE_TOKEN_LIVE_VIEW_V14
+// MEMEFLOW_FINAL_ACTIVITY_GATE_V20_2
+function __mfCurrentEntryTruthV20_2(token,{isOpen=false}={}){
+  if(isOpen)return {pass:true,reason:null};
+
+  const mint=String(token?.mint||'').trim();
+  let live=null;
+  try{live=__mfCandidateMarket5mV4(mint,token)}catch{}
+
+  const num=v=>{
+    if(v===null||v===undefined||v===''||typeof v==='boolean')return null;
+    const n=Number(v);return Number.isFinite(n)?n:null;
+  };
+
+  const tx=num(live?.transactions5m);
+  const volSol=num(live?.volume5mSol);
+  const volUsd=num(live?.volume5mUsd);
+  const mcSol=num(live?.marketCapSol);
+  const mcUsd=num(live?.marketCapUsd);
+
+  const activityKnown=tx!==null||volSol!==null||volUsd!==null;
+  const active=(tx!==null&&tx>0)||(volSol!==null&&volSol>0)||(volUsd!==null&&volUsd>0);
+  const marketReady=(mcSol!==null&&mcSol>0)||(mcUsd!==null&&mcUsd>0);
+
+  if(activityKnown&&!active){
+    return {pass:false,reason:'No live market activity in the last 5 minutes'};
+  }
+  if(!active){
+    return {pass:false,reason:'Fresh 5m market activity is unavailable'};
+  }
+  if(!marketReady){
+    return {pass:false,reason:'Fresh live market cap is unavailable'};
+  }
+  return {pass:true,reason:null};
+}
+
 function __mfLiveDecisionForUserV14(uid,token,settingsOverride=null){
   const mint=String(token?.mint||'').trim();
   if(!mint)return null;
@@ -2130,10 +2165,26 @@ function __mfLiveDecisionForUserV14(uid,token,settingsOverride=null){
     }
   }
 
+  const __v20truth=__mfCurrentEntryTruthV20_2(token,{isOpen});
+  if(!isOpen&&__v20truth.pass!==true){
+    const reason=__v20truth.reason||'Fresh live market evidence is unavailable';
+    decision={
+      ...(decision||{}),
+      state:'WAITING',
+      displayState:'WAITING',
+      score:0,
+      confidence:0,
+      primaryReason:reason,
+      reasons:[reason],
+      terminal:false,
+      liveTruthBlocked:true
+    };
+  }
+
   return {
     ...decision,
     mint,
-    tradeEligible:eligible,
+    tradeEligible:eligible&&__v20truth.pass===true,
     displayOnly:!eligible&&!isOpen,
     openPositionOverride:isOpen&&!eligible,
     entryAdmissionState:admissionState,
@@ -4604,6 +4655,29 @@ async function mf49StandaloneScan(raw,u){
     ? Math.max(...observedSeed)
     : null
  };
+
+ // MEMEFLOW_MANUAL_NO_DYNAMIC_CACHE_V20_2
+ // Do not reuse mutable facts from store.state.tokens during a fresh analysis.
+ // Identity/media/creation/supply stay cached; everything that can move is
+ // rebuilt from current Pump/RPC/live-ledger evidence.
+ const __mfDynamicKnownKeysV20_2=[
+  'state','displayState','underlyingState','score','confidence','decision','evaluation',
+  'qualityScore','opportunityScore','primaryReason','reasons','tradeEligible','displayOnly',
+  'entryAdmissionState','entryAdmissionReasons',
+  'price','priceSol','priceUsd','liquidity','liquiditySol','liquidityUsd',
+  'marketCap','marketCapSol','marketCapUsd','marketCapSource','marketCapUpdatedAt',
+  'volume5mSol','volume5mUsd','volume24hUsd','transactions5m','buys5m','sells5m',
+  'buyTransactions','sellTransactions','totalTransactions','priceChange5mPct','buyPressure','momentum',
+  'marketFresh','lastTradeAt','lastPriceAt','lastMarketActivityAt',
+  'holderCount','holders','observedHolderCount','top10Pct','top10',
+  'developerPct','developerSharePct','developer','holderFresh','holderUpdatedAt','holderSource',
+  'uniqueBuyers','netFlowSol','recentNetFlowSol','priceMomentumPct','drawdownFromPeakPct','whaleDominancePct',
+  'dead','deadReason','riskApproved','walletRiskPending','preOpenRiskStatus','routeApproved','quoteAgeMs',
+  'tokenUpdatedAt','decisionUpdatedAt','snapshotAt'
+ ];
+ for(const key of __mfDynamicKnownKeysV20_2)delete known[key];
+ known.market={};
+ known.holder={};
 
  if(marketLedger)sources.add('MEMEFLOW live market ledger');
  if(holderLedger?.observedHolderCount>0)sources.add('MEMEFLOW live holder ledger');
