@@ -5908,14 +5908,9 @@ updateTimer = null;
           .charAt(0)
           .toUpperCase();
 
-      const localUrl = first(
-        t.imageUrl,
-        t.image,
-        t.logoUrl,
-        t.logo,
-        t.metadata?.imageUrl,
-        t.metadata?.image
-      );
+      const localUrl = d?.mint
+        ? '/api/token-image/' + encodeURIComponent(String(d.mint).trim())
+        : ''; // MEMEFLOW_CANONICAL_TOKEN_IMAGE_V3
 
       const showImage = url => {
         if(!url){
@@ -6034,14 +6029,9 @@ updateTimer = null;
       c.address
     );
 
-    const localUrl=first(
-      c.imageUrl,
-      c.image,
-      c.logoUrl,
-      c.logo,
-      c.metadata?.imageUrl,
-      c.metadata?.image
-    );
+    const localUrl=mint
+      ? '/api/token-image/' + encodeURIComponent(mint)
+      : ''; // MEMEFLOW_CANONICAL_TOKEN_IMAGE_V3
 
     const showImage=url=>{
       if(!url){
@@ -6112,9 +6102,10 @@ updateTimer = null;
   const pending = new Set();
 
   async function getImage(mint){
-    void mint;
-    return '';
-  }
+    const value=String(mint||'').trim();
+    if(!value)return '';
+    return '/api/token-image/' + encodeURIComponent(value);
+  } // MEMEFLOW_CANONICAL_TOKEN_IMAGE_V3
 
   function candidate(){
     try{

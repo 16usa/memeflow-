@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="en">
+<head>
+<!-- MEMEFLOW_LIGHT_THEME_BOOT_V1 -->
+<script id="mfThemeBootV1">
+(() => {
+  try {
+    const value = localStorage.getItem('memeflow.theme.v1');
+    const theme = value === 'light' ? 'light' : 'dark';
+    document.documentElement.dataset.theme = theme;
+    document.documentElement.style.colorScheme = theme;
+  } catch {
+    document.documentElement.dataset.theme = 'dark';
+  }
+})();
+</script>
+<!-- /MEMEFLOW_LIGHT_THEME_BOOT_V1 -->
+  <meta charset="utf-8" />
+
+  <meta
+    name="viewport"
+    content="width=device-width,initial-scale=1,viewport-fit=cover"
+  />
+
+  <meta
+    name="color-scheme"
+    content="dark"
+  />
+
+  <title>MEMEFLOW · Token Flow</title>
+
+  <!-- MEMEFLOW_LOAD_PERF_V1_CRITICAL
+       Tiny inline shell prevents Safari from flashing raw HTML while the
+       external stylesheet is being fetched on a cold Replit request. -->
+  <style>
+    :root{--mf-perf-bg:#0f141a;--mf-perf-text:#eef5fa;--mf-perf-line:rgba(147,178,202,.12)}
+    *{box-sizing:border-box}
+    html,body{margin:0;min-height:100%;background:#0f141a;color:#eef5fa;
+      font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    body{min-height:100vh}
+    button,input,a{font:inherit}
+    .flow-page{width:min(1180px,100%);min-height:100vh;margin:0 auto;padding:10px 12px 24px}
+    .flow-header,.flow-hero,.flow-toolbar,.pagination{border:1px solid var(--mf-perf-line);border-radius:14px}
+    .flow-header{min-height:64px;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 12px}
+    .header-left,.live-status,.pagination{display:flex;align-items:center}
+    .header-left{gap:10px}.live-status{gap:6px}.header-title span,.header-title strong{display:block}
+    .flow-hero{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;margin-top:10px;padding:22px 20px}
+    .flow-hero h1{margin:6px 0 4px;font-size:clamp(24px,5vw,42px);line-height:1}
+    .flow-hero p{margin:0}.hero-counter{text-align:right}.hero-counter span,.hero-counter strong{display:block}
+    .state-summary{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:7px;margin-top:10px}
+    .summary-card{min-width:0;padding:11px 12px;border:1px solid var(--mf-perf-line);border-radius:11px;background:#111820;text-align:left}
+    .summary-card span,.summary-card strong{display:block}.summary-card strong{margin-top:5px}
+    .flow-toolbar{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:9px;margin-top:10px;padding:8px}
+    .search-wrap{height:38px;display:flex;align-items:center;gap:7px;padding:0 10px;border:1px solid var(--mf-perf-line);border-radius:9px}
+    .search-wrap input{width:100%;border:0;outline:0;background:transparent;color:inherit}
+    .refresh-info{display:flex;align-items:center;gap:8px}
+    .pagination{justify-content:space-between;gap:10px;margin-top:10px;padding:10px}
+    @media(max-width:760px){
+      .flow-page{padding:7px 7px 18px}.flow-header{min-height:54px;padding:6px 8px}
+      .flow-hero{margin-top:7px;padding:15px 13px}.flow-hero h1{font-size:25px}.flow-hero p{display:none}
+      .state-summary{grid-template-columns:repeat(5,minmax(72px,1fr));gap:5px;overflow-x:auto}
+      .summary-card{min-width:72px;padding:8px}.flow-toolbar{margin-top:7px;padding:5px}
+      .refresh-info span{display:none}
+    }
+  </style>
+
+  <link
+    rel="stylesheet"
+    href="/system-tokens.css?v=card-details-compact-v16-20260902"
+  />
+<link rel="stylesheet" href="/memeflow-brand.css?v=typography-clean-source-v1-20260830">
+  <!-- MEMEFLOW_GLOBAL_RIGHT_DRAWER_NAV_V1 -->
+  <link rel="stylesheet" href="/memeflow-nav.css?v=global-right-drawer-frameless-v2-20260829">
+  <link rel="stylesheet" href="/memeflow-header.css?v=canonical-header-v1-7-20260830">
+<!-- MEMEFLOW_LIGHT_THEME_ASSETS_V1 -->
+<link rel="stylesheet" href="/memeflow-theme.css?v=dark-header-transparent-v1-20260901">
+<script src="/memeflow-theme.js?v=light-theme-v1-20260830" defer></script>
+<!-- /MEMEFLOW_LIGHT_THEME_ASSETS_V1 -->
+</head>
+
+<body>
+
+  <main class="flow-page">
+
+    <header class="flow-header mf-site-header">
+
+      <div class="header-left">
+        <!-- MEMEFLOW_REMOVE_LEGACY_BACK_BUTTONS_V1: legacy back arrow removed -->
+<div class="brand-mark" aria-hidden="true"><img class="mf-brand-img" src="/brand/memeflow-dragonfly-dark.png?v=final-v5" alt=""></div>
+
+        <div class="header-title">
+          <span>MEMEFLOW</span>
+          <strong>Token Flow</strong>
+        </div>
+
+      </div>
+
+      <div class="live-status">
+        <i></i>
+        <span id="discoveryLiveLabel">LIVE</span>
+      </div>
+
+    </header>
+
+    <section class="flow-hero">
+
+      <div>
+        <span class="eyebrow">
+          REAL-TIME PIPELINE
+        </span>
+
+        <h1>
+          Live token states
+        </h1>
+
+        <p>
+          Current tokens moving through the MEMEFLOW decision pipeline.
+        </p>
+      </div>
+
+      <div class="hero-counter">
+        <span>Visible</span>
+        <strong id="visibleCount">0</strong>
+        <span
+          id="scannerStatus"
+          class="scanner-status"
+          title="Live scanner status"
+        >Scanner —</span>
+      </div>
+
+    </section>
+
+    <section class="state-summary">
+
+      <button
+        class="summary-card all active"
+        type="button"
+        data-filter="all"
+      >
+        <span>All</span>
+        <strong id="countAll">0</strong>
+      </button>
+
+      <button
+        class="summary-card ready"
+        type="button"
+        data-filter="ready"
+      >
+        <span>Buy Ready</span>
+        <strong id="countReady">0</strong>
+      </button>
+
+      <button
+        class="summary-card watch"
+        type="button"
+        data-filter="watch"
+      >
+        <span>Watch</span>
+        <strong id="countWatch">0</strong>
+      </button>
+
+      <button
+        class="summary-card waiting"
+        type="button"
+        data-filter="waiting"
+      >
+        <span>Waiting</span>
+        <strong id="countWaiting">0</strong>
+      </button>
+
+      <button
+        class="summary-card blocked"
+        type="button"
+        data-filter="blocked"
+      >
+        <span>Blocked</span>
+        <strong id="countBlocked">0</strong>
+      </button>
+
+    </section>
+
+    <section class="flow-toolbar">
+
+      <div class="search-wrap">
+        <span>⌕</span>
+
+        <input
+          id="tokenSearch"
+          type="search"
+          autocomplete="off"
+          autocapitalize="off"
+          spellcheck="false"
+          placeholder="Paste Pump.fun URL or mint"
+          aria-label="Paste Pump.fun URL or Solana mint to analyze"
+        />
+      </div>
+
+      <div class="refresh-info">
+        <span id="lastUpdate">
+          Waiting for telemetry
+        </span>
+
+        <button
+          id="refreshButton"
+          type="button"
+          aria-label="Analyze token"
+        >
+          Analyze
+        </button>
+      </div>
+
+    </section>
+
+    <section
+      id="tokenScanResult"
+      class="mf-token-scan-result"
+      aria-live="polite"
+      hidden
+    ></section>
+
+    <section
+      id="tokenList"
+      class="token-list"
+    >
+    </section>
+
+    <section
+      id="emptyState"
+      class="empty-state"
+      hidden
+    >
+      <strong>No tokens found</strong>
+      <span>Try another filter or search.</span>
+    </section>
+
+    <footer class="pagination">
+
+      <button
+        id="prevPage"
+        type="button"
+      >
+        ← Previous
+      </button>
+
+      <div class="page-state">
+        <span>Page</span>
+        <strong id="pageNumber">1</strong>
+        <span>of</span>
+        <strong id="pageTotal">1</strong>
+      </div>
+
+      <button
+        id="nextPage"
+        type="button"
+      >
+        Next →
+      </button>
+
+    </footer>
+
+  </main>
+
+  <script
+    type="module"
+    src="/system-tokens.js?v=canonical-ranking-v26-20260903"
+     data-patch="MEMEFLOW_CANONICAL_TOKEN_IMAGE_CACHE_BUST_V5"
+  ></script>
+<script src="/memeflow-nav.js?v=global-right-drawer-v2-how-it-works" defer></script>
+</body>
+</html>

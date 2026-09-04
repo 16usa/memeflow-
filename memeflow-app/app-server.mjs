@@ -6002,6 +6002,434 @@ function __mfOwnerProposalFromReport(
    ============================================================ */
 
 
+
+// ===== MEMEFLOW_CANONICAL_TOKEN_IMAGE_V3 =====
+// One browser-visible image source for all MEMEFLOW token avatars:
+//   /api/token-image/<mint>
+// Source of truth: token URI captured from Pump CreateEvent -> metadata.image.
+// IPFS gateway fallback happens only inside the server, never in UI code.
+
+const __mfCanonicalTokenImageMetaV1 = new Map();
+const __mfCanonicalTokenImageBytesV1 = new Map();
+const __mfCanonicalTokenImagePendingV1 = new Map();
+
+const __mfCanonicalTokenImageNegativeV4 = new Map();
+const __mfCanonicalTokenImagePumpPendingV4 = new Map();
+
+function __mfCanonicalNegativeHitV4(mint) {
+  const until = Number(__mfCanonicalTokenImageNegativeV4.get(mint) || 0);
+  if (until > Date.now()) return true;
+  if (until) __mfCanonicalTokenImageNegativeV4.delete(mint);
+  return false;
+}
+
+function __mfCanonicalNegativeSetV4(mint, ttlMs = 30000) {
+  __mfCanonicalTokenImageNegativeV4.set(
+    mint,
+    Date.now() + Math.max(5000, Number(ttlMs) || 30000)
+  );
+}
+
+function __mfCanonicalTokenFromRegistryV4(mint) {
+  try {
+    return store.tokenRegistry?.get?.(mint) || null;
+  } catch {
+    return null;
+  }
+}
+
+function __mfCanonicalPumpCoinUrlV4(mint) {
+  const base = String(
+    process.env.PUMPFUN_HISTORY_URL ||
+    'https://frontend-api-v3.pump.fun/coins'
+  ).trim().replace(/\/+$/, '');
+
+  return base + '/' + encodeURIComponent(mint);
+}
+
+async function __mfCanonicalFetchPumpCoinV4(mint) {
+  if (__mfCanonicalTokenImagePumpPendingV4.has(mint)) {
+    return __mfCanonicalTokenImagePumpPendingV4.get(mint);
+  }
+
+  const task = (async () => {
+    try {
+      const headers = {
+        accept: 'application/json',
+        origin: 'https://pump.fun',
+        'user-agent': 'MEMEFLOW/1.0 canonical-token-image'
+      };
+
+      const jwt = String(process.env.PUMPFUN_HISTORY_JWT || '').trim();
+      if (jwt) headers.authorization = 'Bearer ' + jwt;
+
+      const response = await __mfCanonicalFetchV1(
+        __mfCanonicalPumpCoinUrlV4(mint),
+        3500
+      );
+
+      if (!response.ok) return null;
+
+      const body = await response.json().catch(() => null);
+      if (!body || typeof body !== 'object') return null;
+
+      const coin =
+        body?.coin ||
+        body?.data?.coin ||
+        body?.data ||
+        body;
+
+      if (!coin || typeof coin !== 'object') return null;
+
+      const coinMint = String(coin.mint || coin.address || '').trim();
+      if (coinMint && coinMint !== mint) return null;
+
+      const patch = {
+        mint,
+        name: coin.name || undefined,
+        symbol: coin.symbol || undefined,
+        uri:
+          coin.metadata_uri ||
+          coin.metadataUri ||
+          coin.uri ||
+          undefined,
+        imageUri:
+          coin.image_uri ||
+          coin.imageUri ||
+          undefined,
+        creator: coin.creator || undefined,
+        launchPlatform: 'pump',
+        protocol: 'pump',
+        pumpReferenceAt: Date.now()
+      };
+
+      for (const key of Object.keys(patch)) {
+        if (patch[key] === undefined || patch[key] === null || patch[key] === '') {
+          delete patch[key];
+        }
+      }
+
+      try {
+        if (store.state.tokens?.[mint]) {
+          store.setToken(mint, patch);
+        }
+      } catch {}
+
+      try {
+        store.tokenRegistry?.queueUpsert?.(
+          {
+            ...(__mfCanonicalTokenFromRegistryV4(mint) || {}),
+            ...patch
+          },
+          { historical: true }
+        );
+      } catch {}
+
+      return patch;
+    } catch {
+      return null;
+    }
+  })();
+
+  __mfCanonicalTokenImagePumpPendingV4.set(mint, task);
+
+  try {
+    return await task;
+  } finally {
+    __mfCanonicalTokenImagePumpPendingV4.delete(mint);
+  }
+}
+
+// MEMEFLOW_CANONICAL_TOKEN_IMAGE_V4
+
+
+function __mfCanonicalMediaCandidatesV1(value) {
+  const raw = String(value || '').trim();
+  if (!raw) return [];
+
+  const out = [];
+  const add = v => {
+    const u = String(v || '').trim();
+    if (u && /^https?:\/\//i.test(u) && !out.includes(u)) out.push(u);
+  };
+
+  let ipfsPath = '';
+
+  if (/^ipfs:\/\//i.test(raw)) {
+    ipfsPath = raw
+      .replace(/^ipfs:\/\//i, '')
+      .replace(/^ipfs\//i, '')
+      .replace(/^\/+/, '');
+  } else if (/^https?:\/\//i.test(raw)) {
+    add(raw);
+    const m = /\/ipfs\/(.+)$/i.exec(raw);
+    if (m?.[1]) ipfsPath = m[1].replace(/^\/+/, '');
+  }
+
+  if (ipfsPath) {
+    add('https://ipfs.io/ipfs/' + ipfsPath);
+    add('https://dweb.link/ipfs/' + ipfsPath);
+    add('https://gateway.pinata.cloud/ipfs/' + ipfsPath);
+  }
+
+  if (/^ar:\/\//i.test(raw)) {
+    add('https://arweave.net/' + raw.replace(/^ar:\/\//i, '').replace(/^\/+/, ''));
+  }
+
+  return out;
+}
+
+async function __mfCanonicalFetchV1(url, timeoutMs = 2800) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, {
+      signal: controller.signal,
+      headers: {
+        accept: '*/*',
+        'user-agent': 'MEMEFLOW/1.0 canonical-token-image'
+      }
+    });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function __mfCanonicalResolveMetaImageV1(mint) {
+  mint = String(mint || '').trim();
+  if (!mint) return null;
+
+  const cached = __mfCanonicalTokenImageMetaV1.get(mint);
+  if (cached) return cached;
+
+  if (__mfCanonicalNegativeHitV4(mint)) return null;
+
+  async function resolveFromToken(token) {
+    if (!token || typeof token !== 'object') return null;
+
+    // Pump history/backfill can already contain the canonical image URI.
+    const directImageRaw = String(
+      token.imageUri ||
+      token.image_uri ||
+      ''
+    ).trim();
+
+    if (directImageRaw) {
+      const imageCandidates =
+        __mfCanonicalMediaCandidatesV1(directImageRaw);
+
+      if (imageCandidates.length) {
+        return {
+          mint,
+          metadataUrl: String(token.uri || token.metadataUrl || '').trim() || null,
+          imageRaw: directImageRaw,
+          imageCandidates
+        };
+      }
+    }
+
+    const metadataUri = String(
+      token.uri ||
+      token.metadataUrl ||
+      token.metadataUri ||
+      ''
+    ).trim();
+
+    if (!metadataUri) return null;
+
+    const metadataCandidates =
+      __mfCanonicalMediaCandidatesV1(metadataUri);
+
+    for (const metadataUrl of metadataCandidates) {
+      try {
+        const response = await __mfCanonicalFetchV1(metadataUrl, 2800);
+        if (!response.ok) continue;
+
+        const metadata = await response.json().catch(() => null);
+        if (!metadata || typeof metadata !== 'object') continue;
+
+        const imageRaw = String(
+          metadata.image ||
+          metadata.image_url ||
+          metadata.imageUrl ||
+          metadata.logo ||
+          metadata.logoURI ||
+          metadata?.properties?.files?.[0]?.uri ||
+          ''
+        ).trim();
+
+        if (!imageRaw) continue;
+
+        const imageCandidates =
+          __mfCanonicalMediaCandidatesV1(imageRaw);
+
+        if (!imageCandidates.length) continue;
+
+        return {
+          mint,
+          metadataUrl,
+          imageRaw,
+          imageCandidates
+        };
+      } catch {}
+    }
+
+    return null;
+  }
+
+  // 1. Hot RAM token.
+  let token = store.state.tokens?.[mint] || null;
+  let resolved = await resolveFromToken(token);
+
+  // 2. Permanent registry. This repairs cases where a candidate exists in
+  // another runtime view but its Pump URI was not restored into hot RAM.
+  if (!resolved) {
+    const registryToken = __mfCanonicalTokenFromRegistryV4(mint);
+    if (registryToken) {
+      resolved = await resolveFromToken(registryToken);
+
+      if (resolved && token) {
+        try {
+          store.setToken(mint, {
+            uri:
+              registryToken.uri ||
+              registryToken.metadataUrl ||
+              token.uri ||
+              undefined,
+            imageUri:
+              registryToken.imageUri ||
+              registryToken.image_uri ||
+              token.imageUri ||
+              undefined
+          });
+        } catch {}
+      }
+    }
+  }
+
+  // 3. Canonical Pump coin lookup by mint.
+  // This is NOT another frontend image source. It only repairs missing
+  // Pump identity metadata behind the one /api/token-image/<mint> endpoint.
+  if (!resolved) {
+    const pumpToken = await __mfCanonicalFetchPumpCoinV4(mint);
+    if (pumpToken) {
+      resolved = await resolveFromToken(pumpToken);
+    }
+  }
+
+  if (!resolved) {
+    __mfCanonicalNegativeSetV4(mint, 30000);
+    return null;
+  }
+
+  __mfCanonicalTokenImageNegativeV4.delete(mint);
+  __mfCanonicalTokenImageMetaV1.set(mint, resolved);
+
+  try {
+    store.setToken(mint, {
+      canonicalImageUrl:
+        '/api/token-image/' + encodeURIComponent(mint),
+      imageSource: 'pump-canonical-metadata'
+    });
+  } catch {}
+
+  return resolved;
+}
+
+function __mfCanonicalCacheBytesV1(mint, entry) {
+  __mfCanonicalTokenImageBytesV1.set(mint, entry);
+  while (__mfCanonicalTokenImageBytesV1.size > 500) {
+    const first = __mfCanonicalTokenImageBytesV1.keys().next().value;
+    __mfCanonicalTokenImageBytesV1.delete(first);
+  }
+}
+
+async function __mfCanonicalLoadImageBytesV1(mint) {
+  const cached = __mfCanonicalTokenImageBytesV1.get(mint);
+  if (cached) return cached;
+
+  if (__mfCanonicalTokenImagePendingV1.has(mint)) {
+    return __mfCanonicalTokenImagePendingV1.get(mint);
+  }
+
+  const task = (async () => {
+    const meta = await __mfCanonicalResolveMetaImageV1(mint);
+    if (!meta) return null;
+
+    for (const imageUrl of meta.imageCandidates) {
+      try {
+        const response = await __mfCanonicalFetchV1(imageUrl, 3200);
+        if (!response.ok) continue;
+
+        const type = String(response.headers.get('content-type') || '').toLowerCase();
+        if (
+          type &&
+          !type.startsWith('image/') &&
+          !type.includes('octet-stream')
+        ) {
+          continue;
+        }
+
+        const length = Number(response.headers.get('content-length') || 0);
+        if (Number.isFinite(length) && length > 4 * 1024 * 1024) continue;
+
+        const body = Buffer.from(await response.arrayBuffer());
+        if (!body.length || body.length > 4 * 1024 * 1024) continue;
+
+        const entry = {
+          body,
+          contentType: type.startsWith('image/') ? type : 'image/*'
+        };
+
+        __mfCanonicalCacheBytesV1(mint, entry);
+        return entry;
+      } catch {}
+    }
+
+    return null;
+  })();
+
+  __mfCanonicalTokenImagePendingV1.set(mint, task);
+
+  try {
+    return await task;
+  } finally {
+    __mfCanonicalTokenImagePendingV1.delete(mint);
+  }
+}
+
+async function __mfServeCanonicalTokenImageV1(res, mint) {
+  mint = String(mint || '').trim();
+
+  if (!/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(mint)) {
+    res.writeHead(400, {
+      'content-type': 'text/plain; charset=utf-8',
+      'cache-control': 'no-store'
+    });
+    res.end('Invalid mint');
+    return;
+  }
+
+  const image = await __mfCanonicalLoadImageBytesV1(mint);
+
+  if (!image) {
+    res.writeHead(404, {
+      'content-type': 'text/plain; charset=utf-8',
+      'cache-control': 'no-store'
+    });
+    res.end('Token image unavailable');
+    return;
+  }
+
+  res.writeHead(200, {
+    'content-type': image.contentType,
+    'cache-control': 'public, max-age=3600, stale-while-revalidate=86400',
+    'x-memeflow-image-source': 'pump-create-metadata'
+  });
+  res.end(image.body);
+}
+// ===== /MEMEFLOW_CANONICAL_TOKEN_IMAGE_V3 =====
+
 async function handler(req,res){const url=new URL(req.url,'http://x');
  if(url.pathname==='/api/billing/webhook'&&req.method==='POST'){const raw=await rawBody(req);try{billing.verify(raw,req.headers['stripe-signature']);const result=billing.processEvent(JSON.parse(raw));return json(res,200,{received:true,...result})}catch(e){return json(res,e.code==='BAD_SIGNATURE'?400:500,{error:e.code||'WEBHOOK_ERROR',message:e.message})}}
  // Health check — no session or store needed; must respond immediately
@@ -6024,6 +6452,10 @@ async function handler(req,res){const url=new URL(req.url,'http://x');
    }
  }
 
+ if(req.method==='GET'&&url.pathname.startsWith('/api/token-image/')){
+   const _mint=decodeURIComponent(url.pathname.slice('/api/token-image/'.length)).trim();
+   return __mfServeCanonicalTokenImageV1(res,_mint);
+ }
  if(req.method==='GET'&&!url.pathname.startsWith('/api/')){
    const p=url.pathname==='/'?'index.html':url.pathname.slice(1);const f=path.resolve(root,p);
    if(!f.startsWith(root)||!fs.existsSync(f)||fs.statSync(f).isDirectory()){console.log('[STATIC] 404',url.pathname);return json(res,404,{error:'NOT_FOUND'})}

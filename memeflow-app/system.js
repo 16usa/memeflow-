@@ -5173,7 +5173,7 @@ setTimeout(installRealWebV31, 1250);
   const PATCH_ID = 'MEMEFLOW_GALLERY_LIVE_IFRAMES_V1';
   const BASE_WIDTH = 390;
   const BASE_HEIGHT = 844;
-  const LOAD_FADE_DELAY_MS = 450;
+  const LOAD_FADE_DELAY_MS = 0; // MEMEFLOW_THEME_PREVIEW_FLASH_FIX_V2
 
   const LIVE_PAGES = {
     'Trading Terminal': '/trading.html',
@@ -5254,6 +5254,16 @@ setTimeout(installRealWebV31, 1250);
 
     frame.addEventListener('load', () => {
       if (stopped || !layer.isConnected) return;
+
+      // MEMEFLOW_THEME_PREVIEW_FLASH_FIX_V2
+      try {
+        const theme = document.documentElement.dataset.theme === 'light' ? 'light' : 'dark';
+        const childRoot = frame.contentDocument?.documentElement;
+        if (childRoot) {
+          childRoot.dataset.theme = theme;
+          childRoot.style.colorScheme = theme;
+        }
+      } catch (_) {}
 
       state.loaded = true;
       scaleFrame(state);
@@ -5360,6 +5370,20 @@ setTimeout(installRealWebV31, 1250);
       for (const state of states.values()) {
         scaleFrame(state);
       }
+    }
+  });
+
+  window.addEventListener('memeflow:themechange', (event) => {
+    // MEMEFLOW_THEME_PREVIEW_FLASH_FIX_V2
+    const theme = event?.detail?.theme === 'light' ? 'light' : 'dark';
+    for (const state of states.values()) {
+      try {
+        const childRoot = state.frame.contentDocument?.documentElement;
+        if (childRoot) {
+          childRoot.dataset.theme = theme;
+          childRoot.style.colorScheme = theme;
+        }
+      } catch (_) {}
     }
   });
 

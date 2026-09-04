@@ -1162,51 +1162,16 @@ function filteredCandidates() {
  * 28x28 token-avatar treatment as Recent trades.
  * Candidate selection, filters and trading behavior are unchanged.
  */
+function canonicalTokenImageUrlV1(mint) {
+  const value = String(mint || '').trim();
+  return value
+    ? '/api/token-image/' + encodeURIComponent(value)
+    : '';
+}
+// MEMEFLOW_CANONICAL_TOKEN_IMAGE_V3
+
 function candidateImageUrl(candidate) {
-  if (!candidate) return '';
-
-  const direct = String(
-    candidate.logoUrl ||
-    candidate.imageUrl ||
-    candidate.image ||
-    candidate.icon ||
-    candidate.__openPosition?.logoUrl ||
-    candidate.__openPosition?.imageUrl ||
-    candidate.__openPosition?.image ||
-    candidate.__openPosition?.icon ||
-    ''
-  ).trim();
-
-  if (direct) {
-    const normalized = tokenImageCandidates(direct);
-    return normalized[0] || direct;
-  }
-
-  const mint = String(candidate.mint || '').trim();
-  if (!mint) return '';
-
-  const relatedTrade = (state.trades || []).find(trade => {
-    if (String(trade?.mint || '') !== mint) return false;
-    return Boolean(
-      trade?.logoUrl ||
-      trade?.imageUrl ||
-      trade?.image ||
-      trade?.icon
-    );
-  });
-
-  const tradeImage = String(
-    relatedTrade?.logoUrl ||
-    relatedTrade?.imageUrl ||
-    relatedTrade?.image ||
-    relatedTrade?.icon ||
-    ''
-  ).trim();
-
-  if (!tradeImage) return '';
-
-  const normalized = tokenImageCandidates(tradeImage);
-  return normalized[0] || tradeImage;
+  return canonicalTokenImageUrlV1(candidate?.mint);
 }
 
 function candidateAvatarMarkup(candidate) {
@@ -1398,48 +1363,6 @@ function selectCandidate(mint) {
   scheduleChart();
 }
 
-function tokenImageCandidates(value){
-  const raw=String(value||'').trim();
-  if(!raw)return [];
-
-  const out=[];
-  const add=url=>{
-    const clean=String(url||'').trim();
-    if(
-      clean &&
-      /^https?:\/\//i.test(clean) &&
-      !out.includes(clean)
-    ){
-      out.push(clean);
-    }
-  };
-
-  if(/^https?:\/\//i.test(raw))add(raw);
-
-  let ipfsPath=null;
-  if(/^ipfs:\/\//i.test(raw)){
-    ipfsPath=raw
-      .replace(/^ipfs:\/\//i,'')
-      .replace(/^ipfs\//i,'');
-  }else{
-    const match=/\/ipfs\/(.+)$/i.exec(raw);
-    if(match?.[1])ipfsPath=match[1];
-  }
-
-  if(ipfsPath){
-    const cleanPath=ipfsPath.replace(/^\/+/,'');
-    add(`https://ipfs.io/ipfs/${cleanPath}`);
-    add(`https://dweb.link/ipfs/${cleanPath}`);
-    add(`https://gateway.pinata.cloud/ipfs/${cleanPath}`);
-  }
-
-  if(/^ar:\/\//i.test(raw)){
-    add(`https://arweave.net/${raw.replace(/^ar:\/\//i,'').replace(/^\/+/,'')}`);
-  }
-
-  return out;
-}
-
 const tokenAvatarRuntime={
   resolvedUrlByMint:new Map(),
   loadingKey:'',
@@ -1450,75 +1373,33 @@ function renderTokenAvatar(candidate){
   const avatar=$('tokenAvatar');
   if(!avatar)return;
 
-  const mint=String(candidate?.mint||'');
+  const mint=String(candidate?.mint||'').trim();
   const fallback=String(
     candidate?.symbol ||
     candidate?.name ||
     '?'
-  ).slice(0,2).toUpperCase();
+  ).replace(/[^A-Z0-9]/gi,'').slice(0,2).toUpperCase() || '?';
 
-  const sameMint=
-    avatar.dataset.mint===mint;
+  const sameMint=avatar.dataset.mint===mint;
+  const currentImg=sameMint ? avatar.querySelector('img') : null;
 
-  const currentImg=
-    sameMint
-      ? avatar.querySelector('img')
-      : null;
-
-  // IMPORTANT V30.17:
-  // Candidate polling may call renderSelected() several times per second.
-  // Never erase an already loaded image for the same mint while metadata
-  // refreshes. The old code did avatar.textContent=fallback on every call,
-  // producing the visible IMAGE -> "FU" -> IMAGE flicker.
   if(!sameMint){
     avatar.dataset.mint=mint;
-    avatar.dataset.imageSrc='';
     avatar.textContent=fallback;
   }
 
-  const image=
-    candidate?.imageUrl ||
-    candidate?.image ||
-    candidate?.logoUrl ||
-    null;
+  if(!mint)return;
 
-  const cached=
-    tokenAvatarRuntime.resolvedUrlByMint.get(mint) ||
-    null;
-
-  const urls=[
-    ...(cached ? [cached] : []),
-    ...tokenImageCandidates(image)
-  ].filter((url,index,array)=>
-    url && array.indexOf(url)===index
-  );
-
-  // Transient metadata responses are allowed to omit imageUrl.
-  // If this mint already has a successful image, keep it on screen.
-  if(!urls.length){
-    if(currentImg)return;
-    if(!sameMint){
-      avatar.textContent=fallback;
-    }
-    return;
-  }
-
-  const currentSrc=
-    currentImg?.currentSrc ||
-    currentImg?.src ||
-    avatar.dataset.imageSrc ||
-    '';
+  const url=canonicalTokenImageUrlV1(mint);
 
   if(
     currentImg &&
-    urls.some(url=>String(currentSrc)===String(url))
+    currentImg.dataset.canonicalMint===mint
   ){
     return;
   }
 
-  const requestKey=
-    `${mint}|${urls.join('|')}`;
-
+  const requestKey=mint;
   if(
     sameMint &&
     tokenAvatarRuntime.loadingKey===requestKey
@@ -1528,54 +1409,38 @@ function renderTokenAvatar(candidate){
 
   tokenAvatarRuntime.loadingKey=requestKey;
   const generation=++tokenAvatarRuntime.generation;
-  let index=0;
 
-  const tryNext=()=>{
+  const img=new Image();
+  img.alt='';
+  img.referrerPolicy='no-referrer';
+  img.decoding='async';
+  img.dataset.canonicalMint=mint;
+
+  img.onload=()=>{
     if(
       avatar.dataset.mint!==mint ||
-      generation!==tokenAvatarRuntime.generation ||
-      index>=urls.length
+      generation!==tokenAvatarRuntime.generation
     ){
-      if(tokenAvatarRuntime.loadingKey===requestKey){
-        tokenAvatarRuntime.loadingKey='';
-      }
       return;
     }
 
-    const url=urls[index];
-    const img=new Image();
-    img.alt='';
-    img.referrerPolicy='no-referrer';
-    img.decoding='async';
-
-    img.onload=()=>{
-      if(
-        avatar.dataset.mint!==mint ||
-        generation!==tokenAvatarRuntime.generation
-      ){
-        return;
-      }
-
-      tokenAvatarRuntime.resolvedUrlByMint.set(
-        mint,
-        url
-      );
-      tokenAvatarRuntime.loadingKey='';
-
-      avatar.dataset.imageSrc=url;
-      avatar.replaceChildren(img);
-    };
-
-    img.onerror=()=>{
-      index++;
-      tryNext();
-    };
-
-    // Preload off-DOM. Existing image remains visible until this succeeds.
-    img.src=url;
+    tokenAvatarRuntime.resolvedUrlByMint.set(mint,url);
+    tokenAvatarRuntime.loadingKey='';
+    avatar.dataset.imageSrc=url;
+    avatar.replaceChildren(img);
   };
 
-  tryNext();
+  img.onerror=()=>{
+    if(tokenAvatarRuntime.loadingKey===requestKey){
+      tokenAvatarRuntime.loadingKey='';
+    }
+    // Keep a previously loaded image for the same mint; otherwise fallback text.
+    if(!currentImg && avatar.dataset.mint===mint){
+      avatar.textContent=fallback;
+    }
+  };
+
+  img.src=url;
 }
 
 function renderSelected({ redrawChart = true } = {}) {
@@ -4360,46 +4225,7 @@ function renderProposals() {
  * and Recent trades. Position data and Close behavior are unchanged.
  */
 function positionImageUrl(position) {
-  if (!position) return '';
-
-  const mint = String(position.mint || '').trim();
-
-  const relatedCandidate =
-    (state.candidates || []).find(item => String(item?.mint || '') === mint) ||
-    null;
-
-  const relatedTrade =
-    (state.trades || []).find(trade =>
-      String(trade?.mint || '') === mint &&
-      Boolean(
-        trade?.logoUrl ||
-        trade?.imageUrl ||
-        trade?.image ||
-        trade?.icon
-      )
-    ) ||
-    null;
-
-  const raw = String(
-    position.logoUrl ||
-    position.imageUrl ||
-    position.image ||
-    position.icon ||
-    relatedCandidate?.logoUrl ||
-    relatedCandidate?.imageUrl ||
-    relatedCandidate?.image ||
-    relatedCandidate?.icon ||
-    relatedTrade?.logoUrl ||
-    relatedTrade?.imageUrl ||
-    relatedTrade?.image ||
-    relatedTrade?.icon ||
-    ''
-  ).trim();
-
-  if (!raw) return '';
-
-  const normalized = tokenImageCandidates(raw);
-  return normalized[0] || raw;
+  return canonicalTokenImageUrlV1(position?.mint);
 }
 
 function positionAvatarMarkup(position) {
@@ -4591,16 +4417,7 @@ function renderTrades() {
       symbol
     ).trim();
 
-    const avatarUrl = String(
-      trade.logoUrl ||
-      trade.imageUrl ||
-      trade.image ||
-      related?.logoUrl ||
-      related?.imageUrl ||
-      related?.image ||
-      related?.icon ||
-      ''
-    ).trim();
+    const avatarUrl = canonicalTokenImageUrlV1(mint);
 
     const rawTime =
       trade.at ??
