@@ -1511,15 +1511,7 @@ function tokenTemplate(row, index) {
           ? openMarketStripTemplate(row)
           : regularMarketStripTemplate(row)
       }
-
-      <button
-        class="details-button"
-        type="button"
-      >
-        Details
-      </button>
-
-      <div class="token-details">
+<div class="token-details">
 
         <div class="mf-card-analysis-v13" data-mf-card-analysis>
           <div class="mf-card-analysis-status" data-mf-card-analysis-status>
@@ -1630,10 +1622,11 @@ function render() {
                 'expanded'
               );
 
-            button.textContent =
-              expanded
-                ? 'Close'
-                : 'Details';
+            button.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+            button.setAttribute(
+              'aria-label',
+              expanded ? 'Close details' : 'Open details'
+            );
 
             if(expanded){
               void __mfRunCardAnalysisV13(card);
@@ -1937,10 +1930,11 @@ function __mfBindDetailsButtonV183(card){
       const expanded=
         card.classList.toggle('expanded');
 
-      button.textContent=
-        expanded
-          ? 'Close'
-          : 'Details';
+      button.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+            button.setAttribute(
+              'aria-label',
+              expanded ? 'Close details' : 'Open details'
+            );
 
       if(expanded){
         void __mfRunCardAnalysisV13(card);
@@ -3612,7 +3606,10 @@ function __mfScanRenderV27({scan,liveRow,buyContext}){
         card.scrollIntoView({behavior:'smooth',block:'center'});
         card.classList.add('expanded');
         const button=card.querySelector('.details-button');
-        if(button)button.textContent='Close';
+        if(button){
+          button.setAttribute('aria-expanded','true');
+          button.setAttribute('aria-label','Close details');
+        }
       }
     }
   );
@@ -4832,3 +4829,118 @@ async function hydrateTokenMediaV25() {
 // MEMEFLOW_DEX_TOKEN_FLOW_V26
 
 // MEMEFLOW_LIVE_TOKEN_STATES_V7
+
+// ===== MEMEFLOW_TOKEN_FLOW_STICKY_SEARCH_SHADOW_V38 =====
+(function mfStickySearchShadowV38() {
+  function init() {
+    const toolbar = document.querySelector('.flow-toolbar');
+    if (!toolbar || toolbar.dataset.mfStickyShadowV38 === '1') return;
+
+    toolbar.dataset.mfStickyShadowV38 = '1';
+
+    let raf = 0;
+
+    const sync = () => {
+      raf = 0;
+
+      const rect = toolbar.getBoundingClientRect();
+      const style = getComputedStyle(toolbar);
+      const stickyTop = Number.parseFloat(style.top) || 0;
+
+      const stuck =
+        window.scrollY > 0 &&
+        rect.top <= stickyTop + 1;
+
+      toolbar.classList.toggle('mf-stuck', stuck);
+    };
+
+    const schedule = () => {
+      if (raf) return;
+      raf = requestAnimationFrame(sync);
+    };
+
+    window.addEventListener('scroll', schedule, { passive: true });
+    window.addEventListener('resize', schedule, { passive: true });
+
+    schedule();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init, { once: true });
+  } else {
+    init();
+  }
+})();
+// ===== /MEMEFLOW_TOKEN_FLOW_STICKY_SEARCH_SHADOW_V38 =====
+
+// ===== MEMEFLOW_TOKEN_FLOW_REVENUE_ROWS_V43 =====
+(function mfTokenFlowRevenueRowsV43() {
+  function init() {
+    const list = document.querySelector('.token-list');
+    if (!list || list.dataset.mfRevenueRowsV43 === '1') return;
+
+    list.dataset.mfRevenueRowsV43 = '1';
+
+    list.addEventListener('click', (event) => {
+      const card = event.target.closest('.flow-token');
+      if (!card || !list.contains(card)) return;
+
+      list
+        .querySelectorAll('.flow-token.mf-row-selected')
+        .forEach((node) => {
+          if (node !== card) node.classList.remove('mf-row-selected');
+        });
+
+      card.classList.add('mf-row-selected');
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init, { once: true });
+  } else {
+    init();
+  }
+})();
+// ===== /MEMEFLOW_TOKEN_FLOW_REVENUE_ROWS_V43 =====
+
+// ===== MEMEFLOW_TOKEN_FLOW_CARD_CLICK_TOGGLE_V44 =====
+(function mfTokenFlowCardClickToggleV44() {
+  function init() {
+    const list = document.querySelector('.token-list');
+    if (!list || list.dataset.mfCardToggleV44 === '1') return;
+
+    list.dataset.mfCardToggleV44 = '1';
+
+    list.addEventListener('click', (event) => {
+      const card = event.target.closest('.flow-token');
+      if (!card || !list.contains(card)) return;
+
+      // Keep real controls/links working normally.
+      if (
+        event.target.closest(
+          'a, button, input, select, textarea, label, [role="button"]'
+        )
+      ) {
+        return;
+      }
+
+      const expanded = card.classList.toggle('expanded');
+
+      card.setAttribute(
+        'aria-expanded',
+        expanded ? 'true' : 'false'
+      );
+
+      if (expanded && typeof __mfRunCardAnalysisV13 === 'function') {
+        void __mfRunCardAnalysisV13(card);
+      }
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init, { once: true });
+  } else {
+    init();
+  }
+})();
+// ===== /MEMEFLOW_TOKEN_FLOW_CARD_CLICK_TOGGLE_V44 =====
