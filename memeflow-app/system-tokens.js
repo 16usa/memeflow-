@@ -1407,6 +1407,7 @@ function tokenTemplate(row, index) {
     staticIdentity.name;
 
   // MEMEFLOW_TOKEN_AVATAR_PUMPFUN_LINK_V50
+  // MEMEFLOW_TOKEN_AVATAR_WRAPPER_V51
   const pumpUrlV50 =
     tokenExternalLinks(row).pump;
 
@@ -1429,26 +1430,36 @@ function tokenTemplate(row, index) {
           ${
             pumpUrlV50
               ? `<a
-                  class="token-avatar ${key} ${avatar ? 'has-image' : 'fallback-only'} mf-token-avatar-link-v50"
+                  class="mf-token-avatar-anchor-v51"
                   href="${escapeHtml(pumpUrlV50)}"
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="Open token on Pump.fun"
                   title="Open on Pump.fun"
                 >
-                  ${
-                    avatar
-                      ? `<img
-                          src="${escapeHtml(avatar)}"
-                          alt=""
-                          loading="lazy"
-                          decoding="async"
-                          onerror="this.parentElement.classList.add('is-broken')"
-                        >`
-                      : ''
-                  }
-                  <span>${escapeHtml(avatarFallback(row))}</span>
-                  <i class="mf-pump-avatar-badge-v50" aria-hidden="true"></i>
+                  <div class="token-avatar ${key} ${avatar ? 'has-image' : 'fallback-only'}">
+                    ${
+                      avatar
+                        ? `<img
+                            src="${escapeHtml(avatar)}"
+                            alt=""
+                            loading="lazy"
+                            decoding="async"
+                            onerror="this.parentElement.classList.add('is-broken')"
+                          >`
+                        : ''
+                    }
+                    <span>${escapeHtml(avatarFallback(row))}</span>
+                  </div>
+                  <img
+                    class="mf-pump-avatar-badge-v51"
+                    src="https://pump.fun/pump-logomark.svg"
+                    alt=""
+                    aria-hidden="true"
+                    loading="lazy"
+                    decoding="async"
+                    referrerpolicy="no-referrer"
+                  >
                 </a>`
               : `<div class="token-avatar ${key} ${avatar ? 'has-image' : 'fallback-only'}">
                   ${
