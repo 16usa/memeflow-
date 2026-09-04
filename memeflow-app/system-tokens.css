@@ -4561,3 +4561,168 @@ html[data-theme="light"] .mf-time-window-v47c button.is-active{
 }
 /* ===== /MEMEFLOW_TOKEN_AVATAR_WRAPPER_V51 ===== */
 
+
+/* ===== MEMEFLOW_TOKEN_FLOW_GEOMETRY_RESET_V52 =====
+   Final mobile geometry reset after legacy V28/V30 absolute-avatar rules.
+   This intentionally resets only positioning/spacing; data and logic are untouched.
+*/
+@media (max-width:760px){
+
+  /* Legacy V28/V30 left padding was still shifting the whole row ~60px right. */
+  .token-list>.flow-token{
+    padding-left:10px!important;
+    padding-right:10px!important;
+    padding-top:8px!important;
+    padding-bottom:8px!important;
+    min-height:68px!important;
+    box-sizing:border-box!important;
+  }
+
+  /* Identity starts at the actual left edge of the card grid. */
+  .token-list>.flow-token>.token-primary{
+    margin:0!important;
+    padding:0!important;
+    min-width:0!important;
+    width:100%!important;
+    justify-self:stretch!important;
+  }
+
+  .token-list>.flow-token .token-head{
+    position:relative!important;
+    width:100%!important;
+    margin:0!important;
+    padding:0!important;
+    grid-template-columns:48px minmax(0,1fr)!important;
+    gap:8px!important;
+    align-items:center!important;
+  }
+
+  /* Critical reset: old V28/V30 made every .token-avatar absolute. */
+  .token-list>.flow-token .token-avatar{
+    position:relative!important;
+    left:auto!important;
+    right:auto!important;
+    top:auto!important;
+    bottom:auto!important;
+
+    width:48px!important;
+    height:48px!important;
+    min-width:48px!important;
+    min-height:48px!important;
+    max-width:48px!important;
+    max-height:48px!important;
+
+    margin:0!important;
+    padding:0!important;
+    flex:none!important;
+    grid-column:auto!important;
+    grid-row:auto!important;
+    align-self:center!important;
+    justify-self:start!important;
+    box-sizing:border-box!important;
+  }
+
+  .token-list>.flow-token .mf-token-avatar-anchor-v51{
+    position:relative!important;
+    left:auto!important;
+    top:auto!important;
+    width:48px!important;
+    height:48px!important;
+    margin:0!important;
+    padding:0!important;
+    align-self:center!important;
+    justify-self:start!important;
+    overflow:visible!important;
+  }
+
+  .token-list>.flow-token .mf-token-avatar-anchor-v51>.token-avatar{
+    position:relative!important;
+    left:auto!important;
+    top:auto!important;
+    width:48px!important;
+    height:48px!important;
+    min-width:48px!important;
+    min-height:48px!important;
+    max-width:48px!important;
+    max-height:48px!important;
+  }
+
+  /* Name + age stay in one clean line; holders directly below. */
+  .token-list>.flow-token .token-meta{
+    min-width:0!important;
+    width:100%!important;
+    margin:0!important;
+    padding:0!important;
+  }
+
+  .token-list>.flow-token .token-top{
+    width:100%!important;
+    min-width:0!important;
+    margin:0!important;
+    padding:0!important;
+    gap:5px!important;
+    justify-content:flex-start!important;
+  }
+
+  .token-list>.flow-token .token-name{
+    display:block!important;
+    flex:1 1 auto!important;
+    min-width:0!important;
+    max-width:100%!important;
+    margin:0!important;
+    padding:0!important;
+    overflow:hidden!important;
+    text-overflow:ellipsis!important;
+    white-space:nowrap!important;
+  }
+
+  .token-list>.flow-token .mf-token-subline-v47c{
+    margin:0!important;
+    padding:0!important;
+    min-height:12px!important;
+    justify-content:flex-start!important;
+  }
+
+  /* Keep all market columns aligned to their grid cells. */
+  .token-list>.flow-token>.mf-open-market-strip>.mf-open-market-stat,
+  .token-list>.flow-token>.mf-regular-market-strip>.mf-regular-market-stat{
+    margin:0!important;
+    padding:0!important;
+    min-width:0!important;
+    align-self:center!important;
+    justify-self:stretch!important;
+  }
+
+  .token-list>.flow-token>.mf-score-slot,
+  .token-list>.flow-token>.mf-open-pnl-slot{
+    margin:0!important;
+    padding:0!important;
+    min-width:0!important;
+    align-self:center!important;
+  }
+}
+
+@media (max-width:390px){
+  .token-list>.flow-token{
+    padding-left:9px!important;
+    padding-right:9px!important;
+  }
+
+  .token-list>.flow-token .token-head{
+    grid-template-columns:44px minmax(0,1fr)!important;
+    gap:7px!important;
+  }
+
+  .token-list>.flow-token .token-avatar,
+  .token-list>.flow-token .mf-token-avatar-anchor-v51,
+  .token-list>.flow-token .mf-token-avatar-anchor-v51>.token-avatar{
+    width:44px!important;
+    height:44px!important;
+    min-width:44px!important;
+    min-height:44px!important;
+    max-width:44px!important;
+    max-height:44px!important;
+  }
+}
+/* ===== /MEMEFLOW_TOKEN_FLOW_GEOMETRY_RESET_V52 ===== */
+
