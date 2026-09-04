@@ -1406,6 +1406,10 @@ function tokenTemplate(row, index) {
   const staticName =
     staticIdentity.name;
 
+  // MEMEFLOW_TOKEN_AVATAR_PUMPFUN_LINK_V50
+  const pumpUrlV50 =
+    tokenExternalLinks(row).pump;
+
   const pnl =
     key === 'open'
       ? openPositionPnlPct(row?.__openPosition)
@@ -1422,20 +1426,45 @@ function tokenTemplate(row, index) {
 
         <div class="token-head">
 
-          <div class="token-avatar ${key} ${avatar ? 'has-image' : 'fallback-only'}">
-            ${
-              avatar
-                ? `<img
-                    src="${escapeHtml(avatar)}"
-                    alt=""
-                    loading="lazy"
-                    decoding="async"
-                    onerror="this.parentElement.classList.add('is-broken')"
-                  >`
-                : ''
-            }
-            <span>${escapeHtml(avatarFallback(row))}</span>
-          </div>
+          ${
+            pumpUrlV50
+              ? `<a
+                  class="token-avatar ${key} ${avatar ? 'has-image' : 'fallback-only'} mf-token-avatar-link-v50"
+                  href="${escapeHtml(pumpUrlV50)}"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Open token on Pump.fun"
+                  title="Open on Pump.fun"
+                >
+                  ${
+                    avatar
+                      ? `<img
+                          src="${escapeHtml(avatar)}"
+                          alt=""
+                          loading="lazy"
+                          decoding="async"
+                          onerror="this.parentElement.classList.add('is-broken')"
+                        >`
+                      : ''
+                  }
+                  <span>${escapeHtml(avatarFallback(row))}</span>
+                  <i class="mf-pump-avatar-badge-v50" aria-hidden="true"></i>
+                </a>`
+              : `<div class="token-avatar ${key} ${avatar ? 'has-image' : 'fallback-only'}">
+                  ${
+                    avatar
+                      ? `<img
+                          src="${escapeHtml(avatar)}"
+                          alt=""
+                          loading="lazy"
+                          decoding="async"
+                          onerror="this.parentElement.classList.add('is-broken')"
+                        >`
+                      : ''
+                  }
+                  <span>${escapeHtml(avatarFallback(row))}</span>
+                </div>`
+          }
 
           <div class="token-meta">
 
@@ -1449,7 +1478,7 @@ function tokenTemplate(row, index) {
                 ${escapeHtml(compactTokenAge(tokenAge(row)))}
               </span>
 
-              ${tokenSourceLinksTemplate(row)}
+              
 
 </div>
 

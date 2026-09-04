@@ -4451,3 +4451,64 @@ html[data-theme="light"] .mf-time-window-v47c button.is-active{
 }
 /* ===== /MEMEFLOW_TOKEN_FLOW_REFERENCE_GRID_V49 ===== */
 
+
+/* ===== MEMEFLOW_TOKEN_AVATAR_PUMPFUN_LINK_V50 ===== */
+.token-avatar.mf-token-avatar-link-v50{
+  position:relative!important;
+  display:grid!important;
+  place-items:center!important;
+  color:inherit!important;
+  text-decoration:none!important;
+  cursor:pointer!important;
+  -webkit-tap-highlight-color:transparent;
+}
+
+.token-avatar.mf-token-avatar-link-v50:visited{
+  color:inherit!important;
+}
+
+.token-avatar.mf-token-avatar-link-v50 .mf-pump-avatar-badge-v50{
+  position:absolute!important;
+  right:-3px!important;
+  bottom:-3px!important;
+  z-index:3!important;
+  width:15px!important;
+  height:15px!important;
+  display:block!important;
+  border:2px solid #081017!important;
+  border-radius:50%!important;
+  background:#0f2a1e url("https://pump.fun/pump-logomark.svg") center/9px 9px no-repeat!important;
+  box-shadow:0 1px 4px rgba(0,0,0,.45),0 0 0 1px rgba(73,232,157,.34)!important;
+  pointer-events:none!important;
+}
+
+.token-avatar.has-image.is-broken .mf-pump-avatar-badge-v50{
+  display:block!important;
+}
+
+@media(max-width:760px){
+  .token-list>.flow-token .token-avatar.mf-token-avatar-link-v50{
+    overflow:visible!important;
+  }
+
+  .token-list>.flow-token .token-avatar.mf-token-avatar-link-v50>img{
+    width:100%!important;
+    height:100%!important;
+    border-radius:inherit!important;
+    object-fit:cover!important;
+  }
+
+  .token-list>.flow-token .mf-pump-avatar-badge-v50{
+    width:16px!important;
+    height:16px!important;
+    right:-4px!important;
+    bottom:-4px!important;
+    background-size:10px 10px!important;
+  }
+
+  .token-list>.flow-token .token-source-links{
+    display:none!important;
+  }
+}
+/* ===== /MEMEFLOW_TOKEN_AVATAR_PUMPFUN_LINK_V50 ===== */
+
