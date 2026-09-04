@@ -1041,6 +1041,63 @@
         </div>
       </section>
 
+      <!-- MEMEFLOW_V24_PROBATION_EVIDENCE_GATE_V24_2_UI -->
+      <section id="v24ProbationGateMonitor" class="oi-panel oi-v24-probation-gate">
+        <div class="oi-panel-head">
+          <div>
+            <span class="oi-eyebrow">V24 PROBATION · EVIDENCE GATE</span>
+            <h2>V24.2 Probation Evidence Gate</h2>
+            <p>
+              Converts V24.1 completed 5m outcomes into a conservative
+              owner-review verdict using sample balance, resolution quality,
+              SHADOW exposure and a 95% Wilson precision lower bound.
+              It cannot enable ENFORCE.
+            </p>
+          </div>
+          <span id="v24ProbationGateStatus" class="oi-ai-status">LOADING</span>
+        </div>
+
+        <div class="oi-grid oi-grid-4">
+          <article class="oi-stat">
+            <span>DIRECTIONAL</span>
+            <strong id="v24ProbationGateDirectional">—</strong>
+            <small>target ≥100</small>
+          </article>
+          <article class="oi-stat">
+            <span>SHADOW SAMPLE</span>
+            <strong id="v24ProbationGateShadow">—</strong>
+            <small>target ≥50</small>
+          </article>
+          <article class="oi-stat">
+            <span>NEG PRECISION</span>
+            <strong id="v24ProbationGatePrecision">—</strong>
+            <small>target ≥65%</small>
+          </article>
+          <article class="oi-stat">
+            <span>WILSON LOWER 95%</span>
+            <strong id="v24ProbationGateWilson">—</strong>
+            <small>target ≥55%</small>
+          </article>
+        </div>
+
+        <div class="oi-grid oi-grid-2">
+          <div>
+            <h3>Probation gates</h3>
+            <div id="v24ProbationGateChecks" class="oi-promotion-checks"></div>
+          </div>
+          <div>
+            <h3>Review packet</h3>
+            <div id="v24ProbationGatePacket" class="oi-list"></div>
+          </div>
+        </div>
+
+        <div id="v24ProbationGateVerdict"
+             class="oi-promotion-blocker"
+             data-state="blocked">
+          Building V24 probation evidence.
+        </div>
+      </section>
+
       <!-- MEMEFLOW_PLATFORM_LEARNING_V2_UI -->
       <section class="oi-panel">
         <div class="oi-panel-head">

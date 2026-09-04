@@ -21,6 +21,7 @@ import {createOpportunityEngine} from './src/opportunity-engine.mjs'; // MEMEFLO
 import {createTokenIntelligenceShadowV23} from './src/token-intelligence-shadow-v23.mjs'; // MEMEFLOW_TOKEN_INTELLIGENCE_NETWORK_V23
 import {createV24ControlledPolicyBridgeV24_0} from './src/controlled-policy-bridge-v24_0.mjs'; // MEMEFLOW_V24_CONTROLLED_POLICY_BRIDGE_V24_0
 import {createV24ProbationTelemetryV24_1} from './src/v24-probation-telemetry-v24_1.mjs'; // MEMEFLOW_V24_PROBATION_TELEMETRY_V24_1
+import {createV24ProbationEvidenceGateV24_2} from './src/v24-probation-evidence-gate-v24_2.mjs'; // MEMEFLOW_V24_PROBATION_EVIDENCE_GATE_V24_2
 import {createSolUsdOracle} from './src/sol-usd-oracle.mjs'; // MEMEFLOW_OPPORTUNITY_ENGINE_V1
 import {liveCardMarketSnapshot,openPositionLiveMarketCap} from './src/live-card-market.mjs'; // MEMEFLOW_LIVE_CARD_MARKET_TRUTH_V18 / MEMEFLOW_OPEN_POSITION_LIVE_MC_V20
 import {rankCandidateViews} from './src/feed-ranking.mjs'; // MEMEFLOW_FEED_RELEVANCE_RANKING_V1
@@ -67,6 +68,14 @@ const v24ProbationTelemetry=createV24ProbationTelemetryV24_1({
   outcomeRecentProvider:
     options=>tokenIntelligenceShadowV23.listOutcomeReviews(options)
 }); // V24.1 read-only impact telemetry; no runtime authority
+const v24ProbationEvidenceGate=createV24ProbationEvidenceGateV24_2({
+  telemetryProvider:
+    ()=>v24ProbationTelemetry.report({limit:5000}),
+  readinessProvider:
+    ()=>tokenIntelligenceShadowV23.auditV23ReadinessFreeze(),
+  bridgeStatusProvider:
+    ()=>v24ControlledPolicyBridge.status()
+}); // V24.2 owner-review readiness only; cannot change bridge mode
 const solUsdOracle=createSolUsdOracle(); // one shared quote, never per-token RPC
 solUsdOracle.start();
 // MEMEFLOW_PERMANENT_TOKEN_REGISTRY_V1
@@ -7205,6 +7214,24 @@ async function handler(req,res){const url=new URL(req.url,'http://x');
      readOnly:true,
      telemetry:
        v24ProbationTelemetry.report({limit})
+   });
+ }
+
+/* MEMEFLOW_V24_PROBATION_EVIDENCE_GATE_MONITOR_V24_2 */
+ if(
+   url.pathname==='/api/owner/intelligence/v24-probation-gate' &&
+   req.method==='GET'
+ ){
+   if(!u)return json(res,401,{error:'AUTH_REQUIRED'});
+   if(u.isOwner!==true)return json(res,403,{error:'OWNER_REQUIRED'});
+   return json(res,200,{
+     ok:true,
+     owner:true,
+     readOnly:true,
+     applicationAllowed:false,
+     modeMutation:false,
+     automaticPromotion:false,
+     result:v24ProbationEvidenceGate.evaluate()
    });
  }
 

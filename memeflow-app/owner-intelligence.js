@@ -1956,6 +1956,91 @@ async function loadV24PolicyBridge(){
   }
 }
 
+/* MEMEFLOW_V24_PROBATION_EVIDENCE_GATE_V24_2_UI_JS */
+function renderV24ProbationGate(payload={}){
+  const result=payload?.result||{};
+  const sample=result?.sample||{};
+  const impact=result?.impact||{};
+  const gates=Array.isArray(result?.gates)?result.gates:[];
+
+  const badge=$('v24ProbationGateStatus');
+  if(badge){
+    badge.className='oi-ai-status '+(
+      result?.candidateForManualEnforceReview===true
+        ?'online'
+        :(String(result?.status||'').includes('BLOCKED')||
+          String(result?.status||'').includes('ERROR')?'offline':'')
+    );
+    badge.textContent=String(result?.status||'UNKNOWN').replaceAll('_',' ');
+  }
+
+  $('v24ProbationGateDirectional').textContent=num(sample?.directional,0);
+  $('v24ProbationGateShadow').textContent=num(sample?.shadowInterventions,0);
+  $('v24ProbationGatePrecision').textContent=pct(impact?.blockedNegativePrecisionPct);
+  $('v24ProbationGateWilson').textContent=pct(impact?.blockedNegativePrecisionWilsonLower95Pct);
+
+  $('v24ProbationGateChecks').innerHTML=
+    gates.length
+      ?gates.map(row=>`
+        <div class="oi-promotion-check ${row?.pass===true?'pass':'fail'}">
+          <span class="oi-promotion-check-dot"></span>
+          <div>
+            <strong>${esc(row?.label||row?.id||'Gate')}</strong>
+            <small>
+              ${esc(row?.kind||'QUALITY')}
+              · actual ${esc(String(row?.actual??'—'))}
+              · required ${esc(String(row?.required??'—'))}
+            </small>
+          </div>
+        </div>
+      `).join('')
+      :'<div class="oi-empty">V24.2 gates unavailable.</div>';
+
+  $('v24ProbationGatePacket').innerHTML=[
+    ['Bridge mode',result?.bridge?.mode||'—'],
+    ['Kill switch',result?.bridge?.killSwitch===true?'ON':'OFF'],
+    ['Negative / positive',`${num(sample?.negative,0)} / ${num(sample?.positive,0)}`],
+    ['Resolution rate',pct(sample?.resolutionRatePct)],
+    ['Opportunity cost',pct(impact?.positiveOpportunityCostPct)],
+    ['Recommendation',String(result?.reviewPacket?.recommendation||'—').replaceAll('_',' ')]
+  ].map(([name,value])=>`
+    <div class="oi-row">
+      <span>${esc(name)}</span>
+      <strong>${esc(value)}</strong>
+    </div>
+  `).join('');
+
+  const verdict=$('v24ProbationGateVerdict');
+  if(verdict){
+    verdict.dataset.state=
+      result?.candidateForManualEnforceReview===true?'ready':'blocked';
+    verdict.textContent=
+      result?.candidateForManualEnforceReview===true
+        ?'V24 PROBATION PASSED. Candidate may be reviewed manually for a separate controlled ENFORCE step. Nothing was enabled automatically.'
+        :(Array.isArray(result?.blockers)&&result.blockers.length
+          ?`Blocked: ${result.blockers.join(', ').replaceAll('_',' ')}`
+          :'Building V24 probation evidence.');
+  }
+}
+
+async function loadV24ProbationGate(){
+  try{
+    const payload=await api('/api/owner/intelligence/v24-probation-gate');
+    renderV24ProbationGate(payload);
+  }catch(error){
+    const badge=$('v24ProbationGateStatus');
+    if(badge){
+      badge.className='oi-ai-status offline';
+      badge.textContent='UNAVAILABLE';
+    }
+    const verdict=$('v24ProbationGateVerdict');
+    if(verdict){
+      verdict.dataset.state='blocked';
+      verdict.textContent=`V24.2 probation gate unavailable: ${error.message}`;
+    }
+  }
+}
+
 /* MEMEFLOW_SHADOW_PROMOTION_REPORT_V23_14_UI_JS */
 function promotionTone(status=''){
   const s=String(status||'').toUpperCase();
@@ -2875,7 +2960,8 @@ async function load(
       loadPolicySimulation(),
       loadPolicyReview(),
       loadV23Readiness(),
-      loadV24PolicyBridge()
+      loadV24PolicyBridge(),
+      loadV24ProbationGate()
     ]);
 
     if(previous){
