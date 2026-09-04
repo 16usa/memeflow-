@@ -4063,3 +4063,104 @@ body[data-theme="dark"] .pagination,
   }
 }
 /* ===== /MEMEFLOW_TOKEN_FLOW_CARD_CLICK_TOGGLE_V44 ===== */
+
+/* ===== MEMEFLOW_TOKEN_FLOW_STATE_FILL_V45B =====
+   State is communicated by row fill, not text badges.
+   Only OPEN / BUY READY / WATCH receive color.
+*/
+@media (max-width: 760px) {
+  .token-list > .flow-token .token-state {
+    display: none !important;
+  }
+
+  .token-list > .flow-token,
+  .token-list > .flow-token.waiting,
+  .token-list > .flow-token.blocked {
+    background: transparent !important;
+  }
+
+  .token-list > .flow-token.open {
+    background: linear-gradient(
+      90deg,
+      rgba(77, 230, 161, .115),
+      rgba(77, 230, 161, .028)
+    ) !important;
+  }
+
+  .token-list > .flow-token.ready {
+    background: linear-gradient(
+      90deg,
+      rgba(239, 198, 106, .125),
+      rgba(239, 198, 106, .028)
+    ) !important;
+  }
+
+  .token-list > .flow-token.watch {
+    background: linear-gradient(
+      90deg,
+      rgba(92, 141, 255, .125),
+      rgba(92, 141, 255, .028)
+    ) !important;
+  }
+
+  .token-list > .flow-token.open.mf-row-selected {
+    background: linear-gradient(
+      90deg,
+      rgba(77, 230, 161, .17),
+      rgba(77, 230, 161, .045)
+    ) !important;
+  }
+
+  .token-list > .flow-token.ready.mf-row-selected {
+    background: linear-gradient(
+      90deg,
+      rgba(239, 198, 106, .18),
+      rgba(239, 198, 106, .045)
+    ) !important;
+  }
+
+  .token-list > .flow-token.watch.mf-row-selected {
+    background: linear-gradient(
+      90deg,
+      rgba(92, 141, 255, .18),
+      rgba(92, 141, 255, .045)
+    ) !important;
+  }
+
+  .token-list > .flow-token.waiting.mf-row-selected,
+  .token-list > .flow-token.blocked.mf-row-selected {
+    background: transparent !important;
+  }
+
+  html[data-theme="light"] .token-list > .flow-token.open {
+    background: linear-gradient(
+      90deg,
+      rgba(77, 230, 161, .095),
+      rgba(77, 230, 161, .014)
+    ) !important;
+  }
+
+  html[data-theme="light"] .token-list > .flow-token.ready {
+    background: linear-gradient(
+      90deg,
+      rgba(239, 198, 106, .105),
+      rgba(239, 198, 106, .014)
+    ) !important;
+  }
+
+  html[data-theme="light"] .token-list > .flow-token.watch {
+    background: linear-gradient(
+      90deg,
+      rgba(92, 141, 255, .095),
+      rgba(92, 141, 255, .014)
+    ) !important;
+  }
+
+  html[data-theme="light"] .token-list > .flow-token.waiting,
+  html[data-theme="light"] .token-list > .flow-token.blocked,
+  html[data-theme="light"] .token-list > .flow-token.waiting.mf-row-selected,
+  html[data-theme="light"] .token-list > .flow-token.blocked.mf-row-selected {
+    background: transparent !important;
+  }
+}
+/* ===== /MEMEFLOW_TOKEN_FLOW_STATE_FILL_V45B ===== */

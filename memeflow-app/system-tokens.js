@@ -1445,12 +1445,7 @@ function tokenTemplate(row, index) {
                 ${escapeHtml(staticName)}
               </strong>
               ${tokenSourceLinksTemplate(row)}
-
-              <span class="token-state ${key}">
-                ${label}
-              </span>
-
-            </div>
+</div>
 
             
 
@@ -4891,7 +4886,15 @@ async function hydrateTokenMediaV25() {
           if (node !== card) node.classList.remove('mf-row-selected');
         });
 
-      card.classList.add('mf-row-selected');
+      if (
+        card.classList.contains('open') ||
+        card.classList.contains('ready') ||
+        card.classList.contains('watch')
+      ) {
+        card.classList.add('mf-row-selected');
+      } else {
+        card.classList.remove('mf-row-selected');
+      }
     });
   }
 
