@@ -1444,8 +1444,25 @@ function tokenTemplate(row, index) {
               <strong class="token-mint token-name">
                 ${escapeHtml(staticName)}
               </strong>
+
+              <span class="mf-token-age-chip-v47c">
+                ${escapeHtml(compactTokenAge(tokenAge(row)))}
+              </span>
+
               ${tokenSourceLinksTemplate(row)}
+
 </div>
+
+            <div class="mf-token-subline-v47c">
+              <span class="mf-holder-mini-v47c" aria-label="Holders">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <circle cx="9" cy="8" r="3"></circle>
+                  <circle cx="17" cy="9" r="2.5"></circle>
+                  <path d="M3.5 19c.4-3.3 2.2-5 5.5-5s5.1 1.7 5.5 5M14 14.5c3.5-.5 5.7 1 6.3 4.5"></path>
+                </svg>
+                <span class="mf-holder-mini-value-v47c">${escapeHtml(holderCount(row))}</span>
+              </span>
+            </div>
 
             
 
@@ -3948,6 +3965,16 @@ function __mfPatchMutableCardV17(mint){
     'Price SOL',
     finite(price)?fmt(price,9):'—'
   );
+  const ageChipV47c=card.querySelector('.mf-token-age-chip-v47c');
+  if(ageChipV47c){
+    ageChipV47c.textContent=compactTokenAge(tokenAge(row));
+  }
+
+  const holderMiniV47c=card.querySelector('.mf-holder-mini-value-v47c');
+  if(holderMiniV47c){
+    holderMiniV47c.textContent=holderCount(row);
+  }
+
 
   const metrics=
     key==='open'
@@ -4947,3 +4974,68 @@ async function hydrateTokenMediaV25() {
   }
 })();
 // ===== /MEMEFLOW_TOKEN_FLOW_CARD_CLICK_TOGGLE_V44 =====
+
+// ===== MEMEFLOW_TOKEN_FLOW_TIME_WINDOW_V47C =====
+(function mfTokenFlowTimeWindowV47C(){
+  const storageKey='memeflow:token-age-window-v47c';
+
+  function apply(raw, rerender){
+    const value=raw==='all'?null:Number(raw);
+
+    __mfSortConfigV25={
+      ...__mfSortConfigV25,
+      key:'smart',
+      direction:'desc',
+      ageMaxMinutes:Number.isFinite(value)&&value>0?value:null
+    };
+
+    document.querySelectorAll('[data-mf-age-window-v47c]').forEach(button=>{
+      const active=raw==='all'
+        ? __mfSortConfigV25.ageMaxMinutes===null
+        : Number(button.dataset.mfAgeWindowV47c)===__mfSortConfigV25.ageMaxMinutes;
+
+      button.classList.toggle('is-active',active);
+      button.setAttribute('aria-pressed',active?'true':'false');
+    });
+
+    try{localStorage.setItem(storageKey,raw)}catch{}
+
+    if(rerender){
+      state.page=1;
+      render();
+      if(typeof __mfKickCardClockV19==='function'){
+        __mfKickCardClockV19();
+      }
+    }
+  }
+
+  function init(){
+    const bar=document.querySelector('.mf-time-window-v47c');
+    if(!bar||bar.dataset.mfBoundV47c==='1')return;
+
+    bar.dataset.mfBoundV47c='1';
+
+    let saved='all';
+    try{
+      const candidate=localStorage.getItem(storageKey);
+      if(['all','60','360','1440'].includes(candidate)){
+        saved=candidate;
+      }
+    }catch{}
+
+    apply(saved,false);
+
+    bar.addEventListener('click',event=>{
+      const button=event.target.closest('[data-mf-age-window-v47c]');
+      if(!button)return;
+      apply(button.dataset.mfAgeWindowV47c,true);
+    });
+  }
+
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded',init,{once:true});
+  }else{
+    init();
+  }
+})();
+// ===== /MEMEFLOW_TOKEN_FLOW_TIME_WINDOW_V47C =====

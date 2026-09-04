@@ -4164,3 +4164,88 @@ body[data-theme="dark"] .pagination,
   }
 }
 /* ===== /MEMEFLOW_TOKEN_FLOW_STATE_FILL_V45B ===== */
+
+/* ===== MEMEFLOW_TOKEN_FLOW_REFERENCE_LAYOUT_V47C ===== */
+.mf-time-window-v47c{
+  display:flex;align-items:center;gap:4px;margin-top:7px;padding:5px 6px;
+  border:1px solid rgba(128,154,169,.12);border-radius:11px;
+  background:rgba(17,24,32,.72)
+}
+.mf-time-window-v47c button{
+  height:26px;min-width:38px;padding:0 7px;border:1px solid rgba(128,154,169,.12);
+  border-radius:8px;background:transparent;color:#7d919c;font:inherit;
+  font-size:var(--mf-type-micro);font-weight:800
+}
+.mf-time-window-v47c button.is-active{
+  border-color:rgba(85,217,255,.58);background:rgba(85,217,255,.09);color:#bceefa
+}
+.mf-time-window-v47c>span{
+  margin-left:auto;color:#708793;font-size:6px;font-weight:800;letter-spacing:.07em
+}
+html[data-theme="light"] .mf-time-window-v47c{
+  background:linear-gradient(180deg,#fff,#f8fafb);border-color:rgba(55,79,94,.11)
+}
+html[data-theme="light"] .mf-time-window-v47c button.is-active{
+  color:#315d6a;background:rgba(85,217,255,.10)
+}
+
+@media(max-width:760px){
+  .token-list>.flow-token .token-meta{display:grid!important;gap:3px!important;align-content:center!important}
+  .token-list>.flow-token .token-top{display:flex!important;align-items:center!important;gap:5px!important;min-width:0!important}
+  .token-list>.flow-token .token-name{
+    min-width:0!important;max-width:145px!important;overflow:hidden!important;
+    text-overflow:ellipsis!important;white-space:nowrap!important
+  }
+  .mf-token-age-chip-v47c{
+    flex:0 0 auto;padding:2px 5px;border-radius:999px;background:rgba(139,156,167,.10);
+    color:#8fa0aa;font-size:7px;font-weight:750;line-height:1.1;white-space:nowrap
+  }
+  .mf-token-subline-v47c{display:flex;align-items:center;min-height:11px}
+  .mf-holder-mini-v47c{display:inline-flex;align-items:center;gap:3px;color:#768b96;font-size:7px;font-weight:700}
+  .mf-holder-mini-v47c svg{
+    width:11px;height:11px;fill:none;stroke:currentColor;stroke-width:1.7;
+    stroke-linecap:round;stroke-linejoin:round
+  }
+
+  .flow-token>.mf-score-slot,.flow-token>.mf-open-pnl-slot{
+    align-self:start!important;justify-self:end!important;display:flex!important;
+    flex-direction:row!important;align-items:baseline!important;gap:4px!important;
+    margin:0!important;padding:0!important;white-space:nowrap!important
+  }
+  .flow-token>.mf-score-slot span,.flow-token>.mf-open-pnl-slot span{font-size:6px!important}
+  .flow-token>.mf-score-slot strong,.flow-token>.mf-open-pnl-slot strong{font-size:9px!important}
+
+  .mf-open-market-strip>.mf-open-market-stat:nth-child(1),
+  .mf-open-market-strip>.mf-open-market-stat:nth-child(2),
+  .mf-regular-market-strip>.mf-regular-market-stat:nth-child(1),
+  .mf-regular-market-strip>.mf-regular-market-stat:nth-child(2){display:none!important}
+
+  .mf-open-market-strip,.mf-regular-market-strip{
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;
+    grid-template-rows:auto auto!important;gap:3px 12px!important;
+    margin-top:2px!important;padding-top:5px!important
+  }
+
+  .mf-open-market-strip>.mf-open-market-stat:nth-child(3),
+  .mf-regular-market-strip>.mf-regular-market-stat:nth-child(3){grid-column:1;grid-row:1}
+  .mf-open-market-strip>.mf-open-market-stat:nth-child(4),
+  .mf-regular-market-strip>.mf-regular-market-stat:nth-child(4){grid-column:1;grid-row:2}
+  .mf-open-market-strip>.mf-open-market-stat:nth-child(5),
+  .mf-regular-market-strip>.mf-regular-market-stat:nth-child(5){grid-column:2;grid-row:1}
+  .mf-open-market-strip>.mf-open-market-stat:nth-child(6),
+  .mf-regular-market-strip>.mf-regular-market-stat:nth-child(6){grid-column:2;grid-row:2}
+
+  .mf-open-market-stat,.mf-regular-market-stat{
+    display:flex!important;align-items:baseline!important;justify-content:space-between!important;
+    gap:5px!important;min-width:0!important;padding-left:0!important;border-left:0!important
+  }
+  .mf-open-market-stat span,.mf-regular-market-stat span{font-size:6px!important;letter-spacing:.04em!important}
+  .mf-open-market-stat strong,.mf-regular-market-stat strong{
+    margin-top:0!important;font-size:8px!important;text-align:right!important
+  }
+}
+@media(max-width:390px){
+  .token-list>.flow-token .token-name{max-width:116px!important}
+  .mf-time-window-v47c button{min-width:32px;padding:0 5px}
+}
+/* ===== /MEMEFLOW_TOKEN_FLOW_REFERENCE_LAYOUT_V47C ===== */
