@@ -1,0 +1,184 @@
+/* MEMEFLOW_LAYOUT_SPACING_V54
+   Geometry/rhythm layer only.
+   Typography, colors, surfaces, borders, radii, shadows, theme runtime,
+   canonical header geometry and application logic are intentionally untouched.
+*/
+
+/* Shared spacing scale. Page-native rules may still override these low-risk defaults. */
+body.mf-layout-rhythm-v54 {
+  --mf-v54-1: 4px;
+  --mf-v54-2: 8px;
+  --mf-v54-3: 12px;
+  --mf-v54-4: 16px;
+  --mf-v54-5: 20px;
+  --mf-v54-6: 24px;
+  --mf-v54-section: clamp(14px, 1.8vw, 22px);
+  --mf-v54-panel-x: clamp(14px, 2.1vw, 20px);
+  --mf-v54-panel-y: clamp(13px, 1.8vw, 18px);
+}
+
+/* --------------------------------------------------------------------------
+   TRADING TERMINAL — compact panel rhythm
+   -------------------------------------------------------------------------- */
+body.mf-page-trading .mf-trading-terminal :where(.panel-head) {
+  padding: var(--mf-v54-panel-y) var(--mf-v54-panel-x);
+  gap: var(--mf-v54-3);
+  align-items: center;
+}
+
+body.mf-page-trading .mf-trading-terminal :where(.strategy-summary-row, .selected-metrics) {
+  column-gap: var(--mf-v54-4);
+  row-gap: var(--mf-v54-3);
+}
+
+body.mf-page-trading .mf-trading-terminal :where(.candidate-row, .position-row, .trade-row) {
+  gap: var(--mf-v54-3);
+  padding-block: var(--mf-v54-3);
+  padding-inline: var(--mf-v54-panel-x);
+  align-items: center;
+}
+
+body.mf-page-trading .mf-trading-terminal :where(.candidate-name, .token-name-row) {
+  gap: var(--mf-v54-2);
+}
+
+/* --------------------------------------------------------------------------
+   TOKEN FLOW — keep dense rows aligned and predictable
+   -------------------------------------------------------------------------- */
+body.mf-page-system-tokens .flow-page :where(.flow-hero) {
+  padding-block: var(--mf-v54-4);
+  padding-inline: var(--mf-v54-panel-x);
+}
+
+body.mf-page-system-tokens .flow-page :where(.summary-grid, .summary-cards, .flow-summary) {
+  gap: var(--mf-v54-2);
+}
+
+body.mf-page-system-tokens .flow-page :where(.search-wrap) {
+  margin-block: var(--mf-v54-3);
+}
+
+body.mf-page-system-tokens .flow-page :where(.token-row, .token-card, .flow-token-row) {
+  padding-block: var(--mf-v54-3);
+  padding-inline: var(--mf-v54-3);
+  column-gap: var(--mf-v54-3);
+  align-items: center;
+}
+
+body.mf-page-system-tokens .flow-page :where(.token-main, .token-info, .token-metrics) {
+  row-gap: var(--mf-v54-1);
+}
+
+/* --------------------------------------------------------------------------
+   SMART VAULT — consistent card internals, no surface ownership
+   -------------------------------------------------------------------------- */
+body.mf-page-smart-vault .mf-vault-shell :where(.mf-vault-hero) {
+  padding-inline: var(--mf-v54-panel-x);
+}
+
+body.mf-page-smart-vault .mf-vault-shell :where(.mf-vault-card) {
+  padding: var(--mf-v54-5) var(--mf-v54-panel-x);
+}
+
+body.mf-page-smart-vault .mf-vault-shell :where(.mf-vault-card-head) {
+  gap: var(--mf-v54-3);
+  padding-bottom: var(--mf-v54-4);
+  margin-bottom: var(--mf-v54-4);
+  align-items: center;
+}
+
+body.mf-page-smart-vault .mf-vault-shell :where(.mf-vault-stats, .mf-vault-controls, .mf-vault-grid) {
+  gap: var(--mf-v54-3);
+}
+
+body.mf-page-smart-vault .mf-vault-shell :where(.mf-vault-stat, .mf-vault-control-row) {
+  padding: var(--mf-v54-4);
+}
+
+body.mf-page-smart-vault .mf-vault-shell :where(.mf-vault-actions) {
+  gap: var(--mf-v54-2);
+  margin-top: var(--mf-v54-4);
+}
+
+body.mf-page-smart-vault .mf-vault-shell :where(.mf-vault-checklist) {
+  gap: var(--mf-v54-3);
+}
+
+/* --------------------------------------------------------------------------
+   AGENT PERFORMANCE — same cadence as production pages
+   -------------------------------------------------------------------------- */
+body.mf-page-agent-performance :where(.ap-page) {
+  padding-bottom: clamp(28px, 4vw, 48px);
+}
+
+body.mf-page-agent-performance :where(.ap-hero) {
+  padding-inline: var(--mf-v54-panel-x);
+  margin-bottom: var(--mf-v54-section);
+}
+
+body.mf-page-agent-performance :where(.ap-source, .ap-panel) {
+  padding: var(--mf-v54-panel-y) var(--mf-v54-panel-x);
+}
+
+body.mf-page-agent-performance :where(.ap-kpis) {
+  gap: var(--mf-v54-3);
+  margin-block: var(--mf-v54-section);
+}
+
+body.mf-page-agent-performance :where(.ap-kpis article, .ap-summary div, .factor, .rank) {
+  padding: var(--mf-v54-4);
+}
+
+body.mf-page-agent-performance :where(.ap-summary, .ap-bars, .ap-engine) {
+  gap: var(--mf-v54-3);
+}
+
+/* --------------------------------------------------------------------------
+   SETTINGS / SYSTEM / HOW IT WORKS
+   These pages keep their native component geometry; V54 only normalizes the
+   outer page cadence so they breathe like the three dense product pages.
+   -------------------------------------------------------------------------- */
+body.mf-page-settings :where(main),
+body.mf-page-system :where(main),
+body.mf-page-how-it-works :where(main) {
+  padding-bottom: clamp(28px, 4vw, 48px);
+}
+
+body.mf-page-settings :where(main > section, main > article),
+body.mf-page-system :where(main > section, main > article),
+body.mf-page-how-it-works :where(main > section, main > article) {
+  margin-block: 0;
+}
+
+body.mf-page-settings :where(main > section + section, main > article + article, main > section + article, main > article + section),
+body.mf-page-system :where(main > section + section, main > article + article, main > section + article, main > article + section),
+body.mf-page-how-it-works :where(main > section + section, main > article + article, main > section + article, main > article + section) {
+  margin-top: var(--mf-v54-section);
+}
+
+/* Mobile optical compaction: spacing only. */
+@media (max-width: 760px) {
+  body.mf-layout-rhythm-v54 {
+    --mf-v54-section: 12px;
+    --mf-v54-panel-x: 12px;
+    --mf-v54-panel-y: 12px;
+  }
+
+  body.mf-page-trading .mf-trading-terminal :where(.panel-head) {
+    padding-block: 11px;
+  }
+
+  body.mf-page-system-tokens .flow-page :where(.flow-hero) {
+    padding-block: 14px;
+  }
+
+  body.mf-page-smart-vault .mf-vault-shell :where(.mf-vault-card) {
+    padding: 18px 14px;
+  }
+
+  body.mf-page-agent-performance :where(.ap-source, .ap-panel) {
+    padding: 14px;
+  }
+}
+
+/* MEMEFLOW_LAYOUT_SPACING_V54_END */

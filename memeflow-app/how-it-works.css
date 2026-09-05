@@ -1225,3 +1225,283 @@ a, button { font: inherit; }
 }
 
 /* ===== /MEMEFLOW HOW IT WORKS / SMART VAULT GUIDE V1 ===== */
+
+/* MEMEFLOW_HIW_WHITE_POLISH_V31_START */
+/*
+  Light-theme-only visual polish.
+  Neutral palette lock: #FFFFFF / #F5F5F5 / #EBEBEB.
+  Existing MEMEFLOW functional accent colors remain native.
+  No trading / wallet / interaction logic is changed.
+*/
+
+html[data-theme="light"] {
+  background: #FFFFFF !important;
+}
+
+html[data-theme="light"] body.mf-hiw-page {
+  --hiw-bg: #FFFFFF;
+  --hiw-panel: #F5F5F5;
+  --hiw-panel-strong: #F5F5F5;
+  --hiw-line: #EBEBEB;
+  --hiw-line-strong: #EBEBEB;
+  --hiw-text: #111820;
+  --hiw-muted: #71828d;
+  --hiw-muted-2: #71828d;
+  --hiw-shadow: none;
+
+  color: #111820 !important;
+  background: #FFFFFF !important;
+}
+
+html[data-theme="light"] body.mf-hiw-page .mf-hiw-shell {
+  width: min(1240px, 100%) !important;
+  padding-top: 0 !important;
+  background: #FFFFFF !important;
+}
+
+/* Header: flat white, not a floating glass card. */
+html[data-theme="light"] body.mf-hiw-page .mf-hiw-topbar {
+  top: 0 !important;
+  padding-inline: clamp(18px, 4vw, 52px) !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: #FFFFFF !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+html[data-theme="light"] body.mf-hiw-page .mf-hiw-hero::before {
+  display: none !important;
+}
+
+html[data-theme="light"] body.mf-hiw-page .mf-hiw-brand-mark img {
+  filter: none !important;
+}
+
+html[data-theme="light"] body.mf-hiw-page .mf-hiw-hero h1,
+html[data-theme="light"] body.mf-hiw-page .mf-hiw-section-head h2,
+html[data-theme="light"] body.mf-hiw-page .mf-hiw-money h2,
+html[data-theme="light"] body.mf-hiw-page .mf-hiw-cta h2,
+html[data-theme="light"] body.mf-hiw-page .mf-hiw-status-stack strong,
+html[data-theme="light"] body.mf-hiw-page .mf-hiw-step h3,
+html[data-theme="light"] body.mf-hiw-page .mf-hiw-control-card h3,
+html[data-theme="light"] body.mf-hiw-page .mf-hiw-money-flow strong,
+html[data-theme="light"] body.mf-hiw-page .mf-hiw-faq summary {
+  color: #111820 !important;
+}
+
+html[data-theme="light"] body.mf-hiw-page .mf-hiw-hero {
+  background: #FFFFFF !important;
+}
+
+html[data-theme="light"] body.mf-hiw-page .mf-hiw-hero h1 span {
+  text-shadow: none !important;
+}
+
+html[data-theme="light"] body.mf-hiw-page .mf-hiw-hero-copy > p,
+html[data-theme="light"] body.mf-hiw-page .mf-hiw-section-head > p,
+html[data-theme="light"] body.mf-hiw-page .mf-hiw-step p,
+html[data-theme="light"] body.mf-hiw-page .mf-hiw-control-card li,
+html[data-theme="light"] body.mf-hiw-page .mf-hiw-money-copy p,
+html[data-theme="light"] body.mf-hiw-page .mf-hiw-faq details p {
+  color: #71828d !important;
+}
+
+/* Buttons: use the neutral system instead of heavy outlines. */
+html[data-theme="light"] body.mf-hiw-page .mf-hiw-btn {
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body.mf-hiw-page .mf-hiw-btn-primary {
+  background: #EBEBEB !important;
+  color: #111820 !important;
+}
+
+html[data-theme="light"] body.mf-hiw-page .mf-hiw-btn-ghost {
+  background: #F5F5F5 !important;
+  color: #111820 !important;
+}
+
+html[data-theme="light"] body.mf-hiw-page .mf-hiw-btn-primary:hover,
+html[data-theme="light"] body.mf-hiw-page .mf-hiw-btn-primary:focus-visible,
+html[data-theme="light"] body.mf-hiw-page .mf-hiw-btn-ghost:hover,
+html[data-theme="light"] body.mf-hiw-page .mf-hiw-btn-ghost:focus-visible {
+  border-color: transparent !important;
+  background: #EBEBEB !important;
+}
+
+/* Hero status: one soft neutral surface, no glass/shadow. */
+html[data-theme="light"] body.mf-hiw-page .mf-hiw-status-card {
+  border: 0 !important;
+  border-radius: 24px !important;
+  background: #F5F5F5 !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+html[data-theme="light"] body.mf-hiw-page .mf-hiw-status-head {
+  border-bottom-color: #EBEBEB !important;
+}
+
+html[data-theme="light"] body.mf-hiw-page .mf-hiw-status-stack > div {
+  border: 0 !important;
+  background: #FFFFFF !important;
+}
+
+/* Sections: white, separated only by a quiet grey line. */
+html[data-theme="light"] body.mf-hiw-page .mf-hiw-section {
+  border-top-color: #EBEBEB !important;
+  background: #FFFFFF !important;
+}
+
+/* Architecture: soft grey canvas, no outer frame/shadow. */
+html[data-theme="light"] body.mf-hiw-page .mf-hiw-map-shell {
+  border: 0 !important;
+  border-radius: 28px !important;
+  background: #F5F5F5 !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body.mf-hiw-page .mf-hiw-map::before {
+  opacity: .55 !important;
+  background-image:
+    linear-gradient(#EBEBEB 1px, transparent 1px),
+    linear-gradient(90deg, #EBEBEB 1px, transparent 1px) !important;
+}
+
+html[data-theme="light"] body.mf-hiw-page .mf-hiw-node {
+  border-color: transparent !important;
+  background: #FFFFFF !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body.mf-hiw-page .mf-hiw-node:hover,
+html[data-theme="light"] body.mf-hiw-page .mf-hiw-node:focus-visible {
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body.mf-hiw-page .mf-hiw-node.is-active {
+  border-color: var(--hiw-cyan) !important;
+  background: #FFFFFF !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body.mf-hiw-page .mf-hiw-map-detail {
+  border-top-color: #EBEBEB !important;
+  background: #FFFFFF !important;
+}
+
+/* Journey cards: soft blocks instead of outlined cards. */
+html[data-theme="light"] body.mf-hiw-page .mf-hiw-step {
+  border: 0 !important;
+  border-radius: 24px !important;
+  background: #F5F5F5 !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body.mf-hiw-page .mf-hiw-step:hover {
+  border-color: transparent !important;
+}
+
+html[data-theme="light"] body.mf-hiw-page .mf-hiw-step-icon {
+  border: 0 !important;
+  background: #FFFFFF !important;
+}
+
+/* Control boundaries: same visual language. */
+html[data-theme="light"] body.mf-hiw-page .mf-hiw-control {
+  background: #FFFFFF !important;
+}
+
+html[data-theme="light"] body.mf-hiw-page .mf-hiw-control-card,
+html[data-theme="light"] body.mf-hiw-page .mf-hiw-control-user {
+  border: 0 !important;
+  border-radius: 24px !important;
+  background: #F5F5F5 !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body.mf-hiw-page .mf-hiw-control-label {
+  background: #FFFFFF !important;
+  box-shadow: none !important;
+}
+
+/* Funding block: soft grey section, not another framed card. */
+html[data-theme="light"] body.mf-hiw-page .mf-hiw-money {
+  border: 0 !important;
+  border-radius: 28px !important;
+  background: #F5F5F5 !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body.mf-hiw-page .mf-hiw-money-flow > div {
+  border: 0 !important;
+  background: #FFFFFF !important;
+}
+
+html[data-theme="light"] body.mf-hiw-page .mf-hiw-money-flow > div.is-vault {
+  border: 0 !important;
+  background: #EBEBEB !important;
+}
+
+/* FAQ: OpenAI-like quiet rows. Only the open item gets an accent cue. */
+html[data-theme="light"] body.mf-hiw-page .mf-hiw-faq-list {
+  gap: 10px !important;
+}
+
+html[data-theme="light"] body.mf-hiw-page .mf-hiw-faq details {
+  border: 0 !important;
+  border-radius: 20px !important;
+  background: #F5F5F5 !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body.mf-hiw-page .mf-hiw-faq details[open] {
+  border: 1px solid var(--hiw-cyan) !important;
+  background: #FFFFFF !important;
+}
+
+html[data-theme="light"] body.mf-hiw-page .mf-hiw-faq summary::after {
+  color: #71828d !important;
+}
+
+/* Bottom CTA/footer: almost entirely white. */
+html[data-theme="light"] body.mf-hiw-page .mf-hiw-cta,
+html[data-theme="light"] body.mf-hiw-page .mf-hiw-footer {
+  border-top-color: #EBEBEB !important;
+  background: #FFFFFF !important;
+}
+
+@media (max-width: 720px) {
+  html[data-theme="light"] body.mf-hiw-page .mf-hiw-shell {
+    width: 100% !important;
+  }
+
+  html[data-theme="light"] body.mf-hiw-page .mf-hiw-topbar {
+    padding-inline: 18px !important;
+  }
+
+  html[data-theme="light"] body.mf-hiw-page .mf-hiw-hero,
+  html[data-theme="light"] body.mf-hiw-page .mf-hiw-section {
+    padding-inline: 20px !important;
+  }
+
+  html[data-theme="light"] body.mf-hiw-page .mf-hiw-map {
+    padding: 10px !important;
+  }
+
+  html[data-theme="light"] body.mf-hiw-page .mf-hiw-node {
+    background: #FFFFFF !important;
+  }
+
+  html[data-theme="light"] body.mf-hiw-page .mf-hiw-money,
+  html[data-theme="light"] body.mf-hiw-page .mf-hiw-cta,
+  html[data-theme="light"] body.mf-hiw-page .mf-hiw-footer {
+    margin-inline: 20px !important;
+  }
+}
+
+/* MEMEFLOW_HIW_WHITE_POLISH_V31_END */

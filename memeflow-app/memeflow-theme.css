@@ -1728,3 +1728,2587 @@ html[data-theme="light"] .flow-page .summary-card.blocked.active {
   background: rgba(255, 102, 121, .105) !important;
 }
 /* ===== /MEMEFLOW_TOKEN_FLOW_FILTER_COLORS_V46 ===== */
+
+/* ===== MEMEFLOW_GLOBAL_LIGHT_CANVAS_HEADER_V4 ===== */
+/*
+  LIGHT THEME — GLOBAL CANVAS ONLY.
+  Visual source of truth: approved white System Overview page.
+
+  This block intentionally controls only page-level neutral background.
+  Cards/panels/controls/status colors are handled elsewhere and are untouched.
+*/
+
+html[data-theme="light"] {
+  --mf-global-light-canvas: #ffffff;
+  --mf-global-light-header: #ffffff;
+  --mf-global-light-header-line: rgba(15, 20, 25, .08);
+
+  /* Background tokens only. */
+  --bg: #ffffff !important;
+  --bg0: #ffffff !important;
+  --bg1: #ffffff !important;
+  --page-bg: #ffffff !important;
+  --mf-app-bg: #ffffff !important;
+  --mf-nav-bg: #ffffff !important;
+  --hiw-bg: #ffffff !important;
+  --v-bg: #ffffff !important;
+  --op-bg: #ffffff !important;
+}
+
+html[data-theme="light"],
+html[data-theme="light"] body,
+html[data-theme="light"] body[class] {
+  background-color: var(--mf-global-light-canvas) !important;
+  background-image: none !important;
+}
+
+/*
+  Top-level page shells must not paint a second page background.
+  This does NOT alter internal cards/panels.
+*/
+html[data-theme="light"] body > :is(
+  .app,
+  .shell,
+  .system-shell,
+  .mf-settings-page-shell,
+  .mf-vault-page,
+  .mf-hiw-page,
+  main.flow-page
+) {
+  background-color: transparent !important;
+  background-image: none !important;
+}
+
+/* Trading's main viewport uses the same canvas. */
+html[data-theme="light"] body.mf-trading-terminal .shell,
+html[data-theme="light"] body.mf-trading-terminal .terminal {
+  background-color: transparent !important;
+  background-image: none !important;
+}
+
+/* ===== /MEMEFLOW_GLOBAL_LIGHT_CANVAS_HEADER_V4 ===== */
+
+/* ===== MEMEFLOW_LIGHT_CANVAS_HEADER_EXACT_V5 ===== */
+/*
+  FINAL LIGHT CANVAS + HEADER RULE.
+  This block is intentionally at the very end of memeflow-theme.css,
+  which is loaded after page CSS and memeflow-header.css.
+
+  Only page-level backgrounds and the canonical header are controlled here.
+  Internal cards/panels/buttons/status colors remain page-owned.
+*/
+
+html[data-theme="light"] {
+  --mf-light-canvas-final: #ffffff;
+  --mf-light-header-final: #ffffff;
+  --mf-light-header-line-final: rgba(15, 20, 25, .08);
+}
+
+/* Base document canvas. */
+html[data-theme="light"],
+html[data-theme="light"] body,
+html[data-theme="light"] body[class] {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  background-image: none !important;
+}
+
+/* Token Flow — page shell only. */
+html[data-theme="light"] body .flow-page,
+html[data-theme="light"] body > main.flow-page {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+}
+
+/* System Settings — actual standalone shell. */
+html[data-theme="light"] body.mf-settings-standalone,
+html[data-theme="light"] body.mf-settings-standalone .mf-settings-page-shell,
+html[data-theme="light"] body .mf-settings-page-shell {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  background-image: none !important;
+}
+
+/* Trading Terminal — exact high-specificity override for old light gradient rules. */
+html[data-theme="light"] body.mf-trading-terminal,
+html[data-theme="light"] body.mf-trading-terminal .shell,
+html[data-theme="light"] body.mf-trading-terminal .terminal {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  background-image: none !important;
+}
+
+/* Smart Vault — actual page shell from smart-vault.html. */
+html[data-theme="light"] body .mf-vault-shell,
+html[data-theme="light"] body > main.mf-vault-shell {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+}
+
+/*
+  Canonical light header.
+  Same selector specificity as the old Trading-specific light rule,
+  but later in the stylesheet, so this becomes the final source of truth.
+*/
+html[data-theme="light"] body .mf-site-header,
+html[data-theme="light"] body[class] .mf-site-header,
+html[data-theme="light"] body.mf-trading-terminal .mf-site-header,
+html[data-theme="light"] body.mf-trading-terminal .mf-site-header.mf-site-header--sticky,
+html[data-theme="light"] body.mf-settings-standalone .mf-site-header,
+html[data-theme="light"] body .mf-vault-shell > .mf-site-header {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  background-image: none !important;
+
+  border-bottom-color: rgba(15, 20, 25, .08) !important;
+
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* ===== /MEMEFLOW_LIGHT_CANVAS_HEADER_EXACT_V5 ===== */
+
+/* ===== MEMEFLOW_LIGHT_PAGE_CANVAS_EXACT_V6 ===== */
+/*
+  Exact final LIGHT page-canvas overrides.
+  These selectors intentionally match the old page-specific gradient selectors.
+  Internal UI surfaces remain untouched.
+*/
+
+/* Smart Vault: overrides the existing body:has(.mf-vault-shell) gradient. */
+html[data-theme="light"] body:has(.mf-vault-shell) {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  background-image: none !important;
+  background-attachment: scroll !important;
+}
+
+/* How It Works: overrides its existing page-specific gradient. */
+html[data-theme="light"] body.mf-hiw-page {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  background-image: none !important;
+  background-attachment: scroll !important;
+}
+
+/* Trading Terminal: keep exact final canvas white. */
+html[data-theme="light"] body.mf-trading-terminal {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  background-image: none !important;
+  background-attachment: scroll !important;
+}
+
+/* Token Flow and Settings page shells remain on the same white canvas. */
+html[data-theme="light"] body:has(.flow-page),
+html[data-theme="light"] body.mf-settings-standalone {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  background-image: none !important;
+}
+
+/* Keep the canonical header on the exact same canvas. */
+html[data-theme="light"] body .mf-site-header,
+html[data-theme="light"] body:has(.mf-vault-shell) .mf-site-header,
+html[data-theme="light"] body.mf-hiw-page .mf-site-header,
+html[data-theme="light"] body.mf-trading-terminal .mf-site-header,
+html[data-theme="light"] body.mf-settings-standalone .mf-site-header {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+/* ===== /MEMEFLOW_LIGHT_PAGE_CANVAS_EXACT_V6 ===== */
+
+/* ===== MEMEFLOW_SETTINGS_WHITE_CANVAS_V7 ===== */
+/*
+  Standalone System Settings uses the old modal backdrop as its page layer.
+  The global Light theme gives that backdrop a blue-gray translucent fill.
+  On the standalone page only, make that layer pure white.
+*/
+html[data-theme="light"] body.mf-settings-standalone .mf293-settings-backdrop {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Keep the actual standalone page/shell on the exact same canvas. */
+html[data-theme="light"] body.mf-settings-standalone,
+html[data-theme="light"] body.mf-settings-standalone .mf-settings-page-shell {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  background-image: none !important;
+}
+/* ===== /MEMEFLOW_SETTINGS_WHITE_CANVAS_V7 ===== */
+
+/* ===== MEMEFLOW_SETTINGS_PANEL_CLEAN_V8 ===== */
+/*
+  Standalone System Settings · LIGHT only.
+  The page canvas is already white. This removes the remaining panel haze
+  caused by the old modal shadow and leaves only a restrained hairline.
+*/
+html[data-theme="light"] body.mf-settings-standalone .mf293-settings-panel {
+  box-shadow: none !important;
+  border-color: rgba(15, 20, 25, .08) !important;
+}
+
+/* Mobile rule in system.css used a very large upward shadow.
+   Neutralize it explicitly at the same standalone-page scope. */
+@media (max-width: 900px) {
+  html[data-theme="light"] body.mf-settings-standalone .mf293-settings-panel {
+    box-shadow: none !important;
+    border-top-color: rgba(15, 20, 25, .08) !important;
+  }
+}
+/* ===== /MEMEFLOW_SETTINGS_PANEL_CLEAN_V8 ===== */
+
+/* ===== MEMEFLOW_TOKEN_FLOW_OPENAI_LIGHT_V9 ===== */
+/*
+  TOKEN FLOW · LIGHT ONLY
+
+  Neutral palette sampled from the supplied OpenAI screenshot:
+    page canvas    #FFFFFF
+    large surface  #F5F5F5
+    small control  #EBEBEB
+
+  Native MEMEFLOW accent hues are intentionally not redefined.
+  Typography, dimensions and behavior stay page-owned.
+*/
+
+html[data-theme="light"] body:has(.flow-page) {
+  --mf-oa-page: #ffffff;
+  --mf-oa-surface: #f5f5f5;
+  --mf-oa-control: #ebebeb;
+  --mf-oa-hairline: rgba(15, 20, 25, .065);
+
+  background: var(--mf-oa-page) !important;
+  background-color: var(--mf-oa-page) !important;
+  background-image: none !important;
+}
+
+/* HERO */
+html[data-theme="light"] body:has(.flow-page) .flow-hero {
+  background: var(--mf-oa-surface) !important;
+  background-image: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* STATUS FILTERS */
+html[data-theme="light"] body:has(.flow-page) .summary-card {
+  background: var(--mf-oa-surface) !important;
+  background-image: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body:has(.flow-page) .summary-card.active.all {
+  background: rgba(85, 217, 255, .10) !important;
+  box-shadow: inset 0 -2px 0 var(--cyan) !important;
+}
+
+html[data-theme="light"] body:has(.flow-page) .summary-card.ready.active {
+  background: rgba(239, 198, 106, .10) !important;
+  box-shadow: inset 0 -2px 0 var(--yellow) !important;
+}
+
+html[data-theme="light"] body:has(.flow-page) .summary-card.watch.active {
+  background: rgba(92, 141, 255, .10) !important;
+  box-shadow: inset 0 -2px 0 var(--blue) !important;
+}
+
+html[data-theme="light"] body:has(.flow-page) .summary-card.waiting.active {
+  background: rgba(149, 167, 179, .10) !important;
+  box-shadow: inset 0 -2px 0 #95a7b3 !important;
+}
+
+html[data-theme="light"] body:has(.flow-page) .summary-card.blocked.active {
+  background: rgba(255, 102, 121, .09) !important;
+  box-shadow: inset 0 -2px 0 var(--red) !important;
+}
+
+/* Optional injected ALL / 1H / 6H / 24H / SMART RANK row. */
+html[data-theme="light"] body:has(.flow-page)
+.flow-page > .state-summary + :not(.flow-toolbar):not(.token-list):not(.mf-token-scan-result) {
+  background: var(--mf-oa-surface) !important;
+  background-image: none !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body:has(.flow-page)
+.flow-page > .state-summary + :not(.flow-toolbar):not(.token-list):not(.mf-token-scan-result)
+button:not(.active):not([aria-pressed="true"]) {
+  background: var(--mf-oa-control) !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* SEARCH / ANALYZE */
+html[data-theme="light"] body:has(.flow-page) .flow-toolbar {
+  background: var(--mf-oa-surface) !important;
+  background-image: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+html[data-theme="light"] body:has(.flow-page) .search-wrap {
+  background: var(--mf-oa-control) !important;
+  background-image: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body:has(.flow-page) .refresh-info button {
+  background: var(--mf-oa-control) !important;
+  background-image: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+/* TOKEN LIST — one continuous surface. */
+html[data-theme="light"] body:has(.flow-page) .token-list {
+  gap: 0 !important;
+  background: var(--mf-oa-surface) !important;
+  border: 0 !important;
+  border-radius: 18px !important;
+  box-shadow: none !important;
+  overflow: hidden !important;
+}
+
+html[data-theme="light"] body:has(.flow-page) .flow-token {
+  background: transparent !important;
+  background-image: none !important;
+  border: 0 !important;
+  border-bottom: 1px solid var(--mf-oa-hairline) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body:has(.flow-page) .flow-token:last-child {
+  border-bottom: 0 !important;
+}
+
+/* OPEN POSITION keeps the native green semantic hue. */
+html[data-theme="light"] body:has(.flow-page) .flow-token.open {
+  background: rgba(77, 230, 161, .050) !important;
+  border-left: 0 !important;
+  box-shadow: inset 2px 0 0 rgba(77, 230, 161, .92) !important;
+}
+
+html[data-theme="light"] body:has(.flow-page) .flow-token.ready,
+html[data-theme="light"] body:has(.flow-page) .flow-token.watch,
+html[data-theme="light"] body:has(.flow-page) .flow-token.waiting,
+html[data-theme="light"] body:has(.flow-page) .flow-token.blocked {
+  border-left: 0 !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body:has(.flow-page) .token-metric {
+  border-left: 0 !important;
+}
+
+html[data-theme="light"] body:has(.flow-page) .token-avatar {
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body:has(.flow-page) .token-details {
+  border-top-color: var(--mf-oa-hairline) !important;
+}
+
+html[data-theme="light"] body:has(.flow-page) .detail-block {
+  background: var(--mf-oa-control) !important;
+  background-image: none !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* PAGINATION */
+html[data-theme="light"] body:has(.flow-page) .pagination {
+  background: var(--mf-oa-surface) !important;
+  background-image: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+html[data-theme="light"] body:has(.flow-page) .pagination button {
+  background: var(--mf-oa-control) !important;
+  background-image: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body:has(.flow-page) .empty-state {
+  background: var(--mf-oa-surface) !important;
+  background-image: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body:has(.flow-page) .mf-token-scan-result:not([hidden]) {
+  box-shadow: none !important;
+}
+
+@media (max-width: 760px) {
+  html[data-theme="light"] body:has(.flow-page) .flow-hero,
+  html[data-theme="light"] body:has(.flow-page) .flow-toolbar {
+    border-radius: 14px !important;
+  }
+
+  html[data-theme="light"] body:has(.flow-page) .token-list {
+    border-radius: 16px !important;
+  }
+
+  html[data-theme="light"] body:has(.flow-page) .pagination {
+    border-radius: 16px !important;
+  }
+}
+/* ===== /MEMEFLOW_TOKEN_FLOW_OPENAI_LIGHT_V9 ===== */
+
+/* ===== MEMEFLOW_TOKEN_FLOW_PREMIUM_CLEANUP_V10 ===== */
+/*
+  TOKEN FLOW · LIGHT ONLY · second cleanup pass.
+
+  Neutral source:
+    #FFFFFF page
+    #F5F5F5 large surfaces
+    #EBEBEB small controls
+
+  Accent hues remain MEMEFLOW-owned.
+*/
+
+/* -------------------------------------------------------
+   1. OPEN POSITION:
+   no large green panel. Status survives as a thin left rail
+   and the existing green P&L / semantic text.
+   ------------------------------------------------------- */
+html[data-theme="light"] body:has(.flow-page) .flow-token.open {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body:has(.flow-page) .flow-token.open::before {
+  background: var(--green) !important;
+  box-shadow: none !important;
+}
+
+/* Remove status-colored avatar frames; the left rail already carries state. */
+html[data-theme="light"] body:has(.flow-page) .flow-token .token-avatar,
+html[data-theme="light"] body:has(.flow-page) .flow-token.open .token-avatar,
+html[data-theme="light"] body:has(.flow-page) .flow-token.ready .token-avatar,
+html[data-theme="light"] body:has(.flow-page) .flow-token.watch .token-avatar,
+html[data-theme="light"] body:has(.flow-page) .flow-token.waiting .token-avatar,
+html[data-theme="light"] body:has(.flow-page) .flow-token.blocked .token-avatar {
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* -------------------------------------------------------
+   2. TOKEN TABLE:
+   even quieter separators, same #F5F5F5 continuous surface.
+   ------------------------------------------------------- */
+html[data-theme="light"] body:has(.flow-page) .token-list {
+  --mf-oa-hairline-v10: rgba(15, 20, 25, .042);
+  background: #f5f5f5 !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body:has(.flow-page) .flow-token {
+  border-bottom-color: var(--mf-oa-hairline-v10) !important;
+}
+
+/* -------------------------------------------------------
+   3. TIME / RANK FILTER:
+   remove the large gray wrapper itself.
+   Individual pills keep their native selected accent.
+   ------------------------------------------------------- */
+html[data-theme="light"] body:has(.flow-page)
+.flow-page > .state-summary + :not(.flow-toolbar):not(.token-list):not(.mf-token-scan-result) {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Non-selected time/rank pills use the small OpenAI neutral. */
+html[data-theme="light"] body:has(.flow-page)
+.flow-page > .state-summary + :not(.flow-toolbar):not(.token-list):not(.mf-token-scan-result)
+button:not(.active):not([aria-pressed="true"]) {
+  background: #ebebeb !important;
+  background-image: none !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* -------------------------------------------------------
+   4. SEARCH:
+   remove the outer gray capsule. Search and Analyze are
+   the only visible controls.
+   ------------------------------------------------------- */
+html[data-theme="light"] body:has(.flow-page) .flow-toolbar {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+html[data-theme="light"] body:has(.flow-page) .search-wrap {
+  background: #f5f5f5 !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body:has(.flow-page) .refresh-info button {
+  background: #ebebeb !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+/* -------------------------------------------------------
+   5. PAGINATION:
+   no floating card wrapper; only compact neutral buttons.
+   Sticky behavior and position are preserved.
+   ------------------------------------------------------- */
+html[data-theme="light"] body:has(.flow-page) .pagination {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+html[data-theme="light"] body:has(.flow-page) .pagination button {
+  background: #ebebeb !important;
+  background-image: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+/* -------------------------------------------------------
+   6. STATUS CARDS:
+   keep the current frameless V9 look, but lower contrast of
+   inactive surfaces so the hero/list remain the main hierarchy.
+   ------------------------------------------------------- */
+html[data-theme="light"] body:has(.flow-page) .summary-card:not(.active) {
+  background: #f5f5f5 !important;
+  box-shadow: none !important;
+}
+
+/* Mobile geometry: no outer-container padding inflation. */
+@media (max-width: 760px) {
+  html[data-theme="light"] body:has(.flow-page) .flow-toolbar {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    gap: 8px !important;
+  }
+
+  html[data-theme="light"] body:has(.flow-page) .search-wrap,
+  html[data-theme="light"] body:has(.flow-page) .refresh-info button {
+    border-radius: 14px !important;
+  }
+
+  html[data-theme="light"] body:has(.flow-page) .pagination {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+
+  html[data-theme="light"] body:has(.flow-page) .pagination button {
+    border-radius: 14px !important;
+  }
+}
+/* ===== /MEMEFLOW_TOKEN_FLOW_PREMIUM_CLEANUP_V10 ===== */
+
+/* ===== MEMEFLOW_TOKEN_FLOW_FINAL_LIGHT_POLISH_V11 ===== */
+/*
+  TOKEN FLOW · LIGHT THEME · FINAL POLISH
+
+  HARD neutral system:
+    #FFFFFF = page/background
+    #F5F5F5 = large surfaces
+    #EBEBEB = small controls + separators
+
+  No additional neutral surface color is introduced below.
+  Native MEMEFLOW semantic colors remain available for meaning-bearing accents.
+*/
+
+html[data-theme="light"] body:has(.flow-page) {
+  --mf-tf-page-v11: #FFFFFF;
+  --mf-tf-surface-v11: #F5F5F5;
+  --mf-tf-control-v11: #EBEBEB;
+
+  background: var(--mf-tf-page-v11) !important;
+  background-color: var(--mf-tf-page-v11) !important;
+  background-image: none !important;
+}
+
+/* PAGE SHELL */
+html[data-theme="light"] body:has(.flow-page) .flow-page {
+  background: var(--mf-tf-page-v11) !important;
+  background-color: var(--mf-tf-page-v11) !important;
+  background-image: none !important;
+}
+
+/* -------------------------------------------------------
+   HERO
+   One large #F5F5F5 surface, no frame and no shadow.
+   ------------------------------------------------------- */
+html[data-theme="light"] body:has(.flow-page) .flow-hero {
+  background: var(--mf-tf-surface-v11) !important;
+  background-color: var(--mf-tf-surface-v11) !important;
+  background-image: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* -------------------------------------------------------
+   PRIMARY STATUS FILTERS
+   Neutral surfaces stay strictly #F5F5F5.
+   Existing semantic colors may remain only as meaning-bearing accents.
+   ------------------------------------------------------- */
+html[data-theme="light"] body:has(.flow-page) .summary-card,
+html[data-theme="light"] body:has(.flow-page) .summary-card.active,
+html[data-theme="light"] body:has(.flow-page) .summary-card.all,
+html[data-theme="light"] body:has(.flow-page) .summary-card.ready,
+html[data-theme="light"] body:has(.flow-page) .summary-card.watch,
+html[data-theme="light"] body:has(.flow-page) .summary-card.waiting,
+html[data-theme="light"] body:has(.flow-page) .summary-card.blocked {
+  background: var(--mf-tf-surface-v11) !important;
+  background-color: var(--mf-tf-surface-v11) !important;
+  background-image: none !important;
+  border-color: transparent !important;
+}
+
+/*
+  Remove V9 tint fills while retaining the already-established native
+  selected-state accent line where present.
+*/
+html[data-theme="light"] body:has(.flow-page) .summary-card.active.all {
+  background: var(--mf-tf-surface-v11) !important;
+}
+html[data-theme="light"] body:has(.flow-page) .summary-card.ready.active {
+  background: var(--mf-tf-surface-v11) !important;
+}
+html[data-theme="light"] body:has(.flow-page) .summary-card.watch.active {
+  background: var(--mf-tf-surface-v11) !important;
+}
+html[data-theme="light"] body:has(.flow-page) .summary-card.waiting.active {
+  background: var(--mf-tf-surface-v11) !important;
+}
+html[data-theme="light"] body:has(.flow-page) .summary-card.blocked.active {
+  background: var(--mf-tf-surface-v11) !important;
+}
+
+/* -------------------------------------------------------
+   SECONDARY TIME / SMART-RANK ROW
+   Outer row disappears into the #FFFFFF page.
+   All neutral pills are #EBEBEB.
+   Only the selected pill may retain the native cyan accent.
+   ------------------------------------------------------- */
+html[data-theme="light"] body:has(.flow-page)
+.flow-page > .state-summary + :not(.flow-toolbar):not(.token-list):not(.mf-token-scan-result) {
+  background: var(--mf-tf-page-v11) !important;
+  background-color: var(--mf-tf-page-v11) !important;
+  background-image: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Reset every time/rank button first so old cyan borders do not hit all pills. */
+html[data-theme="light"] body:has(.flow-page)
+.flow-page > .state-summary + :not(.flow-toolbar):not(.token-list):not(.mf-token-scan-result)
+button {
+  background: var(--mf-tf-control-v11) !important;
+  background-color: var(--mf-tf-control-v11) !important;
+  background-image: none !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Selected time/rank item: native cyan is allowed as semantic active accent. */
+html[data-theme="light"] body:has(.flow-page)
+.flow-page > .state-summary + :not(.flow-toolbar):not(.token-list):not(.mf-token-scan-result)
+button:is(.active, .is-active, [aria-pressed="true"], [aria-current="true"]) {
+  background: var(--mf-tf-control-v11) !important;
+  border-color: var(--cyan) !important;
+  box-shadow: inset 0 0 0 1px var(--cyan) !important;
+}
+
+/* -------------------------------------------------------
+   SEARCH / ANALYZE
+   The sticky layer itself is #FFFFFF, not a fourth gray container.
+   Field = #F5F5F5; button = #EBEBEB.
+   A single #EBEBEB divider keeps sticky content readable over rows.
+   ------------------------------------------------------- */
+html[data-theme="light"] body:has(.flow-page) .flow-toolbar {
+  background: var(--mf-tf-page-v11) !important;
+  background-color: var(--mf-tf-page-v11) !important;
+  background-image: none !important;
+
+  border: 0 !important;
+  border-bottom: 1px solid var(--mf-tf-control-v11) !important;
+
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+html[data-theme="light"] body:has(.flow-page) .search-wrap {
+  background: var(--mf-tf-surface-v11) !important;
+  background-color: var(--mf-tf-surface-v11) !important;
+  background-image: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body:has(.flow-page) .search-wrap input {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body:has(.flow-page) .refresh-info button {
+  background: var(--mf-tf-control-v11) !important;
+  background-color: var(--mf-tf-control-v11) !important;
+  background-image: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+/* -------------------------------------------------------
+   TOKEN LIST
+   One large #F5F5F5 surface.
+   Rows are not cards.
+   Separators use exactly #EBEBEB.
+   ------------------------------------------------------- */
+html[data-theme="light"] body:has(.flow-page) .token-list {
+  gap: 0 !important;
+
+  background: var(--mf-tf-surface-v11) !important;
+  background-color: var(--mf-tf-surface-v11) !important;
+  background-image: none !important;
+
+  border: 0 !important;
+  box-shadow: none !important;
+
+  overflow: hidden !important;
+}
+
+html[data-theme="light"] body:has(.flow-page) .flow-token,
+html[data-theme="light"] body:has(.flow-page) .flow-token.open,
+html[data-theme="light"] body:has(.flow-page) .flow-token.ready,
+html[data-theme="light"] body:has(.flow-page) .flow-token.watch,
+html[data-theme="light"] body:has(.flow-page) .flow-token.waiting,
+html[data-theme="light"] body:has(.flow-page) .flow-token.blocked {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+
+  border: 0 !important;
+  border-bottom: 1px solid var(--mf-tf-control-v11) !important;
+  border-radius: 0 !important;
+
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body:has(.flow-page) .flow-token:last-child {
+  border-bottom: 0 !important;
+}
+
+/*
+  Status color is not a neutral surface.
+  Keep the existing left semantic rail; remove large status wash/glow.
+*/
+html[data-theme="light"] body:has(.flow-page) .flow-token.open {
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body:has(.flow-page) .flow-token.open::before {
+  background: var(--green) !important;
+  box-shadow: none !important;
+}
+
+/* No decorative neutral frames around token images. */
+html[data-theme="light"] body:has(.flow-page) .token-avatar,
+html[data-theme="light"] body:has(.flow-page) .token-avatar.open,
+html[data-theme="light"] body:has(.flow-page) .token-avatar.ready,
+html[data-theme="light"] body:has(.flow-page) .token-avatar.watch,
+html[data-theme="light"] body:has(.flow-page) .token-avatar.waiting,
+html[data-theme="light"] body:has(.flow-page) .token-avatar.blocked {
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* No micro-grid borders between metrics. */
+html[data-theme="light"] body:has(.flow-page) .token-metric {
+  border-left: 0 !important;
+}
+
+/* Expanded details follow the same strict neutral system. */
+html[data-theme="light"] body:has(.flow-page) .token-details {
+  border-top-color: var(--mf-tf-control-v11) !important;
+}
+
+html[data-theme="light"] body:has(.flow-page) .detail-block {
+  background: var(--mf-tf-control-v11) !important;
+  background-color: var(--mf-tf-control-v11) !important;
+  background-image: none !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* -------------------------------------------------------
+   PAGINATION
+   Compact #F5F5F5 system panel; #EBEBEB buttons; no floating shadow.
+   Sticky behavior remains owned by the existing Token Flow CSS.
+   ------------------------------------------------------- */
+html[data-theme="light"] body:has(.flow-page) .pagination {
+  background: var(--mf-tf-surface-v11) !important;
+  background-color: var(--mf-tf-surface-v11) !important;
+  background-image: none !important;
+
+  border: 0 !important;
+  box-shadow: none !important;
+
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+html[data-theme="light"] body:has(.flow-page) .pagination button {
+  background: var(--mf-tf-control-v11) !important;
+  background-color: var(--mf-tf-control-v11) !important;
+  background-image: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+/* Empty state stays within the approved large-surface gray. */
+html[data-theme="light"] body:has(.flow-page) .empty-state {
+  background: var(--mf-tf-surface-v11) !important;
+  background-color: var(--mf-tf-surface-v11) !important;
+  background-image: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+/* MOBILE POLISH — geometry only, no extra colors. */
+@media (max-width: 760px) {
+  html[data-theme="light"] body:has(.flow-page) .flow-toolbar {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    padding-bottom: 7px !important;
+    gap: 8px !important;
+  }
+
+  html[data-theme="light"] body:has(.flow-page) .search-wrap,
+  html[data-theme="light"] body:has(.flow-page) .refresh-info button {
+    border-radius: 16px !important;
+  }
+
+  html[data-theme="light"] body:has(.flow-page) .token-list {
+    border-radius: 18px !important;
+  }
+
+  html[data-theme="light"] body:has(.flow-page) .pagination {
+    border-radius: 18px !important;
+  }
+
+  html[data-theme="light"] body:has(.flow-page) .pagination button {
+    border-radius: 14px !important;
+  }
+}
+/* ===== /MEMEFLOW_TOKEN_FLOW_FINAL_LIGHT_POLISH_V11 ===== */
+
+/* ===== MEMEFLOW_TOKEN_FLOW_FINAL_MICRO_V12 ===== */
+/*
+  TOKEN FLOW · LIGHT · FINAL MICRO POLISH
+
+  HARD NEUTRAL PALETTE:
+    #FFFFFF = page
+    #F5F5F5 = large surfaces
+    #EBEBEB = controls + separators
+
+  No additional neutral UI colors are introduced here.
+*/
+
+/* Runtime-tagged period row: its wrapper disappears into the white page. */
+html[data-theme="light"] body:has(.flow-page) .mf-period-row-v12 {
+  background: #FFFFFF !important;
+  background-color: #FFFFFF !important;
+  background-image: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/*
+  Every period button is neutral by default.
+  This dedicated class has higher practical precision than the old broad
+  runtime/injected selectors.
+*/
+html[data-theme="light"] body:has(.flow-page) .mf-period-option-v12 {
+  background: #EBEBEB !important;
+  background-color: #EBEBEB !important;
+  background-image: none !important;
+
+  border-color: transparent !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+}
+
+/* ONLY the selected period gets the existing native cyan accent. */
+html[data-theme="light"] body:has(.flow-page)
+.mf-period-option-v12.mf-period-selected-v12 {
+  background: #EBEBEB !important;
+  background-color: #EBEBEB !important;
+  border-color: var(--cyan) !important;
+  box-shadow: inset 0 0 0 1px var(--cyan) !important;
+}
+
+/* Token list remains one #F5F5F5 surface. */
+html[data-theme="light"] body:has(.flow-page) .token-list {
+  background: #F5F5F5 !important;
+  background-color: #F5F5F5 !important;
+  background-image: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+/* Rows: no card frames, separators strictly use the third approved neutral. */
+html[data-theme="light"] body:has(.flow-page) .flow-token,
+html[data-theme="light"] body:has(.flow-page) .flow-token.open,
+html[data-theme="light"] body:has(.flow-page) .flow-token.ready,
+html[data-theme="light"] body:has(.flow-page) .flow-token.watch,
+html[data-theme="light"] body:has(.flow-page) .flow-token.waiting,
+html[data-theme="light"] body:has(.flow-page) .flow-token.blocked {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+
+  border: 0 !important;
+  border-bottom: 1px solid #EBEBEB !important;
+  border-radius: 0 !important;
+
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body:has(.flow-page) .flow-token:last-child {
+  border-bottom: 0 !important;
+}
+
+/*
+  Sticky search: the toolbar is part of the white page, not another card.
+  One #EBEBEB bottom separator is enough to separate it from moving rows.
+*/
+html[data-theme="light"] body:has(.flow-page) .flow-toolbar {
+  background: #FFFFFF !important;
+  background-color: #FFFFFF !important;
+  background-image: none !important;
+
+  border: 0 !important;
+  border-bottom: 1px solid #EBEBEB !important;
+  border-radius: 0 !important;
+
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+html[data-theme="light"] body:has(.flow-page) .search-wrap {
+  background: #F5F5F5 !important;
+  background-color: #F5F5F5 !important;
+  background-image: none !important;
+
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body:has(.flow-page) .refresh-info button {
+  background: #EBEBEB !important;
+  background-color: #EBEBEB !important;
+  background-image: none !important;
+
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+/*
+  Pagination: small system surface, readable while sticky,
+  but no floating-card shadow.
+*/
+html[data-theme="light"] body:has(.flow-page) .pagination {
+  background: #F5F5F5 !important;
+  background-color: #F5F5F5 !important;
+  background-image: none !important;
+
+  border: 0 !important;
+  box-shadow: none !important;
+
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+html[data-theme="light"] body:has(.flow-page) .pagination button {
+  background: #EBEBEB !important;
+  background-color: #EBEBEB !important;
+  background-image: none !important;
+
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+/* Mobile geometry only; no new colors. */
+@media (max-width: 760px) {
+  html[data-theme="light"] body:has(.flow-page) .flow-toolbar {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    padding-bottom: 7px !important;
+  }
+
+  html[data-theme="light"] body:has(.flow-page) .search-wrap,
+  html[data-theme="light"] body:has(.flow-page) .refresh-info button {
+    border-radius: 16px !important;
+  }
+
+  html[data-theme="light"] body:has(.flow-page) .pagination {
+    border-radius: 18px !important;
+  }
+
+  html[data-theme="light"] body:has(.flow-page) .pagination button {
+    border-radius: 14px !important;
+  }
+}
+/* ===== /MEMEFLOW_TOKEN_FLOW_FINAL_MICRO_V12 ===== */
+
+/* ===== MEMEFLOW_TRADING_OPENAI_LIGHT_V15 ===== */
+/*
+  TRADING TERMINAL · LIGHT ONLY
+
+  HARD NEUTRAL SYSTEM
+    #FFFFFF = page / breathing room / chart canvas
+    #F5F5F5 = large functional surfaces
+    #EBEBEB = neutral controls / separators
+
+  Native MEMEFLOW semantic colors are intentionally not redefined.
+*/
+
+/* -------------------------------------------------------
+   1. PAGE CANVAS
+   ------------------------------------------------------- */
+html[data-theme="light"] body.mf-trading-terminal,
+html[data-theme="light"] body.mf-trading-terminal .shell,
+html[data-theme="light"] body.mf-trading-terminal .terminal {
+  background: #FFFFFF !important;
+  background-color: #FFFFFF !important;
+  background-image: none !important;
+}
+
+/* -------------------------------------------------------
+   2. MAJOR PANELS
+   Trade strategy / Open positions / Candidates /
+   Recent trades / Pending approvals / Chart.
+   One calm surface, no neutral card frame or heavy shadow.
+   ------------------------------------------------------- */
+html[data-theme="light"] body.mf-trading-terminal .panel {
+  background: #F5F5F5 !important;
+  background-color: #F5F5F5 !important;
+  background-image: none !important;
+
+  border-color: transparent !important;
+  box-shadow: none !important;
+
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Headers remain part of the same large surface. */
+html[data-theme="light"] body.mf-trading-terminal .panel-head,
+html[data-theme="light"] body.mf-trading-terminal .chart-head {
+  background: #F5F5F5 !important;
+  background-color: #F5F5F5 !important;
+  background-image: none !important;
+
+  border-bottom-color: #EBEBEB !important;
+  box-shadow: none !important;
+}
+
+/* -------------------------------------------------------
+   3. CHART
+   The information panel stays #F5F5F5.
+   The actual plotting canvas gets clean #FFFFFF.
+   Candle/indicator colors are untouched.
+   ------------------------------------------------------- */
+html[data-theme="light"] body.mf-trading-terminal .chart-wrap,
+html[data-theme="light"] body.mf-trading-terminal #chartCanvas {
+  background-color: #FFFFFF !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+/* Timeframes are small controls, never a separate framed card. */
+html[data-theme="light"] body.mf-trading-terminal .timeframes {
+  background: #F5F5F5 !important;
+  background-color: #F5F5F5 !important;
+  background-image: none !important;
+
+  border-bottom-color: #EBEBEB !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body.mf-trading-terminal .timeframes button {
+  background: #EBEBEB !important;
+  background-color: #EBEBEB !important;
+  background-image: none !important;
+
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Selected timeframe keeps the existing semantic cyan accent. */
+html[data-theme="light"] body.mf-trading-terminal .timeframes button.active {
+  background: #EBEBEB !important;
+  background-color: #EBEBEB !important;
+  border-color: var(--cyan) !important;
+  box-shadow: inset 0 0 0 1px var(--cyan) !important;
+}
+
+/* Indicators become a quiet toolbar, not a boxed strip. */
+html[data-theme="light"] body.mf-trading-terminal .indicator-bar,
+html[data-theme="light"] body.mf-trading-terminal .indicator-scroll {
+  background: #F5F5F5 !important;
+  background-color: #F5F5F5 !important;
+  background-image: none !important;
+
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body.mf-trading-terminal .indicator-bar {
+  border-top: 1px solid #EBEBEB !important;
+  border-bottom: 1px solid #EBEBEB !important;
+}
+
+html[data-theme="light"] body.mf-trading-terminal .indicator-divider {
+  background: #EBEBEB !important;
+}
+
+/* Selected-token metrics: one strip with only separators. */
+html[data-theme="light"] body.mf-trading-terminal .selected-metrics {
+  background: #F5F5F5 !important;
+  background-color: #F5F5F5 !important;
+  background-image: none !important;
+
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body.mf-trading-terminal .selected-metrics > div {
+  border-color: #EBEBEB !important;
+  box-shadow: none !important;
+}
+
+/* Token image should not carry a decorative neutral frame. */
+html[data-theme="light"] body.mf-trading-terminal .token-avatar {
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* -------------------------------------------------------
+   4. CANDIDATES
+   One list, not stacked mini-cards.
+   ------------------------------------------------------- */
+html[data-theme="light"] body.mf-trading-terminal .candidate-filter {
+  background: #F5F5F5 !important;
+  background-color: #F5F5F5 !important;
+  background-image: none !important;
+
+  border-bottom-color: #EBEBEB !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body.mf-trading-terminal .candidate-filter button {
+  background: #EBEBEB !important;
+  background-color: #EBEBEB !important;
+  background-image: none !important;
+
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body.mf-trading-terminal .candidate-filter button.active {
+  background: #EBEBEB !important;
+  background-color: #EBEBEB !important;
+  border-color: var(--cyan) !important;
+  box-shadow: inset 0 0 0 1px var(--cyan) !important;
+}
+
+html[data-theme="light"] body.mf-trading-terminal .candidate-list {
+  background: #F5F5F5 !important;
+  background-color: #F5F5F5 !important;
+  background-image: none !important;
+}
+
+html[data-theme="light"] body.mf-trading-terminal .candidate {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+
+  border: 0 !important;
+  border-bottom: 1px solid #EBEBEB !important;
+  border-radius: 0 !important;
+
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body.mf-trading-terminal .candidate:last-child {
+  border-bottom: 0 !important;
+}
+
+/*
+  Candidate selection is semantic, so preserve the existing cyan selection
+  rather than replacing it with another neutral gray.
+*/
+html[data-theme="light"] body.mf-trading-terminal .candidate.selected {
+  box-shadow: none !important;
+}
+
+/* -------------------------------------------------------
+   5. TRADE STRATEGY
+   Remove the grid-box feeling; keep readable row separators.
+   ------------------------------------------------------- */
+html[data-theme="light"] body.mf-trading-terminal .strategy-summary-list,
+html[data-theme="light"] body.mf-trading-terminal .strategy-summary-row,
+html[data-theme="light"] body.mf-trading-terminal .strategy-summary-foot {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body.mf-trading-terminal .strategy-summary-row {
+  border-color: transparent !important;
+  border-bottom: 1px solid #EBEBEB !important;
+}
+
+html[data-theme="light"] body.mf-trading-terminal .strategy-summary-row > div {
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body.mf-trading-terminal .strategy-summary-foot {
+  border-top: 1px solid #EBEBEB !important;
+}
+
+/* Neutral Edit control uses the small-control gray. */
+html[data-theme="light"] body.mf-trading-terminal .strategy-edit-link {
+  background: #EBEBEB !important;
+  background-color: #EBEBEB !important;
+  background-image: none !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Mode badge stays semantic; only remove unnecessary neutral shadow. */
+html[data-theme="light"] body.mf-trading-terminal .mode-badge {
+  box-shadow: none !important;
+}
+
+/* -------------------------------------------------------
+   6. OPEN POSITIONS / APPROVALS / RECENT TRADES
+   Generic direct-row treatment handles runtime-generated rows without
+   changing their markup or actions.
+   ------------------------------------------------------- */
+html[data-theme="light"] body.mf-trading-terminal .positions-list,
+html[data-theme="light"] body.mf-trading-terminal .approval-list,
+html[data-theme="light"] body.mf-trading-terminal .trade-history {
+  background: #F5F5F5 !important;
+  background-color: #F5F5F5 !important;
+  background-image: none !important;
+}
+
+/* Runtime-generated rows become flat list rows. */
+html[data-theme="light"] body.mf-trading-terminal .positions-list > *,
+html[data-theme="light"] body.mf-trading-terminal .approval-list > *,
+html[data-theme="light"] body.mf-trading-terminal .trade-history > * {
+  background-color: transparent !important;
+  background-image: none !important;
+
+  border-left-color: transparent !important;
+  border-right-color: transparent !important;
+  border-top-color: transparent !important;
+  border-bottom-color: #EBEBEB !important;
+
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body.mf-trading-terminal .positions-list > *:last-child,
+html[data-theme="light"] body.mf-trading-terminal .approval-list > *:last-child,
+html[data-theme="light"] body.mf-trading-terminal .trade-history > *:last-child {
+  border-bottom-color: transparent !important;
+}
+
+/* Do not neutralize semantic action buttons such as Close / Approve / Reject. */
+
+/* -------------------------------------------------------
+   7. EMPTY / SYNCING STATES
+   Empty content belongs to its parent surface.
+   ------------------------------------------------------- */
+html[data-theme="light"] body.mf-trading-terminal .empty,
+html[data-theme="light"] body.mf-trading-terminal .chart-empty {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* MOBILE — geometry only. No new colors. */
+@media (max-width: 900px) {
+  html[data-theme="light"] body.mf-trading-terminal .panel {
+    border-radius: 18px !important;
+  }
+
+  html[data-theme="light"] body.mf-trading-terminal .chart-wrap {
+    border-radius: 0 !important;
+  }
+}
+/* ===== /MEMEFLOW_TRADING_OPENAI_LIGHT_V15 ===== */
+
+/* ===== MEMEFLOW_TRADING_FINAL_LIGHT_POLISH_V16 ===== */
+/*
+  TRADING TERMINAL · LIGHT · FINAL POLISH
+
+  HARD NEUTRAL PALETTE
+    #FFFFFF = page / breathing room
+    #F5F5F5 = large functional surfaces
+    #EBEBEB = neutral controls / separators
+
+  No additional neutral surface color is introduced.
+*/
+
+/* -------------------------------------------------------
+   1. KEEP THE PRIMARY INFORMATION SURFACES
+   ------------------------------------------------------- */
+html[data-theme="light"] body.mf-trading-terminal .chart-panel,
+html[data-theme="light"] body.mf-trading-terminal .strategy-summary-panel,
+html[data-theme="light"] body.mf-trading-terminal .positions-panel,
+html[data-theme="light"] body.mf-trading-terminal .candidates-panel,
+html[data-theme="light"] body.mf-trading-terminal .history-panel {
+  background: #F5F5F5 !important;
+  background-color: #F5F5F5 !important;
+  background-image: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+/* Keep one calm radius on the large surface only. */
+html[data-theme="light"] body.mf-trading-terminal .chart-panel,
+html[data-theme="light"] body.mf-trading-terminal .strategy-summary-panel,
+html[data-theme="light"] body.mf-trading-terminal .positions-panel,
+html[data-theme="light"] body.mf-trading-terminal .candidates-panel,
+html[data-theme="light"] body.mf-trading-terminal .history-panel {
+  border-radius: 18px !important;
+}
+
+/* -------------------------------------------------------
+   2. PENDING APPROVALS
+   It is usually a small status section, so let it live directly on
+   the white page instead of becoming another large gray capsule.
+   ------------------------------------------------------- */
+html[data-theme="light"] body.mf-trading-terminal .approvals-panel {
+  background: #FFFFFF !important;
+  background-color: #FFFFFF !important;
+  background-image: none !important;
+
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+
+  overflow: visible !important;
+}
+
+html[data-theme="light"] body.mf-trading-terminal .approvals-panel .panel-head {
+  background: #FFFFFF !important;
+  background-color: #FFFFFF !important;
+  background-image: none !important;
+
+  border: 0 !important;
+  border-bottom: 1px solid #EBEBEB !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body.mf-trading-terminal .approval-list {
+  background: #FFFFFF !important;
+  background-color: #FFFFFF !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body.mf-trading-terminal .approval-list > * {
+  border-bottom-color: #EBEBEB !important;
+}
+
+/* -------------------------------------------------------
+   3. CHART FOOTER
+   Reduce the "table under the chart" feeling.
+   ------------------------------------------------------- */
+html[data-theme="light"] body.mf-trading-terminal .indicator-bar,
+html[data-theme="light"] body.mf-trading-terminal .indicator-scroll {
+  background: #F5F5F5 !important;
+  background-color: #F5F5F5 !important;
+  background-image: none !important;
+
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body.mf-trading-terminal .indicator-bar {
+  border-top: 1px solid #EBEBEB !important;
+}
+
+/*
+  The metrics remain one strip.
+  Remove vertical cell borders; a single top separator is enough.
+*/
+html[data-theme="light"] body.mf-trading-terminal .selected-metrics {
+  background: #F5F5F5 !important;
+  background-color: #F5F5F5 !important;
+  background-image: none !important;
+
+  border: 0 !important;
+  border-top: 1px solid #EBEBEB !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body.mf-trading-terminal .selected-metrics > div {
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+/* Indicator divider uses only the approved control/separator gray. */
+html[data-theme="light"] body.mf-trading-terminal .indicator-divider {
+  background: #EBEBEB !important;
+}
+
+/* -------------------------------------------------------
+   4. TRADE STRATEGY
+   Keep the 2-column content but remove the table-grid impression.
+   ------------------------------------------------------- */
+html[data-theme="light"] body.mf-trading-terminal .strategy-summary-list {
+  background: #F5F5F5 !important;
+  background-color: #F5F5F5 !important;
+  background-image: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body.mf-trading-terminal .strategy-summary-row {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+
+  border: 0 !important;
+  border-bottom: 1px solid #EBEBEB !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body.mf-trading-terminal .strategy-summary-row:last-child {
+  border-bottom: 0 !important;
+}
+
+html[data-theme="light"] body.mf-trading-terminal .strategy-summary-row > div {
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+/* Foot is a small explanatory line, not another boxed row. */
+html[data-theme="light"] body.mf-trading-terminal .strategy-summary-foot {
+  background: #F5F5F5 !important;
+  background-color: #F5F5F5 !important;
+  background-image: none !important;
+
+  border: 0 !important;
+  border-top: 1px solid #EBEBEB !important;
+  box-shadow: none !important;
+}
+
+/* Neutral Edit control stays the darker approved neutral. */
+html[data-theme="light"] body.mf-trading-terminal .strategy-edit-link {
+  background: #EBEBEB !important;
+  background-color: #EBEBEB !important;
+  background-image: none !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* -------------------------------------------------------
+   5. OPEN POSITIONS / CANDIDATES / RECENT TRADES
+   One surface + hairline rows. No mini-card framing.
+   ------------------------------------------------------- */
+html[data-theme="light"] body.mf-trading-terminal .positions-list,
+html[data-theme="light"] body.mf-trading-terminal .candidate-list,
+html[data-theme="light"] body.mf-trading-terminal .trade-history {
+  background: #F5F5F5 !important;
+  background-color: #F5F5F5 !important;
+  background-image: none !important;
+
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+/* Candidate rows are known static class. */
+html[data-theme="light"] body.mf-trading-terminal .candidate {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+
+  border: 0 !important;
+  border-bottom: 1px solid #EBEBEB !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body.mf-trading-terminal .candidate:last-child {
+  border-bottom: 0 !important;
+}
+
+/* Runtime rows: preserve layout/actions, only neutralize card decoration. */
+html[data-theme="light"] body.mf-trading-terminal .positions-list > *,
+html[data-theme="light"] body.mf-trading-terminal .trade-history > * {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+
+  border-left-color: transparent !important;
+  border-right-color: transparent !important;
+  border-top-color: transparent !important;
+  border-bottom-color: #EBEBEB !important;
+
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body.mf-trading-terminal .positions-list > *:last-child,
+html[data-theme="light"] body.mf-trading-terminal .trade-history > *:last-child {
+  border-bottom-color: transparent !important;
+}
+
+/* Token images: no neutral decorative frame/glow. */
+html[data-theme="light"] body.mf-trading-terminal .candidate-token-avatar,
+html[data-theme="light"] body.mf-trading-terminal .positions-list img,
+html[data-theme="light"] body.mf-trading-terminal .trade-history img {
+  box-shadow: none !important;
+}
+
+/* -------------------------------------------------------
+   6. SECTION HEADERS
+   Make headers part of the surface; only one hairline where useful.
+   ------------------------------------------------------- */
+html[data-theme="light"] body.mf-trading-terminal .strategy-summary-panel .panel-head,
+html[data-theme="light"] body.mf-trading-terminal .positions-panel .panel-head,
+html[data-theme="light"] body.mf-trading-terminal .candidates-panel .panel-head,
+html[data-theme="light"] body.mf-trading-terminal .history-panel .panel-head {
+  background: #F5F5F5 !important;
+  background-color: #F5F5F5 !important;
+  background-image: none !important;
+
+  border: 0 !important;
+  border-bottom: 1px solid #EBEBEB !important;
+  box-shadow: none !important;
+}
+
+/* Candidate filter: small controls only; no extra card. */
+html[data-theme="light"] body.mf-trading-terminal .candidate-filter {
+  background: #F5F5F5 !important;
+  background-color: #F5F5F5 !important;
+  background-image: none !important;
+
+  border: 0 !important;
+  border-bottom: 1px solid #EBEBEB !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body.mf-trading-terminal .candidate-filter button {
+  background: #EBEBEB !important;
+  background-color: #EBEBEB !important;
+  background-image: none !important;
+
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Selected candidate filter keeps the existing native cyan semantic accent. */
+html[data-theme="light"] body.mf-trading-terminal .candidate-filter button.active {
+  border-color: var(--cyan) !important;
+  box-shadow: inset 0 0 0 1px var(--cyan) !important;
+}
+
+/* -------------------------------------------------------
+   MOBILE
+   Keep comfortable large-surface radius, but subordinate status panel flat.
+   ------------------------------------------------------- */
+@media (max-width: 900px) {
+  html[data-theme="light"] body.mf-trading-terminal .chart-panel,
+  html[data-theme="light"] body.mf-trading-terminal .strategy-summary-panel,
+  html[data-theme="light"] body.mf-trading-terminal .positions-panel,
+  html[data-theme="light"] body.mf-trading-terminal .candidates-panel,
+  html[data-theme="light"] body.mf-trading-terminal .history-panel {
+    border-radius: 18px !important;
+  }
+
+  html[data-theme="light"] body.mf-trading-terminal .approvals-panel {
+    border-radius: 0 !important;
+  }
+}
+/* ===== /MEMEFLOW_TRADING_FINAL_LIGHT_POLISH_V16 ===== */
+
+/* ===== MEMEFLOW_TRADING_FINAL_MICRO_POLISH_V17 ===== */
+/*
+  TRADING TERMINAL · LIGHT · FINAL MICRO POLISH
+
+  HARD NEUTRAL PALETTE
+    #FFFFFF = page / breathing room
+    #F5F5F5 = large functional surfaces
+    #EBEBEB = neutral controls / separators
+
+  No additional neutral UI color is introduced here.
+*/
+
+/* -------------------------------------------------------
+   1. PENDING APPROVALS
+   Keep this small status section on the white page.
+   When ASSIST is off, it should read like a compact status row,
+   not like another large panel.
+   ------------------------------------------------------- */
+html[data-theme="light"] body.mf-trading-terminal .approvals-panel {
+  background: #FFFFFF !important;
+  background-color: #FFFFFF !important;
+  background-image: none !important;
+
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+
+  min-height: 0 !important;
+}
+
+html[data-theme="light"] body.mf-trading-terminal .approvals-panel .panel-head {
+  background: #FFFFFF !important;
+  background-color: #FFFFFF !important;
+  background-image: none !important;
+
+  min-height: 0 !important;
+  padding-top: 10px !important;
+  padding-bottom: 10px !important;
+
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+/* ASSIST off = no decorative divider and no empty body. */
+html[data-theme="light"] body.mf-trading-terminal
+.approvals-panel:not([data-active="true"]) .panel-head {
+  border-bottom: 0 !important;
+}
+
+html[data-theme="light"] body.mf-trading-terminal
+.approvals-panel:not([data-active="true"]) .approval-list {
+  display: none !important;
+}
+
+/* If approvals become active, one approved neutral separator is enough. */
+html[data-theme="light"] body.mf-trading-terminal
+.approvals-panel[data-active="true"] .panel-head {
+  border-bottom: 1px solid #EBEBEB !important;
+}
+
+html[data-theme="light"] body.mf-trading-terminal
+.approvals-panel[data-active="true"] .approval-list {
+  background: #FFFFFF !important;
+  background-color: #FFFFFF !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+/* -------------------------------------------------------
+   2. TRADE STRATEGY
+   Keep the two-column information layout, but remove the
+   remaining spreadsheet/table sensation.
+   ------------------------------------------------------- */
+html[data-theme="light"] body.mf-trading-terminal .strategy-summary-panel,
+html[data-theme="light"] body.mf-trading-terminal .strategy-summary-list,
+html[data-theme="light"] body.mf-trading-terminal .strategy-summary-row,
+html[data-theme="light"] body.mf-trading-terminal .strategy-summary-row > div {
+  background: #F5F5F5 !important;
+  background-color: #F5F5F5 !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body.mf-trading-terminal .strategy-summary-panel {
+  border: 0 !important;
+  border-radius: 18px !important;
+  overflow: hidden !important;
+}
+
+html[data-theme="light"] body.mf-trading-terminal
+.strategy-summary-panel .panel-head {
+  background: #F5F5F5 !important;
+  background-color: #F5F5F5 !important;
+  background-image: none !important;
+
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+/* No row grid. Spacing, not rules, separates the four strategy pairs. */
+html[data-theme="light"] body.mf-trading-terminal .strategy-summary-list {
+  border: 0 !important;
+  padding-top: 2px !important;
+  padding-bottom: 2px !important;
+}
+
+html[data-theme="light"] body.mf-trading-terminal .strategy-summary-row {
+  border: 0 !important;
+}
+
+html[data-theme="light"] body.mf-trading-terminal .strategy-summary-row > div {
+  border: 0 !important;
+}
+
+/* The explanatory sync line is the only separated footer. */
+html[data-theme="light"] body.mf-trading-terminal .strategy-summary-foot {
+  background: #F5F5F5 !important;
+  background-color: #F5F5F5 !important;
+  background-image: none !important;
+
+  border: 0 !important;
+  border-top: 1px solid #EBEBEB !important;
+  box-shadow: none !important;
+}
+
+/* Neutral Edit remains the small-control gray. */
+html[data-theme="light"] body.mf-trading-terminal .strategy-edit-link {
+  background: #EBEBEB !important;
+  background-color: #EBEBEB !important;
+  background-image: none !important;
+
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* -------------------------------------------------------
+   3. LIST SECTIONS
+   Preserve the V16 structure. Only remove decorative neutral
+   avatar framing; semantic badges/buttons stay untouched.
+   ------------------------------------------------------- */
+html[data-theme="light"] body.mf-trading-terminal .position-token-avatar,
+html[data-theme="light"] body.mf-trading-terminal .candidate-token-avatar {
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/*
+  Runtime rows remain one continuous #F5F5F5 surface with
+  approved #EBEBEB separators. No mini-card backgrounds.
+*/
+html[data-theme="light"] body.mf-trading-terminal .position-row,
+html[data-theme="light"] body.mf-trading-terminal .candidate,
+html[data-theme="light"] body.mf-trading-terminal .trade-history > * {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+
+  box-shadow: none !important;
+}
+
+/* Keep exact approved separators, never another neutral shade. */
+html[data-theme="light"] body.mf-trading-terminal .position-row,
+html[data-theme="light"] body.mf-trading-terminal .candidate,
+html[data-theme="light"] body.mf-trading-terminal .trade-history > * {
+  border-bottom-color: #EBEBEB !important;
+}
+
+html[data-theme="light"] body.mf-trading-terminal .position-row:last-child,
+html[data-theme="light"] body.mf-trading-terminal .candidate:last-child,
+html[data-theme="light"] body.mf-trading-terminal .trade-history > *:last-child {
+  border-bottom-color: transparent !important;
+}
+
+/* -------------------------------------------------------
+   4. SECTION HEADERS
+   Match the same clean spacing across the three large list sections.
+   ------------------------------------------------------- */
+html[data-theme="light"] body.mf-trading-terminal
+.positions-panel .panel-head,
+html[data-theme="light"] body.mf-trading-terminal
+.candidates-panel .panel-head,
+html[data-theme="light"] body.mf-trading-terminal
+.history-panel .panel-head {
+  background: #F5F5F5 !important;
+  background-color: #F5F5F5 !important;
+  background-image: none !important;
+
+  border: 0 !important;
+  border-bottom: 1px solid #EBEBEB !important;
+  box-shadow: none !important;
+}
+
+/* MOBILE: compact approvals further, no new colors. */
+@media (max-width: 900px) {
+  html[data-theme="light"] body.mf-trading-terminal
+  .approvals-panel .panel-head {
+    padding-top: 8px !important;
+    padding-bottom: 8px !important;
+  }
+
+  html[data-theme="light"] body.mf-trading-terminal
+  .strategy-summary-panel,
+  html[data-theme="light"] body.mf-trading-terminal
+  .positions-panel,
+  html[data-theme="light"] body.mf-trading-terminal
+  .candidates-panel,
+  html[data-theme="light"] body.mf-trading-terminal
+  .history-panel {
+    border-radius: 18px !important;
+  }
+}
+/* ===== /MEMEFLOW_TRADING_FINAL_MICRO_POLISH_V17 ===== */
+
+/* ===== MEMEFLOW_TRADING_CANDIDATE_SELECTED_V18 ===== */
+/*
+  LIGHT Trading Terminal only.
+  Restore a clear selected state without bringing back card framing.
+
+  Neutral surface:
+    #EBEBEB
+
+  Semantic selection accent:
+    existing MEMEFLOW cyan
+*/
+html[data-theme="light"] body.mf-trading-terminal
+.candidate-list .candidate.selected {
+  background: #EBEBEB !important;
+  background-color: #EBEBEB !important;
+  background-image: none !important;
+
+  border-left: 0 !important;
+  border-right: 0 !important;
+  border-top: 0 !important;
+  border-bottom-color: #EBEBEB !important;
+
+  border-radius: 0 !important;
+
+  box-shadow: inset 3px 0 0 var(--cyan) !important;
+}
+
+/* Keep hover neutral; selection is the only persistent row highlight. */
+html[data-theme="light"] body.mf-trading-terminal
+.candidate-list .candidate:not(.selected):hover {
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
+/* ===== /MEMEFLOW_TRADING_CANDIDATE_SELECTED_V18 ===== */
+
+/* ===== MEMEFLOW_SETTINGS_OPENAI_LIGHT_V19 ===== */
+/*
+  SYSTEM SETTINGS · LIGHT ONLY
+
+  HARD NEUTRAL PALETTE:
+    #FFFFFF = page / breathing room
+    #F5F5F5 = large functional surface
+    #EBEBEB = neutral controls / separators
+
+  Existing MEMEFLOW semantic colors are intentionally preserved.
+*/
+
+/* -------------------------------------------------------
+   1. PAGE CANVAS
+   Header is intentionally not restyled here.
+   ------------------------------------------------------- */
+html[data-theme="light"] body.mf-settings-standalone {
+  background: #FFFFFF !important;
+  background-color: #FFFFFF !important;
+  background-image: none !important;
+}
+
+html[data-theme="light"] body.mf-settings-standalone
+.mf-settings-page-shell,
+html[data-theme="light"] body.mf-settings-standalone
+.mf293-settings-backdrop {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+}
+
+/* -------------------------------------------------------
+   2. MAIN SETTINGS DOCUMENT
+   One large surface, no outer card frame or shadow.
+   ------------------------------------------------------- */
+html[data-theme="light"] body.mf-settings-standalone
+.mf293-settings-panel {
+  background: #F5F5F5 !important;
+  background-color: #F5F5F5 !important;
+  background-image: none !important;
+
+  border: 0 !important;
+  box-shadow: none !important;
+
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Main heading belongs to the same surface. */
+html[data-theme="light"] body.mf-settings-standalone
+.mf293-settings-head {
+  background: #F5F5F5 !important;
+  background-color: #F5F5F5 !important;
+  background-image: none !important;
+
+  border: 0 !important;
+  border-bottom: 1px solid #EBEBEB !important;
+  box-shadow: none !important;
+}
+
+/* -------------------------------------------------------
+   3. TOP SUMMARY
+   Platform / AI Policy / Kill Switch / optional meta cell.
+   These are small neutral information controls.
+   ------------------------------------------------------- */
+html[data-theme="light"] body.mf-settings-standalone
+.mf293-settings-meta {
+  background: #F5F5F5 !important;
+  background-color: #F5F5F5 !important;
+  background-image: none !important;
+
+  border: 0 !important;
+  border-bottom: 1px solid #EBEBEB !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body.mf-settings-standalone
+.mf293-settings-meta > span,
+html[data-theme="light"] body.mf-settings-standalone
+.mf293-settings-meta > label {
+  background: #EBEBEB !important;
+  background-color: #EBEBEB !important;
+  background-image: none !important;
+
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+/* -------------------------------------------------------
+   4. ACCORDION BODY
+   Remove "card after card" appearance.
+   Closed groups are simple rows separated by #EBEBEB.
+   ------------------------------------------------------- */
+html[data-theme="light"] body.mf-settings-standalone
+.mf293-settings-body {
+  background: #F5F5F5 !important;
+  background-color: #F5F5F5 !important;
+  background-image: none !important;
+}
+
+html[data-theme="light"] body.mf-settings-standalone
+.mf293-settings-group {
+  margin-bottom: 0 !important;
+
+  background: #F5F5F5 !important;
+  background-color: #F5F5F5 !important;
+  background-image: none !important;
+
+  border: 0 !important;
+  border-bottom: 1px solid #EBEBEB !important;
+  border-radius: 0 !important;
+
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body.mf-settings-standalone
+.mf293-settings-group:first-child {
+  border-top: 0 !important;
+}
+
+html[data-theme="light"] body.mf-settings-standalone
+.mf293-settings-group:last-child {
+  border-bottom: 0 !important;
+}
+
+/* Group summary itself is not a nested card. */
+html[data-theme="light"] body.mf-settings-standalone
+.mf293-settings-group summary {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+/* -------------------------------------------------------
+   5. OPEN GROUP
+   White creates hierarchy without adding another neutral shade.
+   No outline/card border.
+   ------------------------------------------------------- */
+html[data-theme="light"] body.mf-settings-standalone
+.mf293-settings-group[open] {
+  background: #FFFFFF !important;
+  background-color: #FFFFFF !important;
+  background-image: none !important;
+
+  border: 0 !important;
+  border-bottom: 1px solid #EBEBEB !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body.mf-settings-standalone
+.mf293-settings-group[open] summary {
+  background: #FFFFFF !important;
+  background-color: #FFFFFF !important;
+  border-bottom: 1px solid #EBEBEB !important;
+}
+
+/* -------------------------------------------------------
+   6. FORM FIELDS
+   Small neutral surfaces use #EBEBEB.
+   No mini-card frame or shadow.
+   ------------------------------------------------------- */
+html[data-theme="light"] body.mf-settings-standalone
+.mf293-settings-group[open] .mf293-settings-grid {
+  background: #FFFFFF !important;
+  background-color: #FFFFFF !important;
+  background-image: none !important;
+}
+
+html[data-theme="light"] body.mf-settings-standalone
+.mf293-settings-group[open] .mf293-field {
+  background: #EBEBEB !important;
+  background-color: #EBEBEB !important;
+  background-image: none !important;
+
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+/*
+  Inputs/selects keep their existing functional geometry and text colors.
+  Remove decorative neutral frames only.
+*/
+html[data-theme="light"] body.mf-settings-standalone
+.mf293-settings-group[open]
+.mf293-field input:not([type="checkbox"]),
+html[data-theme="light"] body.mf-settings-standalone
+.mf293-settings-group[open] .mf293-field select,
+html[data-theme="light"] body.mf-settings-standalone
+.mf293-settings-group[open] .mf293-field textarea {
+  background-color: #EBEBEB !important;
+  background-image: none !important;
+
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* -------------------------------------------------------
+   7. PUBLIC AGENT NESTED ITEMS
+   Bring runtime-generated neutral cards into the same system.
+   Actions/status colors remain untouched.
+   ------------------------------------------------------- */
+html[data-theme="light"] body.mf-settings-standalone
+#mfPublicAgentGroup .mf-agent-item,
+html[data-theme="light"] body.mf-settings-standalone
+#mfPublicAgentGroup .mf-agent-event {
+  background: #EBEBEB !important;
+  background-color: #EBEBEB !important;
+  background-image: none !important;
+
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* -------------------------------------------------------
+   8. FOOTER
+   Keep action colors intact; only remove outer card decoration.
+   ------------------------------------------------------- */
+html[data-theme="light"] body.mf-settings-standalone
+.mf293-settings-footer {
+  background: #F5F5F5 !important;
+  background-color: #F5F5F5 !important;
+  background-image: none !important;
+
+  border: 0 !important;
+  border-top: 1px solid #EBEBEB !important;
+  box-shadow: none !important;
+}
+
+/* MOBILE: same system, only geometry refinement. */
+@media (max-width: 760px) {
+  html[data-theme="light"] body.mf-settings-standalone
+  .mf293-settings-panel {
+    border-radius: 18px !important;
+    overflow: hidden !important;
+  }
+
+  html[data-theme="light"] body.mf-settings-standalone
+  .mf293-settings-group,
+  html[data-theme="light"] body.mf-settings-standalone
+  .mf293-settings-group[open] {
+    border-radius: 0 !important;
+  }
+}
+/* ===== /MEMEFLOW_SETTINGS_OPENAI_LIGHT_V19 ===== */
+
+/* ===== MEMEFLOW_SETTINGS_DENSITY_V20 ===== */
+/*
+  SYSTEM SETTINGS · LIGHT · DENSITY POLISH
+
+  HARD NEUTRAL PALETTE
+    #FFFFFF = page / breathing room
+    #F5F5F5 = main settings document / opened sections
+    #EBEBEB = compact controls / separators
+
+  No fourth neutral shade is introduced.
+*/
+
+/* -------------------------------------------------------
+   1. OPENED SECTIONS
+   Stop turning an opened accordion into a separate white card.
+   It stays inside the same #F5F5F5 settings document.
+   ------------------------------------------------------- */
+html[data-theme="light"] body.mf-settings-standalone
+.mf293-settings-group[open],
+html[data-theme="light"] body.mf-settings-standalone
+.mf293-settings-group[open] summary,
+html[data-theme="light"] body.mf-settings-standalone
+.mf293-settings-group[open] .mf293-settings-grid {
+  background: #F5F5F5 !important;
+  background-color: #F5F5F5 !important;
+  background-image: none !important;
+
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body.mf-settings-standalone
+.mf293-settings-group[open] {
+  border: 0 !important;
+  border-bottom: 1px solid #EBEBEB !important;
+  border-radius: 0 !important;
+  overflow: visible !important;
+}
+
+html[data-theme="light"] body.mf-settings-standalone
+.mf293-settings-group[open] summary {
+  border: 0 !important;
+  border-bottom: 1px solid #EBEBEB !important;
+  border-radius: 0 !important;
+}
+
+/* Appearance should follow the same rule — no special white card. */
+html[data-theme="light"] body.mf-settings-standalone
+.mf293-settings-group[open]:has(summary strong:first-child) {
+  box-shadow: none !important;
+}
+
+/* -------------------------------------------------------
+   2. DENSER FIELD GRID
+   Keep the same two-column structure, just reduce visual mass.
+   ------------------------------------------------------- */
+html[data-theme="light"] body.mf-settings-standalone
+.mf293-settings-grid {
+  gap: 4px !important;
+  padding: 4px 8px 8px !important;
+}
+
+html[data-theme="light"] body.mf-settings-standalone
+.mf293-field {
+  min-height: 50px !important;
+  padding: 6px 8px !important;
+  gap: 4px !important;
+
+  background: #EBEBEB !important;
+  background-color: #EBEBEB !important;
+  background-image: none !important;
+
+  border: 0 !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+}
+
+/* Switch rows need no extra vertical bulk. */
+html[data-theme="light"] body.mf-settings-standalone
+.mf293-field.mf293-field-switch {
+  min-height: 48px !important;
+}
+
+/*
+  Native field contents keep their current font and semantic colors.
+  The field surface itself owns the neutral background.
+*/
+html[data-theme="light"] body.mf-settings-standalone
+.mf293-field input:not([type="checkbox"]),
+html[data-theme="light"] body.mf-settings-standalone
+.mf293-field select,
+html[data-theme="light"] body.mf-settings-standalone
+.mf293-field textarea {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+/* Textareas can grow when needed, but should not start as giant cards. */
+html[data-theme="light"] body.mf-settings-standalone
+.mf293-field textarea {
+  min-height: 54px !important;
+}
+
+/* -------------------------------------------------------
+   3. WIDE NON-INTERACTIVE EXPLANATION BLOCKS
+   Long notes should read like content, not huge nested gray cards.
+   :has() is supported by current Safari/iOS used by the project.
+   ------------------------------------------------------- */
+html[data-theme="light"] body.mf-settings-standalone
+div.mf293-field.mf293-field-wide:not(:has(input, select, textarea, .mf293-switch)),
+html[data-theme="light"] body.mf-settings-standalone
+div.mf293-field.mf-agent-wide:not(:has(input, select, textarea, .mf293-switch, .mf-agent-events)) {
+  min-height: 0 !important;
+  padding: 8px 2px !important;
+
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+/* Public Agent event container remains one compact control surface. */
+html[data-theme="light"] body.mf-settings-standalone
+#mfPublicAgentGroup .mf-agent-events {
+  background: #EBEBEB !important;
+  background-color: #EBEBEB !important;
+  background-image: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body.mf-settings-standalone
+#mfPublicAgentGroup .mf-agent-event {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+
+  border: 0 !important;
+  border-bottom: 1px solid #F5F5F5 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body.mf-settings-standalone
+#mfPublicAgentGroup .mf-agent-event:last-child {
+  border-bottom: 0 !important;
+}
+
+/* -------------------------------------------------------
+   4. SUMMARY ROW RHYTHM
+   Closed and opened groups share one consistent compact rhythm.
+   ------------------------------------------------------- */
+html[data-theme="light"] body.mf-settings-standalone
+.mf293-settings-group summary {
+  min-height: 50px !important;
+  padding: 8px 10px !important;
+}
+
+/* -------------------------------------------------------
+   5. FOOTER
+   Keep actions exactly as designed; reduce only excess surrounding space.
+   ------------------------------------------------------- */
+html[data-theme="light"] body.mf-settings-standalone
+.mf293-settings-footer {
+  min-height: 60px !important;
+  padding: 8px 10px max(8px, env(safe-area-inset-bottom)) !important;
+
+  background: #F5F5F5 !important;
+  background-color: #F5F5F5 !important;
+  background-image: none !important;
+
+  border: 0 !important;
+  border-top: 1px solid #EBEBEB !important;
+  box-shadow: none !important;
+}
+
+/* -------------------------------------------------------
+   MOBILE DENSITY
+   This is where the screenshots show the biggest visual gain.
+   ------------------------------------------------------- */
+@media (max-width: 760px) {
+  html[data-theme="light"] body.mf-settings-standalone
+  .mf293-settings-body {
+    padding: 6px 9px 14px !important;
+  }
+
+  html[data-theme="light"] body.mf-settings-standalone
+  .mf293-settings-group summary {
+    min-height: 47px !important;
+    padding: 7px 9px !important;
+  }
+
+  html[data-theme="light"] body.mf-settings-standalone
+  .mf293-settings-grid {
+    gap: 4px !important;
+    padding: 4px 7px 7px !important;
+  }
+
+  html[data-theme="light"] body.mf-settings-standalone
+  .mf293-field {
+    min-height: 43px !important;
+    padding: 5px 7px !important;
+    gap: 3px !important;
+    border-radius: 7px !important;
+  }
+
+  html[data-theme="light"] body.mf-settings-standalone
+  .mf293-field.mf293-field-switch {
+    min-height: 43px !important;
+  }
+
+  html[data-theme="light"] body.mf-settings-standalone
+  .mf293-field textarea {
+    min-height: 48px !important;
+  }
+
+  html[data-theme="light"] body.mf-settings-standalone
+  .mf293-settings-panel {
+    border-radius: 18px !important;
+  }
+}
+/* ===== /MEMEFLOW_SETTINGS_DENSITY_V20 ===== */
+
+/* ===== MEMEFLOW_SMART_VAULT_OPENAI_LIGHT_V21 ===== */
+/*
+  SMART VAULT · LIGHT THEME
+
+  Neutral palette:
+    #FFFFFF — page / breathing room
+    #F5F5F5 — major functional section
+    #EBEBEB — inner neutral control / separator
+
+  This layer intentionally does NOT set typography or semantic state colors.
+*/
+
+/* ----------------------------------------------------------
+   1. WHITE PAGE CANVAS
+   Kill legacy light-theme gradients without touching the header.
+   ---------------------------------------------------------- */
+html[data-theme="light"] body:has(.mf-vault-shell) {
+  background: #FFFFFF !important;
+  background-color: #FFFFFF !important;
+  background-image: none !important;
+}
+
+html[data-theme="light"] body .mf-vault-shell,
+html[data-theme="light"] body > main.mf-vault-shell {
+  background: #FFFFFF !important;
+  background-color: #FFFFFF !important;
+  background-image: none !important;
+}
+
+/* Header is intentionally excluded from every rule below. */
+
+/* ----------------------------------------------------------
+   2. HERO
+   Same white canvas, no decorative panel/shadow/gradient.
+   ---------------------------------------------------------- */
+html[data-theme="light"] .mf-vault-hero {
+  min-height: 0 !important;
+
+  background: #FFFFFF !important;
+  background-color: #FFFFFF !important;
+  background-image: none !important;
+
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+/* ----------------------------------------------------------
+   3. MAJOR SMART VAULT SECTIONS
+   One calm functional surface instead of white outlined cards.
+   ---------------------------------------------------------- */
+html[data-theme="light"] .mf-vault-card {
+  background: #F5F5F5 !important;
+  background-color: #F5F5F5 !important;
+  background-image: none !important;
+
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+/* ----------------------------------------------------------
+   4. NESTED LAYOUT ROWS
+   Rows are structure, not another card.
+   ---------------------------------------------------------- */
+html[data-theme="light"] .mf-vault-row {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+/* ----------------------------------------------------------
+   5. INNER NEUTRAL CONTROLS / STATS
+   The third neutral level is #EBEBEB.
+   ---------------------------------------------------------- */
+html[data-theme="light"] .mf-vault-stat,
+html[data-theme="light"] .mf-vault-action {
+  background: #EBEBEB !important;
+  background-color: #EBEBEB !important;
+  background-image: none !important;
+
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+/* Informational notes should read as content, not nested cards. */
+html[data-theme="light"] .mf-vault-note {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] .mf-vault-note + .mf-vault-note {
+  border-top: 1px solid #EBEBEB !important;
+}
+
+/* ----------------------------------------------------------
+   6. BUTTONS
+   Neutral secondary buttons use the neutral control surface.
+   Primary/native accent CTA styling stays intact.
+   ---------------------------------------------------------- */
+html[data-theme="light"] .mf-vault-btn:not(.mf-vault-btn-primary) {
+  background: #EBEBEB !important;
+  background-color: #EBEBEB !important;
+  background-image: none !important;
+
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+/*
+  Do not recolor the two native primary Smart Vault actions.
+  Existing project rules continue to own their cyan semantics.
+*/
+html[data-theme="light"] #connectBtn,
+html[data-theme="light"] #createBtn {
+  box-shadow: none !important;
+}
+
+/* ----------------------------------------------------------
+   7. CURRENT PRODUCTION STATE
+   Same visual grammar as the rest of Smart Vault.
+   ---------------------------------------------------------- */
+html[data-theme="light"] .mf-vault-status-panel {
+  background: #F5F5F5 !important;
+  background-color: #F5F5F5 !important;
+  background-image: none !important;
+
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] .mf-vault-status-stack > div {
+  background: #EBEBEB !important;
+  background-color: #EBEBEB !important;
+  background-image: none !important;
+
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+/*
+  Only neutral flow items are flattened.
+  .is-ready / native semantic states remain owned by existing rules.
+*/
+html[data-theme="light"] .mf-vault-status-flow span:not(.is-ready) {
+  background: #EBEBEB !important;
+  background-color: #EBEBEB !important;
+  background-image: none !important;
+
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+/* ----------------------------------------------------------
+   8. NEUTRAL DIVIDERS
+   If the page uses <hr>, it gets the one allowed separator gray.
+   ---------------------------------------------------------- */
+html[data-theme="light"] .mf-vault-shell hr,
+html[data-theme="light"] .mf-vault-card hr {
+  border: 0 !important;
+  border-top: 1px solid #EBEBEB !important;
+  box-shadow: none !important;
+}
+
+/* ----------------------------------------------------------
+   9. MOBILE POLISH
+   Reduce the excessive hero air visible on iPhone without
+   changing typography or content.
+   ---------------------------------------------------------- */
+@media (max-width: 760px) {
+  html[data-theme="light"] .mf-vault-hero {
+    padding-top: 54px !important;
+    padding-bottom: 42px !important;
+  }
+
+  html[data-theme="light"] .mf-vault-card {
+    border-radius: 20px !important;
+  }
+
+  html[data-theme="light"] .mf-vault-stat,
+  html[data-theme="light"] .mf-vault-action {
+    border-radius: 12px !important;
+  }
+
+  html[data-theme="light"] .mf-vault-status-panel {
+    border-radius: 20px !important;
+  }
+}
+/* ===== /MEMEFLOW_SMART_VAULT_OPENAI_LIGHT_V21 ===== */

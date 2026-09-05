@@ -220,3 +220,27 @@
 }
 
 /* ===== /MEMEFLOW_CANONICAL_HEADER_V1_2 ===== */
+
+/* ===== MEMEFLOW_GLOBAL_LIGHT_CANVAS_HEADER_V4 ===== */
+/*
+  LIGHT THEME — CANONICAL HEADER COLOR ONLY.
+  Geometry, typography, buttons, logo and navigation are untouched.
+*/
+html[data-theme="light"] body .mf-site-header,
+html[data-theme="light"] body[class] .mf-site-header,
+html[data-theme="light"] body .mf-site-header:not(.mf-site-header--sticky),
+html[data-theme="light"] body[class] .mf-site-header:not(.mf-site-header--sticky),
+html[data-theme="light"] body .mf-site-header.mf-site-header--sticky,
+html[data-theme="light"] body[class] .mf-site-header.mf-site-header--sticky {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  background-image: none !important;
+
+  border-bottom-color: rgba(15, 20, 25, .08) !important;
+
+  box-shadow: none !important;
+
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+/* ===== /MEMEFLOW_GLOBAL_LIGHT_CANVAS_HEADER_V4 ===== */

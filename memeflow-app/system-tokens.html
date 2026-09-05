@@ -71,14 +71,20 @@
 <link rel="stylesheet" href="/memeflow-brand.css?v=typography-clean-source-v1-20260830">
   <!-- MEMEFLOW_GLOBAL_RIGHT_DRAWER_NAV_V1 -->
   <link rel="stylesheet" href="/memeflow-nav.css?v=global-right-drawer-frameless-v2-20260829">
-  <link rel="stylesheet" href="/memeflow-header.css?v=canonical-header-v1-7-20260830">
+  <link rel="stylesheet" href="/memeflow-header.css?v=canvas-header-v4-20260904-233242">
 <!-- MEMEFLOW_LIGHT_THEME_ASSETS_V1 -->
-<link rel="stylesheet" href="/memeflow-theme.css?v=token-flow-filter-colors-v46-20260904">
+<link rel="stylesheet" href="/memeflow-theme.css?v=token-flow-final-v12-20260905-005242">
 <script src="/memeflow-theme.js?v=light-theme-v1-20260830" defer></script>
 <!-- /MEMEFLOW_LIGHT_THEME_ASSETS_V1 -->
+<link rel="stylesheet" href="/token-flow-white-polish-v36.css?v=token-flow-white-polish-v36-20260904">
+<link rel="stylesheet" href="/memeflow-typography-rhythm-v51.css?v=typography-rhythm-v51-20260905">
+<link rel="stylesheet" href="/memeflow-type-scale-hierarchy-v52.css?v=type-scale-hierarchy-v52-20260905">
+<link rel="stylesheet" href="/memeflow-optical-balance-v53.css?v=optical-balance-v53-20260905">
+<link rel="stylesheet" href="/memeflow-layout-spacing-v54.css?v=layout-spacing-v54-20260905">
+<link rel="stylesheet" href="/memeflow-header-standard-v37.css?v=header-consistency-v37-20260904">
 </head>
 
-<body>
+<body class="mf-token-flow-v36 mf-layout-rhythm-v54 mf-page-system-tokens">
 
   <main class="flow-page">
 
@@ -274,5 +280,200 @@
      data-patch="MEMEFLOW_CANONICAL_TOKEN_IMAGE_CACHE_BUST_V5"
   ></script>
 <script src="/memeflow-nav.js?v=global-right-drawer-v2-how-it-works" defer></script>
+<!-- ===== MEMEFLOW_TOKEN_FLOW_PERIOD_VISUAL_FIX_V14 ===== -->
+<script>
+(() => {
+  'use strict';
+
+  /*
+    VISUAL-ONLY SINGLE SOURCE OF TRUTH.
+
+    V12 and V13 are removed by the installer because they both tried to
+    re-paint the same four controls and could overwrite the user's click.
+
+    Existing MEMEFLOW handlers still perform the REAL filter action.
+    V14 only paints the clicked period.
+  */
+
+  const PERIODS = new Set(['ALL', '1H', '6H', '24H']);
+
+  let selectedPeriod = 'ALL';
+  let initialized = false;
+
+  function labelOf(button) {
+    return String(button?.textContent || '')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .toUpperCase();
+  }
+
+  function buttons() {
+    return [...document.querySelectorAll('button')]
+      .filter(button => PERIODS.has(labelOf(button)));
+  }
+
+  function setVisual(button, selected) {
+    /*
+      Inline !important intentionally beats the old page-specific cyan rules.
+      Only the three approved neutral colors are used here.
+    */
+    button.style.setProperty(
+      'background',
+      '#EBEBEB',
+      'important'
+    );
+    button.style.setProperty(
+      'background-color',
+      '#EBEBEB',
+      'important'
+    );
+    button.style.setProperty(
+      'border-color',
+      selected ? 'var(--cyan)' : 'transparent',
+      'important'
+    );
+    button.style.setProperty(
+      'box-shadow',
+      selected
+        ? 'inset 0 0 0 1px var(--cyan)'
+        : 'none',
+      'important'
+    );
+    button.style.setProperty(
+      'outline',
+      '0',
+      'important'
+    );
+  }
+
+  function paint() {
+    const list = buttons();
+    if (list.length < 3) return false;
+
+    for (const button of list) {
+      setVisual(
+        button,
+        labelOf(button) === selectedPeriod
+      );
+    }
+
+    return true;
+  }
+
+  function inferInitialSelection() {
+    const list = buttons();
+    if (list.length < 3) return;
+
+    /*
+      If the existing UI exposes exactly one real semantic selection,
+      respect it on first load. Otherwise ALL is the safe initial visual state.
+      We DO NOT inspect border color because the old bug paints multiple
+      buttons cyan while ALL is active.
+    */
+    const explicit = list.filter(button =>
+      button.getAttribute('aria-pressed') === 'true' ||
+      button.getAttribute('aria-current') === 'true' ||
+      button.dataset.selected === 'true' ||
+      button.dataset.active === 'true' ||
+      button.classList.contains('is-active')
+    );
+
+    if (explicit.length === 1) {
+      selectedPeriod = labelOf(explicit[0]);
+    } else {
+      selectedPeriod = 'ALL';
+    }
+
+    initialized = true;
+    paint();
+  }
+
+  /*
+    Capture the tap before page code can mutate classes/styles.
+    The actual page handler still receives the event normally.
+  */
+  document.addEventListener(
+    'click',
+    event => {
+      const button = event.target.closest?.('button');
+      if (!button) return;
+
+      const label = labelOf(button);
+      if (!PERIODS.has(label)) return;
+
+      selectedPeriod = label;
+      initialized = true;
+
+      paint();
+
+      /*
+        Existing filter code may update/rebuild UI immediately after our
+        handler. Re-assert the SAME clicked visual state — never read a stale
+        storage value and never force ALL.
+      */
+      queueMicrotask(paint);
+      requestAnimationFrame(paint);
+      setTimeout(paint, 0);
+      setTimeout(paint, 60);
+      setTimeout(paint, 180);
+    },
+    true
+  );
+
+  /*
+    If runtime code rebuilds the period row, re-apply the last user choice.
+    Observe child replacement only; style/class writes are intentionally not
+    observed, preventing observer feedback loops.
+  */
+  let scheduled = false;
+
+  const observer = new MutationObserver(() => {
+    if (scheduled) return;
+
+    scheduled = true;
+
+    requestAnimationFrame(() => {
+      scheduled = false;
+
+      if (!initialized) {
+        inferInitialSelection();
+      } else {
+        paint();
+      }
+    });
+  });
+
+  observer.observe(document.documentElement, {
+    subtree: true,
+    childList: true
+  });
+
+  function boot() {
+    inferInitialSelection();
+
+    /*
+      Runtime controls can be injected just after DOMContentLoaded.
+      Short retries only initialize; after initialization the user's clicks
+      remain the visual source of truth.
+    */
+    if (!initialized) {
+      setTimeout(inferInitialSelection, 50);
+      setTimeout(inferInitialSelection, 150);
+      setTimeout(inferInitialSelection, 400);
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener(
+      'DOMContentLoaded',
+      boot,
+      { once: true }
+    );
+  } else {
+    boot();
+  }
+})();
+</script>
+<!-- ===== /MEMEFLOW_TOKEN_FLOW_PERIOD_VISUAL_FIX_V14 ===== -->
 </body>
 </html>
