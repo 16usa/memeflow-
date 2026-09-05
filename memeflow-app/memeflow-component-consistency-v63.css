@@ -1,0 +1,200 @@
+/* ==========================================================================
+   MEMEFLOW COMPONENT CONSISTENCY V63
+   Final component surface geometry pass.
+
+   Owns:
+     - consistent outer / inner radii
+     - neutral panel border geometry
+     - row separator rhythm
+     - compact, coherent surface nesting
+
+   Does NOT own:
+     - colors / theme palette
+     - typography / font sizes
+     - page spacing system
+     - header / navigation behavior
+     - status colors
+     - JS / wallet / scanner / trading / backend logic
+     - System Overview 3D gallery geometry
+   ========================================================================== */
+
+body.mf-component-consistency-v63 {
+  --mf-v63-panel-radius: 22px;
+  --mf-v63-section-radius: 18px;
+  --mf-v63-item-radius: 14px;
+  --mf-v63-line: rgba(17, 24, 39, .07);
+  --mf-v63-line-dark: rgba(148, 163, 184, .12);
+}
+
+/* TOKEN FLOW */
+body.mf-page-system-tokens.mf-component-consistency-v63
+.flow-page :where(.flow-hero, .flow-toolbar, .pagination) {
+  border-radius: var(--mf-v63-panel-radius);
+}
+
+body.mf-page-system-tokens.mf-component-consistency-v63
+.flow-page .summary-card {
+  border-radius: var(--mf-v63-section-radius);
+}
+
+body.mf-page-system-tokens.mf-component-consistency-v63
+.flow-page :where(.token-row, .token-card, .flow-token-row) {
+  border-bottom-width: 1px;
+  border-bottom-style: solid;
+}
+
+html[data-theme="light"]
+body.mf-page-system-tokens.mf-component-consistency-v63
+.flow-page :where(.token-row, .token-card, .flow-token-row) {
+  border-bottom-color: var(--mf-v63-line);
+}
+
+html[data-theme="dark"]
+body.mf-page-system-tokens.mf-component-consistency-v63
+.flow-page :where(.token-row, .token-card, .flow-token-row) {
+  border-bottom-color: var(--mf-v63-line-dark);
+}
+
+/* TRADING TERMINAL */
+body.mf-page-trading.mf-component-consistency-v63
+.mf-trading-terminal .panel {
+  border-radius: var(--mf-v63-panel-radius);
+}
+
+body.mf-page-trading.mf-component-consistency-v63
+.mf-trading-terminal :where(
+  .strategy-summary-row,
+  .selected-metrics > div,
+  .empty,
+  .indicator-bar
+) {
+  border-radius: var(--mf-v63-item-radius);
+}
+
+body.mf-page-trading.mf-component-consistency-v63
+.mf-trading-terminal :where(
+  .candidate-row,
+  .position-row,
+  .trade-row,
+  .approval-row
+) {
+  border-bottom-width: 1px;
+  border-bottom-style: solid;
+}
+
+html[data-theme="light"]
+body.mf-page-trading.mf-component-consistency-v63
+.mf-trading-terminal :where(
+  .candidate-row,
+  .position-row,
+  .trade-row,
+  .approval-row
+) {
+  border-bottom-color: var(--mf-v63-line);
+}
+
+html[data-theme="dark"]
+body.mf-page-trading.mf-component-consistency-v63
+.mf-trading-terminal :where(
+  .candidate-row,
+  .position-row,
+  .trade-row,
+  .approval-row
+) {
+  border-bottom-color: var(--mf-v63-line-dark);
+}
+
+/* SMART VAULT */
+body.mf-page-smart-vault.mf-component-consistency-v63
+.mf-vault-shell :where(.mf-vault-card, .mf-vault-status-panel) {
+  border-radius: var(--mf-v63-panel-radius);
+}
+
+body.mf-page-smart-vault.mf-component-consistency-v63
+.mf-vault-shell :where(
+  .mf-vault-stat,
+  .mf-vault-control-row,
+  .mf-vault-checklist > div
+) {
+  border-radius: var(--mf-v63-section-radius);
+}
+
+/* SYSTEM SETTINGS */
+body.mf-page-settings.mf-component-consistency-v63
+:where(
+  .mf293-settings-group,
+  .settings-group,
+  .settings-context,
+  .mf-theme-appearance
+) {
+  border-radius: var(--mf-v63-panel-radius);
+}
+
+body.mf-page-settings.mf-component-consistency-v63
+:where(
+  .mf293-field,
+  .mf-agent-item,
+  .mf-agent-event,
+  .settings-summary > div,
+  .toggle-row
+) {
+  border-radius: var(--mf-v63-item-radius);
+}
+
+/* HOW IT WORKS */
+body.mf-page-how-it-works.mf-component-consistency-v63
+:where(
+  .mf-hiw-status-card,
+  .mf-hiw-map-shell,
+  .mf-hiw-money,
+  .mf-hiw-cta
+) {
+  border-radius: var(--mf-v63-panel-radius);
+}
+
+body.mf-page-how-it-works.mf-component-consistency-v63
+:where(
+  .mf-hiw-status-stack > div,
+  .mf-hiw-node,
+  .mf-hiw-step,
+  .mf-hiw-map-detail
+) {
+  border-radius: var(--mf-v63-section-radius);
+}
+
+/* AGENT PERFORMANCE */
+body.mf-page-agent-performance.mf-component-consistency-v63
+:where(.ap-source, .ap-panel) {
+  border-radius: var(--mf-v63-panel-radius);
+}
+
+body.mf-page-agent-performance.mf-component-consistency-v63
+:where(.ap-kpis article, .ap-summary > div, .factor, .rank, .empty) {
+  border-radius: var(--mf-v63-section-radius);
+}
+
+/* SYSTEM OVERVIEW
+   IMPORTANT: do not touch the 3D gallery / viewport / cards / shots / deck. */
+body.mf-page-system.mf-component-consistency-v63
+:where(.mf-infra, .activity-panel) {
+  border-radius: var(--mf-v63-panel-radius);
+}
+
+/* Explicit anti-regression documentation:
+   NO selectors for:
+     .viewport-wrap
+     #mfPageGallery
+     .mfpg-card
+     .mfpg-shot
+     .mfpg-deck
+*/
+
+@media (max-width: 600px) {
+  body.mf-component-consistency-v63 {
+    --mf-v63-panel-radius: 20px;
+    --mf-v63-section-radius: 16px;
+    --mf-v63-item-radius: 13px;
+  }
+}
+
+/* MEMEFLOW_COMPONENT_CONSISTENCY_V63_END */

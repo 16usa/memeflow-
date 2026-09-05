@@ -1,0 +1,234 @@
+/* ==========================================================================
+   MEMEFLOW FINAL VISUAL QA V65
+   Regression guardrails only.
+
+   This layer is intentionally conservative. It prevents common last-mile
+   layout failures without redesigning any page.
+
+   Owns:
+     - shrink safety for known flex/grid surfaces
+     - long runtime-data containment
+     - media containment inside known cards/rows
+     - mobile viewport max-width guardrails
+     - safe horizontal scrollers where the UI already scrolls horizontally
+
+   Does NOT own:
+     - palette / theme colors
+     - typography
+     - normal component styling
+     - spacing rhythm
+     - navigation behavior
+     - interaction states
+     - System Overview 3D gallery geometry
+     - JS / wallet / scanner / API / backend / trading logic
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   TOP-LEVEL SHRINK SAFETY
+   max-inline-size only prevents accidental overflow; it does not set a new
+   visual width for components that already fit.
+   -------------------------------------------------------------------------- */
+body.mf-final-visual-qa-v65 :where(
+  main,
+  section,
+  article,
+  aside,
+  header,
+  footer
+) {
+  min-inline-size: 0;
+}
+
+body.mf-final-visual-qa-v65 :where(
+  .flow-page,
+  .terminal,
+  .mf-vault-shell,
+  .mf-hiw-shell,
+  .ap-page,
+  .mf293-settings-panel
+) {
+  min-inline-size: 0;
+  max-inline-size: 100%;
+}
+
+/* --------------------------------------------------------------------------
+   FLEX / GRID CHILDREN THAT RECEIVE RUNTIME DATA
+   -------------------------------------------------------------------------- */
+body.mf-page-system-tokens.mf-final-visual-qa-v65 :where(
+  .flow-header > *,
+  .flow-hero > *,
+  .flow-toolbar > *,
+  .token-row > *,
+  .token-card > *,
+  .search-wrap,
+  .refresh-info
+),
+body.mf-page-trading.mf-final-visual-qa-v65 :where(
+  .terminal > *,
+  .chart-head > *,
+  .token-title > *,
+  .token-name-row > *,
+  .candidate > *,
+  .candidate-row > *,
+  .position-row > *,
+  .trade-row > *,
+  .strategy-summary-row > *
+),
+body.mf-page-smart-vault.mf-final-visual-qa-v65 :where(
+  .mf-vault-grid > *,
+  .mf-vault-card-head > *,
+  .mf-vault-control-row > *
+),
+body.mf-page-settings.mf-final-visual-qa-v65 :where(
+  .mf293-settings-grid > *,
+  .mf293-settings-meta > *,
+  .mf293-settings-footer > *,
+  .settings-summary > *
+),
+body.mf-page-agent-performance.mf-final-visual-qa-v65 :where(
+  .ap-hero > *,
+  .ap-grid > *,
+  .ap-kpis > *,
+  .ap-summary > *,
+  .ap-bottom > *
+),
+body.mf-page-how-it-works.mf-final-visual-qa-v65 :where(
+  .mf-hiw-hero > *,
+  .mf-hiw-steps > *,
+  .mf-hiw-control-grid > *,
+  .mf-hiw-money-flow > *
+) {
+  min-inline-size: 0;
+}
+
+/* --------------------------------------------------------------------------
+   LONG LIVE VALUES / ADDRESSES / TOKEN NAMES
+   Only known runtime-value surfaces are allowed to break exceptionally long
+   strings instead of widening the page.
+   -------------------------------------------------------------------------- */
+body.mf-page-system-tokens.mf-final-visual-qa-v65 :where(
+  .token-meta,
+  .token-name,
+  .token-symbol
+),
+body.mf-page-trading.mf-final-visual-qa-v65 :where(
+  .token-meta,
+  .candidate-name,
+  .candidate-symbol,
+  .trade-meta
+),
+body.mf-page-smart-vault.mf-final-visual-qa-v65 :where(
+  .mf-vault-address,
+  .mf-vault-card p
+),
+body.mf-page-settings.mf-final-visual-qa-v65 :where(
+  .mf-agent-copy,
+  .mf-agent-history
+),
+body.mf-page-agent-performance.mf-final-visual-qa-v65 :where(
+  .ap-note
+),
+body.mf-page-how-it-works.mf-final-visual-qa-v65 :where(
+  .mf-hiw-map-detail p
+) {
+  overflow-wrap: anywhere;
+}
+
+/* --------------------------------------------------------------------------
+   MEDIA CONTAINMENT
+   Scoped to content cards only. Brand/header media and the 3D gallery are
+   intentionally excluded.
+   -------------------------------------------------------------------------- */
+body.mf-page-system-tokens.mf-final-visual-qa-v65 :where(
+  .token-avatar,
+  .token-image
+) img,
+body.mf-page-trading.mf-final-visual-qa-v65 :where(
+  .token-avatar,
+  .candidate-avatar,
+  .position-avatar,
+  .trade-avatar
+) img,
+body.mf-page-agent-performance.mf-final-visual-qa-v65 :where(
+  .ap-panel,
+  .ap-source
+) img {
+  max-inline-size: 100%;
+  max-block-size: 100%;
+}
+
+/* --------------------------------------------------------------------------
+   EXISTING HORIZONTAL CONTROL STRIPS
+   Preserve native strip geometry; only keep scrolling contained.
+   -------------------------------------------------------------------------- */
+body.mf-page-system-tokens.mf-final-visual-qa-v65 :where(
+  .state-summary,
+  .mf-time-window-v47c
+),
+body.mf-page-trading.mf-final-visual-qa-v65 :where(
+  .timeframes,
+  .indicator-scroll,
+  .selected-metrics
+),
+body.mf-page-agent-performance.mf-final-visual-qa-v65 .ap-periods {
+  overscroll-behavior-inline: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* --------------------------------------------------------------------------
+   MOBILE VIEWPORT GUARDS
+   No fixed dimensions are introduced.
+   -------------------------------------------------------------------------- */
+@media (max-width: 600px) {
+  body.mf-final-visual-qa-v65 :where(
+    .flow-page,
+    .terminal,
+    .mf-vault-shell,
+    .mf-hiw-shell,
+    .ap-page,
+    .mf293-settings-panel
+  ) {
+    max-inline-size: 100%;
+  }
+
+  body.mf-page-system-tokens.mf-final-visual-qa-v65 .pagination {
+    max-inline-size: calc(100dvw - 16px);
+  }
+
+  body.mf-page-trading.mf-final-visual-qa-v65 :where(
+    .chart-panel,
+    .strategy-summary-panel,
+    .candidates-panel,
+    .control-panel
+  ) {
+    max-inline-size: 100%;
+  }
+
+  body.mf-page-smart-vault.mf-final-visual-qa-v65 :where(
+    .mf-vault-card,
+    .mf-vault-status-panel
+  ) {
+    max-inline-size: 100%;
+  }
+}
+
+/* Fallback for browsers without dynamic viewport units. */
+@supports not (width: 100dvw) {
+  @media (max-width: 600px) {
+    body.mf-page-system-tokens.mf-final-visual-qa-v65 .pagination {
+      max-inline-size: calc(100vw - 16px);
+    }
+  }
+}
+
+/* --------------------------------------------------------------------------
+   SYSTEM OVERVIEW 3D GALLERY
+   Deliberately NO selectors for:
+     #mfPageGallery
+     .mfpg-card
+     .mfpg-shot
+     .mfpg-deck
+     .viewport-wrap
+   -------------------------------------------------------------------------- */
+
+/* MEMEFLOW_FINAL_VISUAL_QA_V65_END */

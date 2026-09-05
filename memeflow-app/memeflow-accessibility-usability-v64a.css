@@ -1,0 +1,186 @@
+/* ==========================================================================
+   MEMEFLOW ACCESSIBILITY / USABILITY V64A
+   Conditional interaction-quality pass.
+
+   Normal visual state is intentionally unchanged.
+
+   Owns:
+     - keyboard focus visibility
+     - coarse-pointer / touch usability
+     - disabled/busy interaction behavior
+     - reduced-motion behavior
+     - forced-colors support
+     - pointer affordance for native interactive controls
+
+   Does NOT own:
+     - typography
+     - colors / page palette
+     - component geometry in normal state
+     - layout / spacing
+     - navigation appearance or behavior
+     - 3D System Overview gallery
+     - JS / wallet / trading / scanner / API / backend logic
+   ========================================================================== */
+
+body.mf-accessibility-v64a {
+  --mf-v64a-focus: rgba(69, 207, 248, .72);
+  --mf-v64a-focus-soft: rgba(69, 207, 248, .16);
+}
+
+html[data-theme="light"] body.mf-accessibility-v64a {
+  --mf-v64a-focus: rgba(0, 112, 146, .68);
+  --mf-v64a-focus-soft: rgba(0, 112, 146, .12);
+}
+
+/* Native interaction affordance. No visual effect until interaction. */
+body.mf-accessibility-v64a :where(
+  button,
+  input[type="button"],
+  input[type="submit"],
+  input[type="reset"],
+  select,
+  [role="button"],
+  a[href]
+) {
+  touch-action: manipulation;
+}
+
+body.mf-accessibility-v64a :where(
+  button:not(:disabled),
+  input[type="button"]:not(:disabled),
+  input[type="submit"]:not(:disabled),
+  input[type="reset"]:not(:disabled),
+  select:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  a[href]
+) {
+  cursor: pointer;
+}
+
+/* KEYBOARD FOCUS */
+body.mf-accessibility-v64a :where(
+  a[href],
+  button,
+  input,
+  select,
+  textarea,
+  [role="button"],
+  [tabindex]:not([tabindex="-1"])
+):focus-visible {
+  outline: 2px solid var(--mf-v64a-focus);
+  outline-offset: 3px;
+  box-shadow: 0 0 0 4px var(--mf-v64a-focus-soft);
+}
+
+/* Keep the System Overview 3D gallery visually isolated from this pass. */
+body.mf-page-system.mf-accessibility-v64a :where(
+  #mfPageGallery,
+  .mfpg-card,
+  .mfpg-shot,
+  .mfpg-deck,
+  .viewport-wrap
+) :focus-visible {
+  outline: revert;
+  outline-offset: revert;
+  box-shadow: revert;
+}
+
+/* DISABLED / ARIA-DISABLED */
+body.mf-accessibility-v64a :where(
+  button:disabled,
+  input:disabled,
+  select:disabled,
+  textarea:disabled,
+  [aria-disabled="true"]
+) {
+  cursor: not-allowed !important;
+}
+
+body.mf-accessibility-v64a [aria-busy="true"] {
+  cursor: progress;
+}
+
+/* TOUCH */
+@media (pointer: coarse) {
+  body.mf-accessibility-v64a :where(
+    button,
+    input[type="button"],
+    input[type="submit"],
+    input[type="reset"],
+    select
+  ) {
+    min-block-size: 44px;
+  }
+
+  body.mf-accessibility-v64a :where(
+    .pagination button,
+    .candidate-filter button,
+    .timeframes button,
+    .indicator-scroll button,
+    .ap-periods button,
+    .mf-time-window-v47c button,
+    .mf-theme-appearance button
+  ) {
+    min-inline-size: 44px;
+  }
+}
+
+/* REDUCED MOTION */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto !important;
+  }
+
+  body.mf-accessibility-v64a :where(
+    button,
+    a,
+    input,
+    select,
+    textarea,
+    [role="button"],
+    .candidate,
+    .token-card,
+    .token-row,
+    .mf-hiw-node,
+    .mf-hiw-step
+  ) {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* HIGH-CONTRAST / FORCED COLORS */
+@media (forced-colors: active) {
+  body.mf-accessibility-v64a :where(
+    a[href],
+    button,
+    input,
+    select,
+    textarea,
+    [role="button"]
+  ):focus-visible {
+    outline: 2px solid Highlight !important;
+    outline-offset: 3px;
+    box-shadow: none !important;
+  }
+
+  body.mf-accessibility-v64a :where(
+    button:disabled,
+    input:disabled,
+    select:disabled,
+    textarea:disabled,
+    [aria-disabled="true"]
+  ) {
+    forced-color-adjust: auto;
+  }
+}
+
+/* Preserve native text selection in editable controls. */
+body.mf-accessibility-v64a :where(input, textarea) {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+/* MEMEFLOW_ACCESSIBILITY_USABILITY_V64A_END */
