@@ -68,3 +68,11 @@ tmp
 !.vscode/settings.json
 !.vscode/tasks.json
 yarn-error.log
+
+# MEMEFLOW local patch backups
+/.patch-backups/
+/memeflow-app/.patch-backups/
+.memeflow-before-*/
+.memeflow-backup-*/
+.memeflow-v*-backup-*/
+.*-last-backup/
