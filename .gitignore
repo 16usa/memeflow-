@@ -76,3 +76,28 @@ yarn-error.log
 .memeflow-backup-*/
 .memeflow-v*-backup-*/
 .*-last-backup/
+memeflow-app/data/platform-trade-analytics-v2.sqlite
+memeflow-app/data/platform-trade-analytics-v2.sqlite-shm
+memeflow-app/data/platform-trade-analytics-v2.sqlite-wal
+memeflow-app/data/state.json.bak
+memeflow-app/data/learning-dataset-v23-3.jsonl
+memeflow-app/data/outcome-calibration-v23-11.jsonl
+memeflow-app/data/shadow-error-aware-benchmark-v23-19.jsonl
+memeflow-app/data/shadow-error-pattern-learner-v23-17.jsonl
+memeflow-app/data/shadow-outcome-review-v23-16.jsonl
+memeflow-app/data/token-intelligence-v23.jsonl
+memeflow-app/data/token-pattern-memory-v23-9.jsonl
+memeflow-app/data/token-trajectory-v23-8.jsonl
+memeflow-app/data/v24-policy-bridge-audit.jsonl
+memeflow-app/data/wallet-reputation-v23-2.jsonl
+
+# MEMEFLOW runtime temporary state files
+memeflow-app/data/state.json.tmp.*
+memeflow-app/data/state.json.bak.tmp.*
+
+# MEMEFLOW live runtime data - keep local, never commit
+memeflow-app/data/platform-trade-analytics-v2.sqlite
+memeflow-app/data/platform-trade-analytics-v2.sqlite-shm
+memeflow-app/data/platform-trade-analytics-v2.sqlite-wal
+memeflow-app/data/state.json
+memeflow-app/data/state.json.bak
