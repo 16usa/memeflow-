@@ -1,0 +1,415 @@
+/* ==========================================================================
+   MEMEFLOW GLOBAL HEADER STANDARD V34
+   --------------------------------------------------------------------------
+   Source of truth:
+     the clean header language used by How It Works + Smart Vault.
+
+   Scope:
+     LIGHT theme + .mf-site-header only.
+
+   Goals:
+     - exactly one header geometry across MEMEFLOW pages
+     - white, borderless, shadowless base header
+     - same logo/title/subtitle/hamburger alignment
+     - page-specific status information must not make the base header taller
+     - Trading Terminal's engine state becomes a compact toolbar below the header
+     - no changes to page typography, business logic, JS, data, wallet logic,
+       trading logic, chart colors, semantic status colors, or dark theme
+
+   Neutral surfaces:
+     #FFFFFF
+     #F5F5F5
+     #EBEBEB
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. ONE BASE HEADER
+   -------------------------------------------------------------------------- */
+html[data-theme="light"] .mf-site-header {
+  box-sizing: border-box !important;
+
+  width: 100vw !important;
+  max-width: 100vw !important;
+  min-height: 62px !important;
+  height: 62px !important;
+
+  margin-left: calc(50% - 50vw) !important;
+  margin-right: calc(50% - 50vw) !important;
+
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 10px !important;
+
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  padding-left: max(16px, env(safe-area-inset-left)) !important;
+  padding-right: max(16px, env(safe-area-inset-right)) !important;
+
+  border: 0 !important;
+  border-radius: 0 !important;
+
+  background: #FFFFFF !important;
+  background-color: #FFFFFF !important;
+  background-image: none !important;
+
+  box-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+/* Preserve each page's intended flow/sticky behavior only. */
+html[data-theme="light"] .mf-site-header:not(.mf-site-header--sticky) {
+  position: relative !important;
+  top: auto !important;
+}
+
+html[data-theme="light"] .mf-site-header.mf-site-header--sticky {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 100 !important;
+}
+
+/* --------------------------------------------------------------------------
+   2. SAME LEFT BRAND GEOMETRY ON EVERY PAGE
+   -------------------------------------------------------------------------- */
+html[data-theme="light"] .mf-site-header > :is(
+  .brand,
+  .brand-block,
+  .header-left,
+  .mf-settings-page-header-left,
+  .mf-vault-brand,
+  .mf-hiw-brand
+) {
+  min-width: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  margin-right: 0 !important;
+}
+
+/* Pages without a center status cluster simply push actions to the right. */
+html[data-theme="light"] .mf-site-header:not(:has(> .engine-strip, > .system-chips))
+> :is(
+  .brand,
+  .brand-block,
+  .header-left,
+  .mf-settings-page-header-left,
+  .mf-vault-brand,
+  .mf-hiw-brand
+) {
+  margin-right: auto !important;
+}
+
+/* Canonical logo box: includes Trading's .brand-mark too. */
+html[data-theme="light"] .mf-site-header :is(
+  .brand-mark,
+  .mf-settings-page-brand-mark,
+  .mf-vault-brand-mark,
+  .mf-hiw-brand-mark
+) {
+  width: 54px !important;
+  height: 40px !important;
+  min-width: 54px !important;
+  flex: 0 0 54px !important;
+
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  padding: 0 !important;
+  margin: 0 !important;
+
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] .mf-site-header :is(
+  .brand-mark img,
+  .mf-brand-img,
+  .mf-settings-page-brand-mark img,
+  .mf-vault-brand-mark img,
+  .mf-hiw-brand-mark img
+) {
+  width: 52px !important;
+  height: 36px !important;
+  display: block !important;
+  object-fit: contain !important;
+  filter: none !important;
+}
+
+/* Same title/subtitle hierarchy. This changes only header color/geometry,
+   not the site's typography family. */
+html[data-theme="light"] .mf-site-header :is(
+  .brand-title,
+  .brand-block .brand,
+  .header-title > span,
+  .mf-settings-page-title > span,
+  .mf-vault-brand-copy > strong,
+  .mf-hiw-brand-copy > strong
+) {
+  display: block !important;
+  margin: 0 !important;
+
+  color: #111820 !important;
+
+  font-size: 12px !important;
+  line-height: 1 !important;
+  font-weight: 820 !important;
+  letter-spacing: .08em !important;
+}
+
+html[data-theme="light"] .mf-site-header :is(
+  .brand-sub,
+  .brand-block .subtitle,
+  .header-title > strong,
+  .mf-settings-page-title > strong,
+  .mf-vault-brand-copy > small,
+  .mf-hiw-brand-copy > small
+) {
+  display: block !important;
+  margin: 3px 0 0 !important;
+
+  color: #71828d !important;
+
+  font-size: 8px !important;
+  line-height: 1.15 !important;
+  font-weight: 720 !important;
+  letter-spacing: .12em !important;
+  white-space: nowrap !important;
+}
+
+/* --------------------------------------------------------------------------
+   3. SAME RIGHT-SIDE ACTION / HAMBURGER GEOMETRY
+   -------------------------------------------------------------------------- */
+html[data-theme="light"] .mf-site-header .top-actions {
+  min-width: 0 !important;
+  margin-left: auto !important;
+
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 7px !important;
+}
+
+html[data-theme="light"] .mf-site-header .mf-nav-host {
+  flex: 0 0 auto !important;
+  margin-left: 2px !important;
+}
+
+html[data-theme="light"] .mf-site-header .mf-nav-toggle {
+  width: 38px !important;
+  height: 38px !important;
+  flex: 0 0 38px !important;
+
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] .mf-site-header .mf-nav-toggle-line {
+  background: #71828d !important;
+}
+
+html[data-theme="light"] .mf-site-header .mf-nav-toggle:hover .mf-nav-toggle-line,
+html[data-theme="light"] .mf-site-header .mf-nav-toggle:focus-visible .mf-nav-toggle-line {
+  background: #111820 !important;
+}
+
+/* Keep native colors of page-specific actions. Normalize only geometry/shadow. */
+html[data-theme="light"] .mf-site-header .top-actions > :is(
+  a,
+  button
+):not(.mf-nav-toggle) {
+  min-height: 34px !important;
+  max-height: 34px !important;
+  border-radius: 11px !important;
+  box-shadow: none !important;
+}
+
+/* Neutral header controls that are already neutral in the product. */
+html[data-theme="light"] .mf-site-header :is(
+  .wallet-btn,
+  .live-status,
+  .mf-settings-page-live
+) {
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* --------------------------------------------------------------------------
+   4. PAGE STATUS IS NOT THE BASE HEADER
+   Trading Terminal currently stores its engine state inside <header>.
+   Visually detach it into a clean toolbar directly below the canonical row.
+   -------------------------------------------------------------------------- */
+@media (max-width: 820px) {
+  html[data-theme="light"] body.mf-trading-terminal
+  .mf-site-header--sticky:has(> .engine-strip) {
+    margin-bottom: 36px !important;
+  }
+
+  html[data-theme="light"] body.mf-trading-terminal
+  .mf-site-header--sticky > .engine-strip {
+    position: absolute !important;
+    top: 100% !important;
+    left: 0 !important;
+    right: 0 !important;
+
+    width: 100vw !important;
+    height: 36px !important;
+    min-height: 36px !important;
+
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 14px !important;
+
+    padding: 0 max(12px, env(safe-area-inset-left)) !important;
+
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    white-space: nowrap !important;
+
+    background: #FFFFFF !important;
+    background-color: #FFFFFF !important;
+    background-image: none !important;
+
+    border: 0 !important;
+    border-bottom: 1px solid #EBEBEB !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+
+    scrollbar-width: none !important;
+  }
+
+  html[data-theme="light"] body.mf-trading-terminal
+  .mf-site-header--sticky > .engine-strip::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  /*
+    Statuses become text-level information, not three extra cards.
+    Their existing dots/text semantic colors remain untouched.
+  */
+  html[data-theme="light"] body.mf-trading-terminal
+  .mf-site-header--sticky > .engine-strip .status-pill {
+    min-height: 0 !important;
+    height: auto !important;
+
+    margin: 0 !important;
+    padding: 0 !important;
+
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
+
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   5. MOBILE CANONICAL GEOMETRY
+   -------------------------------------------------------------------------- */
+@media (max-width: 820px) {
+  html[data-theme="light"] .mf-site-header {
+    min-height: 58px !important;
+    height: 58px !important;
+
+    padding-left: max(10px, env(safe-area-inset-left)) !important;
+    padding-right: max(10px, env(safe-area-inset-right)) !important;
+
+    gap: 7px !important;
+  }
+
+  html[data-theme="light"] .mf-site-header :is(
+    .brand-mark,
+    .mf-settings-page-brand-mark,
+    .mf-vault-brand-mark,
+    .mf-hiw-brand-mark
+  ) {
+    width: 50px !important;
+    height: 38px !important;
+    min-width: 50px !important;
+    flex-basis: 50px !important;
+  }
+
+  html[data-theme="light"] .mf-site-header :is(
+    .brand-mark img,
+    .mf-brand-img,
+    .mf-settings-page-brand-mark img,
+    .mf-vault-brand-mark img,
+    .mf-hiw-brand-mark img
+  ) {
+    width: 48px !important;
+    height: 34px !important;
+  }
+
+  html[data-theme="light"] .mf-site-header .top-actions {
+    gap: 5px !important;
+  }
+
+  html[data-theme="light"] .mf-site-header .mf-nav-toggle {
+    width: 36px !important;
+    height: 36px !important;
+    flex-basis: 36px !important;
+  }
+
+  html[data-theme="light"] .mf-site-header .top-actions > :is(
+    a,
+    button
+  ):not(.mf-nav-toggle) {
+    min-height: 32px !important;
+    max-height: 32px !important;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   6. DARK THEME INTENTIONALLY UNTOUCHED
+   -------------------------------------------------------------------------- */
+
+/* ==========================================================================
+   MEMEFLOW GLOBAL HEADER CONSISTENCY V37
+   Extends V34. Header-only. LIGHT only.
+   Purpose: make every canonical page obey the same final header contract
+   even when a later page-local polish stylesheet was added.
+   ========================================================================== */
+
+html[data-theme="light"] .mf-site-header {
+  min-height: 62px !important;
+
+  background: #FFFFFF !important;
+  background-image: none !important;
+
+  border: 0 !important;
+  border-radius: 0 !important;
+
+  box-shadow: none !important;
+
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* A few older pages still keep a legacy back control in their HTML.
+   The canonical mobile header never shows it. */
+html[data-theme="light"] .mf-site-header :is(
+  .back,
+  .back-button,
+  .mf-back,
+  .legacy-back,
+  [data-mf-legacy-back]
+) {
+  display: none !important;
+}
+
+@media (max-width: 760px) {
+  html[data-theme="light"] .mf-site-header {
+    min-height: 58px !important;
+  }
+}
+
+/* DARK THEME INTENTIONALLY UNTOUCHED. */

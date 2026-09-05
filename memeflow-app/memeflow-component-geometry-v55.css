@@ -1,0 +1,49 @@
+/* MEMEFLOW_COMPONENT_GEOMETRY_V55
+   Component geometry only. Typography, colors, surfaces, shadows, header geometry,
+   theme runtime and application logic are intentionally untouched.
+*/
+body.mf-component-geometry-v55{
+ --mf-v55-control-h:40px;--mf-v55-control-h-sm:34px;--mf-v55-touch-h:44px;
+ --mf-v55-field-radius:13px;--mf-v55-control-radius:12px;--mf-v55-item-radius:14px;
+ --mf-v55-pill-radius:999px;--mf-v55-control-x:14px;--mf-v55-control-x-sm:12px;
+}
+/* TOKEN FLOW */
+body.mf-page-system-tokens.mf-component-geometry-v55 .flow-page .summary-card{min-height:58px;border-radius:var(--mf-v55-item-radius);padding:10px 12px}
+body.mf-page-system-tokens.mf-component-geometry-v55 .flow-page .mf-time-window-v47c button{min-height:var(--mf-v55-control-h);min-width:50px;padding:0 15px;border-radius:var(--mf-v55-pill-radius)}
+body.mf-page-system-tokens.mf-component-geometry-v55 .flow-page .search-wrap{height:var(--mf-v55-touch-h);min-height:var(--mf-v55-touch-h);border-radius:var(--mf-v55-pill-radius);padding-inline:14px}
+body.mf-page-system-tokens.mf-component-geometry-v55 .flow-page :where(.refresh-info button,#refreshButton){min-height:var(--mf-v55-touch-h);padding-inline:17px;border-radius:var(--mf-v55-pill-radius)}
+body.mf-page-system-tokens.mf-component-geometry-v55 .flow-page .pagination button{min-height:var(--mf-v55-control-h);padding-inline:16px;border-radius:var(--mf-v55-pill-radius)}
+body.mf-page-system-tokens.mf-component-geometry-v55 .flow-page :where(.token-row,.token-card,.flow-token-row){min-height:74px}
+/* TRADING */
+body.mf-page-trading.mf-component-geometry-v55 .mf-trading-terminal :where(.candidate-filter button,.timeframes button){min-height:var(--mf-v55-control-h-sm);padding-inline:var(--mf-v55-control-x-sm);border-radius:var(--mf-v55-pill-radius)}
+body.mf-page-trading.mf-component-geometry-v55 .mf-trading-terminal :where(.strategy-edit-link,.wallet-btn){min-height:var(--mf-v55-control-h);padding-inline:var(--mf-v55-control-x);border-radius:var(--mf-v55-pill-radius)}
+body.mf-page-trading.mf-component-geometry-v55 .mf-trading-terminal :where(.mode-badge,.approval-count,.decision-badge,.tiny-state){min-height:30px;display:inline-flex;align-items:center;justify-content:center;padding-inline:11px;border-radius:var(--mf-v55-pill-radius)}
+body.mf-page-trading.mf-component-geometry-v55 .mf-trading-terminal :where(.candidate-row,.position-row,.trade-row){min-height:68px}
+body.mf-page-trading.mf-component-geometry-v55 .mf-trading-terminal :where(.position-row button,.trade-row button,.approval-row button){min-height:var(--mf-v55-control-h);padding-inline:14px;border-radius:var(--mf-v55-pill-radius)}
+body.mf-page-trading.mf-component-geometry-v55 .mf-trading-terminal .price-block{min-height:var(--mf-v55-touch-h);border-radius:var(--mf-v55-control-radius)}
+body.mf-page-trading.mf-component-geometry-v55 .mf-trading-terminal .indicator-scroll button{min-height:36px;padding-inline:10px}
+/* SMART VAULT */
+body.mf-page-smart-vault.mf-component-geometry-v55 .mf-vault-shell .mf-vault-badge{min-height:30px;padding-inline:11px;border-radius:var(--mf-v55-pill-radius)}
+body.mf-page-smart-vault.mf-component-geometry-v55 .mf-vault-shell .mf-vault-btn{min-height:var(--mf-v55-touch-h);padding-inline:14px;border-radius:var(--mf-v55-control-radius)}
+body.mf-page-smart-vault.mf-component-geometry-v55 .mf-vault-shell .mf-vault-stat{min-height:72px;border-radius:var(--mf-v55-item-radius)}
+body.mf-page-smart-vault.mf-component-geometry-v55 .mf-vault-shell .mf-vault-control-row{min-height:80px;border-radius:var(--mf-v55-item-radius)}
+body.mf-page-smart-vault.mf-component-geometry-v55 .mf-vault-shell .mf-vault-switch{width:46px;height:26px;flex-basis:46px}
+body.mf-page-smart-vault.mf-component-geometry-v55 .mf-vault-shell .mf-vault-switch span{width:20px;height:20px}
+body.mf-page-smart-vault.mf-component-geometry-v55 .mf-vault-shell .mf-vault-checklist>div{min-height:58px;border-radius:var(--mf-v55-item-radius);padding:12px}
+body.mf-page-smart-vault.mf-component-geometry-v55 .mf-vault-shell .mf-vault-status-flow span{min-height:var(--mf-v55-control-h-sm);padding-inline:11px;border-radius:var(--mf-v55-control-radius)}
+/* SETTINGS / SYSTEM / HOW IT WORKS / AGENT PERFORMANCE */
+body.mf-component-geometry-v55:is(.mf-page-settings,.mf-page-system,.mf-page-how-it-works,.mf-page-agent-performance) :where(button,select,input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="hidden"])){min-height:var(--mf-v55-control-h);border-radius:var(--mf-v55-control-radius)}
+body.mf-component-geometry-v55:is(.mf-page-settings,.mf-page-system,.mf-page-how-it-works,.mf-page-agent-performance) :where(button){padding-inline:var(--mf-v55-control-x)}
+body.mf-component-geometry-v55:is(.mf-page-settings,.mf-page-system,.mf-page-how-it-works,.mf-page-agent-performance) :where(textarea){border-radius:var(--mf-v55-control-radius)}
+body.mf-page-settings.mf-component-geometry-v55 :where(details>summary){min-height:48px;display:flex;align-items:center}
+body.mf-page-settings.mf-component-geometry-v55 :where(.mf293-primary,.mf293-secondary,.mf-agent-save,.mf-agent-review button){min-height:var(--mf-v55-control-h);padding-inline:var(--mf-v55-control-x);border-radius:var(--mf-v55-control-radius)}
+body.mf-page-settings.mf-component-geometry-v55 :where(.mf293-field input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),.mf293-field select){min-height:var(--mf-v55-control-h);border-radius:var(--mf-v55-control-radius)}
+body.mf-page-agent-performance.mf-component-geometry-v55 :where(.ap-kpis article){min-height:86px;border-radius:var(--mf-v55-item-radius)}
+@media(max-width:760px){
+ body.mf-component-geometry-v55{--mf-v55-control-h:40px;--mf-v55-control-h-sm:34px;--mf-v55-touch-h:44px;--mf-v55-control-x:13px;--mf-v55-control-x-sm:11px}
+ body.mf-page-system-tokens.mf-component-geometry-v55 .flow-page .summary-card{min-height:56px;padding:9px 10px}
+ body.mf-page-system-tokens.mf-component-geometry-v55 .flow-page :where(.token-row,.token-card,.flow-token-row){min-height:72px}
+ body.mf-page-trading.mf-component-geometry-v55 .mf-trading-terminal :where(.candidate-row,.position-row,.trade-row){min-height:66px}
+ body.mf-page-smart-vault.mf-component-geometry-v55 .mf-vault-shell .mf-vault-btn{min-height:44px}
+}
+/* MEMEFLOW_COMPONENT_GEOMETRY_V55_END */

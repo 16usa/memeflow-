@@ -1505,3 +1505,55 @@ html[data-theme="light"] body.mf-hiw-page .mf-hiw-footer {
 }
 
 /* MEMEFLOW_HIW_WHITE_POLISH_V31_END */
+
+/* MEMEFLOW_HIW_VERTICAL_RHYTHM_V63_START */
+/*
+  How It Works only.
+  Purpose: remove oversized vertical dead space on wide / landscape screens.
+  No map sizing, component geometry, color, navigation, or production logic changes.
+*/
+
+body.mf-hiw-page.mf-page-how-it-works .mf-hiw-cta-title > span {
+  display: block;
+}
+
+@media (min-width: 981px) {
+  body.mf-hiw-page.mf-page-how-it-works .mf-hiw-section {
+    padding-block: clamp(58px, 4.2vw, 72px);
+  }
+
+  body.mf-hiw-page.mf-page-how-it-works .mf-hiw-section-head {
+    margin-bottom: clamp(26px, 2.2vw, 34px);
+  }
+
+  body.mf-hiw-page.mf-page-how-it-works .mf-hiw-money {
+    margin-top: 8px;
+  }
+
+  body.mf-hiw-page.mf-page-how-it-works .mf-hiw-cta {
+    min-height: 220px;
+    padding-block: 34px;
+  }
+}
+
+@media (min-width: 721px) and (max-width: 980px) {
+  body.mf-hiw-page.mf-page-how-it-works .mf-hiw-section {
+    padding-block: 62px;
+  }
+
+  body.mf-hiw-page.mf-page-how-it-works .mf-hiw-cta {
+    padding-block: 42px;
+  }
+}
+
+@media (max-width: 720px) {
+  body.mf-hiw-page.mf-page-how-it-works .mf-hiw-section {
+    padding-block: 58px;
+  }
+
+  body.mf-hiw-page.mf-page-how-it-works .mf-hiw-cta {
+    padding-block: 48px;
+  }
+}
+/* MEMEFLOW_HIW_VERTICAL_RHYTHM_V63_END */
+

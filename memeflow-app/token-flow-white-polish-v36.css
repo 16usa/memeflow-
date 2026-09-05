@@ -1,0 +1,307 @@
+/* ==========================================================================
+   MEMEFLOW TOKEN FLOW — WHITE POLISH V36
+   --------------------------------------------------------------------------
+   LIGHT theme / Token Flow only.
+
+   Visual contract:
+     neutral surfaces only: #FFFFFF / #F5F5F5 / #EBEBEB
+     more white, fewer frames
+     native status/action colors remain
+     V34 global header remains the only header owner
+   ========================================================================== */
+
+html[data-theme="light"] body.mf-token-flow-v36 {
+  --mf-flow-white: #FFFFFF;
+  --mf-flow-soft: #F5F5F5;
+  --mf-flow-quiet: #EBEBEB;
+
+  background: #FFFFFF !important;
+  background-image: none !important;
+}
+
+/* V34 owns the header. No header geometry, border, shadow or spacing here. */
+html[data-theme="light"] body.mf-token-flow-v36 .flow-page {
+  background: #FFFFFF !important;
+}
+
+/* --------------------------------------------------------------------------
+   HERO — one intentional soft surface, not another outlined card.
+   -------------------------------------------------------------------------- */
+html[data-theme="light"] body.mf-token-flow-v36 .flow-hero {
+  background: #F5F5F5 !important;
+  background-image: none !important;
+
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+/* --------------------------------------------------------------------------
+   STATUS SUMMARY — compact soft surfaces.
+   Existing active semantic accents/borders stay visible.
+   -------------------------------------------------------------------------- */
+html[data-theme="light"] body.mf-token-flow-v36 .summary-card {
+  background: #F5F5F5 !important;
+  background-image: none !important;
+
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body.mf-token-flow-v36 .summary-card.active.all {
+  background: #FFFFFF !important;
+  border-color: var(--cyan) !important;
+}
+
+html[data-theme="light"] body.mf-token-flow-v36 .summary-card.ready.active {
+  background: #FFFFFF !important;
+  border-color: var(--yellow) !important;
+}
+
+html[data-theme="light"] body.mf-token-flow-v36 .summary-card.watch.active {
+  background: #FFFFFF !important;
+  border-color: var(--blue) !important;
+}
+
+html[data-theme="light"] body.mf-token-flow-v36 .summary-card.waiting.active {
+  background: #FFFFFF !important;
+  border-color: #EBEBEB !important;
+}
+
+html[data-theme="light"] body.mf-token-flow-v36 .summary-card.blocked.active {
+  background: #FFFFFF !important;
+  border-color: var(--red) !important;
+}
+
+/* --------------------------------------------------------------------------
+   PERIOD / SMART-RANK CONTROLS.
+   Covers both the current runtime controls and older V12 naming variants.
+   -------------------------------------------------------------------------- */
+html[data-theme="light"] body.mf-token-flow-v36 :is(
+  .flow-periods,
+  .period-filters,
+  .time-filters,
+  .mf-period-filters,
+  .mf-time-filters,
+  .smart-rank-row
+) {
+  background: #FFFFFF !important;
+  background-image: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body.mf-token-flow-v36 :is(
+  .flow-periods,
+  .period-filters,
+  .time-filters,
+  .mf-period-filters,
+  .mf-time-filters
+) button {
+  background: #F5F5F5 !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+/* Preserve the current selected cyan outline without painting the whole row. */
+html[data-theme="light"] body.mf-token-flow-v36 :is(
+  .flow-periods,
+  .period-filters,
+  .time-filters,
+  .mf-period-filters,
+  .mf-time-filters
+) button:is(.active,[aria-pressed="true"]) {
+  background: #FFFFFF !important;
+}
+
+/* --------------------------------------------------------------------------
+   SEARCH / ANALYZE — white toolbar; input is the soft control surface.
+   -------------------------------------------------------------------------- */
+html[data-theme="light"] body.mf-token-flow-v36 .flow-toolbar {
+  background: #FFFFFF !important;
+  background-image: none !important;
+
+  border: 0 !important;
+  border-bottom: 1px solid #EBEBEB !important;
+  border-radius: 0 !important;
+
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body.mf-token-flow-v36 .search-wrap {
+  background: #F5F5F5 !important;
+  background-image: none !important;
+
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body.mf-token-flow-v36 .refresh-info button {
+  background: #EBEBEB !important;
+  background-image: none !important;
+
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* --------------------------------------------------------------------------
+   TOKEN LIST — biggest cleanup.
+   One white list, horizontal separators, native status rail remains.
+   -------------------------------------------------------------------------- */
+html[data-theme="light"] body.mf-token-flow-v36 .token-list {
+  gap: 0 !important;
+
+  background: #FFFFFF !important;
+  background-image: none !important;
+
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body.mf-token-flow-v36 .flow-token {
+  background: #FFFFFF !important;
+  background-image: none !important;
+
+  border: 0 !important;
+  border-bottom: 1px solid #EBEBEB !important;
+  border-radius: 0 !important;
+
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body.mf-token-flow-v36 .flow-token:first-child {
+  border-top: 1px solid #EBEBEB !important;
+}
+
+/* Open/selected token gets only a quiet neutral fill.
+   Status rail / P&L / state colors are intentionally untouched. */
+html[data-theme="light"] body.mf-token-flow-v36 .flow-token:is(
+  .expanded,
+  .active,
+  .selected,
+  [aria-expanded="true"]
+) {
+  background: #F5F5F5 !important;
+}
+
+/* Internal metric dividers were making every row look like a grid. */
+html[data-theme="light"] body.mf-token-flow-v36 .token-metric {
+  border-left: 0 !important;
+}
+
+/* Expanded details: use soft fill instead of mini outlined cards. */
+html[data-theme="light"] body.mf-token-flow-v36 .token-details {
+  border-top-color: #EBEBEB !important;
+}
+
+html[data-theme="light"] body.mf-token-flow-v36 .detail-block {
+  background: #F5F5F5 !important;
+  background-image: none !important;
+
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+/* Current compact/mobile token-row variants from later patches. */
+html[data-theme="light"] body.mf-token-flow-v36 :is(
+  .mf-flow-row,
+  .mf-token-row,
+  .token-row
+) {
+  background: #FFFFFF !important;
+  background-image: none !important;
+
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body.mf-token-flow-v36 :is(
+  .mf-flow-row,
+  .mf-token-row,
+  .token-row
+):is(.active,.selected,.expanded,[aria-selected="true"]) {
+  background: #F5F5F5 !important;
+}
+
+/* --------------------------------------------------------------------------
+   TOKEN SCAN RESULT / EMPTY STATE — same hierarchy.
+   -------------------------------------------------------------------------- */
+html[data-theme="light"] body.mf-token-flow-v36 .mf-token-scan-result {
+  background: #FFFFFF !important;
+  background-image: none !important;
+
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body.mf-token-flow-v36 .empty-state {
+  background: #F5F5F5 !important;
+  background-image: none !important;
+
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+/* --------------------------------------------------------------------------
+   PAGINATION — compact floating neutral control, not a full-width card.
+   -------------------------------------------------------------------------- */
+html[data-theme="light"] body.mf-token-flow-v36 .pagination {
+  width: max-content !important;
+  max-width: calc(100% - 24px) !important;
+
+  margin: 12px auto 0 !important;
+  padding: 5px !important;
+
+  background: #FFFFFF !important;
+  background-image: none !important;
+
+  border: 0 !important;
+  border-radius: 999px !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body.mf-token-flow-v36 .pagination button {
+  background: #F5F5F5 !important;
+  background-image: none !important;
+
+  border-color: transparent !important;
+  border-radius: 999px !important;
+  box-shadow: none !important;
+}
+
+/* --------------------------------------------------------------------------
+   MOBILE
+   -------------------------------------------------------------------------- */
+@media (max-width: 760px) {
+  html[data-theme="light"] body.mf-token-flow-v36 .flow-page {
+    padding-left: 6px !important;
+    padding-right: 6px !important;
+  }
+
+  html[data-theme="light"] body.mf-token-flow-v36 .flow-hero {
+    border-radius: 18px !important;
+  }
+
+  html[data-theme="light"] body.mf-token-flow-v36 .summary-card {
+    border-radius: 15px !important;
+  }
+
+  html[data-theme="light"] body.mf-token-flow-v36 .flow-toolbar {
+    padding-left: 6px !important;
+    padding-right: 6px !important;
+  }
+
+  html[data-theme="light"] body.mf-token-flow-v36 .search-wrap {
+    border-radius: 999px !important;
+  }
+
+  html[data-theme="light"] body.mf-token-flow-v36 .refresh-info button {
+    border-radius: 999px !important;
+  }
+
+  html[data-theme="light"] body.mf-token-flow-v36 .flow-token {
+    border-radius: 0 !important;
+  }
+}
+
+/* DARK THEME INTENTIONALLY UNTOUCHED. */

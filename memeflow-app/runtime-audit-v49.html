@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MEMEFLOW Production Runtime Audit V49</title>
+<style>
+:root{color-scheme:light;--bg:#fff;--surface:#f5f5f5;--surface2:#ebebeb;--text:#111820;--muted:#6f8490;--line:#e7e7e7;--ok:#168f67;--review:#a76b00;--bad:#c8404f}
+*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}body{padding:28px 18px 64px}.wrap{max-width:1100px;margin:0 auto}.eyebrow{font-size:12px;letter-spacing:.18em;font-weight:800;color:#3dbfe7;text-transform:uppercase}.title{font-size:clamp(34px,6vw,62px);line-height:.98;margin:12px 0 16px;font-weight:850;letter-spacing:-.04em}.sub{font-size:clamp(17px,2vw,22px);line-height:1.45;color:var(--muted);max-width:880px}.actions{display:flex;gap:10px;flex-wrap:wrap;margin:24px 0}.btn{border:0;border-radius:999px;padding:13px 20px;font:700 15px/1 inherit;cursor:pointer;background:var(--text);color:#fff}.btn.secondary{background:var(--surface2);color:var(--text)}.btn:disabled{opacity:.45;cursor:not-allowed}.summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:22px 0}.metric{background:var(--surface);border-radius:22px;padding:20px}.metric small{display:block;color:var(--muted);letter-spacing:.12em;text-transform:uppercase}.metric strong{display:block;font-size:38px;margin-top:8px}.note{background:var(--surface);border-radius:22px;padding:18px 20px;color:var(--muted);line-height:1.45;margin:18px 0}.note b{color:var(--text)}.progress{height:8px;background:var(--surface2);border-radius:999px;overflow:hidden;margin:18px 0}.progress>i{display:block;height:100%;width:0;background:var(--text);transition:width .2s}.filters{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 18px}.chip{border:0;border-radius:999px;padding:8px 12px;font-weight:700;background:var(--surface2);color:var(--text);cursor:pointer}.chip.active{outline:2px solid #45c8ef;background:#fff}.results{display:grid;gap:12px}.card{background:var(--surface);border-radius:24px;padding:18px}.card-head{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:12px;align-items:start}.page{font-weight:850;font-size:21px;overflow-wrap:anywhere}.viewport{font-size:18px}.status{font-weight:850}.status.PASS{color:var(--ok)}.status.REVIEW{color:var(--review)}.status.FAIL{color:var(--bad)}.meta{margin-top:12px;color:var(--muted);font:500 13px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre-wrap;overflow-wrap:anywhere}.pillrow{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px}.pill{background:#fff;border-radius:999px;padding:6px 10px;font:600 12px/1.3 ui-monospace,SFMono-Regular,Menlo,monospace}.footer{margin-top:32px;color:var(--muted);font-size:13px}.hidden-frame{position:fixed;left:-100000px;top:0;border:0;height:900px;visibility:hidden;pointer-events:none}.reviewonly .card[data-status="PASS"]{display:none}@media(max-width:700px){body{padding:22px 14px 48px}.summary{grid-template-columns:1fr 1fr}.metric{padding:16px}.metric strong{font-size:32px}.card-head{grid-template-columns:minmax(0,1fr) auto}.status{grid-column:2}.viewport{grid-row:2}.title{font-size:42px}}
+</style>
+</head>
+<body>
+<div class="wrap" id="app">
+  <div class="eyebrow">Passive production QA</div>
+  <h1 class="title">MEMEFLOW Production Runtime Audit V49</h1>
+  <p class="sub">Real same-origin runtime loading across mobile, tablet and desktop widths. V49 observes page startup, DOM readiness, resource activity and safe runtime state. It never intentionally clicks write, wallet, trading, funding or emergency controls.</p>
+  <div class="actions">
+    <button class="btn" id="runBtn">Run V49 audit</button>
+    <button class="btn secondary" id="reviewBtn">Show review only</button>
+    <button class="btn secondary" id="exportBtn" disabled>Export JSON</button>
+  </div>
+  <div class="progress"><i id="bar"></i></div>
+  <div id="headline" class="sub">Ready. 21 passive runtime suites: 7 pages × 3 viewport widths.</div>
+  <div class="summary">
+    <div class="metric"><small>Total suites</small><strong id="mTotal">21</strong></div>
+    <div class="metric"><small>Passed</small><strong id="mPass">0</strong></div>
+    <div class="metric"><small>Review</small><strong id="mReview">0</strong></div>
+    <div class="metric"><small>Runtime resources</small><strong id="mResources">0</strong></div>
+  </div>
+  <div class="note"><b>Safety contract:</b> V49 only navigates fresh hidden iframe instances of the existing pages and reads their same-origin DOM/performance state. It does not dispatch clicks to application controls and does not probe discovered API endpoints directly.</div>
+  <div class="filters">
+    <button class="chip active" data-filter="all">All</button>
+    <button class="chip" data-filter="PASS">Pass</button>
+    <button class="chip" data-filter="REVIEW">Review</button>
+  </div>
+  <div class="results" id="results"></div>
+  <div class="footer">V49 is an audit page only. Production source files are not modified by the patch that installs this page.</div>
+</div>
+<script>
+(()=>{
+'use strict';
+const PAGES=['agent-performance.html','how-it-works.html','settings.html','smart-vault.html','system.html','system-tokens.html','trading.html'];
+const VIEWS=[{name:'mobile',w:390},{name:'tablet',w:820},{name:'desktop',w:1440}];
+const SETTLE_MS=2400, SAMPLE_GAP_MS=1800, HARD_TIMEOUT_MS=18000;
+const results=[], sourceCache=new Map();
+const $=s=>document.querySelector(s), sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const esc=s=>String(s??'').replace(/[&<>\"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function visible(el,win){if(!el)return false;const st=win.getComputedStyle(el);const r=el.getBoundingClientRect();return st.display!=='none'&&st.visibility!=='hidden'&&Number(st.opacity||1)!==0&&r.width>0&&r.height>0}
+function duplicateIds(doc){const seen=new Set(),dups=[];for(const el of doc.querySelectorAll('[id]')){const id=el.id;if(!id)continue;if(seen.has(id)&&!dups.includes(id))dups.push(id);seen.add(id)}return dups}
+function visibleBusy(doc,win){const q='[aria-busy="true"],[class*="spinner" i],[class*="loading" i],[class*="skeleton" i],[id*="spinner" i],[id*="loading" i]';return [...doc.querySelectorAll(q)].filter(el=>visible(el,win)).slice(0,12).map(el=>el.id||el.getAttribute('aria-label')||String(el.className||'').slice(0,80)||el.tagName)}
+function bodySnapshot(doc,win){const body=doc.body;if(!body)return {nodes:0,text:0,busy:[]};return {nodes:body.querySelectorAll('*').length,text:(body.innerText||'').trim().length,busy:visibleBusy(doc,win)}}
+function extractRefs(text){const api=new Set(),ws=new Set();for(const m of String(text).matchAll(/['\"`]((?:\/api\/)[A-Za-z0-9_?&=.%:\/\-{}$]+)['\"`]/g))api.add(m[1]);for(const m of String(text).matchAll(/['\"`](wss?:\/\/[^'\"`\s]+)['\"`]/g))ws.add(m[1]);return {api:[...api].slice(0,60),ws:[...ws].slice(0,30)}}
+async function fetchText(url,timeout=10000){const ctl=new AbortController(),t=setTimeout(()=>ctl.abort(),timeout),started=performance.now();try{const r=await fetch(url,{cache:'no-store',credentials:'same-origin',signal:ctl.signal});const text=await r.text();return {ok:r.ok,status:r.status,text,ms:Math.round(performance.now()-started),bytes:new Blob([text]).size,finalUrl:r.url}}catch(e){return {ok:false,status:0,text:'',ms:Math.round(performance.now()-started),bytes:0,error:String(e?.message||e)}}finally{clearTimeout(t)}}
+async function sourceInventory(pageUrl,html){const key=pageUrl;if(sourceCache.has(key))return sourceCache.get(key);const out={api:new Set(),ws:new Set(),scripts:0,styles:0,jsFetched:0};const p=new DOMParser().parseFromString(html,'text/html');const base=new URL(pageUrl,location.href);const r0=extractRefs(html);r0.api.forEach(x=>out.api.add(x));r0.ws.forEach(x=>out.ws.add(x));const scripts=[...p.querySelectorAll('script[src]')].map(s=>new URL(s.getAttribute('src'),base.href)).filter(u=>u.origin===location.origin);out.scripts=scripts.length;out.styles=p.querySelectorAll('link[rel~="stylesheet"]').length;for(const u of scripts.slice(0,28)){const k=u.href;if(sourceCache.has('js:'+k)){const cached=sourceCache.get('js:'+k);cached.api.forEach(x=>out.api.add(x));cached.ws.forEach(x=>out.ws.add(x));out.jsFetched++;continue}const fr=await fetchText(k,8000);const refs=extractRefs(fr.text);sourceCache.set('js:'+k,refs);refs.api.forEach(x=>out.api.add(x));refs.ws.forEach(x=>out.ws.add(x));if(fr.ok)out.jsFetched++}const done={api:[...out.api].slice(0,80),ws:[...out.ws].slice(0,40),scripts:out.scripts,styles:out.styles,jsFetched:out.jsFetched};sourceCache.set(key,done);return done}
+function resultCard(r){const pills=[];if(r.htmlStatus)pills.push(`html ${r.htmlStatus} · ${r.htmlMs}ms · ${r.htmlBytes}b`);pills.push(`ready ${r.readyState||'n/a'} · ${r.loadMs}ms`);pills.push(`DOM ${r.domNodes} nodes`);pills.push(`resources ${r.resources}`);if(r.fetchResources)pills.push(`fetch/xhr ${r.fetchResources}`);if(r.apiRefs)pills.push(`API refs ${r.apiRefs}`);if(r.wsRefs)pills.push(`WS refs ${r.wsRefs}`);if(r.slowResources)pills.push(`slow resources ${r.slowResources}`);if(r.liveChanged)pills.push('live DOM change observed');if(r.navigationRecovered)pills.push('document navigation recovered');const detail=[];if(r.reasons.length)detail.push('review: '+r.reasons.join(' · '));if(r.duplicateIds.length)detail.push('duplicate IDs: '+r.duplicateIds.join(', '));if(r.errors.length)detail.push('post-load errors: '+r.errors.join(' | '));if(r.busy.length)detail.push('persistent busy UI: '+r.busy.join(', '));if(r.apiList.length)detail.push('API refs (inventory only): '+r.apiList.join(' · '));if(r.wsList.length)detail.push('WS refs (inventory only): '+r.wsList.join(' · '));return `<section class="card" data-status="${r.status}"><div class="card-head"><div class="page">${esc(r.page)}</div><div class="viewport">${r.width}px<br><small>${r.view}</small></div><div class="status ${r.status}">${r.status}</div></div><div class="pillrow">${pills.map(x=>`<span class="pill">${esc(x)}</span>`).join('')}</div>${detail.length?`<div class="meta">${esc(detail.join('\n'))}</div>`:''}</section>`}
+function render(){const root=$('#results');root.innerHTML=results.map(resultCard).join('');const pass=results.filter(r=>r.status==='PASS').length,review=results.length-pass,res=results.reduce((a,r)=>a+r.resources,0);$('#mPass').textContent=pass;$('#mReview').textContent=review;$('#mResources').textContent=res;$('#headline').textContent=results.length===21?`Completed: ${pass}/21 suites passed; ${review} need review. No application controls were intentionally clicked.`:`Running: ${results.length}/21 suites completed.`;$('#exportBtn').disabled=!results.length}
+function applyFilter(f){document.body.classList.toggle('reviewonly',f==='REVIEW');if(f==='PASS'){for(const c of document.querySelectorAll('.card'))c.style.display=c.dataset.status==='PASS'?'':'none'}else if(f==='all'){for(const c of document.querySelectorAll('.card'))c.style.display=''}else if(f==='REVIEW'){for(const c of document.querySelectorAll('.card'))c.style.display=c.dataset.status==='REVIEW'?'':'none'}document.querySelectorAll('.chip').forEach(x=>x.classList.toggle('active',x.dataset.filter===f))}
+async function runSuite(page,view){
+const r={page,view:view.name,width:view.w,status:'PASS',reasons:[],htmlStatus:0,htmlMs:0,htmlBytes:0,readyState:'',loadMs:0,domNodes:0,resources:0,fetchResources:0,apiRefs:0,wsRefs:0,slowResources:0,duplicateIds:[],errors:[],busy:[],apiList:[],wsList:[],liveChanged:false,navigationRecovered:false};
+const pageUrl=new URL(page,location.href);pageUrl.searchParams.set('mf_runtime_audit_v49',String(Date.now()));
+const html=await fetchText(pageUrl.href,12000);r.htmlStatus=html.status;r.htmlMs=html.ms;r.htmlBytes=html.bytes;if(!html.ok)r.reasons.push(`HTML fetch failed (${html.status||html.error||'unknown'})`);
+let inv={api:[],ws:[],scripts:0,styles:0,jsFetched:0};if(html.text){try{inv=await sourceInventory(pageUrl.href,html.text)}catch(e){r.reasons.push('source inventory error: '+String(e?.message||e))}}r.apiRefs=inv.api.length;r.wsRefs=inv.ws.length;r.apiList=inv.api.slice(0,12);r.wsList=inv.ws.slice(0,8);
+const frame=document.createElement('iframe');frame.className='hidden-frame';frame.width=String(view.w);frame.style.width=view.w+'px';frame.style.height='900px';document.body.appendChild(frame);
+const start=performance.now();
+function readFrame(){try{const win=frame.contentWindow,doc=frame.contentDocument;if(!win||!doc)return null;let href='';try{href=String(win.location.href||'')}catch{}return {win,doc,href,ready:doc.readyState||'',body:doc.body||null}}catch{return null}}
+async function waitStable(stableMs,deadline){let lastDoc=null,lastHref='',stableSince=0;while(Date.now()<deadline){const s=readFrame();if(s&&s.body&&(s.ready==='interactive'||s.ready==='complete')){if(s.doc!==lastDoc||s.href!==lastHref){lastDoc=s.doc;lastHref=s.href;stableSince=Date.now()}if(stableSince&&Date.now()-stableSince>=stableMs)return readFrame()}else{lastDoc=s?.doc||null;lastHref=s?.href||'';stableSince=0}await sleep(100)}return null}
+try{
+  frame.src=pageUrl.href;
+  const deadline=Date.now()+HARD_TIMEOUT_MS;
+  let state=await waitStable(650,deadline);
+  if(!state){r.reasons.push('DOM-ready timeout');return r}
+  const firstDoc=state.doc,firstHref=state.href;
+  await sleep(SETTLE_MS);
+  state=await waitStable(450,deadline);
+  if(!state){r.reasons.push('stable DOM timeout after settle');return r}
+  if(state.doc!==firstDoc||state.href!==firstHref)r.navigationRecovered=true;
+
+  let {win,doc}=state;
+  r.readyState=doc?.readyState||'';
+  r.loadMs=Math.round(performance.now()-start);
+  r.duplicateIds=duplicateIds(doc);
+  if(r.duplicateIds.length)r.reasons.push(`${r.duplicateIds.length} duplicate element ID(s)`);
+
+  const postErrors=[];
+  const onErr=e=>postErrors.push(String(e?.message||'window error'));
+  const onRej=e=>postErrors.push('unhandled rejection: '+String(e?.reason?.message||e?.reason||'unknown'));
+  try{win.addEventListener('error',onErr);win.addEventListener('unhandledrejection',onRej)}catch{}
+
+  const s1=bodySnapshot(doc,win);
+  let entries=[];try{entries=win.performance.getEntriesByType('resource')||[]}catch{}
+  r.resources=entries.length;
+  r.fetchResources=entries.filter(e=>e.initiatorType==='fetch'||e.initiatorType==='xmlhttprequest').length;
+  r.slowResources=entries.filter(e=>Number(e.duration)>1500).length;
+
+  const sampleDoc=doc,sampleHref=state.href;
+  await sleep(SAMPLE_GAP_MS);
+  let state2=readFrame();
+  if(!state2||!state2.body||(state2.ready!=='interactive'&&state2.ready!=='complete'))state2=await waitStable(350,deadline);
+  if(state2&&(state2.doc!==sampleDoc||state2.href!==sampleHref)){
+    r.navigationRecovered=true;
+    state2=await waitStable(650,deadline) || state2;
+  }
+  if(state2){win=state2.win;doc=state2.doc;r.readyState=doc?.readyState||r.readyState}
+
+  let s2=bodySnapshot(doc,win);
+  // A detached/replaced document can report body/text/resources as zero.
+  // Reacquire one final stable document before calling that a page failure.
+  if(s2.nodes===0&&s2.text<20&&html.ok){
+    const recovered=await waitStable(800,deadline);
+    if(recovered){
+      r.navigationRecovered=true;win=recovered.win;doc=recovered.doc;r.readyState=doc?.readyState||r.readyState;s2=bodySnapshot(doc,win);
+      try{entries=win.performance.getEntriesByType('resource')||[]}catch{entries=[]}
+      r.resources=Math.max(r.resources,entries.length);
+      r.fetchResources=Math.max(r.fetchResources,entries.filter(e=>e.initiatorType==='fetch'||e.initiatorType==='xmlhttprequest').length);
+      r.slowResources=Math.max(r.slowResources,entries.filter(e=>Number(e.duration)>1500).length);
+    }
+  }
+
+  r.domNodes=s2.nodes;
+  r.liveChanged=(s1.nodes!==s2.nodes||s1.text!==s2.text);
+  r.busy=s2.busy;
+  if(r.busy.length&&s1.busy.length){const both=r.busy.filter(x=>s1.busy.includes(x));r.busy=both;if(both.length)r.reasons.push(`${both.length} persistent loading/busy element(s) after settle`)}else r.busy=[];
+  r.errors=postErrors.slice(0,8);if(r.errors.length)r.reasons.push(`${r.errors.length} post-load runtime error/rejection(s)`);
+  if(s2.text<20)r.reasons.push('page body has almost no visible text after stable-document recovery');
+  if(r.readyState!=='interactive'&&r.readyState!=='complete')r.reasons.push('document never became interactive/complete');
+  try{win.removeEventListener('error',onErr);win.removeEventListener('unhandledrejection',onRej)}catch{}
+  return r;
+}catch(e){r.reasons.push('runtime inspection exception: '+String(e?.message||e));return r}finally{r.loadMs=r.loadMs||Math.round(performance.now()-start);r.status=r.reasons.length?'REVIEW':'PASS';frame.remove()}}
+
+async function run(){const btn=$('#runBtn');btn.disabled=true;results.splice(0);render();$('#bar').style.width='0%';let done=0;for(const page of PAGES){for(const view of VIEWS){const r=await runSuite(page,view);results.push(r);done++;$('#bar').style.width=(done/21*100).toFixed(1)+'%';render();await sleep(120)}}btn.disabled=false}
+$('#runBtn').addEventListener('click',run);$('#reviewBtn').addEventListener('click',()=>applyFilter('REVIEW'));document.querySelectorAll('.chip').forEach(b=>b.addEventListener('click',()=>applyFilter(b.dataset.filter)));$('#exportBtn').addEventListener('click',()=>{const payload={audit:'MEMEFLOW Production Runtime Audit V49',origin:location.origin,generatedAt:new Date().toISOString(),results};const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='memeflow-runtime-audit-v49.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)});
+})();
+</script>
+</body>
+</html>

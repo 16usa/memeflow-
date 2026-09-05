@@ -52,8 +52,20 @@
     }
   ];
 
-  function normalizedPath(pathname = window.location.pathname) {
-    return String(pathname || '/').replace(/\/+$/, '') || '/';
+  function normalizedPath(value = window.location.href) {
+    let pathname = '/';
+
+    try {
+      pathname = new URL(String(value || '/'), window.location.href).pathname;
+    } catch {
+      pathname = String(value || '/').split(/[?#]/, 1)[0];
+    }
+
+    pathname = pathname
+      .replace(/\/index\.html$/i, '/')
+      .replace(/\/+$/, '');
+
+    return pathname || '/';
   }
 
   function resolveHeaderHost() {

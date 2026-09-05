@@ -1,0 +1,182 @@
+/* MEMEFLOW System Settings Light Polish V60
+   Light theme only.
+   Neutral palette: #FFFFFF / #F5F5F5 / #EBEBEB.
+   Semantic cyan / green / yellow / red states are preserved.
+   No typography, geometry, JS, API, scanner, wallet or trading logic changes.
+*/
+
+html[data-theme="light"] body.mf-settings-standalone {
+  --mf-settings-v60-canvas: #ffffff;
+  --mf-settings-v60-surface: #f5f5f5;
+  --mf-settings-v60-inset: #ebebeb;
+  --mf-settings-v60-line: rgba(23, 23, 23, .075);
+  --mf-settings-v60-line-strong: rgba(23, 23, 23, .11);
+  --mf-settings-v60-text: #171717;
+  --mf-settings-v60-muted: #737373;
+
+  background: var(--mf-settings-v60-canvas) !important;
+  background-image: none !important;
+  color: var(--mf-settings-v60-text) !important;
+}
+
+/* Page shell stays white and clean. Header/navigation are intentionally untouched. */
+html[data-theme="light"] body.mf-settings-standalone .mf-settings-page-shell,
+html[data-theme="light"] body.mf-settings-standalone .mf293-settings-backdrop {
+  background: transparent !important;
+  background-image: none !important;
+}
+
+/* Main configuration surface. */
+html[data-theme="light"] body.mf-settings-standalone .mf293-settings-panel {
+  background: var(--mf-settings-v60-canvas) !important;
+  background-image: none !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Head/meta/footer dividers are enough; no heavy container borders. */
+html[data-theme="light"] body.mf-settings-standalone .mf293-settings-head,
+html[data-theme="light"] body.mf-settings-standalone .mf293-settings-meta,
+html[data-theme="light"] body.mf-settings-standalone .mf293-settings-footer {
+  background: transparent !important;
+  background-image: none !important;
+  border-color: var(--mf-settings-v60-line) !important;
+  box-shadow: none !important;
+}
+
+/* Top summary cards. */
+html[data-theme="light"] body.mf-settings-standalone .mf293-settings-meta > span,
+html[data-theme="light"] body.mf-settings-standalone .mf293-settings-meta > label {
+  background: var(--mf-settings-v60-surface) !important;
+  background-image: none !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Accordion sections — one consistent level across every settings group. */
+html[data-theme="light"] body.mf-settings-standalone .mf293-settings-group,
+html[data-theme="light"] body.mf-settings-standalone .mf293-settings-group[open] {
+  background: var(--mf-settings-v60-surface) !important;
+  background-image: none !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Keep summaries clean; open/closed is communicated by the chevron and content. */
+html[data-theme="light"] body.mf-settings-standalone .mf293-settings-group > summary {
+  background: transparent !important;
+  background-image: none !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body.mf-settings-standalone .mf293-settings-group[open] > summary {
+  border-bottom: 1px solid var(--mf-settings-v60-line) !important;
+}
+
+/* Field cards are the third neutral level. */
+html[data-theme="light"] body.mf-settings-standalone .mf293-field,
+html[data-theme="light"] body.mf-settings-standalone .mf-agent-item,
+html[data-theme="light"] body.mf-settings-standalone .mf-agent-event {
+  background: var(--mf-settings-v60-inset) !important;
+  background-image: none !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Focus should be subtle and neutral; semantic controls keep their own colors. */
+html[data-theme="light"] body.mf-settings-standalone .mf293-field:focus-within {
+  background: var(--mf-settings-v60-inset) !important;
+  border-color: var(--mf-settings-v60-line-strong) !important;
+  box-shadow: none !important;
+}
+
+/* Native input/select surface inside the inset field. */
+html[data-theme="light"] body.mf-settings-standalone
+.mf293-field input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+html[data-theme="light"] body.mf-settings-standalone .mf293-field select,
+html[data-theme="light"] body.mf-settings-standalone .mf293-field textarea {
+  background: var(--mf-settings-v60-canvas) !important;
+  background-image: none !important;
+  border-color: var(--mf-settings-v60-line) !important;
+  color: var(--mf-settings-v60-text) !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body.mf-settings-standalone
+.mf293-field input:disabled,
+html[data-theme="light"] body.mf-settings-standalone
+.mf293-field select:disabled,
+html[data-theme="light"] body.mf-settings-standalone
+.mf293-field textarea:disabled {
+  background: var(--mf-settings-v60-surface) !important;
+  color: #8a8a8a !important;
+}
+
+/* Neutral copy. Accent eyebrow/status colors are not overwritten. */
+html[data-theme="light"] body.mf-settings-standalone .mf293-settings-head h2,
+html[data-theme="light"] body.mf-settings-standalone .mf293-settings-group summary strong,
+html[data-theme="light"] body.mf-settings-standalone .mf293-settings-meta strong,
+html[data-theme="light"] body.mf-settings-standalone .mf-agent-item b {
+  color: var(--mf-settings-v60-text) !important;
+}
+
+html[data-theme="light"] body.mf-settings-standalone .mf293-settings-head p,
+html[data-theme="light"] body.mf-settings-standalone .mf293-settings-group summary small,
+html[data-theme="light"] body.mf-settings-standalone .mf293-field-label,
+html[data-theme="light"] body.mf-settings-standalone .mf293-settings-meta span,
+html[data-theme="light"] body.mf-settings-standalone .mf293-dex-filter-meta,
+html[data-theme="light"] body.mf-settings-standalone .mf-agent-note,
+html[data-theme="light"] body.mf-settings-standalone .mf-agent-history,
+html[data-theme="light"] body.mf-settings-standalone .mf-agent-status {
+  color: var(--mf-settings-v60-muted) !important;
+}
+
+/* Off-state switch becomes neutral gray.
+   Checked-state rules are intentionally NOT overridden, preserving MEMEFLOW green. */
+html[data-theme="light"] body.mf-settings-standalone .mf293-switch-track {
+  background: #d8d8d8 !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body.mf-settings-standalone .mf293-switch-track::after {
+  background: #ffffff !important;
+  box-shadow: 0 1px 2px rgba(23, 23, 23, .10) !important;
+}
+
+html[data-theme="light"] body.mf-settings-standalone
+.mf293-switch input:checked + .mf293-switch-track {
+  border-color: rgba(77, 230, 161, .32) !important;
+  background: rgba(77, 230, 161, .14) !important;
+}
+
+html[data-theme="light"] body.mf-settings-standalone
+.mf293-switch input:checked + .mf293-switch-track::after {
+  background: #4de6a1 !important;
+  box-shadow: 0 0 10px rgba(77, 230, 161, .18) !important;
+}
+
+/* Secondary actions use the same neutral hierarchy. Primary action stays semantic. */
+html[data-theme="light"] body.mf-settings-standalone .mf293-secondary,
+html[data-theme="light"] body.mf-settings-standalone .mf-agent-review button {
+  background: var(--mf-settings-v60-inset) !important;
+  background-image: none !important;
+  border-color: transparent !important;
+  color: #333333 !important;
+  box-shadow: none !important;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  html[data-theme="light"] body.mf-settings-standalone .mf293-secondary:hover,
+  html[data-theme="light"] body.mf-settings-standalone .mf-agent-review button:hover {
+    background: #e4e4e4 !important;
+  }
+}
+
+/* Errors/warnings retain their semantic color; only remove decorative shadow. */
+html[data-theme="light"] body.mf-settings-standalone .mf293-settings-error {
+  box-shadow: none !important;
+}
+
+/* MEMEFLOW_SETTINGS_LIGHT_POLISH_V60_END */

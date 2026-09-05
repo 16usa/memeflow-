@@ -1,0 +1,274 @@
+/* ========================================================================
+   MEMEFLOW INTERACTION STATES V58
+   Interaction feedback only.
+
+   Native active/selected/status colors are deliberately preserved.
+   Header/navigation and System Overview 3D gallery are deliberately excluded.
+   ======================================================================== */
+
+body.mf-interaction-states-v58 {
+  --mf-v58-focus: rgba(85, 217, 255, .62);
+  --mf-v58-focus-soft: rgba(85, 217, 255, .12);
+  --mf-v58-hover: rgba(85, 217, 255, .045);
+  --mf-v58-hover-border: rgba(85, 217, 255, .18);
+  --mf-v58-press: rgba(85, 217, 255, .075);
+}
+
+html[data-theme="light"] body.mf-interaction-states-v58 {
+  --mf-v58-focus: rgba(0, 115, 150, .58);
+  --mf-v58-focus-soft: rgba(0, 115, 150, .10);
+  --mf-v58-hover: rgba(17, 24, 39, .035);
+  --mf-v58-hover-border: rgba(17, 24, 39, .12);
+  --mf-v58-press: rgba(17, 24, 39, .065);
+}
+
+/* Shared transition cadence, restricted to known page-content controls. */
+body.mf-page-trading.mf-interaction-states-v58 .terminal :where(
+  button,
+  .candidate
+),
+body.mf-page-system-tokens.mf-interaction-states-v58 .flow-page :where(
+  .summary-card,
+  .mf-time-window-v47c button,
+  #refreshButton,
+  .pagination button,
+  .search-wrap input
+),
+body.mf-page-smart-vault.mf-interaction-states-v58 .mf-vault-shell :where(
+  .mf-vault-card button,
+  .mf-vault-status-panel button,
+  .mf-vault-switch
+),
+body.mf-page-how-it-works.mf-interaction-states-v58 :where(
+  .mf-hiw-btn,
+  .mf-hiw-node
+),
+body.mf-page-agent-performance.mf-interaction-states-v58 :where(
+  .ap-periods button,
+  .ap-refresh
+),
+body.mf-page-settings.mf-interaction-states-v58 :where(
+  .mf293-settings-group button,
+  .mf293-settings-group input,
+  .mf293-settings-group select,
+  .settings-group button,
+  .settings-group input,
+  .settings-group select,
+  .mf-theme-appearance button
+) {
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease,
+    box-shadow 150ms ease,
+    color 150ms ease,
+    opacity 150ms ease,
+    transform 90ms ease;
+}
+
+/* ------------------------------------------------------------------------
+   FOCUS-VISIBLE
+   One keyboard-focus language. Does not recolor the component itself.
+   ------------------------------------------------------------------------ */
+
+body.mf-page-trading.mf-interaction-states-v58 .terminal :where(
+  button,
+  .candidate
+):focus-visible,
+body.mf-page-system-tokens.mf-interaction-states-v58 .flow-page :where(
+  .summary-card,
+  .mf-time-window-v47c button,
+  #refreshButton,
+  .pagination button,
+  .search-wrap input
+):focus-visible,
+body.mf-page-smart-vault.mf-interaction-states-v58 .mf-vault-shell :where(
+  .mf-vault-card button,
+  .mf-vault-status-panel button,
+  .mf-vault-switch
+):focus-visible,
+body.mf-page-how-it-works.mf-interaction-states-v58 :where(
+  .mf-hiw-btn,
+  .mf-hiw-node
+):focus-visible,
+body.mf-page-agent-performance.mf-interaction-states-v58 :where(
+  .ap-periods button,
+  .ap-refresh
+):focus-visible,
+body.mf-page-settings.mf-interaction-states-v58 :where(
+  .mf293-settings-group button,
+  .mf293-settings-group input,
+  .mf293-settings-group select,
+  .settings-group button,
+  .settings-group input,
+  .settings-group select,
+  .mf-theme-appearance button
+):focus-visible {
+  outline: 2px solid var(--mf-v58-focus) !important;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px var(--mf-v58-focus-soft);
+}
+
+/* Input/select focus uses border feedback in addition to the shared ring. */
+body.mf-page-system-tokens.mf-interaction-states-v58 .search-wrap:focus-within,
+body.mf-page-settings.mf-interaction-states-v58 :where(
+  .mf293-field,
+  .setting-field
+):focus-within {
+  border-color: var(--mf-v58-hover-border) !important;
+}
+
+/* ------------------------------------------------------------------------
+   HOVER
+   Only neutral controls receive a neutral hover surface.
+   Active/selected/status controls keep their native page colors.
+   ------------------------------------------------------------------------ */
+
+@media (hover: hover) and (pointer: fine) {
+  body.mf-page-trading.mf-interaction-states-v58 .terminal :where(
+    .candidate-filter button:not(.active),
+    .timeframes button:not(.active),
+    .indicator-scroll button:not([aria-pressed="true"]),
+    .strategy-edit-link,
+    .price-toggle
+  ):hover {
+    background-color: var(--mf-v58-hover) !important;
+    border-color: var(--mf-v58-hover-border) !important;
+  }
+
+  body.mf-page-trading.mf-interaction-states-v58 .terminal
+  .candidate:not(.selected):hover {
+    background-color: var(--mf-v58-hover) !important;
+  }
+
+  body.mf-page-system-tokens.mf-interaction-states-v58 .flow-page :where(
+    .mf-time-window-v47c button:not(.is-active),
+    #refreshButton,
+    .pagination button:not(:disabled)
+  ):hover {
+    background-color: var(--mf-v58-hover) !important;
+    border-color: var(--mf-v58-hover-border) !important;
+  }
+
+  body.mf-page-smart-vault.mf-interaction-states-v58 .mf-vault-shell
+  .mf-vault-btn:not(.mf-vault-btn-primary):not(:disabled):hover {
+    background-color: var(--mf-v58-hover) !important;
+    border-color: var(--mf-v58-hover-border) !important;
+  }
+
+  body.mf-page-how-it-works.mf-interaction-states-v58
+  .mf-hiw-node:not(.is-active):hover {
+    border-color: var(--mf-v58-hover-border) !important;
+  }
+
+  body.mf-page-agent-performance.mf-interaction-states-v58 :where(
+    .ap-periods button:not(.active),
+    .ap-refresh
+  ):hover {
+    background-color: var(--mf-v58-hover) !important;
+    border-color: var(--mf-v58-hover-border) !important;
+  }
+
+  body.mf-page-settings.mf-interaction-states-v58 :where(
+    .mf293-secondary,
+    .mf-agent-review button,
+    .settings-group button:not(.active)
+  ):not(:disabled):hover {
+    background-color: var(--mf-v58-hover) !important;
+    border-color: var(--mf-v58-hover-border) !important;
+  }
+}
+
+/* ------------------------------------------------------------------------
+   PRESSED
+   Small tactile depression only on compact controls; cards/3D nodes do not move.
+   ------------------------------------------------------------------------ */
+
+body.mf-page-trading.mf-interaction-states-v58 .terminal :where(
+  .candidate-filter button,
+  .timeframes button,
+  .indicator-scroll button,
+  .strategy-edit-link,
+  .price-toggle
+):not(:disabled):active,
+body.mf-page-system-tokens.mf-interaction-states-v58 .flow-page :where(
+  .mf-time-window-v47c button,
+  #refreshButton,
+  .pagination button
+):not(:disabled):active,
+body.mf-page-smart-vault.mf-interaction-states-v58 .mf-vault-shell
+.mf-vault-btn:not(:disabled):active,
+body.mf-page-agent-performance.mf-interaction-states-v58 :where(
+  .ap-periods button,
+  .ap-refresh
+):not(:disabled):active,
+body.mf-page-settings.mf-interaction-states-v58 :where(
+  .mf293-settings-group button,
+  .settings-group button,
+  .mf-theme-appearance button
+):not(:disabled):active {
+  transform: translateY(1px);
+}
+
+/* Press fill only for neutral controls. Active semantic colors are not replaced. */
+body.mf-page-trading.mf-interaction-states-v58 .terminal :where(
+  .candidate-filter button:not(.active),
+  .timeframes button:not(.active),
+  .indicator-scroll button:not([aria-pressed="true"]),
+  .strategy-edit-link,
+  .price-toggle
+):not(:disabled):active,
+body.mf-page-system-tokens.mf-interaction-states-v58 .flow-page :where(
+  .mf-time-window-v47c button:not(.is-active),
+  #refreshButton,
+  .pagination button
+):not(:disabled):active,
+body.mf-page-smart-vault.mf-interaction-states-v58 .mf-vault-shell
+.mf-vault-btn:not(.mf-vault-btn-primary):not(:disabled):active,
+body.mf-page-agent-performance.mf-interaction-states-v58 :where(
+  .ap-periods button:not(.active),
+  .ap-refresh
+):not(:disabled):active {
+  background-color: var(--mf-v58-press) !important;
+}
+
+/* ------------------------------------------------------------------------
+   DISABLED / BUSY
+   Same muted feedback without changing status meanings.
+   ------------------------------------------------------------------------ */
+
+body.mf-page-trading.mf-interaction-states-v58 .terminal
+button:disabled,
+body.mf-page-system-tokens.mf-interaction-states-v58 .flow-page
+button:disabled,
+body.mf-page-smart-vault.mf-interaction-states-v58 .mf-vault-shell
+button:disabled,
+body.mf-page-agent-performance.mf-interaction-states-v58
+button:disabled,
+body.mf-page-settings.mf-interaction-states-v58 :where(
+  .mf293-settings-group button,
+  .settings-group button,
+  .mf-theme-appearance button
+):disabled {
+  opacity: .46;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* ------------------------------------------------------------------------
+   REDUCED MOTION
+   ------------------------------------------------------------------------ */
+
+@media (prefers-reduced-motion: reduce) {
+  body.mf-interaction-states-v58 :where(
+    button,
+    input,
+    select,
+    .candidate,
+    .mf-hiw-btn,
+    .mf-hiw-node
+  ) {
+    transition: none !important;
+  }
+}
+
+/* MEMEFLOW_INTERACTION_STATES_V58_END */

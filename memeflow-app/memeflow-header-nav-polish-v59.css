@@ -1,0 +1,254 @@
+/* ========================================================================
+   MEMEFLOW HEADER & NAVIGATION POLISH V59
+   Header/navigation presentation and interaction only.
+
+   Existing header geometry and sticky ownership remain unchanged.
+   ======================================================================== */
+
+body.mf-header-nav-polish-v59 {
+  --mf-v59-header-bg: rgba(15, 20, 26, .94);
+  --mf-v59-header-line: rgba(145, 173, 198, .075);
+  --mf-v59-header-shadow: 0 1px 0 rgba(0, 0, 0, .08);
+  --mf-v59-control-hover: rgba(255, 255, 255, .035);
+  --mf-v59-control-press: rgba(255, 255, 255, .06);
+  --mf-v59-focus: rgba(85, 217, 255, .60);
+
+  --mf-v59-drawer-bg: rgba(15, 20, 26, .985);
+  --mf-v59-drawer-line: rgba(145, 173, 198, .085);
+  --mf-v59-drawer-shadow: -18px 0 48px rgba(0, 0, 0, .26);
+  --mf-v59-link-hover: rgba(85, 217, 255, .035);
+  --mf-v59-link-current: rgba(85, 217, 255, .045);
+  --mf-v59-backdrop: rgba(2, 6, 9, .42);
+}
+
+html[data-theme="light"] body.mf-header-nav-polish-v59 {
+  --mf-v59-header-bg: rgba(255, 255, 255, .97);
+  --mf-v59-header-line: rgba(17, 24, 39, .07);
+  --mf-v59-header-shadow: 0 1px 0 rgba(17, 24, 39, .025);
+  --mf-v59-control-hover: rgba(17, 24, 39, .035);
+  --mf-v59-control-press: rgba(17, 24, 39, .06);
+  --mf-v59-focus: rgba(0, 115, 150, .56);
+
+  --mf-v59-drawer-bg: rgba(255, 255, 255, .985);
+  --mf-v59-drawer-line: rgba(17, 24, 39, .07);
+  --mf-v59-drawer-shadow: -18px 0 44px rgba(17, 24, 39, .10);
+  --mf-v59-link-hover: rgba(17, 24, 39, .035);
+  --mf-v59-link-current: rgba(17, 24, 39, .045);
+  --mf-v59-backdrop: rgba(17, 24, 39, .18);
+}
+
+/* ------------------------------------------------------------------------
+   CANONICAL HEADER
+   No width/height/padding/grid changes here.
+   ------------------------------------------------------------------------ */
+
+body.mf-header-nav-polish-v59 .mf-site-header {
+  background: var(--mf-v59-header-bg) !important;
+  background-image: none !important;
+  border-bottom-color: var(--mf-v59-header-line) !important;
+  box-shadow: var(--mf-v59-header-shadow) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(135%) !important;
+  backdrop-filter: blur(16px) saturate(135%) !important;
+  transition:
+    background-color 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+/* Sticky headers get only a restrained layer cue; geometry remains canonical. */
+body.mf-header-nav-polish-v59 .mf-site-header.mf-site-header--sticky {
+  box-shadow:
+    0 1px 0 var(--mf-v59-header-line),
+    0 8px 24px rgba(0, 0, 0, .055) !important;
+}
+
+html[data-theme="light"]
+body.mf-header-nav-polish-v59
+.mf-site-header.mf-site-header--sticky {
+  box-shadow:
+    0 1px 0 var(--mf-v59-header-line),
+    0 8px 22px rgba(17, 24, 39, .045) !important;
+}
+
+/* Brand links stay visually quiet but keyboard-accessible. */
+body.mf-header-nav-polish-v59 .mf-site-header :where(
+  .brand,
+  .brand-block,
+  .mf-vault-brand,
+  .mf-hiw-brand
+)[href]:focus-visible {
+  outline: 2px solid var(--mf-v59-focus);
+  outline-offset: 4px;
+  border-radius: 8px;
+}
+
+/* ------------------------------------------------------------------------
+   MENU TOGGLE
+   ------------------------------------------------------------------------ */
+
+body.mf-header-nav-polish-v59 .mf-nav-toggle {
+  border-radius: 10px;
+  transition:
+    background-color 150ms ease,
+    box-shadow 150ms ease,
+    transform 90ms ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  body.mf-header-nav-polish-v59 .mf-nav-toggle:hover {
+    background: var(--mf-v59-control-hover) !important;
+  }
+}
+
+body.mf-header-nav-polish-v59 .mf-nav-toggle:focus-visible {
+  outline: 2px solid var(--mf-v59-focus) !important;
+  outline-offset: 2px;
+  background: var(--mf-v59-control-hover) !important;
+  box-shadow: none !important;
+}
+
+body.mf-header-nav-polish-v59 .mf-nav-toggle:active {
+  background: var(--mf-v59-control-press) !important;
+  transform: scale(.96);
+}
+
+html[data-mf-nav-open="1"]
+body.mf-header-nav-polish-v59
+.mf-nav-toggle {
+  background: var(--mf-v59-control-hover) !important;
+}
+
+/* Keep hamburger/cross contrast consistent in both themes. */
+body.mf-header-nav-polish-v59 .mf-nav-toggle-line {
+  background: #aebfc8;
+}
+
+body.mf-header-nav-polish-v59 .mf-nav-toggle:hover .mf-nav-toggle-line,
+body.mf-header-nav-polish-v59 .mf-nav-toggle:focus-visible .mf-nav-toggle-line,
+html[data-mf-nav-open="1"] body.mf-header-nav-polish-v59 .mf-nav-toggle-line {
+  background: #eef5f8;
+}
+
+html[data-theme="light"]
+body.mf-header-nav-polish-v59
+.mf-nav-toggle-line {
+  background: #65757e;
+}
+
+html[data-theme="light"]
+body.mf-header-nav-polish-v59
+.mf-nav-toggle:hover .mf-nav-toggle-line,
+html[data-theme="light"]
+body.mf-header-nav-polish-v59
+.mf-nav-toggle:focus-visible .mf-nav-toggle-line,
+html[data-theme="light"][data-mf-nav-open="1"]
+body.mf-header-nav-polish-v59
+.mf-nav-toggle-line {
+  background: #17222c;
+}
+
+/* ------------------------------------------------------------------------
+   BACKDROP + DRAWER
+   ------------------------------------------------------------------------ */
+
+body.mf-header-nav-polish-v59 .mf-nav-backdrop {
+  background: var(--mf-v59-backdrop) !important;
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+}
+
+body.mf-header-nav-polish-v59 .mf-nav-drawer {
+  background: var(--mf-v59-drawer-bg) !important;
+  background-image: none !important;
+  border-left-color: var(--mf-v59-drawer-line) !important;
+  box-shadow: var(--mf-v59-drawer-shadow) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(125%);
+  backdrop-filter: blur(18px) saturate(125%);
+}
+
+body.mf-header-nav-polish-v59 .mf-nav-drawer-head,
+body.mf-header-nav-polish-v59 .mf-nav-foot {
+  border-color: var(--mf-v59-drawer-line) !important;
+}
+
+/* ------------------------------------------------------------------------
+   NAV LINKS
+   Stable, non-jumping movement. Current-page green dot stays native.
+   ------------------------------------------------------------------------ */
+
+body.mf-header-nav-polish-v59 .mf-nav-link {
+  border-bottom-color: var(--mf-v59-drawer-line) !important;
+  border-radius: 10px;
+  transition:
+    background-color 150ms ease,
+    color 150ms ease,
+    box-shadow 150ms ease;
+}
+
+/* Undo the old horizontal padding jump on hover/focus. */
+body.mf-header-nav-polish-v59 .mf-nav-link:hover,
+body.mf-header-nav-polish-v59 .mf-nav-link:focus-visible {
+  padding-left: 7px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  body.mf-header-nav-polish-v59 .mf-nav-link:hover {
+    background: var(--mf-v59-link-hover) !important;
+  }
+}
+
+body.mf-header-nav-polish-v59 .mf-nav-link:focus-visible {
+  outline: 2px solid var(--mf-v59-focus) !important;
+  outline-offset: -2px;
+  background: var(--mf-v59-link-hover) !important;
+}
+
+body.mf-header-nav-polish-v59 .mf-nav-link[aria-current="page"] {
+  background: var(--mf-v59-link-current);
+}
+
+/* Arrow motion is tiny and does not shift the text column. */
+body.mf-header-nav-polish-v59
+.mf-nav-link:not([aria-current="page"])
+.mf-nav-link-arrow {
+  transform: translateX(-1px);
+}
+
+body.mf-header-nav-polish-v59
+.mf-nav-link:not([aria-current="page"]):hover
+.mf-nav-link-arrow,
+body.mf-header-nav-polish-v59
+.mf-nav-link:not([aria-current="page"]):focus-visible
+.mf-nav-link-arrow {
+  transform: translateX(2px);
+}
+
+/* ------------------------------------------------------------------------
+   MOBILE / REDUCED MOTION
+   ------------------------------------------------------------------------ */
+
+@media (max-width: 600px) {
+  body.mf-header-nav-polish-v59 .mf-nav-toggle {
+    border-radius: 9px;
+  }
+
+  body.mf-header-nav-polish-v59 .mf-nav-link {
+    border-radius: 9px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.mf-header-nav-polish-v59 :where(
+    .mf-site-header,
+    .mf-nav-toggle,
+    .mf-nav-toggle-line,
+    .mf-nav-backdrop,
+    .mf-nav-drawer,
+    .mf-nav-link,
+    .mf-nav-link-arrow
+  ) {
+    transition: none !important;
+  }
+}
+
+/* MEMEFLOW_HEADER_NAV_POLISH_V59_END */

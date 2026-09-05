@@ -1,0 +1,304 @@
+/* ========================================================================
+   MEMEFLOW SURFACE HIERARCHY V57
+   Light-theme presentation layer only.
+
+   Three neutral levels:
+     canvas       #ffffff
+     surface-1    #f7f7f7  (large structural panels)
+     surface-2    #eeeeee  (nested / secondary panels and neutral controls)
+
+   Status/accent colors are intentionally not redefined here.
+   The System Overview 3D/page-gallery viewport and cards are intentionally
+   excluded from all V57 selectors.
+   ======================================================================== */
+
+html[data-theme="light"] body.mf-surface-hierarchy-v57 {
+  --mf-v57-canvas: #ffffff;
+  --mf-v57-surface-1: #f7f7f7;
+  --mf-v57-surface-1-hover: #f3f3f3;
+  --mf-v57-surface-2: #eeeeee;
+  --mf-v57-surface-2-hover: #e9e9e9;
+  --mf-v57-line: rgba(17, 24, 39, .065);
+  --mf-v57-line-strong: rgba(17, 24, 39, .10);
+  --mf-v57-shadow: 0 1px 2px rgba(17, 24, 39, .025);
+
+  background: var(--mf-v57-canvas) !important;
+  background-image: none !important;
+}
+
+/* =========================================================================
+   TRADING TERMINAL
+   Large panels = level 1. Neutral nested rows/controls = level 2.
+   Status badges and state-colored elements are excluded.
+   ========================================================================= */
+
+html[data-theme="light"]
+body.mf-page-trading.mf-surface-hierarchy-v57
+.mf-trading-terminal .panel {
+  background: var(--mf-v57-surface-1) !important;
+  background-image: none !important;
+  border-color: var(--mf-v57-line) !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"]
+body.mf-page-trading.mf-surface-hierarchy-v57
+.mf-trading-terminal :where(
+  .strategy-summary-row,
+  .selected-metrics > div,
+  .empty,
+  .indicator-bar
+) {
+  background: var(--mf-v57-surface-2) !important;
+  background-image: none !important;
+  border-color: var(--mf-v57-line) !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"]
+body.mf-page-trading.mf-surface-hierarchy-v57
+.mf-trading-terminal :where(
+  .candidate-filter button:not(.active),
+  .timeframes button:not(.active),
+  .strategy-edit-link,
+  .wallet-btn
+) {
+  background: var(--mf-v57-surface-2) !important;
+  background-image: none !important;
+  border-color: var(--mf-v57-line) !important;
+  box-shadow: none !important;
+}
+
+/* =========================================================================
+   TOKEN FLOW
+   Keep token-state rows and colored status cards native.
+   Only structural/neutral surfaces are normalized.
+   ========================================================================= */
+
+html[data-theme="light"]
+body.mf-page-system-tokens.mf-surface-hierarchy-v57
+.flow-page :where(.flow-hero, .flow-toolbar, .pagination) {
+  background: var(--mf-v57-surface-1) !important;
+  background-image: none !important;
+  border-color: var(--mf-v57-line) !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"]
+body.mf-page-system-tokens.mf-surface-hierarchy-v57
+.flow-page :where(.search-wrap, .mf-time-window-v47c) {
+  background: var(--mf-v57-surface-2) !important;
+  background-image: none !important;
+  border-color: var(--mf-v57-line) !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"]
+body.mf-page-system-tokens.mf-surface-hierarchy-v57
+.flow-page .mf-time-window-v47c button:not(.is-active) {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* =========================================================================
+   SMART VAULT
+   Large cards = level 1. Internal stats/controls/checklist = level 2.
+   Colored security/status badges remain untouched.
+   ========================================================================= */
+
+html[data-theme="light"]
+body.mf-page-smart-vault.mf-surface-hierarchy-v57
+.mf-vault-shell :where(.mf-vault-card, .mf-vault-status-panel) {
+  background: var(--mf-v57-surface-1) !important;
+  background-image: none !important;
+  border-color: var(--mf-v57-line) !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"]
+body.mf-page-smart-vault.mf-surface-hierarchy-v57
+.mf-vault-shell :where(
+  .mf-vault-stat,
+  .mf-vault-control-row,
+  .mf-vault-checklist > div
+) {
+  background: var(--mf-v57-surface-2) !important;
+  background-image: none !important;
+  border-color: var(--mf-v57-line) !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"]
+body.mf-page-smart-vault.mf-surface-hierarchy-v57
+.mf-vault-shell .mf-vault-btn:not(.mf-vault-btn-primary) {
+  background: var(--mf-v57-surface-2) !important;
+  background-image: none !important;
+  border-color: var(--mf-v57-line) !important;
+  box-shadow: none !important;
+}
+
+/* =========================================================================
+   AGENT PERFORMANCE
+   Preserve green/red/cyan accents. Neutral analytical surfaces only.
+   ========================================================================= */
+
+html[data-theme="light"]
+body.mf-page-agent-performance.mf-surface-hierarchy-v57
+:where(.ap-source, .ap-panel, .ap-kpis article) {
+  background: var(--mf-v57-surface-1) !important;
+  background-image: none !important;
+  border-color: var(--mf-v57-line) !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"]
+body.mf-page-agent-performance.mf-surface-hierarchy-v57
+:where(.ap-summary > div, .factor, .rank, .empty) {
+  background: var(--mf-v57-surface-2) !important;
+  background-image: none !important;
+  border-color: var(--mf-v57-line) !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"]
+body.mf-page-agent-performance.mf-surface-hierarchy-v57
+.ap-periods {
+  background: var(--mf-v57-surface-2) !important;
+  border-color: var(--mf-v57-line) !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"]
+body.mf-page-agent-performance.mf-surface-hierarchy-v57
+.ap-periods button:not(.active) {
+  background: transparent !important;
+}
+
+/* =========================================================================
+   HOW IT WORKS
+   Keep cyan/green signals native; neutral explanatory layers are normalized.
+   ========================================================================= */
+
+html[data-theme="light"]
+body.mf-page-how-it-works.mf-surface-hierarchy-v57
+:where(
+  .mf-hiw-status-card,
+  .mf-hiw-map-shell,
+  .mf-hiw-money,
+  .mf-hiw-cta
+) {
+  background: var(--mf-v57-surface-1) !important;
+  background-image: none !important;
+  border-color: var(--mf-v57-line) !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"]
+body.mf-page-how-it-works.mf-surface-hierarchy-v57
+:where(
+  .mf-hiw-status-stack > div,
+  .mf-hiw-node,
+  .mf-hiw-step,
+  .mf-hiw-map-detail
+) {
+  background: var(--mf-v57-surface-2) !important;
+  background-image: none !important;
+  border-color: var(--mf-v57-line) !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"]
+body.mf-page-how-it-works.mf-surface-hierarchy-v57
+.mf-hiw-btn-ghost {
+  background: var(--mf-v57-surface-2) !important;
+  background-image: none !important;
+  border-color: var(--mf-v57-line) !important;
+  box-shadow: none !important;
+}
+
+/* =========================================================================
+   SETTINGS
+   The body is runtime-generated; target the stable settings component classes.
+   Active/status/accent controls are deliberately not recolored.
+   ========================================================================= */
+
+html[data-theme="light"]
+body.mf-page-settings.mf-surface-hierarchy-v57
+:where(
+  .mf293-settings-group,
+  .settings-group,
+  .settings-context,
+  .mf-theme-appearance
+) {
+  background: var(--mf-v57-surface-1) !important;
+  background-image: none !important;
+  border-color: var(--mf-v57-line) !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"]
+body.mf-page-settings.mf-surface-hierarchy-v57
+:where(
+  .mf293-field,
+  .mf-agent-item,
+  .mf-agent-event,
+  .settings-summary > div,
+  .setting-field input,
+  .setting-field select,
+  .toggle-row
+) {
+  background: var(--mf-v57-surface-2) !important;
+  background-image: none !important;
+  border-color: var(--mf-v57-line) !important;
+  box-shadow: none !important;
+}
+
+/* =========================================================================
+   SYSTEM OVERVIEW
+   IMPORTANT: the 3D gallery itself is NOT selected here.
+   Only neutral content below/around that viewport receives surface hierarchy.
+   ========================================================================= */
+
+html[data-theme="light"]
+body.mf-page-system.mf-surface-hierarchy-v57
+:where(.mf-infra, .activity-panel) {
+  background: var(--mf-v57-surface-1) !important;
+  background-image: none !important;
+  border-color: var(--mf-v57-line) !important;
+  box-shadow: none !important;
+}
+
+/*
+  Explicit anti-regression guard/documentation:
+  V57 intentionally has NO visual property rules for:
+    .viewport-wrap
+    #mfPageGallery
+    .mfpg-card
+    .mfpg-shot
+    .mfpg-deck
+  Their geometry/3D styling remains owned by the existing System page layers.
+*/
+
+/* Hover only for known neutral controls. No status/accent state is touched. */
+@media (hover: hover) {
+  html[data-theme="light"]
+  body.mf-page-trading.mf-surface-hierarchy-v57
+  .mf-trading-terminal :where(
+    .candidate-filter button:not(.active),
+    .timeframes button:not(.active),
+    .strategy-edit-link,
+    .wallet-btn
+  ):hover,
+
+  html[data-theme="light"]
+  body.mf-page-smart-vault.mf-surface-hierarchy-v57
+  .mf-vault-btn:not(.mf-vault-btn-primary):hover,
+
+  html[data-theme="light"]
+  body.mf-page-how-it-works.mf-surface-hierarchy-v57
+  .mf-hiw-btn-ghost:hover {
+    background: var(--mf-v57-surface-2-hover) !important;
+  }
+}
+
+/* MEMEFLOW_SURFACE_HIERARCHY_V57_END */

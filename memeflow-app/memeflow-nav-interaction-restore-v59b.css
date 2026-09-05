@@ -1,0 +1,97 @@
+/* ========================================================================
+   MEMEFLOW NAVIGATION INTERACTION RESTORE V59B
+   Restores pre-V59 navigation behavior while preserving V59 color styling.
+   ======================================================================== */
+
+/* Menu button: original transparent interaction. */
+body.mf-header-nav-polish-v59.mf-nav-interaction-restore-v59b .mf-nav-toggle,
+body.mf-header-nav-polish-v59.mf-nav-interaction-restore-v59b .mf-nav-toggle:hover,
+body.mf-header-nav-polish-v59.mf-nav-interaction-restore-v59b .mf-nav-toggle:focus-visible,
+html[data-mf-nav-open="1"]
+body.mf-header-nav-polish-v59.mf-nav-interaction-restore-v59b
+.mf-nav-toggle {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+body.mf-header-nav-polish-v59.mf-nav-interaction-restore-v59b .mf-nav-toggle:focus-visible {
+  outline: none !important;
+  outline-offset: 0 !important;
+}
+
+body.mf-header-nav-polish-v59.mf-nav-interaction-restore-v59b .mf-nav-toggle:active {
+  transform: scale(.96);
+}
+
+/* Nav rows: restore original square/frameless row behavior. */
+body.mf-header-nav-polish-v59.mf-nav-interaction-restore-v59b .mf-nav-link {
+  border-radius: 0 !important;
+  background: transparent;
+  transition:
+    background-color 170ms ease,
+    padding-left 200ms ease !important;
+}
+
+body.mf-header-nav-polish-v59.mf-nav-interaction-restore-v59b .mf-nav-link:hover,
+body.mf-header-nav-polish-v59.mf-nav-interaction-restore-v59b .mf-nav-link:focus-visible {
+  padding-left: 11px !important;
+  background: rgba(85, 217, 255, .022) !important;
+  outline: none !important;
+  outline-offset: 0 !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"]
+body.mf-header-nav-polish-v59.mf-nav-interaction-restore-v59b
+.mf-nav-link:hover,
+html[data-theme="light"]
+body.mf-header-nav-polish-v59.mf-nav-interaction-restore-v59b
+.mf-nav-link:focus-visible {
+  background: rgba(56, 126, 151, .045) !important;
+}
+
+/* Current page: original green-dot cue only, no V59 row fill. */
+body.mf-header-nav-polish-v59.mf-nav-interaction-restore-v59b
+.mf-nav-link[aria-current="page"] {
+  background: transparent !important;
+}
+
+/* Arrow: restore original translate behavior. */
+body.mf-header-nav-polish-v59.mf-nav-interaction-restore-v59b
+.mf-nav-link:not([aria-current="page"])
+.mf-nav-link-arrow {
+  transform: translateX(-2px) !important;
+}
+
+body.mf-header-nav-polish-v59.mf-nav-interaction-restore-v59b
+.mf-nav-link:not([aria-current="page"]):hover
+.mf-nav-link-arrow,
+body.mf-header-nav-polish-v59.mf-nav-interaction-restore-v59b
+.mf-nav-link:not([aria-current="page"]):focus-visible
+.mf-nav-link-arrow {
+  transform: translateX(1px) !important;
+}
+
+/* Mobile also returns to the original frameless row shape. */
+@media (max-width: 600px) {
+  body.mf-header-nav-polish-v59.mf-nav-interaction-restore-v59b .mf-nav-toggle,
+  body.mf-header-nav-polish-v59.mf-nav-interaction-restore-v59b .mf-nav-link {
+    border-radius: 0 !important;
+  }
+}
+
+/* Preserve reduced-motion behavior. */
+@media (prefers-reduced-motion: reduce) {
+  body.mf-nav-interaction-restore-v59b :where(
+    .mf-nav-toggle,
+    .mf-nav-toggle-line,
+    .mf-nav-backdrop,
+    .mf-nav-drawer,
+    .mf-nav-link,
+    .mf-nav-link-arrow
+  ) {
+    transition-duration: .01ms !important;
+  }
+}
+
+/* MEMEFLOW_NAV_INTERACTION_RESTORE_V59B_END */
