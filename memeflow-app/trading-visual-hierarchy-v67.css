@@ -386,4 +386,25 @@ body.mf-page-trading.mf-trading-terminal :where(
   }
 }
 
-/* MEMEFLOW_TRADING_VISUAL_HIERARCHY_V74_END */
+
+/* ==========================================================================
+   CANDIDATE OPEN FRAME MATCH V75
+
+   WAITING already uses the quiet base 1px outline.
+   OPEN POSITION had the same geometry, but its stronger green border opacity
+   made the frame look visually thicker/larger. Keep the green semantic color,
+   but match WAITING's quiet outline strength.
+   ========================================================================== */
+
+@media (max-width: 820px) {
+  body.mf-page-trading.mf-trading-terminal
+  .candidates-panel .candidate-top .state-dot.open {
+    border-width: 1px !important;
+    border-style: solid !important;
+    border-color: rgba(77, 230, 161, .09) !important;
+    box-shadow: none !important;
+    background: transparent !important;
+  }
+}
+
+/* MEMEFLOW_TRADING_VISUAL_HIERARCHY_V75_END */
