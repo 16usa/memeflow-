@@ -299,40 +299,55 @@ body.mf-page-trading.mf-trading-terminal :where(
 
 
 /* ==========================================================================
-   CANDIDATE TWO-LINE LAYOUT V72
-   Remove the former descriptive middle line from the layout and keep the
-   remaining two lines optically centered against the token avatar.
+   CANDIDATE COMPACT TWO-COLUMN LAYOUT V74
+
+   Row 1: token + COPY TRADE | state
+   Row 2: Score / Holders     | price
+
+   The state is intentionally positioned directly above the price.
    ========================================================================== */
 
 @media (max-width: 820px) {
-  body.mf-page-trading.mf-trading-terminal .candidate-main {
+  body.mf-page-trading.mf-trading-terminal
+  .candidate-main {
     align-self: center;
     justify-self: stretch;
     gap: 4px !important;
   }
 
-  body.mf-page-trading.mf-trading-terminal .candidate-top {
-    min-width: 0;
-    justify-content: flex-start !important;
-    gap: 0 !important;
-  }
-
-  body.mf-page-trading.mf-trading-terminal .candidate-name {
+  body.mf-page-trading.mf-trading-terminal
+  .candidate-top,
+  body.mf-page-trading.mf-trading-terminal
+  .candidate-bottom {
     width: 100%;
     min-width: 0;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    column-gap: 8px !important;
+    white-space: nowrap;
   }
 
-  body.mf-page-trading.mf-trading-terminal .candidate-primary-line {
+  body.mf-page-trading.mf-trading-terminal
+  .candidate-name {
+    width: auto !important;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  body.mf-page-trading.mf-trading-terminal
+  .candidate-primary-line {
     min-width: 0;
     width: 100%;
     display: flex !important;
     align-items: center;
-    gap: 5px;
+    gap: 4px !important;
     overflow: hidden;
     white-space: nowrap;
   }
 
-  body.mf-page-trading.mf-trading-terminal .candidate-symbol {
+  body.mf-page-trading.mf-trading-terminal
+  .candidate-symbol {
     min-width: 0;
     flex: 0 1 auto;
     overflow: hidden;
@@ -340,59 +355,35 @@ body.mf-page-trading.mf-trading-terminal :where(
     white-space: nowrap;
   }
 
-  body.mf-page-trading.mf-trading-terminal .candidate-primary-line :where(
-    .copy-trade-badge,
-    .state-dot
-  ) {
+  body.mf-page-trading.mf-trading-terminal
+  .candidate-primary-line .copy-trade-badge,
+  body.mf-page-trading.mf-trading-terminal
+  .candidate-top .state-dot {
     flex: 0 0 auto;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     margin-left: 0 !important;
-    padding: 2px 4px !important;
+    padding: 1px 3px !important;
     border-radius: 5px !important;
     white-space: nowrap;
-    vertical-align: middle;
   }
 
-  body.mf-page-trading.mf-trading-terminal .candidate-bottom {
-    width: 100%;
-    min-width: 0;
-    align-items: center;
-    gap: 6px !important;
+  body.mf-page-trading.mf-trading-terminal
+  .candidate-top .state-dot,
+  body.mf-page-trading.mf-trading-terminal
+  .candidate-price {
+    justify-self: end;
+    white-space: nowrap;
   }
 
-  body.mf-page-trading.mf-trading-terminal .candidate-bottom > span:first-child {
+  body.mf-page-trading.mf-trading-terminal
+  .candidate-bottom > span:first-child {
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
-  body.mf-page-trading.mf-trading-terminal .candidate-price {
-    flex: 0 0 auto;
-    white-space: nowrap;
-  }
 }
 
-
-/* ==========================================================================
-   CANDIDATE STATE BADGE GEOMETRY V73
-   Keep COPY TRADE at the V72 geometry; make the longer state badge lighter.
-   ========================================================================== */
-
-@media (max-width: 820px) {
-  body.mf-page-trading.mf-trading-terminal
-  .candidate-primary-line .copy-trade-badge {
-    padding: 2px 4px !important;
-    border-radius: 5px !important;
-  }
-
-  body.mf-page-trading.mf-trading-terminal
-  .candidate-primary-line .state-dot {
-    padding: 1px 3px !important;
-    border-radius: 5px !important;
-  }
-}
-
-/* MEMEFLOW_TRADING_VISUAL_HIERARCHY_V73_END */
+/* MEMEFLOW_TRADING_VISUAL_HIERARCHY_V74_END */

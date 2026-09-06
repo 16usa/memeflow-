@@ -1288,9 +1288,9 @@ function renderCandidates() {
                 ${String(item.strategySource || '').toLowerCase() === 'copy-trading'
                   ? '<em class="copy-trade-badge">COPY TRADE</em>'
                   : ''}
-                <span class="state-dot ${decisionClass(stateText)}">${esc(stateText)}</span>
               </strong>
             </div>
+            <span class="state-dot ${decisionClass(stateText)}">${esc(stateText)}</span>
           </div>
 
           <div class="candidate-bottom">
