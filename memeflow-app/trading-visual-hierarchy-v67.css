@@ -177,4 +177,108 @@ body.mf-page-trading.mf-trading-terminal :where(
   }
 }
 
-/* MEMEFLOW_TRADING_VISUAL_HIERARCHY_V67_END */
+
+/* ==========================================================================
+   SINGLE-LINE FLOW STABILITY V70
+   Text-flow only. No trading logic, data, colors or chart behavior.
+   ========================================================================== */
+
+@media (max-width: 820px) {
+  /* Section headers: fixed titles stay on one row; if a very narrow viewport
+     cannot fit everything, the title truncates instead of wrapping. */
+  body.mf-page-trading.mf-trading-terminal :where(
+    .approvals-panel,
+    .strategy-summary-panel,
+    .positions-panel,
+    .candidates-panel,
+    .bottom-history-panel
+  ) > .panel-head h2 {
+    flex: 1 1 auto;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  body.mf-page-trading.mf-trading-terminal :where(
+    .approval-count,
+    .mode-badge,
+    .strategy-edit-link,
+    .pnl-summary span,
+    .pnl-summary strong,
+    .tiny-state,
+    .trade-log-hint
+  ) {
+    white-space: nowrap;
+  }
+
+  /* Real source of the Open Positions jump:
+     trading.css intentionally had flex-wrap: wrap here.
+     Render the same inline pieces as one ellipsized telemetry line. */
+  body.mf-page-trading.mf-trading-terminal .position-main {
+    overflow: hidden;
+  }
+
+  body.mf-page-trading.mf-trading-terminal .position-bottomline {
+    display: block !important;
+    width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Strategy values and approval identity are dynamic. Keep one-line behavior
+     even when server text becomes longer than the examples on screen. */
+  body.mf-page-trading.mf-trading-terminal .strategy-summary-row :where(span, strong),
+  body.mf-page-trading.mf-trading-terminal .approval-main :where(span, strong),
+  body.mf-page-trading.mf-trading-terminal .approval-stats :where(b, strong) {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Candidates already ellipsize names; lock the row itself to one line too. */
+  body.mf-page-trading.mf-trading-terminal .candidate-top,
+  body.mf-page-trading.mf-trading-terminal .candidate-bottom {
+    min-width: 0;
+    flex-wrap: nowrap;
+    white-space: nowrap;
+  }
+
+  body.mf-page-trading.mf-trading-terminal .candidate-name {
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  body.mf-page-trading.mf-trading-terminal .candidate-price,
+  body.mf-page-trading.mf-trading-terminal .state-dot {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+
+  /* Recent trades already use ellipsis in the canonical row.
+     Explicitly prevent inherited wrapping from later shared layers. */
+  body.mf-page-trading.mf-trading-terminal .trade-log-topline,
+  body.mf-page-trading.mf-trading-terminal .trade-log-bottomline {
+    min-width: 0;
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 430px) {
+  /* Base trading.css uses flex-wrap: wrap for OHLC legend.
+     That is why C / candle count can jump to a second line. */
+  body.mf-page-trading.mf-trading-terminal .chart-legend {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    gap: 2px !important;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+
+  body.mf-page-trading.mf-trading-terminal .chart-legend span {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+}
+
+/* MEMEFLOW_TRADING_VISUAL_HIERARCHY_V70_END */

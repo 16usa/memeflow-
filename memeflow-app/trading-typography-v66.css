@@ -1,5 +1,5 @@
 /* ==========================================================================
-   MEMEFLOW TRADING TYPOGRAPHY V69
+   MEMEFLOW TRADING TYPOGRAPHY V70
    Page-specific typography pass for Trading Terminal.
 
    Scope:
@@ -315,4 +315,54 @@ body.mf-page-trading.mf-trading-terminal .trade-log-time {
   }
 }
 
-/* MEMEFLOW_TRADING_TYPOGRAPHY_V69_END */
+
+/* ==========================================================================
+   SINGLE-LINE TEXT FIT V70
+
+   Keep readable sizes, but reduce only the text that is physically too dense
+   for a phone-width row. The rest of V69's 12 / 11 / 10 hierarchy stays intact.
+   ========================================================================== */
+
+@media (max-width: 820px) {
+  /* Open-position telemetry is the only operational line with five values
+     plus separators and a Close action in the same row. */
+  body.mf-page-trading.mf-trading-terminal .position-bottomline,
+  body.mf-page-trading.mf-trading-terminal .position-bottomline span,
+  body.mf-page-trading.mf-trading-terminal .position-bottomline strong {
+    font-size: var(--mf-trading-type-micro) !important;
+    line-height: 1.1 !important;
+  }
+}
+
+@media (max-width: 430px) {
+  /* Fixed panel titles should never force the service element to the next line. */
+  body.mf-page-trading.mf-trading-terminal :where(
+    .approvals-panel,
+    .strategy-summary-panel,
+    .positions-panel,
+    .candidates-panel,
+    .bottom-history-panel
+  ) .panel-head h2 {
+    font-size: 15px !important;
+  }
+
+  body.mf-page-trading.mf-trading-terminal :where(
+    .approvals-panel,
+    .strategy-summary-panel,
+    .positions-panel,
+    .candidates-panel,
+    .bottom-history-panel
+  ) .eyebrow {
+    font-size: 9px !important;
+    letter-spacing: 0.09em !important;
+  }
+
+  /* The OHLC legend has five live values plus candle/trade count.
+     9px is enough to keep it on one stable line without touching chart axes. */
+  body.mf-page-trading.mf-trading-terminal .chart-legend span {
+    font-size: 9px !important;
+    line-height: 1 !important;
+  }
+}
+
+/* MEMEFLOW_TRADING_TYPOGRAPHY_V70_END */
