@@ -10,7 +10,7 @@ args = ["pnpm", "store", "prune"]
 env = { "CI" = "true" }
 
 [workflows]
-runButton = "Project"
+runButton = "MEMEFLOW"
 
 [[workflows.workflow]]
 name = "MEMEFLOW"
@@ -19,73 +19,12 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "cd memeflow-app && node live-bootstrap.mjs"
+args = "cd memeflow-app && exec node live-bootstrap.mjs"
 waitForPort = 3000
 
 [workflows.workflow.metadata]
 outputType = "webview"
 
-[[workflows.workflow]]
-name = "memeflow web"
-mode = "sequential"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "pnpm run replit-internal-dev"
-cwd = "./runtime-components/memeflow-old"
-
-[[workflows.workflow]]
-name = "API Server"
-mode = "sequential"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "PORT=8080 pnpm run replit-internal-dev"
-cwd = "./runtime-components/api-server"
-
-[[workflows.workflow]]
-name = "mockup-sandbox"
-mode = "sequential"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "PORT=8081 BASE_PATH=/ pnpm run replit-internal-dev"
-cwd = "./runtime-components/mockup-sandbox"
-
-
-
-
-
-
-
-[[workflows.workflow]]
-name = "Project"
-mode = "sequential"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "bash ./run-project.sh"
-
 [[ports]]
 localPort = 3000
 externalPort = 80
-
-[[ports]]
-localPort = 8080
-externalPort = 8080
-
-[[ports]]
-localPort = 8081
-externalPort = 8081
-
-[[ports]]
-localPort = 8082
-externalPort = 3000
-
-[[ports]]
-localPort = 8083
-externalPort = 3001
