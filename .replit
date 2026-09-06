@@ -1,4 +1,4 @@
-run = "cd memeflow-app && exec node live-bootstrap.mjs"
+run = "cd memeflow-app && PORT=5000 exec node live-bootstrap.mjs"
 modules = ["nodejs-24", "python-base-3.13"]
 
 [deployment]
@@ -19,12 +19,12 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "cd memeflow-app && exec node live-bootstrap.mjs"
-waitForPort = 3000
+args = "cd memeflow-app && PORT=5000 exec node live-bootstrap.mjs"
+waitForPort = 5000
 
 [workflows.workflow.metadata]
 outputType = "webview"
 
 [[ports]]
-localPort = 3000
+localPort = 5000
 externalPort = 80
