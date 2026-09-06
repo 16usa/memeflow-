@@ -407,4 +407,77 @@ body.mf-page-trading.mf-trading-terminal :where(
   }
 }
 
-/* MEMEFLOW_TRADING_VISUAL_HIERARCHY_V75_END */
+
+/* ==========================================================================
+   TRADING PUMPFUN AVATAR LINK V76
+
+   Matches Real Time Pipeline:
+     badge 16x16
+     right/bottom -4px
+     2px dark ring
+     dark-green circular backing
+     same shadow treatment
+
+   Wrapper dimensions exactly match the existing Trading avatar.
+   The badge is position:absolute and does NOT enlarge rows/cards/images.
+   ========================================================================== */
+
+body.mf-page-trading.mf-trading-terminal
+.mf-trading-pump-avatar-link-v76 {
+  position: relative !important;
+  width: 42px !important;
+  height: 42px !important;
+  display: block !important;
+  align-self: center !important;
+  justify-self: start !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  color: inherit !important;
+  text-decoration: none !important;
+  overflow: visible !important;
+  box-sizing: border-box !important;
+  cursor: pointer !important;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body.mf-page-trading.mf-trading-terminal
+.mf-trading-pump-avatar-link-v76 > .trade-token-avatar {
+  width: 42px !important;
+  height: 42px !important;
+  margin: 0 !important;
+}
+
+body.mf-page-trading.mf-trading-terminal
+.mf-pump-avatar-badge-v76 {
+  position: absolute !important;
+  right: -4px !important;
+  bottom: -4px !important;
+  z-index: 4 !important;
+  width: 16px !important;
+  height: 16px !important;
+  display: block !important;
+  object-fit: contain !important;
+  padding: 2px !important;
+  border: 2px solid #081017 !important;
+  border-radius: 50% !important;
+  background: #0f2a1e !important;
+  box-sizing: border-box !important;
+  box-shadow:
+    0 1px 4px rgba(0, 0, 0, .45),
+    0 0 0 1px rgba(73, 232, 157, .34) !important;
+  pointer-events: none !important;
+}
+
+@media (max-width: 820px) {
+  body.mf-page-trading.mf-trading-terminal
+  .mf-trading-pump-avatar-link-v76,
+  body.mf-page-trading.mf-trading-terminal
+  .mf-trading-pump-avatar-link-v76 > .trade-token-avatar {
+    width: 46px !important;
+    height: 46px !important;
+  }
+}
+
+/* MEMEFLOW_TRADING_VISUAL_HIERARCHY_V76_END */

@@ -114,6 +114,75 @@ async function api(path, options = {}) {
   return payload;
 }
 
+/* MEMEFLOW_TRADING_PUMPFUN_AVATAR_LINK_V76
+ * Mirrors Real Time Pipeline token-avatar behavior without changing row size.
+ * The avatar opens Pump.fun in a new tab and owns a 16px overlaid Pump badge.
+ */
+function pumpAvatarLinkMarkupV76(avatarMarkup, mint, label = 'token') {
+  const cleanMint = String(mint || '').trim();
+
+  if (!cleanMint) {
+    return avatarMarkup;
+  }
+
+  const pumpUrl =
+    `https://pump.fun/coin/${encodeURIComponent(cleanMint)}`;
+
+  return `
+    <span
+      class="mf-trading-pump-avatar-link-v76"
+      data-mf-pump-avatar-link-v76="${esc(pumpUrl)}"
+      title="Open on Pump.fun"
+      aria-label="Open ${esc(label || 'token')} on Pump.fun"
+    >
+      ${avatarMarkup}
+      <img
+        class="mf-pump-avatar-badge-v76"
+        src="https://pump.fun/pump-logomark.svg"
+        alt=""
+        aria-hidden="true"
+        loading="lazy"
+        decoding="async"
+        referrerpolicy="no-referrer"
+      >
+    </span>
+  `;
+}
+
+function openPumpAvatarLinkV76(event) {
+  const target =
+    event.target?.closest?.('[data-mf-pump-avatar-link-v76]');
+
+  if (!target) {
+    return;
+  }
+
+  const url =
+    String(target.dataset.mfPumpAvatarLinkV76 || '').trim();
+
+  if (!url.startsWith('https://pump.fun/coin/')) {
+    return;
+  }
+
+  event.preventDefault();
+  event.stopPropagation();
+
+  window.open(
+    url,
+    '_blank',
+    'noopener,noreferrer'
+  );
+}
+
+/* Capture phase is intentional: Candidate itself is a <button>.
+ * Clicking the avatar must open Pump.fun, not also select the row.
+ */
+document.addEventListener(
+  'click',
+  openPumpAvatarLinkV76,
+  true
+);
+
 function decisionClass(value) {
   const s = String(value || '').toUpperCase();
   if (s.includes('OPEN')) return 'open';
@@ -1278,7 +1347,7 @@ function renderCandidates() {
         data-mint="${esc(item.mint)}"
         type="button"
       >
-        ${candidateAvatarMarkup(item)}
+        ${pumpAvatarLinkMarkupV76(candidateAvatarMarkup(item), item?.mint, item?.symbol || item?.name)}
 
         <div class="candidate-main">
           <div class="candidate-top">
@@ -4284,7 +4353,7 @@ function renderPositions() {
 
     return `
       <div class="position-row">
-        ${positionAvatarMarkup(position)}
+        ${pumpAvatarLinkMarkupV76(positionAvatarMarkup(position), position?.mint, position?.symbol || position?.name)}
 
         <div class="position-main">
           <div class="position-topline">
@@ -4449,7 +4518,7 @@ function renderTrades() {
 
     return `
       <article class="trade-row trade-log-row">
-        ${avatarMarkup(avatarUrl, symbol)}
+        ${pumpAvatarLinkMarkupV76(avatarMarkup(avatarUrl, symbol), mint, symbol)}
 
         <div class="trade-log-main">
           <div class="trade-log-topline">
