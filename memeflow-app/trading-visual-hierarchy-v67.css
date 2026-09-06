@@ -281,4 +281,20 @@ body.mf-page-trading.mf-trading-terminal :where(
   }
 }
 
-/* MEMEFLOW_TRADING_VISUAL_HIERARCHY_V70_END */
+
+/* ==========================================================================
+   MOBILE DENSITY FLOW V71
+   Small spacing relief for chart telemetry after the type reduction.
+   ========================================================================== */
+@media (max-width: 430px) {
+  body.mf-page-trading.mf-trading-terminal .chart-legend {
+    gap: 1px !important;
+  }
+
+  body.mf-page-trading.mf-trading-terminal .chart-legend span {
+    padding-left: 1px !important;
+    padding-right: 1px !important;
+  }
+}
+
+/* MEMEFLOW_TRADING_VISUAL_HIERARCHY_V71_END */

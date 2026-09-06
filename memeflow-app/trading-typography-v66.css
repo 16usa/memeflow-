@@ -1,5 +1,5 @@
 /* ==========================================================================
-   MEMEFLOW TRADING TYPOGRAPHY V70
+   MEMEFLOW TRADING TYPOGRAPHY V71
    Page-specific typography pass for Trading Terminal.
 
    Scope:
@@ -365,4 +365,117 @@ body.mf-page-trading.mf-trading-terminal .trade-log-time {
   }
 }
 
-/* MEMEFLOW_TRADING_TYPOGRAPHY_V70_END */
+
+/* ==========================================================================
+   MOBILE DENSITY REFINEMENT V71
+   Reduce only dense/supporting text so more real data fits before ellipsis.
+   ========================================================================== */
+
+@media (max-width: 820px) {
+  /* Open positions */
+  body.mf-page-trading.mf-trading-terminal .position-symbol {
+    font-size: 11px !important;
+    line-height: 1.1 !important;
+  }
+
+  body.mf-page-trading.mf-trading-terminal .position-bottomline,
+  body.mf-page-trading.mf-trading-terminal .position-bottomline span,
+  body.mf-page-trading.mf-trading-terminal .position-bottomline strong {
+    font-size: 9px !important;
+    line-height: 1.05 !important;
+    letter-spacing: -0.01em !important;
+  }
+
+  body.mf-page-trading.mf-trading-terminal .close-position {
+    font-size: 10px !important;
+    line-height: 1 !important;
+  }
+
+  /* Candidates */
+  body.mf-page-trading.mf-trading-terminal .candidate-name strong {
+    font-size: 11px !important;
+    line-height: 1.1 !important;
+  }
+
+  body.mf-page-trading.mf-trading-terminal .candidate-name span,
+  body.mf-page-trading.mf-trading-terminal .candidate-bottom,
+  body.mf-page-trading.mf-trading-terminal .candidate-price {
+    font-size: 10px !important;
+    line-height: 1.1 !important;
+  }
+
+  body.mf-page-trading.mf-trading-terminal .candidates-panel :where(
+    .state-dot,
+    .copy-trade-badge
+  ) {
+    font-size: 9px !important;
+    line-height: 1 !important;
+    letter-spacing: 0.025em !important;
+  }
+
+  /* Recent trades */
+  body.mf-page-trading.mf-trading-terminal .trade-log-symbol {
+    font-size: 11px !important;
+    line-height: 1.05 !important;
+  }
+
+  body.mf-page-trading.mf-trading-terminal :where(
+    .trade-side,
+    .trade-pump-link,
+    .trade-log-time,
+    .trade-log-bottomline,
+    .trade-log-bottomline span,
+    .trade-token-name,
+    .trade-log-reason
+  ) {
+    font-size: 10px !important;
+  }
+
+  body.mf-page-trading.mf-trading-terminal .trade-log-bottomline {
+    line-height: 1.05 !important;
+  }
+
+  /* Trade strategy */
+  body.mf-page-trading.mf-trading-terminal .strategy-summary-row span {
+    font-size: 10px !important;
+    line-height: 1.1 !important;
+  }
+
+  body.mf-page-trading.mf-trading-terminal .strategy-summary-row strong {
+    font-size: 11px !important;
+    line-height: 1.1 !important;
+    font-weight: 650 !important;
+  }
+
+  /* Pending approvals */
+  body.mf-page-trading.mf-trading-terminal .approvals-panel .empty,
+  body.mf-page-trading.mf-trading-terminal .approval-main span {
+    font-size: 10px !important;
+  }
+
+  body.mf-page-trading.mf-trading-terminal .approval-main strong {
+    font-size: 11px !important;
+  }
+
+  body.mf-page-trading.mf-trading-terminal .approval-stats b {
+    font-size: 9px !important;
+    line-height: 1 !important;
+    letter-spacing: 0.055em !important;
+  }
+
+  body.mf-page-trading.mf-trading-terminal .approval-stats strong,
+  body.mf-page-trading.mf-trading-terminal .approval-actions button {
+    font-size: 10px !important;
+  }
+}
+
+@media (max-width: 430px) {
+  /* Chart OHLC/candle telemetry */
+  body.mf-page-trading.mf-trading-terminal .chart-legend span {
+    font-size: 8px !important;
+    line-height: 1 !important;
+    letter-spacing: -0.01em !important;
+  }
+}
+
+/* MEMEFLOW_TRADING_TYPOGRAPHY_V71_END */
