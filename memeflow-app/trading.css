@@ -345,6 +345,7 @@ button { cursor: pointer; }
   font-weight: 800;
 }
 
+.state-dot.open { color: var(--green); border-color: rgba(77, 230, 161, .24); }
 .state-dot.ready { color: var(--yellow); border-color: rgba(239, 198, 106, .22); }
 .state-dot.blocked { color: var(--red); border-color: rgba(255, 102, 121, .20); }
 .state-dot.watch { color: var(--blue); border-color: rgba(106, 153, 255, .20); }
@@ -416,6 +417,7 @@ button { cursor: pointer; }
   font-weight: 800;
 }
 
+.decision-badge.open { color: var(--green); border-color: rgba(77, 230, 161, .24); }
 .decision-badge.ready { color: var(--yellow); border-color: rgba(239, 198, 106, .23); }
 .decision-badge.blocked { color: var(--red); border-color: rgba(255, 102, 121, .20); }
 .decision-badge.watch { color: var(--blue); border-color: rgba(106, 153, 255, .20); }
@@ -1870,7 +1872,7 @@ button { cursor: pointer; }
 }
 /* ===== /MEMEFLOW_TRADING_BACK_BUTTON_V1 ===== */
 
-/* MEMEFLOW_BUY_READY_YELLOW_OPEN_GREEN_V1: BUY READY = yellow; OPEN POSITION = green. */
+/* MEMEFLOW_BUY_READY_YELLOW_OPEN_GREEN_V68_3: BUY READY = yellow; OPEN POSITION = green. */
 
 
 /* ===== MEMEFLOW_COPY_TRADE_BADGE_V2 ===== */

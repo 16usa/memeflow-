@@ -20,28 +20,6 @@ body.mf-layout-rhythm-v54 {
 /* --------------------------------------------------------------------------
    TRADING TERMINAL — compact panel rhythm
    -------------------------------------------------------------------------- */
-body.mf-page-trading .mf-trading-terminal :where(.panel-head) {
-  padding: var(--mf-v54-panel-y) var(--mf-v54-panel-x);
-  gap: var(--mf-v54-3);
-  align-items: center;
-}
-
-body.mf-page-trading .mf-trading-terminal :where(.strategy-summary-row, .selected-metrics) {
-  column-gap: var(--mf-v54-4);
-  row-gap: var(--mf-v54-3);
-}
-
-body.mf-page-trading .mf-trading-terminal :where(.candidate-row, .position-row, .trade-row) {
-  gap: var(--mf-v54-3);
-  padding-block: var(--mf-v54-3);
-  padding-inline: var(--mf-v54-panel-x);
-  align-items: center;
-}
-
-body.mf-page-trading .mf-trading-terminal :where(.candidate-name, .token-name-row) {
-  gap: var(--mf-v54-2);
-}
-
 /* --------------------------------------------------------------------------
    TOKEN FLOW — keep dense rows aligned and predictable
    -------------------------------------------------------------------------- */
@@ -182,3 +160,6 @@ body.mf-page-how-it-works :where(main > section + section, main > article + arti
 }
 
 /* MEMEFLOW_LAYOUT_SPACING_V54_END */
+/* MEMEFLOW_TRADING_SHARED_SELECTOR_CLEANUP_V68_3
+   Removed 4 unreachable Trading rule(s). Trading page styles remain owned by trading.css and page-scoped late layers.
+*/

@@ -32,43 +32,6 @@ html[data-theme="light"] body.mf-surface-hierarchy-v57 {
    Status badges and state-colored elements are excluded.
    ========================================================================= */
 
-html[data-theme="light"]
-body.mf-page-trading.mf-surface-hierarchy-v57
-.mf-trading-terminal .panel {
-  background: var(--mf-v57-surface-1) !important;
-  background-image: none !important;
-  border-color: var(--mf-v57-line) !important;
-  box-shadow: none !important;
-}
-
-html[data-theme="light"]
-body.mf-page-trading.mf-surface-hierarchy-v57
-.mf-trading-terminal :where(
-  .strategy-summary-row,
-  .selected-metrics > div,
-  .empty,
-  .indicator-bar
-) {
-  background: var(--mf-v57-surface-2) !important;
-  background-image: none !important;
-  border-color: var(--mf-v57-line) !important;
-  box-shadow: none !important;
-}
-
-html[data-theme="light"]
-body.mf-page-trading.mf-surface-hierarchy-v57
-.mf-trading-terminal :where(
-  .candidate-filter button:not(.active),
-  .timeframes button:not(.active),
-  .strategy-edit-link,
-  .wallet-btn
-) {
-  background: var(--mf-v57-surface-2) !important;
-  background-image: none !important;
-  border-color: var(--mf-v57-line) !important;
-  box-shadow: none !important;
-}
-
 /* =========================================================================
    TOKEN FLOW
    Keep token-state rows and colored status cards native.
@@ -302,3 +265,6 @@ body.mf-page-system.mf-surface-hierarchy-v57
 }
 
 /* MEMEFLOW_SURFACE_HIERARCHY_V57_END */
+/* MEMEFLOW_TRADING_SHARED_SELECTOR_CLEANUP_V68_3
+   Removed 3 unreachable Trading rule(s). Trading page styles remain owned by trading.css and page-scoped late layers.
+*/

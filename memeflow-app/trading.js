@@ -116,7 +116,7 @@ async function api(path, options = {}) {
 
 function decisionClass(value) {
   const s = String(value || '').toUpperCase();
-  if (s.includes('OPEN')) return 'ready';
+  if (s.includes('OPEN')) return 'open';
   if (s.includes('BUY')) return 'ready';
   if (s.includes('BLOCK')) return 'blocked';
   if (s.includes('WATCH')) return 'watch';

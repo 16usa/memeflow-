@@ -56,54 +56,6 @@ body.mf-page-system-tokens.mf-component-consistency-v63
 }
 
 /* TRADING TERMINAL */
-body.mf-page-trading.mf-component-consistency-v63
-.mf-trading-terminal .panel {
-  border-radius: var(--mf-v63-panel-radius);
-}
-
-body.mf-page-trading.mf-component-consistency-v63
-.mf-trading-terminal :where(
-  .strategy-summary-row,
-  .selected-metrics > div,
-  .empty,
-  .indicator-bar
-) {
-  border-radius: var(--mf-v63-item-radius);
-}
-
-body.mf-page-trading.mf-component-consistency-v63
-.mf-trading-terminal :where(
-  .candidate-row,
-  .position-row,
-  .trade-row,
-  .approval-row
-) {
-  border-bottom-width: 1px;
-  border-bottom-style: solid;
-}
-
-html[data-theme="light"]
-body.mf-page-trading.mf-component-consistency-v63
-.mf-trading-terminal :where(
-  .candidate-row,
-  .position-row,
-  .trade-row,
-  .approval-row
-) {
-  border-bottom-color: var(--mf-v63-line);
-}
-
-html[data-theme="dark"]
-body.mf-page-trading.mf-component-consistency-v63
-.mf-trading-terminal :where(
-  .candidate-row,
-  .position-row,
-  .trade-row,
-  .approval-row
-) {
-  border-bottom-color: var(--mf-v63-line-dark);
-}
-
 /* SMART VAULT */
 body.mf-page-smart-vault.mf-component-consistency-v63
 .mf-vault-shell :where(.mf-vault-card, .mf-vault-status-panel) {
@@ -198,3 +150,6 @@ body.mf-page-system.mf-component-consistency-v63
 }
 
 /* MEMEFLOW_COMPONENT_CONSISTENCY_V63_END */
+/* MEMEFLOW_TRADING_SHARED_SELECTOR_CLEANUP_V68_3
+   Removed 5 unreachable Trading rule(s). Trading page styles remain owned by trading.css and page-scoped late layers.
+*/

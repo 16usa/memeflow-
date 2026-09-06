@@ -15,13 +15,6 @@ body.mf-page-system-tokens.mf-component-geometry-v55 .flow-page :where(.refresh-
 body.mf-page-system-tokens.mf-component-geometry-v55 .flow-page .pagination button{min-height:var(--mf-v55-control-h);padding-inline:16px;border-radius:var(--mf-v55-pill-radius)}
 body.mf-page-system-tokens.mf-component-geometry-v55 .flow-page :where(.token-row,.token-card,.flow-token-row){min-height:74px}
 /* TRADING */
-body.mf-page-trading.mf-component-geometry-v55 .mf-trading-terminal :where(.candidate-filter button,.timeframes button){min-height:var(--mf-v55-control-h-sm);padding-inline:var(--mf-v55-control-x-sm);border-radius:var(--mf-v55-pill-radius)}
-body.mf-page-trading.mf-component-geometry-v55 .mf-trading-terminal :where(.strategy-edit-link,.wallet-btn){min-height:var(--mf-v55-control-h);padding-inline:var(--mf-v55-control-x);border-radius:var(--mf-v55-pill-radius)}
-body.mf-page-trading.mf-component-geometry-v55 .mf-trading-terminal :where(.mode-badge,.approval-count,.decision-badge,.tiny-state){min-height:30px;display:inline-flex;align-items:center;justify-content:center;padding-inline:11px;border-radius:var(--mf-v55-pill-radius)}
-body.mf-page-trading.mf-component-geometry-v55 .mf-trading-terminal :where(.candidate-row,.position-row,.trade-row){min-height:68px}
-body.mf-page-trading.mf-component-geometry-v55 .mf-trading-terminal :where(.position-row button,.trade-row button,.approval-row button){min-height:var(--mf-v55-control-h);padding-inline:14px;border-radius:var(--mf-v55-pill-radius)}
-body.mf-page-trading.mf-component-geometry-v55 .mf-trading-terminal .price-block{min-height:var(--mf-v55-touch-h);border-radius:var(--mf-v55-control-radius)}
-body.mf-page-trading.mf-component-geometry-v55 .mf-trading-terminal .indicator-scroll button{min-height:36px;padding-inline:10px}
 /* SMART VAULT */
 body.mf-page-smart-vault.mf-component-geometry-v55 .mf-vault-shell .mf-vault-badge{min-height:30px;padding-inline:11px;border-radius:var(--mf-v55-pill-radius)}
 body.mf-page-smart-vault.mf-component-geometry-v55 .mf-vault-shell .mf-vault-btn{min-height:var(--mf-v55-touch-h);padding-inline:14px;border-radius:var(--mf-v55-control-radius)}
@@ -47,3 +40,6 @@ body.mf-page-agent-performance.mf-component-geometry-v55 :where(.ap-kpis article
  body.mf-page-smart-vault.mf-component-geometry-v55 .mf-vault-shell .mf-vault-btn{min-height:44px}
 }
 /* MEMEFLOW_COMPONENT_GEOMETRY_V55_END */
+/* MEMEFLOW_TRADING_SHARED_SELECTOR_CLEANUP_V68_3
+   Removed 7 unreachable Trading rule(s). Trading page styles remain owned by trading.css and page-scoped late layers.
+*/
