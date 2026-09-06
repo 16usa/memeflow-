@@ -1283,16 +1283,14 @@ function renderCandidates() {
         <div class="candidate-main">
           <div class="candidate-top">
             <div class="candidate-name">
-              <strong>
-                ${esc(item.symbol || item.name || short(item.mint))}
+              <strong class="candidate-primary-line">
+                <span class="candidate-symbol">${esc(item.symbol || item.name || short(item.mint))}</span>
                 ${String(item.strategySource || '').toLowerCase() === 'copy-trading'
-                  ? ' <em class="copy-trade-badge">COPY TRADE</em>'
+                  ? '<em class="copy-trade-badge">COPY TRADE</em>'
                   : ''}
+                <span class="state-dot ${decisionClass(stateText)}">${esc(stateText)}</span>
               </strong>
-              <span>${esc(item.name || short(item.mint))}</span>
             </div>
-
-            <span class="state-dot ${decisionClass(stateText)}">${esc(stateText)}</span>
           </div>
 
           <div class="candidate-bottom">
