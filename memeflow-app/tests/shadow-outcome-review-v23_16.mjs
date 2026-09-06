@@ -274,6 +274,7 @@ try{
     createShadowOutcomeReviewV23_16({
       dataDir:tmp
     });
+  await restored.whenHydrated();
 
   assert.equal(
     restored.status().rowsLoaded,

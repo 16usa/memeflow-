@@ -276,6 +276,7 @@ try{
     createShadowTokenTrajectoryMemoryV23_8({
       dataDir:tmp
     });
+  await restored.whenHydrated();
 
   const restoredCell=
     restored.inspect('T1');

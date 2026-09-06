@@ -202,6 +202,7 @@ try{
     createShadowErrorAwareBenchmarkV23_19({
       dataDir:tmp
     });
+  await restored.whenHydrated();
 
   assert.equal(
     restored.status().rowsLoaded,

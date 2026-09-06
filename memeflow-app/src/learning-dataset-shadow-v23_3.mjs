@@ -1,5 +1,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import {
+  enqueueHistoryHydration,
+  parseJsonlCooperatively,
+  readBoundedJsonlTail
+} from './shadow-history-hydration-v23.mjs';
 
 // MEMEFLOW_LEARNING_DATASET_V23_3
 //
@@ -266,37 +271,6 @@ function emptyFeature(name){
   };
 }
 
-function readTailUtf8(file,maxBytes=50*1024*1024){
-  try{
-    if(!file||!fs.existsSync(file))return '';
-
-    const stat=fs.statSync(file);
-    if(!(stat.size>0))return '';
-
-    if(stat.size<=maxBytes){
-      return fs.readFileSync(file,'utf8');
-    }
-
-    const start=stat.size-maxBytes;
-    const fd=fs.openSync(file,'r');
-
-    try{
-      const buffer=Buffer.allocUnsafe(maxBytes);
-      fs.readSync(fd,buffer,0,maxBytes,start);
-      let text=buffer.toString('utf8');
-
-      const nl=text.indexOf('\n');
-      if(nl>=0)text=text.slice(nl+1);
-
-      return text;
-    }finally{
-      fs.closeSync(fd);
-    }
-  }catch{
-    return '';
-  }
-}
-
 export function createLearningDatasetShadowV23_3({
   dataDir=null,
   maxRows=100_000
@@ -324,6 +298,8 @@ export function createLearningDatasetShadowV23_3({
   let rowsLoaded=0;
   let acceptedRows=0;
   let cleanRows=0;
+  let hydrating=Boolean(file);
+  let hydrationComplete=!file;
 
   if(file){
     try{
@@ -442,23 +418,18 @@ export function createLearningDatasetShadowV23_3({
     return true;
   }
 
-  function load(){
-    if(!file)return;
-
-    const text=readTailUtf8(file);
-    if(!text)return;
-
-    for(const line of text.split('\n')){
-      if(!line.trim())continue;
-
-      try{
-        const row=JSON.parse(line);
-        if(apply(row,{persist:false})){
-          rowsLoaded++;
-        }
-      }catch{
-        loadErrors++;
-      }
+  async function load(){
+    try{
+      const text=await readBoundedJsonlTail(file,50*1024*1024);
+      await parseJsonlCooperatively(text,(row,parseError)=>{
+        if(parseError){loadErrors++;return;}
+        if(apply(row,{persist:false}))rowsLoaded++;
+      });
+    }catch{
+      loadErrors++;
+    }finally{
+      hydrating=false;
+      hydrationComplete=true;
     }
   }
 
@@ -727,11 +698,15 @@ export function createLearningDatasetShadowV23_3({
       queued:queue.length,
       draining,
       writeErrors,
-      loadErrors
+      loadErrors,
+      hydrating,
+      hydrationComplete
     };
   }
 
-  load();
+  const hydrationPromise=file
+    ? enqueueHistoryHydration(load)
+    : load();
 
   return {
     recordOutcome,
@@ -741,6 +716,7 @@ export function createLearningDatasetShadowV23_3({
     // unbounded dataset dump.
     trainingRows,
     status,
-    flush
+    flush,
+    whenHydrated:()=>hydrationPromise
   };
 }

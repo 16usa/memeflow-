@@ -161,6 +161,7 @@ try{
     createShadowErrorPatternLearnerV23_17({
       dataDir:tmp
     });
+  await restored.whenHydrated();
 
   assert.equal(
     restored.status().rowsLoaded,

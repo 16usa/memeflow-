@@ -139,6 +139,7 @@ const reloaded=createWalletReputationMemoryV23_2({
   dataDir:dir,
   maxWallets:100
 });
+await reloaded.whenHydrated();
 
 const after=reloaded.inspect(goodWallet);
 assert.ok(after);

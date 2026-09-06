@@ -1,5 +1,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import {
+  enqueueHistoryHydration,
+  parseJsonlCooperatively,
+  readBoundedJsonlTail
+} from './shadow-history-hydration-v23.mjs';
 
 // MEMEFLOW_SMART_MONEY_MEMORY_V23_2
 //
@@ -77,38 +82,6 @@ function classifyOutcome(outcome={}){
   }
 
   return 'NEUTRAL';
-}
-
-function readTailUtf8(file,maxBytes=25*1024*1024){
-  try{
-    if(!file||!fs.existsSync(file))return '';
-
-    const stat=fs.statSync(file);
-    if(!(stat.size>0))return '';
-
-    if(stat.size<=maxBytes){
-      return fs.readFileSync(file,'utf8');
-    }
-
-    const start=stat.size-maxBytes;
-    const fd=fs.openSync(file,'r');
-
-    try{
-      const buffer=Buffer.allocUnsafe(maxBytes);
-      fs.readSync(fd,buffer,0,maxBytes,start);
-      let text=buffer.toString('utf8');
-
-      // First row may be partial because we loaded only the file tail.
-      const nl=text.indexOf('\n');
-      if(nl>=0)text=text.slice(nl+1);
-
-      return text;
-    }finally{
-      fs.closeSync(fd);
-    }
-  }catch{
-    return '';
-  }
 }
 
 function emptyWallet(wallet){
@@ -229,6 +202,8 @@ export function createWalletReputationMemoryV23_2({
   let rowsWritten=0;
   let rowsLoaded=0;
   let loadErrors=0;
+  let hydrating=Boolean(file);
+  let hydrationComplete=!file;
 
   if(file){
     try{
@@ -367,23 +342,18 @@ export function createWalletReputationMemoryV23_2({
     return true;
   }
 
-  function load(){
-    if(!file)return;
-
-    const text=readTailUtf8(file);
-    if(!text)return;
-
-    for(const line of text.split('\n')){
-      if(!line.trim())continue;
-
-      try{
-        const row=JSON.parse(line);
-        if(apply(row,{persist:false})){
-          rowsLoaded++;
-        }
-      }catch{
-        loadErrors++;
-      }
+  async function load(){
+    try{
+      const text=await readBoundedJsonlTail(file,25*1024*1024);
+      await parseJsonlCooperatively(text,(row,parseError)=>{
+        if(parseError){loadErrors++;return;}
+        if(apply(row,{persist:false}))rowsLoaded++;
+      });
+    }catch{
+      loadErrors++;
+    }finally{
+      hydrating=false;
+      hydrationComplete=true;
     }
   }
 
@@ -708,11 +678,15 @@ export function createWalletReputationMemoryV23_2({
       queued:queue.length,
       draining,
       writeErrors,
-      loadErrors
+      loadErrors,
+      hydrating,
+      hydrationComplete
     };
   }
 
-  load();
+  const hydrationPromise=file
+    ? enqueueHistoryHydration(load)
+    : load();
 
   return {
     recordOutcome,
@@ -720,6 +694,7 @@ export function createWalletReputationMemoryV23_2({
     inspect,
     list,
     status,
-    flush
+    flush,
+    whenHydrated:()=>hydrationPromise
   };
 }

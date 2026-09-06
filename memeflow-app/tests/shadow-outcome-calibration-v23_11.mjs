@@ -176,6 +176,7 @@ try{
   const restored=createShadowOutcomeCalibrationV23_11({
     dataDir:tmp
   });
+  await restored.whenHydrated();
 
   assert.ok(restored.status().rowsLoaded>=50);
 

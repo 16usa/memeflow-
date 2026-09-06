@@ -1,5 +1,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import {
+  enqueueHistoryHydration,
+  parseJsonlCooperatively,
+  readBoundedJsonlTail
+} from './shadow-history-hydration-v23.mjs';
 
 // MEMEFLOW_TOKEN_PATTERN_MEMORY_V23_9
 // SHADOW ONLY. No Score/State/settings/BUY/SELL authority.
@@ -28,24 +33,6 @@ function classifyOutcome(outcome={}){
   if((r!==null&&r>=20)||(mfe!==null&&mfe>=50&&(mae===null||mae>-25)))return 'POSITIVE';
   if((r!==null&&r<=-20)||(mae!==null&&mae<=-25))return 'NEGATIVE';
   return 'NEUTRAL';
-}
-
-function readTailUtf8(file,maxBytes=20*1024*1024){
-  try{
-    if(!file||!fs.existsSync(file))return '';
-    const st=fs.statSync(file);
-    if(!(st.size>0))return '';
-    if(st.size<=maxBytes)return fs.readFileSync(file,'utf8');
-    const fd=fs.openSync(file,'r');
-    try{
-      const buf=Buffer.allocUnsafe(maxBytes);
-      fs.readSync(fd,buf,0,maxBytes,st.size-maxBytes);
-      let text=buf.toString('utf8');
-      const nl=text.indexOf('\n');
-      if(nl>=0)text=text.slice(nl+1);
-      return text;
-    }finally{fs.closeSync(fd);}
-  }catch{return '';}
 }
 
 function signature(snapshot={}){
@@ -112,6 +99,7 @@ export function createShadowTokenPatternMemoryV23_9({
   const file=dataDir?path.join(dataDir,'token-pattern-memory-v23-9.jsonl'):null;
   const examples=[],recent=[],queue=[];
   let draining=false,rowsLoaded=0,rowsWritten=0,loadErrors=0,writeErrors=0,predictions=0,outcomesRecorded=0,duplicatesRejected=0;
+  let hydrating=Boolean(file),hydrationComplete=!file;
 
   if(file){try{fs.mkdirSync(path.dirname(file),{recursive:true});}catch{}}
 
@@ -171,19 +159,21 @@ export function createShadowTokenPatternMemoryV23_9({
     return row;
   }
 
-  function load(){
-    if(!file)return;
-    const text=readTailUtf8(file);
-    for(const line of text.split('\n')){
-      if(!line.trim())continue;
-      try{
-        const row=JSON.parse(line);
+  async function load(){
+    try{
+      const text=await readBoundedJsonlTail(file,20*1024*1024);
+      await parseJsonlCooperatively(text,(row,parseError)=>{
+        if(parseError){loadErrors++;return;}
         if(row?.type==='pattern-example'){
           const n=examples.length;
           addExample(row,{persist:false});
           if(examples.length>n)rowsLoaded++;
         }
-      }catch{loadErrors++;}
+      });
+    }catch{
+      loadErrors++;
+    }finally{
+      hydrating=false;hydrationComplete=true;
     }
   }
 
@@ -320,10 +310,16 @@ export function createShadowTokenPatternMemoryV23_9({
       file,examples:examples.length,positiveExamples:positive,
       negativeExamples:examples.length-positive,predictions,outcomesRecorded,
       duplicatesRejected,recentPredictions:recent.length,rowsLoaded,rowsWritten,
-      queued:queue.length,draining,loadErrors,writeErrors
+      queued:queue.length,draining,loadErrors,writeErrors,
+      hydrating,hydrationComplete
     };
   }
 
-  load();
-  return {predict,recordOutcome,listRecent,listExamples,status,flush};
+  const hydrationPromise=file
+    ? enqueueHistoryHydration(load)
+    : load();
+  return {
+    predict,recordOutcome,listRecent,listExamples,status,flush,
+    whenHydrated:()=>hydrationPromise
+  };
 }

@@ -1,5 +1,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import {
+  enqueueHistoryHydration,
+  parseJsonlCooperatively,
+  readBoundedJsonlTail
+} from './shadow-history-hydration-v23.mjs';
 
 // MEMEFLOW_OUTCOME_CALIBRATION_V23_11
 // SHADOW ONLY. No Score/State/settings/BUY/SELL authority.
@@ -45,37 +50,6 @@ function classifyOutcome(outcome={}){
   }
 
   return 'NEUTRAL';
-}
-
-function readTailUtf8(file,maxBytes=20*1024*1024){
-  try{
-    if(!file||!fs.existsSync(file))return '';
-
-    const st=fs.statSync(file);
-    if(!(st.size>0))return '';
-
-    if(st.size<=maxBytes){
-      return fs.readFileSync(file,'utf8');
-    }
-
-    const fd=fs.openSync(file,'r');
-
-    try{
-      const buf=Buffer.allocUnsafe(maxBytes);
-      fs.readSync(fd,buf,0,maxBytes,st.size-maxBytes);
-
-      let text=buf.toString('utf8');
-      const nl=text.indexOf('\n');
-
-      if(nl>=0)text=text.slice(nl+1);
-
-      return text;
-    }finally{
-      fs.closeSync(fd);
-    }
-  }catch{
-    return '';
-  }
 }
 
 function bucketIndex(probabilityPct){
@@ -235,6 +209,8 @@ export function createShadowOutcomeCalibrationV23_11({
   let predictions=0;
   let outcomesRecorded=0;
   let duplicatesRejected=0;
+  let hydrating=Boolean(file);
+  let hydrationComplete=!file;
 
   if(file){
     try{
@@ -341,27 +317,22 @@ export function createShadowOutcomeCalibrationV23_11({
     return row;
   }
 
-  function load(){
-    if(!file)return;
-
-    const text=readTailUtf8(file);
-
-    for(const line of text.split('\n')){
-      if(!line.trim())continue;
-
-      try{
-        const row=JSON.parse(line);
-
+  async function load(){
+    try{
+      const text=await readBoundedJsonlTail(file,20*1024*1024);
+      await parseJsonlCooperatively(text,(row,parseError)=>{
+        if(parseError){loadErrors++;return;}
         if(row?.type==='calibration-outcome'){
           const before=rows.length;
-
           addRow(row,{persist:false});
-
           if(rows.length>before)rowsLoaded++;
         }
-      }catch{
-        loadErrors++;
-      }
+      });
+    }catch{
+      loadErrors++;
+    }finally{
+      hydrating=false;
+      hydrationComplete=true;
     }
   }
 
@@ -388,7 +359,6 @@ export function createShadowOutcomeCalibrationV23_11({
 
     const rawP=finite(synthesis.synthesisProbabilityPositivePct);
     const rawC=finite(synthesis.synthesisConfidencePct);
-
     const eligible=historicalRows({
       horizonMs:TARGET_HORIZON_MS,
       mint,
@@ -612,11 +582,15 @@ export function createShadowOutcomeCalibrationV23_11({
       draining,
       loadErrors,
       writeErrors,
+      hydrating,
+      hydrationComplete,
       file
     };
   }
 
-  load();
+  const hydrationPromise=file
+    ? enqueueHistoryHydration(load)
+    : load();
 
   return {
     predict,
@@ -625,6 +599,7 @@ export function createShadowOutcomeCalibrationV23_11({
     bucketReport,
     listRecent,
     status,
-    flush
+    flush,
+    whenHydrated:()=>hydrationPromise
   };
 }

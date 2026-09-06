@@ -1,5 +1,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import {
+  enqueueHistoryHydration,
+  parseJsonlCooperatively,
+  readBoundedJsonlTail
+} from './shadow-history-hydration-v23.mjs';
 
 // MEMEFLOW_SHADOW_ERROR_AWARE_BENCHMARK_V23_19
 //
@@ -179,46 +184,6 @@ function benchmarkProbability({
     0,
     100
   );
-}
-
-function readTailUtf8(file,maxBytes=20*1024*1024){
-  try{
-    if(!file||!fs.existsSync(file))return '';
-
-    const st=fs.statSync(file);
-    if(!(st.size>0))return '';
-
-    if(st.size<=maxBytes){
-      return fs.readFileSync(file,'utf8');
-    }
-
-    const fd=fs.openSync(file,'r');
-
-    try{
-      const buf=Buffer.allocUnsafe(maxBytes);
-
-      fs.readSync(
-        fd,
-        buf,
-        0,
-        maxBytes,
-        st.size-maxBytes
-      );
-
-      let text=buf.toString('utf8');
-      const nl=text.indexOf('\n');
-
-      if(nl>=0){
-        text=text.slice(nl+1);
-      }
-
-      return text;
-    }finally{
-      fs.closeSync(fd);
-    }
-  }catch{
-    return '';
-  }
 }
 
 function summarize(rows=[]){
@@ -613,6 +578,8 @@ export function createShadowErrorAwareBenchmarkV23_19({
   let writeErrors=0;
   let outcomesRecorded=0;
   let duplicatesRejected=0;
+  let hydrating=Boolean(file);
+  let hydrationComplete=!file;
 
   if(file){
     try{
@@ -795,36 +762,22 @@ export function createShadowErrorAwareBenchmarkV23_19({
     return row;
   }
 
-  function load(){
-    if(!file)return;
-
-    const text=
-      readTailUtf8(file);
-
-    for(const line of text.split('\n')){
-      if(!line.trim())continue;
-
-      try{
-        const row=JSON.parse(line);
-
-        if(
-          row?.type===
-          'error-aware-benchmark-outcome'
-        ){
+  async function load(){
+    try{
+      const text=await readBoundedJsonlTail(file,20*1024*1024);
+      await parseJsonlCooperatively(text,(row,parseError)=>{
+        if(parseError){loadErrors++;return;}
+        if(row?.type==='error-aware-benchmark-outcome'){
           const before=rows.length;
-
-          addRow(
-            row,
-            {persist:false}
-          );
-
-          if(rows.length>before){
-            rowsLoaded++;
-          }
+          addRow(row,{persist:false});
+          if(rows.length>before)rowsLoaded++;
         }
-      }catch{
-        loadErrors++;
-      }
+      });
+    }catch{
+      loadErrors++;
+    }finally{
+      hydrating=false;
+      hydrationComplete=true;
     }
   }
 
@@ -1104,11 +1057,15 @@ export function createShadowErrorAwareBenchmarkV23_19({
       draining,
       loadErrors,
       writeErrors,
+      hydrating,
+      hydrationComplete,
       file
     };
   }
 
-  load();
+  const hydrationPromise=file
+    ? enqueueHistoryHydration(load)
+    : load();
 
   return {
     recordOutcome,
@@ -1117,6 +1074,7 @@ export function createShadowErrorAwareBenchmarkV23_19({
     listRecent,
     listRows,
     status,
-    flush
+    flush,
+    whenHydrated:()=>hydrationPromise
   };
 }

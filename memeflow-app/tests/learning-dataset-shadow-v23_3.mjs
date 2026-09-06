@@ -286,6 +286,7 @@ const reloaded=createLearningDatasetShadowV23_3({
   dataDir:dir,
   maxRows:1000
 });
+await reloaded.whenHydrated();
 
 assert.equal(
   reloaded.status().acceptedRows,

@@ -71,6 +71,7 @@ try{
 
   assert.equal(await m.flush(),true);
   const restored=createShadowTokenPatternMemoryV23_9({dataDir:tmp,minimumExamples:8});
+  await restored.whenHydrated();
   assert.ok(restored.status().rowsLoaded>=20);
 
   assert.equal(typeof m.buy,'undefined');

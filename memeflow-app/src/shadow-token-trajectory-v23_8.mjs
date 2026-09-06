@@ -1,5 +1,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import {
+  enqueueHistoryHydration,
+  parseJsonlCooperatively,
+  readBoundedJsonlTail
+} from './shadow-history-hydration-v23.mjs';
 
 // MEMEFLOW_TOKEN_TRAJECTORY_MEMORY_V23_8
 //
@@ -52,36 +57,6 @@ function classifyOutcome(outcome={}){
   }
 
   return 'NEUTRAL';
-}
-
-function readTailUtf8(file,maxBytes=20*1024*1024){
-  try{
-    if(!file||!fs.existsSync(file))return '';
-
-    const stat=fs.statSync(file);
-    if(!(stat.size>0))return '';
-
-    if(stat.size<=maxBytes){
-      return fs.readFileSync(file,'utf8');
-    }
-
-    const start=stat.size-maxBytes;
-    const fd=fs.openSync(file,'r');
-
-    try{
-      const buffer=Buffer.allocUnsafe(maxBytes);
-      fs.readSync(fd,buffer,0,maxBytes,start);
-
-      let text=buffer.toString('utf8');
-      const nl=text.indexOf('\n');
-      if(nl>=0)text=text.slice(nl+1);
-      return text;
-    }finally{
-      fs.closeSync(fd);
-    }
-  }catch{
-    return '';
-  }
 }
 
 function pointFromSnapshot(snapshot={},mint='',at=Date.now()){
@@ -292,6 +267,8 @@ export function createShadowTokenTrajectoryMemoryV23_8({
   let observations=0;
   let outcomesRecorded=0;
   let evictions=0;
+  let hydrating=Boolean(file);
+  let hydrationComplete=!file;
 
   if(file){
     try{
@@ -611,19 +588,11 @@ export function createShadowTokenTrajectoryMemoryV23_8({
     return row;
   }
 
-  function load(){
-    if(!file)return;
-
-    const text=readTailUtf8(file);
-    if(!text)return;
-
-    for(const line of text.split('\n')){
-      const trimmed=line.trim();
-      if(!trimmed)continue;
-
-      try{
-        const row=JSON.parse(trimmed);
-
+  async function load(){
+    try{
+      const text=await readBoundedJsonlTail(file,20*1024*1024);
+      await parseJsonlCooperatively(text,(row,parseError)=>{
+        if(parseError){loadErrors++;return;}
         if(row?.type==='trajectory-point'){
           applyPoint(row,{persist:false});
           rowsLoaded++;
@@ -632,19 +601,20 @@ export function createShadowTokenTrajectoryMemoryV23_8({
           rowsLoaded++;
         }else if(row?.type==='trajectory-terminal'){
           const entry=ensure(row.mint);
-
           if(entry){
             entry.terminal={
               at:finite(row.at),
               reason:row.reason||'TERMINAL'
             };
           }
-
           rowsLoaded++;
         }
-      }catch{
-        loadErrors++;
-      }
+      });
+    }catch{
+      loadErrors++;
+    }finally{
+      hydrating=false;
+      hydrationComplete=true;
     }
   }
 
@@ -944,11 +914,15 @@ export function createShadowTokenTrajectoryMemoryV23_8({
       queued:queue.length,
       draining,
       loadErrors,
-      writeErrors
+      writeErrors,
+      hydrating,
+      hydrationComplete
     };
   }
 
-  load();
+  const hydrationPromise=file
+    ? enqueueHistoryHydration(load)
+    : load();
 
   return {
     observe,
@@ -957,6 +931,7 @@ export function createShadowTokenTrajectoryMemoryV23_8({
     inspect,
     list,
     status,
-    flush
+    flush,
+    whenHydrated:()=>hydrationPromise
   };
 }

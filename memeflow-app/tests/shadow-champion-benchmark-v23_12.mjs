@@ -133,6 +133,7 @@ try{
   const restored=createShadowChampionBenchmarkV23_12({
     dataDir:tmp
   });
+  await restored.whenHydrated();
 
   assert.ok(restored.status().rowsLoaded>=60);
 
