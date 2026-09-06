@@ -375,4 +375,24 @@ body.mf-page-trading.mf-trading-terminal :where(
   }
 }
 
-/* MEMEFLOW_TRADING_VISUAL_HIERARCHY_V72_END */
+
+/* ==========================================================================
+   CANDIDATE STATE BADGE GEOMETRY V73
+   Keep COPY TRADE at the V72 geometry; make the longer state badge lighter.
+   ========================================================================== */
+
+@media (max-width: 820px) {
+  body.mf-page-trading.mf-trading-terminal
+  .candidate-primary-line .copy-trade-badge {
+    padding: 2px 4px !important;
+    border-radius: 5px !important;
+  }
+
+  body.mf-page-trading.mf-trading-terminal
+  .candidate-primary-line .state-dot {
+    padding: 1px 3px !important;
+    border-radius: 5px !important;
+  }
+}
+
+/* MEMEFLOW_TRADING_VISUAL_HIERARCHY_V73_END */
