@@ -887,3 +887,20 @@ html body:is(
 }
 
 /* MEMEFLOW_LATE_SYSTEM_TEXT_BRIDGE_V90_END */
+
+/* ==========================================================================
+   MEMEFLOW_TRADING_SYSTEM_TEXT_LATE_BRIDGE_V92
+   Late-order consumer of the existing V90 system-text contract.
+   ========================================================================== */
+
+html body.mf-page-trading.mf-trading-terminal :where(
+  .approvals-panel .approval-empty,
+  .approvals-panel .empty,
+  .strategy-summary-panel .strategy-summary-foot,
+  .strategy-summary-panel #saveState
+){
+  font-size:var(--mf-type-system)!important;
+  color:var(--mf-text-tertiary)!important;
+}
+
+/* MEMEFLOW_TRADING_SYSTEM_TEXT_LATE_BRIDGE_V92_END */

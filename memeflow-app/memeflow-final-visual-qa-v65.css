@@ -489,3 +489,26 @@ html body:is(
 /* MEMEFLOW_GLOBAL_SYSTEM_TEXT_CONTRACT_V90_END */
 
 /* MEMEFLOW_FINAL_VISUAL_QA_V65_END */
+
+/* ==========================================================================
+   MEMEFLOW_TRADING_SYSTEM_TEXT_CLASSIFICATION_V92
+
+   Explicit Trading system/service text classification.
+   Uses the existing global V90 authority only.
+
+   Targets:
+     Pending approvals empty-state copy
+     Trade Strategy sync/source footer
+   ========================================================================== */
+
+html body.mf-page-trading.mf-trading-terminal :where(
+  .approvals-panel .approval-empty,
+  .approvals-panel .empty,
+  .strategy-summary-panel .strategy-summary-foot,
+  .strategy-summary-panel #saveState
+){
+  font-size:var(--mf-type-system)!important;
+  color:var(--mf-text-tertiary)!important;
+}
+
+/* MEMEFLOW_TRADING_SYSTEM_TEXT_CLASSIFICATION_V92_END */
