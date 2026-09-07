@@ -565,3 +565,104 @@ html body:is(
 /* #tokenState / OPEN POSITION and semantic state classes are not recolored. */
 
 /* MEMEFLOW_LATE_CONTRAST_BRIDGE_V86_END */
+
+/* ==========================================================================
+   MEMEFLOW_TRADE_STRATEGY_TYPOGRAPHY_MATCH_V87
+
+   Match lower Trading Terminal operational rows to Trade Strategy:
+     primary   12px / 650 / primary contrast
+     secondary 11px / 500 / secondary contrast
+
+   Typography/contrast only.
+   No row height, spacing, geometry, avatar, trading logic or backend changes.
+   Semantic colors remain owned by their existing semantic classes.
+   ========================================================================== */
+
+@media (max-width: 820px) {
+  /* PRIMARY — same tier as Trade Strategy values. */
+  body.mf-page-trading.mf-trading-terminal
+  .positions-panel .position-symbol,
+
+  body.mf-page-trading.mf-trading-terminal
+  .candidates-panel .candidate-symbol,
+
+  body.mf-page-trading.mf-trading-terminal
+  .bottom-history-panel .trade-log-symbol {
+    font-size: 12px !important;
+    font-weight: 650 !important;
+    line-height: 1.15 !important;
+    color: var(--mf-text-primary) !important;
+  }
+
+  /* Same primary typography, but keep existing semantic/accent colors. */
+  body.mf-page-trading.mf-trading-terminal
+  .positions-panel .copy-trade-badge,
+
+  body.mf-page-trading.mf-trading-terminal
+  .candidates-panel .copy-trade-badge,
+
+  body.mf-page-trading.mf-trading-terminal
+  .bottom-history-panel .trade-side,
+
+  body.mf-page-trading.mf-trading-terminal
+  .bottom-history-panel .trade-pump-link {
+    font-size: 12px !important;
+    font-weight: 650 !important;
+    line-height: 1.15 !important;
+  }
+
+  /* SECONDARY — same tier as Trade Strategy labels. */
+  body.mf-page-trading.mf-trading-terminal
+  .positions-panel .position-bottomline,
+
+  body.mf-page-trading.mf-trading-terminal
+  .positions-panel .position-bottomline :where(span, i),
+
+  body.mf-page-trading.mf-trading-terminal
+  .candidates-panel .candidate-bottom,
+
+  body.mf-page-trading.mf-trading-terminal
+  .candidates-panel .candidate-bottom > span,
+
+  body.mf-page-trading.mf-trading-terminal
+  .candidates-panel .candidate-price,
+
+  body.mf-page-trading.mf-trading-terminal
+  .bottom-history-panel .trade-log-bottomline,
+
+  body.mf-page-trading.mf-trading-terminal
+  .bottom-history-panel .trade-log-bottomline :where(span, i),
+
+  body.mf-page-trading.mf-trading-terminal
+  .bottom-history-panel .trade-log-time {
+    font-size: 11px !important;
+    font-weight: 500 !important;
+    line-height: 1.15 !important;
+  }
+
+  body.mf-page-trading.mf-trading-terminal
+  .positions-panel .position-bottomline,
+
+  body.mf-page-trading.mf-trading-terminal
+  .candidates-panel .candidate-bottom,
+
+  body.mf-page-trading.mf-trading-terminal
+  .bottom-history-panel .trade-log-bottomline,
+
+  body.mf-page-trading.mf-trading-terminal
+  .bottom-history-panel .trade-log-time {
+    color: var(--mf-text-secondary) !important;
+  }
+
+  /* P&L is secondary-size telemetry but keeps its green/red semantic color. */
+  body.mf-page-trading.mf-trading-terminal
+  .positions-panel .position-pnl,
+
+  body.mf-page-trading.mf-trading-terminal
+  .bottom-history-panel :where(.pnl-positive, .pnl-negative) {
+    font-size: 11px !important;
+    line-height: 1.15 !important;
+  }
+}
+
+/* MEMEFLOW_TRADE_STRATEGY_TYPOGRAPHY_MATCH_V87_END */
