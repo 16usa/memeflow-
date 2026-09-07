@@ -889,47 +889,30 @@ html body:is(
 /* MEMEFLOW_LATE_SYSTEM_TEXT_BRIDGE_V90_END */
 
 /* ==========================================================================
-   MEMEFLOW_TRADING_SYSTEM_TEXT_LATE_BRIDGE_V92
-   Late-order consumer of the existing V90 system-text contract.
-   ========================================================================== */
+   MEMEFLOW_TRADING_SYSTEM_TEXT_RENDER_FIX_V94
 
-html body.mf-page-trading.mf-trading-terminal :where(
-  .approvals-panel .approval-empty,
-  .approvals-panel .empty,
-  .strategy-summary-panel .strategy-summary-foot,
-  .strategy-summary-panel #saveState
-){
-  font-size:var(--mf-type-system)!important;
-  color:var(--mf-text-tertiary)!important;
-}
+   Final rendering contract for the two Trading system/service messages.
 
-/* MEMEFLOW_TRADING_SYSTEM_TEXT_LATE_BRIDGE_V92_END */
+   Why V92/V93 looked wrong on iPhone:
+     1. shared final-v65 had an old cache key, so V90 variables could be stale;
+     2. iOS Safari can inflate small text independently of CSS font-size.
 
-/* ==========================================================================
-   MEMEFLOW_TRADING_SYSTEM_TEXT_SPECIFICITY_FIX_V93
-
-   V92 used :where(...), which intentionally contributes zero selector
-   specificity. An older Trading typography rule for .empty uses !important
-   with higher specificity, so the approval message stayed at the older size.
-
-   V93 resolves ONLY that cascade problem with stable element IDs.
-   The values still come from V90:
-     --mf-type-system
-     --mf-text-tertiary
+   V94:
+     - consumes V90, with 8px fallback for cache-safety;
+     - uses Tertiary neutral contrast;
+     - disables Safari text inflation ONLY for these system messages.
    ========================================================================== */
 
 html body.mf-page-trading.mf-trading-terminal
 #approvalList > .empty,
 html body.mf-page-trading.mf-trading-terminal
-#approvalList > .empty.approval-empty {
-  font-size: var(--mf-type-system) !important;
-  color: var(--mf-text-tertiary) !important;
-}
-
+#approvalList > .empty.approval-empty,
 html body.mf-page-trading.mf-trading-terminal
 .strategy-summary-panel .strategy-summary-foot > #saveState {
-  font-size: var(--mf-type-system) !important;
+  font-size: var(--mf-type-system, 8px) !important;
   color: var(--mf-text-tertiary) !important;
+  -webkit-text-size-adjust: none !important;
+  text-size-adjust: none !important;
 }
 
-/* MEMEFLOW_TRADING_SYSTEM_TEXT_SPECIFICITY_FIX_V93_END */
+/* MEMEFLOW_TRADING_SYSTEM_TEXT_RENDER_FIX_V94_END */
