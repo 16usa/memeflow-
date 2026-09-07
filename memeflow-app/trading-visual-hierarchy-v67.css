@@ -698,3 +698,101 @@ html body:is(
 }
 
 /* MEMEFLOW_TRADE_STRATEGY_LOWER_TYPOGRAPHY_V88_END */
+
+/* ==========================================================================
+   MEMEFLOW_TRADING_TEXT_CASE_CONTRACT_V89
+
+   NORMAL INFORMATION
+     Preserve authored/source case:
+       Position, Stops, Score, Holders, token names, telemetry, timestamps.
+
+   SEMANTIC STATUS / ACTION
+     Force uppercase:
+       OPEN POSITION, COPY TRADE, BUY, SELL, LIVE, CLOSE, EDIT, ASSIST/AUTOMATE.
+
+   TECHNICAL ABBREVIATIONS
+     Preserve authored uppercase:
+       SL, TP1, TP2, MC, BP, P&L, SOL, etc.
+
+   CASING ONLY.
+   No typography size/weight/family, color, spacing, geometry, JS or backend.
+   ========================================================================== */
+
+@media (max-width: 820px) {
+  /* Normal informational content: never force CAPS. */
+  body.mf-page-trading.mf-trading-terminal
+  .strategy-summary-panel .strategy-summary-row,
+
+  body.mf-page-trading.mf-trading-terminal
+  .strategy-summary-panel .strategy-summary-row :where(span, strong, b),
+
+  body.mf-page-trading.mf-trading-terminal
+  .positions-panel .position-symbol,
+
+  body.mf-page-trading.mf-trading-terminal
+  .positions-panel .position-bottomline,
+
+  body.mf-page-trading.mf-trading-terminal
+  .positions-panel .position-bottomline :where(span, strong, i),
+
+  body.mf-page-trading.mf-trading-terminal
+  .candidates-panel .candidate-symbol,
+
+  body.mf-page-trading.mf-trading-terminal
+  .candidates-panel .candidate-bottom,
+
+  body.mf-page-trading.mf-trading-terminal
+  .candidates-panel .candidate-bottom :where(span, strong, i),
+
+  body.mf-page-trading.mf-trading-terminal
+  .candidates-panel .candidate-price,
+
+  body.mf-page-trading.mf-trading-terminal
+  .bottom-history-panel .trade-log-symbol,
+
+  body.mf-page-trading.mf-trading-terminal
+  .bottom-history-panel .trade-token-name,
+
+  body.mf-page-trading.mf-trading-terminal
+  .bottom-history-panel .trade-log-bottomline,
+
+  body.mf-page-trading.mf-trading-terminal
+  .bottom-history-panel .trade-log-bottomline :where(span, strong, i),
+
+  body.mf-page-trading.mf-trading-terminal
+  .bottom-history-panel .trade-log-time,
+
+  body.mf-page-trading.mf-trading-terminal
+  .bottom-history-panel .trade-pump-link {
+    text-transform: none !important;
+  }
+
+  /* Semantic state/action language: consistent CAPS. */
+  body.mf-page-trading.mf-trading-terminal
+  .strategy-summary-panel .mode-badge,
+
+  body.mf-page-trading.mf-trading-terminal
+  .strategy-summary-panel .strategy-edit-link,
+
+  body.mf-page-trading.mf-trading-terminal
+  .positions-panel .copy-trade-badge,
+
+  body.mf-page-trading.mf-trading-terminal
+  .positions-panel .close-position,
+
+  body.mf-page-trading.mf-trading-terminal
+  .candidates-panel .copy-trade-badge,
+
+  body.mf-page-trading.mf-trading-terminal
+  .candidates-panel .state-dot,
+
+  body.mf-page-trading.mf-trading-terminal
+  .candidates-panel .tiny-state,
+
+  body.mf-page-trading.mf-trading-terminal
+  .bottom-history-panel .trade-side {
+    text-transform: uppercase !important;
+  }
+}
+
+/* MEMEFLOW_TRADING_TEXT_CASE_CONTRACT_V89_END */
