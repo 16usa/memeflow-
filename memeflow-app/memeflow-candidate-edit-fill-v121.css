@@ -1,0 +1,124 @@
+/* ==========================================================================
+   MEMEFLOW CANDIDATE EDIT-FILL V121
+   Trading Terminal > Candidates filter only.
+
+   Goal:
+   - keep the V119 geometry exactly as-is
+   - remove semantic-colored outlines
+   - use the same neutral filled-control language as Trade strategy > EDIT
+   - keep semantic color ONLY in the label text
+   - keep active-state feedback neutral, never state-tinted
+   ========================================================================== */
+
+/* Dark/default: neutral second surface, no colored outline. */
+body.mf-page-trading.mf-trading-terminal
+.candidates-panel .candidate-filter > button[data-filter] {
+  background: var(--mf-dark-surface-2, #181f27) !important;
+  background-color: var(--mf-dark-surface-2, #181f27) !important;
+  background-image: none !important;
+
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Active = neutral material shift only. State color remains text-only. */
+body.mf-page-trading.mf-trading-terminal
+.candidates-panel .candidate-filter > button[data-filter].active {
+  background: #202933 !important;
+  background-color: #202933 !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Semantic text colors — DARK. */
+body.mf-page-trading.mf-trading-terminal
+.candidates-panel .candidate-filter > button[data-filter="all"] {
+  color: #55d9ff !important;
+}
+
+body.mf-page-trading.mf-trading-terminal
+.candidates-panel .candidate-filter > button[data-filter="BUY READY"] {
+  color: #efc66a !important;
+}
+
+body.mf-page-trading.mf-trading-terminal
+.candidates-panel .candidate-filter > button[data-filter="WATCH"] {
+  color: #5c8dff !important;
+}
+
+body.mf-page-trading.mf-trading-terminal
+.candidates-panel .candidate-filter > button[data-filter="WAITING"] {
+  color: #95a7b3 !important;
+}
+
+body.mf-page-trading.mf-trading-terminal
+.candidates-panel .candidate-filter > button[data-filter="BLOCKED"] {
+  color: #ff6679 !important;
+}
+
+/*
+ * LIGHT:
+ * exact Trade strategy > EDIT material contract from Trading Light Polish V61:
+ *   fill   = --mf-trading-v61-inset (#EBEBEB)
+ *   border = transparent
+ * Active uses EDIT's own hover fill (#E4E4E4), still completely neutral.
+ */
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.candidates-panel .candidate-filter > button[data-filter] {
+  background: var(--mf-trading-v61-inset, #EBEBEB) !important;
+  background-color: var(--mf-trading-v61-inset, #EBEBEB) !important;
+  background-image: none !important;
+
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.candidates-panel .candidate-filter > button[data-filter].active {
+  background: #E4E4E4 !important;
+  background-color: #E4E4E4 !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Semantic text colors — LIGHT. */
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.candidates-panel .candidate-filter > button[data-filter="all"] {
+  color: #087d9f !important;
+}
+
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.candidates-panel .candidate-filter > button[data-filter="BUY READY"] {
+  color: #936b0a !important;
+}
+
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.candidates-panel .candidate-filter > button[data-filter="WATCH"] {
+  color: #315fc7 !important;
+}
+
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.candidates-panel .candidate-filter > button[data-filter="WAITING"] {
+  color: #607783 !important;
+}
+
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.candidates-panel .candidate-filter > button[data-filter="BLOCKED"] {
+  color: #c33c50 !important;
+}
+
+/* Keyboard focus: semantic text is kept; focus ring is neutral. */
+body.mf-page-trading.mf-trading-terminal
+.candidates-panel .candidate-filter > button[data-filter]:focus-visible {
+  outline: 1px solid rgba(161, 170, 181, .55) !important;
+  outline-offset: 2px !important;
+}
+
+/* MEMEFLOW_CANDIDATE_EDIT_FILL_V121_END */
