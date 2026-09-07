@@ -12,9 +12,13 @@
   --mf-type-panel:14px;
   --mf-type-title:16px;
 
-  --mf-premium-text:#f4f6f8;
-  --mf-premium-secondary:#a1aab5;
-  --mf-premium-tertiary:#818c99;
+  --mf-text-primary:#ECECEC;
+  --mf-text-secondary:#B4B4B4;
+  --mf-text-tertiary:#949494;
+
+  --mf-premium-text:var(--mf-text-primary);
+  --mf-premium-secondary:var(--mf-text-secondary);
+  --mf-premium-tertiary:var(--mf-text-tertiary);
 
   --mf-premium-display-lh:.98;
   --mf-premium-heading-lh:1.08;
@@ -113,20 +117,31 @@ button:not(.mfpg-card):not(.candidate),.btn,a.btn{font-weight:620!important;}
 html:not([data-theme="light"]) :where(.muted,.hero-sub,.brief-copy,.objective p,.reason span,.agent p,.integrity-note){
   color:var(--mf-premium-secondary)!important;
 }
-html:not([data-theme="light"]) .mf-vault-hero p{color:#9aa8b3!important;}
+html:not([data-theme="light"]) .mf-vault-hero p{color:var(--mf-text-secondary)!important;}
 html:not([data-theme="light"]) :where(.mf-vault-brand-copy small,.mf-vault-stat small,.mf-vault-balance small,.mf-vault-control-row small,.mf-vault-note){
-  color:#8797a3!important;
+  color:var(--mf-text-tertiary)!important;
 }
 
 html[data-theme="light"]{
-  --mf-premium-text:#171717;
-  --mf-premium-secondary:#5f6368;
-  --mf-premium-tertiary:#7a8087;
+  --mf-text-primary:#0D0D0D;
+  --mf-text-secondary:#5D5D5D;
+  --mf-text-tertiary:#6F6F6F;
+
+  --mf-premium-text:var(--mf-text-primary);
+  --mf-premium-secondary:var(--mf-text-secondary);
+  --mf-premium-tertiary:var(--mf-text-tertiary);
 }
-html[data-theme="light"] :where(.muted,.hero-sub,.brief-copy,.objective p,.reason span,.agent p,.integrity-note,
-.mf-vault-hero p,.mf-vault-brand-copy small,.mf-vault-stat small,.mf-vault-balance small,.mf-vault-control-row small,
-.mf-vault-note,.ap-note,.ap-privacy){
-  color:var(--mf-premium-secondary)!important;
+html[data-theme="light"] :where(
+  .muted,.hero-sub,.brief-copy,.objective p,.reason span,.agent p,.integrity-note,
+  .mf-vault-hero p
+){
+  color:var(--mf-text-secondary)!important;
+}
+html[data-theme="light"] :where(
+  .mf-vault-brand-copy small,.mf-vault-stat small,.mf-vault-balance small,
+  .mf-vault-control-row small,.mf-vault-note,.ap-note,.ap-privacy
+){
+  color:var(--mf-text-tertiary)!important;
 }
 
 .mf-hiw-hero-copy > p,.mf-hiw-section-head > p,.mf-vault-hero p,.mf-vault-note,
@@ -158,5 +173,188 @@ html[data-theme="light"] :where(.muted,.hero-sub,.brief-copy,.objective p,.reaso
 @media (max-width:360px){
   :root{--mf-type-micro:10px;--mf-type-meta:11px;}
 }
+
+/* ==========================================================================
+   MEMEFLOW_GLOBAL_TEXT_CONTRAST_CONTRACT_V83
+
+   OpenAI-inspired visual hierarchy benchmark.
+   These are MEMEFLOW tokens, not a claim about OpenAI private CSS values.
+
+   Exactly 3 neutral text roles:
+     PRIMARY   important titles / names / live values
+     SECONDARY ordinary UI information / controls
+     TERTIARY  metadata / addresses / quiet labels
+
+   Semantic status colors remain separate:
+     OPEN / BUY / WATCH / BLOCKED / profit / loss / warnings / links.
+
+   COLOR ONLY. No size, weight, layout, geometry, surface or app logic.
+   ========================================================================== */
+
+body:is(
+  .mf-page-system,
+  .mf-page-system-tokens,
+  .mf-page-trading,
+  .mf-page-smart-vault,
+  .mf-page-settings,
+  .mf-page-how-it-works,
+  .mf-page-agent-performance,
+  .mf-page-owner-intelligence
+){
+  --text:var(--mf-text-primary)!important;
+  --muted:var(--mf-text-secondary)!important;
+  --faint:var(--mf-text-tertiary)!important;
+
+  --mf-app-text:var(--mf-text-primary)!important;
+  --mf-app-muted:var(--mf-text-secondary)!important;
+  --mf-nav-text:var(--mf-text-primary)!important;
+  --mf-nav-muted:var(--mf-text-secondary)!important;
+
+  --hiw-text:var(--mf-text-primary)!important;
+  --hiw-muted:var(--mf-text-secondary)!important;
+  --hiw-muted-2:var(--mf-text-tertiary)!important;
+
+  --v-text:var(--mf-text-primary)!important;
+  --v-muted:var(--mf-text-secondary)!important;
+  --v-muted2:var(--mf-text-tertiary)!important;
+}
+
+/* PRIMARY */
+html body:is(
+  .mf-page-system,
+  .mf-page-system-tokens,
+  .mf-page-trading,
+  .mf-page-smart-vault,
+  .mf-page-settings,
+  .mf-page-how-it-works,
+  .mf-page-agent-performance,
+  .mf-page-owner-intelligence
+) :where(
+  .brand-title,
+  .mf-nav-link-title,
+  .mf-nav-drawer-title,
+  .scene-title h1,
+  .activity-head h2,
+  .panel-head h2,
+  .flow-hero h1,
+  .summary-card strong,
+  .token-name,
+  .token-symbol,
+  .token-metric strong,
+  .page-state strong,
+  .token-name-row h1,
+  .token-price,
+  .selected-metrics strong,
+  .position-symbol,
+  .trade-log-symbol,
+  .strategy-summary-row strong,
+  .approval-main strong,
+  .pnl-summary strong,
+  .metric-card strong,
+  .telemetry-item strong,
+  .mf-vault-hero h1,
+  .mf-vault-card-head h2,
+  .mf-vault-stat strong,
+  .mf-vault-balance strong,
+  .mf-vault-control-row strong,
+  .mf-hiw-hero h1,
+  .mf-hiw-section-head h2,
+  .ap-hero h1,
+  .ap-head h2,
+  .ap-kpis strong,
+  .ap-summary strong
+){
+  color:var(--mf-text-primary)!important;
+}
+
+/* SECONDARY */
+html body:is(
+  .mf-page-system,
+  .mf-page-system-tokens,
+  .mf-page-trading,
+  .mf-page-smart-vault,
+  .mf-page-settings,
+  .mf-page-how-it-works,
+  .mf-page-agent-performance,
+  .mf-page-owner-intelligence
+) :where(
+  .flow-hero p,
+  .summary-card span,
+  .token-metric span,
+  .page-state,
+  .details-button,
+  .candidate-filter button,
+  .timeframes button,
+  .indicator-bar button,
+  .selected-metrics span,
+  .position-bottomline,
+  .trade-log-bottomline,
+  .trade-token-name,
+  .strategy-summary-row span,
+  .status-pill,
+  .tool-btn,
+  .ghost-btn,
+  .wallet-btn,
+  .mf-vault-hero p,
+  .mf-vault-status-copy p,
+  .mf-hiw-hero p,
+  .mf-hiw-section-head p,
+  .mf-hiw-map-detail p,
+  .ap-hero p
+){
+  color:var(--mf-text-secondary)!important;
+}
+
+/* TERTIARY */
+html body:is(
+  .mf-page-system,
+  .mf-page-system-tokens,
+  .mf-page-trading,
+  .mf-page-smart-vault,
+  .mf-page-settings,
+  .mf-page-how-it-works,
+  .mf-page-agent-performance,
+  .mf-page-owner-intelligence
+) :where(
+  .brand-sub,
+  .mf-nav-link-sub,
+  .mf-nav-foot span,
+  .eyebrow,
+  .token-meta,
+  .token-meta button,
+  .token-market,
+  .chart-legend span,
+  .chart-empty span,
+  .chart-credit,
+  .trade-log-time,
+  .legend span,
+  .telemetry-item span,
+  .telemetry-item small,
+  .token-card-meta span,
+  .node-label small,
+  .mf-vault-kicker,
+  .mf-vault-eyebrow,
+  .mf-vault-brand-copy small,
+  .mf-vault-stat small,
+  .mf-vault-balance small,
+  .mf-vault-control-row small,
+  .mf-vault-note,
+  .ap-note,
+  .ap-privacy
+){
+  color:var(--mf-text-tertiary)!important;
+}
+
+.mf-text-primary,[data-mf-text-level="primary"]{
+  color:var(--mf-text-primary)!important;
+}
+.mf-text-secondary,[data-mf-text-level="secondary"]{
+  color:var(--mf-text-secondary)!important;
+}
+.mf-text-tertiary,[data-mf-text-level="tertiary"]{
+  color:var(--mf-text-tertiary)!important;
+}
+
+/* MEMEFLOW_GLOBAL_TEXT_CONTRAST_CONTRACT_V83_END */
 
 /* ===== MEMEFLOW_PREMIUM_TYPOGRAPHY_V66_END ===== */

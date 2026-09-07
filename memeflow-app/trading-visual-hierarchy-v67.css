@@ -481,3 +481,43 @@ body.mf-page-trading.mf-trading-terminal
 }
 
 /* MEMEFLOW_TRADING_VISUAL_HIERARCHY_V76_END */
+
+/* ==========================================================================
+   MEMEFLOW_TRADING_CONTRAST_BRIDGE_V83
+   Consumes the ONE global V83 contract. No duplicate HEX values here.
+   Color only. Semantic status colors are intentionally excluded.
+   ========================================================================== */
+
+html body.mf-page-trading.mf-trading-terminal :where(
+  #tokenName,
+  #tokenPrice,
+  .token-name-row h1,
+  .token-price
+){
+  color:var(--mf-text-primary)!important;
+}
+
+html body.mf-page-trading.mf-trading-terminal :where(
+  #timeframes > button,
+  #indicatorBar button,
+  .selected-metrics span,
+  .selected-metrics strong
+){
+  color:var(--mf-text-secondary)!important;
+}
+
+html body.mf-page-trading.mf-trading-terminal :where(
+  #tokenMint,
+  #copyMintBtn,
+  #tokenMarket,
+  #tokenMarket *,
+  .token-meta,
+  .chart-legend span
+){
+  color:var(--mf-text-tertiary)!important;
+}
+
+/* #tokenState / OPEN POSITION is intentionally NOT recolored.
+   Its semantic OPEN/BUY/WATCH/BLOCKED color stays with status CSS. */
+
+/* MEMEFLOW_TRADING_CONTRAST_BRIDGE_V83_END */
