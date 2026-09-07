@@ -380,4 +380,112 @@ html body:is(
 
 /* MEMEFLOW_GLOBAL_TEXT_CONTRAST_CONTRACT_V86_END */
 
+/* ==========================================================================
+   MEMEFLOW_GLOBAL_SYSTEM_TEXT_CONTRACT_V90
+
+   ONE global system/meta/service text rule:
+     size     8px
+     contrast Tertiary = faintest neutral role
+
+   System text includes:
+     section eyebrows / service labels / technical metadata / addresses /
+     telemetry labels / chart meta / timestamps / quiet helper copy.
+
+   Excluded:
+     semantic statuses/actions (OPEN POSITION, BUY, SELL, LIVE, COPY TRADE),
+     normal controls (All / Ready / Watch, timeframes, indicators),
+     primary/secondary content values.
+
+   SIZE + NEUTRAL CONTRAST ONLY.
+   ========================================================================== */
+
+:root{
+  --mf-type-system:8px;
+}
+
+html body:is(
+.mf-page-system,
+  .mf-page-system-tokens,
+  .mf-page-trading,
+  .mf-page-smart-vault,
+  .mf-page-settings,
+  .mf-page-how-it-works,
+  .mf-page-agent-performance,
+  .mf-page-owner-intelligence
+) :where(
+.brand-sub,
+  .brand .subtitle,
+  .mf-settings-page-title > strong,
+  .mf-nav-link-sub,
+  .mf-nav-foot span,
+  .eyebrow,
+
+  .legend span,
+  .node-label small,
+  .metric-card span,
+  .reason-block span,
+  .inspector-foot span,
+  .telemetry-item span,
+  .telemetry-item small,
+  .token-card-meta span,
+  .scene-hint,
+
+  .hero-counter span,
+  .summary-card span,
+  .token-meta,
+
+  .settings-summary span,
+  .settings-summary small,
+  .setting-field small,
+  .toggle-row small,
+  .settings-save-status,
+
+  .mf-vault-brand-copy small,
+  .mf-vault-kicker,
+  .mf-vault-eyebrow,
+  .mf-vault-stat small,
+  .mf-vault-balance small,
+  .mf-vault-control-row small,
+  .mf-vault-note,
+
+  .mf-hiw-brand-copy small,
+  .mf-hiw-kicker,
+  .mf-hiw-eyebrow,
+  .mf-hiw-label,
+  .mf-hiw-map-detail span,
+  .mf-hiw-foot,
+
+  .ap-eyebrow,
+  .ap-source span,
+  .ap-source small,
+  .ap-kpis span,
+  .ap-kpis small,
+  .ap-note,
+  .ap-privacy,
+
+  #tokenMint,
+  #copyMintBtn,
+  #tokenMarket,
+  #tokenMarket *,
+  .token-meta button,
+  .chart-legend span,
+  .chart-empty span,
+  .chart-credit,
+  .trade-log-time,
+  .trade-log-hint,
+  .strategy-summary-foot,
+  .pnl-summary span
+){
+  font-size:var(--mf-type-system)!important;
+  color:var(--mf-text-tertiary)!important;
+}
+
+.mf-system-text,
+[data-mf-text-role="system"]{
+  font-size:var(--mf-type-system)!important;
+  color:var(--mf-text-tertiary)!important;
+}
+
+/* MEMEFLOW_GLOBAL_SYSTEM_TEXT_CONTRACT_V90_END */
+
 /* MEMEFLOW_FINAL_VISUAL_QA_V65_END */

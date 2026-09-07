@@ -250,3 +250,94 @@ html body:is(
 /* #tokenState / OPEN POSITION and semantic state classes are not recolored. */
 
 /* MEMEFLOW_LATE_CONTRAST_BRIDGE_V86_END */
+
+/* ==========================================================================
+   MEMEFLOW_LATE_SYSTEM_TEXT_BRIDGE_V90
+   Late stylesheet-order consumer of the ONE global V90 system-text contract.
+   No independent palette or font-size value is defined here.
+   ========================================================================== */
+
+html body:is(
+.mf-page-system,
+  .mf-page-system-tokens,
+  .mf-page-trading,
+  .mf-page-smart-vault,
+  .mf-page-settings,
+  .mf-page-how-it-works,
+  .mf-page-agent-performance,
+  .mf-page-owner-intelligence
+) :where(
+.brand-sub,
+  .brand .subtitle,
+  .mf-settings-page-title > strong,
+  .mf-nav-link-sub,
+  .mf-nav-foot span,
+  .eyebrow,
+
+  .legend span,
+  .node-label small,
+  .metric-card span,
+  .reason-block span,
+  .inspector-foot span,
+  .telemetry-item span,
+  .telemetry-item small,
+  .token-card-meta span,
+  .scene-hint,
+
+  .hero-counter span,
+  .summary-card span,
+  .token-meta,
+
+  .settings-summary span,
+  .settings-summary small,
+  .setting-field small,
+  .toggle-row small,
+  .settings-save-status,
+
+  .mf-vault-brand-copy small,
+  .mf-vault-kicker,
+  .mf-vault-eyebrow,
+  .mf-vault-stat small,
+  .mf-vault-balance small,
+  .mf-vault-control-row small,
+  .mf-vault-note,
+
+  .mf-hiw-brand-copy small,
+  .mf-hiw-kicker,
+  .mf-hiw-eyebrow,
+  .mf-hiw-label,
+  .mf-hiw-map-detail span,
+  .mf-hiw-foot,
+
+  .ap-eyebrow,
+  .ap-source span,
+  .ap-source small,
+  .ap-kpis span,
+  .ap-kpis small,
+  .ap-note,
+  .ap-privacy,
+
+  #tokenMint,
+  #copyMintBtn,
+  #tokenMarket,
+  #tokenMarket *,
+  .token-meta button,
+  .chart-legend span,
+  .chart-empty span,
+  .chart-credit,
+  .trade-log-time,
+  .trade-log-hint,
+  .strategy-summary-foot,
+  .pnl-summary span
+){
+  font-size:var(--mf-type-system)!important;
+  color:var(--mf-text-tertiary)!important;
+}
+
+.mf-system-text,
+[data-mf-text-role="system"]{
+  font-size:var(--mf-type-system)!important;
+  color:var(--mf-text-tertiary)!important;
+}
+
+/* MEMEFLOW_LATE_SYSTEM_TEXT_BRIDGE_V90_END */
