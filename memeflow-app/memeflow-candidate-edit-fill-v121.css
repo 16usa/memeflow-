@@ -221,3 +221,34 @@ body.mf-page-trading.mf-trading-terminal
 }
 
 /* MEMEFLOW_CANDIDATE_SEGMENT_STRIP_V122_END */
+
+/* ==========================================================================
+   MEMEFLOW CANDIDATE EMPTY SYSTEM V123.1
+   Trading Terminal > Candidates empty-state only.
+
+   Contract:
+   - every "No ... candidates right now" message
+   - no fill / border / shadow
+   - 8px canonical system text
+   - canonical tertiary contrast
+   - no JS / filter / row / backend changes
+   ========================================================================== */
+
+body.mf-page-trading.mf-trading-terminal
+.candidates-panel .candidate-list > .empty {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+
+  border: 0 !important;
+  border-color: transparent !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+
+  color: var(--mf-text-tertiary, #818c99) !important;
+  font-size: var(--mf-type-system, 8px) !important;
+  line-height: 1.2 !important;
+  font-weight: 500 !important;
+}
+
+/* MEMEFLOW_CANDIDATE_EMPTY_SYSTEM_V123_1_END */
