@@ -4410,6 +4410,7 @@ function renderPositions() {
   });
 }
 
+/* MEMEFLOW_RECENT_TRADES_CANDIDATE_PARITY_V114 */
 function renderTrades() {
   const rows = state.trades.slice(0, 40);
   const list = $('tradeHistory');
@@ -4512,18 +4513,19 @@ return `
 
         <div class="trade-log-main">
           <div class="trade-log-topline">
-            <strong class="trade-side ${sideClass}">${esc(side)}</strong>
             <strong class="trade-log-symbol">${esc(symbol)}</strong>
+            <span class="copy-trade-badge trade-log-reason-badge">${esc(reason)}</span>
 
 <time class="trade-log-time">${esc(tradeTime(rawTime))}</time>
           </div>
 
           <div class="trade-log-bottomline">
+            <strong class="trade-side ${sideClass}">${esc(side)}</strong>
+            <i>·</i>
 <span>${finite(sizeSol) ? `${fmt(sizeSol, 4)} SOL` : '—'}</span>
             <i>·</i>
             <span class="${pnlClass}">${esc(pnlText)}</span>
-            <i>·</i>
-            <span class="trade-log-reason">${esc(reason)}</span>
+
           </div>
         </div>
       </article>

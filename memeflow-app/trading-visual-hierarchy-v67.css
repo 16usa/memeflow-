@@ -1603,3 +1603,57 @@ html[data-theme="dark"] body.mf-page-trading.mf-trading-terminal
   }
 }
 /* MEMEFLOW_CANDIDATE_OPERATIONAL_TYPE_PARITY_V112_END */
+
+/* ==========================================================================
+   MEMEFLOW_RECENT_TRADES_CANDIDATE_PARITY_V114
+
+   Recent Trades:
+     Row 1: token + execution/reason badge | time
+     Row 2: BUY/SELL · amount SOL · P&L
+
+   Existing reason authority stays unchanged.
+   ========================================================================== */
+body.mf-page-trading.mf-trading-terminal
+.bottom-history-panel .trade-log-topline .trade-log-reason-badge {
+  flex: 0 1 auto !important;
+  min-width: 0 !important;
+  max-width: min(46vw, 170px) !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  text-transform: uppercase !important;
+}
+
+body.mf-page-trading.mf-trading-terminal
+.bottom-history-panel .trade-log-bottomline .trade-side {
+  flex: 0 0 auto !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+}
+
+@media (max-width: 820px) {
+  html body.mf-page-trading.mf-trading-terminal
+  .bottom-history-panel .trade-log-topline .trade-log-reason-badge {
+    padding: 1px 3px !important;
+    border-radius: 5px !important;
+    font-size: 9px !important;
+    line-height: 1 !important;
+    font-weight: 500 !important;
+    letter-spacing: 0.025em !important;
+    -webkit-text-size-adjust: none !important;
+    text-size-adjust: none !important;
+  }
+
+  html body.mf-page-trading.mf-trading-terminal
+  .bottom-history-panel .trade-log-bottomline .trade-side {
+    font-size: 9px !important;
+    line-height: 1.05 !important;
+    font-weight: 500 !important;
+    letter-spacing: 0 !important;
+    -webkit-text-size-adjust: none !important;
+    text-size-adjust: none !important;
+  }
+}
+/* MEMEFLOW_RECENT_TRADES_CANDIDATE_PARITY_V114_END */
