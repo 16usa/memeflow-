@@ -1416,3 +1416,144 @@ html body:is(
 }
 
 /* MEMEFLOW_TRADING_HEADER_BASELINE_V108_END */
+
+/* ==========================================================================
+   MEMEFLOW_TRADING_DARK_SURFACE_BRIDGE_V109
+
+   Late-order Trading consumer of the ONE canonical V109 dark hierarchy.
+   Mirrors Trading Light Polish V61 with Dark neutral surfaces only.
+
+   Does NOT define HEX values.
+   Does NOT own text color, typography, geometry, semantic states or chart data.
+   ========================================================================== */
+
+html[data-theme="dark"] body.mf-page-trading.mf-trading-terminal {
+  --mf-trading-v61-canvas: var(--mf-dark-canvas) !important;
+  --mf-trading-v61-surface: var(--mf-dark-surface-1) !important;
+  --mf-trading-v61-inset: var(--mf-dark-surface-2) !important;
+  --mf-trading-v61-line: var(--mf-dark-line) !important;
+  --mf-trading-v61-line-strong: var(--mf-dark-line) !important;
+
+  background: var(--mf-dark-canvas) !important;
+  background-image: none !important;
+}
+
+html[data-theme="dark"] body.mf-page-trading.mf-trading-terminal
+:where(.mf-site-header) {
+  background: var(--mf-dark-canvas) !important;
+  background-image: none !important;
+  border-color: var(--mf-dark-line) !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="dark"] body.mf-page-trading.mf-trading-terminal
+:where(.shell, .terminal, .center-stack) {
+  background: transparent !important;
+  background-image: none !important;
+}
+
+html[data-theme="dark"] body.mf-page-trading.mf-trading-terminal
+.terminal > .panel,
+html[data-theme="dark"] body.mf-page-trading.mf-trading-terminal
+.center-stack > .panel {
+  background: var(--mf-dark-surface-1) !important;
+  background-image: none !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="dark"] body.mf-page-trading.mf-trading-terminal
+:where(.panel-head, .chart-head, .candidate-filter, .timeframes) {
+  border-color: var(--mf-dark-line) !important;
+}
+
+html[data-theme="dark"] body.mf-page-trading.mf-trading-terminal
+:where(.chart-wrap, #chartCanvas) {
+  background: var(--mf-dark-canvas) !important;
+  background-image: none !important;
+}
+
+html[data-theme="dark"] body.mf-page-trading.mf-trading-terminal
+.indicator-bar {
+  background: var(--mf-dark-surface-1) !important;
+  background-image: none !important;
+  border-color: var(--mf-dark-line) !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="dark"] body.mf-page-trading.mf-trading-terminal
+:where(.selected-metrics > div, .strategy-summary-row, .empty) {
+  background: var(--mf-dark-surface-2) !important;
+  background-image: none !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="dark"] body.mf-page-trading.mf-trading-terminal
+:where(.candidate, .position-row, .trade-row.trade-log-row) {
+  background: transparent !important;
+  background-image: none !important;
+  border-bottom-color: var(--mf-dark-line) !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="dark"] body.mf-page-trading.mf-trading-terminal
+:where(.candidate:hover, .candidate.selected, .approval-row) {
+  background: var(--mf-dark-surface-2) !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="dark"] body.mf-page-trading.mf-trading-terminal
+.approval-row {
+  border-color: transparent !important;
+}
+
+html[data-theme="dark"] body.mf-page-trading.mf-trading-terminal
+.candidate-filter button:not(.active),
+html[data-theme="dark"] body.mf-page-trading.mf-trading-terminal
+.timeframes button:not(.active),
+html[data-theme="dark"] body.mf-page-trading.mf-trading-terminal
+.indicator-scroll button:not([aria-pressed="true"]) {
+  background: transparent !important;
+  background-image: none !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="dark"] body.mf-page-trading.mf-trading-terminal
+:where(.strategy-edit-link, .wallet-btn) {
+  background: var(--mf-dark-surface-2) !important;
+  background-image: none !important;
+  border-color: var(--mf-dark-line) !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="dark"] body.mf-page-trading.mf-trading-terminal
+.price-toggle {
+  background: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="dark"] body.mf-page-trading.mf-trading-terminal
+.token-avatar {
+  background: var(--mf-dark-surface-2) !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  html[data-theme="dark"] body.mf-page-trading.mf-trading-terminal
+  .candidate-filter button:not(.active):hover,
+  html[data-theme="dark"] body.mf-page-trading.mf-trading-terminal
+  .timeframes button:not(.active):hover,
+  html[data-theme="dark"] body.mf-page-trading.mf-trading-terminal
+  .indicator-scroll button:not([aria-pressed="true"]):hover,
+  html[data-theme="dark"] body.mf-page-trading.mf-trading-terminal
+  :where(.strategy-edit-link, .wallet-btn):hover {
+    background: var(--mf-dark-surface-2) !important;
+  }
+}
+
+/* MEMEFLOW_TRADING_DARK_SURFACE_BRIDGE_V109_END */
