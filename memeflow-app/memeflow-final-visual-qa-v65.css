@@ -758,14 +758,14 @@ html body:is(
    MEMEFLOW_SEMANTIC_SINGLE_PALETTE_V103_END */
 
 /* ==========================================================================
-   MEMEFLOW_GLOBAL_DARK_SURFACE_CONTRACT_V110
+   MEMEFLOW_GLOBAL_DARK_SURFACE_CONTRACT_V111
 
    Dark is the exact surface-hierarchy projection of the approved Light UI:
 
      Canvas    #000000
      Surface 1 #0C1117   large structural cards / panels
      Surface 2 #181F27   nested cards / neutral controls
-     Divider   #262626   subtle structural separation
+     Divider   rgba(145, 173, 198, .055)   matches Navigation row separators
 
    This block owns NEUTRAL SURFACES ONLY.
 
@@ -784,7 +784,7 @@ html[data-theme="dark"] {
   --mf-dark-canvas: #000000;
   --mf-dark-surface-1: #0c1117;
   --mf-dark-surface-2: #181f27;
-  --mf-dark-line: #262626;
+  --mf-dark-line: rgba(145, 173, 198, .055);
 
   --bg: var(--mf-dark-canvas) !important;
   --panel: var(--mf-dark-surface-1) !important;
@@ -912,7 +912,7 @@ body.mf-page-system-tokens.mf-surface-hierarchy-v57
 .flow-page :where(.flow-hero, .flow-toolbar, .pagination) {
   background: var(--mf-dark-surface-1) !important;
   background-image: none !important;
-  border-color: var(--mf-dark-line) !important;
+  border-color: transparent !important;
   box-shadow: none !important;
 }
 
@@ -939,7 +939,7 @@ body.mf-page-smart-vault.mf-surface-hierarchy-v57
 .mf-vault-shell :where(.mf-vault-card, .mf-vault-status-panel) {
   background: var(--mf-dark-surface-1) !important;
   background-image: none !important;
-  border-color: var(--mf-dark-line) !important;
+  border-color: transparent !important;
   box-shadow: none !important;
 }
 
@@ -971,7 +971,7 @@ body.mf-page-agent-performance.mf-surface-hierarchy-v57
 :where(.ap-source, .ap-panel, .ap-kpis article) {
   background: var(--mf-dark-surface-1) !important;
   background-image: none !important;
-  border-color: var(--mf-dark-line) !important;
+  border-color: transparent !important;
   box-shadow: none !important;
 }
 
@@ -1002,7 +1002,7 @@ body.mf-page-how-it-works.mf-surface-hierarchy-v57
 ) {
   background: var(--mf-dark-surface-1) !important;
   background-image: none !important;
-  border-color: var(--mf-dark-line) !important;
+  border-color: transparent !important;
   box-shadow: none !important;
 }
 
@@ -1171,8 +1171,8 @@ body.mf-page-system.mf-surface-hierarchy-v57
 :where(.mf-infra, .activity-panel) {
   background: var(--mf-dark-surface-1) !important;
   background-image: none !important;
-  border-color: var(--mf-dark-line) !important;
+  border-color: transparent !important;
   box-shadow: none !important;
 }
 
-/* MEMEFLOW_GLOBAL_DARK_SURFACE_CONTRACT_V110_END */
+/* MEMEFLOW_GLOBAL_DARK_SURFACE_CONTRACT_V111_END */
