@@ -11,11 +11,6 @@
   --mf-type-body:13px;
   --mf-type-panel:14px;
   --mf-type-title:16px;
-
-  --mf-text-primary:#ECECEC;
-  --mf-text-secondary:#B4B4B4;
-  --mf-text-tertiary:#949494;
-
   --mf-premium-text:var(--mf-text-primary);
   --mf-premium-secondary:var(--mf-text-secondary);
   --mf-premium-tertiary:var(--mf-text-tertiary);
@@ -123,10 +118,6 @@ html:not([data-theme="light"]) :where(.mf-vault-brand-copy small,.mf-vault-stat 
 }
 
 html[data-theme="light"]{
-  --mf-text-primary:#0D0D0D;
-  --mf-text-secondary:#5D5D5D;
-  --mf-text-tertiary:#6F6F6F;
-
   --mf-premium-text:var(--mf-text-primary);
   --mf-premium-secondary:var(--mf-text-secondary);
   --mf-premium-tertiary:var(--mf-text-tertiary);
@@ -174,187 +165,88 @@ html[data-theme="light"] :where(
   :root{--mf-type-micro:10px;--mf-type-meta:11px;}
 }
 
+/* ===== MEMEFLOW_PREMIUM_TYPOGRAPHY_V66_END ===== */
+
 /* ==========================================================================
-   MEMEFLOW_GLOBAL_TEXT_CONTRAST_CONTRACT_V83
-
-   OpenAI-inspired visual hierarchy benchmark.
-   These are MEMEFLOW tokens, not a claim about OpenAI private CSS values.
-
-   Exactly 3 neutral text roles:
-     PRIMARY   important titles / names / live values
-     SECONDARY ordinary UI information / controls
-     TERTIARY  metadata / addresses / quiet labels
-
-   Semantic status colors remain separate:
-     OPEN / BUY / WATCH / BLOCKED / profit / loss / warnings / links.
-
-   COLOR ONLY. No size, weight, layout, geometry, surface or app logic.
+   MEMEFLOW_LATE_CONTRAST_BRIDGE_V86
+   Runtime-order repair: consumes the ONE canonical V86 palette.
+   No independent neutral HEX values. Semantic colors remain untouched.
    ========================================================================== */
 
-body:is(
-  .mf-page-system,
-  .mf-page-system-tokens,
-  .mf-page-trading,
-  .mf-page-smart-vault,
-  .mf-page-settings,
-  .mf-page-how-it-works,
-  .mf-page-agent-performance,
-  .mf-page-owner-intelligence
-){
-  --text:var(--mf-text-primary)!important;
-  --muted:var(--mf-text-secondary)!important;
-  --faint:var(--mf-text-tertiary)!important;
-
-  --mf-app-text:var(--mf-text-primary)!important;
-  --mf-app-muted:var(--mf-text-secondary)!important;
-  --mf-nav-text:var(--mf-text-primary)!important;
-  --mf-nav-muted:var(--mf-text-secondary)!important;
-
-  --hiw-text:var(--mf-text-primary)!important;
-  --hiw-muted:var(--mf-text-secondary)!important;
-  --hiw-muted-2:var(--mf-text-tertiary)!important;
-
-  --v-text:var(--mf-text-primary)!important;
-  --v-muted:var(--mf-text-secondary)!important;
-  --v-muted2:var(--mf-text-tertiary)!important;
-}
-
-/* PRIMARY */
 html body:is(
-  .mf-page-system,
-  .mf-page-system-tokens,
-  .mf-page-trading,
-  .mf-page-smart-vault,
-  .mf-page-settings,
-  .mf-page-how-it-works,
-  .mf-page-agent-performance,
+  .mf-page-system,.mf-page-system-tokens,.mf-page-trading,.mf-page-smart-vault,
+  .mf-page-settings,.mf-page-how-it-works,.mf-page-agent-performance,
   .mf-page-owner-intelligence
 ) :where(
-  .brand-title,
-  .mf-nav-link-title,
-  .mf-nav-drawer-title,
-  .scene-title h1,
-  .activity-head h2,
-  .panel-head h2,
-  .flow-hero h1,
-  .summary-card strong,
-  .token-name,
-  .token-symbol,
-  .token-metric strong,
-  .page-state strong,
-  .token-name-row h1,
-  .token-price,
-  .selected-metrics strong,
-  .position-symbol,
-  .trade-log-symbol,
-  .strategy-summary-row strong,
-  .approval-main strong,
-  .pnl-summary strong,
-  .metric-card strong,
-  .telemetry-item strong,
-  .mf-vault-hero h1,
-  .mf-vault-card-head h2,
-  .mf-vault-stat strong,
-  .mf-vault-balance strong,
-  .mf-vault-control-row strong,
-  .mf-hiw-hero h1,
-  .mf-hiw-section-head h2,
-  .ap-hero h1,
-  .ap-head h2,
-  .ap-kpis strong,
-  .ap-summary strong
+  .brand-title,.brand .title,.header-title > span,.mf-settings-page-title > span,
+  .mf-nav-link-title,.mf-nav-drawer-title,
+  .scene-title h1,.activity-head h2,.inspector-head h2,.node-label strong,
+  .metric-card strong,.reason-block b,.telemetry-item strong,.token-symbol,.boot strong,
+  .flow-hero h1,.hero-counter strong,.summary-card strong,.token-name,.token-metric strong,
+  .settings-hero h1,.settings-group > summary strong,.settings-summary strong,
+  .toggle-row strong,.setting-field strong,
+  .mf-vault-brand-copy strong,.mf-vault-hero h1,.mf-vault-card-head h2,
+  .mf-vault-stat strong,.mf-vault-balance strong,.mf-vault-control-row strong,
+  .mf-hiw-brand-copy strong,.mf-hiw-hero h1,.mf-hiw-card h2,.mf-hiw-proof strong,
+  .mf-hiw-map-title,.mf-hiw-section-head h2,.mf-hiw-trust strong,
+  .ap-hero h1,.ap-source strong,.ap-head h2,.ap-donut strong,.ap-summary strong,
+  .ap-kpis article:not(.primary) strong,
+  #tokenName,#tokenPrice,.token-name-row h1,.token-price,.position-symbol,
+  .trade-log-symbol,.strategy-summary-row strong,.approval-main strong,.pnl-summary strong
 ){
   color:var(--mf-text-primary)!important;
 }
 
-/* SECONDARY */
 html body:is(
-  .mf-page-system,
-  .mf-page-system-tokens,
-  .mf-page-trading,
-  .mf-page-smart-vault,
-  .mf-page-settings,
-  .mf-page-how-it-works,
-  .mf-page-agent-performance,
+  .mf-page-system,.mf-page-system-tokens,.mf-page-trading,.mf-page-smart-vault,
+  .mf-page-settings,.mf-page-how-it-works,.mf-page-agent-performance,
   .mf-page-owner-intelligence
 ) :where(
-  .flow-hero p,
-  .summary-card span,
+  .tool-btn,.ghost-btn,.wallet-btn,
+  .status-pill:not(.open):not(.ready):not(.watch):not(.blocked),
+  .scene-title p,.inspector-summary,.reason-block p,.inspector-foot button,
+  .candidate-filter button,.token-card-meta b,.boot span,
+  .flow-hero p,.details-button,.page-state,.pagination button,.search-wrap input,
   .token-metric span,
-  .page-state,
-  .details-button,
-  .candidate-filter button,
-  .timeframes button,
-  .indicator-bar button,
-  .selected-metrics span,
-  .position-bottomline,
-  .trade-log-bottomline,
-  .trade-token-name,
-  .strategy-summary-row span,
-  .status-pill,
-  .tool-btn,
-  .ghost-btn,
-  .wallet-btn,
-  .mf-vault-hero p,
-  .mf-vault-status-copy p,
-  .mf-hiw-hero p,
-  .mf-hiw-section-head p,
-  .mf-hiw-map-detail p,
-  .ap-hero p
+  .settings-hero p,.settings-context,.settings-group > summary small,.setting-field label,
+  .mode-option label,.profile-option label,.toggle-row span,
+  .mf-vault-hero p,.mf-vault-status-copy p,.mf-vault-control-row span,
+  .mf-hiw-hero p,.mf-hiw-card p,.mf-hiw-proof span,.mf-hiw-map-detail p,
+  .mf-hiw-section-head p,.mf-hiw-trust span,
+  .header-title > strong,.ap-hero p,.ap-periods button,.ap-refresh,
+  .ap-legend span,.ap-summary span,
+  #timeframes > button,#indicatorBar button,.timeframes button,.indicator-bar button,
+  .selected-metrics span,.selected-metrics strong,.position-bottomline,
+  .trade-log-bottomline,.trade-token-name,.strategy-summary-row span
 ){
   color:var(--mf-text-secondary)!important;
 }
 
-/* TERTIARY */
 html body:is(
-  .mf-page-system,
-  .mf-page-system-tokens,
-  .mf-page-trading,
-  .mf-page-smart-vault,
-  .mf-page-settings,
-  .mf-page-how-it-works,
-  .mf-page-agent-performance,
+  .mf-page-system,.mf-page-system-tokens,.mf-page-trading,.mf-page-smart-vault,
+  .mf-page-settings,.mf-page-how-it-works,.mf-page-agent-performance,
   .mf-page-owner-intelligence
 ) :where(
-  .brand-sub,
-  .mf-nav-link-sub,
-  .mf-nav-foot span,
-  .eyebrow,
-  .token-meta,
-  .token-meta button,
-  .token-market,
-  .chart-legend span,
-  .chart-empty span,
-  .chart-credit,
-  .trade-log-time,
-  .legend span,
-  .telemetry-item span,
-  .telemetry-item small,
-  .token-card-meta span,
-  .node-label small,
-  .mf-vault-kicker,
-  .mf-vault-eyebrow,
-  .mf-vault-brand-copy small,
-  .mf-vault-stat small,
-  .mf-vault-balance small,
-  .mf-vault-control-row small,
-  .mf-vault-note,
-  .ap-note,
-  .ap-privacy
+  .brand-sub,.brand .subtitle,.mf-settings-page-title > strong,.mf-nav-link-sub,
+  .mf-nav-foot span,.eyebrow,
+  .legend span,.node-label small,.metric-card span,.reason-block span,
+  .inspector-foot span,.telemetry-item span,.telemetry-item small,
+  .token-card-meta span,.scene-hint,
+  .hero-counter span,.summary-card span,.token-meta,
+  .settings-summary span,.settings-summary small,.setting-field small,
+  .toggle-row small,.settings-save-status,
+  .mf-vault-brand-copy small,.mf-vault-kicker,.mf-vault-eyebrow,.mf-vault-stat small,
+  .mf-vault-balance small,.mf-vault-control-row small,.mf-vault-note,
+  .mf-hiw-brand-copy small,.mf-hiw-kicker,.mf-hiw-eyebrow,.mf-hiw-label,
+  .mf-hiw-map-detail span,.mf-hiw-foot,
+  .ap-eyebrow,.ap-source span,.ap-source small,.ap-kpis span,.ap-kpis small,
+  .ap-note,.ap-privacy,
+  #tokenMint,#copyMintBtn,#tokenMarket,#tokenMarket *,.token-meta button,
+  .chart-legend span,.chart-empty span,.chart-credit,.trade-log-time
 ){
   color:var(--mf-text-tertiary)!important;
 }
 
-.mf-text-primary,[data-mf-text-level="primary"]{
-  color:var(--mf-text-primary)!important;
-}
-.mf-text-secondary,[data-mf-text-level="secondary"]{
-  color:var(--mf-text-secondary)!important;
-}
-.mf-text-tertiary,[data-mf-text-level="tertiary"]{
-  color:var(--mf-text-tertiary)!important;
-}
+/* #tokenState / OPEN POSITION and semantic state classes are not recolored. */
 
-/* MEMEFLOW_GLOBAL_TEXT_CONTRAST_CONTRACT_V83_END */
-
-/* ===== MEMEFLOW_PREMIUM_TYPOGRAPHY_V66_END ===== */
+/* MEMEFLOW_LATE_CONTRAST_BRIDGE_V86_END */
