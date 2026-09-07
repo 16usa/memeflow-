@@ -1680,3 +1680,104 @@ body.mf-page-trading.mf-trading-terminal
 }
 
 /* MEMEFLOW_RECENT_TRADES_PLACEMENT_V124_1_END */
+
+/* ==========================================================================
+   MEMEFLOW TRADING FLAT INNER SURFACES V125
+
+   Trading Terminal only.
+
+   Requested visual contract:
+   - Chart selected metrics use the SAME panel surface as the chart card.
+   - Pending approvals empty/service state has NO nested fill.
+   - Trade strategy summary rows use the SAME panel surface as the card.
+   - Trade strategy header/footer separators use the canonical site line.
+   - No JS, data, trading, scanner, chart or approval behavior changes.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   FLAT INNER SURFACES
+   Let the parent panel surface show through instead of surface-2/inset.
+   -------------------------------------------------------------------------- */
+
+body.mf-page-trading.mf-trading-terminal
+.chart-panel .selected-metrics,
+body.mf-page-trading.mf-trading-terminal
+.approvals-panel .approval-list,
+body.mf-page-trading.mf-trading-terminal
+.strategy-summary-panel .strategy-summary-list {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+body.mf-page-trading.mf-trading-terminal
+.chart-panel .selected-metrics > div,
+body.mf-page-trading.mf-trading-terminal
+.strategy-summary-panel .strategy-summary-row,
+body.mf-page-trading.mf-trading-terminal
+.approvals-panel .approval-list > .empty,
+body.mf-page-trading.mf-trading-terminal
+.approvals-panel .approval-list > .approval-empty,
+body.mf-page-trading.mf-trading-terminal
+.approvals-panel .approval-empty {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+/* Pending-approval service/empty copy is not a nested card. */
+body.mf-page-trading.mf-trading-terminal
+.approvals-panel .approval-list > .empty,
+body.mf-page-trading.mf-trading-terminal
+.approvals-panel .approval-list > .approval-empty,
+body.mf-page-trading.mf-trading-terminal
+.approvals-panel .approval-empty {
+  border: 0 !important;
+  border-color: transparent !important;
+  border-radius: 0 !important;
+}
+
+/* --------------------------------------------------------------------------
+   CANONICAL SEPARATORS
+   V61 owns the light line token.
+   The dark contract maps that same token to --mf-dark-line.
+   Fallback remains the site's --line token.
+   -------------------------------------------------------------------------- */
+
+body.mf-page-trading.mf-trading-terminal
+.strategy-summary-panel > .panel-head {
+  border-bottom-color: var(--mf-trading-v61-line, var(--line)) !important;
+}
+
+body.mf-page-trading.mf-trading-terminal
+.strategy-summary-panel .strategy-summary-row > div + div {
+  border-left-color: var(--mf-trading-v61-line, var(--line)) !important;
+}
+
+body.mf-page-trading.mf-trading-terminal
+.strategy-summary-panel .strategy-summary-foot {
+  border-top: 1px solid var(--mf-trading-v61-line, var(--line)) !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+body.mf-page-trading.mf-trading-terminal
+.chart-panel .selected-metrics {
+  border-top-color: var(--mf-trading-v61-line, var(--line)) !important;
+}
+
+body.mf-page-trading.mf-trading-terminal
+.chart-panel .selected-metrics > div {
+  border-right-color: var(--mf-trading-v61-line, var(--line)) !important;
+}
+
+body.mf-page-trading.mf-trading-terminal
+.chart-panel .selected-metrics > div:last-child {
+  border-right-color: transparent !important;
+}
+
+/* MEMEFLOW_TRADING_FLAT_INNER_SURFACES_V125_END */
