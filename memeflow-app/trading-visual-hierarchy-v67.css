@@ -1557,3 +1557,49 @@ html[data-theme="dark"] body.mf-page-trading.mf-trading-terminal
 }
 
 /* MEMEFLOW_TRADING_DARK_SURFACE_BRIDGE_V109_END */
+
+/* ==========================================================================
+   MEMEFLOW_CANDIDATE_OPERATIONAL_TYPE_PARITY_V112
+
+   Final late-order fix for the Candidates card typography conflict.
+
+   Root cause:
+     V102 forced Candidate token name to 9px, while the adjacent
+     Open Positions and Recent Trades primary token names use 11px.
+     Older V74 also left Candidate lower price at 8px.
+
+   Final mobile operational hierarchy:
+     Candidate token name     11px / 650
+     COPY TRADE / state        9px / 500
+     Score / Holders / price   9px / 500
+
+   This matches the neighboring Open Positions / Recent Trades hierarchy.
+   Typography only. No layout, colors, borders, surfaces or trading logic.
+   ========================================================================== */
+@media (max-width: 820px) {
+  html body.mf-page-trading.mf-trading-terminal
+  .candidates-panel .candidate-primary-line .candidate-symbol {
+    font-size: 11px !important;
+    line-height: 1.05 !important;
+    font-weight: 650 !important;
+    letter-spacing: -0.01em !important;
+    -webkit-text-size-adjust: none !important;
+    text-size-adjust: none !important;
+  }
+
+  html body.mf-page-trading.mf-trading-terminal
+  .candidates-panel :where(
+    .candidate-primary-line .copy-trade-badge,
+    .candidate-top .state-dot,
+    .candidate-bottom,
+    .candidate-bottom > span:first-child,
+    .candidate-price
+  ) {
+    font-size: 9px !important;
+    line-height: 1.05 !important;
+    font-weight: 500 !important;
+    -webkit-text-size-adjust: none !important;
+    text-size-adjust: none !important;
+  }
+}
+/* MEMEFLOW_CANDIDATE_OPERATIONAL_TYPE_PARITY_V112_END */
