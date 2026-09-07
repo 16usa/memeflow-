@@ -1381,3 +1381,68 @@ html body:is(
 }
 
 /* MEMEFLOW_TRADING_HEADER_REAL_CLASSES_V105_END */
+
+/* ==========================================================================
+   MEMEFLOW_TRADING_HEADER_FULL_NAME_V106
+
+   V105 alignment is correct, but its h1 flex/ellipsis safety rule clips
+   normal names such as "Madao · Madao" at iPhone width.
+
+   V106 keeps the exact requested two-row composition and gives the left side
+   enough room so the normal token name stays complete.
+
+   Row 1: token name + OPEN POSITION | price
+   Row 2: address + Copy              | PRICE · MC · BP
+
+   No semantic-color or typography-contract ownership.
+   ========================================================================== */
+
+@media (max-width: 430px) {
+  html body.mf-page-trading.mf-trading-terminal
+  .chart-head {
+    gap: 8px !important;
+  }
+
+  html body.mf-page-trading.mf-trading-terminal
+  .chart-head .token-title {
+    flex: 1 1 auto !important;
+    gap: 8px !important;
+  }
+
+  html body.mf-page-trading.mf-trading-terminal
+  .chart-head .token-name-row {
+    gap: 4px !important;
+  }
+
+  html body.mf-page-trading.mf-trading-terminal
+  .chart-head .token-name-row h1 {
+    flex: 0 0 auto !important;
+    max-width: none !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    white-space: nowrap !important;
+  }
+
+  html body.mf-page-trading.mf-trading-terminal
+  .chart-head .token-name-row .decision-badge {
+    flex: 0 0 auto !important;
+  }
+
+  /* 112px is sufficient for the current 12px primary price and the 8px
+     system line, while returning 16px to the left title/status row. */
+  html body.mf-page-trading.mf-trading-terminal
+  .chart-head .price-toggle {
+    flex: 0 0 112px !important;
+    width: 112px !important;
+    min-width: 112px !important;
+    max-width: 112px !important;
+  }
+
+  html body.mf-page-trading.mf-trading-terminal
+  .chart-head .token-market {
+    font-size: 8px !important;
+    color: var(--mf-text-tertiary) !important;
+  }
+}
+
+/* MEMEFLOW_TRADING_HEADER_FULL_NAME_V106_END */
