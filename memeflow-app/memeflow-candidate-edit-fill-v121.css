@@ -122,3 +122,102 @@ body.mf-page-trading.mf-trading-terminal
 }
 
 /* MEMEFLOW_CANDIDATE_EDIT_FILL_V121_END */
+
+/* ==========================================================================
+   MEMEFLOW CANDIDATE SEGMENT STRIP V122
+
+   Final Candidates filter geometry / state contract:
+   - keep the same five equal columns and the same outer strip footprint
+   - horizontal gap = 0
+   - vertical padding = 0
+   - button height = 48px (old 34px + 7px top + 7px bottom)
+     so the strip's outside height and label center stay in place
+   - radius = 0 on every segment, including first / last
+   - inactive text = second-level color
+   - only ACTIVE text receives its semantic state color
+   - fill remains the neutral EDIT-style material from V121
+   ========================================================================== */
+
+body.mf-page-trading.mf-trading-terminal
+.candidates-panel .candidate-filter {
+  gap: 0 !important;
+  row-gap: 0 !important;
+  column-gap: 0 !important;
+  padding: 0 !important;
+}
+
+body.mf-page-trading.mf-trading-terminal
+.candidates-panel .candidate-filter > button[data-filter] {
+  height: 48px !important;
+  min-height: 48px !important;
+  border-radius: 0 !important;
+
+  /* Secondary text by default. */
+  color: var(--muted, #718894) !important;
+}
+
+/* Light theme uses the exact Trading secondary-text token. */
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.candidates-panel .candidate-filter > button[data-filter] {
+  color: var(--mf-trading-v61-muted, #737373) !important;
+}
+
+/* Only the active word becomes semantic — DARK. */
+body.mf-page-trading.mf-trading-terminal
+.candidates-panel .candidate-filter > button[data-filter="all"].active {
+  color: #55d9ff !important;
+}
+
+body.mf-page-trading.mf-trading-terminal
+.candidates-panel .candidate-filter > button[data-filter="BUY READY"].active {
+  color: #efc66a !important;
+}
+
+body.mf-page-trading.mf-trading-terminal
+.candidates-panel .candidate-filter > button[data-filter="WATCH"].active {
+  color: #5c8dff !important;
+}
+
+body.mf-page-trading.mf-trading-terminal
+.candidates-panel .candidate-filter > button[data-filter="WAITING"].active {
+  color: #95a7b3 !important;
+}
+
+body.mf-page-trading.mf-trading-terminal
+.candidates-panel .candidate-filter > button[data-filter="BLOCKED"].active {
+  color: #ff6679 !important;
+}
+
+/* Only the active word becomes semantic — LIGHT. */
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.candidates-panel .candidate-filter > button[data-filter="all"].active {
+  color: #087d9f !important;
+}
+
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.candidates-panel .candidate-filter > button[data-filter="BUY READY"].active {
+  color: #936b0a !important;
+}
+
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.candidates-panel .candidate-filter > button[data-filter="WATCH"].active {
+  color: #315fc7 !important;
+}
+
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.candidates-panel .candidate-filter > button[data-filter="WAITING"].active {
+  color: #607783 !important;
+}
+
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.candidates-panel .candidate-filter > button[data-filter="BLOCKED"].active {
+  color: #c33c50 !important;
+}
+
+/* MEMEFLOW_CANDIDATE_SEGMENT_STRIP_V122_END */
