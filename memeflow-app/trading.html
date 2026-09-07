@@ -97,7 +97,8 @@
 
       <div class="top-actions">
         <!-- MEMEFLOW_TRADING_REMOVE_SYSTEM_BUTTON_V1: System button removed -->
-        <button id="walletBtn" class="wallet-btn" type="button">Wallet settings</button>
+        <!-- MEMEFLOW_TRADING_HIDE_SMART_VAULT_HEADER_V118: keep DOM hook for JS, remove header control from UI -->
+        <button id="walletBtn" class="wallet-btn" type="button" hidden aria-hidden="true" tabindex="-1" style="display:none !important">Wallet settings</button>
       </div>
     </header>
 
