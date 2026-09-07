@@ -526,8 +526,8 @@ html body.mf-page-trading.mf-trading-terminal :where(
      exact original MEMEFLOW palette.
 
    LIGHT:
-     same saturated hue families, darkened only for readable contrast on white.
-     No gray/neutral mixing.
+     exact same native MEMEFLOW palette as Dark.
+     No theme-specific semantic override.
 
    COLOR ONLY.
    No typography, casing, spacing, geometry, JS, backend or data logic.
@@ -540,15 +540,6 @@ html body.mf-page-trading.mf-trading-terminal :where(
   --mf-semantic-yellow: #efc66a;
   --mf-semantic-purple: #a98bff;
   --mf-semantic-blue:   #6a99ff;
-}
-
-html[data-theme="light"] {
-  --mf-semantic-cyan:   #00789b;
-  --mf-semantic-green:  #127f4e;
-  --mf-semantic-red:    #e0001c;
-  --mf-semantic-yellow: #90680f;
-  --mf-semantic-purple: #7849ff;
-  --mf-semantic-blue:   #1861ff;
 }
 
 /* Legacy aliases: one semantic palette for existing components. */
@@ -760,3 +751,8 @@ html body:is(
 }
 
 /* MEMEFLOW_GLOBAL_SEMANTIC_COLOR_CONTRACT_V100_END */
+
+/* MEMEFLOW_SEMANTIC_SINGLE_PALETTE_V103
+   Dark + Light now inherit the same six native semantic tokens from :root.
+   No Light-specific semantic variable override exists.
+   MEMEFLOW_SEMANTIC_SINGLE_PALETTE_V103_END */
