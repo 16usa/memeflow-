@@ -549,3 +549,43 @@ body.mf-page-trading.mf-trading-terminal .trade-log-time {
 }
 
 /* MEMEFLOW_TRADING_TYPOGRAPHY_V74_END */
+
+/* ==========================================================================
+   MEMEFLOW_TRADING_MOBILE_EXACT_TYPOGRAPHY_V78
+
+   Mobile Trading Terminal only.
+   Typography size override only. No layout, spacing, color, border or logic.
+
+   Requested:
+     token name + primary price                    12px
+     OPEN POSITION / selected state                 9px
+     mint + Copy + PRICE / MC / BP                  9px
+     timeframe row                                  9px
+     indicator row: MA EMA BOLL SAR VOL MACD...    9px
+     metric row: Score Holders Top 10 Developer...  9px
+   ========================================================================== */
+@media (max-width: 820px) {
+  body.mf-page-trading.mf-trading-terminal .token-name-row h1,
+  body.mf-page-trading.mf-trading-terminal .token-price {
+    font-size: 12px !important;
+  }
+
+  body.mf-page-trading.mf-trading-terminal .decision-badge,
+  body.mf-page-trading.mf-trading-terminal [data-mf-open-position-pipeline-v3="1"] {
+    font-size: 9px !important;
+  }
+
+  body.mf-page-trading.mf-trading-terminal .token-meta,
+  body.mf-page-trading.mf-trading-terminal .token-meta button,
+  body.mf-page-trading.mf-trading-terminal .token-market {
+    font-size: 9px !important;
+  }
+
+  body.mf-page-trading.mf-trading-terminal .timeframes button,
+  body.mf-page-trading.mf-trading-terminal .indicator-bar button,
+  body.mf-page-trading.mf-trading-terminal .selected-metrics span,
+  body.mf-page-trading.mf-trading-terminal .selected-metrics strong {
+    font-size: 9px !important;
+  }
+}
+/* MEMEFLOW_TRADING_MOBILE_EXACT_TYPOGRAPHY_V78_END */
