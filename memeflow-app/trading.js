@@ -1489,6 +1489,7 @@ function selectCandidate(mint) {
   chartRuntime.dataKey = '';
 
   renderCandidates();
+  renderPositions();
   renderSelected();
   connectChartStream(state.selectedMint);
   updateAmountHint();
@@ -4395,6 +4396,7 @@ function positionAvatarMarkup(position) {
   `;
 }
 
+/* MEMEFLOW_OPEN_POSITION_SELECTION_V117_1 */
 function renderPositions() {
   const rows = state.positions.filter(p => p.status === 'OPEN');
   const list = $('positionsList');
@@ -4417,7 +4419,7 @@ function renderPositions() {
       `${pnl >= 0 ? '+' : ''}${fmt(pnl, 2)}%`;
 
     return `
-      <div class="position-row" data-mint="${esc(position.mint)}">
+      <div class="position-row ${String(position.mint) === String(state.selectedMint) ? 'selected' : ''}" data-mint="${esc(position.mint)}">
         ${pumpAvatarLinkMarkupV76(positionAvatarMarkup(position), position?.mint, position?.symbol || position?.name)}
 
         <div class="position-main">

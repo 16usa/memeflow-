@@ -1,0 +1,60 @@
+/* ==========================================================================
+   MEMEFLOW OPEN POSITION SELECTION V117.1
+   Trading Terminal only.
+
+   Purpose:
+   Mirror the existing Candidates selected-row visual state for Open positions.
+
+   Light:
+     - #EBEBEB selected fill
+     - 3px MEMEFLOW cyan inset accent
+
+   Dark:
+     - existing dark surface-2 selected fill
+     - restrained cyan left accent
+
+   No dimensions, trading logic, CLOSE behavior, scanner logic or backend data
+   are changed here.
+   ========================================================================== */
+
+body.mf-page-trading.mf-trading-terminal
+.positions-list .position-row.selected {
+  background: rgba(85, 217, 255, .035) !important;
+  background-image: none !important;
+  border-left: 2px solid var(--mf-v67-selected-accent, rgba(85, 217, 255, .58)) !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="dark"]
+body.mf-page-trading.mf-trading-terminal
+.positions-list .position-row.selected {
+  background: var(--mf-dark-surface-2, #0f141a) !important;
+  background-color: var(--mf-dark-surface-2, #0f141a) !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+@media (max-width: 820px) {
+  body.mf-page-trading.mf-trading-terminal
+  .positions-list .position-row.selected {
+    padding-left: 7px !important;
+  }
+}
+
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.positions-list .position-row.selected {
+  background: #EBEBEB !important;
+  background-color: #EBEBEB !important;
+  background-image: none !important;
+
+  border-left: 0 !important;
+  border-right: 0 !important;
+  border-top: 0 !important;
+  border-bottom-color: #EBEBEB !important;
+  border-radius: 0 !important;
+
+  box-shadow: inset 3px 0 0 var(--cyan) !important;
+}
+
+/* MEMEFLOW_OPEN_POSITION_SELECTION_V117_1_END */
