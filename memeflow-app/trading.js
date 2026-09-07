@@ -1510,9 +1510,65 @@ const tokenAvatarRuntime={
   generation:0
 };
 
+/* MEMEFLOW_CHART_TOKEN_AVATAR_V128
+ * Reuse the exact Trading token-avatar contract already used by Candidates,
+ * Open positions and Recent trades:
+ *   - same mf-trading-pump-avatar-link-v76 wrapper
+ *   - same trade-token-avatar geometry
+ *   - same mf-pump-avatar-badge-v76 Pump.fun badge
+ *   - same capture-phase Pump.fun click handler
+ *
+ * No chart, selection, trading or image-authority logic is changed.
+ */
+function syncChartPumpAvatarLinkV128(candidate) {
+  const link = $('chartTokenAvatarLinkV128');
+  if (!link) return;
+
+  const mint = String(candidate?.mint || '').trim();
+  const label = String(
+    candidate?.symbol ||
+    candidate?.name ||
+    'token'
+  ).trim() || 'token';
+
+  let badge = link.querySelector('.mf-pump-avatar-badge-v76');
+
+  if (!mint) {
+    link.removeAttribute('data-mf-pump-avatar-link-v76');
+    link.removeAttribute('title');
+    link.removeAttribute('aria-label');
+    badge?.remove();
+    return;
+  }
+
+  const pumpUrl =
+    `https://pump.fun/coin/${encodeURIComponent(mint)}`;
+
+  link.dataset.mfPumpAvatarLinkV76 = pumpUrl;
+  link.title = 'Open on Pump.fun';
+  link.setAttribute(
+    'aria-label',
+    `Open ${label} on Pump.fun`
+  );
+
+  if (!badge) {
+    badge = document.createElement('img');
+    badge.className = 'mf-pump-avatar-badge-v76';
+    badge.src = 'https://pump.fun/pump-logomark.svg';
+    badge.alt = '';
+    badge.setAttribute('aria-hidden', 'true');
+    badge.loading = 'lazy';
+    badge.decoding = 'async';
+    badge.referrerPolicy = 'no-referrer';
+    link.appendChild(badge);
+  }
+}
+
 function renderTokenAvatar(candidate){
   const avatar=$('tokenAvatar');
   if(!avatar)return;
+
+  syncChartPumpAvatarLinkV128(candidate);
 
   const mint=String(candidate?.mint||'').trim();
   const fallback=String(
