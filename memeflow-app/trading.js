@@ -951,10 +951,18 @@ function populateSettings() {
       ? 'PAPER ASSIST'
       : 'ENGINE OBSERVE';
 
+  /* MEMEFLOW_PAPER_ASSIST_ENGINE_ACTIVE_V126_1
+   Paper Assist is a live paper runtime mode too.
+   The approval UI already treats operatingMode=assist as active and the
+   terminal polls actionable proposals + paper status continuously.
+   Kill-switch handling elsewhere still forces this pill inactive.
+   */
+  const paperRuntimeModeActive =
+    (mode === 'automate' || mode === 'assist') &&
+    String(s.tradingEnvironment || '').toLowerCase() === 'paper';
+
   $('enginePill').dataset.active =
-    mode === 'automate' && s.tradingEnvironment === 'paper'
-      ? 'true'
-      : 'false';
+    paperRuntimeModeActive ? 'true' : 'false';
 
   text(
     'saveState',

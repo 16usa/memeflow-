@@ -1781,3 +1781,21 @@ body.mf-page-trading.mf-trading-terminal
 }
 
 /* MEMEFLOW_TRADING_FLAT_INNER_SURFACES_V125_END */
+
+/* ==========================================================================
+   MEMEFLOW TRADING HEADER NORMAL FLOW V126.1
+
+   Trading Terminal only:
+   - preserve the current header grid/geometry
+   - remove sticky positioning so the header scrolls with the document
+   - leave navigation, engine strip, brand and responsive layout untouched
+   ========================================================================== */
+
+body.mf-page-trading.mf-trading-terminal
+.topbar.mf-site-header.mf-site-header--sticky {
+  position: relative !important;
+  top: auto !important;
+  inset-block-start: auto !important;
+}
+
+/* MEMEFLOW_TRADING_HEADER_NORMAL_FLOW_V126_1_END */
