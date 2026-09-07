@@ -335,6 +335,7 @@ html body:is(
   .mf-hiw-section-head p,.mf-hiw-trust span,
   .header-title > strong,.ap-hero p,.ap-periods button,.ap-refresh,
   .ap-legend span,.ap-summary span,
+  .trade-log-hint,
   #timeframes > button,#indicatorBar button,.timeframes button,.indicator-bar button,
   .selected-metrics span,.selected-metrics strong,.position-bottomline,
   .trade-log-bottomline,.trade-token-name,.strategy-summary-row span
@@ -472,7 +473,6 @@ html body:is(
   .chart-empty span,
   .chart-credit,
   .trade-log-time,
-  .trade-log-hint,
   .strategy-summary-foot,
   .pnl-summary span
 ){

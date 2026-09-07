@@ -4478,13 +4478,7 @@ function renderTrades() {
       (mint ? short(mint) : 'TOKEN')
     ).trim();
 
-    const tokenName = String(
-      trade.name ||
-      related?.name ||
-      symbol
-    ).trim();
-
-    const avatarUrl = canonicalTokenImageUrlV1(mint);
+const avatarUrl = canonicalTokenImageUrlV1(mint);
 
     const rawTime =
       trade.at ??
@@ -4512,11 +4506,7 @@ function renderTrades() {
       ? (pnl >= 0 ? 'pnl-positive' : 'pnl-negative')
       : '';
 
-    const pumpUrl = mint
-      ? `https://pump.fun/coin/${encodeURIComponent(mint)}`
-      : '';
-
-    return `
+return `
       <article class="trade-row trade-log-row">
         ${pumpAvatarLinkMarkupV76(avatarMarkup(avatarUrl, symbol), mint, symbol)}
 
@@ -4525,21 +4515,11 @@ function renderTrades() {
             <strong class="trade-side ${sideClass}">${esc(side)}</strong>
             <strong class="trade-log-symbol">${esc(symbol)}</strong>
 
-            ${pumpUrl
-              ? `<a class="trade-pump-link"
-                    href="${esc(pumpUrl)}"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label="Open ${esc(symbol)} on Pump.fun">Pump &#8599;</a>`
-              : ''}
-
-            <time class="trade-log-time">${esc(tradeTime(rawTime))}</time>
+<time class="trade-log-time">${esc(tradeTime(rawTime))}</time>
           </div>
 
           <div class="trade-log-bottomline">
-            <span class="trade-token-name">${esc(tokenName)}</span>
-            <i>·</i>
-            <span>${finite(sizeSol) ? `${fmt(sizeSol, 4)} SOL` : '—'}</span>
+<span>${finite(sizeSol) ? `${fmt(sizeSol, 4)} SOL` : '—'}</span>
             <i>·</i>
             <span class="${pnlClass}">${esc(pnlText)}</span>
             <i>·</i>

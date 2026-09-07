@@ -45,9 +45,7 @@ body.mf-page-trading.mf-trading-terminal :where(
   .approval-count,
   .decision-badge,
   .state-dot,
-  .copy-trade-badge,
-  .trade-log-hint
-) {
+  .copy-trade-badge) {
   font-size: var(--mf-trading-type-micro) !important;
   line-height: 1.1 !important;
   font-weight: 650 !important;
@@ -495,9 +493,9 @@ body.mf-page-trading.mf-trading-terminal .trade-log-time {
 @media (max-width: 820px) {
   body.mf-page-trading.mf-trading-terminal
   .candidates-panel .candidate-filter button {
-    font-size: 8px !important;
+    font-size: 9px !important;
     line-height: 1 !important;
-    font-weight: 600 !important;
+    font-weight: 500 !important;
   }
 
   body.mf-page-trading.mf-trading-terminal
@@ -589,3 +587,19 @@ body.mf-page-trading.mf-trading-terminal .trade-log-time {
   }
 }
 /* MEMEFLOW_TRADING_MOBILE_EXACT_TYPOGRAPHY_V78_END */
+
+/* ==========================================================================
+   MEMEFLOW_TRADING_RECENT_CLEANUP_V96
+   Candidate controls and Recent-trades SCROLL share the requested
+   Secondary 9px/500 control tier.
+   ========================================================================== */
+
+body.mf-page-trading.mf-trading-terminal
+.bottom-history-panel .trade-log-hint {
+  font-size: 9px !important;
+  line-height: 1 !important;
+  font-weight: 500 !important;
+  letter-spacing: 0 !important;
+}
+
+/* MEMEFLOW_TRADING_RECENT_CLEANUP_V96_END */
