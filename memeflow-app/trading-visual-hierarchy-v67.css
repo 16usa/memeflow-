@@ -1215,3 +1215,40 @@ html body:is(
 }
 
 /* MEMEFLOW_LATE_SEMANTIC_COLOR_BRIDGE_V100_END */
+
+/* ==========================================================================
+   MEMEFLOW_CANDIDATE_9PX_REASON_SECONDARY_V102
+
+   Candidates:
+     candidate token name
+     COPY TRADE badge
+     Score / Holders
+   = 9px
+
+   Recent trades:
+     COPY TRADING BUY/SELL reason
+   = Secondary neutral contrast
+
+   Owns only requested font-size/color declarations.
+   Semantic hues, borders, fills, casing, geometry and logic untouched.
+   ========================================================================== */
+
+@media (max-width: 820px) {
+  html body.mf-page-trading.mf-trading-terminal
+  .candidates-panel .candidate-primary-line .candidate-symbol,
+
+  html body.mf-page-trading.mf-trading-terminal
+  .candidates-panel .candidate-primary-line .copy-trade-badge,
+
+  html body.mf-page-trading.mf-trading-terminal
+  .candidates-panel .candidate-bottom > span:first-child {
+    font-size: 9px !important;
+  }
+
+  html body.mf-page-trading.mf-trading-terminal
+  .bottom-history-panel .trade-log-reason {
+    color: var(--mf-text-secondary) !important;
+  }
+}
+
+/* MEMEFLOW_CANDIDATE_9PX_REASON_SECONDARY_V102_END */
