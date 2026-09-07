@@ -567,19 +567,39 @@ html body:is(
 /* MEMEFLOW_LATE_CONTRAST_BRIDGE_V86_END */
 
 /* ==========================================================================
-   MEMEFLOW_TRADE_STRATEGY_TYPOGRAPHY_MATCH_V87
+   MEMEFLOW_TRADE_STRATEGY_LOWER_TYPOGRAPHY_V88
 
-   Match lower Trading Terminal operational rows to Trade Strategy:
-     primary   12px / 650 / primary contrast
-     secondary 11px / 500 / secondary contrast
+   Final requested mobile operational type scale:
 
-   Typography/contrast only.
-   No row height, spacing, geometry, avatar, trading logic or backend changes.
-   Semantic colors remain owned by their existing semantic classes.
+     PRIMARY   11px / 650 / Primary neutral contrast
+     SECONDARY  9px / 500 / Secondary neutral contrast
+
+   Applies consistently to:
+     Trade Strategy
+     Open positions
+     Candidates
+     Recent trades
+
+   Inter remains inherited globally.
+   Semantic colors remain untouched:
+     COPY TRADE / OPEN POSITION / BUY / SELL / P&L / Close / Pump link colors.
+
+   Typography + neutral contrast only.
+   No spacing, geometry, row height, avatar, borders, JS, trading or backend.
    ========================================================================== */
 
 @media (max-width: 820px) {
-  /* PRIMARY — same tier as Trade Strategy values. */
+  /* ========================================================================
+     PRIMARY — 11px
+     Same role as Trade Strategy values.
+     ======================================================================== */
+
+  body.mf-page-trading.mf-trading-terminal
+  .strategy-summary-panel .strategy-summary-row strong,
+
+  body.mf-page-trading.mf-trading-terminal
+  .strategy-summary-panel .strategy-summary-row b,
+
   body.mf-page-trading.mf-trading-terminal
   .positions-panel .position-symbol,
 
@@ -588,13 +608,14 @@ html body:is(
 
   body.mf-page-trading.mf-trading-terminal
   .bottom-history-panel .trade-log-symbol {
-    font-size: 12px !important;
+    font-size: 11px !important;
     font-weight: 650 !important;
     line-height: 1.15 !important;
     color: var(--mf-text-primary) !important;
   }
 
-  /* Same primary typography, but keep existing semantic/accent colors. */
+  /* Semantic/accent items on the primary line:
+     size/weight follow PRIMARY, existing colors are deliberately not changed. */
   body.mf-page-trading.mf-trading-terminal
   .positions-panel .copy-trade-badge,
 
@@ -606,12 +627,19 @@ html body:is(
 
   body.mf-page-trading.mf-trading-terminal
   .bottom-history-panel .trade-pump-link {
-    font-size: 12px !important;
+    font-size: 11px !important;
     font-weight: 650 !important;
     line-height: 1.15 !important;
   }
 
-  /* SECONDARY — same tier as Trade Strategy labels. */
+  /* ========================================================================
+     SECONDARY — 9px
+     Same role as Trade Strategy labels.
+     ======================================================================== */
+
+  body.mf-page-trading.mf-trading-terminal
+  .strategy-summary-panel .strategy-summary-row span,
+
   body.mf-page-trading.mf-trading-terminal
   .positions-panel .position-bottomline,
 
@@ -635,10 +663,14 @@ html body:is(
 
   body.mf-page-trading.mf-trading-terminal
   .bottom-history-panel .trade-log-time {
-    font-size: 11px !important;
+    font-size: 9px !important;
     font-weight: 500 !important;
     line-height: 1.15 !important;
   }
+
+  /* Neutral SECONDARY contrast. */
+  body.mf-page-trading.mf-trading-terminal
+  .strategy-summary-panel .strategy-summary-row span,
 
   body.mf-page-trading.mf-trading-terminal
   .positions-panel .position-bottomline,
@@ -654,15 +686,15 @@ html body:is(
     color: var(--mf-text-secondary) !important;
   }
 
-  /* P&L is secondary-size telemetry but keeps its green/red semantic color. */
+  /* P&L follows SECONDARY size but keeps green/red semantic color. */
   body.mf-page-trading.mf-trading-terminal
   .positions-panel .position-pnl,
 
   body.mf-page-trading.mf-trading-terminal
   .bottom-history-panel :where(.pnl-positive, .pnl-negative) {
-    font-size: 11px !important;
+    font-size: 9px !important;
     line-height: 1.15 !important;
   }
 }
 
-/* MEMEFLOW_TRADE_STRATEGY_TYPOGRAPHY_MATCH_V87_END */
+/* MEMEFLOW_TRADE_STRATEGY_LOWER_TYPOGRAPHY_V88_END */
