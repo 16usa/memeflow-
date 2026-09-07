@@ -4765,3 +4765,62 @@ init();
 /* MEMEFLOW_TRADING_CHART_V30_24_OPTIONAL_INDICATORS */
 
 /* MEMEFLOW_TRADING_CHART_V30_26_EXTENDED_INDICATORS */
+
+
+/* MEMEFLOW_TRADING_HEADER_TWO_ROW_V104_RUNTIME */
+(function () {
+  const repairTradingHeroHeaderV104 = () => {
+    const root = document.querySelector('.mf-page-trading.mf-trading-terminal');
+    if (!root) return;
+
+    root.querySelectorAll('.token-hero-meta').forEach((meta) => {
+      if (!(meta instanceof HTMLElement)) return;
+
+      const title = meta.querySelector('.token-hero-title');
+      const status = meta.querySelector('.token-hero-status');
+      const price = meta.querySelector('.token-hero-price');
+      let addressline = meta.querySelector('.token-hero-addressline');
+      const facts = meta.querySelector('.token-hero-facts');
+
+      if (!meta.querySelector('.token-hero-topline')) {
+        const topline = document.createElement('div');
+        topline.className = 'token-hero-topline';
+        if (title) topline.appendChild(title);
+        if (status) topline.appendChild(status);
+        meta.insertBefore(topline, meta.firstChild);
+      }
+
+      if (!addressline) {
+        const address = meta.querySelector('.token-hero-address');
+        const copy = Array.from(meta.children).find((el) =>
+          el instanceof HTMLElement && /copy/i.test(el.className)
+        );
+        if (address || copy) {
+          addressline = document.createElement('div');
+          addressline.className = 'token-hero-addressline';
+          if (address) addressline.appendChild(address);
+          if (copy) addressline.appendChild(copy);
+          meta.appendChild(addressline);
+        }
+      }
+
+      if (addressline && !meta.querySelector('.token-hero-bottomline')) {
+        const bottomline = document.createElement('div');
+        bottomline.className = 'token-hero-bottomline';
+        bottomline.appendChild(addressline);
+        meta.appendChild(bottomline);
+      }
+
+      if (price && price.parentElement !== meta) meta.appendChild(price);
+      if (facts && facts.parentElement !== meta) meta.appendChild(facts);
+    });
+  };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', repairTradingHeroHeaderV104, { once: true });
+  } else {
+    repairTradingHeroHeaderV104();
+  }
+  window.addEventListener('load', repairTradingHeroHeaderV104);
+  document.addEventListener('mf-trading-rendered', repairTradingHeroHeaderV104);
+})();

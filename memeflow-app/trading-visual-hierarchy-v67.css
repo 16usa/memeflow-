@@ -1252,3 +1252,97 @@ html body:is(
 }
 
 /* MEMEFLOW_CANDIDATE_9PX_REASON_SECONDARY_V102_END */
+
+/* ==========================================================================
+   MEMEFLOW_TRADING_HEADER_TWO_ROW_V104
+
+   Mobile Trading token header:
+     Row 1: title + status badge | main price
+     Row 2: address + Copy       | PRICE · MC · BP
+   PRICE · MC · BP = system text (8px / tertiary)
+
+   Owns only this header composition.
+   Does not change semantic hues.
+   ========================================================================== */
+
+@media (max-width: 820px) {
+  html body.mf-page-trading.mf-trading-terminal .token-hero-meta {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    grid-template-areas:
+      "title price"
+      "meta facts" !important;
+    column-gap: 14px !important;
+    row-gap: 4px !important;
+    align-items: start !important;
+  }
+
+  html body.mf-page-trading.mf-trading-terminal .token-hero-topline {
+    grid-area: title !important;
+    min-width: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    flex-wrap: wrap !important;
+  }
+
+  html body.mf-page-trading.mf-trading-terminal .token-hero-title {
+    min-width: 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+  }
+
+  html body.mf-page-trading.mf-trading-terminal .token-hero-status {
+    display: inline-flex !important;
+    align-items: center !important;
+    white-space: nowrap !important;
+  }
+
+  html body.mf-page-trading.mf-trading-terminal .token-hero-price {
+    grid-area: price !important;
+    justify-self: end !important;
+    text-align: right !important;
+    white-space: nowrap !important;
+  }
+
+  html body.mf-page-trading.mf-trading-terminal .token-hero-bottomline {
+    grid-area: meta !important;
+    min-width: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    flex-wrap: wrap !important;
+  }
+
+  html body.mf-page-trading.mf-trading-terminal .token-hero-addressline {
+    min-width: 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    flex-wrap: wrap !important;
+  }
+
+  html body.mf-page-trading.mf-trading-terminal .token-hero-facts {
+    grid-area: facts !important;
+    justify-self: end !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    text-align: right !important;
+    white-space: nowrap !important;
+    font-size: 8px !important;
+    color: var(--mf-text-tertiary) !important;
+  }
+
+  html body.mf-page-trading.mf-trading-terminal .token-hero-facts,
+  html body.mf-page-trading.mf-trading-terminal .token-hero-facts * {
+    font-size: 8px !important;
+    color: var(--mf-text-tertiary) !important;
+  }
+
+  html body.mf-page-trading.mf-trading-terminal .token-hero-address {
+    min-width: 0 !important;
+  }
+}
+
+/* MEMEFLOW_TRADING_HEADER_TWO_ROW_V104_END */
