@@ -758,13 +758,13 @@ html body:is(
    MEMEFLOW_SEMANTIC_SINGLE_PALETTE_V103_END */
 
 /* ==========================================================================
-   MEMEFLOW_GLOBAL_DARK_SURFACE_CONTRACT_V109
+   MEMEFLOW_GLOBAL_DARK_SURFACE_CONTRACT_V110
 
    Dark is the exact surface-hierarchy projection of the approved Light UI:
 
      Canvas    #000000
-     Surface 1 #0D0D0D   large structural cards / panels
-     Surface 2 #171717   nested cards / neutral controls
+     Surface 1 #0C1117   large structural cards / panels
+     Surface 2 #181F27   nested cards / neutral controls
      Divider   #262626   subtle structural separation
 
    This block owns NEUTRAL SURFACES ONLY.
@@ -782,8 +782,8 @@ html[data-theme="dark"] {
   color-scheme: dark;
 
   --mf-dark-canvas: #000000;
-  --mf-dark-surface-1: #0d0d0d;
-  --mf-dark-surface-2: #171717;
+  --mf-dark-surface-1: #0c1117;
+  --mf-dark-surface-2: #181f27;
   --mf-dark-line: #262626;
 
   --bg: var(--mf-dark-canvas) !important;
@@ -1175,4 +1175,4 @@ body.mf-page-system.mf-surface-hierarchy-v57
   box-shadow: none !important;
 }
 
-/* MEMEFLOW_GLOBAL_DARK_SURFACE_CONTRACT_V109_END */
+/* MEMEFLOW_GLOBAL_DARK_SURFACE_CONTRACT_V110_END */
