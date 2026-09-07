@@ -1129,33 +1129,73 @@ function positionAsCandidate(position) {
   };
 }
 
+/* MEMEFLOW_OPEN_POSITION_CHART_TOKEN_V116
+ * Keep Candidates visually deduplicated without removing OPEN positions
+ * from chart selection. Reuse scanner metadata when available; otherwise
+ * fall back to the existing positionAsCandidate() adapter.
+ */
+function terminalTokenForMint(mint) {
+  const cleanMint = String(mint || '').trim();
+  if (!cleanMint) return null;
+
+  const candidate =
+    (Array.isArray(state.candidates) ? state.candidates : [])
+      .find(item => String(item?.mint || '') === cleanMint) ||
+    null;
+
+  const position =
+    openPositionForMint(cleanMint);
+
+  if (!position) {
+    return candidate;
+  }
+
+  if (!candidate) {
+    return positionAsCandidate(position);
+  }
+
+  return {
+    ...candidate,
+    mint: cleanMint,
+    state: 'OPEN POSITION',
+    priceSol:
+      num(position.currentPriceSol) ??
+      num(candidate.priceSol ?? candidate.price) ??
+      num(position.entryPriceSol),
+    strategySource:
+      position.strategySource ||
+      candidate.strategySource ||
+      null,
+    copyTradingWallet:
+      position.copyTradingWallet ||
+      candidate.copyTradingWallet ||
+      null,
+    __openPosition: position
+  };
+}
+
 // MEMEFLOW_TERMINAL_CANONICAL_CANDIDATE_FEED_V21
 // One candidate authority. No client-side WAITING -> WATCH mutation.
 function mergedCandidates() {
-  const byMint=new Map(
-    (Array.isArray(state.candidates)?state.candidates:[])
-      .filter(candidate=>candidate?.mint)
-      .map(candidate=>[String(candidate.mint),candidate])
+  // MEMEFLOW_OPEN_POSITION_CANDIDATE_DEDUP_CHART_V116
+  // Candidates are scanner rows only. A mint with a real OPEN position
+  // belongs exclusively to Open positions and is never duplicated here.
+  const openMints = new Set(
+    (state.positions || [])
+      .filter(
+        position =>
+          position?.mint &&
+          String(position.status || '').toUpperCase() === 'OPEN'
+      )
+      .map(position => String(position.mint))
   );
 
-  const pinned=[];
-  for(const position of state.positions||[]){
-    if(!position?.mint||String(position.status||'').toUpperCase()!=='OPEN')continue;
-    const mint=String(position.mint);
-    const existing=byMint.get(mint);
-    if(existing){
-      pinned.push({
-        ...existing,
-        strategySource:position.strategySource||existing.strategySource||null,
-        copyTradingWallet:position.copyTradingWallet||existing.copyTradingWallet||null,
-        __openPosition:position
-      });
-      byMint.delete(mint);
-    }else{
-      pinned.push(positionAsCandidate(position));
-    }
-  }
-  return [...pinned,...byMint.values()];
+  return (Array.isArray(state.candidates) ? state.candidates : [])
+    .filter(
+      candidate =>
+        candidate?.mint &&
+        !openMints.has(String(candidate.mint))
+    );
 }
 
 function displayStateForCandidate(candidate) {
@@ -1191,25 +1231,46 @@ function updateCandidateCount() {
 function syncSelectedCandidate() {
   const rows = mergedCandidates();
 
-  if (!rows.length) {
+  // A selected OPEN position remains a valid chart token even though it is
+  // intentionally absent from the Candidates list.
+  const current =
+    terminalTokenForMint(state.selectedMint);
+
+  if (current) {
+    state.selected = current;
+    return rows;
+  }
+
+  const firstOpen =
+    (state.positions || []).find(
+      position =>
+        position?.mint &&
+        String(position.status || '').toUpperCase() === 'OPEN'
+    ) ||
+    null;
+
+  if (!rows.length && !firstOpen) {
+    state.selectedMint = null;
     state.selected = null;
     return rows;
   }
 
-  if (
-    !state.selectedMint ||
-    !rows.some(item => item.mint === state.selectedMint)
-  ) {
-    const open = rows.find(item => isMintOpen(item?.mint));
-    const ready = rows.find(
-      item => String(item?.state || '').toUpperCase() === 'BUY READY'
-    );
-    state.selectedMint = (open || ready || rows[0]).mint;
-  }
+  const ready = rows.find(
+    item => String(item?.state || '').toUpperCase() === 'BUY READY'
+  );
+  const watch = rows.find(
+    item => String(item?.state || '').toUpperCase() === 'WATCH'
+  );
+
+  state.selectedMint =
+    firstOpen?.mint ||
+    ready?.mint ||
+    watch?.mint ||
+    rows[0]?.mint ||
+    null;
 
   state.selected =
-    rows.find(item => item.mint === state.selectedMint) ||
-    null;
+    terminalTokenForMint(state.selectedMint);
 
   return rows;
 }
@@ -1218,10 +1279,8 @@ function filteredCandidates() {
   const rows = mergedCandidates();
   if (state.filter === 'all') return rows;
 
-  // Real OPEN positions stay pinned regardless of the scanner filter.
   return rows.filter(
     item =>
-      isMintOpen(item?.mint) ||
       String(item.state || '').toUpperCase() === state.filter
   );
 }
@@ -1418,14 +1477,20 @@ async function loadCandidates({ redrawChart = true } = {}) {
 
 function selectCandidate(mint) {
   if (!mint) return;
-  state.selectedMint = mint;
-  state.selected = mergedCandidates().find(item => item.mint === mint) || null;
+
+  const token = terminalTokenForMint(mint);
+  if (!token) return;
+
+  state.selectedMint = String(mint);
+  state.selected = token;
+
   clearLiveTradeTape();
   chartRuntime.forceFit = true;
   chartRuntime.dataKey = '';
+
   renderCandidates();
   renderSelected();
-  connectChartStream(mint);
+  connectChartStream(state.selectedMint);
   updateAmountHint();
   scheduleChart();
 }
@@ -4352,7 +4417,7 @@ function renderPositions() {
       `${pnl >= 0 ? '+' : ''}${fmt(pnl, 2)}%`;
 
     return `
-      <div class="position-row">
+      <div class="position-row" data-mint="${esc(position.mint)}">
         ${pumpAvatarLinkMarkupV76(positionAvatarMarkup(position), position?.mint, position?.symbol || position?.name)}
 
         <div class="position-main">
@@ -4390,6 +4455,20 @@ function renderPositions() {
   }).join('');
 
   fitListToVisibleRows(list, '.position-row');
+
+  /* MEMEFLOW_OPEN_POSITION_CHART_SELECT_V116
+   * Tap/click an Open position row to load that mint into the existing chart.
+   * CLOSE is explicitly excluded. Pump.fun avatar links retain their existing
+   * capture-phase behavior and are excluded too.
+   */
+  list.querySelectorAll('.position-row[data-mint]').forEach(row => {
+    row.addEventListener('click', event => {
+      if (event.target.closest('.close-position')) return;
+      if (event.target.closest('[data-mf-pump-avatar-link-v76]')) return;
+
+      selectCandidate(row.dataset.mint);
+    });
+  });
 
   list.querySelectorAll('.close-position').forEach(button => {
     button.addEventListener('click', async () => {
