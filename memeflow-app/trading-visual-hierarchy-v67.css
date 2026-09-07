@@ -904,3 +904,32 @@ html body.mf-page-trading.mf-trading-terminal :where(
 }
 
 /* MEMEFLOW_TRADING_SYSTEM_TEXT_LATE_BRIDGE_V92_END */
+
+/* ==========================================================================
+   MEMEFLOW_TRADING_SYSTEM_TEXT_SPECIFICITY_FIX_V93
+
+   V92 used :where(...), which intentionally contributes zero selector
+   specificity. An older Trading typography rule for .empty uses !important
+   with higher specificity, so the approval message stayed at the older size.
+
+   V93 resolves ONLY that cascade problem with stable element IDs.
+   The values still come from V90:
+     --mf-type-system
+     --mf-text-tertiary
+   ========================================================================== */
+
+html body.mf-page-trading.mf-trading-terminal
+#approvalList > .empty,
+html body.mf-page-trading.mf-trading-terminal
+#approvalList > .empty.approval-empty {
+  font-size: var(--mf-type-system) !important;
+  color: var(--mf-text-tertiary) !important;
+}
+
+html body.mf-page-trading.mf-trading-terminal
+.strategy-summary-panel .strategy-summary-foot > #saveState {
+  font-size: var(--mf-type-system) !important;
+  color: var(--mf-text-tertiary) !important;
+}
+
+/* MEMEFLOW_TRADING_SYSTEM_TEXT_SPECIFICITY_FIX_V93_END */
