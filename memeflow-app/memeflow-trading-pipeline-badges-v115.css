@@ -1,0 +1,101 @@
+/* ==========================================================================
+   MEMEFLOW_TRADING_PIPELINE_BADGE_STANDARD_V115
+
+   Scope:
+     - Trading Terminal only
+     - Real-Time Pipeline / Token Flow only
+
+   Canonical visual reference:
+     Trading Terminal > Candidates > WAITING
+
+   Geometry / typography:
+     font-size      9px
+     font-weight    500
+     line-height    1.05
+     letter-spacing .025em
+     padding        1px 3px
+     border         1px
+     border-radius  5px
+     background     transparent
+
+   Existing semantic colors and border colors remain owned by each component.
+   Buttons, links, filters and avatar/Pump.fun image badges are excluded.
+   ========================================================================== */
+
+/* Trading Terminal textual badges only. */
+html body.mf-page-trading.mf-trading-terminal :where(
+  .status-pill,
+  .tiny-state,
+  .mode-badge,
+  .approval-count,
+  .decision-badge,
+  .state-dot,
+  .copy-trade-badge
+) {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 3px !important;
+
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  height: auto !important;
+  min-height: 0 !important;
+
+  padding: 1px 3px !important;
+
+  border-width: 1px !important;
+  border-style: solid !important;
+  border-radius: 5px !important;
+
+  background: transparent !important;
+  box-shadow: none !important;
+
+  font-family: inherit !important;
+  font-size: 9px !important;
+  line-height: 1.05 !important;
+  font-weight: 500 !important;
+  letter-spacing: .025em !important;
+  text-transform: uppercase !important;
+  white-space: nowrap !important;
+
+  -webkit-text-size-adjust: none !important;
+  text-size-adjust: none !important;
+}
+
+/* Real-Time Pipeline textual token-state badges only. */
+html body.mf-page-system-tokens .token-state {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 3px !important;
+
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  height: auto !important;
+  min-height: 0 !important;
+
+  padding: 1px 3px !important;
+
+  border-width: 1px !important;
+  border-style: solid !important;
+  border-radius: 5px !important;
+
+  background: transparent !important;
+  box-shadow: none !important;
+
+  font-family: inherit !important;
+  font-size: 9px !important;
+  line-height: 1.05 !important;
+  font-weight: 500 !important;
+  letter-spacing: .025em !important;
+  text-transform: uppercase !important;
+  white-space: nowrap !important;
+
+  -webkit-text-size-adjust: none !important;
+  text-size-adjust: none !important;
+}
+
+/* MEMEFLOW_TRADING_PIPELINE_BADGE_STANDARD_V115_END */
