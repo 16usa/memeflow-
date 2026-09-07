@@ -916,3 +916,140 @@ html body.mf-page-trading.mf-trading-terminal
 }
 
 /* MEMEFLOW_TRADING_SYSTEM_TEXT_RENDER_FIX_V94_END */
+
+/* ==========================================================================
+   MEMEFLOW_SECONDARY_9PX_OUTLINED_UI_CONTRACT_V97
+
+   User-selected compact operational UI tier.
+
+   TEXT
+     9px / 500
+     Secondary neutral contrast
+
+   FRAMES
+     Derived from the same Secondary token.
+     Semantic green / blue / red frame colors are intentionally neutralized
+     for the selected controls.
+
+   UNTOUCHED
+     background fills
+     geometry / padding / dimensions
+     data / JS / backend
+     primary token names / BUY / SELL headline text
+
+   Mobile/tablet Trading Terminal only.
+   ========================================================================== */
+
+@media (max-width: 820px) {
+  body.mf-page-trading.mf-trading-terminal {
+    --mf-v97-secondary-frame:
+      color-mix(in srgb, var(--mf-text-secondary) 32%, transparent);
+  }
+
+  /* ------------------------------------------------------------------------
+     ONE TEXT ROLE: 9px / 500 / Secondary.
+     ------------------------------------------------------------------------ */
+  html body.mf-page-trading.mf-trading-terminal :where(
+    .candidates-panel .tiny-state,
+    .candidates-panel .state-dot,
+    .copy-trade-badge,
+    .strategy-summary-panel .mode-badge,
+    .strategy-summary-panel .strategy-edit-link,
+    .positions-panel .close-position,
+    .positions-panel .pnl-summary strong,
+    .approvals-panel .approval-count,
+    .approvals-panel .approval-main span,
+    .approvals-panel .approval-stats b,
+    .approvals-panel .approval-stats strong,
+    .approvals-panel .approval-actions button,
+    .bottom-history-panel .trade-log-bottomline,
+    .bottom-history-panel .trade-log-bottomline span,
+    .bottom-history-panel .trade-log-bottomline strong,
+    .bottom-history-panel .trade-log-time
+  ) {
+    font-size: 9px !important;
+    font-weight: 500 !important;
+    color: var(--mf-text-secondary) !important;
+    -webkit-text-size-adjust: none !important;
+    text-size-adjust: none !important;
+  }
+
+  /* The Recent-trades P&L spans have semantic !important colors upstream.
+     This intentionally neutralizes them inside the circled lower telemetry. */
+  html body.mf-page-trading.mf-trading-terminal
+  .bottom-history-panel .trade-log-bottomline :where(
+    .pnl-positive,
+    .pnl-negative
+  ) {
+    color: var(--mf-text-secondary) !important;
+    font-size: 9px !important;
+    font-weight: 500 !important;
+  }
+
+  /* Realized paper P&L is also explicitly part of the requested Secondary tier. */
+  html body.mf-page-trading.mf-trading-terminal
+  .positions-panel .pnl-summary strong:is(
+    .pnl-positive,
+    .pnl-negative
+  ) {
+    color: var(--mf-text-secondary) !important;
+  }
+
+  /* ------------------------------------------------------------------------
+     ONE FRAME ROLE: Secondary-derived neutral border.
+     Backgrounds remain exactly as they are.
+     ------------------------------------------------------------------------ */
+
+  html body.mf-page-trading.mf-trading-terminal :where(
+    .candidates-panel .tiny-state,
+    .copy-trade-badge,
+    .strategy-summary-panel .mode-badge,
+    .strategy-summary-panel .strategy-edit-link,
+    .positions-panel .close-position,
+    .approvals-panel .approval-count,
+    .approvals-panel .approval-actions button
+  ) {
+    border-color: var(--mf-v97-secondary-frame) !important;
+  }
+
+  /* Candidate semantic state frames have a more-specific V75 !important rule.
+     Match/exceed that specificity so OPEN / READY / WATCH / BLOCKED all use
+     the same Secondary frame contract. */
+  html body.mf-page-trading.mf-trading-terminal
+  .candidates-panel .candidate-top .state-dot.open,
+  html body.mf-page-trading.mf-trading-terminal
+  .candidates-panel .candidate-top .state-dot.ready,
+  html body.mf-page-trading.mf-trading-terminal
+  .candidates-panel .candidate-top .state-dot.watch,
+  html body.mf-page-trading.mf-trading-terminal
+  .candidates-panel .candidate-top .state-dot.blocked,
+  html body.mf-page-trading.mf-trading-terminal
+  .candidates-panel .candidate-top .state-dot {
+    border-color: var(--mf-v97-secondary-frame) !important;
+    color: var(--mf-text-secondary) !important;
+  }
+
+  /* SIZE / SCORE / PRICE mini-card frames. */
+  html body.mf-page-trading.mf-trading-terminal
+  .approvals-panel .approval-stats > span {
+    border-color: var(--mf-v97-secondary-frame) !important;
+  }
+
+  /* Keep interactive states in the same neutral Secondary family too. */
+  html body.mf-page-trading.mf-trading-terminal :where(
+    .strategy-summary-panel .strategy-edit-link:hover,
+    .strategy-summary-panel .strategy-edit-link:active,
+    .strategy-summary-panel .strategy-edit-link:focus-visible,
+    .positions-panel .close-position:hover,
+    .positions-panel .close-position:active,
+    .positions-panel .close-position:focus-visible,
+    .approvals-panel .approval-actions button:hover,
+    .approvals-panel .approval-actions button:active,
+    .approvals-panel .approval-actions button:focus-visible
+  ) {
+    color: var(--mf-text-secondary) !important;
+    border-color: var(--mf-v97-secondary-frame) !important;
+  }
+}
+
+/* MEMEFLOW_SECONDARY_9PX_OUTLINED_UI_CONTRACT_V97_END */
