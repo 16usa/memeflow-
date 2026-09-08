@@ -955,3 +955,152 @@ button {
 }
 
 /* MEMEFLOW_TOKEN_IMAGES_HAIRLINE_CONTROLS_V146_END */
+
+/* ==========================================================================
+   MEMEFLOW CHART TYPOGRAPHY + CONTRAST V147
+
+   Trading Terminal chart only.
+
+   Contract:
+     chart DOM legend / support text  8px  tertiary
+     timeframe row                    9px  tertiary
+     timeframe active                 9px  primary, text-only
+     indicator row                    8px  tertiary
+     indicator active                 8px  primary, text-only
+     selected metric row              9px  tertiary
+
+   Active timeframe / indicator controls have:
+     no fill
+     no border
+     no underline/pseudo fill
+     no shadow
+
+   Existing chart/module geometry, separators, data, indicators and trading
+   logic are untouched.
+   ========================================================================== */
+
+/* OHLC / candle-count support text above the plot. */
+html[data-theme]
+body.mf-page-trading.mf-trading-terminal
+.chart-panel
+.chart-legend,
+html[data-theme]
+body.mf-page-trading.mf-trading-terminal
+.chart-panel
+.chart-legend
+span {
+  font-size: 8px !important;
+  color: var(--mf-text-tertiary) !important;
+}
+
+/* Timeframes: tertiary by default, primary when active, text-only state. */
+html[data-theme]
+body.mf-page-trading.mf-trading-terminal
+.chart-panel
+.timeframes
+> button {
+  font-size: 9px !important;
+  color: var(--mf-text-tertiary) !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+}
+
+html[data-theme]
+body.mf-page-trading.mf-trading-terminal
+.chart-panel
+.timeframes
+> button.active {
+  color: var(--mf-text-primary) !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+}
+
+html[data-theme]
+body.mf-page-trading.mf-trading-terminal
+.chart-panel
+.timeframes
+> button:not(.active):hover {
+  color: var(--mf-text-tertiary) !important;
+  background: transparent !important;
+}
+
+/* Indicators: tertiary by default, primary when selected, text-only state. */
+html[data-theme]
+body.mf-page-trading.mf-trading-terminal
+.chart-panel
+.indicator-bar
+button {
+  font-size: 8px !important;
+  color: var(--mf-text-tertiary) !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+}
+
+html[data-theme]
+body.mf-page-trading.mf-trading-terminal
+.chart-panel
+.indicator-bar
+button.active,
+html[data-theme]
+body.mf-page-trading.mf-trading-terminal
+.chart-panel
+.indicator-bar
+button[aria-pressed="true"] {
+  color: var(--mf-text-primary) !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+}
+
+/* Remove the old selected indicator underline. */
+html[data-theme]
+body.mf-page-trading.mf-trading-terminal
+.chart-panel
+.indicator-bar
+button::after,
+html[data-theme]
+body.mf-page-trading.mf-trading-terminal
+.chart-panel
+.indicator-bar
+button.active::after,
+html[data-theme]
+body.mf-page-trading.mf-trading-terminal
+.chart-panel
+.indicator-bar
+button[aria-pressed="true"]::after {
+  display: none !important;
+  content: none !important;
+  background: transparent !important;
+}
+
+/* Bottom chart metrics: label and value share one 9px tertiary tier. */
+html[data-theme]
+body.mf-page-trading.mf-trading-terminal
+.chart-panel
+.selected-metrics
+span,
+html[data-theme]
+body.mf-page-trading.mf-trading-terminal
+.chart-panel
+.selected-metrics
+strong {
+  font-size: 9px !important;
+  color: var(--mf-text-tertiary) !important;
+}
+
+/* MEMEFLOW_CHART_TYPOGRAPHY_CONTRAST_V147_END */

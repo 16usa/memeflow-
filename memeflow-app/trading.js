@@ -3418,7 +3418,7 @@ function chartHorizontalLevelSeries(labels,visibleLevels,liveValue){
         backgroundColor:'#55d9ff',
         borderRadius:2,
         padding:[2,4],
-        fontSize:9,
+        fontSize:8,
         formatter:()=>formatChartValue(live)
       },
       labelLayout:{hideOverlap:false},
@@ -3887,6 +3887,25 @@ function drawChart(){
   const touchUi=chartTouchUi();
   const chartTheme=mfTradingChartPaletteV2();
 
+  /* MEMEFLOW_CHART_TYPOGRAPHY_CONTRAST_V147_JS
+   * Resolve chart neutral text from the same canonical site contrast tokens
+   * used by DOM typography. Semantic price/trade colors are untouched.
+   */
+  const mfChartRootStyleV147 =
+    getComputedStyle(document.documentElement);
+  const mfChartTertiaryV147 =
+    mfChartRootStyleV147
+      .getPropertyValue('--mf-text-tertiary')
+      .trim();
+
+  if (mfChartTertiaryV147) {
+    chartTheme.text = mfChartTertiaryV147;
+    chartTheme.legend = mfChartTertiaryV147;
+    chartTheme.axis = mfChartTertiaryV147;
+    chartTheme.lowerAxis = mfChartTertiaryV147;
+  }
+
+
   chartRuntime.suppressZoom=true;
 
   chartRuntime.api.setOption(
@@ -3898,7 +3917,7 @@ function drawChart(){
       textStyle:{
         color:chartTheme.text,
         fontFamily:'ui-monospace, SFMono-Regular, Menlo, monospace',
-        fontSize:9
+        fontSize:8
       },
       axisPointer:{
         // Mobile Safari was interpreting a finger drag as an axis selection.
@@ -3942,7 +3961,7 @@ function drawChart(){
         borderColor:chartTheme.tooltipBorder,
         textStyle:{
           color:chartTheme.tooltipText,
-          fontSize:10
+          fontSize:8
         },
         extraCssText:chartTheme.tooltipShadow,
         formatter:params=>{
@@ -4068,7 +4087,7 @@ function drawChart(){
           axisTick:{show:false},
           axisLabel:{
             color:chartTheme.axis,
-            fontSize:9,
+            fontSize:8,
             margin:10,
             formatter:value=>formatChartValue(value)
           },
@@ -4093,7 +4112,7 @@ function drawChart(){
           axisLabel:{
             show:lowerIndicatorVisible,
             color:chartTheme.lowerAxis,
-            fontSize:7,
+            fontSize:8,
             margin:10,
             formatter:lowerIndicatorAxis.formatter
           },
