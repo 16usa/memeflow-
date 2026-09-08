@@ -425,8 +425,8 @@ body.mf-page-trading.mf-trading-terminal :where(
 body.mf-page-trading.mf-trading-terminal
 .mf-trading-pump-avatar-link-v76 {
   position: relative !important;
-  width: 42px !important;
-  height: 42px !important;
+  width: 29px !important;
+  height: 29px !important;
   display: block !important;
   align-self: center !important;
   justify-self: start !important;
@@ -444,8 +444,8 @@ body.mf-page-trading.mf-trading-terminal
 
 body.mf-page-trading.mf-trading-terminal
 .mf-trading-pump-avatar-link-v76 > .trade-token-avatar {
-  width: 42px !important;
-  height: 42px !important;
+  width: 29px !important;
+  height: 29px !important;
   margin: 0 !important;
 }
 
@@ -475,8 +475,8 @@ body.mf-page-trading.mf-trading-terminal
   .mf-trading-pump-avatar-link-v76,
   body.mf-page-trading.mf-trading-terminal
   .mf-trading-pump-avatar-link-v76 > .trade-token-avatar {
-    width: 46px !important;
-    height: 46px !important;
+    width: 32px !important;
+    height: 32px !important;
   }
 }
 
