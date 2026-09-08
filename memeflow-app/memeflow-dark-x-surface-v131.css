@@ -797,3 +797,161 @@ body.mf-page-trading.mf-trading-terminal
 }
 
 /* MEMEFLOW_BADGE_SPECIFICITY_FIX_V141_1_END */
+
+/* ==========================================================================
+   MEMEFLOW TOKEN IMAGES + HAIRLINE CONTROLS V146
+
+   Trading Terminal visual cleanup only.
+
+   1) TOKEN IMAGES
+      Remove the border/frame from actual token images.
+      Keep:
+        - token image size
+        - token image radius
+        - Pump.fun overlay logo
+        - Pump.fun click/link behavior
+        - fallback placeholder styling when no image exists
+
+   2) BADGES + FRAMED BUTTONS
+      Normalize border THICKNESS to the exact Retina-aware structural hairline
+      already used by the large Trading module outlines:
+        --mf-structure-hairline
+
+      Semantic border colors remain owned by the existing component/state
+      rules, so green/cyan/red/blue/yellow/neutral colors do not change.
+
+      Borderless controls remain borderless because V146 does not force
+      border-style or border-color on generic controls.
+
+   3) LARGE MODULES
+      Do NOT change module frames, fills, radii, separators or structure.
+
+   No trading/chart/backend logic changes.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   TOKEN IMAGE SHELLS — FRAMELESS IMAGE ONLY
+
+   :has(> img) is intentional:
+   text/initial fallback avatars keep their existing quiet shell until a real
+   image is present.
+
+   The Pump.fun badge is a sibling in .mf-trading-pump-avatar-link-v76 and is
+   therefore intentionally outside these selectors.
+   -------------------------------------------------------------------------- */
+
+html[data-theme]
+body.mf-page-trading.mf-trading-terminal
+.token-avatar:has(> img),
+html[data-theme]
+body.mf-page-trading.mf-trading-terminal
+.trade-token-avatar:has(> img) {
+  border-width: 0 !important;
+  border-style: none !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+}
+
+html[data-theme]
+body.mf-page-trading.mf-trading-terminal
+.token-avatar:has(> img) > img,
+html[data-theme]
+body.mf-page-trading.mf-trading-terminal
+.trade-token-avatar:has(> img) > img {
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+}
+
+/* --------------------------------------------------------------------------
+   BADGES — SAME HAIRLINE THICKNESS PRINCIPLE AS LARGE MODULE OUTLINES
+
+   Thickness only. Existing border-style + semantic border-color remain.
+   -------------------------------------------------------------------------- */
+
+html[data-theme]
+body.mf-page-trading.mf-trading-terminal
+.status-pill,
+html[data-theme]
+body.mf-page-trading.mf-trading-terminal
+.panel .tiny-state,
+html[data-theme]
+body.mf-page-trading.mf-trading-terminal
+.panel .mode-badge,
+html[data-theme]
+body.mf-page-trading.mf-trading-terminal
+.panel .approval-count,
+html[data-theme]
+body.mf-page-trading.mf-trading-terminal
+.panel .state-dot {
+  border-width: var(--mf-structure-hairline, 1px) !important;
+  box-shadow: none !important;
+}
+
+/* Chart state badge: exact selector beats V141.1's 1px !important rule. */
+html[data-theme]
+body.mf-page-trading.mf-trading-terminal
+.chart-panel
+.chart-head
+.token-name-row
+> #tokenState.decision-badge {
+  border-width: var(--mf-structure-hairline, 1px) !important;
+  box-shadow: none !important;
+}
+
+/* Open-position COPY TRADE: exact selector beats V141.1's 1px rule. */
+html[data-theme]
+body.mf-page-trading.mf-trading-terminal
+.positions-panel
+.position-row
+.position-main
+.position-topline
+.position-symbol
+> .copy-trade-badge {
+  border-width: var(--mf-structure-hairline, 1px) !important;
+  box-shadow: none !important;
+}
+
+/* Recent-trades COPY TRADING badges. */
+html[data-theme]
+body.mf-page-trading.mf-trading-terminal
+.bottom-history-panel
+.copy-trade-badge {
+  border-width: var(--mf-structure-hairline, 1px) !important;
+  box-shadow: none !important;
+}
+
+/* --------------------------------------------------------------------------
+   FRAMED BUTTONS — SAME HAIRLINE THICKNESS, EXISTING COLORS PRESERVED
+
+   These selectors intentionally do NOT set border-style or border-color.
+   If a control is intentionally borderless in the current cascade, V146 does
+   not create a new visible frame.
+   -------------------------------------------------------------------------- */
+
+html[data-theme]
+body.mf-page-trading.mf-trading-terminal
+.strategy-summary-panel
+.strategy-edit-link,
+html[data-theme]
+body.mf-page-trading.mf-trading-terminal
+.positions-panel
+.close-position,
+html[data-theme]
+body.mf-page-trading.mf-trading-terminal
+.timeframes
+> button,
+html[data-theme]
+body.mf-page-trading.mf-trading-terminal
+.candidates-panel
+.candidate-filter
+> button[data-filter],
+html[data-theme]
+body.mf-page-trading.mf-trading-terminal
+.indicator-bar
+button {
+  border-width: var(--mf-structure-hairline, 1px) !important;
+  box-shadow: none !important;
+}
+
+/* MEMEFLOW_TOKEN_IMAGES_HAIRLINE_CONTROLS_V146_END */
