@@ -1104,3 +1104,152 @@ strong {
 }
 
 /* MEMEFLOW_CHART_TYPOGRAPHY_CONTRAST_V147_END */
+
+/* ==========================================================================
+   MEMEFLOW CONTRAST MAP V148
+
+   Trading Terminal only.
+   Color hierarchy only. No font sizes, geometry, fills, borders, spacing,
+   semantic badge colors, chart data or trading logic are changed.
+
+   BLUE markup in the approved screenshot -> secondary contrast.
+   YELLOW markup in the approved screenshot -> tertiary contrast.
+
+   Canonical tokens:
+     secondary -> var(--mf-text-secondary)
+     tertiary  -> var(--mf-text-tertiary)
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   SECONDARY CONTRAST
+   -------------------------------------------------------------------------- */
+
+/* Header subtitle + engine strip neutral copy. */
+html[data-theme]
+body.mf-page-trading.mf-trading-terminal
+.mf-site-header .brand-sub,
+html[data-theme]
+body.mf-page-trading.mf-trading-terminal
+.mf-site-header .engine-strip .status-pill,
+html[data-theme]
+body.mf-page-trading.mf-trading-terminal
+.mf-site-header .engine-strip .status-pill > span {
+  color: var(--mf-text-secondary) !important;
+}
+
+/* Chart indicator row: secondary at rest; active remains primary. */
+html[data-theme]
+body.mf-page-trading.mf-trading-terminal
+.chart-panel .indicator-bar button {
+  color: var(--mf-text-secondary) !important;
+}
+
+html[data-theme]
+body.mf-page-trading.mf-trading-terminal
+.chart-panel .indicator-bar button.active,
+html[data-theme]
+body.mf-page-trading.mf-trading-terminal
+.chart-panel .indicator-bar button[aria-pressed="true"] {
+  color: var(--mf-text-primary) !important;
+}
+
+/* Chart selected metrics row. */
+html[data-theme]
+body.mf-page-trading.mf-trading-terminal
+.chart-panel .selected-metrics span,
+html[data-theme]
+body.mf-page-trading.mf-trading-terminal
+.chart-panel .selected-metrics strong {
+  color: var(--mf-text-secondary) !important;
+}
+
+/* Trade strategy values. */
+html[data-theme]
+body.mf-page-trading.mf-trading-terminal
+.strategy-summary-panel .strategy-summary-row strong {
+  color: var(--mf-text-secondary) !important;
+}
+
+/* Open-position size only. Semantic P&L keeps its semantic color. */
+html[data-theme]
+body.mf-page-trading.mf-trading-terminal
+.positions-panel .position-bottomline > .position-size {
+  color: var(--mf-text-secondary) !important;
+}
+
+/* Candidate price. */
+html[data-theme]
+body.mf-page-trading.mf-trading-terminal
+.candidates-panel .candidate-bottom > .candidate-price {
+  color: var(--mf-text-secondary) !important;
+}
+
+/* Recent-trade size amount only:
+   strong.trade-side + i + span(size). */
+html[data-theme]
+body.mf-page-trading.mf-trading-terminal
+.bottom-history-panel
+.trade-log-bottomline > .trade-side + i + span {
+  color: var(--mf-text-secondary) !important;
+}
+
+/* --------------------------------------------------------------------------
+   TERTIARY CONTRAST
+   -------------------------------------------------------------------------- */
+
+/* Selected-token mint + Copy. */
+html[data-theme]
+body.mf-page-trading.mf-trading-terminal
+.chart-panel .token-meta,
+html[data-theme]
+body.mf-page-trading.mf-trading-terminal
+.chart-panel .token-meta > *,
+html[data-theme]
+body.mf-page-trading.mf-trading-terminal
+.chart-panel #tokenMint,
+html[data-theme]
+body.mf-page-trading.mf-trading-terminal
+.chart-panel #copyMintBtn {
+  color: var(--mf-text-tertiary) !important;
+}
+
+/* PRICE / MC / BP support line. */
+html[data-theme]
+body.mf-page-trading.mf-trading-terminal
+.chart-panel #tokenMarket,
+html[data-theme]
+body.mf-page-trading.mf-trading-terminal
+.chart-panel #tokenMarket * {
+  color: var(--mf-text-tertiary) !important;
+}
+
+/* Trade strategy labels. */
+html[data-theme]
+body.mf-page-trading.mf-trading-terminal
+.strategy-summary-panel .strategy-summary-row span {
+  color: var(--mf-text-tertiary) !important;
+}
+
+/* Open-position risk telemetry after semantic P&L:
+   separators + SL / TP1 / TP2. */
+html[data-theme]
+body.mf-page-trading.mf-trading-terminal
+.positions-panel .position-bottomline > .position-pnl ~ * {
+  color: var(--mf-text-tertiary) !important;
+}
+
+/* Candidate Score / Holders copy. */
+html[data-theme]
+body.mf-page-trading.mf-trading-terminal
+.candidates-panel .candidate-bottom > span:first-child {
+  color: var(--mf-text-tertiary) !important;
+}
+
+/* Recent-trade time. */
+html[data-theme]
+body.mf-page-trading.mf-trading-terminal
+.bottom-history-panel .trade-log-time {
+  color: var(--mf-text-tertiary) !important;
+}
+
+/* MEMEFLOW_CONTRAST_MAP_V148_END */
