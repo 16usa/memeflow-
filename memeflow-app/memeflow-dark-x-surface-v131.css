@@ -431,8 +431,8 @@ html[data-theme="light"] {
    Existing radius/fill/geometry remain authoritative.
    -------------------------------------------------------------------------- */
 
-body.mf-page-trading.mf-trading-terminal .terminal > .panel,
-body.mf-page-trading.mf-trading-terminal .center-stack > .panel {
+html[data-theme] body.mf-page-trading.mf-trading-terminal .terminal > .panel,
+html[data-theme] body.mf-page-trading.mf-trading-terminal .center-stack > .panel {
   border-width: var(--mf-structure-hairline) !important;
   border-style: solid !important;
   border-color: var(--mf-structure-outer) !important;
@@ -445,20 +445,20 @@ body.mf-page-trading.mf-trading-terminal .center-stack > .panel {
    Candidates and Pending approvals are intentionally exceptions below.
    -------------------------------------------------------------------------- */
 
-body.mf-page-trading.mf-trading-terminal .panel-head {
+html[data-theme] body.mf-page-trading.mf-trading-terminal .panel-head {
   border-bottom-width: var(--mf-structure-hairline) !important;
   border-bottom-style: solid !important;
   border-bottom-color: var(--mf-structure-divider) !important;
 }
 
 /* Candidates title flows directly into its segmented control. */
-body.mf-page-trading.mf-trading-terminal
+html[data-theme] body.mf-page-trading.mf-trading-terminal
 .candidates-panel > .panel-head {
   border-bottom: 0 !important;
 }
 
 /* Pending approvals = outer boundary only; no line through an empty state. */
-body.mf-page-trading.mf-trading-terminal
+html[data-theme] body.mf-page-trading.mf-trading-terminal
 .approvals-panel > .panel-head {
   border-bottom: 0 !important;
 }
@@ -469,7 +469,7 @@ body.mf-page-trading.mf-trading-terminal
    One quiet line below the whole strip separates controls from content.
    -------------------------------------------------------------------------- */
 
-body.mf-page-trading.mf-trading-terminal
+html[data-theme] body.mf-page-trading.mf-trading-terminal
 .candidates-panel .candidate-filter {
   border-top: 0 !important;
   border-left: 0 !important;
@@ -479,7 +479,7 @@ body.mf-page-trading.mf-trading-terminal
   border-bottom-color: var(--mf-structure-divider) !important;
 }
 
-body.mf-page-trading.mf-trading-terminal
+html[data-theme] body.mf-page-trading.mf-trading-terminal
 .candidates-panel .candidate-filter > button[data-filter] {
   border-width: 0 !important;
   border-style: none !important;
@@ -492,13 +492,13 @@ body.mf-page-trading.mf-trading-terminal
    Semantic left accents, badges and Close buttons remain untouched.
    -------------------------------------------------------------------------- */
 
-body.mf-page-trading.mf-trading-terminal
+html[data-theme] body.mf-page-trading.mf-trading-terminal
 :where(.candidate, .position-row, .trade-row.trade-log-row) {
   position: relative;
   border-bottom: 0 !important;
 }
 
-body.mf-page-trading.mf-trading-terminal
+html[data-theme] body.mf-page-trading.mf-trading-terminal
 :where(.candidate, .position-row, .trade-row.trade-log-row)::after {
   content: "";
   position: absolute;
@@ -510,7 +510,7 @@ body.mf-page-trading.mf-trading-terminal
   pointer-events: none;
 }
 
-body.mf-page-trading.mf-trading-terminal
+html[data-theme] body.mf-page-trading.mf-trading-terminal
 :where(
   .candidate:last-child,
   .position-row:last-child,
@@ -527,12 +527,12 @@ body.mf-page-trading.mf-trading-terminal
      b) one line above indicator controls / after chart
    -------------------------------------------------------------------------- */
 
-body.mf-page-trading.mf-trading-terminal
+html[data-theme] body.mf-page-trading.mf-trading-terminal
 .chart-panel > .chart-head {
   border-bottom: 0 !important;
 }
 
-body.mf-page-trading.mf-trading-terminal
+html[data-theme] body.mf-page-trading.mf-trading-terminal
 .chart-panel > .timeframes {
   border-top: 0 !important;
   border-left: 0 !important;
@@ -542,7 +542,7 @@ body.mf-page-trading.mf-trading-terminal
   border-bottom-color: var(--mf-structure-divider) !important;
 }
 
-body.mf-page-trading.mf-trading-terminal
+html[data-theme] body.mf-page-trading.mf-trading-terminal
 .chart-panel > .indicator-bar {
   border-top-width: var(--mf-structure-hairline) !important;
   border-top-style: solid !important;
@@ -550,20 +550,20 @@ body.mf-page-trading.mf-trading-terminal
   border-bottom: 0 !important;
 }
 
-body.mf-page-trading.mf-trading-terminal
+html[data-theme] body.mf-page-trading.mf-trading-terminal
 .chart-panel > .selected-metrics {
   border-top: 0 !important;
   border-bottom: 0 !important;
 }
 
-body.mf-page-trading.mf-trading-terminal
+html[data-theme] body.mf-page-trading.mf-trading-terminal
 .chart-panel > .selected-metrics > div {
   border-left: 0 !important;
   border-right: 0 !important;
 }
 
 /* Keep the tiny layout gap between overlay/lower indicator groups, but no rule. */
-body.mf-page-trading.mf-trading-terminal
+html[data-theme] body.mf-page-trading.mf-trading-terminal
 .indicator-divider {
   background: transparent !important;
   opacity: 0 !important;
@@ -575,17 +575,17 @@ body.mf-page-trading.mf-trading-terminal
    Keep header divider + one quiet line before the synced footer.
    -------------------------------------------------------------------------- */
 
-body.mf-page-trading.mf-trading-terminal
+html[data-theme] body.mf-page-trading.mf-trading-terminal
 .strategy-summary-panel .strategy-summary-row {
   border-bottom: 0 !important;
 }
 
-body.mf-page-trading.mf-trading-terminal
+html[data-theme] body.mf-page-trading.mf-trading-terminal
 .strategy-summary-panel .strategy-summary-row > div + div {
   border-left: 0 !important;
 }
 
-body.mf-page-trading.mf-trading-terminal
+html[data-theme] body.mf-page-trading.mf-trading-terminal
 .strategy-summary-panel .strategy-summary-foot {
   border-top-width: var(--mf-structure-hairline) !important;
   border-top-style: solid !important;
@@ -594,3 +594,4 @@ body.mf-page-trading.mf-trading-terminal
 }
 
 /* MEMEFLOW_TRADING_STRUCTURAL_CALM_V136_END */
+/* MEMEFLOW_TRADING_STRUCTURAL_CASCADE_V137_END */
