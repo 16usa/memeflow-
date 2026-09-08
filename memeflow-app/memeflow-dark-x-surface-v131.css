@@ -1253,3 +1253,41 @@ body.mf-page-trading.mf-trading-terminal
 }
 
 /* MEMEFLOW_CONTRAST_MAP_V148_END */
+
+/* ==========================================================================
+   MEMEFLOW CONTRAST CORRECTIONS V149
+
+   Trading Terminal only.
+   Approved screenshot correction:
+     YELLOW -> primary contrast
+     RED    -> tertiary contrast
+
+   Color-only patch. No font sizes, geometry, fills, borders, spacing,
+   chart data, indicators, badges, semantic colors or trading logic change.
+   ========================================================================== */
+
+/* YELLOW: Trade strategy Stops value -> primary contrast. */
+html[data-theme]
+body.mf-page-trading.mf-trading-terminal
+.strategy-summary-panel #strategyStops {
+  color: var(--mf-text-primary) !important;
+}
+
+/* RED: MA / EMA / BOLL / SAR / VOL / MACD / KDJ / RSI ... -> tertiary.
+   Selected indicator remains primary so active state is still visible. */
+html[data-theme]
+body.mf-page-trading.mf-trading-terminal
+.chart-panel .indicator-bar button {
+  color: var(--mf-text-tertiary) !important;
+}
+
+html[data-theme]
+body.mf-page-trading.mf-trading-terminal
+.chart-panel .indicator-bar button.active,
+html[data-theme]
+body.mf-page-trading.mf-trading-terminal
+.chart-panel .indicator-bar button[aria-pressed="true"] {
+  color: var(--mf-text-primary) !important;
+}
+
+/* MEMEFLOW_CONTRAST_CORRECTIONS_V149_END */
