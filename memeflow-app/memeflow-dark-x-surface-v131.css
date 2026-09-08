@@ -1,0 +1,181 @@
+/* ==========================================================================
+   MEMEFLOW DARK X SURFACE CONTRACT V131
+
+   DARK MODE ONLY.
+
+   Approved hierarchy:
+     Canvas / large modules   #000000
+     Neutral inset / control  #101113
+     Outline / divider        #2F3336
+
+   #101113 is sampled from the neutral Monthly / Yearly switch surface in the
+   supplied X screenshot.
+
+   Large structural modules no longer use the old #0C1117 fill. They sit on
+   the black canvas and are separated by one restrained X-style 1px outline.
+   Existing radii are preserved.
+
+   This file is intentionally loaded LAST on every audited MEMEFLOW app page.
+   It is the single late authority for DARK neutral surfaces only.
+
+   Does NOT own:
+     - Light mode
+     - typography
+     - semantic state colors
+     - component geometry / radii
+     - chart / scanner / trading logic
+     - JS / API / backend
+     - System Overview 3D gallery geometry
+   ========================================================================== */
+
+html[data-theme="dark"] {
+  color-scheme: dark;
+
+  --mf-x-dark-canvas: #000000;
+  --mf-x-dark-inset: #101113;
+  --mf-x-dark-line: #2f3336;
+
+  /*
+   * Collapse the old second tone (#0C1117) into the canvas.
+   * Existing aliases resolve these variables dynamically, so this also
+   * removes stale Surface-1 fills without adding per-component duplicates.
+   */
+  --mf-dark-canvas: var(--mf-x-dark-canvas) !important;
+  --mf-dark-surface-1: var(--mf-x-dark-canvas) !important;
+
+  /* Replace the old lightest dark neutral (#181F27) with the approved X tone. */
+  --mf-dark-surface-2: var(--mf-x-dark-inset) !important;
+
+  /* One X-style line token for outlines + separators. */
+  --mf-dark-line: var(--mf-x-dark-line) !important;
+}
+
+/* Keep every audited page on the true black canvas. */
+html[data-theme="dark"] body:is(
+  .mf-page-system,
+  .mf-page-system-tokens,
+  .mf-page-trading,
+  .mf-page-smart-vault,
+  .mf-page-settings,
+  .mf-page-how-it-works,
+  .mf-page-agent-performance
+) {
+  background: var(--mf-x-dark-canvas) !important;
+  background-image: none !important;
+}
+
+/* --------------------------------------------------------------------------
+   LARGE STRUCTURAL MODULES
+   Black fill + existing radius + one subtle X outline.
+   Buttons and semantic/status controls are intentionally excluded.
+   -------------------------------------------------------------------------- */
+
+/* System Overview — 3D gallery selectors intentionally absent. */
+html[data-theme="dark"]
+body.mf-page-system
+:where(.mf-infra, .activity-panel),
+
+/* Real-Time Pipeline. */
+html[data-theme="dark"]
+body.mf-page-system-tokens
+.flow-page :where(.flow-hero, .flow-toolbar, .pagination),
+
+/* Trading Terminal. */
+html[data-theme="dark"]
+body.mf-page-trading.mf-trading-terminal
+.terminal > .panel,
+html[data-theme="dark"]
+body.mf-page-trading.mf-trading-terminal
+.center-stack > .panel,
+
+/* Smart Vault. */
+html[data-theme="dark"]
+body.mf-page-smart-vault
+.mf-vault-shell :where(.mf-vault-card, .mf-vault-status-panel),
+
+/* System Settings. */
+html[data-theme="dark"]
+body.mf-page-settings
+:where(
+  .mf293-settings-group,
+  .settings-group,
+  .settings-context,
+  .mf-theme-appearance
+),
+
+/* How It Works. */
+html[data-theme="dark"]
+body.mf-page-how-it-works
+:where(
+  .mf-hiw-status-card,
+  .mf-hiw-map-shell,
+  .mf-hiw-money,
+  .mf-hiw-cta
+),
+
+/* Agent Performance. */
+html[data-theme="dark"]
+body.mf-page-agent-performance
+:where(.ap-source, .ap-panel, .ap-kpis article) {
+  background: var(--mf-x-dark-canvas) !important;
+  background-color: var(--mf-x-dark-canvas) !important;
+  background-image: none !important;
+
+  border-width: 1px !important;
+  border-style: solid !important;
+  border-color: var(--mf-x-dark-line) !important;
+
+  box-shadow: none !important;
+}
+
+/* --------------------------------------------------------------------------
+   THIRD / LIGHTEST DARK TONE
+   Existing Surface-2 consumers already resolve --mf-dark-surface-2.
+   The Candidates segmented control had one later hard-coded active fill,
+   so normalize that one explicit exception to the same approved X material.
+   -------------------------------------------------------------------------- */
+
+html[data-theme="dark"]
+body.mf-page-trading.mf-trading-terminal
+.candidates-panel .candidate-filter > button[data-filter],
+html[data-theme="dark"]
+body.mf-page-trading.mf-trading-terminal
+.candidates-panel .candidate-filter > button[data-filter].active {
+  background: var(--mf-x-dark-inset) !important;
+  background-color: var(--mf-x-dark-inset) !important;
+  background-image: none !important;
+}
+
+/* --------------------------------------------------------------------------
+   X-STYLE SEPARATORS
+   Preserve semantic left accents and status outlines; only neutral separators
+   are normalized here.
+   -------------------------------------------------------------------------- */
+
+html[data-theme="dark"]
+body.mf-page-trading.mf-trading-terminal
+:where(
+  .panel-head,
+  .chart-head,
+  .candidate-filter,
+  .timeframes,
+  .indicator-bar,
+  .selected-metrics,
+  .strategy-summary-foot
+) {
+  border-color: var(--mf-x-dark-line) !important;
+}
+
+html[data-theme="dark"]
+body.mf-page-trading.mf-trading-terminal
+:where(.candidate, .position-row, .trade-row.trade-log-row) {
+  border-bottom-color: var(--mf-x-dark-line) !important;
+}
+
+/*
+ * Navigation / page headers inherit the same neutral line token through
+ * --mf-dark-line, but keep their own fill/geometry and are not reclassified
+ * as structural modules here.
+ */
+
+/* MEMEFLOW_DARK_X_SURFACE_CONTRACT_V131_END */
