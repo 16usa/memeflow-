@@ -83,13 +83,17 @@ export async function readBoundedJsonlTail(file,maxBytes){
 }
 
 export async function parseJsonlCooperatively(text,onRow,{
-  yieldEvery=16,
-  yieldAfterMs=2,
-  idleMs=20
+  // MEMEFLOW_SHADOW_REPLAY_HTTP_PROTECTION_V146
+  // Historical V23 replay is SHADOW ONLY. Yield after each historical row so
+  // an expensive state-rebuild callback can never accumulate into a long
+  // multi-row main-thread slice that starves HTTP.
+  yieldEvery=1,
+  yieldAfterMs=1,
+  idleMs=35
 }={}){
   const source=String(text||'');
-  const safeYieldEvery=Math.max(1,Number(yieldEvery)||16);
-  const safeYieldAfterMs=Math.max(1,Number(yieldAfterMs)||2);
+  const safeYieldEvery=Math.max(1,Number(yieldEvery)||1);
+  const safeYieldAfterMs=Math.max(1,Number(yieldAfterMs)||1);
   const safeIdleMs=Math.max(0,Number(idleMs)||0);
 
   let start=0;
@@ -98,8 +102,9 @@ export async function parseJsonlCooperatively(text,onRow,{
 
   const yieldToRuntime=async()=>{
     if(safeIdleMs>0){
-      // A timer creates an actual idle window. setImmediate alone yields
-      // fairness but can still keep one CPU core saturated continuously.
+      // A timer creates an actual idle window. In V146 the default parser
+      // reaches this after every historical row, prioritizing live HTTP over
+      // shadow-history catch-up.
       await new Promise(resolve=>setTimeout(resolve,safeIdleMs));
     }else{
       await new Promise(resolve=>setImmediate(resolve));

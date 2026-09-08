@@ -268,7 +268,11 @@ export function createV24ControlledPolicyBridgeV24_0({
       recent.length=200;
     }
 
-    if(file){
+    // MEMEFLOW_V24_OFF_AUDIT_IO_GUARD_V146
+    // OFF is the default no-authority mode. Keep counters/recent diagnostics
+    // in memory, but do not continuously append no-op decisions to disk.
+    // SHADOW and ENFORCE retain durable audit persistence unchanged.
+    if(file && configuredMode!=='OFF'){
       writeQueue.push(row);
 
       if(writeQueue.length>5000){
