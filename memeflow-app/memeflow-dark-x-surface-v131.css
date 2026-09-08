@@ -631,3 +631,59 @@ body.mf-page-trading.mf-trading-terminal
 }
 
 /* MEMEFLOW_RECENT_TRADES_PNL_V138_END */
+
+/* ==========================================================================
+   MEMEFLOW COMPACT ACTION BUTTONS V139
+
+   Canonical geometry reference:
+     Trading Terminal > Trade strategy > .mode-badge (AUTOMATE)
+     standardized by MEMEFLOW_TRADING_PIPELINE_BADGE_STANDARD_V115.
+
+   Apply the SAME visual geometry / text scale to:
+     - .strategy-edit-link  (EDIT)
+     - .close-position      (CLOSE)
+
+   Colors are intentionally NOT owned here:
+     - no color
+     - no background
+     - no border-color
+
+   Existing semantic color/background ownership therefore remains unchanged.
+   ========================================================================== */
+
+html[data-theme]
+body.mf-page-trading.mf-trading-terminal
+:where(.strategy-summary-panel .strategy-edit-link,
+       .positions-panel .close-position) {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 3px !important;
+
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  height: auto !important;
+  min-height: 0 !important;
+
+  padding: 1px 3px !important;
+
+  border-width: 1px !important;
+  border-style: solid !important;
+  border-radius: 5px !important;
+
+  box-shadow: none !important;
+
+  font-family: inherit !important;
+  font-size: 9px !important;
+  line-height: 1.05 !important;
+  font-weight: 500 !important;
+  letter-spacing: .025em !important;
+  text-transform: uppercase !important;
+  white-space: nowrap !important;
+
+  -webkit-text-size-adjust: none !important;
+  text-size-adjust: none !important;
+}
+
+/* MEMEFLOW_COMPACT_ACTION_BUTTONS_V139_END */
