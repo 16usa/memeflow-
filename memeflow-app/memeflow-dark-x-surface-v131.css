@@ -692,3 +692,108 @@ body.mf-page-trading.mf-trading-terminal
 
 /* MEMEFLOW_COMPACT_ACTION_BUTTONS_V139_END */
 /* MEMEFLOW_COMPACT_STATE_BADGES_V140_END */
+
+/* ==========================================================================
+   MEMEFLOW BADGE SPECIFICITY FIX V141.1
+
+   Root cause:
+     An older mobile typography rule in trading-visual-hierarchy-v67.css uses
+     a high-specificity selector for .positions-panel .copy-trade-badge
+     with !important 11px / 650 / 1.15.
+
+     V115/V140 used :where(...), whose contents contribute zero specificity.
+     Therefore V140 could load later and still LOSE the !important cascade.
+
+   Repair:
+     Use exact late selectors with deliberately higher specificity so the two
+     requested badges really inherit the same compact geometry/type contract
+     as V139 CLOSE / EDIT.
+
+   Semantic colors/backgrounds are NOT owned here.
+   ========================================================================== */
+
+/* Chart header OPEN POSITION. */
+html[data-theme]
+body.mf-page-trading.mf-trading-terminal
+.chart-panel
+.chart-head
+.token-name-row
+> #tokenState.decision-badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 3px !important;
+
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  height: auto !important;
+  min-height: 0 !important;
+
+  margin: 0 !important;
+  padding: 1px 3px !important;
+
+  border-width: 1px !important;
+  border-style: solid !important;
+  border-radius: 5px !important;
+
+  box-sizing: border-box !important;
+  box-shadow: none !important;
+
+  font-family: inherit !important;
+  font-style: normal !important;
+  font-size: 9px !important;
+  line-height: 1.05 !important;
+  font-weight: 500 !important;
+  letter-spacing: .025em !important;
+  text-transform: uppercase !important;
+  white-space: nowrap !important;
+
+  -webkit-text-size-adjust: none !important;
+  text-size-adjust: none !important;
+}
+
+/* Open positions COPY TRADE.
+   Intentionally do NOT own margin-left: current row placement is preserved. */
+html[data-theme]
+body.mf-page-trading.mf-trading-terminal
+.positions-panel
+.position-row
+.position-main
+.position-topline
+.position-symbol
+> .copy-trade-badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 3px !important;
+
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  height: auto !important;
+  min-height: 0 !important;
+
+  padding: 1px 3px !important;
+
+  border-width: 1px !important;
+  border-style: solid !important;
+  border-radius: 5px !important;
+
+  box-sizing: border-box !important;
+  box-shadow: none !important;
+
+  font-family: inherit !important;
+  font-style: normal !important;
+  font-size: 9px !important;
+  line-height: 1.05 !important;
+  font-weight: 500 !important;
+  letter-spacing: .025em !important;
+  text-transform: uppercase !important;
+  white-space: nowrap !important;
+
+  -webkit-text-size-adjust: none !important;
+  text-size-adjust: none !important;
+}
+
+/* MEMEFLOW_BADGE_SPECIFICITY_FIX_V141_1_END */
