@@ -365,3 +365,232 @@ html[data-theme="dark"] body .mf-site-header.mf-site-header--sticky {
 }
 
 /* MEMEFLOW_DARK_HEADER_DIVIDER_REMOVE_V133_END */
+
+/* ==========================================================================
+   MEMEFLOW TRADING STRUCTURAL CALM V136
+
+   Goal
+   ----
+   Reduce "table/grid" visual noise without letting content merge together.
+
+   BOTH THEMES:
+   - one Retina hairline outer boundary per large Trading module
+   - only key structural separators remain full-width
+   - token/trade/position rows use quiet INSET dividers starting after avatar
+   - internal vertical grid rules are removed
+   - Candidates segment buttons no longer create seams
+   - Pending approvals uses outer boundary only
+   - Trade strategy rows are separated by spacing/typography, not a cell grid
+   - Chart keeps only the two useful structural separators around the plot
+
+   DARK
+     outer       #2F3336
+     inner       rgba(47,51,54,.55)
+     ultra-soft  rgba(47,51,54,.30)
+
+   LIGHT
+     outer       rgba(0,0,0,.14)
+     inner       rgba(0,0,0,.08)
+     ultra-soft  rgba(0,0,0,.045)
+
+   Does NOT change:
+   - semantic/status/button outlines
+   - selected/accent state colors
+   - typography
+   - row geometry / avatar sizes
+   - chart canvas/grid/data
+   - trading/scanner/backend logic
+   ========================================================================== */
+
+:root {
+  --mf-structure-hairline: 1px;
+}
+
+html[data-theme="dark"] {
+  --mf-structure-outer: #2f3336;
+  --mf-structure-divider: rgba(47, 51, 54, .55);
+  --mf-structure-ultra: rgba(47, 51, 54, .30);
+}
+
+html[data-theme="light"] {
+  --mf-structure-outer: rgba(0, 0, 0, .14);
+  --mf-structure-divider: rgba(0, 0, 0, .08);
+  --mf-structure-ultra: rgba(0, 0, 0, .045);
+}
+
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 2dppx) {
+  :root { --mf-structure-hairline: .5px; }
+}
+
+@media (-webkit-min-device-pixel-ratio: 3), (min-resolution: 3dppx) {
+  :root { --mf-structure-hairline: .333333px; }
+}
+
+/* --------------------------------------------------------------------------
+   1) LARGE MODULE = ONE QUIET OUTER BOUNDARY
+   Existing radius/fill/geometry remain authoritative.
+   -------------------------------------------------------------------------- */
+
+body.mf-page-trading.mf-trading-terminal .terminal > .panel,
+body.mf-page-trading.mf-trading-terminal .center-stack > .panel {
+  border-width: var(--mf-structure-hairline) !important;
+  border-style: solid !important;
+  border-color: var(--mf-structure-outer) !important;
+  box-shadow: none !important;
+}
+
+/* --------------------------------------------------------------------------
+   2) MODULE HEADERS
+   Keep one divider only where the header genuinely separates content.
+   Candidates and Pending approvals are intentionally exceptions below.
+   -------------------------------------------------------------------------- */
+
+body.mf-page-trading.mf-trading-terminal .panel-head {
+  border-bottom-width: var(--mf-structure-hairline) !important;
+  border-bottom-style: solid !important;
+  border-bottom-color: var(--mf-structure-divider) !important;
+}
+
+/* Candidates title flows directly into its segmented control. */
+body.mf-page-trading.mf-trading-terminal
+.candidates-panel > .panel-head {
+  border-bottom: 0 !important;
+}
+
+/* Pending approvals = outer boundary only; no line through an empty state. */
+body.mf-page-trading.mf-trading-terminal
+.approvals-panel > .panel-head {
+  border-bottom: 0 !important;
+}
+
+/* --------------------------------------------------------------------------
+   3) CANDIDATES SEGMENTS
+   Preserve existing fills / active semantic text, remove button seams.
+   One quiet line below the whole strip separates controls from content.
+   -------------------------------------------------------------------------- */
+
+body.mf-page-trading.mf-trading-terminal
+.candidates-panel .candidate-filter {
+  border-top: 0 !important;
+  border-left: 0 !important;
+  border-right: 0 !important;
+  border-bottom-width: var(--mf-structure-hairline) !important;
+  border-bottom-style: solid !important;
+  border-bottom-color: var(--mf-structure-divider) !important;
+}
+
+body.mf-page-trading.mf-trading-terminal
+.candidates-panel .candidate-filter > button[data-filter] {
+  border-width: 0 !important;
+  border-style: none !important;
+  box-shadow: none !important;
+}
+
+/* --------------------------------------------------------------------------
+   4) ROW LISTS
+   Remove full-width rules. Use one X/iOS-style inset divider after the avatar.
+   Semantic left accents, badges and Close buttons remain untouched.
+   -------------------------------------------------------------------------- */
+
+body.mf-page-trading.mf-trading-terminal
+:where(.candidate, .position-row, .trade-row.trade-log-row) {
+  position: relative;
+  border-bottom: 0 !important;
+}
+
+body.mf-page-trading.mf-trading-terminal
+:where(.candidate, .position-row, .trade-row.trade-log-row)::after {
+  content: "";
+  position: absolute;
+  left: 64px;
+  right: 10px;
+  bottom: 0;
+  height: var(--mf-structure-hairline);
+  background: var(--mf-structure-ultra);
+  pointer-events: none;
+}
+
+body.mf-page-trading.mf-trading-terminal
+:where(
+  .candidate:last-child,
+  .position-row:last-child,
+  .trade-row.trade-log-row:last-child
+)::after {
+  display: none;
+}
+
+/* --------------------------------------------------------------------------
+   5) CHART
+   No header rule + no metric cell grid.
+   Keep only:
+     a) one line below timeframes / before chart
+     b) one line above indicator controls / after chart
+   -------------------------------------------------------------------------- */
+
+body.mf-page-trading.mf-trading-terminal
+.chart-panel > .chart-head {
+  border-bottom: 0 !important;
+}
+
+body.mf-page-trading.mf-trading-terminal
+.chart-panel > .timeframes {
+  border-top: 0 !important;
+  border-left: 0 !important;
+  border-right: 0 !important;
+  border-bottom-width: var(--mf-structure-hairline) !important;
+  border-bottom-style: solid !important;
+  border-bottom-color: var(--mf-structure-divider) !important;
+}
+
+body.mf-page-trading.mf-trading-terminal
+.chart-panel > .indicator-bar {
+  border-top-width: var(--mf-structure-hairline) !important;
+  border-top-style: solid !important;
+  border-top-color: var(--mf-structure-divider) !important;
+  border-bottom: 0 !important;
+}
+
+body.mf-page-trading.mf-trading-terminal
+.chart-panel > .selected-metrics {
+  border-top: 0 !important;
+  border-bottom: 0 !important;
+}
+
+body.mf-page-trading.mf-trading-terminal
+.chart-panel > .selected-metrics > div {
+  border-left: 0 !important;
+  border-right: 0 !important;
+}
+
+/* Keep the tiny layout gap between overlay/lower indicator groups, but no rule. */
+body.mf-page-trading.mf-trading-terminal
+.indicator-divider {
+  background: transparent !important;
+  opacity: 0 !important;
+}
+
+/* --------------------------------------------------------------------------
+   6) TRADE STRATEGY
+   No table-like horizontal rows or center column rule.
+   Keep header divider + one quiet line before the synced footer.
+   -------------------------------------------------------------------------- */
+
+body.mf-page-trading.mf-trading-terminal
+.strategy-summary-panel .strategy-summary-row {
+  border-bottom: 0 !important;
+}
+
+body.mf-page-trading.mf-trading-terminal
+.strategy-summary-panel .strategy-summary-row > div + div {
+  border-left: 0 !important;
+}
+
+body.mf-page-trading.mf-trading-terminal
+.strategy-summary-panel .strategy-summary-foot {
+  border-top-width: var(--mf-structure-hairline) !important;
+  border-top-style: solid !important;
+  border-top-color: var(--mf-structure-divider) !important;
+  border-bottom: 0 !important;
+}
+
+/* MEMEFLOW_TRADING_STRUCTURAL_CALM_V136_END */
