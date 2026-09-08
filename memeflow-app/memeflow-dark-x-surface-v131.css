@@ -640,8 +640,10 @@ body.mf-page-trading.mf-trading-terminal
      standardized by MEMEFLOW_TRADING_PIPELINE_BADGE_STANDARD_V115.
 
    Apply the SAME visual geometry / text scale to:
-     - .strategy-edit-link  (EDIT)
-     - .close-position      (CLOSE)
+     - .strategy-edit-link                  (EDIT)
+     - .close-position                      (CLOSE)
+     - #tokenState.decision-badge           (chart OPEN POSITION)
+     - .positions-panel .copy-trade-badge   (Open positions COPY TRADE)
 
    Colors are intentionally NOT owned here:
      - no color
@@ -654,7 +656,9 @@ body.mf-page-trading.mf-trading-terminal
 html[data-theme]
 body.mf-page-trading.mf-trading-terminal
 :where(.strategy-summary-panel .strategy-edit-link,
-       .positions-panel .close-position) {
+       .positions-panel .close-position,
+       .chart-panel #tokenState.decision-badge,
+       .positions-panel .copy-trade-badge) {
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -687,3 +691,4 @@ body.mf-page-trading.mf-trading-terminal
 }
 
 /* MEMEFLOW_COMPACT_ACTION_BUTTONS_V139_END */
+/* MEMEFLOW_COMPACT_STATE_BADGES_V140_END */
