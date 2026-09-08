@@ -179,3 +179,162 @@ body.mf-page-trading.mf-trading-terminal
  */
 
 /* MEMEFLOW_DARK_X_SURFACE_CONTRACT_V131_END */
+
+/* ==========================================================================
+   MEMEFLOW DARK X HAIRLINE V132
+
+   Purpose
+   -------
+   Match the visual weight of the supplied X reference on Retina displays.
+
+   Verified from the screenshots:
+     - X straight separator: one physical pixel
+     - MEMEFLOW V131 1 CSS px border on the iPhone screenshot: ~3 physical px
+
+   Keep the V131 palette exactly:
+     canvas / large modules  #000000
+     third neutral           #101113
+     outline / divider       #2F3336
+
+   Change ONLY line rendering / hierarchy:
+     DPR 1 -> 1 CSS px
+     DPR 2 -> 0.5 CSS px  ~= 1 device pixel
+     DPR 3 -> 0.333333 CSS px ~= 1 device pixel
+
+   No gradients. No glow. No shadows.
+   No light-theme selectors.
+   Buttons, semantic status outlines and selected-accent borders are excluded.
+   ========================================================================== */
+
+html[data-theme="dark"] {
+  --mf-x-dark-hairline: 1px;
+  --mf-x-dark-line-inner: rgba(47, 51, 54, .72);
+}
+
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 2dppx) {
+  html[data-theme="dark"] {
+    --mf-x-dark-hairline: .5px;
+  }
+}
+
+@media (-webkit-min-device-pixel-ratio: 3), (min-resolution: 3dppx) {
+  html[data-theme="dark"] {
+    --mf-x-dark-hairline: .333333px;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   LARGE STRUCTURAL MODULE OUTLINES
+   Same selector family as V131. Keep fill/radius/color; only make the outline
+   a true Retina hairline.
+   -------------------------------------------------------------------------- */
+
+html[data-theme="dark"]
+body.mf-page-system
+:where(.mf-infra, .activity-panel),
+
+html[data-theme="dark"]
+body.mf-page-system-tokens
+.flow-page :where(.flow-hero, .flow-toolbar, .pagination),
+
+html[data-theme="dark"]
+body.mf-page-trading.mf-trading-terminal
+.terminal > .panel,
+
+html[data-theme="dark"]
+body.mf-page-trading.mf-trading-terminal
+.center-stack > .panel,
+
+html[data-theme="dark"]
+body.mf-page-smart-vault
+.mf-vault-shell :where(.mf-vault-card, .mf-vault-status-panel),
+
+html[data-theme="dark"]
+body.mf-page-settings
+:where(
+  .mf293-settings-group,
+  .settings-group,
+  .settings-context,
+  .mf-theme-appearance
+),
+
+html[data-theme="dark"]
+body.mf-page-how-it-works
+:where(
+  .mf-hiw-status-card,
+  .mf-hiw-map-shell,
+  .mf-hiw-money,
+  .mf-hiw-cta
+),
+
+html[data-theme="dark"]
+body.mf-page-agent-performance
+:where(.ap-source, .ap-panel, .ap-kpis article) {
+  border-width: var(--mf-x-dark-hairline) !important;
+  border-style: solid !important;
+  border-color: var(--mf-x-dark-line) !important;
+}
+
+/* --------------------------------------------------------------------------
+   TRADING TERMINAL — NEUTRAL STRUCTURAL SEPARATORS
+   `border-width` changes thickness only; the existing side-specific
+   border-style remains authoritative, so this does NOT create new edges.
+   -------------------------------------------------------------------------- */
+
+html[data-theme="dark"]
+body.mf-page-trading.mf-trading-terminal
+:where(
+  .panel-head,
+  .chart-head,
+  .candidate-filter,
+  .timeframes,
+  .indicator-bar,
+  .selected-metrics,
+  .strategy-summary-foot
+) {
+  border-width: var(--mf-x-dark-hairline) !important;
+  border-color: var(--mf-x-dark-line) !important;
+}
+
+/* Row separators: horizontal only. */
+html[data-theme="dark"]
+body.mf-page-trading.mf-trading-terminal
+:where(
+  .candidate,
+  .position-row,
+  .trade-row.trade-log-row
+) {
+  border-bottom-width: var(--mf-x-dark-hairline) !important;
+  border-bottom-color: var(--mf-x-dark-line) !important;
+}
+
+/* Chart metrics: vertical cell dividers are deliberately quieter than the
+   module outline, so the chart does not read as a heavy table/grid. */
+html[data-theme="dark"]
+body.mf-page-trading.mf-trading-terminal
+.selected-metrics > div:not(:last-child) {
+  border-right-width: var(--mf-x-dark-hairline) !important;
+  border-right-color: var(--mf-x-dark-line-inner) !important;
+}
+
+/* Trade Strategy two-column divider: same quiet inner hierarchy. */
+html[data-theme="dark"]
+body.mf-page-trading.mf-trading-terminal
+.strategy-summary-panel .strategy-summary-row > div + div {
+  border-left-width: var(--mf-x-dark-hairline) !important;
+  border-left-color: var(--mf-x-dark-line-inner) !important;
+}
+
+/* Indicator MA/EMA/... | VOL/MACD separator is a 1px element rather than a
+   border, so reduce its actual box width to the same physical hairline. */
+html[data-theme="dark"]
+body.mf-page-trading.mf-trading-terminal
+.indicator-divider {
+  flex-basis: var(--mf-x-dark-hairline) !important;
+  width: var(--mf-x-dark-hairline) !important;
+  min-width: var(--mf-x-dark-hairline) !important;
+  max-width: var(--mf-x-dark-hairline) !important;
+  background: var(--mf-x-dark-line-inner) !important;
+}
+
+/* MEMEFLOW_DARK_X_HAIRLINE_V132_END */
