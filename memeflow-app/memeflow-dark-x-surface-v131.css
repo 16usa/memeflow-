@@ -595,3 +595,39 @@ html[data-theme] body.mf-page-trading.mf-trading-terminal
 
 /* MEMEFLOW_TRADING_STRUCTURAL_CALM_V136_END */
 /* MEMEFLOW_TRADING_STRUCTURAL_CASCADE_V137_END */
+
+/* ==========================================================================
+   MEMEFLOW RECENT TRADES P&L V138
+
+   Move the existing realized paper P&L summary from Open positions to the
+   right side of the Recent trades header.
+
+   Keep the existing .pnl-summary typography and semantic colors exactly.
+   Layout-only change: label + value render on one line.
+   ========================================================================== */
+
+html[data-theme]
+body.mf-page-trading.mf-trading-terminal
+.bottom-history-panel > .panel-head .pnl-summary {
+  display: inline-flex !important;
+  align-items: baseline !important;
+  justify-content: flex-end !important;
+  gap: 6px !important;
+  max-width: none !important;
+  margin: 0 !important;
+  text-align: right !important;
+  white-space: nowrap !important;
+}
+
+html[data-theme]
+body.mf-page-trading.mf-trading-terminal
+.bottom-history-panel > .panel-head .pnl-summary > span,
+html[data-theme]
+body.mf-page-trading.mf-trading-terminal
+.bottom-history-panel > .panel-head .pnl-summary > strong {
+  display: inline !important;
+  margin-top: 0 !important;
+  white-space: nowrap !important;
+}
+
+/* MEMEFLOW_RECENT_TRADES_PNL_V138_END */
