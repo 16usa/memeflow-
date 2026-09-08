@@ -1291,3 +1291,36 @@ body.mf-page-trading.mf-trading-terminal
 }
 
 /* MEMEFLOW_CONTRAST_CORRECTIONS_V149_END */
+
+/* ==========================================================================
+   MEMEFLOW TRADE STRATEGY PRIMARY VALUES V150
+
+   Trading Terminal only.
+
+   In the Trade strategy module:
+     labels stay tertiary
+     all larger value text becomes primary
+
+   Affected values:
+     Position
+     Stops
+     TP1
+     TP2
+     Runner / hold
+     Exit pressure
+     Daily limits
+     Position limits
+
+   Color-only patch. No font sizes, geometry, fills, borders, spacing,
+   badges, chart data, trading logic or backend logic are changed.
+   ========================================================================== */
+
+html[data-theme]
+body.mf-page-trading.mf-trading-terminal
+.strategy-summary-panel
+.strategy-summary-row
+strong {
+  color: var(--mf-text-primary) !important;
+}
+
+/* MEMEFLOW_TRADE_STRATEGY_PRIMARY_VALUES_V150_END */
