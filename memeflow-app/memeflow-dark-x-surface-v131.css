@@ -1324,3 +1324,75 @@ strong {
 }
 
 /* MEMEFLOW_TRADE_STRATEGY_PRIMARY_VALUES_V150_END */
+
+/* ==========================================================================
+   MEMEFLOW CHART METRICS PRIMARY + ALIGNMENT V151
+
+   Trading Terminal chart selected-metrics row only.
+
+   Contract:
+     - Score / Holders / Top 10 / Developer / Liquidity labels and values:
+       primary contrast
+     - keep existing 9px typography from V147
+     - equal visual side inset from the chart module
+     - five balanced columns
+     - first column aligns left
+     - middle columns center
+     - last column aligns right
+
+   No chart data, chart geometry, module frame, row height, borders, fills,
+   badges, trading logic or backend logic are changed.
+   ========================================================================== */
+
+html[data-theme]
+body.mf-page-trading.mf-trading-terminal
+.chart-panel
+.selected-metrics {
+  display: grid !important;
+  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  padding-inline: 16px !important;
+  column-gap: 0 !important;
+  align-items: start !important;
+}
+
+html[data-theme]
+body.mf-page-trading.mf-trading-terminal
+.chart-panel
+.selected-metrics
+> div {
+  min-width: 0 !important;
+  text-align: center !important;
+}
+
+html[data-theme]
+body.mf-page-trading.mf-trading-terminal
+.chart-panel
+.selected-metrics
+> div:first-child {
+  text-align: left !important;
+}
+
+html[data-theme]
+body.mf-page-trading.mf-trading-terminal
+.chart-panel
+.selected-metrics
+> div:last-child {
+  text-align: right !important;
+}
+
+html[data-theme]
+body.mf-page-trading.mf-trading-terminal
+.chart-panel
+.selected-metrics
+span,
+html[data-theme]
+body.mf-page-trading.mf-trading-terminal
+.chart-panel
+.selected-metrics
+strong {
+  color: var(--mf-text-primary) !important;
+}
+
+/* MEMEFLOW_CHART_METRICS_PRIMARY_ALIGN_V151_END */
