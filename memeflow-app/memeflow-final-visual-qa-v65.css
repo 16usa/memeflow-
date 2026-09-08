@@ -251,9 +251,9 @@ body.mf-page-agent-performance.mf-final-visual-qa-v65 .ap-periods {
    ========================================================================== */
 
 :root{
-  --mf-text-primary:#f4f6f8;
-  --mf-text-secondary:#a1aab5;
-  --mf-text-tertiary:#818c99;
+  --mf-text-primary:#e7e9ea;
+  --mf-text-secondary:#71767b;
+  --mf-text-tertiary:#536471;
 }
 html[data-theme="light"]{
   --mf-text-primary:#171717;
@@ -380,6 +380,7 @@ html body:is(
 }
 
 /* MEMEFLOW_GLOBAL_TEXT_CONTRAST_CONTRACT_V86_END */
+/* MEMEFLOW_X_TEXT_CONTRAST_V134_APPLIED */
 
 /* ==========================================================================
    MEMEFLOW_GLOBAL_SYSTEM_TEXT_CONTRACT_V90
