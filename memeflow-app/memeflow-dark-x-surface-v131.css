@@ -902,3 +902,82 @@ body.mf-page-trading.mf-trading-terminal
 }
 
 /* MEMEFLOW_FRAMELESS_MODULES_HAIRLINE_CONTROLS_V143_END */
+
+/* ==========================================================================
+   MEMEFLOW MODULE BOTTOM DIVIDER V144
+
+   Requested Trading Terminal hierarchy:
+     - large module outer frame remains removed (V143)
+     - existing internal/header separators remain untouched
+     - add ONE straight horizontal hairline at the very bottom of each
+       large module
+     - no left/right/top edge, no rounded corner turn-up
+
+   The bottom rule uses the SAME structural divider token as the module
+   header separators:
+     --mf-structure-divider
+
+   Thickness uses the existing Retina-aware token:
+     --mf-structure-hairline
+
+   No fill, typography, component radius, semantic color or logic changes.
+   ========================================================================== */
+
+/* Static large modules need a containing block for the straight ::after rule.
+   Sticky Candidates / Trade strategy already own position: sticky and are
+   deliberately excluded so their sticky behavior cannot be overridden. */
+html[data-theme]
+body.mf-page-trading.mf-trading-terminal
+.terminal > .panel:not(.candidates-panel):not(.control-panel),
+html[data-theme]
+body.mf-page-trading.mf-trading-terminal
+.center-stack > .panel {
+  position: relative !important;
+}
+
+/* Responsive base CSS intentionally changes these two desktop-sticky panels
+   to position: static. Give them a containing block ONLY at those breakpoints;
+   desktop sticky behavior remains untouched. */
+@media (max-width: 1180px) {
+  html[data-theme]
+  body.mf-page-trading.mf-trading-terminal
+  .terminal > .control-panel {
+    position: relative !important;
+  }
+}
+
+@media (max-width: 820px) {
+  html[data-theme]
+  body.mf-page-trading.mf-trading-terminal
+  .terminal > .candidates-panel {
+    position: relative !important;
+  }
+}
+
+/* One horizontal rule only. Because this is a pseudo-element rather than a
+   border, there are no side edges and therefore no corner "turn-ups". */
+html[data-theme]
+body.mf-page-trading.mf-trading-terminal
+.terminal > .panel::after,
+html[data-theme]
+body.mf-page-trading.mf-trading-terminal
+.center-stack > .panel::after {
+  content: "" !important;
+  position: absolute !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+
+  width: auto !important;
+  height: var(--mf-structure-hairline, 1px) !important;
+
+  background: var(--mf-structure-divider) !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+
+  pointer-events: none !important;
+  z-index: 4 !important;
+}
+
+/* MEMEFLOW_MODULE_BOTTOM_DIVIDER_V144_END */
