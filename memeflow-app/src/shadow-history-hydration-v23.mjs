@@ -6,16 +6,38 @@ import fs from 'node:fs';
 let hydrationQueue=Promise.resolve();
 let initialGracePending=true;
 
-// Serialize large history tails so the nine shadow constructors never compete
-// with one another (or startup-critical storage work) for disk and CPU.
+// MEMEFLOW_SHADOW_HISTORY_LOW_PRIORITY_V145
+// These histories are SHADOW ONLY. Page availability and the live HTTP loop
+// always take priority over rebuilding historical diagnostics.
+const initialGraceMs=Math.max(
+  5_000,
+  Number(process.env.MEMEFLOW_SHADOW_HYDRATION_GRACE_MS||20_000)
+);
+const betweenFilesIdleMs=Math.max(
+  0,
+  Number(process.env.MEMEFLOW_SHADOW_HYDRATION_FILE_IDLE_MS||100)
+);
+
+// Serialize large history tails so shadow constructors never compete with one
+// another (or startup-critical storage work) for disk and CPU.
 export function enqueueHistoryHydration(task){
   const run=async()=>{
     if(initialGracePending){
       initialGracePending=false;
-      // Give app-server time to bind its listener and finish critical startup.
-      await new Promise(resolve=>setTimeout(resolve,5_000));
+      // Give app-server and the first browser navigation a clean startup lane.
+      await new Promise(resolve=>setTimeout(resolve,initialGraceMs));
     }
-    return task();
+
+    const result=await task();
+
+    // Do not hand the CPU directly from one large history to the next.
+    if(betweenFilesIdleMs>0){
+      await new Promise(
+        resolve=>setTimeout(resolve,betweenFilesIdleMs)
+      );
+    }
+
+    return result;
   };
 
   const queued=hydrationQueue.then(run,run);
@@ -61,18 +83,48 @@ export async function readBoundedJsonlTail(file,maxBytes){
 }
 
 export async function parseJsonlCooperatively(text,onRow,{
-  yieldEvery=64,
-  yieldAfterMs=6
+  yieldEvery=16,
+  yieldAfterMs=2,
+  idleMs=20
 }={}){
   const source=String(text||'');
+  const safeYieldEvery=Math.max(1,Number(yieldEvery)||16);
+  const safeYieldAfterMs=Math.max(1,Number(yieldAfterMs)||2);
+  const safeIdleMs=Math.max(0,Number(idleMs)||0);
+
   let start=0;
   let rowsSinceYield=0;
   let sliceStartedAt=Date.now();
 
+  const yieldToRuntime=async()=>{
+    if(safeIdleMs>0){
+      // A timer creates an actual idle window. setImmediate alone yields
+      // fairness but can still keep one CPU core saturated continuously.
+      await new Promise(resolve=>setTimeout(resolve,safeIdleMs));
+    }else{
+      await new Promise(resolve=>setImmediate(resolve));
+    }
+    rowsSinceYield=0;
+    sliceStartedAt=Date.now();
+  };
+
   while(start<source.length){
+    // If the previous row callback consumed the entire slice budget, give HTTP
+    // and live timers a turn before parsing another historical row.
+    if(
+      rowsSinceYield>0 &&
+      (
+        rowsSinceYield>=safeYieldEvery ||
+        Date.now()-sliceStartedAt>=safeYieldAfterMs
+      )
+    ){
+      await yieldToRuntime();
+    }
+
     const newline=source.indexOf('\n',start);
     const end=newline<0?source.length:newline;
     const line=source.slice(start,end);
+
     if(line.trim()){
       try{
         onRow(JSON.parse(line));
@@ -80,15 +132,6 @@ export async function parseJsonlCooperatively(text,onRow,{
         onRow(null,true);
       }
       rowsSinceYield++;
-    }
-
-    if(
-      rowsSinceYield>=yieldEvery ||
-      Date.now()-sliceStartedAt>=yieldAfterMs
-    ){
-      await new Promise(resolve=>setImmediate(resolve));
-      rowsSinceYield=0;
-      sliceStartedAt=Date.now();
     }
 
     start=end+1;
