@@ -202,4 +202,5 @@ http.createServer=function patchedCreateServer(listener,...rest){
   return nativeCreateServer.call(http,wrapped,...rest);
 };
 syncBuiltinESMExports();
+await import('./src/paper-close-safety-v78.mjs'); // MEMEFLOW_PAPER_CLOSE_SAFETY_V78
 await import('./app-server.mjs');
