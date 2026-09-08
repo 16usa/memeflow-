@@ -338,3 +338,30 @@ body.mf-page-trading.mf-trading-terminal
 }
 
 /* MEMEFLOW_DARK_X_HAIRLINE_V132_END */
+
+/* ==========================================================================
+   MEMEFLOW DARK HEADER DIVIDER REMOVE V133
+
+   DARK MODE ONLY.
+
+   The canonical shared header currently owns:
+     .mf-site-header { border-bottom: 1px solid ... }
+
+   V133 removes that bottom separator completely in Dark mode on every
+   standardized MEMEFLOW page, including the sticky Trading header.
+
+   Light mode is untouched.
+   Header geometry, position, background, blur, navigation and typography
+   are untouched.
+   ========================================================================== */
+
+html[data-theme="dark"] body .mf-site-header,
+html[data-theme="dark"] body .mf-site-header:not(.mf-site-header--sticky),
+html[data-theme="dark"] body .mf-site-header.mf-site-header--sticky {
+  border-bottom-width: 0 !important;
+  border-bottom-style: none !important;
+  border-bottom-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* MEMEFLOW_DARK_HEADER_DIVIDER_REMOVE_V133_END */
