@@ -77,12 +77,22 @@ export class TokenRegistry{
         token_json=excluded.token_json
     `);
     this.getStmt=this.db.prepare(`SELECT token_json FROM tokens WHERE mint=?`);
-    this.countStmt=this.db.prepare(`SELECT COUNT(*) AS n FROM tokens`);
+    // MEMEFLOW_TOKEN_REGISTRY_STARTUP_UNBLOCK_V144
+    // Metrics must never full-scan the permanent registry on the main thread.
+    // This table is append-oriented/permanent, so MAX(rowid) is a safe,
+    // non-blocking approximation and uses the table B-tree's right edge.
+    this.countStmt=this.db.prepare(
+      `SELECT COALESCE(MAX(rowid),0) AS n FROM tokens`
+    );
+    // V144 startup hot-cache query deliberately follows the existing
+    // idx_tokens_ws_hot(ws_first, updated_at DESC) index. The previous
+    // COALESCE(...) ORDER BY forced a TEMP B-TREE over the large ws_first set
+    // before LIMIT, blocking server.listen() on cold storage.
     this.hotStmt=this.db.prepare(`
       SELECT token_json
       FROM tokens
       WHERE ws_first=1
-      ORDER BY COALESCE(last_activity_at,discovered_at,updated_at) DESC
+      ORDER BY updated_at DESC
       LIMIT ?
     `);
     this.pageStmt=this.db.prepare(`
@@ -222,7 +232,8 @@ export class TokenRegistry{
         duration
       );
 
-      // Count once per background flush, never once per UI request.
+      // V144: refresh the append-oriented approximate cardinality without a
+      // synchronous COUNT(*) scan of the permanent SQLite registry.
       this.metrics.permanentTokensApprox=Number(
         this.countStmt.get()?.n||this.metrics.permanentTokensApprox||0
       );
