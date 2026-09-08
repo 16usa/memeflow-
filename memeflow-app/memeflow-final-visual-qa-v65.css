@@ -1177,3 +1177,44 @@ body.mf-page-system.mf-surface-hierarchy-v57
 }
 
 /* MEMEFLOW_GLOBAL_DARK_SURFACE_CONTRACT_V111_END */
+
+/* ==========================================================================
+   MEMEFLOW THEME CANVAS V135
+
+   One canonical page/root canvas for both themes.
+
+   DARK  = #000000
+   LIGHT = #FFFFFF
+
+   This owns only the root/body fallback canvas and the System Overview boot
+   overlay. It intentionally removes the legacy #0F141A / radial-gradient
+   flash and the same dark-gray color exposed by Safari below short content.
+
+   Component/module surfaces, chart surfaces, 3D viewport, typography,
+   semantic colors, layout and application logic are untouched.
+   ========================================================================== */
+
+html[data-theme="dark"],
+html[data-theme="dark"] body {
+  background-color: #000000 !important;
+  background-image: none !important;
+}
+
+html[data-theme="light"],
+html[data-theme="light"] body {
+  background-color: #ffffff !important;
+  background-image: none !important;
+}
+
+/* System Overview loading screen must use the same active theme canvas. */
+html[data-theme="dark"] body .boot {
+  background: #000000 !important;
+  background-image: none !important;
+}
+
+html[data-theme="light"] body .boot {
+  background: #ffffff !important;
+  background-image: none !important;
+}
+
+/* MEMEFLOW_THEME_CANVAS_V135_END */
