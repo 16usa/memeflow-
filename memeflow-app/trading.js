@@ -4490,7 +4490,15 @@ function renderPositions() {
   }
 
   list.innerHTML = rows.map(position => {
-    const pnl = num(position.unrealizedPnlPct, 0);
+    // MEMEFLOW_OPEN_POSITION_LIVE_PNL_V80
+    // /api/paper/positions/live already computes a canonical live P&L from
+    // the latest trusted TradeEvent mark. The old renderer ignored it and
+    // displayed the durable engine field with a forced zero fallback.
+    const pnl =
+      position?.tokenMetrics?.pnlReady === true
+        ? num(position?.tokenMetrics?.pnlPct)
+        : null;
+
     const settings = position.settingsSnapshot || {};
     const copyTrade =
       String(position.strategySource || '').toLowerCase() === 'copy-trading';
@@ -4498,8 +4506,29 @@ function renderPositions() {
     const size =
       `${fmt(position.remainingSizeSol ?? position.initialSizeSol, 4)} SOL`;
 
+    // Keep tiny real moves visible instead of rounding them to fake 0.00%.
+    const pnlDigits =
+      finite(pnl) &&
+      Math.abs(pnl) > 0 &&
+      Math.abs(pnl) < 0.01
+        ? 4
+        : 2;
+
     const pnlText =
-      `${pnl >= 0 ? '+' : ''}${fmt(pnl, 2)}%`;
+      finite(pnl)
+        ? `${pnl > 0 ? '+' : ''}${fmt(pnl, pnlDigits)}%`
+        : '—';
+
+    const pnlClass =
+      finite(pnl)
+        ? (
+            pnl > 0
+              ? 'pnl-positive'
+              : pnl < 0
+                ? 'pnl-negative'
+                : ''
+          )
+        : '';
 
     return `
       <div class="position-row ${String(position.mint) === String(state.selectedMint) ? 'selected' : ''}" data-mint="${esc(position.mint)}">
@@ -4518,7 +4547,7 @@ function renderPositions() {
           <div class="position-bottomline">
             <span class="position-size">${esc(size)}</span>
             <i>·</i>
-            <strong class="position-pnl ${pnl >= 0 ? 'pnl-positive' : 'pnl-negative'}">
+            <strong class="position-pnl ${pnlClass}">
               ${esc(pnlText)}
             </strong>
             <i>·</i>
