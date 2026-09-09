@@ -1,0 +1,203 @@
+/* MEMEFLOW_CHART_HEADER_GEOMETRY_V95
+   Selected-token header only. The chart itself is NOT touched.
+
+   Canonical geometry mirrors Open positions / Candidates / Recent trades:
+     header row height: 64px
+     left/right padding: 9px
+     avatar: 36x36
+     avatar grid column: 46px
+     gap from column to token copy: 7px
+     resulting avatar edge -> text: 17px
+     top/bottom free space around 36px avatar in 64px row: 14px
+
+   Right price block stays in the same header row and is vertically centered.
+*/
+
+body.mf-page-trading.mf-trading-terminal
+.chart-panel > .chart-head {
+  box-sizing: border-box !important;
+  height: 64px !important;
+  min-height: 64px !important;
+  max-height: 64px !important;
+  padding: 8px 9px !important;
+
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) 128px !important;
+  align-items: center !important;
+  column-gap: 8px !important;
+  row-gap: 0 !important;
+}
+
+/* Left identity side uses the same avatar-column rhythm as the row modules. */
+body.mf-page-trading.mf-trading-terminal
+.chart-panel > .chart-head > .token-title {
+  min-width: 0 !important;
+  width: 100% !important;
+  height: auto !important;
+
+  display: grid !important;
+  grid-template-columns: 46px minmax(0, 1fr) !important;
+  align-items: center !important;
+  column-gap: 7px !important;
+
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Exact same canonical token image size as the three list modules. */
+body.mf-page-trading.mf-trading-terminal
+.chart-panel > .chart-head
+#chartTokenAvatarLinkV128,
+body.mf-page-trading.mf-trading-terminal
+.chart-panel > .chart-head
+#chartTokenAvatarLinkV128 > .token-avatar,
+body.mf-page-trading.mf-trading-terminal
+.chart-panel > .chart-head
+#chartTokenAvatarLinkV128 > .trade-token-avatar {
+  width: 36px !important;
+  height: 36px !important;
+  min-width: 36px !important;
+  min-height: 36px !important;
+  max-width: 36px !important;
+  max-height: 36px !important;
+}
+
+body.mf-page-trading.mf-trading-terminal
+.chart-panel > .chart-head
+#chartTokenAvatarLinkV128 {
+  grid-column: 1 !important;
+  align-self: center !important;
+  justify-self: start !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+body.mf-page-trading.mf-trading-terminal
+.chart-panel > .chart-head
+.token-title > div:last-child {
+  grid-column: 2 !important;
+  min-width: 0 !important;
+  width: 100% !important;
+  height: auto !important;
+  margin: 0 !important;
+  padding: 0 !important;
+
+  display: grid !important;
+  grid-template-rows: auto auto !important;
+  align-content: center !important;
+  row-gap: 4px !important;
+}
+
+body.mf-page-trading.mf-trading-terminal
+.chart-panel > .chart-head
+.token-name-row {
+  min-width: 0 !important;
+  width: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  flex-wrap: nowrap !important;
+  gap: 5px !important;
+  margin: 0 !important;
+}
+
+body.mf-page-trading.mf-trading-terminal
+.chart-panel > .chart-head
+.token-name-row > h1 {
+  min-width: 0 !important;
+  max-width: none !important;
+  flex: 0 1 auto !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+body.mf-page-trading.mf-trading-terminal
+.chart-panel > .chart-head
+.token-name-row > .decision-badge {
+  flex: 0 0 auto !important;
+  margin: 0 !important;
+  white-space: nowrap !important;
+}
+
+body.mf-page-trading.mf-trading-terminal
+.chart-panel > .chart-head
+.token-meta {
+  min-width: 0 !important;
+  width: 100% !important;
+  height: auto !important;
+  margin: 0 !important;
+  padding: 0 !important;
+
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  overflow: hidden !important;
+  white-space: nowrap !important;
+}
+
+body.mf-page-trading.mf-trading-terminal
+.chart-panel > .chart-head
+#tokenMint {
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+body.mf-page-trading.mf-trading-terminal
+.chart-panel > .chart-head
+#copyMintBtn {
+  flex: 0 0 auto !important;
+  margin: 0 !important;
+}
+
+/* Right side: keep price/meta in the same 64px row, 9px from the outer edge. */
+body.mf-page-trading.mf-trading-terminal
+.chart-panel > .chart-head > .price-toggle {
+  grid-column: 2 !important;
+  align-self: center !important;
+  justify-self: end !important;
+
+  width: 128px !important;
+  min-width: 128px !important;
+  max-width: 128px !important;
+
+  margin: 0 !important;
+  padding: 0 !important;
+
+  display: grid !important;
+  grid-template-rows: auto auto !important;
+  justify-items: end !important;
+  align-content: center !important;
+  row-gap: 4px !important;
+  text-align: right !important;
+}
+
+body.mf-page-trading.mf-trading-terminal
+.chart-panel > .chart-head > .price-toggle
+> :where(.token-price, .token-market) {
+  margin: 0 !important;
+  padding: 0 !important;
+  white-space: nowrap !important;
+}
+
+/* Same geometry on tablet / phone. Nothing below .chart-head is selected. */
+@media (max-width: 820px) {
+  body.mf-page-trading.mf-trading-terminal
+  .chart-panel > .chart-head {
+    height: 64px !important;
+    min-height: 64px !important;
+    max-height: 64px !important;
+    padding: 8px 9px !important;
+    grid-template-columns: minmax(0, 1fr) 128px !important;
+    column-gap: 8px !important;
+  }
+
+  body.mf-page-trading.mf-trading-terminal
+  .chart-panel > .chart-head > .token-title {
+    display: grid !important;
+    grid-template-columns: 46px minmax(0, 1fr) !important;
+    column-gap: 7px !important;
+  }
+}

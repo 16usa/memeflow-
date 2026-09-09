@@ -1,0 +1,20 @@
+{
+  "version": "MEMEFLOW_HISTORICAL_FLAT_REPAIR_V79",
+  "mode": "APPLY",
+  "appliedAt": "2026-09-08T23:25:58.011Z",
+  "backupDir": "/home/runner/workspace/.memeflow-backups/historical-flat-repair-v79-2026-09-08T23-25-57-024Z",
+  "preApplyReport": "/home/runner/workspace/.memeflow-reports/historical-flat-repair-v79-pre-apply-2026-09-08T23-25-57-022Z.json",
+  "changedPositions": 44,
+  "changedTrades": 44,
+  "summary": {
+    "candidates": 44,
+    "recoverable": 0,
+    "wouldBecomeWins": 0,
+    "wouldBecomeLosses": 0,
+    "verifiedTrueFlat": 0,
+    "wouldBecomeUnknown": 44,
+    "unknownReasons": {
+      "NO_RELIABLE_ARCHIVE_MARK": 44
+    }
+  }
+}

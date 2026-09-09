@@ -1,0 +1,38 @@
+diff --git a/memeflow-app/trading-light-polish-v61.css b/memeflow-app/trading-light-polish-v61.css
+--- a/memeflow-app/trading-light-polish-v61.css
++++ b/memeflow-app/trading-light-polish-v61.css
+@@ -199,3 +199,32 @@
+ */
+
+-/* MEMEFLOW_TRADING_LIGHT_POLISH_V61_END */
+\ No newline at end of file
++/* MEMEFLOW_TRADING_LIGHT_POLISH_V61_END */
++
++/* MEMEFLOW_TRADING_LIGHT_WHITE_MODULES_V153
++   Light theme only. Remove the neutral gray fill from the five requested
++   Trading Terminal modules while preserving geometry, separators, semantic
++   states, selected-row feedback, controls and Dark mode.
++*/
++html[data-theme="light"] body.mf-trading-terminal :is(
++  .chart-panel,
++  .strategy-summary-panel,
++  .positions-panel,
++  .candidates-panel,
++  .bottom-history-panel
++) {
++  background: #ffffff !important;
++  background-color: #ffffff !important;
++  background-image: none !important;
++}
++
++/* These two module-owned neutral sub-surfaces are structural, not actions.
++   Make them merge into the same white module canvas as requested. */
++html[data-theme="light"] body.mf-trading-terminal .chart-panel .indicator-bar,
++html[data-theme="light"] body.mf-trading-terminal .chart-panel .selected-metrics > div,
++html[data-theme="light"] body.mf-trading-terminal .strategy-summary-panel .strategy-summary-row {
++  background: #ffffff !important;
++  background-color: #ffffff !important;
++  background-image: none !important;
++}
++
++/* MEMEFLOW_TRADING_LIGHT_WHITE_MODULES_V153_END */

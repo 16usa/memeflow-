@@ -1,0 +1,29 @@
+/* MEMEFLOW_OPEN_POSITION_SURFACE_V86
+   Theme-native surface alignment for the V85 compact position popover.
+
+   LIGHT: use the site's second light surface token.
+   DARK:  use the approved neutral inset / second dark surface token.
+
+   Scope is intentionally limited to popover surface + its arrow border.
+   Geometry, icon, typography, P&L colors and interaction remain owned by V85.
+*/
+
+html[data-theme="light"] .position-popover-v85 {
+  background: var(--mf-app-surface-2, #f7f9fb) !important;
+  border-color: var(--mf-app-line, rgba(38, 59, 74, .105)) !important;
+}
+
+html[data-theme="light"] .position-popover-v85::after {
+  border-left-color: var(--mf-app-line, rgba(38, 59, 74, .105)) !important;
+  border-top-color: var(--mf-app-line, rgba(38, 59, 74, .105)) !important;
+}
+
+html[data-theme="dark"] .position-popover-v85 {
+  background: var(--mf-x-dark-inset, #101113) !important;
+  border-color: var(--mf-x-dark-line, #2f3336) !important;
+}
+
+html[data-theme="dark"] .position-popover-v85::after {
+  border-left-color: var(--mf-x-dark-line, #2f3336) !important;
+  border-top-color: var(--mf-x-dark-line, #2f3336) !important;
+}
