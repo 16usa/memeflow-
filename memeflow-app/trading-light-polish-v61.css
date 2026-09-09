@@ -199,3 +199,36 @@ html[data-theme="light"] body.mf-trading-terminal :where(
 */
 
 /* MEMEFLOW_TRADING_LIGHT_POLISH_V61_END */
+
+/* MEMEFLOW_TRADING_LIGHT_WHITE_MODULES_V153
+   Light theme only.
+   Requested modules use the true white canvas while preserving:
+   - Dark mode
+   - geometry and module outlines
+   - semantic state/P&L colors
+   - selected-row feedback
+   - typography and trading logic
+*/
+html[data-theme="light"] body.mf-trading-terminal :is(
+  .chart-panel,
+  .strategy-summary-panel,
+  .positions-panel,
+  .candidates-panel,
+  .bottom-history-panel
+) {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  background-image: none !important;
+}
+
+/* Structural neutral sub-surfaces inside the requested modules merge into
+   the same white canvas. Action/selection states are intentionally untouched. */
+html[data-theme="light"] body.mf-trading-terminal .chart-panel .indicator-bar,
+html[data-theme="light"] body.mf-trading-terminal .chart-panel .selected-metrics > div,
+html[data-theme="light"] body.mf-trading-terminal .strategy-summary-panel .strategy-summary-row {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  background-image: none !important;
+}
+
+/* MEMEFLOW_TRADING_LIGHT_WHITE_MODULES_V153_END */
