@@ -359,25 +359,14 @@ button { cursor: pointer; }
 .chart-panel { min-height: 560px; }
 
 .chart-head {
-  min-height: 73px;
-  padding: 11px 13px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
   border-bottom: 1px solid rgba(111, 154, 172, .065);
 }
 
-.token-title {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-width: 0;
-}
+.token-title { min-width: 0; }
 
 .token-avatar {
-  width: 48px;
-  height: 48px;
+  width: 36px;
+  height: 36px;
   display: grid;
   place-items: center;
   flex: 0 0 auto;
@@ -1054,8 +1043,6 @@ button { cursor: pointer; }
   }
 
   .chart-panel { min-height: 0; }
-  .chart-head { min-height: 62px; padding: 8px 9px; }
-  .token-avatar { width: 33px; height: 33px; }
   .token-name-row h1 { max-width: 150px; font-size: var(--mf-type-body); }
   .token-price { font-size: var(--mf-type-body); }
   .token-market, .token-meta { font-size: var(--mf-type-micro); }
@@ -1438,10 +1425,6 @@ button { cursor: pointer; }
 @media (max-width: 820px) {
   .terminal { padding: 5px; gap: 5px; }
   .panel { border-radius: 10px; }
-
-  .chart-head { min-height: 54px; padding: 7px 8px; gap: 8px; }
-  .token-title { gap: 7px; }
-  .token-avatar { width: 31px; height: 31px; border-radius: 8px; }
   .token-name-row { gap: 5px; }
   .token-name-row h1 { max-width: 145px; font-size: var(--mf-type-ui); }
   .decision-badge { padding: 2px 4px; font-size: var(--mf-type-micro); }
@@ -2239,12 +2222,6 @@ button { cursor: pointer; }
 
   .bottom-history-panel .trade-row.trade-log-row {
     grid-template-columns: 46px minmax(0, 1fr);
-  }
-.chart-head .token-avatar {
-    width: 40px;
-    height: 40px;
-    flex: 0 0 40px;
-    border-radius: 10px;
   }
 }
 /* ===== /MEMEFLOW_TOKEN_AVATAR_ROW_FIT_V1 ===== */
