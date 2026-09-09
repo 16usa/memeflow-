@@ -232,3 +232,15 @@ html[data-theme="light"] body.mf-trading-terminal .strategy-summary-panel .strat
 }
 
 /* MEMEFLOW_TRADING_LIGHT_WHITE_MODULES_V153_END */
+
+/* MEMEFLOW_TRADING_LIGHT_WHITE_MODULES_V153_1 */
+html[data-theme="light"] body.mf-trading-terminal .terminal > .panel.candidates-panel,
+html[data-theme="light"] body.mf-trading-terminal .terminal > .panel.control-panel.strategy-summary-panel,
+html[data-theme="light"] body.mf-trading-terminal .terminal > .panel.bottom-history-panel,
+html[data-theme="light"] body.mf-trading-terminal .center-stack > .panel.chart-panel,
+html[data-theme="light"] body.mf-trading-terminal .center-stack > .panel.positions-panel {
+  background:#ffffff !important;
+  background-color:#ffffff !important;
+  background-image:none !important;
+}
+/* MEMEFLOW_TRADING_LIGHT_WHITE_MODULES_V153_1_END */
