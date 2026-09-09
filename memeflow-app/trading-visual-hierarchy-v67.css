@@ -198,21 +198,6 @@ body.mf-page-trading.mf-trading-terminal :where(
     white-space: nowrap;
   }
 
-  /* Real source of the Open Positions jump:
-     trading.css intentionally had flex-wrap: wrap here.
-     Render the same inline pieces as one ellipsized telemetry line. */
-  body.mf-page-trading.mf-trading-terminal .position-main {
-    overflow: hidden;
-  }
-
-  body.mf-page-trading.mf-trading-terminal .position-bottomline {
-    display: block !important;
-    width: 100%;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
   /* Strategy values and approval identity are dynamic. Keep one-line behavior
      even when server text becomes longer than the examples on screen. */
   body.mf-page-trading.mf-trading-terminal .strategy-summary-row :where(span, strong),

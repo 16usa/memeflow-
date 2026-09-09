@@ -1,40 +1,7 @@
 /* MEMEFLOW_OPEN_POSITION_POPOVER_V85
-   Open positions row:
-   LIVE VALUE · TOTAL P&L · info-icon
-   Tap the tiny icon for a compact contextual popover.
+   Compact Open Positions info icon + contextual popover only.
+   Row layout, P&L colors and selected state are owned by trading.css.
 */
-
-.positions-panel .position-bottomline {
-  min-width: 0;
-  flex-wrap: nowrap !important;
-  gap: 4px !important;
-  overflow: hidden;
-  white-space: nowrap;
-  align-items: center;
-}
-
-.positions-panel .position-size,
-.positions-panel .position-pnl {
-  flex: 0 0 auto;
-  white-space: nowrap;
-  font-variant-numeric: tabular-nums;
-}
-
-.positions-panel .position-pnl.pnl-positive {
-  color: #22b67a !important;
-}
-
-.positions-panel .position-pnl.pnl-negative {
-  color: #e3485d !important;
-}
-
-html[data-theme="dark"] .positions-panel .position-pnl.pnl-positive {
-  color: #49e79e !important;
-}
-
-html[data-theme="dark"] .positions-panel .position-pnl.pnl-negative {
-  color: #ff6679 !important;
-}
 
 .position-info-v85 {
   width: 16px;
@@ -97,9 +64,10 @@ html[data-theme="dark"] .position-info-v85[data-open="1"] {
   z-index: 10050;
   width: min(244px, calc(100vw - 20px));
   padding: 10px 11px;
-  border: 1px solid rgba(20, 31, 40, .12);
+  border: 1px solid var(--mf-app-line, rgba(38, 59, 74, .105));
+  border-color: var(--mf-app-line, rgba(38, 59, 74, .105)) !important;
   border-radius: 14px;
-  background: rgba(255, 255, 255, .98);
+  background: var(--mf-app-surface-2, #f7f9fb) !important;
   color: #152028;
   box-shadow: 0 16px 42px rgba(20, 28, 36, .16);
   backdrop-filter: blur(12px);
@@ -112,8 +80,8 @@ html[data-theme="dark"] .position-info-v85[data-open="1"] {
   width: 10px;
   height: 10px;
   background: inherit;
-  border-left: 1px solid rgba(20, 31, 40, .10);
-  border-top: 1px solid rgba(20, 31, 40, .10);
+  border-left: 1px solid var(--mf-app-line, rgba(38, 59, 74, .105)) !important;
+  border-top: 1px solid var(--mf-app-line, rgba(38, 59, 74, .105)) !important;
   transform: rotate(45deg);
 }
 
@@ -128,15 +96,15 @@ html[data-theme="dark"] .position-info-v85[data-open="1"] {
 }
 
 html[data-theme="dark"] .position-popover-v85 {
-  border-color: rgba(126, 153, 166, .16);
-  background: rgba(13, 20, 26, .96);
+  border-color: var(--mf-x-dark-line, #2f3336) !important;
+  background: var(--mf-x-dark-inset, #101113) !important;
   color: #ecf5f7;
   box-shadow: 0 20px 46px rgba(0, 0, 0, .42);
 }
 
 html[data-theme="dark"] .position-popover-v85::after {
-  border-left-color: rgba(126, 153, 166, .12);
-  border-top-color: rgba(126, 153, 166, .12);
+  border-left-color: var(--mf-x-dark-line, #2f3336) !important;
+  border-top-color: var(--mf-x-dark-line, #2f3336) !important;
 }
 
 .position-popover-v85__head {
@@ -246,10 +214,6 @@ html[data-theme="dark"] .position-popover-v85__label {
 }
 
 @media (max-width: 430px) {
-  .positions-panel .position-bottomline {
-    gap: 3px !important;
-  }
-
   .position-info-v85,
   .position-info-v85 svg {
     width: 14px;

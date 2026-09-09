@@ -31,7 +31,7 @@ html[data-theme="light"] body.mf-trading-terminal .center-stack {
    ----------------------------------------------------------------------- */
 
 html[data-theme="light"] body.mf-trading-terminal .terminal > .panel:not(.candidates-panel),
-html[data-theme="light"] body.mf-trading-terminal .center-stack > .panel {
+html[data-theme="light"] body.mf-trading-terminal .center-stack > .panel:not(.positions-panel) {
   background: var(--mf-trading-v61-surface) !important;
   background-image: none !important;
   border-color: transparent !important;
@@ -79,7 +79,6 @@ html[data-theme="light"] body.mf-trading-terminal .empty {
    inset surface. Semantic badges/dots are deliberately untouched.
    ----------------------------------------------------------------------- */
 
-html[data-theme="light"] body.mf-trading-terminal .position-row,
 html[data-theme="light"] body.mf-trading-terminal .trade-row.trade-log-row {
   background: transparent !important;
   border-bottom-color: var(--mf-trading-v61-line) !important;
@@ -201,7 +200,6 @@ html[data-theme="light"] body.mf-trading-terminal :where(
 html[data-theme="light"] body.mf-trading-terminal :is(
   .chart-panel,
   .strategy-summary-panel,
-  .positions-panel,
   .bottom-history-panel
 ) {
   background: #ffffff !important;
@@ -224,8 +222,7 @@ html[data-theme="light"] body.mf-trading-terminal .strategy-summary-panel .strat
 /* MEMEFLOW_TRADING_LIGHT_WHITE_MODULES_V153_1 */
 html[data-theme="light"] body.mf-trading-terminal .terminal > .panel.control-panel.strategy-summary-panel,
 html[data-theme="light"] body.mf-trading-terminal .terminal > .panel.bottom-history-panel,
-html[data-theme="light"] body.mf-trading-terminal .center-stack > .panel.chart-panel,
-html[data-theme="light"] body.mf-trading-terminal .center-stack > .panel.positions-panel {
+html[data-theme="light"] body.mf-trading-terminal .center-stack > .panel.chart-panel {
   background:#ffffff !important;
   background-color:#ffffff !important;
   background-image:none !important;

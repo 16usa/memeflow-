@@ -7,7 +7,6 @@
      Remove the gray structural fill from exactly these Trading Terminal modules:
        - Chart
        - Trade strategy
-       - Open positions
        - Candidates
        - Recent trades
 
@@ -34,11 +33,7 @@ body.mf-page-trading.mf-trading-terminal
 
 html[data-theme="light"]
 body.mf-page-trading.mf-trading-terminal
-.center-stack > .panel.chart-panel,
-
-html[data-theme="light"]
-body.mf-page-trading.mf-trading-terminal
-.center-stack > .panel.positions-panel {
+.center-stack > .panel.chart-panel {
   --mf-trading-v61-surface: #ffffff !important;
   background: #ffffff !important;
   background-color: #ffffff !important;
@@ -99,27 +94,6 @@ body.mf-page-trading.mf-trading-terminal
   background-image: none !important;
 }
 
-/* Open positions: list and every row, including selected row. */
-html[data-theme="light"]
-body.mf-page-trading.mf-trading-terminal
-.positions-panel > .panel-head,
-
-html[data-theme="light"]
-body.mf-page-trading.mf-trading-terminal
-.positions-panel > .positions-list,
-
-html[data-theme="light"]
-body.mf-page-trading.mf-trading-terminal
-.positions-panel .positions-list > .position-row,
-
-html[data-theme="light"]
-body.mf-page-trading.mf-trading-terminal
-.positions-panel .positions-list > .position-row.selected {
-  background: #ffffff !important;
-  background-color: #ffffff !important;
-  background-image: none !important;
-}
-
 /* Recent trades: header, list and every trade row. */
 html[data-theme="light"]
 body.mf-page-trading.mf-trading-terminal
@@ -143,7 +117,6 @@ body.mf-page-trading.mf-trading-terminal
 :is(
   .chart-panel,
   .strategy-summary-panel,
-  .positions-panel,
   .bottom-history-panel
 ) .empty {
   background: transparent !important;
