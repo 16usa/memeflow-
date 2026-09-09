@@ -2065,8 +2065,8 @@ button { cursor: pointer; }
 
 .trade-token-avatar {
   position: relative;
-  width: 42px;
-  height: 42px;
+  width: 36px;
+  height: 36px;
   display: grid;
   place-items: center;
   overflow: hidden;
@@ -2240,14 +2240,7 @@ button { cursor: pointer; }
   .bottom-history-panel .trade-row.trade-log-row {
     grid-template-columns: 46px minmax(0, 1fr);
   }
-
-  .trade-token-avatar {
-    width: 46px;
-    height: 46px;
-    border-radius: 11px;
-  }
-
-  .chart-head .token-avatar {
+.chart-head .token-avatar {
     width: 40px;
     height: 40px;
     flex: 0 0 40px;
