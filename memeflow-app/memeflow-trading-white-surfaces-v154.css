@@ -199,3 +199,51 @@ body.mf-page-trading.mf-trading-terminal
 }
 
 /* MEMEFLOW_TRADING_LIGHT_WHITE_MODULE_SURFACES_V154_FINAL_END */
+
+/* ==========================================================================
+   MEMEFLOW TRADING WHITE RESIDUAL SURFACES V155
+
+   LIGHT MODE ONLY.
+   Exact residual child surfaces confirmed from current DOM:
+     1) Chart > .indicator-bar > .indicator-scroll
+     2) Trade strategy > .strategy-summary-list > .strategy-summary-row > div
+
+   Parent surfaces are already white in V154. These child boxes were still
+   painting the old neutral gray above those white parents.
+   ========================================================================== */
+
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.chart-panel > #indicatorBar.indicator-bar > .indicator-scroll {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  background-image: none !important;
+}
+
+/* Keep indicator buttons visually text-only on the newly white strip. */
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.chart-panel > #indicatorBar.indicator-bar > .indicator-scroll > button,
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.chart-panel > #indicatorBar.indicator-bar > .indicator-scroll > button[aria-pressed="true"] {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+}
+
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.strategy-summary-panel > .strategy-summary-list,
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.strategy-summary-panel > .strategy-summary-list > .strategy-summary-row,
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.strategy-summary-panel > .strategy-summary-list > .strategy-summary-row > div {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  background-image: none !important;
+}
+
+/* MEMEFLOW_TRADING_WHITE_RESIDUAL_SURFACES_V155_END */
