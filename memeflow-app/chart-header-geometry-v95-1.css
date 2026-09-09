@@ -150,7 +150,30 @@ body.mf-page-trading.mf-trading-terminal
 #copyMintBtn {
   flex: 0 0 auto !important;
   margin: 0 !important;
+  min-block-size: 0 !important;
+  min-height: 0 !important;
+  height: auto !important;
+  min-inline-size: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  line-height: 1 !important;
+  position: relative !important;
 }
+
+/* MEMEFLOW_CHART_HEADER_COPY_TOUCH_V96 */
+body.mf-page-trading.mf-trading-terminal
+.chart-panel > .chart-head
+#copyMintBtn::before {
+  content: "" !important;
+  position: absolute !important;
+  left: 50% !important;
+  top: 50% !important;
+  width: 44px !important;
+  height: 44px !important;
+  transform: translate(-50%, -50%) !important;
+  pointer-events: auto !important;
+}
+/* MEMEFLOW_CHART_HEADER_COPY_TOUCH_V96_END */
 
 /* Right side: same header row, same 9px outer edge. */
 body.mf-page-trading.mf-trading-terminal
