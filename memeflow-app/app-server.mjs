@@ -9773,14 +9773,24 @@ const initialSize=finite(position.initialSizeSol);
           remainingQty>=0
         );
 
+        const liveValueSol=
+          pnlReady
+            ? remainingQty*markPrice
+            : null;
+
         const unrealized=
           pnlReady
             ? remainingQty*(markPrice-entryPrice)
             : null;
 
+        const pnlSol=
+          pnlReady
+            ? realized+unrealized
+            : null;
+
         const pnlPct=
           pnlReady
-            ? ((realized+unrealized)/initialSize)*100
+            ? (pnlSol/initialSize)*100
             : null;
 
         const liveMc=openPositionLiveMarketCap({
@@ -9838,7 +9848,10 @@ const initialSize=finite(position.initialSizeSol);
             marketUpdatedAt:finite(market?.marketUpdatedAt),
             priceChange5mPct:finite(market?.priceChange5mPct),
             pnlReady,
+            liveValueSol,
+            pnlSol,
             pnlPct,
+            pnlRealizedSol:realized,
             pnlUnrealizedSol:unrealized,
             pnlMarkPriceSol:markPrice,
             pnlMarkAt:markAt,
@@ -10005,17 +10018,24 @@ const initialSize=finite(position.initialSizeSol);
       _remainingQty>=0
     );
 
+    const _liveValueSol=
+      _pnlReady
+        ? _remainingQty*_latestPrice
+        : null;
+
     const _liveUnrealizedPnlSol=
       _pnlReady
         ? _remainingQty*(_latestPrice-_entryPrice)
         : null;
 
+    const _livePnlSol=
+      _pnlReady
+        ? _realizedPnl+_liveUnrealizedPnlSol
+        : null;
+
     const _livePnlPct=
       _pnlReady
-        ? (
-            (_realizedPnl+_liveUnrealizedPnlSol) /
-            _initialSize
-          )*100
+        ? (_livePnlSol/_initialSize)*100
         : null;
 
     const _volume5mSol=_recent.reduce(
@@ -10096,7 +10116,10 @@ const initialSize=finite(position.initialSizeSol);
         marketCapUsd:_marketCapUsd,
         priceChange5mPct:_priceChange5mPct,
         pnlReady:_pnlReady,
+        liveValueSol:_liveValueSol,
+        pnlSol:_livePnlSol,
         pnlPct:_livePnlPct,
+        pnlRealizedSol:_realizedPnl,
         pnlUnrealizedSol:_liveUnrealizedPnlSol,
         pnlMarkPriceSol:_latestPrice,
         pnlMarkAt:_pnlMarkAt,

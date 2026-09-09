@@ -1,11 +1,16 @@
 // MEMEFLOW_OPEN_POSITION_MARK_PARITY_V81
+// MEMEFLOW_OPEN_POSITION_LIVE_VALUE_V83
 //
-// One conservative mark resolver for:
-//   1) Open Positions live P&L
+// Shared conservative mark resolver for:
+//   1) Open Positions live valuation/P&L
 //   2) manual PAPER close settlement
 //
-// A UI value and a close decision must not disagree about whether a current
-// market mark exists.
+// V83 continuity rule:
+// A confirmed post-entry Pump trade price remains the latest known market
+// price until a newer confirmed trade supersedes it. Quiet markets therefore
+// do not lose live valuation merely because 120 seconds elapsed.
+//
+// Non-trade telemetry and engine lifecycle marks still require freshness.
 
 const finitePositive = value => {
   if (value === null || value === undefined || value === '') return null;
@@ -27,9 +32,6 @@ function newest(values = []) {
 }
 
 export function tokenPriceMarkTimeV81(token = {}) {
-  // Price/activity-specific clocks are authoritative for freshness.
-  // Generic scanner/update clocks are fallback-only and are never allowed to
-  // make an already-known stale price-specific timestamp look fresh.
   const specific = newest([
     token.lastPriceAt,
     token.lastMarketActivityAt,
@@ -46,11 +48,33 @@ export function tokenPriceMarkTimeV81(token = {}) {
   ]);
 }
 
-function usableTimestamp(atMs, openedAtMs, nowMs, maxAgeMs) {
+function timestampIsPostEntry(atMs, openedAtMs, nowMs) {
   if (atMs === null) return false;
   if (openedAtMs !== null && atMs < openedAtMs) return false;
   if (atMs > nowMs + 30_000) return false;
+  return true;
+}
+
+function usableFreshTimestamp(atMs, openedAtMs, nowMs, maxAgeMs) {
+  if (!timestampIsPostEntry(atMs, openedAtMs, nowMs)) return false;
   return nowMs - atMs <= maxAgeMs;
+}
+
+function tokenTradeEvidence(token = {}) {
+  const marketSource =
+    String(token?.marketSource || '').toLowerCase();
+  const liveMarketCapSource =
+    String(token?.liveMarketCapSource || '').toLowerCase();
+
+  return Boolean(
+    marketSource.includes('trade') ||
+    liveMarketCapSource.includes('trade') ||
+    (
+      token?.eventSignature &&
+      !marketSource.includes('create')
+    ) ||
+    token?.copyTradingDiscovered === true
+  );
 }
 
 export function resolvePaperPositionMarkV81({
@@ -77,11 +101,10 @@ export function resolvePaperPositionMarkV81({
   if (
     tradePriceSol !== null &&
     tradeSource.toLowerCase().includes('trade') &&
-    usableTimestamp(
+    timestampIsPostEntry(
       tradeAtMs,
       openedAtMs,
-      nowMs,
-      safeMaxAgeMs
+      nowMs
     )
   ) {
     return {
@@ -90,7 +113,8 @@ export function resolvePaperPositionMarkV81({
       atMs: tradeAtMs,
       source: tradeSource || 'pump-trade-event',
       ageMs: Math.max(0, nowMs - tradeAtMs),
-      version: 'MEMEFLOW_OPEN_POSITION_MARK_PARITY_V81'
+      continuity: 'last-confirmed-trade',
+      version: 'MEMEFLOW_OPEN_POSITION_LIVE_VALUE_V83'
     };
   }
 
@@ -98,10 +122,31 @@ export function resolvePaperPositionMarkV81({
     token?.priceSol ?? token?.price
   );
   const tokenAtMs = tokenPriceMarkTimeV81(token || {});
+  const hasTradeEvidence = tokenTradeEvidence(token || {});
 
   if (
     tokenPriceSol !== null &&
-    usableTimestamp(
+    hasTradeEvidence &&
+    timestampIsPostEntry(
+      tokenAtMs,
+      openedAtMs,
+      nowMs
+    )
+  ) {
+    return {
+      ok: true,
+      priceSol: tokenPriceSol,
+      atMs: tokenAtMs,
+      source: 'token-live-trade',
+      ageMs: Math.max(0, nowMs - tokenAtMs),
+      continuity: 'last-confirmed-trade',
+      version: 'MEMEFLOW_OPEN_POSITION_LIVE_VALUE_V83'
+    };
+  }
+
+  if (
+    tokenPriceSol !== null &&
+    usableFreshTimestamp(
       tokenAtMs,
       openedAtMs,
       nowMs,
@@ -114,7 +159,8 @@ export function resolvePaperPositionMarkV81({
       atMs: tokenAtMs,
       source: 'token-market',
       ageMs: Math.max(0, nowMs - tokenAtMs),
-      version: 'MEMEFLOW_OPEN_POSITION_MARK_PARITY_V81'
+      continuity: 'fresh-telemetry',
+      version: 'MEMEFLOW_OPEN_POSITION_LIVE_VALUE_V83'
     };
   }
 
@@ -127,7 +173,7 @@ export function resolvePaperPositionMarkV81({
 
   if (
     enginePriceSol !== null &&
-    usableTimestamp(
+    usableFreshTimestamp(
       engineAtMs,
       openedAtMs,
       nowMs,
@@ -140,7 +186,8 @@ export function resolvePaperPositionMarkV81({
       atMs: engineAtMs,
       source: 'paper-engine-mark',
       ageMs: Math.max(0, nowMs - engineAtMs),
-      version: 'MEMEFLOW_OPEN_POSITION_MARK_PARITY_V81'
+      continuity: 'fresh-engine-mark',
+      version: 'MEMEFLOW_OPEN_POSITION_LIVE_VALUE_V83'
     };
   }
 
@@ -148,15 +195,16 @@ export function resolvePaperPositionMarkV81({
     ok: false,
     code: 'LIVE_MARK_UNAVAILABLE',
     message:
-      'No fresh post-entry market mark is currently available.',
+      'No trustworthy post-entry market mark is currently available.',
     entryPriceSol,
     tradePriceSol,
     tradeAtMs,
     tokenPriceSol,
     tokenAtMs,
+    tokenTradeEvidence: hasTradeEvidence,
     enginePriceSol,
     engineAtMs,
     maxAgeMs: safeMaxAgeMs,
-    version: 'MEMEFLOW_OPEN_POSITION_MARK_PARITY_V81'
+    version: 'MEMEFLOW_OPEN_POSITION_LIVE_VALUE_V83'
   };
 }

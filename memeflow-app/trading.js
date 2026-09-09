@@ -4491,40 +4491,53 @@ function renderPositions() {
 
   list.innerHTML = rows.map(position => {
     // MEMEFLOW_OPEN_POSITION_LIVE_PNL_V80
-    // /api/paper/positions/live already computes a canonical live P&L from
-    // the latest trusted TradeEvent mark. The old renderer ignored it and
-    // displayed the durable engine field with a forced zero fallback.
-    const pnl =
+    // MEMEFLOW_OPEN_POSITION_LIVE_VALUE_V83
+    // First number = current market value of the REMAINING open tokens.
+    // Second number = total position P&L so far (realized + unrealized).
+    const liveValueSol =
       position?.tokenMetrics?.pnlReady === true
-        ? num(position?.tokenMetrics?.pnlPct)
+        ? num(position?.tokenMetrics?.liveValueSol)
+        : null;
+
+    const pnlSol =
+      position?.tokenMetrics?.pnlReady === true
+        ? num(position?.tokenMetrics?.pnlSol)
         : null;
 
     const settings = position.settingsSnapshot || {};
     const copyTrade =
       String(position.strategySource || '').toLowerCase() === 'copy-trading';
 
-    const size =
-      `${fmt(position.remainingSizeSol ?? position.initialSizeSol, 4)} SOL`;
+    const valueDigits =
+      finite(liveValueSol) &&
+      Math.abs(liveValueSol) > 0 &&
+      Math.abs(liveValueSol) < 0.00001
+        ? 8
+        : 5;
 
-    // Keep tiny real moves visible instead of rounding them to fake 0.00%.
+    const liveValueText =
+      finite(liveValueSol)
+        ? `${fmt(liveValueSol, valueDigits)} SOL`
+        : '—';
+
     const pnlDigits =
-      finite(pnl) &&
-      Math.abs(pnl) > 0 &&
-      Math.abs(pnl) < 0.01
-        ? 4
-        : 2;
+      finite(pnlSol) &&
+      Math.abs(pnlSol) > 0 &&
+      Math.abs(pnlSol) < 0.00001
+        ? 8
+        : 5;
 
     const pnlText =
-      finite(pnl)
-        ? `${pnl > 0 ? '+' : ''}${fmt(pnl, pnlDigits)}%`
+      finite(pnlSol)
+        ? `${pnlSol > 0 ? '+' : ''}${fmt(pnlSol, pnlDigits)} SOL`
         : '—';
 
     const pnlClass =
-      finite(pnl)
+      finite(pnlSol)
         ? (
-            pnl > 0
+            pnlSol > 0
               ? 'pnl-positive'
-              : pnl < 0
+              : pnlSol < 0
                 ? 'pnl-negative'
                 : ''
           )
@@ -4545,7 +4558,7 @@ function renderPositions() {
           </div>
 
           <div class="position-bottomline">
-            <span class="position-size">${esc(size)}</span>
+            <span class="position-size">${esc(liveValueText)}</span>
             <i>·</i>
             <strong class="position-pnl ${pnlClass}">
               ${esc(pnlText)}
