@@ -1,37 +1,13 @@
 // MEMEFLOW_PAPER_CLOSE_MARK_V78
-// Pure exit-mark resolver used by the manual PAPER close safety patch.
+// MEMEFLOW_OPEN_POSITION_MARK_PARITY_V81
+//
+// V78 public contract is preserved, but mark selection is delegated to the
+// same resolver used by Open Positions live P&L. This prevents UI/close
+// disagreement about whether a fresh market price exists.
 
-const finitePositive = value => {
-  if (value === null || value === undefined || value === '') return null;
-  const n = Number(value);
-  return Number.isFinite(n) && n > 0 ? n : null;
-};
-
-const finiteTime = value => {
-  if (value === null || value === undefined || value === '') return null;
-  const n = Number(value);
-  return Number.isFinite(n) && n > 0 ? n : null;
-};
-
-function newestTokenMarkTime(token = {}) {
-  const candidates = [
-    token.lastPriceAt,
-    token.marketScannedAt,
-    token.updatedAt,
-    token.lastScannedAt
-  ]
-    .map(finiteTime)
-    .filter(value => value !== null);
-
-  return candidates.length ? Math.max(...candidates) : null;
-}
-
-function usableTimestamp(atMs, openedAtMs, nowMs, maxAgeMs) {
-  if (atMs === null) return false;
-  if (openedAtMs !== null && atMs < openedAtMs) return false;
-  if (atMs > nowMs + 30_000) return false;
-  return nowMs - atMs <= maxAgeMs;
-}
+import {
+  resolvePaperPositionMarkV81
+} from './paper-position-mark-v81.mjs';
 
 export function resolveManualPaperExitMarkV78({
   position,
@@ -39,53 +15,27 @@ export function resolveManualPaperExitMarkV78({
   nowMs = Date.now(),
   maxAgeMs = 120_000
 } = {}) {
-  const safeMaxAgeMs = Math.max(5_000, Number(maxAgeMs) || 120_000);
-  const openedAtMs = finiteTime(position?.openedAtMs);
-  const entryPriceSol = finitePositive(position?.entryPriceSol);
+  const resolved = resolvePaperPositionMarkV81({
+    position,
+    token,
+    nowMs,
+    maxAgeMs
+  });
 
-  const tokenPriceSol = finitePositive(token?.priceSol);
-  const tokenAtMs = newestTokenMarkTime(token || {});
-
-  if (
-    tokenPriceSol !== null &&
-    usableTimestamp(tokenAtMs, openedAtMs, nowMs, safeMaxAgeMs)
-  ) {
+  if (!resolved.ok) {
     return {
-      ok: true,
-      priceSol: tokenPriceSol,
-      atMs: tokenAtMs,
-      source: 'token-market',
-      version: 'MEMEFLOW_PAPER_CLOSE_SAFETY_V78'
-    };
-  }
-
-  const enginePriceSol = finitePositive(position?.currentPriceSol);
-  const engineAtMs = finiteTime(position?.lifecycleDecision?.atMs);
-
-  if (
-    enginePriceSol !== null &&
-    usableTimestamp(engineAtMs, openedAtMs, nowMs, safeMaxAgeMs)
-  ) {
-    return {
-      ok: true,
-      priceSol: enginePriceSol,
-      atMs: engineAtMs,
-      source: 'paper-engine-mark',
+      ...resolved,
+      code: 'EXIT_PRICE_UNAVAILABLE',
+      message:
+        'A fresh post-entry market price is required before a PAPER position can be closed. The position remains OPEN.',
+      resolverVersion: resolved.version,
       version: 'MEMEFLOW_PAPER_CLOSE_SAFETY_V78'
     };
   }
 
   return {
-    ok: false,
-    code: 'EXIT_PRICE_UNAVAILABLE',
-    message:
-      'A fresh post-entry market price is required before a PAPER position can be closed. The position remains OPEN.',
-    entryPriceSol,
-    tokenPriceSol,
-    tokenAtMs,
-    enginePriceSol,
-    engineAtMs,
-    maxAgeMs: safeMaxAgeMs,
+    ...resolved,
+    resolverVersion: resolved.version,
     version: 'MEMEFLOW_PAPER_CLOSE_SAFETY_V78'
   };
 }

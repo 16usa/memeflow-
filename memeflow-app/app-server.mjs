@@ -24,6 +24,7 @@ import {createV24ProbationTelemetryV24_1} from './src/v24-probation-telemetry-v2
 import {createV24ProbationEvidenceGateV24_2} from './src/v24-probation-evidence-gate-v24_2.mjs'; // MEMEFLOW_V24_PROBATION_EVIDENCE_GATE_V24_2
 import {createSolUsdOracle} from './src/sol-usd-oracle.mjs'; // MEMEFLOW_OPPORTUNITY_ENGINE_V1
 import {liveCardMarketSnapshot,openPositionLiveMarketCap} from './src/live-card-market.mjs'; // MEMEFLOW_LIVE_CARD_MARKET_TRUTH_V18 / MEMEFLOW_OPEN_POSITION_LIVE_MC_V20
+import {resolvePaperPositionMarkV81} from './src/paper-position-mark-v81.mjs'; // MEMEFLOW_OPEN_POSITION_MARK_PARITY_V81
 import {rankCandidateViews} from './src/feed-ranking.mjs'; // MEMEFLOW_FEED_RELEVANCE_RANKING_V1
 import {startPumpHistoryBackfill} from './src/pump-history-backfill.mjs'; // MEMEFLOW_PERMANENT_TOKEN_REGISTRY_V1
 
@@ -9728,36 +9729,36 @@ if(url.pathname==='/api/ai/decisions'){
           market?.marketCapSource||''
         ).trim();
 
-        const enginePrice=finite(position.currentPriceSol);
+        // MEMEFLOW_OPEN_POSITION_MARK_PARITY_V81_ROUTE
+        // Use exactly the same freshness authority as manual PAPER close.
+        // A position that can be settled must also be valueable in Open Positions.
+        const markResolution=resolvePaperPositionMarkV81({
+          position,
+          token,
+          tradeMarkPriceSol:marketPrice,
+          tradeMarkAt:marketMarkAt,
+          tradeMarkSource:marketMarkSource,
+          nowMs:now,
+          maxAgeMs:Math.max(
+            5000,
+            Number(
+              process.env.PAPER_LIVE_PNL_MAX_MARK_AGE_MS ??
+              process.env.PAPER_MANUAL_EXIT_MAX_MARK_AGE_MS ??
+              120000
+            ) || 120000
+          )
+        });
+        const markPrice=markResolution.ok
+          ? markResolution.priceSol
+          : null;
+        const markAt=markResolution.ok
+          ? markResolution.atMs
+          : null;
+        const markSource=markResolution.ok
+          ? markResolution.source
+          : null;
 
-        let markPrice=null;
-        let markAt=null;
-        let markSource=null;
-
-        if(
-          marketPrice!==null&&
-          marketPrice>0&&
-          marketMarkSource.toLowerCase().includes('trade')
-        ){
-          markPrice=marketPrice;
-          markAt=marketMarkAt;
-          markSource=marketMarkSource;
-        }else if(
-          enginePrice!==null&&
-          enginePrice>0&&
-          entryPrice!==null&&
-          Math.abs(enginePrice-entryPrice)>
-            Math.max(
-              1e-18,
-              Math.abs(entryPrice)*1e-12
-            )
-        ){
-          markPrice=enginePrice;
-          markAt=null;
-          markSource='paper-engine-mark';
-        }
-
-        const initialSize=finite(position.initialSizeSol);
+const initialSize=finite(position.initialSizeSol);
         const remainingQty=finite(position.remainingTokenQuantity);
         const realized=finite(position.realizedPnlSol)??0;
 
@@ -9842,6 +9843,20 @@ if(url.pathname==='/api/ai/decisions'){
             pnlMarkPriceSol:markPrice,
             pnlMarkAt:markAt,
             pnlMarkSource:markSource,
+            pnlMarkAgeMs:
+              markResolution.ok
+                ? markResolution.ageMs??(
+                    markAt!==null
+                      ? Math.max(0,now-markAt)
+                      : null
+                  )
+                : null,
+            pnlMarkResolverVersion:
+              markResolution.version||null,
+            pnlUnavailableReason:
+              markResolution.ok
+                ? null
+                : markResolution.code||'LIVE_MARK_UNAVAILABLE',
             windowMinutes:5,
             source:'canonical-live-token-v18',
             snapshotAt:now
