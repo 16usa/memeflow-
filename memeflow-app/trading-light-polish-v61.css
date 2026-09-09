@@ -45,14 +45,6 @@ html[data-theme="light"] body.mf-trading-terminal .empty {
   box-shadow: none !important;
 }
 
-/* Approvals are nested actionable cards. */
-html[data-theme="light"] body.mf-trading-terminal .approval-row {
-  background: var(--mf-trading-v61-inset) !important;
-  background-image: none !important;
-  border-color: transparent !important;
-  box-shadow: none !important;
-}
-
 /* Shared non-Chart controls. */
 html[data-theme="light"] body.mf-trading-terminal .wallet-btn {
   background: var(--mf-trading-v61-inset) !important;
@@ -79,7 +71,7 @@ html[data-theme="light"] body.mf-trading-terminal .trade-log-hint {
   color: var(--mf-trading-v61-muted) !important;
 }
 
-html[data-theme="light"] body.mf-trading-terminal :where(.approval-stats, .control-error) {
+html[data-theme="light"] body.mf-trading-terminal .control-error {
   box-shadow: none !important;
 }
 

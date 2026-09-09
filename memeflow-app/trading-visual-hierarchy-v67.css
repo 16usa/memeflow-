@@ -37,18 +37,8 @@ body.mf-page-trading.mf-trading-terminal .chart-legend span {
   box-shadow: none !important;
 }
 
-/* Empty approvals remain visible, but stop consuming card-like vertical space. */
-body.mf-page-trading.mf-trading-terminal .approvals-panel .approval-empty,
-body.mf-page-trading.mf-trading-terminal .approvals-panel .empty {
-  min-height: 50px !important;
-  padding: 12px !important;
-  display: grid;
-  place-items: center;
-}
-
 /* Right-side service elements should never push the section title around. */
 body.mf-page-trading.mf-trading-terminal :where(
-  .approval-count,
   .pnl-summary,
   .tiny-state,
   .trade-log-hint
@@ -69,7 +59,6 @@ body.mf-page-trading.mf-trading-terminal :where(
   }
 
   body.mf-page-trading.mf-trading-terminal :where(
-    .approvals-panel,
     .positions-panel,
     .candidates-panel,
     .bottom-history-panel
@@ -80,7 +69,6 @@ body.mf-page-trading.mf-trading-terminal :where(
   }
 
   body.mf-page-trading.mf-trading-terminal :where(
-    .approvals-panel,
     .positions-panel,
     .candidates-panel,
     .bottom-history-panel
@@ -92,7 +80,6 @@ body.mf-page-trading.mf-trading-terminal :where(
   }
 
   body.mf-page-trading.mf-trading-terminal :where(
-    .approvals-panel,
     .positions-panel,
     .candidates-panel,
     .bottom-history-panel
@@ -102,7 +89,6 @@ body.mf-page-trading.mf-trading-terminal :where(
   }
 
   body.mf-page-trading.mf-trading-terminal :where(
-    .approvals-panel,
     .positions-panel,
     .candidates-panel,
     .bottom-history-panel
@@ -119,10 +105,6 @@ body.mf-page-trading.mf-trading-terminal :where(
 
   body.mf-page-trading.mf-trading-terminal .positions-panel .pnl-summary {
     max-width: 118px;
-  }
-
-  body.mf-page-trading.mf-trading-terminal .approvals-panel .approval-list {
-    padding: 4px 6px 6px !important;
   }
 
 }
@@ -145,7 +127,6 @@ body.mf-page-trading.mf-trading-terminal :where(
   /* Section headers: fixed titles stay on one row; if a very narrow viewport
      cannot fit everything, the title truncates instead of wrapping. */
   body.mf-page-trading.mf-trading-terminal :where(
-    .approvals-panel,
     .positions-panel,
     .candidates-panel,
     .bottom-history-panel
@@ -157,8 +138,7 @@ body.mf-page-trading.mf-trading-terminal :where(
   }
 
   body.mf-page-trading.mf-trading-terminal :where(
-    .approval-count,
-    .mode-badge,
+      .mode-badge,
     .pnl-summary span,
     .pnl-summary strong,
     .tiny-state,
@@ -167,14 +147,6 @@ body.mf-page-trading.mf-trading-terminal :where(
     white-space: nowrap;
   }
 
-  /* Strategy values and approval identity are dynamic. Keep one-line behavior
-     even when server text becomes longer than the examples on screen. */
-  body.mf-page-trading.mf-trading-terminal .approval-main :where(span, strong),
-  body.mf-page-trading.mf-trading-terminal .approval-stats :where(b, strong) {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
 
   /* Candidates already ellipsize names; lock the row itself to one line too. */
   body.mf-page-trading.mf-trading-terminal .candidate-top,
@@ -821,22 +793,10 @@ html body:is(
 /* ==========================================================================
    MEMEFLOW_TRADING_SYSTEM_TEXT_RENDER_FIX_V94
 
-   Final rendering contract for the two Trading system/service messages.
-
-   Why V92/V93 looked wrong on iPhone:
-     1. shared final-v65 had an old cache key, so V90 variables could be stale;
-     2. iOS Safari can inflate small text independently of CSS font-size.
-
-   V94:
-     - consumes V90, with 8px fallback for cache-safety;
-     - uses Tertiary neutral contrast;
-     - disables Safari text inflation ONLY for these system messages.
+   Final rendering contract for the remaining Trade Strategy service message.
+   Pending Approvals service-copy ownership moved to trading.css canonical V1.
    ========================================================================== */
 
-html body.mf-page-trading.mf-trading-terminal
-#approvalList > .empty,
-html body.mf-page-trading.mf-trading-terminal
-#approvalList > .empty.approval-empty,
 html body.mf-page-trading.mf-trading-terminal
 .strategy-summary-panel .strategy-summary-foot > #saveState {
   font-size: var(--mf-type-system, 8px) !important;
@@ -850,45 +810,18 @@ html body.mf-page-trading.mf-trading-terminal
 /* ==========================================================================
    MEMEFLOW_9PX_KEEP_SEMANTIC_COLORS_V98
 
-   Corrected interpretation of the compact 9px UI contract.
-
-   SIZE / WEIGHT
-     Selected circled operational text = 9px / 500.
-
-   COLOR
-     Semantic hues are PRESERVED from their original component rules:
-       green  : HISTORY SYNC / OPEN POSITION / Approve / positive P&L
-       cyan   : COPY TRADE
-       blue   : ASSIST / pending state
-       red    : CLOSE / Reject / negative P&L
-     Semantic border colors are also PRESERVED.
-
-     Only genuinely neutral informational text consumes Secondary:
-       EDIT
-       approval metadata
-       SIZE / SCORE / PRICE labels and values
-       Recent-trades lower telemetry and time
-
-   NO border-color override.
-   NO background override.
-   NO geometry override.
+   Shared compact typography for non-Approvals Trading components.
+   Pending Approvals typography ownership moved to trading.css canonical V1.
    ========================================================================== */
 
 @media (max-width: 820px) {
-  /* ------------------------------------------------------------------------
-     9px / 500 only.
-     No color property here: semantic colors continue to come from the
-     original component/state rules underneath this late typography layer.
-     ------------------------------------------------------------------------ */
   html body.mf-page-trading.mf-trading-terminal :where(
     .candidates-panel .tiny-state,
     .candidates-panel .state-dot,
     .copy-trade-badge,
     .strategy-summary-panel .mode-badge,
     .positions-panel .close-position,
-    .positions-panel .pnl-summary strong,
-    .approvals-panel .approval-count,
-    .approvals-panel .approval-actions button
+    .positions-panel .pnl-summary strong
   ) {
     font-size: 9px !important;
     font-weight: 500 !important;
@@ -896,14 +829,8 @@ html body.mf-page-trading.mf-trading-terminal
     text-size-adjust: none !important;
   }
 
-  /* ------------------------------------------------------------------------
-     Neutral informational content: 9px / 500 / Secondary.
-     ------------------------------------------------------------------------ */
   html body.mf-page-trading.mf-trading-terminal :where(
     .strategy-summary-panel .strategy-edit-link,
-    .approvals-panel .approval-main span,
-    .approvals-panel .approval-stats b,
-    .approvals-panel .approval-stats strong,
     .bottom-history-panel .trade-log-bottomline,
     .bottom-history-panel .trade-log-time
   ) {
@@ -914,9 +841,6 @@ html body.mf-page-trading.mf-trading-terminal
     text-size-adjust: none !important;
   }
 
-  /* Lower Recent-trades semantic P&L keeps its red/green hue while matching
-     the same 9px/500 scale. */
-  html body.mf-page-trading.mf-trading-terminal
   .bottom-history-panel .trade-log-bottomline :where(
     .pnl-positive,
     .pnl-negative
@@ -1264,15 +1188,10 @@ html[data-theme="dark"] body.mf-page-trading.mf-trading-terminal
 }
 
 html[data-theme="dark"] body.mf-page-trading.mf-trading-terminal
-:where(.candidate:hover, .candidate.selected, .approval-row) {
+:where(.candidate:hover, .candidate.selected) {
   background: var(--mf-dark-surface-2) !important;
   background-image: none !important;
   box-shadow: none !important;
-}
-
-html[data-theme="dark"] body.mf-page-trading.mf-trading-terminal
-.approval-row {
-  border-color: transparent !important;
 }
 
 html[data-theme="dark"] body.mf-page-trading.mf-trading-terminal
@@ -1450,25 +1369,12 @@ body.mf-page-trading.mf-trading-terminal
 /* ==========================================================================
    MEMEFLOW TRADING FLAT INNER SURFACES V125
 
-   Trading Terminal only.
-
-   Requested visual contract:
-   - Chart selected metrics use the SAME panel surface as the chart card.
-   - Pending approvals empty/service state has NO nested fill.
-   - Trade strategy summary rows use the SAME panel surface as the card.
-   - Trade strategy header/footer separators use the canonical site line.
-   - No JS, data, trading, scanner, chart or approval behavior changes.
+   Chart-only compatibility remainder.
+   Pending Approvals flat-surface ownership moved to trading.css canonical V1.
    ========================================================================== */
 
-/* --------------------------------------------------------------------------
-   FLAT INNER SURFACES
-   Let the parent panel surface show through instead of surface-2/inset.
-   -------------------------------------------------------------------------- */
-
 body.mf-page-trading.mf-trading-terminal
-.chart-panel .selected-metrics,
-body.mf-page-trading.mf-trading-terminal
-.approvals-panel .approval-list {
+.chart-panel .selected-metrics {
   background: transparent !important;
   background-color: transparent !important;
   background-image: none !important;
@@ -1476,37 +1382,12 @@ body.mf-page-trading.mf-trading-terminal
 }
 
 body.mf-page-trading.mf-trading-terminal
-.chart-panel .selected-metrics > div,
-body.mf-page-trading.mf-trading-terminal
-.approvals-panel .approval-list > .empty,
-body.mf-page-trading.mf-trading-terminal
-.approvals-panel .approval-list > .approval-empty,
-body.mf-page-trading.mf-trading-terminal
-.approvals-panel .approval-empty {
+.chart-panel .selected-metrics > div {
   background: transparent !important;
   background-color: transparent !important;
   background-image: none !important;
   box-shadow: none !important;
 }
-
-/* Pending-approval service/empty copy is not a nested card. */
-body.mf-page-trading.mf-trading-terminal
-.approvals-panel .approval-list > .empty,
-body.mf-page-trading.mf-trading-terminal
-.approvals-panel .approval-list > .approval-empty,
-body.mf-page-trading.mf-trading-terminal
-.approvals-panel .approval-empty {
-  border: 0 !important;
-  border-color: transparent !important;
-  border-radius: 0 !important;
-}
-
-/* --------------------------------------------------------------------------
-   CANONICAL SEPARATORS
-   V61 owns the light line token.
-   The dark contract maps that same token to --mf-dark-line.
-   Fallback remains the site's --line token.
-   -------------------------------------------------------------------------- */
 
 body.mf-page-trading.mf-trading-terminal
 .chart-panel .selected-metrics {

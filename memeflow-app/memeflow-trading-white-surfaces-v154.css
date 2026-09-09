@@ -6,6 +6,7 @@
    Owners in this file:
      - Chart light surfaces / neutral Chart controls / Chart light text
      - Trade strategy light surfaces
+     - Pending approvals light surfaces
 
    Geometry and behavior stay outside this file.
    ========================================================================== */
@@ -213,6 +214,51 @@ body.mf-page-trading.mf-trading-terminal
   background: transparent !important;
   background-color: transparent !important;
   background-image: none !important;
+}
+
+
+/* --------------------------------------------------------------------------
+   PENDING APPROVALS — single Light-theme surface owner
+   -------------------------------------------------------------------------- */
+
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.center-stack > .panel.approvals-panel,
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.approvals-panel > .panel-head,
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.approvals-panel > .approval-list {
+  --mf-trading-v61-surface: #ffffff !important;
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  background-image: none !important;
+}
+
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.approvals-panel .approval-row {
+  background: var(--mf-trading-v61-inset, #ebebeb) !important;
+  background-color: var(--mf-trading-v61-inset, #ebebeb) !important;
+  background-image: none !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.approvals-panel .approval-list > .empty,
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.approvals-panel .approval-list > .approval-empty,
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.approvals-panel .approval-empty {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
 }
 
 /* MEMEFLOW_TRADING_LIGHT_SURFACES_V154_CANONICAL_END */
