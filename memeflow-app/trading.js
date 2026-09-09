@@ -4481,84 +4481,125 @@ function positionAvatarMarkup(position) {
 
 /* MEMEFLOW_OPEN_POSITION_SELECTION_V117_1 */
 
-/* MEMEFLOW_OPEN_POSITION_INFO_V84 */
-function ensurePositionInfoSheetV84() {
-  let root = document.getElementById('positionInfoSheetV84');
+
+/* MEMEFLOW_OPEN_POSITION_POPOVER_V85 */
+let positionInfoActiveButtonV85 = null;
+
+function ensurePositionInfoPopoverV85() {
+  let root = document.getElementById('positionInfoPopoverV85');
 
   if (root) {
     return root;
   }
 
   root = document.createElement('div');
-  root.id = 'positionInfoSheetV84';
-  root.className = 'position-info-sheet-v84';
+  root.id = 'positionInfoPopoverV85';
+  root.className = 'position-popover-v85';
   root.hidden = true;
   root.setAttribute('role', 'dialog');
-  root.setAttribute('aria-modal', 'true');
-  root.setAttribute('aria-label', 'Position strategy details');
+  root.setAttribute('aria-label', 'Position rules');
 
   root.innerHTML = `
-    <button
-      class="position-info-sheet-v84__backdrop"
-      type="button"
-      data-position-info-close-v84
-      aria-label="Close position details"
-    ></button>
-
-    <section class="position-info-sheet-v84__card">
-      <div class="position-info-sheet-v84__head">
-        <div class="position-info-sheet-v84__title">
-          <strong data-position-info-symbol-v84>Position</strong>
-          <span>Position rules</span>
-        </div>
-
-        <button
-          class="position-info-sheet-v84__close"
-          type="button"
-          data-position-info-close-v84
-          aria-label="Close"
-        >×</button>
+    <div class="position-popover-v85__head">
+      <div class="position-popover-v85__title">
+        <strong data-position-info-symbol-v85>Position</strong>
+        <span>Position rules</span>
       </div>
 
-      <div
-        class="position-info-sheet-v84__grid"
-        data-position-info-grid-v84
-      ></div>
-    </section>
+      <button
+        class="position-popover-v85__close"
+        type="button"
+        data-position-info-close-v85
+        aria-label="Close"
+      >×</button>
+    </div>
+
+    <ul
+      class="position-popover-v85__list"
+      data-position-info-list-v85
+    ></ul>
   `;
 
   root.addEventListener('click', event => {
-    if (event.target.closest('[data-position-info-close-v84]')) {
-      root.hidden = true;
+    if (event.target.closest('[data-position-info-close-v85]')) {
+      closePositionInfoV85();
     }
   });
+
+  document.addEventListener('pointerdown', event => {
+    if (root.hidden) return;
+    if (root.contains(event.target)) return;
+    if (event.target.closest('.position-info-v85')) return;
+    closePositionInfoV85();
+  }, true);
+
+  window.addEventListener('resize', () => {
+    if (!root.hidden) closePositionInfoV85();
+  });
+
+  window.addEventListener('scroll', () => {
+    if (!root.hidden) closePositionInfoV85();
+  }, true);
 
   document.body.appendChild(root);
 
   return root;
 }
 
-function closePositionInfoV84() {
-  const root = document.getElementById('positionInfoSheetV84');
+function closePositionInfoV85() {
+  const root = document.getElementById('positionInfoPopoverV85');
   if (root) {
     root.hidden = true;
   }
+
+  if (positionInfoActiveButtonV85) {
+    positionInfoActiveButtonV85.removeAttribute('data-open');
+    positionInfoActiveButtonV85 = null;
+  }
 }
 
-function openPositionInfoV84(position) {
-  if (!position) {
+function positionPositionInfoV85(root, anchor) {
+  const gap = 8;
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  const rect = anchor.getBoundingClientRect();
+
+  root.style.left = '0px';
+  root.style.top = '0px';
+  root.hidden = false;
+
+  const pop = root.getBoundingClientRect();
+  const showAbove =
+    rect.bottom + gap + pop.height > vh - 8 &&
+    rect.top - gap - pop.height >= 8;
+
+  const top = showAbove
+    ? rect.top - pop.height - gap
+    : rect.bottom + gap;
+
+  let left = rect.left - 10;
+  left = Math.max(8, Math.min(left, vw - pop.width - 8));
+
+  const arrowCenter = rect.left + (rect.width / 2) - left - 5;
+  const arrowLeft = Math.max(14, Math.min(arrowCenter, pop.width - 22));
+
+  root.dataset.side = showAbove ? 'top' : 'bottom';
+  root.style.left = `${Math.round(left)}px`;
+  root.style.top = `${Math.round(top)}px`;
+  root.style.setProperty('--arrow-left', `${Math.round(arrowLeft)}px`);
+}
+
+function openPositionInfoV85(position, anchor) {
+  if (!position || !anchor) {
     return;
   }
 
-  const root = ensurePositionInfoSheetV84();
+  const root = ensurePositionInfoPopoverV85();
   const settings = position.settingsSnapshot || {};
+  const title = root.querySelector('[data-position-info-symbol-v85]');
+  const list = root.querySelector('[data-position-info-list-v85]');
 
-  const symbolNode =
-    root.querySelector('[data-position-info-symbol-v84]');
-  const grid =
-    root.querySelector('[data-position-info-grid-v84]');
-
-  symbolNode.textContent =
+  title.textContent =
     String(position.symbol || short(position.mint) || 'Position');
 
   const signedPct = value => {
@@ -4601,21 +4642,29 @@ function openPositionInfoV84(position) {
     ]
   ];
 
-  grid.innerHTML = items.map(([label, value]) => `
-    <div class="position-info-sheet-v84__item">
-      <span>${esc(label)}</span>
-      <strong>${esc(value)}</strong>
-    </div>
+  list.innerHTML = items.map(([label, value]) => `
+    <li class="position-popover-v85__row">
+      <span class="position-popover-v85__label">${esc(label)}</span>
+      <strong class="position-popover-v85__value">${esc(value)}</strong>
+    </li>
   `).join('');
 
-  root.hidden = false;
+  if (positionInfoActiveButtonV85 && positionInfoActiveButtonV85 !== anchor) {
+    positionInfoActiveButtonV85.removeAttribute('data-open');
+  }
+
+  positionInfoActiveButtonV85 = anchor;
+  anchor.setAttribute('data-open', '1');
+
+  positionPositionInfoV85(root, anchor);
 }
 
 document.addEventListener('keydown', event => {
   if (event.key === 'Escape') {
-    closePositionInfoV84();
+    closePositionInfoV85();
   }
 });
+
 
 function renderPositions() {
   const rows = state.positions.filter(p => p.status === 'OPEN');
@@ -4701,12 +4750,18 @@ function renderPositions() {
               ${esc(pnlText)}
             </strong>
             <button
-              class="position-info-v84"
-              data-position-info-v84="${esc(position.id)}"
+              class="position-info-v85"
+              data-position-info-v85="${esc(position.id)}"
               type="button"
               aria-label="Show position rules"
               title="Position rules"
-            >!</button>
+            >
+              <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                <circle cx="8" cy="8" r="6.25" fill="none" stroke="currentColor" stroke-width="1.3"></circle>
+                <path d="M8 7.1v3.45" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"></path>
+                <circle cx="8" cy="4.55" r="0.9" fill="currentColor"></circle>
+              </svg>
+            </button>
           </div>
         </div>
 
@@ -4729,27 +4784,31 @@ function renderPositions() {
   list.querySelectorAll('.position-row[data-mint]').forEach(row => {
     row.addEventListener('click', event => {
       if (event.target.closest('.close-position')) return;
-      if (event.target.closest('.position-info-v84')) return;
       if (event.target.closest('[data-mf-pump-avatar-link-v76]')) return;
 
       selectCandidate(row.dataset.mint);
     });
   });
 
-  list.querySelectorAll('.position-info-v84').forEach(button => {
+  list.querySelectorAll('.position-info-v85').forEach(button => {
     button.addEventListener('click', event => {
       event.preventDefault();
       event.stopPropagation();
 
       const id =
-        String(button.dataset.positionInfoV84 || '').trim();
+        String(button.dataset.positionInfoV85 || '').trim();
 
       const position =
         state.positions.find(
           row => String(row?.id || '') === id
         );
 
-      openPositionInfoV84(position);
+      if (button === positionInfoActiveButtonV85) {
+        closePositionInfoV85();
+        return;
+      }
+
+      openPositionInfoV85(position, button);
     });
   });
 
