@@ -1,10 +1,9 @@
 /* MEMEFLOW Trading Terminal Light Polish V61
    Light theme only.
-   Neutral system: #FFFFFF / #F5F5F5 / #EBEBEB.
-   Native BUY READY / WATCH / BLOCKED / P&L / LIVE colors remain semantic.
-   Chart logic, ECharts palette, trading execution and all JS are untouched.
+   Shared Trading Terminal neutral tokens and non-Chart surfaces.
+   Chart light-theme ownership is intentionally delegated to
+   memeflow-trading-white-surfaces-v154.css.
 */
-
 html[data-theme="light"] body.mf-trading-terminal {
   --mf-trading-v61-canvas: #ffffff;
   --mf-trading-v61-surface: #f5f5f5;
@@ -26,45 +25,19 @@ html[data-theme="light"] body.mf-trading-terminal .center-stack {
   background-image: none !important;
 }
 
-/* -----------------------------------------------------------------------
-   MAIN PANELS
-   ----------------------------------------------------------------------- */
-
-html[data-theme="light"] body.mf-trading-terminal .terminal > .panel:not(.candidates-panel),
-html[data-theme="light"] body.mf-trading-terminal .center-stack > .panel:not(.positions-panel) {
+/* Shared panel surfaces. Chart/Candidates/Open Positions have component owners. */
+html[data-theme="light"] body.mf-trading-terminal .terminal > .panel:not(.candidates-panel):not(.chart-panel),
+html[data-theme="light"] body.mf-trading-terminal .center-stack > .panel:not(.positions-panel):not(.chart-panel) {
   background: var(--mf-trading-v61-surface) !important;
   background-image: none !important;
   border-color: transparent !important;
   box-shadow: none !important;
 }
 
-/* Panel separators remain subtle instead of framed. */
-html[data-theme="light"] body.mf-trading-terminal .panel-head,
-html[data-theme="light"] body.mf-trading-terminal .chart-head,
-html[data-theme="light"] body.mf-trading-terminal .timeframes {
+html[data-theme="light"] body.mf-trading-terminal .panel-head {
   border-color: var(--mf-trading-v61-line) !important;
 }
 
-/* -----------------------------------------------------------------------
-   CHART
-   ECharts already has its own light palette in trading.js.
-   Only the HTML surface around it is normalized here.
-   ----------------------------------------------------------------------- */
-
-html[data-theme="light"] body.mf-trading-terminal .chart-wrap,
-html[data-theme="light"] body.mf-trading-terminal #chartCanvas {
-  background: #ffffff !important;
-  background-image: none !important;
-}
-
-html[data-theme="light"] body.mf-trading-terminal .indicator-bar {
-  background: var(--mf-trading-v61-surface) !important;
-  background-image: none !important;
-  border-color: var(--mf-trading-v61-line) !important;
-  box-shadow: none !important;
-}
-
-html[data-theme="light"] body.mf-trading-terminal .selected-metrics > div,
 html[data-theme="light"] body.mf-trading-terminal .strategy-summary-row,
 html[data-theme="light"] body.mf-trading-terminal .empty {
   background: var(--mf-trading-v61-inset) !important;
@@ -72,10 +45,6 @@ html[data-theme="light"] body.mf-trading-terminal .empty {
   border-color: transparent !important;
   box-shadow: none !important;
 }
-
-/* -----------------------------------------------------------------------
-   CANDIDATES / POSITIONS / RECENT TRADES
-   Rows remain compact and borderless;
 
 /* Approvals are nested actionable cards. */
 html[data-theme="light"] body.mf-trading-terminal .approval-row {
@@ -85,22 +54,7 @@ html[data-theme="light"] body.mf-trading-terminal .approval-row {
   box-shadow: none !important;
 }
 
-/* -----------------------------------------------------------------------
-   NEUTRAL CONTROLS
-   Active timeframe/filter/indicator colors stay owned by existing semantic
-   rules; this block only normalizes inactive controls.
-   ----------------------------------------------------------------------- */
-
-html[data-theme="light"] body.mf-trading-terminal
-.timeframes button:not(.active),
-html[data-theme="light"] body.mf-trading-terminal
-.indicator-scroll button:not([aria-pressed="true"]) {
-  background: transparent !important;
-  border-color: transparent !important;
-  color: var(--mf-trading-v61-muted) !important;
-  box-shadow: none !important;
-}
-
+/* Shared non-Chart controls. */
 html[data-theme="light"] body.mf-trading-terminal .strategy-edit-link,
 html[data-theme="light"] body.mf-trading-terminal .wallet-btn {
   background: var(--mf-trading-v61-inset) !important;
@@ -109,94 +63,45 @@ html[data-theme="light"] body.mf-trading-terminal .wallet-btn {
   box-shadow: none !important;
 }
 
-/* Price/market-cap toggle is part of the chart header, not another card. */
-html[data-theme="light"] body.mf-trading-terminal .price-toggle {
-  background: transparent !important;
-  box-shadow: none !important;
-}
-
 @media (hover: hover) and (pointer: fine) {
-  html[data-theme="light"] body.mf-trading-terminal
-  .timeframes button:not(.active):hover,
-html[data-theme="light"] body.mf-trading-terminal
-  .indicator-scroll button:not([aria-pressed="true"]):hover {
-    background: var(--mf-trading-v61-inset) !important;
-  }
-
   html[data-theme="light"] body.mf-trading-terminal .strategy-edit-link:hover,
-html[data-theme="light"] body.mf-trading-terminal .wallet-btn:hover {
+  html[data-theme="light"] body.mf-trading-terminal .wallet-btn:hover {
     background: #e4e4e4 !important;
   }
 }
 
-/* -----------------------------------------------------------------------
-   NEUTRAL TYPOGRAPHIC COLOR ONLY
-   Font family/size/weight/line-height are not changed.
-   ----------------------------------------------------------------------- */
-
+/* Shared non-Chart neutral text. */
 html[data-theme="light"] body.mf-trading-terminal .panel-head h2,
-html[data-theme="light"] body.mf-trading-terminal .token-name-row h1,
-html[data-theme="light"] body.mf-trading-terminal .token-price,
 html[data-theme="light"] body.mf-trading-terminal .candidate-name strong,
-html[data-theme="light"] body.mf-trading-terminal .selected-metrics strong,
 html[data-theme="light"] body.mf-trading-terminal .strategy-summary-row strong {
   color: var(--mf-trading-v61-text) !important;
 }
 
 html[data-theme="light"] body.mf-trading-terminal .candidate-name span,
 html[data-theme="light"] body.mf-trading-terminal .candidate-bottom,
-html[data-theme="light"] body.mf-trading-terminal .token-meta,
-html[data-theme="light"] body.mf-trading-terminal .token-market,
-html[data-theme="light"] body.mf-trading-terminal .selected-metrics span,
 html[data-theme="light"] body.mf-trading-terminal .strategy-summary-row span,
 html[data-theme="light"] body.mf-trading-terminal .trade-log-hint {
   color: var(--mf-trading-v61-muted) !important;
 }
 
-/* Token avatar placeholders use the neutral third level; real token images remain. */
-html[data-theme="light"] body.mf-trading-terminal .token-avatar {
-  background: var(--mf-trading-v61-inset) !important;
-  border-color: transparent !important;
-  box-shadow: none !important;
-}
-
-/* Neutral progress/track surfaces only. */
 html[data-theme="light"] body.mf-trading-terminal :where(.approval-stats, .control-error) {
   box-shadow: none !important;
 }
 
-/* Semantic status colors intentionally remain untouched:
-   .tiny-state
-   .mode-badge
-   .decision-badge
-   .state-dot
-   .approval-count
-   P&L classes
-   LIVE/READY/WATCH/BLOCKED indicators
-*/
-
 /* MEMEFLOW_TRADING_LIGHT_POLISH_V61_END */
 
 /* MEMEFLOW_TRADING_LIGHT_WHITE_MODULES_V153
-   Light theme only.
-   Requested modules use the true white canvas while preserving:
-   - Dark mode
-   - geometry and module outlines
-   - semantic state/P&L colors
-   - selected-row feedback
-   - typography and trading logic
+   Strategy-only compatibility contract.
+   Chart ownership was removed during Chart canonicalization.
 */
-html[data-theme="light"] body.mf-trading-terminal :is(.chart-panel, .strategy-summary-panel) {
+html[data-theme="light"] body.mf-trading-terminal .strategy-summary-panel {
   background: #ffffff !important;
   background-color: #ffffff !important;
   background-image: none !important;
 }
 
-/* Structural neutral sub-surfaces inside the requested modules merge into
-   the same white canvas. Action/selection states are intentionally untouched. */
-html[data-theme="light"] body.mf-trading-terminal .chart-panel .indicator-bar,
-html[data-theme="light"] body.mf-trading-terminal .chart-panel .selected-metrics > div,
-html[data-theme="light"] body.mf-trading-terminal .strategy-summary-panel .strategy-summary-row {
+html[data-theme="light"] body.mf-trading-terminal
+.strategy-summary-panel .strategy-summary-row {
   background: #ffffff !important;
   background-color: #ffffff !important;
   background-image: none !important;
@@ -205,10 +110,10 @@ html[data-theme="light"] body.mf-trading-terminal .strategy-summary-panel .strat
 /* MEMEFLOW_TRADING_LIGHT_WHITE_MODULES_V153_END */
 
 /* MEMEFLOW_TRADING_LIGHT_WHITE_MODULES_V153_1 */
-html[data-theme="light"] body.mf-trading-terminal .terminal > .panel.control-panel.strategy-summary-panel,
-html[data-theme="light"] body.mf-trading-terminal .center-stack > .panel.chart-panel {
-  background:#ffffff !important;
-  background-color:#ffffff !important;
-  background-image:none !important;
+html[data-theme="light"] body.mf-trading-terminal
+.terminal > .panel.control-panel.strategy-summary-panel {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  background-image: none !important;
 }
 /* MEMEFLOW_TRADING_LIGHT_WHITE_MODULES_V153_1_END */

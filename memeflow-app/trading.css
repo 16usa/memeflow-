@@ -248,21 +248,6 @@ button { cursor: pointer; }
   background: transparent;
 }
 
-.timeframes button {
-  border: 1px solid rgba(111, 154, 172, .045);
-  border-radius: 7px;
-  background: transparent;
-  color: #647d88;
-  font-size: var(--mf-type-micro);
-  font-weight: 700;
-}
-
-.timeframes button.active {
-  border-color: rgba(85, 217, 255, .28);
-  background: rgba(85, 217, 255, .06);
-  color: #b5edfa;
-}
-
 /* MEMEFLOW_EXACT_THREE_VISIBLE_ROWS_V1 */
 .candidate-list {
   min-height: 0;
@@ -364,13 +349,34 @@ button { cursor: pointer; }
   font-variant-numeric: tabular-nums;
 }
 
-.chart-panel { min-height: 560px; }
+/* ==========================================================================
+   MEMEFLOW CHART — CANONICAL PRESENTATION V1
+
+   Single owner in trading.css for:
+     - chart panel base geometry
+     - timeframe strip
+     - ECharts host / touch containment / z-index layers
+     - live trade tape
+     - indicator toolbar geometry + touch layer
+     - selected metrics geometry
+
+   Separate intentional owners:
+     - chart-header-geometry-v97.css: selected-token header geometry only
+     - trading-visual-hierarchy-v67.css: OHLC legend visual density only
+     - memeflow-trading-white-surfaces-v154.css: Light-theme Chart surfaces
+   ========================================================================== */
+
+.chart-panel {
+  min-height: 560px;
+}
 
 .chart-head {
   border-bottom: 1px solid rgba(111, 154, 172, .065);
 }
 
-.token-title { min-width: 0; }
+.token-title {
+  min-width: 0;
+}
 
 .token-avatar {
   width: 36px;
@@ -387,7 +393,11 @@ button { cursor: pointer; }
   font-weight: 800;
 }
 
-.token-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.token-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
 
 .token-name-row {
   display: flex;
@@ -414,10 +424,25 @@ button { cursor: pointer; }
   font-weight: 800;
 }
 
-.decision-badge.open { color: var(--green); border-color: rgba(77, 230, 161, .24); }
-.decision-badge.ready { color: var(--yellow); border-color: rgba(239, 198, 106, .23); }
-.decision-badge.blocked { color: var(--red); border-color: rgba(255, 102, 121, .20); }
-.decision-badge.watch { color: var(--blue); border-color: rgba(106, 153, 255, .20); }
+.decision-badge.open {
+  color: var(--green);
+  border-color: rgba(77, 230, 161, .24);
+}
+
+.decision-badge.ready {
+  color: var(--yellow);
+  border-color: rgba(239, 198, 106, .23);
+}
+
+.decision-badge.blocked {
+  color: var(--red);
+  border-color: rgba(255, 102, 121, .20);
+}
+
+.decision-badge.watch {
+  color: var(--blue);
+  border-color: rgba(106, 153, 255, .20);
+}
 
 .token-meta {
   margin-top: 4px;
@@ -437,7 +462,10 @@ button { cursor: pointer; }
   font-size: var(--mf-type-micro);
 }
 
-.price-block { text-align: right; }
+.price-block {
+  text-align: right;
+}
+
 .price-toggle {
   min-width: 170px;
   padding: 6px 0 6px 8px;
@@ -449,18 +477,31 @@ button { cursor: pointer; }
   -webkit-appearance: none;
   touch-action: manipulation;
 }
+
 .price-toggle:active {
   background: rgba(85, 217, 255, .035);
 }
+
 .price-toggle:focus-visible {
   outline: 1px solid rgba(85, 217, 255, .34);
   outline-offset: 2px;
 }
+
 .price-toggle[data-metric="marketCap"] .token-price {
   letter-spacing: -.015em;
 }
-.token-price { font-size: var(--mf-type-title); font-weight: 760; font-variant-numeric: tabular-nums; }
-.token-market { margin-top: 4px; color: #647d88; font-size: var(--mf-type-micro); }
+
+.token-price {
+  font-size: var(--mf-type-title);
+  font-weight: 760;
+  font-variant-numeric: tabular-nums;
+}
+
+.token-market {
+  margin-top: 4px;
+  color: #647d88;
+  font-size: var(--mf-type-micro);
+}
 
 .timeframes {
   height: 39px;
@@ -474,23 +515,56 @@ button { cursor: pointer; }
 .timeframes button {
   min-width: 35px;
   height: 25px;
+  border: 1px solid rgba(111, 154, 172, .045);
+  border-radius: 7px;
+  background: transparent;
+  color: #647d88;
+  font-size: var(--mf-type-micro);
+  font-weight: 700;
+}
+
+.timeframes button.active {
+  border-color: rgba(85, 217, 255, .28);
+  background: rgba(85, 217, 255, .06);
+  color: #b5edfa;
 }
 
 .chart-wrap {
   position: relative;
-  height: 380px;
+  height: 455px;
+  overflow: hidden;
+  isolation: isolate;
+  z-index: 0;
   background-size: 100% 64px, 85px 100%;
 }
 
 #chartCanvas {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
   display: block;
   width: 100%;
   height: 100%;
+  overflow: hidden !important;
+  touch-action: pan-y;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+#chartCanvas > div {
+  width: 100% !important;
+  height: 100% !important;
+  overflow: hidden !important;
+}
+
+#chartCanvas canvas {
+  outline: 0;
 }
 
 .chart-empty {
   position: absolute;
   inset: 0;
+  z-index: 7;
   display: grid;
   place-content: center;
   gap: 6px;
@@ -498,13 +572,24 @@ button { cursor: pointer; }
   pointer-events: none;
 }
 
-.chart-empty strong { color: #728a95; font-size: 12px; }
-.chart-empty span { max-width: 340px; color: #425963; font-size: var(--mf-type-micro); line-height: 1.5; }
+.chart-empty strong {
+  color: #728a95;
+  font-size: 12px;
+}
+
+.chart-empty span {
+  max-width: 340px;
+  color: #425963;
+  font-size: var(--mf-type-micro);
+  line-height: 1.5;
+}
 
 .chart-legend {
   position: absolute;
   top: 8px;
   left: 10px;
+  z-index: 6;
+  max-width: calc(100% - 24px);
   display: flex;
   flex-wrap: wrap;
   gap: 7px;
@@ -520,6 +605,163 @@ button { cursor: pointer; }
   font-size: var(--mf-type-micro);
 }
 
+.chart-credit {
+  position: absolute;
+  right: 8px;
+  bottom: 5px;
+  z-index: 4;
+  color: rgba(111, 154, 172, .42);
+  font-size: var(--mf-type-micro);
+  line-height: 1;
+  text-decoration: none;
+}
+
+.chart-credit:hover {
+  color: rgba(181, 237, 250, .72);
+}
+
+.live-trade-tape {
+  position: absolute;
+  z-index: 6;
+  left: 9px;
+  top: 88px;
+  width: 92px;
+  display: grid;
+  gap: 5px;
+  pointer-events: none;
+  contain: layout paint;
+}
+
+.live-tape-row {
+  width: max-content;
+  max-width: 90px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  opacity: .84;
+  transform: translate3d(0, 0, 0);
+  transition:
+    opacity .38s ease,
+    transform .38s ease;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: var(--mf-type-ui);
+  line-height: 1;
+  text-shadow: 0 1px 10px rgba(0, 0, 0, .9);
+}
+
+.live-tape-row strong {
+  font-weight: 820;
+  font-variant-numeric: tabular-nums;
+}
+
+.live-tape-row.buy {
+  color: rgba(77, 230, 161, .82);
+}
+
+.live-tape-row.sell {
+  color: rgba(255, 102, 121, .78);
+}
+
+.live-tape-arrow {
+  width: 9px;
+  text-align: center;
+  font-size: var(--mf-type-micro);
+}
+
+.live-tape-row.leaving {
+  opacity: 0;
+  transform: translate3d(-5px, -2px, 0);
+}
+
+.indicator-bar {
+  position: relative;
+  z-index: 20;
+  isolation: isolate;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  border-top: 1px solid rgba(111, 154, 172, .08);
+  pointer-events: auto;
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+}
+
+.indicator-scroll {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  padding: 0 8px;
+  display: flex;
+  align-items: stretch;
+  gap: 1px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  pointer-events: auto;
+}
+
+.indicator-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.indicator-bar button {
+  position: relative;
+  z-index: 2;
+  flex: 0 0 auto;
+  min-width: 38px;
+  height: 100%;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: #617985;
+  white-space: nowrap;
+  font-size: var(--mf-type-micro);
+  font-weight: 690;
+  line-height: 1;
+  touch-action: manipulation;
+  pointer-events: auto;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.indicator-bar button::after {
+  content: "";
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 0;
+  height: 2px;
+  border-radius: 2px 2px 0 0;
+  background: transparent;
+}
+
+.indicator-bar button:hover {
+  color: #91a7b1;
+}
+
+.indicator-bar button.active,
+.indicator-bar button[aria-pressed="true"] {
+  color: #d5e6ed;
+  background: rgba(85, 217, 255, .025);
+}
+
+.indicator-bar button.active::after,
+.indicator-bar button[aria-pressed="true"]::after {
+  background: #55d9ff;
+}
+
+.indicator-divider {
+  flex: 0 0 1px;
+  width: 1px;
+  height: 16px;
+  margin: auto 5px;
+  background: rgba(111, 154, 172, .14);
+}
+
 .selected-metrics {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
@@ -532,9 +774,103 @@ button { cursor: pointer; }
   border-right: 1px solid rgba(111, 154, 172, .045);
 }
 
-.selected-metrics div:last-child { border-right: 0; }
-.selected-metrics span { display: block; color: #526a75; font-size: var(--mf-type-micro); }
-.selected-metrics strong { display: block; margin-top: 4px; color: #c9d7dd; font-size: var(--mf-type-ui); font-variant-numeric: tabular-nums; }
+.selected-metrics div:last-child {
+  border-right: 0;
+}
+
+.selected-metrics span {
+  display: block;
+  color: #526a75;
+  font-size: var(--mf-type-micro);
+}
+
+.selected-metrics strong {
+  display: block;
+  margin-top: 4px;
+  color: #c9d7dd;
+  font-size: var(--mf-type-ui);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 820px) {
+  .chart-panel {
+    min-height: 0;
+  }
+
+  .chart-wrap {
+    height: 330px;
+  }
+
+  .timeframes {
+    height: 33px;
+    padding: 4px 7px;
+    gap: 3px;
+  }
+
+  .timeframes button {
+    min-width: 31px;
+    height: 23px;
+  }
+
+  .indicator-bar {
+    height: 31px;
+  }
+
+  .indicator-scroll {
+    padding: 0 5px;
+  }
+
+  .indicator-bar button {
+    min-width: 34px;
+    padding: 0 6px;
+  }
+
+  .selected-metrics div {
+    min-height: 38px;
+    padding: 6px 5px;
+  }
+}
+
+@media (max-width: 760px) {
+  .live-trade-tape {
+    top: 86px;
+    left: 8px;
+    width: 84px;
+    gap: 4px;
+  }
+
+  .live-tape-row {
+    max-width: 82px;
+    font-size: var(--mf-type-meta);
+  }
+}
+
+@media (max-width: 430px) {
+  .chart-wrap {
+    height: 315px;
+  }
+
+  .timeframes {
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .timeframes::-webkit-scrollbar {
+    display: none;
+  }
+
+  .indicator-bar button {
+    min-width: 34px;
+    padding: 0 6px;
+  }
+
+  .indicator-divider {
+    margin-left: 3px;
+    margin-right: 3px;
+  }
+}
+
+/* MEMEFLOW_CHART_CANONICAL_PRESENTATION_V1_END */
 
 .pnl-summary { text-align: right; }
 .pnl-summary span { display: block; color: #506874; font-size: var(--mf-type-micro); }
@@ -886,20 +1222,6 @@ button { cursor: pointer; }
     max-height: none;
   }
 
-  .chart-panel { min-height: 0; }
-  .token-name-row h1 { max-width: 150px; font-size: var(--mf-type-body); }
-  .token-price { font-size: var(--mf-type-body); }
-  .token-market,
-.token-meta { font-size: var(--mf-type-micro); }
-  .chart-wrap { height: 290px; }
-
-  .selected-metrics div {
-    min-height: 42px;
-    padding: 7px 6px;
-  }
-  .selected-metrics span { font-size: var(--mf-type-micro); }
-  .selected-metrics strong { font-size: var(--mf-type-micro); }
-
 
 
 
@@ -914,10 +1236,6 @@ button { cursor: pointer; }
 
 
 
-  .chart-wrap { height: 255px; }
-  .timeframes { padding: 5px 7px; gap: 3px; }
-  .timeframes button { min-width: 30px; font-size: var(--mf-type-micro); }
-  .selected-metrics { grid-template-columns: repeat(5, 1fr); }
   .strategy-grid { gap: 5px; }
   .strategy-grid label { min-height: 49px; padding: 6px; }
   .amount-box { height: 46px; }
@@ -925,344 +1243,10 @@ button { cursor: pointer; }
 }
 
 
-/* MEMEFLOW_TRADING_CHART_V30_5
-   Execution-price OHLC + mobile control placement. No global visual overrides. */
-
-/* MEMEFLOW_TRADING_CHART_V30_4
-   Lightweight Charts host only. No global design overrides. */
-.chart-wrap {
-}
-
-#chartCanvas {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  display: block;
-  width: 100%;
-  height: 100%;
-  touch-action: pan-y;
-}
-
-#chartCanvas > div {
-  width: 100% !important;
-  height: 100% !important;
-}
-
-.chart-legend {
-  z-index: 4;
-  max-width: calc(100% - 24px);
-}
-
-.chart-empty {
-  z-index: 5;
-}
-
-.chart-credit {
-  position: absolute;
-  right: 8px;
-  bottom: 5px;
-  z-index: 4;
-  color: rgba(111, 154, 172, .42);
-  font-size: var(--mf-type-micro);
-  line-height: 1;
-  text-decoration: none;
-}
-
-.chart-credit:hover {
-  color: rgba(181, 237, 250, .72);
-}
-
-/* MEMEFLOW_TRADING_CHART_V30_8_PRICE_MC_GAP_SAFE */
-
-.live-trade-tape {
-  position: absolute;
-  z-index: 5;
-  left: 9px;
-  top: 88px;
-  width: 92px;
-  display: grid;
-  gap: 5px;
-  pointer-events: none;
-  contain: layout paint;
-}
-
-.live-tape-row {
-  width: max-content;
-  max-width: 90px;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  opacity: .84;
-  transform: translate3d(0, 0, 0);
-  transition:
-    opacity .38s ease,
-    transform .38s ease;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: var(--mf-type-ui);
-  line-height: 1;
-  text-shadow: 0 1px 10px rgba(0,0,0,.9);
-}
-
-.live-tape-row strong {
-  font-weight: 820;
-  font-variant-numeric: tabular-nums;
-}
-
-.live-tape-row.buy {
-  color: rgba(77, 230, 161, .82);
-}
-
-.live-tape-row.sell {
-  color: rgba(255, 102, 121, .78);
-}
-
-.live-tape-arrow {
-  width: 9px;
-  text-align: center;
-  font-size: var(--mf-type-micro);
-}
-
-.live-tape-row.leaving {
-  opacity: 0;
-  transform: translate3d(-5px, -2px, 0);
-}
-
-@media (max-width: 760px) {
-  .live-trade-tape {
-    top: 86px;
-    left: 8px;
-    width: 84px;
-    gap: 4px;
-  }
-
-  .live-tape-row {
-    max-width: 82px;
-    font-size: var(--mf-type-meta);
-  }
-}
-/* MEMEFLOW_TRADING_CHART_V30_9_FAST_CONTINUOUS_TAPE_FIXED_LEVELS */
-/* MEMEFLOW_TRADING_CHART_V30_15_2_GMGN_ECHARTS
-   Apache ECharts price + volume pane. The trading/data engine is unchanged. */
-.chart-wrap {
-  height: 455px;
-}
-
-#chartCanvas {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  width: 100%;
-  height: 100%;
-  touch-action: pan-y;
-  -webkit-user-select: none;
-  user-select: none;
-}
-
-#chartCanvas canvas {
-  outline: 0;
-}
-
-.chart-legend {
-  z-index: 6;
-}
-
-.chart-empty {
-  z-index: 7;
-}
-
-.live-trade-tape {
-  z-index: 6;
-}
-
-@media (max-width: 820px) {
-  .chart-wrap {
-    height: 365px;
-  }
-}
-
-@media (max-width: 430px) {
-  .chart-wrap {
-    height: 350px;
-  }
-
-  .timeframes {
-    overflow-x: auto;
-    scrollbar-width: none;
-  }
-
-  .timeframes::-webkit-scrollbar {
-    display: none;
-  }
-}
-
-
-/* MEMEFLOW_TRADING_CHART_V30_24_OPTIONAL_INDICATORS
-   GMGN-style optional indicator toolbar. Scoped only to the chart panel. */
-.indicator-bar {
-  height: 38px;
-  display: flex;
-  align-items: center;
-  overflow: hidden;
-  border-top: 1px solid rgba(111, 154, 172, .08);
-}
-
-.indicator-scroll {
-  width: 100%;
-  height: 100%;
-  padding: 0 8px;
-  display: flex;
-  align-items: stretch;
-  gap: 1px;
-  overflow-x: auto;
-  overflow-y: hidden;
-  overscroll-behavior-x: contain;
-  scrollbar-width: none;
-  -webkit-overflow-scrolling: touch;
-}
-
-.indicator-scroll::-webkit-scrollbar {
-  display: none;
-}
-
-.indicator-bar button {
-  position: relative;
-  flex: 0 0 auto;
-  min-width: 38px;
-  height: 100%;
-  padding: 0 8px;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  color: #617985;
-  white-space: nowrap;
-  font-size: var(--mf-type-micro);
-  font-weight: 690;
-  line-height: 1;
-  touch-action: manipulation;
-}
-
-.indicator-bar button::after {
-  content: "";
-  position: absolute;
-  left: 8px;
-  right: 8px;
-  bottom: 0;
-  height: 2px;
-  border-radius: 2px 2px 0 0;
-  background: transparent;
-}
-
-.indicator-bar button:hover {
-  color: #91a7b1;
-}
-
-.indicator-bar button.active,
-.indicator-bar button[aria-pressed="true"] {
-  color: #d5e6ed;
-  background: rgba(85, 217, 255, .025);
-}
-
-.indicator-bar button.active::after,
-.indicator-bar button[aria-pressed="true"]::after {
-  background: #55d9ff;
-}
-
-.indicator-divider {
-  flex: 0 0 1px;
-  width: 1px;
-  height: 16px;
-  margin: auto 5px;
-  background: rgba(111, 154, 172, .14);
-}
-
-@media (max-width: 820px) {
-  .indicator-bar {
-    height: 36px;
-  }
-
-  .indicator-scroll {
-    padding: 0 6px;
-  }
-
-  .indicator-bar button {
-    min-width: 36px;
-    padding: 0 7px;
-    font-size: var(--mf-type-micro);
-  }
-}
-
-@media (max-width: 430px) {
-  .indicator-bar button {
-    min-width: 34px;
-    padding: 0 6px;
-    font-size: var(--mf-type-micro);
-  }
-
-  .indicator-divider {
-    margin-left: 3px;
-    margin-right: 3px;
-  }
-}
-\n
-
-
-.chart-wrap {
-  overflow: hidden;
-  isolation: isolate;
-  z-index: 0;
-}
-
-#chartCanvas,
-#chartCanvas > div {
-  overflow: hidden !important;
-}
-
-.indicator-bar {
-  position: relative;
-  z-index: 20;
-  isolation: isolate;
-  pointer-events: auto;
-  -webkit-transform: translateZ(0);
-  transform: translateZ(0);
-}
-
-.indicator-scroll {
-  position: relative;
-  z-index: 1;
-  pointer-events: auto;
-}
-
-.indicator-bar button {
-  position: relative;
-  z-index: 2;
-  pointer-events: auto;
-  -webkit-tap-highlight-color: transparent;
-}
-
 /* MEMEFLOW_COMPACT_TRADING_V4_START */
 @media (max-width: 820px) {
   .terminal { padding: 5px; gap: 5px; }
   .panel { border-radius: 10px; }
-  .token-name-row { gap: 5px; }
-  .token-name-row h1 { max-width: 145px; font-size: var(--mf-type-ui); }
-  .decision-badge { padding: 2px 4px; font-size: var(--mf-type-micro); }
-  .token-meta { margin-top: 2px; gap: 4px; font-size: var(--mf-type-micro); }
-  .price-toggle { min-width: 120px; padding: 4px 0 4px 5px; }
-  .token-price { font-size: var(--mf-type-body); }
-  .token-market { margin-top: 2px; font-size: var(--mf-type-micro); }
-
-  .timeframes { height: 33px; padding: 4px 7px; gap: 3px; }
-  .timeframes button { min-width: 31px; height: 23px; font-size: var(--mf-type-micro); }
-
-  .chart-wrap { height: 330px; }
-  .indicator-bar { height: 31px; }
-  .indicator-scroll { padding: 0 5px; }
-  .indicator-bar button { min-width: 34px; padding: 0 6px; font-size: var(--mf-type-micro); }
-
-  .selected-metrics div { min-height: 38px; padding: 6px 5px; }
-  .selected-metrics span { font-size: var(--mf-type-micro); }
-  .selected-metrics strong { margin-top: 3px; font-size: var(--mf-type-micro); }
-
   .control-panel { overflow: visible; }
   .control-panel > .panel-head { min-height: 42px; padding: 7px 9px; }
   .control-panel > .panel-head > div { display: flex; align-items: baseline; gap: 7px; }
@@ -1333,9 +1317,8 @@ button { cursor: pointer; }
   .compact-wallet-panel .control-foot { padding: 0 9px 8px; }
 }
 
-@media (max-width: 430px) {
-  .chart-wrap { height: 315px; }
-}
+
+
 /* MEMEFLOW_COMPACT_TRADING_V4_END */
 
 

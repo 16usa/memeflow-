@@ -1,25 +1,13 @@
 /* ==========================================================================
-   MEMEFLOW TRADING LIGHT WHITE MODULE SURFACES V154 FINAL
+   MEMEFLOW TRADING LIGHT SURFACES V154 — CANONICAL
 
    LIGHT MODE ONLY.
 
-   Goal:
-     Remove the gray structural fill from exactly these Trading Terminal modules:
-       - Chart
-       - Trade strategy
-       - Candidates
-       - Recent trades
+   Owners in this file:
+     - Chart light surfaces / neutral Chart controls / Chart light text
+     - Trade strategy light surfaces
 
-   Preserve:
-     - Dark mode
-     - module geometry/radii/outlines/separators
-     - typography
-     - semantic badges / P&L / status colors
-     - chart data and ECharts behavior
-     - trading/scanner/backend logic
-
-   This stylesheet is intentionally loaded LAST in <head> so it is the final
-   light-surface authority and cannot lose to V61/V117/V121/V127 late rules.
+   Geometry and behavior stay outside this file.
    ========================================================================== */
 
 /* Outer module canvases. */
@@ -35,7 +23,10 @@ body.mf-page-trading.mf-trading-terminal
   background-image: none !important;
 }
 
-/* Chart: header, timeframe strip, plotting surface, indicators and metrics. */
+/* --------------------------------------------------------------------------
+   CHART — one Light-theme owner
+   -------------------------------------------------------------------------- */
+
 html[data-theme="light"]
 body.mf-page-trading.mf-trading-terminal
 .chart-panel > .chart-head,
@@ -53,6 +44,9 @@ body.mf-page-trading.mf-trading-terminal
 .chart-panel > .indicator-bar,
 html[data-theme="light"]
 body.mf-page-trading.mf-trading-terminal
+.chart-panel > .indicator-bar > .indicator-scroll,
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
 .chart-panel > .selected-metrics,
 html[data-theme="light"]
 body.mf-page-trading.mf-trading-terminal
@@ -62,7 +56,107 @@ body.mf-page-trading.mf-trading-terminal
   background-image: none !important;
 }
 
-/* Trade strategy: whole structural body becomes one white canvas. */
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.chart-panel > .chart-head,
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.chart-panel > .timeframes,
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.chart-panel > .indicator-bar {
+  border-color: var(--mf-trading-v61-line, rgba(23, 23, 23, .075)) !important;
+}
+
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.chart-panel .token-name-row h1,
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.chart-panel .token-price,
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.chart-panel .selected-metrics strong {
+  color: var(--mf-trading-v61-text, #171717) !important;
+}
+
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.chart-panel .token-meta,
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.chart-panel .token-market,
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.chart-panel .selected-metrics span {
+  color: var(--mf-trading-v61-muted, #737373) !important;
+}
+
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.chart-panel .token-avatar {
+  background: var(--mf-trading-v61-inset, #ebebeb) !important;
+  background-image: none !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.chart-panel .price-toggle {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.chart-panel .timeframes button:not(.active),
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.chart-panel .indicator-scroll button:not([aria-pressed="true"]) {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border-color: transparent !important;
+  color: var(--mf-trading-v61-muted, #737373) !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.chart-panel .indicator-scroll button,
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.chart-panel .indicator-scroll button[aria-pressed="true"] {
+  background-color: transparent !important;
+  background-image: none !important;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  html[data-theme="light"]
+  body.mf-page-trading.mf-trading-terminal
+  .chart-panel .timeframes button:not(.active):hover,
+  html[data-theme="light"]
+  body.mf-page-trading.mf-trading-terminal
+  .chart-panel .indicator-scroll button:not([aria-pressed="true"]):hover {
+    background: var(--mf-trading-v61-inset, #ebebeb) !important;
+  }
+}
+
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.chart-panel .chart-empty {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+}
+
+/* --------------------------------------------------------------------------
+   TRADE STRATEGY
+   -------------------------------------------------------------------------- */
+
 html[data-theme="light"]
 body.mf-page-trading.mf-trading-terminal
 .strategy-summary-panel > .panel-head,
@@ -80,58 +174,6 @@ body.mf-page-trading.mf-trading-terminal
   background-image: none !important;
 }
 
-/* Recent trades: header, list and every trade row. */
-
-
-/* Empty states inside the requested modules must not reintroduce neutral fill. */
-html[data-theme="light"]
-body.mf-page-trading.mf-trading-terminal
-:is(.chart-panel, .strategy-summary-panel) .empty {
-  background: transparent !important;
-  background-color: transparent !important;
-  background-image: none !important;
-}
-
-/* MEMEFLOW_TRADING_LIGHT_WHITE_MODULE_SURFACES_V154_FINAL_END */
-
-/* ==========================================================================
-   MEMEFLOW TRADING WHITE RESIDUAL SURFACES V155
-
-   LIGHT MODE ONLY.
-   Exact residual child surfaces confirmed from current DOM:
-     1) Chart > .indicator-bar > .indicator-scroll
-     2) Trade strategy > .strategy-summary-list > .strategy-summary-row > div
-
-   Parent surfaces are already white in V154. These child boxes were still
-   painting the old neutral gray above those white parents.
-   ========================================================================== */
-
-html[data-theme="light"]
-body.mf-page-trading.mf-trading-terminal
-.chart-panel > #indicatorBar.indicator-bar > .indicator-scroll {
-  background: #ffffff !important;
-  background-color: #ffffff !important;
-  background-image: none !important;
-}
-
-/* Keep indicator buttons visually text-only on the newly white strip. */
-html[data-theme="light"]
-body.mf-page-trading.mf-trading-terminal
-.chart-panel > #indicatorBar.indicator-bar > .indicator-scroll > button,
-html[data-theme="light"]
-body.mf-page-trading.mf-trading-terminal
-.chart-panel > #indicatorBar.indicator-bar > .indicator-scroll > button[aria-pressed="true"] {
-  background: transparent !important;
-  background-color: transparent !important;
-  background-image: none !important;
-}
-
-html[data-theme="light"]
-body.mf-page-trading.mf-trading-terminal
-.strategy-summary-panel > .strategy-summary-list,
-html[data-theme="light"]
-body.mf-page-trading.mf-trading-terminal
-.strategy-summary-panel > .strategy-summary-list > .strategy-summary-row,
 html[data-theme="light"]
 body.mf-page-trading.mf-trading-terminal
 .strategy-summary-panel > .strategy-summary-list > .strategy-summary-row > div {
@@ -140,4 +182,12 @@ body.mf-page-trading.mf-trading-terminal
   background-image: none !important;
 }
 
-/* MEMEFLOW_TRADING_WHITE_RESIDUAL_SURFACES_V155_END */
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.strategy-summary-panel .empty {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+}
+
+/* MEMEFLOW_TRADING_LIGHT_SURFACES_V154_CANONICAL_END */
