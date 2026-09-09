@@ -75,15 +75,7 @@ html[data-theme="light"] body.mf-trading-terminal .empty {
 
 /* -----------------------------------------------------------------------
    CANDIDATES / POSITIONS / RECENT TRADES
-   Rows remain compact and borderless; selected row uses the same neutral
-   inset surface. Semantic badges/dots are deliberately untouched.
-   ----------------------------------------------------------------------- */
-
-html[data-theme="light"] body.mf-trading-terminal .trade-row.trade-log-row {
-  background: transparent !important;
-  border-bottom-color: var(--mf-trading-v61-line) !important;
-  box-shadow: none !important;
-}
+   Rows remain compact and borderless;
 
 /* Approvals are nested actionable cards. */
 html[data-theme="light"] body.mf-trading-terminal .approval-row {
@@ -126,13 +118,13 @@ html[data-theme="light"] body.mf-trading-terminal .price-toggle {
 @media (hover: hover) and (pointer: fine) {
   html[data-theme="light"] body.mf-trading-terminal
   .timeframes button:not(.active):hover,
-  html[data-theme="light"] body.mf-trading-terminal
+html[data-theme="light"] body.mf-trading-terminal
   .indicator-scroll button:not([aria-pressed="true"]):hover {
     background: var(--mf-trading-v61-inset) !important;
   }
 
   html[data-theme="light"] body.mf-trading-terminal .strategy-edit-link:hover,
-  html[data-theme="light"] body.mf-trading-terminal .wallet-btn:hover {
+html[data-theme="light"] body.mf-trading-terminal .wallet-btn:hover {
     background: #e4e4e4 !important;
   }
 }
@@ -169,10 +161,7 @@ html[data-theme="light"] body.mf-trading-terminal .token-avatar {
 }
 
 /* Neutral progress/track surfaces only. */
-html[data-theme="light"] body.mf-trading-terminal :where(
-  .approval-stats,
-  .control-error
-) {
+html[data-theme="light"] body.mf-trading-terminal :where(.approval-stats, .control-error) {
   box-shadow: none !important;
 }
 
@@ -197,11 +186,7 @@ html[data-theme="light"] body.mf-trading-terminal :where(
    - selected-row feedback
    - typography and trading logic
 */
-html[data-theme="light"] body.mf-trading-terminal :is(
-  .chart-panel,
-  .strategy-summary-panel,
-  .bottom-history-panel
-) {
+html[data-theme="light"] body.mf-trading-terminal :is(.chart-panel, .strategy-summary-panel) {
   background: #ffffff !important;
   background-color: #ffffff !important;
   background-image: none !important;
@@ -221,7 +206,6 @@ html[data-theme="light"] body.mf-trading-terminal .strategy-summary-panel .strat
 
 /* MEMEFLOW_TRADING_LIGHT_WHITE_MODULES_V153_1 */
 html[data-theme="light"] body.mf-trading-terminal .terminal > .panel.control-panel.strategy-summary-panel,
-html[data-theme="light"] body.mf-trading-terminal .terminal > .panel.bottom-history-panel,
 html[data-theme="light"] body.mf-trading-terminal .center-stack > .panel.chart-panel {
   background:#ffffff !important;
   background-color:#ffffff !important;
