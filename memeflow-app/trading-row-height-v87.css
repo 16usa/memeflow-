@@ -1,0 +1,67 @@
+/* MEMEFLOW_ROW_HEIGHT_UNIFY_V87
+   Trading Terminal row-density authority.
+
+   Reference row:
+     Candidates = 64px canonical row height.
+
+   Normalize:
+     Open positions -> 64px
+     Recent trades  -> 64px
+
+   Scope is geometry only. No typography, colors, avatars, P&L, selection,
+   popover, trading logic, data, RPC, or JS behavior is changed.
+*/
+
+body.mf-page-trading.mf-trading-terminal {
+  --mf-v87-operational-row-h: 64px;
+}
+
+/* Open positions previously followed a separate 58/62px breakpoint chain.
+   Give it the same final row box as Candidates. */
+body.mf-page-trading.mf-trading-terminal
+.positions-panel .positions-list > .position-row {
+  height: var(--mf-v87-operational-row-h) !important;
+  min-height: var(--mf-v87-operational-row-h) !important;
+  max-height: var(--mf-v87-operational-row-h) !important;
+  padding-top: 8px !important;
+  padding-bottom: 8px !important;
+  align-items: center !important;
+  overflow: hidden !important;
+}
+
+/* Recent trades already has a 64px canonical rule in trading.css.
+   Re-assert it in the same final layer so later responsive/style layers
+   cannot make it visually taller than Candidates. */
+body.mf-page-trading.mf-trading-terminal
+.bottom-history-panel .trade-history > .trade-row.trade-log-row {
+  height: var(--mf-v87-operational-row-h) !important;
+  min-height: var(--mf-v87-operational-row-h) !important;
+  max-height: var(--mf-v87-operational-row-h) !important;
+  padding-top: 8px !important;
+  padding-bottom: 8px !important;
+  align-items: center !important;
+  overflow: hidden !important;
+}
+
+/* Keep the content centered inside the now-identical row boxes. */
+body.mf-page-trading.mf-trading-terminal
+.positions-panel .position-main,
+body.mf-page-trading.mf-trading-terminal
+.bottom-history-panel .trade-log-primary {
+  align-self: center !important;
+  min-height: 0 !important;
+}
+
+/* Phone/tablet keep exactly the same 64px contract. */
+@media (max-width: 820px) {
+  body.mf-page-trading.mf-trading-terminal
+  .positions-panel .positions-list > .position-row,
+  body.mf-page-trading.mf-trading-terminal
+  .bottom-history-panel .trade-history > .trade-row.trade-log-row {
+    height: var(--mf-v87-operational-row-h) !important;
+    min-height: var(--mf-v87-operational-row-h) !important;
+    max-height: var(--mf-v87-operational-row-h) !important;
+    padding-top: 8px !important;
+    padding-bottom: 8px !important;
+  }
+}
