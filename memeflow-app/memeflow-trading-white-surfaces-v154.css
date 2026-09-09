@@ -1,0 +1,201 @@
+/* ==========================================================================
+   MEMEFLOW TRADING LIGHT WHITE MODULE SURFACES V154 FINAL
+
+   LIGHT MODE ONLY.
+
+   Goal:
+     Remove the gray structural fill from exactly these Trading Terminal modules:
+       - Chart
+       - Trade strategy
+       - Open positions
+       - Candidates
+       - Recent trades
+
+   Preserve:
+     - Dark mode
+     - module geometry/radii/outlines/separators
+     - typography
+     - semantic badges / P&L / status colors
+     - chart data and ECharts behavior
+     - trading/scanner/backend logic
+
+   This stylesheet is intentionally loaded LAST in <head> so it is the final
+   light-surface authority and cannot lose to V61/V117/V121/V127 late rules.
+   ========================================================================== */
+
+/* Outer module canvases. */
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.terminal > .panel.candidates-panel,
+
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.terminal > .panel.control-panel.strategy-summary-panel,
+
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.terminal > .panel.bottom-history-panel,
+
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.center-stack > .panel.chart-panel,
+
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.center-stack > .panel.positions-panel {
+  --mf-trading-v61-surface: #ffffff !important;
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  background-image: none !important;
+}
+
+/* Chart: header, timeframe strip, plotting surface, indicators and metrics. */
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.chart-panel > .chart-head,
+
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.chart-panel > .timeframes,
+
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.chart-panel > .chart-wrap,
+
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.chart-panel #chartCanvas,
+
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.chart-panel > .indicator-bar,
+
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.chart-panel > .selected-metrics,
+
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.chart-panel > .selected-metrics > div {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  background-image: none !important;
+}
+
+/* Trade strategy: whole structural body becomes one white canvas. */
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.strategy-summary-panel > .panel-head,
+
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.strategy-summary-panel > .strategy-summary-list,
+
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.strategy-summary-panel .strategy-summary-list > .strategy-summary-row,
+
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.strategy-summary-panel > .strategy-summary-foot {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  background-image: none !important;
+}
+
+/* Open positions: list and every row, including selected row. */
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.positions-panel > .panel-head,
+
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.positions-panel > .positions-list,
+
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.positions-panel .positions-list > .position-row,
+
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.positions-panel .positions-list > .position-row.selected {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  background-image: none !important;
+}
+
+/* Candidates: title, strip container, list, all rows and selected/hover rows. */
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.candidates-panel > .panel-head,
+
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.candidates-panel > .candidate-filter,
+
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.candidates-panel > #candidateList,
+
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.candidates-panel #candidateList > .candidate,
+
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.candidates-panel #candidateList > .candidate.selected,
+
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.candidates-panel #candidateList > .candidate:hover {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  background-image: none !important;
+}
+
+/* Candidate segment controls remain text-only instead of inheriting old gray fill. */
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.candidates-panel .candidate-filter > button[data-filter],
+
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.candidates-panel .candidate-filter > button[data-filter].active {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+}
+
+/* Recent trades: header, list and every trade row. */
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.bottom-history-panel > .panel-head,
+
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.bottom-history-panel > .trade-history,
+
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.bottom-history-panel .trade-history > .trade-row.trade-log-row {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  background-image: none !important;
+}
+
+/* Empty states inside the requested modules must not reintroduce neutral fill. */
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+:is(
+  .chart-panel,
+  .strategy-summary-panel,
+  .positions-panel,
+  .candidates-panel,
+  .bottom-history-panel
+) .empty {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+}
+
+/* MEMEFLOW_TRADING_LIGHT_WHITE_MODULE_SURFACES_V154_FINAL_END */
