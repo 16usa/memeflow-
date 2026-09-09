@@ -13,9 +13,6 @@
 /* Outer module canvases. */
 html[data-theme="light"]
 body.mf-page-trading.mf-trading-terminal
-.terminal > .panel.control-panel.strategy-summary-panel,
-html[data-theme="light"]
-body.mf-page-trading.mf-trading-terminal
 .center-stack > .panel.chart-panel {
   --mf-trading-v61-surface: #ffffff !important;
   background: #ffffff !important;
@@ -154,9 +151,12 @@ body.mf-page-trading.mf-trading-terminal
 }
 
 /* --------------------------------------------------------------------------
-   TRADE STRATEGY
+   TRADE STRATEGY - single Light-theme owner
    -------------------------------------------------------------------------- */
 
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.terminal > .panel.control-panel.strategy-summary-panel,
 html[data-theme="light"]
 body.mf-page-trading.mf-trading-terminal
 .strategy-summary-panel > .panel-head,
@@ -168,7 +168,11 @@ body.mf-page-trading.mf-trading-terminal
 .strategy-summary-panel .strategy-summary-list > .strategy-summary-row,
 html[data-theme="light"]
 body.mf-page-trading.mf-trading-terminal
+.strategy-summary-panel > .strategy-summary-list > .strategy-summary-row > div,
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
 .strategy-summary-panel > .strategy-summary-foot {
+  --mf-trading-v61-surface: #ffffff !important;
   background: #ffffff !important;
   background-color: #ffffff !important;
   background-image: none !important;
@@ -176,10 +180,31 @@ body.mf-page-trading.mf-trading-terminal
 
 html[data-theme="light"]
 body.mf-page-trading.mf-trading-terminal
-.strategy-summary-panel > .strategy-summary-list > .strategy-summary-row > div {
-  background: #ffffff !important;
-  background-color: #ffffff !important;
+.strategy-summary-panel .strategy-summary-row strong {
+  color: var(--mf-trading-v61-text, #171717) !important;
+}
+
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.strategy-summary-panel .strategy-summary-row span {
+  color: var(--mf-trading-v61-muted, #737373) !important;
+}
+
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.strategy-summary-panel .strategy-edit-link {
+  background: var(--mf-trading-v61-inset, #ebebeb) !important;
   background-image: none !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  html[data-theme="light"]
+  body.mf-page-trading.mf-trading-terminal
+  .strategy-summary-panel .strategy-edit-link:hover {
+    background: #e4e4e4 !important;
+  }
 }
 
 html[data-theme="light"]

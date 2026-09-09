@@ -26,7 +26,7 @@ html[data-theme="light"] body.mf-trading-terminal .center-stack {
 }
 
 /* Shared panel surfaces. Chart/Candidates/Open Positions have component owners. */
-html[data-theme="light"] body.mf-trading-terminal .terminal > .panel:not(.candidates-panel):not(.chart-panel),
+html[data-theme="light"] body.mf-trading-terminal .terminal > .panel:not(.candidates-panel):not(.chart-panel):not(.strategy-summary-panel),
 html[data-theme="light"] body.mf-trading-terminal .center-stack > .panel:not(.positions-panel):not(.chart-panel) {
   background: var(--mf-trading-v61-surface) !important;
   background-image: none !important;
@@ -38,7 +38,6 @@ html[data-theme="light"] body.mf-trading-terminal .panel-head {
   border-color: var(--mf-trading-v61-line) !important;
 }
 
-html[data-theme="light"] body.mf-trading-terminal .strategy-summary-row,
 html[data-theme="light"] body.mf-trading-terminal .empty {
   background: var(--mf-trading-v61-inset) !important;
   background-image: none !important;
@@ -55,7 +54,6 @@ html[data-theme="light"] body.mf-trading-terminal .approval-row {
 }
 
 /* Shared non-Chart controls. */
-html[data-theme="light"] body.mf-trading-terminal .strategy-edit-link,
 html[data-theme="light"] body.mf-trading-terminal .wallet-btn {
   background: var(--mf-trading-v61-inset) !important;
   background-image: none !important;
@@ -64,7 +62,6 @@ html[data-theme="light"] body.mf-trading-terminal .wallet-btn {
 }
 
 @media (hover: hover) and (pointer: fine) {
-  html[data-theme="light"] body.mf-trading-terminal .strategy-edit-link:hover,
   html[data-theme="light"] body.mf-trading-terminal .wallet-btn:hover {
     background: #e4e4e4 !important;
   }
@@ -72,14 +69,12 @@ html[data-theme="light"] body.mf-trading-terminal .wallet-btn {
 
 /* Shared non-Chart neutral text. */
 html[data-theme="light"] body.mf-trading-terminal .panel-head h2,
-html[data-theme="light"] body.mf-trading-terminal .candidate-name strong,
-html[data-theme="light"] body.mf-trading-terminal .strategy-summary-row strong {
+html[data-theme="light"] body.mf-trading-terminal .candidate-name strong {
   color: var(--mf-trading-v61-text) !important;
 }
 
 html[data-theme="light"] body.mf-trading-terminal .candidate-name span,
 html[data-theme="light"] body.mf-trading-terminal .candidate-bottom,
-html[data-theme="light"] body.mf-trading-terminal .strategy-summary-row span,
 html[data-theme="light"] body.mf-trading-terminal .trade-log-hint {
   color: var(--mf-trading-v61-muted) !important;
 }
@@ -89,31 +84,3 @@ html[data-theme="light"] body.mf-trading-terminal :where(.approval-stats, .contr
 }
 
 /* MEMEFLOW_TRADING_LIGHT_POLISH_V61_END */
-
-/* MEMEFLOW_TRADING_LIGHT_WHITE_MODULES_V153
-   Strategy-only compatibility contract.
-   Chart ownership was removed during Chart canonicalization.
-*/
-html[data-theme="light"] body.mf-trading-terminal .strategy-summary-panel {
-  background: #ffffff !important;
-  background-color: #ffffff !important;
-  background-image: none !important;
-}
-
-html[data-theme="light"] body.mf-trading-terminal
-.strategy-summary-panel .strategy-summary-row {
-  background: #ffffff !important;
-  background-color: #ffffff !important;
-  background-image: none !important;
-}
-
-/* MEMEFLOW_TRADING_LIGHT_WHITE_MODULES_V153_END */
-
-/* MEMEFLOW_TRADING_LIGHT_WHITE_MODULES_V153_1 */
-html[data-theme="light"] body.mf-trading-terminal
-.terminal > .panel.control-panel.strategy-summary-panel {
-  background: #ffffff !important;
-  background-color: #ffffff !important;
-  background-image: none !important;
-}
-/* MEMEFLOW_TRADING_LIGHT_WHITE_MODULES_V153_1_END */

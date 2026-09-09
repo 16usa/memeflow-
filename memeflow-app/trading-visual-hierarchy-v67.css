@@ -49,7 +49,6 @@ body.mf-page-trading.mf-trading-terminal .approvals-panel .empty {
 /* Right-side service elements should never push the section title around. */
 body.mf-page-trading.mf-trading-terminal :where(
   .approval-count,
-  .strategy-head-actions,
   .pnl-summary,
   .tiny-state,
   .trade-log-hint
@@ -71,7 +70,6 @@ body.mf-page-trading.mf-trading-terminal :where(
 
   body.mf-page-trading.mf-trading-terminal :where(
     .approvals-panel,
-    .strategy-summary-panel,
     .positions-panel,
     .candidates-panel,
     .bottom-history-panel
@@ -83,7 +81,6 @@ body.mf-page-trading.mf-trading-terminal :where(
 
   body.mf-page-trading.mf-trading-terminal :where(
     .approvals-panel,
-    .strategy-summary-panel,
     .positions-panel,
     .candidates-panel,
     .bottom-history-panel
@@ -96,7 +93,6 @@ body.mf-page-trading.mf-trading-terminal :where(
 
   body.mf-page-trading.mf-trading-terminal :where(
     .approvals-panel,
-    .strategy-summary-panel,
     .positions-panel,
     .candidates-panel,
     .bottom-history-panel
@@ -107,7 +103,6 @@ body.mf-page-trading.mf-trading-terminal :where(
 
   body.mf-page-trading.mf-trading-terminal :where(
     .approvals-panel,
-    .strategy-summary-panel,
     .positions-panel,
     .candidates-panel,
     .bottom-history-panel
@@ -151,7 +146,6 @@ body.mf-page-trading.mf-trading-terminal :where(
      cannot fit everything, the title truncates instead of wrapping. */
   body.mf-page-trading.mf-trading-terminal :where(
     .approvals-panel,
-    .strategy-summary-panel,
     .positions-panel,
     .candidates-panel,
     .bottom-history-panel
@@ -165,7 +159,6 @@ body.mf-page-trading.mf-trading-terminal :where(
   body.mf-page-trading.mf-trading-terminal :where(
     .approval-count,
     .mode-badge,
-    .strategy-edit-link,
     .pnl-summary span,
     .pnl-summary strong,
     .tiny-state,
@@ -176,7 +169,6 @@ body.mf-page-trading.mf-trading-terminal :where(
 
   /* Strategy values and approval identity are dynamic. Keep one-line behavior
      even when server text becomes longer than the examples on screen. */
-  body.mf-page-trading.mf-trading-terminal .strategy-summary-row :where(span, strong),
   body.mf-page-trading.mf-trading-terminal .approval-main :where(span, strong),
   body.mf-page-trading.mf-trading-terminal .approval-stats :where(b, strong) {
     overflow: hidden;
@@ -1256,7 +1248,7 @@ html[data-theme="dark"] body.mf-page-trading.mf-trading-terminal
 }
 
 html[data-theme="dark"] body.mf-page-trading.mf-trading-terminal
-:where(.selected-metrics > div, .strategy-summary-row, .empty) {
+:where(.selected-metrics > div, .empty) {
   background: var(--mf-dark-surface-2) !important;
   background-image: none !important;
   border-color: transparent !important;
@@ -1296,7 +1288,7 @@ html[data-theme="dark"] body.mf-page-trading.mf-trading-terminal
 }
 
 html[data-theme="dark"] body.mf-page-trading.mf-trading-terminal
-:where(.strategy-edit-link, .wallet-btn) {
+.wallet-btn {
   background: var(--mf-dark-surface-2) !important;
   background-image: none !important;
   border-color: var(--mf-dark-line) !important;
@@ -1325,7 +1317,7 @@ html[data-theme="dark"] body.mf-page-trading.mf-trading-terminal
   html[data-theme="dark"] body.mf-page-trading.mf-trading-terminal
   .indicator-scroll button:not([aria-pressed="true"]):hover,
   html[data-theme="dark"] body.mf-page-trading.mf-trading-terminal
-  :where(.strategy-edit-link, .wallet-btn):hover {
+  .wallet-btn:hover {
     background: var(--mf-dark-surface-2) !important;
   }
 }
@@ -1476,9 +1468,7 @@ body.mf-page-trading.mf-trading-terminal
 body.mf-page-trading.mf-trading-terminal
 .chart-panel .selected-metrics,
 body.mf-page-trading.mf-trading-terminal
-.approvals-panel .approval-list,
-body.mf-page-trading.mf-trading-terminal
-.strategy-summary-panel .strategy-summary-list {
+.approvals-panel .approval-list {
   background: transparent !important;
   background-color: transparent !important;
   background-image: none !important;
@@ -1487,8 +1477,6 @@ body.mf-page-trading.mf-trading-terminal
 
 body.mf-page-trading.mf-trading-terminal
 .chart-panel .selected-metrics > div,
-body.mf-page-trading.mf-trading-terminal
-.strategy-summary-panel .strategy-summary-row,
 body.mf-page-trading.mf-trading-terminal
 .approvals-panel .approval-list > .empty,
 body.mf-page-trading.mf-trading-terminal
@@ -1519,25 +1507,6 @@ body.mf-page-trading.mf-trading-terminal
    The dark contract maps that same token to --mf-dark-line.
    Fallback remains the site's --line token.
    -------------------------------------------------------------------------- */
-
-body.mf-page-trading.mf-trading-terminal
-.strategy-summary-panel > .panel-head {
-  border-bottom-color: var(--mf-trading-v61-line, var(--line)) !important;
-}
-
-body.mf-page-trading.mf-trading-terminal
-.strategy-summary-panel .strategy-summary-row > div + div {
-  border-left-color: var(--mf-trading-v61-line, var(--line)) !important;
-}
-
-body.mf-page-trading.mf-trading-terminal
-.strategy-summary-panel .strategy-summary-foot {
-  border-top: 1px solid var(--mf-trading-v61-line, var(--line)) !important;
-  background: transparent !important;
-  background-color: transparent !important;
-  background-image: none !important;
-  box-shadow: none !important;
-}
 
 body.mf-page-trading.mf-trading-terminal
 .chart-panel .selected-metrics {
