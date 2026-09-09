@@ -129,24 +129,6 @@ body.mf-page-agent-performance
 }
 
 /* --------------------------------------------------------------------------
-   THIRD / LIGHTEST DARK TONE
-   Existing Surface-2 consumers already resolve --mf-dark-surface-2.
-   The Candidates segmented control had one later hard-coded active fill,
-   so normalize that one explicit exception to the same approved X material.
-   -------------------------------------------------------------------------- */
-
-html[data-theme="dark"]
-body.mf-page-trading.mf-trading-terminal
-.candidates-panel .candidate-filter > button[data-filter],
-html[data-theme="dark"]
-body.mf-page-trading.mf-trading-terminal
-.candidates-panel .candidate-filter > button[data-filter].active {
-  background: var(--mf-x-dark-inset) !important;
-  background-color: var(--mf-x-dark-inset) !important;
-  background-image: none !important;
-}
-
-/* --------------------------------------------------------------------------
    X-STYLE SEPARATORS
    Preserve semantic left accents and status outlines; only neutral separators
    are normalized here.
@@ -451,39 +433,10 @@ html[data-theme] body.mf-page-trading.mf-trading-terminal .panel-head {
   border-bottom-color: var(--mf-structure-divider) !important;
 }
 
-/* Candidates title flows directly into its segmented control. */
-html[data-theme] body.mf-page-trading.mf-trading-terminal
-.candidates-panel > .panel-head {
-  border-bottom: 0 !important;
-}
-
 /* Pending approvals = outer boundary only; no line through an empty state. */
 html[data-theme] body.mf-page-trading.mf-trading-terminal
 .approvals-panel > .panel-head {
   border-bottom: 0 !important;
-}
-
-/* --------------------------------------------------------------------------
-   3) CANDIDATES SEGMENTS
-   Preserve existing fills / active semantic text, remove button seams.
-   One quiet line below the whole strip separates controls from content.
-   -------------------------------------------------------------------------- */
-
-html[data-theme] body.mf-page-trading.mf-trading-terminal
-.candidates-panel .candidate-filter {
-  border-top: 0 !important;
-  border-left: 0 !important;
-  border-right: 0 !important;
-  border-bottom-width: var(--mf-structure-hairline) !important;
-  border-bottom-style: solid !important;
-  border-bottom-color: var(--mf-structure-divider) !important;
-}
-
-html[data-theme] body.mf-page-trading.mf-trading-terminal
-.candidates-panel .candidate-filter > button[data-filter] {
-  border-width: 0 !important;
-  border-style: none !important;
-  box-shadow: none !important;
 }
 
 /* --------------------------------------------------------------------------
@@ -941,11 +894,6 @@ html[data-theme]
 body.mf-page-trading.mf-trading-terminal
 .timeframes
 > button,
-html[data-theme]
-body.mf-page-trading.mf-trading-terminal
-.candidates-panel
-.candidate-filter
-> button[data-filter],
 html[data-theme]
 body.mf-page-trading.mf-trading-terminal
 .indicator-bar
@@ -1420,60 +1368,9 @@ strong {
    ========================================================================== */
 
 /* --------------------------------------------------------------------------
-   CANDIDATES FILTER
-   -------------------------------------------------------------------------- */
-
-html[data-theme]
-body.mf-page-trading.mf-trading-terminal
-.candidates-panel
-.candidate-filter {
-  background: transparent !important;
-  background-color: transparent !important;
-  background-image: none !important;
-}
-
-html[data-theme]
-body.mf-page-trading.mf-trading-terminal
-.candidates-panel
-.candidate-filter
-> button[data-filter] {
-  font-size: 9px !important;
-  color: var(--mf-text-tertiary) !important;
-
-  background: transparent !important;
-  background-color: transparent !important;
-  background-image: none !important;
-
-  box-shadow: none !important;
-}
-
-html[data-theme]
-body.mf-page-trading.mf-trading-terminal
-.candidates-panel
-.candidate-filter
-> button[data-filter].active {
-  color: var(--mf-text-primary) !important;
-
-  background: transparent !important;
-  background-color: transparent !important;
-  background-image: none !important;
-
-  box-shadow: none !important;
-}
-
-/* --------------------------------------------------------------------------
    SELECTED ROW LEFT ACCENT
    Keep the existing selected fill and the existing box model.
    -------------------------------------------------------------------------- */
-
-/* Candidate V67 uses a 2px border-left accent.
-   Make only the accent color transparent so row geometry does not move. */
-html[data-theme]
-body.mf-page-trading.mf-trading-terminal
-.candidates-panel
-.candidate.selected {
-  border-left-color: transparent !important;
-}
 
 /* Open-position V117 dark/default uses a left border accent.
    Keep its width and selected fill; hide only the accent color. */

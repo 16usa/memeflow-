@@ -47,16 +47,6 @@ body.mf-page-trading.mf-trading-terminal .chart-legend span {
   box-shadow: none !important;
 }
 
-/* Selected candidate: keep one restrained accent instead of stacked effects. */
-body.mf-page-trading.mf-trading-terminal .candidate.selected {
-  border-left: 2px solid var(--mf-v67-selected-accent) !important;
-  box-shadow: none !important;
-}
-
-body.mf-page-trading.mf-trading-terminal .candidate:not(.selected) {
-  border-left: 2px solid transparent !important;
-}
-
 /* Empty approvals remain visible, but stop consuming card-like vertical space. */
 body.mf-page-trading.mf-trading-terminal .approvals-panel .approval-empty,
 body.mf-page-trading.mf-trading-terminal .approvals-panel .empty {
@@ -150,9 +140,6 @@ body.mf-page-trading.mf-trading-terminal :where(
     padding: 4px 6px 6px !important;
   }
 
-  body.mf-page-trading.mf-trading-terminal .candidate.selected {
-    padding-left: 7px !important;
-  }
 }
 
 /* Narrow phone: reserve enough width for PRICE / MC / BP metadata to stay calm. */

@@ -232,13 +232,17 @@ button { cursor: pointer; }
 }
 
 .candidate-filter {
-  padding: 7px 8px;
-  display: flex;
-  gap: 5px;
-  border-bottom: 1px solid rgba(111, 154, 172, .055);
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  align-items: stretch;
+  gap: 0;
+  padding: 0;
+  border: 0;
+  border-bottom: var(--mf-structure-hairline, 1px) solid var(--mf-structure-divider, rgba(111, 154, 172, .055));
+  background: transparent;
 }
 
-.candidate-filter button, .timeframes button {
+.timeframes button {
   border: 1px solid rgba(111, 154, 172, .045);
   border-radius: 7px;
   background: transparent;
@@ -247,12 +251,7 @@ button { cursor: pointer; }
   font-weight: 700;
 }
 
-.candidate-filter button {
-  min-height: 27px;
-  padding: 0 8px;
-}
-
-.candidate-filter button.active, .timeframes button.active {
+.timeframes button.active {
   border-color: rgba(85, 217, 255, .28);
   background: rgba(85, 217, 255, .06);
   color: #b5edfa;
@@ -2225,3 +2224,140 @@ button { cursor: pointer; }
   }
 }
 /* ===== /MEMEFLOW_TOKEN_AVATAR_ROW_FIT_V1 ===== */
+/* ==========================================================================
+   MEMEFLOW CANDIDATES — CANONICAL PRESENTATION CONTRACT
+   One page-level owner for Candidates geometry, surfaces and selection state.
+   Shared global files may provide tokens, but do not redefine Candidates.
+   ========================================================================== */
+
+body.mf-page-trading.mf-trading-terminal
+.candidates-panel > .panel-head {
+  border-bottom: 0 !important;
+}
+
+body.mf-page-trading.mf-trading-terminal
+.candidates-panel .candidate-filter {
+  display: grid !important;
+  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  align-items: stretch !important;
+  gap: 0 !important;
+  row-gap: 0 !important;
+  column-gap: 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border-top: 0 !important;
+  border-left: 0 !important;
+  border-right: 0 !important;
+  border-bottom-width: var(--mf-structure-hairline, 1px) !important;
+  border-bottom-style: solid !important;
+  border-bottom-color: var(--mf-structure-divider, rgba(111, 154, 172, .055)) !important;
+}
+
+body.mf-page-trading.mf-trading-terminal
+.candidates-panel .candidate-filter > button[data-filter] {
+  box-sizing: border-box !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  height: 48px !important;
+  min-height: 48px !important;
+  margin: 0 !important;
+  padding: 0 4px !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  color: var(--mf-text-tertiary, #818c99) !important;
+  font-size: 9px !important;
+  line-height: 1 !important;
+  font-weight: 650 !important;
+  letter-spacing: .025em !important;
+  text-transform: uppercase !important;
+  white-space: nowrap !important;
+  -webkit-text-size-adjust: none !important;
+  text-size-adjust: none !important;
+  touch-action: manipulation;
+}
+
+body.mf-page-trading.mf-trading-terminal
+.candidates-panel .candidate-filter > button[data-filter].active {
+  color: var(--mf-text-primary, #e7e9ea) !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+body.mf-page-trading.mf-trading-terminal
+.candidates-panel .candidate-filter > button[data-filter]:focus-visible {
+  outline: 1px solid rgba(161, 170, 181, .55) !important;
+  outline-offset: 2px !important;
+}
+
+body.mf-page-trading.mf-trading-terminal
+.candidates-panel #candidateList > .candidate {
+  border-left: 2px solid transparent !important;
+}
+
+body.mf-page-trading.mf-trading-terminal
+.candidates-panel #candidateList > .candidate:hover,
+body.mf-page-trading.mf-trading-terminal
+.candidates-panel #candidateList > .candidate.selected {
+  background: rgba(85, 217, 255, .035);
+  background-image: none;
+}
+
+body.mf-page-trading.mf-trading-terminal
+.candidates-panel .candidate-list > .empty {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  color: var(--mf-text-tertiary, #818c99) !important;
+  font-size: var(--mf-type-system, 8px) !important;
+  line-height: 1.2 !important;
+  font-weight: 500 !important;
+}
+
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.candidates-panel,
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.candidates-panel > .panel-head,
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.candidates-panel > .candidate-filter,
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.candidates-panel > #candidateList,
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.candidates-panel #candidateList > .candidate,
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.candidates-panel #candidateList > .candidate.selected,
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.candidates-panel #candidateList > .candidate:hover {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  background-image: none !important;
+}
+
+@media (max-width: 820px) {
+  body.mf-page-trading.mf-trading-terminal
+  .candidates-panel #candidateList > .candidate.selected {
+    padding-left: 7px !important;
+  }
+}
+
+/* MEMEFLOW_CANDIDATES_CANONICAL_PRESENTATION_END */

@@ -26,10 +26,6 @@
 /* Outer module canvases. */
 html[data-theme="light"]
 body.mf-page-trading.mf-trading-terminal
-.terminal > .panel.candidates-panel,
-
-html[data-theme="light"]
-body.mf-page-trading.mf-trading-terminal
 .terminal > .panel.control-panel.strategy-summary-panel,
 
 html[data-theme="light"]
@@ -124,48 +120,6 @@ body.mf-page-trading.mf-trading-terminal
   background-image: none !important;
 }
 
-/* Candidates: title, strip container, list, all rows and selected/hover rows. */
-html[data-theme="light"]
-body.mf-page-trading.mf-trading-terminal
-.candidates-panel > .panel-head,
-
-html[data-theme="light"]
-body.mf-page-trading.mf-trading-terminal
-.candidates-panel > .candidate-filter,
-
-html[data-theme="light"]
-body.mf-page-trading.mf-trading-terminal
-.candidates-panel > #candidateList,
-
-html[data-theme="light"]
-body.mf-page-trading.mf-trading-terminal
-.candidates-panel #candidateList > .candidate,
-
-html[data-theme="light"]
-body.mf-page-trading.mf-trading-terminal
-.candidates-panel #candidateList > .candidate.selected,
-
-html[data-theme="light"]
-body.mf-page-trading.mf-trading-terminal
-.candidates-panel #candidateList > .candidate:hover {
-  background: #ffffff !important;
-  background-color: #ffffff !important;
-  background-image: none !important;
-}
-
-/* Candidate segment controls remain text-only instead of inheriting old gray fill. */
-html[data-theme="light"]
-body.mf-page-trading.mf-trading-terminal
-.candidates-panel .candidate-filter > button[data-filter],
-
-html[data-theme="light"]
-body.mf-page-trading.mf-trading-terminal
-.candidates-panel .candidate-filter > button[data-filter].active {
-  background: transparent !important;
-  background-color: transparent !important;
-  background-image: none !important;
-}
-
 /* Recent trades: header, list and every trade row. */
 html[data-theme="light"]
 body.mf-page-trading.mf-trading-terminal
@@ -190,7 +144,6 @@ body.mf-page-trading.mf-trading-terminal
   .chart-panel,
   .strategy-summary-panel,
   .positions-panel,
-  .candidates-panel,
   .bottom-history-panel
 ) .empty {
   background: transparent !important;
