@@ -4480,6 +4480,143 @@ function positionAvatarMarkup(position) {
 }
 
 /* MEMEFLOW_OPEN_POSITION_SELECTION_V117_1 */
+
+/* MEMEFLOW_OPEN_POSITION_INFO_V84 */
+function ensurePositionInfoSheetV84() {
+  let root = document.getElementById('positionInfoSheetV84');
+
+  if (root) {
+    return root;
+  }
+
+  root = document.createElement('div');
+  root.id = 'positionInfoSheetV84';
+  root.className = 'position-info-sheet-v84';
+  root.hidden = true;
+  root.setAttribute('role', 'dialog');
+  root.setAttribute('aria-modal', 'true');
+  root.setAttribute('aria-label', 'Position strategy details');
+
+  root.innerHTML = `
+    <button
+      class="position-info-sheet-v84__backdrop"
+      type="button"
+      data-position-info-close-v84
+      aria-label="Close position details"
+    ></button>
+
+    <section class="position-info-sheet-v84__card">
+      <div class="position-info-sheet-v84__head">
+        <div class="position-info-sheet-v84__title">
+          <strong data-position-info-symbol-v84>Position</strong>
+          <span>Position rules</span>
+        </div>
+
+        <button
+          class="position-info-sheet-v84__close"
+          type="button"
+          data-position-info-close-v84
+          aria-label="Close"
+        >×</button>
+      </div>
+
+      <div
+        class="position-info-sheet-v84__grid"
+        data-position-info-grid-v84
+      ></div>
+    </section>
+  `;
+
+  root.addEventListener('click', event => {
+    if (event.target.closest('[data-position-info-close-v84]')) {
+      root.hidden = true;
+    }
+  });
+
+  document.body.appendChild(root);
+
+  return root;
+}
+
+function closePositionInfoV84() {
+  const root = document.getElementById('positionInfoSheetV84');
+  if (root) {
+    root.hidden = true;
+  }
+}
+
+function openPositionInfoV84(position) {
+  if (!position) {
+    return;
+  }
+
+  const root = ensurePositionInfoSheetV84();
+  const settings = position.settingsSnapshot || {};
+
+  const symbolNode =
+    root.querySelector('[data-position-info-symbol-v84]');
+  const grid =
+    root.querySelector('[data-position-info-grid-v84]');
+
+  symbolNode.textContent =
+    String(position.symbol || short(position.mint) || 'Position');
+
+  const signedPct = value => {
+    const n = num(value);
+    if (!finite(n)) return '—';
+    return `${n > 0 ? '+' : ''}${fmt(n, 0)}%`;
+  };
+
+  const plainPct = value =>
+    finite(value) ? `${fmt(value, 1)}%` : '—';
+
+  const weakPressure =
+    settings.exitOnWeakBuyPressure !== false
+      ? 'ON'
+      : 'OFF';
+
+  const items = [
+    ['Hard stop', plainPct(settings.hardStopPct)],
+    ['Trailing', plainPct(settings.trailingStopPct)],
+    [
+      'TP1',
+      `${signedPct(settings.tp1Pct)} · sell ${fmt(settings.tp1SellPct, 0)}%`
+    ],
+    [
+      'TP2',
+      `${signedPct(settings.tp2Pct)} · sell ${fmt(settings.tp2SellPct, 0)}%`
+    ],
+    ['Runner', plainPct(settings.runnerPct)],
+    [
+      'Max hold',
+      finite(settings.maxHoldMinutes)
+        ? `${fmt(settings.maxHoldMinutes, 0)} min`
+        : '—'
+    ],
+    [
+      'Exit pressure',
+      finite(settings.exitBuyPressure)
+        ? `${fmt(settings.exitBuyPressure, 1)}× · weak ${weakPressure}`
+        : `— · weak ${weakPressure}`
+    ]
+  ];
+
+  grid.innerHTML = items.map(([label, value]) => `
+    <div class="position-info-sheet-v84__item">
+      <span>${esc(label)}</span>
+      <strong>${esc(value)}</strong>
+    </div>
+  `).join('');
+
+  root.hidden = false;
+}
+
+document.addEventListener('keydown', event => {
+  if (event.key === 'Escape') {
+    closePositionInfoV84();
+  }
+});
+
 function renderPositions() {
   const rows = state.positions.filter(p => p.status === 'OPEN');
   const list = $('positionsList');
@@ -4563,12 +4700,13 @@ function renderPositions() {
             <strong class="position-pnl ${pnlClass}">
               ${esc(pnlText)}
             </strong>
-            <i>·</i>
-            <span>SL ${fmt(settings.hardStopPct, 1)}%</span>
-            <i>·</i>
-            <span>TP1 ${fmt(settings.tp1Pct, 0)}%</span>
-            <i>·</i>
-            <span>TP2 ${fmt(settings.tp2Pct, 0)}%</span>
+            <button
+              class="position-info-v84"
+              data-position-info-v84="${esc(position.id)}"
+              type="button"
+              aria-label="Show position rules"
+              title="Position rules"
+            >!</button>
           </div>
         </div>
 
@@ -4591,9 +4729,27 @@ function renderPositions() {
   list.querySelectorAll('.position-row[data-mint]').forEach(row => {
     row.addEventListener('click', event => {
       if (event.target.closest('.close-position')) return;
+      if (event.target.closest('.position-info-v84')) return;
       if (event.target.closest('[data-mf-pump-avatar-link-v76]')) return;
 
       selectCandidate(row.dataset.mint);
+    });
+  });
+
+  list.querySelectorAll('.position-info-v84').forEach(button => {
+    button.addEventListener('click', event => {
+      event.preventDefault();
+      event.stopPropagation();
+
+      const id =
+        String(button.dataset.positionInfoV84 || '').trim();
+
+      const position =
+        state.positions.find(
+          row => String(row?.id || '') === id
+        );
+
+      openPositionInfoV84(position);
     });
   });
 
