@@ -273,3 +273,39 @@ html[data-theme="dark"] .position-popover-v85__label {
     font-size: 10.5px;
   }
 }
+
+/* MEMEFLOW_OPEN_POSITION_ICON_GEOMETRY_V93
+   Confirmed root cause:
+   memeflow-accessibility-usability-v64a.css gives EVERY native button
+   min-block-size:44px on coarse pointers.
+
+   .position-info-v85 is a native button. Its SVG looked 14/16px, but its
+   layout box was still 44px tall. That made .position-bottomline 44px tall
+   and pushed the token title upward inside the fixed 64px row.
+*/
+@media (pointer: coarse) {
+  body.mf-accessibility-v64a .position-info-v85 {
+    block-size: 16px !important;
+    min-block-size: 16px !important;
+    max-block-size: 16px !important;
+
+    height: 16px !important;
+    min-height: 16px !important;
+    max-height: 16px !important;
+
+    padding-block: 0 !important;
+  }
+}
+
+@media (pointer: coarse) and (max-width: 430px) {
+  body.mf-accessibility-v64a .position-info-v85 {
+    block-size: 14px !important;
+    min-block-size: 14px !important;
+    max-block-size: 14px !important;
+
+    height: 14px !important;
+    min-height: 14px !important;
+    max-height: 14px !important;
+  }
+}
+/* /MEMEFLOW_OPEN_POSITION_ICON_GEOMETRY_V93 */
