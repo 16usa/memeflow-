@@ -887,47 +887,6 @@ button { cursor: pointer; }
 .trade-side.buy { color: var(--green); }
 .trade-side.sell { color: var(--red); }
 
-.section-title {
-  margin-bottom: 8px;
-  color: #718995;
-  font-size: var(--mf-type-micro);
-  font-weight: 740;
-}
-
-.wallet-address {
-  padding: 8px 9px;
-  overflow: hidden;
-  border: 1px solid rgba(111, 154, 172, .035);
-  border-radius: 8px;
-  color: #647d88;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: var(--mf-type-micro);
-  line-height: 1.4;
-  text-overflow: ellipsis;
-}
-
-.live-warning {
-  margin-top: 7px;
-  padding: 8px 9px;
-  border: 1px solid rgba(239, 198, 106, .09);
-  border-radius: 8px;
-  background: rgba(239, 198, 106, .025);
-}
-
-.live-warning strong {
-  display: block;
-  color: #a99365;
-  font-size: var(--mf-type-micro);
-}
-
-.live-warning span {
-  display: block;
-  margin-top: 4px;
-  color: #655d4c;
-  font-size: var(--mf-type-micro);
-  line-height: 1.45;
-}
-
 .control-error {
   margin: 9px 12px 0;
   padding: 8px 9px;
@@ -1030,7 +989,6 @@ button { cursor: pointer; }
   .control-panel > .panel-head .eyebrow {  }
   .control-panel > .panel-head h2 { margin: 0;  }
   .mode-badge { padding: 3px 6px; font-size: var(--mf-type-micro); }
-  .section-title { margin-bottom: 5px; font-size: var(--mf-type-micro); }
 
 
   .candidates-panel .panel-head { min-height: 40px; padding: 7px 9px; }
@@ -1048,15 +1006,6 @@ button { cursor: pointer; }
   .state-dot { padding: 2px 5px; font-size: var(--mf-type-micro); }
   .candidate-price { font-size: var(--mf-type-micro); }
 
-  .compact-wallet-panel { order: 6; width: 100%; }
-  .compact-wallet-panel .panel-head { min-height: 37px; padding: 7px 9px; }
-  .compact-wallet-panel .panel-head h2 { margin: 0;  }
-  .compact-wallet-panel .wallet-section { padding: 7px 9px; }
-  .compact-wallet-panel .wallet-section > .section-title { display: none; }
-  .compact-wallet-panel .wallet-address { padding: 7px 8px; font-size: var(--mf-type-micro); }
-  .compact-wallet-panel .live-warning { margin-top: 5px; padding: 7px 8px; }
-  .compact-wallet-panel .live-warning strong { font-size: var(--mf-type-micro); }
-  .compact-wallet-panel .live-warning span { margin-top: 3px; font-size: var(--mf-type-micro); }
 }
 
 
