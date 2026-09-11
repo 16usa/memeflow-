@@ -6,7 +6,7 @@ import test from 'node:test';
 import vm from 'node:vm';
 import {JsonStore} from '../src/store.mjs';
 
-test('session tombstone rejects delayed hot-cache re-adds without deleting registry history',()=>{
+test('session tombstone rejects re-adds and preserves financial history',()=>{
   const dir=fs.mkdtempSync(
     path.join(os.tmpdir(),'memeflow-global-prune-')
   );
@@ -21,6 +21,7 @@ test('session tombstone rejects delayed hot-cache re-adds without deleting regis
     );
     store.addToken({mint,wsFirst:true,priceSol:1});
     store.tokenRegistry.flush();
+    store.state.paperTrades=[{mint,side:'BUY',priceSol:1}];
 
     pruned.add(mint);
     store.removeToken(mint);
@@ -31,9 +32,15 @@ test('session tombstone rejects delayed hot-cache re-adds without deleting regis
     );
     assert.equal(store.state.tokens[mint],undefined);
     assert.equal(store.getToken(mint),null);
-    assert.ok(
+    assert.equal(
       store.tokenRegistry.get(mint),
-      'permanent registry history must remain available'
+      null,
+      'operational registry row must be deleted'
+    );
+    assert.deepEqual(
+      store.state.paperTrades,
+      [{mint,side:'BUY',priceSol:1}],
+      'financial history must remain intact'
     );
 
     open.add(mint);

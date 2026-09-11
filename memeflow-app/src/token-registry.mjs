@@ -77,10 +77,11 @@ export class TokenRegistry{
         token_json=excluded.token_json
     `);
     this.getStmt=this.db.prepare(`SELECT token_json FROM tokens WHERE mint=?`);
+    this.deleteStmt=this.db.prepare(`DELETE FROM tokens WHERE mint=?`);
     // MEMEFLOW_TOKEN_REGISTRY_STARTUP_UNBLOCK_V144
     // Metrics must never full-scan the permanent registry on the main thread.
-    // This table is append-oriented/permanent, so MAX(rowid) is a safe,
-    // non-blocking approximation and uses the table B-tree's right edge.
+    // MAX(rowid) is a non-blocking approximation using the B-tree's right
+    // edge. It may overestimate after deletions from a previous process.
     this.countStmt=this.db.prepare(
       `SELECT COALESCE(MAX(rowid),0) AS n FROM tokens`
     );
@@ -283,6 +284,22 @@ export class TokenRegistry{
 
     this.metrics.lazyHits++;
     return token;
+  }
+
+  delete(mint){
+    mint=String(mint||'').trim();
+    if(!mint)return false;
+
+    // Cancel a queued stale write before deleting the durable row.
+    this.pending.delete(mint);
+    const result=this.deleteStmt.run(mint);
+    if(Number(result?.changes||0)>0){
+      this.metrics.permanentTokensApprox=Math.max(
+        0,
+        Number(this.metrics.permanentTokensApprox||0)-1
+      );
+    }
+    return true;
   }
 
   loadHot(limit=5000){

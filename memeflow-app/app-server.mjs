@@ -23,6 +23,7 @@ import {createV24ControlledPolicyBridgeV24_0} from './src/controlled-policy-brid
 import {createV24ProbationTelemetryV24_1} from './src/v24-probation-telemetry-v24_1.mjs'; // MEMEFLOW_V24_PROBATION_TELEMETRY_V24_1
 import {createV24ProbationEvidenceGateV24_2} from './src/v24-probation-evidence-gate-v24_2.mjs'; // MEMEFLOW_V24_PROBATION_EVIDENCE_GATE_V24_2
 import {createSolUsdOracle} from './src/sol-usd-oracle.mjs'; // MEMEFLOW_OPPORTUNITY_ENGINE_V1
+import {shouldDeleteToken,tokenPriceDropPercent} from './src/token-cleanup.mjs';
 import {liveCardMarketSnapshot,openPositionLiveMarketCap} from './src/live-card-market.mjs'; // MEMEFLOW_LIVE_CARD_MARKET_TRUTH_V18 / MEMEFLOW_OPEN_POSITION_LIVE_MC_V20
 import {resolvePaperPositionMarkV81} from './src/paper-position-mark-v81.mjs'; // MEMEFLOW_OPEN_POSITION_MARK_PARITY_V81
 import {rankCandidateViews} from './src/feed-ranking.mjs'; // MEMEFLOW_FEED_RELEVANCE_RANKING_V1
@@ -79,9 +80,8 @@ const v24ProbationEvidenceGate=createV24ProbationEvidenceGateV24_2({
 }); // V24.2 owner-review readiness only; cannot change bridge mode
 const solUsdOracle=createSolUsdOracle(); // one shared quote, never per-token RPC
 solUsdOracle.start();
-// MEMEFLOW_PERMANENT_TOKEN_REGISTRY_V1
-// Token lifetime is permanent in the registry. There is NO 3-hour token TTL.
-// RAM is only a hot cache and may be capacity-evicted without deleting history.
+// The registry retains operational tokens until the centralized cleanup rule
+// qualifies them for deletion. RAM may still be capacity-evicted independently.
 const __mfScannerRuntimeStartedAt=Date.now(); // diagnostics only
 const __mfScannerCacheMaxTokens=Math.max(
   1000,
@@ -102,7 +102,7 @@ function __mfOpenPositionMints(){
 
 // MEMEFLOW_GLOBAL_INSTANT_PRUNE_V1
 // Session-only tombstones stop delayed discovery/enrichment work from
-// reintroducing a genuinely pruned scanner mint. Permanent history is intact.
+// reintroducing a deleted scanner mint. Financial history remains intact.
 const __mfGlobalPrunedMintsV1=new Set();
 store.setTokenHotAdmissionGuard?.(
   mint=>
@@ -225,7 +225,20 @@ function __mfDropScannerToken(
   if(sessionPruned)__mfGlobalPrunedMintsV1.add(mint);
 
   if(skipStoreRemoval!==true){
-    try{store.removeToken?.(mint)}catch{}
+    try{
+      if(store.removeToken?.(mint)===false){
+        __mfGlobalPrunedMintsV1.delete(mint);
+        return false;
+      }
+    }catch(error){
+      __mfGlobalPrunedMintsV1.delete(mint);
+      console.error(
+        '[TOKEN CLEANUP] operational deletion failed',
+        mint,
+        String(error?.message||error)
+      );
+      return false;
+    }
   }
 
   try{eventHolderLedger?.dropMint?.(mint)}catch{}
@@ -238,6 +251,7 @@ function __mfDropScannerToken(
     priceTimers?.delete?.(mint);
   }catch{}
   try{tradeWindows?.delete?.(mint)}catch{}
+  try{holderQueue?.cancel?.(mint)}catch{}
   try{tokenIntelligenceShadowV23?.dropMint?.(mint,reason)}catch{}
   try{
     for(const key of __mfEntryAdmissionState?.keys?.()||[]){
@@ -266,9 +280,8 @@ const __mfScannerPruneYieldV44=()=>new Promise(
 );
 
 async function __mfPruneScannerRuntimeState(now=Date.now()){
-  // MEMEFLOW_PERMANENT_TOKEN_REGISTRY_V1
-  // No age TTL and no settings-based deletion. This function is RAM hygiene
-  // only; SQLite remains the permanent source of truth.
+  // Qualifying operational tokens are deleted below. Capacity eviction remains
+  // reversible RAM hygiene and does not delete permanent registry rows.
   if(__mfScannerPruneInFlightV44){
     return {skipped:true,reason:'PRUNE_ALREADY_RUNNING'};
   }
@@ -287,90 +300,47 @@ async function __mfPruneScannerRuntimeState(now=Date.now()){
             )
         );
 
-// MEMEFLOW_STALE_PRICE_PRUNE_V1
-// Remove scanner/runtime tokens whose price has not changed for more than
-// 30 minutes. Open positions are protected by __mfDropScannerToken().
-// Permanent registry/history/trade data remain untouched.
-{
-  const __mfStalePriceNow = Date.now();
-  const __mfStalePriceLimitMs = 30 * 60 * 1000;
-  const __mfStalePriceOpen = __mfOpenPositionMints();
-  const __mfStalePriceRemoved = new Set();
+    const cleanupRemoved=new Set();
 
-  for (const __mfRow of scannerRows) {
-    const __mfMint = __mfRow?.mint;
-    if (!__mfMint) continue;
-    if (__mfStalePriceOpen.has(__mfMint)) continue;
+    for(const token of scannerRows){
+      const mint=String(token?.mint||'');
+      if(!mint||open.has(mint))continue;
 
-    const __mfLastPriceChange =
-      Number(__mfRow?.lastPriceChangeAt) ||
-      Number(__mfRow?.lastPriceAt) ||
-      Number(__mfRow?.updatedAt) ||
-      0;
+      let score=
+        token?.score==null||token.score===''
+          ? NaN
+          : Number(token.score);
+      for(const decision of Object.values(store.state.decisions||{})){
+        if(String(decision?.mint||'')!==mint)continue;
+        const candidate=
+          decision?.score==null||decision.score===''
+            ? NaN
+            : Number(decision.score);
+        if(Number.isFinite(candidate)){
+          score=Number.isFinite(score)
+            ? Math.max(score,candidate)
+            : candidate;
+        }
+      }
 
-    if (
-      __mfLastPriceChange > 0 &&
-      (__mfStalePriceNow - __mfLastPriceChange) > __mfStalePriceLimitMs
-    ) {
-      const __mfDropped = __mfDropScannerToken(
-        __mfMint,
-        'STALE_PRICE_GT_30_MIN'
-      );
+      if(!shouldDeleteToken(token,{now,score}))continue;
 
-      if (__mfDropped) {
-        __mfStalePriceRemoved.add(__mfMint);
+      const drop=tokenPriceDropPercent(token);
+      const reason=
+        drop!==null&&drop>=80
+          ? 'PRICE_DROP_GTE_80_PCT'
+          : 'AGE_GT_30_MIN_SCORE_LT_40';
+
+      if(__mfDropScannerToken(mint,reason)){
+        cleanupRemoved.add(mint);
       }
     }
-  }
 
-  if (__mfStalePriceRemoved.size) {
-    scannerRows = scannerRows.filter(
-      __mfRow => !__mfStalePriceRemoved.has(__mfRow?.mint)
-    );
-  }
-}
-
-
-// MEMEFLOW_DEEP_DRAWDOWN_PRUNE_V1
-// Remove scanner/runtime tokens only when current price is MORE THAN 80%
-// below their recorded ATH (peakPriceSol). Exactly -80% remains active.
-// Open positions are protected by __mfDropScannerToken().
-{
-  const __mfDeepDrawdownOpen = __mfOpenPositionMints();
-  const __mfDeepDrawdownRemoved = new Set();
-
-  for (const __mfRow of scannerRows) {
-    const __mfMint = __mfRow?.mint;
-    if (!__mfMint) continue;
-    if (__mfDeepDrawdownOpen.has(__mfMint)) continue;
-
-    const __mfPeak = Number(__mfRow?.peakPriceSol);
-    const __mfPrice = Number(__mfRow?.priceSol);
-
-    if (
-      Number.isFinite(__mfPeak) &&
-      Number.isFinite(__mfPrice) &&
-      __mfPeak > 0 &&
-      __mfPrice > 0 &&
-      __mfPrice < (__mfPeak * 0.20)
-    ) {
-      const __mfDropped = __mfDropScannerToken(
-        __mfMint,
-        'DEEP_DRAWDOWN_GT_80_PCT'
+    if(cleanupRemoved.size){
+      scannerRows=scannerRows.filter(
+        token=>!cleanupRemoved.has(String(token?.mint||''))
       );
-
-      if (__mfDropped) {
-        __mfDeepDrawdownRemoved.add(__mfMint);
-      }
     }
-  }
-
-  if (__mfDeepDrawdownRemoved.size) {
-    scannerRows = scannerRows.filter(
-      __mfRow => !__mfDeepDrawdownRemoved.has(__mfRow?.mint)
-    );
-  }
-}
 
 
     // MEMEFLOW_SCANNER_PRUNE_MEMBERSHIP_HOTPATH_V74

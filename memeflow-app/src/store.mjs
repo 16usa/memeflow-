@@ -788,7 +788,7 @@ export class JsonStore {
   // MEMEFLOW_SCANNER_PRUNE_LIVE_PRIORITY_V44
   // Bulk removal preserves removeToken() semantics but cleans the decision
   // table/index only once for a capacity-eviction batch.
-  removeTokens(mints){
+  removeTokens(mints,{deleteRegistry=false}={}){
     const target=new Set(
       (Array.isArray(mints)?mints:[mints])
         .map(mint=>String(mint||'').trim())
@@ -796,6 +796,12 @@ export class JsonStore {
     );
 
     if(!target.size)return 0;
+
+    if(deleteRegistry){
+      for(const mint of target){
+        this.tokenRegistry?.delete?.(mint);
+      }
+    }
 
     let removed=0;
 
@@ -832,7 +838,7 @@ export class JsonStore {
   removeToken(mint){
     mint=String(mint||'').trim();
     if(!mint)return false;
-    this.removeTokens([mint]);
+    this.removeTokens([mint],{deleteRegistry:true});
     return true;
   }
   registryStatus(){return this.tokenRegistry?.status?.()||null}

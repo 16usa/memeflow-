@@ -495,6 +495,7 @@ export function makeHolderQueue(config,deps){
   const pending=new Map(); // mint -> {mint,retries,enqueuedAt,dueAt}
   const active=new Map();  // mint -> {mint,item,startedAt,leaseId}
   const history=new Map();
+  const cancelled=new Set();
 
   let wakeTimer=null;
   let wakeAt=0;
@@ -599,6 +600,7 @@ export function makeHolderQueue(config,deps){
   }
 
   function reschedule(item,delayMs){
+    if(cancelled.has(item.mint))return;
     const base=Math.max(1000,Number(delayMs)||retryDelayMs);
     const exponential=Math.min(120000,base*Math.pow(2,Math.min(Number(item.retries||0),3)));
     const jitter=Math.floor(Math.random()*750);
@@ -644,6 +646,7 @@ export function makeHolderQueue(config,deps){
   }
 
   async function run(item){
+    if(cancelled.has(item.mint))return;
     if(admissionFn){
       let gate=null;
       try{
@@ -818,7 +821,13 @@ export function makeHolderQueue(config,deps){
   }
 
   function enqueue(mint){
-    if(stopped||!mint||pending.has(mint)||active.has(mint))return false;
+    if(
+      stopped ||
+      !mint ||
+      cancelled.has(mint) ||
+      pending.has(mint) ||
+      active.has(mint)
+    )return false;
     if(pending.size>=queueMax)dropOldest();
 
     const now=Date.now();
@@ -843,6 +852,20 @@ export function makeHolderQueue(config,deps){
     // If delay is already due (or turns due before another event), give drain an immediate chance.
     if(initialDelayMs===0)kickDrain();
     return true;
+  }
+
+  function cancel(mint){
+    mint=String(mint||'');
+    if(!mint)return false;
+    cancelled.add(mint);
+    const removed=pending.delete(mint);
+    const d=history.get(mint);
+    if(d){
+      d.status='cancelled';
+      d.nextDueAt=null;
+    }
+    scheduleWake();
+    return removed;
   }
 
   // Independent safety net. It does NOT wait for the regular wake timer.
@@ -886,6 +909,7 @@ export function makeHolderQueue(config,deps){
     stopped=true;
 
     pending.clear();
+    cancelled.clear();
 
     if(wakeTimer){
       clearTimeout(wakeTimer);
@@ -898,6 +922,7 @@ export function makeHolderQueue(config,deps){
 
   return {
     enqueue,
+    cancel,
     drain:()=>kickDrain(),
     close,
     get closed(){return stopped;},
