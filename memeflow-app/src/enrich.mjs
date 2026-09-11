@@ -141,6 +141,28 @@ export function makeHolderMetrics() {
     holderAdmissionDropped: 0,
     holderAdmissionErrors: 0,
     holderWorkerTimeouts: 0,
+    holderStarted: 0,
+    holderCompleted: 0,
+    holderDeduplicated: 0,
+    holderQueueWaitMsTotal: 0,
+    holderQueueWaitSamples: 0,
+    holderQueueWaitMsLast: 0,
+    holderQueueWaitMsMax: 0,
+    holderExecutionMsTotal: 0,
+    holderExecutionSamples: 0,
+    holderExecutionMsLast: 0,
+    holderExecutionMsMax: 0,
+    holderRpcStarted: 0,
+    holderRpcCalls: 0,
+    holderRpcFallbacks: 0,
+    holderProgramLookups: 0,
+    holderRpcLatencyMsTotal: 0,
+    holderRpcLatencySamples: 0,
+    holderRpcLatencyMsLast: 0,
+    holderRpcLatencyMsMax: 0,
+    holderParseMsLast: 0,
+    holderTimeoutStages: {},
+    lastHolderTimeoutStage: null,
     holderSchedulerConsidered: 0,
     holderSchedulerSelected: 0,
     holderSchedulerEnqueued: 0,
@@ -365,7 +387,11 @@ function decodeHolderSlice(row,decimals){
 }
 
 async function mintTokenAccounts(rpc,mint,programId,decimals){
-  const rows=await rpc.call('getProgramAccounts',[
+  const call=
+    typeof rpc?.callOnce==='function'
+      ? rpc.callOnce.bind(rpc)
+      : rpc.call.bind(rpc);
+  const rows=await call('getProgramAccounts',[
     programId,
     {
       commitment:'confirmed',
@@ -379,6 +405,24 @@ async function mintTokenAccounts(rpc,mint,programId,decimals){
     .filter(Boolean);
 }
 
+async function mintTokenProgram(rpc,mint){
+  if(typeof rpc?.callOnce!=='function')return null;
+  const account=await rpc.callOnce(
+    'getAccountInfo',
+    [
+      mint,
+      {
+        commitment:'confirmed',
+        encoding:'base64'
+      }
+    ]
+  );
+  const owner=account?.value?.owner;
+  return owner===TOKEN_PROGRAM||owner===TOKEN_2022_PROGRAM
+    ? owner
+    : null;
+}
+
 function aggregateWalletBalances(accounts,protocolAuthorities){
   const byWallet=new Map();
   for(const row of accounts){
@@ -390,20 +434,65 @@ function aggregateWalletBalances(accounts,protocolAuthorities){
 }
 
 export async function enrichHolders(mint,deps){
-  const {rpc,store,evaluateAll,publish,enrichDiag}=deps;
+  const {
+    rpc,
+    store,
+    evaluateAll,
+    publish,
+    enrichDiag,
+    holderMetrics=null,
+    onStage=()=>{}
+  }=deps;
   const token=store.state.tokens[mint]||{};
   const decimals=Number(token.decimals??6);
   const total=Number(token.totalSupply||0);
 
   let accounts=[];
-  let programUsed=TOKEN_PROGRAM;
+  let preferredProgram=
+    token.tokenProgram===TOKEN_PROGRAM ||
+    token.tokenProgram===TOKEN_2022_PROGRAM
+      ? token.tokenProgram
+      : (
+          token.holderTokenProgram===TOKEN_PROGRAM ||
+          token.holderTokenProgram===TOKEN_2022_PROGRAM
+            ? token.holderTokenProgram
+            : null
+        );
+  if(!preferredProgram){
+    onStage('rpc_program_lookup');
+    if(holderMetrics){
+      holderMetrics.holderProgramLookups++;
+      holderMetrics.holderRpcCalls++;
+    }
+    try{
+      preferredProgram=await mintTokenProgram(rpc,mint);
+    }catch(e){
+      e.holderStage='rpc_program_lookup';
+      throw e;
+    }
+  }
+  let programUsed=preferredProgram||TOKEN_PROGRAM;
+  const rpcStartedAt=Date.now();
+  onStage('rpc');
+  if(holderMetrics)holderMetrics.holderRpcStarted++;
   try{
-    accounts=await mintTokenAccounts(rpc,mint,TOKEN_PROGRAM,decimals);
-    if(!accounts.length){
+    if(holderMetrics)holderMetrics.holderRpcCalls++;
+    accounts=await mintTokenAccounts(
+      rpc,
+      mint,
+      programUsed,
+      decimals
+    );
+    if(!accounts.length&&!preferredProgram){
       programUsed=TOKEN_2022_PROGRAM;
+      if(holderMetrics){
+        holderMetrics.holderRpcFallbacks++;
+        holderMetrics.holderRpcCalls++;
+      }
       accounts=await mintTokenAccounts(rpc,mint,TOKEN_2022_PROGRAM,decimals);
     }
   }catch(e){
+    e.holderStage=e?.holderStage||'rpc';
     if(enrichDiag){
       enrichDiag.enrichStepFailures.getTokenLargestAccounts++;
       recordEnrichError(enrichDiag,mint,'getProgramAccounts(holder scan)',e);
@@ -413,8 +502,21 @@ export async function enrichHolders(mint,deps){
       return {rateLimited:true,retryAfter:ra?Number(ra[1])*1000:undefined};
     }
     throw e;
+  }finally{
+    if(holderMetrics){
+      const latency=Math.max(0,Date.now()-rpcStartedAt);
+      holderMetrics.holderRpcLatencyMsTotal+=latency;
+      holderMetrics.holderRpcLatencySamples++;
+      holderMetrics.holderRpcLatencyMsLast=latency;
+      holderMetrics.holderRpcLatencyMsMax=Math.max(
+        holderMetrics.holderRpcLatencyMsMax,
+        latency
+      );
+    }
   }
 
+  onStage('parse');
+  const parseStartedAt=Date.now();
   const protocolAuthorities=new Set(
     [token.curve,token.bondingCurve,token.associatedBondingCurve]
       .filter(x=>typeof x==='string'&&x.length>0)
@@ -439,7 +541,14 @@ export async function enrichHolders(mint,deps){
   const creator=token.creator||null;
   const creatorAmount=creator?(walletBalances.get(creator)||0):0;
   const developerPct=creator&&total>0?creatorAmount/total*100:null;
+  if(holderMetrics){
+    holderMetrics.holderParseMsLast=Math.max(
+      0,
+      Date.now()-parseStartedAt
+    );
+  }
 
+  onStage('store');
   const updated=store.setToken(mint,{
     holderFresh:true,
     holderCountAuthoritative:true,
@@ -461,8 +570,11 @@ export async function enrichHolders(mint,deps){
   });
   if(!updated)return {rateLimited:false,dropped:true};
 
+  onStage('evaluate');
   await evaluateAll(updated);
+  onStage('publish');
   publish(mint);
+  onStage('complete');
   return {rateLimited:false};
 }
 
@@ -481,7 +593,7 @@ export function makeHolderQueue(config,deps){
   /* MEMEFLOW_V12_16_1_HOLDER_THROUGHPUT_SAFE_FIX
    Raise holder worker capacity to a safe minimum of 4.
    Existing timeout/watchdog/retry/backoff logic is intentionally untouched. */
-  const maxConcurrent=Math.max(4,Number(config?.maxConcurrent??4));
+  const maxConcurrent=Math.max(1,Number(config?.maxConcurrent??4));
   const queueMax=Math.max(10,Number(config?.queueMax??500));
   const initialDelayMs=Math.min(10000,Math.max(0,Number(config?.initialDelayMs??750)));
   const retryDelayMs=Math.max(1000,Number(config?.retryDelayMs??30000));
@@ -524,6 +636,19 @@ export function makeHolderQueue(config,deps){
   holderMetrics.holderDrainKicks ??= 0;
   holderMetrics.holderMaxObservedActive ??= 0;
   holderMetrics.holderMaxObservedPending ??= 0;
+  holderMetrics.holderStarted ??= 0;
+  holderMetrics.holderCompleted ??= 0;
+  holderMetrics.holderDeduplicated ??= 0;
+  holderMetrics.holderQueueWaitMsTotal ??= 0;
+  holderMetrics.holderQueueWaitSamples ??= 0;
+  holderMetrics.holderQueueWaitMsLast ??= 0;
+  holderMetrics.holderQueueWaitMsMax ??= 0;
+  holderMetrics.holderExecutionMsTotal ??= 0;
+  holderMetrics.holderExecutionSamples ??= 0;
+  holderMetrics.holderExecutionMsLast ??= 0;
+  holderMetrics.holderExecutionMsMax ??= 0;
+  holderMetrics.holderTimeoutStages ??= {};
+  holderMetrics.lastHolderTimeoutStage ??= null;
 
   function diagRow(mint){
     let row=history.get(mint);
@@ -540,6 +665,7 @@ export function makeHolderQueue(config,deps){
         rateLimited:0,
         retries:0,
         status:'unknown',
+      stage:'queue_wait',
         activeStartedAt:null,
         activeEndedAt:null,
         lastDurationMs:null,
@@ -620,6 +746,7 @@ export function makeHolderQueue(config,deps){
     const next={
       ...item,
       retries:Number(item.retries||0)+1,
+      lastQueuedAt:Date.now(),
       dueAt:Date.now()+exponential+jitter
     };
     pending.set(item.mint,next);
@@ -630,18 +757,25 @@ export function makeHolderQueue(config,deps){
     scheduleWake();
   }
 
-  function timeoutPromise(ms,mint,leaseId){
-    return new Promise((_,reject)=>{
-      const t=setTimeout(()=>{
+  function workerTimeout(ms,mint,leaseId,getStage){
+    let timer=null;
+    const promise=new Promise((_,reject)=>{
+      timer=setTimeout(()=>{
+        const stage=String(getStage?.()||'worker');
         const e=new Error('holder worker timeout after '+ms+'ms');
         e.code='HOLDER_WORKER_TIMEOUT';
         e.holderWorkerTimeout=true;
+        e.holderStage=stage;
         e.mint=mint;
         e.leaseId=leaseId;
         reject(e);
       },ms);
-      t.unref?.();
+      timer.unref?.();
     });
+    return {
+      promise,
+      cancel:()=>timer&&clearTimeout(timer)
+    };
   }
 
   function releaseLease(mint,leaseId,status){
@@ -697,6 +831,18 @@ export function makeHolderQueue(config,deps){
     // Reserve the slot BEFORE the first await.
     const leaseId=++leaseSeq;
     const startedAt=Date.now();
+    const queueWaitMs=Math.max(
+      0,
+      startedAt-Number(item.lastQueuedAt||item.enqueuedAt||startedAt)
+    );
+    holderMetrics.holderStarted++;
+    holderMetrics.holderQueueWaitMsTotal+=queueWaitMs;
+    holderMetrics.holderQueueWaitSamples++;
+    holderMetrics.holderQueueWaitMsLast=queueWaitMs;
+    holderMetrics.holderQueueWaitMsMax=Math.max(
+      holderMetrics.holderQueueWaitMsMax,
+      queueWaitMs
+    );
     active.set(item.mint,{mint:item.mint,item,startedAt,leaseId});
     holderMetrics.holderMaxObservedActive=Math.max(
       holderMetrics.holderMaxObservedActive||0,
@@ -708,14 +854,32 @@ export function makeHolderQueue(config,deps){
     d.lastAttemptAt=startedAt;
     d.activeStartedAt=startedAt;
     d.status='running';
+    d.stage='worker';
     d.nextDueAt=null;
 
     let finalStatus='failed';
+    let stage='worker';
+    const timeout=workerTimeout(
+      jobTimeoutMs,
+      item.mint,
+      leaseId,
+      ()=>stage
+    );
 
     try{
       const result=await Promise.race([
-        Promise.resolve().then(()=>enrichHoldersFn(item.mint)),
-        timeoutPromise(jobTimeoutMs,item.mint,leaseId)
+        Promise.resolve().then(
+          ()=>enrichHoldersFn(
+            item.mint,
+            {
+              setStage:nextStage=>{
+                stage=String(nextStage||'worker');
+                d.stage=stage;
+              }
+            }
+          )
+        ),
+        timeout.promise
       ]);
 
       if(result?.rateLimited){
@@ -736,6 +900,7 @@ export function makeHolderQueue(config,deps){
         }
       }else{
         holderMetrics.holderSucceeded++;
+        holderMetrics.holderCompleted++;
         holderMetrics.lastHolderError=null;
         d.lastSuccessAt=Date.now();
         d.lastError=null;
@@ -747,6 +912,10 @@ export function makeHolderQueue(config,deps){
 
       if(timedOut){
         holderMetrics.holderWorkerTimeouts++;
+        const timeoutStage=String(e?.holderStage||stage||'worker');
+        holderMetrics.lastHolderTimeoutStage=timeoutStage;
+        holderMetrics.holderTimeoutStages[timeoutStage]=
+          Number(holderMetrics.holderTimeoutStages[timeoutStage]||0)+1;
         d.workerTimeouts=(d.workerTimeouts||0)+1;
         d.lastError=sanitize(e?.message||'holder worker timeout');
         d.lastErrorAt=Date.now();
@@ -778,6 +947,15 @@ export function makeHolderQueue(config,deps){
         finalStatus='failed';
       }
     }finally{
+      timeout.cancel();
+      const executionMs=Math.max(0,Date.now()-startedAt);
+      holderMetrics.holderExecutionMsTotal+=executionMs;
+      holderMetrics.holderExecutionSamples++;
+      holderMetrics.holderExecutionMsLast=executionMs;
+      holderMetrics.holderExecutionMsMax=Math.max(
+        holderMetrics.holderExecutionMsMax,
+        executionMs
+      );
       // Only the lease owner may free this slot.
       releaseLease(item.mint,leaseId,finalStatus);
       // Do not wait for the next timer. A newly freed slot should consume an overdue item now.
@@ -840,11 +1018,26 @@ export function makeHolderQueue(config,deps){
       cancelled.has(mint) ||
       pending.has(mint) ||
       active.has(mint)
-    )return false;
+    ){
+      if(
+        mint &&
+        (
+          pending.has(mint) ||
+          active.has(mint)
+        )
+      )holderMetrics.holderDeduplicated++;
+      return false;
+    }
     if(pending.size>=queueMax)dropOldest();
 
     const now=Date.now();
-    const item={mint,retries:0,enqueuedAt:now,dueAt:now+initialDelayMs};
+    const item={
+      mint,
+      retries:0,
+      enqueuedAt:now,
+      lastQueuedAt:now,
+      dueAt:now+initialDelayMs
+    };
     pending.set(mint,item);
 
     const d=diagRow(mint);

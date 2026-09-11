@@ -1,0 +1,178 @@
+Now perform a SECOND, SEPARATE surgical fix for the remaining Memflow bottleneck.
+
+IMPORTANT:
+The previous `defaultSettings is not defined` bug has already been fixed.
+DO NOT revert that fix.
+
+CURRENT STATUS:
+- CreateEvent ingestion is working.
+- New tokens are entering the store/registry.
+- Holder scheduler is now running again.
+- The previous scheduler crash is gone.
+- Focused regression tests passed.
+- However, holder processing is still unhealthy:
+  - holder worker timeouts are occurring
+  - holder queue/backlog remains high
+  - admission is still extremely low compared with the number of scanner tokens
+  - many tokens remain WAITING
+
+GOAL:
+Find the exact cause of the holder worker timeouts and fix ONLY the actual bottleneck.
+
+FIRST: INSPECT THE CURRENT DIFF
+
+Before modifying anything, inspect git diff/status and identify every file changed by the previous patch.
+
+Pay particular attention to:
+- memeflow-app/app-server.mjs
+- memeflow-app/src/store.mjs
+- memeflow-app/src/discqueue.mjs
+- memeflow-app/src/enrich.mjs
+- memeflow-app/src/token-cleanup.mjs
+- memeflow-app/src/token-registry.mjs
+- memeflow-app/src/admitted-scanner-inventory-v60.mjs
+- memeflow-app/src/candidate-visibility.mjs
+
+Do NOT blindly revert files.
+Determine which changes are intentional and required for the previous `defaultSettings` fix.
+
+Then inspect the holder pipeline end-to-end:
+
+1. holder queue creation
+2. job enqueue
+3. worker pickup
+4. RPC/provider request
+5. timeout handling
+6. retry behavior
+7. result handling
+8. admission update
+9. queue removal/completion
+
+Find the EXACT reason for the current holder worker timeouts.
+
+CHECK SPECIFICALLY FOR:
+- jobs waiting too long before worker pickup
+- concurrency too low
+- timeout too aggressive
+- duplicate holder jobs for the same token
+- queue starvation
+- RPC request hanging
+- provider response parsing failures
+- retry amplification
+- deadlocks
+- promises that never resolve
+- worker exceptions being converted into timeouts
+- excessive sequential RPC calls
+- a queue that keeps accepting work faster than workers can process it
+- unnecessary holder work for tokens that can already be rejected
+- any regression introduced by the previous patch
+
+IMPORTANT:
+Do NOT simply increase the timeout or disable the holder checks.
+
+If the root cause is RPC latency, determine whether requests are sequential or duplicated and fix the actual bottleneck.
+
+If concurrency is the bottleneck, make the smallest safe concurrency adjustment consistent with the existing architecture.
+
+If duplicate jobs exist, deduplicate them.
+
+If stale jobs remain queued after a token becomes irrelevant/deleted, safely remove/cancel those jobs.
+
+If a worker is hanging, ensure every worker job has a guaranteed completion path:
+success / failure / timeout.
+
+If timeout is genuinely too aggressive based on observed provider latency, adjust it conservatively and explain why.
+
+DO NOT change:
+- 80% drawdown protection
+- score thresholds
+- age thresholds
+- holder safety thresholds
+- token admission safety rules
+- trading entry logic
+- trading exit logic
+- position limits
+- database schema
+- token cleanup semantics
+
+CRITICAL SAFETY:
+Do not bypass holder validation just to increase admission.
+Do not automatically admit WAITING tokens.
+Do not weaken fail-closed behavior.
+
+ADD DIAGNOSTICS:
+
+For holder jobs, record concise metrics for:
+- queued
+- started
+- completed
+- failed
+- timed out
+- retry count
+- queue wait time
+- execution time
+- RPC latency
+- duplicate/deduplicated jobs
+- current queue depth
+- active worker count
+
+Make timeout errors identify the stage where the timeout happened.
+
+For example:
+HOLDER_TIMEOUT stage=queue_wait
+HOLDER_TIMEOUT stage=rpc
+HOLDER_TIMEOUT stage=parse
+HOLDER_TIMEOUT stage=worker
+
+Do not spam logs every second.
+
+THEN RUN TESTS:
+
+1. Existing focused tests.
+2. Existing core tests.
+3. Add/execute holder-specific tests for:
+   - normal successful holder job
+   - RPC failure
+   - RPC timeout
+   - worker exception
+   - duplicate job
+   - retry
+   - queue pressure
+   - deleted token while queued
+   - empty settings context
+4. Run lint/typecheck/build if available.
+
+THEN RUN A SAFE RUNTIME CHECK:
+
+Confirm:
+- holder workers actually start
+- queue depth does not continuously grow
+- successful holder jobs increase
+- timeout rate decreases
+- admission can progress
+- WAITING tokens can transition when valid holder evidence arrives
+- no `defaultSettings is not defined` returns
+
+IMPORTANT:
+Do NOT clear production data.
+Do NOT delete the token registry.
+Do NOT wipe cache.
+Do NOT reset the database.
+Do NOT restart-loop the application.
+Do NOT mass-delete existing tokens.
+
+Finally report:
+
+A. Exact root cause of holder timeouts.
+B. Exact files changed.
+C. Exact code-level fix.
+D. Before/after holder metrics.
+E. Queue depth before/after.
+F. Holder success/timeout counts before/after.
+G. Admission count before/after.
+H. Tests and results.
+I. Any remaining bottleneck.
+J. Git diff summary.
+
+Do NOT deploy automatically yet.
+Stop after the fix and verification so the changes can be reviewed before production deployment.

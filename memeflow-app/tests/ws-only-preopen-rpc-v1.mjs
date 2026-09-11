@@ -58,7 +58,7 @@ assert.match(app,/THIS is the first automatic Solana HTTP RPC stage/);
 assert.match(app,/const holderQueue=makeHolderQueue\(/);
 assert.match(
   app,
-  /enrichHolders\(mint,\{rpc:__mfPreOpenRpc,store,evaluateAll,publish,enrichDiag\}\)/
+  /enrichHolders\(\s*mint,\s*\{[\s\S]*?rpc:__mfPreOpenRpc,[\s\S]*?store,[\s\S]*?evaluateAll,[\s\S]*?publish,[\s\S]*?enrichDiag,[\s\S]*?holderMetrics,[\s\S]*?onStage:worker\?\.setStage[\s\S]*?\}\s*\)/s
 );
 assert.match(app,/MEMEFLOW_WS_HOLDER_PREVIEW_RPC_CLEANUP_V32/);
 assert.match(app,/MEMEFLOW_CANONICAL_HOLDER_SCHEDULER_V33/);
@@ -70,8 +70,17 @@ assert.doesNotMatch(app,/function holderAdmissionForActiveUsers\(/);
 assert.doesNotMatch(app,/function __v1224HasEventHolder\(/);
 assert.doesNotMatch(app,/reason:'event_holder_authoritative'/);
 
+const holderQueueStart=app.indexOf(
+  'const holderQueue=makeHolderQueue('
+);
+const holderQueueEnd=app.indexOf(
+  '\n// MEMEFLOW_CANONICAL_HOLDER_REFRESH',
+  holderQueueStart
+);
 const holderQueueConstruction=
-  app.match(/const holderQueue=makeHolderQueue\([^\n]+/)?.[0]||'';
+  holderQueueStart>=0&&holderQueueEnd>holderQueueStart
+    ? app.slice(holderQueueStart,holderQueueEnd)
+    : '';
 assert.ok(holderQueueConstruction,'holderQueue construction missing');
 assert.doesNotMatch(holderQueueConstruction,/admissionFn/);
 

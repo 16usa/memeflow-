@@ -1207,10 +1207,31 @@ function settingsGateCheck(token){
 // WS event-holder evidence remains observation-only / lower-bound.
 // Canonical holder scheduling starts immediately below and is unchanged.
 
-const holderQueue=makeHolderQueue({maxConcurrent:4,initialDelayMs:500},{holderMetrics,enrichHoldersFn:(mint)=>enrichHolders(mint,{rpc:__mfPreOpenRpc,store,evaluateAll,publish,enrichDiag})});
+const holderQueue=makeHolderQueue(
+  {
+    maxConcurrent:2,
+    initialDelayMs:500,
+    jobTimeoutMs:35000
+  },
+  {
+    holderMetrics,
+    enrichHoldersFn:(mint,worker)=>enrichHolders(
+      mint,
+      {
+        rpc:__mfPreOpenRpc,
+        store,
+        evaluateAll,
+        publish,
+        enrichDiag,
+        holderMetrics,
+        onStage:worker?.setStage
+      }
+    )
+  }
+);
 // MEMEFLOW_CANONICAL_HOLDER_REFRESH_V5_RELEVANCE
 const HOLDER_REFRESH_MS=15000;
-const HOLDER_REFRESH_MAX_ENQUEUE_PER_TICK=3;
+const HOLDER_REFRESH_MAX_ENQUEUE_PER_TICK=1;
 
 // MEMEFLOW_CANONICAL_HOLDER_SCHEDULER_V33
 // Keep exact holder RPC hot only for tokens that can realistically become a
@@ -3874,6 +3895,7 @@ function __ingestPumpCreateEventDirect(
     symbol:e.symbol,
     uri:e.uri,
     creator:e.creator,
+    tokenProgram:e.tokenProgram||existing?.tokenProgram||null,
 
     decimals,
 
