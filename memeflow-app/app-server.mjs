@@ -104,18 +104,6 @@ function __mfOpenPositionMints(){
 // Session-only tombstones stop delayed discovery/enrichment work from
 // reintroducing a deleted scanner mint. Financial history remains intact.
 const __mfGlobalPrunedMintsV1=new Set();
-const __mfEarlyDrawdownDropScheduledV1=new Set();
-function __mfScheduleEarlyDrawdownDropV1(mint){
-  if(__mfEarlyDrawdownDropScheduledV1.has(mint))return;
-  __mfEarlyDrawdownDropScheduledV1.add(mint);
-  queueMicrotask(()=>{
-    try{
-      __mfDropScannerToken(mint,'PRICE_DROP_GTE_80_PCT');
-    }finally{
-      __mfEarlyDrawdownDropScheduledV1.delete(mint);
-    }
-  });
-}
 store.setTokenHotAdmissionGuard?.(
   (mint,token)=>{
     mint=String(mint||'');
@@ -130,7 +118,27 @@ store.setTokenHotAdmissionGuard?.(
     if(drop!==null&&drop>=80){
       discMetrics.earlyDrawdownRejected++;
       __mfGlobalPrunedMintsV1.add(mint);
-      __mfScheduleEarlyDrawdownDropV1(mint);
+      const removed=__mfDropScannerToken(
+        mint,
+        'PRICE_DROP_GTE_80_PCT'
+      );
+      if(removed){
+        console.info(
+          '[TOKEN_REMOVED]',
+          JSON.stringify({
+            reason:'80_PERCENT_DRAWDOWN',
+            mint,
+            peak:Number(token?.peakPriceSol),
+            current:Number(token?.priceSol),
+            drawdown:drop,
+            backend_active_removed:true,
+            registry_removed:true,
+            jobs_cancelled:true,
+            admission_removed:true,
+            ui_removal_published:true
+          })
+        );
+      }
       return false;
     }
     return true;
@@ -253,7 +261,16 @@ function __mfDropScannerToken(
 
   if(skipStoreRemoval!==true){
     try{
-      if(store.removeToken?.(mint)===false){
+      if(
+        store.removeToken?.(
+          mint,
+          {
+            registryTombstone:
+              reason==='PRICE_DROP_GTE_80_PCT',
+            reason
+          }
+        )===false
+      ){
         __mfGlobalPrunedMintsV1.delete(mint);
         return false;
       }
@@ -3259,6 +3276,12 @@ function publishTrade(mint,event,tokenOverride=null){
 
 
 function publish(mint){
+  mint=String(mint||'');
+  if(
+    !mint ||
+    __mfGlobalPrunedMintsV1.has(mint) ||
+    !store.state.tokens?.[mint]
+  )return false;
   // MEMEFLOW_LIVE_TOKEN_REVISION_V1
   // publish() is called only after canonical token state is updated. Advancing
   // this revision makes every following per-user snapshot cache-aware.

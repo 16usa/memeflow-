@@ -78,7 +78,18 @@ test('client removal signal purges and permanently filters the mint',()=>{
     EventSource:FakeEventSource,
     CustomEvent:FakeCustomEvent,
     BroadcastChannel:undefined,
-    document:{querySelectorAll:()=>[]},
+    document:{
+      querySelectorAll(){
+        return [{
+          matches:()=>true,
+          getAttribute:name=>
+            name==='data-mint'?'MintA':null,
+          remove(){
+            removedNodes.push('MintA');
+          }
+        }];
+      }
+    },
     localStorage:{setItem(){}},
     window:{
       addEventListener(type,listener){
@@ -88,6 +99,7 @@ test('client removal signal purges and permanently filters the mint',()=>{
       MEMEFLOW_GLOBAL_PRUNE_V1:null
     }
   };
+  const removedNodes=[];
 
   vm.runInNewContext(
     fs.readFileSync(
@@ -114,6 +126,7 @@ test('client removal signal purges and permanently filters the mint',()=>{
   });
 
   assert.deepEqual(removed,['MintA']);
+  assert.deepEqual(removedNodes,['MintA']);
   assert.equal(api.isPruned('MintA'),true);
   assert.deepEqual(
     api.filterRows([{mint:'MintA'},{mint:'MintB'}]),

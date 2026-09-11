@@ -41,6 +41,13 @@ export class JsonStore {
       throw error;
     }
 
+    // A durable operational tombstone outranks stale state.json snapshots.
+    for(const mint of Object.keys(this.state.tokens||{})){
+      if(this.tokenRegistry.isTombstoned(mint)){
+        delete this.state.tokens[mint];
+      }
+    }
+
     // MEMEFLOW_COLD_START_V3_WARM_LIMIT
     // Bounded cold boot; permanent SQLite token registry remains intact.
     const warmLimit=Math.max(
@@ -717,7 +724,7 @@ export class JsonStore {
     if(!this._allowsTokenHotAdmission(mint,prospective)){
       return null;
     }
-    this.state.tokens[mint]={...old,...t,mint,updatedAt:Date.now()};
+    this.state.tokens[mint]={...prospective,updatedAt:Date.now()};
     this.state.metrics.discovered++;
     this.tokenRegistry?.queueUpsert?.(
       this.state.tokens[mint],
@@ -838,7 +845,14 @@ export class JsonStore {
   // MEMEFLOW_SCANNER_PRUNE_LIVE_PRIORITY_V44
   // Bulk removal preserves removeToken() semantics but cleans the decision
   // table/index only once for a capacity-eviction batch.
-  removeTokens(mints,{deleteRegistry=false}={}){
+  removeTokens(
+    mints,
+    {
+      deleteRegistry=false,
+      registryTombstone=false,
+      reason='DELETED'
+    }={}
+  ){
     const target=new Set(
       (Array.isArray(mints)?mints:[mints])
         .map(mint=>String(mint||'').trim())
@@ -849,7 +863,13 @@ export class JsonStore {
 
     if(deleteRegistry){
       for(const mint of target){
-        this.tokenRegistry?.delete?.(mint);
+        this.tokenRegistry?.delete?.(
+          mint,
+          {
+            tombstone:registryTombstone,
+            reason
+          }
+        );
       }
     }
 
@@ -885,10 +905,23 @@ export class JsonStore {
     return removed;
   }
 
-  removeToken(mint){
+  removeToken(
+    mint,
+    {
+      registryTombstone=false,
+      reason='DELETED'
+    }={}
+  ){
     mint=String(mint||'').trim();
     if(!mint)return false;
-    this.removeTokens([mint],{deleteRegistry:true});
+    this.removeTokens(
+      [mint],
+      {
+        deleteRegistry:true,
+        registryTombstone,
+        reason
+      }
+    );
     return true;
   }
   registryStatus(){return this.tokenRegistry?.status?.()||null}

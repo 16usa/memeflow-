@@ -1,0 +1,186 @@
+AFTER completing the current holder-worker diagnosis, perform a separate surgical audit and fix for LIVE token removal.
+
+CRITICAL REQUIREMENT:
+
+When a tracked token reaches a drawdown of >= 80.00% from its valid tracked peak, it must be removed IMMEDIATELY from the operational Memflow system and disappear from the website/UI without waiting for periodic cleanup.
+
+EXACT RULE:
+- 80.00% drawdown -> DELETE immediately
+- >80.00% -> DELETE immediately
+- 79.99% -> KEEP
+- Do not round in a way that could turn 79.99% into 80%.
+
+LIVE PATH:
+
+The 80% check must happen on every authoritative live price update before the token is published to downstream consumers.
+
+Required order:
+
+LIVE PRICE UPDATE
+→ calculate current drawdown from tracked peak
+→ if drawdown >= 80%
+→ immediately remove token from active in-memory state
+→ cancel pending holder/metadata/processing jobs for that token
+→ remove it from admission state
+→ remove it from candidate/processing/filtered visibility
+→ prevent it from being republished
+→ synchronously/authoritatively remove its persistent registry record if the registry is being used to resurrect active tokens
+→ create/update the appropriate tombstone so the same stale event cannot immediately recreate it
+→ publish a removal/update event to connected clients
+→ frontend immediately removes the token from displayed lists/cards
+
+IMPORTANT:
+Do NOT wait for:
+- periodic cleanup
+- next scanner cycle
+- next holder refresh
+- next frontend polling interval
+- page refresh
+- cache expiration
+
+The website must remove the token as soon as the backend confirms the >=80% drawdown.
+
+AUDIT ALL LIVE PRICE SOURCES:
+
+Find every path that can update token price, including:
+- Pump/WebSocket live updates
+- scanner updates
+- bonding-curve updates
+- any market-data update path
+- position/monitoring updates if applicable
+
+Ensure the 80% removal guard is applied to the authoritative live price path(s), not only during initial token ingestion.
+
+IMPORTANT:
+Do not calculate the 80% rule from a stale cached price.
+
+Use the current live price and the valid tracked peak.
+
+If there is no valid peak/current price, do NOT classify the token as an 80% drop.
+
+PEAK HANDLING:
+
+Do not accidentally reset the peak downward.
+
+The tracked peak must remain the highest valid price observed for the token during its current tracked lifetime.
+
+Example:
+peak = 1.00
+price = 0.50 -> 50% drop -> KEEP
+price = 0.21 -> 79% drop -> KEEP
+price = 0.2001 -> 79.99% drop -> KEEP
+price = 0.20 -> 80% -> DELETE
+
+If price reaches a new high, update the tracked peak accordingly.
+
+PERSISTENCE / RESURRECTION:
+
+Audit SQLite registry, in-memory store, hydration, lazy hydration, recovery, and capacity eviction.
+
+A token deleted because of >=80% drawdown must NOT be resurrected from:
+- SQLite registry
+- memory cache
+- stale snapshot
+- frontend state
+- hydration
+- lazy hydration
+- recovery
+- queued jobs
+- delayed WebSocket events
+
+If a tombstone is required, make it authoritative for the current session.
+
+Do NOT use stale token market snapshots as the source of truth for live market data.
+
+UI REQUIREMENT:
+
+Find the exact API/WebSocket/SSE event used by the frontend for token removal.
+
+If no removal event exists, add the smallest appropriate event.
+
+The frontend must remove the token from ALL relevant displayed collections:
+- scanner list
+- candidates
+- processing/WAITING
+- filtered lists
+- monitoring views
+- any token cards derived from the active inventory
+
+Do not require a browser refresh.
+
+Also make sure the frontend does not re-add the deleted token from an old local state/snapshot.
+
+RACE CONDITIONS:
+
+Handle this race safely:
+
+price update reaches >=80%
+AND
+another queued/stale update arrives immediately afterward.
+
+Once the token is tombstoned/deleted, stale events must not recreate it.
+
+Only a genuinely new valid discovery/session state may recreate it according to existing scanner rules.
+
+DO NOT CHANGE:
+- score <40 AND age >30m cleanup rule
+- score 40 behavior
+- 30-minute boundary
+- holder safety rules
+- trading entry/exit rules
+- position protection
+- other admission safety rules
+
+Do NOT weaken the fail-closed behavior.
+
+TESTS REQUIRED:
+
+1. 79.99% -> token remains.
+2. 80.00% -> token is immediately removed.
+3. 80.01% -> token is immediately removed.
+4. Token disappears from backend active state.
+5. Token disappears from admission state.
+6. Token disappears from candidate/WAITING/filtered visibility.
+7. Token disappears from frontend without page refresh.
+8. Persistent registry cannot resurrect the deleted token.
+9. A delayed/stale price event cannot resurrect it.
+10. Holder jobs for the deleted token are cancelled/skipped.
+11. Missing peak/current price does not trigger deletion.
+12. New high correctly raises the tracked peak.
+13. Existing score/age cleanup behavior remains unchanged.
+14. Existing 80% initial-ingestion protection remains unchanged.
+
+ADD CONCISE DIAGNOSTICS:
+
+When the rule triggers, emit one structured event such as:
+
+TOKEN_REMOVED reason=80_PERCENT_DRAWDOWN
+mint=<token>
+peak=<peak>
+current=<current>
+drawdown=<drawdown>
+
+Also log the removal propagation:
+
+backend_active_removed
+registry_removed
+jobs_cancelled
+admission_removed
+ui_removal_published
+
+Do not spam repeated logs for the same token.
+
+FINAL VERIFICATION:
+
+Show:
+- exact files changed
+- exact live price paths audited
+- exact removal path
+- how frontend receives removal
+- how resurrection is prevented
+- tests passed
+- confirmation that 79.99% remains
+- confirmation that 80.00% disappears immediately
+
+DO NOT deploy automatically.
+Stop after tests and report the diff.

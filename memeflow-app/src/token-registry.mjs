@@ -51,6 +51,12 @@ export class TokenRegistry{
         value_json TEXT,
         updated_at INTEGER NOT NULL
       );
+
+      CREATE TABLE IF NOT EXISTS token_tombstones(
+        mint TEXT PRIMARY KEY,
+        deleted_at INTEGER NOT NULL,
+        reason TEXT NOT NULL
+      );
     `);
 
     this.upsertStmt=this.db.prepare(`
@@ -78,6 +84,16 @@ export class TokenRegistry{
     `);
     this.getStmt=this.db.prepare(`SELECT token_json FROM tokens WHERE mint=?`);
     this.deleteStmt=this.db.prepare(`DELETE FROM tokens WHERE mint=?`);
+    this.getTombstoneStmt=this.db.prepare(
+      `SELECT deleted_at,reason FROM token_tombstones WHERE mint=?`
+    );
+    this.upsertTombstoneStmt=this.db.prepare(`
+      INSERT INTO token_tombstones(mint,deleted_at,reason)
+      VALUES(?,?,?)
+      ON CONFLICT(mint) DO UPDATE SET
+        deleted_at=excluded.deleted_at,
+        reason=excluded.reason
+    `);
     // MEMEFLOW_TOKEN_REGISTRY_STARTUP_UNBLOCK_V144
     // Metrics must never full-scan the permanent registry on the main thread.
     // MAX(rowid) is a non-blocking approximation using the B-tree's right
@@ -115,6 +131,12 @@ export class TokenRegistry{
     // Hot-path calls only mutate Maps. SQLite work is deferred and bounded.
     this.pending=new Map();
     this.pendingCheckpoints=new Map();
+    this.tombstones=new Set(
+      this.db.prepare(`SELECT mint FROM token_tombstones`)
+        .all()
+        .map(row=>String(row.mint||''))
+        .filter(Boolean)
+    );
     this.admissionGuard=null;
     this.flushMs=Math.max(
       250,
@@ -153,6 +175,7 @@ export class TokenRegistry{
   queueUpsert(token,{historical=false,activityAt=null}={}){
     const mint=String(token?.mint||'').trim();
     if(!mint)return false;
+    if(this.isTombstoned(mint))return false;
 
     const now=Date.now();
     const old=this.pending.get(mint)?.token||null;
@@ -197,6 +220,7 @@ export class TokenRegistry{
       for(const [mint,row] of rowEntries){
         let token=row.token||{};
         if(!mint)continue;
+        if(this.isTombstoned(mint))continue;
 
         // Deep/history rows are intentionally sparse. Never let a later
         // historical page overwrite richer live scanner state already stored.
@@ -272,6 +296,10 @@ export class TokenRegistry{
   get(mint){
     mint=String(mint||'').trim();
     if(!mint)return null;
+    if(this.isTombstoned(mint)){
+      this.metrics.lazyMisses++;
+      return null;
+    }
 
     const pending=this.pending.get(mint)?.token;
     if(pending){
@@ -295,13 +323,41 @@ export class TokenRegistry{
     return token;
   }
 
-  delete(mint){
+  isTombstoned(mint){
+    mint=String(mint||'').trim();
+    if(!mint)return false;
+    if(this.tombstones.has(mint))return true;
+    const row=this.getTombstoneStmt.get(mint);
+    if(!row)return false;
+    this.tombstones.add(mint);
+    return true;
+  }
+
+  delete(mint,{tombstone=false,reason='DELETED'}={}){
     mint=String(mint||'').trim();
     if(!mint)return false;
 
     // Cancel a queued stale write before deleting the durable row.
     this.pending.delete(mint);
-    const result=this.deleteStmt.run(mint);
+    let result=null;
+    if(tombstone){
+      this.db.exec('BEGIN IMMEDIATE');
+      try{
+        this.upsertTombstoneStmt.run(
+          mint,
+          Date.now(),
+          String(reason||'DELETED')
+        );
+        result=this.deleteStmt.run(mint);
+        this.db.exec('COMMIT');
+        this.tombstones.add(mint);
+      }catch(error){
+        try{this.db.exec('ROLLBACK')}catch{}
+        throw error;
+      }
+    }else{
+      result=this.deleteStmt.run(mint);
+    }
     if(Number(result?.changes||0)>0){
       this.metrics.permanentTokensApprox=Math.max(
         0,
@@ -316,7 +372,7 @@ export class TokenRegistry{
     const out=[];
     for(const row of this.hotStmt.all(limit)){
       const token=parseJson(row.token_json,null);
-      if(token?.mint)out.push(token);
+      if(token?.mint&&!this.isTombstoned(token.mint))out.push(token);
     }
     this.metrics.restoredHot+=out.length;
     return out;
@@ -327,7 +383,7 @@ export class TokenRegistry{
     offset=Math.max(0,Math.floor(Number(offset)||0));
     return this.pageStmt.all(limit,offset)
       .map(row=>parseJson(row.token_json,null))
-      .filter(token=>token?.mint);
+      .filter(token=>token?.mint&&!this.isTombstoned(token.mint));
   }
 
   count(){
