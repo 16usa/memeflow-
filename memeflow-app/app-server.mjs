@@ -256,7 +256,7 @@ async function __mfPruneScannerRuntimeState(now=Date.now()){
 
   try{
     const open=__mfOpenPositionMints();
-    const scannerRows=
+    let scannerRows=
       Object.values(store.state.tokens||{})
         .filter(
           token=>
@@ -265,6 +265,92 @@ async function __mfPruneScannerRuntimeState(now=Date.now()){
               now
             )
         );
+
+// MEMEFLOW_STALE_PRICE_PRUNE_V1
+// Remove scanner/runtime tokens whose price has not changed for more than
+// 30 minutes. Open positions are protected by __mfDropScannerToken().
+// Permanent registry/history/trade data remain untouched.
+{
+  const __mfStalePriceNow = Date.now();
+  const __mfStalePriceLimitMs = 30 * 60 * 1000;
+  const __mfStalePriceOpen = __mfOpenPositionMints();
+  const __mfStalePriceRemoved = new Set();
+
+  for (const __mfRow of scannerRows) {
+    const __mfMint = __mfRow?.mint;
+    if (!__mfMint) continue;
+    if (__mfStalePriceOpen.has(__mfMint)) continue;
+
+    const __mfLastPriceChange =
+      Number(__mfRow?.lastPriceChangeAt) ||
+      Number(__mfRow?.lastPriceAt) ||
+      Number(__mfRow?.updatedAt) ||
+      0;
+
+    if (
+      __mfLastPriceChange > 0 &&
+      (__mfStalePriceNow - __mfLastPriceChange) > __mfStalePriceLimitMs
+    ) {
+      const __mfDropped = __mfDropScannerToken(
+        __mfMint,
+        'STALE_PRICE_GT_30_MIN'
+      );
+
+      if (__mfDropped) {
+        __mfStalePriceRemoved.add(__mfMint);
+      }
+    }
+  }
+
+  if (__mfStalePriceRemoved.size) {
+    scannerRows = scannerRows.filter(
+      __mfRow => !__mfStalePriceRemoved.has(__mfRow?.mint)
+    );
+  }
+}
+
+
+// MEMEFLOW_DEEP_DRAWDOWN_PRUNE_V1
+// Remove scanner/runtime tokens only when current price is MORE THAN 80%
+// below their recorded ATH (peakPriceSol). Exactly -80% remains active.
+// Open positions are protected by __mfDropScannerToken().
+{
+  const __mfDeepDrawdownOpen = __mfOpenPositionMints();
+  const __mfDeepDrawdownRemoved = new Set();
+
+  for (const __mfRow of scannerRows) {
+    const __mfMint = __mfRow?.mint;
+    if (!__mfMint) continue;
+    if (__mfDeepDrawdownOpen.has(__mfMint)) continue;
+
+    const __mfPeak = Number(__mfRow?.peakPriceSol);
+    const __mfPrice = Number(__mfRow?.priceSol);
+
+    if (
+      Number.isFinite(__mfPeak) &&
+      Number.isFinite(__mfPrice) &&
+      __mfPeak > 0 &&
+      __mfPrice > 0 &&
+      __mfPrice < (__mfPeak * 0.20)
+    ) {
+      const __mfDropped = __mfDropScannerToken(
+        __mfMint,
+        'DEEP_DRAWDOWN_GT_80_PCT'
+      );
+
+      if (__mfDropped) {
+        __mfDeepDrawdownRemoved.add(__mfMint);
+      }
+    }
+  }
+
+  if (__mfDeepDrawdownRemoved.size) {
+    scannerRows = scannerRows.filter(
+      __mfRow => !__mfDeepDrawdownRemoved.has(__mfRow?.mint)
+    );
+  }
+}
+
 
     // MEMEFLOW_SCANNER_PRUNE_MEMBERSHIP_HOTPATH_V74
     // scannerRows already is the exact current-token membership for this
