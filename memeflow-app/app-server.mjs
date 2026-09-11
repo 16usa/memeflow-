@@ -104,10 +104,33 @@ function __mfOpenPositionMints(){
 // Session-only tombstones stop delayed discovery/enrichment work from
 // reintroducing a deleted scanner mint. Financial history remains intact.
 const __mfGlobalPrunedMintsV1=new Set();
+const __mfEarlyDrawdownDropScheduledV1=new Set();
+function __mfScheduleEarlyDrawdownDropV1(mint){
+  if(__mfEarlyDrawdownDropScheduledV1.has(mint))return;
+  __mfEarlyDrawdownDropScheduledV1.add(mint);
+  queueMicrotask(()=>{
+    try{
+      __mfDropScannerToken(mint,'PRICE_DROP_GTE_80_PCT');
+    }finally{
+      __mfEarlyDrawdownDropScheduledV1.delete(mint);
+    }
+  });
+}
 store.setTokenHotAdmissionGuard?.(
-  mint=>
-    !__mfGlobalPrunedMintsV1.has(String(mint||'')) ||
-    __mfOpenPositionMints().has(String(mint||''))
+  (mint,token)=>{
+    mint=String(mint||'');
+    const open=__mfOpenPositionMints().has(mint);
+    if(open)return true;
+    if(__mfGlobalPrunedMintsV1.has(mint))return false;
+
+    const drop=tokenPriceDropPercent(token);
+    if(drop!==null&&drop>=80){
+      __mfGlobalPrunedMintsV1.add(mint);
+      __mfScheduleEarlyDrawdownDropV1(mint);
+      return false;
+    }
+    return true;
+  }
 );
 
 {
@@ -3926,6 +3949,7 @@ function __ingestPumpCreateEventDirect(
     existing
       ? store.setToken(e.mint,patch)
       : store.addToken(patch);
+  if(!token)return null;
 
   try{
     eventHolderLedger.setCreateState(

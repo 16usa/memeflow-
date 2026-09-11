@@ -115,6 +115,7 @@ export class TokenRegistry{
     // Hot-path calls only mutate Maps. SQLite work is deferred and bounded.
     this.pending=new Map();
     this.pendingCheckpoints=new Map();
+    this.admissionGuard=null;
     this.flushMs=Math.max(
       250,
       Number(opts.flushMs||process.env.TOKEN_REGISTRY_FLUSH_MS||500)
@@ -156,6 +157,7 @@ export class TokenRegistry{
     const now=Date.now();
     const old=this.pending.get(mint)?.token||null;
     const merged=old?{...old,...token}:{...token};
+    if(this.admissionGuard?.(mint,merged)===false)return false;
 
     this.pending.set(mint,{
       token:merged,
@@ -166,6 +168,13 @@ export class TokenRegistry{
 
     this.metrics.queued++;
     return true;
+  }
+
+  setAdmissionGuard(guard){
+    this.admissionGuard=
+      typeof guard==='function'
+        ? guard
+        : null;
   }
 
   flush(){

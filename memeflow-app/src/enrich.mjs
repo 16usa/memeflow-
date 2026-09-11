@@ -294,6 +294,7 @@ export async function enrichToken(mint, curve, deps) {
 
     // ── Always store, evaluate, publish ────────────────────────────────────
     const token = store.setToken(mint, update);
+    if(!token)return null;
 
     // ── Step 4: evaluate (score the token) ─────────────────────────────────
     try {
@@ -447,6 +448,7 @@ export async function enrichHolders(mint,deps){
     liquidity:token.liquiditySol??token.liquidity??null,
     momentum:token.buyPressure??token.momentum??null
   });
+  if(!updated)return {rateLimited:false,dropped:true};
 
   await evaluateAll(updated);
   publish(mint);

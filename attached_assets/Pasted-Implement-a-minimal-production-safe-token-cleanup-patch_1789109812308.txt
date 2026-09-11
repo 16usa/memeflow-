@@ -1,0 +1,127 @@
+Implement a minimal, production-safe token cleanup patch in the existing Memflow project.
+
+Do NOT rewrite, restructure, or replace the existing architecture. Preserve all current functionality. Make this an isolated patch.
+
+1. CRITICAL: Reject tokens with an 80%+ price drop BEFORE database insertion
+
+This must happen at the earliest possible stage of the scanner pipeline.
+
+When the scanner discovers a token, the FIRST relevant validation must check whether the token has already fallen 80% or more from the project’s existing tracked reference/high price.
+
+Rule:
+
+priceDropPercent >= 80
+
+If TRUE:
+
+* immediately reject/discard the token;
+* DO NOT continue with any other token analysis;
+* DO NOT calculate or check score;
+* DO NOT perform liquidity/volume/holder/route/etc. checks;
+* DO NOT insert the token into the database;
+* DO NOT add it to token cache;
+* DO NOT add it to active tokens;
+* DO NOT add it to monitoring/watch/probe queues;
+* DO NOT expose it in API/dashboard operational state;
+* prevent stale scanner/cache data from re-adding it.
+
+This is an EARLY SCANNER FILTER, not merely a cleanup operation after the token has been saved.
+
+The intended flow is:
+
+Scanner discovers token
+→ calculate/read existing price-drop information
+→ if drop >= 80%: DISCARD IMMEDIATELY
+→ otherwise continue normal validation
+→ only then save/process the token
+
+An exact 80% drop MUST be rejected.
+
+A 79.99% drop MUST NOT be rejected by this rule.
+
+Use the project’s existing reference/high-price calculation if one already exists. Do not introduce a conflicting second definition of “high price” unless absolutely necessary.
+
+2. Cleanup rule for tokens already in the system
+
+For tokens that have already passed scanning and entered the operational system, keep a centralized cleanup predicate such as:
+
+shouldDeleteToken(token)
+
+It should return true when either condition is met:
+
+priceDropPercent >= 80 || (score < 40 && tokenAgeMs > 30 * 60 * 1000)
+
+Rules:
+
+* price drop exactly 80% → DELETE
+* price drop greater than 80% → DELETE
+* price drop 79.99% → KEEP
+* score 39 + age 31 minutes → DELETE
+* score 40 + age 31 minutes → KEEP
+* score 39 + age 29 minutes → KEEP
+* score below 40 + age exactly 30 minutes → KEEP
+
+3. Complete operational deletion
+
+When an existing token qualifies for deletion:
+
+* remove it from the active token collection;
+* remove it from persistent token storage/database;
+* remove it from token caches;
+* remove it from monitoring/watch/probe queues if applicable;
+* remove it from API/dashboard operational state;
+* prevent stale cached/scanner data from re-adding it;
+* make deletion idempotent and safe if the token is already absent.
+
+Do NOT delete unrelated system data.
+
+If trading/order/history/audit records are stored separately, preserve those records unless they are explicitly part of the operational token entity.
+
+4. Automatic execution
+
+Run the early 80% rejection during token discovery/scanning BEFORE persistence.
+
+Run the existing-token cleanup whenever token data is refreshed/updated so stale tokens do not remain active.
+
+Avoid duplicate cleanup implementations. Prefer one centralized predicate/helper that can be reused by the scanner and the normal cleanup path.
+
+5. Tests
+
+Add or update tests for:
+
+Scanner early rejection
+
+* newly discovered token with 80% drop → REJECT before database insertion
+* newly discovered token with 85% drop → REJECT before database insertion
+* newly discovered token with 79.99% drop → continue normal processing
+* verify rejected tokens produce ZERO database insert operations
+* verify rejected tokens are not added to caches/queues
+
+Existing-token cleanup
+
+* score 39 + age 31 minutes → DELETE
+* score 40 + age 31 minutes → KEEP
+* score 39 + age 29 minutes → KEEP
+* 80% price drop → DELETE
+* 79.99% price drop → KEEP
+* both conditions true → DELETE
+* newly created token with score below 40 → KEEP until it passes 30 minutes
+
+6. Verification
+
+Run the existing test suite and lint/type checks if available.
+
+Inspect the scanner/persistence flow carefully to make sure the 80% filter is actually executed BEFORE any database insert or equivalent persistence operation.
+
+At the end, report:
+
+1. Files changed
+2. Where the early scanner filter was inserted
+3. Exact rejection condition
+4. Exact existing-token cleanup condition
+5. Confirmation that 80%+ tokens are rejected BEFORE database insertion
+6. Tests added/updated
+7. Test/lint/type-check results
+8. Any potential compatibility issue
+
+Keep the implementation small, isolated, and production-safe.

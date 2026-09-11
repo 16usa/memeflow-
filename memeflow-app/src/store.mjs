@@ -652,11 +652,17 @@ export class JsonStore {
       typeof guard==='function'
         ? guard
         : null;
+    this.tokenRegistry?.setAdmissionGuard?.(
+      (mint,token)=>this._allowsTokenHotAdmission(mint,token)
+    );
   }
-  _allowsTokenHotAdmission(mint){
+  _allowsTokenHotAdmission(mint,token=null){
     if(!this._tokenHotAdmissionGuard)return true;
     try{
-      return this._tokenHotAdmissionGuard(String(mint||''))!==false;
+      return this._tokenHotAdmissionGuard(
+        String(mint||''),
+        token
+      )!==false;
     }catch{
       return false;
     }
@@ -664,15 +670,16 @@ export class JsonStore {
   getToken(mint){
     mint=String(mint||'');
     if(!mint)return null;
-    if(!this._allowsTokenHotAdmission(mint))return null;
 
     const hot=this.state.tokens?.[mint]||null;
+    if(!this._allowsTokenHotAdmission(mint,hot))return null;
     if(hot)return hot;
 
     // Permanent registry lazy-hydration lets an old known Pump token become
     // hot again immediately when a new live event references it.
     const restored=this.tokenRegistry?.get?.(mint)||null;
     if(!restored)return null;
+    if(!this._allowsTokenHotAdmission(mint,restored))return null;
 
     this.state.tokens[mint]={
       ...restored,
@@ -681,28 +688,59 @@ export class JsonStore {
     return this.state.tokens[mint];
   }
   addToken(t){
-    if(!this._allowsTokenHotAdmission(t?.mint)){
+    const mint=String(t?.mint||'');
+    const old=this.state.tokens[mint]||{};
+    const price=Number(t?.priceSol??old?.priceSol);
+    const peak=Math.max(
+      Number(old?.peakPriceSol)||0,
+      Number(t?.peakPriceSol)||0,
+      Number.isFinite(price)&&price>=0?price:0
+    );
+    const prospective={
+      ...old,
+      ...t,
+      mint,
+      peakPriceSol:peak||t?.peakPriceSol||old?.peakPriceSol||null
+    };
+    if(!this._allowsTokenHotAdmission(mint,prospective)){
       return null;
     }
-    const old=this.state.tokens[t.mint]||{};
-    this.state.tokens[t.mint]={...old,...t,updatedAt:Date.now()};
+    this.state.tokens[mint]={...old,...t,mint,updatedAt:Date.now()};
     this.state.metrics.discovered++;
     this.tokenRegistry?.queueUpsert?.(
-      this.state.tokens[t.mint],
+      this.state.tokens[mint],
       {
         historical:t?.registryHistorical===true,
         activityAt:t?.lastMarketActivityAt??t?.lastPriceAt??null
       }
     );
-    if(this._tokenPersistenceRequired(t.mint))this.save();
-    return this.state.tokens[t.mint]
+    if(this._tokenPersistenceRequired(mint))this.save();
+    return this.state.tokens[mint]
   }
   setToken(mint,t){
     mint=String(mint||'');
-    if(!mint||!this._allowsTokenHotAdmission(mint)){
-      return null;
-    }
-    const now=Date.now(),old=this.state.tokens[mint]||{};
+    if(!mint)return null;
+    const old=this.state.tokens[mint]||{};
+    const admissionPrice=Number(t?.priceSol??old?.priceSol);
+    const admissionPeak=Math.max(
+      Number(old?.peakPriceSol)||0,
+      Number(t?.peakPriceSol)||0,
+      Number.isFinite(admissionPrice)&&admissionPrice>=0
+        ? admissionPrice
+        : 0
+    );
+    if(!this._allowsTokenHotAdmission(mint,{
+      ...old,
+      ...(t||{}),
+      mint,
+      peakPriceSol:
+        admissionPeak ||
+        t?.peakPriceSol ||
+        old?.peakPriceSol ||
+        null
+    }))return null;
+
+    const now=Date.now();
     const patch={...(t||{})};
 
     // Never promote an invalid or zero supply into canonical token state.
