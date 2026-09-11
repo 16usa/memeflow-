@@ -121,10 +121,14 @@ store.setTokenHotAdmissionGuard?.(
     mint=String(mint||'');
     const open=__mfOpenPositionMints().has(mint);
     if(open)return true;
-    if(__mfGlobalPrunedMintsV1.has(mint))return false;
+    if(__mfGlobalPrunedMintsV1.has(mint)){
+      discMetrics.tombstoneRejected++;
+      return false;
+    }
 
     const drop=tokenPriceDropPercent(token);
     if(drop!==null&&drop>=80){
+      discMetrics.earlyDrawdownRejected++;
       __mfGlobalPrunedMintsV1.add(mint);
       __mfScheduleEarlyDrawdownDropV1(mint);
       return false;
@@ -1225,7 +1229,7 @@ function __mfHolderDecisionFloorV33(){
   if(!scores.length){
     return Math.max(
       0,
-      Number(defaultSettings?.()?.minScore ?? 72) -
+      Number(defaults?.()?.minScore ?? 72) -
       HOLDER_NEAR_SCORE_MARGIN_V33
     );
   }
@@ -1362,6 +1366,7 @@ const holderRefreshTimer=setInterval(()=>{
 
   for(const token of Object.values(store.state.tokens||{})){
     if(!token?.mint)continue;
+    holderMetrics.holderSchedulerConsidered++;
 
     if(
       !__mfCanonicalHolderNeededV34(
@@ -1372,6 +1377,7 @@ const holderRefreshTimer=setInterval(()=>{
         activeUserContext
       )
     ){
+      holderMetrics.holderSchedulerSkippedNotNeeded++;
       continue;
     }
 
@@ -1386,6 +1392,7 @@ const holderRefreshTimer=setInterval(()=>{
       scannedAt &&
       now-scannedAt<rank.refreshMs
     ){
+      holderMetrics.holderSchedulerSkippedFresh++;
       continue;
     }
 
@@ -1412,6 +1419,7 @@ const holderRefreshTimer=setInterval(()=>{
       fairness,
       maxEnqueue:HOLDER_REFRESH_MAX_ENQUEUE_PER_TICK
     });
+  holderMetrics.holderSchedulerSelected+=candidates.length;
 
   let enqueued=0;
 
@@ -1425,10 +1433,16 @@ const holderRefreshTimer=setInterval(()=>{
     );
 
     const q=holderQueue.inspect?.(token.mint)||null;
-    if(q?.pending || q?.active)continue;
+    if(q?.pending || q?.active){
+      holderMetrics.holderSchedulerSkippedBusy++;
+      continue;
+    }
 
     if(holderQueue.enqueue(token.mint)!==false){
       enqueued++;
+      holderMetrics.holderSchedulerEnqueued++;
+    }else{
+      holderMetrics.holderSchedulerEnqueueRejected++;
     }
 
     if(enqueued>=HOLDER_REFRESH_MAX_ENQUEUE_PER_TICK)break;
@@ -1685,11 +1699,17 @@ const __mfFastHolderPreviewTimerV4=setInterval(()=>{
     FAST_HOLDER_MAX_CONCURRENT_V4-
     __mfFastHolderActiveV4.size;
 
-  if(free<=0)return;
+  if(free<=0){
+    holderMetrics.fastHolderSchedulerSkippedNoCapacity++;
+    return;
+  }
 
   const candidates=__mfFastHolderCandidatesV4(free);
+  holderMetrics.fastHolderSchedulerSelected+=candidates.length;
+  if(!candidates.length)holderMetrics.fastHolderSchedulerSkippedNoCandidates++;
 
   for(const token of candidates){
+    holderMetrics.fastHolderSchedulerStarted++;
     void __mfRunFastHolderPreviewV4(token);
   }
 },500);
@@ -3789,6 +3809,7 @@ function __ingestPumpCreateEventDirect(
     discMetrics.directCreateDecodeFailed++;
     return null;
   }
+  discMetrics.directCreateDecoded++;
 
   // MEMEFLOW_MAYHEM_DIRECT_CREATE_DROP_V17
   if(e?.isMayhemMode===true){
@@ -3949,7 +3970,15 @@ function __ingestPumpCreateEventDirect(
     existing
       ? store.setToken(e.mint,patch)
       : store.addToken(patch);
-  if(!token)return null;
+  if(!token){
+    discMetrics.storeAdmissionRejected++;
+    return null;
+  }
+  discMetrics.storeAdmissionAccepted++;
+  discMetrics.storeRamMutationSucceeded++;
+  if(store.tokenRegistry?.pending?.has?.(e.mint)){
+    discMetrics.registryUpsertQueued++;
+  }
 
   try{
     eventHolderLedger.setCreateState(
@@ -8922,6 +8951,7 @@ if(false && url.pathname==='/api/ai/assistant' &&req.method==='POST'){
   let _openOverride=0;
   let _evalErrors=0;
   let _viewErrors=0;
+  const _admissionReasonCounts={};
 
   const _displayRows=[];
 
@@ -8952,8 +8982,18 @@ if(false && url.pathname==='/api/ai/assistant' &&req.method==='POST'){
     ).trim().toUpperCase();
 
     if(_eligible)_admitted++;
-    else if(_admissionState==='REJECTED')_rejected++;
-    else _pending++;
+    else{
+      if(_admissionState==='REJECTED')_rejected++;
+      else _pending++;
+      const _reasons=Array.isArray(_admission?.reasons)&&_admission.reasons.length
+        ? _admission.reasons
+        : ['Unspecified admission result'];
+      for(const _reason of _reasons){
+        const _key=String(_reason||'Unspecified admission result');
+        _admissionReasonCounts[_key]=
+          Number(_admissionReasonCounts[_key]||0)+1;
+      }
+    }
 
     if(_isOpen&&!_eligible)_openOverride++;
 
@@ -9027,6 +9067,7 @@ if(false && url.pathname==='/api/ai/assistant' &&req.method==='POST'){
     preAdmissionRejected:_rejected,
     preAdmissionVisible:_displayRows.length,
     preAdmissionHidden:0,
+    admissionReasonCounts:_admissionReasonCounts,
     openPositionOverride:_openOverride,
 
     evaluationErrors:_evalErrors,

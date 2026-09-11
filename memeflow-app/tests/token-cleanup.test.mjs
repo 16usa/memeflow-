@@ -232,7 +232,7 @@ test('live scanner returns before analysis after admission rejection',()=>{
     'utf8'
   );
   const write=source.indexOf('const token=\n    existing');
-  const rejected=source.indexOf('if(!token)return null;',write);
+  const rejected=source.indexOf('if(!token){',write);
   const ledger=source.indexOf('eventHolderLedger.setCreateState',write);
 
   assert.ok(write>=0,'live scanner token write missing');

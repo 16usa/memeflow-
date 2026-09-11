@@ -663,7 +663,19 @@ export class JsonStore {
         String(mint||''),
         token
       )!==false;
-    }catch{
+    }catch(error){
+      this.state.metrics.tokenAdmissionGuardErrors=
+        Number(this.state.metrics.tokenAdmissionGuardErrors||0)+1;
+      this.state.metrics.lastTokenAdmissionGuardError=
+        String(error?.message||error);
+      this.state.metrics.lastTokenAdmissionGuardErrorAt=Date.now();
+      console.error(
+        '[TOKEN_ADMISSION_GUARD_ERROR]',
+        JSON.stringify({
+          mint:String(mint||''),
+          error:String(error?.message||error)
+        })
+      );
       return false;
     }
   }

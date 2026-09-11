@@ -1,0 +1,175 @@
+Fix the current Memflow production bug with the SMALLEST possible safe patch.
+
+IMPORTANT: Do NOT redesign or refactor the scanner, admission system, cleanup system, trading logic, or database architecture.
+
+ROOT CAUSE CONFIRMED:
+Runtime repeatedly throws:
+
+defaultSettings is not defined
+
+File:
+memeflow-app/app-server.mjs
+
+Function:
+__mfHolderDecisionFloorV33()
+
+This function is used by BOTH:
+1. canonical holder refresh scheduling
+2. fast holder-preview candidate selection
+
+Because of this exception, holder refresh/admission is effectively frozen. New tokens are still being discovered and persisted, but most remain unadmitted and therefore invisible.
+
+CURRENT EVIDENCE:
+- new token discovery is working
+- tokens are being persisted
+- active tokens increased from ~860 to ~964
+- registry tokens increased
+- flushErrors = 0
+- rpcTimeouts = 0
+- rpcHttp429 = 0
+- admittedScannerTokensForUser = only 3
+- preAdmissionHiddenForUser = ~961
+- holderQueueDepth = ~240
+- holderWorkerTimeouts = ~151
+
+DO NOT blame or modify the 80% drawdown filter. The 80% rule is currently behaving correctly.
+
+REQUIRED FIX:
+
+In:
+memeflow-app/app-server.mjs
+
+Find:
+__mfHolderDecisionFloorV33()
+
+Remove the reference to the undefined `defaultSettings`.
+
+Use the already available `defaults()` wrapper from src/store.mjs if it is already imported.
+
+The fallback should effectively be:
+
+Number(defaults?.()?.minScore ?? 72)
+
+Do not introduce a new settings architecture.
+
+If `defaults()` is not safely available in this scope, then import the correct `defaultSettings` source from src/settings.mjs instead. Choose the smallest existing-project-compatible solution.
+
+IMPORTANT:
+- Keep the existing minScore behavior.
+- Default must remain 72.
+- Do not change user settings behavior.
+- Do not change score thresholds.
+- Do not change holder thresholds.
+- Do not change scanner timing.
+- Do not change entry/exit logic.
+
+THEN ADD FOCUSED REGRESSION TESTS:
+
+1. __mfHolderDecisionFloorV33() must NOT throw when active-user settings/context is empty.
+2. It must return the configured user minScore when available.
+3. It must return 72 when no minScore is available.
+4. Canonical holder refresh scheduling must be able to select/enqueue a token with empty settings context.
+5. Fast holder candidate selection must work with empty settings context.
+6. A newly discovered token with no previous peak must NOT be rejected merely because peak is missing.
+7. A newly discovered token whose initial peak equals current price must remain admitted.
+8. A proven drawdown of exactly 80% must still be rejected.
+9. A drawdown of 79.99% must still be accepted.
+10. Score exactly 40 must remain accepted.
+11. Score 39 with age >30 minutes must still be deleted.
+12. Score 39 at exactly 30 minutes must remain.
+13. An exception from the admission guard must remain fail-closed, but make the exception observable through a clear diagnostic log/counter. Do NOT change fail-closed behavior in this patch.
+
+ALSO ADD MINIMAL DIAGNOSTIC LOGGING AROUND THE DIRECT PUMP CREATE PATH:
+
+For each new token, make it possible to distinguish:
+- CreateEvent received
+- decode succeeded
+- store admission accepted
+- rejected by 80% drawdown
+- rejected by tombstone
+- rejected by admission guard exception
+- RAM mutation succeeded
+- registry upsert queued
+- registry flush failed
+- holder scheduler selected/enqueued
+- holder scheduler skipped and why
+- Entry Admission rejected and why
+- final candidate visibility state
+
+Do NOT spam logs every second. Use concise structured/debug logs and only log meaningful state transitions/errors.
+
+IMPORTANT 80% RULE:
+
+Keep this behavior EXACTLY:
+
+drawdown = (1 - currentPrice / peakPrice) * 100
+
+Delete/reject when:
+drawdown >= 80%
+
+Therefore:
+80.00% -> reject/delete
+79.99% -> keep
+
+Missing/non-numeric peak/current price must NOT automatically count as 80%.
+
+For a brand-new token with valid current price and no previous peak, the initial peak should be established from the current price, producing 0% drawdown.
+
+IMPORTANT CLEANUP RULE:
+
+Keep this EXACTLY:
+
+delete when:
+score < 40 AND age > 30 minutes
+
+Therefore:
+score 39 + age 31m -> delete
+score 40 + age 31m -> keep
+score 39 + age 30m -> keep
+
+Do not change these thresholds.
+
+AFTER THE PATCH:
+
+Run the project's existing:
+- tests
+- lint
+- typecheck/build if available
+
+Then perform a targeted runtime/static verification that:
+
+A) Pump CreateEvent ingestion still works.
+B) New tokens reach the store.
+C) Holder scheduler no longer throws `defaultSettings is not defined`.
+D) Canonical holder queue begins processing/enqueuing normally.
+E) Fast holder preview no longer throws.
+F) Admission count can increase above the current ~3-token state.
+G) Candidate visibility can progress beyond WAITING when holder evidence is available.
+H) 80% protection still works exactly as before.
+I) score/age cleanup still works exactly as before.
+
+DO NOT:
+- rewrite the scanner
+- rewrite admission
+- remove the 80% filter
+- weaken safety protections
+- increase token limits
+- disable holder checks
+- bypass validation
+- change database schema
+- delete existing tokens
+- clear the registry/cache
+- reset production data
+- perform a broad refactor
+
+This is a surgical production bug fix.
+
+At the end, report:
+1. exact files changed
+2. exact root cause
+3. exact fix
+4. tests executed and results
+5. whether `defaultSettings is not defined` is gone
+6. whether holder queue/admission is processing again
+7. whether the 80% and score/age deletion rules remain unchanged
+8. any remaining errors, warnings, or bottlenecks
