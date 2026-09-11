@@ -1,0 +1,223 @@
+Perform a FULL READ-ONLY DIAGNOSTIC of the existing Memflow project.
+
+DO NOT modify, delete, rewrite, or refactor any code yet.
+
+The current production problem is:
+
+* New tokens are no longer appearing in the system.
+* Old/stale tokens remain visible.
+* Some old tokens appear frozen/not moving.
+* Some tokens may be coming back from cache.
+* This started after implementing the 80%+ price-drop early scanner rejection.
+
+I need a complete diagnosis before making another patch.
+
+1. Scanner pipeline
+
+Trace the COMPLETE token lifecycle:
+
+scanner discovery
+→ initial token data
+→ early filters
+→ price/reference/high calculation
+→ score calculation
+→ liquidity/volume/holder checks
+→ persistence/database
+→ cache
+→ monitoring/watch/probe queues
+→ API
+→ frontend/dashboard
+
+Identify exactly where a newly discovered token can be rejected, skipped, thrown, or silently lost.
+
+Pay special attention to the new 80% price-drop filter.
+
+Determine:
+
+* What value is used as the reference/high price?
+* What happens when reference/high price is missing?
+* What happens when reference/high price is 0/null/undefined?
+* Can priceDropPercent become NaN, Infinity, null, or undefined?
+* Does the code accidentally interpret missing price data as an 80%+ drop?
+* Is the 80% filter running before the system has enough information to calculate a valid drop?
+* Is the filter accidentally rejecting every newly discovered token?
+
+The early 80% filter must ONLY reject a token when the price-drop calculation is valid and actually proves:
+
+priceDropPercent >= 80
+
+Missing/unknown price information must NOT automatically mean an 80% drop.
+
+2. Find why NEW tokens are not entering the system
+
+Trace recent scanner execution and identify:
+
+* number of tokens discovered;
+* number rejected;
+* rejection reason for each filter;
+* number reaching persistence;
+* number successfully inserted;
+* database errors;
+* cache errors;
+* RPC/API errors;
+* exceptions;
+* timeouts;
+* rate limits;
+* malformed token data.
+
+Find the FIRST point where the number of new tokens drops to zero.
+
+If logging is insufficient, report exactly where diagnostic logging should be added. Do NOT add it yet.
+
+3. Investigate stale/frozen tokens
+
+Find how old tokens are stored and refreshed.
+
+Check:
+
+* active token store;
+* database;
+* in-memory cache;
+* Redis or equivalent if present;
+* monitoring queues;
+* watch/probe queues;
+* API state;
+* frontend state;
+* polling/websocket subscriptions;
+* stale cache restoration;
+* startup hydration.
+
+Determine why old tokens remain even when their market data is no longer changing.
+
+Check for:
+
+* missing TTL;
+* failed refresh;
+* dead monitoring jobs;
+* failed subscriptions;
+* stale cache;
+* duplicate token records;
+* orphaned records;
+* failed cleanup;
+* cache repopulation;
+* frontend displaying cached data after backend removal.
+
+4. Verify the cleanup rules
+
+Audit the current implementation of:
+
+priceDropPercent >= 80
+
+and:
+
+score < 40 && tokenAge > 30 minutes
+
+Verify exact boundary behavior:
+
+* 80% → delete
+* 79.99% → keep
+* score 39 + age 31m → delete
+* score 40 + age 31m → keep
+* score 39 + age 29m → keep
+* score 39 + exactly 30m → keep
+
+Also determine whether cleanup actually removes the token from:
+
+* database;
+* active collection;
+* cache;
+* monitoring;
+* queues;
+* API state.
+
+5. Check for the likely regression
+
+Specifically investigate whether the new early rejection code is using a price/high value that does not exist yet for newly discovered tokens.
+
+Look for patterns such as:
+
+* undefined/null converted to 0;
+* zero division;
+* default price of 0;
+* missing reference price interpreted as maximum drop;
+* NaN passing through comparisons;
+* incorrect percentage calculation;
+* comparing different price units;
+* comparing USD price against SOL price;
+* comparing stale high price from another token;
+* incorrect timestamp/reference selection.
+
+Do not assume the cause. Prove it from the code and logs.
+
+6. Logs and runtime diagnostics
+
+Inspect all available:
+
+* application logs;
+* scanner logs;
+* worker logs;
+* database logs;
+* API logs;
+* error logs;
+* startup logs;
+* Git history/diffs related to the recent cleanup patch.
+
+Identify the most recent changes that could have caused this regression.
+
+If Git history is available, compare the current version with the version immediately before the 80% cleanup change.
+
+7. Database/cache consistency
+
+Determine whether the same token can exist simultaneously in:
+
+* database;
+* memory;
+* cache;
+* monitoring;
+* API state.
+
+Find whether deleting a token from one layer causes another layer to recreate it.
+
+Find the canonical source of truth.
+
+8. Output a diagnostic report
+
+DO NOT modify anything.
+
+Return a clear report with:
+
+A. ROOT CAUSE
+
+The exact reason new tokens stopped entering the system.
+
+B. SECONDARY PROBLEMS
+
+Every other issue found with stale/frozen tokens.
+
+C. AFFECTED FILES
+
+Exact file paths and relevant functions.
+
+D. CURRENT FLOW
+
+Show the actual scanner → filters → database → cache → monitoring → API flow.
+
+E. FAILURE POINT
+
+Identify the exact line/function where new tokens are being lost.
+
+F. LOG EVIDENCE
+
+Quote only short relevant log/error messages and explain what they prove.
+
+G. SAFE FIX PLAN
+
+Describe the smallest possible patch needed to restore new-token ingestion while preserving the 80% protection.
+
+IMPORTANT:
+Do NOT implement the fix yet.
+Do NOT change thresholds.
+Do NOT disable the 80% protection.
+Do NOT delete existing data.
+
+I want diagnosis first, then we will implement the fix based on the actual code and evidence.
