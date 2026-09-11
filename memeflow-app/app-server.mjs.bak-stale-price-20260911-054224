@@ -100,16 +100,6 @@ function __mfOpenPositionMints(){
   return out;
 }
 
-// MEMEFLOW_GLOBAL_INSTANT_PRUNE_V1
-// Session-only tombstones stop delayed discovery/enrichment work from
-// reintroducing a genuinely pruned scanner mint. Permanent history is intact.
-const __mfGlobalPrunedMintsV1=new Set();
-store.setTokenHotAdmissionGuard?.(
-  mint=>
-    !__mfGlobalPrunedMintsV1.has(String(mint||'')) ||
-    __mfOpenPositionMints().has(String(mint||''))
-);
-
 {
   // MEMEFLOW_RESTART_CONTINUITY_V1
   // A restart/deploy NEVER wipes scanner inventory. JsonStore already restored
@@ -122,11 +112,6 @@ store.setTokenHotAdmissionGuard?.(
 
 function __mfIsCurrentScannerToken(token,now=Date.now()){
   void now;
-  if(
-    __mfGlobalPrunedMintsV1.has(
-      String(token?.mint||'')
-    )
-  )return false;
 
   // MEMEFLOW_MAYHEM_HARD_BLOCK_V17
   // Mayhem is a protocol-level hard exclusion, not a user setting:
@@ -218,12 +203,6 @@ function __mfDropScannerToken(
   if(!mint)return false;
   if(__mfOpenPositionMints().has(mint))return false;
 
-  // MEMEFLOW_GLOBAL_INSTANT_PRUNE_V1
-  // Capacity eviction is reversible RAM hygiene; real prune events create a
-  // session tombstone that rejects late async writes and live-feed responses.
-  const sessionPruned=skipStoreRemoval!==true;
-  if(sessionPruned)__mfGlobalPrunedMintsV1.add(mint);
-
   if(skipStoreRemoval!==true){
     try{store.removeToken?.(mint)}catch{}
   }
@@ -247,7 +226,7 @@ function __mfDropScannerToken(
   try{
     __systemViewEmitV31(
       'token_removed',
-      {mint,reason,sessionPruned,ts:Date.now()}
+      {mint,reason,ts:Date.now()}
     )
   }catch{}
   return true;
@@ -286,50 +265,6 @@ async function __mfPruneScannerRuntimeState(now=Date.now()){
               now
             )
         );
-
-// MEMEFLOW_STALE_PRICE_PRUNE_V1
-// Remove scanner/runtime tokens whose price has not changed for more than
-// 30 minutes. Open positions are protected by __mfDropScannerToken().
-// Permanent registry/history/trade data remain untouched.
-{
-  const __mfStalePriceNow = Date.now();
-  const __mfStalePriceLimitMs = 30 * 60 * 1000;
-  const __mfStalePriceOpen = __mfOpenPositionMints();
-  const __mfStalePriceRemoved = new Set();
-
-  for (const __mfRow of scannerRows) {
-    const __mfMint = __mfRow?.mint;
-    if (!__mfMint) continue;
-    if (__mfStalePriceOpen.has(__mfMint)) continue;
-
-    const __mfLastPriceChange =
-      Number(__mfRow?.lastPriceChangeAt) ||
-      Number(__mfRow?.lastPriceAt) ||
-      Number(__mfRow?.updatedAt) ||
-      0;
-
-    if (
-      __mfLastPriceChange > 0 &&
-      (__mfStalePriceNow - __mfLastPriceChange) > __mfStalePriceLimitMs
-    ) {
-      const __mfDropped = __mfDropScannerToken(
-        __mfMint,
-        'STALE_PRICE_GT_30_MIN'
-      );
-
-      if (__mfDropped) {
-        __mfStalePriceRemoved.add(__mfMint);
-      }
-    }
-  }
-
-  if (__mfStalePriceRemoved.size) {
-    scannerRows = scannerRows.filter(
-      __mfRow => !__mfStalePriceRemoved.has(__mfRow?.mint)
-    );
-  }
-}
-
 
 // MEMEFLOW_DEEP_DRAWDOWN_PRUNE_V1
 // Remove scanner/runtime tokens only when current price is MORE THAN 80%

@@ -3566,6 +3566,7 @@ button.primary.mf-has-icon .mf-btn-icon{
 
 </style></noscript>
 
+<script src="/global-instant-prune-v1.js?v=1"></script>
 <script id="production-core-js">(()=>{
 'use strict';
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
@@ -3831,6 +3832,7 @@ async function refresh(){
     return {...row,mint,id:row.id||mint||`decision-${i}`};
    })
    .filter(c=>{
+    if(window.MEMEFLOW_GLOBAL_PRUNE_V1?.isPruned(c.mint))return false;
     const stateName=String(c.state||'WAITING').toUpperCase();
     return stateName==='BUY READY'&&c.terminal!==true&&c.lifecycle!=='closed'&&!terminalStates.has(stateName);
    })
@@ -3868,6 +3870,26 @@ async function refresh(){
 }
 $$('.itab').forEach(b=>b.addEventListener('click',()=>{$$('.itab').forEach(x=>x.classList.remove('active'));$$('.tab-pane').forEach(x=>x.classList.remove('active'));b.classList.add('active');$('#pane-'+b.dataset.tab)?.classList.add('active')}));
 $('#validateBtn')?.addEventListener('click',()=>toast('Execution remains server-gated.'));$('#reviewMission')?.addEventListener('click',()=>$('#workspace')?.scrollIntoView({behavior:'smooth'}));
+// MEMEFLOW_GLOBAL_INSTANT_PRUNE_V1
+window.MEMEFLOW_GLOBAL_PRUNE_V1?.subscribe(({mint})=>{
+ const previousSelected=state.selected;
+ state.candidates=state.candidates.filter(
+  candidate=>String(candidate?.mint||candidate?.tokenAddress||'')!==mint
+ );
+ if(!state.candidates.some(candidate=>candidate.id===state.selected)){
+  state.selected=state.candidates[0]?.id||null;
+ }
+ render();
+ if(previousSelected!==state.selected){
+  const candidate=selected();
+  window.dispatchEvent(new CustomEvent('memeflow:candidatechange',{detail:{
+   name:candidate.id?candidate.name:'',
+   symbol:candidate.id?(candidate.symbol||candidate.name):'',
+   tokenAddress:candidate.id?(candidate.mint||candidate.tokenAddress||''):'',
+   mint:candidate.id?(candidate.mint||candidate.tokenAddress||''):''
+  }}));
+ }
+});
 window.MEMEFLOW_CORE={getState:()=>clone(state),getSelected:()=>clone(selected()),select:id=>{if(!state.candidates.some(c=>c.id===id))return false;state.selected=id;render();return true},render,refresh,toast,setIncident:on=>{state.incident=Boolean(on);document.body.dataset.incident=String(Boolean(on));render()},setStale:on=>document.body.classList.toggle('data-stale',Boolean(on)),openSheet:()=>{},closeSheets:()=>{}};
 render();(()=>{const d=document.getElementById('ai-analysis');if(d&&window.innerWidth>820)d.open=true})();refresh();setInterval(refresh,10000);
 })();</script><script id="wallet-integration-script">

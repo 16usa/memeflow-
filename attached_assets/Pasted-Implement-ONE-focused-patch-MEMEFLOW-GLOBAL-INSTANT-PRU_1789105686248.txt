@@ -1,0 +1,55 @@
+Implement ONE focused patch: MEMEFLOW_GLOBAL_INSTANT_PRUNE_V1.
+
+Problem:
+Tokens correctly get pruned by the backend after:
+
+1. price is MORE THAN 80% below recorded ATH, or
+2. price has NOT CHANGED for MORE THAN 30 minutes.
+
+But the token card can remain visible on Trading Terminal and other pages because the frontend does not globally remove the token immediately.
+
+Required behavior:
+
+* The instant a token is pruned, it must disappear from EVERY live/current UI surface:
+    * Trading Terminal
+    * Scanner
+    * Feed
+    * Watch/current candidate lists
+    * any other live token/card/list view in the application
+* No page refresh.
+* Do not wait for the next polling cycle.
+* Do not wait for the next navigation.
+* Use the existing token_removed event emitted by the backend as the immediate invalidation signal.
+* The frontend must remove the token from every relevant in-memory collection/state AND remove any currently rendered card/row associated with that mint.
+* If another live update tries to re-add the same mint after token_removed, it must be rejected immediately while the token is in the current-session pruned set.
+* Maintain a global client-side Set such as globalPrunedMints.
+* On token_removed, add the mint to that Set and immediately purge it from all relevant frontend arrays/maps/state objects.
+* All rendering/filtering functions must exclude any mint in globalPrunedMints.
+* Existing live transport (WebSocket/SSE/event mechanism) must be reused. Do NOT introduce a second competing transport.
+* The server must also prevent the pruned token from being returned by live/current feed endpoints after the prune event.
+* Do NOT delete historical trades, statistics, chart history, or permanent registry data.
+* Do NOT remove open positions.
+* Do NOT change the existing >80% or >30-minute thresholds.
+* Do NOT change unrelated UI, styling, trading logic, ranking, scoring, or settings.
+
+Important:
+The removal must propagate immediately across already-open pages/tabs using the existing live event mechanism. If the application already has a shared event bus, use it rather than duplicating listeners.
+
+Add clear marker comments:
+// MEMEFLOW_GLOBAL_INSTANT_PRUNE_V1
+
+Before editing:
+
+* inspect how token_removed is emitted by app-server.mjs;
+* inspect how live events are received in index.html/frontend;
+* identify every current token collection used by Trading Terminal and the other live pages;
+* make the smallest safe change that centralizes the invalidation.
+
+After editing:
+
+* run syntax checks;
+* verify no existing functionality was removed;
+* verify the same mint cannot reappear in live UI after token_removed;
+* create a backup before modifying files.
+
+Do NOT rewrite the application. Do NOT create a new architecture. This is a surgical global invalidation patch only.

@@ -206,6 +206,16 @@ const state = {
   feedViewErrors: 0,
   feedEvaluationErrors: 0
 };
+const globalPruneV1=window.MEMEFLOW_GLOBAL_PRUNE_V1;
+
+// MEMEFLOW_GLOBAL_INSTANT_PRUNE_V1
+globalPruneV1?.subscribe(({mint})=>{
+  state.rows=state.rows.filter(
+    row=>String(row?.mint||'')!==mint
+  );
+  state.page=1;
+  render();
+});
 
 /* MEMEFLOW_SYSTEM_TOKEN_OPEN_POSITIONS_V1
  * UI-only merge of the existing scanner feed with the existing paper-position feed.
@@ -1129,7 +1139,9 @@ function __mfBaseFilteredRowsV25() {
 
 
 function filteredRows(){
-  const rows=__mfBaseFilteredRowsV25();
+  const rows=globalPruneV1
+    ? globalPruneV1.filterRows(__mfBaseFilteredRowsV25())
+    : __mfBaseFilteredRowsV25();
   const maxAge=__mfSortConfigV25.ageMaxMinutes;
 
   if(!finite(maxAge)||Number(maxAge)<=0){
@@ -2570,6 +2582,7 @@ async function __mfLoadStructureV18(){
       rows
         .map(canonicalDecisionRow)
         .filter(row=>row?.mint)
+        .filter(row=>!globalPruneV1?.isPruned(row.mint))
         .map(row=>{
           const mint=String(row.mint||'');
           const previous=previousByMint.get(mint);

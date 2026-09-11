@@ -6,6 +6,7 @@ const fmt = (value, digits = 2) => finite(value)
   : '—';
 const short = (value = '', a = 5, b = 4) => value ? `${value.slice(0, a)}…${value.slice(-b)}` : '—';
 const esc = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+const globalPruneV1=window.MEMEFLOW_GLOBAL_PRUNE_V1;
 
 const state = {
   settings: null,
@@ -1202,6 +1203,7 @@ function mergedCandidates() {
     .filter(
       candidate =>
         candidate?.mint &&
+        !globalPruneV1?.isPruned(candidate.mint) &&
         !openMints.has(String(candidate.mint))
     );
 }
@@ -1458,6 +1460,7 @@ async function loadCandidates({ redrawChart = true } = {}) {
     (Array.isArray(payload?.decisions)?payload.decisions:[])
       .filter(item=>{
         if(!item?.mint)return false;
+        if(globalPruneV1?.isPruned(item.mint))return false;
         return allowedStates.has(String(item?.state||'').trim().toUpperCase());
       });
 
@@ -1503,6 +1506,41 @@ function selectCandidate(mint) {
   updateAmountHint();
   scheduleChart();
 }
+
+// MEMEFLOW_GLOBAL_INSTANT_PRUNE_V1
+globalPruneV1?.subscribe(({mint})=>{
+  const selectedWasPruned=
+    String(state.selectedMint||'')===mint &&
+    !isMintOpen(mint);
+
+  state.candidates=(state.candidates||[]).filter(
+    candidate=>String(candidate?.mint||'')!==mint
+  );
+  state.liveWatchCandidates=(state.liveWatchCandidates||[]).filter(
+    candidate=>String(candidate?.mint||'')!==mint
+  );
+  state.rawByMint.delete(mint);
+  tokenAvatarRuntime.resolvedUrlByMint.delete(mint);
+  chartRuntime.previewEntrySolByMint.delete(mint);
+
+  if(selectedWasPruned){
+    state.chartSource?.close?.();
+    state.chartSource=null;
+    state.selectedMint=null;
+    state.selected=null;
+    clearLiveTradeTape();
+  }
+
+  syncSelectedCandidate();
+  updateCandidateCount();
+  renderCandidates();
+  renderSelected({redrawChart:true});
+  scheduleChart();
+
+  if(selectedWasPruned&&state.selectedMint){
+    connectChartStream(state.selectedMint);
+  }
+});
 
 const tokenAvatarRuntime={
   resolvedUrlByMint:new Map(),

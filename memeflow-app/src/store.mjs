@@ -26,6 +26,7 @@ export class JsonStore {
     // Normal saves use this trusted in-memory payload for .bak rotation instead
     // of synchronously reading+parsing the previous state.json on the event loop.
     this._lastCommittedStatePayloadV54=null;
+    this._tokenHotAdmissionGuard=null;
 
     fs.mkdirSync(dir,{recursive:true});
 
@@ -645,9 +646,25 @@ export class JsonStore {
     return Object.values(this.state.paperPositions||{}).some(p=>p?.mint===mint&&String(p?.status||'').toUpperCase()==='OPEN') ||
       Object.values(this.state.positions||{}).some(p=>p?.mint===mint&&String(p?.status||'').toUpperCase()==='OPEN');
   }
+  // MEMEFLOW_GLOBAL_INSTANT_PRUNE_V1
+  setTokenHotAdmissionGuard(guard){
+    this._tokenHotAdmissionGuard=
+      typeof guard==='function'
+        ? guard
+        : null;
+  }
+  _allowsTokenHotAdmission(mint){
+    if(!this._tokenHotAdmissionGuard)return true;
+    try{
+      return this._tokenHotAdmissionGuard(String(mint||''))!==false;
+    }catch{
+      return false;
+    }
+  }
   getToken(mint){
     mint=String(mint||'');
     if(!mint)return null;
+    if(!this._allowsTokenHotAdmission(mint))return null;
 
     const hot=this.state.tokens?.[mint]||null;
     if(hot)return hot;
@@ -664,6 +681,9 @@ export class JsonStore {
     return this.state.tokens[mint];
   }
   addToken(t){
+    if(!this._allowsTokenHotAdmission(t?.mint)){
+      return null;
+    }
     const old=this.state.tokens[t.mint]||{};
     this.state.tokens[t.mint]={...old,...t,updatedAt:Date.now()};
     this.state.metrics.discovered++;
@@ -678,6 +698,10 @@ export class JsonStore {
     return this.state.tokens[t.mint]
   }
   setToken(mint,t){
+    mint=String(mint||'');
+    if(!mint||!this._allowsTokenHotAdmission(mint)){
+      return null;
+    }
     const now=Date.now(),old=this.state.tokens[mint]||{};
     const patch={...(t||{})};
 
