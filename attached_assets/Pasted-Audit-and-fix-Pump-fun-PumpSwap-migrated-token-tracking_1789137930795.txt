@@ -1,0 +1,213 @@
+Audit and fix Pump.fun -> PumpSwap migrated token tracking in Memflow.
+
+PROBLEM:
+Tokens that migrate from Pump.fun to PumpSwap are apparently not entering or remaining in the Memflow live system.
+
+DO NOT make a broad refactor.
+DO NOT change trading logic.
+DO NOT change score thresholds.
+DO NOT change the 80% drawdown rule.
+DO NOT change holder/admission thresholds.
+DO NOT implement token caching changes yet.
+This task is ONLY about PumpSwap migration tracking.
+
+FIRST: TRACE THE COMPLETE MIGRATION LIFECYCLE
+
+Find how Memflow currently handles:
+
+Pump.fun token
+    ->
+migration
+    ->
+PumpSwap pool/pair
+    ->
+live market data
+    ->
+scanner/store
+    ->
+admission
+    ->
+frontend
+
+Search the entire codebase for existing references to:
+- PumpSwap
+- pumpswap
+- PumpSwap migration
+- migration
+- migrate
+- migrated
+- pool
+- AMM
+- bonding curve completion
+- completeEvent
+- migration event
+- pool creation
+- Pump.fun -> PumpSwap
+- swap
+- pool address
+
+DO NOT assume the implementation is missing.
+There may already be partial PumpSwap support.
+
+IDENTIFY EXACTLY WHERE THE TOKEN IS LOST.
+
+Determine whether the failure is:
+
+A) migration event is not detected
+
+B) migration is detected but token is rejected
+
+C) PumpSwap pool is detected but token is not registered
+
+D) token remains registered but live price updates stop
+
+E) PumpSwap market data is unavailable/incorrect
+
+F) token is hidden by admission
+
+G) token is removed by cleanup logic incorrectly
+
+H) frontend does not receive the migrated token/update
+
+I) token is resurrected/overwritten by stale Pump.fun state
+
+J) another specific failure
+
+IMPORTANT:
+Provide evidence from the actual code path before changing it.
+
+TRACE ONE MIGRATED TOKEN END-TO-END if possible.
+
+For a migrated token, show:
+
+1. token mint
+2. Pump.fun state before migration
+3. migration detection
+4. PumpSwap pool/pair identification
+5. source of live price after migration
+6. source of liquidity after migration
+7. source of volume/trades after migration
+8. store update
+9. admission state
+10. API/WebSocket/SSE state
+11. frontend visibility
+
+PUMPSWAP MUST BECOME A VALID LIVE MARKET SOURCE
+
+After migration, the token must NOT depend on stale Pump.fun market data.
+
+Expected behavior:
+
+Pump.fun bonding curve active
+    -> use Pump.fun live market data
+
+Migration occurs
+    -> detect migration
+    -> identify PumpSwap pool
+    -> switch live market-data source to PumpSwap
+    -> continue tracking the SAME token mint
+    -> continue updating price/liquidity/volume/trades
+    -> continue scoring/admission
+    -> continue displaying the token
+
+Do NOT create a duplicate token just because the market source changes.
+
+The token identity remains the same mint.
+
+IMPORTANT:
+If Pump.fun WebSocket stops sending price updates after migration, Memflow must not interpret that simply as the token being dead.
+
+It should switch to the PumpSwap source if migration is confirmed.
+
+PERSISTENCE:
+Do not use stale cached Pump.fun price/liquidity as the source of truth after migration.
+
+If old Pump.fun state remains in memory, it must not overwrite newer PumpSwap state.
+
+RACE CONDITIONS:
+Handle:
+
+Pump.fun update
+PumpSwap update
+migration event
+
+arriving in different orders.
+
+After migration is confirmed, stale Pump.fun updates must not overwrite the PumpSwap market state.
+
+ADMISSION:
+A migrated PumpSwap token must go through the normal existing admission pipeline.
+
+Do NOT bypass admission.
+
+Do NOT automatically mark it BUY READY.
+
+Do NOT weaken holder validation.
+
+Do NOT change scoring logic.
+
+ONLY ensure that the migrated token continues receiving the live data required by the existing pipeline.
+
+FRONTEND:
+If backend correctly tracks the migrated token but frontend loses it, trace the API/WebSocket/SSE update and fix that path.
+
+The token must remain visible without a page refresh when valid.
+
+DIAGNOSTICS:
+Add concise diagnostics around migration:
+
+PUMPSWAP_MIGRATION_DETECTED
+mint=<mint>
+
+PUMPSWAP_POOL_IDENTIFIED
+mint=<mint>
+pool=<pool>
+
+PUMPSWAP_SOURCE_SWITCHED
+mint=<mint>
+from=pumpfun
+to=pumpswap
+
+PUMPSWAP_LIVE_UPDATE
+mint=<mint>
+price=<price>
+
+PUMPSWAP_UPDATE_FAILED
+mint=<mint>
+reason=<reason>
+
+Do not spam these every second.
+Log migration/source transitions once and errors when they occur.
+
+TESTS:
+Add focused tests for:
+
+1. Pump.fun token before migration.
+2. Migration detection.
+3. PumpSwap pool identification.
+4. Same mint continues after migration.
+5. Live PumpSwap price updates update the existing token.
+6. PumpSwap liquidity/volume updates continue.
+7. Stale Pump.fun update cannot overwrite PumpSwap state after migration.
+8. Migrated token reaches the normal admission pipeline.
+9. Migrated token is not duplicated.
+10. Missing/invalid PumpSwap pool does not crash the scanner.
+11. Existing 80% deletion behavior remains unchanged.
+12. Existing score/age cleanup remains unchanged.
+
+IMPORTANT:
+Do NOT deploy automatically.
+
+At the end report:
+
+1. EXACT root cause.
+2. EXACT file/function where migrated tokens were being lost.
+3. Whether PumpSwap support already existed.
+4. Exact files changed.
+5. Exact migration flow after the fix.
+6. Tests passed.
+7. Whether a real migrated token was successfully tracked end-to-end.
+8. Any remaining PumpSwap limitations.
+
+If you cannot prove the root cause from the code, DO NOT guess.
+Stop and report the exact missing information needed.

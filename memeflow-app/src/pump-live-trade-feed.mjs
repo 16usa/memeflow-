@@ -141,7 +141,8 @@ export function startPumpLiveTradeFeed(opts={}){
     duplicateTradeEventsSkipped:0,unknownMintEventsIgnored:0,
     deadTokensDetected:0,deadTokensDropped:0,
     lastTradeEventAt:null,lastTradeEventSource:null,
-    lastStoreUpdateAt:null,lastStoreUpdateMint:null
+    lastStoreUpdateAt:null,lastStoreUpdateMint:null,
+    migratedPumpEventsIgnored:0
   };
 
   const mintCounts=new Map(),users=new Set();
@@ -260,6 +261,13 @@ export function startPumpLiveTradeFeed(opts={}){
 
     const known=tokenFromStore(store,e.mint);
     if(!known)return;
+    if(
+      known.pumpSwapSourceActive===true ||
+      known.marketProtocol==='pumpswap'
+    ){
+      metrics.migratedPumpEventsIgnored++;
+      return;
+    }
 
     let holderSnap=null;
     try{

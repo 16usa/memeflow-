@@ -3,3 +3,4 @@
 - [Artifact-managed workflows](artifact-managed-workflows.md) — Replit regenerates workflow/port entries for registered artifacts; they cannot be removed independently of the artifacts.
 - [Holder RPC backpressure](holder-rpc-backpressure.md) — preserve mint program identity and keep holder intake below the paced getProgramAccounts service rate.
 - [Live drawdown tombstones](live-drawdown-tombstones.md) — >=80% live drawdown deletion is synchronous; durable tombstones outrank queued writes, registry rows, and stale snapshots.
+- [PumpSwap source continuity](pumpswap-source-continuity.md) — PumpSwap pools may use either mint orientation; recover missed-transition orientation without runtime HTTP RPC.

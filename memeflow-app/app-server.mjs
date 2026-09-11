@@ -16,6 +16,7 @@ import {selectFastHolderPreviewPrefixV69} from './src/fast-holder-preview-select
 import {buildHolderActiveUserContextV70} from './src/holder-active-user-context-v70.mjs'; // MEMEFLOW_HOLDER_ACTIVE_USER_CONTEXT_V70
 import {createHistoryEvalFifoV72} from './src/history-eval-fifo-v72.mjs'; // MEMEFLOW_HISTORY_EVAL_QUEUE_HOTPATH_V72
 import { startPumpLiveTradeFeed } from './src/pump-live-trade-feed.mjs'; // MEMEFLOW_V12_21_LIVE_TRADE_STREAM_HOLDER_FEED
+import {startPumpSwapLiveTradeFeed} from './src/pumpswap-live-trade-feed.mjs';
 import { ChartHistoryArchive } from './src/chart-history-archive.mjs'; // MEMEFLOW_CHART_DATA_PATH_FIX_V2_DIRTY_SAFE // MEMEFLOW_CHART_HISTORY_RESTORE_V1
 import {createOpportunityEngine} from './src/opportunity-engine.mjs'; // MEMEFLOW_OPPORTUNITY_ENGINE_V1
 import {createTokenIntelligenceShadowV23} from './src/token-intelligence-shadow-v23.mjs'; // MEMEFLOW_TOKEN_INTELLIGENCE_NETWORK_V23
@@ -288,6 +289,7 @@ function __mfDropScannerToken(
   try{eventHolderLedger?.dropMint?.(mint)}catch{}
   try{opportunityEngine?.dropMint?.(mint)}catch{}
   try{__pumpLiveTradeFeed?.dropMint?.(mint)}catch{}
+  try{__pumpSwapLiveTradeFeed?.dropMint?.(mint)}catch{}
   try{chartTradeHistory?.delete?.(mint)}catch{}
   try{
     const t=priceTimers?.get?.(mint);
@@ -3192,13 +3194,17 @@ function publishTrade(mint,event,tokenOverride=null){
         ].join(':')
       : null;
 
+  const tradeSource=
+    event?.marketProtocol==='pumpswap'
+      ? 'pumpswap-trade-event'
+      : 'pump-trade-event';
   const point={
     id,
     t:at,
     price,
     priceSol:price,
     markPrice:price,
-    source:'pump-trade-event',
+    source:tradeSource,
     isBuy,
     solAmount,
     tokenAmount
@@ -3245,7 +3251,7 @@ function publishTrade(mint,event,tokenOverride=null){
         point,
         status:{
           stale:false,
-          source:'pump-trade-event',
+          source:tradeSource,
           live:true,
           persistentHistory:true
         }
@@ -4701,6 +4707,8 @@ async function mf49PumpReference(mint){
      : null,
    complete,
    migrated:complete,
+    raydiumPool:coin.raydium_pool||coin.raydiumPool||null,
+    pumpSwapPool:coin.raydium_pool||coin.raydiumPool||null,
    previewHolderCount:holderRef!=null&&holderRef>0?holderRef:null,
    twitterUrl:coin.twitter||null,
    telegramUrl:coin.telegram||null,
@@ -4816,14 +4824,18 @@ async function mf49StandaloneScan(raw,u){
   migrated:
    stored?.migrated===true||
    pumpReference?.migrated===true,
-  priceSol:
-   mf49Num(marketLedger?.priceSol) ??
-   mf49Num(stored?.priceSol) ??
-   mf49Num(pumpReference?.priceSol),
-  liquiditySol:
-   mf49Num(marketLedger?.liquiditySol) ??
-   mf49Num(stored?.liquiditySol) ??
-   mf49Num(pumpReference?.liquiditySol),
+   priceSol:
+    stored?.pumpSwapSourceActive===true
+     ? mf49Num(stored?.priceSol)
+     : mf49Num(marketLedger?.priceSol) ??
+       mf49Num(stored?.priceSol) ??
+       mf49Num(pumpReference?.priceSol),
+   liquiditySol:
+    stored?.pumpSwapSourceActive===true
+     ? mf49Num(stored?.liquiditySol)
+     : mf49Num(marketLedger?.liquiditySol) ??
+       mf49Num(stored?.liquiditySol) ??
+       mf49Num(pumpReference?.liquiditySol),
   buyPressure:
    mf49Num(marketLedger?.buyPressure) ??
    mf49Num(stored?.buyPressure),
@@ -8616,8 +8628,15 @@ if(url.pathname==='/api/system/health'){
         lastEventAt:discovery.lastEventAt
       },
       pumpSwapListener:{
-        status:primaryOk?(rateLimited?'degraded':'healthy'):'unavailable',
-        source:hostname||'Solana RPC'
+        status:
+          __pumpSwapLiveTradeFeed?.metrics?.().connected===true
+            ? 'healthy'
+            : 'unavailable',
+        source:
+          __pumpSwapLiveTradeFeed?.metrics?.().connected===true
+            ? (hostname||'Solana WebSocket')
+            : (wsConfigured?'Connecting':'Not configured'),
+        ...__pumpSwapLiveTradeFeed?.metrics?.()
       },
       marketIndexer:{
         status:primaryOk?(rateLimited?'degraded':'healthy'):'unavailable',
@@ -9447,7 +9466,10 @@ if(url.pathname==='/api/ai/decisions'){
         freshEventOnlyMs:__V12_23_FRESH_EVENT_ONLY_MS,
         legacyHolderRpcForFreshPump:false
       },
-      liveTradeFeed:__pumpLiveTradeFeed?.metrics?.()||null,eventHolderLedger:eventHolderLedger.diagnostics(),eventMarketLedger:eventMarketLedger.diagnostics(),
+      liveTradeFeed:__pumpLiveTradeFeed?.metrics?.()||null,
+      pumpSwapLiveTradeFeed:
+        __pumpSwapLiveTradeFeed?.metrics?.()||null,
+      eventHolderLedger:eventHolderLedger.diagnostics(),eventMarketLedger:eventMarketLedger.diagnostics(),
       now,
       bridge:bridgeMetrics,fastPhase:fastPhaseMetrics,
       instance:{
@@ -9633,6 +9655,8 @@ if(url.pathname==='/api/ai/decisions'){
     startedAt:discovery.startedAt,
     ...discMetrics,...enrichDiag,...holderMetrics,...recoveryMetrics,...liveEvalMetrics,
     liveTradeFeed:__pumpLiveTradeFeed?.metrics?.()||null,
+    pumpSwapLiveTradeFeed:
+      __pumpSwapLiveTradeFeed?.metrics?.()||null,
     queueDepth:discMetrics.freshQueueDepth+discMetrics.retryQueueDepth,
     holderQueueDepth:holderQueue.queueDepth,
     holderProcessing:holderQueue.processing,
@@ -10458,6 +10482,7 @@ function __mfStopBackgroundWorkV52(){
 
   try{solUsdOracle.stop()}catch{}
   try{__pumpLiveTradeFeed?.stop?.()}catch{}
+  try{__pumpSwapLiveTradeFeed?.stop?.()}catch{}
   try{holderQueue?.close?.()}catch{}
 
   for(const timer of [
@@ -10682,6 +10707,17 @@ for(const signal of ['SIGTERM','SIGINT']){
               ? Number(token.previewHolderCount)
               : null
         };
+        if(token?.complete===true)referencePatch.complete=true;
+        if(token?.migrated===true)referencePatch.migrated=true;
+        if(token?.raydiumPool){
+          referencePatch.raydiumPool=token.raydiumPool;
+          referencePatch.pumpSwapPool=token.raydiumPool;
+          __pumpSwapLiveTradeFeed?.registerToken?.({
+            ...current,
+            ...referencePatch,
+            mint:token.mint
+          });
+        }
 
         if(Number.isFinite(Number(token?.marketCapUsd))){
           referencePatch.pumpReportedMarketCapUsd=Number(token.marketCapUsd);
@@ -10741,6 +10777,17 @@ const __pumpLiveTradeFeed=startPumpLiveTradeFeed({
   opportunityEngine,
   getSolUsd:()=>solUsdOracle.get(),
   onDead:null // MEMEFLOW_SETTINGS_CONTROL_SCANNER_RETENTION_V1: decision-only, never scanner delete
+});
+
+const __pumpSwapLiveTradeFeed=startPumpSwapLiveTradeFeed({
+  eventHolderLedger:
+    typeof eventHolderLedger!=='undefined'?eventHolderLedger:null,
+  store:typeof store!=='undefined'?store:null,
+  publish:typeof publish==='function'?publish:null,
+  publishTrade:typeof publishTrade==='function'?publishTrade:null,
+  evaluateAI:typeof evaluateAll==='function'?evaluateAll:null,
+  opportunityEngine,
+  getSolUsd:()=>solUsdOracle.get()
 });
 
 // MEMEFLOW_V12_22_WS_DIRECT_TRADE_EVENT: live feed module now decodes Pump TradeEvent directly from logsSubscribe; no per-signature HTTP getTransaction.

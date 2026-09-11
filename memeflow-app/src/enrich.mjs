@@ -314,7 +314,11 @@ export async function enrichToken(mint, curve, deps) {
     // Supply data
     if (supply) { update.decimals = decimals; update.totalSupply = total; }
     // Curve data
-    if (Object.keys(c).length) {
+    if (
+      Object.keys(c).length &&
+      existingToken.pumpSwapSourceActive!==true &&
+      existingToken.marketProtocol!=='pumpswap'
+    ) {
       update.priceSol       = c.priceSol    ?? null;
       update.liquiditySol   = c.liquiditySol ?? null;
       update.marketCapSol   = (c.priceSol && total) ? c.priceSol * total : null;
