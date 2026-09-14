@@ -1628,14 +1628,15 @@ function render() {
       pageTotal
     );
 
-  const start =
-    (state.page - 1) *
-    PAGE_SIZE;
+  // MEMEFLOW_TOKEN_FLOW_CONTINUOUS_COMPACT_V1
+  // state.page is now the number of progressively revealed PAGE_SIZE chunks.
+  // The first chunk renders immediately; more chunks are appended by scroll.
+  const start = 0;
 
   const pageRows =
     rows.slice(
-      start,
-      start + PAGE_SIZE
+      0,
+      Math.min(rows.length, state.page * PAGE_SIZE)
     );
 
   $('visibleCount').textContent =
@@ -2037,13 +2038,13 @@ function __mfReconcileVisibleCardsV183(){
     pageTotal
   );
 
-  const start=
-    (state.page-1)*PAGE_SIZE;
+  // MEMEFLOW_TOKEN_FLOW_CONTINUOUS_COMPACT_V1_RECONCILE
+  const start=0;
 
   const pageRows=
     rows.slice(
-      start,
-      start+PAGE_SIZE
+      0,
+      Math.min(rows.length,state.page*PAGE_SIZE)
     );
 
   $('visibleCount').textContent=rows.length;
@@ -5092,3 +5093,59 @@ async function hydrateTokenMediaV25() {
   }
 })();
 // ===== /MEMEFLOW_TOKEN_FLOW_TIME_WINDOW_V47C =====
+
+
+/* ===== MEMEFLOW_TOKEN_FLOW_CONTINUOUS_COMPACT_V1 =====
+ * Pagination UI is intentionally removed. state.page is retained as a
+ * backwards-compatible chunk counter so every existing filter/sort/search
+ * reset (state.page = 1) keeps working exactly as before.
+ *
+ * When the user approaches the bottom of the document, reveal one more
+ * PAGE_SIZE chunk and re-render in place. No network request, trading state,
+ * scoring rule, holder logic or market data source is changed here.
+ */
+let __mfContinuousScrollRafV1 = 0;
+let __mfContinuousScrollBusyV1 = false;
+
+function __mfContinuousScrollCheckV1(){
+  if (__mfContinuousScrollBusyV1) return;
+
+  const rows = filteredRows();
+  const totalChunks = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+
+  if (state.page >= totalChunks) return;
+
+  const root = document.documentElement;
+  const scrollBottom = window.scrollY + window.innerHeight;
+  const triggerAt = Math.max(0, root.scrollHeight - Math.max(640, window.innerHeight * 0.75));
+
+  if (scrollBottom < triggerAt) return;
+
+  __mfContinuousScrollBusyV1 = true;
+  state.page += 1;
+
+  try {
+    render();
+    if (typeof __mfKickCardClockV19 === 'function') {
+      __mfKickCardClockV19();
+    }
+  } finally {
+    __mfContinuousScrollBusyV1 = false;
+  }
+
+  // If the newly revealed chunk still does not fill the viewport, continue.
+  requestAnimationFrame(__mfContinuousScrollCheckV1);
+}
+
+function __mfContinuousScrollScheduleV1(){
+  if (__mfContinuousScrollRafV1) return;
+  __mfContinuousScrollRafV1 = requestAnimationFrame(() => {
+    __mfContinuousScrollRafV1 = 0;
+    __mfContinuousScrollCheckV1();
+  });
+}
+
+window.addEventListener('scroll', __mfContinuousScrollScheduleV1, {passive:true});
+window.addEventListener('resize', __mfContinuousScrollScheduleV1, {passive:true});
+requestAnimationFrame(__mfContinuousScrollCheckV1);
+/* ===== /MEMEFLOW_TOKEN_FLOW_CONTINUOUS_COMPACT_V1 ===== */

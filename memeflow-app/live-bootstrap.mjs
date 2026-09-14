@@ -1,5 +1,6 @@
 import {createRequire, syncBuiltinESMExports} from 'node:module';
 import {readFile} from 'node:fs/promises';
+import {createInsightXWalletIntelligenceV1} from './src/insightx-wallet-intelligence.mjs'; // MEMEFLOW_INSIGHTX_WALLET_INTELLIGENCE_V1
 
 const require=createRequire(import.meta.url);
 const http=require('node:http');
@@ -72,6 +73,7 @@ const LIVE_FLAG=/^(1|true|yes|on)$/i.test(String(process.env.LIVE_TRADING_ENABLE
 const MAX_BUY_SOL=Math.max(0.001,Number(process.env.LIVE_MAX_BUY_SOL||0.5));
 const MAX_SLIPPAGE_PCT=Math.min(50,Math.max(0.1,Number(process.env.LIVE_MAX_SLIPPAGE_PCT||10)));
 const BASE58=/^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+const __mfInsightXWalletIntelligenceV1=createInsightXWalletIntelligenceV1(); // MEMEFLOW_INSIGHTX_WALLET_INTELLIGENCE_V1
 
 function rpcUrl(){
   const explicit=String(process.env.LIVE_SOLANA_RPC_URL||process.env.SOLANA_RPC_URL||'').trim();
@@ -125,6 +127,38 @@ http.createServer=function patchedCreateServer(listener,...rest){
   if(typeof listener!=='function')return nativeCreateServer.call(http,listener,...rest);
   const wrapped=async(req,res)=>{
     const pathname=pathOf(req);
+
+    // MEMEFLOW_INSIGHTX_WALLET_INTELLIGENCE_V1
+    // Supplemental/read-only. This wrapper never mutates canonical token data,
+    // Score, State, holder RPC truth, or entry admission.
+    if(req.method==='GET'&&pathname==='/api/insightx/config'){
+      return json(res,200,__mfInsightXWalletIntelligenceV1.publicConfig());
+    }
+    if(req.method==='GET'&&pathname==='/api/insightx/wallet-intelligence'){
+      let requestUrl;
+      try{requestUrl=new URL(req.url,'http://local')}catch{return json(res,400,{ok:false,status:'INVALID_URL'})}
+      const mint=String(requestUrl.searchParams.get('mint')||'').trim();
+      if(!BASE58.test(mint))return json(res,400,{ok:false,status:'INVALID_MINT',message:'Valid Solana token mint is required.'});
+      try{
+        const payload=await __mfInsightXWalletIntelligenceV1.get(mint,{
+          force:requestUrl.searchParams.get('refresh')==='1',
+          compact:requestUrl.searchParams.get('compact')==='1'
+        });
+        return json(res,200,payload);
+      }catch(error){
+        return json(res,200,{
+          ok:false,
+          status:'INTEGRATION_ERROR',
+          provider:'InsightX',
+          mode:'shadow',
+          scoreAuthority:false,
+          mint,
+          atlasUrl:__mfInsightXWalletIntelligenceV1.atlasUrl(mint),
+          message:String(error?.message||error).slice(0,180)
+        });
+      }
+    }
+    // /MEMEFLOW_INSIGHTX_WALLET_INTELLIGENCE_V1
     if(req.method==='GET'&&pathname==='/vendor/solana-web3.iife.js')return serveWeb3(res);
     // MEMEFLOW_PHANTOM_SESSION_HANDOFF_ROUTES_FIX5
     if(req.method==='POST'&&pathname==='/api/session/handoff'){
