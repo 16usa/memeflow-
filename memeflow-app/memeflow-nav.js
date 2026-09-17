@@ -44,6 +44,12 @@
       title: 'Real-Time Pipeline',
       sub: 'Live token states and decision flow'
     },
+    // MEMEFLOW_X100_NETWORK_NAV_V1
+    {
+      href: '/x100.html',
+      title: 'X100 Network',
+      sub: 'Architecture, tokenomics and economic model'
+    },
     // MEMEFLOW_PUBLIC_AGENT_PERFORMANCE_V1_NAV
     {
       href: '/agent-performance.html',
