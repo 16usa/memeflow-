@@ -24,7 +24,7 @@
   max-height: none !important;
   max-block-size: none !important;
 
-  aspect-ratio: 390 / 844 !important;
+  aspect-ratio: 332 / 844 !important;
 }
 
 /* Original compact/mobile gallery size before V55. */
@@ -39,6 +39,6 @@
     height: min(84%, 510px) !important;
     block-size: min(84%, 510px) !important;
 
-    aspect-ratio: 390 / 844 !important;
+    aspect-ratio: 332 / 844 !important;
   }
 }

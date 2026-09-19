@@ -1629,7 +1629,7 @@ body.mf-settings-standalone.mf293-settings-open {
 .mf-settings-page-brand-mark .mf-brand-img {
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  object-fit: cover;
 }
 .mf-settings-page-title span {
   display: block;
@@ -2314,7 +2314,7 @@ html.mf-live-inspector-standalone-layout-v1 {
   top: 50%;
   height: min(84%, 610px);
   width: auto;
-  aspect-ratio: 390 / 844;
+  aspect-ratio: 332 / 844;
   margin: 0;
   padding: 0;
   overflow: hidden;
@@ -2361,7 +2361,7 @@ html.mf-live-inspector-standalone-layout-v1 {
   filter: saturate(.74) brightness(.73);
   transform:
     translate(-50%, -50%)
-    translateX(-73%)
+    translateX(-86%)
     rotateY(6deg)
     translateZ(-78px)
     scale(.86);
@@ -2373,7 +2373,7 @@ html.mf-live-inspector-standalone-layout-v1 {
   filter: saturate(.74) brightness(.73);
   transform:
     translate(-50%, -50%)
-    translateX(73%)
+    translateX(86%)
     rotateY(-6deg)
     translateZ(-78px)
     scale(.86);
@@ -2402,7 +2402,7 @@ html.mf-live-inspector-standalone-layout-v1 {
   opacity: .79;
   transform:
     translate(-50%, -50%)
-    translateX(-71%)
+    translateX(-84%)
     rotateY(4deg)
     translateZ(-18px)
     scale(.89);
@@ -2421,7 +2421,7 @@ html.mf-live-inspector-standalone-layout-v1 {
   opacity: .79;
   transform:
     translate(-50%, -50%)
-    translateX(71%)
+    translateX(84%)
     rotateY(-4deg)
     translateZ(-18px)
     scale(.89);
@@ -2756,7 +2756,7 @@ html.mf-live-inspector-standalone-layout-v1 {
     opacity: .60;
     transform:
       translate(-50%, -50%)
-      translateX(-72%)
+      translateX(-85%)
       rotateY(5deg)
       translateZ(-70px)
       scale(.85);
@@ -2766,7 +2766,7 @@ html.mf-live-inspector-standalone-layout-v1 {
     opacity: .60;
     transform:
       translate(-50%, -50%)
-      translateX(72%)
+      translateX(85%)
       rotateY(-5deg)
       translateZ(-70px)
       scale(.85);
