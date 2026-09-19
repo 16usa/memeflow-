@@ -1414,3 +1414,120 @@ body.mf-page-system
   box-shadow: 0 26px 62px rgba(0, 0, 0, .54) !important;
 }
 /* /MEMEFLOW_3D_GALLERY_BORDER_PARITY_V153 */
+
+/* MEMEFLOW_ALL_LIGHT_3D_CARD_BORDERS_V161
+   ALL 3D gallery cards in LIGHT theme use the normal module border.
+   No cyan border / no cyan halo in any card state.
+*/
+
+html[data-theme="light"]
+body.mf-page-system
+.mfpg-variant2-clean-v1
+.mfpg-card,
+
+html[data-theme="light"]
+body.mf-page-system
+.mfpg-variant2-clean-v1
+.mfpg-card[data-slot="left"],
+
+html[data-theme="light"]
+body.mf-page-system
+.mfpg-variant2-clean-v1
+.mfpg-card[data-slot="center"],
+
+html[data-theme="light"]
+body.mf-page-system
+.mfpg-variant2-clean-v1
+.mfpg-card[data-slot="right"],
+
+html[data-theme="light"]
+body.mf-page-system
+.mfpg-variant2-clean-v1
+.mfpg-card[data-slot="hidden"],
+
+html[data-theme="light"]
+body.mf-page-system
+.mfpg-variant2-clean-v1
+.mfpg-card:hover,
+
+html[data-theme="light"]
+body.mf-page-system
+.mfpg-variant2-clean-v1
+.mfpg-card:focus,
+
+html[data-theme="light"]
+body.mf-page-system
+.mfpg-variant2-clean-v1
+.mfpg-card:focus-visible,
+
+html[data-theme="light"]
+body.mf-page-system
+.mfpg-variant2-clean-v1
+.mfpg-card.is-hovered,
+
+html[data-theme="light"]
+body.mf-page-system
+.mfpg-variant2-clean-v1
+.mfpg-card.is-selected-pulse,
+
+html[data-theme="light"]
+body.mf-page-system
+.mfpg-variant2-clean-v1
+.mfpg-card.is-launching {
+
+  border-width: var(--mf-structure-hairline, 1px) !important;
+  border-style: solid !important;
+  border-color: var(--mf-structure-outer, rgba(0,0,0,.14)) !important;
+  outline: none !important;
+}
+
+/* Neutral shadow for every card — removes cyan inset line/glow */
+html[data-theme="light"]
+body.mf-page-system
+.mfpg-variant2-clean-v1
+.mfpg-card {
+  box-shadow:
+    0 20px 48px rgba(0,0,0,.12) !important;
+}
+
+/* Center card may stay visually elevated, but NEVER cyan */
+html[data-theme="light"]
+body.mf-page-system
+.mfpg-variant2-clean-v1
+.mfpg-card[data-slot="center"] {
+  box-shadow:
+    0 26px 62px rgba(0,0,0,.16) !important;
+}
+
+/* Interaction states keep only neutral shadow */
+html[data-theme="light"]
+body.mf-page-system
+.mfpg-variant2-clean-v1
+:where(
+  .mfpg-card:hover,
+  .mfpg-card:focus,
+  .mfpg-card:focus-visible,
+  .mfpg-card.is-hovered,
+  .mfpg-card.is-selected-pulse,
+  .mfpg-card.is-launching
+) {
+  border-color: var(--mf-structure-outer, rgba(0,0,0,.14)) !important;
+  box-shadow:
+    0 26px 62px rgba(0,0,0,.16) !important;
+}
+
+/* Kill any decorative cyan pseudo-outline */
+html[data-theme="light"]
+body.mf-page-system
+.mfpg-variant2-clean-v1
+.mfpg-card::before,
+
+html[data-theme="light"]
+body.mf-page-system
+.mfpg-variant2-clean-v1
+.mfpg-card::after {
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* /MEMEFLOW_ALL_LIGHT_3D_CARD_BORDERS_V161 */

@@ -2,8 +2,8 @@
    One master geometry everywhere. Dark/light differ only in color processing.
 */
 :root{
-  --mf-logo-dark:url("/brand/memeflow-dragonfly-dark.png?v=final-v5");
-  --mf-logo-light:url("/brand/memeflow-dragonfly-light.png?v=final-v5");
+  --mf-logo-dark:url("/brand/memeflow-gorilla-dark.png?v=gorilla-pair-v159");
+  --mf-logo-light:url("/brand/memeflow-gorilla-light.png?v=gorilla-pair-v159");
 }
 .mf-brand-img{display:block;object-fit:contain;filter:drop-shadow(0 3px 8px rgba(0,229,240,.18));}
 .logo{
@@ -443,3 +443,41 @@ h1,h2,h3{
   font-size:var(--mf-type-body);
 }
 /* ===== MEMEFLOW_TYPOGRAPHY_FOUNDATION_END ===== */
+
+/* MEMEFLOW_THEME_GORILLA_LOGOS_V159
+   Dark theme  -> supplied white gorilla.
+   Light theme -> supplied dark gorilla.
+   Header geometry/layout is unchanged.
+*/
+html[data-theme="dark"] .logo {
+  background-image: url("/brand/memeflow-gorilla-dark.png?v=gorilla-pair-v159") !important;
+}
+
+html[data-theme="light"] .logo {
+  background-image: url("/brand/memeflow-gorilla-light.png?v=gorilla-pair-v159") !important;
+}
+
+html[data-theme="dark"] .mf-brand-img,
+html[data-theme="dark"] .mf-site-header :is(
+  .brand-mark img,
+  .mf-settings-page-brand-mark img,
+  .mf-vault-brand-mark img,
+  .mf-hiw-brand-mark img
+) {
+  content: url("/brand/memeflow-gorilla-dark.png?v=gorilla-pair-v159") !important;
+  object-fit: contain !important;
+  filter: none !important;
+}
+
+html[data-theme="light"] .mf-brand-img,
+html[data-theme="light"] .mf-site-header :is(
+  .brand-mark img,
+  .mf-settings-page-brand-mark img,
+  .mf-vault-brand-mark img,
+  .mf-hiw-brand-mark img
+) {
+  content: url("/brand/memeflow-gorilla-light.png?v=gorilla-pair-v159") !important;
+  object-fit: contain !important;
+  filter: none !important;
+}
+/* /MEMEFLOW_THEME_GORILLA_LOGOS_V159 */
