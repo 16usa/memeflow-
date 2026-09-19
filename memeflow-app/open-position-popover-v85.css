@@ -96,15 +96,15 @@ html[data-theme="dark"] .position-info-v85[data-open="1"] {
 }
 
 html[data-theme="dark"] .position-popover-v85 {
-  border-color: var(--mf-x-dark-line, #2f3336) !important;
-  background: var(--mf-x-dark-inset, #101113) !important;
+  border-color: var(--mf-dark-line, rgba(145, 173, 198, .055)) !important;
+  background: var(--mf-dark-surface-2, #181f27) !important;
   color: #ecf5f7;
   box-shadow: 0 20px 46px rgba(0, 0, 0, .42);
 }
 
 html[data-theme="dark"] .position-popover-v85::after {
-  border-left-color: var(--mf-x-dark-line, #2f3336) !important;
-  border-top-color: var(--mf-x-dark-line, #2f3336) !important;
+  border-left-color: var(--mf-dark-line, rgba(145, 173, 198, .055)) !important;
+  border-top-color: var(--mf-dark-line, rgba(145, 173, 198, .055)) !important;
 }
 
 .position-popover-v85__head {
