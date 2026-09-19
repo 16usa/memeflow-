@@ -5206,15 +5206,15 @@ setTimeout(installRealWebV31, 1250);
     const width = Math.max(1, card.clientWidth);
     const height = Math.max(1, card.clientHeight);
 
-    // Match the old object-fit:cover behavior:
-    // fill the complete card, crop only what does not fit.
-    const scale = Math.max(
-      width / BASE_WIDTH,
-      height / BASE_HEIGHT
-    );
+    // V154: fit the live page by HEIGHT.
+    // Never crop the top/bottom of the embedded page.
+    // The page header must remain visible inside every 3D card.
+    const scale = height / BASE_HEIGHT;
 
+    frame.style.top = '0';
+    frame.style.transformOrigin = 'top center';
     frame.style.transform =
-      `translate(-50%, -50%) scale(${scale.toFixed(5)})`;
+      `translateX(-50%) scale(${scale.toFixed(5)})`;
   }
 
   function makeLiveLayer(card, title, path) {

@@ -2439,7 +2439,7 @@ html.mf-live-inspector-standalone-layout-v1 {
   display: block;
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
   object-position: top center;
   border-radius: inherit;
   background: #111820;
@@ -2842,49 +2842,13 @@ html.mf-live-inspector-standalone-layout-v1 {
 /* ===== /MEMEFLOW_SYSTEM_GALLERY_VARIANT2_CLEAN_V1 ===== */
 
 /* MEMEFLOW_BUY_READY_YELLOW_OPEN_GREEN_V1: BUY READY = yellow; OPEN POSITION = green. */
-
-/* MEMEFLOW INFRASTRUCTURE & INTEGRATIONS V1 */
-.mf-infra{margin:20px auto 0;display:flex;flex-direction:column;align-items:center;gap:9px}
-.mf-infra-title{font-size:var(--mf-type-micro);font-weight:850;letter-spacing:.22em;color:#536775}
-.mf-infra-row{display:flex;align-items:center;justify-content:center;gap:20px;white-space:nowrap}
-.mf-infra-row span{display:flex;align-items:center;gap:6px;font-size:var(--mf-type-micro);font-weight:800;letter-spacing:.09em;color:#718491;opacity:.52;transition:.2s}
-.mf-infra-row span:hover{opacity:.9;color:#a9c4d0}
-.mf-infra-row i{font-style:normal;width:16px;height:16px;display:grid;place-items:center;border:1px solid rgba(117,156,179,.18);border-radius:5px;color:#7896a6;font-size:var(--mf-type-meta)}
 @media(max-width:760px){
- .mf-infra{margin-top:17px;gap:8px}
- .mf-infra-row{gap:11px}
- .mf-infra-row span{font-size:var(--mf-type-micro);gap:4px}
- .mf-infra-row i{width:13px;height:13px;font-size:var(--mf-type-micro);border-radius:4px}
 }
-
-/* MEMEFLOW INFRA MOBILE POSITION V2 */
 @media(max-width:760px){
-  .mf-infra{
-    transform:translateY(-22px)!important;
-    margin-bottom:22px!important;
-  }
 }
-
-/* MEMEFLOW INFRA MOBILE POSITION V3 */
 @media(max-width:760px){
-  .mf-infra{
-    transform:translateY(-8px)!important;
-    margin-bottom:8px!important;
-  }
 }
-
-/* MEMEFLOW INFRA LOGOS MOBILE V5 */
 @media(max-width:760px){
-  .mf-infra-row{
-    transform:translateY(-10px)!important;
-  }
-}
-
-/* MEMEFLOW INFRA LOGOS MOBILE V6 */
-@media(max-width:760px){
-  .mf-infra-row{
-    transform:translateY(-5px)!important;
-  }
 }
 
 /* ===== MEMEFLOW_SETTINGS_LIGHT_SURFACES_V1 ===== */
