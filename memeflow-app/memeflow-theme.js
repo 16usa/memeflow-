@@ -40,7 +40,7 @@
       themeColor.name = 'theme-color';
       document.head?.appendChild(themeColor);
     }
-    themeColor.content = theme === 'light' ? '#ffffff' : '#000000';
+    themeColor.content = theme === 'light' ? '#f4f6f8' : '#0f141a';
   }
 
   function syncLogos(theme) {

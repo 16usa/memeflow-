@@ -251,9 +251,9 @@ body.mf-page-agent-performance.mf-final-visual-qa-v65 .ap-periods {
    ========================================================================== */
 
 :root{
-  --mf-text-primary:#f5f5f5;
-  --mf-text-secondary:#888888;
-  --mf-text-tertiary:#5f5f5f;
+  --mf-text-primary:#e7e9ea;
+  --mf-text-secondary:#71767b;
+  --mf-text-tertiary:#536471;
 }
 html[data-theme="light"]{
   --mf-text-primary:#171717;
@@ -402,7 +402,7 @@ html body:is(
    ========================================================================== */
 
 :root{
-  --mf-type-system:10px;
+  --mf-type-system:8px;
 }
 
 html body:is(
@@ -488,26 +488,6 @@ html body:is(
 }
 
 /* MEMEFLOW_GLOBAL_SYSTEM_TEXT_CONTRACT_V90_END */
-
-/* MEMEFLOW_X100_SOURCE_REBASE_V2_LABELS */
-html body:is(
-  .mf-page-system,
-  .mf-page-system-tokens,
-  .mf-page-trading,
-  .mf-page-smart-vault,
-  .mf-page-settings,
-  .mf-page-how-it-works,
-  .mf-page-agent-performance,
-  .mf-page-owner-intelligence
-) :where(.eyebrow,[class*="eyebrow"],[class*="kicker"]) {
-  font-size:11px !important;
-  line-height:1.35 !important;
-  font-weight:700 !important;
-  letter-spacing:.18em !important;
-  text-transform:uppercase !important;
-}
-/* /MEMEFLOW_X100_SOURCE_REBASE_V2_LABELS */
-
 
 /* MEMEFLOW_FINAL_VISUAL_QA_V65_END */
 
@@ -803,9 +783,9 @@ html[data-theme="dark"] {
   color-scheme: dark;
 
   --mf-dark-canvas: #000000;
-  --mf-dark-surface-1: #080808;
-  --mf-dark-surface-2: #0d0d0d;
-  --mf-dark-line: #242424;
+  --mf-dark-surface-1: #0c1117;
+  --mf-dark-surface-2: #181f27;
+  --mf-dark-line: rgba(145, 173, 198, .055);
 
   --bg: var(--mf-dark-canvas) !important;
   --panel: var(--mf-dark-surface-1) !important;

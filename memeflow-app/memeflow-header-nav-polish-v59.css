@@ -6,19 +6,19 @@
    ======================================================================== */
 
 body.mf-header-nav-polish-v59 {
-  --mf-v59-header-bg: rgba(0, 0, 0, .86);
-  --mf-v59-header-line: #242424;
-  --mf-v59-header-shadow: none;
-  --mf-v59-control-hover: #0d0d0d;
-  --mf-v59-control-press: #171717;
+  --mf-v59-header-bg: rgba(15, 20, 26, .94);
+  --mf-v59-header-line: rgba(145, 173, 198, .075);
+  --mf-v59-header-shadow: 0 1px 0 rgba(0, 0, 0, .08);
+  --mf-v59-control-hover: rgba(255, 255, 255, .035);
+  --mf-v59-control-press: rgba(255, 255, 255, .06);
   --mf-v59-focus: rgba(85, 217, 255, .60);
 
-  --mf-v59-drawer-bg: rgba(8, 8, 8, .985);
-  --mf-v59-drawer-line: #242424;
-  --mf-v59-drawer-shadow: none;
-  --mf-v59-link-hover: #0d0d0d;
-  --mf-v59-link-current: #0d0d0d;
-  --mf-v59-backdrop: rgba(0, 0, 0, .55);
+  --mf-v59-drawer-bg: rgba(15, 20, 26, .985);
+  --mf-v59-drawer-line: rgba(145, 173, 198, .085);
+  --mf-v59-drawer-shadow: -18px 0 48px rgba(0, 0, 0, .26);
+  --mf-v59-link-hover: rgba(85, 217, 255, .035);
+  --mf-v59-link-current: rgba(85, 217, 255, .045);
+  --mf-v59-backdrop: rgba(2, 6, 9, .42);
 }
 
 html[data-theme="light"] body.mf-header-nav-polish-v59 {

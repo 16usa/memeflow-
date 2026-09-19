@@ -1,13 +1,13 @@
 /* ===== MEMEFLOW_GLOBAL_RIGHT_DRAWER_NAV_V1 ===== */
 
 :root {
-  --mf-nav-bg: #000000;
-  --mf-nav-surface: rgba(8, 8, 8, .985);
-  --mf-nav-surface-2: rgba(13, 13, 13, .985);
-  --mf-nav-line: #242424;
-  --mf-nav-line-strong: #242424;
-  --mf-nav-text: #f5f5f5;
-  --mf-nav-muted: #888888;
+  --mf-nav-bg: #0f141a;
+  --mf-nav-surface: rgba(17, 24, 32, .965);
+  --mf-nav-surface-2: rgba(20, 28, 37, .965);
+  --mf-nav-line: rgba(145, 173, 198, .085);
+  --mf-nav-line-strong: rgba(145, 188, 216, .15);
+  --mf-nav-text: #eaf2f6;
+  --mf-nav-muted: #70818f;
   --mf-nav-cyan: #55d9ff;
   --mf-nav-green: #4de6a1;
 }
