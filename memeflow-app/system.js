@@ -5206,15 +5206,57 @@ setTimeout(installRealWebV31, 1250);
     const width = Math.max(1, card.clientWidth);
     const height = Math.max(1, card.clientHeight);
 
-    // V154: fit the live page by HEIGHT.
-    // Never crop the top/bottom of the embedded page.
-    // The page header must remain visible inside every 3D card.
+    /*
+     * MEMEFLOW_GALLERY_INNER_WIDTH_FIT_V156
+     *
+     * Card geometry stays untouched.
+     * Height remains the authority, so the page header stays visible.
+     *
+     * Instead of rendering every embedded page at a fixed 390px width
+     * and cropping its sides, calculate the exact iframe viewport width
+     * required by the CURRENT card.
+     *
+     * The embedded page therefore performs its own responsive layout at
+     * exactly the width visible inside the 3D card.
+     */
     const scale = height / BASE_HEIGHT;
+    const previewWidth = width / scale;
 
+    frame.style.setProperty(
+      'width',
+      `${previewWidth.toFixed(3)}px`,
+      'important'
+    );
+    frame.style.setProperty(
+      'min-width',
+      `${previewWidth.toFixed(3)}px`,
+      'important'
+    );
+    frame.style.setProperty(
+      'max-width',
+      `${previewWidth.toFixed(3)}px`,
+      'important'
+    );
+
+    frame.style.setProperty(
+      'height',
+      `${BASE_HEIGHT}px`,
+      'important'
+    );
+    frame.style.setProperty(
+      'min-height',
+      `${BASE_HEIGHT}px`,
+      'important'
+    );
+
+    frame.style.left = '50%';
     frame.style.top = '0';
     frame.style.transformOrigin = 'top center';
     frame.style.transform =
       `translateX(-50%) scale(${scale.toFixed(5)})`;
+
+    card.dataset.mfPreviewWidth =
+      previewWidth.toFixed(3);
   }
 
   function makeLiveLayer(card, title, path) {
