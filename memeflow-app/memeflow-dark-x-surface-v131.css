@@ -1374,3 +1374,43 @@ html[data-theme="dark"] body .boot {
 }
 
 /* MEMEFLOW_DARK_TWO_TONE_SURFACE_V152_END */
+
+/* MEMEFLOW_3D_GALLERY_BORDER_PARITY_V153
+   3D slide cards use the exact same dark border token and Retina hairline
+   as the site's structural modules. 3D transforms/animation are untouched.
+*/
+html[data-theme="dark"]
+body.mf-page-system
+.mfpg-variant2-clean-v1
+.mfpg-card,
+html[data-theme="dark"]
+body.mf-page-system
+.mfpg-variant2-clean-v1
+.mfpg-card[data-slot="center"],
+html[data-theme="dark"]
+body.mf-page-system
+.mfpg-variant2-clean-v1
+.mfpg-card:focus-visible,
+html[data-theme="dark"]
+body.mf-page-system
+.mfpg-variant2-clean-v1
+.mfpg-card.is-hovered {
+  border-width: var(--mf-x-dark-hairline, 1px) !important;
+  border-style: solid !important;
+  border-color: var(--mf-x-dark-line, #2f3336) !important;
+}
+
+html[data-theme="dark"]
+body.mf-page-system
+.mfpg-variant2-clean-v1
+.mfpg-card {
+  box-shadow: 0 20px 48px rgba(0, 0, 0, .42) !important;
+}
+
+html[data-theme="dark"]
+body.mf-page-system
+.mfpg-variant2-clean-v1
+.mfpg-card[data-slot="center"] {
+  box-shadow: 0 26px 62px rgba(0, 0, 0, .54) !important;
+}
+/* /MEMEFLOW_3D_GALLERY_BORDER_PARITY_V153 */
