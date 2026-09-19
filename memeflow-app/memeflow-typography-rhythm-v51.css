@@ -5,11 +5,11 @@
    ========================================================== */
 
 :root{
-  --mf-rhythm-display-lh:.98;
-  --mf-rhythm-heading-lh:1.08;
+  --mf-rhythm-display-lh:.90;
+  --mf-rhythm-heading-lh:1.02;
   --mf-rhythm-subhead-lh:1.16;
-  --mf-rhythm-body-lh:1.54;
-  --mf-rhythm-meta-lh:1.32;
+  --mf-rhythm-body-lh:1.55;
+  --mf-rhythm-meta-lh:1.35;
   --mf-rhythm-ui-lh:1.18;
 }
 
@@ -98,9 +98,11 @@ main :where(
 .mf-vault-hero h1,
 .ap-hero h1,
 .settings-hero h1,
-.scene-title h1{
-  line-height:.98 !important;
-  letter-spacing:-.04em !important;
+.scene-title h1,
+.flow-hero h1{
+  line-height:.90 !important;
+  letter-spacing:-.065em !important;
+  font-weight:700 !important;
 }
 
 /* Page-specific section titles. */
@@ -115,7 +117,9 @@ main :where(
 .execution-head h2,
 .wallet-dialog-head h2,
 .sheet-top h2{
-  line-height:1.10 !important;
+  line-height:1.02 !important;
+  letter-spacing:-.055em !important;
+  font-weight:700 !important;
 }
 
 /* Descriptive copy on the redesigned pages. */

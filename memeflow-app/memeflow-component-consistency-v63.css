@@ -19,11 +19,11 @@
    ========================================================================== */
 
 body.mf-component-consistency-v63 {
-  --mf-v63-panel-radius: 22px;
-  --mf-v63-section-radius: 18px;
-  --mf-v63-item-radius: 14px;
+  --mf-v63-panel-radius: 0px;
+  --mf-v63-section-radius: 0px;
+  --mf-v63-item-radius: 0px;
   --mf-v63-line: rgba(17, 24, 39, .07);
-  --mf-v63-line-dark: rgba(148, 163, 184, .12);
+  --mf-v63-line-dark: #242424;
 }
 
 /* TOKEN FLOW */

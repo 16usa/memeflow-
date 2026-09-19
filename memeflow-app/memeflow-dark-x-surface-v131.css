@@ -32,8 +32,9 @@ html[data-theme="dark"] {
   color-scheme: dark;
 
   --mf-x-dark-canvas: #000000;
-  --mf-x-dark-inset: #101113;
-  --mf-x-dark-line: #2f3336;
+  --mf-x-dark-surface: #080808;
+  --mf-x-dark-inset: #0d0d0d;
+  --mf-x-dark-line: #242424;
 
   /*
    * Collapse the old second tone (#0C1117) into the canvas.
@@ -41,7 +42,7 @@ html[data-theme="dark"] {
    * removes stale Surface-1 fills without adding per-component duplicates.
    */
   --mf-dark-canvas: var(--mf-x-dark-canvas) !important;
-  --mf-dark-surface-1: var(--mf-x-dark-canvas) !important;
+  --mf-dark-surface-1: var(--mf-x-dark-surface) !important;
 
   /* Replace the old lightest dark neutral (#181F27) with the approved X tone. */
   --mf-dark-surface-2: var(--mf-x-dark-inset) !important;
@@ -117,8 +118,8 @@ body.mf-page-how-it-works
 html[data-theme="dark"]
 body.mf-page-agent-performance
 :where(.ap-source, .ap-panel, .ap-kpis article) {
-  background: var(--mf-x-dark-canvas) !important;
-  background-color: var(--mf-x-dark-canvas) !important;
+  background: var(--mf-x-dark-surface) !important;
+  background-color: var(--mf-x-dark-surface) !important;
   background-image: none !important;
 
   border-width: 1px !important;
@@ -190,7 +191,7 @@ body.mf-page-trading.mf-trading-terminal
 
 html[data-theme="dark"] {
   --mf-x-dark-hairline: 1px;
-  --mf-x-dark-line-inner: rgba(47, 51, 54, .72);
+  --mf-x-dark-line-inner: rgba(36, 36, 36, .72);
 }
 
 @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 2dppx) {
@@ -389,9 +390,9 @@ html[data-theme="dark"] body .mf-site-header.mf-site-header--sticky {
 }
 
 html[data-theme="dark"] {
-  --mf-structure-outer: #2f3336;
-  --mf-structure-divider: rgba(47, 51, 54, .55);
-  --mf-structure-ultra: rgba(47, 51, 54, .30);
+  --mf-structure-outer: #242424;
+  --mf-structure-divider: #171717;
+  --mf-structure-ultra: #171717;
 }
 
 html[data-theme="light"] {
