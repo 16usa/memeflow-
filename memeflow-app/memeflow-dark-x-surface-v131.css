@@ -4,15 +4,15 @@
    DARK MODE ONLY.
 
    Approved hierarchy:
-     Canvas / large modules   #000000
-     Neutral inset / control  #101113
+     Canvas / large modules   #101113
+     Neutral inset / control  #181F27
      Outline / divider        #2F3336
 
    #101113 is sampled from the neutral Monthly / Yearly switch surface in the
    supplied X screenshot.
 
-   Large structural modules no longer use the old #0C1117 fill. They sit on
-   the black canvas and are separated by one restrained X-style 1px outline.
+   True black is intentionally removed from the app surface hierarchy.
+   Large structural modules use #101113; elevated/inset surfaces use #181F27.
    Existing radii are preserved.
 
    This file is intentionally loaded LAST on every audited MEMEFLOW app page.
@@ -31,8 +31,8 @@
 html[data-theme="dark"] {
   color-scheme: dark;
 
-  --mf-x-dark-canvas: #000000;
-  --mf-x-dark-inset: #101113;
+  --mf-x-dark-canvas: #101113;
+  --mf-x-dark-inset: #181f27;
   --mf-x-dark-line: #2f3336;
 
   /*
@@ -43,14 +43,14 @@ html[data-theme="dark"] {
   --mf-dark-canvas: var(--mf-x-dark-canvas) !important;
   --mf-dark-surface-1: var(--mf-x-dark-canvas) !important;
 
-  /* Replace the old lightest dark neutral (#181F27) with the approved X tone. */
+  /* Elevated / inset neutral: the second and only other dark surface tone. */
   --mf-dark-surface-2: var(--mf-x-dark-inset) !important;
 
   /* One X-style line token for outlines + separators. */
   --mf-dark-line: var(--mf-x-dark-line) !important;
 }
 
-/* Keep every audited page on the true black canvas. */
+/* Keep every audited page on the non-black #101113 base surface. */
 html[data-theme="dark"] body:is(
   .mf-page-system,
   .mf-page-system-tokens,
@@ -66,7 +66,7 @@ html[data-theme="dark"] body:is(
 
 /* --------------------------------------------------------------------------
    LARGE STRUCTURAL MODULES
-   Black fill + existing radius + one subtle X outline.
+   #101113 fill + existing radius + one subtle X outline.
    Buttons and semantic/status controls are intentionally excluded.
    -------------------------------------------------------------------------- */
 
@@ -174,8 +174,8 @@ body.mf-page-trading.mf-trading-terminal
      - MEMEFLOW V131 1 CSS px border on the iPhone screenshot: ~3 physical px
 
    Keep the V131 palette exactly:
-     canvas / large modules  #000000
-     third neutral           #101113
+     canvas / large modules  #101113
+     inset / control          #181F27
      outline / divider       #2F3336
 
    Change ONLY line rendering / hierarchy:
@@ -1344,3 +1344,33 @@ strong {
 }
 
 /* MEMEFLOW_CHART_METRICS_PRIMARY_ALIGN_V151_END */
+
+
+/* ==========================================================================
+   MEMEFLOW_DARK_TWO_TONE_SURFACE_V152
+
+   Final DARK neutral surface authority.
+
+   User-approved two-tone hierarchy:
+     base / large modules     #101113
+     elevated / inset         #181F27
+     outline / divider        #2F3336
+
+   True black is not used as the page/module canvas. This late block also
+   overrides the earlier V135 root/boot #000000 fallback so Safari overscroll
+   and the boot surface cannot flash black. Light mode, semantic status colors,
+   layout, radii, 3D/WebGL scene content and application logic are untouched.
+   ========================================================================== */
+
+html[data-theme="dark"],
+html[data-theme="dark"] body {
+  background-color: var(--mf-x-dark-canvas) !important;
+  background-image: none !important;
+}
+
+html[data-theme="dark"] body .boot {
+  background: var(--mf-x-dark-canvas) !important;
+  background-image: none !important;
+}
+
+/* MEMEFLOW_DARK_TWO_TONE_SURFACE_V152_END */
