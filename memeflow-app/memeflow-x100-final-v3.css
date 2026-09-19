@@ -1,0 +1,954 @@
+/* ==========================================================================
+   MEMEFLOW X100 FINAL V3
+   ONE late visual authority for the live MEMEFLOW pages.
+
+   Exact dark reference tokens are taken from /x100.css:
+     #000000 canvas
+     #080808 surface
+     #0d0d0d nested surface
+     #f5f5f5 primary text
+     #888888 secondary text
+     #5f5f5f tertiary text
+     #242424 line
+     #171717 soft divider
+
+   Page-native CSS that remains loaded is structural/feature CSS only.
+   The historical shared visual stack is removed from live page <head>s.
+   ========================================================================== */
+
+body#mfX100Final{
+  --x100-bg:#000000;
+  --x100-surface:#080808;
+  --x100-surface-2:#0d0d0d;
+  --x100-text:#f5f5f5;
+  --x100-muted:#888888;
+  --x100-muted-2:#5f5f5f;
+  --x100-line:#242424;
+  --x100-line-soft:#171717;
+  --x100-action:#ffffff;
+  --x100-action-text:#000000;
+
+  --mf-semantic-cyan:#55d9ff;
+  --mf-semantic-green:#4de6a1;
+  --mf-semantic-red:#ff6679;
+  --mf-semantic-yellow:#efc66a;
+  --mf-semantic-purple:#a98bff;
+  --mf-semantic-blue:#6a99ff;
+
+  --bg:var(--x100-bg)!important;
+  --panel:var(--x100-surface)!important;
+  --panel-solid:var(--x100-surface)!important;
+  --panel-2:var(--x100-surface-2)!important;
+  --surface:var(--x100-surface)!important;
+  --surface2:var(--x100-surface-2)!important;
+  --surface3:var(--x100-surface-2)!important;
+  --surface-2:var(--x100-surface-2)!important;
+  --text:var(--x100-text)!important;
+  --muted:var(--x100-muted)!important;
+  --faint:var(--x100-muted-2)!important;
+  --line:var(--x100-line)!important;
+  --line2:var(--x100-line)!important;
+  --line-strong:var(--x100-line)!important;
+
+  --mf-app-bg:var(--x100-bg)!important;
+  --mf-app-surface:var(--x100-surface)!important;
+  --mf-app-surface-2:var(--x100-surface-2)!important;
+  --mf-app-surface-3:var(--x100-surface-2)!important;
+  --mf-app-line:var(--x100-line)!important;
+  --mf-app-line-strong:var(--x100-line)!important;
+  --mf-app-text:var(--x100-text)!important;
+  --mf-app-muted:var(--x100-muted)!important;
+
+  --mf-nav-bg:var(--x100-bg)!important;
+  --mf-nav-surface:var(--x100-surface)!important;
+  --mf-nav-surface-2:var(--x100-surface-2)!important;
+  --mf-nav-line:var(--x100-line)!important;
+  --mf-nav-line-strong:var(--x100-line)!important;
+  --mf-nav-text:var(--x100-text)!important;
+  --mf-nav-muted:var(--x100-muted)!important;
+
+  --v-bg:var(--x100-bg)!important;
+  --v-panel:var(--x100-surface)!important;
+  --v-panel2:var(--x100-surface-2)!important;
+  --v-line:var(--x100-line)!important;
+  --v-line2:var(--x100-line)!important;
+  --v-text:var(--x100-text)!important;
+  --v-muted:var(--x100-muted)!important;
+  --v-muted2:var(--x100-muted-2)!important;
+  --v-radius:0px!important;
+
+  --hiw-bg:var(--x100-bg)!important;
+  --hiw-panel:var(--x100-surface)!important;
+  --hiw-panel-strong:var(--x100-surface-2)!important;
+  --hiw-line:var(--x100-line)!important;
+  --hiw-line-strong:var(--x100-line)!important;
+  --hiw-text:var(--x100-text)!important;
+  --hiw-muted:var(--x100-muted)!important;
+  --hiw-muted-2:var(--x100-muted-2)!important;
+  --hiw-radius:0px!important;
+  --hiw-shadow:none!important;
+
+  --ap-bg:var(--x100-bg)!important;
+  --ap-panel:var(--x100-surface)!important;
+  --ap-panel-2:var(--x100-surface-2)!important;
+  --ap-line:var(--x100-line)!important;
+  --ap-text:var(--x100-text)!important;
+  --ap-muted:var(--x100-muted)!important;
+
+  --mf-type-micro:9px;
+  --mf-type-system:10px;
+  --mf-type-meta:10px;
+  --mf-type-ui:11px;
+  --mf-type-body:13px;
+  --mf-type-panel:14px;
+  --mf-type-title:24px;
+
+  margin:0!important;
+  min-height:100vh;
+  background:var(--x100-bg)!important;
+  background-image:none!important;
+  color:var(--x100-text)!important;
+  font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif!important;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+  color-scheme:dark;
+}
+
+html[data-theme="light"] body#mfX100Final{
+  --x100-bg:#ffffff;
+  --x100-surface:#f7f7f7;
+  --x100-surface-2:#eeeeee;
+  --x100-text:#171717;
+  --x100-muted:#737373;
+  --x100-muted-2:#8a8a8a;
+  --x100-line:#e5e5e5;
+  --x100-line-soft:#efefef;
+  --x100-action:#171717;
+  --x100-action-text:#ffffff;
+  color-scheme:light;
+}
+
+html,
+html[data-theme="dark"],
+html[data-theme="light"]{
+  background:var(--x100-bg,#000000)!important;
+}
+
+body#mfX100Final *,
+body#mfX100Final *::before,
+body#mfX100Final *::after{box-sizing:border-box}
+
+body#mfX100Final a{color:inherit}
+body#mfX100Final button,
+body#mfX100Final input,
+body#mfX100Final select,
+body#mfX100Final textarea{font:inherit}
+
+/* --------------------------------------------------------------------------
+   TYPE — direct projection of the X100 hierarchy.
+   -------------------------------------------------------------------------- */
+body#mfX100Final :where(h1,h2,h3,h4,strong,b){color:var(--x100-text)}
+body#mfX100Final :where(
+  .eyebrow,[class*="eyebrow"],[class*="kicker"],
+  .mf-nav-kicker,.oi-kicker
+){
+  color:#777777!important;
+  font-size:11px!important;
+  line-height:1.35!important;
+  font-weight:700!important;
+  letter-spacing:.18em!important;
+  text-transform:uppercase!important;
+}
+
+html[data-theme="light"] body#mfX100Final :where(
+  .eyebrow,[class*="eyebrow"],[class*="kicker"],.mf-nav-kicker,.oi-kicker
+){color:#777777!important}
+
+body#mfX100Final :where(
+  .flow-hero h1,
+  .mf-vault-hero h1,
+  .mf-hiw-hero h1,
+  .ap-hero h1,
+  .settings-hero h1,
+  .scene-title h1,
+  .oi-top h1
+){
+  color:var(--x100-text)!important;
+  font-size:clamp(46px,7vw,88px)!important;
+  line-height:.90!important;
+  letter-spacing:-.065em!important;
+  font-weight:700!important;
+  margin-top:0;
+}
+
+body#mfX100Final :where(
+  .panel-head h2,
+  .mf-vault-card-head h2,
+  .mf-hiw-section-head h2,
+  .mf-hiw-money h2,
+  .mf-hiw-cta h2,
+  .ap-head h2,
+  .oi-panel-head h2
+){
+  color:var(--x100-text)!important;
+  font-size:clamp(20px,2.4vw,30px)!important;
+  line-height:1.02!important;
+  letter-spacing:-.045em!important;
+  font-weight:700!important;
+}
+
+body#mfX100Final :where(
+  p,.description,.copy,.note,.helper,.summary,
+  .flow-hero p,.mf-vault-hero p,.mf-hiw-hero p,.ap-hero p,.oi-top p
+){
+  color:var(--x100-muted)!important;
+}
+
+body#mfX100Final :where(
+  small,.muted,[class*="meta"],[class*="hint"],
+  .brand-sub,.subtitle,.header-title>strong,.mf-settings-page-title>strong
+){
+  color:var(--x100-muted-2)!important;
+}
+
+body#mfX100Final :where(
+  .flow-hero p,.mf-vault-hero p,.mf-hiw-hero p,.ap-hero p,.oi-top p
+){
+  font-size:clamp(15px,1.7vw,18px)!important;
+  line-height:1.6!important;
+}
+
+body#mfX100Final :where(
+  .token-meta,.chart-legend,.trade-log-time,.scene-hint,
+  .mf-vault-note,.mf-hiw-foot,.ap-note,.ap-privacy,
+  .settings-save-status,.mf-nav-link-sub
+){
+  font-size:10px!important;
+  line-height:1.4!important;
+}
+
+/* --------------------------------------------------------------------------
+   HEADER / BRAND / NAV
+   -------------------------------------------------------------------------- */
+body#mfX100Final :where(.mf-site-header,.topbar.mf-site-header){
+  width:100vw!important;
+  max-width:100vw!important;
+  min-height:68px!important;
+  height:68px!important;
+  margin-left:calc(50% - 50vw)!important;
+  margin-right:calc(50% - 50vw)!important;
+  padding-left:max(24px,env(safe-area-inset-left))!important;
+  padding-right:max(24px,env(safe-area-inset-right))!important;
+  border:0!important;
+  border-bottom:1px solid var(--x100-line)!important;
+  border-radius:0!important;
+  background:color-mix(in srgb,var(--x100-bg) 86%,transparent)!important;
+  background-image:none!important;
+  box-shadow:none!important;
+  -webkit-backdrop-filter:blur(18px)!important;
+  backdrop-filter:blur(18px)!important;
+}
+
+body#mfX100Final .mf-site-header--sticky{position:sticky!important;top:0!important}
+
+body#mfX100Final :where(
+  .brand-title,.brand-block .brand,.header-title>span,
+  .mf-settings-page-title>span,.mf-vault-brand-copy>strong,.mf-hiw-brand-copy>strong
+){
+  color:var(--x100-text)!important;
+  font-size:13px!important;
+  line-height:1!important;
+  font-weight:700!important;
+  letter-spacing:.13em!important;
+}
+
+body#mfX100Final :where(
+  .brand-sub,.brand-block .subtitle,.header-title>strong,
+  .mf-settings-page-title>strong,.mf-vault-brand-copy>small,.mf-hiw-brand-copy>small
+){
+  color:var(--x100-muted)!important;
+  font-size:9px!important;
+  line-height:1.2!important;
+  font-weight:500!important;
+  letter-spacing:.16em!important;
+}
+
+body#mfX100Final :where(.mf-brand-img,.logo){
+  filter:none!important;
+  box-shadow:none!important;
+}
+
+body#mfX100Final :where(
+  .brand-mark,.mf-settings-page-brand-mark,.mf-vault-brand-mark,.mf-hiw-brand-mark
+){
+  border:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+}
+
+body#mfX100Final .mf-nav-drawer{
+  background:color-mix(in srgb,var(--x100-surface) 98%,transparent)!important;
+  border-left:1px solid var(--x100-line)!important;
+  box-shadow:none!important;
+}
+body#mfX100Final .mf-nav-drawer-head,
+body#mfX100Final .mf-nav-foot{border-color:var(--x100-line)!important}
+body#mfX100Final .mf-nav-link{
+  color:var(--x100-muted)!important;
+  background:transparent!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+}
+body#mfX100Final .mf-nav-link:hover,
+body#mfX100Final .mf-nav-link:focus-visible,
+body#mfX100Final .mf-nav-link[aria-current="page"]{
+  color:var(--x100-text)!important;
+  background:var(--x100-surface-2)!important;
+}
+body#mfX100Final .mf-nav-backdrop{
+  background:rgba(0,0,0,.58)!important;
+  box-shadow:none!important;
+}
+
+/* --------------------------------------------------------------------------
+   ONE SURFACE CONTRACT
+   -------------------------------------------------------------------------- */
+body#mfX100Final :where(
+  .panel,
+  .context-banner,.operator-timeline,.mission-card,.workspace-card,.wallet-card,
+  .system-card,.billing-card,.settings-card,.side-status,
+  .summary-card,
+  .mf-vault-card,.mf-vault-status-panel,
+  .mf-hiw-status-card,.mf-hiw-map-shell,.mf-hiw-money,.mf-hiw-cta,
+  .mf-hiw-control-card,.mf-hiw-step,.mf-hiw-node,.mf-hiw-map-detail,
+  .ap-source,.ap-panel,.ap-kpis article,.ap-summary>div,.factor,.rank,
+  .mf293-settings-group,.settings-group,.settings-context,.mf-theme-appearance,
+  .oi-panel,.oi-stat,.oi-notice,.oi-access,
+  .mf-infra,.activity-panel
+){
+  background:var(--x100-surface)!important;
+  background-image:none!important;
+  border:1px solid var(--x100-line)!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+}
+
+body#mfX100Final :where(
+  .metric-card,.mf-vault-stat,.mf-vault-control-row,.mf-vault-checklist>div,
+  .settings-summary>div,.toggle-row,.mf293-field,
+  .status-chip,.chip,.top-plan-badge,
+  .mf-hiw-status-stack>div,
+  .oi-row
+){
+  background:var(--x100-surface-2)!important;
+  background-image:none!important;
+  border-color:var(--x100-line)!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+}
+
+body#mfX100Final :where(
+  .panel-head,.chart-head,.candidate-filter,.timeframes,.indicator-bar,
+  .selected-metrics,.strategy-summary-foot,.mf-vault-card-head,
+  .mf-hiw-section-head,.ap-note,.ap-engine,.oi-panel-head
+){border-color:var(--x100-line)!important}
+
+/* Hero/section framing follows x100.css: canvas + hairline, not floating cards. */
+body#mfX100Final :where(
+  .flow-hero,.mf-vault-hero,.mf-hiw-hero,.ap-hero,.oi-top
+){
+  background:transparent!important;
+  background-image:none!important;
+  border:0!important;
+  border-bottom:1px solid var(--x100-line)!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+}
+
+/* --------------------------------------------------------------------------
+   FORMS / ACTIONS
+   X100: fields square; actions pill.
+   -------------------------------------------------------------------------- */
+body#mfX100Final :where(
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  select,textarea
+){
+  color:var(--x100-text)!important;
+  background:var(--x100-surface-2)!important;
+  background-image:none!important;
+  border:1px solid var(--x100-line)!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+  outline:none!important;
+}
+body#mfX100Final :where(
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  textarea
+)::placeholder{color:var(--x100-muted-2)!important;opacity:1}
+body#mfX100Final :where(
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  select,textarea
+):focus{border-color:#555!important;box-shadow:none!important}
+
+body#mfX100Final :where(button,.btn,[role="button"]){box-shadow:none!important}
+
+body#mfX100Final :where(
+  .tool-btn,.ghost-btn,.wallet-btn,.ap-refresh,.ap-periods button,
+  .mf-vault-btn,.mf-hiw-btn,.oi-btn,.pagination button,
+  .mf-time-window-v47c button,.candidate-filter button,
+  .mf-theme-segmented button,.strategy-edit-link
+){
+  min-height:38px;
+  padding-inline:14px;
+  color:#aaa!important;
+  background:transparent!important;
+  background-image:none!important;
+  border:1px solid var(--x100-line)!important;
+  border-radius:999px!important;
+  box-shadow:none!important;
+}
+
+body#mfX100Final :where(
+  .tool-btn,.ghost-btn,.wallet-btn,.ap-refresh,.ap-periods button,
+  .mf-vault-btn,.mf-hiw-btn,.oi-btn,.pagination button,
+  .mf-time-window-v47c button,.candidate-filter button,
+  .mf-theme-segmented button,.strategy-edit-link
+):hover{
+  color:var(--x100-text)!important;
+  background:var(--x100-surface-2)!important;
+  border-color:#3a3a3a!important;
+}
+
+body#mfX100Final :where(
+  .btn.primary,.mf-vault-btn-primary,.mf-hiw-btn-primary,.oi-btn.primary,
+  .mf-ag-btn,.mf293-primary,.mf-agent-save
+){
+  color:var(--x100-action-text)!important;
+  background:var(--x100-action)!important;
+  background-image:none!important;
+  border:1px solid var(--x100-action)!important;
+  border-radius:999px!important;
+  box-shadow:none!important;
+  font-weight:750!important;
+}
+
+/* Theme control lives in the single final stylesheet. */
+body#mfX100Final .mf-theme-appearance{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) auto!important;
+  align-items:center!important;
+  gap:16px!important;
+  padding:18px!important;
+}
+body#mfX100Final .mf-theme-segmented{
+  display:inline-grid!important;
+  grid-template-columns:repeat(2,minmax(66px,1fr))!important;
+  gap:3px!important;
+  padding:3px!important;
+  background:var(--x100-surface-2)!important;
+  border:1px solid var(--x100-line)!important;
+  border-radius:999px!important;
+}
+body#mfX100Final .mf-theme-segmented button{
+  border:0!important;
+  min-height:32px!important;
+}
+body#mfX100Final .mf-theme-segmented button.is-active{
+  color:var(--x100-action-text)!important;
+  background:var(--x100-action)!important;
+}
+
+/* --------------------------------------------------------------------------
+   SEMANTIC STATES — meaning stays colored.
+   -------------------------------------------------------------------------- */
+body#mfX100Final :where(
+  .status-pill,.tiny-state,.mode-badge,.approval-count,.decision-badge,
+  .state-dot,.copy-trade-badge,.token-state
+){
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  width:auto!important;
+  min-width:0!important;
+  min-height:0!important;
+  padding:2px 5px!important;
+  border:1px solid var(--x100-line)!important;
+  border-radius:5px!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  font-size:9px!important;
+  line-height:1.05!important;
+  font-weight:600!important;
+  letter-spacing:.04em!important;
+  text-transform:uppercase!important;
+  white-space:nowrap!important;
+}
+
+body#mfX100Final :where(.open,.buy,.positive,.pnl-positive,[data-mf-semantic="green"]){
+  color:var(--mf-semantic-green)!important;
+}
+body#mfX100Final :where(.ready,[data-mf-semantic="yellow"]){
+  color:var(--mf-semantic-yellow)!important;
+}
+body#mfX100Final :where(.watch,[data-mf-semantic="blue"]){
+  color:var(--mf-semantic-blue)!important;
+}
+body#mfX100Final :where(.blocked,.sell,.negative,.pnl-negative,.danger,[data-mf-semantic="red"]){
+  color:var(--mf-semantic-red)!important;
+}
+body#mfX100Final :where(.copy-trade-badge,[data-mf-semantic="cyan"]){
+  color:var(--mf-semantic-cyan)!important;
+}
+
+/* --------------------------------------------------------------------------
+   REAL-TIME PIPELINE
+   -------------------------------------------------------------------------- */
+body#mfX100Final.mf-page-system-tokens .flow-page{
+  width:min(1180px,calc(100% - 48px))!important;
+  margin:0 auto!important;
+  padding-bottom:56px!important;
+}
+body#mfX100Final.mf-page-system-tokens .flow-header{
+  background:color-mix(in srgb,var(--x100-bg) 86%,transparent)!important;
+  border:0!important;
+  border-bottom:1px solid var(--x100-line)!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+}
+body#mfX100Final.mf-page-system-tokens .flow-hero{
+  padding:74px 0 44px!important;
+}
+body#mfX100Final.mf-page-system-tokens .state-summary{
+  gap:0!important;
+  border-top:1px solid var(--x100-line)!important;
+  border-left:1px solid var(--x100-line)!important;
+}
+body#mfX100Final.mf-page-system-tokens .summary-card{
+  min-height:82px!important;
+  padding:16px!important;
+  border:0!important;
+  border-right:1px solid var(--x100-line)!important;
+  border-bottom:1px solid var(--x100-line)!important;
+}
+body#mfX100Final.mf-page-system-tokens .summary-card strong{
+  font-size:24px!important;
+  line-height:1!important;
+  letter-spacing:-.04em!important;
+}
+body#mfX100Final.mf-page-system-tokens .summary-card span{
+  font-size:10px!important;
+  color:var(--x100-muted-2)!important;
+  letter-spacing:.12em!important;
+  text-transform:uppercase!important;
+}
+body#mfX100Final.mf-page-system-tokens .flow-toolbar{
+  position:sticky!important;
+  top:0!important;
+  z-index:70!important;
+  margin:0!important;
+  padding:10px 0!important;
+  background:color-mix(in srgb,var(--x100-bg) 92%,transparent)!important;
+  border:0!important;
+  border-bottom:1px solid var(--x100-line)!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+  -webkit-backdrop-filter:blur(18px)!important;
+  backdrop-filter:blur(18px)!important;
+}
+body#mfX100Final.mf-page-system-tokens .search-wrap{
+  height:40px!important;
+  margin:0!important;
+  padding:0 14px!important;
+  background:var(--x100-surface-2)!important;
+  border:1px solid var(--x100-line)!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+}
+body#mfX100Final.mf-page-system-tokens #refreshButton{
+  min-height:40px!important;
+  border-radius:999px!important;
+}
+body#mfX100Final.mf-page-system-tokens .pagination{display:none!important}
+body#mfX100Final.mf-page-system-tokens :where(.token-row,.token-card,.flow-token-row){
+  background:var(--x100-surface)!important;
+  background-image:none!important;
+  border:0!important;
+  border-bottom:1px solid var(--x100-line)!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+}
+body#mfX100Final.mf-page-system-tokens .empty-state{
+  color:var(--x100-muted)!important;
+  background:transparent!important;
+  border:1px solid var(--x100-line)!important;
+  border-radius:0!important;
+}
+
+/* InsightX feature keeps its behavior but inherits X100 visuals. */
+body#mfX100Final .mf-insightx-panel-v1{
+  background:var(--x100-surface)!important;
+  color:var(--x100-text)!important;
+  border:1px solid var(--x100-line)!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+}
+body#mfX100Final :where(
+  .mf-insightx-header-v1,.mf-insightx-status-v1,.mf-insightx-metrics-v1
+){border-color:var(--x100-line)!important}
+body#mfX100Final .mf-insightx-metric-v1,
+body#mfX100Final .mf-insightx-actions-v1 button{
+  background:var(--x100-surface-2)!important;
+  border-color:var(--x100-line)!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+}
+
+/* --------------------------------------------------------------------------
+   TRADING TERMINAL
+   -------------------------------------------------------------------------- */
+body#mfX100Final.mf-page-trading .shell,
+body#mfX100Final.mf-page-trading .terminal{background:transparent!important}
+body#mfX100Final.mf-page-trading .terminal>.panel,
+body#mfX100Final.mf-page-trading .center-stack>.panel{
+  background:var(--x100-surface)!important;
+  background-image:none!important;
+  border:1px solid var(--x100-line)!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+}
+body#mfX100Final.mf-page-trading .panel-head{
+  min-height:60px!important;
+  padding:14px 16px!important;
+  background:transparent!important;
+  border-bottom:1px solid var(--x100-line)!important;
+}
+body#mfX100Final.mf-page-trading .panel-head h2{
+  font-size:22px!important;
+  line-height:1!important;
+  font-weight:700!important;
+  letter-spacing:-.045em!important;
+}
+body#mfX100Final.mf-page-trading :where(
+  .candidate,.position-row,.trade-row.trade-log-row
+){
+  background:transparent!important;
+  border:0!important;
+  border-bottom:1px solid var(--x100-line-soft)!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+}
+body#mfX100Final.mf-page-trading :where(
+  .candidate:last-child,.position-row:last-child,.trade-row.trade-log-row:last-child
+){border-bottom:0!important}
+body#mfX100Final.mf-page-trading :where(.candidate-filter,.timeframes,.indicator-bar,.selected-metrics){
+  background:transparent!important;
+  border-color:var(--x100-line)!important;
+  box-shadow:none!important;
+}
+body#mfX100Final.mf-page-trading :where(.timeframes button,.indicator-bar button){
+  color:var(--x100-muted)!important;
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+}
+body#mfX100Final.mf-page-trading :where(.timeframes button.active,.indicator-bar button.active,.indicator-bar button[aria-pressed="true"]){
+  color:var(--x100-text)!important;
+}
+body#mfX100Final.mf-page-trading .strategy-summary-row{
+  border-color:var(--x100-line-soft)!important;
+}
+body#mfX100Final.mf-page-trading .chart-wrap{
+  background:#000!important;
+  border-color:var(--x100-line)!important;
+}
+body#mfX100Final.mf-page-trading .position-popover-v85{
+  background:var(--x100-surface-2)!important;
+  color:var(--x100-text)!important;
+  border:1px solid var(--x100-line)!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+}
+
+/* --------------------------------------------------------------------------
+   SMART VAULT
+   -------------------------------------------------------------------------- */
+body#mfX100Final.mf-page-smart-vault .mf-vault-shell{
+  width:min(1180px,calc(100% - 48px))!important;
+  margin:0 auto!important;
+}
+body#mfX100Final.mf-page-smart-vault .mf-vault-topbar{
+  top:0!important;
+  border-radius:0!important;
+  background:color-mix(in srgb,var(--x100-bg) 86%,transparent)!important;
+}
+body#mfX100Final.mf-page-smart-vault .mf-vault-hero{
+  padding:88px 0 48px!important;
+}
+body#mfX100Final.mf-page-smart-vault .mf-vault-grid{gap:12px!important}
+body#mfX100Final.mf-page-smart-vault :where(
+  .mf-vault-card,.mf-vault-status-panel
+){
+  padding:20px!important;
+  border-radius:0!important;
+}
+body#mfX100Final.mf-page-smart-vault :where(
+  .mf-vault-stat,.mf-vault-control-row,.mf-vault-checklist>div
+){
+  background:var(--x100-surface-2)!important;
+  border:1px solid var(--x100-line)!important;
+  border-radius:0!important;
+}
+body#mfX100Final.mf-page-smart-vault .mf-vault-balance strong{
+  color:var(--x100-text)!important;
+  font-size:42px!important;
+  font-weight:700!important;
+  letter-spacing:-.055em!important;
+}
+
+/* --------------------------------------------------------------------------
+   SETTINGS
+   -------------------------------------------------------------------------- */
+body#mfX100Final.mf-page-settings .mf-settings-page-shell{
+  background:transparent!important;
+}
+body#mfX100Final.mf-page-settings :where(
+  .mf293-settings-group,.settings-group,.settings-context,.mf-theme-appearance
+){
+  border-radius:0!important;
+}
+body#mfX100Final.mf-page-settings :where(
+  .mf293-field,.settings-summary>div,.toggle-row,.mf-agent-item,.mf-agent-event
+){
+  background:var(--x100-surface-2)!important;
+  border-color:var(--x100-line)!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+}
+body#mfX100Final.mf-page-settings details>summary{
+  color:var(--x100-text)!important;
+  border-color:var(--x100-line)!important;
+}
+
+/* --------------------------------------------------------------------------
+   HOW IT WORKS
+   -------------------------------------------------------------------------- */
+body#mfX100Final.mf-page-how-it-works .mf-hiw-shell{
+  width:min(1180px,calc(100% - 48px))!important;
+  margin:0 auto!important;
+}
+body#mfX100Final.mf-page-how-it-works .mf-hiw-section{
+  padding:88px 0!important;
+  border-bottom:1px solid var(--x100-line)!important;
+}
+body#mfX100Final.mf-page-how-it-works :where(
+  .mf-hiw-node,.mf-hiw-step,.mf-hiw-control-card,.mf-hiw-map-detail
+){
+  border-radius:0!important;
+  box-shadow:none!important;
+}
+body#mfX100Final.mf-page-how-it-works .mf-hiw-link{
+  background:var(--x100-line)!important;
+}
+
+/* --------------------------------------------------------------------------
+   AGENT PERFORMANCE
+   -------------------------------------------------------------------------- */
+body#mfX100Final.mf-page-agent-performance .ap-page{
+  width:min(1180px,calc(100% - 48px))!important;
+  margin:0 auto!important;
+}
+body#mfX100Final.mf-page-agent-performance .ap-hero{
+  padding:88px 0 48px!important;
+}
+body#mfX100Final.mf-page-agent-performance :where(
+  .ap-source,.ap-panel,.ap-kpis article,.ap-summary>div,.factor,.rank
+){border-radius:0!important}
+body#mfX100Final.mf-page-agent-performance .ap-periods{
+  background:transparent!important;
+  border:1px solid var(--x100-line)!important;
+  border-radius:999px!important;
+}
+body#mfX100Final.mf-page-agent-performance .ap-periods button.active{
+  color:var(--x100-action-text)!important;
+  background:var(--x100-action)!important;
+}
+
+/* --------------------------------------------------------------------------
+   OWNER INTELLIGENCE
+   -------------------------------------------------------------------------- */
+body#mfX100Final.mf-page-owner-intelligence .oi-shell{
+  --bg:var(--x100-bg)!important;
+  --surface:var(--x100-surface)!important;
+  --surface2:var(--x100-surface-2)!important;
+  --line:var(--x100-line)!important;
+  --line2:var(--x100-line)!important;
+  --text:var(--x100-text)!important;
+  --muted:var(--x100-muted)!important;
+  background:transparent!important;
+}
+body#mfX100Final.mf-page-owner-intelligence :where(
+  .oi-panel,.oi-stat,.oi-notice,.oi-access,.oi-chat,.oi-chat-message,
+  .oi-scorecard-detail,.oi-promotion-monitor
+){
+  background:var(--x100-surface)!important;
+  background-image:none!important;
+  border:1px solid var(--x100-line)!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+}
+body#mfX100Final.mf-page-owner-intelligence .oi-btn{
+  border-radius:999px!important;
+}
+
+/* --------------------------------------------------------------------------
+   ACCESS GATE
+   -------------------------------------------------------------------------- */
+body#mfX100Final #mf-access-gate{
+  background:rgba(0,0,0,.50)!important;
+  -webkit-backdrop-filter:blur(8px)!important;
+  backdrop-filter:blur(8px)!important;
+}
+body#mfX100Final .mf-ag-card{
+  background:var(--x100-surface)!important;
+  color:var(--x100-text)!important;
+  border:1px solid var(--x100-line)!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+}
+body#mfX100Final .mf-ag-tier{
+  background:var(--x100-surface-2)!important;
+  border:1px solid var(--x100-line)!important;
+  border-radius:0!important;
+}
+body#mfX100Final .mf-ag-kicker{color:#777!important}
+body#mfX100Final .mf-ag-lock{
+  background:var(--x100-surface-2)!important;
+  border:1px solid var(--x100-line)!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+}
+
+/* --------------------------------------------------------------------------
+   SYSTEM OVERVIEW — UI only. 3D gallery/cards/canvas are intentionally untouched.
+   -------------------------------------------------------------------------- */
+body#mfX100Final.mf-page-system .system-shell{background:transparent!important}
+body#mfX100Final.mf-page-system :where(.mf-infra,.activity-panel){
+  background:var(--x100-surface)!important;
+  border:1px solid var(--x100-line)!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+}
+body#mfX100Final.mf-page-system :where(
+  .scene-labels,.scene-hint,.inspector,.telemetry
+){
+  border-color:var(--x100-line)!important;
+  box-shadow:none!important;
+}
+
+/* --------------------------------------------------------------------------
+   LEGACY INDEX / PRODUCT DASHBOARD
+   -------------------------------------------------------------------------- */
+body#mfX100Final.mf-page-index{
+  --bg:var(--x100-bg)!important;
+  --surface:var(--x100-surface)!important;
+  --surface2:var(--x100-surface-2)!important;
+  --surface3:var(--x100-surface-2)!important;
+  --line:var(--x100-line)!important;
+  --line2:var(--x100-line)!important;
+  --text:var(--x100-text)!important;
+  --muted:var(--x100-muted)!important;
+}
+body#mfX100Final.mf-page-index .aurora{opacity:0!important;background:none!important}
+body#mfX100Final.mf-page-index :where(
+  .sidebar,.topbar,.context-banner,.operator-timeline,.panel,.wallet-card,
+  .side-status,.context-tabs,.connection-strip,.quality-strip
+){
+  background:var(--x100-surface)!important;
+  background-image:none!important;
+  border-color:var(--x100-line)!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+}
+body#mfX100Final.mf-page-index .sidebar{border-right:1px solid var(--x100-line)!important}
+body#mfX100Final.mf-page-index :where(
+  .mission-facts,.fact,.metric,.wallet-stat,.data-row,.operator-step
+){
+  background:var(--x100-surface-2)!important;
+  border-color:var(--x100-line)!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+}
+
+/* --------------------------------------------------------------------------
+   ACCESSIBILITY / INTERACTION
+   -------------------------------------------------------------------------- */
+body#mfX100Final :where(
+  button:not(:disabled),a[href],select:not(:disabled),[role="button"]:not([aria-disabled="true"])
+){touch-action:manipulation}
+
+body#mfX100Final :where(
+  button,a[href],input,select,textarea,[role="button"]
+):focus-visible{
+  outline:1px solid color-mix(in srgb,var(--x100-text) 52%,transparent)!important;
+  outline-offset:2px!important;
+}
+
+@media (prefers-reduced-motion:reduce){
+  body#mfX100Final *,body#mfX100Final *::before,body#mfX100Final *::after{
+    animation-duration:.001ms!important;
+    animation-iteration-count:1!important;
+    scroll-behavior:auto!important;
+    transition-duration:.001ms!important;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   MOBILE
+   -------------------------------------------------------------------------- */
+@media(max-width:760px){
+  body#mfX100Final :where(.mf-site-header,.topbar.mf-site-header){
+    min-height:60px!important;
+    height:60px!important;
+    padding-left:max(16px,env(safe-area-inset-left))!important;
+    padding-right:max(16px,env(safe-area-inset-right))!important;
+  }
+
+  body#mfX100Final :where(
+    .flow-hero h1,.mf-vault-hero h1,.mf-hiw-hero h1,.ap-hero h1,
+    .settings-hero h1,.scene-title h1,.oi-top h1
+  ){
+    font-size:clamp(40px,12vw,58px)!important;
+    line-height:.92!important;
+    letter-spacing:-.06em!important;
+  }
+
+  body#mfX100Final.mf-page-system-tokens .flow-page,
+  body#mfX100Final.mf-page-smart-vault .mf-vault-shell,
+  body#mfX100Final.mf-page-how-it-works .mf-hiw-shell,
+  body#mfX100Final.mf-page-agent-performance .ap-page{
+    width:min(100% - 32px,1180px)!important;
+  }
+
+  body#mfX100Final.mf-page-system-tokens .flow-hero,
+  body#mfX100Final.mf-page-smart-vault .mf-vault-hero,
+  body#mfX100Final.mf-page-agent-performance .ap-hero{
+    padding:58px 0 34px!important;
+  }
+
+  body#mfX100Final.mf-page-system-tokens .flow-toolbar{
+    padding:8px 0!important;
+  }
+
+  body#mfX100Final.mf-page-system-tokens .search-wrap input{
+    font-size:16px!important; /* prevents iOS focus zoom */
+  }
+
+  body#mfX100Final .mf-insightx-panel-v1{
+    border-left:0!important;
+    border-right:0!important;
+    border-bottom:0!important;
+    border-radius:0!important;
+  }
+}
+
+/* MEMEFLOW_X100_FINAL_V3_END */
