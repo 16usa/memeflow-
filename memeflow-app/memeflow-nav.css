@@ -270,6 +270,15 @@ html[data-mf-nav-open="1"] .mf-nav-drawer {
   transform: translateX(1px);
 }
 
+/* ===== MEMEFLOW_NAV_ACTIVE_ROW_UNIFIED_V1 ===== */
+.mf-nav-link[aria-current="page"] {
+  background: var(
+    --mf-app-surface-3,
+    var(--surface3, rgba(85, 217, 255, .022))
+  );
+}
+/* ===== /MEMEFLOW_NAV_ACTIVE_ROW_UNIFIED_V1 ===== */
+
 .mf-nav-link[aria-current="page"] .mf-nav-link-title {
   color: #f0f7fa;
 }
