@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-POINTER=".memeflow-style-deep-clean-v169-last-backup"
+POINTER=".memeflow-deep-conflict-clean-v173-last-backup"
+
 if [ ! -f "$POINTER" ]; then
   echo "ERROR: $POINTER not found."
   exit 1
@@ -14,17 +15,13 @@ if [ ! -d "$BACKUP/memeflow-app" ]; then
 fi
 
 APP="memeflow-app"
+rm -f "$APP/memeflow-x-canonical-v173.css"
 
-# Remove V169 generated files first.
-rm -f \
-  "$APP/memeflow-x-canonical-v169.css" \
-  "$APP/memeflow-visual-guardrails-v169.css" \
-  "$APP/memeflow-structural-compat-v169.css"
-
-# Restore every backed-up file exactly.
 for src in "$BACKUP"/memeflow-app/*; do
   [ -e "$src" ] || continue
-  cp -p "$src" "$APP/$(basename "$src")"
+  name="$(basename "$src")"
+  [[ "$name" == *.before ]] && continue
+  cp -p "$src" "$APP/$name"
 done
 
 echo "Rollback complete from $BACKUP"

@@ -1,9 +1,3 @@
-/* ==========================================================
-   MEMEFLOW PREMIUM TYPOGRAPHY V66
-   Typography-only presentation layer.
-   Keeps Inter. Does not change layout/card geometry or app logic.
-   ========================================================== */
-
 :root{
   --mf-type-micro:10px;
   --mf-type-meta:11px;
@@ -165,14 +159,6 @@ html[data-theme="light"] :where(
   :root{--mf-type-micro:10px;--mf-type-meta:11px;}
 }
 
-/* ===== MEMEFLOW_PREMIUM_TYPOGRAPHY_V66_END ===== */
-
-/* ==========================================================================
-   MEMEFLOW_LATE_CONTRAST_BRIDGE_V86
-   Runtime-order repair: consumes the ONE canonical V86 palette.
-   No independent neutral HEX values. Semantic colors remain untouched.
-   ========================================================================== */
-
 html body:is(
   .mf-page-system,.mf-page-system-tokens,.mf-page-trading,.mf-page-smart-vault,
   .mf-page-settings,.mf-page-how-it-works,.mf-page-agent-performance,
@@ -246,16 +232,6 @@ html body:is(
 ){
   color:var(--mf-text-tertiary)!important;
 }
-
-/* #tokenState / OPEN POSITION and semantic state classes are not recolored. */
-
-/* MEMEFLOW_LATE_CONTRAST_BRIDGE_V86_END */
-
-/* ==========================================================================
-   MEMEFLOW_LATE_SYSTEM_TEXT_BRIDGE_V90
-   Late stylesheet-order consumer of the ONE global V90 system-text contract.
-   No independent palette or font-size value is defined here.
-   ========================================================================== */
 
 html body:is(
 .mf-page-system,
@@ -340,17 +316,6 @@ html body:is(
   color:var(--mf-text-tertiary)!important;
 }
 
-/* MEMEFLOW_LATE_SYSTEM_TEXT_BRIDGE_V90_END */
-
-/* ==========================================================================
-   MEMEFLOW_LATE_SEMANTIC_COLOR_BRIDGE_V100
-
-   Late stylesheet-order consumer of the ONE canonical V100 semantic palette.
-   No duplicate HEX palette values.
-   COLOR ONLY.
-   ========================================================================== */
-
-/* Legacy aliases: one semantic palette for existing components. */
 html body:is(
   .mf-page-system,
   .mf-page-system-tokens,
@@ -361,15 +326,14 @@ html body:is(
   .mf-page-agent-performance,
   .mf-page-owner-intelligence
 ) {
-  --cyan: var(--mf-semantic-cyan) !important;
-  --green: var(--mf-semantic-green) !important;
-  --red: var(--mf-semantic-red) !important;
-  --yellow: var(--mf-semantic-yellow) !important;
-  --purple: var(--mf-semantic-purple) !important;
-  --blue: var(--mf-semantic-blue) !important;
+  --cyan:var(--mf-semantic-cyan) !important;
+  --green:var(--mf-semantic-green) !important;
+  --red:var(--mf-semantic-red) !important;
+  --yellow:var(--mf-semantic-yellow) !important;
+  --purple:var(--mf-semantic-purple) !important;
+  --blue:var(--mf-semantic-blue) !important;
 }
 
-/* GREEN: OPEN / LIVE / AUTOMATE / APPROVE / positive P&L / BUY. */
 html body:is(
   .mf-page-system,
   .mf-page-system-tokens,
@@ -388,7 +352,7 @@ html body:is(
   .approval-approve,
   [data-mf-semantic="green"]
 ) {
-  color: var(--mf-semantic-green) !important;
+  color:var(--mf-semantic-green) !important;
 }
 
 html body:is(
@@ -426,10 +390,9 @@ html body:is(
   .pnl-positive,
   .trade-side.buy
 ) {
-  color: var(--mf-semantic-green) !important;
+  color:var(--mf-semantic-green) !important;
 }
 
-/* YELLOW: BUY READY / ready. */
 html body:is(
   .mf-page-system,
   .mf-page-system-tokens,
@@ -445,13 +408,12 @@ html body:is(
   .status-pill.ready,
   [data-mf-semantic="yellow"]
 ) {
-  color: var(--mf-semantic-yellow) !important;
+  color:var(--mf-semantic-yellow) !important;
   border-color:
     color-mix(in srgb, var(--mf-semantic-yellow) 58%, transparent)
     !important;
 }
 
-/* BLUE: WATCH / ASSIST / active pending-review state. */
 html body:is(
   .mf-page-system,
   .mf-page-system-tokens,
@@ -469,13 +431,12 @@ html body:is(
   .approval-count[data-active="true"],
   [data-mf-semantic="blue"]
 ) {
-  color: var(--mf-semantic-blue) !important;
+  color:var(--mf-semantic-blue) !important;
   border-color:
     color-mix(in srgb, var(--mf-semantic-blue) 58%, transparent)
     !important;
 }
 
-/* RED: BLOCKED / CLOSE / REJECT / SELL / negative P&L. */
 html body:is(
   .mf-page-system,
   .mf-page-system-tokens,
@@ -493,7 +454,7 @@ html body:is(
   .approval-reject,
   [data-mf-semantic="red"]
 ) {
-  color: var(--mf-semantic-red) !important;
+  color:var(--mf-semantic-red) !important;
   border-color:
     color-mix(in srgb, var(--mf-semantic-red) 58%, transparent)
     !important;
@@ -512,10 +473,9 @@ html body:is(
   .pnl-negative,
   .trade-side.sell
 ) {
-  color: var(--mf-semantic-red) !important;
+  color:var(--mf-semantic-red) !important;
 }
 
-/* CYAN: COPY TRADE + active chart/filter accents. */
 html body:is(
   .mf-page-system,
   .mf-page-system-tokens,
@@ -532,13 +492,12 @@ html body:is(
   .indicator-scroll button[aria-pressed="true"],
   [data-mf-semantic="cyan"]
 ) {
-  color: var(--mf-semantic-cyan) !important;
+  color:var(--mf-semantic-cyan) !important;
   border-color:
     color-mix(in srgb, var(--mf-semantic-cyan) 58%, transparent)
     !important;
 }
 
-/* PURPLE: canonical sixth semantic hue / explicit utility. */
 html body:is(
   .mf-page-system,
   .mf-page-system-tokens,
@@ -552,10 +511,8 @@ html body:is(
   .mf-semantic-purple,
   [data-mf-semantic="purple"]
 ) {
-  color: var(--mf-semantic-purple) !important;
+  color:var(--mf-semantic-purple) !important;
   border-color:
     color-mix(in srgb, var(--mf-semantic-purple) 58%, transparent)
     !important;
 }
-
-/* MEMEFLOW_LATE_SEMANTIC_COLOR_BRIDGE_V100_END */

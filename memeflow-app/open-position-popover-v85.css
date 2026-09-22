@@ -1,275 +1,260 @@
-/* MEMEFLOW_OPEN_POSITION_POPOVER_V85
-   Compact Open Positions info icon + contextual popover only.
-   Row layout, P&L colors and selected state are owned by trading.css.
-*/
-
 .position-info-v85 {
-  width: 16px;
-  height: 16px;
-  min-width: 16px;
-  flex: 0 0 16px;
-  margin: 0 0 0 2px;
-  padding: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  width:16px;
+  height:16px;
+  min-width:16px;
+  flex:0 0 16px;
+  margin:0 0 0 2px;
+  padding:0;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
   border: 0;
-  background: transparent;
-  color: #889198;
-  opacity: .82;
-  appearance: none;
-  -webkit-appearance: none;
-  vertical-align: middle;
+  background:transparent;
+  color:#71767b;
+  opacity:.82;
+  appearance:none;
+  -webkit-appearance:none;
+  vertical-align:middle;
 }
 
 .position-info-v85 svg {
-  width: 16px;
-  height: 16px;
-  display: block;
+  width:16px;
+  height:16px;
+  display:block;
 }
 
 .position-info-v85:active {
-  transform: scale(.95);
+  transform:scale(.95);
 }
 
 .position-info-v85:hover,
 .position-info-v85:focus-visible,
 .position-info-v85[data-open="1"] {
-  opacity: 1;
-  color: #5f6b73;
+  opacity:1;
+  color:#536471;
 }
 
 .position-info-v85:focus-visible {
-  outline: 2px solid rgba(89, 208, 255, .36);
-  outline-offset: 2px;
-  border-radius: 999px;
+  outline:2px solid rgba(89, 208, 255, .36);
+  outline-offset:2px;
+  border-radius:999px;
 }
 
 html[data-theme="dark"] .position-info-v85 {
-  color: #71818b;
+  color:#71767b;
 }
 
 html[data-theme="dark"] .position-info-v85:hover,
 html[data-theme="dark"] .position-info-v85:focus-visible,
 html[data-theme="dark"] .position-info-v85[data-open="1"] {
-  color: #b3c2cb;
+  color:#e7e9ea;
 }
 
 .position-popover-v85[hidden] {
-  display: none !important;
+  display:none !important;
 }
 
 .position-popover-v85 {
-  position: fixed;
-  z-index: 10050;
-  width: min(244px, calc(100vw - 20px));
-  padding: 10px 11px;
-  border: 1px solid var(--mf-app-line, rgba(38, 59, 74, .105));
-  border-color: var(--mf-app-line, rgba(38, 59, 74, .105)) !important;
-  border-radius: 14px;
-  background: var(--mf-app-surface-2, #f7f9fb) !important;
-  color: #152028;
-  box-shadow: 0 16px 42px rgba(20, 28, 36, .16);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  position:fixed;
+  z-index:10050;
+  width:min(244px, calc(100vw - 20px));
+  padding:10px 11px;
+  border:1px solid #2f3336;
+  border-color:#2f3336;
+  border-radius:14px;
+  background:var(--mf-app-surface-2, #f7f9fb) !important;
+  color:#152028;
+  box-shadow:none;
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
 }
 
 .position-popover-v85::after {
-  content: "";
-  position: absolute;
-  width: 10px;
-  height: 10px;
-  background: inherit;
-  border-left: 1px solid var(--mf-app-line, rgba(38, 59, 74, .105)) !important;
-  border-top: 1px solid var(--mf-app-line, rgba(38, 59, 74, .105)) !important;
-  transform: rotate(45deg);
+  content:"";
+  position:absolute;
+  width:10px;
+  height:10px;
+  background:inherit;
+  border-left:1px solid #2f3336;
+  border-top:1px solid #2f3336;
+  transform:rotate(45deg);
 }
 
 .position-popover-v85[data-side="top"]::after {
-  left: var(--arrow-left, 18px);
-  bottom: -6px;
+  left:var(--arrow-left, 18px);
+  bottom:-6px;
 }
 
 .position-popover-v85[data-side="bottom"]::after {
-  left: var(--arrow-left, 18px);
-  top: -6px;
+  left:var(--arrow-left, 18px);
+  top:-6px;
 }
 
 html[data-theme="dark"] .position-popover-v85 {
-  border-color: var(--mf-x-dark-line, #2f3336) !important;
-  background: var(--mf-x-dark-inset, #101113) !important;
-  color: #ecf5f7;
-  box-shadow: 0 20px 46px rgba(0, 0, 0, .42);
+  border-color:#2f3336;
+  background:var(--mf-x-dark-inset, #000000) !important;
+  color:#ecf5f7;
+  box-shadow:none;
 }
 
 html[data-theme="dark"] .position-popover-v85::after {
-  border-left-color: var(--mf-x-dark-line, #2f3336) !important;
-  border-top-color: var(--mf-x-dark-line, #2f3336) !important;
+  border-left-color:var(--mf-x-dark-line, #2f3336) !important;
+  border-top-color:var(--mf-x-dark-line, #2f3336) !important;
 }
 
 .position-popover-v85__head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 6px;
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:8px;
+  margin-bottom:6px;
 }
 
 .position-popover-v85__title {
-  min-width: 0;
-  line-height: 1.1;
+  min-width:0;
+  line-height:1.1;
 }
 
 .position-popover-v85__title strong {
-  display: block;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 12px;
-  font-weight: 760;
+  display:block;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  font-size:12px;
+  font-weight:760;
 }
 
 .position-popover-v85__title span {
-  display: block;
-  margin-top: 2px;
-  color: #7a858c;
-  font-size: 9px;
-  font-weight: 750;
-  letter-spacing: .14em;
-  text-transform: uppercase;
+  display:block;
+  margin-top:2px;
+  color:#71767b;
+  font-size:9px;
+  font-weight:750;
+  letter-spacing:.14em;
+  text-transform:uppercase;
 }
 
 html[data-theme="dark"] .position-popover-v85__title span {
-  color: #7f929d;
+  color:#71767b;
 }
 
 .position-popover-v85__close {
-  width: 18px;
-  height: 18px;
-  min-width: 18px;
-  margin: -1px -1px 0 0;
-  padding: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  width:18px;
+  height:18px;
+  min-width:18px;
+  margin:-1px -1px 0 0;
+  padding:0;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
   border: 0;
-  background: transparent;
-  color: #97a2a9;
-  font-size: 15px;
-  line-height: 1;
-  appearance: none;
-  -webkit-appearance: none;
+  background:transparent;
+  color:#71767b;
+  font-size:15px;
+  line-height:1;
+  appearance:none;
+  -webkit-appearance:none;
 }
 
 .position-popover-v85__close:hover,
 .position-popover-v85__close:focus-visible {
-  color: #56626a;
+  color:#536471;
 }
 
 html[data-theme="dark"] .position-popover-v85__close:hover,
 html[data-theme="dark"] .position-popover-v85__close:focus-visible {
-  color: #d8e2e7;
+  color:#e7e9ea;
 }
 
 .position-popover-v85__list {
-  margin: 0;
-  padding: 0;
-  list-style: none;
+  margin:0;
+  padding:0;
+  list-style:none;
 }
 
 .position-popover-v85__row {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 8px;
-  align-items: baseline;
-  padding: 4px 0;
+  display:grid;
+  grid-template-columns:1fr auto;
+  gap:8px;
+  align-items:baseline;
+  padding:4px 0;
 }
 
 .position-popover-v85__row + .position-popover-v85__row {
-  border-top: 1px solid rgba(20, 31, 40, .06);
+  border-top:1px solid #2f3336;
 }
 
 html[data-theme="dark"] .position-popover-v85__row + .position-popover-v85__row {
-  border-top-color: rgba(126, 153, 166, .10);
+  border-top-color:rgba(126, 153, 166, .10);
 }
 
 .position-popover-v85__label {
-  min-width: 0;
-  color: #6b757c;
-  font-size: 11px;
-  font-weight: 640;
+  min-width:0;
+  color:#71767b;
+  font-size:11px;
+  font-weight:640;
 }
 
 .position-popover-v85__value {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 11px;
-  font-weight: 740;
-  font-variant-numeric: tabular-nums;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  font-size:11px;
+  font-weight:740;
+  font-variant-numeric:tabular-nums;
 }
 
 html[data-theme="dark"] .position-popover-v85__label {
-  color: #81929a;
+  color:#71767b;
 }
 
 @media (max-width: 430px) {
   .position-info-v85,
   .position-info-v85 svg {
-    width: 14px;
-    height: 14px;
-    min-width: 14px;
-    flex-basis: 14px;
+    width:14px;
+    height:14px;
+    min-width:14px;
+    flex-basis:14px;
   }
 
   .position-popover-v85 {
-    width: min(232px, calc(100vw - 18px));
-    padding: 9px 10px;
-    border-radius: 12px;
+    width:min(232px, calc(100vw - 18px));
+    padding:9px 10px;
+    border-radius:12px;
   }
 
   .position-popover-v85__row {
-    padding: 3px 0;
+    padding:3px 0;
   }
 
   .position-popover-v85__label,
   .position-popover-v85__value {
-    font-size: 10.5px;
+    font-size:10.5px;
   }
 }
 
-/* MEMEFLOW_OPEN_POSITION_ICON_GEOMETRY_V93
-   Confirmed root cause:
-   memeflow-accessibility-usability-v64a.css gives EVERY native button
-   min-block-size:44px on coarse pointers.
-
-   .position-info-v85 is a native button. Its SVG looked 14/16px, but its
-   layout box was still 44px tall. That made .position-bottomline 44px tall
-   and pushed the token title upward inside the fixed 64px row.
-*/
 @media (pointer: coarse) {
   body.mf-accessibility-v64a .position-info-v85 {
-    block-size: 16px !important;
-    min-block-size: 16px !important;
-    max-block-size: 16px !important;
+    block-size:16px !important;
+    min-block-size:16px !important;
+    max-block-size:16px !important;
 
-    height: 16px !important;
-    min-height: 16px !important;
-    max-height: 16px !important;
+    height:16px !important;
+    min-height:16px !important;
+    max-height:16px !important;
 
-    padding-block: 0 !important;
+    padding-block:0 !important;
   }
 }
 
 @media (pointer: coarse) and (max-width: 430px) {
   body.mf-accessibility-v64a .position-info-v85 {
-    block-size: 14px !important;
-    min-block-size: 14px !important;
-    max-block-size: 14px !important;
+    block-size:14px !important;
+    min-block-size:14px !important;
+    max-block-size:14px !important;
 
-    height: 14px !important;
-    min-height: 14px !important;
-    max-height: 14px !important;
+    height:14px !important;
+    min-height:14px !important;
+    max-height:14px !important;
   }
 }
-/* /MEMEFLOW_OPEN_POSITION_ICON_GEOMETRY_V93 */

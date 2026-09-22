@@ -13,13 +13,12 @@
   --radius:16px;
 }
 
-*{box-sizing:border-box}
+*{box-sizing:border-box;}
 
 html{
   background:var(--bg);
   color:var(--text);
-  font-family:
-    Inter,
+  font-family:Inter,
     ui-sans-serif,
     system-ui,
     -apple-system,
@@ -31,8 +30,7 @@ html{
 body{
   margin:0;
   min-height:100vh;
-  background:
-    radial-gradient(
+  background:radial-gradient(
       circle at 80% -10%,
       rgba(87,220,255,.07),
       transparent 33%
@@ -49,8 +47,7 @@ textarea{
 .oi-shell{
   width:min(1500px,100%);
   margin:0 auto;
-  padding:
-    22px
+  padding:22px
     22px
     calc(60px + env(safe-area-inset-bottom,0px));
 }
@@ -92,7 +89,7 @@ textarea{
 .oi-btn{
   min-height:38px;
   padding:8px 12px;
-  border:1px solid var(--line2);
+  border:1px solid #2f3336;
   border-radius:10px;
   background:var(--surface2);
   color:var(--text);
@@ -104,7 +101,7 @@ textarea{
 }
 
 .oi-btn:hover{
-  border-color:rgba(87,220,255,.55);
+  border-color:#2f3336;
 }
 
 .oi-btn.primary{
@@ -129,7 +126,7 @@ textarea{
 
 .oi-access{
   margin-top:30px;
-  border:1px solid rgba(255,104,120,.3);
+  border:1px solid #2f3336;
   background:rgba(255,104,120,.05);
   color:#ff9daa;
   border-radius:14px;
@@ -144,7 +141,7 @@ textarea{
   justify-content:space-between;
   gap:14px;
   padding:12px 14px;
-  border:1px solid rgba(87,220,255,.15);
+  border:1px solid #2f3336;
   background:rgba(87,220,255,.035);
   border-radius:14px;
   margin-bottom:12px;
@@ -198,9 +195,8 @@ textarea{
 
 .oi-stat,
 .oi-panel{
-  border:1px solid rgba(38,56,69,.85);
-  background:
-    linear-gradient(
+  border:1px solid #2f3336;
+  background:linear-gradient(
       180deg,
       rgba(15,22,30,.95),
       rgba(8,13,18,.97)
@@ -255,7 +251,7 @@ textarea{
   font-size:var(--mf-type-ui);
   text-transform:uppercase;
   letter-spacing:.08em;
-  color:#a8b5be;
+  color:#71767b;
 }
 
 .oi-decision-stats{
@@ -294,7 +290,7 @@ textarea{
   align-items:flex-start;
   gap:12px;
   padding:8px 9px;
-  border:1px solid rgba(38,56,69,.65);
+  border:1px solid #2f3336;
   border-radius:9px;
   background:rgba(255,255,255,.012);
   font-size:var(--mf-type-meta);
@@ -326,10 +322,10 @@ textarea{
 .oi-focus input,
 .oi-chat-compose textarea{
   width:100%;
-  border:1px solid var(--line);
+  border:1px solid #2f3336;
   border-radius:11px;
   outline:none;
-  background:#0b1218;
+  background:#000000;
   color:var(--text);
 }
 
@@ -348,12 +344,12 @@ textarea{
 
 .oi-focus input:focus,
 .oi-chat-compose textarea:focus{
-  border-color:rgba(87,220,255,.42);
+  border-color:#2f3336;
 }
 
 .oi-empty{
   padding:28px 15px;
-  border:1px dashed var(--line);
+  border:1px solid #2f3336;
   border-radius:12px;
   text-align:center;
   color:var(--muted);
@@ -367,7 +363,7 @@ textarea{
 }
 
 .oi-report-summary>div{
-  border:1px solid var(--line);
+  border:1px solid #2f3336;
   border-radius:11px;
   padding:11px;
 }
@@ -381,7 +377,7 @@ textarea{
 
 .oi-report-summary p{
   margin:7px 0 0;
-  color:#bbc6cd;
+  color:#e7e9ea;
   font-size:var(--mf-type-ui);
   line-height:1.55;
 }
@@ -393,7 +389,7 @@ textarea{
 
 .oi-finding{
   padding:10px;
-  border:1px solid var(--line);
+  border:1px solid #2f3336;
   border-radius:10px;
 }
 
@@ -423,7 +419,7 @@ textarea{
 }
 
 .oi-proposal{
-  border:1px solid var(--line);
+  border:1px solid #2f3336;
   border-radius:12px;
   padding:12px;
   background:rgba(255,255,255,.012);
@@ -462,10 +458,10 @@ textarea{
 }
 
 .oi-setting-diff code{
-  border:1px solid var(--line);
+  border:1px solid #2f3336;
   padding:5px 7px;
   border-radius:7px;
-  color:#cbd7dd;
+  color:#e7e9ea;
 }
 
 .oi-proposal-actions{
@@ -480,7 +476,7 @@ textarea{
   border-left:2px solid var(--cyan);
   padding:8px 10px;
   background:rgba(87,220,255,.035);
-  color:#9eb0bb;
+  color:#71767b;
   font-size:var(--mf-type-micro);
   line-height:1.5;
 }
@@ -492,9 +488,9 @@ textarea{
   flex-direction:column;
   gap:8px;
   padding:9px;
-  border:1px solid var(--line);
+  border:1px solid #2f3336;
   border-radius:11px;
-  background:#080e13;
+  background:#000000;
 }
 
 .oi-chat-message{
@@ -508,13 +504,13 @@ textarea{
 
 .oi-chat-message.assistant{
   align-self:flex-start;
-  border:1px solid var(--line);
+  border:1px solid #2f3336;
   background:var(--surface2);
 }
 
 .oi-chat-message.user{
   align-self:flex-end;
-  border:1px solid rgba(87,220,255,.18);
+  border:1px solid #2f3336;
   background:rgba(87,220,255,.07);
 }
 
@@ -529,10 +525,6 @@ textarea{
   margin-top:8px;
 }
 
-/* ==========================================================
-   MEMEFLOW_TOKEN_INTELLIGENCE_SCORECARD_V23_15
-   ========================================================== */
-
 .oi-scorecard-search{
   display:grid;
   grid-template-columns:minmax(0,1fr) auto;
@@ -544,21 +536,20 @@ textarea{
   min-width:0;
   min-height:40px;
   padding:9px 11px;
-  border:1px solid var(--line2);
+  border:1px solid #2f3336;
   border-radius:10px;
   outline:none;
-  background:#090f14;
+  background:#000000;
   color:var(--text);
 }
 
 .oi-scorecard-search input:focus{
-  border-color:rgba(87,220,255,.55);
+  border-color:#2f3336;
 }
 
 .oi-scorecard-list{
   display:grid;
-  grid-template-columns:
-    repeat(2,minmax(0,1fr));
+  grid-template-columns:repeat(2,minmax(0,1fr));
   gap:8px;
   margin-top:9px;
 }
@@ -566,7 +557,7 @@ textarea{
 .oi-scorecard-card{
   min-width:0;
   padding:11px;
-  border:1px solid rgba(38,56,69,.72);
+  border:1px solid #2f3336;
   border-radius:12px;
   background:rgba(255,255,255,.012);
   color:var(--text);
@@ -575,7 +566,7 @@ textarea{
 }
 
 .oi-scorecard-card:hover{
-  border-color:rgba(87,220,255,.40);
+  border-color:#2f3336;
 }
 
 .oi-scorecard-card.positive{
@@ -618,7 +609,7 @@ textarea{
 
 .oi-scorecard-card-main div{
   padding:8px;
-  border:1px solid rgba(38,56,69,.55);
+  border:1px solid #2f3336;
   border-radius:9px;
 }
 
@@ -637,7 +628,7 @@ textarea{
 .oi-scorecard-detail{
   margin-bottom:12px;
   padding:12px;
-  border:1px solid rgba(87,220,255,.18);
+  border:1px solid #2f3336;
   border-radius:13px;
   background:rgba(87,220,255,.025);
 }
@@ -661,7 +652,7 @@ textarea{
 
 .oi-scorecard-direction{
   padding:6px 9px;
-  border:1px solid var(--line2);
+  border:1px solid #2f3336;
   border-radius:999px;
   color:var(--muted);
   font-size:var(--mf-type-meta);
@@ -688,7 +679,7 @@ textarea{
 
 .oi-scorecard-detail-metrics>div{
   padding:9px;
-  border:1px solid rgba(38,56,69,.62);
+  border:1px solid #2f3336;
   border-radius:10px;
   background:rgba(0,0,0,.08);
 }
@@ -718,13 +709,13 @@ textarea{
   justify-content:space-between;
   gap:12px;
   padding:9px 10px;
-  border:1px solid rgba(38,56,69,.58);
+  border:1px solid #2f3336;
   border-radius:10px;
   background:rgba(255,255,255,.01);
 }
 
 .oi-scorecard-factor.caution{
-  border-color:rgba(255,104,120,.20);
+  border-color:#2f3336;
 }
 
 .oi-scorecard-factor strong,
@@ -753,7 +744,7 @@ textarea{
 
 .oi-scorecard-blockers span{
   padding:5px 7px;
-  border:1px solid rgba(255,104,120,.20);
+  border:1px solid #2f3336;
   border-radius:999px;
   color:#ff9daa;
   font-size:var(--mf-type-micro);
@@ -761,7 +752,7 @@ textarea{
 }
 
 .oi-scorecard-blockers span.clear{
-  border-color:rgba(81,231,168,.20);
+  border-color:#2f3336;
   color:var(--green);
 }
 
@@ -787,10 +778,6 @@ textarea{
   }
 }
 
-/* ==========================================================
-   MEMEFLOW_SHADOW_OUTCOME_REVIEW_V23_16
-   ========================================================== */
-
 .oi-outcome-review-list{
   display:grid;
   gap:7px;
@@ -798,17 +785,17 @@ textarea{
 
 .oi-outcome-review-row{
   padding:9px 10px;
-  border:1px solid rgba(38,56,69,.64);
+  border:1px solid #2f3336;
   border-radius:10px;
   background:rgba(255,255,255,.012);
 }
 
 .oi-outcome-review-row.hit{
-  border-color:rgba(81,231,168,.18);
+  border-color:#2f3336;
 }
 
 .oi-outcome-review-row.miss{
-  border-color:rgba(255,104,120,.22);
+  border-color:#2f3336;
 }
 
 .oi-outcome-review-head{
@@ -860,20 +847,16 @@ textarea{
 
 .oi-outcome-review-tags span{
   padding:4px 6px;
-  border:1px solid rgba(255,104,120,.16);
+  border:1px solid #2f3336;
   border-radius:999px;
   color:#ff9daa;
   font-size:var(--mf-type-micro);
 }
 
 .oi-outcome-review-tags span.clear{
-  border-color:rgba(81,231,168,.18);
+  border-color:#2f3336;
   color:var(--green);
 }
-
-/* ==========================================================
-   MEMEFLOW_SHADOW_ERROR_PATTERN_LEARNER_V23_17
-   ========================================================== */
 
 .oi-error-pattern-list{
   display:grid;
@@ -942,10 +925,6 @@ textarea{
   color:var(--muted);
   font-size:var(--mf-type-micro);
 }
-
-/* ==========================================================
-   MEMEFLOW_SHADOW_ERROR_AWARE_CONFIDENCE_V23_18
-   ========================================================== */
 
 .oi-error-aware-list{
   display:grid;
@@ -1020,10 +999,6 @@ textarea{
   color:var(--green);
 }
 
-/* ==========================================================
-   MEMEFLOW_SHADOW_ERROR_AWARE_BENCHMARK_V23_19
-   ========================================================== */
-
 .oi-error-aware-benchmark
 .oi-grid-2{
   margin-top:12px;
@@ -1033,10 +1008,6 @@ textarea{
 .oi-list{
   margin-top:7px;
 }
-
-/* ==========================================================
-   MEMEFLOW_SHADOW_POLICY_CANDIDATE_BUILDER_V23_20
-   ========================================================== */
 
 .oi-policy-candidate
 .oi-grid-2{
@@ -1048,10 +1019,6 @@ textarea{
   margin-top:7px;
 }
 
-/* ==========================================================
-   MEMEFLOW_SHADOW_POLICY_SIMULATOR_V23_21
-   ========================================================== */
-
 .oi-policy-simulation
 .oi-grid-2{
   margin-top:12px;
@@ -1061,10 +1028,6 @@ textarea{
 .oi-list{
   margin-top:7px;
 }
-
-/* ==========================================================
-   MEMEFLOW_SHADOW_POLICY_REVIEW_GATE_V23_22
-   ========================================================== */
 
 .oi-policy-review
 .oi-grid-2{
@@ -1076,10 +1039,6 @@ textarea{
   margin-top:7px;
 }
 
-/* ==========================================================
-   MEMEFLOW_V23_E2E_READINESS_FREEZE_V23_23
-   ========================================================== */
-
 .oi-v23-readiness
 .oi-grid-2{
   margin-top:12px;
@@ -1090,10 +1049,6 @@ textarea{
   margin-top:7px;
 }
 
-/* ==========================================================
-   MEMEFLOW_V24_CONTROLLED_POLICY_BRIDGE_V24_0
-   ========================================================== */
-
 .oi-v24-policy-bridge
 .oi-grid-2{
   margin-top:12px;
@@ -1103,10 +1058,6 @@ textarea{
 .oi-list{
   margin-top:7px;
 }
-
-/* ==========================================================
-   MEMEFLOW_V24_PROBATION_EVIDENCE_GATE_V24_2
-   ========================================================== */
 
 .oi-v24-probation-gate .oi-grid-2{
   margin-top:12px;
@@ -1116,18 +1067,13 @@ textarea{
   margin-top:7px;
 }
 
-/* ==========================================================
-   MEMEFLOW_SHADOW_PROMOTION_REPORT_V23_14
-   ========================================================== */
-
 .oi-promotion-monitor{
   overflow:hidden;
 }
 
 .oi-promotion-meter{
   height:7px;
-  margin:
-    -2px
+  margin:-2px
     0
     14px;
   overflow:hidden;
@@ -1165,24 +1111,20 @@ textarea{
 
 .oi-promotion-checks{
   display:grid;
-  grid-template-columns:
-    repeat(2,minmax(0,1fr));
+  grid-template-columns:repeat(2,minmax(0,1fr));
   gap:7px;
   margin-top:9px;
 }
 
 .oi-promotion-check{
   display:grid;
-  grid-template-columns:
-    8px
+  grid-template-columns:8px
     minmax(0,1fr);
   gap:9px;
   align-items:start;
   min-width:0;
   padding:9px 10px;
-  border:
-    1px solid
-    rgba(38,56,69,.65);
+  border:1px solid #2f3336;
   border-radius:10px;
   background:rgba(255,255,255,.012);
 }
@@ -1208,7 +1150,7 @@ textarea{
 .oi-promotion-check strong{
   display:block;
   overflow-wrap:anywhere;
-  color:#dbe5ea;
+  color:#e7e9ea;
   font-size:var(--mf-type-meta);
 }
 
@@ -1223,9 +1165,7 @@ textarea{
 .oi-promotion-blocker{
   margin-top:10px;
   padding:10px 11px;
-  border:
-    1px solid
-    rgba(239,200,106,.22);
+  border:1px solid #2f3336;
   border-radius:10px;
   background:rgba(239,200,106,.035);
   color:var(--amber);
@@ -1261,8 +1201,7 @@ textarea{
   }
 
   .oi-shell{
-    padding:
-      14px
+    padding:14px
       10px
       calc(35px + env(safe-area-inset-bottom,0px));
   }
@@ -1304,10 +1243,6 @@ textarea{
   }
 }
 
-/* ==========================================================
-   MEMEFLOW_PLATFORM_LEARNING_V2
-   ========================================================== */
-
 .oi-factor-table{
   display:grid;
   gap:5px;
@@ -1315,8 +1250,7 @@ textarea{
 
 .oi-factor-row{
   display:grid;
-  grid-template-columns:
-    minmax(62px,.8fr)
+  grid-template-columns:minmax(62px,.8fr)
     1fr
     1fr
     1fr;
@@ -1325,24 +1259,21 @@ textarea{
 
   padding:8px 9px;
 
-  border:
-    1px solid
-    rgba(38,56,69,.65);
+  border:1px solid #2f3336;
 
   border-radius:9px;
 
-  background:
-    rgba(255,255,255,.012);
+  background:rgba(255,255,255,.012);
 
   font-size:var(--mf-type-micro);
 }
 
 .oi-factor-row strong{
-  color:#d9e4e9;
+  color:#e7e9ea;
 }
 
 .oi-factor-row span{
-  color:#81909c;
+  color:#71767b;
   text-align:right;
 }
 
@@ -1351,16 +1282,13 @@ textarea{
 
   padding:9px 11px;
 
-  border:
-    1px solid
-    rgba(81,231,168,.15);
+  border:1px solid #2f3336;
 
   border-radius:10px;
 
-  background:
-    rgba(81,231,168,.025);
+  background:rgba(81,231,168,.025);
 
-  color:#71818d;
+  color:#71767b;
 
   font-size:var(--mf-type-micro);
   line-height:1.5;
@@ -1368,8 +1296,7 @@ textarea{
 
 @media(max-width:650px){
   .oi-factor-row{
-    grid-template-columns:
-      1fr 1fr;
+    grid-template-columns:1fr 1fr;
 
     gap:5px 10px;
   }
@@ -1378,10 +1305,6 @@ textarea{
     text-align:left;
   }
 }
-
-/* =========================================================
-   MEMEFLOW_OWNER_ACCESS_UI_V1
-   ========================================================= */
 
 .oi-owner-login{
   max-width:620px;
@@ -1400,7 +1323,7 @@ textarea{
 .oi-owner-login h2{
   margin:10px 0 8px;
   font-size:21px;
-  color:#f2f7f9;
+  color:#e7e9ea;
 }
 
 .oi-owner-login p{
@@ -1423,23 +1346,20 @@ textarea{
   min-height:44px;
   padding:10px 12px;
 
-  border:
-    1px solid
-    var(--line2);
+  border:1px solid #2f3336;
 
   border-radius:10px;
 
   outline:none;
 
-  background:#090f14;
+  background:#000000;
   color:var(--text);
 
   font-size:14px;
 }
 
 #ownerAccessKey:focus{
-  border-color:
-    rgba(87,220,255,.55);
+  border-color:#2f3336;
 }
 
 .oi-owner-access-message{
@@ -1469,7 +1389,7 @@ textarea{
 
   margin-top:13px;
 
-  color:#566570;
+  color:#536471;
 
   font-size:var(--mf-type-micro);
   line-height:1.5;

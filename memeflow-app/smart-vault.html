@@ -26,34 +26,33 @@
 
 <style>
 :root{
-  --v-bg:#0d1218;
-  --v-panel:rgba(17,24,32,.78);
-  --v-panel2:rgba(20,28,37,.92);
-  --v-line:rgba(145,188,216,.105);
-  --v-line2:rgba(145,188,216,.18);
-  --v-text:#eef5fa;
-  --v-muted:#758895;
-  --v-muted2:#93a4af;
+  --v-bg:#000000;
+  --v-panel:#000000;
+  --v-panel2:#000000;
+  --v-line:#2f3336;
+  --v-line2:#2f3336;
+  --v-text:#e7e9ea;
+  --v-muted:#71767b;
+  --v-muted2:#536471;
   --v-cyan:#55d9ff;
   --v-green:#4de6a1;
   --v-red:#ff6679;
   --v-radius:18px;
 }
-*{box-sizing:border-box}
-html{background:var(--v-bg)}
+*{box-sizing:border-box;}
+html{background:var(--v-bg);}
 body{
   margin:0;
   min-height:100vh;
   overflow-x:hidden;
   color:var(--v-text);
-  background:
-    radial-gradient(circle at 50% 5%,rgba(52,110,139,.18),transparent 25%),
+  background:radial-gradient(circle at 50% 5%,rgba(52,110,139,.18),transparent 25%),
     radial-gradient(circle at 5% 42%,rgba(85,217,255,.035),transparent 26%),
-    linear-gradient(180deg,#0c1117 0%,#0f141a 46%,#0c1116 100%);
+    linear-gradient(180deg,#000000 0%,#000000 46%,#0c1116 100%);
   font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
 }
-button,a{font:inherit}
-button{color:inherit}
+button,a{font:inherit;}
+button{color:inherit;}
 
 .mf-vault-shell{
   width:min(1240px,calc(100% - 24px));
@@ -61,7 +60,6 @@ button{color:inherit}
   padding:12px 0 54px;
 }
 
-/* HEADER */
 .mf-vault-topbar{
   min-height:70px;
   display:flex;
@@ -72,12 +70,12 @@ button{color:inherit}
   position:sticky;
   top:10px;
   z-index:50;
-  border:1px solid var(--v-line);
+  border:1px solid #2f3336;
   border-radius:16px;
-  background:linear-gradient(180deg,rgba(18,26,35,.94),rgba(13,19,25,.93));
-  box-shadow:0 16px 44px rgba(0,0,0,.20);
-  -webkit-backdrop-filter:blur(18px);
-  backdrop-filter:blur(18px);
+  background:transparent;
+  box-shadow:none;
+  -webkit-backdrop-filter:none;
+  backdrop-filter:none;
 }
 .mf-vault-brand{
   display:inline-flex;
@@ -95,13 +93,13 @@ button{color:inherit}
   object-fit:contain;
   filter:drop-shadow(0 0 12px rgba(85,217,255,.18));
 }
-.mf-vault-brand-copy{display:grid;gap:2px}
+.mf-vault-brand-copy{display:grid;gap:2px;}
 .mf-vault-brand-copy strong{
   font-size:14px;font-weight:900;
-  letter-spacing:.16em;color:#f5f8fa;
+  letter-spacing:.16em;color:#e7e9ea;
 }
 .mf-vault-brand-copy small{
-  color:#647885;font-size:var(--mf-type-micro);
+  color:#71767b;font-size:var(--mf-type-micro);
   font-weight:750;letter-spacing:.20em;
 }
 .mf-vault-topbar .top-actions{
@@ -110,7 +108,6 @@ button{color:inherit}
   align-items:center;
 }
 
-/* HERO */
 .mf-vault-hero{
   display:grid;
   grid-template-columns:minmax(0,1fr) auto;
@@ -136,7 +133,7 @@ button{color:inherit}
 .mf-vault-hero p{
   max-width:720px;
   margin:0;
-  color:#81939f;
+  color:#71767b;
   font-size:14px;
   line-height:1.65;
 }
@@ -146,10 +143,10 @@ button{color:inherit}
   align-items:center;
   gap:8px;
   padding:0 12px;
-  border:1px solid rgba(255,102,121,.17);
+  border:1px solid #2f3336;
   border-radius:10px;
   background:rgba(255,102,121,.035);
-  color:#b4848d;
+  color:#71767b;
   font-size:var(--mf-type-micro);
   font-weight:900;
   letter-spacing:.11em;
@@ -158,10 +155,9 @@ button{color:inherit}
 .mf-vault-hero-state i{
   width:6px;height:6px;border-radius:50%;
   background:var(--v-red);
-  box-shadow:0 0 10px rgba(255,102,121,.35);
+  box-shadow:none;
 }
 
-/* GRID */
 .mf-vault-grid{
   display:grid;
   grid-template-columns:repeat(2,minmax(0,1fr));
@@ -170,12 +166,11 @@ button{color:inherit}
 .mf-vault-card{
   min-width:0;
   padding:18px;
-  border:1px solid var(--v-line);
+  border:1px solid #2f3336;
   border-radius:var(--v-radius);
-  background:
-    radial-gradient(circle at 94% 0,rgba(85,217,255,.035),transparent 28%),
+  background:radial-gradient(circle at 94% 0,rgba(85,217,255,.035),transparent 28%),
     linear-gradient(180deg,rgba(18,26,35,.82),rgba(13,19,25,.78));
-  box-shadow:0 18px 54px rgba(0,0,0,.16);
+  box-shadow:none;
 }
 .mf-vault-card-head{
   min-height:44px;
@@ -184,7 +179,7 @@ button{color:inherit}
   justify-content:space-between;
   gap:12px;
   padding-bottom:14px;
-  border-bottom:1px solid var(--v-line);
+  border-bottom:1px solid #2f3336;
 }
 .mf-vault-card-head h2{
   margin:5px 0 0;
@@ -199,9 +194,9 @@ button{color:inherit}
   justify-content:center;
   min-height:25px;
   padding:0 8px;
-  border:1px solid rgba(145,188,216,.14);
+  border:1px solid #2f3336;
   border-radius:999px;
-  color:#8499a7;
+  color:#71767b;
   background:rgba(255,255,255,.018);
   font-size:var(--mf-type-micro);
   font-weight:900;
@@ -211,15 +206,14 @@ button{color:inherit}
 .mf-vault-badge.is-connected,
 .mf-vault-badge.is-safe{
   color:#6fc9a1;
-  border-color:rgba(77,230,161,.18);
+  border-color:#2f3336;
   background:rgba(77,230,161,.04);
 }
 .mf-vault-badge.is-locked{
-  color:#b48189;
-  border-color:rgba(255,102,121,.16);
+  color:#71767b;
+  border-color:#2f3336;
 }
 
-/* STATS */
 .mf-vault-stat-grid{
   display:grid;
   grid-template-columns:repeat(2,minmax(0,1fr));
@@ -230,14 +224,14 @@ button{color:inherit}
   min-width:0;
   min-height:66px;
   padding:10px;
-  border:1px solid rgba(145,188,216,.065);
+  border:1px solid #2f3336;
   border-radius:10px;
   background:rgba(0,0,0,.055);
 }
-.mf-vault-stat-wide{grid-column:1/-1}
+.mf-vault-stat-wide{grid-column:1/-1;}
 .mf-vault-stat small,.mf-vault-balance small,.mf-vault-control-row small{
   display:block;
-  color:#607481;
+  color:#536471;
   font-size:var(--mf-type-micro);
   font-weight:800;
   letter-spacing:.10em;
@@ -246,7 +240,7 @@ button{color:inherit}
 .mf-vault-stat strong{
   display:block;
   margin-top:7px;
-  color:#dbe5ea;
+  color:#e7e9ea;
   font-size:var(--mf-type-body);
   line-height:1.4;
   font-weight:700;
@@ -259,7 +253,6 @@ button{color:inherit}
   white-space:normal!important;
 }
 
-/* BALANCE */
 .mf-vault-balance{
   padding:22px 2px 12px;
 }
@@ -275,28 +268,27 @@ button{color:inherit}
 .mf-vault-balance span{
   display:block;
   margin-top:8px;
-  color:#687d89;
+  color:#71767b;
   font-size:var(--mf-type-meta);
 }
 
-/* BUTTONS */
 .mf-vault-actions{
   display:grid;
   grid-template-columns:repeat(2,minmax(0,1fr));
   gap:7px;
   margin-top:12px;
 }
-.mf-vault-actions-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.mf-vault-actions-3{grid-template-columns:repeat(3,minmax(0,1fr));}
 .mf-vault-btn{
   min-height:40px;
   display:flex;
   align-items:center;
   justify-content:center;
   padding:0 10px;
-  border:1px solid var(--v-line);
+  border:1px solid #2f3336;
   border-radius:9px;
   background:rgba(255,255,255,.018);
-  color:#9babb5;
+  color:#71767b;
   text-decoration:none;
   text-align:center;
   cursor:pointer;
@@ -305,12 +297,12 @@ button{color:inherit}
   letter-spacing:.09em;
 }
 .mf-vault-btn-primary{
-  border-color:rgba(85,217,255,.24);
+  border-color:#2f3336;
   background:rgba(85,217,255,.075);
   color:#cdf5ff;
 }
 .mf-vault-btn:not(:disabled):hover{
-  border-color:rgba(85,217,255,.30);
+  border-color:#2f3336;
   color:#eafaff;
 }
 .mf-vault-btn:disabled{
@@ -319,12 +311,11 @@ button{color:inherit}
 }
 .mf-vault-note{
   margin:12px 2px 0;
-  color:#687b87;
+  color:#71767b;
   font-size:var(--mf-type-meta);
   line-height:1.55;
 }
 
-/* AUTOMATION */
 .mf-vault-control-row{
   display:flex;
   align-items:center;
@@ -333,7 +324,7 @@ button{color:inherit}
   min-height:76px;
   margin-top:12px;
   padding:12px;
-  border:1px solid rgba(145,188,216,.065);
+  border:1px solid #2f3336;
   border-radius:10px;
   background:rgba(0,0,0,.055);
 }
@@ -346,7 +337,7 @@ button{color:inherit}
   width:44px;height:24px;
   flex:0 0 44px;
   padding:2px;
-  border:1px solid var(--v-line2);
+  border:1px solid #2f3336;
   border-radius:999px;
   background:rgba(255,255,255,.025);
 }
@@ -357,7 +348,6 @@ button{color:inherit}
   background:#52636d;
 }
 
-/* SECURITY */
 .mf-vault-checklist{
   display:grid;
   gap:8px;
@@ -368,7 +358,7 @@ button{color:inherit}
   gap:10px;
   align-items:flex-start;
   padding:11px;
-  border:1px solid rgba(145,188,216,.06);
+  border:1px solid #2f3336;
   border-radius:10px;
 }
 .mf-vault-checklist i{
@@ -377,20 +367,19 @@ button{color:inherit}
   flex:0 0 7px;
   border-radius:50%;
   background:var(--v-green);
-  box-shadow:0 0 10px rgba(77,230,161,.28);
+  box-shadow:none;
 }
-.mf-vault-checklist span{display:grid;gap:3px}
+.mf-vault-checklist span{display:grid;gap:3px;}
 .mf-vault-checklist strong{
-  color:#cbd7dd;
+  color:#e7e9ea;
   font-size:var(--mf-type-ui);
 }
 .mf-vault-checklist small{
-  color:#667984;
+  color:#71767b;
   font-size:var(--mf-type-micro);
   line-height:1.45;
 }
 
-/* STATUS */
 .mf-vault-status-panel{
   margin-top:12px;
   padding:18px;
@@ -440,7 +429,6 @@ button{color:inherit}
   font-size:var(--mf-type-meta);
 }
 
-/* TOAST */
 .mf-vault-toast{
   position:fixed;
   left:50%;
@@ -449,26 +437,25 @@ button{color:inherit}
   width:min(440px,calc(100% - 28px));
   transform:translateX(-50%);
   padding:12px 14px;
-  border:1px solid rgba(85,217,255,.18);
+  border:1px solid #2f3336;
   border-radius:11px;
   background:rgba(14,22,29,.96);
-  color:#b9cbd4;
-  box-shadow:0 18px 50px rgba(0,0,0,.35);
+  color:#e7e9ea;
+  box-shadow:none;
   font-size:var(--mf-type-ui);
   line-height:1.45;
 }
 
-/* RESPONSIVE */
 @media(max-width:760px){
-  .mf-vault-shell{width:min(100% - 20px,1240px)}
+  .mf-vault-shell{width:min(100% - 20px,1240px);}
   .mf-vault-hero{
     grid-template-columns:1fr;
     align-items:start;
     padding:48px 10px 26px;
   }
-  .mf-vault-hero-state{justify-self:start}
-  .mf-vault-grid{grid-template-columns:1fr}
-  .mf-vault-status-panel{grid-template-columns:1fr}
+  .mf-vault-hero-state{justify-self:start;}
+  .mf-vault-grid{grid-template-columns:1fr;}
+  .mf-vault-status-panel{grid-template-columns:1fr;}
   .mf-vault-status-flow{
     width:100%;
     overflow-x:auto;
@@ -476,12 +463,12 @@ button{color:inherit}
   }
 }
 @media(max-width:480px){
-  .mf-vault-topbar{min-height:66px}
-  .mf-vault-brand-copy strong{font-size:var(--mf-type-panel)}
+  .mf-vault-topbar{min-height:66px;}
+  .mf-vault-brand-copy strong{font-size:var(--mf-type-panel);}
   .mf-vault-actions,
-  .mf-vault-actions-3{grid-template-columns:1fr}
-  .mf-vault-hero h1{font-size:39px}
-  .mf-vault-balance strong{font-size:35px}
+  .mf-vault-actions-3{grid-template-columns:1fr;}
+  .mf-vault-hero h1{font-size:39px;}
+  .mf-vault-balance strong{font-size:35px;}
 }
 </style>
 <link rel="stylesheet" href="/access-gate.css?v=16">
@@ -515,9 +502,7 @@ button{color:inherit}
 <!-- /MEMEFLOW_FINAL_VISUAL_QA_V65 -->
 <!-- MEMEFLOW_DARK_X_SURFACE_V131_ASSET -->
 <!-- /MEMEFLOW_DARK_X_SURFACE_V131_ASSET -->
-  <link rel="stylesheet" href="/memeflow-visual-guardrails-v169.css?v=visual-guardrails-v169-20260922">
-  <link rel="stylesheet" href="/memeflow-structural-compat-v169.css?v=structural-compat-v169-20260922">
-  <link rel="stylesheet" href="/memeflow-x-canonical-v169.css?v=x-canonical-v169-20260922">
+  <link rel="stylesheet" href="/memeflow-x-canonical-v173.css?v=x-deep-conflict-clean-v173-20260922">
 </head>
 
 <body class="mf-final-visual-qa-v65 mf-accessibility-v64a mf-component-consistency-v63 mf-layout-rhythm-v54 mf-page-smart-vault mf-component-geometry-v55 mf-surface-hierarchy-v57 mf-interaction-states-v58 mf-header-nav-polish-v59 mf-nav-interaction-restore-v59b">
