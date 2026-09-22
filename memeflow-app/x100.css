@@ -1,13 +1,13 @@
 :root{
   color-scheme:dark;
-  --bg:#000;
-  --surface:#080808;
-  --surface-2:#0d0d0d;
-  --text:#f5f5f5;
-  --muted:#888;
-  --muted-2:#5f5f5f;
-  --line:#242424;
-  --line-soft:#171717;
+  --bg:#000000;
+  --surface:#000000;
+  --surface-2:#000000;
+  --text:#e7e9ea;
+  --muted:#71767b;
+  --muted-2:#536471;
+  --line:#2f3336;
+  --line-soft:#2f3336;
   --max:1180px;
 }
 *{box-sizing:border-box}

@@ -1,5 +1,5 @@
 /* ==========================================================================
-   MEMEFLOW X CANONICAL DARK STYLE V167
+   MEMEFLOW X CANONICAL DARK STYLE V169
    Single visual source of truth for the final dark neutral system.
 
    FINAL CONTRACT
@@ -697,5 +697,197 @@ html:not([data-theme="light"]) body.mf-page-system .viewport-wrap {
 /* Semantic state/action colors remain owned by their existing component rules:
    approve/reject, buy/sell, danger, open-position, watch, ready, blocked, P&L. */
 
-/* MEMEFLOW_X_CANONICAL_DARK_STYLE_V167_END */
+/* MEMEFLOW_X_CANONICAL_DARK_STYLE_V169_END */
+
+
+/* ==========================================================================
+   V169 LEGACY TOKEN BRIDGE
+   These aliases let old component/layout CSS consume ONE canonical neutral
+   system without owning an independent dark palette.
+   ========================================================================== */
+
+html:not([data-theme="light"]) {
+  --surface-0: #000000 !important;
+  --surface-1: #000000 !important;
+  --surface-2: #000000 !important;
+  --panel-bg: #000000 !important;
+
+  --ds-bg: #000000 !important;
+  --ds-surface: #000000 !important;
+  --ds-surface-raised: #000000 !important;
+  --ds-line: #2f3336 !important;
+  --ds-line-strong: #2f3336 !important;
+  --ds-text: #e7e9ea !important;
+  --ds-muted: #71767b !important;
+
+  --text-2: #71767b !important;
+  --text-3: #536471 !important;
+
+  --mf-hairline: #2f3336 !important;
+  --mf-pm-line: #2f3336 !important;
+  --mf-pm-line-strong: #2f3336 !important;
+  --mf-icon-muted: #71767b !important;
+  --mf-panel: #000000 !important;
+}
+
+/* X100 — previously outside the canonical theme. */
+html:not([data-theme="light"]) body.mf-page-x100 :where(
+  .site-header,
+  .module,
+  .revenue-grid article,
+  .policy-flow div,
+  .definition-grid > div
+) {
+  background: #000000 !important;
+  background-color: #000000 !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+html:not([data-theme="light"]) body.mf-page-x100 :where(
+  .site-header,
+  .section,
+  .hero-note,
+  .stat-row,
+  .stat-row div,
+  .module,
+  .principles,
+  .principles div,
+  .allocation-bar,
+  .allocation-list,
+  .allocation-list div,
+  .timeline-track,
+  .timeline-points,
+  .timeline-points div,
+  .revenue-grid,
+  .revenue-grid article,
+  .flow-stack,
+  .flow-stack div,
+  .policy-flow div,
+  .definition-grid,
+  .definition-grid > div,
+  .faq-list,
+  details
+) {
+  border-color: #2f3336 !important;
+}
+
+html:not([data-theme="light"]) body.mf-page-x100 :where(
+  .section-head > p:last-child,
+  .lead,
+  .nav a,
+  .text-action,
+  .hero-note p,
+  .module > small,
+  .module p,
+  .prose > p,
+  .principles small,
+  .allocation-list small,
+  .timeline-points strong,
+  .timeline-points small,
+  .revenue-grid p,
+  .policy-note,
+  .flow-stack span,
+  .policy-flow small,
+  .muted-copy,
+  .definition-grid p,
+  details p,
+  .footer-inner
+) {
+  color: #71767b !important;
+}
+
+html:not([data-theme="light"]) body.mf-page-x100 :where(
+  .kicker,
+  .working,
+  .module > span:first-child,
+  .principles span,
+  .definition-grid span
+) {
+  color: #536471 !important;
+}
+
+html:not([data-theme="light"]) body.mf-page-x100 :where(
+  .primary-action
+) {
+  background: #ffffff !important;
+  border-color: #ffffff !important;
+  color: #000000 !important;
+  box-shadow: none !important;
+}
+
+/* Preserve intentionally inverted X100 information modules. */
+html:not([data-theme="light"]) body.mf-page-x100 :where(
+  .core-module,
+  .definition-grid .is
+) {
+  background: #f2f2f2 !important;
+  color: #050505 !important;
+}
+
+/* Discovery Source — internal production page, now part of the same system. */
+html:not([data-theme="light"]) body.mf-page-system-source :where(
+  .top,
+  .panel,
+  .card,
+  .mode,
+  .info
+) {
+  background: #000000 !important;
+  background-color: #000000 !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+html:not([data-theme="light"]) body.mf-page-system-source :where(
+  .top,
+  .panel,
+  .card,
+  .mode,
+  .back
+) {
+  border-color: #2f3336 !important;
+}
+
+html:not([data-theme="light"]) body.mf-page-system-source :where(
+  .sub,
+  .muted,
+  .k,
+  .msg,
+  .back
+) {
+  color: #71767b !important;
+}
+
+/* Owner Intelligence — cover nested neutral rows, not only outer panels. */
+html:not([data-theme="light"]) body.mf-page-owner-intelligence :where(
+  .oi-panel,
+  .oi-stat,
+  .oi-notice,
+  .oi-decision,
+  .oi-row,
+  .oi-ai-status
+) {
+  background: #000000 !important;
+  background-color: #000000 !important;
+  background-image: none !important;
+  border-color: #2f3336 !important;
+  box-shadow: none !important;
+}
+
+/* Agent Performance — cover nested neutral metric cells. */
+html:not([data-theme="light"]) body.mf-page-agent-performance :where(
+  .ap-source,
+  .ap-panel,
+  .ap-kpis article,
+  .ap-summary div,
+  .ap-periods
+) {
+  background-color: #000000 !important;
+  background-image: none !important;
+  border-color: #2f3336 !important;
+  box-shadow: none !important;
+}
+
+/* MEMEFLOW_X_CANONICAL_V169_DEEP_COVERAGE_END */
 

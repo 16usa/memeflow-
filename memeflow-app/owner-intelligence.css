@@ -1,11 +1,11 @@
 :root{
-  --bg:#05080c;
-  --surface:#0c1218;
-  --surface2:#101820;
-  --line:#1d2a34;
-  --line2:#263845;
-  --text:#eef5f8;
-  --muted:#7e8d99;
+  --bg:#000000;
+  --surface:#000000;
+  --surface2:#000000;
+  --line:#2f3336;
+  --line2:#2f3336;
+  --text:#e7e9ea;
+  --muted:#71767b;
   --cyan:#57dcff;
   --green:#51e7a8;
   --red:#ff6878;
