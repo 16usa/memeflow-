@@ -270,8 +270,6 @@ body.mf-page-trading.mf-trading-terminal
   padding:0 !important;
   border: 0 !important;
   background:transparent !important;
-  color:inherit !important;
-  text-decoration:none !important;
   overflow:visible !important;
   box-sizing:border-box !important;
   cursor:pointer !important;
@@ -306,244 +304,23 @@ body.mf-page-trading.mf-trading-terminal
   pointer-events:none !important;
 }
 
-html body:is(
-  .mf-page-system,.mf-page-system-tokens,.mf-page-trading,.mf-page-smart-vault,
-  .mf-page-settings,.mf-page-how-it-works,.mf-page-agent-performance,
-  .mf-page-owner-intelligence
-) :where(
-  .brand-title,.brand .title,.header-title > span,.mf-settings-page-title > span,
-  .mf-nav-link-title,.mf-nav-drawer-title,
-  .scene-title h1,.activity-head h2,.inspector-head h2,.node-label strong,
-  .metric-card strong,.reason-block b,.telemetry-item strong,.token-symbol,.boot strong,
-  .flow-hero h1,.hero-counter strong,.summary-card strong,.token-name,.token-metric strong,
-  .settings-hero h1,.settings-group > summary strong,.settings-summary strong,
-  .toggle-row strong,.setting-field strong,
-  .mf-vault-brand-copy strong,.mf-vault-hero h1,.mf-vault-card-head h2,
-  .mf-vault-stat strong,.mf-vault-balance strong,.mf-vault-control-row strong,
-  .mf-hiw-brand-copy strong,.mf-hiw-hero h1,.mf-hiw-card h2,.mf-hiw-proof strong,
-  .mf-hiw-map-title,.mf-hiw-section-head h2,.mf-hiw-trust strong,
-  .ap-hero h1,.ap-source strong,.ap-head h2,.ap-donut strong,.ap-summary strong,
-  .ap-kpis article:not(.primary) strong,
-  #tokenName,#tokenPrice,.token-name-row h1,.token-price,.position-symbol,
-  .trade-log-symbol,.strategy-summary-row strong,.approval-main strong,.pnl-summary strong
-){
-  color:var(--mf-text-primary)!important;
-}
-
-html body:is(
-  .mf-page-system,.mf-page-system-tokens,.mf-page-trading,.mf-page-smart-vault,
-  .mf-page-settings,.mf-page-how-it-works,.mf-page-agent-performance,
-  .mf-page-owner-intelligence
-) :where(
-  .tool-btn,.ghost-btn,.wallet-btn,
-  .status-pill:not(.open):not(.ready):not(.watch):not(.blocked),
-  .scene-title p,.inspector-summary,.reason-block p,.inspector-foot button,
-  .candidate-filter button,.token-card-meta b,.boot span,
-  .flow-hero p,.details-button,.page-state,.pagination button,.search-wrap input,
-  .token-metric span,
-  .settings-hero p,.settings-context,.settings-group > summary small,.setting-field label,
-  .mode-option label,.profile-option label,.toggle-row span,
-  .mf-vault-hero p,.mf-vault-status-copy p,.mf-vault-control-row span,
-  .mf-hiw-hero p,.mf-hiw-card p,.mf-hiw-proof span,.mf-hiw-map-detail p,
-  .mf-hiw-section-head p,.mf-hiw-trust span,
-  .header-title > strong,.ap-hero p,.ap-periods button,.ap-refresh,
-  .ap-legend span,.ap-summary span,
-  .trade-log-hint,
-  #timeframes > button,#indicatorBar button,.timeframes button,.indicator-bar button,
-  .selected-metrics span,.selected-metrics strong,.position-bottomline,
-  .trade-log-bottomline,.trade-token-name,.strategy-summary-row span
-){
-  color:var(--mf-text-secondary)!important;
-}
-
-html body:is(
-  .mf-page-system,.mf-page-system-tokens,.mf-page-trading,.mf-page-smart-vault,
-  .mf-page-settings,.mf-page-how-it-works,.mf-page-agent-performance,
-  .mf-page-owner-intelligence
-) :where(
-  .brand-sub,.brand .subtitle,.mf-settings-page-title > strong,.mf-nav-link-sub,
-  .mf-nav-foot span,.eyebrow,
-  .legend span,.node-label small,.metric-card span,.reason-block span,
-  .inspector-foot span,.telemetry-item span,.telemetry-item small,
-  .token-card-meta span,.scene-hint,
-  .hero-counter span,.summary-card span,.token-meta,
-  .settings-summary span,.settings-summary small,.setting-field small,
-  .toggle-row small,.settings-save-status,
-  .mf-vault-brand-copy small,.mf-vault-kicker,.mf-vault-eyebrow,.mf-vault-stat small,
-  .mf-vault-balance small,.mf-vault-control-row small,.mf-vault-note,
-  .mf-hiw-brand-copy small,.mf-hiw-kicker,.mf-hiw-eyebrow,.mf-hiw-label,
-  .mf-hiw-map-detail span,.mf-hiw-foot,
-  .ap-eyebrow,.ap-source span,.ap-source small,.ap-kpis span,.ap-kpis small,
-  .ap-note,.ap-privacy,
-  #tokenMint,#copyMintBtn,#tokenMarket,#tokenMarket *,.token-meta button,
-  .chart-legend span,.chart-empty span,.chart-credit,.trade-log-time
-){
-  color:var(--mf-text-tertiary)!important;
-}
-
-@media (max-width: 820px){
-  
-
-  body.mf-page-trading.mf-trading-terminal
-  .strategy-summary-panel .strategy-summary-row strong,
-
-  body.mf-page-trading.mf-trading-terminal
-  .strategy-summary-panel .strategy-summary-row b,
-
-  body.mf-page-trading.mf-trading-terminal
-  .positions-panel .position-symbol,
-
-  body.mf-page-trading.mf-trading-terminal
-  .candidates-panel .candidate-symbol,
-
-  body.mf-page-trading.mf-trading-terminal
-  .bottom-history-panel .trade-log-symbol{
-    color:var(--mf-text-primary) !important;
-  }
-
-  
-  
-
-  
-
-  
-
-  
-  body.mf-page-trading.mf-trading-terminal
-  .strategy-summary-panel .strategy-summary-row span,
-
-  body.mf-page-trading.mf-trading-terminal
-  .positions-panel .position-bottomline,
-
-  body.mf-page-trading.mf-trading-terminal
-  .candidates-panel .candidate-bottom,
-
-  body.mf-page-trading.mf-trading-terminal
-  .bottom-history-panel .trade-log-bottomline,
-
-  body.mf-page-trading.mf-trading-terminal
-  .bottom-history-panel .trade-log-time{
-    color:var(--mf-text-secondary) !important;
-  }
-
-  
-  
-}
 
 
 
-html body:is(
-.mf-page-system,
-  .mf-page-system-tokens,
-  .mf-page-trading,
-  .mf-page-smart-vault,
-  .mf-page-settings,
-  .mf-page-how-it-works,
-  .mf-page-agent-performance,
-  .mf-page-owner-intelligence
-) :where(
-.brand-sub,
-  .brand .subtitle,
-  .mf-settings-page-title > strong,
-  .mf-nav-link-sub,
-  .mf-nav-foot span,
-  .eyebrow,
 
-  .legend span,
-  .node-label small,
-  .metric-card span,
-  .reason-block span,
-  .inspector-foot span,
-  .telemetry-item span,
-  .telemetry-item small,
-  .token-card-meta span,
-  .scene-hint,
 
-  .hero-counter span,
-  .summary-card span,
-  .token-meta,
 
-  .settings-summary span,
-  .settings-summary small,
-  .setting-field small,
-  .toggle-row small,
-  .settings-save-status,
 
-  .mf-vault-brand-copy small,
-  .mf-vault-kicker,
-  .mf-vault-eyebrow,
-  .mf-vault-stat small,
-  .mf-vault-balance small,
-  .mf-vault-control-row small,
-  .mf-vault-note,
 
-  .mf-hiw-brand-copy small,
-  .mf-hiw-kicker,
-  .mf-hiw-eyebrow,
-  .mf-hiw-label,
-  .mf-hiw-map-detail span,
-  .mf-hiw-foot,
 
-  .ap-eyebrow,
-  .ap-source span,
-  .ap-source small,
-  .ap-kpis span,
-  .ap-kpis small,
-  .ap-note,
-  .ap-privacy,
 
-  #tokenMint,
-  #copyMintBtn,
-  #tokenMarket,
-  #tokenMarket *,
-  .token-meta button,
-  .chart-legend span,
-  .chart-empty span,
-  .chart-credit,
-  .trade-log-time,
-  .strategy-summary-foot,
-  .pnl-summary span
-){
-  color:var(--mf-text-tertiary)!important;
-}
 
-.mf-system-text,
-[data-mf-text-role="system"]{
-  color:var(--mf-text-tertiary)!important;
-}
 
-html body.mf-page-trading.mf-trading-terminal
-.strategy-summary-panel .strategy-summary-foot > #saveState{
-  color:var(--mf-text-tertiary) !important;
-  -webkit-text-size-adjust:none !important;
-  text-size-adjust:none !important;
-}
 
-@media (max-width: 820px){
-  html body.mf-page-trading.mf-trading-terminal :where(
-    .candidates-panel .tiny-state,
-    .candidates-panel .state-dot,
-    .copy-trade-badge,
-    .strategy-summary-panel .mode-badge,
-    .positions-panel .close-position,
-    .positions-panel .pnl-summary strong
-  ){
-    -webkit-text-size-adjust:none !important;
-    text-size-adjust:none !important;
-  }
 
-  html body.mf-page-trading.mf-trading-terminal :where(
-    .strategy-summary-panel .strategy-edit-link,
-    .bottom-history-panel .trade-log-bottomline,
-    .bottom-history-panel .trade-log-time
-  ){
-    color:var(--mf-text-secondary) !important;
-    -webkit-text-size-adjust:none !important;
-    text-size-adjust:none !important;
-  }
 
-  
-}
+
+
 
 html body:is(
   .mf-page-system,
@@ -563,26 +340,7 @@ html body:is(
   --blue:var(--mf-semantic-blue) !important;
 }
 
-html body:is(
-  .mf-page-system,
-  .mf-page-system-tokens,
-  .mf-page-trading,
-  .mf-page-smart-vault,
-  .mf-page-settings,
-  .mf-page-how-it-works,
-  .mf-page-agent-performance,
-  .mf-page-owner-intelligence
-) :where(
-  .tiny-state,
-  .state-dot.open,
-  .decision-badge.open,
-  .status-pill.open,
-  .mode-badge[data-mode="automate"],
-  .approval-approve,
-  [data-mf-semantic="green"]
-){
-  color:var(--mf-semantic-green) !important;
-}
+
 
 html body:is(
   .mf-page-system,
@@ -606,21 +364,7 @@ html body:is(
     !important;
 }
 
-html body:is(
-  .mf-page-system,
-  .mf-page-system-tokens,
-  .mf-page-trading,
-  .mf-page-smart-vault,
-  .mf-page-settings,
-  .mf-page-how-it-works,
-  .mf-page-agent-performance,
-  .mf-page-owner-intelligence
-) :where(
-  .pnl-positive,
-  .trade-side.buy
-){
-  color:var(--mf-semantic-green) !important;
-}
+
 
 html body:is(
   .mf-page-system,
@@ -637,7 +381,6 @@ html body:is(
   .status-pill.ready,
   [data-mf-semantic="yellow"]
 ){
-  color:var(--mf-semantic-yellow) !important;
   border-color:
     color-mix(in srgb, var(--mf-semantic-yellow) 58%, transparent)
     !important;
@@ -660,7 +403,6 @@ html body:is(
   .approval-count[data-active="true"],
   [data-mf-semantic="blue"]
 ){
-  color:var(--mf-semantic-blue) !important;
   border-color:
     color-mix(in srgb, var(--mf-semantic-blue) 58%, transparent)
     !important;
@@ -683,27 +425,12 @@ html body:is(
   .approval-reject,
   [data-mf-semantic="red"]
 ){
-  color:var(--mf-semantic-red) !important;
   border-color:
     color-mix(in srgb, var(--mf-semantic-red) 58%, transparent)
     !important;
 }
 
-html body:is(
-  .mf-page-system,
-  .mf-page-system-tokens,
-  .mf-page-trading,
-  .mf-page-smart-vault,
-  .mf-page-settings,
-  .mf-page-how-it-works,
-  .mf-page-agent-performance,
-  .mf-page-owner-intelligence
-) :where(
-  .pnl-negative,
-  .trade-side.sell
-){
-  color:var(--mf-semantic-red) !important;
-}
+
 
 html body:is(
   .mf-page-system,
@@ -721,7 +448,6 @@ html body:is(
   .indicator-scroll button[aria-pressed="true"],
   [data-mf-semantic="cyan"]
 ){
-  color:var(--mf-semantic-cyan) !important;
   border-color:
     color-mix(in srgb, var(--mf-semantic-cyan) 58%, transparent)
     !important;
@@ -740,20 +466,12 @@ html body:is(
   .mf-semantic-purple,
   [data-mf-semantic="purple"]
 ){
-  color:var(--mf-semantic-purple) !important;
   border-color:
     color-mix(in srgb, var(--mf-semantic-purple) 58%, transparent)
     !important;
 }
 
-@media (max-width: 820px){
-  
 
-  html body.mf-page-trading.mf-trading-terminal
-  .bottom-history-panel .trade-log-reason{
-    color:var(--mf-text-secondary) !important;
-  }
-}
 
 html[data-theme="dark"] body.mf-page-trading.mf-trading-terminal{
   --mf-trading-v61-canvas:var(--mf-dark-canvas) !important;
@@ -879,25 +597,7 @@ html[data-theme="dark"] body.mf-page-trading.mf-trading-terminal
   }
 }
 
-@media (max-width: 820px){
-  html body.mf-page-trading.mf-trading-terminal
-  .candidates-panel .candidate-primary-line .candidate-symbol{
-    -webkit-text-size-adjust:none !important;
-    text-size-adjust:none !important;
-  }
 
-  html body.mf-page-trading.mf-trading-terminal
-  .candidates-panel :where(
-    .candidate-primary-line .copy-trade-badge,
-    .candidate-top .state-dot,
-    .candidate-bottom,
-    .candidate-bottom > span:first-child,
-    .candidate-price
-  ){
-    -webkit-text-size-adjust:none !important;
-    text-size-adjust:none !important;
-  }
-}
 
 body.mf-page-trading.mf-trading-terminal
 .bottom-history-panel .trade-log-topline .trade-log-reason-badge{
@@ -923,15 +623,9 @@ body.mf-page-trading.mf-trading-terminal
   .bottom-history-panel .trade-log-topline .trade-log-reason-badge{
     padding:1px 3px !important;
     border-radius:5px !important;
-    -webkit-text-size-adjust:none !important;
-    text-size-adjust:none !important;
   }
 
-  html body.mf-page-trading.mf-trading-terminal
-  .bottom-history-panel .trade-log-bottomline .trade-side{
-    -webkit-text-size-adjust:none !important;
-    text-size-adjust:none !important;
-  }
+  
 }
 
 body.mf-page-trading.mf-trading-terminal

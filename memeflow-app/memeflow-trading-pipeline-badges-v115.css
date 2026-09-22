@@ -52,9 +52,6 @@ html body.mf-page-trading.mf-trading-terminal :where(
   background: transparent !important;
   box-shadow: none !important;
   white-space: nowrap !important;
-
-  -webkit-text-size-adjust: none !important;
-  text-size-adjust: none !important;
 }
 
 /* Real-Time Pipeline textual token-state badges only. */
@@ -79,9 +76,6 @@ html body.mf-page-system-tokens .token-state{
   background: transparent !important;
   box-shadow: none !important;
   white-space: nowrap !important;
-
-  -webkit-text-size-adjust: none !important;
-  text-size-adjust: none !important;
 }
 
 /* MEMEFLOW_TRADING_PIPELINE_BADGE_STANDARD_V115_END */

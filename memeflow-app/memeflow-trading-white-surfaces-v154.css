@@ -66,29 +66,9 @@ body.mf-page-trading.mf-trading-terminal
   border-color: var(--mf-trading-v61-line, rgba(23, 23, 23, .075)) !important;
 }
 
-html[data-theme="light"]
-body.mf-page-trading.mf-trading-terminal
-.chart-panel .token-name-row h1,
-html[data-theme="light"]
-body.mf-page-trading.mf-trading-terminal
-.chart-panel .token-price,
-html[data-theme="light"]
-body.mf-page-trading.mf-trading-terminal
-.chart-panel .selected-metrics strong{
-  color: var(--mf-trading-v61-text, #171717) !important;
-}
 
-html[data-theme="light"]
-body.mf-page-trading.mf-trading-terminal
-.chart-panel .token-meta,
-html[data-theme="light"]
-body.mf-page-trading.mf-trading-terminal
-.chart-panel .token-market,
-html[data-theme="light"]
-body.mf-page-trading.mf-trading-terminal
-.chart-panel .selected-metrics span{
-  color: var(--mf-trading-v61-muted, #737373) !important;
-}
+
+
 
 html[data-theme="light"]
 body.mf-page-trading.mf-trading-terminal
@@ -118,7 +98,6 @@ body.mf-page-trading.mf-trading-terminal
   background-color: transparent !important;
   background-image: none !important;
   border-color: transparent !important;
-  color: var(--mf-trading-v61-muted, #737373) !important;
   box-shadow: none !important;
 }
 
@@ -179,17 +158,9 @@ body.mf-page-trading.mf-trading-terminal
   background-image: none !important;
 }
 
-html[data-theme="light"]
-body.mf-page-trading.mf-trading-terminal
-.strategy-summary-panel .strategy-summary-row strong{
-  color: var(--mf-trading-v61-text, #171717) !important;
-}
 
-html[data-theme="light"]
-body.mf-page-trading.mf-trading-terminal
-.strategy-summary-panel .strategy-summary-row span{
-  color: var(--mf-trading-v61-muted, #737373) !important;
-}
+
+
 
 html[data-theme="light"]
 body.mf-page-trading.mf-trading-terminal

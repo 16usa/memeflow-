@@ -45,13 +45,12 @@ body{
   margin:0;
   min-height:100vh;
   overflow-x:hidden;
-  color:var(--mf-neutral-text-2);
   background:radial-gradient(circle at 50% 5%,rgba(52,110,139,.18),transparent 25%),
     radial-gradient(circle at 5% 42%,rgba(85,217,255,.035),transparent 26%),
     linear-gradient(180deg,#000000 0%,#000000 46%,#0c1116 100%);
 }
 
-button{color:inherit;}
+
 
 .mf-vault-shell{
   width:min(1240px,calc(100% - 24px));
@@ -80,8 +79,6 @@ button{color:inherit;}
   display:inline-flex;
   align-items:center;
   gap:11px;
-  color:inherit;
-  text-decoration:none;
 }
 .mf-vault-brand-mark{
   width:40px;height:40px;
@@ -93,11 +90,8 @@ button{color:inherit;}
   filter:drop-shadow(0 0 12px rgba(85,217,255,.18));
 }
 .mf-vault-brand-copy{display:grid;gap:2px;}
-.mf-vault-brand-copy strong{color:var(--mf-neutral-text-1);
-}
-.mf-vault-brand-copy small{
-  color:var(--mf-neutral-text-3);
-}
+
+
 .mf-vault-topbar .top-actions{
   margin-left:auto;
   display:flex;
@@ -111,17 +105,13 @@ button{color:inherit;}
   gap:28px;
   padding:68px 22px 34px;
 }
-.mf-vault-kicker,.mf-vault-eyebrow{
-  color:var(--v-cyan);
-}
+
 .mf-vault-hero h1{
   margin:10px 0 12px;
-  color:#f3f7fa;
 }
 .mf-vault-hero p{
   max-width:720px;
   margin:0;
-  color:var(--mf-neutral-text-3);
 }
 .mf-vault-hero-state{
   min-height:36px;
@@ -132,7 +122,6 @@ button{color:inherit;}
   border:1px solid #2f3336;
   border-radius:10px;
   background:rgba(255,102,121,.035);
-  color:var(--mf-neutral-text-3);
   white-space:nowrap;
 }
 .mf-vault-hero-state i{
@@ -175,18 +164,15 @@ button{color:inherit;}
   padding:0 8px;
   border:1px solid #2f3336;
   border-radius:999px;
-  color:var(--mf-neutral-text-3);
   background:rgba(255,255,255,.018);
   white-space:nowrap;
 }
 .mf-vault-badge.is-connected,
 .mf-vault-badge.is-safe{
-  color:#6fc9a1;
   border-color:#2f3336;
   background:rgba(77,230,161,.04);
 }
 .mf-vault-badge.is-locked{
-  color:#71767b;
   border-color:#2f3336;
 }
 
@@ -207,12 +193,10 @@ button{color:inherit;}
 .mf-vault-stat-wide{grid-column:1/-1;}
 .mf-vault-stat small,.mf-vault-balance small,.mf-vault-control-row small{
   display:block;
-  color:var(--mf-neutral-text-3);
 }
 .mf-vault-stat strong{
   display:block;
   margin-top:7px;
-  color:var(--mf-neutral-text-1);
   overflow:hidden;
   text-overflow:ellipsis;
 }
@@ -227,12 +211,10 @@ button{color:inherit;}
 .mf-vault-balance strong{
   display:block;
   margin-top:5px;
-  color:#f3f8fb;
 }
 .mf-vault-balance span{
   display:block;
   margin-top:8px;
-  color:var(--mf-neutral-text-3);
 }
 
 .mf-vault-actions{
@@ -251,19 +233,15 @@ button{color:inherit;}
   border:1px solid #2f3336;
   border-radius:9px;
   background:rgba(255,255,255,.018);
-  color:var(--mf-neutral-text-3);
-  text-decoration:none;
   text-align:center;
   cursor:pointer;
 }
 .mf-vault-btn-primary{
   border-color:#2f3336;
   background:rgba(85,217,255,.075);
-  color:#cdf5ff;
 }
 .mf-vault-btn:not(:disabled):hover{
   border-color:#2f3336;
-  color:#eafaff;
 }
 .mf-vault-btn:disabled{
   cursor:not-allowed;
@@ -271,7 +249,6 @@ button{color:inherit;}
 }
 .mf-vault-note{
   margin:12px 2px 0;
-  color:var(--mf-neutral-text-3);
 }
 
 .mf-vault-control-row{
@@ -327,12 +304,8 @@ button{color:inherit;}
   box-shadow:none;
 }
 .mf-vault-checklist span{display:grid;gap:3px;}
-.mf-vault-checklist strong{
-  color:var(--mf-neutral-text-1);
-}
-.mf-vault-checklist small{
-  color:var(--mf-neutral-text-3);
-}
+
+
 
 .mf-vault-status-panel{
   margin-top:12px;
@@ -351,7 +324,6 @@ button{color:inherit;}
 .mf-vault-status-copy p{
   max-width:720px;
   margin:0;
-  color:var(--mf-neutral-text-3);
 }
 .mf-vault-status-flow{
   display:flex;
@@ -365,16 +337,12 @@ button{color:inherit;}
   padding:0 8px;
   border:1px solid rgba(145,188,216,.08);
   border-radius:8px;
-  color:var(--mf-neutral-text-4);
   white-space:nowrap;
 }
 .mf-vault-status-flow span.is-ready{
-  color:#72b99b;
   border-color:rgba(77,230,161,.14);
 }
-.mf-vault-status-flow b{
-  color:var(--mf-neutral-text-4);
-}
+
 
 .mf-vault-toast{
   position:fixed;
@@ -387,7 +355,6 @@ button{color:inherit;}
   border:1px solid #2f3336;
   border-radius:11px;
   background:rgba(14,22,29,.96);
-  color:var(--mf-neutral-text-2);
   box-shadow:none;
 }
 
@@ -445,7 +412,7 @@ button{color:inherit;}
 <!-- /MEMEFLOW_FINAL_VISUAL_QA_V65 -->
 <!-- MEMEFLOW_DARK_X_SURFACE_V131_ASSET -->
 <!-- /MEMEFLOW_DARK_X_SURFACE_V131_ASSET -->
-  <link rel="stylesheet" href="/memeflow-x-canonical-v180.css?v=type-scale-v180-20260922">
+  <link rel="stylesheet" href="/memeflow-x-canonical-v185.css?v=runtime-text-final-v185-20260922">
 </head>
 
 <body class="mf-final-visual-qa-v65 mf-accessibility-v64a mf-component-consistency-v63 mf-layout-rhythm-v54 mf-page-smart-vault mf-component-geometry-v55 mf-surface-hierarchy-v57 mf-interaction-states-v58 mf-header-nav-polish-v59 mf-nav-interaction-restore-v59b">

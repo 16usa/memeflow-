@@ -13,7 +13,7 @@
   width:58px!important;height:42px!important;min-width:58px!important;flex:0 0 58px!important;
   display:inline-flex!important;align-items:center!important;justify-content:center!important;
   padding:0!important;margin:0!important;border:0!important;border-radius:0!important;
-  background:none!important;box-shadow:none;color:transparent!important;
+  background:none!important;box-shadow:none;
 }
 .brand-mark>span,.brand-mark>i,.brand-mark::before,.brand-mark::after{display:none!important;content:none!important;}
 .brand-mark .mf-brand-img{width:56px!important;height:38px!important;}
@@ -165,7 +165,6 @@ html[data-theme="light"] .mf-brand-img, body.light .mf-brand-img, .theme-light .
 
 html,body{
   background:#000000!important;
-  color:var(--mf-app-text)!important;
 }
 
 .sidebar{
@@ -178,18 +177,15 @@ html,body{
 .sidebar .nav a,.nav-item{
   background:transparent!important;
   border-color:transparent!important;
-  color:var(--mf-neutral-text-2);
 }
 .sidebar .nav a:hover,.sidebar .nav a:focus-visible,
 .nav-item:hover,.nav-item:focus-visible{
   background:rgba(255,255,255,.045)!important;
   border-color:#2f3336;
-  color:#fff!important;
 }
 .sidebar .nav a.active,.nav-item.active{
   background:linear-gradient(90deg,rgba(97,223,255,.10),rgba(255,255,255,.035))!important;
   border-color:#2f3336;
-  color:#fff!important;
   box-shadow:none;
 }
 
@@ -222,7 +218,6 @@ html,body{
 }
 .panel-head h2,.execution-head h2,.wallet-dialog-head h2,.sheet-top h2{
   margin:0!important;
-  color:var(--mf-app-text)!important;
 }
 .panel-body{padding:14px!important;}
 
@@ -257,11 +252,10 @@ html,body{
 .plan-ribbon{
   background:rgba(97,223,255,.10)!important;
   border-color:#2f3336;
-  color:var(--mf-app-cyan)!important;
   box-shadow:none;
 }
-.plan-price,.plan-name{color:var(--mf-app-text)!important;}
-.plan-copy,.feature.locked,.muted{color:var(--mf-app-muted)!important;}
+
+
 
 .settings-hero{
   border-color:#2f3336;
@@ -273,9 +267,7 @@ html,body{
 }
 .settings-group[open]>summary{border-bottom:1px solid #2f3336;}
 .settings-group-body{background:transparent!important;}
-.mode-option label,.profile-option label,.setting-field input,.setting-field select{
-  color:var(--mf-app-text)!important;
-}
+
 .mode-option input:checked+label,.profile-option input:checked+label{
   border-color:#2f3336;
   background:rgba(97,223,255,.055)!important;
@@ -298,11 +290,10 @@ html,body{
 .wallet-avatar{
   border-color:var(--mf-app-line-strong)!important;
   background:var(--mf-app-surface-2)!important;
-  color:var(--mf-app-muted)!important;
   box-shadow:none!important;
 }
-.wallet-security h3,.wallet-title b{color:var(--mf-app-text)!important;}
-.wallet-security p,.wallet-title small,.wallet-compact-note{color:var(--mf-app-muted)!important;}
+
+
 
 button:not(.mfpg-card):not(.candidate),.btn,a.btn{
   border-radius:12px!important;
@@ -311,7 +302,6 @@ button:not(.mfpg-card):not(.candidate),.btn,a.btn{
 .btn:not(.primary){
   background:#000000!important;
   border-color:#2f3336;
-  color:#eaf0f6!important;
 }
 .btn:not(.primary):hover,.btn:not(.primary):focus-visible{
   border-color:#2f3336;
@@ -320,24 +310,17 @@ button:not(.mfpg-card):not(.candidate),.btn,a.btn{
 .btn.primary{
   background:var(--mf-app-cyan)!important;
   border-color:#2f3336;
-  color:#031017!important;
   box-shadow:none;
 }
 .btn.red{
-  color:var(--mf-app-red)!important;
   border-color:#2f3336;
   background:rgba(255,108,123,.035)!important;
 }
 .chip,.badge,.status-pill,.state,.top-plan-badge{box-shadow:none!important;}
 
-h1,h2,h3{
-  color:var(--mf-app-text)!important;
-}
 
-.wallet-stat b,.subscription-metric b,.system-health-summary b,.settings-summary b,
-.plan-price,.big-score,.metric-value,.score,.big-number{
-  font-variant-numeric:tabular-nums!important;
-}
+
+
 
 .wallet-modal,.explain-overlay{
   background:rgba(2,4,7,.72)!important;
@@ -357,11 +340,9 @@ h1,h2,h3{
 }
 .mobile-nav button{
   background:transparent!important;
-  color:var(--mf-app-muted)!important;
   box-shadow:none;
 }
 .mobile-nav button.active{
-  color:#fff!important;
   background:rgba(97,223,255,.09)!important;
   box-shadow:none;
 }

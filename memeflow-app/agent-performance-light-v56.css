@@ -14,7 +14,6 @@ html[data-theme="light"] body.mf-agent-performance-page{
 
   background: #ffffff !important;
   background-image: none !important;
-  color: var(--text) !important;
 }
 
 html[data-theme="light"] body.mf-agent-performance-page .ap-page{
@@ -26,30 +25,9 @@ html[data-theme="light"] body.mf-agent-performance-page .ap-hero{
   background: transparent !important;
 }
 
-html[data-theme="light"] body.mf-agent-performance-page .ap-hero h1,
-html[data-theme="light"] body.mf-agent-performance-page .ap-head h2,
-html[data-theme="light"] body.mf-agent-performance-page .ap-source strong,
-html[data-theme="light"] body.mf-agent-performance-page .ap-kpis strong,
-html[data-theme="light"] body.mf-agent-performance-page .ap-summary strong,
-html[data-theme="light"] body.mf-agent-performance-page .ap-engine strong,
-html[data-theme="light"] body.mf-agent-performance-page .factor-top strong,
-html[data-theme="light"] body.mf-agent-performance-page .rank strong{
-  color: #171717 !important;
-}
 
-html[data-theme="light"] body.mf-agent-performance-page .ap-hero p,
-html[data-theme="light"] body.mf-agent-performance-page .ap-source span,
-html[data-theme="light"] body.mf-agent-performance-page .ap-source small,
-html[data-theme="light"] body.mf-agent-performance-page .ap-kpis span,
-html[data-theme="light"] body.mf-agent-performance-page .ap-kpis small,
-html[data-theme="light"] body.mf-agent-performance-page .ap-summary span,
-html[data-theme="light"] body.mf-agent-performance-page .factor-top span,
-html[data-theme="light"] body.mf-agent-performance-page .meta,
-html[data-theme="light"] body.mf-agent-performance-page .ap-engine span,
-html[data-theme="light"] body.mf-agent-performance-page .ap-engine small,
-html[data-theme="light"] body.mf-agent-performance-page footer{
-  color: #737373 !important;
-}
+
+
 
 /* Main surfaces */
 html[data-theme="light"] body.mf-agent-performance-page .ap-source,
@@ -91,13 +69,11 @@ html[data-theme="light"] body.mf-agent-performance-page .ap-periods{
 
 html[data-theme="light"] body.mf-agent-performance-page .ap-periods button,
 html[data-theme="light"] body.mf-agent-performance-page .ap-refresh{
-  color: #737373 !important;
   box-shadow: none !important;
 }
 
 html[data-theme="light"] body.mf-agent-performance-page .ap-periods button.active{
   background: #ebebeb !important;
-  color: #171717 !important;
 }
 
 html[data-theme="light"] body.mf-agent-performance-page .ap-refresh{
@@ -110,7 +86,6 @@ html[data-theme="light"] body.mf-agent-performance-page .ap-refresh:focus-visibl
 html[data-theme="light"] body.mf-agent-performance-page .ap-periods button:hover,
 html[data-theme="light"] body.mf-agent-performance-page .ap-periods button:focus-visible{
   background: #ebebeb !important;
-  color: #171717 !important;
 }
 
 /* Donut / tracks */
@@ -130,23 +105,11 @@ html[data-theme="light"] body.mf-agent-performance-page .ap-engine{
   border-top-color: rgba(23, 23, 23, .085) !important;
 }
 
-html[data-theme="light"] body.mf-agent-performance-page .ap-note{
-  color: #737373 !important;
-}
 
-html[data-theme="light"] body.mf-agent-performance-page .ap-note strong,
-html[data-theme="light"] body.mf-agent-performance-page .ap-privacy strong,
-html[data-theme="light"] body.mf-agent-performance-page .ap-legend b,
-html[data-theme="light"] body.mf-agent-performance-page .ap-bars strong{
-  color: #333333 !important;
-}
 
-html[data-theme="light"] body.mf-agent-performance-page .ap-bars > div,
-html[data-theme="light"] body.mf-agent-performance-page .ap-legend,
-html[data-theme="light"] body.mf-agent-performance-page .ap-privacy,
-html[data-theme="light"] body.mf-agent-performance-page footer a{
-  color: #737373 !important;
-}
+
+
+
 
 /* Error remains semantic red, but uses the same neutral surface language. */
 html[data-theme="light"] body.mf-agent-performance-page .ap-error{

@@ -881,7 +881,7 @@ function updateAllocation() {
     .reduce((sum, id) => sum + num($(id).value, 0), 0);
   const node = $('allocationBadge');
   node.textContent = `${fmt(allocation, 0)}% allocated`;
-  node.style.color = Math.abs(allocation - 100) <= .001 ? '#4de6a1' : '#ff6679';
+  node.dataset.mfTone = Math.abs(allocation - 100) <= .001 ? 'allocation-ok' : 'allocation-bad';
   scheduleChart();
 }
 

@@ -152,8 +152,6 @@ html[data-theme="light"] .mf-site-header :is(
 ){
   display: block !important;
   margin: 0 !important;
-
-  color: #111820 !important;
 }
 
 html[data-theme="light"] .mf-site-header :is(
@@ -166,8 +164,6 @@ html[data-theme="light"] .mf-site-header :is(
 ){
   display: block !important;
   margin: 3px 0 0 !important;
-
-  color: #71828d !important;
   white-space: nowrap !important;
 }
 
