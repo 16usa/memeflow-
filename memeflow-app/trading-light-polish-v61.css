@@ -4,7 +4,7 @@
    Chart light-theme ownership is intentionally delegated to
    memeflow-trading-white-surfaces-v154.css.
 */
-html[data-theme="light"] body.mf-trading-terminal {
+html[data-theme="light"] body.mf-trading-terminal{
   --mf-trading-v61-canvas: #ffffff;
   --mf-trading-v61-surface: #f5f5f5;
   --mf-trading-v61-inset: #ebebeb;
@@ -20,25 +20,25 @@ html[data-theme="light"] body.mf-trading-terminal {
 
 html[data-theme="light"] body.mf-trading-terminal .shell,
 html[data-theme="light"] body.mf-trading-terminal .terminal,
-html[data-theme="light"] body.mf-trading-terminal .center-stack {
+html[data-theme="light"] body.mf-trading-terminal .center-stack{
   background: transparent !important;
   background-image: none !important;
 }
 
 /* Shared panel surfaces. Chart/Candidates/Open Positions have component owners. */
 html[data-theme="light"] body.mf-trading-terminal .terminal > .panel:not(.candidates-panel):not(.chart-panel):not(.strategy-summary-panel),
-html[data-theme="light"] body.mf-trading-terminal .center-stack > .panel:not(.positions-panel):not(.chart-panel) {
+html[data-theme="light"] body.mf-trading-terminal .center-stack > .panel:not(.positions-panel):not(.chart-panel){
   background: var(--mf-trading-v61-surface) !important;
   background-image: none !important;
   border-color: transparent !important;
   box-shadow: none !important;
 }
 
-html[data-theme="light"] body.mf-trading-terminal .panel-head {
+html[data-theme="light"] body.mf-trading-terminal .panel-head{
   border-color: var(--mf-trading-v61-line) !important;
 }
 
-html[data-theme="light"] body.mf-trading-terminal .empty {
+html[data-theme="light"] body.mf-trading-terminal .empty{
   background: var(--mf-trading-v61-inset) !important;
   background-image: none !important;
   border-color: transparent !important;
@@ -46,32 +46,32 @@ html[data-theme="light"] body.mf-trading-terminal .empty {
 }
 
 /* Shared non-Chart controls. */
-html[data-theme="light"] body.mf-trading-terminal .wallet-btn {
+html[data-theme="light"] body.mf-trading-terminal .wallet-btn{
   background: var(--mf-trading-v61-inset) !important;
   background-image: none !important;
   border-color: transparent !important;
   box-shadow: none !important;
 }
 
-@media (hover: hover) and (pointer: fine) {
-  html[data-theme="light"] body.mf-trading-terminal .wallet-btn:hover {
+@media (hover: hover) and (pointer: fine){
+  html[data-theme="light"] body.mf-trading-terminal .wallet-btn:hover{
     background: #e4e4e4 !important;
   }
 }
 
 /* Shared non-Chart neutral text. */
 html[data-theme="light"] body.mf-trading-terminal .panel-head h2,
-html[data-theme="light"] body.mf-trading-terminal .candidate-name strong {
+html[data-theme="light"] body.mf-trading-terminal .candidate-name strong{
   color: var(--mf-trading-v61-text) !important;
 }
 
 html[data-theme="light"] body.mf-trading-terminal .candidate-name span,
 html[data-theme="light"] body.mf-trading-terminal .candidate-bottom,
-html[data-theme="light"] body.mf-trading-terminal .trade-log-hint {
+html[data-theme="light"] body.mf-trading-terminal .trade-log-hint{
   color: var(--mf-trading-v61-muted) !important;
 }
 
-html[data-theme="light"] body.mf-trading-terminal .control-error {
+html[data-theme="light"] body.mf-trading-terminal .control-error{
   box-shadow: none !important;
 }
 

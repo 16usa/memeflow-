@@ -10,7 +10,7 @@
      V34 global header remains the only header owner
    ========================================================================== */
 
-html[data-theme="light"] body.mf-token-flow-v36 {
+html[data-theme="light"] body.mf-token-flow-v36{
   --mf-flow-white: #FFFFFF;
   --mf-flow-soft: #F5F5F5;
   --mf-flow-quiet: #EBEBEB;
@@ -20,14 +20,14 @@ html[data-theme="light"] body.mf-token-flow-v36 {
 }
 
 /* V34 owns the header. No header geometry, border, shadow or spacing here. */
-html[data-theme="light"] body.mf-token-flow-v36 .flow-page {
+html[data-theme="light"] body.mf-token-flow-v36 .flow-page{
   background: #FFFFFF !important;
 }
 
 /* --------------------------------------------------------------------------
    HERO — one intentional soft surface, not another outlined card.
    -------------------------------------------------------------------------- */
-html[data-theme="light"] body.mf-token-flow-v36 .flow-hero {
+html[data-theme="light"] body.mf-token-flow-v36 .flow-hero{
   background: #F5F5F5 !important;
   background-image: none !important;
 
@@ -39,7 +39,7 @@ html[data-theme="light"] body.mf-token-flow-v36 .flow-hero {
    STATUS SUMMARY — compact soft surfaces.
    Existing active semantic accents/borders stay visible.
    -------------------------------------------------------------------------- */
-html[data-theme="light"] body.mf-token-flow-v36 .summary-card {
+html[data-theme="light"] body.mf-token-flow-v36 .summary-card{
   background: #F5F5F5 !important;
   background-image: none !important;
 
@@ -47,27 +47,27 @@ html[data-theme="light"] body.mf-token-flow-v36 .summary-card {
   box-shadow: none !important;
 }
 
-html[data-theme="light"] body.mf-token-flow-v36 .summary-card.active.all {
+html[data-theme="light"] body.mf-token-flow-v36 .summary-card.active.all{
   background: #FFFFFF !important;
   border-color: var(--cyan) !important;
 }
 
-html[data-theme="light"] body.mf-token-flow-v36 .summary-card.ready.active {
+html[data-theme="light"] body.mf-token-flow-v36 .summary-card.ready.active{
   background: #FFFFFF !important;
   border-color: var(--yellow) !important;
 }
 
-html[data-theme="light"] body.mf-token-flow-v36 .summary-card.watch.active {
+html[data-theme="light"] body.mf-token-flow-v36 .summary-card.watch.active{
   background: #FFFFFF !important;
   border-color: var(--blue) !important;
 }
 
-html[data-theme="light"] body.mf-token-flow-v36 .summary-card.waiting.active {
+html[data-theme="light"] body.mf-token-flow-v36 .summary-card.waiting.active{
   background: #FFFFFF !important;
   border-color: #EBEBEB !important;
 }
 
-html[data-theme="light"] body.mf-token-flow-v36 .summary-card.blocked.active {
+html[data-theme="light"] body.mf-token-flow-v36 .summary-card.blocked.active{
   background: #FFFFFF !important;
   border-color: var(--red) !important;
 }
@@ -83,7 +83,7 @@ html[data-theme="light"] body.mf-token-flow-v36 :is(
   .mf-period-filters,
   .mf-time-filters,
   .smart-rank-row
-) {
+){
   background: #FFFFFF !important;
   background-image: none !important;
   border: 0 !important;
@@ -96,7 +96,7 @@ html[data-theme="light"] body.mf-token-flow-v36 :is(
   .time-filters,
   .mf-period-filters,
   .mf-time-filters
-) button {
+) button{
   background: #F5F5F5 !important;
   background-image: none !important;
   box-shadow: none !important;
@@ -109,14 +109,14 @@ html[data-theme="light"] body.mf-token-flow-v36 :is(
   .time-filters,
   .mf-period-filters,
   .mf-time-filters
-) button:is(.active,[aria-pressed="true"]) {
+) button:is(.active,[aria-pressed="true"]){
   background: #FFFFFF !important;
 }
 
 /* --------------------------------------------------------------------------
    SEARCH / ANALYZE — white toolbar; input is the soft control surface.
    -------------------------------------------------------------------------- */
-html[data-theme="light"] body.mf-token-flow-v36 .flow-toolbar {
+html[data-theme="light"] body.mf-token-flow-v36 .flow-toolbar{
   background: #FFFFFF !important;
   background-image: none !important;
 
@@ -129,7 +129,7 @@ html[data-theme="light"] body.mf-token-flow-v36 .flow-toolbar {
   box-shadow: none !important;
 }
 
-html[data-theme="light"] body.mf-token-flow-v36 .search-wrap {
+html[data-theme="light"] body.mf-token-flow-v36 .search-wrap{
   background: #F5F5F5 !important;
   background-image: none !important;
 
@@ -137,7 +137,7 @@ html[data-theme="light"] body.mf-token-flow-v36 .search-wrap {
   box-shadow: none !important;
 }
 
-html[data-theme="light"] body.mf-token-flow-v36 .refresh-info button {
+html[data-theme="light"] body.mf-token-flow-v36 .refresh-info button{
   background: #EBEBEB !important;
   background-image: none !important;
 
@@ -149,7 +149,7 @@ html[data-theme="light"] body.mf-token-flow-v36 .refresh-info button {
    TOKEN LIST — biggest cleanup.
    One white list, horizontal separators, native status rail remains.
    -------------------------------------------------------------------------- */
-html[data-theme="light"] body.mf-token-flow-v36 .token-list {
+html[data-theme="light"] body.mf-token-flow-v36 .token-list{
   gap: 0 !important;
 
   background: #FFFFFF !important;
@@ -160,7 +160,7 @@ html[data-theme="light"] body.mf-token-flow-v36 .token-list {
   box-shadow: none !important;
 }
 
-html[data-theme="light"] body.mf-token-flow-v36 .flow-token {
+html[data-theme="light"] body.mf-token-flow-v36 .flow-token{
   background: #FFFFFF !important;
   background-image: none !important;
 
@@ -171,7 +171,7 @@ html[data-theme="light"] body.mf-token-flow-v36 .flow-token {
   box-shadow: none !important;
 }
 
-html[data-theme="light"] body.mf-token-flow-v36 .flow-token:first-child {
+html[data-theme="light"] body.mf-token-flow-v36 .flow-token:first-child{
   border-top: 1px solid #EBEBEB !important;
 }
 
@@ -182,21 +182,21 @@ html[data-theme="light"] body.mf-token-flow-v36 .flow-token:is(
   .active,
   .selected,
   [aria-expanded="true"]
-) {
+){
   background: #F5F5F5 !important;
 }
 
 /* Internal metric dividers were making every row look like a grid. */
-html[data-theme="light"] body.mf-token-flow-v36 .token-metric {
+html[data-theme="light"] body.mf-token-flow-v36 .token-metric{
   border-left: 0 !important;
 }
 
 /* Expanded details: use soft fill instead of mini outlined cards. */
-html[data-theme="light"] body.mf-token-flow-v36 .token-details {
+html[data-theme="light"] body.mf-token-flow-v36 .token-details{
   border-top-color: #EBEBEB !important;
 }
 
-html[data-theme="light"] body.mf-token-flow-v36 .detail-block {
+html[data-theme="light"] body.mf-token-flow-v36 .detail-block{
   background: #F5F5F5 !important;
   background-image: none !important;
 
@@ -209,7 +209,7 @@ html[data-theme="light"] body.mf-token-flow-v36 :is(
   .mf-flow-row,
   .mf-token-row,
   .token-row
-) {
+){
   background: #FFFFFF !important;
   background-image: none !important;
 
@@ -220,21 +220,21 @@ html[data-theme="light"] body.mf-token-flow-v36 :is(
   .mf-flow-row,
   .mf-token-row,
   .token-row
-):is(.active,.selected,.expanded,[aria-selected="true"]) {
+):is(.active,.selected,.expanded,[aria-selected="true"]){
   background: #F5F5F5 !important;
 }
 
 /* --------------------------------------------------------------------------
    TOKEN SCAN RESULT / EMPTY STATE — same hierarchy.
    -------------------------------------------------------------------------- */
-html[data-theme="light"] body.mf-token-flow-v36 .mf-token-scan-result {
+html[data-theme="light"] body.mf-token-flow-v36 .mf-token-scan-result{
   background: #FFFFFF !important;
   background-image: none !important;
 
   box-shadow: none !important;
 }
 
-html[data-theme="light"] body.mf-token-flow-v36 .empty-state {
+html[data-theme="light"] body.mf-token-flow-v36 .empty-state{
   background: #F5F5F5 !important;
   background-image: none !important;
 
@@ -245,7 +245,7 @@ html[data-theme="light"] body.mf-token-flow-v36 .empty-state {
 /* --------------------------------------------------------------------------
    PAGINATION — compact floating neutral control, not a full-width card.
    -------------------------------------------------------------------------- */
-html[data-theme="light"] body.mf-token-flow-v36 .pagination {
+html[data-theme="light"] body.mf-token-flow-v36 .pagination{
   width: max-content !important;
   max-width: calc(100% - 24px) !important;
 
@@ -260,7 +260,7 @@ html[data-theme="light"] body.mf-token-flow-v36 .pagination {
   box-shadow: none !important;
 }
 
-html[data-theme="light"] body.mf-token-flow-v36 .pagination button {
+html[data-theme="light"] body.mf-token-flow-v36 .pagination button{
   background: #F5F5F5 !important;
   background-image: none !important;
 
@@ -272,34 +272,34 @@ html[data-theme="light"] body.mf-token-flow-v36 .pagination button {
 /* --------------------------------------------------------------------------
    MOBILE
    -------------------------------------------------------------------------- */
-@media (max-width: 760px) {
-  html[data-theme="light"] body.mf-token-flow-v36 .flow-page {
+@media (max-width: 760px){
+  html[data-theme="light"] body.mf-token-flow-v36 .flow-page{
     padding-left: 6px !important;
     padding-right: 6px !important;
   }
 
-  html[data-theme="light"] body.mf-token-flow-v36 .flow-hero {
+  html[data-theme="light"] body.mf-token-flow-v36 .flow-hero{
     border-radius: 18px !important;
   }
 
-  html[data-theme="light"] body.mf-token-flow-v36 .summary-card {
+  html[data-theme="light"] body.mf-token-flow-v36 .summary-card{
     border-radius: 15px !important;
   }
 
-  html[data-theme="light"] body.mf-token-flow-v36 .flow-toolbar {
+  html[data-theme="light"] body.mf-token-flow-v36 .flow-toolbar{
     padding-left: 6px !important;
     padding-right: 6px !important;
   }
 
-  html[data-theme="light"] body.mf-token-flow-v36 .search-wrap {
+  html[data-theme="light"] body.mf-token-flow-v36 .search-wrap{
     border-radius: 999px !important;
   }
 
-  html[data-theme="light"] body.mf-token-flow-v36 .refresh-info button {
+  html[data-theme="light"] body.mf-token-flow-v36 .refresh-info button{
     border-radius: 999px !important;
   }
 
-  html[data-theme="light"] body.mf-token-flow-v36 .flow-token {
+  html[data-theme="light"] body.mf-token-flow-v36 .flow-token{
     border-radius: 0 !important;
   }
 }

@@ -1,4 +1,4 @@
-body.mf-component-consistency-v63 {
+body.mf-component-consistency-v63{
   --mf-v63-panel-radius:22px;
   --mf-v63-section-radius:18px;
   --mf-v63-item-radius:14px;
@@ -7,35 +7,35 @@ body.mf-component-consistency-v63 {
 }
 
 body.mf-page-system-tokens.mf-component-consistency-v63
-.flow-page :where(.flow-hero, .flow-toolbar, .pagination) {
+.flow-page :where(.flow-hero, .flow-toolbar, .pagination){
   border-radius:var(--mf-v63-panel-radius);
 }
 
 body.mf-page-system-tokens.mf-component-consistency-v63
-.flow-page .summary-card {
+.flow-page .summary-card{
   border-radius:var(--mf-v63-section-radius);
 }
 
 body.mf-page-system-tokens.mf-component-consistency-v63
-.flow-page :where(.token-row, .token-card, .flow-token-row) {
+.flow-page :where(.token-row, .token-card, .flow-token-row){
   border-bottom-width:1px;
   border-bottom-style:solid;
 }
 
 html[data-theme="light"]
 body.mf-page-system-tokens.mf-component-consistency-v63
-.flow-page :where(.token-row, .token-card, .flow-token-row) {
+.flow-page :where(.token-row, .token-card, .flow-token-row){
   border-bottom-color: var(--mf-v63-line);
 }
 
 html[data-theme="dark"]
 body.mf-page-system-tokens.mf-component-consistency-v63
-.flow-page :where(.token-row, .token-card, .flow-token-row) {
+.flow-page :where(.token-row, .token-card, .flow-token-row){
   border-bottom-color:var(--mf-v63-line-dark);
 }
 
 body.mf-page-smart-vault.mf-component-consistency-v63
-.mf-vault-shell :where(.mf-vault-card, .mf-vault-status-panel) {
+.mf-vault-shell :where(.mf-vault-card, .mf-vault-status-panel){
   border-radius:var(--mf-v63-panel-radius);
 }
 
@@ -44,7 +44,7 @@ body.mf-page-smart-vault.mf-component-consistency-v63
   .mf-vault-stat,
   .mf-vault-control-row,
   .mf-vault-checklist > div
-) {
+){
   border-radius:var(--mf-v63-section-radius);
 }
 
@@ -54,7 +54,7 @@ body.mf-page-settings.mf-component-consistency-v63
   .settings-group,
   .settings-context,
   .mf-theme-appearance
-) {
+){
   border-radius:var(--mf-v63-panel-radius);
 }
 
@@ -65,7 +65,7 @@ body.mf-page-settings.mf-component-consistency-v63
   .mf-agent-event,
   .settings-summary > div,
   .toggle-row
-) {
+){
   border-radius:var(--mf-v63-item-radius);
 }
 
@@ -75,7 +75,7 @@ body.mf-page-how-it-works.mf-component-consistency-v63
   .mf-hiw-map-shell,
   .mf-hiw-money,
   .mf-hiw-cta
-) {
+){
   border-radius:var(--mf-v63-panel-radius);
 }
 
@@ -85,27 +85,27 @@ body.mf-page-how-it-works.mf-component-consistency-v63
   .mf-hiw-node,
   .mf-hiw-step,
   .mf-hiw-map-detail
-) {
+){
   border-radius:var(--mf-v63-section-radius);
 }
 
 body.mf-page-agent-performance.mf-component-consistency-v63
-:where(.ap-source, .ap-panel) {
+:where(.ap-source, .ap-panel){
   border-radius:var(--mf-v63-panel-radius);
 }
 
 body.mf-page-agent-performance.mf-component-consistency-v63
-:where(.ap-kpis article, .ap-summary > div, .factor, .rank, .empty) {
+:where(.ap-kpis article, .ap-summary > div, .factor, .rank, .empty){
   border-radius:var(--mf-v63-section-radius);
 }
 
 body.mf-page-system.mf-component-consistency-v63
-:where(.mf-infra, .activity-panel) {
+:where(.mf-infra, .activity-panel){
   border-radius:var(--mf-v63-panel-radius);
 }
 
-@media (max-width: 600px) {
-  body.mf-component-consistency-v63 {
+@media (max-width: 600px){
+  body.mf-component-consistency-v63{
     --mf-v63-panel-radius:20px;
     --mf-v63-section-radius:16px;
     --mf-v63-item-radius:13px;

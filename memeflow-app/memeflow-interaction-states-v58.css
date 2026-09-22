@@ -6,7 +6,7 @@
    Header/navigation and System Overview 3D gallery are deliberately excluded.
    ======================================================================== */
 
-body.mf-interaction-states-v58 {
+body.mf-interaction-states-v58{
   --mf-v58-focus: rgba(85, 217, 255, .62);
   --mf-v58-focus-soft: rgba(85, 217, 255, .12);
   --mf-v58-hover: rgba(85, 217, 255, .045);
@@ -14,7 +14,7 @@ body.mf-interaction-states-v58 {
   --mf-v58-press: rgba(85, 217, 255, .075);
 }
 
-html[data-theme="light"] body.mf-interaction-states-v58 {
+html[data-theme="light"] body.mf-interaction-states-v58{
   --mf-v58-focus: rgba(0, 115, 150, .58);
   --mf-v58-focus-soft: rgba(0, 115, 150, .10);
   --mf-v58-hover: rgba(17, 24, 39, .035);
@@ -55,7 +55,7 @@ body.mf-page-settings.mf-interaction-states-v58 :where(
   .settings-group input,
   .settings-group select,
   .mf-theme-appearance button
-) {
+){
   transition:
     background-color 150ms ease,
     border-color 150ms ease,
@@ -102,7 +102,7 @@ body.mf-page-settings.mf-interaction-states-v58 :where(
   .settings-group input,
   .settings-group select,
   .mf-theme-appearance button
-):focus-visible {
+):focus-visible{
   outline: 2px solid var(--mf-v58-focus) !important;
   outline-offset: 2px;
   box-shadow: 0 0 0 4px var(--mf-v58-focus-soft);
@@ -113,7 +113,7 @@ body.mf-page-system-tokens.mf-interaction-states-v58 .search-wrap:focus-within,
 body.mf-page-settings.mf-interaction-states-v58 :where(
   .mf293-field,
   .setting-field
-):focus-within {
+):focus-within{
   border-color: var(--mf-v58-hover-border) !important;
 }
 
@@ -123,20 +123,20 @@ body.mf-page-settings.mf-interaction-states-v58 :where(
    Active/selected/status controls keep their native page colors.
    ------------------------------------------------------------------------ */
 
-@media (hover: hover) and (pointer: fine) {
+@media (hover: hover) and (pointer: fine){
   body.mf-page-trading.mf-interaction-states-v58 .terminal :where(
     .candidate-filter button:not(.active),
     .timeframes button:not(.active),
     .indicator-scroll button:not([aria-pressed="true"]),
     .strategy-edit-link,
     .price-toggle
-  ):hover {
+  ):hover{
     background-color: var(--mf-v58-hover) !important;
     border-color: var(--mf-v58-hover-border) !important;
   }
 
   body.mf-page-trading.mf-interaction-states-v58 .terminal
-  .candidate:not(.selected):hover {
+  .candidate:not(.selected):hover{
     background-color: var(--mf-v58-hover) !important;
   }
 
@@ -144,26 +144,26 @@ body.mf-page-settings.mf-interaction-states-v58 :where(
     .mf-time-window-v47c button:not(.is-active),
     #refreshButton,
     .pagination button:not(:disabled)
-  ):hover {
+  ):hover{
     background-color: var(--mf-v58-hover) !important;
     border-color: var(--mf-v58-hover-border) !important;
   }
 
   body.mf-page-smart-vault.mf-interaction-states-v58 .mf-vault-shell
-  .mf-vault-btn:not(.mf-vault-btn-primary):not(:disabled):hover {
+  .mf-vault-btn:not(.mf-vault-btn-primary):not(:disabled):hover{
     background-color: var(--mf-v58-hover) !important;
     border-color: var(--mf-v58-hover-border) !important;
   }
 
   body.mf-page-how-it-works.mf-interaction-states-v58
-  .mf-hiw-node:not(.is-active):hover {
+  .mf-hiw-node:not(.is-active):hover{
     border-color: var(--mf-v58-hover-border) !important;
   }
 
   body.mf-page-agent-performance.mf-interaction-states-v58 :where(
     .ap-periods button:not(.active),
     .ap-refresh
-  ):hover {
+  ):hover{
     background-color: var(--mf-v58-hover) !important;
     border-color: var(--mf-v58-hover-border) !important;
   }
@@ -172,7 +172,7 @@ body.mf-page-settings.mf-interaction-states-v58 :where(
     .mf293-secondary,
     .mf-agent-review button,
     .settings-group button:not(.active)
-  ):not(:disabled):hover {
+  ):not(:disabled):hover{
     background-color: var(--mf-v58-hover) !important;
     border-color: var(--mf-v58-hover-border) !important;
   }
@@ -205,7 +205,7 @@ body.mf-page-settings.mf-interaction-states-v58 :where(
   .mf293-settings-group button,
   .settings-group button,
   .mf-theme-appearance button
-):not(:disabled):active {
+):not(:disabled):active{
   transform: translateY(1px);
 }
 
@@ -227,7 +227,7 @@ body.mf-page-smart-vault.mf-interaction-states-v58 .mf-vault-shell
 body.mf-page-agent-performance.mf-interaction-states-v58 :where(
   .ap-periods button:not(.active),
   .ap-refresh
-):not(:disabled):active {
+):not(:disabled):active{
   background-color: var(--mf-v58-press) !important;
 }
 
@@ -248,7 +248,7 @@ body.mf-page-settings.mf-interaction-states-v58 :where(
   .mf293-settings-group button,
   .settings-group button,
   .mf-theme-appearance button
-):disabled {
+):disabled{
   opacity: .46;
   cursor: not-allowed;
   box-shadow: none;
@@ -258,7 +258,7 @@ body.mf-page-settings.mf-interaction-states-v58 :where(
    REDUCED MOTION
    ------------------------------------------------------------------------ */
 
-@media (prefers-reduced-motion: reduce) {
+@media (prefers-reduced-motion: reduce){
   body.mf-interaction-states-v58 :where(
     button,
     input,
@@ -266,7 +266,7 @@ body.mf-page-settings.mf-interaction-states-v58 :where(
     .candidate,
     .mf-hiw-btn,
     .mf-hiw-node
-  ) {
+  ){
     transition: none !important;
   }
 }

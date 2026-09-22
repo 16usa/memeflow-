@@ -24,7 +24,7 @@ body:is(
   .mf-page-smart-vault,
   .mf-page-system-tokens,
   .mf-page-trading
-) {
+){
   overflow-x: clip;
 }
 
@@ -42,7 +42,7 @@ body:is(
   aside,
   header,
   footer
-) {
+){
   min-width: 0;
 }
 
@@ -58,7 +58,7 @@ body:is(
   select,
   textarea,
   button
-) {
+){
   max-width: 100%;
 }
 
@@ -76,7 +76,7 @@ body:is(
   .mf-hiw-map-detail p,
   .mf-vault-card p,
   .ap-note
-) {
+){
   overflow-wrap: anywhere;
 }
 
@@ -85,13 +85,13 @@ body:is(
    Existing page breakpoints remain source of truth. V62 fills only gaps.
    ------------------------------------------------------------------------ */
 
-@media (max-width: 1024px) {
+@media (max-width: 1024px){
   /* HOW IT WORKS */
-  body.mf-page-how-it-works .mf-hiw-hero {
+  body.mf-page-how-it-works .mf-hiw-hero{
     grid-template-columns: minmax(0, 1fr);
   }
 
-  body.mf-page-how-it-works .mf-hiw-status-card {
+  body.mf-page-how-it-works .mf-hiw-status-card{
     width: 100%;
     max-width: none;
   }
@@ -99,31 +99,31 @@ body:is(
   body.mf-page-how-it-works :where(
     .mf-hiw-steps,
     .mf-hiw-control-grid
-  ) {
+  ){
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   /* SMART VAULT */
-  body.mf-page-smart-vault .mf-vault-hero {
+  body.mf-page-smart-vault .mf-vault-hero{
     grid-template-columns: minmax(0, 1fr);
     align-items: start;
   }
 
-  body.mf-page-smart-vault .mf-vault-hero-state {
+  body.mf-page-smart-vault .mf-vault-hero-state{
     justify-self: start;
   }
 
   /* SETTINGS — runtime-generated panel */
-  body.mf-page-settings .mf293-settings-meta {
+  body.mf-page-settings .mf293-settings-meta{
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   }
 
   /* TOKEN FLOW */
-  body.mf-page-system-tokens .flow-page {
+  body.mf-page-system-tokens .flow-page{
     width: 100%;
   }
 
-  body.mf-page-system-tokens .state-summary {
+  body.mf-page-system-tokens .state-summary{
     scrollbar-width: thin;
   }
 
@@ -132,12 +132,12 @@ body:is(
   body.mf-page-trading :where(
     .candidates-panel,
     .control-panel
-  ) {
+  ){
     overscroll-behavior: contain;
   }
 
   /* AGENT PERFORMANCE */
-  body.mf-page-agent-performance .ap-page {
+  body.mf-page-agent-performance .ap-page{
     width: 100%;
   }
 }
@@ -146,24 +146,24 @@ body:is(
    TABLET PORTRAIT / LARGE PHONE
    ------------------------------------------------------------------------ */
 
-@media (max-width: 820px) {
+@media (max-width: 820px){
   /* HOW IT WORKS */
   body.mf-page-how-it-works :where(
     .mf-hiw-steps,
     .mf-hiw-control-grid
-  ) {
+  ){
     grid-template-columns: minmax(0, 1fr);
   }
 
-  body.mf-page-how-it-works .mf-hiw-money-flow {
+  body.mf-page-how-it-works .mf-hiw-money-flow{
     grid-template-columns: minmax(0, 1fr);
   }
 
-  body.mf-page-how-it-works .mf-hiw-money-flow > span {
+  body.mf-page-how-it-works .mf-hiw-money-flow > span{
     justify-self: start;
   }
 
-  body.mf-page-how-it-works .mf-hiw-map-shell {
+  body.mf-page-how-it-works .mf-hiw-map-shell{
     max-width: 100%;
     overflow-x: auto;
     overscroll-behavior-x: contain;
@@ -171,31 +171,31 @@ body:is(
   }
 
   /* SMART VAULT */
-  body.mf-page-smart-vault .mf-vault-grid {
+  body.mf-page-smart-vault .mf-vault-grid{
     grid-template-columns: minmax(0, 1fr);
   }
 
-  body.mf-page-smart-vault .mf-vault-shell {
+  body.mf-page-smart-vault .mf-vault-shell{
     width: min(100%, calc(100% - 14px));
   }
 
   /* SETTINGS */
-  body.mf-page-settings .mf293-settings-panel {
+  body.mf-page-settings .mf293-settings-panel{
     max-width: 100% !important;
   }
 
-  body.mf-page-settings .mf293-settings-footer {
+  body.mf-page-settings .mf293-settings-footer{
     flex-wrap: wrap;
   }
 
   /* TOKEN FLOW */
-  body.mf-page-system-tokens .state-summary {
+  body.mf-page-system-tokens .state-summary{
     overflow-x: auto;
     overscroll-behavior-x: contain;
     -webkit-overflow-scrolling: touch;
   }
 
-  body.mf-page-system-tokens .mf-time-window-v47c {
+  body.mf-page-system-tokens .mf-time-window-v47c{
     max-width: 100%;
     overflow-x: auto;
     overscroll-behavior-x: contain;
@@ -203,7 +203,7 @@ body:is(
   }
 
   /* AGENT PERFORMANCE */
-  body.mf-page-agent-performance .ap-hero {
+  body.mf-page-agent-performance .ap-hero{
     grid-template-columns: minmax(0, 1fr);
   }
 
@@ -211,7 +211,7 @@ body:is(
     .ap-grid,
     .ap-factors,
     .ap-bottom
-  ) {
+  ){
     grid-template-columns: minmax(0, 1fr);
   }
 }
@@ -220,117 +220,117 @@ body:is(
    MOBILE ~390px
    ------------------------------------------------------------------------ */
 
-@media (max-width: 600px) {
+@media (max-width: 600px){
   /* HOW IT WORKS */
-  body.mf-page-how-it-works .mf-hiw-shell {
+  body.mf-page-how-it-works .mf-hiw-shell{
     width: min(100%, calc(100% - 14px));
   }
 
-  body.mf-page-how-it-works .mf-hiw-hero-actions {
+  body.mf-page-how-it-works .mf-hiw-hero-actions{
     display: grid;
     grid-template-columns: minmax(0, 1fr);
   }
 
-  body.mf-page-how-it-works .mf-hiw-hero-actions .mf-hiw-btn {
+  body.mf-page-how-it-works .mf-hiw-hero-actions .mf-hiw-btn{
     width: 100%;
   }
 
-  body.mf-page-how-it-works .mf-hiw-section-head {
+  body.mf-page-how-it-works .mf-hiw-section-head{
     grid-template-columns: minmax(0, 1fr);
   }
 
   /* SMART VAULT */
-  body.mf-page-smart-vault .mf-vault-card-head {
+  body.mf-page-smart-vault .mf-vault-card-head{
     flex-wrap: wrap;
   }
 
   body.mf-page-smart-vault :where(
     .mf-vault-control-row,
     .mf-vault-checklist > div
-  ) {
+  ){
     min-width: 0;
   }
 
   /* SETTINGS */
   body.mf-page-settings .mf293-settings-meta,
-  body.mf-page-settings .mf293-settings-grid {
+  body.mf-page-settings .mf293-settings-grid{
     grid-template-columns: minmax(0, 1fr) !important;
   }
 
-  body.mf-page-settings .mf293-settings-footer > button {
+  body.mf-page-settings .mf293-settings-footer > button{
     flex: 1 1 160px;
   }
 
-  body.mf-page-settings .mf-agent-events {
+  body.mf-page-settings .mf-agent-events{
     grid-template-columns: minmax(0, 1fr) !important;
   }
 
   /* TOKEN FLOW */
-  body.mf-page-system-tokens .flow-toolbar {
+  body.mf-page-system-tokens .flow-toolbar{
     grid-template-columns: minmax(0, 1fr);
   }
 
-  body.mf-page-system-tokens .refresh-info {
+  body.mf-page-system-tokens .refresh-info{
     min-width: 0;
     justify-content: flex-end;
   }
 
-  body.mf-page-system-tokens .search-wrap {
+  body.mf-page-system-tokens .search-wrap{
     min-width: 0;
   }
 
-  body.mf-page-system-tokens .search-wrap input {
+  body.mf-page-system-tokens .search-wrap input{
     min-width: 0;
   }
 
-  body.mf-page-system-tokens .pagination {
+  body.mf-page-system-tokens .pagination{
     flex-wrap: wrap;
   }
 
   /* TRADING */
-  body.mf-page-trading .chart-head {
+  body.mf-page-trading .chart-head{
     min-width: 0;
   }
 
-  body.mf-page-trading .token-title {
+  body.mf-page-trading .token-title{
     min-width: 0;
   }
 
-  body.mf-page-trading .token-name-row {
+  body.mf-page-trading .token-name-row{
     min-width: 0;
     flex-wrap: wrap;
   }
 
-  body.mf-page-trading .price-toggle {
+  body.mf-page-trading .price-toggle{
     max-width: 46%;
   }
 
   body.mf-page-trading :where(
     .timeframes,
     .indicator-scroll
-  ) {
+  ){
     max-width: 100%;
     overflow-x: auto;
     overscroll-behavior-x: contain;
     -webkit-overflow-scrolling: touch;
   }
 
-  body.mf-page-trading .selected-metrics {
+  body.mf-page-trading .selected-metrics{
     overflow-x: auto;
     overscroll-behavior-x: contain;
     -webkit-overflow-scrolling: touch;
   }
 
   /* AGENT PERFORMANCE */
-  body.mf-page-agent-performance .ap-controls {
+  body.mf-page-agent-performance .ap-controls{
     flex-wrap: wrap;
   }
 
-  body.mf-page-agent-performance .ap-kpis {
+  body.mf-page-agent-performance .ap-kpis{
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  body.mf-page-agent-performance .ap-summary {
+  body.mf-page-agent-performance .ap-summary{
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
@@ -339,28 +339,28 @@ body:is(
    NARROW MOBILE 390 / 375 / 360
    ------------------------------------------------------------------------ */
 
-@media (max-width: 430px) {
+@media (max-width: 430px){
   body.mf-page-agent-performance .ap-page,
-  body.mf-page-system-tokens .flow-page {
+  body.mf-page-system-tokens .flow-page{
     width: 100%;
   }
 
-  body.mf-page-agent-performance .ap-periods {
+  body.mf-page-agent-performance .ap-periods{
     max-width: 100%;
     overflow-x: auto;
   }
 
-  body.mf-page-trading .price-toggle {
+  body.mf-page-trading .price-toggle{
     max-width: 44%;
   }
 
-  body.mf-page-trading .token-meta {
+  body.mf-page-trading .token-meta{
     max-width: 100%;
     overflow: hidden;
     text-overflow: ellipsis;
   }
 
-  body.mf-page-how-it-works .mf-hiw-trust-row {
+  body.mf-page-how-it-works .mf-hiw-trust-row{
     display: grid;
     grid-template-columns: minmax(0, 1fr);
   }
@@ -371,7 +371,7 @@ body:is(
    No redesign. Only prevent unusually long runtime data from widening grids.
    ------------------------------------------------------------------------ */
 
-@media (min-width: 1280px) {
+@media (min-width: 1280px){
   body.mf-page-trading :where(
     .candidate-main,
     .center-stack,
@@ -384,7 +384,7 @@ body:is(
   body.mf-page-settings :where(
     .mf293-settings-panel,
     .mf293-settings-body
-  ) {
+  ){
     min-width: 0;
   }
 }
@@ -395,8 +395,8 @@ body:is(
    Only the simple infrastructure row below the gallery may wrap naturally.
    ------------------------------------------------------------------------ */
 
-@media (max-width: 600px) {
-  body.mf-page-system .mf-infra-row {
+@media (max-width: 600px){
+  body.mf-page-system .mf-infra-row{
     flex-wrap: wrap;
   }
 }

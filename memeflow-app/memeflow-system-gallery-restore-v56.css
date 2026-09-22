@@ -7,7 +7,7 @@
 .mf-page-system
 .system-shell.mf-system-page-flow-v2
 > .viewport-wrap.mfpg-variant2-clean-v1
-#mfPageGallery .mfpg-card {
+#mfPageGallery .mfpg-card{
   width: auto !important;
   inline-size: auto !important;
 
@@ -28,11 +28,11 @@
 }
 
 /* Original compact/mobile gallery size before V55. */
-@media (max-width: 760px) {
+@media (max-width: 760px){
   .mf-page-system
   .system-shell.mf-system-page-flow-v2
   > .viewport-wrap.mfpg-variant2-clean-v1
-  #mfPageGallery .mfpg-card {
+  #mfPageGallery .mfpg-card{
     width: auto !important;
     inline-size: auto !important;
 

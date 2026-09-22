@@ -31,7 +31,7 @@ html body.mf-page-trading.mf-trading-terminal :where(
   .decision-badge,
   .state-dot,
   .copy-trade-badge
-) {
+){
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -51,13 +51,6 @@ html body.mf-page-trading.mf-trading-terminal :where(
 
   background: transparent !important;
   box-shadow: none !important;
-
-  font-family: inherit !important;
-  font-size: 9px !important;
-  line-height: 1.05 !important;
-  font-weight: 500 !important;
-  letter-spacing: .025em !important;
-  text-transform: uppercase !important;
   white-space: nowrap !important;
 
   -webkit-text-size-adjust: none !important;
@@ -65,7 +58,7 @@ html body.mf-page-trading.mf-trading-terminal :where(
 }
 
 /* Real-Time Pipeline textual token-state badges only. */
-html body.mf-page-system-tokens .token-state {
+html body.mf-page-system-tokens .token-state{
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -85,13 +78,6 @@ html body.mf-page-system-tokens .token-state {
 
   background: transparent !important;
   box-shadow: none !important;
-
-  font-family: inherit !important;
-  font-size: 9px !important;
-  line-height: 1.05 !important;
-  font-weight: 500 !important;
-  letter-spacing: .025em !important;
-  text-transform: uppercase !important;
   white-space: nowrap !important;
 
   -webkit-text-size-adjust: none !important;

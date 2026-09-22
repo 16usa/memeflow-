@@ -25,7 +25,7 @@
 /* --------------------------------------------------------------------------
    1. ONE BASE HEADER
    -------------------------------------------------------------------------- */
-html[data-theme="light"] .mf-site-header {
+html[data-theme="light"] .mf-site-header{
   box-sizing: border-box !important;
 
   width: 100vw !important;
@@ -59,12 +59,12 @@ html[data-theme="light"] .mf-site-header {
 }
 
 /* Preserve each page's intended flow/sticky behavior only. */
-html[data-theme="light"] .mf-site-header:not(.mf-site-header--sticky) {
+html[data-theme="light"] .mf-site-header:not(.mf-site-header--sticky){
   position: relative !important;
   top: auto !important;
 }
 
-html[data-theme="light"] .mf-site-header.mf-site-header--sticky {
+html[data-theme="light"] .mf-site-header.mf-site-header--sticky{
   position: sticky !important;
   top: 0 !important;
   z-index: 100 !important;
@@ -80,7 +80,7 @@ html[data-theme="light"] .mf-site-header > :is(
   .mf-settings-page-header-left,
   .mf-vault-brand,
   .mf-hiw-brand
-) {
+){
   min-width: 0 !important;
   display: flex !important;
   align-items: center !important;
@@ -97,7 +97,7 @@ html[data-theme="light"] .mf-site-header:not(:has(> .engine-strip, > .system-chi
   .mf-settings-page-header-left,
   .mf-vault-brand,
   .mf-hiw-brand
-) {
+){
   margin-right: auto !important;
 }
 
@@ -107,7 +107,7 @@ html[data-theme="light"] .mf-site-header :is(
   .mf-settings-page-brand-mark,
   .mf-vault-brand-mark,
   .mf-hiw-brand-mark
-) {
+){
   width: 54px !important;
   height: 40px !important;
   min-width: 54px !important;
@@ -132,7 +132,7 @@ html[data-theme="light"] .mf-site-header :is(
   .mf-settings-page-brand-mark img,
   .mf-vault-brand-mark img,
   .mf-hiw-brand-mark img
-) {
+){
   width: 52px !important;
   height: 36px !important;
   display: block !important;
@@ -149,16 +149,11 @@ html[data-theme="light"] .mf-site-header :is(
   .mf-settings-page-title > span,
   .mf-vault-brand-copy > strong,
   .mf-hiw-brand-copy > strong
-) {
+){
   display: block !important;
   margin: 0 !important;
 
   color: #111820 !important;
-
-  font-size: 12px !important;
-  line-height: 1 !important;
-  font-weight: 820 !important;
-  letter-spacing: .08em !important;
 }
 
 html[data-theme="light"] .mf-site-header :is(
@@ -168,23 +163,18 @@ html[data-theme="light"] .mf-site-header :is(
   .mf-settings-page-title > strong,
   .mf-vault-brand-copy > small,
   .mf-hiw-brand-copy > small
-) {
+){
   display: block !important;
   margin: 3px 0 0 !important;
 
   color: #71828d !important;
-
-  font-size: 8px !important;
-  line-height: 1.15 !important;
-  font-weight: 720 !important;
-  letter-spacing: .12em !important;
   white-space: nowrap !important;
 }
 
 /* --------------------------------------------------------------------------
    3. SAME RIGHT-SIDE ACTION / HAMBURGER GEOMETRY
    -------------------------------------------------------------------------- */
-html[data-theme="light"] .mf-site-header .top-actions {
+html[data-theme="light"] .mf-site-header .top-actions{
   min-width: 0 !important;
   margin-left: auto !important;
 
@@ -194,12 +184,12 @@ html[data-theme="light"] .mf-site-header .top-actions {
   gap: 7px !important;
 }
 
-html[data-theme="light"] .mf-site-header .mf-nav-host {
+html[data-theme="light"] .mf-site-header .mf-nav-host{
   flex: 0 0 auto !important;
   margin-left: 2px !important;
 }
 
-html[data-theme="light"] .mf-site-header .mf-nav-toggle {
+html[data-theme="light"] .mf-site-header .mf-nav-toggle{
   width: 38px !important;
   height: 38px !important;
   flex: 0 0 38px !important;
@@ -210,12 +200,12 @@ html[data-theme="light"] .mf-site-header .mf-nav-toggle {
   box-shadow: none !important;
 }
 
-html[data-theme="light"] .mf-site-header .mf-nav-toggle-line {
+html[data-theme="light"] .mf-site-header .mf-nav-toggle-line{
   background: #71828d !important;
 }
 
 html[data-theme="light"] .mf-site-header .mf-nav-toggle:hover .mf-nav-toggle-line,
-html[data-theme="light"] .mf-site-header .mf-nav-toggle:focus-visible .mf-nav-toggle-line {
+html[data-theme="light"] .mf-site-header .mf-nav-toggle:focus-visible .mf-nav-toggle-line{
   background: #111820 !important;
 }
 
@@ -223,7 +213,7 @@ html[data-theme="light"] .mf-site-header .mf-nav-toggle:focus-visible .mf-nav-to
 html[data-theme="light"] .mf-site-header .top-actions > :is(
   a,
   button
-):not(.mf-nav-toggle) {
+):not(.mf-nav-toggle){
   min-height: 34px !important;
   max-height: 34px !important;
   border-radius: 11px !important;
@@ -235,7 +225,7 @@ html[data-theme="light"] .mf-site-header :is(
   .wallet-btn,
   .live-status,
   .mf-settings-page-live
-) {
+){
   border-color: transparent !important;
   box-shadow: none !important;
 }
@@ -245,14 +235,14 @@ html[data-theme="light"] .mf-site-header :is(
    Trading Terminal currently stores its engine state inside <header>.
    Visually detach it into a clean toolbar directly below the canonical row.
    -------------------------------------------------------------------------- */
-@media (max-width: 820px) {
+@media (max-width: 820px){
   html[data-theme="light"] body.mf-trading-terminal
-  .mf-site-header--sticky:has(> .engine-strip) {
+  .mf-site-header--sticky:has(> .engine-strip){
     margin-bottom: 36px !important;
   }
 
   html[data-theme="light"] body.mf-trading-terminal
-  .mf-site-header--sticky > .engine-strip {
+  .mf-site-header--sticky > .engine-strip{
     position: absolute !important;
     top: 100% !important;
     left: 0 !important;
@@ -286,7 +276,7 @@ html[data-theme="light"] .mf-site-header :is(
   }
 
   html[data-theme="light"] body.mf-trading-terminal
-  .mf-site-header--sticky > .engine-strip::-webkit-scrollbar {
+  .mf-site-header--sticky > .engine-strip::-webkit-scrollbar{
     display: none !important;
   }
 
@@ -295,7 +285,7 @@ html[data-theme="light"] .mf-site-header :is(
     Their existing dots/text semantic colors remain untouched.
   */
   html[data-theme="light"] body.mf-trading-terminal
-  .mf-site-header--sticky > .engine-strip .status-pill {
+  .mf-site-header--sticky > .engine-strip .status-pill{
     min-height: 0 !important;
     height: auto !important;
 
@@ -315,8 +305,8 @@ html[data-theme="light"] .mf-site-header :is(
 /* --------------------------------------------------------------------------
    5. MOBILE CANONICAL GEOMETRY
    -------------------------------------------------------------------------- */
-@media (max-width: 820px) {
-  html[data-theme="light"] .mf-site-header {
+@media (max-width: 820px){
+  html[data-theme="light"] .mf-site-header{
     min-height: 58px !important;
     height: 58px !important;
 
@@ -331,7 +321,7 @@ html[data-theme="light"] .mf-site-header :is(
     .mf-settings-page-brand-mark,
     .mf-vault-brand-mark,
     .mf-hiw-brand-mark
-  ) {
+  ){
     width: 50px !important;
     height: 38px !important;
     min-width: 50px !important;
@@ -344,16 +334,16 @@ html[data-theme="light"] .mf-site-header :is(
     .mf-settings-page-brand-mark img,
     .mf-vault-brand-mark img,
     .mf-hiw-brand-mark img
-  ) {
+  ){
     width: 48px !important;
     height: 34px !important;
   }
 
-  html[data-theme="light"] .mf-site-header .top-actions {
+  html[data-theme="light"] .mf-site-header .top-actions{
     gap: 5px !important;
   }
 
-  html[data-theme="light"] .mf-site-header .mf-nav-toggle {
+  html[data-theme="light"] .mf-site-header .mf-nav-toggle{
     width: 36px !important;
     height: 36px !important;
     flex-basis: 36px !important;
@@ -362,7 +352,7 @@ html[data-theme="light"] .mf-site-header :is(
   html[data-theme="light"] .mf-site-header .top-actions > :is(
     a,
     button
-  ):not(.mf-nav-toggle) {
+  ):not(.mf-nav-toggle){
     min-height: 32px !important;
     max-height: 32px !important;
   }
@@ -379,7 +369,7 @@ html[data-theme="light"] .mf-site-header :is(
    even when a later page-local polish stylesheet was added.
    ========================================================================== */
 
-html[data-theme="light"] .mf-site-header {
+html[data-theme="light"] .mf-site-header{
   min-height: 62px !important;
 
   background: #FFFFFF !important;
@@ -402,12 +392,12 @@ html[data-theme="light"] .mf-site-header :is(
   .mf-back,
   .legacy-back,
   [data-mf-legacy-back]
-) {
+){
   display: none !important;
 }
 
-@media (max-width: 760px) {
-  html[data-theme="light"] .mf-site-header {
+@media (max-width: 760px){
+  html[data-theme="light"] .mf-site-header{
     min-height: 58px !important;
   }
 }

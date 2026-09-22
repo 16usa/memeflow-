@@ -14,7 +14,7 @@
 /* Outer module canvases. */
 html[data-theme="light"]
 body.mf-page-trading.mf-trading-terminal
-.center-stack > .panel.chart-panel {
+.center-stack > .panel.chart-panel{
   --mf-trading-v61-surface: #ffffff !important;
   background: #ffffff !important;
   background-color: #ffffff !important;
@@ -48,7 +48,7 @@ body.mf-page-trading.mf-trading-terminal
 .chart-panel > .selected-metrics,
 html[data-theme="light"]
 body.mf-page-trading.mf-trading-terminal
-.chart-panel > .selected-metrics > div {
+.chart-panel > .selected-metrics > div{
   background: #ffffff !important;
   background-color: #ffffff !important;
   background-image: none !important;
@@ -62,7 +62,7 @@ body.mf-page-trading.mf-trading-terminal
 .chart-panel > .timeframes,
 html[data-theme="light"]
 body.mf-page-trading.mf-trading-terminal
-.chart-panel > .indicator-bar {
+.chart-panel > .indicator-bar{
   border-color: var(--mf-trading-v61-line, rgba(23, 23, 23, .075)) !important;
 }
 
@@ -74,7 +74,7 @@ body.mf-page-trading.mf-trading-terminal
 .chart-panel .token-price,
 html[data-theme="light"]
 body.mf-page-trading.mf-trading-terminal
-.chart-panel .selected-metrics strong {
+.chart-panel .selected-metrics strong{
   color: var(--mf-trading-v61-text, #171717) !important;
 }
 
@@ -86,13 +86,13 @@ body.mf-page-trading.mf-trading-terminal
 .chart-panel .token-market,
 html[data-theme="light"]
 body.mf-page-trading.mf-trading-terminal
-.chart-panel .selected-metrics span {
+.chart-panel .selected-metrics span{
   color: var(--mf-trading-v61-muted, #737373) !important;
 }
 
 html[data-theme="light"]
 body.mf-page-trading.mf-trading-terminal
-.chart-panel .token-avatar {
+.chart-panel .token-avatar{
   background: var(--mf-trading-v61-inset, #ebebeb) !important;
   background-image: none !important;
   border-color: transparent !important;
@@ -101,7 +101,7 @@ body.mf-page-trading.mf-trading-terminal
 
 html[data-theme="light"]
 body.mf-page-trading.mf-trading-terminal
-.chart-panel .price-toggle {
+.chart-panel .price-toggle{
   background: transparent !important;
   background-color: transparent !important;
   background-image: none !important;
@@ -113,7 +113,7 @@ body.mf-page-trading.mf-trading-terminal
 .chart-panel .timeframes button:not(.active),
 html[data-theme="light"]
 body.mf-page-trading.mf-trading-terminal
-.chart-panel .indicator-scroll button:not([aria-pressed="true"]) {
+.chart-panel .indicator-scroll button:not([aria-pressed="true"]){
   background: transparent !important;
   background-color: transparent !important;
   background-image: none !important;
@@ -127,25 +127,25 @@ body.mf-page-trading.mf-trading-terminal
 .chart-panel .indicator-scroll button,
 html[data-theme="light"]
 body.mf-page-trading.mf-trading-terminal
-.chart-panel .indicator-scroll button[aria-pressed="true"] {
+.chart-panel .indicator-scroll button[aria-pressed="true"]{
   background-color: transparent !important;
   background-image: none !important;
 }
 
-@media (hover: hover) and (pointer: fine) {
+@media (hover: hover) and (pointer: fine){
   html[data-theme="light"]
   body.mf-page-trading.mf-trading-terminal
   .chart-panel .timeframes button:not(.active):hover,
   html[data-theme="light"]
   body.mf-page-trading.mf-trading-terminal
-  .chart-panel .indicator-scroll button:not([aria-pressed="true"]):hover {
+  .chart-panel .indicator-scroll button:not([aria-pressed="true"]):hover{
     background: var(--mf-trading-v61-inset, #ebebeb) !important;
   }
 }
 
 html[data-theme="light"]
 body.mf-page-trading.mf-trading-terminal
-.chart-panel .chart-empty {
+.chart-panel .chart-empty{
   background: transparent !important;
   background-color: transparent !important;
   background-image: none !important;
@@ -172,7 +172,7 @@ body.mf-page-trading.mf-trading-terminal
 .strategy-summary-panel > .strategy-summary-list > .strategy-summary-row > div,
 html[data-theme="light"]
 body.mf-page-trading.mf-trading-terminal
-.strategy-summary-panel > .strategy-summary-foot {
+.strategy-summary-panel > .strategy-summary-foot{
   --mf-trading-v61-surface: #ffffff !important;
   background: #ffffff !important;
   background-color: #ffffff !important;
@@ -181,36 +181,36 @@ body.mf-page-trading.mf-trading-terminal
 
 html[data-theme="light"]
 body.mf-page-trading.mf-trading-terminal
-.strategy-summary-panel .strategy-summary-row strong {
+.strategy-summary-panel .strategy-summary-row strong{
   color: var(--mf-trading-v61-text, #171717) !important;
 }
 
 html[data-theme="light"]
 body.mf-page-trading.mf-trading-terminal
-.strategy-summary-panel .strategy-summary-row span {
+.strategy-summary-panel .strategy-summary-row span{
   color: var(--mf-trading-v61-muted, #737373) !important;
 }
 
 html[data-theme="light"]
 body.mf-page-trading.mf-trading-terminal
-.strategy-summary-panel .strategy-edit-link {
+.strategy-summary-panel .strategy-edit-link{
   background: var(--mf-trading-v61-inset, #ebebeb) !important;
   background-image: none !important;
   border-color: transparent !important;
   box-shadow: none !important;
 }
 
-@media (hover: hover) and (pointer: fine) {
+@media (hover: hover) and (pointer: fine){
   html[data-theme="light"]
   body.mf-page-trading.mf-trading-terminal
-  .strategy-summary-panel .strategy-edit-link:hover {
+  .strategy-summary-panel .strategy-edit-link:hover{
     background: #e4e4e4 !important;
   }
 }
 
 html[data-theme="light"]
 body.mf-page-trading.mf-trading-terminal
-.strategy-summary-panel .empty {
+.strategy-summary-panel .empty{
   background: transparent !important;
   background-color: transparent !important;
   background-image: none !important;
@@ -229,7 +229,7 @@ body.mf-page-trading.mf-trading-terminal
 .approvals-panel > .panel-head,
 html[data-theme="light"]
 body.mf-page-trading.mf-trading-terminal
-.approvals-panel > .approval-list {
+.approvals-panel > .approval-list{
   --mf-trading-v61-surface: #ffffff !important;
   background: #ffffff !important;
   background-color: #ffffff !important;
@@ -238,7 +238,7 @@ body.mf-page-trading.mf-trading-terminal
 
 html[data-theme="light"]
 body.mf-page-trading.mf-trading-terminal
-.approvals-panel .approval-row {
+.approvals-panel .approval-row{
   background: var(--mf-trading-v61-inset, #ebebeb) !important;
   background-color: var(--mf-trading-v61-inset, #ebebeb) !important;
   background-image: none !important;
@@ -254,7 +254,7 @@ body.mf-page-trading.mf-trading-terminal
 .approvals-panel .approval-list > .approval-empty,
 html[data-theme="light"]
 body.mf-page-trading.mf-trading-terminal
-.approvals-panel .approval-empty {
+.approvals-panel .approval-empty{
   background: transparent !important;
   background-color: transparent !important;
   background-image: none !important;

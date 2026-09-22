@@ -22,12 +22,12 @@
      - JS / wallet / trading / scanner / API / backend logic
    ========================================================================== */
 
-body.mf-accessibility-v64a {
+body.mf-accessibility-v64a{
   --mf-v64a-focus: rgba(69, 207, 248, .72);
   --mf-v64a-focus-soft: rgba(69, 207, 248, .16);
 }
 
-html[data-theme="light"] body.mf-accessibility-v64a {
+html[data-theme="light"] body.mf-accessibility-v64a{
   --mf-v64a-focus: rgba(0, 112, 146, .68);
   --mf-v64a-focus-soft: rgba(0, 112, 146, .12);
 }
@@ -41,7 +41,7 @@ body.mf-accessibility-v64a :where(
   select,
   [role="button"],
   a[href]
-) {
+){
   touch-action: manipulation;
 }
 
@@ -53,7 +53,7 @@ body.mf-accessibility-v64a :where(
   select:not(:disabled),
   [role="button"]:not([aria-disabled="true"]),
   a[href]
-) {
+){
   cursor: pointer;
 }
 
@@ -66,7 +66,7 @@ body.mf-accessibility-v64a :where(
   textarea,
   [role="button"],
   [tabindex]:not([tabindex="-1"])
-):focus-visible {
+):focus-visible{
   outline: 2px solid var(--mf-v64a-focus);
   outline-offset: 3px;
   box-shadow: 0 0 0 4px var(--mf-v64a-focus-soft);
@@ -79,7 +79,7 @@ body.mf-page-system.mf-accessibility-v64a :where(
   .mfpg-shot,
   .mfpg-deck,
   .viewport-wrap
-) :focus-visible {
+) :focus-visible{
   outline: revert;
   outline-offset: revert;
   box-shadow: revert;
@@ -92,23 +92,23 @@ body.mf-accessibility-v64a :where(
   select:disabled,
   textarea:disabled,
   [aria-disabled="true"]
-) {
+){
   cursor: not-allowed !important;
 }
 
-body.mf-accessibility-v64a [aria-busy="true"] {
+body.mf-accessibility-v64a [aria-busy="true"]{
   cursor: progress;
 }
 
 /* TOUCH */
-@media (pointer: coarse) {
+@media (pointer: coarse){
   body.mf-accessibility-v64a :where(
     button,
     input[type="button"],
     input[type="submit"],
     input[type="reset"],
     select
-  ) {
+  ){
     min-block-size: 44px;
   }
 
@@ -120,14 +120,14 @@ body.mf-accessibility-v64a [aria-busy="true"] {
     .ap-periods button,
     .mf-time-window-v47c button,
     .mf-theme-appearance button
-  ) {
+  ){
     min-inline-size: 44px;
   }
 }
 
 /* REDUCED MOTION */
-@media (prefers-reduced-motion: reduce) {
-  html {
+@media (prefers-reduced-motion: reduce){
+  html{
     scroll-behavior: auto !important;
   }
 
@@ -143,7 +143,7 @@ body.mf-accessibility-v64a [aria-busy="true"] {
     .token-row,
     .mf-hiw-node,
     .mf-hiw-step
-  ) {
+  ){
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
@@ -152,7 +152,7 @@ body.mf-accessibility-v64a [aria-busy="true"] {
 }
 
 /* HIGH-CONTRAST / FORCED COLORS */
-@media (forced-colors: active) {
+@media (forced-colors: active){
   body.mf-accessibility-v64a :where(
     a[href],
     button,
@@ -160,7 +160,7 @@ body.mf-accessibility-v64a [aria-busy="true"] {
     select,
     textarea,
     [role="button"]
-  ):focus-visible {
+  ):focus-visible{
     outline: 2px solid Highlight !important;
     outline-offset: 3px;
     box-shadow: none !important;
@@ -172,13 +172,13 @@ body.mf-accessibility-v64a [aria-busy="true"] {
     select:disabled,
     textarea:disabled,
     [aria-disabled="true"]
-  ) {
+  ){
     forced-color-adjust: auto;
   }
 }
 
 /* Preserve native text selection in editable controls. */
-body.mf-accessibility-v64a :where(input, textarea) {
+body.mf-accessibility-v64a :where(input, textarea){
   -webkit-user-select: text;
   user-select: text;
 }

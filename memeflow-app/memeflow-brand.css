@@ -13,7 +13,7 @@
   width:58px!important;height:42px!important;min-width:58px!important;flex:0 0 58px!important;
   display:inline-flex!important;align-items:center!important;justify-content:center!important;
   padding:0!important;margin:0!important;border:0!important;border-radius:0!important;
-  background:none!important;box-shadow:none;color:transparent!important;font-size:0!important;line-height:0!important;
+  background:none!important;box-shadow:none;color:transparent!important;
 }
 .brand-mark>span,.brand-mark>i,.brand-mark::before,.brand-mark::after{display:none!important;content:none!important;}
 .brand-mark .mf-brand-img{width:56px!important;height:38px!important;}
@@ -223,9 +223,6 @@ html,body{
 .panel-head h2,.execution-head h2,.wallet-dialog-head h2,.sheet-top h2{
   margin:0!important;
   color:var(--mf-app-text)!important;
-  font-size:var(--mf-type-panel);
-  line-height:1.2!important;
-  letter-spacing:-.02em!important;
 }
 .panel-body{padding:14px!important;}
 
@@ -310,7 +307,6 @@ html,body{
 button:not(.mfpg-card):not(.candidate),.btn,a.btn{
   border-radius:12px!important;
   box-shadow:none;
-  font-weight:760!important;
 }
 .btn:not(.primary){
   background:#000000!important;
@@ -336,13 +332,8 @@ button:not(.mfpg-card):not(.candidate),.btn,a.btn{
 
 h1,h2,h3{
   color:var(--mf-app-text)!important;
-  letter-spacing:-.035em!important;
 }
-.eyebrow,.kicker,.label,.settings-group>summary small,.wallet-stat small,
-.subscription-metric small,.system-health-summary small{
-  letter-spacing:.13em!important;
-  text-transform:uppercase!important;
-}
+
 .wallet-stat b,.subscription-metric b,.system-health-summary b,.settings-summary b,
 .plan-price,.big-score,.metric-value,.score,.big-number{
   font-variant-numeric:tabular-nums!important;
@@ -384,7 +375,7 @@ h1,h2,h3{
   .wallet-card,.wallet-security,.plan-card,.settings-group{border-radius:12px!important;}
 }
 @media(max-width:430px){
-  .panel-head h2,.execution-head h2{font-size:12px;}
+  
   .wallet-actions,.settings-footer-actions{gap:7px!important;}
 }
 @media(prefers-reduced-motion:reduce){
@@ -393,34 +384,17 @@ h1,h2,h3{
   }
 }
 
-:root{
-  --mf-type-micro:8px;
-  --mf-type-meta:9px;
-  --mf-type-ui:10px;
-  --mf-type-body:11px;
-  --mf-type-panel:13px;
-  --mf-type-title:15px;
-}
 
-.eyebrow{
-  font-size:var(--mf-type-micro);
-}
-.panel-head h2,
-.execution-head h2,
-.wallet-dialog-head h2,
-.sheet-top h2{
-  font-size:var(--mf-type-panel);
-  line-height:1.2;
-}
-.btn{
-  font-size:var(--mf-type-body);
-}
 
-html[data-theme="dark"] .logo {
+
+
+
+
+html[data-theme="dark"] .logo{
   background-image:url("/brand/memeflow-gorilla-dark.png?v=gorilla-pair-v159") !important;
 }
 
-html[data-theme="light"] .logo {
+html[data-theme="light"] .logo{
   background-image: url("/brand/memeflow-gorilla-light.png?v=gorilla-pair-v159") !important;
 }
 
@@ -430,7 +404,7 @@ html[data-theme="dark"] .mf-site-header :is(
   .mf-settings-page-brand-mark img,
   .mf-vault-brand-mark img,
   .mf-hiw-brand-mark img
-) {
+){
   content:url("/brand/memeflow-gorilla-dark.png?v=gorilla-pair-v159") !important;
   object-fit:contain !important;
   filter:none !important;
@@ -442,7 +416,7 @@ html[data-theme="light"] .mf-site-header :is(
   .mf-settings-page-brand-mark img,
   .mf-vault-brand-mark img,
   .mf-hiw-brand-mark img
-) {
+){
   content: url("/brand/memeflow-gorilla-light.png?v=gorilla-pair-v159") !important;
   object-fit: contain !important;
   filter: none !important;
