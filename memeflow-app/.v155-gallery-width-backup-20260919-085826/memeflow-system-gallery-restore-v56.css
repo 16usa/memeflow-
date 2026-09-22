@@ -1,0 +1,44 @@
+/*
+ * MEMEFLOW System Gallery Restore V56
+ * Purpose: isolate and restore the pre-V55 central 3D/page-gallery dimensions.
+ * No typography, colors, shadows, header, theme, JS or business logic.
+ */
+
+.mf-page-system
+.system-shell.mf-system-page-flow-v2
+> .viewport-wrap.mfpg-variant2-clean-v1
+#mfPageGallery .mfpg-card {
+  width: auto !important;
+  inline-size: auto !important;
+
+  height: min(84%, 610px) !important;
+  block-size: min(84%, 610px) !important;
+
+  min-width: 0 !important;
+  min-inline-size: 0 !important;
+  max-width: none !important;
+  max-inline-size: none !important;
+
+  min-height: 0 !important;
+  min-block-size: 0 !important;
+  max-height: none !important;
+  max-block-size: none !important;
+
+  aspect-ratio: 390 / 844 !important;
+}
+
+/* Original compact/mobile gallery size before V55. */
+@media (max-width: 760px) {
+  .mf-page-system
+  .system-shell.mf-system-page-flow-v2
+  > .viewport-wrap.mfpg-variant2-clean-v1
+  #mfPageGallery .mfpg-card {
+    width: auto !important;
+    inline-size: auto !important;
+
+    height: min(84%, 510px) !important;
+    block-size: min(84%, 510px) !important;
+
+    aspect-ratio: 390 / 844 !important;
+  }
+}
