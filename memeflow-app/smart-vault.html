@@ -31,9 +31,9 @@
   --v-panel2:#000000;
   --v-line:#2f3336;
   --v-line2:#2f3336;
-  --v-text:#e7e9ea;
-  --v-muted:#71767b;
-  --v-muted2:#536471;
+  --v-text:var(--mf-neutral-text-2);
+  --v-muted:var(--mf-neutral-text-3);
+  --v-muted2:var(--mf-neutral-text-4);
   --v-cyan:#55d9ff;
   --v-green:#4de6a1;
   --v-red:#ff6679;
@@ -45,7 +45,7 @@ body{
   margin:0;
   min-height:100vh;
   overflow-x:hidden;
-  color:var(--v-text);
+  color:var(--mf-neutral-text-2);
   background:radial-gradient(circle at 50% 5%,rgba(52,110,139,.18),transparent 25%),
     radial-gradient(circle at 5% 42%,rgba(85,217,255,.035),transparent 26%),
     linear-gradient(180deg,#000000 0%,#000000 46%,#0c1116 100%);
@@ -93,10 +93,10 @@ button{color:inherit;}
   filter:drop-shadow(0 0 12px rgba(85,217,255,.18));
 }
 .mf-vault-brand-copy{display:grid;gap:2px;}
-.mf-vault-brand-copy strong{color:#e7e9ea;
+.mf-vault-brand-copy strong{color:var(--mf-neutral-text-1);
 }
 .mf-vault-brand-copy small{
-  color:#71767b;
+  color:var(--mf-neutral-text-3);
 }
 .mf-vault-topbar .top-actions{
   margin-left:auto;
@@ -121,7 +121,7 @@ button{color:inherit;}
 .mf-vault-hero p{
   max-width:720px;
   margin:0;
-  color:#71767b;
+  color:var(--mf-neutral-text-3);
 }
 .mf-vault-hero-state{
   min-height:36px;
@@ -132,7 +132,7 @@ button{color:inherit;}
   border:1px solid #2f3336;
   border-radius:10px;
   background:rgba(255,102,121,.035);
-  color:#71767b;
+  color:var(--mf-neutral-text-3);
   white-space:nowrap;
 }
 .mf-vault-hero-state i{
@@ -175,7 +175,7 @@ button{color:inherit;}
   padding:0 8px;
   border:1px solid #2f3336;
   border-radius:999px;
-  color:#71767b;
+  color:var(--mf-neutral-text-3);
   background:rgba(255,255,255,.018);
   white-space:nowrap;
 }
@@ -207,12 +207,12 @@ button{color:inherit;}
 .mf-vault-stat-wide{grid-column:1/-1;}
 .mf-vault-stat small,.mf-vault-balance small,.mf-vault-control-row small{
   display:block;
-  color:#536471;
+  color:var(--mf-neutral-text-3);
 }
 .mf-vault-stat strong{
   display:block;
   margin-top:7px;
-  color:#e7e9ea;
+  color:var(--mf-neutral-text-1);
   overflow:hidden;
   text-overflow:ellipsis;
 }
@@ -232,7 +232,7 @@ button{color:inherit;}
 .mf-vault-balance span{
   display:block;
   margin-top:8px;
-  color:#71767b;
+  color:var(--mf-neutral-text-3);
 }
 
 .mf-vault-actions{
@@ -251,7 +251,7 @@ button{color:inherit;}
   border:1px solid #2f3336;
   border-radius:9px;
   background:rgba(255,255,255,.018);
-  color:#71767b;
+  color:var(--mf-neutral-text-3);
   text-decoration:none;
   text-align:center;
   cursor:pointer;
@@ -271,7 +271,7 @@ button{color:inherit;}
 }
 .mf-vault-note{
   margin:12px 2px 0;
-  color:#71767b;
+  color:var(--mf-neutral-text-3);
 }
 
 .mf-vault-control-row{
@@ -328,10 +328,10 @@ button{color:inherit;}
 }
 .mf-vault-checklist span{display:grid;gap:3px;}
 .mf-vault-checklist strong{
-  color:#e7e9ea;
+  color:var(--mf-neutral-text-1);
 }
 .mf-vault-checklist small{
-  color:#71767b;
+  color:var(--mf-neutral-text-3);
 }
 
 .mf-vault-status-panel{
@@ -351,7 +351,7 @@ button{color:inherit;}
 .mf-vault-status-copy p{
   max-width:720px;
   margin:0;
-  color:#718591;
+  color:var(--mf-neutral-text-3);
 }
 .mf-vault-status-flow{
   display:flex;
@@ -365,7 +365,7 @@ button{color:inherit;}
   padding:0 8px;
   border:1px solid rgba(145,188,216,.08);
   border-radius:8px;
-  color:#536671;
+  color:var(--mf-neutral-text-4);
   white-space:nowrap;
 }
 .mf-vault-status-flow span.is-ready{
@@ -373,7 +373,7 @@ button{color:inherit;}
   border-color:rgba(77,230,161,.14);
 }
 .mf-vault-status-flow b{
-  color:#465863;
+  color:var(--mf-neutral-text-4);
 }
 
 .mf-vault-toast{
@@ -387,7 +387,7 @@ button{color:inherit;}
   border:1px solid #2f3336;
   border-radius:11px;
   background:rgba(14,22,29,.96);
-  color:#e7e9ea;
+  color:var(--mf-neutral-text-2);
   box-shadow:none;
 }
 
@@ -445,7 +445,7 @@ button{color:inherit;}
 <!-- /MEMEFLOW_FINAL_VISUAL_QA_V65 -->
 <!-- MEMEFLOW_DARK_X_SURFACE_V131_ASSET -->
 <!-- /MEMEFLOW_DARK_X_SURFACE_V131_ASSET -->
-  <link rel="stylesheet" href="/memeflow-x-canonical-v174.css?v=x-typography-canonical-v174-20260922">
+  <link rel="stylesheet" href="/memeflow-x-canonical-v179.css?v=pure-neutral-text-v179-20260922">
 </head>
 
 <body class="mf-final-visual-qa-v65 mf-accessibility-v64a mf-component-consistency-v63 mf-layout-rhythm-v54 mf-page-smart-vault mf-component-geometry-v55 mf-surface-hierarchy-v57 mf-interaction-states-v58 mf-header-nav-polish-v59 mf-nav-interaction-restore-v59b">

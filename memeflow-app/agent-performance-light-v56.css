@@ -9,8 +9,8 @@ html[data-theme="light"] body.mf-agent-performance-page{
   --bg: #ffffff !important;
   --panel: #f5f5f5 !important;
   --line: rgba(23, 23, 23, .085) !important;
-  --text: #171717 !important;
-  --muted: #737373 !important;
+  --text: var(--mf-neutral-text-2);
+  --muted: var(--mf-neutral-text-3);
 
   background: #ffffff !important;
   background-image: none !important;

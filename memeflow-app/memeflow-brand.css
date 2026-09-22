@@ -139,8 +139,8 @@ html[data-theme="light"] .mf-brand-img, body.light .mf-brand-img, .theme-light .
   --mf-app-line-strong:#2f3336;
   --mf-app-soft:rgba(255,255,255,.018);
   --mf-app-soft-hover:rgba(255,255,255,.032);
-  --mf-app-text:#e7e9ea;
-  --mf-app-muted:#71767b;
+  --mf-app-text:var(--mf-neutral-text-2);
+  --mf-app-muted:var(--mf-neutral-text-3);
   --mf-app-cyan:#61dfff;
   --mf-app-green:#58e4ad;
   --mf-app-yellow:#f2c668;
@@ -154,8 +154,8 @@ html[data-theme="light"] .mf-brand-img, body.light .mf-brand-img, .theme-light .
   --surface3:#000000;
   --line:#2f3336;
   --line2:#2f3336;
-  --text:#e7e9ea;
-  --muted:#71767b;
+  --text:var(--mf-neutral-text-2);
+  --muted:var(--mf-neutral-text-3);
   --cyan:var(--mf-app-cyan)!important;
   --green:var(--mf-app-green)!important;
   --yellow:var(--mf-app-yellow)!important;
@@ -178,7 +178,7 @@ html,body{
 .sidebar .nav a,.nav-item{
   background:transparent!important;
   border-color:transparent!important;
-  color:#e7e9ea;
+  color:var(--mf-neutral-text-2);
 }
 .sidebar .nav a:hover,.sidebar .nav a:focus-visible,
 .nav-item:hover,.nav-item:focus-visible{

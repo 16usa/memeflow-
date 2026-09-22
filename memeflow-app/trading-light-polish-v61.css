@@ -10,8 +10,8 @@ html[data-theme="light"] body.mf-trading-terminal{
   --mf-trading-v61-inset: #ebebeb;
   --mf-trading-v61-line: rgba(23, 23, 23, .075);
   --mf-trading-v61-line-strong: rgba(23, 23, 23, .11);
-  --mf-trading-v61-text: #171717;
-  --mf-trading-v61-muted: #737373;
+  --mf-trading-v61-text: var(--mf-neutral-text-4);
+  --mf-trading-v61-muted: var(--mf-neutral-text-3);
 
   background: var(--mf-trading-v61-canvas) !important;
   background-image: none !important;

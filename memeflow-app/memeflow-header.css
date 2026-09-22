@@ -92,7 +92,7 @@
 .mf-site-header .mf-hiw-brand-copy > strong{
   display:block;
   margin:0;
-  color:#e7e9ea;
+  color:var(--mf-neutral-text-1);
 }
 
 .mf-site-header .brand-sub,
@@ -103,7 +103,7 @@
 .mf-site-header .mf-hiw-brand-copy > small{
   display:block;
   margin:2px 0 0;
-  color:#71767b;
+  color:var(--mf-neutral-text-3);
   white-space:nowrap;
 }
 

@@ -482,51 +482,7 @@ html body:is(
 
 
 
-html[data-theme="dark"]
-body.mf-page-system
-:where(.mf-infra, .activity-panel),
 
-html[data-theme="dark"]
-body.mf-page-system-tokens
-.flow-page :where(.flow-hero, .flow-toolbar, .pagination),
-
-html[data-theme="dark"]
-body.mf-page-trading.mf-trading-terminal
-.terminal > .panel,
-
-html[data-theme="dark"]
-body.mf-page-trading.mf-trading-terminal
-.center-stack > .panel,
-
-html[data-theme="dark"]
-body.mf-page-smart-vault
-.mf-vault-shell :where(.mf-vault-card, .mf-vault-status-panel),
-
-html[data-theme="dark"]
-body.mf-page-settings
-:where(
-  .mf293-settings-group,
-  .settings-group,
-  .settings-context,
-  .mf-theme-appearance
-),
-
-html[data-theme="dark"]
-body.mf-page-how-it-works
-:where(
-  .mf-hiw-status-card,
-  .mf-hiw-map-shell,
-  .mf-hiw-money,
-  .mf-hiw-cta
-),
-
-html[data-theme="dark"]
-body.mf-page-agent-performance
-:where(.ap-source, .ap-panel, .ap-kpis article){
-  border-width: var(--mf-x-dark-hairline) !important;
-  border-style: solid !important;
-  border-color: var(--mf-x-dark-line) !important;
-}
 
 html[data-theme="dark"]
 body.mf-page-trading.mf-trading-terminal
@@ -1371,11 +1327,11 @@ html:not([data-theme="light"]){
 
   --mf-x-bg: #000000;
   --mf-x-surface: #000000;
-  --mf-x-text: #e7e9ea;
-  --mf-x-text-strong: #ffffff;
-  --mf-x-text-muted: #71767b;
-  --mf-x-text-tertiary: #536471;
-  --mf-x-text-faint: #3e4a55;
+  --mf-x-text: var(--mf-neutral-text-2);
+  --mf-x-text-strong: var(--mf-neutral-text-1);
+  --mf-x-text-muted: var(--mf-neutral-text-3);
+  --mf-x-text-tertiary: var(--mf-neutral-text-4);
+  --mf-x-text-faint: var(--mf-neutral-text-4);
   --mf-x-blue: #1d9bf0;
   --mf-x-line: #2f3336;
   --mf-x-button: #111111;
@@ -1390,9 +1346,9 @@ html:not([data-theme="light"]){
   --surface3: #000000 !important;
   --surface-2: #000000 !important;
 
-  --text: #e7e9ea !important;
-  --muted: #71767b !important;
-  --faint: #536471 !important;
+  --text: var(--mf-neutral-text-2);
+  --muted: var(--mf-neutral-text-3);
+  --faint: var(--mf-neutral-text-4);
 
   --line: #2f3336 !important;
   --line2: #2f3336 !important;
@@ -1406,25 +1362,25 @@ html:not([data-theme="light"]){
   --mf-app-panel-bottom: #000000 !important;
   --mf-app-line: #2f3336 !important;
   --mf-app-line-strong: #2f3336 !important;
-  --mf-app-text: #e7e9ea !important;
-  --mf-app-muted: #71767b !important;
+  --mf-app-text: var(--mf-neutral-text-2);
+  --mf-app-muted: var(--mf-neutral-text-3);
 
   --mf-nav-bg: #000000 !important;
   --mf-nav-surface: #000000 !important;
   --mf-nav-surface-2: #000000 !important;
   --mf-nav-line: #2f3336 !important;
   --mf-nav-line-strong: #2f3336 !important;
-  --mf-nav-text: #e7e9ea !important;
-  --mf-nav-muted: #71767b !important;
+  --mf-nav-text: var(--mf-neutral-text-2);
+  --mf-nav-muted: var(--mf-neutral-text-3);
 
   --hiw-bg: #000000 !important;
   --hiw-panel: #000000 !important;
   --hiw-panel-strong: #000000 !important;
   --hiw-line: #2f3336 !important;
   --hiw-line-strong: #2f3336 !important;
-  --hiw-text: #e7e9ea !important;
-  --hiw-muted: #71767b !important;
-  --hiw-muted-2: #536471 !important;
+  --hiw-text: var(--mf-neutral-text-2);
+  --hiw-muted: var(--mf-neutral-text-3);
+  --hiw-muted-2: var(--mf-neutral-text-4);
   --hiw-shadow: none !important;
 
   --v-bg: #000000 !important;
@@ -1432,9 +1388,9 @@ html:not([data-theme="light"]){
   --v-panel2: #000000 !important;
   --v-line: #2f3336 !important;
   --v-line2: #2f3336 !important;
-  --v-text: #e7e9ea !important;
-  --v-muted: #71767b !important;
-  --v-muted2: #536471 !important;
+  --v-text: var(--mf-neutral-text-2);
+  --v-muted: var(--mf-neutral-text-3);
+  --v-muted2: var(--mf-neutral-text-4);
 
   --mf-dark-canvas: #000000 !important;
   --mf-dark-surface-1: #000000 !important;
@@ -1445,9 +1401,9 @@ html:not([data-theme="light"]){
   --mf-x-dark-inset: #000000 !important;
   --mf-x-dark-line: #2f3336 !important;
 
-  --mf-text-primary: #e7e9ea !important;
-  --mf-text-secondary: #71767b !important;
-  --mf-text-tertiary: #536471 !important;
+  --mf-text-primary: var(--mf-neutral-text-2);
+  --mf-text-secondary: var(--mf-neutral-text-3);
+  --mf-text-tertiary: var(--mf-neutral-text-4);
 
   --mf-structure-outer: #2f3336 !important;
   --mf-structure-divider: #2f3336 !important;
@@ -2015,16 +1971,16 @@ html:not([data-theme="light"]){
   --ds-surface-raised: #000000 !important;
   --ds-line: #2f3336 !important;
   --ds-line-strong: #2f3336 !important;
-  --ds-text: #e7e9ea !important;
-  --ds-muted: #71767b !important;
+  --ds-text: var(--mf-neutral-text-2);
+  --ds-muted: var(--mf-neutral-text-3);
 
-  --text-2: #71767b !important;
-  --text-3: #536471 !important;
+  --text-2: var(--mf-neutral-text-3);
+  --text-3: var(--mf-neutral-text-4);
 
   --mf-hairline: #2f3336 !important;
   --mf-pm-line: #2f3336 !important;
   --mf-pm-line-strong: #2f3336 !important;
-  --mf-icon-muted: #71767b !important;
+  --mf-icon-muted: var(--mf-neutral-text-3);
   --mf-panel: #000000 !important;
 }
 
@@ -2187,11 +2143,11 @@ html:not([data-theme="light"]){
 
   --mf-x-bg: #000000;
   --mf-x-surface: #000000;
-  --mf-x-text: #e7e9ea;
-  --mf-x-text-strong: #ffffff;
-  --mf-x-text-muted: #71767b;
-  --mf-x-text-tertiary: #536471;
-  --mf-x-text-faint: #3e4a55;
+  --mf-x-text: var(--mf-neutral-text-2);
+  --mf-x-text-strong: var(--mf-neutral-text-1);
+  --mf-x-text-muted: var(--mf-neutral-text-3);
+  --mf-x-text-tertiary: var(--mf-neutral-text-4);
+  --mf-x-text-faint: var(--mf-neutral-text-4);
   --mf-x-blue: #1d9bf0;
   --mf-x-line: #2f3336;
   --mf-x-line-width: 1px;
@@ -2275,22 +2231,22 @@ html:not([data-theme="light"]){
   --mf-v59-drawer-shadow: none !important;
 
   
-  --text: #e7e9ea !important;
-  --muted: #71767b !important;
-  --faint: #536471 !important;
-  --mf-app-text: #e7e9ea !important;
-  --mf-app-muted: #71767b !important;
-  --mf-nav-text: #e7e9ea !important;
-  --mf-nav-muted: #71767b !important;
-  --hiw-text: #e7e9ea !important;
-  --hiw-muted: #71767b !important;
-  --hiw-muted-2: #536471 !important;
-  --v-text: #e7e9ea !important;
-  --v-muted: #71767b !important;
-  --v-muted2: #536471 !important;
-  --mf-text-primary: #e7e9ea !important;
-  --mf-text-secondary: #71767b !important;
-  --mf-text-tertiary: #536471 !important;
+  --text: var(--mf-neutral-text-2);
+  --muted: var(--mf-neutral-text-3);
+  --faint: var(--mf-neutral-text-4);
+  --mf-app-text: var(--mf-neutral-text-2);
+  --mf-app-muted: var(--mf-neutral-text-3);
+  --mf-nav-text: var(--mf-neutral-text-2);
+  --mf-nav-muted: var(--mf-neutral-text-3);
+  --hiw-text: var(--mf-neutral-text-2);
+  --hiw-muted: var(--mf-neutral-text-3);
+  --hiw-muted-2: var(--mf-neutral-text-4);
+  --v-text: var(--mf-neutral-text-2);
+  --v-muted: var(--mf-neutral-text-3);
+  --v-muted2: var(--mf-neutral-text-4);
+  --mf-text-primary: var(--mf-neutral-text-2);
+  --mf-text-secondary: var(--mf-neutral-text-3);
+  --mf-text-tertiary: var(--mf-neutral-text-4);
 }
 
 html:not([data-theme="light"]),
@@ -2522,11 +2478,11 @@ html:not([data-theme="light"]){
 
   --mf-x-bg: #000000;
   --mf-x-surface: #000000;
-  --mf-x-text: #e7e9ea;
-  --mf-x-text-strong: #ffffff;
-  --mf-x-text-muted: #71767b;
-  --mf-x-text-tertiary: #536471;
-  --mf-x-text-faint: #3e4a55;
+  --mf-x-text: var(--mf-neutral-text-2);
+  --mf-x-text-strong: var(--mf-neutral-text-1);
+  --mf-x-text-muted: var(--mf-neutral-text-3);
+  --mf-x-text-tertiary: var(--mf-neutral-text-4);
+  --mf-x-text-faint: var(--mf-neutral-text-4);
   --mf-x-blue: #1d9bf0;
   --mf-x-line: #2f3336;
 
@@ -2572,24 +2528,24 @@ html:not([data-theme="light"]){
   --ds-surface: #000000 !important;
   --ds-surface-raised: #000000 !important;
 
-  --text: #e7e9ea !important;
-  --muted: #71767b !important;
-  --faint: #536471 !important;
-  --text-2: #71767b !important;
-  --text-3: #536471 !important;
-  --mf-app-text: #e7e9ea !important;
-  --mf-app-muted: #71767b !important;
-  --mf-nav-text: #e7e9ea !important;
-  --mf-nav-muted: #71767b !important;
-  --hiw-text: #e7e9ea !important;
-  --hiw-muted: #71767b !important;
-  --hiw-muted-2: #536471 !important;
-  --v-text: #e7e9ea !important;
-  --v-muted: #71767b !important;
-  --v-muted2: #536471 !important;
-  --mf-text-primary: #e7e9ea !important;
-  --mf-text-secondary: #71767b !important;
-  --mf-text-tertiary: #536471 !important;
+  --text: var(--mf-neutral-text-2);
+  --muted: var(--mf-neutral-text-3);
+  --faint: var(--mf-neutral-text-4);
+  --text-2: var(--mf-neutral-text-3);
+  --text-3: var(--mf-neutral-text-4);
+  --mf-app-text: var(--mf-neutral-text-2);
+  --mf-app-muted: var(--mf-neutral-text-3);
+  --mf-nav-text: var(--mf-neutral-text-2);
+  --mf-nav-muted: var(--mf-neutral-text-3);
+  --hiw-text: var(--mf-neutral-text-2);
+  --hiw-muted: var(--mf-neutral-text-3);
+  --hiw-muted-2: var(--mf-neutral-text-4);
+  --v-text: var(--mf-neutral-text-2);
+  --v-muted: var(--mf-neutral-text-3);
+  --v-muted2: var(--mf-neutral-text-4);
+  --mf-text-primary: var(--mf-neutral-text-2);
+  --mf-text-secondary: var(--mf-neutral-text-3);
+  --mf-text-tertiary: var(--mf-neutral-text-4);
 
   /* Every neutral line alias = the exact same X line. */
   --line: #2f3336 !important;
@@ -2897,7 +2853,7 @@ body,
 button,
 input,
 select,
-textarea {
+textarea{
   font-family:
     Inter,
     ui-sans-serif,
@@ -3526,9 +3482,9 @@ body.mf-page-index .candidate-token-logo{font-weight:900;}
 body.mf-page-index #primary-candidate .mf-primary-native-v11-head #primaryName{line-height:1.02!important;}
 body.mf-page-index #primary-candidate .mf-primary-native-v11-head #primaryMeta{line-height:1!important;}
 body.mf-page-index #primary-candidate .mf-primary-native-v11-avatar span{font-size:calc(var(--mf-primary-avatar-size,56px) * .58)!important;}
-body.mf-page-index #primary-candidate .token-head.mf-primary-v21-head{--mf-primary-v21-cap-font-size:10px;}
+body.mf-page-index #primary-candidate .token-head.mf-primary-v21-head{--mf-primary-v21-cap-font-size:11px;}
 body.mf-page-index #primary-candidate .token-head.mf-primary-v21-head{--mf-primary-v21-cap-line-height:14px;}
-body.mf-page-index #primary-candidate .token-head.mf-primary-v21-head{--mf-primary-v21-cap-font-weight:400;}
+body.mf-page-index #primary-candidate .token-head.mf-primary-v21-head{--mf-primary-v21-cap-font-weight:500;}
 body.mf-page-index #primary-candidate .token-head.mf-primary-v21-head{--mf-primary-v21-cap-letter-spacing:normal;}
 body.mf-page-index #primary-candidate .mf-primary-v21-left #primaryName{line-height:1.04!important;}
 body.mf-page-index #primary-candidate .mf-primary-v21-left #primaryMeta{font-size:var(--mf-primary-v21-cap-font-size)!important;}
@@ -3549,7 +3505,7 @@ body.mf-page-index .top-plan-badge{font-size:var(--mf-type-meta);}}
 @media(max-width:820px){body.mf-page-index .context-copy b{line-height:1.08!important;}}
 @media(max-width:820px){body.mf-page-index .context-copy p{font-size:var(--mf-type-body);}}
 @media(max-width:820px){body.mf-page-index .context-copy p{line-height:1.42!important;}}
-@media(max-width:820px){body.mf-page-index [data-mf-premium="manual-scan"] p{font-size:10.5px;}}
+@media(max-width:820px){body.mf-page-index [data-mf-premium="manual-scan"] p{font-size:11px;}}
 @media(max-width:820px){body.mf-page-index [data-mf-premium="manual-scan"] p{line-height:1.42!important;}}
 @media(max-width:820px){body.mf-page-index #executionPreview .execution-head h2{font-size:16px!important;}}
 @media(max-width:820px){body.mf-page-index #executionPreview .execution-head h2{line-height:1.15!important;}}
@@ -3574,9 +3530,9 @@ body.mf-page-index .top-plan-badge{font-size:var(--mf-type-meta);}}
 @media(max-width:820px){body.mf-page-index #executionPreview .primary-blocker small{text-transform:uppercase!important;}}
 @media(max-width:820px){body.mf-page-index #executionPreview .primary-blocker b{font-size:11.5px;}}
 @media(max-width:820px){body.mf-page-index #executionPreview .primary-blocker b{line-height:1.25!important;}}
-@media(max-width:820px){body.mf-page-index #executionPreview .primary-blocker span{font-size:9.5px;}}
+@media(max-width:820px){body.mf-page-index #executionPreview .primary-blocker span{font-size:11px;}}
 @media(max-width:820px){body.mf-page-index #executionPreview .primary-blocker span{line-height:1.34!important;}}
-@media(max-width:820px){body.mf-page-index #executionPreview .execution-decision-link{font-size:9.5px;}}
+@media(max-width:820px){body.mf-page-index #executionPreview .execution-decision-link{font-size:11px;}}
 @media(max-width:820px){body.mf-page-index #executionPreview .execution-decision-link{font-weight:760!important;}}
 @media(max-width:820px){body.mf-page-index #executionPreview .mf-pm-check-toggle{font-size:var(--mf-type-ui);}}
 @media(max-width:820px){body.mf-page-index #executionPreview .mf-pm-check-toggle{font-weight:760!important;}}
@@ -3585,7 +3541,7 @@ body.mf-page-index .top-plan-badge{font-size:var(--mf-type-meta);}}
 @media(max-width:820px){body.mf-page-index #executionPreview .execution-check-name b{font-size:var(--mf-type-ui);}}
 @media(max-width:820px){body.mf-page-index #executionPreview .execution-check-name b{font-weight:640!important;}}
 @media(max-width:820px){body.mf-page-index #executionPreview .execution-check-row em{font-style:normal!important;}}
-@media(max-width:820px){body.mf-page-index #executionPreview .execution-check-row em{font-size:8.5px;}}
+@media(max-width:820px){body.mf-page-index #executionPreview .execution-check-row em{font-size:11px;}}
 @media(max-width:820px){body.mf-page-index #executionPreview .execution-check-row em{font-weight:850!important;}}
 @media(max-width:820px){body.mf-page-index #executionPreview .execution-check-row em{letter-spacing:.08em!important;}}
 @media(max-width:820px){body.mf-page-index #billing .subscription-metric small{font-size:var(--mf-type-micro);}}
@@ -3595,17 +3551,17 @@ body.mf-page-index .top-plan-badge{font-size:var(--mf-type-meta);}}
 @media(max-width:820px){body.mf-page-index #billing .plan-name{font-size:17px!important;}}
 @media(max-width:820px){body.mf-page-index #billing .plan-price{font-size:34px!important;}}
 @media(max-width:820px){body.mf-page-index #billing .plan-price small{font-size:12px;}}
-@media(max-width:820px){body.mf-page-index #billing .plan-copy{font-size:10.5px;}}
+@media(max-width:820px){body.mf-page-index #billing .plan-copy{font-size:11px;}}
 @media(max-width:820px){body.mf-page-index #billing .plan-copy{line-height:1.4!important;}}
 @media(max-width:820px){body.mf-page-index #billing .feature{font-size:var(--mf-type-body);}}
 @media(max-width:820px){body.mf-page-index #billing .feature{line-height:1.35!important;}}
 @media(max-width:820px){body.mf-page-index #settings .settings-hero h2{font-size:21px!important;}}
-@media(max-width:820px){body.mf-page-index #settings .settings-hero p{font-size:10.5px;}}
+@media(max-width:820px){body.mf-page-index #settings .settings-hero p{font-size:11px;}}
 @media(max-width:820px){body.mf-page-index #settings .settings-hero p{line-height:1.42!important;}}
 @media(max-width:820px){body.mf-page-index #settings .settings-summary small{font-size:var(--mf-type-micro);}}
 @media(max-width:820px){body.mf-page-index #settings .settings-summary b{font-size:12px;}}
 @media(max-width:820px){body.mf-page-index #settings .settings-context b{font-size:var(--mf-type-body);}}
-@media(max-width:820px){body.mf-page-index #settings .settings-context span{font-size:9.5px;}}
+@media(max-width:820px){body.mf-page-index #settings .settings-context span{font-size:11px;}}
 @media(max-width:820px){body.mf-page-index #settings .settings-context span{line-height:1.35!important;}}
 @media(max-width:820px){body.mf-page-index #settings .settings-group>summary small{font-size:var(--mf-type-micro);}}
 @media(max-width:820px){body.mf-page-index #settings .settings-group>summary b{font-size:var(--mf-type-title);}}
@@ -3614,7 +3570,7 @@ body.mf-page-index .top-plan-badge{font-size:var(--mf-type-meta);}}
 @media(max-width:820px){body.mf-page-index #settings .settings-group>summary em{letter-spacing:.12em!important;}}
 @media(max-width:820px){body.mf-page-index #settings .setting-field label,
 body.mf-page-index #settings .setting-field>span{font-size:var(--mf-type-meta);}}
-@media(max-width:820px){body.mf-page-index #settings .toggle-copy b{font-size:10.5px;}}
+@media(max-width:820px){body.mf-page-index #settings .toggle-copy b{font-size:11px;}}
 @media(max-width:820px){body.mf-page-index #settings .toggle-copy span{font-size:var(--mf-type-meta);}}
 @media(max-width:820px){body.mf-page-index #settings .toggle-copy span{line-height:1.35!important;}}
 @media(max-width:820px){body.mf-page-index #settings .settings-footer p{font-size:var(--mf-type-meta);}}
@@ -3656,12 +3612,12 @@ body.mf-page-index .subscription-metric small,
 body.mf-page-index .system-health-summary small{text-transform:uppercase!important;}
 @media(max-width:430px){body.mf-page-index .panel-head h2,
 body.mf-page-index .execution-head h2{font-size:12px;}}
-body.mf-page-index{--mf-type-micro:8px;}
-body.mf-page-index{--mf-type-meta:9px;}
-body.mf-page-index{--mf-type-ui:10px;}
-body.mf-page-index{--mf-type-body:11px;}
-body.mf-page-index{--mf-type-panel:13px;}
-body.mf-page-index{--mf-type-title:15px;}
+body.mf-page-index{--mf-type-micro:11px;}
+body.mf-page-index{--mf-type-meta:12px;}
+body.mf-page-index{--mf-type-ui:13px;}
+body.mf-page-index{--mf-type-body:14px;}
+body.mf-page-index{--mf-type-panel:15px;}
+body.mf-page-index{--mf-type-title:17px;}
 body.mf-page-index .eyebrow{font-size:var(--mf-type-micro);}
 body.mf-page-index .panel-head h2,
 body.mf-page-index .execution-head h2,
@@ -3672,7 +3628,7 @@ body.mf-page-index .execution-head h2,
 body.mf-page-index .wallet-dialog-head h2,
 body.mf-page-index .sheet-top h2{line-height:1.2;}
 body.mf-page-index .btn{font-size:var(--mf-type-body);}
-body.mf-page-index{--mf-type-system:8px;}
+body.mf-page-index{--mf-type-system:11px;}
 html body.mf-page-index:is(
 .mf-page-system,
   .mf-page-system-tokens,
@@ -3758,7 +3714,7 @@ body.mf-page-index.mf-page-trading.mf-trading-terminal
 :where(.strategy-summary-panel .strategy-edit-link,
        .positions-panel .close-position,
        .chart-panel #tokenState.decision-badge,
-       .positions-panel .copy-trade-badge){font-size:9px !important;}
+       .positions-panel .copy-trade-badge){font-size:11px !important;}
 html[data-theme]
 body.mf-page-index.mf-page-trading.mf-trading-terminal
 :where(.strategy-summary-panel .strategy-edit-link,
@@ -3794,7 +3750,7 @@ body.mf-page-index.mf-page-trading.mf-trading-terminal
 .chart-panel
 .chart-head
 .token-name-row
-> #tokenState.decision-badge{font-size:9px !important;}
+> #tokenState.decision-badge{font-size:11px !important;}
 html[data-theme]
 body.mf-page-index.mf-page-trading.mf-trading-terminal
 .chart-panel
@@ -3834,7 +3790,7 @@ body.mf-page-index.mf-page-trading.mf-trading-terminal
 .position-main
 .position-topline
 .position-symbol
-> .copy-trade-badge{font-size:9px !important;}
+> .copy-trade-badge{font-size:11px !important;}
 html[data-theme]
 body.mf-page-index.mf-page-trading.mf-trading-terminal
 .positions-panel
@@ -3875,17 +3831,17 @@ html[data-theme]
 body.mf-page-index.mf-page-trading.mf-trading-terminal
 .chart-panel
 .chart-legend
-span{font-size:8px !important;}
+span{font-size:11px !important;}
 html[data-theme]
 body.mf-page-index.mf-page-trading.mf-trading-terminal
 .chart-panel
 .timeframes
-> button{font-size:9px !important;}
+> button{font-size:11px !important;}
 html[data-theme]
 body.mf-page-index.mf-page-trading.mf-trading-terminal
 .chart-panel
 .indicator-bar
-button{font-size:8px !important;}
+button{font-size:11px !important;}
 html[data-theme]
 body.mf-page-index.mf-page-trading.mf-trading-terminal
 .chart-panel
@@ -3895,7 +3851,7 @@ html[data-theme]
 body.mf-page-index.mf-page-trading.mf-trading-terminal
 .chart-panel
 .selected-metrics
-strong{font-size:9px !important;}
+strong{font-size:11px !important;}
 body.mf-page-index .brief-title{font-size:23px;}
 body.mf-page-index .brief-title{letter-spacing:-.035em;}
 body.mf-page-index .brief-copy{font-size:var(--mf-type-body);}
@@ -4100,7 +4056,7 @@ body.mf-page-system .fatal span{line-height:1.5;}
 @media (max-width: 900px){body.mf-page-system .flow-view-all{font-weight:800;}}
 @media (max-width: 900px){body.mf-page-system .flow-view-all{letter-spacing:.08em;}}
 @media (max-width: 900px){body.mf-page-system .flow-view-all{text-transform:uppercase;}}
-@media (max-width: 900px){body.mf-page-system .token-symbol{font-size:8.5px;}}
+@media (max-width: 900px){body.mf-page-system .token-symbol{font-size:11px;}}
 @media (max-width: 900px){body.mf-page-system .token-state{font-size:var(--mf-type-micro);}}
 @media (max-width: 900px){body.mf-page-system .token-card-meta span{font-size:var(--mf-type-micro);}}
 @media (max-width: 900px){body.mf-page-system .token-card-meta b{font-size:var(--mf-type-micro);}}
@@ -4209,12 +4165,12 @@ body.mf-page-system.mf-settings-standalone .mf293-settings-footer button{font-we
 body.mf-page-system.mf-settings-standalone .mf293-settings-footer button{letter-spacing:.015em !important;}
 @media (max-width: 760px){body.mf-page-system.mf-settings-standalone .mf293-settings-head h2{font-size:21px !important;}}
 @media (max-width: 760px){body.mf-page-system.mf-settings-standalone .mf293-settings-footer button{font-size:var(--mf-type-meta);}}
-body.mf-page-system .mfpg-variant2-clean-v1 .mfpg-kicker{font-size:clamp(8px, 1.02vw, 11px);}
+body.mf-page-system .mfpg-variant2-clean-v1 .mfpg-kicker{font-size:clamp(11px, 1.02vw, 11px);}
 body.mf-page-system .mfpg-variant2-clean-v1 .mfpg-kicker{line-height:1;}
 body.mf-page-system .mfpg-variant2-clean-v1 .mfpg-kicker{font-weight:850;}
 body.mf-page-system .mfpg-variant2-clean-v1 .mfpg-kicker{letter-spacing:.18em;}
 body.mf-page-system .mfpg-variant2-clean-v1 .mfpg-kicker{text-transform:uppercase;}
-body.mf-page-system .mfpg-variant2-clean-v1 .mfpg-sub{font-size:clamp(7px, .9vw, 10px);}
+body.mf-page-system .mfpg-variant2-clean-v1 .mfpg-sub{font-size:clamp(11px, .9vw, 11px);}
 body.mf-page-system .mfpg-variant2-clean-v1 .mfpg-sub{line-height:1;}
 body.mf-page-system .mfpg-variant2-clean-v1 .mfpg-sub{font-weight:560;}
 body.mf-page-system .mfpg-variant2-clean-v1 .mfpg-sub{letter-spacing:.08em;}
@@ -4227,7 +4183,7 @@ body.mf-page-system .mfpg-caption-title{line-height:1.12;}
 body.mf-page-system .mfpg-caption-title{font-weight:880;}
 body.mf-page-system .mfpg-caption-title{letter-spacing:.045em;}
 body.mf-page-system .mfpg-caption-title{text-transform:uppercase;}
-body.mf-page-system .mfpg-caption-text{font-size:clamp(9px, 1.15vw, 11px);}
+body.mf-page-system .mfpg-caption-text{font-size:clamp(11px, 1.15vw, 11px);}
 body.mf-page-system .mfpg-caption-text{line-height:1.55;}
 body.mf-page-system .mfpg-caption-text{font-weight:520;}
 body.mf-page-system .mfpg-caption-text{letter-spacing:.015em;}
@@ -4265,12 +4221,12 @@ body.mf-page-system .subscription-metric small,
 body.mf-page-system .system-health-summary small{text-transform:uppercase!important;}
 @media(max-width:430px){body.mf-page-system .panel-head h2,
 body.mf-page-system .execution-head h2{font-size:12px;}}
-body.mf-page-system{--mf-type-micro:8px;}
-body.mf-page-system{--mf-type-meta:9px;}
-body.mf-page-system{--mf-type-ui:10px;}
-body.mf-page-system{--mf-type-body:11px;}
-body.mf-page-system{--mf-type-panel:13px;}
-body.mf-page-system{--mf-type-title:15px;}
+body.mf-page-system{--mf-type-micro:11px;}
+body.mf-page-system{--mf-type-meta:12px;}
+body.mf-page-system{--mf-type-ui:13px;}
+body.mf-page-system{--mf-type-body:14px;}
+body.mf-page-system{--mf-type-panel:15px;}
+body.mf-page-system{--mf-type-title:17px;}
 body.mf-page-system .eyebrow{font-size:var(--mf-type-micro);}
 body.mf-page-system .panel-head h2,
 body.mf-page-system .execution-head h2,
@@ -4281,7 +4237,7 @@ body.mf-page-system .execution-head h2,
 body.mf-page-system .wallet-dialog-head h2,
 body.mf-page-system .sheet-top h2{line-height:1.2;}
 body.mf-page-system .btn{font-size:var(--mf-type-body);}
-body.mf-page-system .mf-nav-kicker{font-size:7px;}
+body.mf-page-system .mf-nav-kicker{font-size:11px;}
 body.mf-page-system .mf-nav-kicker{line-height:1;}
 body.mf-page-system .mf-nav-kicker{font-weight:850;}
 body.mf-page-system .mf-nav-kicker{letter-spacing:.18em;}
@@ -4294,17 +4250,17 @@ body.mf-page-system .mf-nav-link-title{font-size:12px;}
 body.mf-page-system .mf-nav-link-title{line-height:1.2;}
 body.mf-page-system .mf-nav-link-title{font-weight:760;}
 body.mf-page-system .mf-nav-link-title{letter-spacing:.012em;}
-body.mf-page-system .mf-nav-link-sub{font-size:8px;}
+body.mf-page-system .mf-nav-link-sub{font-size:11px;}
 body.mf-page-system .mf-nav-link-sub{line-height:1.35;}
 body.mf-page-system .mf-nav-link-sub{font-weight:550;}
 body.mf-page-system .mf-nav-link-sub{letter-spacing:.02em;}
 body.mf-page-system .mf-nav-link-arrow{font-size:14px;}
 body.mf-page-system .mf-nav-link-arrow{line-height:1;}
-body.mf-page-system .mf-nav-foot strong{font-size:8px;}
+body.mf-page-system .mf-nav-foot strong{font-size:11px;}
 body.mf-page-system .mf-nav-foot strong{line-height:1.2;}
 body.mf-page-system .mf-nav-foot strong{font-weight:750;}
 body.mf-page-system .mf-nav-foot strong{letter-spacing:.12em;}
-body.mf-page-system .mf-nav-foot span{font-size:7px;}
+body.mf-page-system .mf-nav-foot span{font-size:11px;}
 body.mf-page-system .mf-nav-foot span{line-height:1.4;}
 body.mf-page-system .mf-site-header .brand-title,
 body.mf-page-system .mf-site-header .brand-block .brand,
@@ -4335,7 +4291,7 @@ body.mf-page-system .mf-site-header .brand-block .subtitle,
 body.mf-page-system .mf-site-header .header-title > strong,
 body.mf-page-system .mf-site-header .mf-settings-page-title > strong,
 body.mf-page-system .mf-site-header .mf-vault-brand-copy > small,
-body.mf-page-system .mf-site-header .mf-hiw-brand-copy > small{font-size:8px;}
+body.mf-page-system .mf-site-header .mf-hiw-brand-copy > small{font-size:11px;}
 body.mf-page-system .mf-site-header .brand-sub,
 body.mf-page-system .mf-site-header .brand-block .subtitle,
 body.mf-page-system .mf-site-header .header-title > strong,
@@ -4355,7 +4311,7 @@ body.mf-page-system .mf-site-header .mf-settings-page-title > strong,
 body.mf-page-system .mf-site-header .mf-vault-brand-copy > small,
 body.mf-page-system .mf-site-header .mf-hiw-brand-copy > small{letter-spacing:.12em;}
 body.mf-page-system .mf-site-header .live-status,
-body.mf-page-system .mf-site-header .mf-settings-page-live{font-size:8px;}
+body.mf-page-system .mf-site-header .mf-settings-page-live{font-size:11px;}
 body.mf-page-system .mf-site-header .live-status,
 body.mf-page-system .mf-site-header .mf-settings-page-live{line-height:1;}
 body.mf-page-system .mf-site-header .live-status,
@@ -4373,7 +4329,7 @@ body.mf-page-system .mf-site-header .brand-block .subtitle,
 body.mf-page-system .mf-site-header .header-title > strong,
 body.mf-page-system .mf-site-header .mf-settings-page-title > strong,
 body.mf-page-system .mf-site-header .mf-vault-brand-copy > small,
-body.mf-page-system .mf-site-header .mf-hiw-brand-copy > small{font-size:8px;}}
+body.mf-page-system .mf-site-header .mf-hiw-brand-copy > small{font-size:11px;}}
 @media (max-width: 820px){body.mf-page-system .mf-site-header .brand-sub,
 body.mf-page-system .mf-site-header .brand-block .subtitle,
 body.mf-page-system .mf-site-header .header-title > strong,
@@ -4382,16 +4338,16 @@ body.mf-page-system .mf-site-header .mf-vault-brand-copy > small,
 body.mf-page-system .mf-site-header .mf-hiw-brand-copy > small{letter-spacing:.12em;}}
 body.mf-page-system .mf-theme-appearance-copy strong{font-size:var(--mf-type-panel, 13px);}
 body.mf-page-system .mf-theme-appearance-copy strong{line-height:1.2;}
-body.mf-page-system .mf-theme-appearance-copy small{font-size:var(--mf-type-meta, 9px);}
+body.mf-page-system .mf-theme-appearance-copy small{font-size:var(--mf-type-meta, 11px);}
 body.mf-page-system .mf-theme-appearance-copy small{line-height:1.35;}
 body.mf-page-system .mf-theme-appearance-label,
-body.mf-page-system .mf-theme-current{font-size:var(--mf-type-meta, 9px);}
+body.mf-page-system .mf-theme-current{font-size:var(--mf-type-meta, 11px);}
 body.mf-page-system .mf-theme-appearance-label,
 body.mf-page-system .mf-theme-current{line-height:1;}
 body.mf-page-system .mf-theme-segmented button{font:inherit;}
-body.mf-page-system .mf-theme-segmented button{font-size:var(--mf-type-meta, 9px);}
+body.mf-page-system .mf-theme-segmented button{font-size:var(--mf-type-meta, 11px);}
 body.mf-page-system .mf-theme-segmented button{font-weight:760;}
-body.mf-page-system [data-mf-open-position-pipeline-v3="1"]{font-size:var(--mf-type-micro, 10px) !important;}
+body.mf-page-system [data-mf-open-position-pipeline-v3="1"]{font-size:var(--mf-type-micro, 11px) !important;}
 body.mf-page-system [data-mf-open-position-pipeline-v3="1"]{font-weight:900 !important;}
 body.mf-page-system [data-mf-open-position-pipeline-v3="1"]{line-height:1 !important;}
 body.mf-page-system [data-mf-open-position-pipeline-v3="1"]{letter-spacing:.07em !important;}
@@ -4510,7 +4466,7 @@ html:has(body.mf-page-system)[data-theme="light"] .mf-site-header :is(
   .mf-settings-page-title > strong,
   .mf-vault-brand-copy > small,
   .mf-hiw-brand-copy > small
-){font-size:8px !important;}
+){font-size:11px !important;}
 html:has(body.mf-page-system)[data-theme="light"] .mf-site-header :is(
   .brand-sub,
   .brand-block .subtitle,
@@ -4535,7 +4491,7 @@ html:has(body.mf-page-system)[data-theme="light"] .mf-site-header :is(
   .mf-vault-brand-copy > small,
   .mf-hiw-brand-copy > small
 ){letter-spacing:.12em !important;}
-body.mf-page-system{--mf-type-system:8px;}
+body.mf-page-system{--mf-type-system:11px;}
 html body.mf-page-system:is(
 .mf-page-system,
   .mf-page-system-tokens,
@@ -4621,7 +4577,7 @@ body.mf-page-system.mf-page-trading.mf-trading-terminal
 :where(.strategy-summary-panel .strategy-edit-link,
        .positions-panel .close-position,
        .chart-panel #tokenState.decision-badge,
-       .positions-panel .copy-trade-badge){font-size:9px !important;}
+       .positions-panel .copy-trade-badge){font-size:11px !important;}
 html[data-theme]
 body.mf-page-system.mf-page-trading.mf-trading-terminal
 :where(.strategy-summary-panel .strategy-edit-link,
@@ -4657,7 +4613,7 @@ body.mf-page-system.mf-page-trading.mf-trading-terminal
 .chart-panel
 .chart-head
 .token-name-row
-> #tokenState.decision-badge{font-size:9px !important;}
+> #tokenState.decision-badge{font-size:11px !important;}
 html[data-theme]
 body.mf-page-system.mf-page-trading.mf-trading-terminal
 .chart-panel
@@ -4697,7 +4653,7 @@ body.mf-page-system.mf-page-trading.mf-trading-terminal
 .position-main
 .position-topline
 .position-symbol
-> .copy-trade-badge{font-size:9px !important;}
+> .copy-trade-badge{font-size:11px !important;}
 html[data-theme]
 body.mf-page-system.mf-page-trading.mf-trading-terminal
 .positions-panel
@@ -4738,17 +4694,17 @@ html[data-theme]
 body.mf-page-system.mf-page-trading.mf-trading-terminal
 .chart-panel
 .chart-legend
-span{font-size:8px !important;}
+span{font-size:11px !important;}
 html[data-theme]
 body.mf-page-system.mf-page-trading.mf-trading-terminal
 .chart-panel
 .timeframes
-> button{font-size:9px !important;}
+> button{font-size:11px !important;}
 html[data-theme]
 body.mf-page-system.mf-page-trading.mf-trading-terminal
 .chart-panel
 .indicator-bar
-button{font-size:8px !important;}
+button{font-size:11px !important;}
 html[data-theme]
 body.mf-page-system.mf-page-trading.mf-trading-terminal
 .chart-panel
@@ -4758,7 +4714,7 @@ html[data-theme]
 body.mf-page-system.mf-page-trading.mf-trading-terminal
 .chart-panel
 .selected-metrics
-strong{font-size:9px !important;}
+strong{font-size:11px !important;}
 
 /* TYPOGRAPHY: how-it-works.html */
 body.mf-page-how-it-works .brand-mark{font-size:0!important;}
@@ -4789,12 +4745,12 @@ body.mf-page-how-it-works .subscription-metric small,
 body.mf-page-how-it-works .system-health-summary small{text-transform:uppercase!important;}
 @media(max-width:430px){body.mf-page-how-it-works .panel-head h2,
 body.mf-page-how-it-works .execution-head h2{font-size:12px;}}
-body.mf-page-how-it-works{--mf-type-micro:8px;}
-body.mf-page-how-it-works{--mf-type-meta:9px;}
-body.mf-page-how-it-works{--mf-type-ui:10px;}
-body.mf-page-how-it-works{--mf-type-body:11px;}
-body.mf-page-how-it-works{--mf-type-panel:13px;}
-body.mf-page-how-it-works{--mf-type-title:15px;}
+body.mf-page-how-it-works{--mf-type-micro:11px;}
+body.mf-page-how-it-works{--mf-type-meta:12px;}
+body.mf-page-how-it-works{--mf-type-ui:13px;}
+body.mf-page-how-it-works{--mf-type-body:14px;}
+body.mf-page-how-it-works{--mf-type-panel:15px;}
+body.mf-page-how-it-works{--mf-type-title:17px;}
 body.mf-page-how-it-works .eyebrow{font-size:var(--mf-type-micro);}
 body.mf-page-how-it-works .panel-head h2,
 body.mf-page-how-it-works .execution-head h2,
@@ -4805,7 +4761,7 @@ body.mf-page-how-it-works .execution-head h2,
 body.mf-page-how-it-works .wallet-dialog-head h2,
 body.mf-page-how-it-works .sheet-top h2{line-height:1.2;}
 body.mf-page-how-it-works .btn{font-size:var(--mf-type-body);}
-body.mf-page-how-it-works .mf-nav-kicker{font-size:7px;}
+body.mf-page-how-it-works .mf-nav-kicker{font-size:11px;}
 body.mf-page-how-it-works .mf-nav-kicker{line-height:1;}
 body.mf-page-how-it-works .mf-nav-kicker{font-weight:850;}
 body.mf-page-how-it-works .mf-nav-kicker{letter-spacing:.18em;}
@@ -4818,17 +4774,17 @@ body.mf-page-how-it-works .mf-nav-link-title{font-size:12px;}
 body.mf-page-how-it-works .mf-nav-link-title{line-height:1.2;}
 body.mf-page-how-it-works .mf-nav-link-title{font-weight:760;}
 body.mf-page-how-it-works .mf-nav-link-title{letter-spacing:.012em;}
-body.mf-page-how-it-works .mf-nav-link-sub{font-size:8px;}
+body.mf-page-how-it-works .mf-nav-link-sub{font-size:11px;}
 body.mf-page-how-it-works .mf-nav-link-sub{line-height:1.35;}
 body.mf-page-how-it-works .mf-nav-link-sub{font-weight:550;}
 body.mf-page-how-it-works .mf-nav-link-sub{letter-spacing:.02em;}
 body.mf-page-how-it-works .mf-nav-link-arrow{font-size:14px;}
 body.mf-page-how-it-works .mf-nav-link-arrow{line-height:1;}
-body.mf-page-how-it-works .mf-nav-foot strong{font-size:8px;}
+body.mf-page-how-it-works .mf-nav-foot strong{font-size:11px;}
 body.mf-page-how-it-works .mf-nav-foot strong{line-height:1.2;}
 body.mf-page-how-it-works .mf-nav-foot strong{font-weight:750;}
 body.mf-page-how-it-works .mf-nav-foot strong{letter-spacing:.12em;}
-body.mf-page-how-it-works .mf-nav-foot span{font-size:7px;}
+body.mf-page-how-it-works .mf-nav-foot span{font-size:11px;}
 body.mf-page-how-it-works .mf-nav-foot span{line-height:1.4;}
 body.mf-page-how-it-works a,
 body.mf-page-how-it-works button{font:inherit;}
@@ -4995,7 +4951,7 @@ body.mf-page-how-it-works .mf-site-header .brand-block .subtitle,
 body.mf-page-how-it-works .mf-site-header .header-title > strong,
 body.mf-page-how-it-works .mf-site-header .mf-settings-page-title > strong,
 body.mf-page-how-it-works .mf-site-header .mf-vault-brand-copy > small,
-body.mf-page-how-it-works .mf-site-header .mf-hiw-brand-copy > small{font-size:8px;}
+body.mf-page-how-it-works .mf-site-header .mf-hiw-brand-copy > small{font-size:11px;}
 body.mf-page-how-it-works .mf-site-header .brand-sub,
 body.mf-page-how-it-works .mf-site-header .brand-block .subtitle,
 body.mf-page-how-it-works .mf-site-header .header-title > strong,
@@ -5015,7 +4971,7 @@ body.mf-page-how-it-works .mf-site-header .mf-settings-page-title > strong,
 body.mf-page-how-it-works .mf-site-header .mf-vault-brand-copy > small,
 body.mf-page-how-it-works .mf-site-header .mf-hiw-brand-copy > small{letter-spacing:.12em;}
 body.mf-page-how-it-works .mf-site-header .live-status,
-body.mf-page-how-it-works .mf-site-header .mf-settings-page-live{font-size:8px;}
+body.mf-page-how-it-works .mf-site-header .mf-settings-page-live{font-size:11px;}
 body.mf-page-how-it-works .mf-site-header .live-status,
 body.mf-page-how-it-works .mf-site-header .mf-settings-page-live{line-height:1;}
 body.mf-page-how-it-works .mf-site-header .live-status,
@@ -5033,7 +4989,7 @@ body.mf-page-how-it-works .mf-site-header .brand-block .subtitle,
 body.mf-page-how-it-works .mf-site-header .header-title > strong,
 body.mf-page-how-it-works .mf-site-header .mf-settings-page-title > strong,
 body.mf-page-how-it-works .mf-site-header .mf-vault-brand-copy > small,
-body.mf-page-how-it-works .mf-site-header .mf-hiw-brand-copy > small{font-size:8px;}}
+body.mf-page-how-it-works .mf-site-header .mf-hiw-brand-copy > small{font-size:11px;}}
 @media (max-width: 820px){body.mf-page-how-it-works .mf-site-header .brand-sub,
 body.mf-page-how-it-works .mf-site-header .brand-block .subtitle,
 body.mf-page-how-it-works .mf-site-header .header-title > strong,
@@ -5042,16 +4998,16 @@ body.mf-page-how-it-works .mf-site-header .mf-vault-brand-copy > small,
 body.mf-page-how-it-works .mf-site-header .mf-hiw-brand-copy > small{letter-spacing:.12em;}}
 body.mf-page-how-it-works .mf-theme-appearance-copy strong{font-size:var(--mf-type-panel, 13px);}
 body.mf-page-how-it-works .mf-theme-appearance-copy strong{line-height:1.2;}
-body.mf-page-how-it-works .mf-theme-appearance-copy small{font-size:var(--mf-type-meta, 9px);}
+body.mf-page-how-it-works .mf-theme-appearance-copy small{font-size:var(--mf-type-meta, 11px);}
 body.mf-page-how-it-works .mf-theme-appearance-copy small{line-height:1.35;}
 body.mf-page-how-it-works .mf-theme-appearance-label,
-body.mf-page-how-it-works .mf-theme-current{font-size:var(--mf-type-meta, 9px);}
+body.mf-page-how-it-works .mf-theme-current{font-size:var(--mf-type-meta, 11px);}
 body.mf-page-how-it-works .mf-theme-appearance-label,
 body.mf-page-how-it-works .mf-theme-current{line-height:1;}
 body.mf-page-how-it-works .mf-theme-segmented button{font:inherit;}
-body.mf-page-how-it-works .mf-theme-segmented button{font-size:var(--mf-type-meta, 9px);}
+body.mf-page-how-it-works .mf-theme-segmented button{font-size:var(--mf-type-meta, 11px);}
 body.mf-page-how-it-works .mf-theme-segmented button{font-weight:760;}
-body.mf-page-how-it-works [data-mf-open-position-pipeline-v3="1"]{font-size:var(--mf-type-micro, 10px) !important;}
+body.mf-page-how-it-works [data-mf-open-position-pipeline-v3="1"]{font-size:var(--mf-type-micro, 11px) !important;}
 body.mf-page-how-it-works [data-mf-open-position-pipeline-v3="1"]{font-weight:900 !important;}
 body.mf-page-how-it-works [data-mf-open-position-pipeline-v3="1"]{line-height:1 !important;}
 body.mf-page-how-it-works [data-mf-open-position-pipeline-v3="1"]{letter-spacing:.07em !important;}
@@ -5170,7 +5126,7 @@ html:has(body.mf-page-how-it-works)[data-theme="light"] .mf-site-header :is(
   .mf-settings-page-title > strong,
   .mf-vault-brand-copy > small,
   .mf-hiw-brand-copy > small
-){font-size:8px !important;}
+){font-size:11px !important;}
 html:has(body.mf-page-how-it-works)[data-theme="light"] .mf-site-header :is(
   .brand-sub,
   .brand-block .subtitle,
@@ -5195,7 +5151,7 @@ html:has(body.mf-page-how-it-works)[data-theme="light"] .mf-site-header :is(
   .mf-vault-brand-copy > small,
   .mf-hiw-brand-copy > small
 ){letter-spacing:.12em !important;}
-body.mf-page-how-it-works{--mf-type-system:8px;}
+body.mf-page-how-it-works{--mf-type-system:11px;}
 html body.mf-page-how-it-works:is(
 .mf-page-system,
   .mf-page-system-tokens,
@@ -5281,7 +5237,7 @@ body.mf-page-how-it-works.mf-page-trading.mf-trading-terminal
 :where(.strategy-summary-panel .strategy-edit-link,
        .positions-panel .close-position,
        .chart-panel #tokenState.decision-badge,
-       .positions-panel .copy-trade-badge){font-size:9px !important;}
+       .positions-panel .copy-trade-badge){font-size:11px !important;}
 html[data-theme]
 body.mf-page-how-it-works.mf-page-trading.mf-trading-terminal
 :where(.strategy-summary-panel .strategy-edit-link,
@@ -5317,7 +5273,7 @@ body.mf-page-how-it-works.mf-page-trading.mf-trading-terminal
 .chart-panel
 .chart-head
 .token-name-row
-> #tokenState.decision-badge{font-size:9px !important;}
+> #tokenState.decision-badge{font-size:11px !important;}
 html[data-theme]
 body.mf-page-how-it-works.mf-page-trading.mf-trading-terminal
 .chart-panel
@@ -5357,7 +5313,7 @@ body.mf-page-how-it-works.mf-page-trading.mf-trading-terminal
 .position-main
 .position-topline
 .position-symbol
-> .copy-trade-badge{font-size:9px !important;}
+> .copy-trade-badge{font-size:11px !important;}
 html[data-theme]
 body.mf-page-how-it-works.mf-page-trading.mf-trading-terminal
 .positions-panel
@@ -5398,17 +5354,17 @@ html[data-theme]
 body.mf-page-how-it-works.mf-page-trading.mf-trading-terminal
 .chart-panel
 .chart-legend
-span{font-size:8px !important;}
+span{font-size:11px !important;}
 html[data-theme]
 body.mf-page-how-it-works.mf-page-trading.mf-trading-terminal
 .chart-panel
 .timeframes
-> button{font-size:9px !important;}
+> button{font-size:11px !important;}
 html[data-theme]
 body.mf-page-how-it-works.mf-page-trading.mf-trading-terminal
 .chart-panel
 .indicator-bar
-button{font-size:8px !important;}
+button{font-size:11px !important;}
 html[data-theme]
 body.mf-page-how-it-works.mf-page-trading.mf-trading-terminal
 .chart-panel
@@ -5418,7 +5374,7 @@ html[data-theme]
 body.mf-page-how-it-works.mf-page-trading.mf-trading-terminal
 .chart-panel
 .selected-metrics
-strong{font-size:9px !important;}
+strong{font-size:11px !important;}
 
 /* TYPOGRAPHY: smart-vault.html */
 body.mf-page-smart-vault .brand-mark{font-size:0!important;}
@@ -5449,12 +5405,12 @@ body.mf-page-smart-vault .subscription-metric small,
 body.mf-page-smart-vault .system-health-summary small{text-transform:uppercase!important;}
 @media(max-width:430px){body.mf-page-smart-vault .panel-head h2,
 body.mf-page-smart-vault .execution-head h2{font-size:12px;}}
-body.mf-page-smart-vault{--mf-type-micro:8px;}
-body.mf-page-smart-vault{--mf-type-meta:9px;}
-body.mf-page-smart-vault{--mf-type-ui:10px;}
-body.mf-page-smart-vault{--mf-type-body:11px;}
-body.mf-page-smart-vault{--mf-type-panel:13px;}
-body.mf-page-smart-vault{--mf-type-title:15px;}
+body.mf-page-smart-vault{--mf-type-micro:11px;}
+body.mf-page-smart-vault{--mf-type-meta:12px;}
+body.mf-page-smart-vault{--mf-type-ui:13px;}
+body.mf-page-smart-vault{--mf-type-body:14px;}
+body.mf-page-smart-vault{--mf-type-panel:15px;}
+body.mf-page-smart-vault{--mf-type-title:17px;}
 body.mf-page-smart-vault .eyebrow{font-size:var(--mf-type-micro);}
 body.mf-page-smart-vault .panel-head h2,
 body.mf-page-smart-vault .execution-head h2,
@@ -5465,7 +5421,7 @@ body.mf-page-smart-vault .execution-head h2,
 body.mf-page-smart-vault .wallet-dialog-head h2,
 body.mf-page-smart-vault .sheet-top h2{line-height:1.2;}
 body.mf-page-smart-vault .btn{font-size:var(--mf-type-body);}
-body.mf-page-smart-vault .mf-nav-kicker{font-size:7px;}
+body.mf-page-smart-vault .mf-nav-kicker{font-size:11px;}
 body.mf-page-smart-vault .mf-nav-kicker{line-height:1;}
 body.mf-page-smart-vault .mf-nav-kicker{font-weight:850;}
 body.mf-page-smart-vault .mf-nav-kicker{letter-spacing:.18em;}
@@ -5478,17 +5434,17 @@ body.mf-page-smart-vault .mf-nav-link-title{font-size:12px;}
 body.mf-page-smart-vault .mf-nav-link-title{line-height:1.2;}
 body.mf-page-smart-vault .mf-nav-link-title{font-weight:760;}
 body.mf-page-smart-vault .mf-nav-link-title{letter-spacing:.012em;}
-body.mf-page-smart-vault .mf-nav-link-sub{font-size:8px;}
+body.mf-page-smart-vault .mf-nav-link-sub{font-size:11px;}
 body.mf-page-smart-vault .mf-nav-link-sub{line-height:1.35;}
 body.mf-page-smart-vault .mf-nav-link-sub{font-weight:550;}
 body.mf-page-smart-vault .mf-nav-link-sub{letter-spacing:.02em;}
 body.mf-page-smart-vault .mf-nav-link-arrow{font-size:14px;}
 body.mf-page-smart-vault .mf-nav-link-arrow{line-height:1;}
-body.mf-page-smart-vault .mf-nav-foot strong{font-size:8px;}
+body.mf-page-smart-vault .mf-nav-foot strong{font-size:11px;}
 body.mf-page-smart-vault .mf-nav-foot strong{line-height:1.2;}
 body.mf-page-smart-vault .mf-nav-foot strong{font-weight:750;}
 body.mf-page-smart-vault .mf-nav-foot strong{letter-spacing:.12em;}
-body.mf-page-smart-vault .mf-nav-foot span{font-size:7px;}
+body.mf-page-smart-vault .mf-nav-foot span{font-size:11px;}
 body.mf-page-smart-vault .mf-nav-foot span{line-height:1.4;}
 body.mf-page-smart-vault button,
 body.mf-page-smart-vault a{font:inherit;}
@@ -5575,11 +5531,11 @@ body.mf-page-smart-vault .mf-ag-card h2{line-height:1.03!important;}
 body.mf-page-smart-vault .mf-ag-card p{font-size:12px;}
 body.mf-page-smart-vault .mf-ag-card p{line-height:1.42!important;}
 body.mf-page-smart-vault .mf-ag-tier b{font-size:var(--mf-type-panel);}
-body.mf-page-smart-vault .mf-ag-tier span{font-size:10.5px;}
+body.mf-page-smart-vault .mf-ag-tier span{font-size:11px;}
 body.mf-page-smart-vault .mf-ag-tier span{line-height:1.35!important;}
-body.mf-page-smart-vault .mf-ag-btn{font-size:10.5px;}
+body.mf-page-smart-vault .mf-ag-btn{font-size:11px;}
 body.mf-page-smart-vault .mf-ag-btn{line-height:1.25!important;}
-body.mf-page-smart-vault .mf-ag-foot{font-size:9.5px;}
+body.mf-page-smart-vault .mf-ag-foot{font-size:11px;}
 body.mf-page-smart-vault .mf-ag-foot{line-height:1.35!important;}
 body.mf-page-smart-vault .mf-ag-tier span strong{font-weight:800!important;}
 body.mf-page-smart-vault .mf-site-header .brand-title,
@@ -5611,7 +5567,7 @@ body.mf-page-smart-vault .mf-site-header .brand-block .subtitle,
 body.mf-page-smart-vault .mf-site-header .header-title > strong,
 body.mf-page-smart-vault .mf-site-header .mf-settings-page-title > strong,
 body.mf-page-smart-vault .mf-site-header .mf-vault-brand-copy > small,
-body.mf-page-smart-vault .mf-site-header .mf-hiw-brand-copy > small{font-size:8px;}
+body.mf-page-smart-vault .mf-site-header .mf-hiw-brand-copy > small{font-size:11px;}
 body.mf-page-smart-vault .mf-site-header .brand-sub,
 body.mf-page-smart-vault .mf-site-header .brand-block .subtitle,
 body.mf-page-smart-vault .mf-site-header .header-title > strong,
@@ -5631,7 +5587,7 @@ body.mf-page-smart-vault .mf-site-header .mf-settings-page-title > strong,
 body.mf-page-smart-vault .mf-site-header .mf-vault-brand-copy > small,
 body.mf-page-smart-vault .mf-site-header .mf-hiw-brand-copy > small{letter-spacing:.12em;}
 body.mf-page-smart-vault .mf-site-header .live-status,
-body.mf-page-smart-vault .mf-site-header .mf-settings-page-live{font-size:8px;}
+body.mf-page-smart-vault .mf-site-header .mf-settings-page-live{font-size:11px;}
 body.mf-page-smart-vault .mf-site-header .live-status,
 body.mf-page-smart-vault .mf-site-header .mf-settings-page-live{line-height:1;}
 body.mf-page-smart-vault .mf-site-header .live-status,
@@ -5649,7 +5605,7 @@ body.mf-page-smart-vault .mf-site-header .brand-block .subtitle,
 body.mf-page-smart-vault .mf-site-header .header-title > strong,
 body.mf-page-smart-vault .mf-site-header .mf-settings-page-title > strong,
 body.mf-page-smart-vault .mf-site-header .mf-vault-brand-copy > small,
-body.mf-page-smart-vault .mf-site-header .mf-hiw-brand-copy > small{font-size:8px;}}
+body.mf-page-smart-vault .mf-site-header .mf-hiw-brand-copy > small{font-size:11px;}}
 @media (max-width: 820px){body.mf-page-smart-vault .mf-site-header .brand-sub,
 body.mf-page-smart-vault .mf-site-header .brand-block .subtitle,
 body.mf-page-smart-vault .mf-site-header .header-title > strong,
@@ -5658,16 +5614,16 @@ body.mf-page-smart-vault .mf-site-header .mf-vault-brand-copy > small,
 body.mf-page-smart-vault .mf-site-header .mf-hiw-brand-copy > small{letter-spacing:.12em;}}
 body.mf-page-smart-vault .mf-theme-appearance-copy strong{font-size:var(--mf-type-panel, 13px);}
 body.mf-page-smart-vault .mf-theme-appearance-copy strong{line-height:1.2;}
-body.mf-page-smart-vault .mf-theme-appearance-copy small{font-size:var(--mf-type-meta, 9px);}
+body.mf-page-smart-vault .mf-theme-appearance-copy small{font-size:var(--mf-type-meta, 11px);}
 body.mf-page-smart-vault .mf-theme-appearance-copy small{line-height:1.35;}
 body.mf-page-smart-vault .mf-theme-appearance-label,
-body.mf-page-smart-vault .mf-theme-current{font-size:var(--mf-type-meta, 9px);}
+body.mf-page-smart-vault .mf-theme-current{font-size:var(--mf-type-meta, 11px);}
 body.mf-page-smart-vault .mf-theme-appearance-label,
 body.mf-page-smart-vault .mf-theme-current{line-height:1;}
 body.mf-page-smart-vault .mf-theme-segmented button{font:inherit;}
-body.mf-page-smart-vault .mf-theme-segmented button{font-size:var(--mf-type-meta, 9px);}
+body.mf-page-smart-vault .mf-theme-segmented button{font-size:var(--mf-type-meta, 11px);}
 body.mf-page-smart-vault .mf-theme-segmented button{font-weight:760;}
-body.mf-page-smart-vault [data-mf-open-position-pipeline-v3="1"]{font-size:var(--mf-type-micro, 10px) !important;}
+body.mf-page-smart-vault [data-mf-open-position-pipeline-v3="1"]{font-size:var(--mf-type-micro, 11px) !important;}
 body.mf-page-smart-vault [data-mf-open-position-pipeline-v3="1"]{font-weight:900 !important;}
 body.mf-page-smart-vault [data-mf-open-position-pipeline-v3="1"]{line-height:1 !important;}
 body.mf-page-smart-vault [data-mf-open-position-pipeline-v3="1"]{letter-spacing:.07em !important;}
@@ -5763,7 +5719,7 @@ body.mf-page-smart-vault .mf-trading-terminal .panel-head h2{font-size:clamp(18p
 body.mf-page-smart-vault .mf-trading-terminal .panel-head h2{line-height:1.08;}
 body.mf-page-smart-vault .mf-trading-terminal .panel-head h2{font-weight:780;}
 body.mf-page-smart-vault .mf-trading-terminal .panel-head h2{letter-spacing:-0.025em;}
-body.mf-page-smart-vault .mf-trading-terminal .eyebrow{font-size:10.5px;}
+body.mf-page-smart-vault .mf-trading-terminal .eyebrow{font-size:11px;}
 body.mf-page-smart-vault .mf-trading-terminal .eyebrow{line-height:1.15;}
 body.mf-page-smart-vault .mf-trading-terminal .eyebrow{font-weight:800;}
 body.mf-page-smart-vault .mf-trading-terminal .eyebrow{letter-spacing:0.145em;}
@@ -5791,7 +5747,7 @@ body.mf-page-smart-vault .flow-page .flow-hero h1{font-size:clamp(28px, 4.2vw, 3
 body.mf-page-smart-vault .flow-page .flow-hero h1{line-height:0.98;}
 body.mf-page-smart-vault .flow-page .flow-hero h1{font-weight:800;}
 body.mf-page-smart-vault .flow-page .flow-hero h1{letter-spacing:-0.038em;}
-body.mf-page-smart-vault .flow-page .flow-hero .eyebrow{font-size:10.5px;}
+body.mf-page-smart-vault .flow-page .flow-hero .eyebrow{font-size:11px;}
 body.mf-page-smart-vault .flow-page .flow-hero .eyebrow{line-height:1.15;}
 body.mf-page-smart-vault .flow-page .flow-hero .eyebrow{font-weight:850;}
 body.mf-page-smart-vault .flow-page .flow-hero .eyebrow{letter-spacing:0.155em;}
@@ -5821,7 +5777,7 @@ body.mf-page-smart-vault .mf-vault-shell .mf-vault-hero p{font-size:15px;}
 body.mf-page-smart-vault .mf-vault-shell .mf-vault-hero p{line-height:1.58;}
 body.mf-page-smart-vault .mf-vault-shell .mf-vault-hero p{letter-spacing:-0.008em;}
 body.mf-page-smart-vault .mf-vault-shell .mf-vault-kicker,
-body.mf-page-smart-vault .mf-vault-shell .mf-vault-eyebrow{font-size:10.5px;}
+body.mf-page-smart-vault .mf-vault-shell .mf-vault-eyebrow{font-size:11px;}
 body.mf-page-smart-vault .mf-vault-shell .mf-vault-kicker,
 body.mf-page-smart-vault .mf-vault-shell .mf-vault-eyebrow{line-height:1.2;}
 body.mf-page-smart-vault .mf-vault-shell .mf-vault-kicker,
@@ -5845,7 +5801,7 @@ body.mf-page-smart-vault .mf-vault-shell .mf-vault-checklist small{line-height:1
 body.mf-page-smart-vault .mf-vault-shell .mf-vault-btn{line-height:1.2;}
 body.mf-page-smart-vault .mf-vault-shell .mf-vault-btn{letter-spacing:0.085em;}
 @media (max-width: 760px){body.mf-page-smart-vault .mf-trading-terminal .panel-head h2{font-size:18px;}}
-@media (max-width: 760px){body.mf-page-smart-vault .mf-trading-terminal .eyebrow{font-size:10px;}}
+@media (max-width: 760px){body.mf-page-smart-vault .mf-trading-terminal .eyebrow{font-size:11px;}}
 @media (max-width: 760px){body.mf-page-smart-vault .flow-page .flow-hero h1{font-size:28px;}}
 @media (max-width: 760px){body.mf-page-smart-vault .flow-page .summary-card strong{font-size:18px;}}
 @media (max-width: 760px){body.mf-page-smart-vault .mf-vault-shell .mf-vault-hero h1{font-size:38px;}}
@@ -5892,7 +5848,7 @@ html:has(body.mf-page-smart-vault)[data-theme="light"] .mf-site-header :is(
   .mf-settings-page-title > strong,
   .mf-vault-brand-copy > small,
   .mf-hiw-brand-copy > small
-){font-size:8px !important;}
+){font-size:11px !important;}
 html:has(body.mf-page-smart-vault)[data-theme="light"] .mf-site-header :is(
   .brand-sub,
   .brand-block .subtitle,
@@ -5917,7 +5873,7 @@ html:has(body.mf-page-smart-vault)[data-theme="light"] .mf-site-header :is(
   .mf-vault-brand-copy > small,
   .mf-hiw-brand-copy > small
 ){letter-spacing:.12em !important;}
-body.mf-page-smart-vault{--mf-type-system:8px;}
+body.mf-page-smart-vault{--mf-type-system:11px;}
 html body.mf-page-smart-vault:is(
 .mf-page-system,
   .mf-page-system-tokens,
@@ -6003,7 +5959,7 @@ body.mf-page-smart-vault.mf-page-trading.mf-trading-terminal
 :where(.strategy-summary-panel .strategy-edit-link,
        .positions-panel .close-position,
        .chart-panel #tokenState.decision-badge,
-       .positions-panel .copy-trade-badge){font-size:9px !important;}
+       .positions-panel .copy-trade-badge){font-size:11px !important;}
 html[data-theme]
 body.mf-page-smart-vault.mf-page-trading.mf-trading-terminal
 :where(.strategy-summary-panel .strategy-edit-link,
@@ -6039,7 +5995,7 @@ body.mf-page-smart-vault.mf-page-trading.mf-trading-terminal
 .chart-panel
 .chart-head
 .token-name-row
-> #tokenState.decision-badge{font-size:9px !important;}
+> #tokenState.decision-badge{font-size:11px !important;}
 html[data-theme]
 body.mf-page-smart-vault.mf-page-trading.mf-trading-terminal
 .chart-panel
@@ -6079,7 +6035,7 @@ body.mf-page-smart-vault.mf-page-trading.mf-trading-terminal
 .position-main
 .position-topline
 .position-symbol
-> .copy-trade-badge{font-size:9px !important;}
+> .copy-trade-badge{font-size:11px !important;}
 html[data-theme]
 body.mf-page-smart-vault.mf-page-trading.mf-trading-terminal
 .positions-panel
@@ -6120,17 +6076,17 @@ html[data-theme]
 body.mf-page-smart-vault.mf-page-trading.mf-trading-terminal
 .chart-panel
 .chart-legend
-span{font-size:8px !important;}
+span{font-size:11px !important;}
 html[data-theme]
 body.mf-page-smart-vault.mf-page-trading.mf-trading-terminal
 .chart-panel
 .timeframes
-> button{font-size:9px !important;}
+> button{font-size:11px !important;}
 html[data-theme]
 body.mf-page-smart-vault.mf-page-trading.mf-trading-terminal
 .chart-panel
 .indicator-bar
-button{font-size:8px !important;}
+button{font-size:11px !important;}
 html[data-theme]
 body.mf-page-smart-vault.mf-page-trading.mf-trading-terminal
 .chart-panel
@@ -6140,7 +6096,7 @@ html[data-theme]
 body.mf-page-smart-vault.mf-page-trading.mf-trading-terminal
 .chart-panel
 .selected-metrics
-strong{font-size:9px !important;}
+strong{font-size:11px !important;}
 
 /* TYPOGRAPHY: trading.html */
 body.mf-page-trading button,
@@ -6221,7 +6177,7 @@ body.mf-page-trading .approval-count{font-weight:800;}
 body.mf-page-trading .approval-count{letter-spacing:.05em;}
 body.mf-page-trading .approvals-panel .approval-list > .empty,
 body.mf-page-trading .approvals-panel .approval-list > .approval-empty,
-body.mf-page-trading .approvals-panel .approval-empty{font-size:var(--mf-type-system, 8px) !important;}
+body.mf-page-trading .approvals-panel .approval-empty{font-size:var(--mf-type-system, 11px) !important;}
 body.mf-page-trading .approval-main strong{font-size:var(--mf-type-ui);}
 body.mf-page-trading .approval-main span{font-size:var(--mf-type-micro);}
 body.mf-page-trading .approval-stats b{font-size:var(--mf-type-micro);}
@@ -6231,12 +6187,12 @@ body.mf-page-trading .approval-stats strong{font-weight:720;}
 body.mf-page-trading .approval-actions button{font-size:var(--mf-type-micro);}
 body.mf-page-trading .approval-actions button{font-weight:820;}
 @media (max-width: 820px){body.mf-page-trading .approval-count,
-body.mf-page-trading .approval-actions button{font-size:9px !important;}}
+body.mf-page-trading .approval-actions button{font-size:11px !important;}}
 @media (max-width: 820px){body.mf-page-trading .approval-count,
 body.mf-page-trading .approval-actions button{font-weight:500 !important;}}
 @media (max-width: 820px){body.mf-page-trading .approval-main span,
 body.mf-page-trading .approval-stats b,
-body.mf-page-trading .approval-stats strong{font-size:9px !important;}}
+body.mf-page-trading .approval-stats strong{font-size:11px !important;}}
 @media (max-width: 820px){body.mf-page-trading .approval-main span,
 body.mf-page-trading .approval-stats b,
 body.mf-page-trading .approval-stats strong{font-weight:500 !important;}}
@@ -6277,7 +6233,7 @@ body.mf-page-trading .trade-log-bottomline{font-size:var(--mf-type-micro);}
 body.mf-page-trading .trade-log-bottomline{line-height:1;}
 body.mf-page-trading .trade-log-bottomline i{font-style:normal;}
 body.mf-page-trading.mf-trading-terminal
-.candidates-panel .candidate-filter > button[data-filter]{font-size:9px !important;}
+.candidates-panel .candidate-filter > button[data-filter]{font-size:11px !important;}
 body.mf-page-trading.mf-trading-terminal
 .candidates-panel .candidate-filter > button[data-filter]{line-height:1 !important;}
 body.mf-page-trading.mf-trading-terminal
@@ -6287,7 +6243,7 @@ body.mf-page-trading.mf-trading-terminal
 body.mf-page-trading.mf-trading-terminal
 .candidates-panel .candidate-filter > button[data-filter]{text-transform:uppercase !important;}
 body.mf-page-trading.mf-trading-terminal
-.candidates-panel .candidate-list > .empty{font-size:var(--mf-type-system, 8px) !important;}
+.candidates-panel .candidate-list > .empty{font-size:var(--mf-type-system, 11px) !important;}
 body.mf-page-trading.mf-trading-terminal
 .candidates-panel .candidate-list > .empty{line-height:1.2 !important;}
 body.mf-page-trading.mf-trading-terminal
@@ -6335,7 +6291,7 @@ body.mf-page-trading .execution-head h2,
 body.mf-page-trading .wallet-dialog-head h2,
 body.mf-page-trading .sheet-top h2{line-height:1.2;}
 body.mf-page-trading .btn{font-size:var(--mf-type-body);}
-body.mf-page-trading .mf-nav-kicker{font-size:7px;}
+body.mf-page-trading .mf-nav-kicker{font-size:11px;}
 body.mf-page-trading .mf-nav-kicker{line-height:1;}
 body.mf-page-trading .mf-nav-kicker{font-weight:850;}
 body.mf-page-trading .mf-nav-kicker{letter-spacing:.18em;}
@@ -6348,17 +6304,17 @@ body.mf-page-trading .mf-nav-link-title{font-size:12px;}
 body.mf-page-trading .mf-nav-link-title{line-height:1.2;}
 body.mf-page-trading .mf-nav-link-title{font-weight:760;}
 body.mf-page-trading .mf-nav-link-title{letter-spacing:.012em;}
-body.mf-page-trading .mf-nav-link-sub{font-size:8px;}
+body.mf-page-trading .mf-nav-link-sub{font-size:11px;}
 body.mf-page-trading .mf-nav-link-sub{line-height:1.35;}
 body.mf-page-trading .mf-nav-link-sub{font-weight:550;}
 body.mf-page-trading .mf-nav-link-sub{letter-spacing:.02em;}
 body.mf-page-trading .mf-nav-link-arrow{font-size:14px;}
 body.mf-page-trading .mf-nav-link-arrow{line-height:1;}
-body.mf-page-trading .mf-nav-foot strong{font-size:8px;}
+body.mf-page-trading .mf-nav-foot strong{font-size:11px;}
 body.mf-page-trading .mf-nav-foot strong{line-height:1.2;}
 body.mf-page-trading .mf-nav-foot strong{font-weight:750;}
 body.mf-page-trading .mf-nav-foot strong{letter-spacing:.12em;}
-body.mf-page-trading .mf-nav-foot span{font-size:7px;}
+body.mf-page-trading .mf-nav-foot span{font-size:11px;}
 body.mf-page-trading .mf-nav-foot span{line-height:1.4;}
 body.mf-page-trading .mf-site-header .brand-title,
 body.mf-page-trading .mf-site-header .brand-block .brand,
@@ -6389,7 +6345,7 @@ body.mf-page-trading .mf-site-header .brand-block .subtitle,
 body.mf-page-trading .mf-site-header .header-title > strong,
 body.mf-page-trading .mf-site-header .mf-settings-page-title > strong,
 body.mf-page-trading .mf-site-header .mf-vault-brand-copy > small,
-body.mf-page-trading .mf-site-header .mf-hiw-brand-copy > small{font-size:8px;}
+body.mf-page-trading .mf-site-header .mf-hiw-brand-copy > small{font-size:11px;}
 body.mf-page-trading .mf-site-header .brand-sub,
 body.mf-page-trading .mf-site-header .brand-block .subtitle,
 body.mf-page-trading .mf-site-header .header-title > strong,
@@ -6409,7 +6365,7 @@ body.mf-page-trading .mf-site-header .mf-settings-page-title > strong,
 body.mf-page-trading .mf-site-header .mf-vault-brand-copy > small,
 body.mf-page-trading .mf-site-header .mf-hiw-brand-copy > small{letter-spacing:.12em;}
 body.mf-page-trading .mf-site-header .live-status,
-body.mf-page-trading .mf-site-header .mf-settings-page-live{font-size:8px;}
+body.mf-page-trading .mf-site-header .mf-settings-page-live{font-size:11px;}
 body.mf-page-trading .mf-site-header .live-status,
 body.mf-page-trading .mf-site-header .mf-settings-page-live{line-height:1;}
 body.mf-page-trading .mf-site-header .live-status,
@@ -6427,7 +6383,7 @@ body.mf-page-trading .mf-site-header .brand-block .subtitle,
 body.mf-page-trading .mf-site-header .header-title > strong,
 body.mf-page-trading .mf-site-header .mf-settings-page-title > strong,
 body.mf-page-trading .mf-site-header .mf-vault-brand-copy > small,
-body.mf-page-trading .mf-site-header .mf-hiw-brand-copy > small{font-size:8px;}}
+body.mf-page-trading .mf-site-header .mf-hiw-brand-copy > small{font-size:11px;}}
 @media (max-width: 820px){body.mf-page-trading .mf-site-header .brand-sub,
 body.mf-page-trading .mf-site-header .brand-block .subtitle,
 body.mf-page-trading .mf-site-header .header-title > strong,
@@ -6436,16 +6392,16 @@ body.mf-page-trading .mf-site-header .mf-vault-brand-copy > small,
 body.mf-page-trading .mf-site-header .mf-hiw-brand-copy > small{letter-spacing:.12em;}}
 body.mf-page-trading .mf-theme-appearance-copy strong{font-size:var(--mf-type-panel, 13px);}
 body.mf-page-trading .mf-theme-appearance-copy strong{line-height:1.2;}
-body.mf-page-trading .mf-theme-appearance-copy small{font-size:var(--mf-type-meta, 9px);}
+body.mf-page-trading .mf-theme-appearance-copy small{font-size:var(--mf-type-meta, 11px);}
 body.mf-page-trading .mf-theme-appearance-copy small{line-height:1.35;}
 body.mf-page-trading .mf-theme-appearance-label,
-body.mf-page-trading .mf-theme-current{font-size:var(--mf-type-meta, 9px);}
+body.mf-page-trading .mf-theme-current{font-size:var(--mf-type-meta, 11px);}
 body.mf-page-trading .mf-theme-appearance-label,
 body.mf-page-trading .mf-theme-current{line-height:1;}
 body.mf-page-trading .mf-theme-segmented button{font:inherit;}
-body.mf-page-trading .mf-theme-segmented button{font-size:var(--mf-type-meta, 9px);}
+body.mf-page-trading .mf-theme-segmented button{font-size:var(--mf-type-meta, 11px);}
 body.mf-page-trading .mf-theme-segmented button{font-weight:760;}
-body.mf-page-trading [data-mf-open-position-pipeline-v3="1"]{font-size:var(--mf-type-micro, 10px) !important;}
+body.mf-page-trading [data-mf-open-position-pipeline-v3="1"]{font-size:var(--mf-type-micro, 11px) !important;}
 body.mf-page-trading [data-mf-open-position-pipeline-v3="1"]{font-weight:900 !important;}
 body.mf-page-trading [data-mf-open-position-pipeline-v3="1"]{line-height:1 !important;}
 body.mf-page-trading [data-mf-open-position-pipeline-v3="1"]{letter-spacing:.07em !important;}
@@ -6536,7 +6492,7 @@ body.mf-page-trading .mf-trading-terminal .panel-head h2{font-size:clamp(18px, 1
 body.mf-page-trading .mf-trading-terminal .panel-head h2{line-height:1.08;}
 body.mf-page-trading .mf-trading-terminal .panel-head h2{font-weight:780;}
 body.mf-page-trading .mf-trading-terminal .panel-head h2{letter-spacing:-0.025em;}
-body.mf-page-trading .mf-trading-terminal .eyebrow{font-size:10.5px;}
+body.mf-page-trading .mf-trading-terminal .eyebrow{font-size:11px;}
 body.mf-page-trading .mf-trading-terminal .eyebrow{line-height:1.15;}
 body.mf-page-trading .mf-trading-terminal .eyebrow{font-weight:800;}
 body.mf-page-trading .mf-trading-terminal .eyebrow{letter-spacing:0.145em;}
@@ -6564,7 +6520,7 @@ body.mf-page-trading .flow-page .flow-hero h1{font-size:clamp(28px, 4.2vw, 38px)
 body.mf-page-trading .flow-page .flow-hero h1{line-height:0.98;}
 body.mf-page-trading .flow-page .flow-hero h1{font-weight:800;}
 body.mf-page-trading .flow-page .flow-hero h1{letter-spacing:-0.038em;}
-body.mf-page-trading .flow-page .flow-hero .eyebrow{font-size:10.5px;}
+body.mf-page-trading .flow-page .flow-hero .eyebrow{font-size:11px;}
 body.mf-page-trading .flow-page .flow-hero .eyebrow{line-height:1.15;}
 body.mf-page-trading .flow-page .flow-hero .eyebrow{font-weight:850;}
 body.mf-page-trading .flow-page .flow-hero .eyebrow{letter-spacing:0.155em;}
@@ -6594,7 +6550,7 @@ body.mf-page-trading .mf-vault-shell .mf-vault-hero p{font-size:15px;}
 body.mf-page-trading .mf-vault-shell .mf-vault-hero p{line-height:1.58;}
 body.mf-page-trading .mf-vault-shell .mf-vault-hero p{letter-spacing:-0.008em;}
 body.mf-page-trading .mf-vault-shell .mf-vault-kicker,
-body.mf-page-trading .mf-vault-shell .mf-vault-eyebrow{font-size:10.5px;}
+body.mf-page-trading .mf-vault-shell .mf-vault-eyebrow{font-size:11px;}
 body.mf-page-trading .mf-vault-shell .mf-vault-kicker,
 body.mf-page-trading .mf-vault-shell .mf-vault-eyebrow{line-height:1.2;}
 body.mf-page-trading .mf-vault-shell .mf-vault-kicker,
@@ -6617,7 +6573,7 @@ body.mf-page-trading .mf-vault-shell .mf-vault-note,
 body.mf-page-trading .mf-vault-shell .mf-vault-checklist small{line-height:1.5;}
 body.mf-page-trading .mf-vault-shell .mf-vault-btn{line-height:1.2;}
 body.mf-page-trading .mf-vault-shell .mf-vault-btn{letter-spacing:0.085em;}
-@media (max-width: 760px){body.mf-page-trading .mf-trading-terminal .eyebrow{font-size:10px;}}
+@media (max-width: 760px){body.mf-page-trading .mf-trading-terminal .eyebrow{font-size:11px;}}
 @media (max-width: 760px){body.mf-page-trading .flow-page .summary-card strong{font-size:18px;}}
 @media (max-width: 760px){body.mf-page-trading .mf-vault-shell .mf-vault-hero h1{font-size:38px;}}
 @media (max-width: 760px){body.mf-page-trading .mf-vault-shell .mf-vault-hero h1{line-height:0.97;}}
@@ -6671,7 +6627,7 @@ html:has(body.mf-page-trading)[data-theme="light"] .mf-site-header :is(
   .mf-settings-page-title > strong,
   .mf-vault-brand-copy > small,
   .mf-hiw-brand-copy > small
-){font-size:8px !important;}
+){font-size:11px !important;}
 html:has(body.mf-page-trading)[data-theme="light"] .mf-site-header :is(
   .brand-sub,
   .brand-block .subtitle,
@@ -6696,12 +6652,12 @@ html:has(body.mf-page-trading)[data-theme="light"] .mf-site-header :is(
   .mf-vault-brand-copy > small,
   .mf-hiw-brand-copy > small
 ){letter-spacing:.12em !important;}
-body.mf-page-trading{--mf-type-micro:10px;}
-body.mf-page-trading{--mf-type-meta:11px;}
-body.mf-page-trading{--mf-type-ui:12px;}
-body.mf-page-trading{--mf-type-body:13px;}
-body.mf-page-trading{--mf-type-panel:14px;}
-body.mf-page-trading{--mf-type-title:16px;}
+body.mf-page-trading{--mf-type-micro:11px;}
+body.mf-page-trading{--mf-type-meta:12px;}
+body.mf-page-trading{--mf-type-ui:13px;}
+body.mf-page-trading{--mf-type-body:14px;}
+body.mf-page-trading{--mf-type-panel:15px;}
+body.mf-page-trading{--mf-type-title:17px;}
 html:has(body.mf-page-trading){text-rendering:optimizeLegibility;}
 body.mf-page-trading{-webkit-font-smoothing:antialiased;}
 body.mf-page-trading{-moz-osx-font-smoothing:grayscale;}
@@ -6785,8 +6741,8 @@ body.mf-page-trading :where(.metric b,.live-item b,.fact b,.score-box b,.profile
 @media (max-width:820px){body.mf-page-trading input,
 body.mf-page-trading select,
 body.mf-page-trading textarea{font-size:max(16px,1em);}}
-@media (max-width:360px){body.mf-page-trading{--mf-type-micro:10px;}}
-@media (max-width:360px){body.mf-page-trading{--mf-type-meta:11px;}}
+@media (max-width:360px){body.mf-page-trading{--mf-type-micro:11px;}}
+@media (max-width:360px){body.mf-page-trading{--mf-type-meta:12px;}}
 html body.mf-page-trading:is(
 .mf-page-system,
   .mf-page-system-tokens,
@@ -6863,10 +6819,10 @@ html body.mf-page-trading:is(
 body.mf-page-trading.mf-trading-terminal{--mf-trading-type-section:17px;}
 body.mf-page-trading.mf-trading-terminal{--mf-trading-type-token:15px;}
 body.mf-page-trading.mf-trading-terminal{--mf-trading-type-price:16px;}
-body.mf-page-trading.mf-trading-terminal{--mf-trading-type-body:12px;}
-body.mf-page-trading.mf-trading-terminal{--mf-trading-type-meta:11px;}
-body.mf-page-trading.mf-trading-terminal{--mf-trading-type-micro:10px;}
-body.mf-page-trading.mf-trading-terminal{--mf-trading-type-eyebrow:9.5px;}
+body.mf-page-trading.mf-trading-terminal{--mf-trading-type-body:14px;}
+body.mf-page-trading.mf-trading-terminal{--mf-trading-type-meta:12px;}
+body.mf-page-trading.mf-trading-terminal{--mf-trading-type-micro:11px;}
+body.mf-page-trading.mf-trading-terminal{--mf-trading-type-eyebrow:11px;}
 body.mf-page-trading.mf-trading-terminal .panel-head h2{font-size:var(--mf-trading-type-section) !important;}
 body.mf-page-trading.mf-trading-terminal .panel-head h2{line-height:1.08 !important;}
 body.mf-page-trading.mf-trading-terminal .panel-head h2{font-weight:650 !important;}
@@ -7111,7 +7067,7 @@ body.mf-page-trading.mf-trading-terminal .trade-log-time{font-weight:500 !import
     .positions-panel,
     .candidates-panel,
     .bottom-history-panel
-  ) .eyebrow{font-size:9.5px !important;}}
+  ) .eyebrow{font-size:11px !important;}}
 @media (max-width: 820px){body.mf-page-trading.mf-trading-terminal :where(
     .approvals-panel,
     .strategy-summary-panel,
@@ -7150,7 +7106,7 @@ body.mf-page-trading.mf-trading-terminal .trade-log-time{font-weight:500 !import
     .positions-panel,
     .candidates-panel,
     .bottom-history-panel
-  ) .eyebrow{font-size:9px !important;}}
+  ) .eyebrow{font-size:11px !important;}}
 @media (max-width: 430px){body.mf-page-trading.mf-trading-terminal :where(
     .approvals-panel,
     .strategy-summary-panel,
@@ -7162,20 +7118,20 @@ body.mf-page-trading.mf-trading-terminal .trade-log-time{font-weight:500 !import
 @media (max-width: 820px){body.mf-page-trading.mf-trading-terminal .position-symbol{line-height:1.1 !important;}}
 @media (max-width: 820px){body.mf-page-trading.mf-trading-terminal .position-bottomline,
 body.mf-page-trading.mf-trading-terminal .position-bottomline span,
-body.mf-page-trading.mf-trading-terminal .position-bottomline strong{font-size:9px !important;}}
+body.mf-page-trading.mf-trading-terminal .position-bottomline strong{font-size:11px !important;}}
 @media (max-width: 820px){body.mf-page-trading.mf-trading-terminal .position-bottomline,
 body.mf-page-trading.mf-trading-terminal .position-bottomline span,
 body.mf-page-trading.mf-trading-terminal .position-bottomline strong{line-height:1.05 !important;}}
 @media (max-width: 820px){body.mf-page-trading.mf-trading-terminal .position-bottomline,
 body.mf-page-trading.mf-trading-terminal .position-bottomline span,
 body.mf-page-trading.mf-trading-terminal .position-bottomline strong{letter-spacing:-0.01em !important;}}
-@media (max-width: 820px){body.mf-page-trading.mf-trading-terminal .close-position{font-size:10px !important;}}
+@media (max-width: 820px){body.mf-page-trading.mf-trading-terminal .close-position{font-size:11px !important;}}
 @media (max-width: 820px){body.mf-page-trading.mf-trading-terminal .close-position{line-height:1 !important;}}
 @media (max-width: 820px){body.mf-page-trading.mf-trading-terminal .candidate-name strong{font-size:11px !important;}}
 @media (max-width: 820px){body.mf-page-trading.mf-trading-terminal .candidate-name strong{line-height:1.1 !important;}}
 @media (max-width: 820px){body.mf-page-trading.mf-trading-terminal .candidate-name span,
 body.mf-page-trading.mf-trading-terminal .candidate-bottom,
-body.mf-page-trading.mf-trading-terminal .candidate-price{font-size:10px !important;}}
+body.mf-page-trading.mf-trading-terminal .candidate-price{font-size:11px !important;}}
 @media (max-width: 820px){body.mf-page-trading.mf-trading-terminal .candidate-name span,
 body.mf-page-trading.mf-trading-terminal .candidate-bottom,
 body.mf-page-trading.mf-trading-terminal .candidate-price{line-height:1.1 !important;}}
@@ -7201,32 +7157,32 @@ body.mf-page-trading.mf-trading-terminal .candidate-price{line-height:1.1 !impor
     .trade-log-bottomline span,
     .trade-token-name,
     .trade-log-reason
-  ){font-size:10px !important;}}
+  ){font-size:11px !important;}}
 @media (max-width: 820px){body.mf-page-trading.mf-trading-terminal .trade-log-bottomline{line-height:1.05 !important;}}
-@media (max-width: 820px){body.mf-page-trading.mf-trading-terminal .strategy-summary-row span{font-size:10px !important;}}
+@media (max-width: 820px){body.mf-page-trading.mf-trading-terminal .strategy-summary-row span{font-size:11px !important;}}
 @media (max-width: 820px){body.mf-page-trading.mf-trading-terminal .strategy-summary-row span{line-height:1.1 !important;}}
 @media (max-width: 820px){body.mf-page-trading.mf-trading-terminal .strategy-summary-row strong{font-size:11px !important;}}
 @media (max-width: 820px){body.mf-page-trading.mf-trading-terminal .strategy-summary-row strong{line-height:1.1 !important;}}
 @media (max-width: 820px){body.mf-page-trading.mf-trading-terminal .strategy-summary-row strong{font-weight:650 !important;}}
 @media (max-width: 820px){body.mf-page-trading.mf-trading-terminal .approvals-panel .empty,
-body.mf-page-trading.mf-trading-terminal .approval-main span{font-size:10px !important;}}
+body.mf-page-trading.mf-trading-terminal .approval-main span{font-size:11px !important;}}
 @media (max-width: 820px){body.mf-page-trading.mf-trading-terminal .approval-main strong{font-size:11px !important;}}
-@media (max-width: 820px){body.mf-page-trading.mf-trading-terminal .approval-stats b{font-size:9px !important;}}
+@media (max-width: 820px){body.mf-page-trading.mf-trading-terminal .approval-stats b{font-size:11px !important;}}
 @media (max-width: 820px){body.mf-page-trading.mf-trading-terminal .approval-stats b{line-height:1 !important;}}
 @media (max-width: 820px){body.mf-page-trading.mf-trading-terminal .approval-stats b{letter-spacing:0.055em !important;}}
 @media (max-width: 820px){body.mf-page-trading.mf-trading-terminal .approval-stats strong,
-body.mf-page-trading.mf-trading-terminal .approval-actions button{font-size:10px !important;}}
-@media (max-width: 430px){body.mf-page-trading.mf-trading-terminal .chart-legend span{font-size:8px !important;}}
+body.mf-page-trading.mf-trading-terminal .approval-actions button{font-size:11px !important;}}
+@media (max-width: 430px){body.mf-page-trading.mf-trading-terminal .chart-legend span{font-size:11px !important;}}
 @media (max-width: 430px){body.mf-page-trading.mf-trading-terminal .chart-legend span{line-height:1 !important;}}
 @media (max-width: 430px){body.mf-page-trading.mf-trading-terminal .chart-legend span{letter-spacing:-0.01em !important;}}
 @media (max-width: 820px){body.mf-page-trading.mf-trading-terminal
-  .candidates-panel .candidate-filter button{font-size:9px !important;}}
+  .candidates-panel .candidate-filter button{font-size:11px !important;}}
 @media (max-width: 820px){body.mf-page-trading.mf-trading-terminal
   .candidates-panel .candidate-filter button{line-height:1 !important;}}
 @media (max-width: 820px){body.mf-page-trading.mf-trading-terminal
   .candidates-panel .candidate-filter button{font-weight:500 !important;}}
 @media (max-width: 820px){body.mf-page-trading.mf-trading-terminal
-  .candidates-panel .tiny-state{font-size:8px !important;}}
+  .candidates-panel .tiny-state{font-size:11px !important;}}
 @media (max-width: 820px){body.mf-page-trading.mf-trading-terminal
   .candidates-panel .tiny-state{line-height:1 !important;}}
 @media (max-width: 820px){body.mf-page-trading.mf-trading-terminal
@@ -7234,7 +7190,7 @@ body.mf-page-trading.mf-trading-terminal .approval-actions button{font-size:10px
 @media (max-width: 820px){body.mf-page-trading.mf-trading-terminal
   .candidates-panel .tiny-state{letter-spacing:0.035em !important;}}
 @media (max-width: 820px){body.mf-page-trading.mf-trading-terminal
-  .candidate-symbol{font-size:10px !important;}}
+  .candidate-symbol{font-size:11px !important;}}
 @media (max-width: 820px){body.mf-page-trading.mf-trading-terminal
   .candidate-symbol{line-height:1.05 !important;}}
 @media (max-width: 820px){body.mf-page-trading.mf-trading-terminal
@@ -7262,7 +7218,7 @@ body.mf-page-trading.mf-trading-terminal
 body.mf-page-trading.mf-trading-terminal
   .candidate-bottom > span:first-child,
 body.mf-page-trading.mf-trading-terminal
-  .candidate-price{font-size:8px !important;}}
+  .candidate-price{font-size:11px !important;}}
 @media (max-width: 820px){body.mf-page-trading.mf-trading-terminal
   .candidate-bottom,
 body.mf-page-trading.mf-trading-terminal
@@ -7278,16 +7234,16 @@ body.mf-page-trading.mf-trading-terminal
 @media (max-width: 820px){body.mf-page-trading.mf-trading-terminal .token-name-row h1,
 body.mf-page-trading.mf-trading-terminal .token-price{font-size:12px !important;}}
 @media (max-width: 820px){body.mf-page-trading.mf-trading-terminal .decision-badge,
-body.mf-page-trading.mf-trading-terminal [data-mf-open-position-pipeline-v3="1"]{font-size:9px !important;}}
+body.mf-page-trading.mf-trading-terminal [data-mf-open-position-pipeline-v3="1"]{font-size:11px !important;}}
 @media (max-width: 820px){body.mf-page-trading.mf-trading-terminal .token-meta,
 body.mf-page-trading.mf-trading-terminal .token-meta button,
 body.mf-page-trading.mf-trading-terminal .token-market{font-size:9px !important;}}
 @media (max-width: 820px){body.mf-page-trading.mf-trading-terminal .timeframes button,
 body.mf-page-trading.mf-trading-terminal .indicator-bar button,
 body.mf-page-trading.mf-trading-terminal .selected-metrics span,
-body.mf-page-trading.mf-trading-terminal .selected-metrics strong{font-size:9px !important;}}
+body.mf-page-trading.mf-trading-terminal .selected-metrics strong{font-size:11px !important;}}
 body.mf-page-trading.mf-trading-terminal
-.bottom-history-panel .trade-log-hint{font-size:9px !important;}
+.bottom-history-panel .trade-log-hint{font-size:11px !important;}
 body.mf-page-trading.mf-trading-terminal
 .bottom-history-panel .trade-log-hint{line-height:1 !important;}
 body.mf-page-trading.mf-trading-terminal
@@ -7365,7 +7321,7 @@ body.mf-page-trading.mf-trading-terminal
 body.mf-page-trading.mf-trading-terminal
   .bottom-history-panel .trade-log-bottomline :where(span, i),
 body.mf-page-trading.mf-trading-terminal
-  .bottom-history-panel .trade-log-time{font-size:9px !important;}}
+  .bottom-history-panel .trade-log-time{font-size:11px !important;}}
 @media (max-width: 820px){body.mf-page-trading.mf-trading-terminal
   .strategy-summary-panel .strategy-summary-row span,
 body.mf-page-trading.mf-trading-terminal
@@ -7405,7 +7361,7 @@ body.mf-page-trading.mf-trading-terminal
 @media (max-width: 820px){body.mf-page-trading.mf-trading-terminal
   .positions-panel .position-pnl,
 body.mf-page-trading.mf-trading-terminal
-  .bottom-history-panel :where(.pnl-positive, .pnl-negative){font-size:9px !important;}}
+  .bottom-history-panel :where(.pnl-positive, .pnl-negative){font-size:11px !important;}}
 @media (max-width: 820px){body.mf-page-trading.mf-trading-terminal
   .positions-panel .position-pnl,
 body.mf-page-trading.mf-trading-terminal
@@ -7457,7 +7413,7 @@ body.mf-page-trading.mf-trading-terminal
 body.mf-page-trading.mf-trading-terminal
   .bottom-history-panel .trade-side{text-transform:uppercase !important;}}
 html body.mf-page-trading.mf-trading-terminal
-.strategy-summary-panel .strategy-summary-foot > #saveState{font-size:var(--mf-type-system, 8px) !important;}
+.strategy-summary-panel .strategy-summary-foot > #saveState{font-size:var(--mf-type-system, 11px) !important;}
 @media (max-width: 820px){html body.mf-page-trading.mf-trading-terminal :where(
     .candidates-panel .tiny-state,
     .candidates-panel .state-dot,
@@ -7478,7 +7434,7 @@ html body.mf-page-trading.mf-trading-terminal
     .strategy-summary-panel .strategy-edit-link,
     .bottom-history-panel .trade-log-bottomline,
     .bottom-history-panel .trade-log-time
-  ){font-size:9px !important;}}
+  ){font-size:11px !important;}}
 @media (max-width: 820px){html body.mf-page-trading.mf-trading-terminal :where(
     .strategy-summary-panel .strategy-edit-link,
     .bottom-history-panel .trade-log-bottomline,
@@ -7487,7 +7443,7 @@ html body.mf-page-trading.mf-trading-terminal
 @media (max-width: 820px){body.mf-page-trading .bottom-history-panel .trade-log-bottomline :where(
     .pnl-positive,
     .pnl-negative
-  ){font-size:9px !important;}}
+  ){font-size:11px !important;}}
 @media (max-width: 820px){body.mf-page-trading .bottom-history-panel .trade-log-bottomline :where(
     .pnl-positive,
     .pnl-negative
@@ -7497,7 +7453,7 @@ html body.mf-page-trading.mf-trading-terminal
 html body.mf-page-trading.mf-trading-terminal
   .candidates-panel .candidate-primary-line .copy-trade-badge,
 html body.mf-page-trading.mf-trading-terminal
-  .candidates-panel .candidate-bottom > span:first-child{font-size:9px !important;}}
+  .candidates-panel .candidate-bottom > span:first-child{font-size:11px !important;}}
 @media (max-width: 820px){html body.mf-page-trading.mf-trading-terminal
   .candidates-panel .candidate-primary-line .candidate-symbol{font-size:11px !important;}}
 @media (max-width: 820px){html body.mf-page-trading.mf-trading-terminal
@@ -7533,7 +7489,7 @@ html body.mf-page-trading.mf-trading-terminal
 body.mf-page-trading.mf-trading-terminal
 .bottom-history-panel .trade-log-topline .trade-log-reason-badge{text-transform:uppercase !important;}
 @media (max-width: 820px){html body.mf-page-trading.mf-trading-terminal
-  .bottom-history-panel .trade-log-topline .trade-log-reason-badge{font-size:9px !important;}}
+  .bottom-history-panel .trade-log-topline .trade-log-reason-badge{font-size:11px !important;}}
 @media (max-width: 820px){html body.mf-page-trading.mf-trading-terminal
   .bottom-history-panel .trade-log-topline .trade-log-reason-badge{line-height:1 !important;}}
 @media (max-width: 820px){html body.mf-page-trading.mf-trading-terminal
@@ -7541,7 +7497,7 @@ body.mf-page-trading.mf-trading-terminal
 @media (max-width: 820px){html body.mf-page-trading.mf-trading-terminal
   .bottom-history-panel .trade-log-topline .trade-log-reason-badge{letter-spacing:0.025em !important;}}
 @media (max-width: 820px){html body.mf-page-trading.mf-trading-terminal
-  .bottom-history-panel .trade-log-bottomline .trade-side{font-size:9px !important;}}
+  .bottom-history-panel .trade-log-bottomline .trade-side{font-size:11px !important;}}
 @media (max-width: 820px){html body.mf-page-trading.mf-trading-terminal
   .bottom-history-panel .trade-log-bottomline .trade-side{line-height:1.05 !important;}}
 @media (max-width: 820px){html body.mf-page-trading.mf-trading-terminal
@@ -7593,7 +7549,7 @@ html body.mf-page-trading.mf-trading-terminal :where(
   .state-dot,
   .copy-trade-badge
 ){text-transform:uppercase !important;}
-html body.mf-page-trading.mf-page-system-tokens .token-state{font-size:9px !important;}
+html body.mf-page-trading.mf-page-system-tokens .token-state{font-size:11px !important;}
 html body.mf-page-trading.mf-page-system-tokens .token-state{line-height:1.05 !important;}
 html body.mf-page-trading.mf-page-system-tokens .token-state{font-weight:500 !important;}
 html body.mf-page-trading.mf-page-system-tokens .token-state{letter-spacing:.025em !important;}
@@ -7601,7 +7557,7 @@ html body.mf-page-trading.mf-page-system-tokens .token-state{text-transform:uppe
 body.mf-page-trading .position-popover-v85__title{line-height:1.1;}
 body.mf-page-trading .position-popover-v85__title strong{font-size:12px;}
 body.mf-page-trading .position-popover-v85__title strong{font-weight:760;}
-body.mf-page-trading .position-popover-v85__title span{font-size:9px;}
+body.mf-page-trading .position-popover-v85__title span{font-size:11px;}
 body.mf-page-trading .position-popover-v85__title span{font-weight:750;}
 body.mf-page-trading .position-popover-v85__title span{letter-spacing:.14em;}
 body.mf-page-trading .position-popover-v85__title span{text-transform:uppercase;}
@@ -7612,7 +7568,7 @@ body.mf-page-trading .position-popover-v85__label{font-weight:640;}
 body.mf-page-trading .position-popover-v85__value{font-size:11px;}
 body.mf-page-trading .position-popover-v85__value{font-weight:740;}
 @media (max-width: 430px){body.mf-page-trading .position-popover-v85__label,
-body.mf-page-trading .position-popover-v85__value{font-size:10.5px;}}
+body.mf-page-trading .position-popover-v85__value{font-size:11px;}}
 body.mf-page-trading.mf-trading-terminal
 .chart-panel > .chart-head
 .token-name-row > h1{line-height:var(--mf-chart-head-primary-row) !important;}
@@ -7631,7 +7587,7 @@ body.mf-page-trading.mf-trading-terminal
 body.mf-page-trading.mf-trading-terminal
 .chart-panel > .chart-head
 .token-market{line-height:var(--mf-chart-head-secondary-row) !important;}
-body.mf-page-trading{--mf-type-system:8px;}
+body.mf-page-trading{--mf-type-system:11px;}
 html body.mf-page-trading:is(
 .mf-page-system,
   .mf-page-system-tokens,
@@ -7717,7 +7673,7 @@ body.mf-page-trading.mf-trading-terminal
 :where(.strategy-summary-panel .strategy-edit-link,
        .positions-panel .close-position,
        .chart-panel #tokenState.decision-badge,
-       .positions-panel .copy-trade-badge){font-size:9px !important;}
+       .positions-panel .copy-trade-badge){font-size:11px !important;}
 html[data-theme]
 body.mf-page-trading.mf-trading-terminal
 :where(.strategy-summary-panel .strategy-edit-link,
@@ -7753,7 +7709,7 @@ body.mf-page-trading.mf-trading-terminal
 .chart-panel
 .chart-head
 .token-name-row
-> #tokenState.decision-badge{font-size:9px !important;}
+> #tokenState.decision-badge{font-size:11px !important;}
 html[data-theme]
 body.mf-page-trading.mf-trading-terminal
 .chart-panel
@@ -7793,7 +7749,7 @@ body.mf-page-trading.mf-trading-terminal
 .position-main
 .position-topline
 .position-symbol
-> .copy-trade-badge{font-size:9px !important;}
+> .copy-trade-badge{font-size:11px !important;}
 html[data-theme]
 body.mf-page-trading.mf-trading-terminal
 .positions-panel
@@ -7834,17 +7790,17 @@ html[data-theme]
 body.mf-page-trading.mf-trading-terminal
 .chart-panel
 .chart-legend
-span{font-size:8px !important;}
+span{font-size:11px !important;}
 html[data-theme]
 body.mf-page-trading.mf-trading-terminal
 .chart-panel
 .timeframes
-> button{font-size:9px !important;}
+> button{font-size:11px !important;}
 html[data-theme]
 body.mf-page-trading.mf-trading-terminal
 .chart-panel
 .indicator-bar
-button{font-size:8px !important;}
+button{font-size:11px !important;}
 html[data-theme]
 body.mf-page-trading.mf-trading-terminal
 .chart-panel
@@ -7854,7 +7810,7 @@ html[data-theme]
 body.mf-page-trading.mf-trading-terminal
 .chart-panel
 .selected-metrics
-strong{font-size:9px !important;}
+strong{font-size:11px !important;}
 
 /* TYPOGRAPHY: settings.html */
 body.mf-page-settings button,
@@ -7945,7 +7901,7 @@ body.mf-page-settings .fatal span{line-height:1.5;}
 @media (max-width: 900px){body.mf-page-settings .flow-view-all{font-weight:800;}}
 @media (max-width: 900px){body.mf-page-settings .flow-view-all{letter-spacing:.08em;}}
 @media (max-width: 900px){body.mf-page-settings .flow-view-all{text-transform:uppercase;}}
-@media (max-width: 900px){body.mf-page-settings .token-symbol{font-size:8.5px;}}
+@media (max-width: 900px){body.mf-page-settings .token-symbol{font-size:11px;}}
 @media (max-width: 900px){body.mf-page-settings .token-state{font-size:var(--mf-type-micro);}}
 @media (max-width: 900px){body.mf-page-settings .token-card-meta span{font-size:var(--mf-type-micro);}}
 @media (max-width: 900px){body.mf-page-settings .token-card-meta b{font-size:var(--mf-type-micro);}}
@@ -8054,12 +8010,12 @@ body.mf-page-settings.mf-settings-standalone .mf293-settings-footer button{font-
 body.mf-page-settings.mf-settings-standalone .mf293-settings-footer button{letter-spacing:.015em !important;}
 @media (max-width: 760px){body.mf-page-settings.mf-settings-standalone .mf293-settings-head h2{font-size:21px !important;}}
 @media (max-width: 760px){body.mf-page-settings.mf-settings-standalone .mf293-settings-footer button{font-size:var(--mf-type-meta);}}
-body.mf-page-settings .mfpg-variant2-clean-v1 .mfpg-kicker{font-size:clamp(8px, 1.02vw, 11px);}
+body.mf-page-settings .mfpg-variant2-clean-v1 .mfpg-kicker{font-size:clamp(11px, 1.02vw, 11px);}
 body.mf-page-settings .mfpg-variant2-clean-v1 .mfpg-kicker{line-height:1;}
 body.mf-page-settings .mfpg-variant2-clean-v1 .mfpg-kicker{font-weight:850;}
 body.mf-page-settings .mfpg-variant2-clean-v1 .mfpg-kicker{letter-spacing:.18em;}
 body.mf-page-settings .mfpg-variant2-clean-v1 .mfpg-kicker{text-transform:uppercase;}
-body.mf-page-settings .mfpg-variant2-clean-v1 .mfpg-sub{font-size:clamp(7px, .9vw, 10px);}
+body.mf-page-settings .mfpg-variant2-clean-v1 .mfpg-sub{font-size:clamp(11px, .9vw, 11px);}
 body.mf-page-settings .mfpg-variant2-clean-v1 .mfpg-sub{line-height:1;}
 body.mf-page-settings .mfpg-variant2-clean-v1 .mfpg-sub{font-weight:560;}
 body.mf-page-settings .mfpg-variant2-clean-v1 .mfpg-sub{letter-spacing:.08em;}
@@ -8072,7 +8028,7 @@ body.mf-page-settings .mfpg-caption-title{line-height:1.12;}
 body.mf-page-settings .mfpg-caption-title{font-weight:880;}
 body.mf-page-settings .mfpg-caption-title{letter-spacing:.045em;}
 body.mf-page-settings .mfpg-caption-title{text-transform:uppercase;}
-body.mf-page-settings .mfpg-caption-text{font-size:clamp(9px, 1.15vw, 11px);}
+body.mf-page-settings .mfpg-caption-text{font-size:clamp(11px, 1.15vw, 11px);}
 body.mf-page-settings .mfpg-caption-text{line-height:1.55;}
 body.mf-page-settings .mfpg-caption-text{font-weight:520;}
 body.mf-page-settings .mfpg-caption-text{letter-spacing:.015em;}
@@ -8110,12 +8066,12 @@ body.mf-page-settings .subscription-metric small,
 body.mf-page-settings .system-health-summary small{text-transform:uppercase!important;}
 @media(max-width:430px){body.mf-page-settings .panel-head h2,
 body.mf-page-settings .execution-head h2{font-size:12px;}}
-body.mf-page-settings{--mf-type-micro:8px;}
-body.mf-page-settings{--mf-type-meta:9px;}
-body.mf-page-settings{--mf-type-ui:10px;}
-body.mf-page-settings{--mf-type-body:11px;}
-body.mf-page-settings{--mf-type-panel:13px;}
-body.mf-page-settings{--mf-type-title:15px;}
+body.mf-page-settings{--mf-type-micro:11px;}
+body.mf-page-settings{--mf-type-meta:12px;}
+body.mf-page-settings{--mf-type-ui:13px;}
+body.mf-page-settings{--mf-type-body:14px;}
+body.mf-page-settings{--mf-type-panel:15px;}
+body.mf-page-settings{--mf-type-title:17px;}
 body.mf-page-settings .eyebrow{font-size:var(--mf-type-micro);}
 body.mf-page-settings .panel-head h2,
 body.mf-page-settings .execution-head h2,
@@ -8126,7 +8082,7 @@ body.mf-page-settings .execution-head h2,
 body.mf-page-settings .wallet-dialog-head h2,
 body.mf-page-settings .sheet-top h2{line-height:1.2;}
 body.mf-page-settings .btn{font-size:var(--mf-type-body);}
-body.mf-page-settings .mf-nav-kicker{font-size:7px;}
+body.mf-page-settings .mf-nav-kicker{font-size:11px;}
 body.mf-page-settings .mf-nav-kicker{line-height:1;}
 body.mf-page-settings .mf-nav-kicker{font-weight:850;}
 body.mf-page-settings .mf-nav-kicker{letter-spacing:.18em;}
@@ -8139,17 +8095,17 @@ body.mf-page-settings .mf-nav-link-title{font-size:12px;}
 body.mf-page-settings .mf-nav-link-title{line-height:1.2;}
 body.mf-page-settings .mf-nav-link-title{font-weight:760;}
 body.mf-page-settings .mf-nav-link-title{letter-spacing:.012em;}
-body.mf-page-settings .mf-nav-link-sub{font-size:8px;}
+body.mf-page-settings .mf-nav-link-sub{font-size:11px;}
 body.mf-page-settings .mf-nav-link-sub{line-height:1.35;}
 body.mf-page-settings .mf-nav-link-sub{font-weight:550;}
 body.mf-page-settings .mf-nav-link-sub{letter-spacing:.02em;}
 body.mf-page-settings .mf-nav-link-arrow{font-size:14px;}
 body.mf-page-settings .mf-nav-link-arrow{line-height:1;}
-body.mf-page-settings .mf-nav-foot strong{font-size:8px;}
+body.mf-page-settings .mf-nav-foot strong{font-size:11px;}
 body.mf-page-settings .mf-nav-foot strong{line-height:1.2;}
 body.mf-page-settings .mf-nav-foot strong{font-weight:750;}
 body.mf-page-settings .mf-nav-foot strong{letter-spacing:.12em;}
-body.mf-page-settings .mf-nav-foot span{font-size:7px;}
+body.mf-page-settings .mf-nav-foot span{font-size:11px;}
 body.mf-page-settings .mf-nav-foot span{line-height:1.4;}
 body.mf-page-settings .mf-ag-kicker{font-weight:800;}
 body.mf-page-settings .mf-ag-btn{font-weight:800;}
@@ -8163,11 +8119,11 @@ body.mf-page-settings .mf-ag-card h2{line-height:1.03!important;}
 body.mf-page-settings .mf-ag-card p{font-size:12px;}
 body.mf-page-settings .mf-ag-card p{line-height:1.42!important;}
 body.mf-page-settings .mf-ag-tier b{font-size:var(--mf-type-panel);}
-body.mf-page-settings .mf-ag-tier span{font-size:10.5px;}
+body.mf-page-settings .mf-ag-tier span{font-size:11px;}
 body.mf-page-settings .mf-ag-tier span{line-height:1.35!important;}
-body.mf-page-settings .mf-ag-btn{font-size:10.5px;}
+body.mf-page-settings .mf-ag-btn{font-size:11px;}
 body.mf-page-settings .mf-ag-btn{line-height:1.25!important;}
-body.mf-page-settings .mf-ag-foot{font-size:9.5px;}
+body.mf-page-settings .mf-ag-foot{font-size:11px;}
 body.mf-page-settings .mf-ag-foot{line-height:1.35!important;}
 body.mf-page-settings .mf-ag-tier span strong{font-weight:800!important;}
 body.mf-page-settings .mf-site-header .brand-title,
@@ -8199,7 +8155,7 @@ body.mf-page-settings .mf-site-header .brand-block .subtitle,
 body.mf-page-settings .mf-site-header .header-title > strong,
 body.mf-page-settings .mf-site-header .mf-settings-page-title > strong,
 body.mf-page-settings .mf-site-header .mf-vault-brand-copy > small,
-body.mf-page-settings .mf-site-header .mf-hiw-brand-copy > small{font-size:8px;}
+body.mf-page-settings .mf-site-header .mf-hiw-brand-copy > small{font-size:11px;}
 body.mf-page-settings .mf-site-header .brand-sub,
 body.mf-page-settings .mf-site-header .brand-block .subtitle,
 body.mf-page-settings .mf-site-header .header-title > strong,
@@ -8219,7 +8175,7 @@ body.mf-page-settings .mf-site-header .mf-settings-page-title > strong,
 body.mf-page-settings .mf-site-header .mf-vault-brand-copy > small,
 body.mf-page-settings .mf-site-header .mf-hiw-brand-copy > small{letter-spacing:.12em;}
 body.mf-page-settings .mf-site-header .live-status,
-body.mf-page-settings .mf-site-header .mf-settings-page-live{font-size:8px;}
+body.mf-page-settings .mf-site-header .mf-settings-page-live{font-size:11px;}
 body.mf-page-settings .mf-site-header .live-status,
 body.mf-page-settings .mf-site-header .mf-settings-page-live{line-height:1;}
 body.mf-page-settings .mf-site-header .live-status,
@@ -8237,7 +8193,7 @@ body.mf-page-settings .mf-site-header .brand-block .subtitle,
 body.mf-page-settings .mf-site-header .header-title > strong,
 body.mf-page-settings .mf-site-header .mf-settings-page-title > strong,
 body.mf-page-settings .mf-site-header .mf-vault-brand-copy > small,
-body.mf-page-settings .mf-site-header .mf-hiw-brand-copy > small{font-size:8px;}}
+body.mf-page-settings .mf-site-header .mf-hiw-brand-copy > small{font-size:11px;}}
 @media (max-width: 820px){body.mf-page-settings .mf-site-header .brand-sub,
 body.mf-page-settings .mf-site-header .brand-block .subtitle,
 body.mf-page-settings .mf-site-header .header-title > strong,
@@ -8246,16 +8202,16 @@ body.mf-page-settings .mf-site-header .mf-vault-brand-copy > small,
 body.mf-page-settings .mf-site-header .mf-hiw-brand-copy > small{letter-spacing:.12em;}}
 body.mf-page-settings .mf-theme-appearance-copy strong{font-size:var(--mf-type-panel, 13px);}
 body.mf-page-settings .mf-theme-appearance-copy strong{line-height:1.2;}
-body.mf-page-settings .mf-theme-appearance-copy small{font-size:var(--mf-type-meta, 9px);}
+body.mf-page-settings .mf-theme-appearance-copy small{font-size:var(--mf-type-meta, 11px);}
 body.mf-page-settings .mf-theme-appearance-copy small{line-height:1.35;}
 body.mf-page-settings .mf-theme-appearance-label,
-body.mf-page-settings .mf-theme-current{font-size:var(--mf-type-meta, 9px);}
+body.mf-page-settings .mf-theme-current{font-size:var(--mf-type-meta, 11px);}
 body.mf-page-settings .mf-theme-appearance-label,
 body.mf-page-settings .mf-theme-current{line-height:1;}
 body.mf-page-settings .mf-theme-segmented button{font:inherit;}
-body.mf-page-settings .mf-theme-segmented button{font-size:var(--mf-type-meta, 9px);}
+body.mf-page-settings .mf-theme-segmented button{font-size:var(--mf-type-meta, 11px);}
 body.mf-page-settings .mf-theme-segmented button{font-weight:760;}
-body.mf-page-settings [data-mf-open-position-pipeline-v3="1"]{font-size:var(--mf-type-micro, 10px) !important;}
+body.mf-page-settings [data-mf-open-position-pipeline-v3="1"]{font-size:var(--mf-type-micro, 11px) !important;}
 body.mf-page-settings [data-mf-open-position-pipeline-v3="1"]{font-weight:900 !important;}
 body.mf-page-settings [data-mf-open-position-pipeline-v3="1"]{line-height:1 !important;}
 body.mf-page-settings [data-mf-open-position-pipeline-v3="1"]{letter-spacing:.07em !important;}
@@ -8374,7 +8330,7 @@ html:has(body.mf-page-settings)[data-theme="light"] .mf-site-header :is(
   .mf-settings-page-title > strong,
   .mf-vault-brand-copy > small,
   .mf-hiw-brand-copy > small
-){font-size:8px !important;}
+){font-size:11px !important;}
 html:has(body.mf-page-settings)[data-theme="light"] .mf-site-header :is(
   .brand-sub,
   .brand-block .subtitle,
@@ -8399,7 +8355,7 @@ html:has(body.mf-page-settings)[data-theme="light"] .mf-site-header :is(
   .mf-vault-brand-copy > small,
   .mf-hiw-brand-copy > small
 ){letter-spacing:.12em !important;}
-body.mf-page-settings{--mf-type-system:8px;}
+body.mf-page-settings{--mf-type-system:11px;}
 html body.mf-page-settings:is(
 .mf-page-system,
   .mf-page-system-tokens,
@@ -8485,7 +8441,7 @@ body.mf-page-settings.mf-page-trading.mf-trading-terminal
 :where(.strategy-summary-panel .strategy-edit-link,
        .positions-panel .close-position,
        .chart-panel #tokenState.decision-badge,
-       .positions-panel .copy-trade-badge){font-size:9px !important;}
+       .positions-panel .copy-trade-badge){font-size:11px !important;}
 html[data-theme]
 body.mf-page-settings.mf-page-trading.mf-trading-terminal
 :where(.strategy-summary-panel .strategy-edit-link,
@@ -8521,7 +8477,7 @@ body.mf-page-settings.mf-page-trading.mf-trading-terminal
 .chart-panel
 .chart-head
 .token-name-row
-> #tokenState.decision-badge{font-size:9px !important;}
+> #tokenState.decision-badge{font-size:11px !important;}
 html[data-theme]
 body.mf-page-settings.mf-page-trading.mf-trading-terminal
 .chart-panel
@@ -8561,7 +8517,7 @@ body.mf-page-settings.mf-page-trading.mf-trading-terminal
 .position-main
 .position-topline
 .position-symbol
-> .copy-trade-badge{font-size:9px !important;}
+> .copy-trade-badge{font-size:11px !important;}
 html[data-theme]
 body.mf-page-settings.mf-page-trading.mf-trading-terminal
 .positions-panel
@@ -8602,17 +8558,17 @@ html[data-theme]
 body.mf-page-settings.mf-page-trading.mf-trading-terminal
 .chart-panel
 .chart-legend
-span{font-size:8px !important;}
+span{font-size:11px !important;}
 html[data-theme]
 body.mf-page-settings.mf-page-trading.mf-trading-terminal
 .chart-panel
 .timeframes
-> button{font-size:9px !important;}
+> button{font-size:11px !important;}
 html[data-theme]
 body.mf-page-settings.mf-page-trading.mf-trading-terminal
 .chart-panel
 .indicator-bar
-button{font-size:8px !important;}
+button{font-size:11px !important;}
 html[data-theme]
 body.mf-page-settings.mf-page-trading.mf-trading-terminal
 .chart-panel
@@ -8622,7 +8578,7 @@ html[data-theme]
 body.mf-page-settings.mf-page-trading.mf-trading-terminal
 .chart-panel
 .selected-metrics
-strong{font-size:9px !important;}
+strong{font-size:11px !important;}
 
 /* TYPOGRAPHY: system-tokens.html */
 @media(max-width:760px){body.mf-page-system-tokens .flow-hero h1{font-size:25px;}}
@@ -8717,7 +8673,7 @@ body.mf-page-system-tokens .token-mint{line-height:1 !important;}}
 @media (max-width: 760px){body.mf-page-system-tokens .details-button{line-height:1 !important;}}
 @media (max-width: 390px){body.mf-page-system-tokens .token-state{font-size:var(--mf-type-micro);}}
 @media (max-width: 760px){body.mf-page-system-tokens .token-name,
-body.mf-page-system-tokens .token-mint{font-size:9.2px;}}
+body.mf-page-system-tokens .token-mint{font-size:11px;}}
 @media (max-width: 760px){body.mf-page-system-tokens .token-name,
 body.mf-page-system-tokens .token-mint{font-weight:760 !important;}}
 @media (max-width: 760px){body.mf-page-system-tokens .token-name,
@@ -8725,11 +8681,11 @@ body.mf-page-system-tokens .token-mint{letter-spacing:-.01em !important;}}
 @media (max-width: 760px){body.mf-page-system-tokens .token-state{font-size:var(--mf-type-micro);}}
 @media (max-width: 760px){body.mf-page-system-tokens .token-metric span{font-size:var(--mf-type-micro);}}
 @media (max-width: 760px){body.mf-page-system-tokens .token-metric span{letter-spacing:.08em !important;}}
-@media (max-width: 760px){body.mf-page-system-tokens .token-metric strong{font-size:8.8px;}}
+@media (max-width: 760px){body.mf-page-system-tokens .token-metric strong{font-size:11px;}}
 @media (max-width: 760px){body.mf-page-system-tokens .token-metric strong{font-weight:780 !important;}}
 @media (max-width: 760px){body.mf-page-system-tokens .details-button{font-size:var(--mf-type-micro);}}
 @media (max-width: 390px){body.mf-page-system-tokens .token-name,
-body.mf-page-system-tokens .token-mint{font-size:8.6px;}}
+body.mf-page-system-tokens .token-mint{font-size:11px;}}
 @media (max-width: 390px){body.mf-page-system-tokens .token-metric span{font-size:var(--mf-type-micro);}}
 @media (max-width: 390px){body.mf-page-system-tokens .token-metric strong{font-size:var(--mf-type-micro);}}
 @media (max-width: 760px){body.mf-page-system-tokens .flow-token.open .mf-open-position-pnl{letter-spacing:-.02em;}}
@@ -8768,7 +8724,7 @@ body.mf-page-system-tokens .mf-sort-trigger-v25{letter-spacing:.115em;}
 body.mf-page-system-tokens .mf-sort-trigger-v25{text-transform:uppercase;}
 body.mf-page-system-tokens .mf-sort-trigger-chevron-v251{font-size:14px;}
 body.mf-page-system-tokens .mf-sort-trigger-chevron-v251{line-height:1;}
-body.mf-page-system-tokens .mf-sort-sheet-head-v25 h2{font-size:10.5px;}
+body.mf-page-system-tokens .mf-sort-sheet-head-v25 h2{font-size:11px;}
 body.mf-page-system-tokens .mf-sort-sheet-head-v25 h2{letter-spacing:.018em;}
 body.mf-page-system-tokens .mf-sort-back-v25{font:inherit;}
 body.mf-page-system-tokens .mf-sort-back-v25{font-size:18px;}
@@ -8777,11 +8733,11 @@ body.mf-page-system-tokens .mf-sort-direction-v25 button{font:inherit;}
 body.mf-page-system-tokens .mf-sort-direction-v25 button{font-size:var(--mf-type-micro);}
 body.mf-page-system-tokens .mf-sort-direction-v25 button{letter-spacing:.085em;}
 body.mf-page-system-tokens .mf-sort-row-v25{font:inherit;}
-body.mf-page-system-tokens .mf-sort-row-v25{font-size:8.9px;}
+body.mf-page-system-tokens .mf-sort-row-v25{font-size:11px;}
 body.mf-page-system-tokens .mf-sort-row-chevron-v251{font-size:16px;}
 body.mf-page-system-tokens .mf-sort-row-chevron-v251{font-weight:300;}
 body.mf-page-system-tokens .mf-sort-row-chevron-v251{line-height:1;}
-@media (max-width:760px){body.mf-page-system-tokens .mf-sort-row-v25{font-size:8.9px;}}
+@media (max-width:760px){body.mf-page-system-tokens .mf-sort-row-v25{font-size:11px;}}
 body.mf-page-system-tokens .mf-sort-toolbar-v25 :is(button, .btn, a.btn, [role="button"]),
 body.mf-page-system-tokens .mf-sort-sheet-v25 :is(button, .btn, a.btn, [role="button"]),
 body.mf-page-system-tokens .mf-sort-overlay-v25 :is(button, .btn, a.btn, [role="button"]){text-transform:inherit !important;}
@@ -8847,61 +8803,61 @@ body.mf-page-system-tokens .mf-analysis-head-v15>strong{font-size:var(--mf-type-
 body.mf-page-system-tokens .mf-analysis-head-v15>strong{font-weight:850;}
 body.mf-page-system-tokens .mf-analysis-head-v15 b{font-weight:850;}
 @media(max-width:390px){body.mf-page-system-tokens .mf-analysis-strip-v15 span,
-body.mf-page-system-tokens .mf-analysis-strip-v15 strong{font-size:8px!important;}}
+body.mf-page-system-tokens .mf-analysis-strip-v15 strong{font-size:11px!important;}}
 body.mf-page-system-tokens .mf-card-analysis-status{font-size:var(--mf-type-micro)!important;}
 body.mf-page-system-tokens .mf-card-analysis-status{line-height:1.1!important;}
 body.mf-page-system-tokens .mf-analysis-head-v15{font-size:var(--mf-type-micro)!important;}
 body.mf-page-system-tokens .mf-analysis-head-v15{line-height:1!important;}
 body.mf-page-system-tokens .mf-analysis-head-v15>strong,
 body.mf-page-system-tokens .mf-analysis-head-v15 b{font-weight:800!important;}
-body.mf-page-system-tokens .mf-analysis-strip-v15 span{font-size:8px!important;}
+body.mf-page-system-tokens .mf-analysis-strip-v15 span{font-size:11px!important;}
 body.mf-page-system-tokens .mf-analysis-strip-v15 span{font-weight:760!important;}
 body.mf-page-system-tokens .mf-analysis-strip-v15 span{line-height:1!important;}
 body.mf-page-system-tokens .mf-analysis-strip-v15 span{letter-spacing:.025em!important;}
 body.mf-page-system-tokens .mf-analysis-strip-v15 span{text-transform:uppercase!important;}
-body.mf-page-system-tokens .mf-analysis-strip-v15 strong{font-size:9px!important;}
+body.mf-page-system-tokens .mf-analysis-strip-v15 strong{font-size:11px!important;}
 body.mf-page-system-tokens .mf-analysis-strip-v15 strong{font-weight:800!important;}
 body.mf-page-system-tokens .mf-analysis-strip-v15 strong{line-height:1!important;}
-body.mf-page-system-tokens .mf-card-context-row-v15 span{font-size:8px!important;}
+body.mf-page-system-tokens .mf-card-context-row-v15 span{font-size:11px!important;}
 body.mf-page-system-tokens .mf-card-context-row-v15 span{font-weight:800!important;}
 body.mf-page-system-tokens .mf-card-context-row-v15 span{line-height:1!important;}
 body.mf-page-system-tokens .mf-card-context-row-v15 span{letter-spacing:.035em!important;}
 body.mf-page-system-tokens .mf-card-context-row-v15 span{text-transform:uppercase!important;}
-body.mf-page-system-tokens .mf-card-context-row-v15 strong{font-size:9px!important;}
+body.mf-page-system-tokens .mf-card-context-row-v15 strong{font-size:11px!important;}
 body.mf-page-system-tokens .mf-card-context-row-v15 strong{font-weight:600!important;}
 body.mf-page-system-tokens .mf-card-context-row-v15 strong{line-height:1.1!important;}
-@media (max-width: 760px){body.mf-page-system-tokens .flow-token .token-state{font-size:6px !important;}}
+@media (max-width: 760px){body.mf-page-system-tokens .flow-token .token-state{font-size:11px !important;}}
 @media (max-width: 760px){body.mf-page-system-tokens .flow-token .token-state{line-height:12px !important;}}
 @media (max-width: 760px){body.mf-page-system-tokens .flow-token .token-state{letter-spacing:.045em !important;}}
 @media (max-width: 760px){body.mf-page-system-tokens .token-source-link.pump.mf-pump-logo-link::before{font-size:12px;}}
 @media (max-width: 760px){body.mf-page-system-tokens .token-source-link.pump.mf-pump-logo-link::before{font-weight:760;}}
 @media (max-width: 760px){body.mf-page-system-tokens .token-source-link.pump.mf-pump-logo-link::before{line-height:1;}}
-@media (max-width: 390px){body.mf-page-system-tokens .flow-token .token-state{font-size:5.8px !important;}}
+@media (max-width: 390px){body.mf-page-system-tokens .flow-token .token-state{font-size:11px !important;}}
 @media (max-width: 760px){body.mf-page-system-tokens .search-wrap input{font-size:16px !important;}}
 @media (max-width: 760px){body.mf-page-system-tokens .search-wrap input{line-height:1.2 !important;}}
 body.mf-page-system-tokens .mf-time-window-v47c button{font:inherit;}
 body.mf-page-system-tokens .mf-time-window-v47c button{font-size:var(--mf-type-micro);}
 body.mf-page-system-tokens .mf-time-window-v47c button{font-weight:800;}
-body.mf-page-system-tokens .mf-time-window-v47c>span{font-size:6px;}
+body.mf-page-system-tokens .mf-time-window-v47c>span{font-size:11px;}
 body.mf-page-system-tokens .mf-time-window-v47c>span{font-weight:800;}
 body.mf-page-system-tokens .mf-time-window-v47c>span{letter-spacing:.07em;}
-@media(max-width:760px){body.mf-page-system-tokens .mf-token-age-chip-v47c{font-size:7px;}}
+@media(max-width:760px){body.mf-page-system-tokens .mf-token-age-chip-v47c{font-size:11px;}}
 @media(max-width:760px){body.mf-page-system-tokens .mf-token-age-chip-v47c{font-weight:750;}}
 @media(max-width:760px){body.mf-page-system-tokens .mf-token-age-chip-v47c{line-height:1.1;}}
-@media(max-width:760px){body.mf-page-system-tokens .mf-holder-mini-v47c{font-size:7px;}}
+@media(max-width:760px){body.mf-page-system-tokens .mf-holder-mini-v47c{font-size:11px;}}
 @media(max-width:760px){body.mf-page-system-tokens .mf-holder-mini-v47c{font-weight:700;}}
 @media(max-width:760px){body.mf-page-system-tokens .flow-token>.mf-score-slot span,
-body.mf-page-system-tokens .flow-token>.mf-open-pnl-slot span{font-size:6px!important;}}
+body.mf-page-system-tokens .flow-token>.mf-open-pnl-slot span{font-size:11px!important;}}
 @media(max-width:760px){body.mf-page-system-tokens .flow-token>.mf-score-slot strong,
-body.mf-page-system-tokens .flow-token>.mf-open-pnl-slot strong{font-size:9px!important;}}
+body.mf-page-system-tokens .flow-token>.mf-open-pnl-slot strong{font-size:11px!important;}}
 @media(max-width:760px){body.mf-page-system-tokens .mf-open-market-stat span,
 body.mf-page-system-tokens .mf-regular-market-stat span{font-size:6px!important;}}
 @media(max-width:760px){body.mf-page-system-tokens .mf-open-market-stat span,
 body.mf-page-system-tokens .mf-regular-market-stat span{letter-spacing:.04em!important;}}
 @media(max-width:760px){body.mf-page-system-tokens .mf-open-market-stat strong,
 body.mf-page-system-tokens .mf-regular-market-stat strong{font-size:8px!important;}}
-@media (max-width:760px){body.mf-page-system-tokens .token-list>.flow-token .mf-token-age-chip-v47c{font-size:7px!important;}}
-@media (max-width:760px){body.mf-page-system-tokens .token-list>.flow-token .mf-holder-mini-v47c{font-size:8px!important;}}
+@media (max-width:760px){body.mf-page-system-tokens .token-list>.flow-token .mf-token-age-chip-v47c{font-size:11px!important;}}
+@media (max-width:760px){body.mf-page-system-tokens .token-list>.flow-token .mf-holder-mini-v47c{font-size:11px!important;}}
 @media (max-width:760px){body.mf-page-system-tokens .token-list>.flow-token>.mf-open-market-strip>.mf-open-market-stat span,
 body.mf-page-system-tokens .token-list>.flow-token>.mf-regular-market-strip>.mf-regular-market-stat span{font-size:6px!important;}}
 @media (max-width:760px){body.mf-page-system-tokens .token-list>.flow-token>.mf-open-market-strip>.mf-open-market-stat span,
@@ -8913,17 +8869,17 @@ body.mf-page-system-tokens .token-list>.flow-token>.mf-regular-market-strip>.mf-
 @media (max-width:760px){body.mf-page-system-tokens .token-list>.flow-token>.mf-open-market-strip>.mf-open-market-stat strong,
 body.mf-page-system-tokens .token-list>.flow-token>.mf-regular-market-strip>.mf-regular-market-stat strong{line-height:1.1!important;}}
 @media (max-width:760px){body.mf-page-system-tokens .token-list>.flow-token>.mf-score-slot span,
-body.mf-page-system-tokens .token-list>.flow-token>.mf-open-pnl-slot span{font-size:6px!important;}}
+body.mf-page-system-tokens .token-list>.flow-token>.mf-open-pnl-slot span{font-size:11px!important;}}
 @media (max-width:760px){body.mf-page-system-tokens .token-list>.flow-token>.mf-score-slot span,
 body.mf-page-system-tokens .token-list>.flow-token>.mf-open-pnl-slot span{line-height:1!important;}}
 @media (max-width:760px){body.mf-page-system-tokens .token-list>.flow-token>.mf-score-slot strong,
-body.mf-page-system-tokens .token-list>.flow-token>.mf-open-pnl-slot strong{font-size:10px!important;}}
+body.mf-page-system-tokens .token-list>.flow-token>.mf-open-pnl-slot strong{font-size:11px!important;}}
 @media (max-width:760px){body.mf-page-system-tokens .token-list>.flow-token>.mf-score-slot strong,
 body.mf-page-system-tokens .token-list>.flow-token>.mf-open-pnl-slot strong{line-height:1.1!important;}}
-@media (max-width:760px){body.mf-page-system-tokens .token-list>.flow-token .token-name{font-size:10px!important;}}
+@media (max-width:760px){body.mf-page-system-tokens .token-list>.flow-token .token-name{font-size:11px!important;}}
 @media (max-width:760px){body.mf-page-system-tokens .token-list>.flow-token .token-name{font-weight:800!important;}}
 @media (max-width:760px){body.mf-page-system-tokens .token-list>.flow-token .token-name{line-height:1.15!important;}}
-@media (max-width:390px){body.mf-page-system-tokens .token-list>.flow-token .token-name{font-size:9px!important;}}
+@media (max-width:390px){body.mf-page-system-tokens .token-list>.flow-token .token-name{font-size:11px!important;}}
 body.mf-page-system-tokens .brand-mark{font-size:0!important;}
 body.mf-page-system-tokens .brand-mark{line-height:0!important;}
 body.mf-page-system-tokens .panel-head h2,
@@ -8952,12 +8908,12 @@ body.mf-page-system-tokens .subscription-metric small,
 body.mf-page-system-tokens .system-health-summary small{text-transform:uppercase!important;}
 @media(max-width:430px){body.mf-page-system-tokens .panel-head h2,
 body.mf-page-system-tokens .execution-head h2{font-size:12px;}}
-body.mf-page-system-tokens{--mf-type-micro:8px;}
-body.mf-page-system-tokens{--mf-type-meta:9px;}
-body.mf-page-system-tokens{--mf-type-ui:10px;}
-body.mf-page-system-tokens{--mf-type-body:11px;}
-body.mf-page-system-tokens{--mf-type-panel:13px;}
-body.mf-page-system-tokens{--mf-type-title:15px;}
+body.mf-page-system-tokens{--mf-type-micro:11px;}
+body.mf-page-system-tokens{--mf-type-meta:12px;}
+body.mf-page-system-tokens{--mf-type-ui:13px;}
+body.mf-page-system-tokens{--mf-type-body:14px;}
+body.mf-page-system-tokens{--mf-type-panel:15px;}
+body.mf-page-system-tokens{--mf-type-title:17px;}
 body.mf-page-system-tokens .eyebrow{font-size:var(--mf-type-micro);}
 body.mf-page-system-tokens .panel-head h2,
 body.mf-page-system-tokens .execution-head h2,
@@ -8968,7 +8924,7 @@ body.mf-page-system-tokens .execution-head h2,
 body.mf-page-system-tokens .wallet-dialog-head h2,
 body.mf-page-system-tokens .sheet-top h2{line-height:1.2;}
 body.mf-page-system-tokens .btn{font-size:var(--mf-type-body);}
-body.mf-page-system-tokens .mf-nav-kicker{font-size:7px;}
+body.mf-page-system-tokens .mf-nav-kicker{font-size:11px;}
 body.mf-page-system-tokens .mf-nav-kicker{line-height:1;}
 body.mf-page-system-tokens .mf-nav-kicker{font-weight:850;}
 body.mf-page-system-tokens .mf-nav-kicker{letter-spacing:.18em;}
@@ -8981,17 +8937,17 @@ body.mf-page-system-tokens .mf-nav-link-title{font-size:12px;}
 body.mf-page-system-tokens .mf-nav-link-title{line-height:1.2;}
 body.mf-page-system-tokens .mf-nav-link-title{font-weight:760;}
 body.mf-page-system-tokens .mf-nav-link-title{letter-spacing:.012em;}
-body.mf-page-system-tokens .mf-nav-link-sub{font-size:8px;}
+body.mf-page-system-tokens .mf-nav-link-sub{font-size:11px;}
 body.mf-page-system-tokens .mf-nav-link-sub{line-height:1.35;}
 body.mf-page-system-tokens .mf-nav-link-sub{font-weight:550;}
 body.mf-page-system-tokens .mf-nav-link-sub{letter-spacing:.02em;}
 body.mf-page-system-tokens .mf-nav-link-arrow{font-size:14px;}
 body.mf-page-system-tokens .mf-nav-link-arrow{line-height:1;}
-body.mf-page-system-tokens .mf-nav-foot strong{font-size:8px;}
+body.mf-page-system-tokens .mf-nav-foot strong{font-size:11px;}
 body.mf-page-system-tokens .mf-nav-foot strong{line-height:1.2;}
 body.mf-page-system-tokens .mf-nav-foot strong{font-weight:750;}
 body.mf-page-system-tokens .mf-nav-foot strong{letter-spacing:.12em;}
-body.mf-page-system-tokens .mf-nav-foot span{font-size:7px;}
+body.mf-page-system-tokens .mf-nav-foot span{font-size:11px;}
 body.mf-page-system-tokens .mf-nav-foot span{line-height:1.4;}
 body.mf-page-system-tokens .mf-site-header .brand-title,
 body.mf-page-system-tokens .mf-site-header .brand-block .brand,
@@ -9022,7 +8978,7 @@ body.mf-page-system-tokens .mf-site-header .brand-block .subtitle,
 body.mf-page-system-tokens .mf-site-header .header-title > strong,
 body.mf-page-system-tokens .mf-site-header .mf-settings-page-title > strong,
 body.mf-page-system-tokens .mf-site-header .mf-vault-brand-copy > small,
-body.mf-page-system-tokens .mf-site-header .mf-hiw-brand-copy > small{font-size:8px;}
+body.mf-page-system-tokens .mf-site-header .mf-hiw-brand-copy > small{font-size:11px;}
 body.mf-page-system-tokens .mf-site-header .brand-sub,
 body.mf-page-system-tokens .mf-site-header .brand-block .subtitle,
 body.mf-page-system-tokens .mf-site-header .header-title > strong,
@@ -9042,7 +8998,7 @@ body.mf-page-system-tokens .mf-site-header .mf-settings-page-title > strong,
 body.mf-page-system-tokens .mf-site-header .mf-vault-brand-copy > small,
 body.mf-page-system-tokens .mf-site-header .mf-hiw-brand-copy > small{letter-spacing:.12em;}
 body.mf-page-system-tokens .mf-site-header .live-status,
-body.mf-page-system-tokens .mf-site-header .mf-settings-page-live{font-size:8px;}
+body.mf-page-system-tokens .mf-site-header .mf-settings-page-live{font-size:11px;}
 body.mf-page-system-tokens .mf-site-header .live-status,
 body.mf-page-system-tokens .mf-site-header .mf-settings-page-live{line-height:1;}
 body.mf-page-system-tokens .mf-site-header .live-status,
@@ -9060,7 +9016,7 @@ body.mf-page-system-tokens .mf-site-header .brand-block .subtitle,
 body.mf-page-system-tokens .mf-site-header .header-title > strong,
 body.mf-page-system-tokens .mf-site-header .mf-settings-page-title > strong,
 body.mf-page-system-tokens .mf-site-header .mf-vault-brand-copy > small,
-body.mf-page-system-tokens .mf-site-header .mf-hiw-brand-copy > small{font-size:8px;}}
+body.mf-page-system-tokens .mf-site-header .mf-hiw-brand-copy > small{font-size:11px;}}
 @media (max-width: 820px){body.mf-page-system-tokens .mf-site-header .brand-sub,
 body.mf-page-system-tokens .mf-site-header .brand-block .subtitle,
 body.mf-page-system-tokens .mf-site-header .header-title > strong,
@@ -9069,16 +9025,16 @@ body.mf-page-system-tokens .mf-site-header .mf-vault-brand-copy > small,
 body.mf-page-system-tokens .mf-site-header .mf-hiw-brand-copy > small{letter-spacing:.12em;}}
 body.mf-page-system-tokens .mf-theme-appearance-copy strong{font-size:var(--mf-type-panel, 13px);}
 body.mf-page-system-tokens .mf-theme-appearance-copy strong{line-height:1.2;}
-body.mf-page-system-tokens .mf-theme-appearance-copy small{font-size:var(--mf-type-meta, 9px);}
+body.mf-page-system-tokens .mf-theme-appearance-copy small{font-size:var(--mf-type-meta, 11px);}
 body.mf-page-system-tokens .mf-theme-appearance-copy small{line-height:1.35;}
 body.mf-page-system-tokens .mf-theme-appearance-label,
-body.mf-page-system-tokens .mf-theme-current{font-size:var(--mf-type-meta, 9px);}
+body.mf-page-system-tokens .mf-theme-current{font-size:var(--mf-type-meta, 11px);}
 body.mf-page-system-tokens .mf-theme-appearance-label,
 body.mf-page-system-tokens .mf-theme-current{line-height:1;}
 body.mf-page-system-tokens .mf-theme-segmented button{font:inherit;}
-body.mf-page-system-tokens .mf-theme-segmented button{font-size:var(--mf-type-meta, 9px);}
+body.mf-page-system-tokens .mf-theme-segmented button{font-size:var(--mf-type-meta, 11px);}
 body.mf-page-system-tokens .mf-theme-segmented button{font-weight:760;}
-body.mf-page-system-tokens [data-mf-open-position-pipeline-v3="1"]{font-size:var(--mf-type-micro, 10px) !important;}
+body.mf-page-system-tokens [data-mf-open-position-pipeline-v3="1"]{font-size:var(--mf-type-micro, 11px) !important;}
 body.mf-page-system-tokens [data-mf-open-position-pipeline-v3="1"]{font-weight:900 !important;}
 body.mf-page-system-tokens [data-mf-open-position-pipeline-v3="1"]{line-height:1 !important;}
 body.mf-page-system-tokens [data-mf-open-position-pipeline-v3="1"]{letter-spacing:.07em !important;}
@@ -9174,7 +9130,7 @@ body.mf-page-system-tokens .mf-trading-terminal .panel-head h2{font-size:clamp(1
 body.mf-page-system-tokens .mf-trading-terminal .panel-head h2{line-height:1.08;}
 body.mf-page-system-tokens .mf-trading-terminal .panel-head h2{font-weight:780;}
 body.mf-page-system-tokens .mf-trading-terminal .panel-head h2{letter-spacing:-0.025em;}
-body.mf-page-system-tokens .mf-trading-terminal .eyebrow{font-size:10.5px;}
+body.mf-page-system-tokens .mf-trading-terminal .eyebrow{font-size:11px;}
 body.mf-page-system-tokens .mf-trading-terminal .eyebrow{line-height:1.15;}
 body.mf-page-system-tokens .mf-trading-terminal .eyebrow{font-weight:800;}
 body.mf-page-system-tokens .mf-trading-terminal .eyebrow{letter-spacing:0.145em;}
@@ -9202,7 +9158,7 @@ body.mf-page-system-tokens .flow-page .flow-hero h1{font-size:clamp(28px, 4.2vw,
 body.mf-page-system-tokens .flow-page .flow-hero h1{line-height:0.98;}
 body.mf-page-system-tokens .flow-page .flow-hero h1{font-weight:800;}
 body.mf-page-system-tokens .flow-page .flow-hero h1{letter-spacing:-0.038em;}
-body.mf-page-system-tokens .flow-page .flow-hero .eyebrow{font-size:10.5px;}
+body.mf-page-system-tokens .flow-page .flow-hero .eyebrow{font-size:11px;}
 body.mf-page-system-tokens .flow-page .flow-hero .eyebrow{line-height:1.15;}
 body.mf-page-system-tokens .flow-page .flow-hero .eyebrow{font-weight:850;}
 body.mf-page-system-tokens .flow-page .flow-hero .eyebrow{letter-spacing:0.155em;}
@@ -9232,7 +9188,7 @@ body.mf-page-system-tokens .mf-vault-shell .mf-vault-hero p{font-size:15px;}
 body.mf-page-system-tokens .mf-vault-shell .mf-vault-hero p{line-height:1.58;}
 body.mf-page-system-tokens .mf-vault-shell .mf-vault-hero p{letter-spacing:-0.008em;}
 body.mf-page-system-tokens .mf-vault-shell .mf-vault-kicker,
-body.mf-page-system-tokens .mf-vault-shell .mf-vault-eyebrow{font-size:10.5px;}
+body.mf-page-system-tokens .mf-vault-shell .mf-vault-eyebrow{font-size:11px;}
 body.mf-page-system-tokens .mf-vault-shell .mf-vault-kicker,
 body.mf-page-system-tokens .mf-vault-shell .mf-vault-eyebrow{line-height:1.2;}
 body.mf-page-system-tokens .mf-vault-shell .mf-vault-kicker,
@@ -9255,7 +9211,7 @@ body.mf-page-system-tokens .mf-vault-shell .mf-vault-note,
 body.mf-page-system-tokens .mf-vault-shell .mf-vault-checklist small{line-height:1.5;}
 body.mf-page-system-tokens .mf-vault-shell .mf-vault-btn{line-height:1.2;}
 body.mf-page-system-tokens .mf-vault-shell .mf-vault-btn{letter-spacing:0.085em;}
-@media (max-width: 760px){body.mf-page-system-tokens .mf-trading-terminal .eyebrow{font-size:10px;}}
+@media (max-width: 760px){body.mf-page-system-tokens .mf-trading-terminal .eyebrow{font-size:11px;}}
 @media (max-width: 760px){body.mf-page-system-tokens .flow-page .summary-card strong{font-size:18px;}}
 @media (max-width: 760px){body.mf-page-system-tokens .mf-vault-shell .mf-vault-hero h1{font-size:38px;}}
 @media (max-width: 760px){body.mf-page-system-tokens .mf-vault-shell .mf-vault-hero h1{line-height:0.97;}}
@@ -9309,7 +9265,7 @@ html:has(body.mf-page-system-tokens)[data-theme="light"] .mf-site-header :is(
   .mf-settings-page-title > strong,
   .mf-vault-brand-copy > small,
   .mf-hiw-brand-copy > small
-){font-size:8px !important;}
+){font-size:11px !important;}
 html:has(body.mf-page-system-tokens)[data-theme="light"] .mf-site-header :is(
   .brand-sub,
   .brand-block .subtitle,
@@ -9379,7 +9335,7 @@ html body.mf-page-system-tokens.mf-page-trading.mf-trading-terminal :where(
   .state-dot,
   .copy-trade-badge
 ){text-transform:uppercase !important;}
-html body.mf-page-system-tokens .token-state{font-size:9px !important;}
+html body.mf-page-system-tokens .token-state{font-size:11px !important;}
 html body.mf-page-system-tokens .token-state{line-height:1.05 !important;}
 html body.mf-page-system-tokens .token-state{font-weight:500 !important;}
 html body.mf-page-system-tokens .token-state{letter-spacing:.025em !important;}
@@ -9387,27 +9343,27 @@ html body.mf-page-system-tokens .token-state{text-transform:uppercase !important
 body.mf-page-system-tokens .mf-insightx-title-wrap-v1 h2{font-size:18px;}
 body.mf-page-system-tokens .mf-insightx-title-wrap-v1 h2{line-height:1.2;}
 body.mf-page-system-tokens .mf-insightx-title-wrap-v1 h2{font-weight:650;}
-body.mf-page-system-tokens .mf-insightx-kicker-v1{font-size:9px;}
+body.mf-page-system-tokens .mf-insightx-kicker-v1{font-size:11px;}
 body.mf-page-system-tokens .mf-insightx-kicker-v1{letter-spacing:.12em;}
 body.mf-page-system-tokens .mf-insightx-kicker-v1{font-weight:650;}
-body.mf-page-system-tokens .mf-insightx-subtitle-v1{font-size:10px;}
+body.mf-page-system-tokens .mf-insightx-subtitle-v1{font-size:11px;}
 body.mf-page-system-tokens .mf-insightx-actions-v1 button{font-size:20px;}
 body.mf-page-system-tokens .mf-insightx-actions-v1 button{line-height:1;}
-body.mf-page-system-tokens .mf-insightx-status-v1{font-size:10px;}
+body.mf-page-system-tokens .mf-insightx-status-v1{font-size:11px;}
 body.mf-page-system-tokens .mf-insightx-status-v1{line-height:1.35;}
-body.mf-page-system-tokens .mf-insightx-metric-v1 span{font-size:8px;}
+body.mf-page-system-tokens .mf-insightx-metric-v1 span{font-size:11px;}
 body.mf-page-system-tokens .mf-insightx-metric-v1 span{text-transform:uppercase;}
 body.mf-page-system-tokens .mf-insightx-metric-v1 span{letter-spacing:.05em;}
 body.mf-page-system-tokens .mf-insightx-metric-v1 strong{font-size:12px;}
 body.mf-page-system-tokens .mf-insightx-metric-v1 strong{font-weight:650;}
-body.mf-page-system-tokens .mf-insightx-tags-v1 span{font-size:9px;}
+body.mf-page-system-tokens .mf-insightx-tags-v1 span{font-size:11px;}
 body.mf-page-system-tokens .mf-insightx-atlas-empty-v1{font-size:12px;}
 @media(max-width:760px){body.mf-page-system-tokens .mf-insightx-title-wrap-v1 h2{font-size:16px;}}
-@media(max-width:760px){body.mf-page-system-tokens .mf-insightx-subtitle-v1{font-size:9px;}}
+@media(max-width:760px){body.mf-page-system-tokens .mf-insightx-subtitle-v1{font-size:11px;}}
 body.mf-page-system-tokens .flow-toolbar .search-wrap input{line-height:36px !important;}
 @media (max-width: 760px){body.mf-page-system-tokens .flow-toolbar .search-wrap input{line-height:34px !important;}}
 @media (max-width: 760px){body.mf-page-system-tokens .flow-toolbar .search-wrap input{font-size:16px !important;}}
-body.mf-page-system-tokens{--mf-type-system:8px;}
+body.mf-page-system-tokens{--mf-type-system:11px;}
 html body.mf-page-system-tokens:is(
 .mf-page-system,
   .mf-page-system-tokens,
@@ -9493,7 +9449,7 @@ body.mf-page-system-tokens.mf-page-trading.mf-trading-terminal
 :where(.strategy-summary-panel .strategy-edit-link,
        .positions-panel .close-position,
        .chart-panel #tokenState.decision-badge,
-       .positions-panel .copy-trade-badge){font-size:9px !important;}
+       .positions-panel .copy-trade-badge){font-size:11px !important;}
 html[data-theme]
 body.mf-page-system-tokens.mf-page-trading.mf-trading-terminal
 :where(.strategy-summary-panel .strategy-edit-link,
@@ -9529,7 +9485,7 @@ body.mf-page-system-tokens.mf-page-trading.mf-trading-terminal
 .chart-panel
 .chart-head
 .token-name-row
-> #tokenState.decision-badge{font-size:9px !important;}
+> #tokenState.decision-badge{font-size:11px !important;}
 html[data-theme]
 body.mf-page-system-tokens.mf-page-trading.mf-trading-terminal
 .chart-panel
@@ -9569,7 +9525,7 @@ body.mf-page-system-tokens.mf-page-trading.mf-trading-terminal
 .position-main
 .position-topline
 .position-symbol
-> .copy-trade-badge{font-size:9px !important;}
+> .copy-trade-badge{font-size:11px !important;}
 html[data-theme]
 body.mf-page-system-tokens.mf-page-trading.mf-trading-terminal
 .positions-panel
@@ -9610,17 +9566,17 @@ html[data-theme]
 body.mf-page-system-tokens.mf-page-trading.mf-trading-terminal
 .chart-panel
 .chart-legend
-span{font-size:8px !important;}
+span{font-size:11px !important;}
 html[data-theme]
 body.mf-page-system-tokens.mf-page-trading.mf-trading-terminal
 .chart-panel
 .timeframes
-> button{font-size:9px !important;}
+> button{font-size:11px !important;}
 html[data-theme]
 body.mf-page-system-tokens.mf-page-trading.mf-trading-terminal
 .chart-panel
 .indicator-bar
-button{font-size:8px !important;}
+button{font-size:11px !important;}
 html[data-theme]
 body.mf-page-system-tokens.mf-page-trading.mf-trading-terminal
 .chart-panel
@@ -9630,14 +9586,14 @@ html[data-theme]
 body.mf-page-system-tokens.mf-page-trading.mf-trading-terminal
 .chart-panel
 .selected-metrics
-strong{font-size:9px !important;}
+strong{font-size:11px !important;}
 
 /* TYPOGRAPHY: x100.html */
 body.mf-page-x100{-webkit-font-smoothing:antialiased;}
 body.mf-page-x100 .brand span{line-height:1;}
 body.mf-page-x100 .brand b{font-size:13px;}
 body.mf-page-x100 .brand b{letter-spacing:.13em;}
-body.mf-page-x100 .brand small{font-size:9px;}
+body.mf-page-x100 .brand small{font-size:11px;}
 body.mf-page-x100 .brand small{letter-spacing:.16em;}
 body.mf-page-x100 .nav a{font-size:12px;}
 body.mf-page-x100 .kicker{font-size:11px;}
@@ -9664,21 +9620,21 @@ body.mf-page-x100 .hero-note strong{font-size:13px;}
 body.mf-page-x100 .hero-note p{font-size:12px;}
 body.mf-page-x100 .hero-note p{line-height:1.6;}
 body.mf-page-x100 .stat-row span,
-body.mf-page-x100 .stat-row small{font-size:10px;}
+body.mf-page-x100 .stat-row small{font-size:11px;}
 body.mf-page-x100 .stat-row span,
 body.mf-page-x100 .stat-row small{text-transform:uppercase;}
 body.mf-page-x100 .stat-row span,
 body.mf-page-x100 .stat-row small{letter-spacing:.12em;}
 body.mf-page-x100 .stat-row strong{font-size:34px;}
 body.mf-page-x100 .stat-row strong{letter-spacing:-.04em;}
-body.mf-page-x100 .stat-row small{font-size:9px;}
+body.mf-page-x100 .stat-row small{font-size:11px;}
 body.mf-page-x100 .module b{font-size:28px;}
 body.mf-page-x100 .module b{letter-spacing:-.035em;}
 body.mf-page-x100 .module>small{font-size:11px;}
 body.mf-page-x100 .module p{font-size:12px;}
 body.mf-page-x100 .module p{line-height:1.55;}
 body.mf-page-x100 .working,
-body.mf-page-x100 .module>span:first-child{font-size:9px;}
+body.mf-page-x100 .module>span:first-child{font-size:11px;}
 body.mf-page-x100 .working,
 body.mf-page-x100 .module>span:first-child{text-transform:uppercase;}
 body.mf-page-x100 .working,
@@ -9695,10 +9651,10 @@ body.mf-page-x100 .allocation-bar span{font-size:11px;}
 body.mf-page-x100 .allocation-bar span{font-weight:800;}
 body.mf-page-x100 .allocation-list strong{font-size:26px;}
 body.mf-page-x100 .allocation-list span{font-size:13px;}
-body.mf-page-x100 .allocation-list small{font-size:10px;}
+body.mf-page-x100 .allocation-list small{font-size:11px;}
 body.mf-page-x100 .timeline-points strong{font-size:11px;}
 body.mf-page-x100 .timeline-points span{font-size:13px;}
-body.mf-page-x100 .timeline-points small{font-size:10px;}
+body.mf-page-x100 .timeline-points small{font-size:11px;}
 body.mf-page-x100 .timeline-points small{line-height:1.4;}
 body.mf-page-x100 .revenue-grid strong{font-size:36px;}
 body.mf-page-x100 .revenue-grid strong{letter-spacing:-.04em;}
@@ -9707,19 +9663,19 @@ body.mf-page-x100 .revenue-grid p{font-size:11px;}
 body.mf-page-x100 .revenue-grid p{line-height:1.6;}
 body.mf-page-x100 .policy-note{font-size:12px;}
 body.mf-page-x100 .policy-note{line-height:1.65;}
-body.mf-page-x100 .flow-stack span{font-size:10px;}
+body.mf-page-x100 .flow-stack span{font-size:11px;}
 body.mf-page-x100 .flow-stack span{text-transform:uppercase;}
 body.mf-page-x100 .flow-stack span{letter-spacing:.12em;}
 body.mf-page-x100 .flow-stack b{font-size:13px;}
 body.mf-page-x100 .flow-stack b{font-weight:600;}
 body.mf-page-x100 .flow-stack b{line-height:1.5;}
 body.mf-page-x100 .policy-flow b{font-size:14px;}
-body.mf-page-x100 .policy-flow small{font-size:10px;}
+body.mf-page-x100 .policy-flow small{font-size:11px;}
 body.mf-page-x100 .policy-flow small{line-height:1.5;}
 body.mf-page-x100 .policy-flow i{font-style:normal;}
 body.mf-page-x100 .muted-copy{font-size:12px;}
 body.mf-page-x100 .muted-copy{line-height:1.7;}
-body.mf-page-x100 .definition-grid span{font-size:10px;}
+body.mf-page-x100 .definition-grid span{font-size:11px;}
 body.mf-page-x100 .definition-grid span{text-transform:uppercase;}
 body.mf-page-x100 .definition-grid span{letter-spacing:.12em;}
 body.mf-page-x100 .definition-grid h3{font-size:26px;}
@@ -9733,16 +9689,16 @@ body.mf-page-x100 summary:after{font-weight:300;}
 body.mf-page-x100 details p{font-size:13px;}
 body.mf-page-x100 details p{line-height:1.7;}
 body.mf-page-x100 .closing h2{font-size:clamp(34px,4vw,58px);}
-body.mf-page-x100 .footer-inner{font-size:10px;}
+body.mf-page-x100 .footer-inner{font-size:11px;}
 body.mf-page-x100 .footer-inner{text-transform:uppercase;}
 body.mf-page-x100 .footer-inner{letter-spacing:.08em;}
-@media (max-width:700px){body.mf-page-x100 .nav a{font-size:10px;}}
+@media (max-width:700px){body.mf-page-x100 .nav a{font-size:11px;}}
 @media (max-width:700px){body.mf-page-x100 .hero h1{font-size:clamp(50px,17vw,76px);}}
 @media (max-width:700px){body.mf-page-x100 .lead{font-size:17px;}}
 @media (max-width:700px){body.mf-page-x100 .section-head h2,
 body.mf-page-x100 .closing h2{font-size:39px;}}
-@media (max-width:700px){body.mf-page-x100 .allocation-bar span{font-size:9px;}}
-body.mf-page-x100{--mf-type-system:8px;}
+@media (max-width:700px){body.mf-page-x100 .allocation-bar span{font-size:11px;}}
+body.mf-page-x100{--mf-type-system:11px;}
 html body.mf-page-x100:is(
 .mf-page-system,
   .mf-page-system-tokens,
@@ -9828,7 +9784,7 @@ body.mf-page-x100.mf-page-trading.mf-trading-terminal
 :where(.strategy-summary-panel .strategy-edit-link,
        .positions-panel .close-position,
        .chart-panel #tokenState.decision-badge,
-       .positions-panel .copy-trade-badge){font-size:9px !important;}
+       .positions-panel .copy-trade-badge){font-size:11px !important;}
 html[data-theme]
 body.mf-page-x100.mf-page-trading.mf-trading-terminal
 :where(.strategy-summary-panel .strategy-edit-link,
@@ -9864,7 +9820,7 @@ body.mf-page-x100.mf-page-trading.mf-trading-terminal
 .chart-panel
 .chart-head
 .token-name-row
-> #tokenState.decision-badge{font-size:9px !important;}
+> #tokenState.decision-badge{font-size:11px !important;}
 html[data-theme]
 body.mf-page-x100.mf-page-trading.mf-trading-terminal
 .chart-panel
@@ -9904,7 +9860,7 @@ body.mf-page-x100.mf-page-trading.mf-trading-terminal
 .position-main
 .position-topline
 .position-symbol
-> .copy-trade-badge{font-size:9px !important;}
+> .copy-trade-badge{font-size:11px !important;}
 html[data-theme]
 body.mf-page-x100.mf-page-trading.mf-trading-terminal
 .positions-panel
@@ -9945,17 +9901,17 @@ html[data-theme]
 body.mf-page-x100.mf-page-trading.mf-trading-terminal
 .chart-panel
 .chart-legend
-span{font-size:8px !important;}
+span{font-size:11px !important;}
 html[data-theme]
 body.mf-page-x100.mf-page-trading.mf-trading-terminal
 .chart-panel
 .timeframes
-> button{font-size:9px !important;}
+> button{font-size:11px !important;}
 html[data-theme]
 body.mf-page-x100.mf-page-trading.mf-trading-terminal
 .chart-panel
 .indicator-bar
-button{font-size:8px !important;}
+button{font-size:11px !important;}
 html[data-theme]
 body.mf-page-x100.mf-page-trading.mf-trading-terminal
 .chart-panel
@@ -9965,7 +9921,7 @@ html[data-theme]
 body.mf-page-x100.mf-page-trading.mf-trading-terminal
 .chart-panel
 .selected-metrics
-strong{font-size:9px !important;}
+strong{font-size:11px !important;}
 
 /* TYPOGRAPHY: agent-performance.html */
 body.mf-page-agent-performance .brand-mark{font-size:0!important;}
@@ -9996,12 +9952,12 @@ body.mf-page-agent-performance .subscription-metric small,
 body.mf-page-agent-performance .system-health-summary small{text-transform:uppercase!important;}
 @media(max-width:430px){body.mf-page-agent-performance .panel-head h2,
 body.mf-page-agent-performance .execution-head h2{font-size:12px;}}
-body.mf-page-agent-performance{--mf-type-micro:8px;}
-body.mf-page-agent-performance{--mf-type-meta:9px;}
-body.mf-page-agent-performance{--mf-type-ui:10px;}
-body.mf-page-agent-performance{--mf-type-body:11px;}
-body.mf-page-agent-performance{--mf-type-panel:13px;}
-body.mf-page-agent-performance{--mf-type-title:15px;}
+body.mf-page-agent-performance{--mf-type-micro:11px;}
+body.mf-page-agent-performance{--mf-type-meta:12px;}
+body.mf-page-agent-performance{--mf-type-ui:13px;}
+body.mf-page-agent-performance{--mf-type-body:14px;}
+body.mf-page-agent-performance{--mf-type-panel:15px;}
+body.mf-page-agent-performance{--mf-type-title:17px;}
 body.mf-page-agent-performance .eyebrow{font-size:var(--mf-type-micro);}
 body.mf-page-agent-performance .panel-head h2,
 body.mf-page-agent-performance .execution-head h2,
@@ -10012,7 +9968,7 @@ body.mf-page-agent-performance .execution-head h2,
 body.mf-page-agent-performance .wallet-dialog-head h2,
 body.mf-page-agent-performance .sheet-top h2{line-height:1.2;}
 body.mf-page-agent-performance .btn{font-size:var(--mf-type-body);}
-body.mf-page-agent-performance .mf-nav-kicker{font-size:7px;}
+body.mf-page-agent-performance .mf-nav-kicker{font-size:11px;}
 body.mf-page-agent-performance .mf-nav-kicker{line-height:1;}
 body.mf-page-agent-performance .mf-nav-kicker{font-weight:850;}
 body.mf-page-agent-performance .mf-nav-kicker{letter-spacing:.18em;}
@@ -10025,17 +9981,17 @@ body.mf-page-agent-performance .mf-nav-link-title{font-size:12px;}
 body.mf-page-agent-performance .mf-nav-link-title{line-height:1.2;}
 body.mf-page-agent-performance .mf-nav-link-title{font-weight:760;}
 body.mf-page-agent-performance .mf-nav-link-title{letter-spacing:.012em;}
-body.mf-page-agent-performance .mf-nav-link-sub{font-size:8px;}
+body.mf-page-agent-performance .mf-nav-link-sub{font-size:11px;}
 body.mf-page-agent-performance .mf-nav-link-sub{line-height:1.35;}
 body.mf-page-agent-performance .mf-nav-link-sub{font-weight:550;}
 body.mf-page-agent-performance .mf-nav-link-sub{letter-spacing:.02em;}
 body.mf-page-agent-performance .mf-nav-link-arrow{font-size:14px;}
 body.mf-page-agent-performance .mf-nav-link-arrow{line-height:1;}
-body.mf-page-agent-performance .mf-nav-foot strong{font-size:8px;}
+body.mf-page-agent-performance .mf-nav-foot strong{font-size:11px;}
 body.mf-page-agent-performance .mf-nav-foot strong{line-height:1.2;}
 body.mf-page-agent-performance .mf-nav-foot strong{font-weight:750;}
 body.mf-page-agent-performance .mf-nav-foot strong{letter-spacing:.12em;}
-body.mf-page-agent-performance .mf-nav-foot span{font-size:7px;}
+body.mf-page-agent-performance .mf-nav-foot span{font-size:11px;}
 body.mf-page-agent-performance .mf-nav-foot span{line-height:1.4;}
 body.mf-page-agent-performance .mf-site-header .brand-title,
 body.mf-page-agent-performance .mf-site-header .brand-block .brand,
@@ -10066,7 +10022,7 @@ body.mf-page-agent-performance .mf-site-header .brand-block .subtitle,
 body.mf-page-agent-performance .mf-site-header .header-title > strong,
 body.mf-page-agent-performance .mf-site-header .mf-settings-page-title > strong,
 body.mf-page-agent-performance .mf-site-header .mf-vault-brand-copy > small,
-body.mf-page-agent-performance .mf-site-header .mf-hiw-brand-copy > small{font-size:8px;}
+body.mf-page-agent-performance .mf-site-header .mf-hiw-brand-copy > small{font-size:11px;}
 body.mf-page-agent-performance .mf-site-header .brand-sub,
 body.mf-page-agent-performance .mf-site-header .brand-block .subtitle,
 body.mf-page-agent-performance .mf-site-header .header-title > strong,
@@ -10086,7 +10042,7 @@ body.mf-page-agent-performance .mf-site-header .mf-settings-page-title > strong,
 body.mf-page-agent-performance .mf-site-header .mf-vault-brand-copy > small,
 body.mf-page-agent-performance .mf-site-header .mf-hiw-brand-copy > small{letter-spacing:.12em;}
 body.mf-page-agent-performance .mf-site-header .live-status,
-body.mf-page-agent-performance .mf-site-header .mf-settings-page-live{font-size:8px;}
+body.mf-page-agent-performance .mf-site-header .mf-settings-page-live{font-size:11px;}
 body.mf-page-agent-performance .mf-site-header .live-status,
 body.mf-page-agent-performance .mf-site-header .mf-settings-page-live{line-height:1;}
 body.mf-page-agent-performance .mf-site-header .live-status,
@@ -10104,17 +10060,17 @@ body.mf-page-agent-performance .mf-site-header .brand-block .subtitle,
 body.mf-page-agent-performance .mf-site-header .header-title > strong,
 body.mf-page-agent-performance .mf-site-header .mf-settings-page-title > strong,
 body.mf-page-agent-performance .mf-site-header .mf-vault-brand-copy > small,
-body.mf-page-agent-performance .mf-site-header .mf-hiw-brand-copy > small{font-size:8px;}}
+body.mf-page-agent-performance .mf-site-header .mf-hiw-brand-copy > small{font-size:11px;}}
 @media (max-width: 820px){body.mf-page-agent-performance .mf-site-header .brand-sub,
 body.mf-page-agent-performance .mf-site-header .brand-block .subtitle,
 body.mf-page-agent-performance .mf-site-header .header-title > strong,
 body.mf-page-agent-performance .mf-site-header .mf-settings-page-title > strong,
 body.mf-page-agent-performance .mf-site-header .mf-vault-brand-copy > small,
 body.mf-page-agent-performance .mf-site-header .mf-hiw-brand-copy > small{letter-spacing:.12em;}}
-body.mf-page-agent-performance .ap-live-pill{font-size:9px;}
+body.mf-page-agent-performance .ap-live-pill{font-size:11px;}
 body.mf-page-agent-performance .ap-live-pill{font-weight:800;}
 body.mf-page-agent-performance .ap-live-pill{letter-spacing:.1em;}
-body.mf-page-agent-performance .ap-eyebrow{font-size:10px;}
+body.mf-page-agent-performance .ap-eyebrow{font-size:11px;}
 body.mf-page-agent-performance .ap-eyebrow{font-weight:850;}
 body.mf-page-agent-performance .ap-eyebrow{letter-spacing:.18em;}
 body.mf-page-agent-performance .ap-eyebrow{text-transform:uppercase;}
@@ -10123,7 +10079,7 @@ body.mf-page-agent-performance .ap-hero h1{line-height:1;}
 body.mf-page-agent-performance .ap-hero h1{letter-spacing:-.045em;}
 body.mf-page-agent-performance .ap-hero p{font-size:14px;}
 body.mf-page-agent-performance .ap-hero p{line-height:1.55;}
-body.mf-page-agent-performance .ap-source span{font-size:9px;}
+body.mf-page-agent-performance .ap-source span{font-size:11px;}
 body.mf-page-agent-performance .ap-source span{letter-spacing:.12em;}
 body.mf-page-agent-performance .ap-periods button,
 body.mf-page-agent-performance .ap-refresh{font:inherit;}
@@ -10131,53 +10087,53 @@ body.mf-page-agent-performance .ap-periods button,
 body.mf-page-agent-performance .ap-refresh{font-size:11px;}
 body.mf-page-agent-performance .ap-periods button,
 body.mf-page-agent-performance .ap-refresh{font-weight:800;}
-body.mf-page-agent-performance .ap-kpis span{font-size:9px;}
+body.mf-page-agent-performance .ap-kpis span{font-size:11px;}
 body.mf-page-agent-performance .ap-kpis span{font-weight:800;}
 body.mf-page-agent-performance .ap-kpis span{letter-spacing:.13em;}
 body.mf-page-agent-performance .ap-kpis strong{font-size:29px;}
 body.mf-page-agent-performance .ap-kpis strong{line-height:1;}
 body.mf-page-agent-performance .ap-head h2{font-size:17px;}
-body.mf-page-agent-performance .ap-head>b{font-size:9px;}
+body.mf-page-agent-performance .ap-head>b{font-size:11px;}
 body.mf-page-agent-performance .ap-head>b{letter-spacing:.08em;}
 body.mf-page-agent-performance .ap-donut strong{font-size:26px;}
-body.mf-page-agent-performance .ap-donut span{font-size:9px;}
+body.mf-page-agent-performance .ap-donut span{font-size:11px;}
 body.mf-page-agent-performance .ap-donut span{text-transform:uppercase;}
-body.mf-page-agent-performance .ap-legend{font-size:9px;}
-body.mf-page-agent-performance .ap-summary span{font-size:10px;}
+body.mf-page-agent-performance .ap-legend{font-size:11px;}
+body.mf-page-agent-performance .ap-summary span{font-size:11px;}
 body.mf-page-agent-performance .ap-summary strong{font-size:18px;}
-body.mf-page-agent-performance .ap-note{font-size:10px;}
+body.mf-page-agent-performance .ap-note{font-size:11px;}
 body.mf-page-agent-performance .ap-note{line-height:1.5;}
-body.mf-page-agent-performance .ap-bars>div{font-size:10px;}
-body.mf-page-agent-performance .ap-engine span{font-size:9px;}
+body.mf-page-agent-performance .ap-bars>div{font-size:11px;}
+body.mf-page-agent-performance .ap-engine span{font-size:11px;}
 body.mf-page-agent-performance .ap-engine span{letter-spacing:.12em;}
 body.mf-page-agent-performance .ap-engine strong{font-size:18px;}
 body.mf-page-agent-performance .factor-top strong{font-size:12px;}
-body.mf-page-agent-performance .factor-top span{font-size:9px;}
-body.mf-page-agent-performance .factor-top b{font-size:10px;}
-body.mf-page-agent-performance .meta{font-size:9px;}
+body.mf-page-agent-performance .factor-top span{font-size:11px;}
+body.mf-page-agent-performance .factor-top b{font-size:11px;}
+body.mf-page-agent-performance .meta{font-size:11px;}
 body.mf-page-agent-performance .rank span{font-size:11px;}
 body.mf-page-agent-performance .rank strong{font-size:12px;}
-body.mf-page-agent-performance .empty{font-size:10px;}
-body.mf-page-agent-performance .ap-privacy{font-size:10px;}
+body.mf-page-agent-performance .empty{font-size:11px;}
+body.mf-page-agent-performance .ap-privacy{font-size:11px;}
 body.mf-page-agent-performance .ap-privacy{line-height:1.55;}
-body.mf-page-agent-performance footer{font-size:9px;}
+body.mf-page-agent-performance footer{font-size:11px;}
 @media(max-width:470px){body.mf-page-agent-performance .ap-hero h1{font-size:32px;}}
 @media(max-width:470px){body.mf-page-agent-performance .ap-hero p{font-size:12px;}}
 @media(max-width:470px){body.mf-page-agent-performance .ap-kpis strong{font-size:23px;}}
-@media(max-width:470px){body.mf-page-agent-performance .ap-kpis span{font-size:8px;}}
-@media(max-width:470px){body.mf-page-agent-performance .ap-kpis small{font-size:9px;}}
+@media(max-width:470px){body.mf-page-agent-performance .ap-kpis span{font-size:11px;}}
+@media(max-width:470px){body.mf-page-agent-performance .ap-kpis small{font-size:11px;}}
 body.mf-page-agent-performance .mf-theme-appearance-copy strong{font-size:var(--mf-type-panel, 13px);}
 body.mf-page-agent-performance .mf-theme-appearance-copy strong{line-height:1.2;}
-body.mf-page-agent-performance .mf-theme-appearance-copy small{font-size:var(--mf-type-meta, 9px);}
+body.mf-page-agent-performance .mf-theme-appearance-copy small{font-size:var(--mf-type-meta, 11px);}
 body.mf-page-agent-performance .mf-theme-appearance-copy small{line-height:1.35;}
 body.mf-page-agent-performance .mf-theme-appearance-label,
-body.mf-page-agent-performance .mf-theme-current{font-size:var(--mf-type-meta, 9px);}
+body.mf-page-agent-performance .mf-theme-current{font-size:var(--mf-type-meta, 11px);}
 body.mf-page-agent-performance .mf-theme-appearance-label,
 body.mf-page-agent-performance .mf-theme-current{line-height:1;}
 body.mf-page-agent-performance .mf-theme-segmented button{font:inherit;}
-body.mf-page-agent-performance .mf-theme-segmented button{font-size:var(--mf-type-meta, 9px);}
+body.mf-page-agent-performance .mf-theme-segmented button{font-size:var(--mf-type-meta, 11px);}
 body.mf-page-agent-performance .mf-theme-segmented button{font-weight:760;}
-body.mf-page-agent-performance [data-mf-open-position-pipeline-v3="1"]{font-size:var(--mf-type-micro, 10px) !important;}
+body.mf-page-agent-performance [data-mf-open-position-pipeline-v3="1"]{font-size:var(--mf-type-micro, 11px) !important;}
 body.mf-page-agent-performance [data-mf-open-position-pipeline-v3="1"]{font-weight:900 !important;}
 body.mf-page-agent-performance [data-mf-open-position-pipeline-v3="1"]{line-height:1 !important;}
 body.mf-page-agent-performance [data-mf-open-position-pipeline-v3="1"]{letter-spacing:.07em !important;}
@@ -10296,7 +10252,7 @@ html:has(body.mf-page-agent-performance)[data-theme="light"] .mf-site-header :is
   .mf-settings-page-title > strong,
   .mf-vault-brand-copy > small,
   .mf-hiw-brand-copy > small
-){font-size:8px !important;}
+){font-size:11px !important;}
 html:has(body.mf-page-agent-performance)[data-theme="light"] .mf-site-header :is(
   .brand-sub,
   .brand-block .subtitle,
@@ -10321,7 +10277,7 @@ html:has(body.mf-page-agent-performance)[data-theme="light"] .mf-site-header :is
   .mf-vault-brand-copy > small,
   .mf-hiw-brand-copy > small
 ){letter-spacing:.12em !important;}
-body.mf-page-agent-performance{--mf-type-system:8px;}
+body.mf-page-agent-performance{--mf-type-system:11px;}
 html body.mf-page-agent-performance:is(
 .mf-page-system,
   .mf-page-system-tokens,
@@ -10407,7 +10363,7 @@ body.mf-page-agent-performance.mf-page-trading.mf-trading-terminal
 :where(.strategy-summary-panel .strategy-edit-link,
        .positions-panel .close-position,
        .chart-panel #tokenState.decision-badge,
-       .positions-panel .copy-trade-badge){font-size:9px !important;}
+       .positions-panel .copy-trade-badge){font-size:11px !important;}
 html[data-theme]
 body.mf-page-agent-performance.mf-page-trading.mf-trading-terminal
 :where(.strategy-summary-panel .strategy-edit-link,
@@ -10443,7 +10399,7 @@ body.mf-page-agent-performance.mf-page-trading.mf-trading-terminal
 .chart-panel
 .chart-head
 .token-name-row
-> #tokenState.decision-badge{font-size:9px !important;}
+> #tokenState.decision-badge{font-size:11px !important;}
 html[data-theme]
 body.mf-page-agent-performance.mf-page-trading.mf-trading-terminal
 .chart-panel
@@ -10483,7 +10439,7 @@ body.mf-page-agent-performance.mf-page-trading.mf-trading-terminal
 .position-main
 .position-topline
 .position-symbol
-> .copy-trade-badge{font-size:9px !important;}
+> .copy-trade-badge{font-size:11px !important;}
 html[data-theme]
 body.mf-page-agent-performance.mf-page-trading.mf-trading-terminal
 .positions-panel
@@ -10524,17 +10480,17 @@ html[data-theme]
 body.mf-page-agent-performance.mf-page-trading.mf-trading-terminal
 .chart-panel
 .chart-legend
-span{font-size:8px !important;}
+span{font-size:11px !important;}
 html[data-theme]
 body.mf-page-agent-performance.mf-page-trading.mf-trading-terminal
 .chart-panel
 .timeframes
-> button{font-size:9px !important;}
+> button{font-size:11px !important;}
 html[data-theme]
 body.mf-page-agent-performance.mf-page-trading.mf-trading-terminal
 .chart-panel
 .indicator-bar
-button{font-size:8px !important;}
+button{font-size:11px !important;}
 html[data-theme]
 body.mf-page-agent-performance.mf-page-trading.mf-trading-terminal
 .chart-panel
@@ -10544,7 +10500,7 @@ html[data-theme]
 body.mf-page-agent-performance.mf-page-trading.mf-trading-terminal
 .chart-panel
 .selected-metrics
-strong{font-size:9px !important;}
+strong{font-size:11px !important;}
 
 /* TYPOGRAPHY: owner-intelligence.html */
 body.mf-page-owner-intelligence button,
@@ -10656,7 +10612,7 @@ body.mf-page-owner-intelligence .oi-owner-access-message{font-weight:750;}
 body.mf-page-owner-intelligence .oi-owner-login small{font-size:var(--mf-type-micro);}
 body.mf-page-owner-intelligence .oi-owner-login small{line-height:1.5;}
 @media(max-width:650px){body.mf-page-owner-intelligence #ownerAccessKey{font-size:16px;}}
-body.mf-page-owner-intelligence{--mf-type-system:8px;}
+body.mf-page-owner-intelligence{--mf-type-system:11px;}
 html body.mf-page-owner-intelligence:is(
 .mf-page-system,
   .mf-page-system-tokens,
@@ -10742,7 +10698,7 @@ body.mf-page-owner-intelligence.mf-page-trading.mf-trading-terminal
 :where(.strategy-summary-panel .strategy-edit-link,
        .positions-panel .close-position,
        .chart-panel #tokenState.decision-badge,
-       .positions-panel .copy-trade-badge){font-size:9px !important;}
+       .positions-panel .copy-trade-badge){font-size:11px !important;}
 html[data-theme]
 body.mf-page-owner-intelligence.mf-page-trading.mf-trading-terminal
 :where(.strategy-summary-panel .strategy-edit-link,
@@ -10778,7 +10734,7 @@ body.mf-page-owner-intelligence.mf-page-trading.mf-trading-terminal
 .chart-panel
 .chart-head
 .token-name-row
-> #tokenState.decision-badge{font-size:9px !important;}
+> #tokenState.decision-badge{font-size:11px !important;}
 html[data-theme]
 body.mf-page-owner-intelligence.mf-page-trading.mf-trading-terminal
 .chart-panel
@@ -10818,7 +10774,7 @@ body.mf-page-owner-intelligence.mf-page-trading.mf-trading-terminal
 .position-main
 .position-topline
 .position-symbol
-> .copy-trade-badge{font-size:9px !important;}
+> .copy-trade-badge{font-size:11px !important;}
 html[data-theme]
 body.mf-page-owner-intelligence.mf-page-trading.mf-trading-terminal
 .positions-panel
@@ -10859,17 +10815,17 @@ html[data-theme]
 body.mf-page-owner-intelligence.mf-page-trading.mf-trading-terminal
 .chart-panel
 .chart-legend
-span{font-size:8px !important;}
+span{font-size:11px !important;}
 html[data-theme]
 body.mf-page-owner-intelligence.mf-page-trading.mf-trading-terminal
 .chart-panel
 .timeframes
-> button{font-size:9px !important;}
+> button{font-size:11px !important;}
 html[data-theme]
 body.mf-page-owner-intelligence.mf-page-trading.mf-trading-terminal
 .chart-panel
 .indicator-bar
-button{font-size:8px !important;}
+button{font-size:11px !important;}
 html[data-theme]
 body.mf-page-owner-intelligence.mf-page-trading.mf-trading-terminal
 .chart-panel
@@ -10879,7 +10835,7 @@ html[data-theme]
 body.mf-page-owner-intelligence.mf-page-trading.mf-trading-terminal
 .chart-panel
 .selected-metrics
-strong{font-size:9px !important;}
+strong{font-size:11px !important;}
 
 /* TYPOGRAPHY: system-source.html */
 body.mf-page-system-source .back{font-size:24px;}
@@ -10906,7 +10862,7 @@ body.mf-page-system-source .info{font-size:12px;}
 body.mf-page-system-source .info{line-height:1.55;}
 body.mf-page-system-source .msg{font-size:12px;}
 @media(max-width:560px){body.mf-page-system-source h1{font-size:25px;}}
-body.mf-page-system-source{--mf-type-system:8px;}
+body.mf-page-system-source{--mf-type-system:11px;}
 html body.mf-page-system-source:is(
 .mf-page-system,
   .mf-page-system-tokens,
@@ -10992,7 +10948,7 @@ body.mf-page-system-source.mf-page-trading.mf-trading-terminal
 :where(.strategy-summary-panel .strategy-edit-link,
        .positions-panel .close-position,
        .chart-panel #tokenState.decision-badge,
-       .positions-panel .copy-trade-badge){font-size:9px !important;}
+       .positions-panel .copy-trade-badge){font-size:11px !important;}
 html[data-theme]
 body.mf-page-system-source.mf-page-trading.mf-trading-terminal
 :where(.strategy-summary-panel .strategy-edit-link,
@@ -11028,7 +10984,7 @@ body.mf-page-system-source.mf-page-trading.mf-trading-terminal
 .chart-panel
 .chart-head
 .token-name-row
-> #tokenState.decision-badge{font-size:9px !important;}
+> #tokenState.decision-badge{font-size:11px !important;}
 html[data-theme]
 body.mf-page-system-source.mf-page-trading.mf-trading-terminal
 .chart-panel
@@ -11068,7 +11024,7 @@ body.mf-page-system-source.mf-page-trading.mf-trading-terminal
 .position-main
 .position-topline
 .position-symbol
-> .copy-trade-badge{font-size:9px !important;}
+> .copy-trade-badge{font-size:11px !important;}
 html[data-theme]
 body.mf-page-system-source.mf-page-trading.mf-trading-terminal
 .positions-panel
@@ -11109,17 +11065,17 @@ html[data-theme]
 body.mf-page-system-source.mf-page-trading.mf-trading-terminal
 .chart-panel
 .chart-legend
-span{font-size:8px !important;}
+span{font-size:11px !important;}
 html[data-theme]
 body.mf-page-system-source.mf-page-trading.mf-trading-terminal
 .chart-panel
 .timeframes
-> button{font-size:9px !important;}
+> button{font-size:11px !important;}
 html[data-theme]
 body.mf-page-system-source.mf-page-trading.mf-trading-terminal
 .chart-panel
 .indicator-bar
-button{font-size:8px !important;}
+button{font-size:11px !important;}
 html[data-theme]
 body.mf-page-system-source.mf-page-trading.mf-trading-terminal
 .chart-panel
@@ -11129,8 +11085,363 @@ html[data-theme]
 body.mf-page-system-source.mf-page-trading.mf-trading-terminal
 .chart-panel
 .selected-metrics
-strong{font-size:9px !important;}
+strong{font-size:11px !important;}
 
 /* INLINE TYPOGRAPHY MOVED FROM STYLE ATTRIBUTES */
-body.mf-page-index [data-mf-type-v174="mf-page-index-1"]{font-size:9px !important;line-height:1.45 !important;}
+body.mf-page-index [data-mf-type-v174="mf-page-index-1"]{font-size:11px !important;line-height:1.45 !important;}
 /* MEMEFLOW_X_TYPOGRAPHY_CANONICAL_V174_END */
+
+/* ==========================================================================
+   MEMEFLOW SYSTEM SETTINGS CANONICAL V175
+   One visual owner for Settings. Geometry remains in component CSS.
+   ========================================================================== */
+
+/* DARK */
+html:not([data-theme="light"]) body.mf-settings-standalone {
+  background: #000000 !important;
+  background-color: #000000 !important;
+  background-image: none !important;
+  color: #e7e9ea !important;
+}
+
+html:not([data-theme="light"]) body.mf-settings-standalone .mf-settings-page-shell {
+  background: transparent !important;
+  background-image: none !important;
+}
+
+html:not([data-theme="light"]) body.mf-settings-standalone .mf-settings-page-header {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border: 0 !important;
+  border-bottom: 1px solid #2f3336 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+html:not([data-theme="light"]) body.mf-settings-standalone :where(
+  .mf293-settings-panel,
+  .mf293-settings-group,
+  .mf293-field,
+  .mf293-settings-meta > span,
+  .mf293-settings-meta > label,
+  .mf293-dex-filter-meta,
+  .mf-agent-item,
+  .mf-agent-events,
+  .mf-theme-appearance
+) {
+  background: #000000 !important;
+  background-color: #000000 !important;
+  background-image: none !important;
+  border-color: #2f3336 !important;
+  box-shadow: none !important;
+}
+
+html:not([data-theme="light"]) body.mf-settings-standalone .mf293-settings-panel {
+  border: 1px solid #2f3336 !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+html:not([data-theme="light"]) body.mf-settings-standalone :where(
+  .mf293-settings-head,
+  .mf293-settings-meta,
+  .mf293-settings-body,
+  .mf293-settings-group > summary,
+  .mf293-settings-grid
+) {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+html:not([data-theme="light"]) body.mf-settings-standalone :where(
+  .mf293-settings-head,
+  .mf293-settings-meta
+) {
+  border-bottom-color: #2f3336 !important;
+}
+
+html:not([data-theme="light"]) body.mf-settings-standalone .mf293-settings-footer {
+  background: #000000 !important;
+  background-color: #000000 !important;
+  background-image: none !important;
+  border-top-color: #2f3336 !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+html:not([data-theme="light"]) body.mf-settings-standalone :where(
+  .mf293-settings-head h2,
+  .mf293-settings-group summary strong,
+  .mf293-settings-meta strong,
+  .mf293-field input:not([type="checkbox"]),
+  .mf293-field select,
+  .mf293-field textarea,
+  .mf-theme-appearance-copy strong
+) {
+  color: #e7e9ea !important;
+}
+
+html:not([data-theme="light"]) body.mf-settings-standalone :where(
+  .mf-settings-page-title > strong,
+  .mf293-settings-group summary small,
+  .mf293-settings-meta span,
+  .mf293-field-label,
+  .mf293-dex-filter-meta,
+  .mf-theme-appearance-copy small,
+  .mf-theme-appearance-label,
+  .mf-theme-current,
+  .mf-agent-note,
+  .mf-agent-history
+) {
+  color: #71767b !important;
+}
+
+html:not([data-theme="light"]) body.mf-settings-standalone :where(
+  .mf293-field input:not([type="checkbox"]),
+  .mf293-field select,
+  .mf293-field textarea
+) {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+html:not([data-theme="light"]) body.mf-settings-standalone .mf293-switch-track {
+  background: #000000 !important;
+  border-color: #2f3336 !important;
+  box-shadow: none !important;
+}
+
+/* LIGHT — same global light language as the rest of MEMEFLOW */
+html[data-theme="light"] body.mf-settings-standalone {
+  background: var(--mf-app-bg, #f4f6f8) !important;
+  background-color: var(--mf-app-bg, #f4f6f8) !important;
+  background-image:
+    radial-gradient(circle at 52% -8%, rgba(70,150,178,.08), transparent 31%),
+    linear-gradient(180deg,#f7f9fb 0%,#f4f6f8 48%,#f1f4f6 100%) !important;
+  color: var(--mf-app-text, #17222c) !important;
+}
+
+html[data-theme="light"] body.mf-settings-standalone .mf-settings-page-shell {
+  background: transparent !important;
+  background-image: none !important;
+}
+
+html[data-theme="light"] body.mf-settings-standalone .mf-settings-page-header {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border: 0 !important;
+  border-bottom: 1px solid rgba(38,59,74,.09) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+html[data-theme="light"] body.mf-settings-standalone .mf293-settings-panel {
+  background: linear-gradient(180deg,#ffffff,#f8fafb) !important;
+  background-color: #ffffff !important;
+  background-image: linear-gradient(180deg,#ffffff,#f8fafb) !important;
+  border: 1px solid rgba(38,59,74,.105) !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+html[data-theme="light"] body.mf-settings-standalone :where(
+  .mf293-settings-group,
+  .mf293-settings-meta > span,
+  .mf293-settings-meta > label,
+  .mf-theme-appearance
+) {
+  background: rgba(255,255,255,.92) !important;
+  background-color: rgba(255,255,255,.92) !important;
+  background-image: none !important;
+  border-color: rgba(38,59,74,.10) !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body.mf-settings-standalone :where(
+  .mf293-field,
+  .mf293-dex-filter-meta,
+  .mf-agent-item,
+  .mf-agent-events
+) {
+  background: rgba(25,45,59,.025) !important;
+  background-color: rgba(25,45,59,.025) !important;
+  background-image: none !important;
+  border-color: rgba(38,59,74,.08) !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body.mf-settings-standalone :where(
+  .mf293-settings-head,
+  .mf293-settings-meta,
+  .mf293-settings-body,
+  .mf293-settings-group > summary,
+  .mf293-settings-grid
+) {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body.mf-settings-standalone :where(
+  .mf293-settings-head,
+  .mf293-settings-meta
+) {
+  border-bottom-color: rgba(38,59,74,.085) !important;
+}
+
+html[data-theme="light"] body.mf-settings-standalone .mf293-settings-footer {
+  background: rgba(248,250,252,.97) !important;
+  background-color: rgba(248,250,252,.97) !important;
+  background-image: none !important;
+  border-top-color: rgba(38,59,74,.085) !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+html[data-theme="light"] body.mf-settings-standalone :where(
+  .mf-settings-page-title > span,
+  .mf293-settings-head h2,
+  .mf293-settings-group summary strong,
+  .mf293-settings-meta strong,
+  .mf293-field input:not([type="checkbox"]),
+  .mf293-field select,
+  .mf293-field textarea,
+  .mf-theme-appearance-copy strong
+) {
+  color: #17222c !important;
+}
+
+html[data-theme="light"] body.mf-settings-standalone :where(
+  .mf-settings-page-title > strong,
+  .mf293-settings-group summary small,
+  .mf293-settings-meta span,
+  .mf293-field-label,
+  .mf293-dex-filter-meta,
+  .mf-theme-appearance-copy small,
+  .mf-theme-appearance-label,
+  .mf-theme-current,
+  .mf-agent-note,
+  .mf-agent-history
+) {
+  color: #667782 !important;
+}
+
+html[data-theme="light"] body.mf-settings-standalone :where(
+  .mf293-field input:not([type="checkbox"]),
+  .mf293-field select,
+  .mf293-field textarea
+) {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body.mf-settings-standalone .mf293-switch-track {
+  background: #eef2f5 !important;
+  border-color: rgba(38,59,74,.12) !important;
+  box-shadow: none !important;
+}
+
+/* Semantic colors/states remain owned by their existing semantic rules. */
+/* MEMEFLOW_SYSTEM_SETTINGS_CANONICAL_V175_END */
+
+/* MEMEFLOW_READABILITY_SCALE_V176_START */
+
+/* Base UI copy */
+body {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.45;
+}
+
+/* Native controls inherit the same readable weight. */
+button,
+input,
+select,
+textarea {
+  font-weight: 500;
+}
+
+/* HTML small text is metadata, never microscopic. */
+small {
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+/* Common muted labels keep the X tone but gain readable weight/leading. */
+:where(
+  .muted,
+  .brand-sub,
+  .subtitle,
+  .mf-nav-link-sub,
+  .mf-settings-page-title > strong,
+  .mf293-field-label,
+  .mf-theme-appearance-label,
+  .mf-theme-current
+) {
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+/* MEMEFLOW_READABILITY_SCALE_V176_END */
+
+/* MEMEFLOW_NEUTRAL_TEXT_V179_START */
+
+/*
+  PURE GRAYSCALE TYPOGRAPHY - NO COLOR CAST
+
+  DARK
+  1 #FFFFFF
+  2 #D6D6D6
+  3 #A3A3A3
+  4 #737373
+
+  LIGHT
+  1 #000000
+  2 #303030
+  3 #606060
+  4 #8A8A8A
+*/
+
+:root,
+html:not([data-theme="light"]) {
+  --mf-neutral-text-1: #ffffff;
+  --mf-neutral-text-2: #d6d6d6;
+  --mf-neutral-text-3: #a3a3a3;
+  --mf-neutral-text-4: #737373;
+}
+
+html[data-theme="light"] {
+  --mf-neutral-text-1: #000000;
+  --mf-neutral-text-2: #303030;
+  --mf-neutral-text-3: #606060;
+  --mf-neutral-text-4: #8a8a8a;
+}
+
+:root {
+  --mf-text-strong: var(--mf-neutral-text-1);
+  --mf-text-primary: var(--mf-neutral-text-2);
+  --mf-text-secondary: var(--mf-neutral-text-3);
+  --mf-text-tertiary: var(--mf-neutral-text-4);
+}
+
+/* MEMEFLOW_NEUTRAL_TEXT_V179_END */
