@@ -816,7 +816,7 @@ button{ cursor:pointer; }
   .chart-panel{ order:1; width:100%; }
   .control-panel{ order:2; width:100%; }
   .positions-panel{ order:3; width:100%; }
-  .candidates-panel{ order:5; width:100%; }
+  .candidates-panel{ order:2; width:100%; }
 
   .candidate-list{
     max-height:none;
@@ -1468,7 +1468,7 @@ body.mf-page-trading.mf-trading-terminal
   .chart-panel{ order:1; width:100%; }
   .control-panel{ order:2; width:100%; }
   .positions-panel{ order:3; width:100%; }
-  .candidates-panel{ order:5; width:100%; }
+  .candidates-panel{ order:2; width:100%; }
   .bottom-history-panel{ order:6; width:100%; }
 }
 

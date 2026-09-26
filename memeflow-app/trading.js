@@ -1352,6 +1352,7 @@ function candidateAvatarMarkup(candidate) {
  * Height is measured from the actual rendered rows, not a hardcoded pixel guess.
  */
 const MF_VISIBLE_LIST_ROWS = 3;
+const MF_CANDIDATE_VISIBLE_LIST_ROWS = 6;
 let mfVisibleRowsResizeRaf = 0;
 
 function fitListToVisibleRows(list, rowSelector, visibleRows = MF_VISIBLE_LIST_ROWS) {
@@ -1386,7 +1387,7 @@ function fitListToVisibleRows(list, rowSelector, visibleRows = MF_VISIBLE_LIST_R
 function refreshThreeRowListViewports() {
   cancelAnimationFrame(mfVisibleRowsResizeRaf);
   mfVisibleRowsResizeRaf = requestAnimationFrame(() => {
-    fitListToVisibleRows($('candidateList'), '.candidate');
+    fitListToVisibleRows($('candidateList'), '.candidate', MF_CANDIDATE_VISIBLE_LIST_ROWS);
     fitListToVisibleRows($('positionsList'), '.position-row');
     fitListToVisibleRows($('tradeHistory'), '.trade-row.trade-log-row');
   });
@@ -3954,7 +3955,7 @@ function drawChart(){
       backgroundColor:chartTheme.background,
       textStyle:{
         color:chartTheme.text,
-        fontFamily:'ui-monospace, SFMono-Regular, Menlo, monospace',
+        fontFamily:'IBM Plex Mono',
         fontSize:8
       },
       axisPointer:{
@@ -4997,7 +4998,7 @@ return `
 }
 
 function openWalletSettings() {
-  window.location.href = '/settings.html?v=cachefix-c6663c7-20260826-v1#wallet';
+  window.location.href = '/smart-vault.html';
 }
 
 function bind() {
