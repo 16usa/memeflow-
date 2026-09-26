@@ -1445,7 +1445,7 @@ function renderCandidates() {
     `;
   }).join('');
 
-  fitListToVisibleRows(list, '.candidate');
+  fitListToVisibleRows(list, '.candidate', MF_CANDIDATE_VISIBLE_LIST_ROWS);
 
   list.querySelectorAll('.candidate').forEach(button => {
     button.addEventListener('click', () => selectCandidate(button.dataset.mint));
