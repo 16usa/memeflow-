@@ -1452,6 +1452,46 @@ function renderCandidates() {
   });
 }
 
+
+// MEMEFLOW_CANDIDATES_ENTRY_FILTER_GATE_V207
+// Candidates is a trading surface, therefore a card is visible only when the
+// SAME canonical Entry Admission used by trading says it is admitted.
+// OPEN positions are preserved so position management never disappears.
+function __mfCandidatePassesEntryFiltersV207(candidate) {
+  if (!candidate?.mint) return false;
+
+  const displayState =
+    String(candidate?.state || candidate?.displayState || '')
+      .trim()
+      .toUpperCase();
+
+  if (
+    displayState === 'OPEN POSITION' ||
+    displayState === 'OPEN' ||
+    candidate?.openPositionOverride === true ||
+    candidate?.__openPosition
+  ) {
+    return true;
+  }
+
+  const admission =
+    String(candidate?.entryAdmissionState || '')
+      .trim()
+      .toUpperCase();
+
+  if (admission) {
+    return admission === 'ADMITTED';
+  }
+
+  if (candidate?.tradeEligible === true) return true;
+  if (candidate?.tradeEligible === false) return false;
+  if (candidate?.displayOnly === true) return false;
+
+  // Compatibility: rows from strict /api/ai/decisions are already
+  // Entry-Admission-gated server-side and may omit UI annotations.
+  return true;
+}
+
 async function loadCandidates({ redrawChart = true } = {}) {
   // MEMEFLOW_TERMINAL_ONE_MECHANISM_V21
   const payload=await api('/api/system/live-token-states?limit=200');
@@ -1464,6 +1504,14 @@ async function loadCandidates({ redrawChart = true } = {}) {
         if(globalPruneV1?.isPruned(item.mint))return false;
         return allowedStates.has(String(item?.state||'').trim().toUpperCase());
       });
+
+
+  // MEMEFLOW_CANDIDATES_ENTRY_FILTER_GATE_V207
+  // Real-Time Pipeline can carry PENDING/REJECTED rows. Do not show those in
+  // Terminal Candidates. This runs before ALL/BUY READY/WATCH/WAITING/BLOCKED.
+  state.candidates =
+    (Array.isArray(state.candidates) ? state.candidates : [])
+      .filter(__mfCandidatePassesEntryFiltersV207);
 
   state.liveWatchCandidates=[];
 
