@@ -61,14 +61,14 @@
 
 html[data-theme="light"]{
   color-scheme: light;
-  --bg: #f4f6f8 !important;
-  --panel: rgba(255,255,255,.94) !important;
-  --panel-solid: #ffffff !important;
-  --panel-2: rgba(248,250,252,.96) !important;
-  --surface: #ffffff !important;
-  --surface2: #f7f9fb !important;
-  --surface3: #eef2f5 !important;
-  --surface-2: #f7f9fb !important;
+  --bg: #FFFFFF !important;
+  --panel: #FFFFFF !important;
+  --panel-solid: #FFFFFF !important;
+  --panel-2: #FFFFFF !important;
+  --surface: #FFFFFF !important;
+  --surface2: #FFFFFF !important;
+  --surface3: #FFFFFF !important;
+  --surface-2: #FFFFFF !important;
   --line: rgba(38,59,74,.105) !important;
   --line2: rgba(38,59,74,.17) !important;
   --line-strong: rgba(38,59,74,.17) !important;
@@ -76,12 +76,12 @@ html[data-theme="light"]{
   --muted: var(--mf-neutral-text-3);
   --faint: var(--mf-neutral-text-4);
 
-  --mf-app-bg: #f4f6f8 !important;
-  --mf-app-surface: #ffffff !important;
-  --mf-app-surface-2: #f7f9fb !important;
-  --mf-app-surface-3: #edf2f5 !important;
-  --mf-app-panel-top: rgba(255,255,255,.98) !important;
-  --mf-app-panel-bottom: rgba(247,249,251,.98) !important;
+  --mf-app-bg: #FFFFFF !important;
+  --mf-app-surface: #FFFFFF !important;
+  --mf-app-surface-2: #FFFFFF !important;
+  --mf-app-surface-3: #FFFFFF !important;
+  --mf-app-panel-top: #FFFFFF !important;
+  --mf-app-panel-bottom: #FFFFFF !important;
   --mf-app-line: rgba(38,59,74,.105) !important;
   --mf-app-line-strong: rgba(38,59,74,.17) !important;
   --mf-app-soft: rgba(27,47,61,.025) !important;
@@ -89,17 +89,17 @@ html[data-theme="light"]{
   --mf-app-text: var(--mf-neutral-text-2);
   --mf-app-muted: var(--mf-neutral-text-3);
 
-  --mf-nav-bg: #f4f6f8 !important;
-  --mf-nav-surface: rgba(248,250,252,.985) !important;
-  --mf-nav-surface-2: rgba(255,255,255,.985) !important;
+  --mf-nav-bg: #FFFFFF !important;
+  --mf-nav-surface: #FFFFFF !important;
+  --mf-nav-surface-2: #FFFFFF !important;
   --mf-nav-line: rgba(38,59,74,.10) !important;
   --mf-nav-line-strong: rgba(38,59,74,.17) !important;
   --mf-nav-text: var(--mf-neutral-text-2);
   --mf-nav-muted: var(--mf-neutral-text-3);
 
-  --hiw-bg: #f4f6f8 !important;
-  --hiw-panel: rgba(255,255,255,.90) !important;
-  --hiw-panel-strong: rgba(255,255,255,.98) !important;
+  --hiw-bg: #FFFFFF !important;
+  --hiw-panel: #FFFFFF !important;
+  --hiw-panel-strong: #FFFFFF !important;
   --hiw-line: rgba(38,59,74,.10) !important;
   --hiw-line-strong: rgba(38,59,74,.17) !important;
   --hiw-text: var(--mf-neutral-text-2);
@@ -107,9 +107,9 @@ html[data-theme="light"]{
   --hiw-muted-2: var(--mf-neutral-text-4);
   --hiw-shadow: 0 18px 52px rgba(46,63,76,.08) !important;
 
-  --v-bg: #f4f6f8 !important;
-  --v-panel: rgba(255,255,255,.90) !important;
-  --v-panel2: rgba(255,255,255,.98) !important;
+  --v-bg: #FFFFFF !important;
+  --v-panel: #FFFFFF !important;
+  --v-panel2: #FFFFFF !important;
   --v-line: rgba(38,59,74,.10) !important;
   --v-line2: rgba(38,59,74,.17) !important;
   --v-text: var(--mf-neutral-text-2);
@@ -119,12 +119,10 @@ html[data-theme="light"]{
 
 html[data-theme="light"],
 html[data-theme="light"] body{
-  background: #f4f6f8 !important;
+
 }
 html[data-theme="light"] body{
-  background-image:
-    radial-gradient(circle at 52% -8%, rgba(70,150,178,.08), transparent 31%),
-    linear-gradient(180deg,#f7f9fb 0%,#f4f6f8 48%,#f1f4f6 100%) !important;
+
 }
 
 html[data-theme="light"] .mf-site-header{
@@ -141,26 +139,24 @@ html[data-theme="light"] .status-chip,
 html[data-theme="light"] .tool-btn,
 html[data-theme="light"] .ghost-btn,
 html[data-theme="light"] .wallet-btn{
-  background: rgba(255,255,255,.74) !important;
+
   border-color: rgba(38,59,74,.11) !important;
 }
 html[data-theme="light"] .tool-btn:hover,
 html[data-theme="light"] .tool-btn.active,
 html[data-theme="light"] .ghost-btn:hover,
 html[data-theme="light"] .wallet-btn:hover{
-  background: rgba(85,217,255,.07) !important;
+
   border-color: rgba(48,143,174,.23) !important;
 }
 
-html[data-theme="light"] .mf-nav-toggle-line{ background: #536873 !important; }
+html[data-theme="light"] .mf-nav-toggle-line{  }
 html[data-theme="light"] .mf-nav-toggle:hover .mf-nav-toggle-line,
 html[data-theme="light"] .mf-nav-toggle:focus-visible .mf-nav-toggle-line,
-html[data-theme="light"][data-mf-nav-open="1"] .mf-nav-toggle-line{ background: #17222c !important; }
+html[data-theme="light"][data-mf-nav-open="1"] .mf-nav-toggle-line{  }
 html[data-theme="light"] .mf-nav-backdrop{ background: rgba(31,45,55,.18) !important; }
 html[data-theme="light"] .mf-nav-drawer{
-  background:
-    radial-gradient(circle at 72% 4%, rgba(85,217,255,.08), transparent 24%),
-    linear-gradient(180deg,var(--mf-nav-surface-2),var(--mf-nav-surface)) !important;
+
   border-left-color: var(--mf-nav-line) !important;
   box-shadow: -20px 0 55px rgba(39,55,67,.12) !important;
 }
@@ -170,10 +166,10 @@ html[data-theme="light"] .mf-nav-link{ border-bottom-color: rgba(38,59,74,.075) 
 
 
 html[data-theme="light"] .mf-nav-link:hover,
-html[data-theme="light"] .mf-nav-link:focus-visible{ background: rgba(56,126,151,.045) !important; }
+html[data-theme="light"] .mf-nav-link:focus-visible{  }
 
 html[data-theme="light"] .sidebar{
-  background: rgba(248,250,252,.95) !important;
+
   border-color: rgba(38,59,74,.10) !important;
   box-shadow: 0 10px 30px rgba(42,59,72,.06) !important;
 }
@@ -182,7 +178,7 @@ html[data-theme="light"] .sidebar .nav a:hover,
 html[data-theme="light"] .sidebar .nav a.active,
 html[data-theme="light"] .nav-item:hover,
 html[data-theme="light"] .nav-item.active{
-  background: rgba(50,137,167,.06) !important;
+
 }
 
 html[data-theme="light"] .panel,
@@ -195,7 +191,7 @@ html[data-theme="light"] #settings,
 html[data-theme="light"] .execution-preview,
 html[data-theme="light"] .advanced-intelligence{
   border-color: rgba(38,59,74,.105) !important;
-  background: linear-gradient(180deg,#ffffff,#f8fafb) !important;
+
   box-shadow: none !important;
 }
 
@@ -228,17 +224,17 @@ html[data-theme="light"] .mobile-wallet-card,
 html[data-theme="light"] .explain-step,
 html[data-theme="light"] .production-empty{
   border-color: rgba(38,59,74,.09) !important;
-  background: rgba(25,45,59,.025) !important;
+
 }
 html[data-theme="light"] .btn:not(.primary){
-  background: #ffffff !important;
+
   border-color: rgba(38,59,74,.11) !important;
 }
-html[data-theme="light"] .settings-footer{ background: rgba(248,250,252,.97) !important; }
+html[data-theme="light"] .settings-footer{  }
 
-html[data-theme="light"] .system-shell{ background: transparent !important; }
+html[data-theme="light"] .system-shell{  }
 html[data-theme="light"] .glass:not(.viewport-wrap){
-  background: rgba(255,255,255,.90) !important;
+
   border-color: rgba(38,59,74,.10) !important;
   box-shadow: 0 12px 34px rgba(41,57,68,.06) !important;
 }
@@ -247,7 +243,7 @@ html[data-theme="light"] .glass:not(.viewport-wrap){
 html[data-theme="light"] .token-card,
 html[data-theme="light"] .metric-card,
 html[data-theme="light"] .node-label{
-  background: rgba(255,255,255,.92) !important;
+
   border-color: rgba(38,59,74,.10) !important;
   box-shadow: none !important;
 }
@@ -259,12 +255,12 @@ html[data-theme="light"] .viewport-wrap.mf-true3d-clean-v3{
   box-shadow: 0 12px 34px rgba(41,57,68,.08) !important;
 }
 html[data-theme="light"] .boot{
-  background: radial-gradient(circle at 52% 38%,#ffffff 0,#f4f6f8 44%,#edf2f5 100%) !important;
+
 }
 
 
 html[data-theme="light"] .terminal .panel{
-  background: linear-gradient(180deg,#ffffff,#f8fafb) !important;
+
   border-color: rgba(38,59,74,.10) !important;
   box-shadow: 0 10px 30px rgba(42,59,72,.05) !important;
 }
@@ -272,17 +268,17 @@ html[data-theme="light"] .metric,
 html[data-theme="light"] .approval-row,
 html[data-theme="light"] .selected-metrics > div,
 html[data-theme="light"] .control-section{
-  background: rgba(24,44,58,.025) !important;
+
   border-color: rgba(38,59,74,.08) !important;
 }
 
 html[data-theme="light"] .candidate{
-  background: transparent !important;
+
 }
 
 html[data-theme="light"] .candidate:hover,
 html[data-theme="light"] .candidate.selected{
-  background: rgba(56,145,177,.055) !important;
+
 }
 
 
@@ -298,13 +294,13 @@ html[data-theme="light"] .candidate-filter button.active,
 html[data-theme="light"] .timeframes button.active,
 html[data-theme="light"] .indicator-bar button[aria-pressed="true"]{
   border-color: rgba(56,145,177,.22) !important;
-  background: rgba(56,145,177,.075) !important;
+
 }
 
 html[data-theme="light"] .token-row,
 html[data-theme="light"] .token-card-expanded,
 html[data-theme="light"] .scanner-card{
-  background: rgba(255,255,255,.90) !important;
+
   border-color: rgba(38,59,74,.10) !important;
   box-shadow: none !important;
 }
@@ -313,9 +309,7 @@ html[data-theme="light"] .scanner-card{
 
 
 html[data-theme="light"] body:has(.mf-vault-shell){
-  background:
-    radial-gradient(circle at 50% 5%,rgba(61,142,171,.10),transparent 27%),
-    linear-gradient(180deg,#f7f9fb 0%,#f4f6f8 48%,#f1f4f6 100%) !important;
+
 }
 html[data-theme="light"] .mf-vault-card,
 html[data-theme="light"] .mf-vault-topbar,
@@ -323,7 +317,7 @@ html[data-theme="light"] .mf-vault-row,
 html[data-theme="light"] .mf-vault-stat,
 html[data-theme="light"] .mf-vault-action,
 html[data-theme="light"] .mf-vault-note{
-  background: linear-gradient(180deg,#ffffff,#f8fafb) !important;
+
   border-color: rgba(38,59,74,.10) !important;
   box-shadow: 0 12px 34px rgba(41,57,68,.055) !important;
 }
@@ -331,9 +325,7 @@ html[data-theme="light"] .mf-vault-note{
 
 
 html[data-theme="light"] body.mf-hiw-page{
-  background:
-    radial-gradient(circle at 52% 16%,rgba(61,142,171,.10),transparent 24%),
-    linear-gradient(180deg,#f7f9fb 0%,#f4f6f8 42%,#f1f4f6 100%) !important;
+
 }
 html[data-theme="light"] .mf-hiw-topbar,
 html[data-theme="light"] .mf-hiw-status-card,
@@ -343,43 +335,41 @@ html[data-theme="light"] .mf-hiw-card,
 html[data-theme="light"] .mf-hiw-step,
 html[data-theme="light"] .mf-hiw-money-card,
 html[data-theme="light"] .mf-hiw-cta{
-  background: linear-gradient(180deg,#ffffff,#f8fafb) !important;
+
   border-color: rgba(38,59,74,.10) !important;
   box-shadow: 0 12px 34px rgba(41,57,68,.055) !important;
 }
 
 
 html[data-theme="light"] .mf-hiw-status-stack > div{
-  background: rgba(24,44,58,.025) !important;
+
   border-color: rgba(38,59,74,.08) !important;
 }
 html[data-theme="light"] .mf-hiw-map::before{
   opacity: .34 !important;
-  background-image:
-    linear-gradient(rgba(38,59,74,.07) 1px, transparent 1px),
-    linear-gradient(90deg,rgba(38,59,74,.07) 1px, transparent 1px) !important;
+
 }
 
-html[data-theme="light"] .mf293-settings-backdrop{ background: rgba(226,232,236,.70) !important; }
+html[data-theme="light"] .mf293-settings-backdrop{  }
 html[data-theme="light"] .mf293-settings-panel{
-  background: var(--mf-app-surface, #ffffff) !important;
+
   border-color: rgba(38,59,74,.10) !important;
   box-shadow: -20px 0 60px rgba(41,57,68,.10) !important;
 }
 html[data-theme="light"] .mf293-settings-head,
 html[data-theme="light"] .mf293-settings-meta,
 html[data-theme="light"] .mf293-settings-footer{ border-color: rgba(38,59,74,.08) !important; }
-html[data-theme="light"] .mf293-settings-footer{ background: rgba(248,250,252,.98) !important; }
+html[data-theme="light"] .mf293-settings-footer{  }
 html[data-theme="light"] .mf293-settings-group,
 html[data-theme="light"] .mf293-field,
 html[data-theme="light"] .mf-theme-appearance{
-  background: rgba(255,255,255,.88) !important;
+
   border-color: rgba(38,59,74,.09) !important;
 }
 
 
 html[data-theme="light"] .mf293-settings-head-actions button{
-  background: #ffffff !important;
+
   border-color: rgba(38,59,74,.10) !important;
 }
 html[data-theme="light"] .mf293-secondary{
@@ -387,7 +377,7 @@ html[data-theme="light"] .mf293-secondary{
 }
 html[data-theme="light"] .mf293-primary{
   border-color: rgba(47,145,177,.23) !important;
-  background: rgba(47,145,177,.08) !important;
+
 }
 html[data-theme="light"] .mf293-switch-track,
 html[data-theme="light"] .mf-theme-segmented{
@@ -396,7 +386,7 @@ html[data-theme="light"] .mf-theme-segmented{
 }
 
 html[data-theme="light"] .mf-theme-segmented button.is-active{
-  background: #ffffff !important;
+
   box-shadow: 0 1px 4px rgba(41,57,68,.09), inset 0 0 0 1px rgba(47,145,177,.18) !important;
 }
 
@@ -406,25 +396,21 @@ html[data-theme="light"] .mf-theme-segmented button.is-active{
 
 
 html[data-theme="light"] .mf-site-header:not(.mf-site-header--sticky){
-  background: transparent !important;
-  background-image: none !important;
+
+
   box-shadow: none !important;
 }
 
 html[data-theme="light"] body.mf-trading-terminal{
-  background-color: #f4f6f8 !important;
-  background-image:
-    radial-gradient(circle at 52% -8%, rgba(70,150,178,.08), transparent 31%),
-    linear-gradient(180deg,#f7f9fb 0%,#f4f6f8 48%,#f1f4f6 100%) !important;
+
+
   background-attachment: fixed !important;
 }
 
 html[data-theme="light"] body.mf-trading-terminal
 .mf-site-header.mf-site-header--sticky{
-  background-color: #f4f6f8 !important;
-  background-image:
-    radial-gradient(circle at 52% -8%, rgba(70,150,178,.08), transparent 31%),
-    linear-gradient(180deg,#f7f9fb 0%,#f4f6f8 48%,#f1f4f6 100%) !important;
+
+
   background-attachment: fixed !important;
   background-position: 0 0 !important;
   box-shadow: none !important;
@@ -437,31 +423,30 @@ html[data-theme="light"] body.mf-hiw-page .mf-hiw-btn{
 }
 
 html[data-theme="light"] body.mf-hiw-page .mf-hiw-btn-primary{
-  background: rgba(85, 217, 255, .13) !important;
+
   border-color: rgba(37, 166, 198, .42) !important;
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .34) !important;
 }
 
 html[data-theme="light"] body.mf-hiw-page .mf-hiw-btn-primary:hover,
 html[data-theme="light"] body.mf-hiw-page .mf-hiw-btn-primary:focus-visible{
-  background: rgba(85, 217, 255, .18) !important;
+
   border-color: rgba(28, 145, 176, .56) !important;
 }
 
 html[data-theme="light"] body.mf-hiw-page .mf-hiw-btn-ghost{
-  background: rgba(255, 255, 255, .28) !important;
+
   border-color: rgba(73, 98, 112, .22) !important;
 }
 
 html[data-theme="light"] body.mf-hiw-page .mf-hiw-btn-ghost:hover,
 html[data-theme="light"] body.mf-hiw-page .mf-hiw-btn-ghost:focus-visible{
-  background: rgba(255, 255, 255, .48) !important;
+
   border-color: rgba(64, 88, 102, .34) !important;
 }
 
 html[data-theme="light"] body.mf-hiw-page .mf-hiw-map-detail{
-  background:
-    linear-gradient(180deg, rgba(255,255,255,.94), rgba(247,250,252,.94)) !important;
+
   border-color: rgba(88,111,125,.14) !important;
   box-shadow: 0 12px 34px rgba(27,42,53,.045) !important;
 }
@@ -475,8 +460,7 @@ html[data-theme="light"] body.mf-hiw-page .mf-hiw-map-detail{
 
 
 html[data-theme="light"] body.mf-hiw-page .mf-hiw-control-card{
-  background:
-    linear-gradient(180deg, rgba(255,255,255,.92), rgba(245,248,250,.96)) !important;
+
   border-color: rgba(91,113,126,.16) !important;
   box-shadow: 0 12px 32px rgba(27,42,53,.04) !important;
 }
@@ -487,7 +471,7 @@ html[data-theme="light"] body.mf-hiw-page .mf-hiw-control-card.mf-hiw-control-us
 
 html[data-theme="light"] body.mf-hiw-page .mf-hiw-control-label{
   border-color: rgba(48,161,190,.22) !important;
-  background: rgba(85,217,255,.055) !important;
+
 }
 
 
@@ -497,9 +481,7 @@ html[data-theme="light"] body.mf-hiw-page .mf-hiw-control-label{
 
 
 html[data-theme="light"] body.mf-hiw-page .mf-hiw-money{
-  background:
-    radial-gradient(circle at 92% 0%, rgba(85,217,255,.075), transparent 30%),
-    linear-gradient(180deg, rgba(255,255,255,.94), rgba(244,248,250,.96)) !important;
+
   border-color: rgba(47,170,203,.20) !important;
   box-shadow: 0 16px 44px rgba(27,42,53,.05) !important;
 }
@@ -509,13 +491,13 @@ html[data-theme="light"] body.mf-hiw-page .mf-hiw-money{
 
 
 html[data-theme="light"] body.mf-hiw-page .mf-hiw-money-flow > div{
-  background: rgba(255,255,255,.72) !important;
+
   border-color: rgba(91,113,126,.15) !important;
   box-shadow: none !important;
 }
 
 html[data-theme="light"] body.mf-hiw-page .mf-hiw-money-flow > div.is-vault{
-  background: rgba(77,230,161,.045) !important;
+
   border-color: rgba(36,181,122,.22) !important;
 }
 
@@ -526,15 +508,13 @@ html[data-theme="light"] body.mf-hiw-page .mf-hiw-money-flow > div.is-vault{
 
 
 html[data-theme="light"] body.mf-hiw-page .mf-hiw-faq details{
-  background:
-    linear-gradient(180deg, rgba(255,255,255,.90), rgba(244,248,250,.96)) !important;
+
   border-color: rgba(91,113,126,.16) !important;
   box-shadow: 0 8px 24px rgba(27,42,53,.035) !important;
 }
 
 html[data-theme="light"] body.mf-hiw-page .mf-hiw-faq details[open]{
-  background:
-    linear-gradient(180deg, rgba(255,255,255,.98), rgba(243,249,251,.98)) !important;
+
   border-color: rgba(44,167,199,.27) !important;
 }
 
@@ -545,15 +525,13 @@ html[data-theme="light"] body.mf-hiw-page .mf-hiw-faq details[open]{
 
 
 html[data-theme="light"] body.mf-hiw-page .mf-hiw-cta{
-  background: transparent !important;
-  background-image: none !important;
+
+
   box-shadow: none !important;
 }
 
 html[data-theme="light"] .mf-vault-status-panel{
-  background:
-    radial-gradient(circle at 92% 0%, rgba(85,217,255,.06), transparent 30%),
-    linear-gradient(180deg, rgba(255,255,255,.94), rgba(244,248,250,.97)) !important;
+
   border-color: rgba(91,113,126,.16) !important;
   box-shadow: 0 14px 36px rgba(27,42,53,.045) !important;
 }
@@ -563,12 +541,12 @@ html[data-theme="light"] .mf-vault-status-panel{
 
 
 html[data-theme="light"] .mf-vault-status-flow span{
-  background: rgba(255,255,255,.58) !important;
+
   border-color: rgba(91,113,126,.15) !important;
 }
 
 html[data-theme="light"] .mf-vault-status-flow span.is-ready{
-  background: rgba(77,230,161,.055) !important;
+
   border-color: rgba(36,181,122,.22) !important;
 }
 
@@ -577,12 +555,12 @@ html[data-theme="light"] .mf-vault-status-flow span.is-ready{
 html[data-theme="light"] .mf-vault-btn:disabled{
   opacity: .68 !important;
   border-color: rgba(91,113,126,.14) !important;
-  background: rgba(255,255,255,.22) !important;
+
 }
 
 html[data-theme="light"] .mf-vault-btn-primary:disabled{
   border-color: rgba(52,178,211,.22) !important;
-  background: rgba(85,217,255,.055) !important;
+
 }
 
 
@@ -591,7 +569,7 @@ html[data-theme="light"] #connectBtn:disabled,
 html[data-theme="light"] #createBtn:disabled{
   opacity: .78 !important;
   border-color: rgba(52,178,211,.24) !important;
-  background: rgba(85,217,255,.06) !important;
+
 }
 
 html[data-theme="light"] .chart-panel .chart-head,
@@ -616,7 +594,7 @@ html[data-theme="light"] .chart-panel .selected-metrics{
 }
 
 html[data-theme="light"] .chart-panel .token-avatar{
-  background: rgba(38,74,92,.035) !important;
+
   border-color: rgba(47,84,102,.16) !important;
 }
 
@@ -628,17 +606,17 @@ html[data-theme="light"] .chart-panel .token-avatar{
 
 html[data-theme="light"] .chart-panel .decision-badge{
   border-color: rgba(55,79,94,.16) !important;
-  background: rgba(255,255,255,.44) !important;
+
 }
 
 html[data-theme="light"] .chart-panel .timeframes button{
   border-color: rgba(55,79,94,.08) !important;
-  background: transparent !important;
+
 }
 
 html[data-theme="light"] .chart-panel .timeframes button.active{
   border-color: rgba(32,155,188,.28) !important;
-  background: rgba(85,217,255,.10) !important;
+
 }
 
 
@@ -646,7 +624,7 @@ html[data-theme="light"] .chart-panel .timeframes button.active{
 
 
 html[data-theme="light"] .chart-panel .chart-legend span{
-  background: rgba(255,255,255,.76) !important;
+
   border-color: rgba(55,79,94,.08) !important;
 }
 
@@ -660,11 +638,11 @@ html[data-theme="light"] .chart-panel .indicator-bar{
 
 html[data-theme="light"] .chart-panel .indicator-bar button.active,
 html[data-theme="light"] .chart-panel .indicator-bar button[aria-pressed="true"]{
-  background: rgba(85,217,255,.075) !important;
+
 }
 
 html[data-theme="light"] .chart-panel .indicator-divider{
-  background: rgba(55,79,94,.14) !important;
+
 }
 
 
@@ -725,8 +703,7 @@ html[data-theme="light"] .chart-panel .indicator-divider{
 }
 
 html[data-theme="light"] .flow-token{
-  background:
-    linear-gradient(180deg, #ffffff 0%, #f8fbfc 100%) !important;
+
   border-color: rgba(55, 79, 94, .12) !important;
   box-shadow: 0 8px 24px rgba(27, 42, 53, .045) !important;
 }
@@ -739,15 +716,14 @@ html[data-theme="light"] .flow-token.open{
 }
 
 html[data-theme="light"] .flow-token.open::before{
-  background: #4de6a1 !important;
+
   box-shadow: none !important;
 }
 
 
 
 html[data-theme="light"] .flow-token .token-avatar{
-  background:
-    linear-gradient(180deg, #f8fbfc 0%, #eef4f7 100%) !important;
+
   border-color: rgba(55, 79, 94, .14) !important;
   box-shadow: none !important;
 }
@@ -760,7 +736,7 @@ html[data-theme="light"] .flow-token .token-avatar.open{
 
 html[data-theme="light"] .flow-token .token-state.open{
   border-color: rgba(77, 230, 161, .72) !important;
-  background: rgba(77, 230, 161, .07) !important;
+
 }
 
 html[data-theme="light"] .flow-token .token-metric{
@@ -788,7 +764,7 @@ html[data-theme="light"] .flow-token .mf-regular-market-stat{
 
 
 html[data-theme="light"] .flow-token .details-button{
-  background: #ffffff !important;
+
   border-color: rgba(55, 79, 94, .13) !important;
   box-shadow: none !important;
 }
@@ -798,8 +774,7 @@ html[data-theme="light"] .flow-token .token-details{
 }
 
 html[data-theme="light"] .flow-token .detail-block{
-  background:
-    linear-gradient(180deg, #fafcfd 0%, #f5f9fa 100%) !important;
+
   border-color: rgba(55, 79, 94, .10) !important;
   box-shadow: none !important;
 }
@@ -809,13 +784,13 @@ html[data-theme="light"] .flow-token .detail-block{
 
 
 html[data-theme="light"] .flow-toolbar{
-  background: rgba(249, 252, 253, .96) !important;
+
   border-color: rgba(55, 79, 94, .11) !important;
   box-shadow: none !important;
 }
 
 html[data-theme="light"] .search-wrap{
-  background: linear-gradient(180deg,#ffffff,#f8fafb) !important;
+
   border-color: rgba(55, 79, 94, .12) !important;
 }
 
@@ -826,13 +801,13 @@ html[data-theme="light"] .search-wrap{
 
 
 html[data-theme="light"] .refresh-info button{
-  background: linear-gradient(180deg,#ffffff,#f8fafb) !important;
+
   border-color: rgba(55, 79, 94, .12) !important;
 }
 
 html[data-theme="light"] .mf-sort-trigger-v25,
 html[data-theme="light"] .mf-sort-trigger-v25.is-active{
-  background: linear-gradient(180deg,#ffffff,#f8fafb) !important;
+
   border-color: rgba(77, 230, 161, .24) !important;
   box-shadow: none !important;
 }
@@ -840,13 +815,13 @@ html[data-theme="light"] .mf-sort-trigger-v25.is-active{
 
 
 html[data-theme="light"] .pagination{
-  background: rgba(245, 249, 251, .97) !important;
+
   border-color: rgba(55, 79, 94, .11) !important;
   box-shadow: 0 8px 24px rgba(27, 42, 53, .055) !important;
 }
 
 html[data-theme="light"] .pagination button{
-  background: #ffffff !important;
+
   border-color: rgba(55, 79, 94, .12) !important;
 }
 
@@ -871,17 +846,17 @@ html[data-theme="light"] .flow-token.blocked,
 html[data-theme="light"] .flow-token .detail-block,
 html[data-theme="light"] .empty-state,
 html[data-theme="light"] .pagination{
-  background: linear-gradient(180deg,#ffffff,#f8fafb) !important;
+
 }
 
 html[data-theme="light"] .mf-sort-overlay-v25{
-  background: rgba(226, 235, 239, .12) !important;
+
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
 }
 
 html[data-theme="light"] .mf-sort-sheet-v25{
-  background: linear-gradient(180deg,#ffffff,#f8fafb) !important;
+
   border: 1px solid rgba(70, 92, 105, .13) !important;
 
   box-shadow:
@@ -891,7 +866,7 @@ html[data-theme="light"] .mf-sort-sheet-v25{
 html[data-theme="light"] .mf-sort-handle-v25{
   width: 34px !important;
   height: 4px !important;
-  background: rgba(78, 98, 110, .28) !important;
+
   border-radius: 999px !important;
 }
 
@@ -902,45 +877,45 @@ html[data-theme="light"] .mf-sort-sheet-head-v25{
 
 
 html[data-theme="light"] .mf-sort-back-v25{
-  background: transparent !important;
+
 }
 
 html[data-theme="light"] .mf-sort-direction-v25{
-  background: linear-gradient(180deg,#ffffff,#f8fafb) !important;
+
   border: 1px solid rgba(70, 92, 105, .10) !important;
   box-shadow: none !important;
 }
 
 html[data-theme="light"] .mf-sort-direction-v25 button{
-  background: transparent !important;
+
   border: 1px solid transparent !important;
   box-shadow: none !important;
 }
 
 html[data-theme="light"] .mf-sort-direction-v25 button.is-active{
-  background: linear-gradient(180deg,#ffffff,#f8fafb) !important;
+
   border-color: rgba(85, 217, 255, .72) !important;
   box-shadow: none !important;
 }
 
 html[data-theme="light"] .mf-sort-list-shell-v252{
-  background: linear-gradient(180deg,#ffffff,#f8fafb) !important;
+
   border: 1px solid rgba(70, 92, 105, .11) !important;
   box-shadow: none !important;
   overflow: hidden !important;
 }
 
 html[data-theme="light"] .mf-sort-row-v25{
-  background: transparent !important;
+
   box-shadow: none !important;
 }
 
 html[data-theme="light"] .mf-sort-row-v25 + .mf-sort-row-v25::before{
-  background: rgba(70, 92, 105, .085) !important;
+
 }
 
 html[data-theme="light"] .mf-sort-row-v25:active{
-  background: rgba(85, 217, 255, .045) !important;
+
 }
 
 
@@ -948,52 +923,44 @@ html[data-theme="light"] .mf-sort-row-v25:active{
 
 
 html[data-theme="light"] .mf-sort-radio-v25{
-  background: transparent !important;
+
   border-color: #8da0aa !important;
   box-shadow: none !important;
 }
 
 html[data-theme="light"] .mf-sort-radio-v25.is-active{
   border-color: #55d9ff !important;
-  background:
-    radial-gradient(circle at center,
-      #55d9ff 0 3px,
-      transparent 3.5px
-    ) !important;
+
   box-shadow: none !important;
 }
 
 html[data-theme="light"] .mf-age-list-v25{
-  background: linear-gradient(180deg,#ffffff,#f8fafb) !important;
+
 }
 
 html[data-theme="light"] .mf-age-list-v25 .mf-sort-row-v25{
-  background: transparent !important;
+
 }
 
 html[data-theme="light"] body,
 html[data-theme="light"] body.mf-trading-terminal,
 html[data-theme="light"] body.mf-hiw-page,
 html[data-theme="light"] body:has(.mf-vault-shell){
-  background-color: #f4f6f8 !important;
-  background-image:
-    radial-gradient(circle at 52% -8%, rgba(103, 202, 226, 0.14), transparent 31%),
-    linear-gradient(180deg, #fbfcfd 0%, #f4f6f8 54%, #edf1f4 100%) !important;
+
+
   background-attachment: fixed !important;
 }
 
 html[data-theme="light"] .mf-site-header:not(.mf-site-header--sticky){
-  background-color: transparent !important;
-  background-image: none !important;
+
+
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
 }
 
 html[data-theme="light"] .mf-site-header.mf-site-header--sticky{
-  background-color: #f4f6f8 !important;
-  background-image:
-    radial-gradient(circle at 52% -8%, rgba(103, 202, 226, 0.14), transparent 31%),
-    linear-gradient(180deg, #fbfcfd 0%, #f4f6f8 54%, #edf1f4 100%) !important;
+
+
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
 }
@@ -1023,11 +990,9 @@ html:not([data-theme="light"]) body,
 html[data-theme="dark"],
 html[data-theme="dark"] body{
 
-  background-color:
-    var(--mf-canvas-dark-base) !important;
 
-  background-image:
-    var(--mf-canvas-dark-image) !important;
+
+
 
   background-attachment:
     fixed !important;
@@ -1048,11 +1013,9 @@ body.mf-hiw-page,
 html[data-theme="light"]
 body:has(.mf-vault-shell){
 
-  background-color:
-    var(--mf-canvas-light-base) !important;
 
-  background-image:
-    var(--mf-canvas-light-image) !important;
+
+
 
   background-attachment:
     fixed !important;
@@ -1065,21 +1028,17 @@ html[data-theme="light"] .mf-vault-shell,
 html[data-theme="light"] .mf-hiw-shell,
 html[data-theme="light"] .shell{
 
-  background-color:
-    transparent !important;
 
-  background-image:
-    none !important;
+
+
 }
 
 html[data-theme="light"]
 .mf-site-header:not(.mf-site-header--sticky){
 
-  background-color:
-    transparent !important;
 
-  background-image:
-    none !important;
+
+
 
   box-shadow:
     none !important;
@@ -1088,11 +1047,9 @@ html[data-theme="light"]
 html[data-theme="light"]
 .mf-site-header.mf-site-header--sticky{
 
-  background-color:
-    var(--mf-canvas-light-base) !important;
 
-  background-image:
-    var(--mf-canvas-light-image) !important;
+
+
 
   background-attachment:
     fixed !important;
@@ -1116,8 +1073,7 @@ html:not([data-theme="light"])
 html[data-theme="dark"]
 .mf-site-header{
 
-  background-color:
-    var(--mf-canvas-dark-base) !important;
+
 }
 
 .mf-site-header{
@@ -1134,13 +1090,13 @@ html[data-theme="light"]
 
 html:not([data-theme="light"]) .mf-site-header,
 html[data-theme="dark"] .mf-site-header{
-  background: transparent !important;
-  background-image: none !important;
+
+
   box-shadow: none !important;
 }
 
 html[data-theme="light"] .pagination{
-  background: rgba(255, 255, 255, .985) !important;
+
   border-color: rgba(66, 88, 101, .16) !important;
 
   box-shadow:
@@ -1153,7 +1109,7 @@ html[data-theme="light"] .pagination{
 }
 
 html[data-theme="light"] .flow-toolbar.mf-stuck{
-  background: rgba(255, 255, 255, .985) !important;
+
   border-color: rgba(66, 88, 101, .16) !important;
 
   box-shadow:
@@ -1218,19 +1174,19 @@ html[data-theme="light"] .flow-toolbar.mf-stuck{
 }
 
 html[data-theme="light"] .flow-page .summary-card.all.active{
-  background: rgba(85, 217, 255, .105) !important;
+
 }
 html[data-theme="light"] .flow-page .summary-card.ready.active{
-  background: rgba(239, 198, 106, .115) !important;
+
 }
 html[data-theme="light"] .flow-page .summary-card.watch.active{
-  background: rgba(92, 141, 255, .11) !important;
+
 }
 html[data-theme="light"] .flow-page .summary-card.waiting.active{
-  background: rgba(163, 180, 192, .10) !important;
+
 }
 html[data-theme="light"] .flow-page .summary-card.blocked.active{
-  background: rgba(255, 102, 121, .105) !important;
+
 }
 
 html[data-theme="light"]{
@@ -1238,23 +1194,23 @@ html[data-theme="light"]{
   --mf-global-light-header: #ffffff;
   --mf-global-light-header-line: rgba(15, 20, 25, .08);
 
-  
-  --bg: #ffffff !important;
-  --bg0: #ffffff !important;
-  --bg1: #ffffff !important;
-  --page-bg: #ffffff !important;
-  --mf-app-bg: #ffffff !important;
-  --mf-nav-bg: #ffffff !important;
-  --hiw-bg: #ffffff !important;
-  --v-bg: #ffffff !important;
-  --op-bg: #ffffff !important;
+
+  --bg: #FFFFFF !important;
+  --bg0: #FFFFFF !important;
+  --bg1: #FFFFFF !important;
+  --page-bg: #FFFFFF !important;
+  --mf-app-bg: #FFFFFF !important;
+  --mf-nav-bg: #FFFFFF !important;
+  --hiw-bg: #FFFFFF !important;
+  --v-bg: #FFFFFF !important;
+  --op-bg: #FFFFFF !important;
 }
 
 html[data-theme="light"],
 html[data-theme="light"] body,
 html[data-theme="light"] body[class]{
-  background-color: var(--mf-global-light-canvas) !important;
-  background-image: none !important;
+
+
 }
 
 html[data-theme="light"] body > :is(
@@ -1266,14 +1222,14 @@ html[data-theme="light"] body > :is(
   .mf-hiw-page,
   main.flow-page
 ){
-  background-color: transparent !important;
-  background-image: none !important;
+
+
 }
 
 html[data-theme="light"] body.mf-trading-terminal .shell,
 html[data-theme="light"] body.mf-trading-terminal .terminal{
-  background-color: transparent !important;
-  background-image: none !important;
+
+
 }
 
 html[data-theme="light"]{
@@ -1285,39 +1241,39 @@ html[data-theme="light"]{
 html[data-theme="light"],
 html[data-theme="light"] body,
 html[data-theme="light"] body[class]{
-  background: #ffffff !important;
-  background-color: #ffffff !important;
-  background-image: none !important;
+
+
+
 }
 
 html[data-theme="light"] body .flow-page,
 html[data-theme="light"] body > main.flow-page{
-  background: transparent !important;
-  background-color: transparent !important;
-  background-image: none !important;
+
+
+
 }
 
 html[data-theme="light"] body.mf-settings-standalone,
 html[data-theme="light"] body.mf-settings-standalone .mf-settings-page-shell,
 html[data-theme="light"] body .mf-settings-page-shell{
-  background: #ffffff !important;
-  background-color: #ffffff !important;
-  background-image: none !important;
+
+
+
 }
 
 html[data-theme="light"] body.mf-trading-terminal,
 html[data-theme="light"] body.mf-trading-terminal .shell,
 html[data-theme="light"] body.mf-trading-terminal .terminal{
-  background: #ffffff !important;
-  background-color: #ffffff !important;
-  background-image: none !important;
+
+
+
 }
 
 html[data-theme="light"] body .mf-vault-shell,
 html[data-theme="light"] body > main.mf-vault-shell{
-  background: transparent !important;
-  background-color: transparent !important;
-  background-image: none !important;
+
+
+
 }
 
 html[data-theme="light"] body .mf-site-header,
@@ -1326,9 +1282,9 @@ html[data-theme="light"] body.mf-trading-terminal .mf-site-header,
 html[data-theme="light"] body.mf-trading-terminal .mf-site-header.mf-site-header--sticky,
 html[data-theme="light"] body.mf-settings-standalone .mf-site-header,
 html[data-theme="light"] body .mf-vault-shell > .mf-site-header{
-  background: #ffffff !important;
-  background-color: #ffffff !important;
-  background-image: none !important;
+
+
+
 
   border-bottom-color: rgba(15, 20, 25, .08) !important;
 
@@ -1338,31 +1294,31 @@ html[data-theme="light"] body .mf-vault-shell > .mf-site-header{
 }
 
 html[data-theme="light"] body:has(.mf-vault-shell){
-  background: #ffffff !important;
-  background-color: #ffffff !important;
-  background-image: none !important;
+
+
+
   background-attachment: scroll !important;
 }
 
 html[data-theme="light"] body.mf-hiw-page{
-  background: #ffffff !important;
-  background-color: #ffffff !important;
-  background-image: none !important;
+
+
+
   background-attachment: scroll !important;
 }
 
 html[data-theme="light"] body.mf-trading-terminal{
-  background: #ffffff !important;
-  background-color: #ffffff !important;
-  background-image: none !important;
+
+
+
   background-attachment: scroll !important;
 }
 
 html[data-theme="light"] body:has(.flow-page),
 html[data-theme="light"] body.mf-settings-standalone{
-  background: #ffffff !important;
-  background-color: #ffffff !important;
-  background-image: none !important;
+
+
+
 }
 
 html[data-theme="light"] body .mf-site-header,
@@ -1370,18 +1326,18 @@ html[data-theme="light"] body:has(.mf-vault-shell) .mf-site-header,
 html[data-theme="light"] body.mf-hiw-page .mf-site-header,
 html[data-theme="light"] body.mf-trading-terminal .mf-site-header,
 html[data-theme="light"] body.mf-settings-standalone .mf-site-header{
-  background: #ffffff !important;
-  background-color: #ffffff !important;
-  background-image: none !important;
+
+
+
   box-shadow: none !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
 }
 
 html[data-theme="light"] body.mf-settings-standalone .mf293-settings-backdrop{
-  background: #ffffff !important;
-  background-color: #ffffff !important;
-  background-image: none !important;
+
+
+
   box-shadow: none !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
@@ -1389,9 +1345,9 @@ html[data-theme="light"] body.mf-settings-standalone .mf293-settings-backdrop{
 
 html[data-theme="light"] body.mf-settings-standalone,
 html[data-theme="light"] body.mf-settings-standalone .mf-settings-page-shell{
-  background: #ffffff !important;
-  background-color: #ffffff !important;
-  background-image: none !important;
+
+
+
 }
 
 html[data-theme="light"] body.mf-settings-standalone .mf293-settings-panel{
@@ -1408,18 +1364,18 @@ html[data-theme="light"] body.mf-settings-standalone .mf293-settings-panel{
 
 html[data-theme="light"] body:has(.flow-page){
   --mf-oa-page: #ffffff;
-  --mf-oa-surface: #f5f5f5;
+  --mf-oa-surface: #FFFFFF !important;
   --mf-oa-control: #ebebeb;
   --mf-oa-hairline: rgba(15, 20, 25, .065);
 
-  background: var(--mf-oa-page) !important;
-  background-color: var(--mf-oa-page) !important;
-  background-image: none !important;
+
+
+
 }
 
 html[data-theme="light"] body:has(.flow-page) .flow-hero{
-  background: var(--mf-oa-surface) !important;
-  background-image: none !important;
+
+
   border: 0 !important;
   box-shadow: none !important;
   backdrop-filter: none !important;
@@ -1427,41 +1383,41 @@ html[data-theme="light"] body:has(.flow-page) .flow-hero{
 }
 
 html[data-theme="light"] body:has(.flow-page) .summary-card{
-  background: var(--mf-oa-surface) !important;
-  background-image: none !important;
+
+
   border: 0 !important;
   box-shadow: none !important;
 }
 
 html[data-theme="light"] body:has(.flow-page) .summary-card.active.all{
-  background: rgba(85, 217, 255, .10) !important;
+
   box-shadow: inset 0 -2px 0 var(--cyan) !important;
 }
 
 html[data-theme="light"] body:has(.flow-page) .summary-card.ready.active{
-  background: rgba(239, 198, 106, .10) !important;
+
   box-shadow: inset 0 -2px 0 var(--yellow) !important;
 }
 
 html[data-theme="light"] body:has(.flow-page) .summary-card.watch.active{
-  background: rgba(92, 141, 255, .10) !important;
+
   box-shadow: inset 0 -2px 0 var(--blue) !important;
 }
 
 html[data-theme="light"] body:has(.flow-page) .summary-card.waiting.active{
-  background: rgba(149, 167, 179, .10) !important;
+
   box-shadow: inset 0 -2px 0 #95a7b3 !important;
 }
 
 html[data-theme="light"] body:has(.flow-page) .summary-card.blocked.active{
-  background: rgba(255, 102, 121, .09) !important;
+
   box-shadow: inset 0 -2px 0 var(--red) !important;
 }
 
 html[data-theme="light"] body:has(.flow-page)
 .flow-page > .state-summary + :not(.flow-toolbar):not(.token-list):not(.mf-token-scan-result){
-  background: var(--mf-oa-surface) !important;
-  background-image: none !important;
+
+
   border-color: transparent !important;
   box-shadow: none !important;
 }
@@ -1469,14 +1425,14 @@ html[data-theme="light"] body:has(.flow-page)
 html[data-theme="light"] body:has(.flow-page)
 .flow-page > .state-summary + :not(.flow-toolbar):not(.token-list):not(.mf-token-scan-result)
 button:not(.active):not([aria-pressed="true"]){
-  background: var(--mf-oa-control) !important;
+
   border-color: transparent !important;
   box-shadow: none !important;
 }
 
 html[data-theme="light"] body:has(.flow-page) .flow-toolbar{
-  background: var(--mf-oa-surface) !important;
-  background-image: none !important;
+
+
   border: 0 !important;
   box-shadow: none !important;
   backdrop-filter: none !important;
@@ -1484,22 +1440,22 @@ html[data-theme="light"] body:has(.flow-page) .flow-toolbar{
 }
 
 html[data-theme="light"] body:has(.flow-page) .search-wrap{
-  background: var(--mf-oa-control) !important;
-  background-image: none !important;
+
+
   border: 0 !important;
   box-shadow: none !important;
 }
 
 html[data-theme="light"] body:has(.flow-page) .refresh-info button{
-  background: var(--mf-oa-control) !important;
-  background-image: none !important;
+
+
   border: 0 !important;
   box-shadow: none !important;
 }
 
 html[data-theme="light"] body:has(.flow-page) .token-list{
   gap: 0 !important;
-  background: var(--mf-oa-surface) !important;
+
   border: 0 !important;
   border-radius: 18px !important;
   box-shadow: none !important;
@@ -1507,8 +1463,8 @@ html[data-theme="light"] body:has(.flow-page) .token-list{
 }
 
 html[data-theme="light"] body:has(.flow-page) .flow-token{
-  background: transparent !important;
-  background-image: none !important;
+
+
   border: 0 !important;
   border-bottom: 1px solid var(--mf-oa-hairline) !important;
   border-radius: 0 !important;
@@ -1520,7 +1476,7 @@ html[data-theme="light"] body:has(.flow-page) .flow-token:last-child{
 }
 
 html[data-theme="light"] body:has(.flow-page) .flow-token.open{
-  background: rgba(77, 230, 161, .050) !important;
+
   border-left: 0 !important;
   box-shadow: inset 2px 0 0 rgba(77, 230, 161, .92) !important;
 }
@@ -1547,15 +1503,15 @@ html[data-theme="light"] body:has(.flow-page) .token-details{
 }
 
 html[data-theme="light"] body:has(.flow-page) .detail-block{
-  background: var(--mf-oa-control) !important;
-  background-image: none !important;
+
+
   border-color: transparent !important;
   box-shadow: none !important;
 }
 
 html[data-theme="light"] body:has(.flow-page) .pagination{
-  background: var(--mf-oa-surface) !important;
-  background-image: none !important;
+
+
   border: 0 !important;
   box-shadow: none !important;
   backdrop-filter: none !important;
@@ -1563,15 +1519,15 @@ html[data-theme="light"] body:has(.flow-page) .pagination{
 }
 
 html[data-theme="light"] body:has(.flow-page) .pagination button{
-  background: var(--mf-oa-control) !important;
-  background-image: none !important;
+
+
   border: 0 !important;
   box-shadow: none !important;
 }
 
 html[data-theme="light"] body:has(.flow-page) .empty-state{
-  background: var(--mf-oa-surface) !important;
-  background-image: none !important;
+
+
   border: 0 !important;
   box-shadow: none !important;
 }
@@ -1596,14 +1552,14 @@ html[data-theme="light"] body:has(.flow-page) .mf-token-scan-result:not([hidden]
 }
 
 html[data-theme="light"] body:has(.flow-page) .flow-token.open{
-  background: transparent !important;
-  background-color: transparent !important;
-  background-image: none !important;
+
+
+
   box-shadow: none !important;
 }
 
 html[data-theme="light"] body:has(.flow-page) .flow-token.open::before{
-  background: var(--green) !important;
+
   box-shadow: none !important;
 }
 
@@ -1619,7 +1575,7 @@ html[data-theme="light"] body:has(.flow-page) .flow-token.blocked .token-avatar{
 
 html[data-theme="light"] body:has(.flow-page) .token-list{
   --mf-oa-hairline-v10: rgba(15, 20, 25, .042);
-  background: #f5f5f5 !important;
+
   box-shadow: none !important;
 }
 
@@ -1629,9 +1585,9 @@ html[data-theme="light"] body:has(.flow-page) .flow-token{
 
 html[data-theme="light"] body:has(.flow-page)
 .flow-page > .state-summary + :not(.flow-toolbar):not(.token-list):not(.mf-token-scan-result){
-  background: transparent !important;
-  background-color: transparent !important;
-  background-image: none !important;
+
+
+
   border: 0 !important;
   box-shadow: none !important;
   backdrop-filter: none !important;
@@ -1641,16 +1597,16 @@ html[data-theme="light"] body:has(.flow-page)
 html[data-theme="light"] body:has(.flow-page)
 .flow-page > .state-summary + :not(.flow-toolbar):not(.token-list):not(.mf-token-scan-result)
 button:not(.active):not([aria-pressed="true"]){
-  background: #ebebeb !important;
-  background-image: none !important;
+
+
   border-color: transparent !important;
   box-shadow: none !important;
 }
 
 html[data-theme="light"] body:has(.flow-page) .flow-toolbar{
-  background: transparent !important;
-  background-color: transparent !important;
-  background-image: none !important;
+
+
+
   border: 0 !important;
   box-shadow: none !important;
   backdrop-filter: none !important;
@@ -1658,21 +1614,21 @@ html[data-theme="light"] body:has(.flow-page) .flow-toolbar{
 }
 
 html[data-theme="light"] body:has(.flow-page) .search-wrap{
-  background: #f5f5f5 !important;
+
   border: 0 !important;
   box-shadow: none !important;
 }
 
 html[data-theme="light"] body:has(.flow-page) .refresh-info button{
-  background: #ebebeb !important;
+
   border: 0 !important;
   box-shadow: none !important;
 }
 
 html[data-theme="light"] body:has(.flow-page) .pagination{
-  background: transparent !important;
-  background-color: transparent !important;
-  background-image: none !important;
+
+
+
   border: 0 !important;
   box-shadow: none !important;
   backdrop-filter: none !important;
@@ -1680,14 +1636,14 @@ html[data-theme="light"] body:has(.flow-page) .pagination{
 }
 
 html[data-theme="light"] body:has(.flow-page) .pagination button{
-  background: #ebebeb !important;
-  background-image: none !important;
+
+
   border: 0 !important;
   box-shadow: none !important;
 }
 
 html[data-theme="light"] body:has(.flow-page) .summary-card:not(.active){
-  background: #f5f5f5 !important;
+
   box-shadow: none !important;
 }
 
@@ -1715,24 +1671,24 @@ html[data-theme="light"] body:has(.flow-page) .summary-card:not(.active){
 
 html[data-theme="light"] body:has(.flow-page){
   --mf-tf-page-v11: #FFFFFF;
-  --mf-tf-surface-v11: #F5F5F5;
+  --mf-tf-surface-v11: #FFFFFF !important;
   --mf-tf-control-v11: #EBEBEB;
 
-  background: var(--mf-tf-page-v11) !important;
-  background-color: var(--mf-tf-page-v11) !important;
-  background-image: none !important;
+
+
+
 }
 
 html[data-theme="light"] body:has(.flow-page) .flow-page{
-  background: var(--mf-tf-page-v11) !important;
-  background-color: var(--mf-tf-page-v11) !important;
-  background-image: none !important;
+
+
+
 }
 
 html[data-theme="light"] body:has(.flow-page) .flow-hero{
-  background: var(--mf-tf-surface-v11) !important;
-  background-color: var(--mf-tf-surface-v11) !important;
-  background-image: none !important;
+
+
+
   border: 0 !important;
   box-shadow: none !important;
   backdrop-filter: none !important;
@@ -1746,33 +1702,33 @@ html[data-theme="light"] body:has(.flow-page) .summary-card.ready,
 html[data-theme="light"] body:has(.flow-page) .summary-card.watch,
 html[data-theme="light"] body:has(.flow-page) .summary-card.waiting,
 html[data-theme="light"] body:has(.flow-page) .summary-card.blocked{
-  background: var(--mf-tf-surface-v11) !important;
-  background-color: var(--mf-tf-surface-v11) !important;
-  background-image: none !important;
+
+
+
   border-color: transparent !important;
 }
 
 html[data-theme="light"] body:has(.flow-page) .summary-card.active.all{
-  background: var(--mf-tf-surface-v11) !important;
+
 }
 html[data-theme="light"] body:has(.flow-page) .summary-card.ready.active{
-  background: var(--mf-tf-surface-v11) !important;
+
 }
 html[data-theme="light"] body:has(.flow-page) .summary-card.watch.active{
-  background: var(--mf-tf-surface-v11) !important;
+
 }
 html[data-theme="light"] body:has(.flow-page) .summary-card.waiting.active{
-  background: var(--mf-tf-surface-v11) !important;
+
 }
 html[data-theme="light"] body:has(.flow-page) .summary-card.blocked.active{
-  background: var(--mf-tf-surface-v11) !important;
+
 }
 
 html[data-theme="light"] body:has(.flow-page)
 .flow-page > .state-summary + :not(.flow-toolbar):not(.token-list):not(.mf-token-scan-result){
-  background: var(--mf-tf-page-v11) !important;
-  background-color: var(--mf-tf-page-v11) !important;
-  background-image: none !important;
+
+
+
   border: 0 !important;
   box-shadow: none !important;
   backdrop-filter: none !important;
@@ -1782,9 +1738,9 @@ html[data-theme="light"] body:has(.flow-page)
 html[data-theme="light"] body:has(.flow-page)
 .flow-page > .state-summary + :not(.flow-toolbar):not(.token-list):not(.mf-token-scan-result)
 button{
-  background: var(--mf-tf-control-v11) !important;
-  background-color: var(--mf-tf-control-v11) !important;
-  background-image: none !important;
+
+
+
   border-color: transparent !important;
   box-shadow: none !important;
 }
@@ -1792,15 +1748,15 @@ button{
 html[data-theme="light"] body:has(.flow-page)
 .flow-page > .state-summary + :not(.flow-toolbar):not(.token-list):not(.mf-token-scan-result)
 button:is(.active, .is-active, [aria-pressed="true"], [aria-current="true"]){
-  background: var(--mf-tf-control-v11) !important;
+
   border-color: var(--cyan) !important;
   box-shadow: inset 0 0 0 1px var(--cyan) !important;
 }
 
 html[data-theme="light"] body:has(.flow-page) .flow-toolbar{
-  background: var(--mf-tf-page-v11) !important;
-  background-color: var(--mf-tf-page-v11) !important;
-  background-image: none !important;
+
+
+
 
   border: 0 !important;
   border-bottom: 1px solid var(--mf-tf-control-v11) !important;
@@ -1811,23 +1767,23 @@ html[data-theme="light"] body:has(.flow-page) .flow-toolbar{
 }
 
 html[data-theme="light"] body:has(.flow-page) .search-wrap{
-  background: var(--mf-tf-surface-v11) !important;
-  background-color: var(--mf-tf-surface-v11) !important;
-  background-image: none !important;
+
+
+
   border: 0 !important;
   box-shadow: none !important;
 }
 
 html[data-theme="light"] body:has(.flow-page) .search-wrap input{
-  background: transparent !important;
+
   border: 0 !important;
   box-shadow: none !important;
 }
 
 html[data-theme="light"] body:has(.flow-page) .refresh-info button{
-  background: var(--mf-tf-control-v11) !important;
-  background-color: var(--mf-tf-control-v11) !important;
-  background-image: none !important;
+
+
+
   border: 0 !important;
   box-shadow: none !important;
 }
@@ -1835,9 +1791,9 @@ html[data-theme="light"] body:has(.flow-page) .refresh-info button{
 html[data-theme="light"] body:has(.flow-page) .token-list{
   gap: 0 !important;
 
-  background: var(--mf-tf-surface-v11) !important;
-  background-color: var(--mf-tf-surface-v11) !important;
-  background-image: none !important;
+
+
+
 
   border: 0 !important;
   box-shadow: none !important;
@@ -1851,9 +1807,9 @@ html[data-theme="light"] body:has(.flow-page) .flow-token.ready,
 html[data-theme="light"] body:has(.flow-page) .flow-token.watch,
 html[data-theme="light"] body:has(.flow-page) .flow-token.waiting,
 html[data-theme="light"] body:has(.flow-page) .flow-token.blocked{
-  background: transparent !important;
-  background-color: transparent !important;
-  background-image: none !important;
+
+
+
 
   border: 0 !important;
   border-bottom: 1px solid var(--mf-tf-control-v11) !important;
@@ -1871,7 +1827,7 @@ html[data-theme="light"] body:has(.flow-page) .flow-token.open{
 }
 
 html[data-theme="light"] body:has(.flow-page) .flow-token.open::before{
-  background: var(--green) !important;
+
   box-shadow: none !important;
 }
 
@@ -1894,17 +1850,17 @@ html[data-theme="light"] body:has(.flow-page) .token-details{
 }
 
 html[data-theme="light"] body:has(.flow-page) .detail-block{
-  background: var(--mf-tf-control-v11) !important;
-  background-color: var(--mf-tf-control-v11) !important;
-  background-image: none !important;
+
+
+
   border-color: transparent !important;
   box-shadow: none !important;
 }
 
 html[data-theme="light"] body:has(.flow-page) .pagination{
-  background: var(--mf-tf-surface-v11) !important;
-  background-color: var(--mf-tf-surface-v11) !important;
-  background-image: none !important;
+
+
+
 
   border: 0 !important;
   box-shadow: none !important;
@@ -1914,17 +1870,17 @@ html[data-theme="light"] body:has(.flow-page) .pagination{
 }
 
 html[data-theme="light"] body:has(.flow-page) .pagination button{
-  background: var(--mf-tf-control-v11) !important;
-  background-color: var(--mf-tf-control-v11) !important;
-  background-image: none !important;
+
+
+
   border: 0 !important;
   box-shadow: none !important;
 }
 
 html[data-theme="light"] body:has(.flow-page) .empty-state{
-  background: var(--mf-tf-surface-v11) !important;
-  background-color: var(--mf-tf-surface-v11) !important;
-  background-image: none !important;
+
+
+
   border: 0 !important;
   box-shadow: none !important;
 }
@@ -1956,9 +1912,9 @@ html[data-theme="light"] body:has(.flow-page) .empty-state{
 }
 
 html[data-theme="light"] body:has(.flow-page) .mf-period-row-v12{
-  background: #FFFFFF !important;
-  background-color: #FFFFFF !important;
-  background-image: none !important;
+
+
+
   border: 0 !important;
   box-shadow: none !important;
   backdrop-filter: none !important;
@@ -1966,9 +1922,9 @@ html[data-theme="light"] body:has(.flow-page) .mf-period-row-v12{
 }
 
 html[data-theme="light"] body:has(.flow-page) .mf-period-option-v12{
-  background: #EBEBEB !important;
-  background-color: #EBEBEB !important;
-  background-image: none !important;
+
+
+
 
   border-color: transparent !important;
   outline: 0 !important;
@@ -1977,16 +1933,16 @@ html[data-theme="light"] body:has(.flow-page) .mf-period-option-v12{
 
 html[data-theme="light"] body:has(.flow-page)
 .mf-period-option-v12.mf-period-selected-v12{
-  background: #EBEBEB !important;
-  background-color: #EBEBEB !important;
+
+
   border-color: var(--cyan) !important;
   box-shadow: inset 0 0 0 1px var(--cyan) !important;
 }
 
 html[data-theme="light"] body:has(.flow-page) .token-list{
-  background: #F5F5F5 !important;
-  background-color: #F5F5F5 !important;
-  background-image: none !important;
+
+
+
   border: 0 !important;
   box-shadow: none !important;
 }
@@ -1997,9 +1953,9 @@ html[data-theme="light"] body:has(.flow-page) .flow-token.ready,
 html[data-theme="light"] body:has(.flow-page) .flow-token.watch,
 html[data-theme="light"] body:has(.flow-page) .flow-token.waiting,
 html[data-theme="light"] body:has(.flow-page) .flow-token.blocked{
-  background: transparent !important;
-  background-color: transparent !important;
-  background-image: none !important;
+
+
+
 
   border: 0 !important;
   border-bottom: 1px solid #EBEBEB !important;
@@ -2013,9 +1969,9 @@ html[data-theme="light"] body:has(.flow-page) .flow-token:last-child{
 }
 
 html[data-theme="light"] body:has(.flow-page) .flow-toolbar{
-  background: #FFFFFF !important;
-  background-color: #FFFFFF !important;
-  background-image: none !important;
+
+
+
 
   border: 0 !important;
   border-bottom: 1px solid #EBEBEB !important;
@@ -2027,27 +1983,27 @@ html[data-theme="light"] body:has(.flow-page) .flow-toolbar{
 }
 
 html[data-theme="light"] body:has(.flow-page) .search-wrap{
-  background: #F5F5F5 !important;
-  background-color: #F5F5F5 !important;
-  background-image: none !important;
+
+
+
 
   border: 0 !important;
   box-shadow: none !important;
 }
 
 html[data-theme="light"] body:has(.flow-page) .refresh-info button{
-  background: #EBEBEB !important;
-  background-color: #EBEBEB !important;
-  background-image: none !important;
+
+
+
 
   border: 0 !important;
   box-shadow: none !important;
 }
 
 html[data-theme="light"] body:has(.flow-page) .pagination{
-  background: #F5F5F5 !important;
-  background-color: #F5F5F5 !important;
-  background-image: none !important;
+
+
+
 
   border: 0 !important;
   box-shadow: none !important;
@@ -2057,9 +2013,9 @@ html[data-theme="light"] body:has(.flow-page) .pagination{
 }
 
 html[data-theme="light"] body:has(.flow-page) .pagination button{
-  background: #EBEBEB !important;
-  background-color: #EBEBEB !important;
-  background-image: none !important;
+
+
+
 
   border: 0 !important;
   box-shadow: none !important;
@@ -2089,15 +2045,15 @@ html[data-theme="light"] body:has(.flow-page) .pagination button{
 html[data-theme="light"] body.mf-trading-terminal,
 html[data-theme="light"] body.mf-trading-terminal .shell,
 html[data-theme="light"] body.mf-trading-terminal .terminal{
-  background: #FFFFFF !important;
-  background-color: #FFFFFF !important;
-  background-image: none !important;
+
+
+
 }
 
 html[data-theme="light"] body.mf-trading-terminal .panel{
-  background: #F5F5F5 !important;
-  background-color: #F5F5F5 !important;
-  background-image: none !important;
+
+
+
 
   border-color: transparent !important;
   box-shadow: none !important;
@@ -2108,9 +2064,9 @@ html[data-theme="light"] body.mf-trading-terminal .panel{
 
 html[data-theme="light"] body.mf-trading-terminal .panel-head,
 html[data-theme="light"] body.mf-trading-terminal .chart-head{
-  background: #F5F5F5 !important;
-  background-color: #F5F5F5 !important;
-  background-image: none !important;
+
+
+
 
   border-bottom-color: #EBEBEB !important;
   box-shadow: none !important;
@@ -2124,35 +2080,35 @@ html[data-theme="light"] body.mf-trading-terminal #chartCanvas{
 }
 
 html[data-theme="light"] body.mf-trading-terminal .timeframes{
-  background: #F5F5F5 !important;
-  background-color: #F5F5F5 !important;
-  background-image: none !important;
+
+
+
 
   border-bottom-color: #EBEBEB !important;
   box-shadow: none !important;
 }
 
 html[data-theme="light"] body.mf-trading-terminal .timeframes button{
-  background: #EBEBEB !important;
-  background-color: #EBEBEB !important;
-  background-image: none !important;
+
+
+
 
   border-color: transparent !important;
   box-shadow: none !important;
 }
 
 html[data-theme="light"] body.mf-trading-terminal .timeframes button.active{
-  background: #EBEBEB !important;
-  background-color: #EBEBEB !important;
+
+
   border-color: var(--cyan) !important;
   box-shadow: inset 0 0 0 1px var(--cyan) !important;
 }
 
 html[data-theme="light"] body.mf-trading-terminal .indicator-bar,
 html[data-theme="light"] body.mf-trading-terminal .indicator-scroll{
-  background: #F5F5F5 !important;
-  background-color: #F5F5F5 !important;
-  background-image: none !important;
+
+
+
 
   border-color: transparent !important;
   box-shadow: none !important;
@@ -2164,13 +2120,13 @@ html[data-theme="light"] body.mf-trading-terminal .indicator-bar{
 }
 
 html[data-theme="light"] body.mf-trading-terminal .indicator-divider{
-  background: #EBEBEB !important;
+
 }
 
 html[data-theme="light"] body.mf-trading-terminal .selected-metrics{
-  background: #F5F5F5 !important;
-  background-color: #F5F5F5 !important;
-  background-image: none !important;
+
+
+
 
   border-color: transparent !important;
   box-shadow: none !important;
@@ -2187,40 +2143,40 @@ html[data-theme="light"] body.mf-trading-terminal .token-avatar{
 }
 
 html[data-theme="light"] body.mf-trading-terminal .candidate-filter{
-  background: #F5F5F5 !important;
-  background-color: #F5F5F5 !important;
-  background-image: none !important;
+
+
+
 
   border-bottom-color: #EBEBEB !important;
   box-shadow: none !important;
 }
 
 html[data-theme="light"] body.mf-trading-terminal .candidate-filter button{
-  background: #EBEBEB !important;
-  background-color: #EBEBEB !important;
-  background-image: none !important;
+
+
+
 
   border-color: transparent !important;
   box-shadow: none !important;
 }
 
 html[data-theme="light"] body.mf-trading-terminal .candidate-filter button.active{
-  background: #EBEBEB !important;
-  background-color: #EBEBEB !important;
+
+
   border-color: var(--cyan) !important;
   box-shadow: inset 0 0 0 1px var(--cyan) !important;
 }
 
 html[data-theme="light"] body.mf-trading-terminal .candidate-list{
-  background: #F5F5F5 !important;
-  background-color: #F5F5F5 !important;
-  background-image: none !important;
+
+
+
 }
 
 html[data-theme="light"] body.mf-trading-terminal .candidate{
-  background: transparent !important;
-  background-color: transparent !important;
-  background-image: none !important;
+
+
+
 
   border: 0 !important;
   border-bottom: 1px solid #EBEBEB !important;
@@ -2240,9 +2196,9 @@ html[data-theme="light"] body.mf-trading-terminal .candidate.selected{
 html[data-theme="light"] body.mf-trading-terminal .strategy-summary-list,
 html[data-theme="light"] body.mf-trading-terminal .strategy-summary-row,
 html[data-theme="light"] body.mf-trading-terminal .strategy-summary-foot{
-  background: transparent !important;
-  background-color: transparent !important;
-  background-image: none !important;
+
+
+
   box-shadow: none !important;
 }
 
@@ -2261,9 +2217,9 @@ html[data-theme="light"] body.mf-trading-terminal .strategy-summary-foot{
 }
 
 html[data-theme="light"] body.mf-trading-terminal .strategy-edit-link{
-  background: #EBEBEB !important;
-  background-color: #EBEBEB !important;
-  background-image: none !important;
+
+
+
   border-color: transparent !important;
   box-shadow: none !important;
 }
@@ -2275,16 +2231,16 @@ html[data-theme="light"] body.mf-trading-terminal .mode-badge{
 html[data-theme="light"] body.mf-trading-terminal .positions-list,
 html[data-theme="light"] body.mf-trading-terminal .approval-list,
 html[data-theme="light"] body.mf-trading-terminal .trade-history{
-  background: #F5F5F5 !important;
-  background-color: #F5F5F5 !important;
-  background-image: none !important;
+
+
+
 }
 
 html[data-theme="light"] body.mf-trading-terminal .positions-list > *,
 html[data-theme="light"] body.mf-trading-terminal .approval-list > *,
 html[data-theme="light"] body.mf-trading-terminal .trade-history > *{
-  background-color: transparent !important;
-  background-image: none !important;
+
+
 
   border-left-color: transparent !important;
   border-right-color: transparent !important;
@@ -2302,9 +2258,9 @@ html[data-theme="light"] body.mf-trading-terminal .trade-history > *:last-child{
 
 html[data-theme="light"] body.mf-trading-terminal .empty,
 html[data-theme="light"] body.mf-trading-terminal .chart-empty{
-  background: transparent !important;
-  background-color: transparent !important;
-  background-image: none !important;
+
+
+
   border-color: transparent !important;
   box-shadow: none !important;
 }
@@ -2324,9 +2280,9 @@ html[data-theme="light"] body.mf-trading-terminal .strategy-summary-panel,
 html[data-theme="light"] body.mf-trading-terminal .positions-panel,
 html[data-theme="light"] body.mf-trading-terminal .candidates-panel,
 html[data-theme="light"] body.mf-trading-terminal .history-panel{
-  background: #F5F5F5 !important;
-  background-color: #F5F5F5 !important;
-  background-image: none !important;
+
+
+
   border: 0 !important;
   box-shadow: none !important;
 }
@@ -2340,9 +2296,9 @@ html[data-theme="light"] body.mf-trading-terminal .history-panel{
 }
 
 html[data-theme="light"] body.mf-trading-terminal .approvals-panel{
-  background: #FFFFFF !important;
-  background-color: #FFFFFF !important;
-  background-image: none !important;
+
+
+
 
   border: 0 !important;
   border-radius: 0 !important;
@@ -2352,9 +2308,9 @@ html[data-theme="light"] body.mf-trading-terminal .approvals-panel{
 }
 
 html[data-theme="light"] body.mf-trading-terminal .approvals-panel .panel-head{
-  background: #FFFFFF !important;
-  background-color: #FFFFFF !important;
-  background-image: none !important;
+
+
+
 
   border: 0 !important;
   border-bottom: 1px solid #EBEBEB !important;
@@ -2362,9 +2318,9 @@ html[data-theme="light"] body.mf-trading-terminal .approvals-panel .panel-head{
 }
 
 html[data-theme="light"] body.mf-trading-terminal .approval-list{
-  background: #FFFFFF !important;
-  background-color: #FFFFFF !important;
-  background-image: none !important;
+
+
+
   box-shadow: none !important;
 }
 
@@ -2374,9 +2330,9 @@ html[data-theme="light"] body.mf-trading-terminal .approval-list > *{
 
 html[data-theme="light"] body.mf-trading-terminal .indicator-bar,
 html[data-theme="light"] body.mf-trading-terminal .indicator-scroll{
-  background: #F5F5F5 !important;
-  background-color: #F5F5F5 !important;
-  background-image: none !important;
+
+
+
 
   border: 0 !important;
   box-shadow: none !important;
@@ -2387,9 +2343,9 @@ html[data-theme="light"] body.mf-trading-terminal .indicator-bar{
 }
 
 html[data-theme="light"] body.mf-trading-terminal .selected-metrics{
-  background: #F5F5F5 !important;
-  background-color: #F5F5F5 !important;
-  background-image: none !important;
+
+
+
 
   border: 0 !important;
   border-top: 1px solid #EBEBEB !important;
@@ -2402,21 +2358,21 @@ html[data-theme="light"] body.mf-trading-terminal .selected-metrics > div{
 }
 
 html[data-theme="light"] body.mf-trading-terminal .indicator-divider{
-  background: #EBEBEB !important;
+
 }
 
 html[data-theme="light"] body.mf-trading-terminal .strategy-summary-list{
-  background: #F5F5F5 !important;
-  background-color: #F5F5F5 !important;
-  background-image: none !important;
+
+
+
   border: 0 !important;
   box-shadow: none !important;
 }
 
 html[data-theme="light"] body.mf-trading-terminal .strategy-summary-row{
-  background: transparent !important;
-  background-color: transparent !important;
-  background-image: none !important;
+
+
+
 
   border: 0 !important;
   border-bottom: 1px solid #EBEBEB !important;
@@ -2433,9 +2389,9 @@ html[data-theme="light"] body.mf-trading-terminal .strategy-summary-row > div{
 }
 
 html[data-theme="light"] body.mf-trading-terminal .strategy-summary-foot{
-  background: #F5F5F5 !important;
-  background-color: #F5F5F5 !important;
-  background-image: none !important;
+
+
+
 
   border: 0 !important;
   border-top: 1px solid #EBEBEB !important;
@@ -2443,9 +2399,9 @@ html[data-theme="light"] body.mf-trading-terminal .strategy-summary-foot{
 }
 
 html[data-theme="light"] body.mf-trading-terminal .strategy-edit-link{
-  background: #EBEBEB !important;
-  background-color: #EBEBEB !important;
-  background-image: none !important;
+
+
+
   border-color: transparent !important;
   box-shadow: none !important;
 }
@@ -2453,18 +2409,18 @@ html[data-theme="light"] body.mf-trading-terminal .strategy-edit-link{
 html[data-theme="light"] body.mf-trading-terminal .positions-list,
 html[data-theme="light"] body.mf-trading-terminal .candidate-list,
 html[data-theme="light"] body.mf-trading-terminal .trade-history{
-  background: #F5F5F5 !important;
-  background-color: #F5F5F5 !important;
-  background-image: none !important;
+
+
+
 
   border: 0 !important;
   box-shadow: none !important;
 }
 
 html[data-theme="light"] body.mf-trading-terminal .candidate{
-  background: transparent !important;
-  background-color: transparent !important;
-  background-image: none !important;
+
+
+
 
   border: 0 !important;
   border-bottom: 1px solid #EBEBEB !important;
@@ -2478,9 +2434,9 @@ html[data-theme="light"] body.mf-trading-terminal .candidate:last-child{
 
 html[data-theme="light"] body.mf-trading-terminal .positions-list > *,
 html[data-theme="light"] body.mf-trading-terminal .trade-history > *{
-  background: transparent !important;
-  background-color: transparent !important;
-  background-image: none !important;
+
+
+
 
   border-left-color: transparent !important;
   border-right-color: transparent !important;
@@ -2505,9 +2461,9 @@ html[data-theme="light"] body.mf-trading-terminal .strategy-summary-panel .panel
 html[data-theme="light"] body.mf-trading-terminal .positions-panel .panel-head,
 html[data-theme="light"] body.mf-trading-terminal .candidates-panel .panel-head,
 html[data-theme="light"] body.mf-trading-terminal .history-panel .panel-head{
-  background: #F5F5F5 !important;
-  background-color: #F5F5F5 !important;
-  background-image: none !important;
+
+
+
 
   border: 0 !important;
   border-bottom: 1px solid #EBEBEB !important;
@@ -2515,9 +2471,9 @@ html[data-theme="light"] body.mf-trading-terminal .history-panel .panel-head{
 }
 
 html[data-theme="light"] body.mf-trading-terminal .candidate-filter{
-  background: #F5F5F5 !important;
-  background-color: #F5F5F5 !important;
-  background-image: none !important;
+
+
+
 
   border: 0 !important;
   border-bottom: 1px solid #EBEBEB !important;
@@ -2525,9 +2481,9 @@ html[data-theme="light"] body.mf-trading-terminal .candidate-filter{
 }
 
 html[data-theme="light"] body.mf-trading-terminal .candidate-filter button{
-  background: #EBEBEB !important;
-  background-color: #EBEBEB !important;
-  background-image: none !important;
+
+
+
 
   border-color: transparent !important;
   box-shadow: none !important;
@@ -2553,9 +2509,9 @@ html[data-theme="light"] body.mf-trading-terminal .candidate-filter button.activ
 }
 
 html[data-theme="light"] body.mf-trading-terminal .approvals-panel{
-  background: #FFFFFF !important;
-  background-color: #FFFFFF !important;
-  background-image: none !important;
+
+
+
 
   border: 0 !important;
   border-radius: 0 !important;
@@ -2565,9 +2521,9 @@ html[data-theme="light"] body.mf-trading-terminal .approvals-panel{
 }
 
 html[data-theme="light"] body.mf-trading-terminal .approvals-panel .panel-head{
-  background: #FFFFFF !important;
-  background-color: #FFFFFF !important;
-  background-image: none !important;
+
+
+
 
   min-height: 0 !important;
   padding-top: 10px !important;
@@ -2594,9 +2550,9 @@ html[data-theme="light"] body.mf-trading-terminal
 
 html[data-theme="light"] body.mf-trading-terminal
 .approvals-panel[data-active="true"] .approval-list{
-  background: #FFFFFF !important;
-  background-color: #FFFFFF !important;
-  background-image: none !important;
+
+
+
   box-shadow: none !important;
 }
 
@@ -2604,9 +2560,9 @@ html[data-theme="light"] body.mf-trading-terminal .strategy-summary-panel,
 html[data-theme="light"] body.mf-trading-terminal .strategy-summary-list,
 html[data-theme="light"] body.mf-trading-terminal .strategy-summary-row,
 html[data-theme="light"] body.mf-trading-terminal .strategy-summary-row > div{
-  background: #F5F5F5 !important;
-  background-color: #F5F5F5 !important;
-  background-image: none !important;
+
+
+
   box-shadow: none !important;
 }
 
@@ -2618,9 +2574,9 @@ html[data-theme="light"] body.mf-trading-terminal .strategy-summary-panel{
 
 html[data-theme="light"] body.mf-trading-terminal
 .strategy-summary-panel .panel-head{
-  background: #F5F5F5 !important;
-  background-color: #F5F5F5 !important;
-  background-image: none !important;
+
+
+
 
   border: 0 !important;
   box-shadow: none !important;
@@ -2641,9 +2597,9 @@ html[data-theme="light"] body.mf-trading-terminal .strategy-summary-row > div{
 }
 
 html[data-theme="light"] body.mf-trading-terminal .strategy-summary-foot{
-  background: #F5F5F5 !important;
-  background-color: #F5F5F5 !important;
-  background-image: none !important;
+
+
+
 
   border: 0 !important;
   border-top: 1px solid #EBEBEB !important;
@@ -2651,9 +2607,9 @@ html[data-theme="light"] body.mf-trading-terminal .strategy-summary-foot{
 }
 
 html[data-theme="light"] body.mf-trading-terminal .strategy-edit-link{
-  background: #EBEBEB !important;
-  background-color: #EBEBEB !important;
-  background-image: none !important;
+
+
+
 
   border-color: transparent !important;
   box-shadow: none !important;
@@ -2668,9 +2624,9 @@ html[data-theme="light"] body.mf-trading-terminal .candidate-token-avatar{
 html[data-theme="light"] body.mf-trading-terminal .position-row,
 html[data-theme="light"] body.mf-trading-terminal .candidate,
 html[data-theme="light"] body.mf-trading-terminal .trade-history > *{
-  background: transparent !important;
-  background-color: transparent !important;
-  background-image: none !important;
+
+
+
 
   box-shadow: none !important;
 }
@@ -2693,9 +2649,9 @@ html[data-theme="light"] body.mf-trading-terminal
 .candidates-panel .panel-head,
 html[data-theme="light"] body.mf-trading-terminal
 .history-panel .panel-head{
-  background: #F5F5F5 !important;
-  background-color: #F5F5F5 !important;
-  background-image: none !important;
+
+
+
 
   border: 0 !important;
   border-bottom: 1px solid #EBEBEB !important;
@@ -2723,9 +2679,9 @@ html[data-theme="light"] body.mf-trading-terminal
 
 html[data-theme="light"] body.mf-trading-terminal
 .candidate-list .candidate.selected{
-  background: #EBEBEB !important;
-  background-color: #EBEBEB !important;
-  background-image: none !important;
+
+
+
 
   border-left: 0 !important;
   border-right: 0 !important;
@@ -2739,31 +2695,31 @@ html[data-theme="light"] body.mf-trading-terminal
 
 html[data-theme="light"] body.mf-trading-terminal
 .candidate-list .candidate:not(.selected):hover{
-  background: transparent !important;
-  background-color: transparent !important;
+
+
   box-shadow: none !important;
 }
 
 html[data-theme="light"] body.mf-settings-standalone{
-  background: #FFFFFF !important;
-  background-color: #FFFFFF !important;
-  background-image: none !important;
+
+
+
 }
 
 html[data-theme="light"] body.mf-settings-standalone
 .mf-settings-page-shell,
 html[data-theme="light"] body.mf-settings-standalone
 .mf293-settings-backdrop{
-  background: transparent !important;
-  background-color: transparent !important;
-  background-image: none !important;
+
+
+
 }
 
 html[data-theme="light"] body.mf-settings-standalone
 .mf293-settings-panel{
-  background: #F5F5F5 !important;
-  background-color: #F5F5F5 !important;
-  background-image: none !important;
+
+
+
 
   border: 0 !important;
   box-shadow: none !important;
@@ -2774,9 +2730,9 @@ html[data-theme="light"] body.mf-settings-standalone
 
 html[data-theme="light"] body.mf-settings-standalone
 .mf293-settings-head{
-  background: #F5F5F5 !important;
-  background-color: #F5F5F5 !important;
-  background-image: none !important;
+
+
+
 
   border: 0 !important;
   border-bottom: 1px solid #EBEBEB !important;
@@ -2785,9 +2741,9 @@ html[data-theme="light"] body.mf-settings-standalone
 
 html[data-theme="light"] body.mf-settings-standalone
 .mf293-settings-meta{
-  background: #F5F5F5 !important;
-  background-color: #F5F5F5 !important;
-  background-image: none !important;
+
+
+
 
   border: 0 !important;
   border-bottom: 1px solid #EBEBEB !important;
@@ -2798,9 +2754,9 @@ html[data-theme="light"] body.mf-settings-standalone
 .mf293-settings-meta > span,
 html[data-theme="light"] body.mf-settings-standalone
 .mf293-settings-meta > label{
-  background: #EBEBEB !important;
-  background-color: #EBEBEB !important;
-  background-image: none !important;
+
+
+
 
   border: 0 !important;
   box-shadow: none !important;
@@ -2808,18 +2764,18 @@ html[data-theme="light"] body.mf-settings-standalone
 
 html[data-theme="light"] body.mf-settings-standalone
 .mf293-settings-body{
-  background: #F5F5F5 !important;
-  background-color: #F5F5F5 !important;
-  background-image: none !important;
+
+
+
 }
 
 html[data-theme="light"] body.mf-settings-standalone
 .mf293-settings-group{
   margin-bottom: 0 !important;
 
-  background: #F5F5F5 !important;
-  background-color: #F5F5F5 !important;
-  background-image: none !important;
+
+
+
 
   border: 0 !important;
   border-bottom: 1px solid #EBEBEB !important;
@@ -2840,9 +2796,9 @@ html[data-theme="light"] body.mf-settings-standalone
 
 html[data-theme="light"] body.mf-settings-standalone
 .mf293-settings-group summary{
-  background: transparent !important;
-  background-color: transparent !important;
-  background-image: none !important;
+
+
+
 
   border: 0 !important;
   box-shadow: none !important;
@@ -2850,9 +2806,9 @@ html[data-theme="light"] body.mf-settings-standalone
 
 html[data-theme="light"] body.mf-settings-standalone
 .mf293-settings-group[open]{
-  background: #FFFFFF !important;
-  background-color: #FFFFFF !important;
-  background-image: none !important;
+
+
+
 
   border: 0 !important;
   border-bottom: 1px solid #EBEBEB !important;
@@ -2862,23 +2818,23 @@ html[data-theme="light"] body.mf-settings-standalone
 
 html[data-theme="light"] body.mf-settings-standalone
 .mf293-settings-group[open] summary{
-  background: #FFFFFF !important;
-  background-color: #FFFFFF !important;
+
+
   border-bottom: 1px solid #EBEBEB !important;
 }
 
 html[data-theme="light"] body.mf-settings-standalone
 .mf293-settings-group[open] .mf293-settings-grid{
-  background: #FFFFFF !important;
-  background-color: #FFFFFF !important;
-  background-image: none !important;
+
+
+
 }
 
 html[data-theme="light"] body.mf-settings-standalone
 .mf293-settings-group[open] .mf293-field{
-  background: #EBEBEB !important;
-  background-color: #EBEBEB !important;
-  background-image: none !important;
+
+
+
 
   border: 0 !important;
   box-shadow: none !important;
@@ -2891,8 +2847,8 @@ html[data-theme="light"] body.mf-settings-standalone
 .mf293-settings-group[open] .mf293-field select,
 html[data-theme="light"] body.mf-settings-standalone
 .mf293-settings-group[open] .mf293-field textarea{
-  background-color: #EBEBEB !important;
-  background-image: none !important;
+
+
 
   border-color: transparent !important;
   box-shadow: none !important;
@@ -2902,9 +2858,9 @@ html[data-theme="light"] body.mf-settings-standalone
 #mfPublicAgentGroup .mf-agent-item,
 html[data-theme="light"] body.mf-settings-standalone
 #mfPublicAgentGroup .mf-agent-event{
-  background: #EBEBEB !important;
-  background-color: #EBEBEB !important;
-  background-image: none !important;
+
+
+
 
   border-color: transparent !important;
   box-shadow: none !important;
@@ -2912,9 +2868,9 @@ html[data-theme="light"] body.mf-settings-standalone
 
 html[data-theme="light"] body.mf-settings-standalone
 .mf293-settings-footer{
-  background: #F5F5F5 !important;
-  background-color: #F5F5F5 !important;
-  background-image: none !important;
+
+
+
 
   border: 0 !important;
   border-top: 1px solid #EBEBEB !important;
@@ -2942,9 +2898,9 @@ html[data-theme="light"] body.mf-settings-standalone
 .mf293-settings-group[open] summary,
 html[data-theme="light"] body.mf-settings-standalone
 .mf293-settings-group[open] .mf293-settings-grid{
-  background: #F5F5F5 !important;
-  background-color: #F5F5F5 !important;
-  background-image: none !important;
+
+
+
 
   box-shadow: none !important;
 }
@@ -2981,9 +2937,9 @@ html[data-theme="light"] body.mf-settings-standalone
   padding: 6px 8px !important;
   gap: 4px !important;
 
-  background: #EBEBEB !important;
-  background-color: #EBEBEB !important;
-  background-image: none !important;
+
+
+
 
   border: 0 !important;
   border-radius: 8px !important;
@@ -3001,9 +2957,9 @@ html[data-theme="light"] body.mf-settings-standalone
 .mf293-field select,
 html[data-theme="light"] body.mf-settings-standalone
 .mf293-field textarea{
-  background: transparent !important;
-  background-color: transparent !important;
-  background-image: none !important;
+
+
+
 
   border: 0 !important;
   box-shadow: none !important;
@@ -3021,9 +2977,9 @@ div.mf293-field.mf-agent-wide:not(:has(input, select, textarea, .mf293-switch, .
   min-height: 0 !important;
   padding: 8px 2px !important;
 
-  background: transparent !important;
-  background-color: transparent !important;
-  background-image: none !important;
+
+
+
 
   border: 0 !important;
   border-radius: 0 !important;
@@ -3032,18 +2988,18 @@ div.mf293-field.mf-agent-wide:not(:has(input, select, textarea, .mf293-switch, .
 
 html[data-theme="light"] body.mf-settings-standalone
 #mfPublicAgentGroup .mf-agent-events{
-  background: #EBEBEB !important;
-  background-color: #EBEBEB !important;
-  background-image: none !important;
+
+
+
   border: 0 !important;
   box-shadow: none !important;
 }
 
 html[data-theme="light"] body.mf-settings-standalone
 #mfPublicAgentGroup .mf-agent-event{
-  background: transparent !important;
-  background-color: transparent !important;
-  background-image: none !important;
+
+
+
 
   border: 0 !important;
   border-bottom: 1px solid #F5F5F5 !important;
@@ -3067,9 +3023,9 @@ html[data-theme="light"] body.mf-settings-standalone
   min-height: 60px !important;
   padding: 8px 10px max(8px, env(safe-area-inset-bottom)) !important;
 
-  background: #F5F5F5 !important;
-  background-color: #F5F5F5 !important;
-  background-image: none !important;
+
+
+
 
   border: 0 !important;
   border-top: 1px solid #EBEBEB !important;
@@ -3119,42 +3075,42 @@ html[data-theme="light"] body.mf-settings-standalone
 }
 
 html[data-theme="light"] body:has(.mf-vault-shell){
-  background: #FFFFFF !important;
-  background-color: #FFFFFF !important;
-  background-image: none !important;
+
+
+
 }
 
 html[data-theme="light"] body .mf-vault-shell,
 html[data-theme="light"] body > main.mf-vault-shell{
-  background: #FFFFFF !important;
-  background-color: #FFFFFF !important;
-  background-image: none !important;
+
+
+
 }
 
 html[data-theme="light"] .mf-vault-hero{
   min-height: 0 !important;
 
-  background: #FFFFFF !important;
-  background-color: #FFFFFF !important;
-  background-image: none !important;
+
+
+
 
   border: 0 !important;
   box-shadow: none !important;
 }
 
 html[data-theme="light"] .mf-vault-card{
-  background: #F5F5F5 !important;
-  background-color: #F5F5F5 !important;
-  background-image: none !important;
+
+
+
 
   border: 0 !important;
   box-shadow: none !important;
 }
 
 html[data-theme="light"] .mf-vault-row{
-  background: transparent !important;
-  background-color: transparent !important;
-  background-image: none !important;
+
+
+
 
   border: 0 !important;
   box-shadow: none !important;
@@ -3162,18 +3118,18 @@ html[data-theme="light"] .mf-vault-row{
 
 html[data-theme="light"] .mf-vault-stat,
 html[data-theme="light"] .mf-vault-action{
-  background: #EBEBEB !important;
-  background-color: #EBEBEB !important;
-  background-image: none !important;
+
+
+
 
   border: 0 !important;
   box-shadow: none !important;
 }
 
 html[data-theme="light"] .mf-vault-note{
-  background: transparent !important;
-  background-color: transparent !important;
-  background-image: none !important;
+
+
+
 
   border: 0 !important;
   border-radius: 0 !important;
@@ -3185,9 +3141,9 @@ html[data-theme="light"] .mf-vault-note + .mf-vault-note{
 }
 
 html[data-theme="light"] .mf-vault-btn:not(.mf-vault-btn-primary){
-  background: #EBEBEB !important;
-  background-color: #EBEBEB !important;
-  background-image: none !important;
+
+
+
 
   border: 0 !important;
   box-shadow: none !important;
@@ -3199,27 +3155,27 @@ html[data-theme="light"] #createBtn{
 }
 
 html[data-theme="light"] .mf-vault-status-panel{
-  background: #F5F5F5 !important;
-  background-color: #F5F5F5 !important;
-  background-image: none !important;
+
+
+
 
   border: 0 !important;
   box-shadow: none !important;
 }
 
 html[data-theme="light"] .mf-vault-status-stack > div{
-  background: #EBEBEB !important;
-  background-color: #EBEBEB !important;
-  background-image: none !important;
+
+
+
 
   border: 0 !important;
   box-shadow: none !important;
 }
 
 html[data-theme="light"] .mf-vault-status-flow span:not(.is-ready){
-  background: #EBEBEB !important;
-  background-color: #EBEBEB !important;
-  background-image: none !important;
+
+
+
 
   border: 0 !important;
   box-shadow: none !important;
@@ -3327,3 +3283,147 @@ body.mf-page-settings .mf-theme-segmented-compact button.is-active {
   }
 }
 /* /MEMEFLOW_SYSTEM_SETTINGS_CLEANUP_V191_3 */
+
+/* MEMEFLOW_LIGHT_PURE_WHITE_V219
+   Single owner for LIGHT neutral surfaces.
+   All legacy gray/blue LIGHT fills are removed from production CSS.
+*/
+html[data-theme="light"]{
+  color-scheme:light;
+
+  --bg:#FFFFFF !important;
+  --panel:#FFFFFF !important;
+  --panel-solid:#FFFFFF !important;
+  --panel-2:#FFFFFF !important;
+  --surface:#FFFFFF !important;
+  --surface2:#FFFFFF !important;
+  --surface3:#FFFFFF !important;
+  --surface-2:#FFFFFF !important;
+
+  --mf-app-bg:#FFFFFF !important;
+  --mf-app-surface:#FFFFFF !important;
+  --mf-app-surface-2:#FFFFFF !important;
+  --mf-app-surface-3:#FFFFFF !important;
+  --mf-app-panel-top:#FFFFFF !important;
+  --mf-app-panel-bottom:#FFFFFF !important;
+  --mf-app-soft:#FFFFFF !important;
+  --mf-app-soft-hover:#FFFFFF !important;
+
+  --mf-nav-bg:#FFFFFF !important;
+  --mf-nav-surface:#FFFFFF !important;
+  --mf-nav-surface-2:#FFFFFF !important;
+
+  --hiw-bg:#FFFFFF !important;
+  --hiw-panel:#FFFFFF !important;
+  --hiw-panel-strong:#FFFFFF !important;
+
+  --v-bg:#FFFFFF !important;
+  --v-panel:#FFFFFF !important;
+  --v-panel2:#FFFFFF !important;
+}
+
+html[data-theme="light"],
+html[data-theme="light"] body{
+  background:#FFFFFF !important;
+  background-color:#FFFFFF !important;
+  background-image:none !important;
+}
+
+html[data-theme="light"] body :is(
+  main,
+  section,
+  article,
+  aside,
+  header,
+  footer,
+  nav,
+  form,
+  fieldset,
+  details,
+  summary
+),
+html[data-theme="light"] body :is(
+  [class*="panel"],
+  [class*="card"],
+  [class*="shell"],
+  [class*="surface"],
+  [class*="block"],
+  [class*="group"],
+  [class*="field"],
+  [class*="row"],
+  [class*="wrap"],
+  [class*="drawer"],
+  [class*="modal"],
+  [class*="head"],
+  [class*="header"],
+  [class*="footer"],
+  [class*="meta"],
+  [class*="body"]
+){
+  background:#FFFFFF !important;
+  background-color:#FFFFFF !important;
+  background-image:none !important;
+}
+
+/* Explicit production surfaces that do not share a naming pattern. */
+html[data-theme="light"] body :is(
+  .candidate,
+  .position-row,
+  .token-row,
+  .scanner-card,
+  .metric,
+  .approval-row,
+  .control-section,
+  .mf-hiw-node,
+  .mf-vault-stat,
+  .mf-vault-action,
+  .mf-vault-note,
+  .mf293-settings-panel,
+  .mf293-settings-head,
+  .mf293-settings-meta,
+  .mf293-settings-body,
+  .mf293-settings-group,
+  .mf293-settings-grid,
+  .mf293-field,
+  .mf293-settings-footer,
+  .settings-summary > div,
+  .system-health-summary > div,
+  .data-row,
+  .settings-context,
+  .toggle-row,
+  .execution-readiness,
+  .primary-blocker,
+  .signal-explainer,
+  .execution-check-list,
+  .production-empty
+){
+  background:#FFFFFF !important;
+  background-color:#FFFFFF !important;
+  background-image:none !important;
+}
+
+/* Controls also stay white in LIGHT; active state is shown by text/border/underline. */
+html[data-theme="light"] body :is(
+  button,
+  input,
+  select,
+  textarea
+){
+  background-color:#FFFFFF !important;
+  background-image:none !important;
+}
+
+/* Functional exceptions: these are not neutral page/block surfaces. */
+html[data-theme="light"] .mf-nav-backdrop{
+  background:rgba(31,45,55,.18) !important;
+}
+
+html[data-theme="light"] .viewport-wrap.mf-true3d-clean-v3,
+html[data-theme="light"] .viewport-wrap.mf-true3d-clean-v3 #memeflowTrue3DHost,
+html[data-theme="light"] .viewport-wrap.mf-true3d-clean-v3 #memeflowTrue3DCanvas{
+  background:#000000 !important;
+  background-color:#000000 !important;
+  background-image:none !important;
+}
+
+/* /MEMEFLOW_LIGHT_PURE_WHITE_V219 */

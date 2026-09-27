@@ -9,22 +9,7 @@
 :where(body.mf-page-index) .brand-mark{color: transparent!important;}
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 :where(body.mf-page-index) .wallet-stat b, :where(body.mf-page-index) .subscription-metric b, :where(body.mf-page-index) .system-health-summary b, :where(body.mf-page-index) .settings-summary b, :where(body.mf-page-index) .plan-price, :where(body.mf-page-index) .big-score, :where(body.mf-page-index) .metric-value, :where(body.mf-page-index) .score, :where(body.mf-page-index) .big-number{font-variant-numeric: tabular-nums!important;}
-
 
 
 /* V184 EXTERNAL TEXT OWNERSHIP: system.html */
@@ -33,14 +18,10 @@
 :where(body.mf-page-system) .back{text-decoration: none;}
 
 
-
 :where(body.mf-page-system) .status-chip.execution b{color: var(--yellow);}
 
 
-
 :where(body.mf-page-system) .eyebrow{color: var(--cyan);}
-
-
 
 
 :where(body.mf-page-system) .state-pill.ready{color: var(--yellow);}
@@ -48,15 +29,9 @@
 :where(body.mf-page-system) .state-pill.blocked{color: var(--red);}
 
 
-
-
-
-
 :where(body.mf-page-system) .gate.pass b{color: var(--green);}
 :where(body.mf-page-system) .gate.fail b{color: var(--red);}
 :where(body.mf-page-system) .gate.wait b{color: var(--yellow);}
-
-
 
 
 :where(body.mf-page-system) .live-badge{color: var(--green);}
@@ -65,9 +40,6 @@
 :where(body.mf-page-system) .token-state.ready{color: var(--yellow);}
 :where(body.mf-page-system) .token-state.watch{color: var(--blue);}
 :where(body.mf-page-system) .token-state.blocked{color: var(--red);}
-
-
-
 
 
 :where(body.mf-page-system) .fatal strong{color: var(--red);}
@@ -99,79 +71,16 @@ body:where(.mf-page-system).mf-settings-standalone .mf293-settings-error{color: 
 :where(body.mf-page-system) .brand-mark{color: transparent!important;}
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 :where(body.mf-page-system) .wallet-stat b, :where(body.mf-page-system) .subscription-metric b, :where(body.mf-page-system) .system-health-summary b, :where(body.mf-page-system) .settings-summary b, :where(body.mf-page-system) .plan-price, :where(body.mf-page-system) .big-score, :where(body.mf-page-system) .metric-value, :where(body.mf-page-system) .score, :where(body.mf-page-system) .big-number{font-variant-numeric: tabular-nums!important;}
-
-
-
 
 
 :where(body.mf-page-system) .mf-nav-link{color: inherit; text-decoration: none;}
 
 
-
-
-
-
 :where(body.mf-page-system) .mf-nav-link[aria-current="page"] .mf-nav-link-arrow{color: transparent;}
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 html[data-theme="light"] :where(body.mf-page-system) .candidate-filter button.active, html[data-theme="light"] :where(body.mf-page-system) .timeframes button.active, html[data-theme="light"] :where(body.mf-page-system) .indicator-bar button[aria-pressed="true"]{color: #16485a !important;}
-
-
-
-
-
-
-
-
-
-
-
 
 
 html[data-theme="light"] :where(body.mf-page-system) .mf293-primary{color: #15495b !important;}
@@ -203,8 +112,6 @@ html[data-theme="light"] body:where(.mf-page-system).mf-hiw-page .mf-hiw-money-f
 html[data-theme="light"] body:where(.mf-page-system).mf-hiw-page .mf-hiw-faq summary::after{color: #4e8295 !important;}
 
 
-
-
 html[data-theme="light"] :where(body.mf-page-system) .mf-vault-status-flow span.is-ready{color: #248e67 !important;}
 
 
@@ -212,9 +119,6 @@ html[data-theme="light"] :where(body.mf-page-system) .mf-vault-btn-primary:disab
 html[data-theme="light"] :where(body.mf-page-system) #connectBtn, html[data-theme="light"] :where(body.mf-page-system) #createBtn{color: #3e7d91 !important;}
 html[data-theme="light"] :where(body.mf-page-system) #connectBtn:disabled, html[data-theme="light"] :where(body.mf-page-system) #createBtn:disabled{color: #4d8191 !important;}
 html[data-theme="light"] :where(body.mf-page-system) .chart-panel .token-avatar{color: #5d7682 !important;}
-
-
-
 
 
 html[data-theme="light"] :where(body.mf-page-system) .chart-panel .timeframes button.active{color: #176f88 !important;}
@@ -226,8 +130,6 @@ html[data-theme="light"] :where(body.mf-page-system) .chart-panel .indicator-bar
 html[data-theme="light"] :where(body.mf-page-system) .chart-panel .indicator-bar button.active, html[data-theme="light"] :where(body.mf-page-system) .chart-panel .indicator-bar button[aria-pressed="true"]{color: #176f88 !important;}
 
 html[data-theme="light"] :where(body.mf-page-system) .chart-panel .selected-metrics strong{color: #334b57 !important;}
-
-
 
 
 :where(body.mf-page-system) [data-mf-open-position-pipeline-v3="1"]{color: #4de6a1 !important;}
@@ -242,19 +144,7 @@ html[data-theme="light"] :where(body.mf-page-system) .flow-token.open .mf-open-p
 html[data-theme="light"] :where(body.mf-page-system) .flow-token.open .mf-open-position-pnl.is-loss, html[data-theme="light"] :where(body.mf-page-system) .flow-token .mf-open-market-stat strong.is-loss, html[data-theme="light"] :where(body.mf-page-system) .flow-token .mf-regular-market-stat strong.is-loss{color: #ef6677 !important;}
 
 
-
-
-
-
-
-
-
 html[data-theme="light"] :where(body.mf-page-system) .mf-sort-trigger-icon-v251, html[data-theme="light"] :where(body.mf-page-system) .mf-sort-trigger-chevron-v251, html[data-theme="light"] :where(body.mf-page-system) .mf-sort-trigger-chevron-v251.is-active{color: #78909a !important;}
-
-
-
-
-
 
 
 html[data-theme="light"] :where(body.mf-page-system) .mf-sort-direction-v25 button.is-active{color: #203946 !important;}
@@ -263,46 +153,20 @@ html[data-theme="light"] :where(body.mf-page-system) .mf-sort-direction-v25 butt
 html[data-theme="light"] :where(body.mf-page-system) .mf-sort-option-icon-v251, html[data-theme="light"] :where(body.mf-page-system) .mf-sort-row-chevron-v251{color: #738791 !important;}
 
 
-
-
 /* V184 EXTERNAL TEXT OWNERSHIP: how-it-works.html */
 :where(body.mf-page-how-it-works) .brand-mark{color: transparent!important;}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 :where(body.mf-page-how-it-works) .wallet-stat b, :where(body.mf-page-how-it-works) .subscription-metric b, :where(body.mf-page-how-it-works) .system-health-summary b, :where(body.mf-page-how-it-works) .settings-summary b, :where(body.mf-page-how-it-works) .plan-price, :where(body.mf-page-how-it-works) .big-score, :where(body.mf-page-how-it-works) .metric-value, :where(body.mf-page-how-it-works) .score, :where(body.mf-page-how-it-works) .big-number{font-variant-numeric: tabular-nums!important;}
 
 
-
-
-
 :where(body.mf-page-how-it-works) .mf-nav-link{color: inherit; text-decoration: none;}
-
-
-
-
 
 
 :where(body.mf-page-how-it-works) .mf-nav-link[aria-current="page"] .mf-nav-link-arrow{color: transparent;}
 
 
-
 :where(body.mf-page-how-it-works) .mf-hiw-brand{color: inherit; text-decoration: none;}
-
-
 
 
 :where(body.mf-page-how-it-works) .mf-hiw-hero h1 span{ text-shadow: none;}
@@ -310,90 +174,19 @@ html[data-theme="light"] :where(body.mf-page-system) .mf-sort-option-icon-v251, 
 :where(body.mf-page-how-it-works) .mf-hiw-btn{ text-decoration: none;}
 
 
-
-
-
-
-
-
-
-
 :where(body.mf-page-how-it-works) .mf-hiw-node{color: inherit;}
-
-
-
-
-
-
 
 
 :where(body.mf-page-how-it-works) .mf-hiw-step-icon{color: var(--hiw-cyan);}
 
 
-
-
-
-
-
-
-
-
-
-
-
 :where(body.mf-page-how-it-works) .mf-hiw-faq summary::after{color: var(--mf-neutral-text-3);}
-
-
 
 
 html[data-theme="light"] body:where(.mf-page-how-it-works).mf-hiw-page .mf-hiw-hero h1 span{text-shadow: none !important;}
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 html[data-theme="light"] :where(body.mf-page-how-it-works) .candidate-filter button.active, html[data-theme="light"] :where(body.mf-page-how-it-works) .timeframes button.active, html[data-theme="light"] :where(body.mf-page-how-it-works) .indicator-bar button[aria-pressed="true"]{color: #16485a !important;}
-
-
-
-
-
-
-
-
-
-
-
 
 
 html[data-theme="light"] :where(body.mf-page-how-it-works) .mf293-primary{color: #15495b !important;}
@@ -425,8 +218,6 @@ html[data-theme="light"] body:where(.mf-page-how-it-works).mf-hiw-page .mf-hiw-m
 html[data-theme="light"] body:where(.mf-page-how-it-works).mf-hiw-page .mf-hiw-faq summary::after{color: #4e8295 !important;}
 
 
-
-
 html[data-theme="light"] :where(body.mf-page-how-it-works) .mf-vault-status-flow span.is-ready{color: #248e67 !important;}
 
 
@@ -434,9 +225,6 @@ html[data-theme="light"] :where(body.mf-page-how-it-works) .mf-vault-btn-primary
 html[data-theme="light"] :where(body.mf-page-how-it-works) #connectBtn, html[data-theme="light"] :where(body.mf-page-how-it-works) #createBtn{color: #3e7d91 !important;}
 html[data-theme="light"] :where(body.mf-page-how-it-works) #connectBtn:disabled, html[data-theme="light"] :where(body.mf-page-how-it-works) #createBtn:disabled{color: #4d8191 !important;}
 html[data-theme="light"] :where(body.mf-page-how-it-works) .chart-panel .token-avatar{color: #5d7682 !important;}
-
-
-
 
 
 html[data-theme="light"] :where(body.mf-page-how-it-works) .chart-panel .timeframes button.active{color: #176f88 !important;}
@@ -448,8 +236,6 @@ html[data-theme="light"] :where(body.mf-page-how-it-works) .chart-panel .indicat
 html[data-theme="light"] :where(body.mf-page-how-it-works) .chart-panel .indicator-bar button.active, html[data-theme="light"] :where(body.mf-page-how-it-works) .chart-panel .indicator-bar button[aria-pressed="true"]{color: #176f88 !important;}
 
 html[data-theme="light"] :where(body.mf-page-how-it-works) .chart-panel .selected-metrics strong{color: #334b57 !important;}
-
-
 
 
 :where(body.mf-page-how-it-works) [data-mf-open-position-pipeline-v3="1"]{color: #4de6a1 !important;}
@@ -464,19 +250,7 @@ html[data-theme="light"] :where(body.mf-page-how-it-works) .flow-token.open .mf-
 html[data-theme="light"] :where(body.mf-page-how-it-works) .flow-token.open .mf-open-position-pnl.is-loss, html[data-theme="light"] :where(body.mf-page-how-it-works) .flow-token .mf-open-market-stat strong.is-loss, html[data-theme="light"] :where(body.mf-page-how-it-works) .flow-token .mf-regular-market-stat strong.is-loss{color: #ef6677 !important;}
 
 
-
-
-
-
-
-
-
 html[data-theme="light"] :where(body.mf-page-how-it-works) .mf-sort-trigger-icon-v251, html[data-theme="light"] :where(body.mf-page-how-it-works) .mf-sort-trigger-chevron-v251, html[data-theme="light"] :where(body.mf-page-how-it-works) .mf-sort-trigger-chevron-v251.is-active{color: #78909a !important;}
-
-
-
-
-
 
 
 html[data-theme="light"] :where(body.mf-page-how-it-works) .mf-sort-direction-v25 button.is-active{color: #203946 !important;}
@@ -485,41 +259,17 @@ html[data-theme="light"] :where(body.mf-page-how-it-works) .mf-sort-direction-v2
 html[data-theme="light"] :where(body.mf-page-how-it-works) .mf-sort-option-icon-v251, html[data-theme="light"] :where(body.mf-page-how-it-works) .mf-sort-row-chevron-v251{color: #738791 !important;}
 
 
-
-
 /* V184 EXTERNAL TEXT OWNERSHIP: smart-vault.html */
 :where(body.mf-page-smart-vault) .brand-mark{color: transparent!important;}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 :where(body.mf-page-smart-vault) .wallet-stat b, :where(body.mf-page-smart-vault) .subscription-metric b, :where(body.mf-page-smart-vault) .system-health-summary b, :where(body.mf-page-smart-vault) .settings-summary b, :where(body.mf-page-smart-vault) .plan-price, :where(body.mf-page-smart-vault) .big-score, :where(body.mf-page-smart-vault) .metric-value, :where(body.mf-page-smart-vault) .score, :where(body.mf-page-smart-vault) .big-number{font-variant-numeric: tabular-nums!important;}
 
 
-
-
-
 :where(body.mf-page-smart-vault) .mf-nav-link{color: inherit; text-decoration: none;}
 
 
-
-
-
-
 :where(body.mf-page-smart-vault) .mf-nav-link[aria-current="page"] .mf-nav-link-arrow{color: transparent;}
-
 
 
 :where(body.mf-page-smart-vault) .mf-ag-kicker{color: #55d9ff;}
@@ -529,51 +279,7 @@ html[data-theme="light"] :where(body.mf-page-how-it-works) .mf-sort-option-icon-
 :where(body.mf-page-smart-vault) #mf-access-ribbon{color: #9beaff;}
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 html[data-theme="light"] :where(body.mf-page-smart-vault) .candidate-filter button.active, html[data-theme="light"] :where(body.mf-page-smart-vault) .timeframes button.active, html[data-theme="light"] :where(body.mf-page-smart-vault) .indicator-bar button[aria-pressed="true"]{color: #16485a !important;}
-
-
-
-
-
-
-
-
-
-
-
 
 
 html[data-theme="light"] :where(body.mf-page-smart-vault) .mf293-primary{color: #15495b !important;}
@@ -605,8 +311,6 @@ html[data-theme="light"] body:where(.mf-page-smart-vault).mf-hiw-page .mf-hiw-mo
 html[data-theme="light"] body:where(.mf-page-smart-vault).mf-hiw-page .mf-hiw-faq summary::after{color: #4e8295 !important;}
 
 
-
-
 html[data-theme="light"] :where(body.mf-page-smart-vault) .mf-vault-status-flow span.is-ready{color: #248e67 !important;}
 
 
@@ -614,9 +318,6 @@ html[data-theme="light"] :where(body.mf-page-smart-vault) .mf-vault-btn-primary:
 html[data-theme="light"] :where(body.mf-page-smart-vault) #connectBtn, html[data-theme="light"] :where(body.mf-page-smart-vault) #createBtn{color: #3e7d91 !important;}
 html[data-theme="light"] :where(body.mf-page-smart-vault) #connectBtn:disabled, html[data-theme="light"] :where(body.mf-page-smart-vault) #createBtn:disabled{color: #4d8191 !important;}
 html[data-theme="light"] :where(body.mf-page-smart-vault) .chart-panel .token-avatar{color: #5d7682 !important;}
-
-
-
 
 
 html[data-theme="light"] :where(body.mf-page-smart-vault) .chart-panel .timeframes button.active{color: #176f88 !important;}
@@ -628,8 +329,6 @@ html[data-theme="light"] :where(body.mf-page-smart-vault) .chart-panel .indicato
 html[data-theme="light"] :where(body.mf-page-smart-vault) .chart-panel .indicator-bar button.active, html[data-theme="light"] :where(body.mf-page-smart-vault) .chart-panel .indicator-bar button[aria-pressed="true"]{color: #176f88 !important;}
 
 html[data-theme="light"] :where(body.mf-page-smart-vault) .chart-panel .selected-metrics strong{color: #334b57 !important;}
-
-
 
 
 :where(body.mf-page-smart-vault) [data-mf-open-position-pipeline-v3="1"]{color: #4de6a1 !important;}
@@ -644,19 +343,7 @@ html[data-theme="light"] :where(body.mf-page-smart-vault) .flow-token.open .mf-o
 html[data-theme="light"] :where(body.mf-page-smart-vault) .flow-token.open .mf-open-position-pnl.is-loss, html[data-theme="light"] :where(body.mf-page-smart-vault) .flow-token .mf-open-market-stat strong.is-loss, html[data-theme="light"] :where(body.mf-page-smart-vault) .flow-token .mf-regular-market-stat strong.is-loss{color: #ef6677 !important;}
 
 
-
-
-
-
-
-
-
 html[data-theme="light"] :where(body.mf-page-smart-vault) .mf-sort-trigger-icon-v251, html[data-theme="light"] :where(body.mf-page-smart-vault) .mf-sort-trigger-chevron-v251, html[data-theme="light"] :where(body.mf-page-smart-vault) .mf-sort-trigger-chevron-v251.is-active{color: #78909a !important;}
-
-
-
-
-
 
 
 html[data-theme="light"] :where(body.mf-page-smart-vault) .mf-sort-direction-v25 button.is-active{color: #203946 !important;}
@@ -665,13 +352,9 @@ html[data-theme="light"] :where(body.mf-page-smart-vault) .mf-sort-direction-v25
 html[data-theme="light"] :where(body.mf-page-smart-vault) .mf-sort-option-icon-v251, html[data-theme="light"] :where(body.mf-page-smart-vault) .mf-sort-row-chevron-v251{color: #738791 !important;}
 
 
-
-
 /* V184 EXTERNAL TEXT OWNERSHIP: trading.html */
 
 :where(body.mf-page-trading) .brand-mark{ text-decoration: none;}
-
-
 
 
 :where(body.mf-page-trading) .ghost-btn, :where(body.mf-page-trading) .wallet-btn{ text-decoration: none;}
@@ -690,7 +373,6 @@ html[data-theme="light"] :where(body.mf-page-smart-vault) .mf-sort-option-icon-v
 :where(body.mf-page-trading) .candidate-price{ font-variant-numeric: tabular-nums;}
 
 
-
 :where(body.mf-page-trading) .decision-badge.open{color: var(--green);}
 :where(body.mf-page-trading) .decision-badge.ready{color: var(--yellow);}
 :where(body.mf-page-trading) .decision-badge.blocked{color: var(--red);}
@@ -701,18 +383,12 @@ html[data-theme="light"] :where(body.mf-page-smart-vault) .mf-sort-option-icon-v
 :where(body.mf-page-trading) .token-price{font-variant-numeric: tabular-nums;}
 
 
-
-
-
-
 :where(body.mf-page-trading) .chart-credit{ text-decoration: none;}
 
 :where(body.mf-page-trading) .live-tape-row{text-shadow: 0 1px 10px rgba(0, 0, 0, .9);}
 :where(body.mf-page-trading) .live-tape-row strong{font-variant-numeric: tabular-nums;}
 :where(body.mf-page-trading) .live-tape-row.buy{color: rgba(77, 230, 161, .82);}
 :where(body.mf-page-trading) .live-tape-row.sell{color: rgba(255, 102, 121, .78);}
-
-
 
 
 :where(body.mf-page-trading) .selected-metrics strong{ font-variant-numeric: tabular-nums;}
@@ -725,7 +401,6 @@ html[data-theme="light"] :where(body.mf-page-smart-vault) .mf-sort-option-icon-v
 
 :where(body.mf-page-trading) .approval-count[data-active="true"]{color: #8db0ff;}
 :where(body.mf-page-trading) .approvals-panel .approval-list > .empty, :where(body.mf-page-trading) .approvals-panel .approval-list > .approval-empty, :where(body.mf-page-trading) .approvals-panel .approval-empty{ -webkit-text-size-adjust: none !important; text-size-adjust: none !important;}
-
 
 
 :where(body.mf-page-trading) .approval-stats strong{ font-variant-numeric: tabular-nums;}
@@ -742,10 +417,7 @@ html[data-theme="light"] :where(body.mf-page-smart-vault) .mf-sort-option-icon-v
 :where(body.mf-page-trading) .copy-trade-badge{color: #7fdff7;}
 
 
-
 :where(body.mf-page-trading) .strategy-summary-panel .strategy-summary-row strong{ font-variant-numeric: tabular-nums;}
-
-
 
 
 :where(body.mf-page-trading) .trade-side.buy{color: var(--green);}
@@ -756,15 +428,10 @@ html[data-theme="light"] :where(body.mf-page-smart-vault) .mf-sort-option-icon-v
 :where(body.mf-page-trading) .trade-log-time{ font-variant-numeric: tabular-nums;}
 
 
-
-
 :where(body.mf-page-trading) .trade-log-bottomline .pnl-positive{color: var(--green);}
 :where(body.mf-page-trading) .trade-log-bottomline .pnl-negative{color: var(--red);}
 body.mf-page-trading.mf-trading-terminal
 .candidates-panel .candidate-filter > button[data-filter]{ -webkit-text-size-adjust: none !important; text-size-adjust: none !important;}
-
-
-
 
 
 :where(body.mf-page-trading) .positions-panel .position-bottomline span, :where(body.mf-page-trading) .positions-panel .position-bottomline strong{font-variant-numeric: tabular-nums;}
@@ -778,79 +445,16 @@ html[data-theme="dark"] :where(body.mf-page-trading) .positions-panel .position-
 :where(body.mf-page-trading) .brand-mark{color: transparent!important;}
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 :where(body.mf-page-trading) .wallet-stat b, :where(body.mf-page-trading) .subscription-metric b, :where(body.mf-page-trading) .system-health-summary b, :where(body.mf-page-trading) .settings-summary b, :where(body.mf-page-trading) .plan-price, :where(body.mf-page-trading) .big-score, :where(body.mf-page-trading) .metric-value, :where(body.mf-page-trading) .score, :where(body.mf-page-trading) .big-number{font-variant-numeric: tabular-nums!important;}
-
-
-
 
 
 :where(body.mf-page-trading) .mf-nav-link{color: inherit; text-decoration: none;}
 
 
-
-
-
-
 :where(body.mf-page-trading) .mf-nav-link[aria-current="page"] .mf-nav-link-arrow{color: transparent;}
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 html[data-theme="light"] :where(body.mf-page-trading) .candidate-filter button.active, html[data-theme="light"] :where(body.mf-page-trading) .timeframes button.active, html[data-theme="light"] :where(body.mf-page-trading) .indicator-bar button[aria-pressed="true"]{color: #16485a !important;}
-
-
-
-
-
-
-
-
-
-
-
 
 
 html[data-theme="light"] :where(body.mf-page-trading) .mf293-primary{color: #15495b !important;}
@@ -882,8 +486,6 @@ html[data-theme="light"] body:where(.mf-page-trading).mf-hiw-page .mf-hiw-money-
 html[data-theme="light"] body:where(.mf-page-trading).mf-hiw-page .mf-hiw-faq summary::after{color: #4e8295 !important;}
 
 
-
-
 html[data-theme="light"] :where(body.mf-page-trading) .mf-vault-status-flow span.is-ready{color: #248e67 !important;}
 
 
@@ -891,9 +493,6 @@ html[data-theme="light"] :where(body.mf-page-trading) .mf-vault-btn-primary:disa
 html[data-theme="light"] :where(body.mf-page-trading) #connectBtn, html[data-theme="light"] :where(body.mf-page-trading) #createBtn{color: #3e7d91 !important;}
 html[data-theme="light"] :where(body.mf-page-trading) #connectBtn:disabled, html[data-theme="light"] :where(body.mf-page-trading) #createBtn:disabled{color: #4d8191 !important;}
 html[data-theme="light"] :where(body.mf-page-trading) .chart-panel .token-avatar{color: #5d7682 !important;}
-
-
-
 
 
 html[data-theme="light"] :where(body.mf-page-trading) .chart-panel .timeframes button.active{color: #176f88 !important;}
@@ -905,8 +504,6 @@ html[data-theme="light"] :where(body.mf-page-trading) .chart-panel .indicator-ba
 html[data-theme="light"] :where(body.mf-page-trading) .chart-panel .indicator-bar button.active, html[data-theme="light"] :where(body.mf-page-trading) .chart-panel .indicator-bar button[aria-pressed="true"]{color: #176f88 !important;}
 
 html[data-theme="light"] :where(body.mf-page-trading) .chart-panel .selected-metrics strong{color: #334b57 !important;}
-
-
 
 
 :where(body.mf-page-trading) [data-mf-open-position-pipeline-v3="1"]{color: #4de6a1 !important;}
@@ -921,29 +518,13 @@ html[data-theme="light"] :where(body.mf-page-trading) .flow-token.open .mf-open-
 html[data-theme="light"] :where(body.mf-page-trading) .flow-token.open .mf-open-position-pnl.is-loss, html[data-theme="light"] :where(body.mf-page-trading) .flow-token .mf-open-market-stat strong.is-loss, html[data-theme="light"] :where(body.mf-page-trading) .flow-token .mf-regular-market-stat strong.is-loss{color: #ef6677 !important;}
 
 
-
-
-
-
-
-
-
 html[data-theme="light"] :where(body.mf-page-trading) .mf-sort-trigger-icon-v251, html[data-theme="light"] :where(body.mf-page-trading) .mf-sort-trigger-chevron-v251, html[data-theme="light"] :where(body.mf-page-trading) .mf-sort-trigger-chevron-v251.is-active{color: #78909a !important;}
-
-
-
-
-
 
 
 html[data-theme="light"] :where(body.mf-page-trading) .mf-sort-direction-v25 button.is-active{color: #203946 !important;}
 
 
 html[data-theme="light"] :where(body.mf-page-trading) .mf-sort-option-icon-v251, html[data-theme="light"] :where(body.mf-page-trading) .mf-sort-row-chevron-v251{color: #738791 !important;}
-
-
-
-
 
 
 html :where(body.mf-page-trading){-webkit-text-size-adjust: 100%; text-size-adjust: 100%;}
@@ -953,29 +534,8 @@ body:where(.mf-page-trading){font-synthesis: none;}
 [class*="value"],[class*="count"]){font-variant-numeric: tabular-nums lining-nums;}
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 body.mf-page-trading.mf-trading-terminal
 .mf-trading-pump-avatar-link-v76{color: inherit !important; text-decoration: none !important;}
-
-
-
-
-
 
 
 html body.mf-page-trading.mf-trading-terminal
@@ -997,13 +557,6 @@ html body.mf-page-trading.mf-trading-terminal :where(
     .bottom-history-panel .trade-log-time
   ){ -webkit-text-size-adjust: none !important; text-size-adjust: none !important;}
 }
-
-
-
-
-
-
-
 
 
 @media (max-width: 820px){
@@ -1040,22 +593,7 @@ html body.mf-page-trading.mf-trading-terminal :where(
 html body:where(.mf-page-trading).mf-page-system-tokens .token-state{-webkit-text-size-adjust: none !important; text-size-adjust: none !important;}
 
 
-
-
-
-
-
-
-
-
-
-
 :where(body.mf-page-trading) .position-popover-v85__value{font-variant-numeric: tabular-nums;}
-
-
-
-
-
 
 
 /* V184 EXTERNAL TEXT OWNERSHIP: settings.html */
@@ -1064,14 +602,10 @@ html body:where(.mf-page-trading).mf-page-system-tokens .token-state{-webkit-tex
 :where(body.mf-page-settings) .back{text-decoration: none;}
 
 
-
 :where(body.mf-page-settings) .status-chip.execution b{color: var(--yellow);}
 
 
-
 :where(body.mf-page-settings) .eyebrow{color: var(--cyan);}
-
-
 
 
 :where(body.mf-page-settings) .state-pill.ready{color: var(--yellow);}
@@ -1079,15 +613,9 @@ html body:where(.mf-page-trading).mf-page-system-tokens .token-state{-webkit-tex
 :where(body.mf-page-settings) .state-pill.blocked{color: var(--red);}
 
 
-
-
-
-
 :where(body.mf-page-settings) .gate.pass b{color: var(--green);}
 :where(body.mf-page-settings) .gate.fail b{color: var(--red);}
 :where(body.mf-page-settings) .gate.wait b{color: var(--yellow);}
-
-
 
 
 :where(body.mf-page-settings) .live-badge{color: var(--green);}
@@ -1096,9 +624,6 @@ html body:where(.mf-page-trading).mf-page-system-tokens .token-state{-webkit-tex
 :where(body.mf-page-settings) .token-state.ready{color: var(--yellow);}
 :where(body.mf-page-settings) .token-state.watch{color: var(--blue);}
 :where(body.mf-page-settings) .token-state.blocked{color: var(--red);}
-
-
-
 
 
 :where(body.mf-page-settings) .fatal strong{color: var(--red);}
@@ -1130,35 +655,13 @@ body:where(.mf-page-settings).mf-settings-standalone .mf293-settings-error{color
 :where(body.mf-page-settings) .brand-mark{color: transparent!important;}
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 :where(body.mf-page-settings) .wallet-stat b, :where(body.mf-page-settings) .subscription-metric b, :where(body.mf-page-settings) .system-health-summary b, :where(body.mf-page-settings) .settings-summary b, :where(body.mf-page-settings) .plan-price, :where(body.mf-page-settings) .big-score, :where(body.mf-page-settings) .metric-value, :where(body.mf-page-settings) .score, :where(body.mf-page-settings) .big-number{font-variant-numeric: tabular-nums!important;}
-
-
-
 
 
 :where(body.mf-page-settings) .mf-nav-link{color: inherit; text-decoration: none;}
 
 
-
-
-
-
 :where(body.mf-page-settings) .mf-nav-link[aria-current="page"] .mf-nav-link-arrow{color: transparent;}
-
 
 
 :where(body.mf-page-settings) .mf-ag-kicker{color: #55d9ff;}
@@ -1168,51 +671,7 @@ body:where(.mf-page-settings).mf-settings-standalone .mf293-settings-error{color
 :where(body.mf-page-settings) #mf-access-ribbon{color: #9beaff;}
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 html[data-theme="light"] :where(body.mf-page-settings) .candidate-filter button.active, html[data-theme="light"] :where(body.mf-page-settings) .timeframes button.active, html[data-theme="light"] :where(body.mf-page-settings) .indicator-bar button[aria-pressed="true"]{color: #16485a !important;}
-
-
-
-
-
-
-
-
-
-
-
 
 
 html[data-theme="light"] :where(body.mf-page-settings) .mf293-primary{color: #15495b !important;}
@@ -1244,8 +703,6 @@ html[data-theme="light"] body:where(.mf-page-settings).mf-hiw-page .mf-hiw-money
 html[data-theme="light"] body:where(.mf-page-settings).mf-hiw-page .mf-hiw-faq summary::after{color: #4e8295 !important;}
 
 
-
-
 html[data-theme="light"] :where(body.mf-page-settings) .mf-vault-status-flow span.is-ready{color: #248e67 !important;}
 
 
@@ -1253,9 +710,6 @@ html[data-theme="light"] :where(body.mf-page-settings) .mf-vault-btn-primary:dis
 html[data-theme="light"] :where(body.mf-page-settings) #connectBtn, html[data-theme="light"] :where(body.mf-page-settings) #createBtn{color: #3e7d91 !important;}
 html[data-theme="light"] :where(body.mf-page-settings) #connectBtn:disabled, html[data-theme="light"] :where(body.mf-page-settings) #createBtn:disabled{color: #4d8191 !important;}
 html[data-theme="light"] :where(body.mf-page-settings) .chart-panel .token-avatar{color: #5d7682 !important;}
-
-
-
 
 
 html[data-theme="light"] :where(body.mf-page-settings) .chart-panel .timeframes button.active{color: #176f88 !important;}
@@ -1267,8 +721,6 @@ html[data-theme="light"] :where(body.mf-page-settings) .chart-panel .indicator-b
 html[data-theme="light"] :where(body.mf-page-settings) .chart-panel .indicator-bar button.active, html[data-theme="light"] :where(body.mf-page-settings) .chart-panel .indicator-bar button[aria-pressed="true"]{color: #176f88 !important;}
 
 html[data-theme="light"] :where(body.mf-page-settings) .chart-panel .selected-metrics strong{color: #334b57 !important;}
-
-
 
 
 :where(body.mf-page-settings) [data-mf-open-position-pipeline-v3="1"]{color: #4de6a1 !important;}
@@ -1283,27 +735,13 @@ html[data-theme="light"] :where(body.mf-page-settings) .flow-token.open .mf-open
 html[data-theme="light"] :where(body.mf-page-settings) .flow-token.open .mf-open-position-pnl.is-loss, html[data-theme="light"] :where(body.mf-page-settings) .flow-token .mf-open-market-stat strong.is-loss, html[data-theme="light"] :where(body.mf-page-settings) .flow-token .mf-regular-market-stat strong.is-loss{color: #ef6677 !important;}
 
 
-
-
-
-
-
-
-
 html[data-theme="light"] :where(body.mf-page-settings) .mf-sort-trigger-icon-v251, html[data-theme="light"] :where(body.mf-page-settings) .mf-sort-trigger-chevron-v251, html[data-theme="light"] :where(body.mf-page-settings) .mf-sort-trigger-chevron-v251.is-active{color: #78909a !important;}
-
-
-
-
-
 
 
 html[data-theme="light"] :where(body.mf-page-settings) .mf-sort-direction-v25 button.is-active{color: #203946 !important;}
 
 
 html[data-theme="light"] :where(body.mf-page-settings) .mf-sort-option-icon-v251, html[data-theme="light"] :where(body.mf-page-settings) .mf-sort-row-chevron-v251{color: #738791 !important;}
-
-
 
 
 /* V184 EXTERNAL TEXT OWNERSHIP: system-tokens.html */
@@ -1316,23 +754,10 @@ html[data-theme="light"] :where(body.mf-page-settings) .mf-sort-option-icon-v251
 :where(body.mf-page-system-tokens) .eyebrow{color: var(--cyan);}
 
 
-
-
-
-
-
 :where(body.mf-page-system-tokens) .token-state.ready{color: var(--yellow);}
 :where(body.mf-page-system-tokens) .token-state.watch{color: var(--blue);}
 
 :where(body.mf-page-system-tokens) .token-state.blocked{color: var(--red);}
-
-
-
-
-
-
-
-
 
 
 :where(body.mf-page-system-tokens) .token-pump-link{color: #75dff7; text-decoration: none;}
@@ -1362,18 +787,12 @@ html[data-theme="light"] :where(body.mf-page-settings) .mf-sort-option-icon-v251
 :where(body.mf-page-system-tokens) .live-status.is-syncing{color: var(--yellow);}
 
 
-
 :where(body.mf-page-system-tokens) .mf-sort-trigger-icon-v251, :where(body.mf-page-system-tokens) .mf-sort-trigger-chevron-v251{color: #a7b6be;}
 :where(body.mf-page-system-tokens) .mf-sort-trigger-chevron-v251.is-active{color: #e7e9ea;}
 
 
-
-
-
-
 :where(body.mf-page-system-tokens) .mf-sort-option-icon-v251{color: #a9bac2;}
 :where(body.mf-page-system-tokens) .mf-sort-row-chevron-v251{color: #71767b;}
-
 
 
 :where(body.mf-page-system-tokens) .mf-scan-state.ready{color: var(--yellow);}
@@ -1389,20 +808,6 @@ html[data-theme="light"] :where(body.mf-page-settings) .mf-sort-option-icon-v251
 :where(body.mf-page-system-tokens) .mf-scan-error{color: var(--red);}
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 :where(body.mf-page-system-tokens) .mf-analysis-strip-v15 strong{ font-variant-numeric: tabular-nums!important;}
 
 
@@ -1412,7 +817,6 @@ html[data-theme="light"] :where(body.mf-page-settings) .mf-sort-option-icon-v251
 @media (max-width: 760px){
 :where(body.mf-page-system-tokens) .token-source-link.pump.mf-pump-logo-link::before{color: currentColor;}
 }
-
 
 
 html[data-theme="light"] :where(body.mf-page-system-tokens) .mf-time-window-v47c button.is-active{color: #315d6a;}
@@ -1427,79 +831,16 @@ html[data-theme="light"] :where(body.mf-page-system-tokens) .mf-time-window-v47c
 :where(body.mf-page-system-tokens) .brand-mark{color: transparent!important;}
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 :where(body.mf-page-system-tokens) .wallet-stat b, :where(body.mf-page-system-tokens) .subscription-metric b, :where(body.mf-page-system-tokens) .system-health-summary b, :where(body.mf-page-system-tokens) .settings-summary b, :where(body.mf-page-system-tokens) .plan-price, :where(body.mf-page-system-tokens) .big-score, :where(body.mf-page-system-tokens) .metric-value, :where(body.mf-page-system-tokens) .score, :where(body.mf-page-system-tokens) .big-number{font-variant-numeric: tabular-nums!important;}
-
-
-
 
 
 :where(body.mf-page-system-tokens) .mf-nav-link{color: inherit; text-decoration: none;}
 
 
-
-
-
-
 :where(body.mf-page-system-tokens) .mf-nav-link[aria-current="page"] .mf-nav-link-arrow{color: transparent;}
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 html[data-theme="light"] :where(body.mf-page-system-tokens) .candidate-filter button.active, html[data-theme="light"] :where(body.mf-page-system-tokens) .timeframes button.active, html[data-theme="light"] :where(body.mf-page-system-tokens) .indicator-bar button[aria-pressed="true"]{color: #16485a !important;}
-
-
-
-
-
-
-
-
-
-
-
 
 
 html[data-theme="light"] :where(body.mf-page-system-tokens) .mf293-primary{color: #15495b !important;}
@@ -1531,8 +872,6 @@ html[data-theme="light"] body:where(.mf-page-system-tokens).mf-hiw-page .mf-hiw-
 html[data-theme="light"] body:where(.mf-page-system-tokens).mf-hiw-page .mf-hiw-faq summary::after{color: #4e8295 !important;}
 
 
-
-
 html[data-theme="light"] :where(body.mf-page-system-tokens) .mf-vault-status-flow span.is-ready{color: #248e67 !important;}
 
 
@@ -1540,9 +879,6 @@ html[data-theme="light"] :where(body.mf-page-system-tokens) .mf-vault-btn-primar
 html[data-theme="light"] :where(body.mf-page-system-tokens) #connectBtn, html[data-theme="light"] :where(body.mf-page-system-tokens) #createBtn{color: #3e7d91 !important;}
 html[data-theme="light"] :where(body.mf-page-system-tokens) #connectBtn:disabled, html[data-theme="light"] :where(body.mf-page-system-tokens) #createBtn:disabled{color: #4d8191 !important;}
 html[data-theme="light"] :where(body.mf-page-system-tokens) .chart-panel .token-avatar{color: #5d7682 !important;}
-
-
-
 
 
 html[data-theme="light"] :where(body.mf-page-system-tokens) .chart-panel .timeframes button.active{color: #176f88 !important;}
@@ -1554,8 +890,6 @@ html[data-theme="light"] :where(body.mf-page-system-tokens) .chart-panel .indica
 html[data-theme="light"] :where(body.mf-page-system-tokens) .chart-panel .indicator-bar button.active, html[data-theme="light"] :where(body.mf-page-system-tokens) .chart-panel .indicator-bar button[aria-pressed="true"]{color: #176f88 !important;}
 
 html[data-theme="light"] :where(body.mf-page-system-tokens) .chart-panel .selected-metrics strong{color: #334b57 !important;}
-
-
 
 
 :where(body.mf-page-system-tokens) [data-mf-open-position-pipeline-v3="1"]{color: #4de6a1 !important;}
@@ -1570,26 +904,13 @@ html[data-theme="light"] :where(body.mf-page-system-tokens) .flow-token.open .mf
 html[data-theme="light"] :where(body.mf-page-system-tokens) .flow-token.open .mf-open-position-pnl.is-loss, html[data-theme="light"] :where(body.mf-page-system-tokens) .flow-token .mf-open-market-stat strong.is-loss, html[data-theme="light"] :where(body.mf-page-system-tokens) .flow-token .mf-regular-market-stat strong.is-loss{color: #ef6677 !important;}
 
 
-
-
-
-
-
-
-
 html[data-theme="light"] :where(body.mf-page-system-tokens) .mf-sort-trigger-icon-v251, html[data-theme="light"] :where(body.mf-page-system-tokens) .mf-sort-trigger-chevron-v251, html[data-theme="light"] :where(body.mf-page-system-tokens) .mf-sort-trigger-chevron-v251.is-active{color: #78909a !important;}
-
-
-
-
-
 
 
 html[data-theme="light"] :where(body.mf-page-system-tokens) .mf-sort-direction-v25 button.is-active{color: #203946 !important;}
 
 
 html[data-theme="light"] :where(body.mf-page-system-tokens) .mf-sort-option-icon-v251, html[data-theme="light"] :where(body.mf-page-system-tokens) .mf-sort-row-chevron-v251{color: #738791 !important;}
-
 
 
 html body:where(.mf-page-system-tokens).mf-page-trading.mf-trading-terminal :where(
@@ -1616,102 +937,33 @@ html body.mf-page-system-tokens .token-state{-webkit-text-size-adjust: none !imp
 :where(body.mf-page-x100) .nav a{text-decoration: none;}
 
 
-
-
 :where(body.mf-page-x100) .primary-action{ text-decoration: none;}
 :where(body.mf-page-x100) .text-action{ text-decoration: none;}
 
 
-
-
-
-
 :where(body.mf-page-x100) .connector{color: var(--mf-neutral-text-4);}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 /* V184 EXTERNAL TEXT OWNERSHIP: agent-performance.html */
 :where(body.mf-page-agent-performance) .brand-mark{color: transparent!important;}
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 :where(body.mf-page-agent-performance) .wallet-stat b, :where(body.mf-page-agent-performance) .subscription-metric b, :where(body.mf-page-agent-performance) .system-health-summary b, :where(body.mf-page-agent-performance) .settings-summary b, :where(body.mf-page-agent-performance) .plan-price, :where(body.mf-page-agent-performance) .big-score, :where(body.mf-page-agent-performance) .metric-value, :where(body.mf-page-agent-performance) .score, :where(body.mf-page-agent-performance) .big-number{font-variant-numeric: tabular-nums!important;}
-
-
-
 
 
 :where(body.mf-page-agent-performance) .mf-nav-link{color: inherit; text-decoration: none;}
 
 
-
-
-
-
 :where(body.mf-page-agent-performance) .mf-nav-link[aria-current="page"] .mf-nav-link-arrow{color: transparent;}
 
 
-
-
-
-
-
 :where(body.mf-page-agent-performance) .ap-eyebrow{color: var(--cyan);}
-
-
-
-
 
 
 :where(body.mf-page-agent-performance) .ap-error{color: #f2aab0;}
 
 
 :where(body.mf-page-agent-performance) .ap-head>b{color: var(--green);}
-
-
-
-
-
-
-
-
-
-
 
 
 :where(body.mf-page-agent-performance) .meta .pos{color: var(--green);}
@@ -1724,44 +976,7 @@ html body.mf-page-system-tokens .token-state{-webkit-text-size-adjust: none !imp
 :where(body.mf-page-agent-performance) footer a{ text-decoration: none;}
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 html[data-theme="light"] :where(body.mf-page-agent-performance) .candidate-filter button.active, html[data-theme="light"] :where(body.mf-page-agent-performance) .timeframes button.active, html[data-theme="light"] :where(body.mf-page-agent-performance) .indicator-bar button[aria-pressed="true"]{color: #16485a !important;}
-
-
-
-
-
-
-
-
-
-
-
 
 
 html[data-theme="light"] :where(body.mf-page-agent-performance) .mf293-primary{color: #15495b !important;}
@@ -1793,8 +1008,6 @@ html[data-theme="light"] body:where(.mf-page-agent-performance).mf-hiw-page .mf-
 html[data-theme="light"] body:where(.mf-page-agent-performance).mf-hiw-page .mf-hiw-faq summary::after{color: #4e8295 !important;}
 
 
-
-
 html[data-theme="light"] :where(body.mf-page-agent-performance) .mf-vault-status-flow span.is-ready{color: #248e67 !important;}
 
 
@@ -1802,9 +1015,6 @@ html[data-theme="light"] :where(body.mf-page-agent-performance) .mf-vault-btn-pr
 html[data-theme="light"] :where(body.mf-page-agent-performance) #connectBtn, html[data-theme="light"] :where(body.mf-page-agent-performance) #createBtn{color: #3e7d91 !important;}
 html[data-theme="light"] :where(body.mf-page-agent-performance) #connectBtn:disabled, html[data-theme="light"] :where(body.mf-page-agent-performance) #createBtn:disabled{color: #4d8191 !important;}
 html[data-theme="light"] :where(body.mf-page-agent-performance) .chart-panel .token-avatar{color: #5d7682 !important;}
-
-
-
 
 
 html[data-theme="light"] :where(body.mf-page-agent-performance) .chart-panel .timeframes button.active{color: #176f88 !important;}
@@ -1816,8 +1026,6 @@ html[data-theme="light"] :where(body.mf-page-agent-performance) .chart-panel .in
 html[data-theme="light"] :where(body.mf-page-agent-performance) .chart-panel .indicator-bar button.active, html[data-theme="light"] :where(body.mf-page-agent-performance) .chart-panel .indicator-bar button[aria-pressed="true"]{color: #176f88 !important;}
 
 html[data-theme="light"] :where(body.mf-page-agent-performance) .chart-panel .selected-metrics strong{color: #334b57 !important;}
-
-
 
 
 :where(body.mf-page-agent-performance) [data-mf-open-position-pipeline-v3="1"]{color: #4de6a1 !important;}
@@ -1832,36 +1040,13 @@ html[data-theme="light"] :where(body.mf-page-agent-performance) .flow-token.open
 html[data-theme="light"] :where(body.mf-page-agent-performance) .flow-token.open .mf-open-position-pnl.is-loss, html[data-theme="light"] :where(body.mf-page-agent-performance) .flow-token .mf-open-market-stat strong.is-loss, html[data-theme="light"] :where(body.mf-page-agent-performance) .flow-token .mf-regular-market-stat strong.is-loss{color: #ef6677 !important;}
 
 
-
-
-
-
-
-
-
 html[data-theme="light"] :where(body.mf-page-agent-performance) .mf-sort-trigger-icon-v251, html[data-theme="light"] :where(body.mf-page-agent-performance) .mf-sort-trigger-chevron-v251, html[data-theme="light"] :where(body.mf-page-agent-performance) .mf-sort-trigger-chevron-v251.is-active{color: #78909a !important;}
-
-
-
-
-
 
 
 html[data-theme="light"] :where(body.mf-page-agent-performance) .mf-sort-direction-v25 button.is-active{color: #203946 !important;}
 
 
 html[data-theme="light"] :where(body.mf-page-agent-performance) .mf-sort-option-icon-v251, html[data-theme="light"] :where(body.mf-page-agent-performance) .mf-sort-row-chevron-v251{color: #738791 !important;}
-
-
-
-
-
-
-
-
-
-
-
 
 
 /* V184 EXTERNAL TEXT OWNERSHIP: owner-intelligence.html */
@@ -1877,25 +1062,13 @@ html[data-theme="light"] :where(body.mf-page-agent-performance) .mf-sort-option-
 :where(body.mf-page-owner-intelligence) .oi-ai-status.online{color: var(--green);}
 
 
-
-
-
-
-
-
 :where(body.mf-page-owner-intelligence) .oi-report-summary span{color: var(--cyan);}
-
 
 
 :where(body.mf-page-owner-intelligence) .oi-proposal-type{color: var(--cyan);}
 
 
-
 :where(body.mf-page-owner-intelligence) .oi-chat-message.error{color: #ffabb4;}
-
-
-
-
 
 
 :where(body.mf-page-owner-intelligence) .oi-scorecard-direction.positive{color: var(--green);}
@@ -1919,27 +1092,18 @@ html[data-theme="light"] :where(body.mf-page-agent-performance) .mf-sort-option-
 :where(body.mf-page-owner-intelligence) .oi-error-pattern-tags span{color: #9fdff0;}
 
 
-
-
-
 :where(body.mf-page-owner-intelligence) .oi-error-aware-patterns span.clear{color: var(--green);}
-
-
 
 
 :where(body.mf-page-owner-intelligence) .oi-promotion-blocker[data-state="ready"]{color: var(--green);}
 
 
-
 :where(body.mf-page-owner-intelligence) .oi-owner-lock{color: var(--cyan);}
-
-
 
 
 :where(body.mf-page-owner-intelligence) .oi-owner-access-message[data-state="success"]{color: var(--green);}
 :where(body.mf-page-owner-intelligence) .oi-owner-access-message[data-state="error"]{color: #ff8f9c;}
 :where(body.mf-page-owner-intelligence) .oi-owner-access-message[data-state="working"]{color: var(--cyan);}
-
 
 
 /* V184 RUNTIME TEXT STATE: canonical owns all runtime text appearance */
@@ -1948,13 +1112,6 @@ html[data-theme="light"] :where(body.mf-page-agent-performance) .mf-sort-option-
 :where([data-mf-tone="yellow"]){color:var(--yellow)!important;}
 :where([data-mf-tone="blue"]){color:var(--blue)!important;}
 :where([data-mf-tone="cyan"]){color:var(--cyan)!important;}
-
-
-
-
-
-
-
 
 
 /* V184 INLINE-BEFORE: index.html */
@@ -1972,7 +1129,6 @@ html[data-theme="light"] :where(body.mf-page-agent-performance) .mf-sort-option-
 :where(body.mf-page-index) .nav a{text-decoration: none;}
 
 
-
 :where(body.mf-page-index) .mode-indicator b{color: var(--green);}
 
 
@@ -1982,14 +1138,8 @@ html[data-theme="light"] :where(body.mf-page-agent-performance) .mf-sort-option-
 :where(body.mf-page-index) .btn.green{color: var(--green);}
 
 
-
-
-
-
-
 :where(body.mf-page-index) .state.wait{color: var(--cyan);}
 :where(body.mf-page-index) .state.block{color: var(--red);}
-
 
 
 :where(body.mf-page-index) .mini-check.pass{color: var(--green);}
@@ -2002,30 +1152,14 @@ html[data-theme="light"] :where(body.mf-page-agent-performance) .mf-sort-option-
 :where(body.mf-page-index) .lane.ignore{color: var(--red);}
 
 
-
 :where(body.mf-page-index) .tree-node.pass{color: var(--green);}
 :where(body.mf-page-index) .tree-node.active{color: var(--cyan);}
 :where(body.mf-page-index) .tree-node.fail{color: var(--red);}
 
 
-
-
-
-
-
-
-
-
-
-
-
-
 :where(body.mf-page-index) .change-pill.up i{color: var(--green);}
 :where(body.mf-page-index) .change-pill.down i{color: var(--red);}
 :where(body.mf-page-index) .change-pill.info i{color: var(--cyan);}
-
-
-
 
 
 :where(body.mf-page-index) .signal-cell b.good{color: var(--green);}
@@ -2035,11 +1169,7 @@ html[data-theme="light"] :where(body.mf-page-agent-performance) .mf-sort-option-
 :where(body.mf-page-index) .context-icon{color: var(--cyan);}
 
 
-
-
 :where(body.mf-page-index) .execution-verdict strong{color: var(--green);}
-
-
 
 
 @media(max-width:820px){
@@ -2050,47 +1180,14 @@ body:where(.mf-page-index)[data-incident="true"] .mobile-incident-alert a{color:
 }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 :where(body.mf-page-index) .journey-step.done{color: var(--green);}
 :where(body.mf-page-index) .journey-step.active{color: var(--cyan);}
-
 
 
 :where(body.mf-page-index) .wallet-connect-top.connected{color: var(--green);}
 
 
-
-
-
-
-
 :where(body.mf-page-index) .wallet-option-icon{color: var(--cyan);}
-
-
-
-
-
-
-
 
 
 :where(body.mf-page-index) .feature i{color: var(--green);}
@@ -2099,33 +1196,14 @@ body:where(.mf-page-index)[data-incident="true"] .mobile-incident-alert a{color:
 :where(body.mf-page-index) .top-plan-badge.pro{color: var(--green);}
 
 
-
-
-
 :where(body.mf-page-index) .change-item.good b{color: var(--green);}
 :where(body.mf-page-index) .change-item.warn b{color: var(--yellow);}
-
-
-
-
-
-
-
 
 
 :where(body.mf-page-index) .explain-step i{color: var(--cyan);}
 
 
-
-
-
-
 :where(body.mf-page-index) .consensus small{color: var(--purple);}
-
-
-
-
-
 
 
 :where(body.mf-page-index) .why-not-item.pass b{color: var(--green);}
@@ -2133,15 +1211,7 @@ body:where(.mf-page-index)[data-incident="true"] .mobile-incident-alert a{color:
 :where(body.mf-page-index) .why-not-item.wait b{color: var(--yellow);}
 
 
-
-
-
-
-
 :where(body.mf-page-index) .decision-intelligence>summary::after{color: var(--mf-neutral-text-3);}
-
-
-
 
 
 :where(body.mf-page-index) .wallet-error:before{color: var(--red);}
@@ -2150,22 +1220,6 @@ body:where(.mf-page-index)[data-incident="true"] .mobile-incident-alert a{color:
 
 :where(body.mf-page-index) .operator-step.done b{color: var(--green);}
 :where(body.mf-page-index) .primary-blocker small{color: var(--yellow);}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 :where(body.mf-page-index) .big-score{color: transparent;}
@@ -2177,33 +1231,7 @@ body:where(.mf-page-index)[data-incident="true"] .mobile-incident-alert a{color:
 :where(body.mf-page-index) .chart-badge-current{color: var(--green);}
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 :where(body.mf-page-index) .metric-value, :where(body.mf-page-index) .score, :where(body.mf-page-index) .big-number{font-variant-numeric: tabular-nums;}
-
-
-
-
-
-
 
 
 :where(body.mf-page-index) .settings-save-state{color: var(--green);}
@@ -2219,31 +1247,16 @@ body:where(.mf-page-index)[data-incident="true"] .mobile-incident-alert a{color:
 :where(body.mf-page-index) .settings-group>summary small{color: var(--cyan);}
 
 
-
-
 :where(body.mf-page-index) .health-value{font-variant-numeric: tabular-nums;}
 :where(body.mf-page-index) .health-value.healthy{color: var(--green);}
 :where(body.mf-page-index) .health-value.degraded, :where(body.mf-page-index) .health-value.pending{color: var(--yellow);}
 :where(body.mf-page-index) .health-value.unavailable{color: var(--red);}
 
 
-
-
-
-
-
-
-
-
-
-
 html :where(body.mf-page-index), body:where(.mf-page-index){-webkit-text-size-adjust: 100%;}
 
 
-
-
 /* V184 INLINE-BEFORE: index.html */
-
 
 
 :where(body.mf-page-index) .platform-chip input:checked+span{color: var(--green);}
@@ -2256,7 +1269,6 @@ html :where(body.mf-page-index), body:where(.mf-page-index){-webkit-text-size-ad
 :where(body.mf-page-index) #ai-analysis>summary::after{color: var(--muted)!important;}
 
 
-
 @media(max-width:820px){
 :where(body.mf-page-index) #ai-analysis>summary::after{color: var(--muted)!important;}
 }
@@ -2264,14 +1276,11 @@ html :where(body.mf-page-index), body:where(.mf-page-index){-webkit-text-size-ad
 :where(body.mf-page-index) .mf-ai-compact-copy small{color: var(--cyan);}
 
 
-
 :where(body.mf-page-index) .mf-ai-compact-status b{color: var(--yellow);}
-
 
 
 /* V184 INLINE-BEFORE: index.html */
 :where(body.mf-page-index) #market-chart-module .mf-market-chart-empty-icon{color: #8290a2;}
-
 
 
 /* V184 INLINE-BEFORE: index.html */
@@ -2289,9 +1298,6 @@ html :where(body.mf-page-index), body:where(.mf-page-index){-webkit-text-size-ad
 /* V184 INLINE-BEFORE: index.html */
 
 
-
-
-
 /* V184 INLINE-BEFORE: index.html */
 
 
@@ -2300,12 +1306,9 @@ html :where(body.mf-page-index), body:where(.mf-page-index){-webkit-text-size-ad
 }
 
 
-
 @media(max-width:820px){
 :where(body.mf-page-index) #executionPreview .primary-blocker small{color: var(--yellow)!important;}
 }
-
-
 
 
 @media(max-width:820px){
@@ -2353,27 +1356,13 @@ html :where(body.mf-page-index), body:where(.mf-page-index){-webkit-text-size-ad
 :where(body.mf-page-smart-vault) .mf-vault-brand{color: inherit; text-decoration: none;}
 
 
-
-
-
-
-
 :where(body.mf-page-smart-vault) .mf-vault-badge.is-connected, :where(body.mf-page-smart-vault) .mf-vault-badge.is-safe{color: #6fc9a1;}
-
-
-
 
 
 :where(body.mf-page-smart-vault) .mf-vault-btn{ text-decoration: none;}
 
 
-
-
-
-
-
 :where(body.mf-page-smart-vault) .mf-vault-status-flow span.is-ready{color: #72b99b;}
-
 
 
 /* V184 INLINE-BEFORE: system-tokens.html */
@@ -2386,8 +1375,6 @@ html :where(body.mf-page-index), body:where(.mf-page-index){-webkit-text-size-ad
 
 :where(body.mf-page-system-source) .live{color: #53efb2;}
 :where(body.mf-page-system-source) .eyebrow{color: #54dfff;}
-
-
 
 
 :where(body.mf-page-system-source) .ok{color: #53efb2;}
@@ -2575,13 +1562,6 @@ body.mf-page-agent-performance.mf-final-visual-qa-v65 .ap-periods{
 }
 
 
-
-
-
-
-
-
-
 :root{
   --mf-semantic-cyan:   #55d9ff;
   --mf-semantic-green:  #4de6a1;
@@ -2653,7 +1633,6 @@ html body:is(
 }
 
 
-
 html body:is(
   .mf-page-system,
   .mf-page-system-tokens,
@@ -2722,7 +1701,6 @@ html body:is(
 }
 
 
-
 html body:is(
   .mf-page-system,
   .mf-page-system-tokens,
@@ -2761,11 +1739,6 @@ html body:is(
     color-mix(in srgb, var(--mf-semantic-purple) 58%, transparent)
     !important;
 }
-
-
-
-
-
 
 
 html[data-theme="dark"]
@@ -3162,7 +2135,6 @@ button{
 }
 
 
-
 html[data-theme]
 body.mf-page-trading.mf-trading-terminal
 .chart-panel
@@ -3249,43 +2221,6 @@ button[aria-pressed="true"]::after{
 }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 html[data-theme]
 body.mf-page-trading.mf-trading-terminal
 .chart-panel
@@ -3323,7 +2258,6 @@ body.mf-page-trading.mf-trading-terminal
 > div:last-child{
   text-align: right !important;
 }
-
 
 
 html[data-theme="dark"]
@@ -3470,8 +2404,8 @@ body.mf-page-system
 html:not([data-theme="light"]){
   color-scheme: dark;
 
-  --mf-x-bg: #000000;
-  --mf-x-surface: #000000;
+  --mf-x-bg: #FFFFFF !important;
+  --mf-x-surface: #FFFFFF !important;
   --mf-x-text: var(--mf-neutral-text-2);
   --mf-x-text-strong: var(--mf-neutral-text-1);
   --mf-x-text-muted: var(--mf-neutral-text-3);
@@ -3482,14 +2416,14 @@ html:not([data-theme="light"]){
   --mf-x-button: #111111;
   --mf-x-button-hover: #171717;
 
-  --bg: #000000 !important;
-  --panel: #000000 !important;
-  --panel-solid: #000000 !important;
-  --panel-2: #000000 !important;
-  --surface: #000000 !important;
-  --surface2: #000000 !important;
-  --surface3: #000000 !important;
-  --surface-2: #000000 !important;
+  --bg: #FFFFFF !important;
+  --panel: #FFFFFF !important;
+  --panel-solid: #FFFFFF !important;
+  --panel-2: #FFFFFF !important;
+  --surface: #FFFFFF !important;
+  --surface2: #FFFFFF !important;
+  --surface3: #FFFFFF !important;
+  --surface-2: #FFFFFF !important;
 
   --text: var(--mf-neutral-text-2);
   --muted: var(--mf-neutral-text-3);
@@ -3499,28 +2433,28 @@ html:not([data-theme="light"]){
   --line2: #2f3336 !important;
   --line-strong: #2f3336 !important;
 
-  --mf-app-bg: #000000 !important;
-  --mf-app-surface: #000000 !important;
-  --mf-app-surface-2: #000000 !important;
-  --mf-app-surface-3: #000000 !important;
-  --mf-app-panel-top: #000000 !important;
-  --mf-app-panel-bottom: #000000 !important;
+  --mf-app-bg: #FFFFFF !important;
+  --mf-app-surface: #FFFFFF !important;
+  --mf-app-surface-2: #FFFFFF !important;
+  --mf-app-surface-3: #FFFFFF !important;
+  --mf-app-panel-top: #FFFFFF !important;
+  --mf-app-panel-bottom: #FFFFFF !important;
   --mf-app-line: #2f3336 !important;
   --mf-app-line-strong: #2f3336 !important;
   --mf-app-text: var(--mf-neutral-text-2);
   --mf-app-muted: var(--mf-neutral-text-3);
 
-  --mf-nav-bg: #000000 !important;
-  --mf-nav-surface: #000000 !important;
-  --mf-nav-surface-2: #000000 !important;
+  --mf-nav-bg: #FFFFFF !important;
+  --mf-nav-surface: #FFFFFF !important;
+  --mf-nav-surface-2: #FFFFFF !important;
   --mf-nav-line: #2f3336 !important;
   --mf-nav-line-strong: #2f3336 !important;
   --mf-nav-text: var(--mf-neutral-text-2);
   --mf-nav-muted: var(--mf-neutral-text-3);
 
-  --hiw-bg: #000000 !important;
-  --hiw-panel: #000000 !important;
-  --hiw-panel-strong: #000000 !important;
+  --hiw-bg: #FFFFFF !important;
+  --hiw-panel: #FFFFFF !important;
+  --hiw-panel-strong: #FFFFFF !important;
   --hiw-line: #2f3336 !important;
   --hiw-line-strong: #2f3336 !important;
   --hiw-text: var(--mf-neutral-text-2);
@@ -3528,9 +2462,9 @@ html:not([data-theme="light"]){
   --hiw-muted-2: var(--mf-neutral-text-4);
   --hiw-shadow: none !important;
 
-  --v-bg: #000000 !important;
-  --v-panel: #000000 !important;
-  --v-panel2: #000000 !important;
+  --v-bg: #FFFFFF !important;
+  --v-panel: #FFFFFF !important;
+  --v-panel2: #FFFFFF !important;
   --v-line: #2f3336 !important;
   --v-line2: #2f3336 !important;
   --v-text: var(--mf-neutral-text-2);
@@ -3538,8 +2472,8 @@ html:not([data-theme="light"]){
   --v-muted2: var(--mf-neutral-text-4);
 
   --mf-dark-canvas: #000000 !important;
-  --mf-dark-surface-1: #000000 !important;
-  --mf-dark-surface-2: #000000 !important;
+  --mf-dark-surface-1: #FFFFFF !important;
+  --mf-dark-surface-2: #FFFFFF !important;
   --mf-dark-line: #2f3336 !important;
 
   --mf-x-dark-canvas: #000000 !important;
@@ -3560,9 +2494,9 @@ html:not([data-theme="light"]){
 html:not([data-theme="light"]),
 html:not([data-theme="light"]) body,
 html:not([data-theme="light"]) body[class]{
-  background: #000000 !important;
-  background-color: #000000 !important;
-  background-image: none !important;
+
+
+
 }
 
 html:not([data-theme="light"]) body :where(
@@ -3574,9 +2508,9 @@ html:not([data-theme="light"]) body :where(
   .mf-vault-topbar,
   .mf-hiw-topbar
 ){
-  background: #000000 !important;
-  background-color: #000000 !important;
-  background-image: none !important;
+
+
+
   box-shadow: none !important;
 }
 
@@ -3664,22 +2598,11 @@ html:not([data-theme="light"]) body :where(
   .mf-paper-status,
   .mf-paper-grid > div
 ){
-  background: #000000 !important;
-  background-color: #000000 !important;
-  background-image: none !important;
+
+
+
   box-shadow: none !important;
 }
-
-
-
-
-
-
-
-
-
-
-
 
 
 html:not([data-theme="light"]) body :where(
@@ -3779,7 +2702,7 @@ html:not([data-theme="light"]) body :where(
 
 html:not([data-theme="light"]) body.mf-page-trading.mf-trading-terminal
 :where(.candidate, .position-row, .trade-row.trade-log-row)::after{
-  background: #2f3336 !important;
+
   height: 1px !important;
   opacity: 1 !important;
 }
@@ -3804,9 +2727,9 @@ html:not([data-theme="light"]) body :where(
   .inspector-foot button
 ){
   border: 1px solid #2f3336 !important;
-  background: #111111 !important;
-  background-color: #111111 !important;
-  background-image: none !important;
+
+
+
   box-shadow: none !important;
 }
 
@@ -3839,8 +2762,8 @@ html:not([data-theme="light"]) body :where(
   .inspector-foot button
 ):focus-visible{
   border-color: #2f3336 !important;
-  background: #171717 !important;
-  background-color: #171717 !important;
+
+
   box-shadow: none !important;
 }
 
@@ -3853,9 +2776,9 @@ html:not([data-theme="light"]) body :where(
   .oi-btn.primary
 ){
   border: 1px solid #ffffff !important;
-  background: #ffffff !important;
-  background-color: #ffffff !important;
-  background-image: none !important;
+
+
+
   box-shadow: none !important;
 }
 
@@ -3876,8 +2799,8 @@ html:not([data-theme="light"]) body :where(
   .oi-btn.primary
 ):focus-visible{
   border-color: #e8e8e8 !important;
-  background: #e8e8e8 !important;
-  background-color: #e8e8e8 !important;
+
+
   box-shadow: none !important;
 }
 
@@ -3907,9 +2830,9 @@ html:not([data-theme="light"]) body.mf-page-system-tokens
 .mf-time-window-v47c button,
 html:not([data-theme="light"]) body .mf-theme-segmented button{
   border-color: transparent !important;
-  background: transparent !important;
-  background-color: transparent !important;
-  background-image: none !important;
+
+
+
   box-shadow: none !important;
 }
 
@@ -3927,9 +2850,9 @@ html:not([data-theme="light"]) body.mf-page-system-tokens
 .mf-time-window-v47c button.is-active,
 html:not([data-theme="light"]) body .mf-theme-segmented button.is-active{
   border-color: transparent !important;
-  background: transparent !important;
-  background-color: transparent !important;
-  background-image: none !important;
+
+
+
   box-shadow: none !important;
 }
 
@@ -3937,7 +2860,7 @@ html:not([data-theme="light"]) body.mf-page-trading.mf-trading-terminal
 .indicator-bar button::after,
 html:not([data-theme="light"]) body.mf-page-trading.mf-trading-terminal
 .indicator-bar button:is(.active,[aria-pressed="true"])::after{
-  background: transparent !important;
+
 }
 
 html:not([data-theme="light"]) body :where(
@@ -3949,9 +2872,9 @@ html:not([data-theme="light"]) body :where(
   .launch-form input,
   .launch-form select
 ){
-  background: #000000 !important;
-  background-color: #000000 !important;
-  background-image: none !important;
+
+
+
   border-color: #2f3336 !important;
   box-shadow: none !important;
 }
@@ -3973,7 +2896,7 @@ html:not([data-theme="light"]) body :where(
 
 html:not([data-theme="light"]) body .details-button{
   border: 0 !important;
-  background: transparent !important;
+
   box-shadow: none !important;
 }
 
@@ -3983,14 +2906,14 @@ html:not([data-theme="light"]) body.mf-page-system .viewport-wrap{
 }
 
 html:not([data-theme="light"]){
-  --surface-0: #000000 !important;
-  --surface-1: #000000 !important;
-  --surface-2: #000000 !important;
-  --panel-bg: #000000 !important;
+  --surface-0: #FFFFFF !important;
+  --surface-1: #FFFFFF !important;
+  --surface-2: #FFFFFF !important;
+  --panel-bg: #FFFFFF !important;
 
-  --ds-bg: #000000 !important;
-  --ds-surface: #000000 !important;
-  --ds-surface-raised: #000000 !important;
+  --ds-bg: #FFFFFF !important;
+  --ds-surface: #FFFFFF !important;
+  --ds-surface-raised: #FFFFFF !important;
   --ds-line: #2f3336 !important;
   --ds-line-strong: #2f3336 !important;
   --ds-text: var(--mf-neutral-text-2);
@@ -4003,7 +2926,7 @@ html:not([data-theme="light"]){
   --mf-pm-line: #2f3336 !important;
   --mf-pm-line-strong: #2f3336 !important;
   --mf-icon-muted: var(--mf-neutral-text-3);
-  --mf-panel: #000000 !important;
+  --mf-panel: #FFFFFF !important;
 }
 
 html:not([data-theme="light"]) body.mf-page-x100 :where(
@@ -4013,9 +2936,9 @@ html:not([data-theme="light"]) body.mf-page-x100 :where(
   .policy-flow div,
   .definition-grid > div
 ){
-  background: #000000 !important;
-  background-color: #000000 !important;
-  background-image: none !important;
+
+
+
   box-shadow: none !important;
 }
 
@@ -4048,13 +2971,10 @@ html:not([data-theme="light"]) body.mf-page-x100 :where(
 }
 
 
-
-
-
 html:not([data-theme="light"]) body.mf-page-x100 :where(
   .primary-action
 ){
-  background: #ffffff !important;
+
   border-color: #ffffff !important;
   box-shadow: none !important;
 }
@@ -4063,7 +2983,7 @@ html:not([data-theme="light"]) body.mf-page-x100 :where(
   .core-module,
   .definition-grid .is
 ){
-  background: #f2f2f2 !important;
+
 }
 
 html:not([data-theme="light"]) body.mf-page-system-source :where(
@@ -4073,9 +2993,9 @@ html:not([data-theme="light"]) body.mf-page-system-source :where(
   .mode,
   .info
 ){
-  background: #000000 !important;
-  background-color: #000000 !important;
-  background-image: none !important;
+
+
+
   box-shadow: none !important;
 }
 
@@ -4090,7 +3010,6 @@ html:not([data-theme="light"]) body.mf-page-system-source :where(
 }
 
 
-
 html:not([data-theme="light"]) body.mf-page-owner-intelligence :where(
   .oi-panel,
   .oi-stat,
@@ -4099,9 +3018,9 @@ html:not([data-theme="light"]) body.mf-page-owner-intelligence :where(
   .oi-row,
   .oi-ai-status
 ){
-  background: #000000 !important;
-  background-color: #000000 !important;
-  background-image: none !important;
+
+
+
   border-color: #2f3336 !important;
   box-shadow: none !important;
 }
@@ -4113,8 +3032,8 @@ html:not([data-theme="light"]) body.mf-page-agent-performance :where(
   .ap-summary div,
   .ap-periods
 ){
-  background-color: #000000 !important;
-  background-image: none !important;
+
+
   border-color: #2f3336 !important;
   box-shadow: none !important;
 }
@@ -4122,8 +3041,8 @@ html:not([data-theme="light"]) body.mf-page-agent-performance :where(
 html:not([data-theme="light"]){
   color-scheme: dark;
 
-  --mf-x-bg: #000000;
-  --mf-x-surface: #000000;
+  --mf-x-bg: #FFFFFF !important;
+  --mf-x-surface: #FFFFFF !important;
   --mf-x-text: var(--mf-neutral-text-2);
   --mf-x-text-strong: var(--mf-neutral-text-1);
   --mf-x-text-muted: var(--mf-neutral-text-3);
@@ -4133,7 +3052,7 @@ html:not([data-theme="light"]){
   --mf-x-line: #2f3336;
   --mf-x-line-width: 1px;
 
-  
+
   --line: #2f3336 !important;
   --line2: #2f3336 !important;
   --line-strong: #2f3336 !important;
@@ -4160,58 +3079,58 @@ html:not([data-theme="light"]){
   --mf-structure-hairline: 1px !important;
   --mf-x-dark-hairline: 1px !important;
 
-  
-  --bg: #000000 !important;
-  --panel: #000000 !important;
-  --panel-solid: #000000 !important;
-  --panel-2: #000000 !important;
-  --surface: #000000 !important;
-  --surface2: #000000 !important;
-  --surface3: #000000 !important;
-  --surface-0: #000000 !important;
-  --surface-1: #000000 !important;
-  --surface-2: #000000 !important;
-  --panel-bg: #000000 !important;
 
-  --mf-app-bg: #000000 !important;
-  --mf-app-surface: #000000 !important;
-  --mf-app-surface-2: #000000 !important;
-  --mf-app-surface-3: #000000 !important;
-  --mf-app-panel-top: #000000 !important;
-  --mf-app-panel-bottom: #000000 !important;
+  --bg: #FFFFFF !important;
+  --panel: #FFFFFF !important;
+  --panel-solid: #FFFFFF !important;
+  --panel-2: #FFFFFF !important;
+  --surface: #FFFFFF !important;
+  --surface2: #FFFFFF !important;
+  --surface3: #FFFFFF !important;
+  --surface-0: #FFFFFF !important;
+  --surface-1: #FFFFFF !important;
+  --surface-2: #FFFFFF !important;
+  --panel-bg: #FFFFFF !important;
 
-  --mf-nav-bg: #000000 !important;
-  --mf-nav-surface: #000000 !important;
-  --mf-nav-surface-2: #000000 !important;
+  --mf-app-bg: #FFFFFF !important;
+  --mf-app-surface: #FFFFFF !important;
+  --mf-app-surface-2: #FFFFFF !important;
+  --mf-app-surface-3: #FFFFFF !important;
+  --mf-app-panel-top: #FFFFFF !important;
+  --mf-app-panel-bottom: #FFFFFF !important;
 
-  --hiw-bg: #000000 !important;
-  --hiw-panel: #000000 !important;
-  --hiw-panel-strong: #000000 !important;
+  --mf-nav-bg: #FFFFFF !important;
+  --mf-nav-surface: #FFFFFF !important;
+  --mf-nav-surface-2: #FFFFFF !important;
+
+  --hiw-bg: #FFFFFF !important;
+  --hiw-panel: #FFFFFF !important;
+  --hiw-panel-strong: #FFFFFF !important;
   --hiw-shadow: none !important;
 
-  --v-bg: #000000 !important;
-  --v-panel: #000000 !important;
-  --v-panel2: #000000 !important;
+  --v-bg: #FFFFFF !important;
+  --v-panel: #FFFFFF !important;
+  --v-panel2: #FFFFFF !important;
 
   --mf-dark-canvas: #000000 !important;
-  --mf-dark-surface-1: #000000 !important;
-  --mf-dark-surface-2: #000000 !important;
+  --mf-dark-surface-1: #FFFFFF !important;
+  --mf-dark-surface-2: #FFFFFF !important;
   --mf-x-dark-canvas: #000000 !important;
   --mf-x-dark-inset: #000000 !important;
 
-  --ds-bg: #000000 !important;
-  --ds-surface: #000000 !important;
-  --ds-surface-raised: #000000 !important;
+  --ds-bg: #FFFFFF !important;
+  --ds-surface: #FFFFFF !important;
+  --ds-surface-raised: #FFFFFF !important;
   --ds-line: #2f3336 !important;
   --ds-line-strong: #2f3336 !important;
 
-  
-  --mf-v59-header-bg: transparent !important;
+
+  --mf-v59-header-bg: #FFFFFF !important;
   --mf-v59-header-shadow: none !important;
-  --mf-v59-drawer-bg: #000000 !important;
+  --mf-v59-drawer-bg: #FFFFFF !important;
   --mf-v59-drawer-shadow: none !important;
 
-  
+
   --text: var(--mf-neutral-text-2);
   --muted: var(--mf-neutral-text-3);
   --faint: var(--mf-neutral-text-4);
@@ -4242,8 +3161,8 @@ html:not([data-theme="light"]) body :where(
   .ap-page,
   .oi-shell
 ){
-  background-color: #000000 !important;
-  background-image: none !important;
+
+
 }
 
 html:not([data-theme="light"]) body :where(
@@ -4254,9 +3173,9 @@ html:not([data-theme="light"]) body :where(
   .mf-hiw-topbar,
   .site-header
 ){
-  background: transparent !important;
-  background-color: transparent !important;
-  background-image: none !important;
+
+
+
   box-shadow: none !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
@@ -4267,9 +3186,9 @@ html:not([data-theme="light"]) body .mf-site-header > :where(
   .engine-strip,
   .system-chips
 ){
-  background: transparent !important;
-  background-color: transparent !important;
-  background-image: none !important;
+
+
+
   box-shadow: none !important;
 }
 
@@ -4295,8 +3214,8 @@ html:not([data-theme="light"]) body
 :not([class*="reject"])
 :not([class*="open-position"])
 :not(.core-module){
-  background-color: #000000 !important;
-  background-image: none !important;
+
+
   border-width: 1px !important;
   border-style: solid !important;
   border-color: #2f3336 !important;
@@ -4339,8 +3258,8 @@ html:not([data-theme="light"]) body :where(
   .mf-paper-status,
   .mf-paper-grid > div
 ){
-  background-color: #000000 !important;
-  background-image: none !important;
+
+
   border-color: #2f3336 !important;
   box-shadow: none !important;
 }
@@ -4383,7 +3302,7 @@ html:not([data-theme="light"]) body :where(
 html:not([data-theme="light"]) body.mf-page-trading.mf-trading-terminal
 :where(.candidate, .position-row, .trade-row.trade-log-row)::after{
   height: 1px !important;
-  background: #2f3336 !important;
+
   opacity: 1 !important;
 }
 
@@ -4419,7 +3338,7 @@ html:not([data-theme="light"]) body.mf-page-x100 :where(
   .core-module,
   .definition-grid .is
 ){
-  background: #f2f2f2 !important;
+
 }
 
 html:not([data-theme="light"]) body.mf-page-system .viewport-wrap{
@@ -4456,8 +3375,8 @@ html:not([data-theme="light"]) body :where(input, select, textarea):focus-visibl
 html:not([data-theme="light"]){
   color-scheme: dark;
 
-  --mf-x-bg: #000000;
-  --mf-x-surface: #000000;
+  --mf-x-bg: #FFFFFF !important;
+  --mf-x-surface: #FFFFFF !important;
   --mf-x-text: var(--mf-neutral-text-2);
   --mf-x-text-strong: var(--mf-neutral-text-1);
   --mf-x-text-muted: var(--mf-neutral-text-3);
@@ -4466,47 +3385,47 @@ html:not([data-theme="light"]){
   --mf-x-blue: #1d9bf0;
   --mf-x-line: #2f3336;
 
-  --bg: #000000 !important;
-  --panel: #000000 !important;
-  --panel-solid: #000000 !important;
-  --panel-2: #000000 !important;
-  --surface: #000000 !important;
-  --surface2: #000000 !important;
-  --surface3: #000000 !important;
-  --surface-0: #000000 !important;
-  --surface-1: #000000 !important;
-  --surface-2: #000000 !important;
-  --panel-bg: #000000 !important;
+  --bg: #FFFFFF !important;
+  --panel: #FFFFFF !important;
+  --panel-solid: #FFFFFF !important;
+  --panel-2: #FFFFFF !important;
+  --surface: #FFFFFF !important;
+  --surface2: #FFFFFF !important;
+  --surface3: #FFFFFF !important;
+  --surface-0: #FFFFFF !important;
+  --surface-1: #FFFFFF !important;
+  --surface-2: #FFFFFF !important;
+  --panel-bg: #FFFFFF !important;
 
-  --mf-app-bg: #000000 !important;
-  --mf-app-surface: #000000 !important;
-  --mf-app-surface-2: #000000 !important;
-  --mf-app-surface-3: #000000 !important;
-  --mf-app-panel-top: #000000 !important;
-  --mf-app-panel-bottom: #000000 !important;
+  --mf-app-bg: #FFFFFF !important;
+  --mf-app-surface: #FFFFFF !important;
+  --mf-app-surface-2: #FFFFFF !important;
+  --mf-app-surface-3: #FFFFFF !important;
+  --mf-app-panel-top: #FFFFFF !important;
+  --mf-app-panel-bottom: #FFFFFF !important;
 
-  --mf-nav-bg: #000000 !important;
-  --mf-nav-surface: #000000 !important;
-  --mf-nav-surface-2: #000000 !important;
+  --mf-nav-bg: #FFFFFF !important;
+  --mf-nav-surface: #FFFFFF !important;
+  --mf-nav-surface-2: #FFFFFF !important;
 
-  --hiw-bg: #000000 !important;
-  --hiw-panel: #000000 !important;
-  --hiw-panel-strong: #000000 !important;
+  --hiw-bg: #FFFFFF !important;
+  --hiw-panel: #FFFFFF !important;
+  --hiw-panel-strong: #FFFFFF !important;
   --hiw-shadow: none !important;
 
-  --v-bg: #000000 !important;
-  --v-panel: #000000 !important;
-  --v-panel2: #000000 !important;
+  --v-bg: #FFFFFF !important;
+  --v-panel: #FFFFFF !important;
+  --v-panel2: #FFFFFF !important;
 
   --mf-dark-canvas: #000000 !important;
-  --mf-dark-surface-1: #000000 !important;
-  --mf-dark-surface-2: #000000 !important;
+  --mf-dark-surface-1: #FFFFFF !important;
+  --mf-dark-surface-2: #FFFFFF !important;
   --mf-x-dark-canvas: #000000 !important;
   --mf-x-dark-inset: #000000 !important;
 
-  --ds-bg: #000000 !important;
-  --ds-surface: #000000 !important;
-  --ds-surface-raised: #000000 !important;
+  --ds-bg: #FFFFFF !important;
+  --ds-surface: #FFFFFF !important;
+  --ds-surface-raised: #FFFFFF !important;
 
   --text: var(--mf-neutral-text-2);
   --muted: var(--mf-neutral-text-3);
@@ -4559,9 +3478,9 @@ html:not([data-theme="light"]){
   --mf-structure-hairline: 1px !important;
   --mf-x-dark-hairline: 1px !important;
 
-  --mf-v59-header-bg: transparent !important;
+  --mf-v59-header-bg: #FFFFFF !important;
   --mf-v59-header-shadow: none !important;
-  --mf-v59-drawer-bg: #000000 !important;
+  --mf-v59-drawer-bg: #FFFFFF !important;
   --mf-v59-drawer-shadow: none !important;
 }
 
@@ -4569,9 +3488,9 @@ html:not([data-theme="light"]){
 html:not([data-theme="light"]),
 html:not([data-theme="light"]) body,
 html:not([data-theme="light"]) body[class]{
-  background: #000000 !important;
-  background-color: #000000 !important;
-  background-image: none !important;
+
+
+
 }
 
 /* Header has no sheet/surface at all. */
@@ -4583,9 +3502,9 @@ html:not([data-theme="light"]) body :where(
   .mf-hiw-topbar,
   .site-header
 ){
-  background: transparent !important;
-  background-color: transparent !important;
-  background-image: none !important;
+
+
+
   box-shadow: none !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
@@ -4615,8 +3534,8 @@ html:not([data-theme="light"]) body
 :not([class*="reject"])
 :not([class*="open-position"])
 :not(.core-module){
-  background-color: #000000 !important;
-  background-image: none !important;
+
+
   border-width: 1px !important;
   border-style: solid !important;
   border-color: #2f3336 !important;
@@ -4659,8 +3578,8 @@ html:not([data-theme="light"]) body :where(
   .mf-paper-status,
   .mf-paper-grid > div
 ){
-  background-color: #000000 !important;
-  background-image: none !important;
+
+
   border-color: #2f3336 !important;
   box-shadow: none !important;
 }
@@ -4703,14 +3622,14 @@ html:not([data-theme="light"]) body :where(
 
 html:not([data-theme="light"]) body.mf-page-trading.mf-trading-terminal
 :where(.candidate, .position-row, .trade-row.trade-log-row)::after{
-  background: #2f3336 !important;
+
   height: 1px !important;
   opacity: 1 !important;
 }
 
 /* Inputs/neutral fields. */
 html:not([data-theme="light"]) body :where(input, select, textarea){
-  background-color: #000000 !important;
+
   border-color: #2f3336 !important;
 }
 
@@ -4732,7 +3651,7 @@ html:not([data-theme="light"]) body.mf-page-x100 :where(
   .core-module,
   .definition-grid .is
 ){
-  background: #f2f2f2 !important;
+
 }
 
 
@@ -4835,83 +3754,33 @@ body.mf-page-index .topbar #walletConnectTop::after{font-size:15px!important;}}
 body.mf-page-index .nav-label{text-transform:uppercase;}
 
 
-
-
-
 body.mf-page-index .eyebrow{text-transform:uppercase;}
-
 
 
 body.mf-page-index .fact small{text-transform:uppercase;}
 
 
-
-
-
-
-
 body.mf-page-index .metric small{text-transform:uppercase;}
-
 
 
 body.mf-page-index .live-item small{text-transform:uppercase;}
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 body.mf-page-index .slide-stat small{text-transform:uppercase;}
-
-
-
-
-
 
 
 body.mf-page-index .op-main small,
 body.mf-page-index .op-cell small{text-transform:uppercase;}
 
 
-
-
-
-
-
-
-
 @media(max-width:820px){body.mf-page-index .mobile-primary-brief small{text-transform:uppercase;}}
-
-
 
 
 body.mf-page-index .signal-main small,
 body.mf-page-index .signal-cell small{text-transform:uppercase;}
 
 
-
-
 @media(max-width:820px){body.mf-page-index .mobile-signal small{text-transform:uppercase;}}
-
-
-
-
-
 
 
 body.mf-page-index .context-icon{font-weight:900;}
@@ -4919,71 +3788,28 @@ body.mf-page-index .context-copy small{text-transform:uppercase;}
 body.mf-page-index .exec-cell small{text-transform:uppercase;}
 
 
-
-
 body.mf-page-index .quality-item small{text-transform:uppercase;}
-
-
-
-
-
 
 
 @media(max-width:820px){body.mf-page-index[data-incident="true"] .mobile-incident-alert b{text-transform:uppercase;}}
 
 
-
 body.mf-page-index .refine-cell small{text-transform:uppercase;}
-
-
 
 
 body.mf-page-index .change-box small{text-transform:uppercase;}
 
 
-
 body.mf-page-index .dna-item small{text-transform:uppercase;}
-
 
 
 body.mf-page-index .incident-grid small{text-transform:uppercase;}
 
 
-
-
-
-
-
-
 body.mf-page-index .wallet-stat small{text-transform:uppercase;}
 
 
-
-
-
-
-
-
 body.mf-page-index .wallet-option-icon{font-weight:950;}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 body.mf-page-index .feature i{font-style:normal;}
@@ -4992,75 +3818,26 @@ body.mf-page-index .feature i{font-style:normal;}
 body.mf-page-index .subscription-metric small{text-transform:uppercase;}
 
 
-
-
-
-
-
-
-
-
 body.mf-page-index .confidence-event small{text-transform:uppercase;}
-
-
-
-
-
 
 
 body.mf-page-index .change-box h3{text-transform:uppercase;}
 
 
-
-
-
-
-
-
-
-
-
-
-
-
 body.mf-page-index .replay-snapshot small{text-transform:uppercase;}
 
 
-
-
-
 body.mf-page-index .explain-step i{font-style:normal;}
-
-
-
-
-
 
 
 body.mf-page-index .mission-os-main small,
 body.mf-page-index .mission-os-stat small{text-transform:uppercase;}
 
 
-
-
-
-
-
-
-
 body.mf-page-index .debate-vote small{text-transform:uppercase;}
 
 
-
-
-
 body.mf-page-index .consensus small{text-transform:uppercase;}
-
-
-
-
-
-
 
 
 body.mf-page-index .profile-impact small{text-transform:uppercase;}
@@ -5069,33 +3846,17 @@ body.mf-page-index .profile-impact small{text-transform:uppercase;}
 body.mf-page-index .memory-summary small{text-transform:uppercase;}
 
 
-
-
 body.mf-page-index .cone-labels small{text-transform:uppercase;}
-
-
 
 
 body.mf-page-index .review-kpis small{text-transform:uppercase;}
 
 
-
-
-
-
-
 body.mf-page-index .mobile-subhead{text-transform:uppercase;}
-
 
 
 body.mf-page-index .decision-intelligence>summary::after{font-size:15px;}
 body.mf-page-index .decision-intelligence>summary::after{font-weight:500;}
-
-
-
-
-
-
 
 
 body.mf-page-index .connection-item small{text-transform:uppercase;}
@@ -5104,249 +3865,40 @@ body.mf-page-index .connection-item small{text-transform:uppercase;}
 body.mf-page-index .execution-readiness>div:first-child small{text-transform:uppercase;}
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 body.mf-page-index .operator-step small{text-transform:uppercase;}
-
 
 
 body.mf-page-index .primary-blocker small{text-transform:uppercase;}
 
 
-
-
-
-
 body.mf-page-index .wallet-session-note small{text-transform:uppercase;}
-
-
-
-
-
-
-
 
 
 body.mf-page-index .context-icon{font-size:13px;}
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 body.mf-page-index .chart-level em{font-style:normal;}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 body.mf-page-index .settings-summary small{text-transform:uppercase;}
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 body.mf-page-index .settings-budget small{text-transform:uppercase;}
-
-
-
-
-
 
 
 body.mf-page-index .settings-card-head .section-kicker{text-transform:uppercase;}
 
 
-
-
-
-
-
 body.mf-page-index .settings-group>summary em{font-style:normal;}
-
-
-
-
-
-
 
 
 body.mf-page-index .system-health-summary small{text-transform:uppercase;}
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 body.mf-page-index .mf-paper-grid small{text-transform:uppercase;}
 
 
-
-
-
 body.mf-page-index #ai-analysis>summary::after{font-size:15px!important;}
-
-
-
-
-
-
 
 
 @media(max-width:820px){body.mf-page-index #ai-analysis>summary::after{font-size:15px!important;}}
@@ -5354,44 +3906,10 @@ body.mf-page-index #ai-analysis>summary::after{font-size:15px!important;}
 @media(max-width:820px){body.mf-page-index #ai-analysis>summary::after{font-weight:400!important;}}
 
 
-
-
-
 body.mf-page-index .mf-ai-compact-copy small{text-transform:uppercase;}
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 body.mf-page-index #market-chart-module .mf-market-chart-empty-icon{font-size:15px;}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 body.mf-page-index #primary-candidate .token-head.mf-primary-v21-head{--mf-primary-v21-cap-font-size:"IBM Plex Mono","SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;}
@@ -5400,104 +3918,16 @@ body.mf-page-index #primary-candidate .token-head.mf-primary-v21-head{--mf-prima
 body.mf-page-index #primary-candidate .token-head.mf-primary-v21-head{--mf-primary-v21-cap-letter-spacing:normal;}
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 @media(max-width:820px){body.mf-page-index #executionPreview .execution-readiness small{text-transform:uppercase!important;}}
-
-
-
-
-
-
-
-
-
-
 
 
 @media(max-width:820px){body.mf-page-index #executionPreview .primary-blocker small{text-transform:uppercase!important;}}
 
 
-
-
-
-
-
-
-
-
-
-
 @media(max-width:820px){body.mf-page-index #executionPreview .execution-check-row em{font-style:normal!important;}}
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 body.mf-page-index .mobile-nav button.mf-has-icon:not(.mf-existing-graphic){line-height:1.05!important;}
-
-
-
-
-
-
 
 
 body.mf-page-index .eyebrow,
@@ -5516,14 +3946,7 @@ body.mf-page-index{--mf-type-panel:15px;}
 body.mf-page-index{--mf-type-title:15px;}
 
 
-
-
 body.mf-page-index{--mf-type-system:11px;}
-
-
-
-
-
 
 
 html[data-theme]
@@ -5538,8 +3961,6 @@ body.mf-page-index.mf-page-trading.mf-trading-terminal
 .chart-head
 .token-name-row
 > #tokenState.decision-badge{font-style:normal !important;}
-
-
 
 
 html[data-theme]
@@ -5558,8 +3979,6 @@ body.mf-page-index.mf-page-trading.mf-trading-terminal
 > .copy-trade-badge{font-style:normal !important;}
 
 
-
-
 html[data-theme]
 body.mf-page-index.mf-page-trading.mf-trading-terminal
 .positions-panel
@@ -5570,24 +3989,7 @@ body.mf-page-index.mf-page-trading.mf-trading-terminal
 > .copy-trade-badge{text-transform:uppercase !important;}
 
 
-
-
-
-
-
-
-
-
-
 body.mf-page-index .agent-role{text-transform:uppercase;}
-
-
-
-
-
-
-
-
 
 
 body.mf-page-index .profile-metric small{text-transform:uppercase;}
@@ -5599,191 +4001,32 @@ body.mf-page-index .sim-result-grid small{text-transform:uppercase;}
 body.mf-page-index .report-item small{text-transform:uppercase;}
 
 
-
-
 body.mf-page-index .intel-alert-icon{font-weight:900;}
-
-
-
-
 
 
 body.mf-page-index .advanced-intelligence>summary::after{font-size:15px;}
 body.mf-page-index .advanced-intelligence>summary::after{font-weight:500;}
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 body.mf-page-index .manual-ai-metric small{text-transform:uppercase;}
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 @media (max-width:820px){body.mf-page-index .mf-positions-mobile-title small{text-transform:uppercase;}}
 
 
-
 /* TYPOGRAPHY: system.html */
-
-
-
-
-
 
 
 body.mf-page-system .status-chip span{text-transform:uppercase;}
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 body.mf-page-system .metric-card span{text-transform:uppercase;}
-
-
-
-
-
-
-
-
-
 
 
 body.mf-page-system .telemetry-item span{text-transform:uppercase;}
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 @media (max-width: 900px){body.mf-page-system .flow-view-all{text-transform:uppercase;}}
-
-
-
-
-
-
-
-
-
 
 
 body.mf-page-system .mf293-settings-meta span{text-transform:uppercase;}
@@ -5792,48 +4035,7 @@ body.mf-page-system .mf293-settings-meta span{text-transform:uppercase;}
 body.mf-page-system .mf293-settings-meta strong{text-transform:none;}
 
 
-
-
 body.mf-page-system .mf293-settings-meta select{text-transform:none;}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 body.mf-page-system .mf293-dex-filter-meta{text-transform:uppercase;}
@@ -5842,69 +4044,10 @@ body.mf-page-system .mf293-dex-filter-meta{text-transform:uppercase;}
 body.mf-page-system .mf293-dex-filter-meta strong{text-transform:none;}
 
 
-
-
-
-
-
-
-
-
-
-body.mf-page-system .mf-settings-page-title strong{text-transform:uppercase;}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 body.mf-page-system .mfpg-variant2-clean-v1 .mfpg-kicker{text-transform:uppercase;}
 
 
-
-
-
-
-
-
-
-
-
-
 body.mf-page-system .mfpg-caption-title{text-transform:uppercase;}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 body.mf-page-system .eyebrow,
@@ -5923,63 +4066,10 @@ body.mf-page-system{--mf-type-panel:15px;}
 body.mf-page-system{--mf-type-title:15px;}
 
 
-
-
-
-
-
-
 body.mf-page-system .mf-nav-kicker{text-transform:uppercase;}
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 body.mf-page-system [data-mf-open-position-pipeline-v3="1"]{text-transform:uppercase !important;}
-
 
 
 body.mf-page-system [data-mf-open-position-pipeline-v3="1"] *{text-transform:inherit !important;}
@@ -5989,10 +4079,6 @@ body.mf-page-system{-webkit-font-smoothing:antialiased;}
 body.mf-page-system{-moz-osx-font-smoothing:grayscale;}
 body.mf-page-system{font-kerning:normal;}
 body.mf-page-system main :where(h1,h2,h3,h4){font-kerning:normal;}
-
-
-
-
 
 
 body.mf-page-system main :where(
@@ -6012,22 +4098,7 @@ body.mf-page-system main :where(
 ){font-feature-settings:"tnum" 1,"lnum" 1;}
 
 
-
-
-
-
-
-
-
-
-
-
 body.mf-page-system{--mf-type-system:11px;}
-
-
-
-
-
 
 
 html[data-theme]
@@ -6042,8 +4113,6 @@ body.mf-page-system.mf-page-trading.mf-trading-terminal
 .chart-head
 .token-name-row
 > #tokenState.decision-badge{font-style:normal !important;}
-
-
 
 
 html[data-theme]
@@ -6062,8 +4131,6 @@ body.mf-page-system.mf-page-trading.mf-trading-terminal
 > .copy-trade-badge{font-style:normal !important;}
 
 
-
-
 html[data-theme]
 body.mf-page-system.mf-page-trading.mf-trading-terminal
 .positions-panel
@@ -6074,14 +4141,7 @@ body.mf-page-system.mf-page-trading.mf-trading-terminal
 > .copy-trade-badge{text-transform:uppercase !important;}
 
 
-
-
-
 /* TYPOGRAPHY: how-it-works.html */
-
-
-
-
 
 
 body.mf-page-how-it-works .eyebrow,
@@ -6100,190 +4160,23 @@ body.mf-page-how-it-works{--mf-type-panel:15px;}
 body.mf-page-how-it-works{--mf-type-title:15px;}
 
 
-
-
-
-
-
-
 body.mf-page-how-it-works .mf-nav-kicker{text-transform:uppercase;}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 body.mf-page-how-it-works .mf-hiw-kicker{text-transform:uppercase;}
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 body.mf-page-how-it-works .mf-hiw-node em{font-style:normal;}
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 body.mf-page-how-it-works .mf-hiw-step-icon{font-size:15px;}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 body.mf-page-how-it-works .mf-hiw-faq summary::after{font-size:15px;}
 body.mf-page-how-it-works .mf-hiw-faq summary::after{font-weight:400;}
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 body.mf-page-how-it-works [data-mf-open-position-pipeline-v3="1"]{text-transform:uppercase !important;}
-
 
 
 body.mf-page-how-it-works [data-mf-open-position-pipeline-v3="1"] *{text-transform:inherit !important;}
@@ -6293,10 +4186,6 @@ body.mf-page-how-it-works{-webkit-font-smoothing:antialiased;}
 body.mf-page-how-it-works{-moz-osx-font-smoothing:grayscale;}
 body.mf-page-how-it-works{font-kerning:normal;}
 body.mf-page-how-it-works main :where(h1,h2,h3,h4){font-kerning:normal;}
-
-
-
-
 
 
 body.mf-page-how-it-works main :where(
@@ -6316,22 +4205,7 @@ body.mf-page-how-it-works main :where(
 ){font-feature-settings:"tnum" 1,"lnum" 1;}
 
 
-
-
-
-
-
-
-
-
-
-
 body.mf-page-how-it-works{--mf-type-system:11px;}
-
-
-
-
-
 
 
 html[data-theme]
@@ -6346,8 +4220,6 @@ body.mf-page-how-it-works.mf-page-trading.mf-trading-terminal
 .chart-head
 .token-name-row
 > #tokenState.decision-badge{font-style:normal !important;}
-
-
 
 
 html[data-theme]
@@ -6366,8 +4238,6 @@ body.mf-page-how-it-works.mf-page-trading.mf-trading-terminal
 > .copy-trade-badge{font-style:normal !important;}
 
 
-
-
 html[data-theme]
 body.mf-page-how-it-works.mf-page-trading.mf-trading-terminal
 .positions-panel
@@ -6378,14 +4248,7 @@ body.mf-page-how-it-works.mf-page-trading.mf-trading-terminal
 > .copy-trade-badge{text-transform:uppercase !important;}
 
 
-
-
-
 /* TYPOGRAPHY: smart-vault.html */
-
-
-
-
 
 
 body.mf-page-smart-vault .eyebrow,
@@ -6404,61 +4267,7 @@ body.mf-page-smart-vault{--mf-type-panel:15px;}
 body.mf-page-smart-vault{--mf-type-title:15px;}
 
 
-
-
-
-
-
-
 body.mf-page-smart-vault .mf-nav-kicker{text-transform:uppercase;}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 body.mf-page-smart-vault .mf-vault-stat small,
@@ -6466,82 +4275,7 @@ body.mf-page-smart-vault .mf-vault-balance small,
 body.mf-page-smart-vault .mf-vault-control-row small{text-transform:uppercase;}
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 body.mf-page-smart-vault [data-mf-open-position-pipeline-v3="1"]{text-transform:uppercase !important;}
-
 
 
 body.mf-page-smart-vault [data-mf-open-position-pipeline-v3="1"] *{text-transform:inherit !important;}
@@ -6551,10 +4285,6 @@ body.mf-page-smart-vault{-webkit-font-smoothing:antialiased;}
 body.mf-page-smart-vault{-moz-osx-font-smoothing:grayscale;}
 body.mf-page-smart-vault{font-kerning:normal;}
 body.mf-page-smart-vault main :where(h1,h2,h3,h4){font-kerning:normal;}
-
-
-
-
 
 
 body.mf-page-smart-vault main :where(
@@ -6574,8 +4304,6 @@ body.mf-page-smart-vault main :where(
 ){font-feature-settings:"tnum" 1,"lnum" 1;}
 
 
-
-
 body.mf-page-smart-vault .mf-trading-terminal,
 body.mf-page-smart-vault .flow-page,
 body.mf-page-smart-vault .mf-vault-shell{font-kerning:normal;}
@@ -6590,87 +4318,7 @@ body.mf-page-smart-vault .flow-page,
 body.mf-page-smart-vault .mf-vault-shell{-moz-osx-font-smoothing:grayscale;}
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 body.mf-page-smart-vault{--mf-type-system:11px;}
-
-
-
-
-
 
 
 html[data-theme]
@@ -6685,8 +4333,6 @@ body.mf-page-smart-vault.mf-page-trading.mf-trading-terminal
 .chart-head
 .token-name-row
 > #tokenState.decision-badge{font-style:normal !important;}
-
-
 
 
 html[data-theme]
@@ -6705,8 +4351,6 @@ body.mf-page-smart-vault.mf-page-trading.mf-trading-terminal
 > .copy-trade-badge{font-style:normal !important;}
 
 
-
-
 html[data-theme]
 body.mf-page-smart-vault.mf-page-trading.mf-trading-terminal
 .positions-panel
@@ -6717,146 +4361,27 @@ body.mf-page-smart-vault.mf-page-trading.mf-trading-terminal
 > .copy-trade-badge{text-transform:uppercase !important;}
 
 
-
-
-
 /* TYPOGRAPHY: trading.html */
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 body.mf-page-trading .state-dot{font-size:11px;}
 body.mf-page-trading .state-dot{font-weight:800;}
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 @media (max-width: 820px){body.mf-page-trading .state-dot{font-size:11px;}}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 body.mf-page-trading .copy-trade-badge{font-style:normal;}
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 body.mf-page-trading .trade-log-bottomline i{font-style:normal;}
-
-
 
 
 body.mf-page-trading.mf-trading-terminal
 .candidates-panel .candidate-filter > button[data-filter]{text-transform:uppercase !important;}
 
 
-
-
 body.mf-page-trading .positions-panel .position-bottomline i{font-style:normal;}
-
-
-
-
-
-
-
-
 
 
 body.mf-page-trading .eyebrow,
@@ -6868,72 +4393,15 @@ body.mf-page-trading .subscription-metric small,
 body.mf-page-trading .system-health-summary small{text-transform:uppercase!important;}
 
 
-
-
-
-
-
-
-
 body.mf-page-trading .mf-nav-kicker{text-transform:uppercase;}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 body.mf-page-trading [data-mf-open-position-pipeline-v3="1"]{text-transform:uppercase !important;}
 
 
-
 body.mf-page-trading [data-mf-open-position-pipeline-v3="1"] *{text-transform:inherit !important;}
 
 body.mf-page-trading main :where(h1,h2,h3,h4){font-kerning:normal;}
-
-
-
 
 
 body.mf-page-trading main :where(
@@ -6953,8 +4421,6 @@ body.mf-page-trading main :where(
 ){font-feature-settings:"tnum" 1,"lnum" 1;}
 
 
-
-
 body.mf-page-trading .mf-trading-terminal,
 body.mf-page-trading .flow-page,
 body.mf-page-trading .mf-vault-shell{font-kerning:normal;}
@@ -6967,87 +4433,6 @@ body.mf-page-trading .mf-vault-shell{-webkit-font-smoothing:antialiased;}
 body.mf-page-trading .mf-trading-terminal,
 body.mf-page-trading .flow-page,
 body.mf-page-trading .mf-vault-shell{-moz-osx-font-smoothing:grayscale;}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 body.mf-page-trading{--mf-type-micro:11px;}
@@ -7066,23 +4451,9 @@ body.mf-page-trading .mf-hiw-shell :where(h1,h2,h3,h4),
 body.mf-page-trading .ap-shell :where(h1,h2,h3,h4){font-kerning:normal;}
 
 
-
-
-
-
-
-
-
-
-
-
 body.mf-page-trading :where(time,code,.mf-vault-mono,.ap-kpis strong,.mf-vault-stat strong,.telemetry-item,
 .metric-card,[class*="price"],[class*="score"],[class*="pnl"],[class*="metric"],
 [class*="value"],[class*="count"]){font-feature-settings:"tnum" 1,"lnum" 1;}
-
-
-
-
 
 
 @media (max-width:360px){body.mf-page-trading{--mf-type-micro:11px;}}
@@ -7095,12 +4466,6 @@ body.mf-page-trading.mf-trading-terminal{--mf-trading-type-body:13px;}
 body.mf-page-trading.mf-trading-terminal{--mf-trading-type-meta:11px;}
 body.mf-page-trading.mf-trading-terminal{--mf-trading-type-micro:11px;}
 body.mf-page-trading.mf-trading-terminal{--mf-trading-type-eyebrow:11px;}
-
-
-
-
-
-
 
 
 body.mf-page-trading.mf-trading-terminal :where(
@@ -7133,105 +4498,6 @@ body.mf-page-trading.mf-trading-terminal :where(
   .copy-trade-badge){letter-spacing:0.035em !important;}
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 @media (max-width: 820px){body.mf-page-trading.mf-trading-terminal .candidates-panel :where(
     .state-dot,
     .copy-trade-badge
@@ -7244,33 +4510,6 @@ body.mf-page-trading.mf-trading-terminal :where(
     .state-dot,
     .copy-trade-badge
   ){letter-spacing:0.025em !important;}}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 @media (max-width: 820px){body.mf-page-trading.mf-trading-terminal
@@ -7289,28 +4528,6 @@ body.mf-page-trading.mf-trading-terminal
   .candidate-primary-line .copy-trade-badge,
 body.mf-page-trading.mf-trading-terminal
   .candidate-top .state-dot{letter-spacing:0.025em !important;}}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 @media (max-width: 820px){body.mf-page-trading.mf-trading-terminal
@@ -7378,13 +4595,6 @@ body.mf-page-trading.mf-trading-terminal
   ){font-weight:500 !important;}}
 
 
-
-
-
-
-
-
-
 @media (max-width: 820px){html body.mf-page-trading.mf-trading-terminal
   .candidates-panel :where(
     .candidate-primary-line .copy-trade-badge,
@@ -7413,12 +4623,6 @@ body.mf-page-trading.mf-trading-terminal
 .bottom-history-panel .trade-log-topline .trade-log-reason-badge{text-transform:uppercase !important;}
 
 
-
-
-
-
-
-
 html body.mf-page-trading.mf-trading-terminal :where(
   .status-pill,
   .tiny-state,
@@ -7466,35 +4670,13 @@ html body.mf-page-trading.mf-trading-terminal :where(
 ){text-transform:uppercase !important;}
 
 
-
-
 html body.mf-page-trading.mf-page-system-tokens .token-state{text-transform:uppercase !important;}
-
-
-
-
 
 
 body.mf-page-trading .position-popover-v85__title span{text-transform:uppercase;}
 
 
-
-
-
-
-
-
-
-
-
-
-
 body.mf-page-trading{--mf-type-system:11px;}
-
-
-
-
-
 
 
 html[data-theme]
@@ -7509,8 +4691,6 @@ body.mf-page-trading.mf-trading-terminal
 .chart-head
 .token-name-row
 > #tokenState.decision-badge{font-style:normal !important;}
-
-
 
 
 html[data-theme]
@@ -7529,8 +4709,6 @@ body.mf-page-trading.mf-trading-terminal
 > .copy-trade-badge{font-style:normal !important;}
 
 
-
-
 html[data-theme]
 body.mf-page-trading.mf-trading-terminal
 .positions-panel
@@ -7541,106 +4719,19 @@ body.mf-page-trading.mf-trading-terminal
 > .copy-trade-badge{text-transform:uppercase !important;}
 
 
-
-
-
 /* TYPOGRAPHY: settings.html */
-
-
-
-
-
 
 
 body.mf-page-settings .status-chip span{text-transform:uppercase;}
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 body.mf-page-settings .metric-card span{text-transform:uppercase;}
-
-
-
-
-
-
-
-
-
 
 
 body.mf-page-settings .telemetry-item span{text-transform:uppercase;}
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 @media (max-width: 900px){body.mf-page-settings .flow-view-all{text-transform:uppercase;}}
-
-
-
-
-
-
-
-
-
 
 
 body.mf-page-settings .mf293-settings-meta span{text-transform:uppercase;}
@@ -7649,48 +4740,7 @@ body.mf-page-settings .mf293-settings-meta span{text-transform:uppercase;}
 body.mf-page-settings .mf293-settings-meta strong{text-transform:none;}
 
 
-
-
 body.mf-page-settings .mf293-settings-meta select{text-transform:none;}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 body.mf-page-settings .mf293-dex-filter-meta{text-transform:uppercase;}
@@ -7699,69 +4749,10 @@ body.mf-page-settings .mf293-dex-filter-meta{text-transform:uppercase;}
 body.mf-page-settings .mf293-dex-filter-meta strong{text-transform:none;}
 
 
-
-
-
-
-
-
-
-
-
-body.mf-page-settings .mf-settings-page-title strong{text-transform:uppercase;}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 body.mf-page-settings .mfpg-variant2-clean-v1 .mfpg-kicker{text-transform:uppercase;}
 
 
-
-
-
-
-
-
-
-
-
-
 body.mf-page-settings .mfpg-caption-title{text-transform:uppercase;}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 body.mf-page-settings .eyebrow,
@@ -7780,82 +4771,10 @@ body.mf-page-settings{--mf-type-panel:15px;}
 body.mf-page-settings{--mf-type-title:15px;}
 
 
-
-
-
-
-
-
 body.mf-page-settings .mf-nav-kicker{text-transform:uppercase;}
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 body.mf-page-settings [data-mf-open-position-pipeline-v3="1"]{text-transform:uppercase !important;}
-
 
 
 body.mf-page-settings [data-mf-open-position-pipeline-v3="1"] *{text-transform:inherit !important;}
@@ -7865,10 +4784,6 @@ body.mf-page-settings{-webkit-font-smoothing:antialiased;}
 body.mf-page-settings{-moz-osx-font-smoothing:grayscale;}
 body.mf-page-settings{font-kerning:normal;}
 body.mf-page-settings main :where(h1,h2,h3,h4){font-kerning:normal;}
-
-
-
-
 
 
 body.mf-page-settings main :where(
@@ -7888,22 +4803,7 @@ body.mf-page-settings main :where(
 ){font-feature-settings:"tnum" 1,"lnum" 1;}
 
 
-
-
-
-
-
-
-
-
-
-
 body.mf-page-settings{--mf-type-system:11px;}
-
-
-
-
-
 
 
 html[data-theme]
@@ -7918,8 +4818,6 @@ body.mf-page-settings.mf-page-trading.mf-trading-terminal
 .chart-head
 .token-name-row
 > #tokenState.decision-badge{font-style:normal !important;}
-
-
 
 
 html[data-theme]
@@ -7938,8 +4836,6 @@ body.mf-page-settings.mf-page-trading.mf-trading-terminal
 > .copy-trade-badge{font-style:normal !important;}
 
 
-
-
 html[data-theme]
 body.mf-page-settings.mf-page-trading.mf-trading-terminal
 .positions-panel
@@ -7950,154 +4846,33 @@ body.mf-page-settings.mf-page-trading.mf-trading-terminal
 > .copy-trade-badge{text-transform:uppercase !important;}
 
 
-
-
-
 /* TYPOGRAPHY: system-tokens.html */
-
-
-
-
-
-
-
-
-body.mf-page-system-tokens .header-title strong{text-transform:uppercase;}
-
-
-
-
-
-
-
-
 
 
 body.mf-page-system-tokens .hero-counter span{text-transform:uppercase;}
 
 
-
-
-
 body.mf-page-system-tokens .summary-card span{text-transform:uppercase;}
-
-
-
-
-
-
-
-
-
-
 
 
 body.mf-page-system-tokens .token-metric span{text-transform:uppercase;}
 
 
-
-
 body.mf-page-system-tokens .detail-block span{text-transform:uppercase;}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 body.mf-page-system-tokens .mf-open-market-stat span{text-transform:uppercase;}
 
 
-
-
-
-
-
-
-
-
-
 body.mf-page-system-tokens .mf-regular-market-stat span{text-transform:uppercase;}
-
-
-
-
-
 
 
 body.mf-page-system-tokens .hero-counter .scanner-status{text-transform:none;}
 
 
-
-
-
-
-
 body.mf-page-system-tokens .mf-sort-trigger-v25{text-transform:uppercase;}
 body.mf-page-system-tokens .mf-sort-trigger-chevron-v251{font-size:13px;}
 body.mf-page-system-tokens .mf-sort-trigger-chevron-v251{line-height:1;}
-
-
-
-
-
-
-
-
 
 
 body.mf-page-system-tokens .mf-sort-row-chevron-v251{font-size:15px;}
@@ -8109,117 +4884,29 @@ body.mf-page-system-tokens .mf-sort-sheet-v25 :is(button, .btn, a.btn, [role="bu
 body.mf-page-system-tokens .mf-sort-overlay-v25 :is(button, .btn, a.btn, [role="button"]){text-transform:inherit !important;}
 
 
-
-
-
-
-
-
-
 body.mf-page-system-tokens .mf-scan-kicker{text-transform:uppercase;}
-
-
-
-
-
-
 
 
 body.mf-page-system-tokens .mf-scan-metric span,
 body.mf-page-system-tokens .mf-scan-detail span{text-transform:uppercase;}
 
 
-
-
-
-
-
-
-
-
-
-
 body.mf-page-system-tokens .mf-card-analysis-summary-v14 span,
 body.mf-page-system-tokens .mf-card-analysis-grid-v14 .detail-block>span{text-transform:uppercase;}
-
-
-
-
 
 
 body.mf-page-system-tokens .mf-card-context-row-v14 span{text-transform:uppercase;}
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 body.mf-page-system-tokens .mf-analysis-strip-v15 span{text-transform:uppercase!important;}
-
-
-
-
-
 
 
 body.mf-page-system-tokens .mf-card-context-row-v15 span{text-transform:uppercase!important;}
 
 
-
-
-
-
 @media (max-width: 760px){body.mf-page-system-tokens .token-source-link.pump.mf-pump-logo-link::before{font-size:11px;}}
 @media (max-width: 760px){body.mf-page-system-tokens .token-source-link.pump.mf-pump-logo-link::before{font-weight:760;}}
 @media (max-width: 760px){body.mf-page-system-tokens .token-source-link.pump.mf-pump-logo-link::before{line-height:1;}}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 body.mf-page-system-tokens .eyebrow,
@@ -8238,63 +4925,10 @@ body.mf-page-system-tokens{--mf-type-panel:15px;}
 body.mf-page-system-tokens{--mf-type-title:15px;}
 
 
-
-
-
-
-
-
 body.mf-page-system-tokens .mf-nav-kicker{text-transform:uppercase;}
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 body.mf-page-system-tokens [data-mf-open-position-pipeline-v3="1"]{text-transform:uppercase !important;}
-
 
 
 body.mf-page-system-tokens [data-mf-open-position-pipeline-v3="1"] *{text-transform:inherit !important;}
@@ -8304,10 +4938,6 @@ body.mf-page-system-tokens{-webkit-font-smoothing:antialiased;}
 body.mf-page-system-tokens{-moz-osx-font-smoothing:grayscale;}
 body.mf-page-system-tokens{font-kerning:normal;}
 body.mf-page-system-tokens main :where(h1,h2,h3,h4){font-kerning:normal;}
-
-
-
-
 
 
 body.mf-page-system-tokens main :where(
@@ -8327,8 +4957,6 @@ body.mf-page-system-tokens main :where(
 ){font-feature-settings:"tnum" 1,"lnum" 1;}
 
 
-
-
 body.mf-page-system-tokens .mf-trading-terminal,
 body.mf-page-system-tokens .flow-page,
 body.mf-page-system-tokens .mf-vault-shell{font-kerning:normal;}
@@ -8341,87 +4969,6 @@ body.mf-page-system-tokens .mf-vault-shell{-webkit-font-smoothing:antialiased;}
 body.mf-page-system-tokens .mf-trading-terminal,
 body.mf-page-system-tokens .flow-page,
 body.mf-page-system-tokens .mf-vault-shell{-moz-osx-font-smoothing:grayscale;}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 html body.mf-page-system-tokens.mf-page-trading.mf-trading-terminal :where(
@@ -8471,38 +5018,13 @@ html body.mf-page-system-tokens.mf-page-trading.mf-trading-terminal :where(
 ){text-transform:uppercase !important;}
 
 
-
-
 html body.mf-page-system-tokens .token-state{text-transform:uppercase !important;}
-
-
-
-
-
-
-
-
-
-
 
 
 body.mf-page-system-tokens .mf-insightx-metric-v1 span{text-transform:uppercase;}
 
 
-
-
-
-
-
-
-
-
 body.mf-page-system-tokens{--mf-type-system:11px;}
-
-
-
-
-
 
 
 html[data-theme]
@@ -8517,8 +5039,6 @@ body.mf-page-system-tokens.mf-page-trading.mf-trading-terminal
 .chart-head
 .token-name-row
 > #tokenState.decision-badge{font-style:normal !important;}
-
-
 
 
 html[data-theme]
@@ -8537,8 +5057,6 @@ body.mf-page-system-tokens.mf-page-trading.mf-trading-terminal
 > .copy-trade-badge{font-style:normal !important;}
 
 
-
-
 html[data-theme]
 body.mf-page-system-tokens.mf-page-trading.mf-trading-terminal
 .positions-panel
@@ -8549,48 +5067,15 @@ body.mf-page-system-tokens.mf-page-trading.mf-trading-terminal
 > .copy-trade-badge{text-transform:uppercase !important;}
 
 
-
-
-
 /* TYPOGRAPHY: x100.html */
 body.mf-page-x100{-webkit-font-smoothing:antialiased;}
-
-
-
-
-
-
-
 
 
 body.mf-page-x100 .kicker{text-transform:uppercase;}
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 body.mf-page-x100 .stat-row span,
 body.mf-page-x100 .stat-row small{text-transform:uppercase;}
-
-
-
-
-
-
-
-
 
 
 body.mf-page-x100 .working,
@@ -8599,67 +5084,22 @@ body.mf-page-x100 .module>span:first-child{text-transform:uppercase;}
 body.mf-page-x100 .connector{font-size:15px;}
 
 
-
-
-
-
 body.mf-page-x100 .allocation-bar i{font-style:normal;}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 body.mf-page-x100 .flow-stack span{text-transform:uppercase;}
 
 
-
-
-
-
-
 body.mf-page-x100 .policy-flow i{font-style:normal;}
-
 
 
 body.mf-page-x100 .definition-grid span{text-transform:uppercase;}
 
 
-
-
-
-
-
-
-
-
-
-
-
 body.mf-page-x100 .footer-inner{text-transform:uppercase;}
 
 
-
-
-
-
 body.mf-page-x100{--mf-type-system:11px;}
-
-
-
-
-
 
 
 html[data-theme]
@@ -8674,8 +5114,6 @@ body.mf-page-x100.mf-page-trading.mf-trading-terminal
 .chart-head
 .token-name-row
 > #tokenState.decision-badge{font-style:normal !important;}
-
-
 
 
 html[data-theme]
@@ -8694,8 +5132,6 @@ body.mf-page-x100.mf-page-trading.mf-trading-terminal
 > .copy-trade-badge{font-style:normal !important;}
 
 
-
-
 html[data-theme]
 body.mf-page-x100.mf-page-trading.mf-trading-terminal
 .positions-panel
@@ -8706,14 +5142,7 @@ body.mf-page-x100.mf-page-trading.mf-trading-terminal
 > .copy-trade-badge{text-transform:uppercase !important;}
 
 
-
-
-
 /* TYPOGRAPHY: agent-performance.html */
-
-
-
-
 
 
 body.mf-page-agent-performance .eyebrow,
@@ -8732,115 +5161,16 @@ body.mf-page-agent-performance{--mf-type-panel:15px;}
 body.mf-page-agent-performance{--mf-type-title:15px;}
 
 
-
-
-
-
-
-
 body.mf-page-agent-performance .mf-nav-kicker{text-transform:uppercase;}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 body.mf-page-agent-performance .ap-eyebrow{text-transform:uppercase;}
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 body.mf-page-agent-performance .ap-donut span{text-transform:uppercase;}
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 body.mf-page-agent-performance [data-mf-open-position-pipeline-v3="1"]{text-transform:uppercase !important;}
-
 
 
 body.mf-page-agent-performance [data-mf-open-position-pipeline-v3="1"] *{text-transform:inherit !important;}
@@ -8850,10 +5180,6 @@ body.mf-page-agent-performance{-webkit-font-smoothing:antialiased;}
 body.mf-page-agent-performance{-moz-osx-font-smoothing:grayscale;}
 body.mf-page-agent-performance{font-kerning:normal;}
 body.mf-page-agent-performance main :where(h1,h2,h3,h4){font-kerning:normal;}
-
-
-
-
 
 
 body.mf-page-agent-performance main :where(
@@ -8873,22 +5199,7 @@ body.mf-page-agent-performance main :where(
 ){font-feature-settings:"tnum" 1,"lnum" 1;}
 
 
-
-
-
-
-
-
-
-
-
-
 body.mf-page-agent-performance{--mf-type-system:11px;}
-
-
-
-
-
 
 
 html[data-theme]
@@ -8903,8 +5214,6 @@ body.mf-page-agent-performance.mf-page-trading.mf-trading-terminal
 .chart-head
 .token-name-row
 > #tokenState.decision-badge{font-style:normal !important;}
-
-
 
 
 html[data-theme]
@@ -8923,8 +5232,6 @@ body.mf-page-agent-performance.mf-page-trading.mf-trading-terminal
 > .copy-trade-badge{font-style:normal !important;}
 
 
-
-
 html[data-theme]
 body.mf-page-agent-performance.mf-page-trading.mf-trading-terminal
 .positions-panel
@@ -8933,118 +5240,18 @@ body.mf-page-agent-performance.mf-page-trading.mf-trading-terminal
 .position-topline
 .position-symbol
 > .copy-trade-badge{text-transform:uppercase !important;}
-
-
-
 
 
 /* TYPOGRAPHY: owner-intelligence.html */
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 body.mf-page-owner-intelligence .oi-panel h3{text-transform:uppercase;}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 body.mf-page-owner-intelligence .oi-scorecard-detail-head h3{text-transform:none;}
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 body.mf-page-owner-intelligence{--mf-type-system:11px;}
-
-
-
-
-
 
 
 html[data-theme]
@@ -9059,8 +5266,6 @@ body.mf-page-owner-intelligence.mf-page-trading.mf-trading-terminal
 .chart-head
 .token-name-row
 > #tokenState.decision-badge{font-style:normal !important;}
-
-
 
 
 html[data-theme]
@@ -9079,8 +5284,6 @@ body.mf-page-owner-intelligence.mf-page-trading.mf-trading-terminal
 > .copy-trade-badge{font-style:normal !important;}
 
 
-
-
 html[data-theme]
 body.mf-page-owner-intelligence.mf-page-trading.mf-trading-terminal
 .positions-panel
@@ -9089,42 +5292,15 @@ body.mf-page-owner-intelligence.mf-page-trading.mf-trading-terminal
 .position-topline
 .position-symbol
 > .copy-trade-badge{text-transform:uppercase !important;}
-
-
-
 
 
 /* TYPOGRAPHY: system-source.html */
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 body.mf-page-system-source .k{text-transform:uppercase;}
 
 
-
-
-
-
 body.mf-page-system-source{--mf-type-system:11px;}
-
-
-
-
-
 
 
 html[data-theme]
@@ -9139,8 +5315,6 @@ body.mf-page-system-source.mf-page-trading.mf-trading-terminal
 .chart-head
 .token-name-row
 > #tokenState.decision-badge{font-style:normal !important;}
-
-
 
 
 html[data-theme]
@@ -9159,8 +5333,6 @@ body.mf-page-system-source.mf-page-trading.mf-trading-terminal
 > .copy-trade-badge{font-style:normal !important;}
 
 
-
-
 html[data-theme]
 body.mf-page-system-source.mf-page-trading.mf-trading-terminal
 .positions-panel
@@ -9169,9 +5341,6 @@ body.mf-page-system-source.mf-page-trading.mf-trading-terminal
 .position-topline
 .position-symbol
 > .copy-trade-badge{text-transform:uppercase !important;}
-
-
-
 
 
 /* INLINE TYPOGRAPHY MOVED FROM STYLE ATTRIBUTES */
@@ -9185,20 +5354,20 @@ body.mf-page-system-source.mf-page-trading.mf-trading-terminal
 
 /* DARK */
 html:not([data-theme="light"]) body.mf-settings-standalone{
-  background: #000000 !important;
-  background-color: #000000 !important;
-  background-image: none !important;
+
+
+
 }
 
 html:not([data-theme="light"]) body.mf-settings-standalone .mf-settings-page-shell{
-  background: transparent !important;
-  background-image: none !important;
+
+
 }
 
 html:not([data-theme="light"]) body.mf-settings-standalone .mf-settings-page-header{
-  background: transparent !important;
-  background-color: transparent !important;
-  background-image: none !important;
+
+
+
   border: 0 !important;
   border-bottom: 1px solid #2f3336 !important;
   border-radius: 0 !important;
@@ -9218,9 +5387,9 @@ html:not([data-theme="light"]) body.mf-settings-standalone :where(
   .mf-agent-events,
   .mf-theme-appearance
 ){
-  background: #000000 !important;
-  background-color: #000000 !important;
-  background-image: none !important;
+
+
+
   border-color: #2f3336 !important;
   box-shadow: none !important;
 }
@@ -9239,9 +5408,9 @@ html:not([data-theme="light"]) body.mf-settings-standalone :where(
   .mf293-settings-group > summary,
   .mf293-settings-grid
 ){
-  background: transparent !important;
-  background-color: transparent !important;
-  background-image: none !important;
+
+
+
   box-shadow: none !important;
 }
 
@@ -9253,9 +5422,9 @@ html:not([data-theme="light"]) body.mf-settings-standalone :where(
 }
 
 html:not([data-theme="light"]) body.mf-settings-standalone .mf293-settings-footer{
-  background: #000000 !important;
-  background-color: #000000 !important;
-  background-image: none !important;
+
+
+
   border-top-color: #2f3336 !important;
   box-shadow: none !important;
   backdrop-filter: none !important;
@@ -9263,17 +5432,14 @@ html:not([data-theme="light"]) body.mf-settings-standalone .mf293-settings-foote
 }
 
 
-
-
-
 html:not([data-theme="light"]) body.mf-settings-standalone :where(
   .mf293-field input:not([type="checkbox"]),
   .mf293-field select,
   .mf293-field textarea
 ){
-  background: transparent !important;
-  background-color: transparent !important;
-  background-image: none !important;
+
+
+
   border-color: transparent !important;
   box-shadow: none !important;
 }
@@ -9286,22 +5452,20 @@ html:not([data-theme="light"]) body.mf-settings-standalone .mf293-switch-track{
 
 /* LIGHT — same global light language as the rest of MEMEFLOW */
 html[data-theme="light"] body.mf-settings-standalone{
-  background: var(--mf-app-bg, #f4f6f8) !important;
-  background-color: var(--mf-app-bg, #f4f6f8) !important;
-  background-image:
-    radial-gradient(circle at 52% -8%, rgba(70,150,178,.08), transparent 31%),
-    linear-gradient(180deg,#f7f9fb 0%,#f4f6f8 48%,#f1f4f6 100%) !important;
+
+
+
 }
 
 html[data-theme="light"] body.mf-settings-standalone .mf-settings-page-shell{
-  background: transparent !important;
-  background-image: none !important;
+
+
 }
 
 html[data-theme="light"] body.mf-settings-standalone .mf-settings-page-header{
-  background: transparent !important;
-  background-color: transparent !important;
-  background-image: none !important;
+
+
+
   border: 0 !important;
   border-bottom: 1px solid rgba(38,59,74,.09) !important;
   border-radius: 0 !important;
@@ -9311,9 +5475,9 @@ html[data-theme="light"] body.mf-settings-standalone .mf-settings-page-header{
 }
 
 html[data-theme="light"] body.mf-settings-standalone .mf293-settings-panel{
-  background: linear-gradient(180deg,#ffffff,#f8fafb) !important;
-  background-color: #ffffff !important;
-  background-image: linear-gradient(180deg,#ffffff,#f8fafb) !important;
+
+
+
   border: 1px solid rgba(38,59,74,.105) !important;
   box-shadow: none !important;
   backdrop-filter: none !important;
@@ -9326,9 +5490,9 @@ html[data-theme="light"] body.mf-settings-standalone :where(
   .mf293-settings-meta > label,
   .mf-theme-appearance
 ){
-  background: rgba(255,255,255,.92) !important;
-  background-color: rgba(255,255,255,.92) !important;
-  background-image: none !important;
+
+
+
   border-color: rgba(38,59,74,.10) !important;
   box-shadow: none !important;
 }
@@ -9339,9 +5503,9 @@ html[data-theme="light"] body.mf-settings-standalone :where(
   .mf-agent-item,
   .mf-agent-events
 ){
-  background: rgba(25,45,59,.025) !important;
-  background-color: rgba(25,45,59,.025) !important;
-  background-image: none !important;
+
+
+
   border-color: rgba(38,59,74,.08) !important;
   box-shadow: none !important;
 }
@@ -9353,9 +5517,9 @@ html[data-theme="light"] body.mf-settings-standalone :where(
   .mf293-settings-group > summary,
   .mf293-settings-grid
 ){
-  background: transparent !important;
-  background-color: transparent !important;
-  background-image: none !important;
+
+
+
   box-shadow: none !important;
 }
 
@@ -9367,9 +5531,9 @@ html[data-theme="light"] body.mf-settings-standalone :where(
 }
 
 html[data-theme="light"] body.mf-settings-standalone .mf293-settings-footer{
-  background: rgba(248,250,252,.97) !important;
-  background-color: rgba(248,250,252,.97) !important;
-  background-image: none !important;
+
+
+
   border-top-color: rgba(38,59,74,.085) !important;
   box-shadow: none !important;
   backdrop-filter: none !important;
@@ -9377,17 +5541,14 @@ html[data-theme="light"] body.mf-settings-standalone .mf293-settings-footer{
 }
 
 
-
-
-
 html[data-theme="light"] body.mf-settings-standalone :where(
   .mf293-field input:not([type="checkbox"]),
   .mf293-field select,
   .mf293-field textarea
 ){
-  background: transparent !important;
-  background-color: transparent !important;
-  background-image: none !important;
+
+
+
   border-color: transparent !important;
   box-shadow: none !important;
 }
@@ -9474,10 +5635,6 @@ html[data-theme="light"]{
   --mf-type-system: 11px;
 
 
-
-
-
-
   --mf-trading-type-micro: 11px;
   --mf-trading-type-eyebrow: 11px;
   --mf-trading-type-meta: 11px;
@@ -9491,20 +5648,10 @@ html[data-theme="light"]{
 /* V184 INLINE-AFTER: index.html */
 
 
-
-
-
-
-
-
-
-
-
 :where(body.mf-page-index) .intel-alert-icon{color: var(--purple);}
 
 :where(body.mf-page-index) .nav-intelligence{color: var(--purple)!important;}
 :where(body.mf-page-index) .advanced-intelligence>summary::after{color: var(--mf-neutral-text-3);}
-
 
 
 :where(body.mf-page-index) .mf-native-price{font-variant-numeric: tabular-nums;}
@@ -9512,18 +5659,12 @@ html[data-theme="light"]{
 :where(body.mf-page-index) .mf-native-change.down{color: var(--red);}
 
 
-
-
 :where(body.mf-page-index) .mf-native-badge{color: var(--green);}
 :where(body.mf-page-index) .mf-native-lastprice{ font-variant-numeric: tabular-nums;}
 
 
-
-
-
 /* V184 INLINE-AFTER: index.html */
 :where(body.mf-page-index) .manual-ai-scan-head small{color: var(--cyan);}
-
 
 
 :where(body.mf-page-index) .manual-ai-score strong{font-variant-numeric: tabular-nums;}
@@ -9533,12 +5674,10 @@ html[data-theme="light"]{
 :where(body.mf-page-index) .manual-ai-state.block{color: var(--red);}
 
 
-
 :where(body.mf-page-index) .manual-ai-links a{ text-decoration: none;}
 :where(body.mf-page-index) .manual-ai-error{color: #ff98a5;}
 
 /* V184 INLINE-AFTER: index.html */
-
 
 
 /* V184 INLINE-ATTRIBUTE: index.html */
@@ -9587,10 +5726,10 @@ html[data-theme="light"]{
 @media(max-width:560px){
   #mf-final-chart-host .token{grid-template-columns:54px minmax(0,1fr);gap:11px;padding:13px;}
   #mf-final-chart-host .avatar{width:54px;height:54px;border-radius:16px;}
-  
+
   #mf-final-chart-host .meta{margin-top:5px;}
   #mf-final-chart-host .quote{grid-column:1/-1;display:flex;align-items:baseline;justify-content:space-between;text-align:left;min-width:0;padding-top:2px;}
-  
+
   #mf-final-chart-host .change{margin-top:0;}
   #mf-final-chart-host .toolbar{padding:11px 10px 9px;}
   #mf-final-chart-host .source{max-width:42%;}
@@ -9621,8 +5760,8 @@ h1{font-size:15px;font-weight:800;line-height:1.08;letter-spacing:-.025em;color:
 body.mf-page-index #missionTitle{font-size:15px;font-weight:800;line-height:1.03;letter-spacing:-.035em;color:var(--mf-neutral-text-1);}body.mf-page-index h2{font-size:13px;}body.mf-page-index h3{font-size:13px;}body.mf-page-index .token-name{font-size:13px;font-weight:700;line-height:1.15;color:var(--mf-neutral-text-1);}body.mf-page-index :where(.ai-data-val,.readiness-label){font-size:13px;font-weight:700;color:var(--mf-neutral-text-1);}
 body.mf-page-how-it-works h1{font-size:15px;font-weight:800;line-height:1.02;letter-spacing:-.04em;}body.mf-page-how-it-works h2{font-size:15px;font-weight:700;line-height:1.08;letter-spacing:-.025em;}body.mf-page-how-it-works h3{font-size:13px;font-weight:700;}body.mf-page-how-it-works p{color:var(--mf-neutral-text-2);}
 body.mf-page-smart-vault h1{font-size:15px;font-weight:800;line-height:1.03;letter-spacing:-.035em;}body.mf-page-smart-vault h2{font-size:13px;}body.mf-page-smart-vault :where(.mf-vault-mono,strong){font-size:13px;line-height:1.3;}body.mf-page-smart-vault .mf-vault-eyebrow{font-size:8px;font-weight:700;letter-spacing:.08em;color:var(--mf-neutral-text-3);}
-body.mf-page-trading .brand-title{font-size:13px;font-weight:700;line-height:1.1;}body.mf-page-trading .brand-sub{font-size:8px;}body.mf-page-trading h1#tokenName{font-size:13px;font-weight:700;line-height:1.12;letter-spacing:-.015em;}body.mf-page-trading h2{font-size:13px;}body.mf-page-trading .token-price{font-size:15px;font-weight:800;}body.mf-page-trading .token-market{font-size:9px;color:var(--mf-neutral-text-3);}body.mf-page-trading #paperPnl{font-size:13px;font-weight:700;}
-body.mf-page-settings .mf-settings-page-title>span{font-size:15px;font-weight:800;line-height:1.08;letter-spacing:-.025em;}body.mf-page-settings .mf-settings-page-title>strong{font-size:9px;font-weight:500;color:var(--mf-neutral-text-3);}body.mf-page-settings .mf293-settings-head h2{font-size:13px;font-weight:700;}body.mf-page-settings .mf293-settings-group summary strong{font-size:13px;font-weight:700;}body.mf-page-settings :where(.mf293-field input:not([type="checkbox"]),.mf293-field select,.mf293-field textarea){font-size:11px;font-weight:500;color:var(--mf-neutral-text-1);}
+body.mf-page-trading h1#tokenName{font-size:13px;font-weight:700;line-height:1.12;letter-spacing:-.015em;}body.mf-page-trading h2{font-size:13px;}body.mf-page-trading .token-price{font-size:15px;font-weight:800;}body.mf-page-trading .token-market{font-size:9px;color:var(--mf-neutral-text-3);}body.mf-page-trading #paperPnl{font-size:13px;font-weight:700;}
+body.mf-page-settings .mf293-settings-head h2{font-size:13px;font-weight:700;}body.mf-page-settings .mf293-settings-group summary strong{font-size:13px;font-weight:700;}body.mf-page-settings :where(.mf293-field input:not([type="checkbox"]),.mf293-field select,.mf293-field textarea){font-size:11px;font-weight:500;color:var(--mf-neutral-text-1);}
 body.mf-page-system-tokens h1{font-size:15px;font-weight:800;}body.mf-page-system-tokens :where(#visibleCount,#countAll,#countReady,#countWatch,#countWaiting,#countBlocked,#pageNumber,#pageTotal){font-size:13px;font-weight:700;color:var(--mf-neutral-text-1);font-variant-numeric:tabular-nums;}
 body.mf-page-system .brand{font-size:13px;font-weight:700;}body.mf-page-system .subtitle{font-size:8px;}body.mf-page-system :where(#inspectorTitle,.mfpg-caption-title){font-size:13px;font-weight:700;}body.mf-page-system .scene-hint{font-size:9px;color:var(--mf-neutral-text-3);}
 body.mf-page-x100 h1{font-size:15px;font-weight:800;line-height:1.03;letter-spacing:-.035em;}body.mf-page-x100 h2{font-size:15px;font-weight:700;line-height:1.1;letter-spacing:-.025em;}body.mf-page-x100 h3{font-size:13px;font-weight:700;}body.mf-page-x100 .kicker{font-size:8px;font-weight:700;letter-spacing:.09em;color:var(--mf-neutral-text-3);}
@@ -9648,20 +5787,8 @@ body.mf-page-system-source h1{font-size:15px;font-weight:800;}body.mf-page-syste
 /* --------------------------------------------------------------------------
    1. Terminal identity + selected instrument
    -------------------------------------------------------------------------- */
-body.mf-page-trading .brand-title {
-  font-size:13px !important;
-  font-weight: 700 !important;
-  line-height: 1.1 !important;
-  letter-spacing: -.006em !important;
-  color: var(--mf-neutral-text-1) !important;
-}
-body.mf-page-trading .brand-sub {
-  font-size:8px !important;
-  font-weight: 600 !important;
-  line-height: 1.25 !important;
-  letter-spacing: .08em !important;
-  color: var(--mf-neutral-text-3) !important;
-}
+
+
 body.mf-page-trading :where(.topbar .status-pill,.topbar .ghost-btn,.topbar .wallet-btn) {
   font-size:8px !important;
   font-weight: 600 !important;
@@ -9936,20 +6063,8 @@ body.mf-page-trading .bottom-history-panel :where(.trade-pump-link,.trade-status
 */
 
 /* 1. Identity: compact software header, not marketing masthead. */
-body.mf-page-trading .brand-title {
-  font-size:10px !important;
-  font-weight: 700 !important;
-  line-height: 1.15 !important;
-  letter-spacing: 0 !important;
-  color: var(--mf-neutral-text-1) !important;
-}
-body.mf-page-trading .brand-sub {
-  font-size:8px !important;
-  font-weight: 600 !important;
-  line-height: 1.15 !important;
-  letter-spacing: .08em !important;
-  color: var(--mf-neutral-text-3) !important;
-}
+
+
 body.mf-page-trading :where(.topbar .status-pill,.topbar .ghost-btn,.topbar .wallet-btn) {
   font-size:8px !important;
   font-weight: 600 !important;
@@ -10214,20 +6329,8 @@ body.mf-page-trading .bottom-history-panel :where(.trade-pump-link,.trade-status
   /* ----------------------------------------------------------------------
      1. Product identity: software chrome, not marketing typography
      ---------------------------------------------------------------------- */
-  body.mf-page-trading .brand-title {
-    font-size:9px !important;
-    font-weight: 700 !important;
-    line-height: 1.1 !important;
-    letter-spacing: 0 !important;
-    color: var(--mf-neutral-text-1) !important;
-  }
-  body.mf-page-trading .brand-sub {
-    font-size:8px !important;
-    font-weight: 600 !important;
-    line-height: 1.1 !important;
-    letter-spacing: .08em !important;
-    color: var(--mf-neutral-text-4) !important;
-  }
+
+
   body.mf-page-trading :where(.topbar .status-pill,.topbar .ghost-btn,.topbar .wallet-btn) {
     font-size:8px !important;
     font-weight: 600 !important;

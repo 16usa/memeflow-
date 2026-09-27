@@ -38,64 +38,6 @@ body.mf-hiw-page{
   padding:12px 0 48px;
 }
 
-.mf-hiw-topbar{
-  min-height:70px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:18px;
-  padding:10px 14px;
-  position:sticky;
-  top:10px;
-  z-index:50;
-  border:1px solid #2f3336;
-  border-radius:16px;
-  background:transparent;
-  box-shadow:none;
-  -webkit-backdrop-filter:none;
-  backdrop-filter:none;
-}
-
-.mf-hiw-brand{
-  min-width:0;
-  display:inline-flex;
-  align-items:center;
-  gap:11px;
-}
-
-.mf-hiw-brand-mark{
-  width:40px;
-  height:40px;
-  display:grid;
-  place-items:center;
-  flex:0 0 40px;
-}
-
-.mf-hiw-brand-mark img{
-  width:38px;
-  height:38px;
-  object-fit:contain;
-  display:block;
-  filter:drop-shadow(0 0 12px rgba(85, 217, 255, .18));
-}
-
-.mf-hiw-brand-copy{
-  min-width:0;
-  display:grid;
-  gap:2px;
-}
-
-
-
-
-
-.mf-hiw-topbar .top-actions{
-  margin-left:auto;
-  display:flex;
-  align-items:center;
-  justify-content:flex-end;
-}
-
 
 
 .mf-hiw-hero{
@@ -794,37 +736,6 @@ body.mf-hiw-page{
     padding-top:7px;
   }
 
-  .mf-hiw-topbar{
-    top:7px;
-    min-height:76px;
-    padding:9px 12px;
-    border-radius:15px;
-  }
-
-  .mf-hiw-brand-mark{
-    width:42px;
-    height:42px;
-    flex-basis:42px;
-  }
-
-  .mf-hiw-brand-mark img{
-    width:40px;
-    height:40px;
-  }
-
-  
-
-  .mf-hiw-brand-copy small{
-    display:none;
-  }
-
-  .mf-hiw-topbar .mf-nav-toggle{
-    width:42px;
-    height:42px;
-    flex-basis:42px;
-    border-radius:12px;
-  }
-
   .mf-hiw-hero{
     gap:34px;
     padding:78px 12px 64px;
@@ -841,7 +752,7 @@ body.mf-hiw-page{
     margin-top:13px;
   }
 
-  
+
 
   .mf-hiw-hero-actions{
     display:grid;
@@ -923,11 +834,11 @@ body.mf-hiw-page{
     padding:18px 14px;
   }
 
-  
 
-  
 
-  
+
+
+
 
   .mf-hiw-steps,
   .mf-hiw-control-grid{
@@ -1008,51 +919,36 @@ body.mf-hiw-page{
 }
 
 html[data-theme="light"]{
-  background: #FFFFFF !important;
+
 }
 
 html[data-theme="light"] body.mf-hiw-page{
-  --hiw-bg: #FFFFFF;
-  --hiw-panel: #F5F5F5;
-  --hiw-panel-strong: #F5F5F5;
+  --hiw-bg: #FFFFFF !important;
+  --hiw-panel: #FFFFFF !important;
+  --hiw-panel-strong: #FFFFFF !important;
   --hiw-line: #EBEBEB;
   --hiw-line-strong: #EBEBEB;
   --hiw-text: var(--mf-neutral-text-2);
   --hiw-muted: var(--mf-neutral-text-3);
   --hiw-muted-2: var(--mf-neutral-text-4);
   --hiw-shadow: none;
-  background: #FFFFFF !important;
+
 }
 
 html[data-theme="light"] body.mf-hiw-page .mf-hiw-shell{
   width: min(1240px, 100%) !important;
   padding-top: 0 !important;
-  background: #FFFFFF !important;
-}
 
-html[data-theme="light"] body.mf-hiw-page .mf-hiw-topbar{
-  top: 0 !important;
-  padding-inline: clamp(18px, 4vw, 52px) !important;
-  border: 0 !important;
-  border-radius: 0 !important;
-  background: #FFFFFF !important;
-  box-shadow: none !important;
-  -webkit-backdrop-filter: none !important;
-  backdrop-filter: none !important;
 }
 
 html[data-theme="light"] body.mf-hiw-page .mf-hiw-hero::before{
   display: none !important;
 }
 
-html[data-theme="light"] body.mf-hiw-page .mf-hiw-brand-mark img{
-  filter: none !important;
-}
-
 
 
 html[data-theme="light"] body.mf-hiw-page .mf-hiw-hero{
-  background: #FFFFFF !important;
+
 }
 
 
@@ -1065,11 +961,11 @@ html[data-theme="light"] body.mf-hiw-page .mf-hiw-btn{
 }
 
 html[data-theme="light"] body.mf-hiw-page .mf-hiw-btn-primary{
-  background: #EBEBEB !important;
+
 }
 
 html[data-theme="light"] body.mf-hiw-page .mf-hiw-btn-ghost{
-  background: #F5F5F5 !important;
+
 }
 
 html[data-theme="light"] body.mf-hiw-page .mf-hiw-btn-primary:hover,
@@ -1077,13 +973,13 @@ html[data-theme="light"] body.mf-hiw-page .mf-hiw-btn-primary:focus-visible,
 html[data-theme="light"] body.mf-hiw-page .mf-hiw-btn-ghost:hover,
 html[data-theme="light"] body.mf-hiw-page .mf-hiw-btn-ghost:focus-visible{
   border-color: transparent !important;
-  background: #EBEBEB !important;
+
 }
 
 html[data-theme="light"] body.mf-hiw-page .mf-hiw-status-card{
   border: 0 !important;
   border-radius: 24px !important;
-  background: #F5F5F5 !important;
+
   box-shadow: none !important;
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
@@ -1095,31 +991,29 @@ html[data-theme="light"] body.mf-hiw-page .mf-hiw-status-head{
 
 html[data-theme="light"] body.mf-hiw-page .mf-hiw-status-stack > div{
   border: 0 !important;
-  background: #FFFFFF !important;
+
 }
 
 html[data-theme="light"] body.mf-hiw-page .mf-hiw-section{
   border-top-color: #EBEBEB !important;
-  background: #FFFFFF !important;
+
 }
 
 html[data-theme="light"] body.mf-hiw-page .mf-hiw-map-shell{
   border: 0 !important;
   border-radius: 28px !important;
-  background: #F5F5F5 !important;
+
   box-shadow: none !important;
 }
 
 html[data-theme="light"] body.mf-hiw-page .mf-hiw-map::before{
   opacity: .55 !important;
-  background-image:
-    linear-gradient(#EBEBEB 1px, transparent 1px),
-    linear-gradient(90deg, #EBEBEB 1px, transparent 1px) !important;
+
 }
 
 html[data-theme="light"] body.mf-hiw-page .mf-hiw-node{
   border-color: transparent !important;
-  background: #FFFFFF !important;
+
   box-shadow: none !important;
 }
 
@@ -1130,19 +1024,19 @@ html[data-theme="light"] body.mf-hiw-page .mf-hiw-node:focus-visible{
 
 html[data-theme="light"] body.mf-hiw-page .mf-hiw-node.is-active{
   border-color: var(--hiw-cyan) !important;
-  background: #FFFFFF !important;
+
   box-shadow: none !important;
 }
 
 html[data-theme="light"] body.mf-hiw-page .mf-hiw-map-detail{
   border-top-color: #EBEBEB !important;
-  background: #FFFFFF !important;
+
 }
 
 html[data-theme="light"] body.mf-hiw-page .mf-hiw-step{
   border: 0 !important;
   border-radius: 24px !important;
-  background: #F5F5F5 !important;
+
   box-shadow: none !important;
 }
 
@@ -1152,41 +1046,41 @@ html[data-theme="light"] body.mf-hiw-page .mf-hiw-step:hover{
 
 html[data-theme="light"] body.mf-hiw-page .mf-hiw-step-icon{
   border: 0 !important;
-  background: #FFFFFF !important;
+
 }
 
 html[data-theme="light"] body.mf-hiw-page .mf-hiw-control{
-  background: #FFFFFF !important;
+
 }
 
 html[data-theme="light"] body.mf-hiw-page .mf-hiw-control-card,
 html[data-theme="light"] body.mf-hiw-page .mf-hiw-control-user{
   border: 0 !important;
   border-radius: 24px !important;
-  background: #F5F5F5 !important;
+
   box-shadow: none !important;
 }
 
 html[data-theme="light"] body.mf-hiw-page .mf-hiw-control-label{
-  background: #FFFFFF !important;
+
   box-shadow: none !important;
 }
 
 html[data-theme="light"] body.mf-hiw-page .mf-hiw-money{
   border: 0 !important;
   border-radius: 28px !important;
-  background: #F5F5F5 !important;
+
   box-shadow: none !important;
 }
 
 html[data-theme="light"] body.mf-hiw-page .mf-hiw-money-flow > div{
   border: 0 !important;
-  background: #FFFFFF !important;
+
 }
 
 html[data-theme="light"] body.mf-hiw-page .mf-hiw-money-flow > div.is-vault{
   border: 0 !important;
-  background: #EBEBEB !important;
+
 }
 
 html[data-theme="light"] body.mf-hiw-page .mf-hiw-faq-list{
@@ -1196,13 +1090,13 @@ html[data-theme="light"] body.mf-hiw-page .mf-hiw-faq-list{
 html[data-theme="light"] body.mf-hiw-page .mf-hiw-faq details{
   border: 0 !important;
   border-radius: 20px !important;
-  background: #F5F5F5 !important;
+
   box-shadow: none !important;
 }
 
 html[data-theme="light"] body.mf-hiw-page .mf-hiw-faq details[open]{
   border: 1px solid var(--hiw-cyan) !important;
-  background: #FFFFFF !important;
+
 }
 
 
@@ -1210,16 +1104,12 @@ html[data-theme="light"] body.mf-hiw-page .mf-hiw-faq details[open]{
 html[data-theme="light"] body.mf-hiw-page .mf-hiw-cta,
 html[data-theme="light"] body.mf-hiw-page .mf-hiw-footer{
   border-top-color: #EBEBEB !important;
-  background: #FFFFFF !important;
+
 }
 
 @media (max-width: 720px){
   html[data-theme="light"] body.mf-hiw-page .mf-hiw-shell{
     width: 100% !important;
-  }
-
-  html[data-theme="light"] body.mf-hiw-page .mf-hiw-topbar{
-    padding-inline: 18px !important;
   }
 
   html[data-theme="light"] body.mf-hiw-page .mf-hiw-hero,
@@ -1232,7 +1122,7 @@ html[data-theme="light"] body.mf-hiw-page .mf-hiw-footer{
   }
 
   html[data-theme="light"] body.mf-hiw-page .mf-hiw-node{
-    background: #FFFFFF !important;
+
   }
 
   html[data-theme="light"] body.mf-hiw-page .mf-hiw-money,

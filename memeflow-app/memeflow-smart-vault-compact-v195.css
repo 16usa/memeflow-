@@ -1,10 +1,6 @@
 /* MEMEFLOW SMART VAULT COMPACT SOFTWARE V195 */
 body.mf-page-smart-vault .mf-vault-shell{width:min(980px,100%)!important;padding-bottom:18px!important;font-family:"Inter",ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif!important}
 body.mf-page-smart-vault .mf-vault-topbar,body.mf-page-smart-vault .topbar{min-height:54px!important;padding:7px 12px!important;gap:10px!important;border-radius:0!important;box-shadow:none!important}
-body.mf-page-smart-vault .mf-vault-brand,body.mf-page-smart-vault .brand{gap:8px!important}
-body.mf-page-smart-vault .mf-vault-brand-mark,body.mf-page-smart-vault .brand-mark{width:30px!important;height:30px!important;flex-basis:30px!important}
-body.mf-page-smart-vault .mf-vault-brand-copy strong,body.mf-page-smart-vault .brand-copy strong{font-family:"IBM Plex Mono","SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace !important;font-size:13px!important;font-weight:700!important;line-height:1!important}
-body.mf-page-smart-vault .mf-vault-brand-copy small,body.mf-page-smart-vault .brand-copy small{font-family:"IBM Plex Mono","SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace !important;font-size:11px!important;font-weight:500!important;line-height:1.1!important}
 body.mf-page-smart-vault .mf-vault-hero{min-height:0!important;padding:22px 16px 16px!important;background-image:none!important;box-shadow:none!important}
 body.mf-page-smart-vault .mf-vault-hero :where(.eyebrow,.mf-vault-eyebrow,small){font-family:"IBM Plex Mono","SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace !important;font-size:11px!important;font-weight:500!important;line-height:1.15!important;letter-spacing:.04em!important}
 body.mf-page-smart-vault .mf-vault-hero h1{max-width:620px!important;margin:6px 0 7px!important;font-family:"IBM Plex Mono","SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace !important;font-size:15px!important;font-weight:700!important;line-height:1.05!important;letter-spacing:-.02em!important}
@@ -42,13 +38,13 @@ body.mf-page-smart-vault .mf-vault-status-panel>p{margin:0!important;font-size:1
 body.mf-page-smart-vault .mf-vault-status-flow{display:flex!important;gap:4px!important;margin-top:8px!important;overflow-x:auto!important;scrollbar-width:none!important}
 body.mf-page-smart-vault .mf-vault-status-flow::-webkit-scrollbar{display:none!important}
 body.mf-page-smart-vault .mf-vault-status-flow span{flex:0 0 auto!important;min-height:26px!important;padding:0 8px!important;border-radius:8px!important;display:inline-flex!important;align-items:center!important;font-family:"IBM Plex Mono","SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace !important;font-size:11px!important;font-weight:500!important;line-height:1!important}
-html[data-theme="light"] body.mf-page-smart-vault{color:#333333!important;background:#FFFFFF!important}
-html[data-theme="light"] body.mf-page-smart-vault .mf-vault-shell{background:#FFFFFF!important}
+html[data-theme="light"] body.mf-page-smart-vault{color:#333333!important;}
+html[data-theme="light"] body.mf-page-smart-vault .mf-vault-shell{}
 html[data-theme="light"] body.mf-page-smart-vault :where(.mf-vault-hero h1,.mf-vault-card-head h2,.mf-vault-card-head h3,.mf-vault-stat strong,.mf-vault-stat b,.mf-vault-balance,.mf-vault-control-row strong,.mf-vault-checklist strong,.mf-vault-status-panel h2,.mf-vault-status-panel h3){color:#000000!important}
 html[data-theme="light"] body.mf-page-smart-vault :where(.mf-vault-hero p,.mf-vault-card p,.mf-vault-checklist p,.mf-vault-status-panel>p){color:#666666!important}
 html[data-theme="light"] body.mf-page-smart-vault :where(.mf-vault-hero .eyebrow,.mf-vault-card-head small,.mf-vault-stat small,.mf-vault-control-row label,.mf-vault-status-panel small){color:#929292!important}
-html[data-theme="light"] body.mf-page-smart-vault :where(.mf-vault-card,.mf-vault-status-panel){background:#F5F5F5!important;background-image:none!important;border-color:#E7E7E7!important}
-html[data-theme="light"] body.mf-page-smart-vault :where(.mf-vault-stat,.mf-vault-action,.mf-vault-control-row,.mf-vault-btn:not(.mf-vault-btn-primary),.mf-vault-status-flow span:not(.is-ready)){background:#EBEBEB!important;background-image:none!important;border-color:transparent!important}
+html[data-theme="light"] body.mf-page-smart-vault :where(.mf-vault-card,.mf-vault-status-panel){border-color:#E7E7E7!important}
+html[data-theme="light"] body.mf-page-smart-vault :where(.mf-vault-stat,.mf-vault-action,.mf-vault-control-row,.mf-vault-btn:not(.mf-vault-btn-primary),.mf-vault-status-flow span:not(.is-ready)){border-color:transparent!important}
 html[data-theme="light"] body.mf-page-smart-vault .mf-vault-checklist>div{border-bottom:1px solid #E7E7E7!important}
 html[data-theme="dark"] body.mf-page-smart-vault{color:#CFCFCF!important}
 html[data-theme="dark"] body.mf-page-smart-vault :where(.mf-vault-hero h1,.mf-vault-card-head h2,.mf-vault-card-head h3,.mf-vault-stat strong,.mf-vault-stat b,.mf-vault-balance,.mf-vault-control-row strong,.mf-vault-checklist strong,.mf-vault-status-panel h2,.mf-vault-status-panel h3){color:#FFFFFF!important}
