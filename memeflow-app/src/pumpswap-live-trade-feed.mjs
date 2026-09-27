@@ -194,7 +194,7 @@ export function pumpSwapMarketFromReserves({
 export function startPumpSwapLiveTradeFeed(opts={}){
   const {
     eventHolderLedger,store,publish,publishTrade,evaluateAI,
-    opportunityEngine,getSolUsd
+    opportunityEngine,getSolUsd,onTokenUpdate
   }=opts;
   const urls=envList('SOLANA_WS_URLS');
   const metrics={
@@ -650,6 +650,18 @@ export function startPumpSwapLiveTradeFeed(opts={}){
       }
     );
     if(!updated)return false;
+
+    // MEMEFLOW_PAPER_LIFECYCLE_LIVE_WIRE_V84
+    // PumpSwap becomes the canonical live lifecycle source after migration.
+    try{
+      onTokenUpdate?.(meta.mint,updated);
+    }catch(error){
+      fail(
+        meta.mint,
+        'paper-lifecycle:'+String(error?.message||error)
+      );
+    }
+
     if(
       known.pumpSwapSourceActive!==true &&
       known.marketProtocol!=='pumpswap'

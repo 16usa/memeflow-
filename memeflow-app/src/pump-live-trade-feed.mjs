@@ -124,7 +124,7 @@ function tokenFromStore(store,mint){
 export function startPumpLiveTradeFeed(opts={}){
   const {
     eventHolderLedger,store,publish,publishTrade,preprocessTrade,evaluateAI,
-    opportunityEngine,getSolUsd,onDead
+    opportunityEngine,getSolUsd,onDead,onTokenUpdate
   }=opts;
   const urls=envList('SOLANA_WS_URLS');
 
@@ -355,6 +355,16 @@ export function startPumpLiveTradeFeed(opts={}){
       metrics.marketSnapshots++;
       metrics.lastStoreUpdateAt=Date.now();
       metrics.lastStoreUpdateMint=e.mint;
+
+      // MEMEFLOW_PAPER_LIFECYCLE_LIVE_WIRE_V84
+      // Every confirmed Pump TradeEvent updates OPEN PAPER positions using
+      // the same canonical token snapshot that drives Score / State.
+      try{
+        onTokenUpdate?.(e.mint,updated);
+      }catch(err){
+        metrics.lastError=
+          'paper-lifecycle:'+String(err?.message||err);
+      }
 
       let dropped=false;
       if(updated.dead===true){

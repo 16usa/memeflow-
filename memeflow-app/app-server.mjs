@@ -10135,7 +10135,8 @@ function __mfStopBackgroundWorkV52(){
     __mfScannerPruneTimer,
     holderRefreshTimer,
     __mfFastHolderPreviewTimerV4,
-    __mfPreAdmissionSweepTimer
+    __mfPreAdmissionSweepTimer,
+    __mfPaperLifecycleSweepTimerV84
   ]){
     try{clearInterval(timer)}catch{}
   }
@@ -10422,6 +10423,11 @@ const __pumpLiveTradeFeed=startPumpLiveTradeFeed({
   evaluateAI: typeof evaluateAll==='function'?evaluateAll:null,
   opportunityEngine,
   getSolUsd:()=>solUsdOracle.get(),
+
+  // MEMEFLOW_PAPER_LIFECYCLE_LIVE_WIRE_V84
+  onTokenUpdate:(mint,updated)=>
+    paper.onTokenUpdate(mint,updated),
+
   onDead:null // MEMEFLOW_SETTINGS_CONTROL_SCANNER_RETENTION_V1: decision-only, never scanner delete
 });
 
@@ -10433,8 +10439,139 @@ const __pumpSwapLiveTradeFeed=startPumpSwapLiveTradeFeed({
   publishTrade:typeof publishTrade==='function'?publishTrade:null,
   evaluateAI:typeof evaluateAll==='function'?evaluateAll:null,
   opportunityEngine,
-  getSolUsd:()=>solUsdOracle.get()
+  getSolUsd:()=>solUsdOracle.get(),
+
+  // MEMEFLOW_PAPER_LIFECYCLE_LIVE_WIRE_V84
+  onTokenUpdate:(mint,updated)=>
+    paper.onTokenUpdate(mint,updated)
 });
+
+
+// MEMEFLOW_PAPER_LIFECYCLE_SWEEP_V84
+//
+// Primary lifecycle source = confirmed Pump/PumpSwap TradeEvents.
+// This bounded sweep is only the safety clock for rules that can become
+// actionable without another trade event, especially MAX HOLD.
+//
+// A sweep never invents a price. It uses the same conservative mark resolver
+// as Open Positions and PAPER settlement.
+const __mfPaperLifecycleSweepMsV84=
+  Math.max(
+    5000,
+    Number(
+      process.env.PAPER_LIFECYCLE_SWEEP_MS||
+      10000
+    )
+  );
+
+const __mfPaperLifecycleSweepTimerV84=
+  setInterval(
+    ()=>{
+      if(__mfShutdownRequestedV52)return;
+
+      try{
+        const now=Date.now();
+
+        const maxMarkAgeMs=
+          Math.max(
+            5000,
+            Number(
+              process.env.PAPER_LIVE_PNL_MAX_MARK_AGE_MS ??
+              process.env.PAPER_MANUAL_EXIT_MAX_MARK_AGE_MS ??
+              120000
+            ) || 120000
+          );
+
+        let durableMutation=false;
+
+        const positions=
+          Object.values(
+            store.state.paperPositions||
+            {}
+          );
+
+        for(const position of positions){
+          if(
+            String(
+              position?.status||
+              ''
+            ).toUpperCase()!=='OPEN'
+          ){
+            continue;
+          }
+
+          const mint=
+            String(
+              position?.mint||
+              ''
+            );
+
+          if(!mint)continue;
+
+          const token=
+            store.state.tokens?.[
+              mint
+            ] ||
+            null;
+
+          if(!token)continue;
+
+          const mark=
+            resolvePaperPositionMarkV81({
+              position,
+              token,
+              nowMs:now,
+              maxAgeMs:maxMarkAgeMs
+            });
+
+          // Fail closed: never execute a timed exit against an invented
+          // or untrustworthy market mark.
+          if(
+            !mark?.ok ||
+            !(Number(mark.priceSol)>0)
+          ){
+            continue;
+          }
+
+          const lifecycleToken={
+            ...token,
+            priceSol:Number(mark.priceSol),
+
+            // Preserve the timestamp authority of the resolved mark.
+            lastPriceAt:
+              Number(mark.atMs)||
+              token.lastPriceAt||
+              null
+          };
+
+          const result=
+            paper.updatePosition(
+              position,
+              lifecycleToken
+            );
+
+          if(result?.durable===true){
+            durableMutation=true;
+          }
+        }
+
+        // Persist irreversible SELL/CLOSE actions immediately.
+        if(durableMutation){
+          paper.save();
+        }
+
+      }catch(error){
+        console.warn(
+          '[paper-lifecycle-sweep]',
+          error?.message||error
+        );
+      }
+    },
+    __mfPaperLifecycleSweepMsV84
+  );
+
+__mfPaperLifecycleSweepTimerV84.unref?.();
+// /MEMEFLOW_PAPER_LIFECYCLE_SWEEP_V84
 
 // MEMEFLOW_V12_22_WS_DIRECT_TRADE_EVENT: live feed module now decodes Pump TradeEvent directly from logsSubscribe; no per-signature HTTP getTransaction.
 

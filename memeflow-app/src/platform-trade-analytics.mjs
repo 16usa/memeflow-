@@ -487,30 +487,62 @@ export class PlatformTradeAnalytics{
       Date.now()-
       safeDays*86400000;
 
+    // MEMEFLOW_PERFORMANCE_CLOSE_WINDOW_V84
+    //
+    // Outcome statistics are defined by WHEN THE POSITION CLOSED.
+    // Previously the headline used opened_at_ms while Exit Reasons and factor
+    // tables used closed_at_ms, so the same 30-day page could describe
+    // different sets of trades.
+    //
+    // totalPositions/openPositions retain their entry-window semantics.
+    // Every CLOSED outcome metric uses exactly closed_at_ms >= cutoff.
     const positions=
       this.db.prepare(`
+        WITH scoped AS (
+          SELECT
+            *,
+            CASE
+              WHEN opened_at_ms>=?
+              THEN 1 ELSE 0
+            END AS opened_in_window,
+
+            CASE
+              WHEN
+                status='CLOSED' AND
+                closed_at_ms>=?
+              THEN 1 ELSE 0
+            END AS closed_in_window
+
+          FROM platform_positions
+        )
+
         SELECT
-          COUNT(*) AS total_positions,
-          COUNT(DISTINCT user_hash) AS unique_users,
+          SUM(opened_in_window) AS total_positions,
 
-          SUM(
-            CASE
-              WHEN status='OPEN'
-              THEN 1 ELSE 0
+          COUNT(
+            DISTINCT CASE
+              WHEN closed_in_window=1
+              THEN user_hash
+              ELSE NULL
             END
-          ) AS open_positions,
-
-          SUM(
-            CASE
-              WHEN status='CLOSED'
-              THEN 1 ELSE 0
-            END
-          ) AS closed_positions,
+          ) AS unique_users,
 
           SUM(
             CASE
               WHEN
-                status='CLOSED' AND
+                status='OPEN' AND
+                opened_in_window=1
+              THEN 1 ELSE 0
+            END
+          ) AS open_positions,
+
+          SUM(closed_in_window)
+            AS closed_positions,
+
+          SUM(
+            CASE
+              WHEN
+                closed_in_window=1 AND
                 realized_pnl_sol IS NOT NULL
               THEN 1 ELSE 0
             END
@@ -519,7 +551,7 @@ export class PlatformTradeAnalytics{
           SUM(
             CASE
               WHEN
-                status='CLOSED' AND
+                closed_in_window=1 AND
                 realized_pnl_sol IS NULL
               THEN 1 ELSE 0
             END
@@ -528,7 +560,7 @@ export class PlatformTradeAnalytics{
           SUM(
             CASE
               WHEN
-                status='CLOSED' AND
+                closed_in_window=1 AND
                 realized_pnl_sol>0
               THEN 1 ELSE 0
             END
@@ -537,7 +569,7 @@ export class PlatformTradeAnalytics{
           SUM(
             CASE
               WHEN
-                status='CLOSED' AND
+                closed_in_window=1 AND
                 realized_pnl_sol<0
               THEN 1 ELSE 0
             END
@@ -546,7 +578,7 @@ export class PlatformTradeAnalytics{
           SUM(
             CASE
               WHEN
-                status='CLOSED' AND
+                closed_in_window=1 AND
                 realized_pnl_sol=0
               THEN 1 ELSE 0
             END
@@ -555,7 +587,7 @@ export class PlatformTradeAnalytics{
           SUM(
             CASE
               WHEN
-                status='CLOSED' AND
+                closed_in_window=1 AND
                 realized_pnl_sol IS NOT NULL
               THEN realized_pnl_sol
               ELSE NULL
@@ -565,7 +597,7 @@ export class PlatformTradeAnalytics{
           AVG(
             CASE
               WHEN
-                status='CLOSED' AND
+                closed_in_window=1 AND
                 realized_pnl_pct IS NOT NULL
               THEN realized_pnl_pct
               ELSE NULL
@@ -575,16 +607,15 @@ export class PlatformTradeAnalytics{
           AVG(
             CASE
               WHEN
-                status='CLOSED' AND
+                closed_in_window=1 AND
                 realized_pnl_sol IS NOT NULL
               THEN hold_minutes
               ELSE NULL
             END
           ) AS avg_hold_minutes
 
-        FROM platform_positions
-        WHERE opened_at_ms>=?
-      `).get(cutoff);
+        FROM scoped
+      `).get(cutoff,cutoff);
 
     const tradeStats=
       this.db.prepare(`
@@ -640,7 +671,9 @@ export class PlatformTradeAnalytics{
 
         FROM platform_positions
 
-        WHERE opened_at_ms>=?
+        WHERE
+          status='CLOSED' AND
+          closed_at_ms>=?
 
         GROUP BY name
         ORDER BY count DESC
