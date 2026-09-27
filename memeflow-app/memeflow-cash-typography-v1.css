@@ -1,0 +1,213 @@
+/* MEMEFLOW_CASH_TYPOGRAPHY_V1
+   Typography tuned to the supplied iPhone/Cash App reference.
+   No font files are bundled. Apple devices use the native system face. */
+
+:root{
+  --mf-font-sans:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display","Helvetica Neue",Arial,sans-serif!important;
+
+  /* Cash-style neutral text ladder */
+  --mf-neutral-text-1:#ffffff!important;
+  --mf-neutral-text-2:#f2f2f7!important;
+  --mf-neutral-text-3:#8e8e93!important;
+  --mf-neutral-text-4:#636366!important;
+
+  /* Larger, cleaner role scale */
+  --mf-role-display:44px!important;
+  --mf-role-page:30px!important;
+  --mf-role-section:20px!important;
+  --mf-role-subhead:17px!important;
+  --mf-role-body:16px!important;
+  --mf-role-ui:16px!important;
+  --mf-role-meta:14px!important;
+  --mf-role-micro:12px!important;
+
+  --mf-text-strong:var(--mf-neutral-text-1)!important;
+  --mf-text-primary:var(--mf-neutral-text-2)!important;
+  --mf-text-secondary:var(--mf-neutral-text-3)!important;
+  --mf-text-tertiary:var(--mf-neutral-text-4)!important;
+}
+
+html[data-theme="light"]{
+  --mf-neutral-text-1:#000000!important;
+  --mf-neutral-text-2:#1c1c1e!important;
+  --mf-neutral-text-3:#636366!important;
+  --mf-neutral-text-4:#8e8e93!important;
+}
+
+html,
+body,
+button,
+input,
+select,
+textarea{
+  font-family:var(--mf-font-sans)!important;
+  -webkit-font-smoothing:antialiased!important;
+  text-rendering:optimizeLegibility!important;
+  font-synthesis:none!important;
+}
+
+body{
+  font-size:var(--mf-role-body)!important;
+  font-weight:400!important;
+  line-height:1.38!important;
+  letter-spacing:-.008em!important;
+  color:var(--mf-neutral-text-2)!important;
+}
+
+p{
+  font-size:var(--mf-role-body)!important;
+  font-weight:400!important;
+  line-height:1.42!important;
+  letter-spacing:-.006em!important;
+}
+
+small{
+  font-size:var(--mf-role-meta)!important;
+  font-weight:400!important;
+  line-height:1.35!important;
+}
+
+strong,b{font-weight:600!important;}
+
+h1{
+  font-size:var(--mf-role-page)!important;
+  font-weight:700!important;
+  line-height:1.04!important;
+  letter-spacing:-.035em!important;
+}
+h2{
+  font-size:var(--mf-role-section)!important;
+  font-weight:700!important;
+  line-height:1.10!important;
+  letter-spacing:-.025em!important;
+}
+h3{
+  font-size:var(--mf-role-subhead)!important;
+  font-weight:600!important;
+  line-height:1.18!important;
+  letter-spacing:-.015em!important;
+}
+h4,h5,h6{
+  font-size:var(--mf-role-ui)!important;
+  font-weight:600!important;
+  line-height:1.22!important;
+  letter-spacing:-.01em!important;
+}
+
+button,
+.btn,
+[class*="-btn"],
+[class*="_btn"],
+.tool-btn,
+.wallet-btn,
+.primary-action,
+.text-action,
+.nav-link,
+.mf-nav-link,
+.back{
+  font-size:var(--mf-role-ui)!important;
+  font-weight:600!important;
+  line-height:1.18!important;
+  letter-spacing:-.01em!important;
+}
+
+input,
+select,
+textarea{
+  font-size:16px!important;
+  font-weight:400!important;
+  line-height:1.3!important;
+  letter-spacing:-.006em!important;
+}
+
+:where(.eyebrow,[class*="eyebrow"],.kicker,[class*="kicker"],.nav-label,.mf293-field-label,.mf-theme-appearance-label){
+  font-size:var(--mf-role-micro)!important;
+  font-weight:600!important;
+  line-height:1.2!important;
+  letter-spacing:.055em!important;
+}
+
+:where(.score-caption,[class*="caption"],[class*="-meta"],.meta,.muted,.subtitle,.brand-sub,.sub,.mf293-dex-filter-meta,.mf-theme-current){
+  font-size:var(--mf-role-meta)!important;
+  font-weight:400!important;
+  line-height:1.32!important;
+  letter-spacing:-.004em!important;
+}
+
+:where(.chip,[class*="badge"],[class*="pill"],[class*="state"],.tiny-state,.mode-badge,.approval-count,.scanner-status){
+  font-size:var(--mf-role-micro)!important;
+  font-weight:600!important;
+  line-height:1.15!important;
+  letter-spacing:.015em!important;
+}
+
+/* Important value hierarchy: Cash-style large, clean numbers. */
+:where(.big-score,[class*="total"],[class*="balance"]){
+  font-variant-numeric:tabular-nums!important;
+}
+.big-score{
+  font-size:var(--mf-role-display)!important;
+  font-weight:700!important;
+  line-height:.98!important;
+  letter-spacing:-.045em!important;
+}
+:where(.token-price,.chart-price){
+  font-size:var(--mf-role-page)!important;
+  font-weight:700!important;
+  line-height:1!important;
+  letter-spacing:-.035em!important;
+}
+
+/* Existing page roles, retuned without changing semantics/data. */
+body.mf-page-index #missionTitle,
+body.mf-page-how-it-works h1,
+body.mf-page-smart-vault h1,
+body.mf-page-x100 h1{
+  font-size:var(--mf-role-display)!important;
+  font-weight:700!important;
+  line-height:1.01!important;
+  letter-spacing:-.045em!important;
+}
+
+body.mf-page-system-tokens h1,
+body.mf-page-agent-performance h1,
+body.mf-page-owner-intelligence h1,
+body.mf-page-settings .mf-settings-page-title>span{
+  font-size:var(--mf-role-page)!important;
+  font-weight:700!important;
+  line-height:1.04!important;
+  letter-spacing:-.035em!important;
+}
+
+body.mf-page-trading h1#tokenName,
+body.mf-page-index .token-name,
+body.mf-page-system :where(#inspectorTitle,.mfpg-caption-title){
+  font-size:var(--mf-role-section)!important;
+  font-weight:600!important;
+  line-height:1.12!important;
+  letter-spacing:-.02em!important;
+}
+
+/* Cash reference uses bright white primary copy and neutral iOS gray secondary copy. */
+html:not([data-theme="light"]) :where(
+  h1,h2,h3,h4,h5,h6,
+  .brand-title,.brand,.token-name,.readiness-label,.mfpg-caption-title,.mf-settings-page-title>span
+){color:#fff!important;}
+
+html:not([data-theme="light"]) :where(
+  .muted,.subtitle,.brand-sub,.sub,.meta,[class*="-meta"],[class*="caption"],[class*="description"],[class*="summary"],[class*="hint"],[class*="note"],[class*="-sub"]
+){color:#8e8e93;}
+
+@media(max-width:760px){
+  :root{
+    --mf-role-display:40px!important;
+    --mf-role-page:28px!important;
+    --mf-role-section:19px!important;
+    --mf-role-subhead:17px!important;
+    --mf-role-body:16px!important;
+    --mf-role-ui:16px!important;
+    --mf-role-meta:14px!important;
+    --mf-role-micro:12px!important;
+  }
+  body{line-height:1.4!important;}
+}
