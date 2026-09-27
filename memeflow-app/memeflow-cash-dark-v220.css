@@ -350,3 +350,97 @@ html:not([data-theme="light"]) :is(
 }
 
 /* Functional semantic colors (profit/loss/status/accent) remain page-owned. */
+
+/* MEMEFLOW_TRADING_DARK_WHITE_BLEED_GUARD_V221 */
+html:not([data-theme="light"]) body.mf-page-trading.mf-trading-terminal{
+  --mf-dark-canvas:var(--mf-cash-bg) !important;
+  --mf-dark-surface-1:var(--mf-cash-surface) !important;
+  --mf-dark-surface-2:var(--mf-cash-surface-2) !important;
+  --mf-dark-line:var(--mf-cash-line) !important;
+
+  --mf-trading-v61-canvas:var(--mf-cash-bg) !important;
+  --mf-trading-v61-surface:var(--mf-cash-surface) !important;
+  --mf-trading-v61-inset:var(--mf-cash-surface-2) !important;
+  --mf-trading-v61-line:var(--mf-cash-line) !important;
+  --mf-trading-v61-line-strong:var(--mf-cash-line-strong) !important;
+}
+
+html:not([data-theme="light"])
+body.mf-page-trading.mf-trading-terminal
+:is(.terminal > .panel,.center-stack > .panel){
+  background:var(--mf-cash-surface) !important;
+  background-color:var(--mf-cash-surface) !important;
+  background-image:none !important;
+  box-shadow:none !important;
+}
+
+html:not([data-theme="light"])
+body.mf-page-trading.mf-trading-terminal
+:is(
+  .candidates-panel > .panel-head,
+  .candidates-panel > .candidate-filter,
+  .candidates-panel > .candidate-list,
+  .chart-panel > .chart-head,
+  .chart-panel > .timeframes,
+  .chart-panel > .indicator-bar,
+  .chart-panel > .indicator-bar > .indicator-scroll,
+  .chart-panel > .selected-metrics,
+  .approvals-panel > .panel-head,
+  .approvals-panel > .approval-list,
+  .positions-panel > .panel-head,
+  .positions-panel > .positions-list,
+  .strategy-summary-panel > .panel-head,
+  .strategy-summary-panel > .strategy-summary-list,
+  .strategy-summary-panel .strategy-summary-row,
+  .strategy-summary-panel .strategy-summary-row > div,
+  .strategy-summary-panel > .strategy-summary-foot,
+  .bottom-history-panel > .panel-head,
+  .bottom-history-panel > .trade-history
+){
+  background:transparent !important;
+  background-color:transparent !important;
+  background-image:none !important;
+  box-shadow:none !important;
+}
+
+html:not([data-theme="light"])
+body.mf-page-trading.mf-trading-terminal
+:is(
+  .candidate-filter > button[data-filter],
+  .timeframes > button,
+  .indicator-bar button
+){
+  background:transparent !important;
+  background-color:transparent !important;
+  background-image:none !important;
+  box-shadow:none !important;
+}
+
+html:not([data-theme="light"])
+body.mf-page-trading.mf-trading-terminal
+.chart-panel > .selected-metrics > div{
+  background:var(--mf-cash-surface-2) !important;
+  background-color:var(--mf-cash-surface-2) !important;
+  background-image:none !important;
+}
+
+html:not([data-theme="light"])
+body.mf-page-trading.mf-trading-terminal
+:is(
+  .candidate-list > .candidate,
+  .positions-list > .position-row,
+  .trade-history > .trade-row
+){
+  background:transparent !important;
+  background-color:transparent !important;
+  background-image:none !important;
+}
+
+html:not([data-theme="light"])
+body.mf-page-trading.mf-trading-terminal
+.chart-panel :is(.chart-wrap,#chartCanvas,#chartCanvas > div){
+  background:#000000 !important;
+  background-color:#000000 !important;
+  background-image:none !important;
+}
+/* /MEMEFLOW_TRADING_DARK_WHITE_BLEED_GUARD_V221 */
