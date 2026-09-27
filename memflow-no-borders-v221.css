@@ -1,0 +1,103 @@
+/* MEMFLOW — remove borders everywhere, keep divider lines */
+
+:root{
+  --mf-divider: rgba(255,255,255,0.08);
+}
+
+/* remove borders / outlines / frame-like shadows everywhere */
+*,
+*::before,
+*::after{
+  border-color: transparent !important;
+}
+
+.card,
+.panel,
+.block,
+.module,
+.widget,
+.section,
+.container,
+.surface,
+.box,
+.tile,
+.row-card,
+.list-card,
+.token-card,
+.stat-card,
+.search-panel,
+.search-wrap,
+.toolbar,
+.topbar,
+.header,
+.subheader,
+.sidebar,
+.drawer,
+.modal,
+.sheet,
+.popover,
+.dropdown,
+.menu,
+.table-wrap,
+.table-card,
+.pagination,
+.tabs,
+.tab-panel,
+.accordion,
+.details,
+.preview,
+.preview-card,
+.chart-card,
+.info-card,
+.content-card,
+button,
+input,
+select,
+textarea{
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* remove inline frame styles too */
+[style*="border:"],
+[style*="border-width"],
+[style*="outline:"],
+[style*="box-shadow"]{
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* keep divider lines */
+hr,
+.divider,
+.separator,
+[data-divider],
+[class*="divider"],
+[class*="separator"]{
+  border: 0 !important;
+  border-top: 1px solid var(--mf-divider) !important;
+  outline: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  opacity: 1 !important;
+}
+
+/* common row/list separators */
+.list > * + *,
+.table > * + *,
+.table-wrap > * + *,
+.stack > * + *,
+.rows > * + *,
+.cols > * + *{
+  border-top: 1px solid var(--mf-divider) !important;
+}
+
+/* optional: if sticky elements had fake border via shadow */
+.sticky,
+.sticky-header,
+.search-sticky,
+.pagination-sticky{
+  box-shadow: none !important;
+}

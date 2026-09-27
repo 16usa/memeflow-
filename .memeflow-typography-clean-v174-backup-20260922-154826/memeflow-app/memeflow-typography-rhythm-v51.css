@@ -1,0 +1,150 @@
+/* ==========================================================
+   MEMEFLOW TYPOGRAPHY & RHYTHM V51
+   Presentation only. No colors, backgrounds, borders, layout,
+   header geometry, JS, trading, wallet, scanner, API or backend.
+   ========================================================== */
+
+:root{
+  --mf-rhythm-display-lh:.98;
+  --mf-rhythm-heading-lh:1.08;
+  --mf-rhythm-subhead-lh:1.16;
+  --mf-rhythm-body-lh:1.54;
+  --mf-rhythm-meta-lh:1.32;
+  --mf-rhythm-ui-lh:1.18;
+}
+
+/* Stable glyph rasterization and sizing across iOS / tablet / desktop. */
+html{
+  -webkit-text-size-adjust:100%;
+  text-size-adjust:100%;
+  text-rendering:optimizeLegibility;
+}
+body{
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+  font-kerning:normal;
+  font-synthesis:none;
+}
+
+/* Keep headings tight and predictable without changing their font sizes. */
+main :where(h1,h2,h3,h4){
+  font-kerning:normal;
+  text-wrap:balance;
+}
+main h1{
+  line-height:var(--mf-rhythm-display-lh);
+}
+main h2{
+  line-height:var(--mf-rhythm-heading-lh);
+}
+main :where(h3,h4){
+  line-height:var(--mf-rhythm-subhead-lh);
+}
+
+/* Long copy gets a single readable vertical rhythm. */
+main :where(p,.description,.copy,.note,.helper,.summary,.subtitle){
+  line-height:var(--mf-rhythm-body-lh);
+  text-wrap:pretty;
+}
+
+/* Compact labels stay centered on one visual baseline. */
+main :where(
+  small,
+  .eyebrow,
+  [class*="eyebrow"],
+  [class*="kicker"],
+  [class*="label"],
+  [class*="meta"]
+){
+  line-height:var(--mf-rhythm-meta-lh);
+}
+
+/* UI text: buttons/tabs/chips stay vertically centered and do not inherit
+   accidental paragraph line-height. */
+main :where(
+  button,
+  [role="button"],
+  .btn,
+  [class*="pill"],
+  [class*="badge"],
+  [class*="chip"],
+  [class*="tab"]
+){
+  line-height:var(--mf-rhythm-ui-lh);
+}
+
+/* Numeric columns remain optically straight as values update. */
+main :where(
+  time,
+  code,
+  .mf-vault-mono,
+  .ap-kpis strong,
+  .mf-vault-stat strong,
+  .telemetry-item,
+  .metric-card,
+  [class*="price"],
+  [class*="score"],
+  [class*="pnl"],
+  [class*="metric"],
+  [class*="value"],
+  [class*="count"]
+){
+  font-variant-numeric:tabular-nums lining-nums;
+  font-feature-settings:"tnum" 1,"lnum" 1;
+}
+
+/* Page-specific display titles: preserve size, normalize only rhythm. */
+.mf-hiw-hero h1,
+.mf-vault-hero h1,
+.ap-hero h1,
+.settings-hero h1,
+.scene-title h1{
+  line-height:.98 !important;
+  letter-spacing:-.04em !important;
+}
+
+/* Page-specific section titles. */
+.mf-hiw-section-head h2,
+.mf-hiw-money h2,
+.mf-hiw-cta h2,
+.mf-vault-card-head h2,
+.mf-vault-status-copy h2,
+.ap-head h2,
+.settings-group > summary strong,
+.panel-head h2,
+.execution-head h2,
+.wallet-dialog-head h2,
+.sheet-top h2{
+  line-height:1.10 !important;
+}
+
+/* Descriptive copy on the redesigned pages. */
+.mf-hiw-hero-copy > p,
+.mf-hiw-section-head > p,
+.mf-vault-hero p,
+.mf-vault-note,
+.mf-vault-status-copy p,
+.ap-hero p,
+.ap-note,
+.ap-privacy{
+  line-height:1.55 !important;
+}
+
+/* Deliberately do not own the global header. The canonical V37/Vxx header
+   stylesheet is loaded after this file and remains the final header owner. */
+.mf-site-header{
+  font-variant-numeric:normal;
+}
+
+/* Mobile: keep wrapping clean without enlarging the interface. */
+@media (max-width:560px){
+  main :where(h1,h2,h3,h4){
+    overflow-wrap:normal;
+    word-break:normal;
+  }
+  main :where(p,.description,.copy,.note,.helper,.summary){
+    overflow-wrap:break-word;
+  }
+}
+
+/* ===== MEMEFLOW_TYPOGRAPHY_RHYTHM_V51_END ===== */

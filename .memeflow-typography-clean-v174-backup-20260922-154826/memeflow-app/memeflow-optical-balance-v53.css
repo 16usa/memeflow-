@@ -1,0 +1,28 @@
+/* MEMEFLOW_OPTICAL_BALANCE_V53
+   Final typography-only mobile correction layered after V52.
+   No color, surface, spacing, geometry, header, theme-runtime or logic ownership.
+*/
+
+@media (max-width: 760px) {
+  /* TOKEN FLOW
+     V52 at 28px is visually too large in the split hero on phone widths.
+     25px restores the compact one-line title without changing hero geometry. */
+  .flow-page .flow-hero h1 {
+    font-size: 25px;
+    line-height: 1;
+    font-weight: 800;
+    letter-spacing: -0.035em;
+  }
+
+  /* TRADING TERMINAL
+     V52 18px/780 is slightly too heavy on compact panels.
+     Keep the hierarchy, but quiet the titles by one optical step. */
+  .mf-trading-terminal .panel-head h2 {
+    font-size: 17px;
+    line-height: 1.1;
+    font-weight: 740;
+    letter-spacing: -0.02em;
+  }
+}
+
+/* MEMEFLOW_OPTICAL_BALANCE_V53_END */

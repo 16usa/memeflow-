@@ -1,0 +1,169 @@
+/* MEMEFLOW_TOKEN_FLOW_CONTINUOUS_COMPACT_V1
+   Token Flow only.
+   - pagination is visually removed; JS progressively reveals the next PAGE_SIZE rows
+   - search/analyze stays as one compact sticky row
+   - no trading, score, holder, market or InsightX logic changes
+*/
+
+body.mf-page-system-tokens .pagination {
+  display: none !important;
+}
+
+body.mf-page-system-tokens .flow-toolbar {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 70 !important;
+
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  align-items: center !important;
+
+  width: 100% !important;
+  min-height: 0 !important;
+  height: auto !important;
+
+  margin: 6px 0 0 !important;
+  padding: 5px 6px !important;
+  gap: 6px !important;
+
+  border-radius: 12px !important;
+}
+
+body.mf-page-system-tokens .flow-toolbar .search-wrap {
+  width: 100% !important;
+  min-width: 0 !important;
+  height: 38px !important;
+  min-height: 38px !important;
+  max-height: 38px !important;
+  margin: 0 !important;
+  padding: 0 12px !important;
+  border-radius: 999px !important;
+}
+
+body.mf-page-system-tokens .flow-toolbar .search-wrap input {
+  min-width: 0 !important;
+  height: 36px !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  line-height: 36px !important;
+}
+
+body.mf-page-system-tokens .flow-toolbar .refresh-info {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  min-width: 0 !important;
+  width: auto !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  gap: 0 !important;
+}
+
+body.mf-page-system-tokens .flow-toolbar .refresh-info > span,
+body.mf-page-system-tokens .flow-toolbar #lastUpdate {
+  display: none !important;
+}
+
+body.mf-page-system-tokens .flow-toolbar #refreshButton {
+  width: auto !important;
+  min-width: 86px !important;
+  height: 38px !important;
+  min-height: 38px !important;
+  max-height: 38px !important;
+  margin: 0 !important;
+  padding: 0 14px !important;
+  border-radius: 999px !important;
+  white-space: nowrap !important;
+}
+
+/* Light theme: compact neutral bar that blends into the page. */
+html[data-theme="light"] body.mf-page-system-tokens .flow-toolbar {
+  background: rgba(255, 255, 255, .96) !important;
+  border: 0 !important;
+  border-bottom: 1px solid #EBEBEB !important;
+  box-shadow: none !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+}
+
+html[data-theme="light"] body.mf-page-system-tokens .flow-toolbar .search-wrap {
+  background: #F5F5F5 !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body.mf-page-system-tokens .flow-toolbar #refreshButton {
+  background: #EBEBEB !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+/* Dark theme parity. */
+html[data-theme="dark"] body.mf-page-system-tokens .flow-toolbar {
+  background: rgba(15, 20, 26, .96) !important;
+  border: 0 !important;
+  border-bottom: 1px solid rgba(147, 178, 202, .12) !important;
+  box-shadow: none !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+}
+
+html[data-theme="dark"] body.mf-page-system-tokens .flow-toolbar .search-wrap {
+  background: rgba(255, 255, 255, .055) !important;
+  border: 0 !important;
+}
+
+html[data-theme="dark"] body.mf-page-system-tokens .flow-toolbar #refreshButton {
+  background: rgba(255, 255, 255, .08) !important;
+  border: 0 !important;
+}
+
+/* Existing V38 JS toggles mf-stuck only while the toolbar is actually pinned. */
+html[data-theme="light"] body.mf-page-system-tokens .flow-toolbar.mf-stuck {
+  box-shadow: 0 8px 22px rgba(32, 47, 58, .12) !important;
+}
+
+html[data-theme="dark"] body.mf-page-system-tokens .flow-toolbar.mf-stuck {
+  box-shadow: 0 10px 26px rgba(0, 0, 0, .36) !important;
+}
+
+@media (max-width: 760px) {
+  body.mf-page-system-tokens .flow-toolbar {
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    margin-top: 5px !important;
+    padding: 4px 5px !important;
+    gap: 5px !important;
+    border-radius: 10px !important;
+  }
+
+  body.mf-page-system-tokens .flow-toolbar .search-wrap {
+    height: 36px !important;
+    min-height: 36px !important;
+    max-height: 36px !important;
+    padding-inline: 11px !important;
+  }
+
+  body.mf-page-system-tokens .flow-toolbar .search-wrap input {
+    height: 34px !important;
+    line-height: 34px !important;
+    /* 16px prevents iOS focus zoom without changing the control geometry. */
+    font-size: 16px !important;
+  }
+
+  body.mf-page-system-tokens .flow-toolbar #refreshButton {
+    min-width: 82px !important;
+    height: 36px !important;
+    min-height: 36px !important;
+    max-height: 36px !important;
+    padding-inline: 12px !important;
+  }
+}
+
+@media (max-width: 380px) {
+  body.mf-page-system-tokens .flow-toolbar #refreshButton {
+    min-width: 76px !important;
+    padding-inline: 10px !important;
+  }
+}
+/* /MEMEFLOW_TOKEN_FLOW_CONTINUOUS_COMPACT_V1 */

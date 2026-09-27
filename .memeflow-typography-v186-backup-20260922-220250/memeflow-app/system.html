@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+<head>
+<!-- MEMEFLOW_LIGHT_THEME_BOOT_V1 -->
+<script id="mfThemeBootV1">
+(() => {
+  try {
+    const value = localStorage.getItem('memeflow.theme.v1');
+    const theme = value === 'light' ? 'light' : 'dark';
+    document.documentElement.dataset.theme = theme;
+    document.documentElement.style.colorScheme = theme;
+  } catch {
+    document.documentElement.dataset.theme = 'dark';
+  }
+})();
+</script>
+<!-- /MEMEFLOW_LIGHT_THEME_BOOT_V1 -->
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="color-scheme" content="light dark" />
+  <meta name="description" content="MEMEFLOW Live System View — real-time 3D visualization of discovery, market, holder, evaluation and paper trading pipelines." />
+  <title>MEMEFLOW · Live System View</title>
+  <link rel="stylesheet" href="/system.css?v=gallery-width-v155-20260919" />
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.185.1/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.185.1/examples/jsm/"
+    }
+  }
+  </script>
+<link rel="stylesheet" href="/memeflow-brand.css?v=gorilla-pair-v159-20260919">
+<script>window.__MEMEFLOW_TRUE_3D_ACTIVE__=true;</script>
+  <!-- MEMEFLOW_GLOBAL_RIGHT_DRAWER_NAV_V1 -->
+  <link rel="stylesheet" href="/memeflow-nav.css?v=global-right-drawer-frameless-v2-20260829">
+  <!-- MEMEFLOW_SYSTEM_REMOVE_TRADING_SETTINGS_HEADER_BUTTONS_V1 -->
+  <!-- MEMEFLOW_SYSTEM_GALLERY_VARIANT2_CLEAN_V1 -->
+
+  <!-- MEMEFLOW_HEADER_TAGLINE_V1 -->
+
+
+  <link rel="stylesheet" href="/memeflow-header.css?v=canvas-header-v4-20260904-233242">
+<!-- MEMEFLOW_LIGHT_THEME_ASSETS_V1 -->
+<link rel="stylesheet" href="/memeflow-theme.css?v=light-page-canvas-v6-20260904-233933">
+<!-- MEMEFLOW_THEME_PREVIEW_FLASH_FIX_V2_ASSET -->
+<link rel="stylesheet" href="/theme-preview-flash-v2.css?v=2">
+<script src="/memeflow-theme.js?v=light-theme-v1-20260830" defer></script>
+<!-- /MEMEFLOW_LIGHT_THEME_ASSETS_V1 -->
+<link rel="stylesheet" href="/memeflow-layout-spacing-v54.css?v=layout-spacing-v54-20260905">
+<link rel="stylesheet" href="/memeflow-component-geometry-v55.css?v=component-geometry-v55-20260905">
+<link rel="stylesheet" href="/memeflow-surface-hierarchy-v57.css?v=surface-hierarchy-v57-20260905">
+<link rel="stylesheet" href="/memeflow-interaction-states-v58.css?v=interaction-states-v58-20260905">
+
+
+<link rel="stylesheet" href="/memeflow-header-standard-v37.css?v=header-consistency-v37-20260904">
+<!-- MEMEFLOW_SYSTEM_GALLERY_RESTORE_V56 -->
+<link rel="stylesheet" href="/memeflow-system-gallery-restore-v56.css?v=gallery-width-v155-20260919">
+<link rel="stylesheet" href="/memeflow-header-nav-polish-v59.css?v=header-nav-polish-v59-20260905">
+<link rel="stylesheet" href="/memeflow-nav-interaction-restore-v59b.css?v=nav-interaction-restore-v59b-20260905">
+
+<!-- MEMEFLOW_RESPONSIVE_FINAL_V62 -->
+<link rel="stylesheet" href="/memeflow-responsive-final-v62.css?v=responsive-final-v62-20260905">
+<!-- /MEMEFLOW_RESPONSIVE_FINAL_V62 -->
+<!-- MEMEFLOW_COMPONENT_CONSISTENCY_V63 -->
+<link rel="stylesheet" href="/memeflow-component-consistency-v63.css?v=component-consistency-v63-20260905">
+<!-- /MEMEFLOW_COMPONENT_CONSISTENCY_V63 -->
+<!-- MEMEFLOW_ACCESSIBILITY_USABILITY_V64A -->
+<link rel="stylesheet" href="/memeflow-accessibility-usability-v64a.css?v=accessibility-v64a-20260905">
+<!-- /MEMEFLOW_ACCESSIBILITY_USABILITY_V64A -->
+<!-- MEMEFLOW_FINAL_VISUAL_QA_V65 -->
+<!-- /MEMEFLOW_FINAL_VISUAL_QA_V65 -->
+<!-- MEMEFLOW_DARK_X_SURFACE_V131_ASSET -->
+<!-- /MEMEFLOW_DARK_X_SURFACE_V131_ASSET -->
+  <link rel="stylesheet" href="/memeflow-x-canonical-v185.css?v=runtime-text-final-v185-20260922">
+</head>
+<body class="mf-final-visual-qa-v65 mf-accessibility-v64a mf-component-consistency-v63 mf-layout-rhythm-v54 mf-page-system mf-component-geometry-v55 mf-surface-hierarchy-v57 mf-interaction-states-v58 mf-header-nav-polish-v59 mf-nav-interaction-restore-v59b">
+  <div id="boot" class="boot" aria-live="polite">
+    <div class="boot-mark"><span class="mf-loader-v9"><img class="mf-v9-glow" src="/brand/loader-v9/glow.png?v=v9" alt=""><img class="mf-v9-ul" src="/brand/loader-v9/wing-upper-left.png?v=v9" alt=""><img class="mf-v9-ur" src="/brand/loader-v9/wing-upper-right.png?v=v9" alt=""><img class="mf-v9-ll" src="/brand/loader-v9/wing-lower-left.png?v=v9" alt=""><img class="mf-v9-lr" src="/brand/loader-v9/wing-lower-right.png?v=v9" alt=""><img class="mf-v9-body" src="/brand/loader-v9/body.png?v=v9" alt=""></span></div>
+    <strong>MEMEFLOW SYSTEM VIEW</strong>
+    <span>Initializing real-time topology…</span>
+  </div>
+
+  <main class="system-shell mf-system-page-flow-v2">
+    <header class="topbar glass mf-site-header">
+      <div class="brand-block">
+        <a class="back" href="/" aria-label="Back to dashboard">←</a>
+        <div class="brand-mark" aria-hidden="true"><img class="mf-brand-img" src="/brand/memeflow-gorilla-dark.png?v=gorilla-pair-v159" alt=""></div>
+        <div>
+          <div class="brand">APE TRADING</div>
+          <div class="subtitle">AI-POWERED ON-CHAIN TRADING</div>
+        </div>
+      </div>
+
+      <div class="system-chips" aria-label="System status">
+        <div class="status-chip"><i id="wsDot" class="dot idle"></i><span>Discovery</span><b id="wsStatus">Connecting</b></div>
+        <div class="status-chip"><i id="rpcDot" class="dot idle"></i><span>Pre-open RPC</span><b id="rpcStatus">Ready gate</b></div>
+        <div class="status-chip"><i id="aiDot" class="dot idle"></i><span>OpenAI</span><b id="aiStatus">Checking</b></div>
+        <div class="status-chip execution"><i class="dot warning"></i><span>Live execution</span><b>Not verified</b></div>
+      </div>
+
+      <div class="top-actions">
+        <button id="autoRotateBtn" class="tool-btn active" type="button">Auto orbit</button>
+        <button id="resetViewBtn" class="tool-btn" type="button">Reset view</button>
+      </div>
+    </header>
+
+<!-- MEMEFLOW_REALTIME_PAGE_GALLERY_TOP_V5_1 -->
+<section class="viewport-wrap mf-true3d-clean-v3 mf-page-gallery-host mf-page-gallery-clean-v2 mfpg-variant2-clean-v1">
+      <canvas id="systemCanvas" aria-label="Interactive 3D MEMEFLOW system topology"></canvas>
+      <div id="memeflowTrue3DHost" aria-label="MEMEFLOW true 3D renderer"></div>
+      <div id="labels" class="scene-labels" aria-hidden="true"></div>
+
+<div class="scene-hint glass">Drag to orbit · Wheel / pinch to zoom · Tap a token or module</div>
+
+      <aside id="inspector" class="inspector glass mf-live-inspector-removed-v3" hidden aria-hidden="true">
+        <div class="inspector-head">
+          <div>
+            <span class="eyebrow">LIVE INSPECTOR</span>
+            <h2 id="inspectorTitle">MEMEFLOW Core</h2>
+          </div>
+          <span id="inspectorState" class="state-pill neutral">SYSTEM</span>
+        </div>
+        <p id="inspectorSummary" class="inspector-summary">Select a token or architecture module to inspect its live state.</p>
+        <div id="metricGrid" class="metric-grid"></div>
+        <div class="reason-block">
+          <span>PRIMARY SIGNAL</span>
+          <p id="primaryReason">Waiting for telemetry.</p>
+        </div>
+        <div id="gateList" class="gate-list"></div>
+        <div class="inspector-foot">
+          <span id="inspectorMint">Live architecture</span>
+          <button id="focusBtn" type="button">Focus</button>
+        </div>
+      </aside>
+
+</section>
+
+<!-- MEMEFLOW_REALTIME_PAGE_GALLERY_CAPTION_V6 -->
+<section id="mfPageCaption" class="mfpg-caption" aria-live="polite" aria-atomic="true">
+  <div class="mfpg-caption-inner">
+    <span id="mfPageCaptionIndex" class="mfpg-caption-index">04 / 04</span>
+    <h2 id="mfPageCaptionTitle" class="mfpg-caption-title">HOW IT WORKS</h2>
+    <p id="mfPageCaptionText" class="mfpg-caption-text">Configure trading mode, AI thresholds, risk filters and execution rules.</p>
+
+  </div>
+</section>
+</main>
+
+  <div id="fatal" class="fatal" hidden>
+    <strong>3D renderer unavailable</strong>
+    <span>The system telemetry panel can still update, but WebGL/Three.js could not start.</span>
+  </div>
+
+  <script src="/copy-trading-wallets-v3.js?v=multi-wallet-v3-20260827"></script>
+  <script type="module" src="/system.js?v=gallery-inner-width-fit-v156-20260919"></script>
+<script src="/memeflow-nav.js?v=global-right-drawer-v2-how-it-works" defer></script>
+</body>
+</html>

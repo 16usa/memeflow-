@@ -1,0 +1,197 @@
+/* ==========================================================================
+   MEMEFLOW AGENT PERFORMANCE — WHITE POLISH V38
+   LIGHT THEME ONLY
+   Neutral surfaces: #FFFFFF / #F5F5F5 / #EBEBEB
+   Functional cyan / green / red semantics intentionally remain native.
+   Header geometry is intentionally NOT owned here; V37/V34 remains final.
+   ========================================================================== */
+
+html[data-theme="light"] body.mf-agent-performance-page {
+  --bg: #FFFFFF !important;
+  --panel: #F5F5F5 !important;
+  --line: #EBEBEB !important;
+  --text: #17222C !important;
+  --muted: #738590 !important;
+  --flat: #91A0A9 !important;
+
+  margin: 0;
+  background: #FFFFFF !important;
+  background-image: none !important;
+  color: var(--text) !important;
+}
+
+html[data-theme="light"] body.mf-agent-performance-page .ap-page {
+  background: #FFFFFF !important;
+}
+
+html[data-theme="light"] body.mf-agent-performance-page .ap-hero h1,
+html[data-theme="light"] body.mf-agent-performance-page .ap-head h2,
+html[data-theme="light"] body.mf-agent-performance-page .ap-source strong,
+html[data-theme="light"] body.mf-agent-performance-page .ap-kpis strong,
+html[data-theme="light"] body.mf-agent-performance-page .ap-summary strong,
+html[data-theme="light"] body.mf-agent-performance-page .ap-engine strong,
+html[data-theme="light"] body.mf-agent-performance-page .factor-top strong,
+html[data-theme="light"] body.mf-agent-performance-page .rank strong,
+html[data-theme="light"] body.mf-agent-performance-page .ap-bars strong,
+html[data-theme="light"] body.mf-agent-performance-page .ap-legend b {
+  color: #17222C !important;
+}
+
+html[data-theme="light"] body.mf-agent-performance-page .ap-hero p,
+html[data-theme="light"] body.mf-agent-performance-page .ap-source span,
+html[data-theme="light"] body.mf-agent-performance-page .ap-source small,
+html[data-theme="light"] body.mf-agent-performance-page .ap-kpis span,
+html[data-theme="light"] body.mf-agent-performance-page .ap-kpis small,
+html[data-theme="light"] body.mf-agent-performance-page .ap-summary span,
+html[data-theme="light"] body.mf-agent-performance-page .ap-note,
+html[data-theme="light"] body.mf-agent-performance-page .ap-bars > div,
+html[data-theme="light"] body.mf-agent-performance-page .ap-engine span,
+html[data-theme="light"] body.mf-agent-performance-page .ap-engine small,
+html[data-theme="light"] body.mf-agent-performance-page .factor-top span,
+html[data-theme="light"] body.mf-agent-performance-page .meta,
+html[data-theme="light"] body.mf-agent-performance-page .empty,
+html[data-theme="light"] body.mf-agent-performance-page .ap-privacy,
+html[data-theme="light"] body.mf-agent-performance-page footer {
+  color: #738590 !important;
+}
+
+/* Main surfaces */
+html[data-theme="light"] body.mf-agent-performance-page .ap-source,
+html[data-theme="light"] body.mf-agent-performance-page .ap-panel,
+html[data-theme="light"] body.mf-agent-performance-page .ap-kpis article {
+  background: #F5F5F5 !important;
+  background-image: none !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body.mf-agent-performance-page .ap-source {
+  border-radius: 18px !important;
+}
+
+html[data-theme="light"] body.mf-agent-performance-page .ap-panel,
+html[data-theme="light"] body.mf-agent-performance-page .ap-kpis article {
+  border-radius: 20px !important;
+}
+
+/* Controls */
+html[data-theme="light"] body.mf-agent-performance-page .ap-periods {
+  background: #F5F5F5 !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body.mf-agent-performance-page .ap-periods button,
+html[data-theme="light"] body.mf-agent-performance-page .ap-refresh {
+  color: #667782 !important;
+}
+
+html[data-theme="light"] body.mf-agent-performance-page .ap-periods button.active {
+  background: #EBEBEB !important;
+  color: #17222C !important;
+}
+
+html[data-theme="light"] body.mf-agent-performance-page .ap-refresh {
+  background: #F5F5F5 !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body.mf-agent-performance-page .ap-refresh:hover,
+html[data-theme="light"] body.mf-agent-performance-page .ap-refresh:focus-visible {
+  background: #EBEBEB !important;
+  color: #17222C !important;
+}
+
+/* KPI emphasis keeps meaning through native cyan accent. */
+html[data-theme="light"] body.mf-agent-performance-page .ap-kpis .primary {
+  border-color: rgba(85,215,244,.40) !important;
+}
+
+/* Nested content */
+html[data-theme="light"] body.mf-agent-performance-page .ap-summary div,
+html[data-theme="light"] body.mf-agent-performance-page .factor,
+html[data-theme="light"] body.mf-agent-performance-page .rank {
+  background: #FFFFFF !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body.mf-agent-performance-page .ap-summary div,
+html[data-theme="light"] body.mf-agent-performance-page .factor,
+html[data-theme="light"] body.mf-agent-performance-page .rank,
+html[data-theme="light"] body.mf-agent-performance-page .empty {
+  border-radius: 14px !important;
+}
+
+html[data-theme="light"] body.mf-agent-performance-page .ap-note,
+html[data-theme="light"] body.mf-agent-performance-page .ap-engine {
+  border-top-color: #EBEBEB !important;
+}
+
+html[data-theme="light"] body.mf-agent-performance-page .ap-bars em,
+html[data-theme="light"] body.mf-agent-performance-page .track,
+html[data-theme="light"] body.mf-agent-performance-page .rank div {
+  background: #EBEBEB !important;
+}
+
+html[data-theme="light"] body.mf-agent-performance-page .ap-donut::before {
+  background: #F5F5F5 !important;
+}
+
+html[data-theme="light"] body.mf-agent-performance-page .ap-donut span,
+html[data-theme="light"] body.mf-agent-performance-page .ap-legend {
+  color: #738590 !important;
+}
+
+/* Quiet lower surfaces */
+html[data-theme="light"] body.mf-agent-performance-page .ap-privacy {
+  background: #F5F5F5 !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body.mf-agent-performance-page .ap-privacy strong {
+  color: #334650 !important;
+}
+
+html[data-theme="light"] body.mf-agent-performance-page footer a {
+  color: #536873 !important;
+}
+
+/* Error remains semantic red. */
+html[data-theme="light"] body.mf-agent-performance-page .ap-error {
+  background: rgba(239,102,112,.055) !important;
+  border-color: rgba(239,102,112,.22) !important;
+  color: #B44F59 !important;
+}
+
+/* Functional accents intentionally retained. */
+html[data-theme="light"] body.mf-agent-performance-page .ap-eyebrow {
+  color: var(--cyan) !important;
+}
+
+html[data-theme="light"] body.mf-agent-performance-page .ap-head > b,
+html[data-theme="light"] body.mf-agent-performance-page .ap-privacy > b,
+html[data-theme="light"] body.mf-agent-performance-page .meta .pos {
+  color: var(--green) !important;
+}
+
+html[data-theme="light"] body.mf-agent-performance-page .meta .neg {
+  color: var(--red) !important;
+}
+
+@media (max-width: 820px) {
+  html[data-theme="light"] body.mf-agent-performance-page .ap-hero {
+    padding-top: 30px !important;
+  }
+}
+
+@media (max-width: 470px) {
+  html[data-theme="light"] body.mf-agent-performance-page .ap-panel,
+  html[data-theme="light"] body.mf-agent-performance-page .ap-kpis article {
+    border-radius: 18px !important;
+  }
+}
+
+/* DARK THEME INTENTIONALLY UNTOUCHED. */

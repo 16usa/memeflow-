@@ -1,0 +1,376 @@
+/*
+  MEMEFLOW Trading Terminal — White Polish V33
+  LIGHT theme presentation only.
+
+  Neutral palette locked to:
+    #FFFFFF  page / chart / breathing room
+    #F5F5F5  large functional surfaces
+    #EBEBEB  neutral controls / separators / selected neutral row
+
+  Native functional colors are intentionally NOT redefined.
+  Header, typography, chart series, JS, data, trading logic and dark theme stay untouched.
+
+  This file is intentionally page-scoped and loaded LAST from trading.html so it is the
+  single final neutral-surface authority for Trading Terminal without changing shared CSS.
+*/
+
+/* =========================================================
+   1. PAGE CANVAS — MOSTLY WHITE
+   ========================================================= */
+html[data-theme="light"] body.mf-trading-terminal,
+html[data-theme="light"] body.mf-trading-terminal .shell,
+html[data-theme="light"] body.mf-trading-terminal .terminal {
+  background: #FFFFFF !important;
+  background-color: #FFFFFF !important;
+  background-image: none !important;
+}
+
+/* =========================================================
+   2. TOP RUNTIME STATUS — QUIET CONTROLS, NOT FRAMED CARDS
+   ========================================================= */
+html[data-theme="light"] body.mf-trading-terminal :is(
+  .engine-strip .status-pill,
+  .status-pill,
+  .decision-badge,
+  .tiny-state,
+  .approval-count
+) {
+  background: #F5F5F5 !important;
+  background-color: #F5F5F5 !important;
+  background-image: none !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Semantic status text/dots remain whatever the app already defines. */
+
+/* =========================================================
+   3. CHART — WHITE CANVAS WITH TWO QUIET GRAY BANDS
+   ========================================================= */
+html[data-theme="light"] body.mf-trading-terminal .chart-panel {
+  background: #FFFFFF !important;
+  background-color: #FFFFFF !important;
+  background-image: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  overflow: hidden !important;
+}
+
+/* Token summary + timeframe band. */
+html[data-theme="light"] body.mf-trading-terminal .chart-panel .chart-head,
+html[data-theme="light"] body.mf-trading-terminal .chart-panel .timeframes {
+  background: #F5F5F5 !important;
+  background-color: #F5F5F5 !important;
+  background-image: none !important;
+  border: 0 !important;
+  border-bottom: 1px solid #EBEBEB !important;
+  box-shadow: none !important;
+}
+
+/* The actual chart is pure white. Candle/level colors are untouched. */
+html[data-theme="light"] body.mf-trading-terminal .chart-panel .chart-wrap,
+html[data-theme="light"] body.mf-trading-terminal .chart-panel #chartCanvas,
+html[data-theme="light"] body.mf-trading-terminal .chart-panel #chartCanvas > div {
+  background: #FFFFFF !important;
+  background-color: #FFFFFF !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+/* Small neutral timeframe controls use only the approved darker gray. */
+html[data-theme="light"] body.mf-trading-terminal .timeframes button:not(.active) {
+  background: #EBEBEB !important;
+  background-color: #EBEBEB !important;
+  background-image: none !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Selected timeframe keeps the existing native cyan semantic accent. */
+html[data-theme="light"] body.mf-trading-terminal .timeframes button.active {
+  background: #EBEBEB !important;
+  background-color: #EBEBEB !important;
+  border-color: var(--cyan) !important;
+  box-shadow: inset 0 0 0 1px var(--cyan) !important;
+}
+
+/* Footer reads as one quiet information band rather than a table. */
+html[data-theme="light"] body.mf-trading-terminal .indicator-bar,
+html[data-theme="light"] body.mf-trading-terminal .indicator-scroll,
+html[data-theme="light"] body.mf-trading-terminal .selected-metrics {
+  background: #F5F5F5 !important;
+  background-color: #F5F5F5 !important;
+  background-image: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body.mf-trading-terminal .indicator-bar {
+  border-top: 1px solid #EBEBEB !important;
+}
+
+html[data-theme="light"] body.mf-trading-terminal .selected-metrics {
+  border-top: 1px solid #EBEBEB !important;
+}
+
+html[data-theme="light"] body.mf-trading-terminal .selected-metrics > div {
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body.mf-trading-terminal .indicator-divider {
+  background: #EBEBEB !important;
+}
+
+/* =========================================================
+   4. PENDING APPROVALS — FLAT ON THE WHITE PAGE
+   ========================================================= */
+html[data-theme="light"] body.mf-trading-terminal .approvals-panel {
+  background: #FFFFFF !important;
+  background-color: #FFFFFF !important;
+  background-image: none !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  min-height: 0 !important;
+  overflow: visible !important;
+}
+
+html[data-theme="light"] body.mf-trading-terminal .approvals-panel .panel-head {
+  background: #FFFFFF !important;
+  background-color: #FFFFFF !important;
+  background-image: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  min-height: 0 !important;
+}
+
+html[data-theme="light"] body.mf-trading-terminal
+.approvals-panel:not([data-active="true"]) .approval-list {
+  display: none !important;
+}
+
+html[data-theme="light"] body.mf-trading-terminal
+.approvals-panel[data-active="true"] .panel-head {
+  border-bottom: 1px solid #EBEBEB !important;
+}
+
+html[data-theme="light"] body.mf-trading-terminal .approval-list {
+  background: #FFFFFF !important;
+  background-color: #FFFFFF !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+/* =========================================================
+   5. LARGE FUNCTIONAL SURFACES — ONE SOFT BLOCK EACH
+   ========================================================= */
+html[data-theme="light"] body.mf-trading-terminal :is(
+  .strategy-summary-panel,
+  .positions-panel,
+  .candidates-panel,
+  .history-panel
+) {
+  background: #F5F5F5 !important;
+  background-color: #F5F5F5 !important;
+  background-image: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  overflow: hidden !important;
+}
+
+html[data-theme="light"] body.mf-trading-terminal :is(
+  .strategy-summary-panel,
+  .positions-panel,
+  .candidates-panel,
+  .history-panel
+) .panel-head {
+  background: #F5F5F5 !important;
+  background-color: #F5F5F5 !important;
+  background-image: none !important;
+  border: 0 !important;
+  border-bottom: 1px solid #EBEBEB !important;
+  box-shadow: none !important;
+}
+
+/* =========================================================
+   6. TRADE STRATEGY — NO TABLE GRID
+   ========================================================= */
+html[data-theme="light"] body.mf-trading-terminal .strategy-summary-list,
+html[data-theme="light"] body.mf-trading-terminal .strategy-summary-row,
+html[data-theme="light"] body.mf-trading-terminal .strategy-summary-row > div,
+html[data-theme="light"] body.mf-trading-terminal .strategy-summary-foot {
+  background: #F5F5F5 !important;
+  background-color: #F5F5F5 !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body.mf-trading-terminal .strategy-summary-list,
+html[data-theme="light"] body.mf-trading-terminal .strategy-summary-row,
+html[data-theme="light"] body.mf-trading-terminal .strategy-summary-row > div {
+  border: 0 !important;
+}
+
+html[data-theme="light"] body.mf-trading-terminal .strategy-summary-foot {
+  border: 0 !important;
+  border-top: 1px solid #EBEBEB !important;
+}
+
+html[data-theme="light"] body.mf-trading-terminal .strategy-edit-link {
+  background: #EBEBEB !important;
+  background-color: #EBEBEB !important;
+  background-image: none !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Mode badge itself is semantic; only remove decorative neutral shadow. */
+html[data-theme="light"] body.mf-trading-terminal .mode-badge {
+  box-shadow: none !important;
+}
+
+/* =========================================================
+   7. OPEN POSITIONS / CANDIDATES / RECENT TRADES
+      ONE SURFACE + HAIRLINE ROWS
+   ========================================================= */
+html[data-theme="light"] body.mf-trading-terminal :is(
+  .positions-list,
+  .candidate-list,
+  .trade-history
+) {
+  background: #F5F5F5 !important;
+  background-color: #F5F5F5 !important;
+  background-image: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body.mf-trading-terminal :is(
+  .position-row,
+  .positions-list > *,
+  .candidate,
+  .candidate-list > *,
+  .trade-history > *
+) {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border-left-color: transparent !important;
+  border-right-color: transparent !important;
+  border-top-color: transparent !important;
+  border-bottom-color: #EBEBEB !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body.mf-trading-terminal :is(
+  .positions-list > *:last-child,
+  .candidate-list > *:last-child,
+  .trade-history > *:last-child
+) {
+  border-bottom-color: transparent !important;
+}
+
+/* Token artwork should not have another neutral decorative frame/glow. */
+html[data-theme="light"] body.mf-trading-terminal :is(
+  .token-avatar,
+  .position-token-avatar,
+  .candidate-token-avatar,
+  .trade-token-avatar
+) {
+  box-shadow: none !important;
+}
+
+/* =========================================================
+   8. CANDIDATES — FILTERS + SELECTED ROW
+   ========================================================= */
+html[data-theme="light"] body.mf-trading-terminal .candidate-filter {
+  background: #F5F5F5 !important;
+  background-color: #F5F5F5 !important;
+  background-image: none !important;
+  border: 0 !important;
+  border-bottom: 1px solid #EBEBEB !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body.mf-trading-terminal .candidate-filter button:not(.active) {
+  background: #EBEBEB !important;
+  background-color: #EBEBEB !important;
+  background-image: none !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body.mf-trading-terminal .candidate-filter button.active {
+  background: #EBEBEB !important;
+  background-color: #EBEBEB !important;
+  border-color: var(--cyan) !important;
+  box-shadow: inset 0 0 0 1px var(--cyan) !important;
+}
+
+/* Preserve the V18 selected-candidate behavior. */
+html[data-theme="light"] body.mf-trading-terminal
+.candidate-list .candidate.selected {
+  background: #EBEBEB !important;
+  background-color: #EBEBEB !important;
+  background-image: none !important;
+  border-left: 0 !important;
+  border-right: 0 !important;
+  border-top: 0 !important;
+  border-bottom-color: #EBEBEB !important;
+  border-radius: 0 !important;
+  box-shadow: inset 3px 0 0 var(--cyan) !important;
+}
+
+html[data-theme="light"] body.mf-trading-terminal
+.candidate-list .candidate:not(.selected):hover {
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* =========================================================
+   9. EMPTY / SYNCING STATES
+   ========================================================= */
+html[data-theme="light"] body.mf-trading-terminal :is(.empty, .chart-empty) {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* No glass / backdrop effects on neutral surfaces. */
+html[data-theme="light"] body.mf-trading-terminal :is(
+  .chart-panel,
+  .strategy-summary-panel,
+  .positions-panel,
+  .candidates-panel,
+  .history-panel,
+  .approvals-panel
+) {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+@media (max-width: 900px) {
+  html[data-theme="light"] body.mf-trading-terminal :is(
+    .chart-panel,
+    .strategy-summary-panel,
+    .positions-panel,
+    .candidates-panel,
+    .history-panel
+  ) {
+    border-radius: 18px !important;
+  }
+
+  html[data-theme="light"] body.mf-trading-terminal .approvals-panel {
+    border-radius: 0 !important;
+  }
+
+  html[data-theme="light"] body.mf-trading-terminal .approvals-panel .panel-head {
+    padding-top: 8px !important;
+    padding-bottom: 8px !important;
+  }
+}

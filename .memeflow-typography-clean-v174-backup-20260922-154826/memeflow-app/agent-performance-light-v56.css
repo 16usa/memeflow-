@@ -1,0 +1,160 @@
+/* MEMEFLOW Agent Performance Light Polish V56
+   Presentation only.
+   Palette: #FFFFFF / #F5F5F5 / #EBEBEB.
+   Keeps MEMEFLOW semantic cyan / green / red accents.
+   Does not change typography, JS, API, scanner, wallet or trading logic.
+*/
+
+html[data-theme="light"] body.mf-agent-performance-page {
+  --bg: #ffffff !important;
+  --panel: #f5f5f5 !important;
+  --line: rgba(23, 23, 23, .085) !important;
+  --text: #171717 !important;
+  --muted: #737373 !important;
+
+  background: #ffffff !important;
+  background-image: none !important;
+  color: var(--text) !important;
+}
+
+html[data-theme="light"] body.mf-agent-performance-page .ap-page {
+  background: transparent !important;
+}
+
+/* Hero / source */
+html[data-theme="light"] body.mf-agent-performance-page .ap-hero {
+  background: transparent !important;
+}
+
+html[data-theme="light"] body.mf-agent-performance-page .ap-hero h1,
+html[data-theme="light"] body.mf-agent-performance-page .ap-head h2,
+html[data-theme="light"] body.mf-agent-performance-page .ap-source strong,
+html[data-theme="light"] body.mf-agent-performance-page .ap-kpis strong,
+html[data-theme="light"] body.mf-agent-performance-page .ap-summary strong,
+html[data-theme="light"] body.mf-agent-performance-page .ap-engine strong,
+html[data-theme="light"] body.mf-agent-performance-page .factor-top strong,
+html[data-theme="light"] body.mf-agent-performance-page .rank strong {
+  color: #171717 !important;
+}
+
+html[data-theme="light"] body.mf-agent-performance-page .ap-hero p,
+html[data-theme="light"] body.mf-agent-performance-page .ap-source span,
+html[data-theme="light"] body.mf-agent-performance-page .ap-source small,
+html[data-theme="light"] body.mf-agent-performance-page .ap-kpis span,
+html[data-theme="light"] body.mf-agent-performance-page .ap-kpis small,
+html[data-theme="light"] body.mf-agent-performance-page .ap-summary span,
+html[data-theme="light"] body.mf-agent-performance-page .factor-top span,
+html[data-theme="light"] body.mf-agent-performance-page .meta,
+html[data-theme="light"] body.mf-agent-performance-page .ap-engine span,
+html[data-theme="light"] body.mf-agent-performance-page .ap-engine small,
+html[data-theme="light"] body.mf-agent-performance-page footer {
+  color: #737373 !important;
+}
+
+/* Main surfaces */
+html[data-theme="light"] body.mf-agent-performance-page .ap-source,
+html[data-theme="light"] body.mf-agent-performance-page .ap-panel,
+html[data-theme="light"] body.mf-agent-performance-page .ap-kpis article {
+  background: #f5f5f5 !important;
+  background-image: none !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Keep the intentionally emphasized KPI semantic accent. */
+html[data-theme="light"] body.mf-agent-performance-page .ap-kpis .primary {
+  border: 1px solid rgba(85, 215, 244, .48) !important;
+}
+
+/* Secondary / inset surfaces */
+html[data-theme="light"] body.mf-agent-performance-page .ap-summary div,
+html[data-theme="light"] body.mf-agent-performance-page .factor,
+html[data-theme="light"] body.mf-agent-performance-page .rank,
+html[data-theme="light"] body.mf-agent-performance-page .empty {
+  background: #ebebeb !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body.mf-agent-performance-page .ap-privacy {
+  background: #f5f5f5 !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Controls */
+html[data-theme="light"] body.mf-agent-performance-page .ap-periods {
+  background: #f5f5f5 !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body.mf-agent-performance-page .ap-periods button,
+html[data-theme="light"] body.mf-agent-performance-page .ap-refresh {
+  color: #737373 !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body.mf-agent-performance-page .ap-periods button.active {
+  background: #ebebeb !important;
+  color: #171717 !important;
+}
+
+html[data-theme="light"] body.mf-agent-performance-page .ap-refresh {
+  background: #f5f5f5 !important;
+  border-color: transparent !important;
+}
+
+html[data-theme="light"] body.mf-agent-performance-page .ap-refresh:hover,
+html[data-theme="light"] body.mf-agent-performance-page .ap-refresh:focus-visible,
+html[data-theme="light"] body.mf-agent-performance-page .ap-periods button:hover,
+html[data-theme="light"] body.mf-agent-performance-page .ap-periods button:focus-visible {
+  background: #ebebeb !important;
+  color: #171717 !important;
+}
+
+/* Donut / tracks */
+html[data-theme="light"] body.mf-agent-performance-page .ap-donut:before {
+  background: #f5f5f5 !important;
+}
+
+html[data-theme="light"] body.mf-agent-performance-page .ap-bars em,
+html[data-theme="light"] body.mf-agent-performance-page .track,
+html[data-theme="light"] body.mf-agent-performance-page .rank div {
+  background: #ebebeb !important;
+}
+
+/* Dividers — only where structure needs them */
+html[data-theme="light"] body.mf-agent-performance-page .ap-note,
+html[data-theme="light"] body.mf-agent-performance-page .ap-engine {
+  border-top-color: rgba(23, 23, 23, .085) !important;
+}
+
+html[data-theme="light"] body.mf-agent-performance-page .ap-note {
+  color: #737373 !important;
+}
+
+html[data-theme="light"] body.mf-agent-performance-page .ap-note strong,
+html[data-theme="light"] body.mf-agent-performance-page .ap-privacy strong,
+html[data-theme="light"] body.mf-agent-performance-page .ap-legend b,
+html[data-theme="light"] body.mf-agent-performance-page .ap-bars strong {
+  color: #333333 !important;
+}
+
+html[data-theme="light"] body.mf-agent-performance-page .ap-bars > div,
+html[data-theme="light"] body.mf-agent-performance-page .ap-legend,
+html[data-theme="light"] body.mf-agent-performance-page .ap-privacy,
+html[data-theme="light"] body.mf-agent-performance-page footer a {
+  color: #737373 !important;
+}
+
+/* Error remains semantic red, but uses the same neutral surface language. */
+html[data-theme="light"] body.mf-agent-performance-page .ap-error {
+  background: #f5f5f5 !important;
+  border-color: rgba(239, 102, 112, .30) !important;
+}
+
+/* No decorative light-theme glow/shadow. */
+html[data-theme="light"] body.mf-agent-performance-page .ap-live-pill {
+  box-shadow: none !important;
+}

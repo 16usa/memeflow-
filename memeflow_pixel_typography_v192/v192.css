@@ -1,0 +1,291 @@
+/* ==========================================================================\n   MEMEFLOW PIXEL TYPOGRAPHY V192\n   Active site-wide typography owner.\n\n   EXACT FONT SIZES ONLY:\n   11px / 12px / 13px / 14px / 16px / 20px\n\n   FAMILIES:\n   Inter          = core product UI\n   Inter Tight    = titles / names / compact headings\n   IBM Plex Mono  = prices / P&L / timestamps / addresses / technical data\n   ========================================================================== */
+
+html body.mf-pixel-type-v192,
+html body.mf-pixel-type-v192 button,
+html body.mf-pixel-type-v192 input,
+html body.mf-pixel-type-v192 select,
+html body.mf-pixel-type-v192 textarea,
+html body.mf-pixel-type-v192 option {
+  font-family: "Inter", ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  line-height: 1.38 !important;
+  font-synthesis: none !important;
+  font-kerning: normal !important;
+  -webkit-font-smoothing: antialiased !important;
+  -moz-osx-font-smoothing: grayscale !important;
+  text-rendering: optimizeLegibility !important;
+}
+
+html body.mf-pixel-type-v192 {
+  font-variant-numeric: tabular-nums lining-nums !important;
+}
+
+/* 20px — page title / one primary page-level value */
+html body.mf-pixel-type-v192 :where(
+  .settings-hero h1,
+  .flow-hero h1,
+  .scene-title h1,
+  .ap-hero h1,
+  .mf-vault-hero h1,
+  .mf-hiw-hero h1,
+  .mf-settings-page-title > span,
+  .page-title,
+  .hero-title
+) {
+  font-family: "Inter Tight", "Inter", ui-sans-serif, sans-serif !important;
+  font-size: 20px !important;
+  font-weight: 700 !important;
+  line-height: 1.08 !important;
+  letter-spacing: -0.025em !important;
+}
+
+/* 16px — section/module heading */
+html body.mf-pixel-type-v192 :where(
+  .panel-head h2,
+  .execution-head h2,
+  .activity-head h2,
+  .inspector-head h2,
+  .settings-group > summary strong,
+  .mf293-settings-group > summary strong,
+  .mf-vault-card-head h2,
+  .mf-hiw-card h2,
+  .mf-hiw-section-head h2,
+  .ap-head h2,
+  .sheet-top h2,
+  .wallet-dialog-head h2,
+  .section-title,
+  h2
+) {
+  font-family: "Inter Tight", "Inter", ui-sans-serif, sans-serif !important;
+  font-size: 16px !important;
+  font-weight: 700 !important;
+  line-height: 1.14 !important;
+  letter-spacing: -0.018em !important;
+}
+
+/* 14px — important names / primary values */
+html body.mf-pixel-type-v192 :where(
+  .brand-title,
+  .token-name,
+  .token-name-row h1,
+  #tokenName,
+  .candidate-symbol,
+  .candidate-name,
+  .position-symbol,
+  .position-token-name,
+  .trade-log-symbol,
+  .trade-token-name,
+  .approval-main strong,
+  .strategy-summary-row strong,
+  .selected-metrics strong,
+  .settings-summary strong,
+  .setting-field strong,
+  .toggle-row strong,
+  .mf-vault-stat strong,
+  .mf-vault-balance strong,
+  .ap-summary strong,
+  .metric-card strong,
+  h3
+) {
+  font-family: "Inter Tight", "Inter", ui-sans-serif, sans-serif !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  line-height: 1.22 !important;
+  letter-spacing: -0.01em !important;
+}
+
+/* Trading selected price stays compact, never hero-sized */
+html body.mf-pixel-type-v192 :where(
+  #tokenPrice,
+  .token-price,
+  .pnl-summary strong
+) {
+  font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  line-height: 1.16 !important;
+  letter-spacing: -0.015em !important;
+  font-variant-numeric: tabular-nums lining-nums !important;
+}
+
+/* 13px — normal product UI */
+html body.mf-pixel-type-v192 :where(
+  p,
+  li,
+  dd,
+  dt,
+  .body-copy,
+  .settings-context,
+  .mf-vault-hero p,
+  .mf-hiw-card p,
+  .mf-hiw-hero p,
+  .ap-hero p,
+  .inspector-summary,
+  .reason-block p
+) {
+  font-family: "Inter", ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  line-height: 1.42 !important;
+}
+
+/* 12px — controls / labels / navigation */
+html body.mf-pixel-type-v192 :where(
+  button,
+  input,
+  select,
+  textarea,
+  .btn,
+  .ghost-btn,
+  .wallet-btn,
+  .tool-btn,
+  .mf-nav-link-title,
+  .candidate-filter button,
+  .timeframes button,
+  #timeframes > button,
+  .indicator-scroll button,
+  #indicatorBar button,
+  .indicator-bar button,
+  .strategy-edit-link,
+  .price-toggle,
+  .pagination button,
+  .details-button,
+  .mf293-primary,
+  .mf293-secondary,
+  .mf-theme-appearance button,
+  .ap-periods button,
+  .ap-refresh,
+  .setting-field label,
+  .mode-option label,
+  .profile-option label
+) {
+  font-family: "Inter", ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  line-height: 1.18 !important;
+  letter-spacing: 0 !important;
+}
+
+/* 11px — technical / system / metadata */
+html body.mf-pixel-type-v192 :where(
+  .brand-sub,
+  .eyebrow,
+  .tiny-state,
+  .mode-badge,
+  .approval-count,
+  .decision-badge,
+  .state-dot,
+  .copy-trade-badge,
+  .status-pill,
+  .status-chip,
+  .live-badge,
+  .live-status,
+  .settings-group > summary small,
+  .mf293-settings-group > summary small,
+  .mf293-field-label,
+  .token-meta,
+  .token-market,
+  .candidate-bottom,
+  .candidate-meta,
+  .position-bottomline,
+  .trade-log-bottomline,
+  .trade-log-time,
+  .chart-legend,
+  .chart-legend span,
+  .chart-axis,
+  .chart-axis-label,
+  .chart-time,
+  .selected-metrics span,
+  .settings-context small,
+  .page-state,
+  .boot span,
+  .ap-source,
+  .ap-legend,
+  .mf-vault-control-row span,
+  .mf-hiw-proof span,
+  .mf-hiw-trust span,
+  time,
+  code,
+  samp,
+  kbd
+) {
+  font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  line-height: 1.28 !important;
+  letter-spacing: 0 !important;
+  font-variant-numeric: tabular-nums lining-nums !important;
+}
+
+/* Technical/numeric values use mono without changing their assigned size */
+html body.mf-pixel-type-v192 :where(
+  [data-price],
+  [data-pnl],
+  [data-time],
+  [data-mint],
+  [data-address],
+  .mono,
+  .address,
+  .mint,
+  .price,
+  .pnl,
+  .sol-value,
+  .usd-value
+) {
+  font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace !important;
+  font-variant-numeric: tabular-nums lining-nums !important;
+}
+
+/* Dark text hierarchy — literal colors */
+html[data-theme="dark"] body.mf-pixel-type-v192 { color: #CFCFCF !important; }
+html[data-theme="dark"] body.mf-pixel-type-v192 :where(
+  h1,h2,h3,.brand-title,.token-name,.token-name-row h1,#tokenName,#tokenPrice,.token-price,
+  .candidate-symbol,.position-symbol,.trade-log-symbol,.strategy-summary-row strong,
+  .selected-metrics strong,.settings-summary strong,.setting-field strong
+) { color: #FFFFFF !important; }
+html[data-theme="dark"] body.mf-pixel-type-v192 :where(
+  p,li,.body-copy,.settings-context,.candidate-filter button:not(.active),
+  .timeframes button:not(.active),#timeframes > button:not(.active),
+  .indicator-scroll button:not([aria-pressed="true"]),#indicatorBar button:not([aria-pressed="true"]),
+  .setting-field label
+) { color: #CFCFCF !important; }
+html[data-theme="dark"] body.mf-pixel-type-v192 :where(
+  .settings-group > summary small,.mf293-settings-group > summary small,.candidate-bottom,
+  .candidate-meta,.position-bottomline,.trade-log-bottomline,.selected-metrics span
+) { color: #929292 !important; }
+html[data-theme="dark"] body.mf-pixel-type-v192 :where(
+  .brand-sub,.eyebrow,.mf293-field-label,.token-meta,.token-market,.trade-log-time,
+  .chart-legend,.chart-legend span,.chart-axis,.chart-axis-label,.chart-time,time,code,samp,kbd
+) { color: #626262 !important; }
+
+/* Light text hierarchy — literal colors */
+html[data-theme="light"] body.mf-pixel-type-v192 { color: #333333 !important; }
+html[data-theme="light"] body.mf-pixel-type-v192 :where(
+  h1,h2,h3,.brand-title,.token-name,.token-name-row h1,#tokenName,#tokenPrice,.token-price,
+  .candidate-symbol,.position-symbol,.trade-log-symbol,.strategy-summary-row strong,
+  .selected-metrics strong,.settings-summary strong,.setting-field strong
+) { color: #000000 !important; }
+html[data-theme="light"] body.mf-pixel-type-v192 :where(
+  p,li,.body-copy,.settings-context,.candidate-filter button:not(.active),
+  .timeframes button:not(.active),#timeframes > button:not(.active),
+  .indicator-scroll button:not([aria-pressed="true"]),#indicatorBar button:not([aria-pressed="true"]),
+  .setting-field label
+) { color: #333333 !important; }
+html[data-theme="light"] body.mf-pixel-type-v192 :where(
+  .settings-group > summary small,.mf293-settings-group > summary small,.candidate-bottom,
+  .candidate-meta,.position-bottomline,.trade-log-bottomline,.selected-metrics span
+) { color: #666666 !important; }
+html[data-theme="light"] body.mf-pixel-type-v192 :where(
+  .brand-sub,.eyebrow,.mf293-field-label,.token-meta,.token-market,.trade-log-time,
+  .chart-legend,.chart-legend span,.chart-axis,.chart-axis-label,.chart-time,time,code,samp,kbd
+) { color: #929292 !important; }
+
+/* Semantic states keep their component-owned green/red/blue colors. */
+@media (max-width: 820px) {
+  html body.mf-pixel-type-v192 :where(
+    .panel-head,.execution-head,.settings-group > summary,.mf293-settings-group > summary
+  ) { line-height: 1.12 !important; }
+}
+
+/* MEMEFLOW PIXEL TYPOGRAPHY V192 END */

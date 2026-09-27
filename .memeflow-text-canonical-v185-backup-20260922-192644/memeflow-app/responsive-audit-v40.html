@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>MEMEFLOW Responsive Audit V40</title>
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;background:#fff;color:#111820;font-family:Arial,Helvetica,sans-serif}
+  body{padding:24px}
+  h1{margin:0 0 8px;font-size:28px}
+  p{margin:0 0 18px;color:#667985}
+  .toolbar{display:flex;gap:10px;flex-wrap:wrap;margin:0 0 18px}
+  button{appearance:none;border:0;border-radius:999px;padding:11px 16px;background:#ebebeb;color:#111820;font-weight:700}
+  button.primary{background:#111820;color:#fff}
+  .summary{display:grid;gap:8px}
+  .row{display:grid;grid-template-columns:190px 90px 90px 1fr;gap:10px;align-items:center;padding:11px 12px;background:#f5f5f5;border-radius:14px}
+  .pass{font-weight:800}
+  .fail{font-weight:800}
+  .detail{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;overflow-wrap:anywhere}
+  .progress{margin:14px 0;color:#667985}
+  .preview{margin-top:24px}
+  .preview-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}
+  select{border:0;border-radius:999px;background:#ebebeb;padding:10px 14px;color:#111820}
+  .stage{width:100%;overflow:auto;background:#f5f5f5;padding:14px;border-radius:16px}
+  .frame-wrap{margin:auto;transform-origin:top left}
+  #previewFrame{display:block;border:0;background:#fff;box-shadow:none}
+  @media(max-width:760px){
+    body{padding:14px}
+    .row{grid-template-columns:1fr 70px 72px;gap:6px}
+    .row .detail{grid-column:1/-1}
+  }
+</style>
+</head>
+<body>
+<h1>MEMEFLOW Responsive Audit V40</h1>
+<p>Actual same-origin browser geometry. Tablet: 768 / 820 / 1024. Desktop: 1366 / 1440.</p>
+
+<div class="toolbar">
+  <button class="primary" id="run">Run full audit</button>
+  <button id="onlyFailures">Show failures only</button>
+</div>
+
+<div class="progress" id="progress">Ready.</div>
+<div class="summary" id="summary"></div>
+
+<div class="preview">
+  <div class="preview-head">
+    <strong>Visual preview</strong>
+    <div>
+      <select id="pageSelect"></select>
+      <select id="widthSelect"></select>
+    </div>
+  </div>
+  <div class="stage" id="stage">
+    <div class="frame-wrap" id="frameWrap">
+      <iframe id="previewFrame" height="900"></iframe>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const pages = [
+    'agent-performance.html',
+    'how-it-works.html',
+    'settings.html',
+    'smart-vault.html',
+    'system.html',
+    'system-tokens.html',
+    'trading.html'
+  ];
+  const widths = [768, 820, 1024, 1366, 1440];
+  const results = [];
+  let failuresOnly = false;
+
+  const $ = s => document.querySelector(s);
+  const summary = $('#summary');
+  const progress = $('#progress');
+  const pageSelect = $('#pageSelect');
+  const widthSelect = $('#widthSelect');
+  const previewFrame = $('#previewFrame');
+  const frameWrap = $('#frameWrap');
+  const stage = $('#stage');
+
+  pages.forEach(p => pageSelect.add(new Option(p,p)));
+  widths.forEach(w => widthSelect.add(new Option(w + ' px',String(w))));
+
+  function isVisible(el) {
+    const cs = getComputedStyle(el);
+    if (cs.display === 'none' || cs.visibility === 'hidden') return false;
+    if (Number(cs.opacity) === 0) return false;
+    const r = el.getBoundingClientRect();
+    return r.width > .5 && r.height > .5;
+  }
+
+  function hasScrollableXAncestor(el) {
+    let p = el.parentElement;
+    while (p && p !== el.ownerDocument.body) {
+      const cs = getComputedStyle(p);
+      if (/(auto|scroll)/.test(cs.overflowX) && p.scrollWidth > p.clientWidth + 2) return true;
+      p = p.parentElement;
+    }
+    return false;
+  }
+
+  function ignored(el) {
+    if (!el || !el.matches) return true;
+    if (el.closest('[aria-hidden="true"]')) return true;
+    if (el.closest('.mf-nav-drawer,.mf-nav-overlay,.drawer,.modal,.overlay,[role="dialog"]')) return true;
+    if (el.matches('svg,path,canvas,script,style,link,meta')) return true;
+    return false;
+  }
+
+  function inspect(win, page, requestedWidth) {
+    const doc = win.document;
+    const de = doc.documentElement;
+    const body = doc.body;
+    const vw = win.innerWidth || de.clientWidth;
+    const tol = 3;
+
+    const issues = [];
+    const docOverflow = Math.max(de.scrollWidth - de.clientWidth, body ? body.scrollWidth - de.clientWidth : 0);
+    if (docOverflow > tol) issues.push(`horizontal overflow +${Math.round(docOverflow)}px`);
+
+    const header = doc.querySelector('.mf-site-header');
+    if (!header) {
+      issues.push('canonical header missing');
+    } else {
+      const hr = header.getBoundingClientRect();
+      if (hr.left < -tol || hr.right > vw + tol) {
+        issues.push(`header outside viewport (${Math.round(hr.left)}..${Math.round(hr.right)} / ${vw})`);
+      }
+
+      const children = [...header.children]
+        .filter(el => isVisible(el))
+        .filter(el => !el.matches('.engine-strip,.system-chips'))
+        .map(el => ({el, r: el.getBoundingClientRect()}))
+        .filter(x => x.r.top < hr.bottom + tol && x.r.bottom > hr.top - tol)
+        .sort((a,b) => a.r.left - b.r.left);
+
+      for (let i=1;i<children.length;i++) {
+        const a = children[i-1].r, b = children[i].r;
+        if (a.right > b.left + 4) {
+          issues.push(`header children overlap by ${Math.round(a.right-b.left)}px`);
+          break;
+        }
+      }
+    }
+
+    const escape = [];
+    const clipped = [];
+
+    for (const el of doc.body ? doc.body.querySelectorAll('*') : []) {
+      if (ignored(el) || !isVisible(el)) continue;
+      const r = el.getBoundingClientRect();
+      const cs = getComputedStyle(el);
+
+      if ((r.right > vw + 6 || r.left < -6) && !hasScrollableXAncestor(el)) {
+        if (!/(fixed)/.test(cs.position)) {
+          escape.push({
+            tag: el.tagName.toLowerCase(),
+            cls: String(el.className || '').trim().replace(/\s+/g,'.').slice(0,70),
+            over: Math.round(Math.max(r.right-vw, -r.left, 0))
+          });
+          if (escape.length >= 5) break;
+        }
+      }
+
+      if (el.children.length === 0 && (el.textContent || '').trim().length > 3) {
+        const clippedX = el.scrollWidth > el.clientWidth + 6;
+        const clippedY = el.scrollHeight > el.clientHeight + 6;
+        const intentional = /(auto|scroll)/.test(cs.overflowX + cs.overflowY)
+          || cs.textOverflow === 'ellipsis'
+          || cs.webkitLineClamp !== 'none';
+        if ((clippedX || clippedY) && !intentional) {
+          clipped.push((el.textContent || '').trim().replace(/\s+/g,' ').slice(0,55));
+          if (clipped.length >= 4) break;
+        }
+      }
+    }
+
+    if (escape.length) {
+      issues.push('escaping: ' + escape.map(x => `${x.tag}${x.cls?'.'+x.cls:''}(+${x.over}px)`).join(', '));
+    }
+    if (clipped.length) {
+      issues.push('possible clipping: ' + clipped.join(' | '));
+    }
+
+    return {
+      page,
+      requestedWidth,
+      actualWidth: vw,
+      pass: issues.length === 0,
+      issues
+    };
+  }
+
+  function testOne(page, width) {
+    return new Promise(resolve => {
+      const iframe = document.createElement('iframe');
+      iframe.style.cssText = `position:fixed;left:-100000px;top:0;width:${width}px;height:900px;border:0;`;
+      iframe.src = `/${page}?__mf_responsive_audit_v40=${Date.now()}`;
+      document.body.appendChild(iframe);
+
+      const timeout = setTimeout(() => {
+        iframe.remove();
+        resolve({page,requestedWidth:width,actualWidth:0,pass:false,issues:['load timeout']});
+      }, 12000);
+
+      iframe.onload = () => {
+        setTimeout(() => {
+          clearTimeout(timeout);
+          try {
+            resolve(inspect(iframe.contentWindow, page, width));
+          } catch (e) {
+            resolve({page,requestedWidth:width,actualWidth:0,pass:false,issues:['inspect error: '+e.message]});
+          } finally {
+            iframe.remove();
+          }
+        }, 700);
+      };
+    });
+  }
+
+  function render() {
+    summary.innerHTML = '';
+    const shown = failuresOnly ? results.filter(r => !r.pass) : results;
+    for (const r of shown) {
+      const row = document.createElement('div');
+      row.className='row';
+      row.innerHTML = `
+        <strong>${r.page}</strong>
+        <span>${r.requestedWidth}px</span>
+        <span class="${r.pass?'pass':'fail'}">${r.pass?'PASS':'REVIEW'}</span>
+        <span class="detail">${r.issues.length ? r.issues.join(' · ') : 'no geometry issue detected'}</span>`;
+      summary.appendChild(row);
+    }
+  }
+
+  async function run() {
+    results.length = 0;
+    summary.innerHTML='';
+    let n = 0;
+    const total = pages.length * widths.length;
+    for (const page of pages) {
+      for (const width of widths) {
+        progress.textContent = `Testing ${page} at ${width}px (${++n}/${total})…`;
+        results.push(await testOne(page,width));
+        render();
+      }
+    }
+    const fail = results.filter(r => !r.pass);
+    progress.textContent = fail.length
+      ? `Completed: ${results.length-fail.length}/${results.length} geometry checks passed; ${fail.length} need review.`
+      : `Completed: ${results.length}/${results.length} geometry checks passed.`;
+  }
+
+  function updatePreview() {
+    const page = pageSelect.value || pages[0];
+    const width = Number(widthSelect.value || widths[0]);
+    const available = Math.max(280, stage.clientWidth - 28);
+    const scale = Math.min(1, available / width);
+    previewFrame.src = `/${page}?__mf_responsive_preview_v40=${Date.now()}`;
+    previewFrame.style.width = width + 'px';
+    previewFrame.style.height = '900px';
+    frameWrap.style.width = width + 'px';
+    frameWrap.style.height = (900 * scale) + 'px';
+    frameWrap.style.transform = `scale(${scale})`;
+  }
+
+  $('#run').addEventListener('click', run);
+  $('#onlyFailures').addEventListener('click', () => {
+    failuresOnly = !failuresOnly;
+    $('#onlyFailures').textContent = failuresOnly ? 'Show all' : 'Show failures only';
+    render();
+  });
+  pageSelect.addEventListener('change', updatePreview);
+  widthSelect.addEventListener('change', updatePreview);
+  window.addEventListener('resize', updatePreview);
+
+  pageSelect.value = pages[0];
+  widthSelect.value = '768';
+  updatePreview();
+})();
+</script>
+</body>
+</html>

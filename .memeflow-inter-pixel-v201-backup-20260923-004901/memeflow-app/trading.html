@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="en">
+<head>
+<!-- MEMEFLOW_LIGHT_THEME_BOOT_V1 -->
+<script id="mfThemeBootV1">
+(() => {
+  try {
+    const value = localStorage.getItem('memeflow.theme.v1');
+    const theme = value === 'light' ? 'light' : 'dark';
+    document.documentElement.dataset.theme = theme;
+    document.documentElement.style.colorScheme = theme;
+  } catch {
+    document.documentElement.dataset.theme = 'dark';
+  }
+})();
+</script>
+<!-- /MEMEFLOW_LIGHT_THEME_BOOT_V1 -->
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <!-- MEMEFLOW_TRADING_GHOST_WALLET_REMOVAL_V2 -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <meta name="mf-trading-build" content="remove-mobile-ghost-wallet-v2-20260826">
+  <meta name="theme-color" content="#03070a">
+  <title>MEMEFLOW Trading Terminal</title>
+  <link rel="stylesheet" href="/trading.css?v=wallet-service-controls-cleanup-v1-20260910">
+<link rel="stylesheet" href="/memeflow-brand.css?v=gorilla-pair-v159-20260919">
+  <!-- MEMEFLOW_TRADING_CHART_RESTORE_SITE_BG_V2 -->
+  <!-- MEMEFLOW_TRADING_CHART_MATCH_PANEL_V3 -->
+<!-- MEMEFLOW_GLOBAL_RIGHT_DRAWER_NAV_V1 -->
+  <link rel="stylesheet" href="/memeflow-nav.css?v=global-right-drawer-frameless-v2-20260829">
+  <link rel="stylesheet" href="/memeflow-header.css?v=canvas-header-v4-20260904-233242">
+<!-- MEMEFLOW_LIGHT_THEME_ASSETS_V1 -->
+<link rel="stylesheet" href="/memeflow-theme.css?v=trading-candidate-v18-20260905-012205">
+<script src="/memeflow-theme.js?v=light-theme-v1-20260830" defer></script>
+<!-- /MEMEFLOW_LIGHT_THEME_ASSETS_V1 -->
+<link rel="stylesheet" href="/memeflow-layout-spacing-v54.css?v=layout-spacing-v54-20260905">
+<link rel="stylesheet" href="/memeflow-component-geometry-v55.css?v=component-geometry-v55-20260905">
+<link rel="stylesheet" href="/memeflow-surface-hierarchy-v57.css?v=surface-hierarchy-v57-20260905">
+<link rel="stylesheet" href="/memeflow-interaction-states-v58.css?v=interaction-states-v58-20260905">
+
+
+<link rel="stylesheet" href="/memeflow-header-standard-v37.css?v=header-consistency-v37-20260904">
+<link rel="stylesheet" href="/memeflow-header-nav-polish-v59.css?v=header-nav-polish-v59-20260905">
+<link rel="stylesheet" href="/memeflow-nav-interaction-restore-v59b.css?v=nav-interaction-restore-v59b-20260905">
+
+<!-- MEMEFLOW_TRADING_LIGHT_POLISH_V61 -->
+<link rel="stylesheet" href="/trading-light-polish-v61.css?v=pending-approvals-cleanup-v1-20260909">
+<!-- /MEMEFLOW_TRADING_LIGHT_POLISH_V61 -->
+<!-- MEMEFLOW_RESPONSIVE_FINAL_V62 -->
+<link rel="stylesheet" href="/memeflow-responsive-final-v62.css?v=responsive-final-v62-20260905">
+<!-- /MEMEFLOW_RESPONSIVE_FINAL_V62 -->
+<!-- MEMEFLOW_COMPONENT_CONSISTENCY_V63 -->
+<link rel="stylesheet" href="/memeflow-component-consistency-v63.css?v=component-consistency-v63-20260905">
+<!-- /MEMEFLOW_COMPONENT_CONSISTENCY_V63 -->
+<!-- MEMEFLOW_ACCESSIBILITY_USABILITY_V64A -->
+<link rel="stylesheet" href="/memeflow-accessibility-usability-v64a.css?v=accessibility-v64a-20260905">
+<!-- /MEMEFLOW_ACCESSIBILITY_USABILITY_V64A -->
+<!-- MEMEFLOW_FINAL_VISUAL_QA_V65 -->
+<!-- /MEMEFLOW_FINAL_VISUAL_QA_V65 -->
+<link rel="stylesheet" href="/memeflow-typography-premium-v66.css?v=66">
+<!-- MEMEFLOW_TRADING_TYPOGRAPHY_V66 -->
+<!-- /MEMEFLOW_TRADING_TYPOGRAPHY_V66 -->
+<!-- MEMEFLOW_TRADING_VISUAL_HIERARCHY_V67 -->
+<link rel="stylesheet" href="/trading-visual-hierarchy-v67.css?v=pending-approvals-cleanup-v1-20260909">
+<!-- /MEMEFLOW_TRADING_VISUAL_HIERARCHY_V67 -->
+<!-- MEMEFLOW_TRADING_PIPELINE_BADGE_STANDARD_V115_ASSET -->
+<link rel="stylesheet" href="/memeflow-trading-pipeline-badges-v115.css?v=trading-pipeline-badges-v115-20260907">
+<!-- /MEMEFLOW_TRADING_PIPELINE_BADGE_STANDARD_V115_ASSET -->
+<!-- MEMEFLOW_DARK_X_SURFACE_V131_ASSET -->
+<!-- /MEMEFLOW_DARK_X_SURFACE_V131_ASSET -->
+<!-- MEMEFLOW_OPEN_POSITION_POPOVER_V85_ASSET -->
+<link rel="stylesheet" href="/open-position-popover-v85.css?v=open-position-popover-canonical-v4-20260909">
+<!-- /MEMEFLOW_OPEN_POSITION_POPOVER_V85_ASSET -->
+<!-- MEMEFLOW_ROW_HEIGHT_CANONICAL_V89_ASSET -->
+<link rel="stylesheet" href="/trading-row-height-v89.css?v=row-height-canonical-v89-20260909">
+<!-- /MEMEFLOW_ROW_HEIGHT_CANONICAL_V89_ASSET -->
+<!-- MEMEFLOW_CHART_HEADER_ROW_PARITY_V97_ASSET -->
+<link rel="stylesheet" href="/chart-header-geometry-v97.css?v=chart-header-row-parity-v97-20260909">
+<!-- /MEMEFLOW_CHART_HEADER_ROW_PARITY_V97_ASSET -->
+<!-- MEMEFLOW_TRADING_LIGHT_WHITE_MODULE_SURFACES_V154_FINAL_ASSET -->
+<link rel="stylesheet" href="/memeflow-trading-white-surfaces-v154.css?v=pending-approvals-cleanup-v1-20260909">
+<!-- /MEMEFLOW_TRADING_LIGHT_WHITE_MODULE_SURFACES_V154_FINAL_ASSET -->
+  <link rel="stylesheet" href="/memeflow-x-canonical-v186.css?v=trading-technical-hierarchy-v189-20260922">
+</head>
+<body class="mf-final-visual-qa-v65 mf-accessibility-v64a mf-component-consistency-v63 mf-trading-terminal mf-layout-rhythm-v54 mf-page-trading mf-component-geometry-v55 mf-surface-hierarchy-v57 mf-interaction-states-v58 mf-header-nav-polish-v59 mf-nav-interaction-restore-v59b">
+  <div class="shell">
+    <header class="topbar mf-site-header mf-site-header--sticky">
+      <div class="brand">
+        <!-- MEMEFLOW_REMOVE_LEGACY_BACK_BUTTONS_V1: legacy back arrow removed -->
+<a class="brand-mark" href="/system.html" aria-label="Back to MEMEFLOW system"><img class="mf-brand-img" src="/brand/memeflow-gorilla-dark.png?v=gorilla-pair-v159" alt=""></a>
+        <div>
+          <div class="brand-title">APE TRADING</div>
+          <div class="brand-sub">TRADING TERMINAL</div>
+        </div>
+      </div>
+
+      <div class="engine-strip">
+        <div class="status-pill" id="enginePill"><i></i><span id="engineText">Loading engine</span></div>
+        <div class="status-pill muted"><span id="candidateCount">0 candidates</span></div>
+        <div class="status-pill live-locked" id="livePill">LIVE · NOT READY</div>
+      </div>
+
+      <div class="top-actions">
+        <!-- MEMEFLOW_TRADING_REMOVE_SYSTEM_BUTTON_V1: System button removed -->
+        <!-- MEMEFLOW_TRADING_HIDE_SMART_VAULT_HEADER_V118: keep DOM hook for JS, remove header control from UI -->
+        <button id="walletBtn" class="wallet-btn" type="button" hidden aria-hidden="true" tabindex="-1" style="display:none !important">Wallet settings</button>
+      </div>
+    </header>
+
+    <main class="terminal">
+      <aside class="panel candidates-panel">
+        <div class="panel-head">
+          <div>
+            <span class="eyebrow">AI / RISK FEED</span>
+            <h2>Candidates</h2>
+          </div>
+          <span id="feedState" class="tiny-state">LIVE</span>
+        </div>
+        <div class="candidate-filter" role="group" aria-label="Candidate state filter">
+          <button type="button" data-filter="all" class="active">All</button>
+          <button type="button" data-filter="BUY READY">Buy Ready</button>
+          <button type="button" data-filter="WATCH">Watch</button>
+          <button type="button" data-filter="WAITING">Waiting</button>
+          <button type="button" data-filter="BLOCKED">Blocked</button>
+        </div>
+        <div id="candidateList" class="candidate-list">
+          <div class="empty">Waiting for candidates…</div>
+        </div>
+      </aside>
+
+      <section class="center-stack">
+        <section class="panel chart-panel">
+          <div class="chart-head">
+            <div class="token-title">
+              <!-- MEMEFLOW_CHART_TOKEN_AVATAR_V128: exact V76/V1 row-avatar contract -->
+              <span class="mf-trading-pump-avatar-link-v76" id="chartTokenAvatarLinkV128">
+                <span class="token-avatar trade-token-avatar" id="tokenAvatar">—</span>
+              </span>
+              <div>
+                <div class="token-name-row">
+                  <h1 id="tokenName">Select a candidate</h1>
+                  <span id="tokenState" class="decision-badge">—</span>
+                </div>
+                <div class="token-meta">
+                  <span id="tokenMint">—</span>
+                  <button id="copyMintBtn" type="button">Copy</button>
+                </div>
+              </div>
+            </div>
+
+            <button id="priceModeBtn" class="price-block price-toggle" type="button"
+                    aria-label="Token price shown. Tap to show market cap.">
+              <div id="tokenPrice" class="token-price">$—</div>
+              <div id="tokenMarket" class="token-market">PRICE · MC — · BP —</div>
+            </button>
+          </div>
+
+          <div class="timeframes" id="timeframes">
+            <button data-tf="1000" class="active">1s</button>
+            <button data-tf="30000">30s</button>
+            <button data-tf="60000">1m</button>
+            <button data-tf="300000">5m</button>
+            <button data-tf="900000">15m</button>
+            <button data-tf="3600000">1h</button>
+            <button data-tf="all">All</button>
+          </div>
+
+          <div class="chart-wrap">
+            <div id="chartCanvas" aria-label="Live candlestick chart with optional technical indicators"></div>
+            <div id="chartEmpty" class="chart-empty">
+              <strong>Live candles</strong>
+              <span>Select a token. Tap the top-right value to switch USD price / market cap.</span>
+            </div>
+            <div id="chartLegend" class="chart-legend"></div>
+            <div id="liveTradeTape" class="live-trade-tape" aria-hidden="true"></div>
+          </div>
+
+          <div id="indicatorBar" class="indicator-bar" aria-label="Chart indicators">
+            <div class="indicator-scroll">
+              <button type="button" data-indicator="MA" data-kind="overlay" aria-pressed="false">MA</button>
+              <button type="button" data-indicator="EMA" data-kind="overlay" aria-pressed="false">EMA</button>
+              <button type="button" data-indicator="BOLL" data-kind="overlay" aria-pressed="false">BOLL</button>
+              <button type="button" data-indicator="SAR" data-kind="overlay" aria-pressed="false">SAR</button>
+              <span class="indicator-divider" aria-hidden="true"></span>
+              <button type="button" data-indicator="VOL" data-kind="lower" aria-pressed="false">VOL</button>
+              <button type="button" data-indicator="MACD" data-kind="lower" aria-pressed="false">MACD</button>
+              <button type="button" data-indicator="KDJ" data-kind="lower" aria-pressed="false">KDJ</button>
+              <button type="button" data-indicator="RSI" data-kind="lower" aria-pressed="false">RSI</button>
+              <button type="button" data-indicator="STOCHRSI" data-kind="lower" aria-pressed="false">StochRSI</button>
+              <button type="button" data-indicator="TRIX" data-kind="lower" aria-pressed="false">TRIX</button>
+              <button type="button" data-indicator="OBV" data-kind="lower" aria-pressed="false">OBV</button>
+              <button type="button" data-indicator="WR" data-kind="lower" aria-pressed="false">WR</button>
+              <button type="button" data-indicator="CCI" data-kind="lower" aria-pressed="false">CCI</button>
+              <button type="button" data-indicator="ROC" data-kind="lower" aria-pressed="false">ROC</button>
+              <button type="button" data-indicator="DMI" data-kind="lower" aria-pressed="false">DMI</button>
+              <button type="button" data-indicator="VR" data-kind="lower" aria-pressed="false">VR</button>
+              <button type="button" data-indicator="PSY" data-kind="lower" aria-pressed="false">PSY</button>
+              <button type="button" data-indicator="BIAS" data-kind="lower" aria-pressed="false">BIAS</button>
+              <button type="button" data-indicator="DMA" data-kind="lower" aria-pressed="false">DMA</button>
+              <button type="button" data-indicator="EMV" data-kind="lower" aria-pressed="false">EMV</button>
+              <button type="button" data-indicator="ATR" data-kind="lower" aria-pressed="false">ATR</button>
+            </div>
+          </div>
+
+          <div class="selected-metrics">
+            <div><span>Score</span><strong id="metricScore">—</strong></div>
+            <div><span>Holders</span><strong id="metricHolders">—</strong></div>
+            <div><span>Top 10</span><strong id="metricTop10">—</strong></div>
+            <div><span>Developer</span><strong id="metricDev">—</strong></div>
+            <div><span>Liquidity</span><strong id="metricLiquidity">—</strong></div>
+          </div>
+        </section>
+
+        <section class="panel approvals-panel" id="approvalsPanel">
+          <div class="panel-head compact-head">
+            <div>
+              <span class="eyebrow">ASSIST MODE</span>
+              <h2>Pending approvals</h2>
+            </div>
+            <span id="approvalCount" class="approval-count">ASSIST OFF</span>
+          </div>
+          <div id="approvalList" class="approval-list">
+            <div class="empty">Switch Trade control to Review manually to approve BUY READY entries.</div>
+          </div>
+        </section>
+
+        <section class="panel positions-panel">
+          <div class="panel-head compact-head">
+            <div>
+              <span class="eyebrow">ENGINE POSITIONS</span>
+              <h2>Open positions</h2>
+            </div>
+
+          </div>
+          <div id="positionsList" class="positions-list">
+            <div class="empty">No open paper positions</div>
+          </div>
+        </section>
+
+      </section>
+
+      <aside class="panel control-panel strategy-summary-panel">
+        <div class="panel-head compact-head">
+          <div>
+            <span class="eyebrow">SERVER STRATEGY</span>
+            <h2>Trade strategy</h2>
+          </div>
+          <div class="strategy-head-actions">
+            <span id="modeBadge" class="mode-badge">OBSERVE</span>
+            <button id="editStrategyBtn" class="strategy-edit-link" type="button">Edit</button>
+          </div>
+        </div>
+
+        <div class="strategy-summary-list">
+          <div class="strategy-summary-row">
+            <div>
+              <span>Position</span>
+              <strong id="strategyPosition">—</strong>
+            </div>
+            <div>
+              <span>Stops</span>
+              <strong id="strategyStops">—</strong>
+            </div>
+          </div>
+
+          <div class="strategy-summary-row">
+            <div>
+              <span>TP1</span>
+              <strong id="strategyTp1">—</strong>
+            </div>
+            <div>
+              <span>TP2</span>
+              <strong id="strategyTp2">—</strong>
+            </div>
+          </div>
+
+          <div class="strategy-summary-row">
+            <div>
+              <span>Runner / hold</span>
+              <strong id="strategyRunner">—</strong>
+            </div>
+            <div>
+              <span>Exit pressure</span>
+              <strong id="strategyExitPressure">—</strong>
+            </div>
+          </div>
+
+          <div class="strategy-summary-row">
+            <div>
+              <span>Daily limits</span>
+              <strong id="strategyDailyLimits">—</strong>
+            </div>
+            <div>
+              <span>Position limits</span>
+              <strong id="strategyPositionLimits">—</strong>
+            </div>
+          </div>
+        </div>
+
+        <div id="controlError" class="control-error" hidden></div>
+
+        <div class="strategy-summary-foot">
+          <span id="saveState">Loading server strategy…</span>
+        </div>
+      </aside>
+
+
+      <section class="panel history-panel bottom-history-panel">
+        <div class="panel-head compact-head">
+          <div>
+            <span class="eyebrow">EXECUTION LOG</span>
+            <h2>Recent trades</h2>
+          </div>
+          <!-- MEMEFLOW_RECENT_TRADES_PNL_V138 -->
+          <div class="pnl-summary" aria-label="Realized paper profit and loss">
+            <span>P&amp;L</span>
+            <strong id="paperPnl">0.0000 SOL</strong>
+          </div>
+<!-- MEMEFLOW_REMOVE_RECENT_TRADES_SCROLL_V120 -->
+        </div>
+        <div id="tradeHistory" class="trade-history">
+          <div class="empty">No paper trades yet</div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/echarts@6.1.0/dist/echarts.min.js"></script>
+  <script src="/global-instant-prune-v1.js?v=1"></script>
+  <script type="module" src="/trading.js?v=open-position-popover-v85-20260909"></script>
+  <!-- MEMEFLOW_TRADING_CHART_V30_4 -->
+  <!-- MEMEFLOW_TRADING_CHART_V30_5_EXECUTION_OHLC -->
+  <!-- MEMEFLOW_TRADING_CHART_V30_6_USD_CURVE_MARK -->
+<script src="/memeflow-nav.js?v=noncustodial-live-solana-v1-20260827" defer></script>
+
+<script src="/open-position-pipeline-v3.js?v=20260830-v3"></script>
+</body>
+</html>
+
+<!-- MEMEFLOW_TRADING_CHART_V30_8_PRICE_MC_GAP_SAFE -->
+
+<!-- MEMEFLOW_TRADING_CHART_V30_9_FAST_CONTINUOUS_TAPE_FIXED_LEVELS -->
+
+<!-- MEMEFLOW_TRADING_CHART_V30_15_2_GMGN_ECHARTS -->
+<!-- MEMEFLOW_TRADING_CHART_V30_16_MOBILE_PAN_NO_SHADOW -->
+<!-- MEMEFLOW_TRADING_CHART_V30_17_STABLE_TOKEN_AVATAR -->
+<!-- MEMEFLOW_TRADING_CHART_V30_18_TOKEN_BIRTH_ANCHORED_TIMEFRAMES -->
+<!-- MEMEFLOW_TRADING_CHART_V30_19_STABLE_CANDLE_DENSITY -->
+<!-- MEMEFLOW_TRADING_CHART_V30_20_COMPACT_SPARSE_CANDLES -->
+<!-- MEMEFLOW_TRADING_CHART_V30_21_ZOOM_PROPORTIONAL_CANDLES -->
+<!-- MEMEFLOW_TRADING_CHART_V30_22_LEFT_ANCHORED_NEWBORN -->
+<!-- MEMEFLOW_TRADING_CHART_V30_23B_PRICE_MC_LEVEL_PARITY_AUDITED -->
+<!-- MEMEFLOW_TRADING_CHART_V30_23C_CACHE_ACTIVATED -->
+<!-- MEMEFLOW_TRADING_CHART_V30_24_OPTIONAL_INDICATORS -->
+<!-- MEMEFLOW_TRADING_CHART_V30_25_INDICATOR_TOUCH_LAYER -->
+<!-- MEMEFLOW_TRADING_CHART_V30_26_EXTENDED_INDICATORS -->

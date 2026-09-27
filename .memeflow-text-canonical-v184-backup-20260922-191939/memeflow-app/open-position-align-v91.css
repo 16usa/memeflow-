@@ -1,0 +1,114 @@
+/* MEMEFLOW_OPEN_POSITION_ALIGN_V91
+   Final Open Positions internal vertical alignment authority.
+
+   Root cause:
+   - trading-visual-hierarchy-v67.css forces .position-bottomline to
+     display:block !important on <=820px.
+   - V90 centered the grid, but did not override that display rule.
+   - older Open Position layout rules could therefore keep the two text rows
+     visually distributed too far apart.
+
+   V91 removes that ambiguity:
+   - .position-main fills the 64px row content box
+   - it is a vertical flex stack
+   - token name + telemetry are centered as one unit
+   - telemetry is explicitly flex again
+   - V89 continues to own the 64px row height
+
+   Geometry only. No colors, typography scale, P&L, avatar, CLOSE, popover,
+   trading logic, API, RPC, or polling changes.
+*/
+
+body.mf-page-trading.mf-trading-terminal
+.positions-panel .positions-list > .position-row
+.position-main {
+  min-width: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  max-height: none !important;
+
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  align-items: stretch !important;
+
+  align-self: stretch !important;
+  justify-self: stretch !important;
+
+  gap: 4px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+}
+
+body.mf-page-trading.mf-trading-terminal
+.positions-panel .position-topline,
+body.mf-page-trading.mf-trading-terminal
+.positions-panel .position-bottomline {
+  min-width: 0 !important;
+  width: 100% !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+
+  flex: 0 0 auto !important;
+  align-self: auto !important;
+
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Explicitly override V67 mobile display:block !important. */
+body.mf-page-trading.mf-trading-terminal
+.positions-panel .position-topline {
+  display: flex !important;
+  align-items: center !important;
+}
+
+body.mf-page-trading.mf-trading-terminal
+.positions-panel .position-bottomline {
+  display: flex !important;
+  align-items: center !important;
+  flex-wrap: nowrap !important;
+  overflow: hidden !important;
+  white-space: nowrap !important;
+}
+
+/* Never let the token title carry stray vertical margins. */
+body.mf-page-trading.mf-trading-terminal
+.positions-panel .position-symbol {
+  display: block !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+@media (max-width: 820px) {
+  body.mf-page-trading.mf-trading-terminal
+  .positions-panel .positions-list > .position-row
+  .position-main {
+    height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    align-items: stretch !important;
+    align-self: stretch !important;
+    gap: 4px !important;
+  }
+
+  body.mf-page-trading.mf-trading-terminal
+  .positions-panel .position-topline,
+  body.mf-page-trading.mf-trading-terminal
+  .positions-panel .position-bottomline {
+    flex: 0 0 auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  body.mf-page-trading.mf-trading-terminal
+  .positions-panel .position-bottomline {
+    display: flex !important;
+    align-items: center !important;
+    flex-wrap: nowrap !important;
+  }
+}

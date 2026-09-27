@@ -1,0 +1,299 @@
+/* ==========================================================================
+   MEMEFLOW SYSTEM SETTINGS — WHITE POLISH V35
+   --------------------------------------------------------------------------
+   Page-local LIGHT-theme polish only.
+
+   Visual language:
+     - more white
+     - fewer frames
+     - OpenAI / Apple-like surface hierarchy
+     - neutral surfaces locked to:
+         #FFFFFF
+         #F5F5F5
+         #EBEBEB
+     - native semantic / functional colors remain
+
+   Does NOT own:
+     - global header (V34 owns it)
+     - dark theme
+     - fonts
+     - JS
+     - settings logic
+     - wallet / trading / API / backend
+   ========================================================================== */
+
+html[data-theme="light"] body.mf-settings-standalone {
+  --mf-settings-white: #FFFFFF;
+  --mf-settings-soft: #F5F5F5;
+  --mf-settings-quiet: #EBEBEB;
+  background: #FFFFFF !important;
+}
+
+/* Keep V34 as the only header owner. */
+html[data-theme="light"] body.mf-settings-standalone .mf-site-header {
+  /* intentionally no geometry overrides here */
+}
+
+/* --------------------------------------------------------------------------
+   1. REMOVE THE "BIG CARD INSIDE A CARD" FEEL
+   -------------------------------------------------------------------------- */
+html[data-theme="light"] body.mf-settings-standalone .mf-settings-page-shell {
+  background: #FFFFFF !important;
+}
+
+html[data-theme="light"] body.mf-settings-standalone .mf293-settings-backdrop {
+  background: #FFFFFF !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+html[data-theme="light"] body.mf-settings-standalone .mf293-settings-panel {
+  width: min(100%, 980px) !important;
+  max-width: 980px !important;
+  margin-inline: auto !important;
+
+  background: #FFFFFF !important;
+  background-image: none !important;
+
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+/* --------------------------------------------------------------------------
+   2. TITLE / META — WHITE FIRST, SOFT GREY ONLY WHERE IT HELPS
+   -------------------------------------------------------------------------- */
+html[data-theme="light"] body.mf-settings-standalone .mf293-settings-head {
+  background: #FFFFFF !important;
+  background-image: none !important;
+
+  border: 0 !important;
+  border-bottom: 1px solid #EBEBEB !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body.mf-settings-standalone .mf293-settings-meta {
+  background: #FFFFFF !important;
+  background-image: none !important;
+
+  border: 0 !important;
+  border-bottom: 1px solid #EBEBEB !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+
+  gap: 10px !important;
+}
+
+html[data-theme="light"] body.mf-settings-standalone .mf293-settings-meta > span {
+  background: #F5F5F5 !important;
+  background-image: none !important;
+
+  border: 0 !important;
+  border-radius: 14px !important;
+  box-shadow: none !important;
+}
+
+/* --------------------------------------------------------------------------
+   3. ACCORDIONS — ROWS, NOT FLOATING CARDS
+   -------------------------------------------------------------------------- */
+html[data-theme="light"] body.mf-settings-standalone .mf293-settings-body {
+  background: #FFFFFF !important;
+}
+
+html[data-theme="light"] body.mf-settings-standalone .mf293-settings-group {
+  margin: 0 !important;
+
+  background: #FFFFFF !important;
+  background-image: none !important;
+
+  border: 0 !important;
+  border-bottom: 1px solid #EBEBEB !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+}
+
+html[data-theme="light"] body.mf-settings-standalone .mf293-settings-group > summary {
+  min-height: 76px !important;
+  padding: 18px 20px !important;
+
+  background: #FFFFFF !important;
+  background-image: none !important;
+
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body.mf-settings-standalone .mf293-settings-group > summary:hover {
+  background: #F5F5F5 !important;
+}
+
+html[data-theme="light"] body.mf-settings-standalone .mf293-settings-group[open] > summary {
+  background: #FFFFFF !important;
+  border-bottom: 1px solid #EBEBEB !important;
+}
+
+/* Appearance is a native always-visible group in the current page.
+   Give it the same visual language as the accordion rows. */
+html[data-theme="light"] body.mf-settings-standalone :is(
+  .mf293-appearance,
+  .mf293-settings-appearance
+) {
+  background: #FFFFFF !important;
+  border: 0 !important;
+  border-bottom: 1px solid #EBEBEB !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+/* --------------------------------------------------------------------------
+   4. OPEN CONTENT — NO SECOND OUTER FRAME
+   -------------------------------------------------------------------------- */
+html[data-theme="light"] body.mf-settings-standalone .mf293-settings-grid {
+  padding: 14px 14px 18px !important;
+  gap: 10px !important;
+
+  background: #FFFFFF !important;
+  background-image: none !important;
+
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+/* Individual editable values remain visually grouped, but as filled surfaces
+   instead of bordered cards. */
+html[data-theme="light"] body.mf-settings-standalone .mf293-field {
+  min-width: 0 !important;
+
+  background: #F5F5F5 !important;
+  background-image: none !important;
+
+  border: 0 !important;
+  border-radius: 14px !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body.mf-settings-standalone .mf293-field:focus-within {
+  background: #EBEBEB !important;
+}
+
+/* Inputs themselves disappear into the field surface. */
+html[data-theme="light"] body.mf-settings-standalone .mf293-field :is(
+  input,
+  select,
+  textarea
+) {
+  background: transparent !important;
+  background-image: none !important;
+
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+}
+
+/* Disabled/empty state still reads as inactive without adding another frame. */
+html[data-theme="light"] body.mf-settings-standalone .mf293-field :is(
+  input:disabled,
+  select:disabled,
+  textarea:disabled
+) {
+  opacity: .68 !important;
+}
+
+/* --------------------------------------------------------------------------
+   5. PUBLIC AGENT — SAME SYSTEM, NO LEGACY MINI-CARDS
+   -------------------------------------------------------------------------- */
+html[data-theme="light"] body.mf-settings-standalone #mfPublicAgentGroup .mf-agent-event,
+html[data-theme="light"] body.mf-settings-standalone #mfPublicAgentGroup .mf-agent-item {
+  background: #FFFFFF !important;
+  background-image: none !important;
+
+  border: 0 !important;
+  border-bottom: 1px solid #EBEBEB !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body.mf-settings-standalone #mfPublicAgentGroup .mf-agent-list,
+html[data-theme="light"] body.mf-settings-standalone #mfPublicAgentGroup .mf-agent-events {
+  gap: 0 !important;
+}
+
+/* --------------------------------------------------------------------------
+   6. FOOTER ACTIONS — QUIET, CLEAN, STICKY WITHOUT A FLOATING CARD
+   -------------------------------------------------------------------------- */
+html[data-theme="light"] body.mf-settings-standalone .mf293-settings-footer {
+  padding: 14px !important;
+
+  background: #FFFFFF !important;
+  background-image: none !important;
+
+  border: 0 !important;
+  border-top: 1px solid #EBEBEB !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] body.mf-settings-standalone .mf293-settings-footer :is(
+  button,
+  .mf293-secondary
+) {
+  box-shadow: none !important;
+}
+
+/* Preserve the product's native functional color on the primary action.
+   Neutral buttons use the approved neutral palette. */
+html[data-theme="light"] body.mf-settings-standalone .mf293-settings-footer .mf293-secondary {
+  background: #F5F5F5 !important;
+  border-color: transparent !important;
+}
+
+/* --------------------------------------------------------------------------
+   7. MOBILE — MORE AIR, LESS BOXINESS
+   -------------------------------------------------------------------------- */
+@media (max-width: 760px) {
+  html[data-theme="light"] body.mf-settings-standalone .mf293-settings-panel {
+    width: 100% !important;
+  }
+
+  html[data-theme="light"] body.mf-settings-standalone .mf293-settings-head {
+    padding-inline: 18px !important;
+  }
+
+  html[data-theme="light"] body.mf-settings-standalone .mf293-settings-meta {
+    padding: 12px 18px 16px !important;
+    gap: 8px !important;
+  }
+
+  html[data-theme="light"] body.mf-settings-standalone .mf293-settings-meta > span {
+    border-radius: 12px !important;
+  }
+
+  html[data-theme="light"] body.mf-settings-standalone .mf293-settings-group > summary {
+    min-height: 70px !important;
+    padding: 15px 18px !important;
+  }
+
+  html[data-theme="light"] body.mf-settings-standalone .mf293-settings-grid {
+    padding: 12px 14px 16px !important;
+    gap: 8px !important;
+  }
+
+  html[data-theme="light"] body.mf-settings-standalone .mf293-field {
+    border-radius: 13px !important;
+  }
+
+  html[data-theme="light"] body.mf-settings-standalone .mf293-settings-footer {
+    padding:
+      12px
+      max(14px, env(safe-area-inset-right))
+      calc(12px + env(safe-area-inset-bottom))
+      max(14px, env(safe-area-inset-left)) !important;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   8. DARK THEME INTENTIONALLY UNTOUCHED
+   -------------------------------------------------------------------------- */

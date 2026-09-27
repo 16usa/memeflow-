@@ -1,0 +1,264 @@
+/* ==========================================================================
+   MEMEFLOW TRADING LIGHT SURFACES V154 — CANONICAL
+
+   LIGHT MODE ONLY.
+
+   Owners in this file:
+     - Chart light surfaces / neutral Chart controls / Chart light text
+     - Trade strategy light surfaces
+     - Pending approvals light surfaces
+
+   Geometry and behavior stay outside this file.
+   ========================================================================== */
+
+/* Outer module canvases. */
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.center-stack > .panel.chart-panel{
+  --mf-trading-v61-surface: #ffffff !important;
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  background-image: none !important;
+}
+
+/* --------------------------------------------------------------------------
+   CHART — one Light-theme owner
+   -------------------------------------------------------------------------- */
+
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.chart-panel > .chart-head,
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.chart-panel > .timeframes,
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.chart-panel > .chart-wrap,
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.chart-panel #chartCanvas,
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.chart-panel > .indicator-bar,
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.chart-panel > .indicator-bar > .indicator-scroll,
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.chart-panel > .selected-metrics,
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.chart-panel > .selected-metrics > div{
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  background-image: none !important;
+}
+
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.chart-panel > .chart-head,
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.chart-panel > .timeframes,
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.chart-panel > .indicator-bar{
+  border-color: var(--mf-trading-v61-line, rgba(23, 23, 23, .075)) !important;
+}
+
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.chart-panel .token-name-row h1,
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.chart-panel .token-price,
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.chart-panel .selected-metrics strong{
+  color: var(--mf-trading-v61-text, #171717) !important;
+}
+
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.chart-panel .token-meta,
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.chart-panel .token-market,
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.chart-panel .selected-metrics span{
+  color: var(--mf-trading-v61-muted, #737373) !important;
+}
+
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.chart-panel .token-avatar{
+  background: var(--mf-trading-v61-inset, #ebebeb) !important;
+  background-image: none !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.chart-panel .price-toggle{
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.chart-panel .timeframes button:not(.active),
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.chart-panel .indicator-scroll button:not([aria-pressed="true"]){
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border-color: transparent !important;
+  color: var(--mf-trading-v61-muted, #737373) !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.chart-panel .indicator-scroll button,
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.chart-panel .indicator-scroll button[aria-pressed="true"]{
+  background-color: transparent !important;
+  background-image: none !important;
+}
+
+@media (hover: hover) and (pointer: fine){
+  html[data-theme="light"]
+  body.mf-page-trading.mf-trading-terminal
+  .chart-panel .timeframes button:not(.active):hover,
+  html[data-theme="light"]
+  body.mf-page-trading.mf-trading-terminal
+  .chart-panel .indicator-scroll button:not([aria-pressed="true"]):hover{
+    background: var(--mf-trading-v61-inset, #ebebeb) !important;
+  }
+}
+
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.chart-panel .chart-empty{
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+}
+
+/* --------------------------------------------------------------------------
+   TRADE STRATEGY - single Light-theme owner
+   -------------------------------------------------------------------------- */
+
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.terminal > .panel.control-panel.strategy-summary-panel,
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.strategy-summary-panel > .panel-head,
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.strategy-summary-panel > .strategy-summary-list,
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.strategy-summary-panel .strategy-summary-list > .strategy-summary-row,
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.strategy-summary-panel > .strategy-summary-list > .strategy-summary-row > div,
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.strategy-summary-panel > .strategy-summary-foot{
+  --mf-trading-v61-surface: #ffffff !important;
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  background-image: none !important;
+}
+
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.strategy-summary-panel .strategy-summary-row strong{
+  color: var(--mf-trading-v61-text, #171717) !important;
+}
+
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.strategy-summary-panel .strategy-summary-row span{
+  color: var(--mf-trading-v61-muted, #737373) !important;
+}
+
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.strategy-summary-panel .strategy-edit-link{
+  background: var(--mf-trading-v61-inset, #ebebeb) !important;
+  background-image: none !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+@media (hover: hover) and (pointer: fine){
+  html[data-theme="light"]
+  body.mf-page-trading.mf-trading-terminal
+  .strategy-summary-panel .strategy-edit-link:hover{
+    background: #e4e4e4 !important;
+  }
+}
+
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.strategy-summary-panel .empty{
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+}
+
+
+/* --------------------------------------------------------------------------
+   PENDING APPROVALS — single Light-theme surface owner
+   -------------------------------------------------------------------------- */
+
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.center-stack > .panel.approvals-panel,
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.approvals-panel > .panel-head,
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.approvals-panel > .approval-list{
+  --mf-trading-v61-surface: #ffffff !important;
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  background-image: none !important;
+}
+
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.approvals-panel .approval-row{
+  background: var(--mf-trading-v61-inset, #ebebeb) !important;
+  background-color: var(--mf-trading-v61-inset, #ebebeb) !important;
+  background-image: none !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.approvals-panel .approval-list > .empty,
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.approvals-panel .approval-list > .approval-empty,
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal
+.approvals-panel .approval-empty{
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+/* MEMEFLOW_TRADING_LIGHT_SURFACES_V154_CANONICAL_END */

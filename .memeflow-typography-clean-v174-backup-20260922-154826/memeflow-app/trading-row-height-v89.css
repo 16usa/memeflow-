@@ -1,0 +1,87 @@
+/* MEMEFLOW_ROW_HEIGHT_CANONICAL_V89
+   Trading Terminal canonical operational-row geometry.
+
+   One fixed contract for:
+     Candidates
+     Open positions
+     Recent trades
+
+   Canonical row:
+     height: 64px
+     vertical padding: 8px
+     box-sizing: border-box
+
+   This is geometry only. No typography, colors, avatar sizes, P&L,
+   buttons, popovers, trading logic, data flow, RPC, or polling changes.
+*/
+
+body.mf-page-trading.mf-trading-terminal {
+  --mf-v89-row-height: 64px;
+  --mf-v89-row-pad-y: 8px;
+}
+
+/* Candidates — restore and lock the original canonical 64px contract. */
+body.mf-page-trading.mf-trading-terminal
+.candidates-panel #candidateList > .candidate {
+  box-sizing: border-box !important;
+  height: var(--mf-v89-row-height) !important;
+  min-height: var(--mf-v89-row-height) !important;
+  max-height: var(--mf-v89-row-height) !important;
+  padding-top: var(--mf-v89-row-pad-y) !important;
+  padding-bottom: var(--mf-v89-row-pad-y) !important;
+  align-items: center !important;
+  overflow: hidden !important;
+}
+
+/* Open positions — same exact row box. */
+body.mf-page-trading.mf-trading-terminal
+.positions-panel .positions-list > .position-row {
+  box-sizing: border-box !important;
+  height: var(--mf-v89-row-height) !important;
+  min-height: var(--mf-v89-row-height) !important;
+  max-height: var(--mf-v89-row-height) !important;
+  padding-top: var(--mf-v89-row-pad-y) !important;
+  padding-bottom: var(--mf-v89-row-pad-y) !important;
+  align-items: center !important;
+  overflow: hidden !important;
+}
+
+/* Recent trades — same exact row box. */
+body.mf-page-trading.mf-trading-terminal
+.bottom-history-panel .trade-history > .trade-row.trade-log-row {
+  box-sizing: border-box !important;
+  height: var(--mf-v89-row-height) !important;
+  min-height: var(--mf-v89-row-height) !important;
+  max-height: var(--mf-v89-row-height) !important;
+  padding-top: var(--mf-v89-row-pad-y) !important;
+  padding-bottom: var(--mf-v89-row-pad-y) !important;
+  align-items: center !important;
+  overflow: hidden !important;
+}
+
+/* Center inner content without changing its typography or horizontal layout. */
+body.mf-page-trading.mf-trading-terminal
+.candidates-panel .candidate-main,
+body.mf-page-trading.mf-trading-terminal
+.positions-panel .position-main,
+body.mf-page-trading.mf-trading-terminal
+.bottom-history-panel .trade-log-primary {
+  min-height: 0 !important;
+  align-self: center !important;
+}
+
+/* Same contract on tablet/phone. Late responsive layers cannot diverge it. */
+@media (max-width: 820px) {
+  body.mf-page-trading.mf-trading-terminal
+  .candidates-panel #candidateList > .candidate,
+  body.mf-page-trading.mf-trading-terminal
+  .positions-panel .positions-list > .position-row,
+  body.mf-page-trading.mf-trading-terminal
+  .bottom-history-panel .trade-history > .trade-row.trade-log-row {
+    height: var(--mf-v89-row-height) !important;
+    min-height: var(--mf-v89-row-height) !important;
+    max-height: var(--mf-v89-row-height) !important;
+    padding-top: var(--mf-v89-row-pad-y) !important;
+    padding-bottom: var(--mf-v89-row-pad-y) !important;
+  }
+}

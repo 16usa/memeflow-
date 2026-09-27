@@ -1,0 +1,508 @@
+<!doctype html>
+<html lang="en">
+<head>
+<!-- MEMEFLOW_LIGHT_THEME_BOOT_V1 -->
+<script id="mfThemeBootV1">
+(() => {
+  try {
+    const value = localStorage.getItem('memeflow.theme.v1');
+    const theme = value === 'light' ? 'light' : 'dark';
+    document.documentElement.dataset.theme = theme;
+    document.documentElement.style.colorScheme = theme;
+  } catch {
+    document.documentElement.dataset.theme = 'dark';
+  }
+})();
+</script>
+<!-- /MEMEFLOW_LIGHT_THEME_BOOT_V1 -->
+  <meta charset="utf-8" />
+
+  <meta
+    name="viewport"
+    content="width=device-width,initial-scale=1,viewport-fit=cover"
+  />
+
+  <meta
+    name="color-scheme"
+    content="dark"
+  />
+
+  <title>MEMEFLOW · Token Flow</title>
+
+  <!-- MEMEFLOW_LOAD_PERF_V1_CRITICAL
+       Tiny inline shell prevents Safari from flashing raw HTML while the
+       external stylesheet is being fetched on a cold Replit request. -->
+  <style>
+:root{--mf-perf-bg:#000000;--mf-perf-text:#eef5fa;--mf-perf-line:rgba(147,178,202,.12);}
+    *{box-sizing:border-box;}
+    html,body{margin:0;min-height:100%;background:#000000;color:var(--mf-neutral-text-2);}
+    body{min-height:100vh;}
+    
+    .flow-page{width:min(1180px,100%);min-height:100vh;margin:0 auto;padding:10px 12px 24px;}
+    .flow-header,.flow-hero,.flow-toolbar,.pagination{border:1px solid #2f3336;border-radius:14px;}
+    .flow-header{min-height:64px;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 12px;}
+    .header-left,.live-status,.pagination{display:flex;align-items:center;}
+    .header-left{gap:10px;}.live-status{gap:6px;}.header-title span,.header-title strong{display:block;}
+    .flow-hero{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;margin-top:10px;padding:22px 20px;}
+    .flow-hero h1{margin:6px 0 4px;}
+    .flow-hero p{margin:0;}.hero-counter{text-align:right;}.hero-counter span,.hero-counter strong{display:block;}
+    .state-summary{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:7px;margin-top:10px;}
+    .summary-card{min-width:0;padding:11px 12px;border:1px solid #2f3336;border-radius:11px;background:#000000;text-align:left;}
+    .summary-card span,.summary-card strong{display:block;}.summary-card strong{margin-top:5px;}
+    .flow-toolbar{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:9px;margin-top:10px;padding:8px;}
+    .search-wrap{height:38px;display:flex;align-items:center;gap:7px;padding:0 10px;border:1px solid #2f3336;border-radius:9px;}
+    .search-wrap input{width:100%;border:0;outline:0;background:transparent;color:inherit;}
+    .refresh-info{display:flex;align-items:center;gap:8px;}
+    .pagination{justify-content:space-between;gap:10px;margin-top:10px;padding:10px;}
+    @media(max-width:760px){
+      .flow-page{padding:7px 7px 18px;}.flow-header{min-height:54px;padding:6px 8px;}
+      .flow-hero{margin-top:7px;padding:15px 13px;}.flow-hero p{display:none;}
+      .state-summary{grid-template-columns:repeat(5,minmax(72px,1fr));gap:5px;overflow-x:auto;}
+      .summary-card{min-width:72px;padding:8px;}.flow-toolbar{margin-top:7px;padding:5px;}
+      .refresh-info span{display:none;}
+    }
+</style>
+
+  <link
+    rel="stylesheet"
+    href="/system-tokens.css?v=token-flow-geometry-reset-v52-20260904"
+  />
+<link rel="stylesheet" href="/memeflow-brand.css?v=gorilla-pair-v159-20260919">
+  <!-- MEMEFLOW_GLOBAL_RIGHT_DRAWER_NAV_V1 -->
+  <link rel="stylesheet" href="/memeflow-nav.css?v=global-right-drawer-frameless-v2-20260829">
+  <link rel="stylesheet" href="/memeflow-header.css?v=canvas-header-v4-20260904-233242">
+<!-- MEMEFLOW_LIGHT_THEME_ASSETS_V1 -->
+<link rel="stylesheet" href="/memeflow-theme.css?v=token-flow-final-v12-20260905-005242">
+<script src="/memeflow-theme.js?v=light-theme-v1-20260830" defer></script>
+<!-- /MEMEFLOW_LIGHT_THEME_ASSETS_V1 -->
+<link rel="stylesheet" href="/token-flow-white-polish-v36.css?v=token-flow-white-polish-v36-20260904">
+<link rel="stylesheet" href="/memeflow-layout-spacing-v54.css?v=layout-spacing-v54-20260905">
+<link rel="stylesheet" href="/memeflow-component-geometry-v55.css?v=component-geometry-v55-20260905">
+<link rel="stylesheet" href="/memeflow-surface-hierarchy-v57.css?v=surface-hierarchy-v57-20260905">
+<link rel="stylesheet" href="/memeflow-interaction-states-v58.css?v=interaction-states-v58-20260905">
+
+
+<link rel="stylesheet" href="/memeflow-header-standard-v37.css?v=header-consistency-v37-20260904">
+<link rel="stylesheet" href="/memeflow-header-nav-polish-v59.css?v=header-nav-polish-v59-20260905">
+<link rel="stylesheet" href="/memeflow-nav-interaction-restore-v59b.css?v=nav-interaction-restore-v59b-20260905">
+
+<!-- MEMEFLOW_RESPONSIVE_FINAL_V62 -->
+<link rel="stylesheet" href="/memeflow-responsive-final-v62.css?v=responsive-final-v62-20260905">
+<!-- /MEMEFLOW_RESPONSIVE_FINAL_V62 -->
+<!-- MEMEFLOW_COMPONENT_CONSISTENCY_V63 -->
+<link rel="stylesheet" href="/memeflow-component-consistency-v63.css?v=component-consistency-v63-20260905">
+<!-- /MEMEFLOW_COMPONENT_CONSISTENCY_V63 -->
+<!-- MEMEFLOW_ACCESSIBILITY_USABILITY_V64A -->
+<link rel="stylesheet" href="/memeflow-accessibility-usability-v64a.css?v=accessibility-v64a-20260905">
+<!-- /MEMEFLOW_ACCESSIBILITY_USABILITY_V64A -->
+<!-- MEMEFLOW_FINAL_VISUAL_QA_V65 -->
+<!-- /MEMEFLOW_FINAL_VISUAL_QA_V65 -->
+<!-- MEMEFLOW_TRADING_PIPELINE_BADGE_STANDARD_V115_ASSET -->
+<link rel="stylesheet" href="/memeflow-trading-pipeline-badges-v115.css?v=trading-pipeline-badges-v115-20260907">
+<!-- /MEMEFLOW_TRADING_PIPELINE_BADGE_STANDARD_V115_ASSET -->
+<!-- MEMEFLOW_DARK_X_SURFACE_V131_ASSET -->
+<!-- /MEMEFLOW_DARK_X_SURFACE_V131_ASSET -->
+
+<!-- MEMEFLOW_INSIGHTX_WALLET_INTELLIGENCE_UI_V1 -->
+<link rel="stylesheet" href="/memeflow-insightx-v1.css?v=insightx-wallet-intelligence-v1-20260913">
+<link rel="stylesheet" href="/memeflow-token-flow-continuous-v1.css?v=continuous-compact-v1-20260913">
+  <link rel="stylesheet" href="/memeflow-x-canonical-v180.css?v=type-scale-v180-20260922">
+</head>
+
+<body class="mf-final-visual-qa-v65 mf-accessibility-v64a mf-component-consistency-v63 mf-token-flow-v36 mf-layout-rhythm-v54 mf-page-system-tokens mf-component-geometry-v55 mf-surface-hierarchy-v57 mf-interaction-states-v58 mf-header-nav-polish-v59 mf-nav-interaction-restore-v59b">
+
+  <main class="flow-page">
+
+    <header class="flow-header mf-site-header">
+
+      <div class="header-left">
+        <!-- MEMEFLOW_REMOVE_LEGACY_BACK_BUTTONS_V1: legacy back arrow removed -->
+<div class="brand-mark" aria-hidden="true"><img class="mf-brand-img" src="/brand/memeflow-gorilla-dark.png?v=gorilla-pair-v159" alt=""></div>
+
+        <div class="header-title">
+          <span>APE TRADING</span>
+          <strong>Token Flow</strong>
+        </div>
+
+      </div>
+
+      <div class="live-status">
+        <i></i>
+        <span id="discoveryLiveLabel">LIVE</span>
+      </div>
+
+    </header>
+
+    <section class="flow-hero">
+
+      <div>
+        <span class="eyebrow">
+          REAL-TIME PIPELINE
+        </span>
+
+        <h1>
+          Live token states
+        </h1>
+
+        <p>
+          Current tokens moving through the MEMEFLOW decision pipeline.
+        </p>
+      </div>
+
+      <div class="hero-counter">
+        <span>Visible</span>
+        <strong id="visibleCount">0</strong>
+        <span
+          id="scannerStatus"
+          class="scanner-status"
+          title="Live scanner status"
+        >Scanner —</span>
+      </div>
+
+    </section>
+
+    <section class="state-summary">
+
+      <button
+        class="summary-card all active"
+        type="button"
+        data-filter="all"
+      >
+        <span>All</span>
+        <strong id="countAll">0</strong>
+      </button>
+
+      <button
+        class="summary-card ready"
+        type="button"
+        data-filter="ready"
+      >
+        <span>Buy Ready</span>
+        <strong id="countReady">0</strong>
+      </button>
+
+      <button
+        class="summary-card watch"
+        type="button"
+        data-filter="watch"
+      >
+        <span>Watch</span>
+        <strong id="countWatch">0</strong>
+      </button>
+
+      <button
+        class="summary-card waiting"
+        type="button"
+        data-filter="waiting"
+      >
+        <span>Waiting</span>
+        <strong id="countWaiting">0</strong>
+      </button>
+
+      <button
+        class="summary-card blocked"
+        type="button"
+        data-filter="blocked"
+      >
+        <span>Blocked</span>
+        <strong id="countBlocked">0</strong>
+      </button>
+
+    </section>
+    <section class="mf-time-window-v47c" aria-label="Token age window">
+      <button type="button" class="is-active" data-mf-age-window-v47c="all">ALL</button>
+      <button type="button" data-mf-age-window-v47c="60">1H</button>
+      <button type="button" data-mf-age-window-v47c="360">6H</button>
+      <button type="button" data-mf-age-window-v47c="1440">24H</button>
+      <span>SMART RANK</span>
+    </section>
+
+
+    <section class="flow-toolbar">
+
+      <div class="search-wrap">
+        <span>⌕</span>
+
+        <input
+          id="tokenSearch"
+          type="search"
+          autocomplete="off"
+          autocapitalize="off"
+          spellcheck="false"
+          placeholder="Paste Pump.fun URL or mint"
+          aria-label="Paste Pump.fun URL or Solana mint to analyze"
+        />
+      </div>
+
+      <div class="refresh-info">
+        <span id="lastUpdate">
+          Waiting for telemetry
+        </span>
+
+        <button
+          id="refreshButton"
+          type="button"
+          aria-label="Analyze token"
+        >
+          Analyze
+        </button>
+      </div>
+
+    </section>
+
+    <section
+      id="tokenScanResult"
+      class="mf-token-scan-result"
+      aria-live="polite"
+      hidden
+    ></section>
+
+    <section
+      id="tokenList"
+      class="token-list"
+    >
+    </section>
+
+    <section
+      id="emptyState"
+      class="empty-state"
+      hidden
+    >
+      <strong>No tokens found</strong>
+      <span>Try another filter or search.</span>
+    </section>
+
+    <footer class="pagination">
+
+      <button
+        id="prevPage"
+        type="button"
+      >
+        ← Previous
+      </button>
+
+      <div class="page-state">
+        <span>Page</span>
+        <strong id="pageNumber">1</strong>
+        <span>of</span>
+        <strong id="pageTotal">1</strong>
+      </div>
+
+      <button
+        id="nextPage"
+        type="button"
+      >
+        Next →
+      </button>
+
+    </footer>
+
+  </main>
+
+  <script src="/global-instant-prune-v1.js?v=1"></script>
+  <script
+    type="module"
+    src="/system-tokens.js?v=token-avatar-wrapper-v51-20260904"
+     data-patch="MEMEFLOW_CANONICAL_TOKEN_IMAGE_CACHE_BUST_V5"
+  ></script>
+<script src="/memeflow-nav.js?v=global-right-drawer-v2-how-it-works" defer></script>
+<!-- ===== MEMEFLOW_TOKEN_FLOW_PERIOD_VISUAL_FIX_V14 ===== -->
+<script>
+(() => {
+  'use strict';
+
+  /*
+    VISUAL-ONLY SINGLE SOURCE OF TRUTH.
+
+    V12 and V13 are removed by the installer because they both tried to
+    re-paint the same four controls and could overwrite the user's click.
+
+    Existing MEMEFLOW handlers still perform the REAL filter action.
+    V14 only paints the clicked period.
+  */
+
+  const PERIODS = new Set(['ALL', '1H', '6H', '24H']);
+
+  let selectedPeriod = 'ALL';
+  let initialized = false;
+
+  function labelOf(button) {
+    return String(button?.textContent || '')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .toUpperCase();
+  }
+
+  function buttons() {
+    return [...document.querySelectorAll('button')]
+      .filter(button => PERIODS.has(labelOf(button)));
+  }
+
+  function setVisual(button, selected) {
+    /*
+      Inline !important intentionally beats the old page-specific cyan rules.
+      Only the three approved neutral colors are used here.
+    */
+    button.style.setProperty(
+      'background',
+      '#EBEBEB',
+      'important'
+    );
+    button.style.setProperty(
+      'background-color',
+      '#EBEBEB',
+      'important'
+    );
+    button.style.setProperty(
+      'border-color',
+      selected ? 'var(--cyan)' : 'transparent',
+      'important'
+    );
+    button.style.setProperty(
+      'box-shadow',
+      selected
+        ? 'inset 0 0 0 1px var(--cyan)'
+        : 'none',
+      'important'
+    );
+    button.style.setProperty(
+      'outline',
+      '0',
+      'important'
+    );
+  }
+
+  function paint() {
+    const list = buttons();
+    if (list.length < 3) return false;
+
+    for (const button of list) {
+      setVisual(
+        button,
+        labelOf(button) === selectedPeriod
+      );
+    }
+
+    return true;
+  }
+
+  function inferInitialSelection() {
+    const list = buttons();
+    if (list.length < 3) return;
+
+    /*
+      If the existing UI exposes exactly one real semantic selection,
+      respect it on first load. Otherwise ALL is the safe initial visual state.
+      We DO NOT inspect border color because the old bug paints multiple
+      buttons cyan while ALL is active.
+    */
+    const explicit = list.filter(button =>
+      button.getAttribute('aria-pressed') === 'true' ||
+      button.getAttribute('aria-current') === 'true' ||
+      button.dataset.selected === 'true' ||
+      button.dataset.active === 'true' ||
+      button.classList.contains('is-active')
+    );
+
+    if (explicit.length === 1) {
+      selectedPeriod = labelOf(explicit[0]);
+    } else {
+      selectedPeriod = 'ALL';
+    }
+
+    initialized = true;
+    paint();
+  }
+
+  /*
+    Capture the tap before page code can mutate classes/styles.
+    The actual page handler still receives the event normally.
+  */
+  document.addEventListener(
+    'click',
+    event => {
+      const button = event.target.closest?.('button');
+      if (!button) return;
+
+      const label = labelOf(button);
+      if (!PERIODS.has(label)) return;
+
+      selectedPeriod = label;
+      initialized = true;
+
+      paint();
+
+      /*
+        Existing filter code may update/rebuild UI immediately after our
+        handler. Re-assert the SAME clicked visual state — never read a stale
+        storage value and never force ALL.
+      */
+      queueMicrotask(paint);
+      requestAnimationFrame(paint);
+      setTimeout(paint, 0);
+      setTimeout(paint, 60);
+      setTimeout(paint, 180);
+    },
+    true
+  );
+
+  /*
+    If runtime code rebuilds the period row, re-apply the last user choice.
+    Observe child replacement only; style/class writes are intentionally not
+    observed, preventing observer feedback loops.
+  */
+  let scheduled = false;
+
+  const observer = new MutationObserver(() => {
+    if (scheduled) return;
+
+    scheduled = true;
+
+    requestAnimationFrame(() => {
+      scheduled = false;
+
+      if (!initialized) {
+        inferInitialSelection();
+      } else {
+        paint();
+      }
+    });
+  });
+
+  observer.observe(document.documentElement, {
+    subtree: true,
+    childList: true
+  });
+
+  function boot() {
+    inferInitialSelection();
+
+    /*
+      Runtime controls can be injected just after DOMContentLoaded.
+      Short retries only initialize; after initialization the user's clicks
+      remain the visual source of truth.
+    */
+    if (!initialized) {
+      setTimeout(inferInitialSelection, 50);
+      setTimeout(inferInitialSelection, 150);
+      setTimeout(inferInitialSelection, 400);
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener(
+      'DOMContentLoaded',
+      boot,
+      { once: true }
+    );
+  } else {
+    boot();
+  }
+})();
+</script>
+<!-- ===== /MEMEFLOW_TOKEN_FLOW_PERIOD_VISUAL_FIX_V14 ===== -->
+
+<!-- MEMEFLOW_INSIGHTX_WALLET_INTELLIGENCE_UI_V1 -->
+<script src="/memeflow-insightx-v1.js?v=insightx-wallet-intelligence-v1-20260913" defer></script>
+</body>
+</html>

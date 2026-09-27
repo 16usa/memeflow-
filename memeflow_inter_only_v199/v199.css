@@ -1,0 +1,21 @@
+/* MEMEFLOW INTER ONLY V199
+   Typography-family owner only.
+   This file changes font family only; it does not change sizes, weights,
+   colors, spacing, borders, geometry, states, or application logic.
+*/
+
+html body.mf-inter-only-v199,
+html body.mf-inter-only-v199.mf-inter-only-v199 *,
+html body.mf-inter-only-v199.mf-inter-only-v199 *::before,
+html body.mf-inter-only-v199.mf-inter-only-v199 *::after,
+html body.mf-inter-only-v199.mf-inter-only-v199 svg text,
+html body.mf-inter-only-v199.mf-inter-only-v199 foreignObject * {
+  font-family: "Inter" !important;
+}
+
+/* Preserve numeric alignment while keeping the same single family. */
+html body.mf-inter-only-v199 {
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+/* MEMEFLOW INTER ONLY V199 END */

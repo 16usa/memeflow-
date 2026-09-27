@@ -1,0 +1,228 @@
+/* MEMEFLOW_TYPE_SCALE_HIERARCHY_V52
+   Typography-only refinement.
+   No color, background, border, spacing-layout, header-geometry or logic ownership.
+*/
+
+/* rendering quality only */
+.mf-trading-terminal,
+.flow-page,
+.mf-vault-shell {
+  font-kerning: normal;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* -----------------------------
+   TRADING TERMINAL
+   ----------------------------- */
+
+.mf-trading-terminal .panel-head h2 {
+  font-size: clamp(18px, 1.55vw, 21px);
+  line-height: 1.08;
+  font-weight: 780;
+  letter-spacing: -0.025em;
+}
+
+.mf-trading-terminal .eyebrow {
+  font-size: 10.5px;
+  line-height: 1.15;
+  font-weight: 800;
+  letter-spacing: 0.145em;
+}
+
+.mf-trading-terminal .token-name-row h1,
+.mf-trading-terminal .token-price {
+  font-weight: 780;
+  letter-spacing: -0.025em;
+}
+
+.mf-trading-terminal .token-name-row h1 {
+  line-height: 1.08;
+}
+
+.mf-trading-terminal .token-meta,
+.mf-trading-terminal .candidate-name span,
+.mf-trading-terminal .candidate-bottom,
+.mf-trading-terminal .token-market {
+  line-height: 1.3;
+}
+
+.mf-trading-terminal .candidate-name strong {
+  line-height: 1.15;
+  font-weight: 760;
+  letter-spacing: -0.012em;
+}
+
+.mf-trading-terminal .strategy-summary-row span,
+.mf-trading-terminal .selected-metrics span {
+  line-height: 1.25;
+  letter-spacing: 0.005em;
+}
+
+.mf-trading-terminal .strategy-summary-row strong,
+.mf-trading-terminal .selected-metrics strong {
+  line-height: 1.28;
+  font-weight: 680;
+}
+
+.mf-trading-terminal .token-price,
+.mf-trading-terminal .candidate-price,
+.mf-trading-terminal .selected-metrics strong,
+.mf-trading-terminal .strategy-summary-row strong,
+.mf-trading-terminal .pnl-summary strong,
+.mf-trading-terminal .token-meta {
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+/* -----------------------------
+   TOKEN FLOW
+   ----------------------------- */
+
+.flow-page .flow-hero h1 {
+  font-size: clamp(28px, 4.2vw, 38px);
+  line-height: 0.98;
+  font-weight: 800;
+  letter-spacing: -0.038em;
+}
+
+.flow-page .flow-hero .eyebrow {
+  font-size: 10.5px;
+  line-height: 1.15;
+  font-weight: 850;
+  letter-spacing: 0.155em;
+}
+
+.flow-page .hero-counter span,
+.flow-page .summary-card span,
+.flow-page .token-metric span {
+  line-height: 1.15;
+  font-weight: 800;
+}
+
+.flow-page .summary-card span,
+.flow-page .token-metric span {
+  letter-spacing: 0.075em;
+}
+
+.flow-page .summary-card strong {
+  font-size: 18px;
+  line-height: 1;
+  font-weight: 760;
+}
+
+.flow-page .token-mint {
+  line-height: 1.12;
+  font-weight: 780;
+  letter-spacing: -0.018em;
+}
+
+.flow-page .token-metric strong {
+  line-height: 1.08;
+  font-weight: 740;
+  letter-spacing: -0.012em;
+}
+
+.flow-page .search-wrap input,
+.flow-page .page-state {
+  line-height: 1.25;
+}
+
+.flow-page .hero-counter strong,
+.flow-page .summary-card strong,
+.flow-page .token-metric strong,
+.flow-page .page-state strong {
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+/* -----------------------------
+   SMART VAULT
+   ----------------------------- */
+
+.mf-vault-shell .mf-vault-hero h1 {
+  line-height: 0.96;
+  font-weight: 850;
+  letter-spacing: -0.042em;
+  text-wrap: balance;
+}
+
+.mf-vault-shell .mf-vault-hero p {
+  font-size: 15px;
+  line-height: 1.58;
+  letter-spacing: -0.008em;
+}
+
+.mf-vault-shell .mf-vault-kicker,
+.mf-vault-shell .mf-vault-eyebrow {
+  font-size: 10.5px;
+  line-height: 1.2;
+  letter-spacing: 0.165em;
+}
+
+.mf-vault-shell .mf-vault-card-head h2 {
+  font-size: 18px;
+  line-height: 1.08;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+}
+
+.mf-vault-shell .mf-vault-stat small,
+.mf-vault-shell .mf-vault-balance small,
+.mf-vault-shell .mf-vault-control-row small {
+  line-height: 1.2;
+  letter-spacing: 0.095em;
+}
+
+.mf-vault-shell .mf-vault-stat strong,
+.mf-vault-shell .mf-vault-control-row strong {
+  line-height: 1.3;
+  font-weight: 700;
+}
+
+.mf-vault-shell .mf-vault-note,
+.mf-vault-shell .mf-vault-checklist small {
+  line-height: 1.5;
+}
+
+.mf-vault-shell .mf-vault-btn {
+  line-height: 1.2;
+  letter-spacing: 0.085em;
+}
+
+.mf-vault-shell .mf-vault-balance strong,
+.mf-vault-shell .mf-vault-stat strong {
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+/* Mobile optical tuning: typography only. */
+@media (max-width: 760px) {
+  .mf-trading-terminal .panel-head h2 {
+    font-size: 18px;
+  }
+
+  .mf-trading-terminal .eyebrow {
+    font-size: 10px;
+  }
+
+  .flow-page .flow-hero h1 {
+    font-size: 28px;
+  }
+
+  .flow-page .summary-card strong {
+    font-size: 18px;
+  }
+
+  .mf-vault-shell .mf-vault-hero h1 {
+    font-size: 38px;
+    line-height: 0.97;
+  }
+
+  .mf-vault-shell .mf-vault-hero p {
+    font-size: 15px;
+    line-height: 1.56;
+  }
+
+  .mf-vault-shell .mf-vault-card-head h2 {
+    font-size: 18px;
+  }
+}

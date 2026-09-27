@@ -1,0 +1,14 @@
+{
+  "files": [
+    "memeflow-app/app-server.mjs",
+    "memeflow-app/settings-page.js",
+    "memeflow-app/settings.html",
+    "memeflow-app/memeflow-theme.js",
+    "memeflow-app/memeflow-theme.css",
+    "memeflow-app/account-wallet-settings.js",
+    "memeflow-app/memeflow-nav.js",
+    "package.json",
+    "memeflow-app/package.json",
+    "memeflow-app/tests/public-agent-v2.mjs"
+  ]
+}

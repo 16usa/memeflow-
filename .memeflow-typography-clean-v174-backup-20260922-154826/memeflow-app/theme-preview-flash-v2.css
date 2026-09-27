@@ -1,0 +1,20 @@
+/* ===== MEMEFLOW_THEME_PREVIEW_FLASH_FIX_V2 =====
+   Prevents dark fallback / dark iframe background from flashing while
+   light-theme gallery previews are loading.
+*/
+html[data-theme="light"] .mfpg-variant2-clean-v1 .mfpg-card {
+  background: #f4f6f8 !important;
+}
+html[data-theme="light"] .mfpg-variant2-clean-v1 .mfpg-shot {
+  opacity: 0 !important;
+  visibility: hidden !important;
+  background: #f4f6f8 !important;
+}
+html[data-theme="light"] .mfpg-variant2-clean-v1 .mfpg-live-viewport,
+html[data-theme="light"] .mfpg-variant2-clean-v1 .mfpg-live-frame {
+  background: #f4f6f8 !important;
+}
+html[data-theme="light"] .mfpg-variant2-clean-v1 .mfpg-card[data-slot="center"] {
+  filter: saturate(.96) brightness(1) !important;
+}
+/* ===== /MEMEFLOW_THEME_PREVIEW_FLASH_FIX_V2 ===== */

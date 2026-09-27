@@ -1,0 +1,227 @@
+:root{
+  --mf-premium-text:var(--mf-text-primary);
+  --mf-premium-secondary:var(--mf-text-secondary);
+  --mf-premium-tertiary:var(--mf-text-tertiary);
+
+  --mf-premium-display-lh:.98;
+  --mf-premium-heading-lh:1.08;
+  --mf-premium-body-lh:1.42;
+  --mf-premium-meta-lh:1.22;
+  --mf-premium-ui-lh:1.16;
+}
+
+
+
+
+
+main :where(h1,h2,h3,h4),
+.mf-vault-shell :where(h1,h2,h3,h4),
+.mf-hiw-shell :where(h1,h2,h3,h4),
+.ap-shell :where(h1,h2,h3,h4){
+  text-wrap:balance;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+html[data-theme="light"]{
+  --mf-premium-text:var(--mf-text-primary);
+  --mf-premium-secondary:var(--mf-text-secondary);
+  --mf-premium-tertiary:var(--mf-text-tertiary);
+}
+
+
+
+
+
+
+
+
+
+
+@media (max-width:820px){
+  
+  main :where(h1,h2,h3,h4),.mf-vault-shell :where(h1,h2,h3,h4),.ap-shell :where(h1,h2,h3,h4){
+    overflow-wrap:normal;
+    word-break:normal;
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+html body:is(
+  .mf-page-system,
+  .mf-page-system-tokens,
+  .mf-page-trading,
+  .mf-page-smart-vault,
+  .mf-page-settings,
+  .mf-page-how-it-works,
+  .mf-page-agent-performance,
+  .mf-page-owner-intelligence
+){
+  --cyan:var(--mf-semantic-cyan) !important;
+  --green:var(--mf-semantic-green) !important;
+  --red:var(--mf-semantic-red) !important;
+  --yellow:var(--mf-semantic-yellow) !important;
+  --purple:var(--mf-semantic-purple) !important;
+  --blue:var(--mf-semantic-blue) !important;
+}
+
+
+
+html body:is(
+  .mf-page-system,
+  .mf-page-system-tokens,
+  .mf-page-trading,
+  .mf-page-smart-vault,
+  .mf-page-settings,
+  .mf-page-how-it-works,
+  .mf-page-agent-performance,
+  .mf-page-owner-intelligence
+) :where(
+  .tiny-state,
+  .state-dot.open,
+  .decision-badge.open,
+  .status-pill.open,
+  .mode-badge[data-mode="automate"],
+  .approval-approve
+){
+  border-color:
+    color-mix(in srgb, var(--mf-semantic-green) 58%, transparent)
+    !important;
+}
+
+
+
+html body:is(
+  .mf-page-system,
+  .mf-page-system-tokens,
+  .mf-page-trading,
+  .mf-page-smart-vault,
+  .mf-page-settings,
+  .mf-page-how-it-works,
+  .mf-page-agent-performance,
+  .mf-page-owner-intelligence
+) :where(
+  .state-dot.ready,
+  .decision-badge.ready,
+  .status-pill.ready,
+  [data-mf-semantic="yellow"]
+){
+  border-color:
+    color-mix(in srgb, var(--mf-semantic-yellow) 58%, transparent)
+    !important;
+}
+
+html body:is(
+  .mf-page-system,
+  .mf-page-system-tokens,
+  .mf-page-trading,
+  .mf-page-smart-vault,
+  .mf-page-settings,
+  .mf-page-how-it-works,
+  .mf-page-agent-performance,
+  .mf-page-owner-intelligence
+) :where(
+  .state-dot.watch,
+  .decision-badge.watch,
+  .status-pill.watch,
+  .mode-badge[data-mode="assist"],
+  .approval-count[data-active="true"],
+  [data-mf-semantic="blue"]
+){
+  border-color:
+    color-mix(in srgb, var(--mf-semantic-blue) 58%, transparent)
+    !important;
+}
+
+html body:is(
+  .mf-page-system,
+  .mf-page-system-tokens,
+  .mf-page-trading,
+  .mf-page-smart-vault,
+  .mf-page-settings,
+  .mf-page-how-it-works,
+  .mf-page-agent-performance,
+  .mf-page-owner-intelligence
+) :where(
+  .state-dot.blocked,
+  .decision-badge.blocked,
+  .status-pill.blocked,
+  .close-position,
+  .approval-reject,
+  [data-mf-semantic="red"]
+){
+  border-color:
+    color-mix(in srgb, var(--mf-semantic-red) 58%, transparent)
+    !important;
+}
+
+
+
+html body:is(
+  .mf-page-system,
+  .mf-page-system-tokens,
+  .mf-page-trading,
+  .mf-page-smart-vault,
+  .mf-page-settings,
+  .mf-page-how-it-works,
+  .mf-page-agent-performance,
+  .mf-page-owner-intelligence
+) :where(
+  .copy-trade-badge,
+  .candidate-filter button.active,
+  .timeframes button.active,
+  .indicator-scroll button[aria-pressed="true"],
+  [data-mf-semantic="cyan"]
+){
+  border-color:
+    color-mix(in srgb, var(--mf-semantic-cyan) 58%, transparent)
+    !important;
+}
+
+html body:is(
+  .mf-page-system,
+  .mf-page-system-tokens,
+  .mf-page-trading,
+  .mf-page-smart-vault,
+  .mf-page-settings,
+  .mf-page-how-it-works,
+  .mf-page-agent-performance,
+  .mf-page-owner-intelligence
+) :where(
+  .mf-semantic-purple,
+  [data-mf-semantic="purple"]
+){
+  border-color:
+    color-mix(in srgb, var(--mf-semantic-purple) 58%, transparent)
+    !important;
+}
