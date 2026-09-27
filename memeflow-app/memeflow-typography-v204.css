@@ -1,0 +1,14 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+/* MEMEFLOW PRODUCTION TYPOGRAPHY V204
+   Inter + six direct-pixel sizes.
+   No universal selector / pseudo-elements / SVG override.
+*/
+html,body,button,input,select,textarea,option,optgroup{
+  font-family:"IBM Plex Mono","SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace !important;
+}
+body{
+  font-size:11px!important;
+  font-variant-numeric:tabular-nums lining-nums;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+}

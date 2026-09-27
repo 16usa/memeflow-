@@ -255,17 +255,7 @@
     catch { message('Could not copy the wallet address.',true); }
   }
 
-  function walletHtml() {
-    return `
-      <summary><span><strong>Wallet & Smart Vault</strong><small>Identity · funding · LIVE automation</small></span><i></i></summary>
-      <div class="mf293-settings-grid mf-account-grid">
-        <div class="mf293-field mf-account-stat"><small class="mf293-field-label">Wallet</small><b id="mfWalletConnection">NOT CONNECTED</b></div>
-        <div class="mf293-field mf-account-stat"><small class="mf293-field-label">Network</small><b>Solana Mainnet</b></div>
-        <div class="mf293-field mf-account-stat wide"><small class="mf293-field-label">Wallet address</small><b id="mfWalletAddressValue">Open Smart Vault to connect</b></div>
-        <div class="mf-account-actions"><button class="mf293-primary" type="button" onclick="location.href='/smart-vault.html'">Open Smart Vault</button></div>
-        <div class="mf293-field mf293-field-wide mf-account-note">Connection, deposits, withdrawals and LIVE automation are managed in Smart Vault.</div>
-      </div>`;
-  }
+
 
   function executionHtml() {
     return `
@@ -291,14 +281,7 @@
     if (!isSettings) return true;
     const body = $('mf293SettingsBody');
     if (!body) return false;
-    if ($('mfAccountWalletGroup')) return true;
-
-    const wallet = document.createElement('details');
-    wallet.id = 'mfAccountWalletGroup';
-    wallet.className = 'mf293-settings-group mf-account-settings-group';
-    // MEMEFLOW_SETTINGS_ACCORDIONS_CLOSED_DEFAULT_V1
-    wallet.open = false;
-    wallet.innerHTML = walletHtml();
+    if ($('mfExecutionSettingsGroup')) return true;
 
     const execution = document.createElement('details');
     execution.id = 'mfExecutionSettingsGroup';
@@ -312,11 +295,9 @@
     execution.appendChild(executionBadge);
 
     body.prepend(execution);
-    body.prepend(wallet);
 
-    $('mfWalletConnect')?.addEventListener('click',connectWallet);
-    $('mfWalletDisconnect')?.addEventListener('click',disconnectWallet);
-    $('mfWalletCopy')?.addEventListener('click',copyWallet);
+
+
     $('mfReviewManually')?.addEventListener('click',()=>setMode('assist'));
     $('mfTogglePaperAuto')?.addEventListener('click',()=>setMode(autoActive()?'observe':'automate'));
     $('mfPauseEntries')?.addEventListener('click',()=>setMode('observe'));
@@ -327,10 +308,6 @@
     renderWallet();
     refresh();
 
-    if (location.hash === '#wallet') {
-      wallet.open = true;
-      requestAnimationFrame(()=>wallet.scrollIntoView({behavior:'smooth',block:'start'}));
-    }
     return true;
   }
 
@@ -343,7 +320,7 @@
   },100);
 
   if (isSettings) setInterval(() => {
-    if ($('mfAccountWalletGroup')) refresh();
+    if ($('mfExecutionSettingsGroup')) refresh();
     else installSettings();
   },5000);
 })();

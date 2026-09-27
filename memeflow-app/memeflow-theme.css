@@ -3251,3 +3251,79 @@ html[data-theme="light"] .mf-vault-card hr{
     border-radius: 20px !important;
   }
 }
+/* MEMEFLOW_SYSTEM_SETTINGS_CLEANUP_V191_3
+   Compact System Settings meta row. Uses existing theme palette + V186 sizes only.
+   The old full-size Appearance module is intentionally retired.
+*/
+body.mf-page-settings #mfThemeAppearance { display:none !important; }
+
+body.mf-page-settings .mf293-settings-meta {
+  display:grid !important;
+  grid-template-columns:repeat(4,minmax(0,1fr)) !important;
+  gap:8px !important;
+}
+
+body.mf-page-settings .mf293-settings-meta > span,
+body.mf-page-settings .mf293-settings-meta > label {
+  min-width:0;
+}
+
+body.mf-page-settings .mf-theme-meta-control {
+  display:flex !important;
+  flex-direction:column;
+  justify-content:center;
+  gap:7px;
+}
+
+body.mf-page-settings .mf-theme-meta-label {
+  font-size:11px !important;
+  line-height:1.15 !important;
+  font-weight:600 !important;
+  color:var(--muted) !important;
+  letter-spacing:.04em;
+  text-transform:uppercase;
+}
+
+body.mf-page-settings .mf-theme-segmented-compact {
+  width:100%;
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:2px;
+  padding:2px;
+  border:1px solid var(--line) !important;
+  border-radius:9px !important;
+  background:transparent !important;
+}
+
+body.mf-page-settings .mf-theme-segmented-compact button {
+  min-width:0;
+  min-height:26px !important;
+  padding:0 7px !important;
+  border:0 !important;
+  border-radius:7px !important;
+  font-size:11px !important;
+  line-height:1 !important;
+  font-weight:600 !important;
+  color:var(--muted) !important;
+  background:transparent !important;
+  box-shadow:none !important;
+}
+
+body.mf-page-settings .mf-theme-segmented-compact button.is-active {
+  color:var(--text) !important;
+  background:var(--surface2, var(--panel)) !important;
+  box-shadow:inset 0 0 0 1px var(--line) !important;
+}
+
+@media (max-width:620px) {
+  body.mf-page-settings .mf293-settings-meta {
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+    gap:8px !important;
+  }
+  body.mf-page-settings .mf293-settings-meta > span,
+  body.mf-page-settings .mf293-settings-meta > label {
+    padding:10px 12px !important;
+    min-height:68px !important;
+  }
+}
+/* /MEMEFLOW_SYSTEM_SETTINGS_CLEANUP_V191_3 */

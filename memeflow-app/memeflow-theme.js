@@ -88,39 +88,31 @@
     return theme;
   }
 
-  function mountAppearance() {
+function mountAppearance() {
     if (!/\/settings\.html$/i.test(location.pathname)) return true;
-    if (document.getElementById('mfThemeAppearance')) return true;
+    if (document.getElementById('mfThemeMetaControl')) return true;
 
-    const body = document.getElementById('mf293SettingsBody');
-    if (!body) return false;
+    // Remove the old full-size Appearance card if an older cached mount created it.
+    document.getElementById('mfThemeAppearance')?.remove();
 
-    const section = document.createElement('section');
-    section.id = 'mfThemeAppearance';
-    section.className = 'mf-theme-appearance';
-    section.setAttribute('aria-labelledby', 'mfThemeAppearanceTitle');
+    const meta = document.querySelector('.mf293-settings-meta');
+    if (!meta) return false;
 
-    section.innerHTML = `
-      <div class="mf-theme-appearance-copy">
-        <strong id="mfThemeAppearanceTitle">Appearance</strong>
-        <small>Interface only · trading logic is unchanged</small>
-      </div>
-      <div class="mf-theme-appearance-control">
-        <span class="mf-theme-appearance-label">Theme</span>
-        <div class="mf-theme-segmented" role="group" aria-label="Theme">
-          <button type="button" data-mf-theme-choice="dark" aria-pressed="false">Dark</button>
-          <button type="button" data-mf-theme-choice="light" aria-pressed="false">Light</button>
-        </div>
-        <span class="mf-theme-current" id="mfThemeCurrentValue"></span>
+    const item = document.createElement('span');
+    item.id = 'mfThemeMetaControl';
+    item.className = 'mf-theme-meta-control';
+    item.innerHTML = `
+      <span class="mf-theme-meta-label">Theme</span>
+      <div class="mf-theme-segmented mf-theme-segmented-compact" role="group" aria-label="Theme">
+        <button type="button" data-mf-theme-choice="dark" aria-pressed="false">Dark</button>
+        <button type="button" data-mf-theme-choice="light" aria-pressed="false">Light</button>
       </div>
     `;
 
-    body.prepend(section);
+    meta.appendChild(item);
 
-    section.querySelectorAll('[data-mf-theme-choice]').forEach((button) => {
-      button.addEventListener('click', () => {
-        applyTheme(button.dataset.mfThemeChoice);
-      });
+    item.querySelectorAll('[data-mf-theme-choice]').forEach((button) => {
+      button.addEventListener('click', () => applyTheme(button.dataset.mfThemeChoice));
     });
 
     syncControls(readTheme());

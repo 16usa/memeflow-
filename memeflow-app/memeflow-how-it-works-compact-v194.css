@@ -1,0 +1,150 @@
+
+/* ==========================================================================
+   MEMEFLOW · HOW IT WORKS COMPACT SOFTWARE V194
+   Page-only presentation layer.
+   Typography sizes: 11 / 12 / 13 / 14 / 16 / 20 px only.
+   Families: Inter / Inter Tight / IBM Plex Mono.
+   No content, interaction, navigation, wallet or trading logic changes.
+   ========================================================================== */
+
+body.mf-hiw-page{font-family:"Inter",ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif!important}
+body.mf-hiw-page .mf-hiw-shell{width:min(1120px,100%)!important;padding:0 0 20px!important}
+body.mf-hiw-page .mf-hiw-topbar{min-height:54px!important;top:0!important;padding:7px 12px!important;gap:10px!important;border-radius:0!important;box-shadow:none!important}
+body.mf-hiw-page .mf-hiw-brand{gap:8px!important}
+body.mf-hiw-page .mf-hiw-brand-mark{width:30px!important;height:30px!important;flex-basis:30px!important}
+body.mf-hiw-page .mf-hiw-brand-mark img{width:28px!important;height:28px!important;filter:none!important}
+body.mf-hiw-page .mf-hiw-brand-copy{gap:1px!important}
+body.mf-hiw-page .mf-hiw-brand-copy strong{font-family:"IBM Plex Mono","SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace !important;font-size:13px!important;font-weight:700!important;line-height:1!important;letter-spacing:-.01em!important}
+body.mf-hiw-page .mf-hiw-brand-copy small{font-family:"IBM Plex Mono","SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace !important;font-size:11px!important;font-weight:500!important;line-height:1.1!important;letter-spacing:.02em!important}
+
+body.mf-hiw-page .mf-hiw-hero{min-height:0!important;grid-template-columns:minmax(0,1.25fr) minmax(280px,.75fr)!important;gap:18px!important;padding:28px 20px 24px!important;align-items:start!important}
+body.mf-hiw-page .mf-hiw-hero::before{display:none!important}
+body.mf-hiw-page .mf-hiw-kicker{font-family:"IBM Plex Mono","SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace !important;font-size:11px!important;font-weight:500!important;line-height:1.1!important;letter-spacing:.04em!important}
+body.mf-hiw-page .mf-hiw-hero h1{max-width:680px!important;margin:8px 0 10px!important;font-family:"IBM Plex Mono","SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace !important;font-size:15px!important;font-weight:700!important;line-height:1.02!important;letter-spacing:-.025em!important}
+body.mf-hiw-page .mf-hiw-hero-copy>p{max-width:680px!important;margin:0!important;font-size:13px!important;font-weight:500!important;line-height:1.4!important}
+body.mf-hiw-page .mf-hiw-hero-actions{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:6px!important;margin-top:14px!important}
+body.mf-hiw-page .mf-hiw-btn{min-height:34px!important;padding:0 10px!important;border-radius:9px!important;font-size:11px!important;font-weight:600!important;line-height:1!important;letter-spacing:0!important}
+body.mf-hiw-page .mf-hiw-trust-row{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:5px!important;margin-top:10px!important}
+body.mf-hiw-page .mf-hiw-trust-row span{min-width:0!important;gap:5px!important;font-family:"IBM Plex Mono","SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace !important;font-size:11px!important;font-weight:500!important;line-height:1.2!important;letter-spacing:0!important}
+
+body.mf-hiw-page .mf-hiw-status-card{padding:10px!important;border-radius:12px!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+body.mf-hiw-page .mf-hiw-status-head{gap:8px!important;padding-bottom:7px!important}
+body.mf-hiw-page .mf-hiw-status-head>span,
+body.mf-hiw-page .mf-hiw-status-head b{font-family:"IBM Plex Mono","SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace !important;font-size:11px!important;font-weight:500!important;line-height:1.1!important;letter-spacing:0!important}
+body.mf-hiw-page .mf-hiw-status-stack{gap:5px!important;margin-top:7px!important}
+body.mf-hiw-page .mf-hiw-status-stack>div{min-height:44px!important;gap:2px!important;padding:7px 9px!important;border-radius:9px!important}
+body.mf-hiw-page .mf-hiw-status-stack small{font-family:"IBM Plex Mono","SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace !important;font-size:11px!important;font-weight:500!important;line-height:1.1!important;letter-spacing:0!important}
+body.mf-hiw-page .mf-hiw-status-stack strong{font-family:"IBM Plex Mono","SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace !important;font-size:13px!important;font-weight:600!important;line-height:1.15!important}
+body.mf-hiw-page .mf-hiw-status-card>p{margin:7px 1px 0!important;font-size:11px!important;line-height:1.3!important}
+
+body.mf-hiw-page .mf-hiw-section{padding:24px 20px!important}
+body.mf-hiw-page .mf-hiw-section-head{align-items:end!important;gap:16px!important;margin-bottom:12px!important}
+body.mf-hiw-page .mf-hiw-section-head h2,
+body.mf-hiw-page .mf-hiw-money h2,
+body.mf-hiw-page .mf-hiw-cta h2{margin:4px 0 0!important;font-family:"IBM Plex Mono","SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace !important;font-size:15px!important;font-weight:700!important;line-height:1.08!important;letter-spacing:-.015em!important}
+body.mf-hiw-page .mf-hiw-section-head>p{max-width:360px!important;margin:0!important;font-size:11px!important;line-height:1.3!important}
+
+body.mf-hiw-page .mf-hiw-map-shell{border-radius:12px!important;box-shadow:none!important}
+body.mf-hiw-page .mf-hiw-map{height:400px!important}
+body.mf-hiw-page .mf-hiw-node{min-height:68px!important;grid-template-columns:30px minmax(0,1fr)!important;gap:7px!important;padding:8px!important;border-radius:10px!important;box-shadow:none!important}
+body.mf-hiw-page .mf-hiw-node-icon{width:30px!important;height:30px!important;border-radius:8px!important}
+body.mf-hiw-page .mf-hiw-node-icon svg{width:16px!important;height:16px!important}
+body.mf-hiw-page .mf-hiw-node small,
+body.mf-hiw-page .mf-hiw-node em{font-family:"IBM Plex Mono","SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace !important;font-size:11px!important;font-weight:500!important;line-height:1.1!important;letter-spacing:0!important}
+body.mf-hiw-page .mf-hiw-node strong{font-family:"IBM Plex Mono","SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace !important;font-size:11px!important;font-weight:600!important;line-height:1.1!important;letter-spacing:0!important}
+body.mf-hiw-page .mf-hiw-map-detail{min-height:82px!important;grid-template-columns:34px minmax(0,1fr)!important;gap:10px!important;padding:10px 12px!important}
+body.mf-hiw-page .mf-hiw-detail-index{font-family:"IBM Plex Mono","SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace !important;font-size:15px!important;font-weight:600!important}
+body.mf-hiw-page .mf-hiw-map-detail span{font-family:"IBM Plex Mono","SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace !important;font-size:11px!important;font-weight:500!important;letter-spacing:.02em!important}
+body.mf-hiw-page .mf-hiw-map-detail h3{margin:2px 0 3px!important;font-family:"IBM Plex Mono","SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace !important;font-size:13px!important;font-weight:600!important;line-height:1.15!important}
+body.mf-hiw-page .mf-hiw-map-detail p{margin:0!important;font-size:11px!important;line-height:1.3!important}
+
+body.mf-hiw-page .mf-hiw-steps{gap:6px!important}
+body.mf-hiw-page .mf-hiw-step{min-height:138px!important;padding:11px!important;border-radius:10px!important;transform:none!important;opacity:1!important}
+body.mf-hiw-page .mf-hiw-step>span{top:9px!important;right:10px!important;font-family:"IBM Plex Mono","SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace !important;font-size:11px!important;font-weight:500!important;letter-spacing:0!important}
+body.mf-hiw-page .mf-hiw-step-icon{width:30px!important;height:30px!important;border-radius:8px!important;font-size:14px!important}
+body.mf-hiw-page .mf-hiw-step h3{margin:10px 0 4px!important;font-family:"IBM Plex Mono","SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace !important;font-size:13px!important;font-weight:600!important;line-height:1.15!important;letter-spacing:0!important}
+body.mf-hiw-page .mf-hiw-step p{margin:0!important;font-size:11px!important;line-height:1.3!important}
+body.mf-hiw-page .mf-hiw-step small{margin-top:auto!important;padding-top:7px!important;font-family:"IBM Plex Mono","SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace !important;font-size:11px!important;font-weight:500!important;line-height:1.1!important;letter-spacing:0!important}
+
+body.mf-hiw-page .mf-hiw-control-grid{gap:6px!important}
+body.mf-hiw-page .mf-hiw-control-card{min-height:0!important;padding:11px!important;border-radius:10px!important;transform:none!important;opacity:1!important}
+body.mf-hiw-page .mf-hiw-control-label{min-height:20px!important;padding:0 6px!important;border-radius:6px!important;font-family:"IBM Plex Mono","SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace !important;font-size:11px!important;font-weight:500!important;letter-spacing:0!important}
+body.mf-hiw-page .mf-hiw-control-card h3{margin:8px 0!important;font-family:"IBM Plex Mono","SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace !important;font-size:13px!important;font-weight:600!important;line-height:1.15!important;letter-spacing:0!important}
+body.mf-hiw-page .mf-hiw-control-card ul{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:5px 8px!important}
+body.mf-hiw-page .mf-hiw-control-card li{grid-template-columns:12px minmax(0,1fr)!important;gap:4px!important;font-size:11px!important;line-height:1.25!important}
+
+body.mf-hiw-page .mf-hiw-money{margin:8px 20px 0!important;padding:14px!important;border-radius:12px!important;box-shadow:none!important;transform:none!important;opacity:1!important}
+body.mf-hiw-page .mf-hiw-money-copy p{margin:7px 0 0!important;font-size:11px!important;line-height:1.35!important}
+body.mf-hiw-page .mf-hiw-money-flow{grid-template-columns:minmax(0,1fr) auto minmax(0,1fr)!important;gap:7px!important;margin-top:10px!important}
+body.mf-hiw-page .mf-hiw-money-flow>div{min-height:58px!important;gap:2px!important;padding:8px!important;border-radius:9px!important}
+body.mf-hiw-page .mf-hiw-money-flow small,
+body.mf-hiw-page .mf-hiw-money-flow>span,
+body.mf-hiw-page .mf-hiw-network-note{font-family:"IBM Plex Mono","SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace !important;font-size:11px!important;font-weight:500!important;line-height:1.2!important;letter-spacing:0!important}
+body.mf-hiw-page .mf-hiw-money-flow strong{font-family:"IBM Plex Mono","SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace !important;font-size:13px!important;font-weight:600!important;line-height:1.15!important}
+body.mf-hiw-page .mf-hiw-network-note{margin:8px 0 0!important}
+
+body.mf-hiw-page .mf-hiw-faq-list{gap:4px!important}
+body.mf-hiw-page .mf-hiw-faq details{border-radius:9px!important;transform:none!important;opacity:1!important}
+body.mf-hiw-page .mf-hiw-faq summary{min-height:38px!important;padding:7px 34px 7px 10px!important;font-size:11px!important;font-weight:600!important;line-height:1.2!important}
+body.mf-hiw-page .mf-hiw-faq summary::after{right:11px!important;font-size:14px!important}
+body.mf-hiw-page .mf-hiw-faq details p{padding:0 34px 9px 10px!important;font-size:11px!important;line-height:1.35!important}
+
+body.mf-hiw-page .mf-hiw-cta{min-height:0!important;gap:14px!important;margin:0 20px!important;padding:22px 0!important}
+body.mf-hiw-page .mf-hiw-cta-actions{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:6px!important;width:min(420px,100%)!important}
+body.mf-hiw-page .mf-hiw-footer{min-height:44px!important;gap:10px!important;margin:0 20px!important;padding:8px 0!important}
+body.mf-hiw-page .mf-hiw-footer>span,
+body.mf-hiw-page .mf-hiw-footer p{font-family:"IBM Plex Mono","SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace !important;font-size:11px!important;font-weight:500!important;line-height:1.2!important;letter-spacing:0!important}
+
+html[data-theme="light"] body.mf-hiw-page{color:#333333!important;background:#FFFFFF!important}
+html[data-theme="light"] body.mf-hiw-page :where(.mf-hiw-hero h1,.mf-hiw-section-head h2,.mf-hiw-money h2,.mf-hiw-cta h2,.mf-hiw-status-stack strong,.mf-hiw-step h3,.mf-hiw-control-card h3,.mf-hiw-money-flow strong,.mf-hiw-faq summary,.mf-hiw-map-detail h3,.mf-hiw-node strong){color:#000000!important}
+html[data-theme="light"] body.mf-hiw-page :where(.mf-hiw-hero-copy>p,.mf-hiw-section-head>p,.mf-hiw-step p,.mf-hiw-control-card li,.mf-hiw-money-copy p,.mf-hiw-faq details p){color:#666666!important}
+html[data-theme="light"] body.mf-hiw-page :where(.mf-hiw-brand-copy small,.mf-hiw-status-head>span,.mf-hiw-status-stack small,.mf-hiw-status-card>p,.mf-hiw-node small,.mf-hiw-node em,.mf-hiw-map-detail span,.mf-hiw-step small,.mf-hiw-network-note,.mf-hiw-footer){color:#929292!important}
+html[data-theme="light"] body.mf-hiw-page :where(.mf-hiw-status-card,.mf-hiw-map-shell,.mf-hiw-step,.mf-hiw-control-card,.mf-hiw-money,.mf-hiw-faq details){background:#F5F5F5!important;box-shadow:none!important}
+html[data-theme="light"] body.mf-hiw-page :where(.mf-hiw-status-card,.mf-hiw-map-shell,.mf-hiw-step,.mf-hiw-control-card,.mf-hiw-money,.mf-hiw-faq details,.mf-hiw-status-stack>div,.mf-hiw-money-flow>div){border-color:#E7E7E7!important}
+
+@media(max-width:720px){
+ body.mf-hiw-page .mf-hiw-shell{width:100%!important}
+ body.mf-hiw-page .mf-hiw-topbar{padding-inline:10px!important}
+ body.mf-hiw-page .mf-hiw-hero{grid-template-columns:1fr!important;gap:10px!important;padding:18px 12px 16px!important}
+ body.mf-hiw-page .mf-hiw-hero-actions{margin-top:10px!important}
+ body.mf-hiw-page .mf-hiw-trust-row{grid-template-columns:1fr!important;gap:3px!important;margin-top:8px!important}
+ body.mf-hiw-page .mf-hiw-status-stack{grid-template-columns:1fr!important}
+ body.mf-hiw-page .mf-hiw-section{padding:18px 12px!important}
+ body.mf-hiw-page .mf-hiw-section-head{display:grid!important;gap:4px!important;margin-bottom:9px!important}
+ body.mf-hiw-page .mf-hiw-section-head>p{text-align:left!important}
+ body.mf-hiw-page .mf-hiw-map{height:auto!important;display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:5px!important;padding:6px!important;overflow:visible!important}
+ body.mf-hiw-page .mf-hiw-map::before,body.mf-hiw-page .mf-hiw-links{display:none!important}
+ body.mf-hiw-page .mf-hiw-node,
+ body.mf-hiw-page .mf-hiw-node-wallet,
+ body.mf-hiw-page .mf-hiw-node-program,
+ body.mf-hiw-page .mf-hiw-node-policy,
+ body.mf-hiw-page .mf-hiw-node-vault,
+ body.mf-hiw-page .mf-hiw-node-executor,
+ body.mf-hiw-page .mf-hiw-node-market{width:100%!important;min-height:60px!important;position:static!important;transform:none!important}
+ body.mf-hiw-page .mf-hiw-node:hover,
+ body.mf-hiw-page .mf-hiw-node:focus-visible,
+ body.mf-hiw-page .mf-hiw-node-program:hover,
+ body.mf-hiw-page .mf-hiw-node-program:focus-visible,
+ body.mf-hiw-page .mf-hiw-node-policy:hover,
+ body.mf-hiw-page .mf-hiw-node-policy:focus-visible,
+ body.mf-hiw-page .mf-hiw-node-vault:hover,
+ body.mf-hiw-page .mf-hiw-node-vault:focus-visible{transform:none!important}
+ body.mf-hiw-page .mf-hiw-map-detail{min-height:72px!important;padding:8px 10px!important}
+ body.mf-hiw-page .mf-hiw-steps{grid-template-columns:1fr!important;gap:5px!important}
+ body.mf-hiw-page .mf-hiw-step{min-height:0!important;display:grid!important;grid-template-columns:30px minmax(0,1fr) auto!important;grid-template-areas:"icon title num" "icon body body" "icon meta meta"!important;column-gap:8px!important;row-gap:2px!important;padding:8px 9px!important}
+ body.mf-hiw-page .mf-hiw-step-icon{grid-area:icon!important;align-self:center!important}
+ body.mf-hiw-page .mf-hiw-step>span{grid-area:num!important;position:static!important;align-self:start!important;justify-self:end!important}
+ body.mf-hiw-page .mf-hiw-step h3{grid-area:title!important;margin:0!important}
+ body.mf-hiw-page .mf-hiw-step p{grid-area:body!important}
+ body.mf-hiw-page .mf-hiw-step small{grid-area:meta!important;margin:0!important;padding:2px 0 0!important}
+ body.mf-hiw-page .mf-hiw-control-grid{grid-template-columns:1fr!important;gap:5px!important}
+ body.mf-hiw-page .mf-hiw-control-card{padding:9px!important}
+ body.mf-hiw-page .mf-hiw-control-card ul{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+ body.mf-hiw-page .mf-hiw-money{margin:5px 12px 0!important;padding:11px!important}
+ body.mf-hiw-page .mf-hiw-money-flow{grid-template-columns:minmax(0,1fr) auto minmax(0,1fr)!important;gap:5px!important}
+ body.mf-hiw-page .mf-hiw-money-flow>span{transform:none!important;padding:0!important}
+ body.mf-hiw-page .mf-hiw-cta{display:grid!important;margin:0 12px!important;padding:18px 0!important}
+ body.mf-hiw-page .mf-hiw-cta-actions{width:100%!important}
+ body.mf-hiw-page .mf-hiw-footer{min-height:38px!important;flex-direction:row!important;align-items:center!important;justify-content:space-between!important;margin:0 12px!important;padding:6px 0!important}
+}
+/* V194 END */

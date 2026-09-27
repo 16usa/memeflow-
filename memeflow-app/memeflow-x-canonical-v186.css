@@ -4829,7 +4829,7 @@ html body :where(
 @media (max-width:820px){body.mf-page-index .topbar #walletConnectTop::before,
 body.mf-page-index .topbar #walletConnectTop::after{line-height:1!important;}}
 @media (max-width:820px){body.mf-page-index .topbar #walletConnectTop::before,
-body.mf-page-index .topbar #walletConnectTop::after{font-size:28px!important;}}
+body.mf-page-index .topbar #walletConnectTop::after{font-size:15px!important;}}
 
 
 body.mf-page-index .nav-label{text-transform:uppercase;}
@@ -5088,7 +5088,7 @@ body.mf-page-index .mobile-subhead{text-transform:uppercase;}
 
 
 
-body.mf-page-index .decision-intelligence>summary::after{font-size:21px;}
+body.mf-page-index .decision-intelligence>summary::after{font-size:15px;}
 body.mf-page-index .decision-intelligence>summary::after{font-weight:500;}
 
 
@@ -5138,7 +5138,7 @@ body.mf-page-index .wallet-session-note small{text-transform:uppercase;}
 
 
 
-body.mf-page-index .context-icon{font-size:14px;}
+body.mf-page-index .context-icon{font-size:13px;}
 
 
 
@@ -5340,7 +5340,7 @@ body.mf-page-index .mf-paper-grid small{text-transform:uppercase;}
 
 
 
-body.mf-page-index #ai-analysis>summary::after{font-size:18px!important;}
+body.mf-page-index #ai-analysis>summary::after{font-size:15px!important;}
 
 
 
@@ -5349,7 +5349,7 @@ body.mf-page-index #ai-analysis>summary::after{font-size:18px!important;}
 
 
 
-@media(max-width:820px){body.mf-page-index #ai-analysis>summary::after{font-size:20px!important;}}
+@media(max-width:820px){body.mf-page-index #ai-analysis>summary::after{font-size:15px!important;}}
 @media(max-width:820px){body.mf-page-index #ai-analysis>summary::after{line-height:1!important;}}
 @media(max-width:820px){body.mf-page-index #ai-analysis>summary::after{font-weight:400!important;}}
 
@@ -5373,7 +5373,7 @@ body.mf-page-index .mf-ai-compact-copy small{text-transform:uppercase;}
 
 
 
-body.mf-page-index #market-chart-module .mf-market-chart-empty-icon{font-size:30px;}
+body.mf-page-index #market-chart-module .mf-market-chart-empty-icon{font-size:15px;}
 
 
 
@@ -5394,9 +5394,9 @@ body.mf-page-index #market-chart-module .mf-market-chart-empty-icon{font-size:30
 
 
 
-body.mf-page-index #primary-candidate .token-head.mf-primary-v21-head{--mf-primary-v21-cap-font-size:var(--mf-size-11);}
+body.mf-page-index #primary-candidate .token-head.mf-primary-v21-head{--mf-primary-v21-cap-font-size:"IBM Plex Mono","SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;}
 body.mf-page-index #primary-candidate .token-head.mf-primary-v21-head{--mf-primary-v21-cap-line-height:14px;}
-body.mf-page-index #primary-candidate .token-head.mf-primary-v21-head{--mf-primary-v21-cap-font-weight:500;}
+body.mf-page-index #primary-candidate .token-head.mf-primary-v21-head{--mf-primary-v21-cap-font-weight:"IBM Plex Mono","SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;}
 body.mf-page-index #primary-candidate .token-head.mf-primary-v21-head{--mf-primary-v21-cap-letter-spacing:normal;}
 
 
@@ -5508,17 +5508,17 @@ body.mf-page-index .wallet-stat small,
 body.mf-page-index .subscription-metric small,
 body.mf-page-index .system-health-summary small{text-transform:uppercase!important;}
 
-body.mf-page-index{--mf-type-micro:var(--mf-size-11);}
-body.mf-page-index{--mf-type-meta:var(--mf-size-12);}
-body.mf-page-index{--mf-type-ui:var(--mf-size-13);}
-body.mf-page-index{--mf-type-body:var(--mf-size-14);}
-body.mf-page-index{--mf-type-panel:var(--mf-size-15);}
-body.mf-page-index{--mf-type-title:var(--mf-size-17);}
+body.mf-page-index{--mf-type-micro:11px;}
+body.mf-page-index{--mf-type-meta:11px;}
+body.mf-page-index{--mf-type-ui:13px;}
+body.mf-page-index{--mf-type-body:13px;}
+body.mf-page-index{--mf-type-panel:15px;}
+body.mf-page-index{--mf-type-title:15px;}
 
 
 
 
-body.mf-page-index{--mf-type-system:var(--mf-size-11);}
+body.mf-page-index{--mf-type-system:11px;}
 
 
 
@@ -5608,7 +5608,7 @@ body.mf-page-index .intel-alert-icon{font-weight:900;}
 
 
 
-body.mf-page-index .advanced-intelligence>summary::after{font-size:22px;}
+body.mf-page-index .advanced-intelligence>summary::after{font-size:15px;}
 body.mf-page-index .advanced-intelligence>summary::after{font-weight:500;}
 
 
@@ -5915,12 +5915,12 @@ body.mf-page-system .wallet-stat small,
 body.mf-page-system .subscription-metric small,
 body.mf-page-system .system-health-summary small{text-transform:uppercase!important;}
 
-body.mf-page-system{--mf-type-micro:var(--mf-size-11);}
-body.mf-page-system{--mf-type-meta:var(--mf-size-12);}
-body.mf-page-system{--mf-type-ui:var(--mf-size-13);}
-body.mf-page-system{--mf-type-body:var(--mf-size-14);}
-body.mf-page-system{--mf-type-panel:var(--mf-size-15);}
-body.mf-page-system{--mf-type-title:var(--mf-size-17);}
+body.mf-page-system{--mf-type-micro:11px;}
+body.mf-page-system{--mf-type-meta:11px;}
+body.mf-page-system{--mf-type-ui:13px;}
+body.mf-page-system{--mf-type-body:13px;}
+body.mf-page-system{--mf-type-panel:15px;}
+body.mf-page-system{--mf-type-title:15px;}
 
 
 
@@ -6022,7 +6022,7 @@ body.mf-page-system main :where(
 
 
 
-body.mf-page-system{--mf-type-system:var(--mf-size-11);}
+body.mf-page-system{--mf-type-system:11px;}
 
 
 
@@ -6092,12 +6092,12 @@ body.mf-page-how-it-works .wallet-stat small,
 body.mf-page-how-it-works .subscription-metric small,
 body.mf-page-how-it-works .system-health-summary small{text-transform:uppercase!important;}
 
-body.mf-page-how-it-works{--mf-type-micro:var(--mf-size-11);}
-body.mf-page-how-it-works{--mf-type-meta:var(--mf-size-12);}
-body.mf-page-how-it-works{--mf-type-ui:var(--mf-size-13);}
-body.mf-page-how-it-works{--mf-type-body:var(--mf-size-14);}
-body.mf-page-how-it-works{--mf-type-panel:var(--mf-size-15);}
-body.mf-page-how-it-works{--mf-type-title:var(--mf-size-17);}
+body.mf-page-how-it-works{--mf-type-micro:11px;}
+body.mf-page-how-it-works{--mf-type-meta:11px;}
+body.mf-page-how-it-works{--mf-type-ui:13px;}
+body.mf-page-how-it-works{--mf-type-body:13px;}
+body.mf-page-how-it-works{--mf-type-panel:15px;}
+body.mf-page-how-it-works{--mf-type-title:15px;}
 
 
 
@@ -6199,7 +6199,7 @@ body.mf-page-how-it-works .mf-hiw-node em{font-style:normal;}
 
 
 
-body.mf-page-how-it-works .mf-hiw-step-icon{font-size:20px;}
+body.mf-page-how-it-works .mf-hiw-step-icon{font-size:15px;}
 
 
 
@@ -6235,7 +6235,7 @@ body.mf-page-how-it-works .mf-hiw-step-icon{font-size:20px;}
 
 
 
-body.mf-page-how-it-works .mf-hiw-faq summary::after{font-size:18px;}
+body.mf-page-how-it-works .mf-hiw-faq summary::after{font-size:15px;}
 body.mf-page-how-it-works .mf-hiw-faq summary::after{font-weight:400;}
 
 
@@ -6326,7 +6326,7 @@ body.mf-page-how-it-works main :where(
 
 
 
-body.mf-page-how-it-works{--mf-type-system:var(--mf-size-11);}
+body.mf-page-how-it-works{--mf-type-system:11px;}
 
 
 
@@ -6396,12 +6396,12 @@ body.mf-page-smart-vault .wallet-stat small,
 body.mf-page-smart-vault .subscription-metric small,
 body.mf-page-smart-vault .system-health-summary small{text-transform:uppercase!important;}
 
-body.mf-page-smart-vault{--mf-type-micro:var(--mf-size-11);}
-body.mf-page-smart-vault{--mf-type-meta:var(--mf-size-12);}
-body.mf-page-smart-vault{--mf-type-ui:var(--mf-size-13);}
-body.mf-page-smart-vault{--mf-type-body:var(--mf-size-14);}
-body.mf-page-smart-vault{--mf-type-panel:var(--mf-size-15);}
-body.mf-page-smart-vault{--mf-type-title:var(--mf-size-17);}
+body.mf-page-smart-vault{--mf-type-micro:11px;}
+body.mf-page-smart-vault{--mf-type-meta:11px;}
+body.mf-page-smart-vault{--mf-type-ui:13px;}
+body.mf-page-smart-vault{--mf-type-body:13px;}
+body.mf-page-smart-vault{--mf-type-panel:15px;}
+body.mf-page-smart-vault{--mf-type-title:15px;}
 
 
 
@@ -6665,7 +6665,7 @@ body.mf-page-smart-vault .mf-vault-shell{-moz-osx-font-smoothing:grayscale;}
 
 
 
-body.mf-page-smart-vault{--mf-type-system:var(--mf-size-11);}
+body.mf-page-smart-vault{--mf-type-system:11px;}
 
 
 
@@ -6739,7 +6739,7 @@ body.mf-page-smart-vault.mf-page-trading.mf-trading-terminal
 
 
 
-body.mf-page-trading .state-dot{font-size:var(--mf-size-11);}
+body.mf-page-trading .state-dot{font-size:11px;}
 body.mf-page-trading .state-dot{font-weight:800;}
 
 
@@ -6784,7 +6784,7 @@ body.mf-page-trading .state-dot{font-weight:800;}
 
 
 
-@media (max-width: 820px){body.mf-page-trading .state-dot{font-size:var(--mf-size-11);}}
+@media (max-width: 820px){body.mf-page-trading .state-dot{font-size:11px;}}
 
 
 
@@ -7050,12 +7050,12 @@ body.mf-page-trading .mf-vault-shell{-moz-osx-font-smoothing:grayscale;}
 
 
 
-body.mf-page-trading{--mf-type-micro:var(--mf-size-11);}
-body.mf-page-trading{--mf-type-meta:var(--mf-size-12);}
-body.mf-page-trading{--mf-type-ui:var(--mf-size-13);}
-body.mf-page-trading{--mf-type-body:var(--mf-size-14);}
-body.mf-page-trading{--mf-type-panel:var(--mf-size-15);}
-body.mf-page-trading{--mf-type-title:var(--mf-size-17);}
+body.mf-page-trading{--mf-type-micro:11px;}
+body.mf-page-trading{--mf-type-meta:11px;}
+body.mf-page-trading{--mf-type-ui:13px;}
+body.mf-page-trading{--mf-type-body:13px;}
+body.mf-page-trading{--mf-type-panel:15px;}
+body.mf-page-trading{--mf-type-title:15px;}
 html:has(body.mf-page-trading){text-rendering:optimizeLegibility;}
 body.mf-page-trading{-webkit-font-smoothing:antialiased;}
 body.mf-page-trading{-moz-osx-font-smoothing:grayscale;}
@@ -7085,16 +7085,16 @@ body.mf-page-trading :where(time,code,.mf-vault-mono,.ap-kpis strong,.mf-vault-s
 
 
 
-@media (max-width:360px){body.mf-page-trading{--mf-type-micro:var(--mf-size-11);}}
-@media (max-width:360px){body.mf-page-trading{--mf-type-meta:var(--mf-size-12);}}
+@media (max-width:360px){body.mf-page-trading{--mf-type-micro:11px;}}
+@media (max-width:360px){body.mf-page-trading{--mf-type-meta:11px;}}
 
-body.mf-page-trading.mf-trading-terminal{--mf-trading-type-section:var(--mf-size-17);}
-body.mf-page-trading.mf-trading-terminal{--mf-trading-type-token:var(--mf-size-15);}
-body.mf-page-trading.mf-trading-terminal{--mf-trading-type-price:var(--mf-size-17);}
-body.mf-page-trading.mf-trading-terminal{--mf-trading-type-body:var(--mf-size-14);}
-body.mf-page-trading.mf-trading-terminal{--mf-trading-type-meta:var(--mf-size-12);}
-body.mf-page-trading.mf-trading-terminal{--mf-trading-type-micro:var(--mf-size-11);}
-body.mf-page-trading.mf-trading-terminal{--mf-trading-type-eyebrow:var(--mf-size-11);}
+body.mf-page-trading.mf-trading-terminal{--mf-trading-type-section:15px;}
+body.mf-page-trading.mf-trading-terminal{--mf-trading-type-token:15px;}
+body.mf-page-trading.mf-trading-terminal{--mf-trading-type-price:15px;}
+body.mf-page-trading.mf-trading-terminal{--mf-trading-type-body:13px;}
+body.mf-page-trading.mf-trading-terminal{--mf-trading-type-meta:11px;}
+body.mf-page-trading.mf-trading-terminal{--mf-trading-type-micro:11px;}
+body.mf-page-trading.mf-trading-terminal{--mf-trading-type-eyebrow:11px;}
 
 
 
@@ -7109,7 +7109,7 @@ body.mf-page-trading.mf-trading-terminal :where(
   .approval-count,
   .decision-badge,
   .state-dot,
-  .copy-trade-badge){font-size:var(--mf-size-11);}
+  .copy-trade-badge){font-size:11px;}
 body.mf-page-trading.mf-trading-terminal :where(
   .tiny-state,
   .mode-badge,
@@ -7235,7 +7235,7 @@ body.mf-page-trading.mf-trading-terminal :where(
 @media (max-width: 820px){body.mf-page-trading.mf-trading-terminal .candidates-panel :where(
     .state-dot,
     .copy-trade-badge
-  ){font-size:var(--mf-size-11);}}
+  ){font-size:11px;}}
 @media (max-width: 820px){body.mf-page-trading.mf-trading-terminal .candidates-panel :where(
     .state-dot,
     .copy-trade-badge
@@ -7276,7 +7276,7 @@ body.mf-page-trading.mf-trading-terminal :where(
 @media (max-width: 820px){body.mf-page-trading.mf-trading-terminal
   .candidate-primary-line .copy-trade-badge,
 body.mf-page-trading.mf-trading-terminal
-  .candidate-top .state-dot{font-size:var(--mf-size-11);}}
+  .candidate-top .state-dot{font-size:11px;}}
 @media (max-width: 820px){body.mf-page-trading.mf-trading-terminal
   .candidate-primary-line .copy-trade-badge,
 body.mf-page-trading.mf-trading-terminal
@@ -7367,7 +7367,7 @@ body.mf-page-trading.mf-trading-terminal
     .strategy-summary-panel .mode-badge,
     .positions-panel .close-position,
     .positions-panel .pnl-summary strong
-  ){font-size:var(--mf-size-11);}}
+  ){font-size:11px;}}
 @media (max-width: 820px){html body.mf-page-trading.mf-trading-terminal :where(
     .candidates-panel .tiny-state,
     .candidates-panel .state-dot,
@@ -7392,7 +7392,7 @@ body.mf-page-trading.mf-trading-terminal
     .candidate-bottom,
     .candidate-bottom > span:first-child,
     .candidate-price
-  ){font-size:var(--mf-size-11);}}
+  ){font-size:11px;}}
 @media (max-width: 820px){html body.mf-page-trading.mf-trading-terminal
   .candidates-panel :where(
     .candidate-primary-line .copy-trade-badge,
@@ -7427,7 +7427,7 @@ html body.mf-page-trading.mf-trading-terminal :where(
   .decision-badge,
   .state-dot,
   .copy-trade-badge
-){font-size:var(--mf-size-11);}
+){font-size:11px;}
 html body.mf-page-trading.mf-trading-terminal :where(
   .status-pill,
   .tiny-state,
@@ -7489,7 +7489,7 @@ body.mf-page-trading .position-popover-v85__title span{text-transform:uppercase;
 
 
 
-body.mf-page-trading{--mf-type-system:var(--mf-size-11);}
+body.mf-page-trading{--mf-type-system:11px;}
 
 
 
@@ -7772,12 +7772,12 @@ body.mf-page-settings .wallet-stat small,
 body.mf-page-settings .subscription-metric small,
 body.mf-page-settings .system-health-summary small{text-transform:uppercase!important;}
 
-body.mf-page-settings{--mf-type-micro:var(--mf-size-11);}
-body.mf-page-settings{--mf-type-meta:var(--mf-size-12);}
-body.mf-page-settings{--mf-type-ui:var(--mf-size-13);}
-body.mf-page-settings{--mf-type-body:var(--mf-size-14);}
-body.mf-page-settings{--mf-type-panel:var(--mf-size-15);}
-body.mf-page-settings{--mf-type-title:var(--mf-size-17);}
+body.mf-page-settings{--mf-type-micro:11px;}
+body.mf-page-settings{--mf-type-meta:11px;}
+body.mf-page-settings{--mf-type-ui:13px;}
+body.mf-page-settings{--mf-type-body:13px;}
+body.mf-page-settings{--mf-type-panel:15px;}
+body.mf-page-settings{--mf-type-title:15px;}
 
 
 
@@ -7898,7 +7898,7 @@ body.mf-page-settings main :where(
 
 
 
-body.mf-page-settings{--mf-type-system:var(--mf-size-11);}
+body.mf-page-settings{--mf-type-system:11px;}
 
 
 
@@ -8088,7 +8088,7 @@ body.mf-page-system-tokens .hero-counter .scanner-status{text-transform:none;}
 
 
 body.mf-page-system-tokens .mf-sort-trigger-v25{text-transform:uppercase;}
-body.mf-page-system-tokens .mf-sort-trigger-chevron-v251{font-size:14px;}
+body.mf-page-system-tokens .mf-sort-trigger-chevron-v251{font-size:13px;}
 body.mf-page-system-tokens .mf-sort-trigger-chevron-v251{line-height:1;}
 
 
@@ -8100,7 +8100,7 @@ body.mf-page-system-tokens .mf-sort-trigger-chevron-v251{line-height:1;}
 
 
 
-body.mf-page-system-tokens .mf-sort-row-chevron-v251{font-size:16px;}
+body.mf-page-system-tokens .mf-sort-row-chevron-v251{font-size:15px;}
 body.mf-page-system-tokens .mf-sort-row-chevron-v251{font-weight:300;}
 body.mf-page-system-tokens .mf-sort-row-chevron-v251{line-height:1;}
 
@@ -8179,7 +8179,7 @@ body.mf-page-system-tokens .mf-card-context-row-v15 span{text-transform:uppercas
 
 
 
-@media (max-width: 760px){body.mf-page-system-tokens .token-source-link.pump.mf-pump-logo-link::before{font-size:12px;}}
+@media (max-width: 760px){body.mf-page-system-tokens .token-source-link.pump.mf-pump-logo-link::before{font-size:11px;}}
 @media (max-width: 760px){body.mf-page-system-tokens .token-source-link.pump.mf-pump-logo-link::before{font-weight:760;}}
 @media (max-width: 760px){body.mf-page-system-tokens .token-source-link.pump.mf-pump-logo-link::before{line-height:1;}}
 
@@ -8230,12 +8230,12 @@ body.mf-page-system-tokens .wallet-stat small,
 body.mf-page-system-tokens .subscription-metric small,
 body.mf-page-system-tokens .system-health-summary small{text-transform:uppercase!important;}
 
-body.mf-page-system-tokens{--mf-type-micro:var(--mf-size-11);}
-body.mf-page-system-tokens{--mf-type-meta:var(--mf-size-12);}
-body.mf-page-system-tokens{--mf-type-ui:var(--mf-size-13);}
-body.mf-page-system-tokens{--mf-type-body:var(--mf-size-14);}
-body.mf-page-system-tokens{--mf-type-panel:var(--mf-size-15);}
-body.mf-page-system-tokens{--mf-type-title:var(--mf-size-17);}
+body.mf-page-system-tokens{--mf-type-micro:11px;}
+body.mf-page-system-tokens{--mf-type-meta:11px;}
+body.mf-page-system-tokens{--mf-type-ui:13px;}
+body.mf-page-system-tokens{--mf-type-body:13px;}
+body.mf-page-system-tokens{--mf-type-panel:15px;}
+body.mf-page-system-tokens{--mf-type-title:15px;}
 
 
 
@@ -8432,7 +8432,7 @@ html body.mf-page-system-tokens.mf-page-trading.mf-trading-terminal :where(
   .decision-badge,
   .state-dot,
   .copy-trade-badge
-){font-size:var(--mf-size-11);}
+){font-size:11px;}
 html body.mf-page-system-tokens.mf-page-trading.mf-trading-terminal :where(
   .status-pill,
   .tiny-state,
@@ -8497,7 +8497,7 @@ body.mf-page-system-tokens .mf-insightx-metric-v1 span{text-transform:uppercase;
 
 
 
-body.mf-page-system-tokens{--mf-type-system:var(--mf-size-11);}
+body.mf-page-system-tokens{--mf-type-system:11px;}
 
 
 
@@ -8596,7 +8596,7 @@ body.mf-page-x100 .stat-row small{text-transform:uppercase;}
 body.mf-page-x100 .working,
 body.mf-page-x100 .module>span:first-child{text-transform:uppercase;}
 
-body.mf-page-x100 .connector{font-size:var(--mf-size-17);}
+body.mf-page-x100 .connector{font-size:15px;}
 
 
 
@@ -8654,7 +8654,7 @@ body.mf-page-x100 .footer-inner{text-transform:uppercase;}
 
 
 
-body.mf-page-x100{--mf-type-system:var(--mf-size-11);}
+body.mf-page-x100{--mf-type-system:11px;}
 
 
 
@@ -8724,12 +8724,12 @@ body.mf-page-agent-performance .wallet-stat small,
 body.mf-page-agent-performance .subscription-metric small,
 body.mf-page-agent-performance .system-health-summary small{text-transform:uppercase!important;}
 
-body.mf-page-agent-performance{--mf-type-micro:var(--mf-size-11);}
-body.mf-page-agent-performance{--mf-type-meta:var(--mf-size-12);}
-body.mf-page-agent-performance{--mf-type-ui:var(--mf-size-13);}
-body.mf-page-agent-performance{--mf-type-body:var(--mf-size-14);}
-body.mf-page-agent-performance{--mf-type-panel:var(--mf-size-15);}
-body.mf-page-agent-performance{--mf-type-title:var(--mf-size-17);}
+body.mf-page-agent-performance{--mf-type-micro:11px;}
+body.mf-page-agent-performance{--mf-type-meta:11px;}
+body.mf-page-agent-performance{--mf-type-ui:13px;}
+body.mf-page-agent-performance{--mf-type-body:13px;}
+body.mf-page-agent-performance{--mf-type-panel:15px;}
+body.mf-page-agent-performance{--mf-type-title:15px;}
 
 
 
@@ -8883,7 +8883,7 @@ body.mf-page-agent-performance main :where(
 
 
 
-body.mf-page-agent-performance{--mf-type-system:var(--mf-size-11);}
+body.mf-page-agent-performance{--mf-type-system:11px;}
 
 
 
@@ -9039,7 +9039,7 @@ body.mf-page-owner-intelligence .oi-scorecard-detail-head h3{text-transform:none
 
 
 
-body.mf-page-owner-intelligence{--mf-type-system:var(--mf-size-11);}
+body.mf-page-owner-intelligence{--mf-type-system:11px;}
 
 
 
@@ -9119,7 +9119,7 @@ body.mf-page-system-source .k{text-transform:uppercase;}
 
 
 
-body.mf-page-system-source{--mf-type-system:var(--mf-size-11);}
+body.mf-page-system-source{--mf-type-system:11px;}
 
 
 
@@ -9471,20 +9471,20 @@ html[data-theme="light"]{
   --mf-size-36: 36px;
 }
 :root{
-  --mf-type-system: var(--mf-size-11);
-  --mf-type-micro: var(--mf-size-11);
-  --mf-type-meta: var(--mf-size-12);
-  --mf-type-ui: var(--mf-size-13);
-  --mf-type-body: var(--mf-size-14);
-  --mf-type-panel: var(--mf-size-15);
-  --mf-type-title: var(--mf-size-17);
-  --mf-trading-type-micro: var(--mf-size-11);
-  --mf-trading-type-eyebrow: var(--mf-size-11);
-  --mf-trading-type-meta: var(--mf-size-12);
-  --mf-trading-type-body: var(--mf-size-14);
-  --mf-trading-type-token: var(--mf-size-15);
-  --mf-trading-type-price: var(--mf-size-17);
-  --mf-trading-type-section: var(--mf-size-17);
+  --mf-type-system: 11px;
+
+
+
+
+
+
+  --mf-trading-type-micro: 11px;
+  --mf-trading-type-eyebrow: 11px;
+  --mf-trading-type-meta: 11px;
+  --mf-trading-type-body: 13px;
+  --mf-trading-type-token: 15px;
+  --mf-trading-type-price: 15px;
+  --mf-trading-type-section: 15px;
 }
 /* MEMEFLOW_TYPE_SCALE_V180_END */
 
@@ -9605,30 +9605,882 @@ html[data-theme="light"]{
 /* MEMEFLOW_TYPOGRAPHY_ROLE_SYSTEM_V186_START */
 :root{
 --mf-neutral-text-1:#FFFFFF;--mf-neutral-text-2:#D6D6D6;--mf-neutral-text-3:#A3A3A3;--mf-neutral-text-4:#737373;
---mf-font-sans:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
---mf-font-mono:"SFMono-Regular",ui-monospace,Menlo,Monaco,Consolas,"Liberation Mono",monospace;
---mf-role-display:var(--mf-size-36);--mf-role-page:var(--mf-size-24);--mf-role-section:var(--mf-size-17);--mf-role-subhead:var(--mf-size-15);--mf-role-body:var(--mf-size-14);--mf-role-ui:var(--mf-size-13);--mf-role-meta:var(--mf-size-12);--mf-role-micro:var(--mf-size-11);
+--mf-font-sans:"IBM Plex Mono","SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+--mf-font-mono:"IBM Plex Mono","SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+--mf-role-display:15px;--mf-role-page:15px;--mf-role-section:15px;--mf-role-subhead:15px;--mf-role-body:13px;--mf-role-ui:13px;--mf-role-meta:11px;--mf-role-micro:11px;
 }
 html[data-theme="light"]{--mf-neutral-text-1:#000000;--mf-neutral-text-2:#303030;--mf-neutral-text-3:#606060;--mf-neutral-text-4:#8A8A8A;}
-body{font-family:var(--mf-font-sans);font-size:var(--mf-role-body);font-weight:500;line-height:1.45;letter-spacing:0;color:var(--mf-neutral-text-2);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;}
-button,input,select,textarea{font-family:var(--mf-font-sans);font-size:var(--mf-role-ui);font-weight:600;line-height:1.3;letter-spacing:0;}input,select,textarea{color:var(--mf-neutral-text-1);}input::placeholder,textarea::placeholder{color:var(--mf-neutral-text-4);}a{color:var(--mf-neutral-text-2);}p{font-size:var(--mf-role-body);font-weight:500;line-height:1.45;color:var(--mf-neutral-text-2);}small{font-size:var(--mf-role-meta);font-weight:500;line-height:1.35;color:var(--mf-neutral-text-3);}strong,b{font-weight:700;color:var(--mf-neutral-text-1);}code,pre,kbd,samp,:where(.mono,[class*="mono"],[class*="mint"],[class*="address"]){font-family:var(--mf-font-mono);}
-h1{font-size:var(--mf-role-page);font-weight:800;line-height:1.08;letter-spacing:-.025em;color:var(--mf-neutral-text-1);}h2{font-size:var(--mf-role-section);font-weight:700;line-height:1.18;letter-spacing:-.012em;color:var(--mf-neutral-text-1);}h3{font-size:var(--mf-role-subhead);font-weight:700;line-height:1.24;letter-spacing:-.006em;color:var(--mf-neutral-text-1);}h4,h5,h6{font-size:var(--mf-role-ui);font-weight:600;line-height:1.3;color:var(--mf-neutral-text-1);}
+body{font-family:"IBM Plex Mono","SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;font-size:11px;font-weight:500;line-height:1.45;letter-spacing:0;color:var(--mf-neutral-text-2);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;}
+button,input,select,textarea{font-family:"IBM Plex Mono","SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;font-size:10px;font-weight:600;line-height:1.3;letter-spacing:0;}input,select,textarea{color:var(--mf-neutral-text-1);}input::placeholder,textarea::placeholder{color:var(--mf-neutral-text-4);}a{color:var(--mf-neutral-text-2);}p{font-size:11px;font-weight:500;line-height:1.45;color:var(--mf-neutral-text-2);}small{font-size:9px;font-weight:500;line-height:1.35;color:var(--mf-neutral-text-3);}strong,b{font-weight:700;color:var(--mf-neutral-text-1);}code,pre,kbd,samp,:where(.mono,[class*="mono"],[class*="mint"],[class*="address"]){font-family:"IBM Plex Mono","SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;}
+h1{font-size:15px;font-weight:800;line-height:1.08;letter-spacing:-.025em;color:var(--mf-neutral-text-1);}h2{font-size:13px;font-weight:700;line-height:1.18;letter-spacing:-.012em;color:var(--mf-neutral-text-1);}h3{font-size:13px;font-weight:700;line-height:1.24;letter-spacing:-.006em;color:var(--mf-neutral-text-1);}h4,h5,h6{font-size:10px;font-weight:600;line-height:1.3;color:var(--mf-neutral-text-1);}
 :where(.brand-title,.brand,.token-name,.readiness-label,.mfpg-caption-title,.mf-settings-page-title>span,[class*="title"]:not([class*="subtitle"])){color:var(--mf-neutral-text-1);}:where(.hero-sub,.inspector-summary,.brief-copy,.empty,.empty-state,.advanced-intelligence-intro,.ap-note,.mfpg-caption-text){color:var(--mf-neutral-text-2);}:where(.muted,.subtitle,.brand-sub,.sub,.meta,[class*="-meta"],[class*="caption"],[class*="description"],[class*="summary"],[class*="hint"],[class*="note"],[class*="-sub"]){color:var(--mf-neutral-text-3);}:where([aria-disabled="true"],[disabled],.disabled,.is-disabled,[class*="placeholder"],[class*="tertiary"]){color:var(--mf-neutral-text-4);}
-:where(.eyebrow,[class*="eyebrow"],.kicker,[class*="kicker"],.nav-label,.mf293-field-label,.mf-theme-appearance-label){font-size:var(--mf-role-micro);font-weight:600;line-height:1.25;letter-spacing:.08em;color:var(--mf-neutral-text-3);text-transform:uppercase;}:where(.score-caption,[class*="caption"],[class*="-meta"],.meta,.muted,.subtitle,.brand-sub,.sub,.mf293-dex-filter-meta,.mf-theme-current){font-size:var(--mf-role-meta);font-weight:500;line-height:1.35;letter-spacing:0;color:var(--mf-neutral-text-3);}
-:where(button,.btn,[class*="-btn"],[class*="_btn"],.tool-btn,.wallet-btn,.primary-action,.text-action,.nav-link,.mf-nav-link,.back){font-size:var(--mf-role-ui);font-weight:600;line-height:1.2;letter-spacing:0;}:where(nav a,.nav a,.mf-nav-link,.mobile-nav button,.itab,.mode,.timeframes button,.intervals button){font-size:var(--mf-role-ui);font-weight:600;line-height:1.25;}:where(nav a:not(.active),.nav a:not(.active),.mf-nav-link:not(.active)){color:var(--mf-neutral-text-3);}:where(nav a.active,.nav a.active,.mf-nav-link.active){color:var(--mf-neutral-text-1);}
-:where(.chip,[class*="badge"],[class*="pill"],[class*="state"],.tiny-state,.mode-badge,.approval-count,.scanner-status){font-size:var(--mf-role-micro);font-weight:600;line-height:1.15;letter-spacing:.035em;}
-:where(.big-score,.token-price,.chart-price,.price,[class*="pnl"],[class*="score"]:not([class*="caption"]),[class*="count"]:not([class*="discount"])){font-variant-numeric:tabular-nums;}.big-score{font-size:var(--mf-role-display);font-weight:800;line-height:1;letter-spacing:-.035em;color:var(--mf-neutral-text-1);}:where(.token-price,.chart-price){font-size:var(--mf-role-page);font-weight:800;line-height:1.05;letter-spacing:-.025em;color:var(--mf-neutral-text-1);}
-body.mf-page-index #missionTitle{font-size:var(--mf-role-display);font-weight:800;line-height:1.03;letter-spacing:-.035em;color:var(--mf-neutral-text-1);}body.mf-page-index h2{font-size:var(--mf-role-section);}body.mf-page-index h3{font-size:var(--mf-role-subhead);}body.mf-page-index .token-name{font-size:var(--mf-role-section);font-weight:700;line-height:1.15;color:var(--mf-neutral-text-1);}body.mf-page-index :where(.ai-data-val,.readiness-label){font-size:var(--mf-role-subhead);font-weight:700;color:var(--mf-neutral-text-1);}
-body.mf-page-how-it-works h1{font-size:var(--mf-role-display);font-weight:800;line-height:1.02;letter-spacing:-.04em;}body.mf-page-how-it-works h2{font-size:var(--mf-role-page);font-weight:700;line-height:1.08;letter-spacing:-.025em;}body.mf-page-how-it-works h3{font-size:var(--mf-role-section);font-weight:700;}body.mf-page-how-it-works p{color:var(--mf-neutral-text-2);}
-body.mf-page-smart-vault h1{font-size:var(--mf-role-display);font-weight:800;line-height:1.03;letter-spacing:-.035em;}body.mf-page-smart-vault h2{font-size:var(--mf-role-section);}body.mf-page-smart-vault :where(.mf-vault-mono,strong){font-size:var(--mf-role-subhead);line-height:1.3;}body.mf-page-smart-vault .mf-vault-eyebrow{font-size:var(--mf-role-micro);font-weight:700;letter-spacing:.08em;color:var(--mf-neutral-text-3);}
-body.mf-page-trading .brand-title{font-size:var(--mf-role-subhead);font-weight:700;line-height:1.1;}body.mf-page-trading .brand-sub{font-size:var(--mf-role-micro);}body.mf-page-trading h1#tokenName{font-size:var(--mf-role-section);font-weight:700;line-height:1.12;letter-spacing:-.015em;}body.mf-page-trading h2{font-size:var(--mf-role-section);}body.mf-page-trading .token-price{font-size:var(--mf-role-page);font-weight:800;}body.mf-page-trading .token-market{font-size:var(--mf-role-meta);color:var(--mf-neutral-text-3);}body.mf-page-trading #paperPnl{font-size:var(--mf-role-section);font-weight:700;}
-body.mf-page-settings .mf-settings-page-title>span{font-size:var(--mf-role-page);font-weight:800;line-height:1.08;letter-spacing:-.025em;}body.mf-page-settings .mf-settings-page-title>strong{font-size:var(--mf-role-meta);font-weight:500;color:var(--mf-neutral-text-3);}body.mf-page-settings .mf293-settings-head h2{font-size:var(--mf-role-section);font-weight:700;}body.mf-page-settings .mf293-settings-group summary strong{font-size:var(--mf-role-subhead);font-weight:700;}body.mf-page-settings :where(.mf293-field input:not([type="checkbox"]),.mf293-field select,.mf293-field textarea){font-size:var(--mf-role-body);font-weight:500;color:var(--mf-neutral-text-1);}
-body.mf-page-system-tokens h1{font-size:var(--mf-role-page);font-weight:800;}body.mf-page-system-tokens :where(#visibleCount,#countAll,#countReady,#countWatch,#countWaiting,#countBlocked,#pageNumber,#pageTotal){font-size:var(--mf-role-section);font-weight:700;color:var(--mf-neutral-text-1);font-variant-numeric:tabular-nums;}
-body.mf-page-system .brand{font-size:var(--mf-role-subhead);font-weight:700;}body.mf-page-system .subtitle{font-size:var(--mf-role-micro);}body.mf-page-system :where(#inspectorTitle,.mfpg-caption-title){font-size:var(--mf-role-section);font-weight:700;}body.mf-page-system .scene-hint{font-size:var(--mf-role-meta);color:var(--mf-neutral-text-3);}
-body.mf-page-x100 h1{font-size:var(--mf-role-display);font-weight:800;line-height:1.03;letter-spacing:-.035em;}body.mf-page-x100 h2{font-size:var(--mf-role-page);font-weight:700;line-height:1.1;letter-spacing:-.025em;}body.mf-page-x100 h3{font-size:var(--mf-role-section);font-weight:700;}body.mf-page-x100 .kicker{font-size:var(--mf-role-micro);font-weight:700;letter-spacing:.09em;color:var(--mf-neutral-text-3);}
-body.mf-page-agent-performance h1{font-size:var(--mf-role-page);font-weight:800;}body.mf-page-agent-performance h2{font-size:var(--mf-role-section);font-weight:700;}body.mf-page-agent-performance .ap-eyebrow{font-size:var(--mf-role-micro);font-weight:700;letter-spacing:.08em;color:var(--mf-neutral-text-3);}
-body.mf-page-owner-intelligence h1{font-size:var(--mf-role-page);font-weight:800;line-height:1.05;}body.mf-page-owner-intelligence h2{font-size:var(--mf-role-section);font-weight:700;}body.mf-page-owner-intelligence h3{font-size:var(--mf-role-subhead);font-weight:700;}body.mf-page-owner-intelligence :where(.oi-eyebrow,.oi-kicker){font-size:var(--mf-role-micro);font-weight:700;letter-spacing:.08em;color:var(--mf-neutral-text-3);}body.mf-page-owner-intelligence .oi-promotion-blocker{font-size:var(--mf-role-ui);font-weight:500;line-height:1.4;color:var(--mf-neutral-text-3);}
-body.mf-page-system-source h1{font-size:var(--mf-role-page);font-weight:800;}body.mf-page-system-source .brand{font-size:var(--mf-role-subhead);font-weight:700;}body.mf-page-system-source :where(.sub,.k){font-size:var(--mf-role-meta);color:var(--mf-neutral-text-3);}body.mf-page-system-source .mode{font-size:var(--mf-role-ui);font-weight:700;}
-#mf-final-chart-host .name{font-size:var(--mf-role-section);font-weight:700;line-height:1.1;letter-spacing:-.015em;color:var(--mf-neutral-text-1);}#mf-final-chart-host .price{font-size:var(--mf-role-page);font-weight:800;line-height:1;letter-spacing:-.03em;color:var(--mf-neutral-text-1);}#mf-final-chart-host :where(.meta,.source,.age,.footer,.empty){font-size:var(--mf-role-micro);color:var(--mf-neutral-text-3);}#mf-final-chart-host .label b{font-size:var(--mf-role-ui);font-weight:700;color:var(--mf-neutral-text-1);}
-@media(max-width:560px){body.mf-page-how-it-works h1,body.mf-page-smart-vault h1,body.mf-page-x100 h1,body.mf-page-index #missionTitle{font-size:var(--mf-role-page);line-height:1.05;}body.mf-page-how-it-works h2,body.mf-page-x100 h2{font-size:var(--mf-role-section);}}
+:where(.eyebrow,[class*="eyebrow"],.kicker,[class*="kicker"],.nav-label,.mf293-field-label,.mf-theme-appearance-label){font-size:8px;font-weight:600;line-height:1.25;letter-spacing:.08em;color:var(--mf-neutral-text-3);text-transform:uppercase;}:where(.score-caption,[class*="caption"],[class*="-meta"],.meta,.muted,.subtitle,.brand-sub,.sub,.mf293-dex-filter-meta,.mf-theme-current){font-size:9px;font-weight:500;line-height:1.35;letter-spacing:0;color:var(--mf-neutral-text-3);}
+:where(button,.btn,[class*="-btn"],[class*="_btn"],.tool-btn,.wallet-btn,.primary-action,.text-action,.nav-link,.mf-nav-link,.back){font-size:10px;font-weight:600;line-height:1.2;letter-spacing:0;}:where(nav a,.nav a,.mf-nav-link,.mobile-nav button,.itab,.mode,.timeframes button,.intervals button){font-size:10px;font-weight:600;line-height:1.25;}:where(nav a:not(.active),.nav a:not(.active),.mf-nav-link:not(.active)){color:var(--mf-neutral-text-3);}:where(nav a.active,.nav a.active,.mf-nav-link.active){color:var(--mf-neutral-text-1);}
+:where(.chip,[class*="badge"],[class*="pill"],[class*="state"],.tiny-state,.mode-badge,.approval-count,.scanner-status){font-size:8px;font-weight:600;line-height:1.15;letter-spacing:.035em;}
+:where(.big-score,.token-price,.chart-price,.price,[class*="pnl"],[class*="score"]:not([class*="caption"]),[class*="count"]:not([class*="discount"])){font-variant-numeric:tabular-nums;}.big-score{font-size:15px;font-weight:800;line-height:1;letter-spacing:-.035em;color:var(--mf-neutral-text-1);}:where(.token-price,.chart-price){font-size:15px;font-weight:800;line-height:1.05;letter-spacing:-.025em;color:var(--mf-neutral-text-1);}
+body.mf-page-index #missionTitle{font-size:15px;font-weight:800;line-height:1.03;letter-spacing:-.035em;color:var(--mf-neutral-text-1);}body.mf-page-index h2{font-size:13px;}body.mf-page-index h3{font-size:13px;}body.mf-page-index .token-name{font-size:13px;font-weight:700;line-height:1.15;color:var(--mf-neutral-text-1);}body.mf-page-index :where(.ai-data-val,.readiness-label){font-size:13px;font-weight:700;color:var(--mf-neutral-text-1);}
+body.mf-page-how-it-works h1{font-size:15px;font-weight:800;line-height:1.02;letter-spacing:-.04em;}body.mf-page-how-it-works h2{font-size:15px;font-weight:700;line-height:1.08;letter-spacing:-.025em;}body.mf-page-how-it-works h3{font-size:13px;font-weight:700;}body.mf-page-how-it-works p{color:var(--mf-neutral-text-2);}
+body.mf-page-smart-vault h1{font-size:15px;font-weight:800;line-height:1.03;letter-spacing:-.035em;}body.mf-page-smart-vault h2{font-size:13px;}body.mf-page-smart-vault :where(.mf-vault-mono,strong){font-size:13px;line-height:1.3;}body.mf-page-smart-vault .mf-vault-eyebrow{font-size:8px;font-weight:700;letter-spacing:.08em;color:var(--mf-neutral-text-3);}
+body.mf-page-trading .brand-title{font-size:13px;font-weight:700;line-height:1.1;}body.mf-page-trading .brand-sub{font-size:8px;}body.mf-page-trading h1#tokenName{font-size:13px;font-weight:700;line-height:1.12;letter-spacing:-.015em;}body.mf-page-trading h2{font-size:13px;}body.mf-page-trading .token-price{font-size:15px;font-weight:800;}body.mf-page-trading .token-market{font-size:9px;color:var(--mf-neutral-text-3);}body.mf-page-trading #paperPnl{font-size:13px;font-weight:700;}
+body.mf-page-settings .mf-settings-page-title>span{font-size:15px;font-weight:800;line-height:1.08;letter-spacing:-.025em;}body.mf-page-settings .mf-settings-page-title>strong{font-size:9px;font-weight:500;color:var(--mf-neutral-text-3);}body.mf-page-settings .mf293-settings-head h2{font-size:13px;font-weight:700;}body.mf-page-settings .mf293-settings-group summary strong{font-size:13px;font-weight:700;}body.mf-page-settings :where(.mf293-field input:not([type="checkbox"]),.mf293-field select,.mf293-field textarea){font-size:11px;font-weight:500;color:var(--mf-neutral-text-1);}
+body.mf-page-system-tokens h1{font-size:15px;font-weight:800;}body.mf-page-system-tokens :where(#visibleCount,#countAll,#countReady,#countWatch,#countWaiting,#countBlocked,#pageNumber,#pageTotal){font-size:13px;font-weight:700;color:var(--mf-neutral-text-1);font-variant-numeric:tabular-nums;}
+body.mf-page-system .brand{font-size:13px;font-weight:700;}body.mf-page-system .subtitle{font-size:8px;}body.mf-page-system :where(#inspectorTitle,.mfpg-caption-title){font-size:13px;font-weight:700;}body.mf-page-system .scene-hint{font-size:9px;color:var(--mf-neutral-text-3);}
+body.mf-page-x100 h1{font-size:15px;font-weight:800;line-height:1.03;letter-spacing:-.035em;}body.mf-page-x100 h2{font-size:15px;font-weight:700;line-height:1.1;letter-spacing:-.025em;}body.mf-page-x100 h3{font-size:13px;font-weight:700;}body.mf-page-x100 .kicker{font-size:8px;font-weight:700;letter-spacing:.09em;color:var(--mf-neutral-text-3);}
+body.mf-page-agent-performance h1{font-size:15px;font-weight:800;}body.mf-page-agent-performance h2{font-size:13px;font-weight:700;}body.mf-page-agent-performance .ap-eyebrow{font-size:8px;font-weight:700;letter-spacing:.08em;color:var(--mf-neutral-text-3);}
+body.mf-page-owner-intelligence h1{font-size:15px;font-weight:800;line-height:1.05;}body.mf-page-owner-intelligence h2{font-size:13px;font-weight:700;}body.mf-page-owner-intelligence h3{font-size:13px;font-weight:700;}body.mf-page-owner-intelligence :where(.oi-eyebrow,.oi-kicker){font-size:8px;font-weight:700;letter-spacing:.08em;color:var(--mf-neutral-text-3);}body.mf-page-owner-intelligence .oi-promotion-blocker{font-size:10px;font-weight:500;line-height:1.4;color:var(--mf-neutral-text-3);}
+body.mf-page-system-source h1{font-size:15px;font-weight:800;}body.mf-page-system-source .brand{font-size:13px;font-weight:700;}body.mf-page-system-source :where(.sub,.k){font-size:9px;color:var(--mf-neutral-text-3);}body.mf-page-system-source .mode{font-size:10px;font-weight:700;}
+#mf-final-chart-host .name{font-size:13px;font-weight:700;line-height:1.1;letter-spacing:-.015em;color:var(--mf-neutral-text-1);}#mf-final-chart-host .price{font-size:15px;font-weight:800;line-height:1;letter-spacing:-.03em;color:var(--mf-neutral-text-1);}#mf-final-chart-host :where(.meta,.source,.age,.footer,.empty){font-size:8px;color:var(--mf-neutral-text-3);}#mf-final-chart-host .label b{font-size:10px;font-weight:700;color:var(--mf-neutral-text-1);}
+@media(max-width:560px){body.mf-page-how-it-works h1,body.mf-page-smart-vault h1,body.mf-page-x100 h1,body.mf-page-index #missionTitle{font-size:15px;line-height:1.05;}body.mf-page-how-it-works h2,body.mf-page-x100 h2{font-size:13px;}}
 /* MEMEFLOW_TYPOGRAPHY_ROLE_SYSTEM_V186_END */
+
+/* MEMEFLOW_TRADING_TERMINAL_POLISH_V187_START
+   Dense trading-terminal role mapping built ONLY from MEMEFLOW V186.
+
+   Allowed physical scale via V186 role variables only:
+   MICRO 11 / META 12 / UI 13 / BODY 14 / SUBHEAD 15 / SECTION 17 / PAGE 24.
+   Allowed weights only: 500 / 600 / 700 / 800.
+   Allowed neutral colors only: --mf-neutral-text-1..4.
+   Semantic/accent colors are intentionally preserved by not recoloring states.
+   Typography/neutral hierarchy only. No spacing, geometry, border, radius,
+   layout, chart rendering, JavaScript, trading logic or backend changes.
+*/
+
+/* --------------------------------------------------------------------------
+   1. Terminal identity + selected instrument
+   -------------------------------------------------------------------------- */
+body.mf-page-trading .brand-title {
+  font-size:13px !important;
+  font-weight: 700 !important;
+  line-height: 1.1 !important;
+  letter-spacing: -.006em !important;
+  color: var(--mf-neutral-text-1) !important;
+}
+body.mf-page-trading .brand-sub {
+  font-size:8px !important;
+  font-weight: 600 !important;
+  line-height: 1.25 !important;
+  letter-spacing: .08em !important;
+  color: var(--mf-neutral-text-3) !important;
+}
+body.mf-page-trading :where(.topbar .status-pill,.topbar .ghost-btn,.topbar .wallet-btn) {
+  font-size:8px !important;
+  font-weight: 600 !important;
+  line-height: 1.15 !important;
+  letter-spacing: .035em !important;
+}
+body.mf-page-trading h1#tokenName {
+  font-size:13px !important;
+  font-weight: 700 !important;
+  line-height: 1.12 !important;
+  letter-spacing: -.015em !important;
+  color: var(--mf-neutral-text-1) !important;
+}
+body.mf-page-trading .token-price {
+  font-size:15px !important;
+  font-weight: 800 !important;
+  line-height: 1.05 !important;
+  letter-spacing: -.025em !important;
+  color: var(--mf-neutral-text-1) !important;
+  font-variant-numeric: tabular-nums lining-nums !important;
+}
+body.mf-page-trading :where(.token-meta,.token-market) {
+  font-size:9px !important;
+  font-weight: 500 !important;
+  line-height: 1.35 !important;
+  letter-spacing: 0 !important;
+  color: var(--mf-neutral-text-3) !important;
+}
+body.mf-page-trading .token-meta button {
+  font-size:10px !important;
+  font-weight: 600 !important;
+  line-height: 1.2 !important;
+  letter-spacing: 0 !important;
+}
+body.mf-page-trading :where(.decision-badge,.tiny-state,.mode-badge,.approval-count) {
+  font-size:8px !important;
+  font-weight: 600 !important;
+  line-height: 1.15 !important;
+  letter-spacing: .035em !important;
+}
+
+/* --------------------------------------------------------------------------
+   2. Chart controls + chart information
+   -------------------------------------------------------------------------- */
+body.mf-page-trading :where(.timeframes button,.indicator-bar button,.candidate-filter button) {
+  font-size:10px !important;
+  font-weight: 600 !important;
+  line-height: 1.2 !important;
+  letter-spacing: 0 !important;
+}
+body.mf-page-trading :where(.timeframes button,.indicator-bar button,.candidate-filter button):not(.active):not([aria-selected="true"]):not([aria-pressed="true"]) {
+  color: var(--mf-neutral-text-2) !important;
+}
+body.mf-page-trading .chart-legend {
+  font-size:9px !important;
+  font-weight: 500 !important;
+  line-height: 1.35 !important;
+  letter-spacing: 0 !important;
+  color: var(--mf-neutral-text-3) !important;
+  font-variant-numeric: tabular-nums lining-nums !important;
+}
+body.mf-page-trading .chart-legend :where(b,strong) {
+  font-size:9px !important;
+  font-weight: 500 !important;
+  color: var(--mf-neutral-text-2) !important;
+}
+body.mf-page-trading .selected-metrics span {
+  font-size:9px !important;
+  font-weight: 500 !important;
+  line-height: 1.3 !important;
+  letter-spacing: 0 !important;
+  color: var(--mf-neutral-text-3) !important;
+}
+body.mf-page-trading .selected-metrics strong {
+  font-size:11px !important;
+  font-weight: 600 !important;
+  line-height: 1.2 !important;
+  letter-spacing: 0 !important;
+  color: var(--mf-neutral-text-1) !important;
+  font-variant-numeric: tabular-nums lining-nums !important;
+}
+
+/* --------------------------------------------------------------------------
+   3. Every operational module uses one header hierarchy
+   Dense mobile software: MICRO system label + SUBHEAD module title.
+   -------------------------------------------------------------------------- */
+body.mf-page-trading :where(
+  .approvals-panel,
+  .strategy-summary-panel,
+  .positions-panel,
+  .candidates-panel,
+  .bottom-history-panel
+) .panel-head .eyebrow {
+  font-size:8px !important;
+  font-weight: 600 !important;
+  line-height: 1.25 !important;
+  letter-spacing: .08em !important;
+  color: var(--mf-neutral-text-4) !important;
+  text-transform: uppercase !important;
+}
+body.mf-page-trading :where(
+  .approvals-panel,
+  .strategy-summary-panel,
+  .positions-panel,
+  .candidates-panel,
+  .bottom-history-panel
+) .panel-head h2 {
+  font-size:13px !important;
+  font-weight: 700 !important;
+  line-height: 1.2 !important;
+  letter-spacing: -.006em !important;
+  color: var(--mf-neutral-text-1) !important;
+}
+body.mf-page-trading #paperPnl {
+  font-size:13px !important;
+  font-weight: 700 !important;
+  line-height: 1.15 !important;
+  letter-spacing: -.006em !important;
+  font-variant-numeric: tabular-nums lining-nums !important;
+}
+
+/* --------------------------------------------------------------------------
+   4. Strategy: labels recede, values stay readable without shouting
+   -------------------------------------------------------------------------- */
+body.mf-page-trading .strategy-summary-panel .strategy-summary-row span {
+  font-size:9px !important;
+  font-weight: 500 !important;
+  line-height: 1.35 !important;
+  letter-spacing: 0 !important;
+  color: var(--mf-neutral-text-3) !important;
+  text-transform: none !important;
+}
+body.mf-page-trading .strategy-summary-panel .strategy-summary-row :where(strong,b) {
+  font-size:11px !important;
+  font-weight: 600 !important;
+  line-height: 1.25 !important;
+  letter-spacing: 0 !important;
+  color: var(--mf-neutral-text-1) !important;
+  text-transform: none !important;
+  font-variant-numeric: tabular-nums lining-nums !important;
+}
+body.mf-page-trading .strategy-summary-panel :where(.strategy-note,.panel-note,.synced-note) {
+  font-size:9px !important;
+  font-weight: 500 !important;
+  line-height: 1.35 !important;
+  color: var(--mf-neutral-text-3) !important;
+}
+
+/* --------------------------------------------------------------------------
+   5. Open positions: compact execution-list hierarchy
+   -------------------------------------------------------------------------- */
+body.mf-page-trading .positions-panel .position-symbol {
+  font-size:10px !important;
+  font-weight: 600 !important;
+  line-height: 1.2 !important;
+  letter-spacing: 0 !important;
+  color: var(--mf-neutral-text-1) !important;
+  text-transform: none !important;
+}
+body.mf-page-trading .positions-panel .position-bottomline,
+body.mf-page-trading .positions-panel .position-bottomline :where(span,i,strong) {
+  font-size:9px !important;
+  font-weight: 500 !important;
+  line-height: 1.3 !important;
+  letter-spacing: 0 !important;
+  color: var(--mf-neutral-text-3) !important;
+  text-transform: none !important;
+  font-variant-numeric: tabular-nums lining-nums !important;
+}
+body.mf-page-trading .positions-panel .position-pnl {
+  font-size:10px !important;
+  font-weight: 600 !important;
+  line-height: 1.2 !important;
+  font-variant-numeric: tabular-nums lining-nums !important;
+}
+body.mf-page-trading .positions-panel :where(.close-position,.copy-trade-badge) {
+  font-size:8px !important;
+  font-weight: 600 !important;
+  line-height: 1.15 !important;
+  letter-spacing: .035em !important;
+}
+
+/* --------------------------------------------------------------------------
+   6. Candidates: name > evidence > state/price
+   -------------------------------------------------------------------------- */
+body.mf-page-trading .candidates-panel .candidate-symbol {
+  font-size:10px !important;
+  font-weight: 600 !important;
+  line-height: 1.2 !important;
+  letter-spacing: 0 !important;
+  color: var(--mf-neutral-text-1) !important;
+  text-transform: none !important;
+}
+body.mf-page-trading .candidates-panel .candidate-bottom,
+body.mf-page-trading .candidates-panel .candidate-bottom :where(span,i,strong) {
+  font-size:9px !important;
+  font-weight: 500 !important;
+  line-height: 1.3 !important;
+  letter-spacing: 0 !important;
+  color: var(--mf-neutral-text-3) !important;
+  text-transform: none !important;
+}
+body.mf-page-trading .candidates-panel .candidate-price {
+  font-size:9px !important;
+  font-weight: 500 !important;
+  line-height: 1.3 !important;
+  letter-spacing: 0 !important;
+  color: var(--mf-neutral-text-2) !important;
+  font-variant-numeric: tabular-nums lining-nums !important;
+}
+body.mf-page-trading .candidates-panel :where(.state-dot,.copy-trade-badge) {
+  font-size:8px !important;
+  font-weight: 600 !important;
+  line-height: 1.15 !important;
+  letter-spacing: .035em !important;
+}
+
+/* --------------------------------------------------------------------------
+   7. Recent trades: operational log, not another headline block
+   -------------------------------------------------------------------------- */
+body.mf-page-trading .bottom-history-panel :where(.trade-log-symbol,.trade-token-name) {
+  font-size:10px !important;
+  font-weight: 600 !important;
+  line-height: 1.2 !important;
+  letter-spacing: 0 !important;
+  color: var(--mf-neutral-text-1) !important;
+  text-transform: none !important;
+}
+body.mf-page-trading .bottom-history-panel .trade-log-bottomline,
+body.mf-page-trading .bottom-history-panel .trade-log-bottomline :where(span,i,strong) {
+  font-size:9px !important;
+  font-weight: 500 !important;
+  line-height: 1.3 !important;
+  letter-spacing: 0 !important;
+  color: var(--mf-neutral-text-3) !important;
+  text-transform: none !important;
+  font-variant-numeric: tabular-nums lining-nums !important;
+}
+body.mf-page-trading .bottom-history-panel .trade-log-time {
+  font-size:9px !important;
+  font-weight: 500 !important;
+  line-height: 1.3 !important;
+  color: var(--mf-neutral-text-3) !important;
+  font-variant-numeric: tabular-nums lining-nums !important;
+}
+body.mf-page-trading .bottom-history-panel :where(.trade-side,.pnl-positive,.pnl-negative) {
+  font-size:10px !important;
+  font-weight: 600 !important;
+  line-height: 1.2 !important;
+  font-variant-numeric: tabular-nums lining-nums !important;
+}
+body.mf-page-trading .bottom-history-panel :where(.trade-pump-link,.trade-status,.trade-log-hint) {
+  font-size:8px !important;
+  font-weight: 600 !important;
+  line-height: 1.15 !important;
+  letter-spacing: .035em !important;
+}
+
+/* MEMEFLOW_TRADING_TERMINAL_POLISH_V187_END */
+
+/* MEMEFLOW_TRADING_TERMINAL_COMPACT_V188_START
+   Compact/readable refinement on top of V187.
+
+   STRICT V186 TYPOGRAPHY CONTRACT:
+   - sizes ONLY through V186 role variables
+   - weights ONLY 500 / 600 / 700 / 800
+   - neutral text ONLY T1 / T2 / T3 / T4
+   - semantic/accent colors inherited unchanged
+   - NO spacing, geometry, border, radius, background, chart or logic edits
+
+   Goal: reduce visual mass while keeping fast scanability on mobile.
+*/
+
+/* 1. Identity: compact software header, not marketing masthead. */
+body.mf-page-trading .brand-title {
+  font-size:10px !important;
+  font-weight: 700 !important;
+  line-height: 1.15 !important;
+  letter-spacing: 0 !important;
+  color: var(--mf-neutral-text-1) !important;
+}
+body.mf-page-trading .brand-sub {
+  font-size:8px !important;
+  font-weight: 600 !important;
+  line-height: 1.15 !important;
+  letter-spacing: .08em !important;
+  color: var(--mf-neutral-text-3) !important;
+}
+body.mf-page-trading :where(.topbar .status-pill,.topbar .ghost-btn,.topbar .wallet-btn) {
+  font-size:8px !important;
+  font-weight: 600 !important;
+  line-height: 1.1 !important;
+  letter-spacing: .03em !important;
+}
+
+/* 2. Selected token: preserve hierarchy, remove oversized feel/truncation. */
+body.mf-page-trading h1#tokenName {
+  font-size:13px !important;
+  font-weight: 700 !important;
+  line-height: 1.1 !important;
+  letter-spacing: -.01em !important;
+  color: var(--mf-neutral-text-1) !important;
+}
+body.mf-page-trading .token-price {
+  font-size:13px !important;
+  font-weight: 800 !important;
+  line-height: 1.05 !important;
+  letter-spacing: -.015em !important;
+  color: var(--mf-neutral-text-1) !important;
+  font-variant-numeric: tabular-nums lining-nums !important;
+}
+body.mf-page-trading :where(.token-meta,.token-market) {
+  font-size:8px !important;
+  font-weight: 500 !important;
+  line-height: 1.2 !important;
+  letter-spacing: 0 !important;
+  color: var(--mf-neutral-text-3) !important;
+}
+body.mf-page-trading .token-meta button {
+  font-size:9px !important;
+  font-weight: 600 !important;
+  line-height: 1.15 !important;
+  letter-spacing: 0 !important;
+}
+body.mf-page-trading :where(.decision-badge,.tiny-state,.mode-badge,.approval-count) {
+  font-size:8px !important;
+  font-weight: 600 !important;
+  line-height: 1.1 !important;
+  letter-spacing: .03em !important;
+}
+
+/* 3. Chart chrome: controls become compact; chart remains the visual anchor. */
+body.mf-page-trading :where(.timeframes button,.indicator-bar button,.candidate-filter button) {
+  font-size:9px !important;
+  font-weight: 600 !important;
+  line-height: 1.15 !important;
+  letter-spacing: 0 !important;
+}
+body.mf-page-trading :where(.timeframes button,.indicator-bar button,.candidate-filter button):not(.active):not([aria-selected="true"]):not([aria-pressed="true"]) {
+  color: var(--mf-neutral-text-2) !important;
+}
+body.mf-page-trading .chart-legend,
+body.mf-page-trading .chart-legend :where(b,strong) {
+  font-size:8px !important;
+  font-weight: 500 !important;
+  line-height: 1.2 !important;
+  letter-spacing: 0 !important;
+  color: var(--mf-neutral-text-3) !important;
+  font-variant-numeric: tabular-nums lining-nums !important;
+}
+body.mf-page-trading .chart-legend :where(b,strong) {
+  color: var(--mf-neutral-text-2) !important;
+}
+body.mf-page-trading .selected-metrics span {
+  font-size:8px !important;
+  font-weight: 500 !important;
+  line-height: 1.15 !important;
+  letter-spacing: 0 !important;
+  color: var(--mf-neutral-text-3) !important;
+}
+body.mf-page-trading .selected-metrics strong {
+  font-size:9px !important;
+  font-weight: 600 !important;
+  line-height: 1.15 !important;
+  letter-spacing: 0 !important;
+  color: var(--mf-neutral-text-1) !important;
+  font-variant-numeric: tabular-nums lining-nums !important;
+}
+
+/* 4. Module headers: MICRO context + UI title. This is the terminal standard. */
+body.mf-page-trading :where(
+  .approvals-panel,
+  .strategy-summary-panel,
+  .positions-panel,
+  .candidates-panel,
+  .bottom-history-panel
+) .panel-head .eyebrow {
+  font-size:8px !important;
+  font-weight: 600 !important;
+  line-height: 1.15 !important;
+  letter-spacing: .08em !important;
+  color: var(--mf-neutral-text-4) !important;
+  text-transform: uppercase !important;
+}
+body.mf-page-trading :where(
+  .approvals-panel,
+  .strategy-summary-panel,
+  .positions-panel,
+  .candidates-panel,
+  .bottom-history-panel
+) .panel-head h2 {
+  font-size:10px !important;
+  font-weight: 700 !important;
+  line-height: 1.15 !important;
+  letter-spacing: 0 !important;
+  color: var(--mf-neutral-text-1) !important;
+}
+body.mf-page-trading #paperPnl {
+  font-size:10px !important;
+  font-weight: 700 !important;
+  line-height: 1.1 !important;
+  letter-spacing: 0 !important;
+  font-variant-numeric: tabular-nums lining-nums !important;
+}
+
+/* 5. Strategy: smallest readable labels, compact UI-level values. */
+body.mf-page-trading .strategy-summary-panel .strategy-summary-row span {
+  font-size:8px !important;
+  font-weight: 500 !important;
+  line-height: 1.2 !important;
+  letter-spacing: 0 !important;
+  color: var(--mf-neutral-text-3) !important;
+  text-transform: none !important;
+}
+body.mf-page-trading .strategy-summary-panel .strategy-summary-row :where(strong,b) {
+  font-size:10px !important;
+  font-weight: 600 !important;
+  line-height: 1.15 !important;
+  letter-spacing: 0 !important;
+  color: var(--mf-neutral-text-1) !important;
+  text-transform: none !important;
+  font-variant-numeric: tabular-nums lining-nums !important;
+}
+body.mf-page-trading .strategy-summary-panel :where(.strategy-note,.panel-note,.synced-note) {
+  font-size:8px !important;
+  font-weight: 500 !important;
+  line-height: 1.2 !important;
+  color: var(--mf-neutral-text-3) !important;
+}
+
+/* 6. Positions: compact execution rows. */
+body.mf-page-trading .positions-panel .position-symbol {
+  font-size:9px !important;
+  font-weight: 600 !important;
+  line-height: 1.15 !important;
+  letter-spacing: 0 !important;
+  color: var(--mf-neutral-text-1) !important;
+  text-transform: none !important;
+}
+body.mf-page-trading .positions-panel .position-bottomline,
+body.mf-page-trading .positions-panel .position-bottomline :where(span,i,strong) {
+  font-size:8px !important;
+  font-weight: 500 !important;
+  line-height: 1.15 !important;
+  letter-spacing: 0 !important;
+  color: var(--mf-neutral-text-3) !important;
+  text-transform: none !important;
+  font-variant-numeric: tabular-nums lining-nums !important;
+}
+body.mf-page-trading .positions-panel .position-pnl {
+  font-size:9px !important;
+  font-weight: 600 !important;
+  line-height: 1.15 !important;
+  font-variant-numeric: tabular-nums lining-nums !important;
+}
+body.mf-page-trading .positions-panel :where(.close-position,.copy-trade-badge) {
+  font-size:8px !important;
+  font-weight: 600 !important;
+  line-height: 1.1 !important;
+  letter-spacing: .03em !important;
+}
+
+/* 7. Candidates: dense scan list, evidence is secondary. */
+body.mf-page-trading .candidates-panel .candidate-symbol {
+  font-size:9px !important;
+  font-weight: 600 !important;
+  line-height: 1.15 !important;
+  letter-spacing: 0 !important;
+  color: var(--mf-neutral-text-1) !important;
+  text-transform: none !important;
+}
+body.mf-page-trading .candidates-panel .candidate-bottom,
+body.mf-page-trading .candidates-panel .candidate-bottom :where(span,i,strong) {
+  font-size:8px !important;
+  font-weight: 500 !important;
+  line-height: 1.15 !important;
+  letter-spacing: 0 !important;
+  color: var(--mf-neutral-text-3) !important;
+  text-transform: none !important;
+}
+body.mf-page-trading .candidates-panel .candidate-price {
+  font-size:8px !important;
+  font-weight: 500 !important;
+  line-height: 1.15 !important;
+  letter-spacing: 0 !important;
+  color: var(--mf-neutral-text-2) !important;
+  font-variant-numeric: tabular-nums lining-nums !important;
+}
+body.mf-page-trading .candidates-panel :where(.state-dot,.copy-trade-badge) {
+  font-size:8px !important;
+  font-weight: 600 !important;
+  line-height: 1.1 !important;
+  letter-spacing: .03em !important;
+}
+
+/* 8. Recent trades: log typography, not content-card typography. */
+body.mf-page-trading .bottom-history-panel :where(.trade-log-symbol,.trade-token-name) {
+  font-size:9px !important;
+  font-weight: 600 !important;
+  line-height: 1.15 !important;
+  letter-spacing: 0 !important;
+  color: var(--mf-neutral-text-1) !important;
+  text-transform: none !important;
+}
+body.mf-page-trading .bottom-history-panel .trade-log-bottomline,
+body.mf-page-trading .bottom-history-panel .trade-log-bottomline :where(span,i,strong),
+body.mf-page-trading .bottom-history-panel .trade-log-time {
+  font-size:8px !important;
+  font-weight: 500 !important;
+  line-height: 1.15 !important;
+  letter-spacing: 0 !important;
+  color: var(--mf-neutral-text-3) !important;
+  text-transform: none !important;
+  font-variant-numeric: tabular-nums lining-nums !important;
+}
+body.mf-page-trading .bottom-history-panel :where(.trade-side,.pnl-positive,.pnl-negative) {
+  font-size:9px !important;
+  font-weight: 600 !important;
+  line-height: 1.15 !important;
+  font-variant-numeric: tabular-nums lining-nums !important;
+}
+body.mf-page-trading .bottom-history-panel :where(.trade-pump-link,.trade-status,.trade-log-hint) {
+  font-size:8px !important;
+  font-weight: 600 !important;
+  line-height: 1.1 !important;
+  letter-spacing: .03em !important;
+}
+
+/* MEMEFLOW_TRADING_TERMINAL_COMPACT_V188_END */
+
+/* MEMEFLOW_TRADING_TECHNICAL_HIERARCHY_V189_START
+   Final compact technical hierarchy on top of V188.
+
+   STRICT MEMEFLOW V186 CONTRACT:
+   - sizes ONLY: MICRO 11 / META 12 / UI 13 / BODY 14 / SUBHEAD 15 / SECTION 17 / PAGE 24 / DISPLAY 36
+   - weights ONLY: 500 / 600 / 700 / 800
+   - neutral colors ONLY: T1 / T2 / T3 / T4
+   - semantic state colors remain inherited and untouched
+   - typography + neutral hierarchy only
+   - NO spacing / geometry / border / radius / background / chart rendering / JS / trading logic edits
+
+   Visual rule:
+   T1 = only decisive information
+   T2 = working data
+   T3 = secondary controls/data
+   T4 = technical/system metadata
+*/
+
+@media (max-width: 820px) {
+  /* ----------------------------------------------------------------------
+     1. Product identity: software chrome, not marketing typography
+     ---------------------------------------------------------------------- */
+  body.mf-page-trading .brand-title {
+    font-size:9px !important;
+    font-weight: 700 !important;
+    line-height: 1.1 !important;
+    letter-spacing: 0 !important;
+    color: var(--mf-neutral-text-1) !important;
+  }
+  body.mf-page-trading .brand-sub {
+    font-size:8px !important;
+    font-weight: 600 !important;
+    line-height: 1.1 !important;
+    letter-spacing: .08em !important;
+    color: var(--mf-neutral-text-4) !important;
+  }
+  body.mf-page-trading :where(.topbar .status-pill,.topbar .ghost-btn,.topbar .wallet-btn) {
+    font-size:8px !important;
+    font-weight: 600 !important;
+    line-height: 1.05 !important;
+    letter-spacing: .025em !important;
+  }
+
+  /* ----------------------------------------------------------------------
+     2. Selected token: compact instrument header
+     ---------------------------------------------------------------------- */
+  body.mf-page-trading h1#tokenName {
+    font-size:10px !important;
+    font-weight: 600 !important;
+    line-height: 1.08 !important;
+    letter-spacing: 0 !important;
+    color: var(--mf-neutral-text-1) !important;
+  }
+  body.mf-page-trading .token-price {
+    font-size:13px !important;
+    font-weight: 700 !important;
+    line-height: 1.04 !important;
+    letter-spacing: -.01em !important;
+    color: var(--mf-neutral-text-1) !important;
+    font-variant-numeric: tabular-nums lining-nums !important;
+  }
+  body.mf-page-trading :where(.token-meta,.token-market) {
+    font-size:8px !important;
+    font-weight: 500 !important;
+    line-height: 1.12 !important;
+    letter-spacing: 0 !important;
+    color: var(--mf-neutral-text-4) !important;
+  }
+  body.mf-page-trading .token-meta button {
+    font-size:9px !important;
+    font-weight: 600 !important;
+    line-height: 1.08 !important;
+    letter-spacing: 0 !important;
+  }
+  body.mf-page-trading :where(.decision-badge,.tiny-state,.mode-badge,.approval-count) {
+    font-size:8px !important;
+    font-weight: 600 !important;
+    line-height: 1.05 !important;
+    letter-spacing: .025em !important;
+  }
+
+  /* ----------------------------------------------------------------------
+     3. Chart chrome: technical information recedes
+     ---------------------------------------------------------------------- */
+  body.mf-page-trading :where(.timeframes button,.indicator-bar button,.candidate-filter button) {
+    font-size:9px !important;
+    font-weight: 600 !important;
+    line-height: 1.08 !important;
+    letter-spacing: 0 !important;
+  }
+  body.mf-page-trading :where(.timeframes button,.indicator-bar button,.candidate-filter button):not(.active):not([aria-selected="true"]):not([aria-pressed="true"]) {
+    color: var(--mf-neutral-text-3) !important;
+  }
+  body.mf-page-trading .chart-legend,
+  body.mf-page-trading .chart-legend :where(b,strong) {
+    font-size:8px !important;
+    font-weight: 500 !important;
+    line-height: 1.08 !important;
+    letter-spacing: 0 !important;
+    color: var(--mf-neutral-text-4) !important;
+    font-variant-numeric: tabular-nums lining-nums !important;
+  }
+  body.mf-page-trading .chart-legend :where(b,strong) {
+    color: var(--mf-neutral-text-3) !important;
+  }
+  body.mf-page-trading .selected-metrics span {
+    font-size:8px !important;
+    font-weight: 500 !important;
+    line-height: 1.08 !important;
+    letter-spacing: 0 !important;
+    color: var(--mf-neutral-text-4) !important;
+  }
+  body.mf-page-trading .selected-metrics strong {
+    font-size:9px !important;
+    font-weight: 600 !important;
+    line-height: 1.08 !important;
+    letter-spacing: 0 !important;
+    color: var(--mf-neutral-text-2) !important;
+    font-variant-numeric: tabular-nums lining-nums !important;
+  }
+
+  /* ----------------------------------------------------------------------
+     4. One module-header grammar everywhere
+     ---------------------------------------------------------------------- */
+  body.mf-page-trading :where(
+    .approvals-panel,
+    .strategy-summary-panel,
+    .positions-panel,
+    .candidates-panel,
+    .bottom-history-panel
+  ) .panel-head .eyebrow {
+    font-size:8px !important;
+    font-weight: 600 !important;
+    line-height: 1.08 !important;
+    letter-spacing: .08em !important;
+    color: var(--mf-neutral-text-4) !important;
+    text-transform: uppercase !important;
+  }
+  body.mf-page-trading :where(
+    .approvals-panel,
+    .strategy-summary-panel,
+    .positions-panel,
+    .candidates-panel,
+    .bottom-history-panel
+  ) .panel-head h2 {
+    font-size:10px !important;
+    font-weight: 600 !important;
+    line-height: 1.08 !important;
+    letter-spacing: 0 !important;
+    color: var(--mf-neutral-text-1) !important;
+  }
+  body.mf-page-trading #paperPnl {
+    font-size:9px !important;
+    font-weight: 600 !important;
+    line-height: 1.08 !important;
+    letter-spacing: 0 !important;
+    font-variant-numeric: tabular-nums lining-nums !important;
+  }
+
+  /* ----------------------------------------------------------------------
+     5. Strategy: technical labels darkest; values compact and readable
+     ---------------------------------------------------------------------- */
+  body.mf-page-trading .strategy-summary-panel .strategy-summary-row span {
+    font-size:8px !important;
+    font-weight: 500 !important;
+    line-height: 1.12 !important;
+    letter-spacing: 0 !important;
+    color: var(--mf-neutral-text-4) !important;
+    text-transform: none !important;
+  }
+  body.mf-page-trading .strategy-summary-panel .strategy-summary-row :where(strong,b) {
+    font-size:9px !important;
+    font-weight: 600 !important;
+    line-height: 1.1 !important;
+    letter-spacing: 0 !important;
+    color: var(--mf-neutral-text-1) !important;
+    text-transform: none !important;
+    font-variant-numeric: tabular-nums lining-nums !important;
+  }
+  body.mf-page-trading .strategy-summary-panel :where(.strategy-note,.panel-note,.synced-note) {
+    font-size:8px !important;
+    font-weight: 500 !important;
+    line-height: 1.1 !important;
+    color: var(--mf-neutral-text-4) !important;
+  }
+
+  /* ----------------------------------------------------------------------
+     6. Positions: execution data, not card-title typography
+     ---------------------------------------------------------------------- */
+  body.mf-page-trading .positions-panel .position-symbol {
+    font-size:9px !important;
+    font-weight: 600 !important;
+    line-height: 1.08 !important;
+    letter-spacing: 0 !important;
+    color: var(--mf-neutral-text-1) !important;
+    text-transform: none !important;
+  }
+  body.mf-page-trading .positions-panel .position-bottomline,
+  body.mf-page-trading .positions-panel .position-bottomline :where(span,i,strong) {
+    font-size:8px !important;
+    font-weight: 500 !important;
+    line-height: 1.08 !important;
+    letter-spacing: 0 !important;
+    color: var(--mf-neutral-text-3) !important;
+    text-transform: none !important;
+    font-variant-numeric: tabular-nums lining-nums !important;
+  }
+  body.mf-page-trading .positions-panel .position-pnl {
+    font-size:9px !important;
+    font-weight: 600 !important;
+    line-height: 1.08 !important;
+    font-variant-numeric: tabular-nums lining-nums !important;
+  }
+  body.mf-page-trading .positions-panel :where(.close-position,.copy-trade-badge) {
+    font-size:8px !important;
+    font-weight: 600 !important;
+    line-height: 1.05 !important;
+    letter-spacing: .02em !important;
+  }
+
+  /* ----------------------------------------------------------------------
+     7. Candidates: evidence becomes technical metadata
+     ---------------------------------------------------------------------- */
+  body.mf-page-trading .candidates-panel .candidate-symbol {
+    font-size:9px !important;
+    font-weight: 600 !important;
+    line-height: 1.08 !important;
+    letter-spacing: 0 !important;
+    color: var(--mf-neutral-text-1) !important;
+    text-transform: none !important;
+  }
+  body.mf-page-trading .candidates-panel .candidate-bottom,
+  body.mf-page-trading .candidates-panel .candidate-bottom :where(span,i,strong) {
+    font-size:8px !important;
+    font-weight: 500 !important;
+    line-height: 1.08 !important;
+    letter-spacing: 0 !important;
+    color: var(--mf-neutral-text-4) !important;
+    text-transform: none !important;
+  }
+  body.mf-page-trading .candidates-panel .candidate-price {
+    font-size:9px !important;
+    font-weight: 500 !important;
+    line-height: 1.08 !important;
+    letter-spacing: 0 !important;
+    color: var(--mf-neutral-text-2) !important;
+    font-variant-numeric: tabular-nums lining-nums !important;
+  }
+  body.mf-page-trading .candidates-panel :where(.state-dot,.copy-trade-badge) {
+    font-size:8px !important;
+    font-weight: 600 !important;
+    line-height: 1.05 !important;
+    letter-spacing: .02em !important;
+  }
+
+  /* ----------------------------------------------------------------------
+     8. Recent trades: execution log hierarchy
+     ---------------------------------------------------------------------- */
+  body.mf-page-trading .bottom-history-panel :where(.trade-log-symbol,.trade-token-name) {
+    font-size:9px !important;
+    font-weight: 600 !important;
+    line-height: 1.08 !important;
+    letter-spacing: 0 !important;
+    color: var(--mf-neutral-text-1) !important;
+    text-transform: none !important;
+  }
+  body.mf-page-trading .bottom-history-panel .trade-log-bottomline,
+  body.mf-page-trading .bottom-history-panel .trade-log-bottomline :where(span,i,strong),
+  body.mf-page-trading .bottom-history-panel .trade-log-time {
+    font-size:8px !important;
+    font-weight: 500 !important;
+    line-height: 1.08 !important;
+    letter-spacing: 0 !important;
+    color: var(--mf-neutral-text-4) !important;
+    text-transform: none !important;
+    font-variant-numeric: tabular-nums lining-nums !important;
+  }
+  body.mf-page-trading .bottom-history-panel :where(.trade-side,.pnl-positive,.pnl-negative) {
+    font-size:9px !important;
+    font-weight: 600 !important;
+    line-height: 1.08 !important;
+    font-variant-numeric: tabular-nums lining-nums !important;
+  }
+  body.mf-page-trading .bottom-history-panel :where(.trade-pump-link,.trade-status,.trade-log-hint) {
+    font-size:8px !important;
+    font-weight: 600 !important;
+    line-height: 1.05 !important;
+    letter-spacing: .02em !important;
+  }
+}
+
+/* MEMEFLOW_TRADING_TECHNICAL_HIERARCHY_V189_END */

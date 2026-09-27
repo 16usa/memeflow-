@@ -326,7 +326,7 @@
   if (window.__MEMEFLOW_ACCOUNT_WALLET_SETTINGS_LOADER_V1__) return;
   window.__MEMEFLOW_ACCOUNT_WALLET_SETTINGS_LOADER_V1__ = true;
   const script = document.createElement('script');
-  script.src = '/account-wallet-settings.js?v=smart-vault-clean-v2-20260828';
+  script.src = '/account-wallet-settings.js?v=settings-clean-v1913-20260922';
   script.defer = true;
   document.head.appendChild(script);
 })();
