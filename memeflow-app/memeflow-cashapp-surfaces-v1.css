@@ -1,0 +1,227 @@
+/* MEMEFLOW_CASHAPP_SURFACES_V1
+   Dark theme only: pure-black app/3D canvas + #1A1A1A frameless cards.
+   Light theme is intentionally untouched.
+*/
+
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --bg:#000000 !important;
+  --panel:#1A1A1A !important;
+  --panel-solid:#1A1A1A !important;
+  --panel-2:#1A1A1A !important;
+  --panel2:#1A1A1A !important;
+  --surface:#1A1A1A !important;
+  --surface2:#1A1A1A !important;
+  --surface3:#1A1A1A !important;
+  --surface-2:#1A1A1A !important;
+  --panel-bg:#1A1A1A !important;
+
+  --mf-app-bg:#000000 !important;
+  --mf-app-surface:#1A1A1A !important;
+  --mf-app-surface-2:#1A1A1A !important;
+  --mf-app-surface-3:#1A1A1A !important;
+  --mf-app-panel-top:#1A1A1A !important;
+  --mf-app-panel-bottom:#1A1A1A !important;
+
+  --mf-nav-bg:#000000 !important;
+  --mf-nav-surface:#1A1A1A !important;
+  --mf-nav-surface-2:#1A1A1A !important;
+
+  --hiw-bg:#000000 !important;
+  --hiw-panel:#1A1A1A !important;
+  --hiw-panel-strong:#1A1A1A !important;
+
+  --v-bg:#000000 !important;
+  --v-panel:#1A1A1A !important;
+  --v-panel2:#1A1A1A !important;
+}
+
+/* One uninterrupted black application background. */
+html[data-theme="dark"],
+html[data-theme="dark"] body,
+html[data-theme="dark"] .app,
+html[data-theme="dark"] .shell,
+html[data-theme="dark"] .system-shell,
+html[data-theme="dark"] .terminal,
+html[data-theme="dark"] .mf-vault-shell,
+html[data-theme="dark"] body.mf-trading-terminal,
+html[data-theme="dark"] body.mf-hiw-page,
+html[data-theme="dark"] .ap-page {
+  background:#000000 !important;
+  background-color:#000000 !important;
+  background-image:none !important;
+}
+
+/* Main card / module surfaces: Cash App style — dark fill, no outline, no shadow. */
+html[data-theme="dark"] :is(
+  .panel,
+  .card,
+  .glass:not(.viewport-wrap),
+  .token-card,
+  .token-row,
+  .token-card-expanded,
+  .scanner-card,
+  .candidate,
+  .metric-card,
+  .wallet-card,
+  .wallet-security,
+  .wallet-stat,
+  .wallet-session-note,
+  .wallet-rule,
+  .subscription-metric,
+  .plan-card,
+  .live-lock,
+  .data-row,
+  .settings-context,
+  .settings-group,
+  .execution-preview,
+  .advanced-intelligence,
+  .execution-readiness,
+  .primary-blocker,
+  .signal-explainer,
+  .execution-check-list,
+  .wallet-note,
+  .wallet-network,
+  .wallet-option,
+  .mobile-wallet-card,
+  .explain-step,
+  .production-empty,
+  .mf-vault-card,
+  .mf-vault-topbar,
+  .mf-vault-row,
+  .mf-vault-stat,
+  .mf-vault-action,
+  .mf-vault-note,
+  .mf-vault-status-panel,
+  .mf-hiw-status-card,
+  .mf-hiw-map-shell,
+  .mf-hiw-node,
+  .mf-hiw-card,
+  .mf-hiw-step,
+  .mf-hiw-control-card,
+  .mf-hiw-money,
+  .mf-hiw-money-card,
+  .mf-hiw-faq details,
+  .mf293-settings-group,
+  .mf293-field,
+  .mf-theme-appearance,
+  .ap-source,
+  .ap-panel,
+  .ap-kpis article,
+  .factor,
+  .rank,
+  .empty
+) {
+  background:#1A1A1A !important;
+  background-color:#1A1A1A !important;
+  background-image:none !important;
+  border-color:transparent !important;
+  box-shadow:none !important;
+}
+
+/* Common ID-based modules used on system/settings pages. */
+html[data-theme="dark"] :is(
+  #wallet,
+  #system,
+  #billing,
+  #settings
+) {
+  background:#1A1A1A !important;
+  background-image:none !important;
+  border-color:transparent !important;
+  box-shadow:none !important;
+}
+
+/* Nested metric blocks should read as content inside the card, not another framed card. */
+html[data-theme="dark"] :is(
+  .si-card-stat,
+  .metric,
+  .ap-summary > div,
+  .system-health-summary > div,
+  .settings-summary > div,
+  .selected-metrics > div,
+  .control-section,
+  .mf-hiw-status-stack > div,
+  .mf-hiw-money-flow > div,
+  .mf-vault-status-flow span
+) {
+  border-color:transparent !important;
+  box-shadow:none !important;
+}
+
+/* Remove the old card outlines while preserving intentional status/accent controls. */
+html[data-theme="dark"] :is(
+  .panel,
+  .token-card,
+  .token-row,
+  .token-card-expanded,
+  .scanner-card,
+  .candidate,
+  .metric-card,
+  .wallet-card,
+  .plan-card,
+  .mf-vault-card,
+  .mf-vault-row,
+  .mf-vault-stat,
+  .mf-hiw-card,
+  .mf-hiw-step,
+  .mf-hiw-control-card,
+  .mf-hiw-faq details,
+  .ap-source,
+  .ap-panel,
+  .ap-kpis article,
+  .factor,
+  .rank,
+  .empty
+) {
+  border-width:0 !important;
+}
+
+/* 3D / system canvas stays pure black instead of inheriting the gray card surface. */
+html[data-theme="dark"] .viewport-wrap,
+html[data-theme="dark"] .viewport-wrap.mf-true3d-clean-v3,
+html[data-theme="dark"] .viewport-wrap #memeflowTrue3DHost,
+html[data-theme="dark"] .viewport-wrap #memeflowTrue3DCanvas,
+html[data-theme="dark"] .viewport-wrap #systemCanvas,
+html[data-theme="dark"] .viewport-wrap canvas,
+html[data-theme="dark"] #memeflowTrue3DHost,
+html[data-theme="dark"] #memeflowTrue3DCanvas,
+html[data-theme="dark"] #systemCanvas {
+  background:#000000 !important;
+  background-color:#000000 !important;
+  background-image:none !important;
+  border-color:transparent !important;
+  box-shadow:none !important;
+}
+html[data-theme="dark"] .viewport-wrap::before,
+html[data-theme="dark"] .viewport-wrap::after {
+  background:none !important;
+  background-image:none !important;
+  box-shadow:none !important;
+}
+
+/* System token rail cards are explicitly hard-coded in older CSS. */
+html[data-theme="dark"] .activity-panel,
+html[data-theme="dark"] .inspector {
+  background:#1A1A1A !important;
+  background-image:none !important;
+  border-color:transparent !important;
+  box-shadow:none !important;
+}
+
+/* Agent Performance has older hard-coded black gradients. */
+html[data-theme="dark"] .ap-source,
+html[data-theme="dark"] .ap-panel,
+html[data-theme="dark"] .ap-kpis article {
+  background:#1A1A1A !important;
+  background-image:none !important;
+}
+
+/* Keep the top header visually continuous with the black canvas. */
+html[data-theme="dark"] .mf-site-header:not(.mf-nav-drawer),
+html[data-theme="dark"] .mf-site-header.mf-site-header--sticky {
+  background:#000000 !important;
+  background-color:#000000 !important;
+  background-image:none !important;
+  box-shadow:none !important;
+}
