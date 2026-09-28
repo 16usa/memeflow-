@@ -3577,8 +3577,8 @@ function chartAxisRailRenderV34(){
 
   const gutter=Math.max(64,Number(chartRightGutterV32())||0);
 
-  rail.style.left=`${Math.max(0,width-gutter+2)}px`;
-  rail.style.right='2px';
+  rail.style.left=`${Math.max(0,width-gutter+8)}px`;
+  rail.style.right='0px';
 
   const top=Number(chartMainGridTopV32())||0;
   const rawHeight=chartMainGridHeightV32(
@@ -3621,7 +3621,7 @@ function chartAxisRailRenderV34(){
     return;
   }
 
-  const gap=window.innerWidth<700 ? 18 : 20;
+  const gap=window.innerWidth<700 ? 14 : 16;
 
   mapped[0].y=Math.max(minY,Math.min(maxY,mapped[0].targetY));
 
@@ -3864,12 +3864,12 @@ function chartCandle(candle){
 
 // MEMEFLOW_CHART_INFORMATION_HIERARCHY_V32
 function chartRightGutterV32(){
-  // V34: this gutter is shared by ordinary Y-axis numbers and
-  // LIVE / ENTRY / SL / TP1 / TP2 axis markers.
+  // V36: polished rail geometry. Keep axis markers integrated, but reduce
+  // wasted right-side space so the PRICE / MARKET CAP rail looks tighter.
   if(state.chartMetric==='marketCap'){
-    return window.innerWidth<700 ? 88 : 100;
+    return window.innerWidth<700 ? 82 : 92;
   }
-  return window.innerWidth<700 ? 116 : 128;
+  return window.innerWidth<700 ? 102 : 112;
 }
 
 function chartMainGridTopV32(){

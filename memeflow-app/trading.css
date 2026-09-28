@@ -2155,3 +2155,118 @@ body.mf-page-trading.mf-trading-terminal .chart-status-cell-v32.tp2 b{
   }
 }
 /* ===== /MEMEFLOW_CHART_LEVEL_INTEGRATION_V33 ===== */
+
+
+/* ===== MEMEFLOW_CHART_AXIS_RAIL_V34 ===== */
+body.mf-page-trading.mf-trading-terminal .chart-axis-rail-v34{
+  position:absolute;
+  top:0;
+  bottom:0;
+  z-index:5;
+  overflow:visible;
+  pointer-events:none;
+  contain:layout style;
+}
+
+body.mf-page-trading.mf-trading-terminal .chart-axis-marker-v34{
+  --mf-level-color:#91a6b0;
+  position:absolute;
+  left:auto;
+  right:0;
+  width:max-content;
+  max-width:100%;
+  box-sizing:border-box;
+  min-height:15px;
+  padding:0 5px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:4px;
+  transform:translateY(-50%);
+  border:0.8px solid color-mix(in srgb,var(--mf-level-color) 62%,transparent);
+  border-left-width:1.4px;
+  border-radius:3px;
+  background:rgba(4,8,10,.78);
+  white-space:nowrap;
+  overflow:hidden;
+  box-shadow:none;
+  font-family:"IBM Plex Mono",monospace;
+  font-size:7.2px;
+  line-height:1;
+  letter-spacing:0;
+  backdrop-filter:blur(2px);
+  -webkit-backdrop-filter:blur(2px);
+}
+
+body.mf-page-trading.mf-trading-terminal .chart-axis-marker-v34::before{
+  content:"";
+  position:absolute;
+  left:-5px;
+  top:50%;
+  width:5px;
+  height:1px;
+  transform:translateY(-50%);
+  background:var(--mf-level-color);
+  opacity:.78;
+}
+
+body.mf-page-trading.mf-trading-terminal .chart-axis-marker-v34 span{
+  flex:0 0 auto;
+  color:var(--mf-level-color);
+  font-weight:780;
+  opacity:.96;
+}
+
+body.mf-page-trading.mf-trading-terminal .chart-axis-marker-v34 strong{
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  color:#eef3f5;
+  font-weight:620;
+  text-align:right;
+  opacity:.96;
+}
+
+body.mf-page-trading.mf-trading-terminal .chart-axis-marker-v34.live{
+  border-color:rgba(245,196,81,.72);
+  background:rgba(245,196,81,.17);
+}
+
+body.mf-page-trading.mf-trading-terminal .chart-axis-marker-v34.live span{
+  color:#f5c451;
+  font-weight:820;
+}
+
+body.mf-page-trading.mf-trading-terminal .chart-axis-marker-v34.live strong{
+  color:#fff4ce;
+  font-weight:700;
+}
+
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal .chart-axis-marker-v34{
+  background:rgba(255,255,255,.88);
+  box-shadow:none;
+}
+
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal .chart-axis-marker-v34 strong{
+  color:#233744;
+}
+
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal .chart-axis-marker-v34.live{
+  background:rgba(245,196,81,.20);
+  border-color:rgba(201,154,29,.72);
+}
+
+@media (max-width:700px){
+  body.mf-page-trading.mf-trading-terminal .chart-axis-marker-v34{
+    min-height:14px;
+    padding-left:4px;
+    padding-right:4px;
+    gap:3px;
+    font-size:6.9px;
+    border-radius:3px;
+  }
+}
+/* ===== /MEMEFLOW_CHART_AXIS_RAIL_V34 ===== */
