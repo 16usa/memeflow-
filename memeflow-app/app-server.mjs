@@ -10470,12 +10470,60 @@ for(const signal of ['SIGTERM','SIGINT']){
             ...referencePatch,
             mint:token.mint
           });
+        }        // MEMEFLOW_REFERENCE_REPAIR_AND_CIRCUIT_BREAKER_V16_1
+        if(token?.quoteMint){
+          referencePatch.quoteMint=String(token.quoteMint);
+        }
+        if(Number.isFinite(Number(token?.quoteDecimals))){
+          referencePatch.quoteDecimals=Number(token.quoteDecimals);
+        }
+        if(Number.isFinite(Number(token?.tokenDecimals))){
+          referencePatch.tokenDecimals=Number(token.tokenDecimals);
+        }
+        if(token?.virtualQuoteReservesRaw!=null){
+          referencePatch.virtualQuoteReservesRaw=
+            String(token.virtualQuoteReservesRaw);
+        }
+        if(token?.realQuoteReservesRaw!=null){
+          referencePatch.realQuoteReservesRaw=
+            String(token.realQuoteReservesRaw);
         }
 
-        if(Number.isFinite(Number(token?.marketCapUsd))){
-          referencePatch.pumpReportedMarketCapUsd=Number(token.marketCapUsd);
+        const pumpMcUsd=Number(token?.marketCapUsd);
+        const pumpMcSol=Number(token?.marketCapSol);
+        const liveSolUsd=Number(solUsdOracle.get());
+
+        const referenceMc=
+          Number.isFinite(pumpMcUsd)&&pumpMcUsd>0
+            ? pumpMcUsd
+            : (
+                Number.isFinite(pumpMcSol)&&pumpMcSol>0&&
+                Number.isFinite(liveSolUsd)&&liveSolUsd>0
+                  ? pumpMcSol*liveSolUsd
+                  : null
+              );
+
+        if(Number.isFinite(referenceMc)&&referenceMc>0){
+          referencePatch.pumpReportedMarketCapUsd=referenceMc;
+
+          const localMc=Number(current?.marketCapUsd);
+          if(Number.isFinite(localMc)&&localMc>0){
+            const ratio=
+              Math.max(localMc,referenceMc)/
+              Math.min(localMc,referenceMc);
+
+            if(ratio>20){
+              referencePatch.quotePricingReady=false;
+              referencePatch.quotePricingMode='REFERENCE_MISMATCH';
+              referencePatch.marketSanityRatio=ratio;
+              referencePatch.priceSol=null;
+              referencePatch.marketCapSol=null;
+              referencePatch.marketCapUsd=referenceMc;
+              referencePatch.liquiditySol=null;
+              referencePatch.liquidityUsd=null;
+            }
+          }
         }
-        
 
         store.setToken(token.mint,referencePatch);
         try{publish(token.mint)}catch{}

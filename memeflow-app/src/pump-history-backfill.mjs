@@ -5,14 +5,14 @@ function finite(v){
   return Number.isFinite(n)?n:null;
 }
 
-// MEMEFLOW_PUMP_UNIT_NORMALIZATION_V1
-// Pump frontend API uses raw integer units for several fields.
-// `market_cap` is lamport-denominated; `total_supply` is token base units.
+// MEMEFLOW_PUMP_UNIT_NORMALIZATION_V16
+// Current Pump payloads commonly expose market_cap in SOL; legacy/adapted
+// payloads can still expose lamport-sized integers. Normalize both shapes.
 function pumpMarketCapSol(coin){
   const raw=finite(coin?.market_cap);
-  if(raw!==null)return raw/1e9;
-
-  // Camel-case fallbacks from other adapters are assumed already normalized.
+  if(raw!==null){
+    return raw>1_000_000?raw/1e9:raw;
+  }
   return finite(coin?.marketCapSol??coin?.marketCap);
 }
 
@@ -65,12 +65,22 @@ function coinToken(coin,{recent=false}={}){
     pumpCreatedAt:created,
     discoveredAt:created||now,
     // Pump API truth/reference fields.
-    marketCapUsd:finite(coin?.usd_market_cap??coin?.marketCapUsd),
+    marketCapUsd:finite(
+      coin?.usd_market_cap ??
+      coin?.market_cap_usd ??
+      coin?.marketCapUsd
+    ),
     marketCapSol:pumpMarketCapSol(coin),
     totalSupply:pumpSupplyTokens(coin),
-    pumpMarketCapRawLamports:finite(coin?.market_cap),
+    pumpMarketCapRaw:finite(coin?.market_cap),
     pumpTotalSupplyRaw:finite(coin?.total_supply),
-    tokenDecimals:finite(coin?.decimals)??6,
+    tokenDecimals:finite(coin?.base_decimals??coin?.decimals)??6,
+    quoteMint:coin?.quote_mint??coin?.quoteMint??null,
+    quoteDecimals:finite(coin?.quote_decimals??coin?.quoteDecimals),
+    virtualQuoteReservesRaw:
+      coin?.virtual_quote_reserves??coin?.virtualQuoteReserves??null,
+    realQuoteReservesRaw:
+      coin?.real_quote_reserves??coin?.realQuoteReserves??null,
     pumpReportedHolderCount:finite(
       coin?.holder_count ??
       coin?.holderCount ??

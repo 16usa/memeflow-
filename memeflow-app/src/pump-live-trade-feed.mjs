@@ -4,7 +4,7 @@
 
 import crypto from 'node:crypto';
 
-const VERSION='V15.0';
+const VERSION='V16.0';
 const PUMP_PROGRAM='6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P';
 const DISC=crypto.createHash('sha256').update('event:TradeEvent').digest().subarray(0,8);
 const B58='123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
@@ -111,11 +111,12 @@ export function decodeTradeEvent(buf){
 }
 function programData(log){const m=/^Program data:\s*([A-Za-z0-9+/=]+)\s*$/.exec(String(log||'').trim());if(!m)return null;try{return Buffer.from(m[1],'base64')}catch{return null}}
 function marketFromEvent(e,token,solUsd){
-  // V15: CreateEvent quoteMint is canonical when already known. A partially
-  // decoded newer TradeEvent must never override it with garbage/stale bytes.
+  // MEMEFLOW_EXECUTION_PRICE_AUTHORITY_V16
+  // Confirmed BUY/SELL execution is the primary price authority.
   const tokenQuoteMint=String(token?.quoteMint||'').trim();
   const eventQuoteMint=String(e?.quoteMint||'').trim();
   const quoteMint=tokenQuoteMint||eventQuoteMint;
+
   const hasQuoteTail=Boolean(
     e?.quoteAmount!==null&&e?.quoteAmount!==undefined ||
     e?.virtualQuoteReserves!==null&&e?.virtualQuoteReserves!==undefined ||
@@ -133,19 +134,44 @@ function marketFromEvent(e,token,solUsd){
 
   const decimals=Math.max(
     0,
-    Math.min(
-      12,
-      Math.floor(Number(token?.decimals??token?.tokenDecimals??6))
-    )
+    Math.min(12,Math.floor(Number(token?.decimals??token?.tokenDecimals??6)))
   );
 
+  const quoteDecimals=Math.max(
+    0,
+    Math.min(12,Math.floor(Number(token?.quoteDecimals??6)))
+  );
+
+  const tokenRaw=e?.tokenAmount;
+  const tokenUi=
+    tokenRaw!==null&&tokenRaw!==undefined&&tokenRaw>0n
+      ? Number(tokenRaw)/(10**decimals)
+      : null;
+
+  const usd=Number(solUsd);
   let priceSol=null;
   let priceUsd=null;
   let liquiditySol=null;
   let liquidityUsd=null;
+  let priceMethod=null;
 
   if(quoteKind==='SOL'){
     if(
+      e?.solAmount!==null&&
+      e?.solAmount!==undefined&&
+      e.solAmount>0n&&
+      Number.isFinite(tokenUi)&&
+      tokenUi>0
+    ){
+      const executionSol=Number(e.solAmount)/1e9;
+      if(executionSol>0){
+        priceSol=executionSol/tokenUi;
+        priceMethod='trade-execution-sol';
+      }
+    }
+
+    if(
+      !(Number.isFinite(priceSol)&&priceSol>0)&&
       e.virtualSolReserves!==null&&
       e.virtualTokenReserves!==null&&
       e.virtualSolReserves>0n&&
@@ -154,13 +180,13 @@ function marketFromEvent(e,token,solUsd){
       priceSol=
         (Number(e.virtualSolReserves)/1e9)/
         (Number(e.virtualTokenReserves)/(10**decimals));
+      priceMethod='virtual-reserves-sol-fallback';
     }
 
     if(e.realSolReserves!==null){
       liquiditySol=Number(e.realSolReserves)/1e9;
     }
 
-    const usd=Number(solUsd);
     if(Number.isFinite(priceSol)&&priceSol>0&&Number.isFinite(usd)&&usd>0){
       priceUsd=priceSol*usd;
     }
@@ -170,35 +196,26 @@ function marketFromEvent(e,token,solUsd){
   }
 
   if(quoteKind==='USDC'){
-    // For quote-paired Pump trades, use the REAL quote execution amount.
-    // Do NOT treat it as lamports and multiply it by SOL/USD.
     const quoteRaw=e.quoteAmount??e.solAmount;
-    const tokenRaw=e.tokenAmount;
-    const usd=Number(solUsd);
 
     if(
       quoteRaw!==null&&quoteRaw!==undefined&&
-      tokenRaw!==null&&tokenRaw!==undefined&&
-      quoteRaw>0n&&tokenRaw>0n
+      quoteRaw>0n&&
+      Number.isFinite(tokenUi)&&
+      tokenUi>0
     ){
-      const quoteUi=Number(quoteRaw)/1e6;
-      const tokenUi=Number(tokenRaw)/(10**decimals);
-
-      if(quoteUi>0&&tokenUi>0){
+      const quoteUi=Number(quoteRaw)/(10**quoteDecimals);
+      if(quoteUi>0){
         priceUsd=quoteUi/tokenUi;
-
+        priceMethod='trade-execution-usdc';
         if(Number.isFinite(usd)&&usd>0){
           priceSol=priceUsd/usd;
         }
       }
     }
 
-    if(
-      e.realQuoteReserves!==null&&
-      e.realQuoteReserves!==undefined
-    ){
-      liquidityUsd=Number(e.realQuoteReserves)/1e6;
-
+    if(e.realQuoteReserves!==null&&e.realQuoteReserves!==undefined){
+      liquidityUsd=Number(e.realQuoteReserves)/(10**quoteDecimals);
       if(Number.isFinite(usd)&&usd>0){
         liquiditySol=liquidityUsd/usd;
       }
@@ -208,22 +225,19 @@ function marketFromEvent(e,token,solUsd){
   const quotePricingReady=
     Number.isFinite(priceSol)&&
     priceSol>0&&
-    (
-      quoteKind==='SOL'||
-      quoteKind==='USDC'
-    );
+    (quoteKind==='SOL'||quoteKind==='USDC');
 
   return {
     quoteMint:quoteMint||null,
     quoteKind,
     quotePricingReady,
+    priceMethod,
     priceSol,
     priceUsd,
     liquiditySol,
     liquidityUsd
   };
 }
-
 function canonicalEventForMarket(e,m,solUsd){
   if(m?.quoteKind!=='USDC'){
     return {
@@ -485,24 +499,65 @@ export function startPumpLiveTradeFeed(opts={}){
       const m=marketFromEvent(e,known,solUsd);
       const canonicalEvent=canonicalEventForMarket(e,m,solUsd);
 
+      // MEMEFLOW_PUMP_REFERENCE_SANITY_V16
+      // Pump HTTP is display/reference only. It never authorizes entry.
+      // A catastrophic (>20x) mismatch fails CLOSED.
+      const preFeatures={...known,...(holderSnap||{})};
+      const liveSupply=normalizedPumpSupply(preFeatures);
+
+      const liveMarketCapSol=
+        Number.isFinite(m.priceSol)&&m.priceSol>0&&
+        Number.isFinite(liveSupply)&&liveSupply>0
+          ? m.priceSol*liveSupply
+          : null;
+
+      const liveMarketCapUsd=
+        Number.isFinite(liveMarketCapSol)&&liveMarketCapSol>0&&
+        Number.isFinite(Number(solUsd))&&Number(solUsd)>0
+          ? liveMarketCapSol*Number(solUsd)
+          : null;
+
+      const referenceMarketCapUsd=Number(known?.pumpReportedMarketCapUsd);
+      const referenceAt=Number(known?.pumpReferenceAt);
+      const referenceFresh=
+        Number.isFinite(referenceMarketCapUsd)&&
+        referenceMarketCapUsd>0&&
+        Number.isFinite(referenceAt)&&
+        referenceAt>0&&
+        Date.now()-referenceAt<=90_000;
+
+      let marketSanityRatio=null;
+      let marketReady=m.quotePricingReady===true;
+
+      if(
+        marketReady&&
+        referenceFresh&&
+        Number.isFinite(liveMarketCapUsd)&&
+        liveMarketCapUsd>0
+      ){
+        marketSanityRatio=
+          Math.max(liveMarketCapUsd,referenceMarketCapUsd)/
+          Math.min(liveMarketCapUsd,referenceMarketCapUsd);
+
+        if(marketSanityRatio>20){
+          marketReady=false;
+        }
+      }
+
       const mergedForFeatures={
-        ...known,...(holderSnap||{}),
+        ...preFeatures,
         priceSol:
-          m.quotePricingReady===true&&
-          Number.isFinite(m.priceSol)&&
-          m.priceSol>0
+          marketReady&&Number.isFinite(m.priceSol)&&m.priceSol>0
             ? m.priceSol
             : known.priceSol,
         liquiditySol:
-          m.quotePricingReady===true&&
-          Number.isFinite(m.liquiditySol)&&
-          m.liquiditySol>=0
+          marketReady&&Number.isFinite(m.liquiditySol)&&m.liquiditySol>=0
             ? m.liquiditySol
             : known.liquiditySol
       };
 
       const opp=
-        m.quotePricingReady===true
+        marketReady
           ? (
               opportunityEngine?.update?.(canonicalEvent,{
                 creator:mergedForFeatures.creator||e.creator||null,
@@ -521,19 +576,6 @@ export function startPumpLiveTradeFeed(opts={}){
               })||{}
             )
           : {};
-
-      const liveSupply=normalizedPumpSupply(mergedForFeatures);
-      const liveMarketCapSol=
-        Number.isFinite(m.priceSol)&&m.priceSol>0&&
-        Number.isFinite(liveSupply)&&liveSupply>0
-          ? m.priceSol*liveSupply
-          : null;
-
-      const liveMarketCapUsd=
-        Number.isFinite(liveMarketCapSol)&&liveMarketCapSol>0&&
-        Number.isFinite(Number(solUsd))&&Number(solUsd)>0
-          ? liveMarketCapSol*Number(solUsd)
-          : null;
 
       const holderObservedPatch=holderSnap?{
         observedHolderCount:holderSnap.observedHolderCount??null,
@@ -554,21 +596,31 @@ export function startPumpLiveTradeFeed(opts={}){
         ...holderObservedPatch,
         ...opp,
         marketSource:
-          m.quotePricingReady===true
-            ? 'ws-direct-trade-event-v14'
-            : 'quote-pricing-blocked-v14',
+          marketReady
+            ? 'ws-direct-trade-event-v16'
+            : 'quote-pricing-blocked-v16',
         liveMarketCapSource:
-          m.quotePricingReady===true
-            ? 'pump-trade-price-x-supply-v14'
-            : 'quote-pricing-blocked-v14',
+          marketReady
+            ? 'pump-trade-price-x-supply-v16'
+            : 'quote-pricing-blocked-v16',
         eventSlot:e.slot??null,
         eventSignature:
-          m.quotePricingReady===true
+          marketReady
             ? e.signature||null
             : null,
         quoteMint:m.quoteMint||known?.quoteMint||null,
-        quotePricingReady:m.quotePricingReady===true,
-        quotePricingMode:m.quoteKind,
+        quotePricingReady:marketReady,
+        quotePricingMode:
+          marketReady
+            ? m.quoteKind
+            : (marketSanityRatio>20?'REFERENCE_MISMATCH':m.quoteKind),
+        quotePriceMethod:m.priceMethod||null,
+        marketSanityRatio:
+          Number.isFinite(marketSanityRatio)?marketSanityRatio:null,
+        pumpReportedMarketCapUsd:
+          referenceFresh
+            ? referenceMarketCapUsd
+            : (known?.pumpReportedMarketCapUsd??null),
         quotePriceUsd:
           Number.isFinite(m.priceUsd)&&m.priceUsd>0
             ? m.priceUsd
@@ -582,28 +634,28 @@ export function startPumpLiveTradeFeed(opts={}){
         quoteAmountRaw:(e.quoteAmount??null)?.toString?.()||null
       };
 
-      if(m.quotePricingReady===true){
+      if(marketReady){
         patch.lastPriceAt=Date.now();
         patch.lastMarketActivityAt=Date.now();
         patch.marketCapUpdatedAt=Date.now();
       }
 
-      if(Number.isFinite(m.priceSol)&&m.priceSol>0)patch.priceSol=m.priceSol;
-      if(Number.isFinite(m.liquiditySol)&&m.liquiditySol>=0)patch.liquiditySol=m.liquiditySol;
-      if(Number.isFinite(m.liquidityUsd)&&m.liquidityUsd>=0)patch.liquidityUsd=m.liquidityUsd;
+      if(marketReady&&Number.isFinite(m.priceSol)&&m.priceSol>0)patch.priceSol=m.priceSol;
+      if(marketReady&&Number.isFinite(m.liquiditySol)&&m.liquiditySol>=0)patch.liquiditySol=m.liquiditySol;
+      if(marketReady&&Number.isFinite(m.liquidityUsd)&&m.liquidityUsd>=0)patch.liquidityUsd=m.liquidityUsd;
       if(Number.isFinite(liveSupply)&&liveSupply>0)patch.totalSupply=liveSupply;
-      if(Number.isFinite(liveMarketCapSol)&&liveMarketCapSol>0)patch.marketCapSol=liveMarketCapSol;
-      if(Number.isFinite(liveMarketCapUsd)&&liveMarketCapUsd>0)patch.marketCapUsd=liveMarketCapUsd;
+      if(marketReady&&Number.isFinite(liveMarketCapSol)&&liveMarketCapSol>0)patch.marketCapSol=liveMarketCapSol;
+      if(marketReady&&Number.isFinite(liveMarketCapUsd)&&liveMarketCapUsd>0)patch.marketCapUsd=liveMarketCapUsd;
 
       // MEMEFLOW_QUOTE_STALE_MARK_PURGE_V15
       // V14 correctly blocked unsafe execution but an old V13 price could
       // survive in persisted token state and still be displayed. Explicitly
       // invalidate those fields. Store may retain historical peak internally,
       // but every market/display/trading consumer below is now fail-closed.
-      if(m.quotePricingReady!==true){
+      if(!marketReady){
         patch.priceSol=null;
         patch.marketCapSol=null;
-        patch.marketCapUsd=null;
+        patch.marketCapUsd=referenceFresh?referenceMarketCapUsd:null;
         patch.liquiditySol=null;
         patch.liquidityUsd=null;
       }
@@ -618,7 +670,7 @@ export function startPumpLiveTradeFeed(opts={}){
       // Every confirmed Pump TradeEvent updates OPEN PAPER positions using
       // the same canonical token snapshot that drives Score / State.
       try{
-        if(m.quotePricingReady===true){
+        if(marketReady){
           onTokenUpdate?.(e.mint,updated);
         }
       }catch(err){
@@ -636,7 +688,7 @@ export function startPumpLiveTradeFeed(opts={}){
 
       // One TradeEvent -> one evaluation, after holder + market + momentum are
       // already merged into the same canonical token snapshot.
-      if(m.quotePricingReady===true){
+      if(marketReady){
         try{__v1226Evaluate(updated,e.mint,'trade-event-complete')}catch{}
         try{publishTrade?.(e.mint,canonicalEvent,updated)}catch{}
       }

@@ -108,9 +108,11 @@ function tokenDecimalsFromTx(tx,mint,fallback=6){
 }
 
 function marketPoint(event,{token={},solUsd=null,decimals=6}={}){
+  // MEMEFLOW_CHART_EXECUTION_PRICE_AUTHORITY_V16
   const tokenQuote=String(token?.quoteMint||'').trim();
   const eventQuote=String(event?.quoteMint||'').trim();
   const quoteMint=tokenQuote||eventQuote;
+
   const hasQuoteTail=Boolean(
     event?.quoteAmount!==null&&event?.quoteAmount!==undefined ||
     event?.virtualQuoteReserves!==null&&event?.virtualQuoteReserves!==undefined ||
@@ -127,41 +129,65 @@ function marketPoint(event,{token={},solUsd=null,decimals=6}={}){
           : 'UNSUPPORTED';
 
   const rate=Number(solUsd);
+  const tokenRaw=event?.tokenAmount;
+  const tokenUi=tokenRaw>0n?Number(tokenRaw)/(10**decimals):null;
 
   if(kind==='SOL'){
-    if(!(event?.virtualSolReserves>0n&&event?.virtualTokenReserves>0n))return null;
-    const priceSol=
-      (Number(event.virtualSolReserves)/1e9)/
-      (Number(event.virtualTokenReserves)/(10**decimals));
+    let priceSol=null;
+    let source='pump-history-backfill-execution-v16';
+
+    if(event?.solAmount>0n&&Number.isFinite(tokenUi)&&tokenUi>0){
+      priceSol=(Number(event.solAmount)/1e9)/tokenUi;
+    }
+
+    if(
+      !(Number.isFinite(priceSol)&&priceSol>0)&&
+      event?.virtualSolReserves>0n&&
+      event?.virtualTokenReserves>0n
+    ){
+      priceSol=
+        (Number(event.virtualSolReserves)/1e9)/
+        (Number(event.virtualTokenReserves)/(10**decimals));
+      source='pump-history-backfill-reserve-fallback-v16';
+    }
+
     if(!(Number.isFinite(priceSol)&&priceSol>0))return null;
     return {
       priceSol,
       solAmount:Number(event.solAmount||0n)/1e9,
-      source:'pump-history-backfill'
+      source
     };
   }
 
   if(kind==='USDC'){
+    const quoteDecimals=Math.max(
+      0,
+      Math.min(12,Math.floor(Number(token?.quoteDecimals??6)))
+    );
     const quoteRaw=event?.quoteAmount??event?.solAmount;
-    const tokenRaw=event?.tokenAmount;
-    if(!(quoteRaw>0n&&tokenRaw>0n&&Number.isFinite(rate)&&rate>0))return null;
-    const quoteUsd=Number(quoteRaw)/1e6;
-    const tokenUi=Number(tokenRaw)/(10**decimals);
-    if(!(quoteUsd>0&&tokenUi>0))return null;
+
+    if(
+      !(quoteRaw>0n&&
+        Number.isFinite(tokenUi)&&tokenUi>0&&
+        Number.isFinite(rate)&&rate>0)
+    )return null;
+
+    const quoteUsd=Number(quoteRaw)/(10**quoteDecimals);
     const priceUsd=quoteUsd/tokenUi;
     const priceSol=priceUsd/rate;
+
     if(!(Number.isFinite(priceSol)&&priceSol>0))return null;
+
     return {
       priceSol,
       priceUsd,
       solAmount:quoteUsd/rate,
-      source:'pump-history-backfill-quote-aware'
+      source:'pump-history-backfill-quote-execution-v16'
     };
   }
 
   return null;
 }
-
 function cleanMint(mint) {
   const value = String(mint || '').trim();
   if (!/^[1-9A-HJ-NP-Za-km-z]{32,64}$/.test(value)) return null;
@@ -203,7 +229,7 @@ function fallbackKey(point) {
 export class ChartHistoryArchive {
   constructor({ dataDir, rpc, pageSize = 1000, txConcurrency = 1, getToken = null, getSolUsd = null } = {}) {
     // Fresh namespace guarantees that pre-V15 wrong non-SOL candles/meta are never reused.
-    this.root = path.join(String(dataDir || 'data'), 'chart-history-v30-10-quote-v15');
+    this.root = path.join(String(dataDir || 'data'), 'chart-history-v30-10-execution-v16');
     this.rpc = rpc;
     this.getToken = typeof getToken==='function'?getToken:()=>null;
     this.getSolUsd = typeof getSolUsd==='function'?getSolUsd:()=>null;

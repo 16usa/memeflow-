@@ -353,7 +353,12 @@ function tokenSupply(candidate = state.selected) {
 
 function marketCapUsdForPrice(priceUsd, candidate = state.selected) {
   const px = num(priceUsd);
-  if (!(px > 0)) return null;
+
+  // MEMEFLOW_REFERENCE_MC_DISPLAY_FALLBACK_V16
+  if (!(px > 0)) {
+    const storedUsd=num(candidate?.marketCapUsd??candidate?.marketCapUSD);
+    return storedUsd>0?storedUsd:null;
+  }
 
   const supply = tokenSupply(candidate);
   if (supply > 0) return px * supply;
@@ -1451,6 +1456,8 @@ function renderCandidates() {
     button.addEventListener('click', () => selectCandidate(button.dataset.mint));
   });
 }
+
+
 
 
 // MEMEFLOW_CANDIDATES_ENTRY_FILTER_GATE_V207
