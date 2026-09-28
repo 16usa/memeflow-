@@ -1954,14 +1954,14 @@ function pushLiveTradeTape(mint, point) {
 
   host.prepend(row);
 
-  while (host.children.length > 8) {
+  while (host.children.length > 5) {
     host.lastElementChild?.remove();
   }
 
   window.setTimeout(() => {
     row.classList.add('leaving');
     window.setTimeout(() => row.remove(), 420);
-  }, 3300);
+  }, 2400);
 }
 
 function connectChartStream(mint) {
@@ -2288,10 +2288,10 @@ function strategyLevels() {
       ? { label: `SL -${fmt(hard, 1)}%`, price: entry * (1 - hard / 100), kind: 'stop' }
       : null,
     tp1 > 0
-      ? { label: `TP1 +${fmt(tp1, 0)}% · SELL ${fmt(tp1Sell, 0)}%`, price: entry * (1 + tp1 / 100), kind: 'tp' }
+      ? { label: `TP1 +${fmt(tp1, 0)}% · ${fmt(tp1Sell, 0)}%`, price: entry * (1 + tp1 / 100), kind: 'tp' }
       : null,
     tp2 > 0
-      ? { label: `TP2 +${fmt(tp2, 0)}% · SELL ${fmt(tp2Sell, 0)}%`, price: entry * (1 + tp2 / 100), kind: 'tp2' }
+      ? { label: `TP2 +${fmt(tp2, 0)}% · ${fmt(tp2Sell, 0)}%`, price: entry * (1 + tp2 / 100), kind: 'tp2' }
       : null
   ].filter(Boolean);
 }
@@ -3481,7 +3481,22 @@ function chartHorizontalLevelSeries(labels,visibleLevels,liveValue){
         color:levelColor(level),
         width:1,
         type:'dashed',
-        opacity:.85
+        opacity:.76
+      },
+      endLabel:{
+        show:true,
+        formatter:()=>chartLevelTagV32(level),
+        color:levelColor(level),
+        backgroundColor:'rgba(3,7,10,.82)',
+        borderRadius:3,
+        padding:[2,4],
+        distance:3,
+        fontSize:8,
+        fontWeight:600
+      },
+      labelLayout:{
+        hideOverlap:true,
+        moveOverlap:'shiftY'
       },
       z:5
     }));
@@ -3715,23 +3730,67 @@ function chartCandle(candle){
   };
 }
 
-// MEMEFLOW_CHART_COMPACT_LAYOUT_V31
-function chartRightGutterV31(){
+// MEMEFLOW_CHART_INFORMATION_HIERARCHY_V32
+function chartRightGutterV32(){
   if(state.chartMetric==='marketCap'){
-    return window.innerWidth<700 ? 58 : 64;
+    return window.innerWidth<700 ? 48 : 56;
   }
-  return window.innerWidth<700 ? 88 : 96;
+  return window.innerWidth<700 ? 80 : 88;
 }
 
-function chartMainGridTopV31(){
-  return window.innerWidth<700 ? 84 : 62;
+function chartMainGridTopV32(){
+  return window.innerWidth<700 ? 60 : 56;
 }
 
-function chartMainGridHeightV31(lowerIndicatorVisible){
+function chartMainGridHeightV32(lowerIndicatorVisible){
   if(lowerIndicatorVisible){
-    return window.innerWidth<700 ? '47%' : '52%';
+    return window.innerWidth<700 ? '54%' : '56%';
   }
-  return window.innerWidth<700 ? '68%' : '74%';
+  return window.innerWidth<700 ? '76%' : '78%';
+}
+
+function chartLevelBadgeV32(level){
+  const kind=String(level?.kind||'').toLowerCase();
+  const raw=String(level?.label||'').trim();
+
+  if(kind==='stop'){
+    return {
+      label:'SL',
+      value:raw.replace(/^SL\s*/i,'')||'—',
+      kind:'stop'
+    };
+  }
+
+  if(kind==='tp'){
+    return {
+      label:'TP1',
+      value:raw.replace(/^TP1\s*/i,'').replace(/\s*·\s*/g,' · ')||'—',
+      kind:'tp'
+    };
+  }
+
+  if(kind==='tp2'){
+    return {
+      label:'TP2',
+      value:raw.replace(/^TP2\s*/i,'').replace(/\s*·\s*/g,' · ')||'—',
+      kind:'tp2'
+    };
+  }
+
+  if(kind==='entry'){
+    return {label:'ENTRY',value:'',kind:'entry'};
+  }
+
+  return null;
+}
+
+function chartLevelTagV32(level){
+  const kind=String(level?.kind||'').toLowerCase();
+  if(kind==='stop')return 'SL';
+  if(kind==='tp')return 'TP1';
+  if(kind==='tp2')return 'TP2';
+  if(kind==='entry')return 'ENTRY';
+  return 'LEVEL';
 }
 
 function renderLegend(last,totalCandles,totalTicks,offscreenLevels=[]){
@@ -3742,43 +3801,51 @@ function renderLegend(last,totalCandles,totalTicks,offscreenLevels=[]){
     return;
   }
 
-  const cells=[
-    ['O',formatChartValue(last.open),'ohlc'],
-    ['H',formatChartValue(last.high),'ohlc'],
-    ['L',formatChartValue(last.low),'ohlc'],
-    ['C',formatChartValue(last.close),'ohlc']
+  const ohlc=[
+    ['O',formatChartValue(last.open)],
+    ['H',formatChartValue(last.high)],
+    ['L',formatChartValue(last.low)],
+    ['C',formatChartValue(last.close)]
   ];
 
-  if(totalCandles!==null && totalCandles!==undefined){
-    cells.push(
-      ['CANDLES',String(totalCandles),'meta'],
-      ['TRADES',String(totalTicks||0),'meta']
-    );
-  }
+  const stats=[
+    ['CANDLES',String(totalCandles??0),'meta'],
+    ['TRADES',String(totalTicks||0),'meta']
+  ];
 
-  for(const level of offscreenLevels.slice(0,3)){
-    const current=Number(last.close);
-    const arrow=Number(level.price)>current?'↑':'↓';
-    const kind=String(level.kind||'level').toLowerCase();
+  const orderedKinds=['stop','tp','tp2'];
+  const strategy=strategyLevels();
 
-    cells.push([
-      `${arrow} ${kind==='stop'?'SL':kind==='tp'?'TP1':kind==='tp2'?'TP2':'LEVEL'}`,
-      String(level.label||'—'),
-      `level ${kind}`
-    ]);
+  for(const kind of orderedKinds){
+    const level=strategy.find(row=>String(row?.kind||'')===kind);
+    if(!level)continue;
+
+    const badge=chartLevelBadgeV32(level);
+    if(badge){
+      stats.push([badge.label,badge.value,badge.kind]);
+    }
   }
 
   root.innerHTML=
-    `<div class="chart-legend-grid-v31">`+
-      cells.map(([label,value,kind])=>
-        `<span class="chart-legend-cell-v31 ${esc(kind)}">`+
-          `<b>${esc(label)}</b>`+
-          `<em>${esc(value)}</em>`+
-        `</span>`
-      ).join('')+
+    `<div class="chart-info-v32">`+
+      `<div class="chart-ohlc-row-v32">`+
+        ohlc.map(([label,value])=>
+          `<span class="chart-ohlc-cell-v32">`+
+            `<b>${esc(label)}</b>`+
+            `<em>${esc(value)}</em>`+
+          `</span>`
+        ).join('')+
+      `</div>`+
+      `<div class="chart-status-row-v32">`+
+        stats.map(([label,value,kind])=>
+          `<span class="chart-status-cell-v32 ${esc(kind)}">`+
+            `<b>${esc(label)}</b>`+
+            `<em>${esc(value)}</em>`+
+          `</span>`
+        ).join('')+
+      `</div>`+
     `</div>`;
 }
-
 function scheduleChart(){
   if(chartRuntime.raf)return;
 
@@ -4126,15 +4193,15 @@ function drawChart(){
       grid:[
         {
           left:10,
-          right:chartRightGutterV31(),
-          top:chartMainGridTopV31(),
-          height:chartMainGridHeightV31(lowerIndicatorVisible),
+          right:chartRightGutterV32(),
+          top:chartMainGridTopV32(),
+          height:chartMainGridHeightV32(lowerIndicatorVisible),
           containLabel:false
         },
         {
           show:lowerIndicatorVisible,
           left:10,
-          right:chartRightGutterV31(),
+          right:chartRightGutterV32(),
           top:lowerIndicatorVisible ? '77%' : '94%',
           height:lowerIndicatorVisible ? '15%' : 0,
           containLabel:false

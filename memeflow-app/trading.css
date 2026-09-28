@@ -1935,3 +1935,163 @@ body.mf-page-trading.mf-trading-terminal .chart-legend-cell-v31.tp2{
   }
 }
 /* ===== /MEMEFLOW_CHART_COMPACT_LAYOUT_V31 ===== */
+
+
+/* ===== MEMEFLOW_CHART_INFORMATION_HIERARCHY_V32 ===== */
+body.mf-page-trading.mf-trading-terminal .chart-legend{
+  top:5px !important;
+  left:10px !important;
+  right:10px !important;
+  width:auto !important;
+  max-width:none !important;
+}
+
+body.mf-page-trading.mf-trading-terminal .chart-info-v32{
+  width:100%;
+  display:grid;
+  gap:3px;
+}
+
+body.mf-page-trading.mf-trading-terminal .chart-ohlc-row-v32{
+  width:100%;
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:3px;
+}
+
+body.mf-page-trading.mf-trading-terminal .chart-ohlc-cell-v32{
+  min-width:0;
+  height:21px;
+  padding:0 5px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:4px;
+  border:1px solid rgba(111,154,172,.08);
+  border-radius:4px;
+  background:rgba(15,20,26,.72);
+  overflow:hidden;
+}
+
+body.mf-page-trading.mf-trading-terminal .chart-ohlc-cell-v32 b,
+body.mf-page-trading.mf-trading-terminal .chart-status-cell-v32 b{
+  flex:0 0 auto;
+  opacity:.64;
+  white-space:nowrap;
+}
+
+body.mf-page-trading.mf-trading-terminal .chart-ohlc-cell-v32 em,
+body.mf-page-trading.mf-trading-terminal .chart-status-cell-v32 em{
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  font-style:normal;
+}
+
+body.mf-page-trading.mf-trading-terminal .chart-status-row-v32{
+  width:100%;
+  display:grid;
+  grid-template-columns:
+    minmax(0,1fr)
+    minmax(0,1fr)
+    minmax(0,.82fr)
+    minmax(0,1.08fr)
+    minmax(0,1.08fr);
+  gap:3px;
+}
+
+body.mf-page-trading.mf-trading-terminal .chart-status-cell-v32{
+  box-sizing:border-box;
+  min-width:0;
+  height:21px;
+  padding:0 4px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:3px;
+  border:1px solid rgba(111,154,172,.065);
+  border-radius:4px;
+  background:rgba(15,20,26,.60);
+  overflow:hidden;
+}
+
+body.mf-page-trading.mf-trading-terminal .chart-status-cell-v32.stop{
+  border-color:rgba(255,102,121,.16);
+}
+
+body.mf-page-trading.mf-trading-terminal .chart-status-cell-v32.tp,
+body.mf-page-trading.mf-trading-terminal .chart-status-cell-v32.tp2{
+  border-color:rgba(77,230,161,.12);
+}
+
+body.mf-page-trading.mf-trading-terminal .live-trade-tape{
+  top:78px !important;
+  width:68px !important;
+  gap:2px !important;
+  opacity:.48;
+}
+
+body.mf-page-trading.mf-trading-terminal .live-tape-row{
+  max-width:68px !important;
+  gap:2px !important;
+}
+
+body.mf-page-trading.mf-trading-terminal .live-tape-row strong{
+  font-size:.78em;
+  font-weight:500;
+}
+
+body.mf-page-trading.mf-trading-terminal .live-tape-arrow{
+  width:7px !important;
+  font-size:.72em;
+}
+
+body.mf-page-trading.mf-trading-terminal .price-toggle{
+  align-self:center;
+}
+
+body.mf-page-trading.mf-trading-terminal .token-market{
+  opacity:.72;
+}
+
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal .chart-ohlc-cell-v32,
+html[data-theme="light"]
+body.mf-page-trading.mf-trading-terminal .chart-status-cell-v32{
+  background:rgba(255,255,255,.80);
+  border-color:rgba(55,93,111,.12);
+}
+
+@media (max-width:700px){
+  body.mf-page-trading.mf-trading-terminal .chart-legend{
+    left:8px !important;
+    right:8px !important;
+  }
+
+  body.mf-page-trading.mf-trading-terminal .chart-ohlc-cell-v32,
+  body.mf-page-trading.mf-trading-terminal .chart-status-cell-v32{
+    height:20px;
+    padding-left:3px;
+    padding-right:3px;
+    gap:2px;
+  }
+
+  body.mf-page-trading.mf-trading-terminal .chart-status-row-v32{
+    grid-template-columns:
+      minmax(0,.92fr)
+      minmax(0,.92fr)
+      minmax(0,.72fr)
+      minmax(0,1.22fr)
+      minmax(0,1.22fr);
+  }
+
+  body.mf-page-trading.mf-trading-terminal .chart-status-cell-v32 b{
+    font-size:.86em;
+  }
+
+  body.mf-page-trading.mf-trading-terminal .chart-status-cell-v32 em{
+    font-size:.92em;
+  }
+}
+/* ===== /MEMEFLOW_CHART_INFORMATION_HIERARCHY_V32 ===== */
