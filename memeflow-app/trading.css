@@ -2095,3 +2095,63 @@ body.mf-page-trading.mf-trading-terminal .chart-status-cell-v32{
   }
 }
 /* ===== /MEMEFLOW_CHART_INFORMATION_HIERARCHY_V32 ===== */
+
+
+/* ===== MEMEFLOW_CHART_LEVEL_INTEGRATION_V33 ===== */
+body.mf-page-trading.mf-trading-terminal .chart-status-row-v32{
+  grid-template-columns:
+    minmax(0,.95fr)
+    minmax(0,.95fr)
+    minmax(0,.72fr)
+    minmax(0,.78fr)
+    minmax(0,1.02fr)
+    minmax(0,1.02fr);
+}
+
+body.mf-page-trading.mf-trading-terminal .chart-status-cell-v32.entry{
+  border-color:rgba(85,217,255,.20);
+}
+body.mf-page-trading.mf-trading-terminal .chart-status-cell-v32.entry b{
+  color:#55d9ff;
+  opacity:1;
+}
+body.mf-page-trading.mf-trading-terminal .chart-status-cell-v32.stop{
+  border-color:rgba(255,102,121,.22);
+}
+body.mf-page-trading.mf-trading-terminal .chart-status-cell-v32.stop b{
+  color:#ff6679;
+  opacity:1;
+}
+body.mf-page-trading.mf-trading-terminal .chart-status-cell-v32.tp{
+  border-color:rgba(77,230,161,.20);
+}
+body.mf-page-trading.mf-trading-terminal .chart-status-cell-v32.tp b{
+  color:#4de6a1;
+  opacity:1;
+}
+body.mf-page-trading.mf-trading-terminal .chart-status-cell-v32.tp2{
+  border-color:rgba(169,139,255,.22);
+}
+body.mf-page-trading.mf-trading-terminal .chart-status-cell-v32.tp2 b{
+  color:#a98bff;
+  opacity:1;
+}
+
+@media (max-width:700px){
+  body.mf-page-trading.mf-trading-terminal .chart-status-row-v32{
+    grid-template-columns:
+      minmax(0,.92fr)
+      minmax(0,.92fr)
+      minmax(0,.66fr)
+      minmax(0,.72fr)
+      minmax(0,.94fr)
+      minmax(0,.94fr);
+    gap:2px;
+  }
+
+  body.mf-page-trading.mf-trading-terminal .chart-status-cell-v32{
+    padding-left:2px;
+    padding-right:2px;
+  }
+}
+/* ===== /MEMEFLOW_CHART_LEVEL_INTEGRATION_V33 ===== */

@@ -3405,63 +3405,56 @@ function chartLowerIndicatorPane(candles,padCount,volumeData,ma5,ma10){
 }
 
 function chartLevelInfo(candles){
-  const levels=strategyLevels();
-  if(!candles.length || !levels.length){
-    return {visible:[],offscreen:levels};
-  }
-
-  const basis=
-    state.timeframe==='all'
-      ? candles
-      : candles.slice(-Math.min(140,candles.length));
-
-  const values=basis.flatMap(c=>[
-    Number(c.high),
-    Number(c.low)
-  ]).filter(Number.isFinite);
-
-  if(!values.length){
-    return {visible:[],offscreen:levels};
-  }
-
-  const min=Math.min(...values);
-  const max=Math.max(...values);
-  const span=Math.max(
-    max-min,
-    Math.abs(max||1)*.006
-  );
-
-  const low=Math.max(0,min-span*.30);
-  const high=max+span*.30;
+  // V33: strategy levels are first-class chart geometry.
+  // Never drop TP/SL/ENTRY just because the candle-only autoscale would
+  // place them outside the current price band. ECharts will include these
+  // real-price line series in the Y range, so every configured level stays
+  // visible in both PRICE and MARKET CAP modes.
+  const levels=strategyLevels()
+    .filter(level=>
+      Number.isFinite(Number(level?.price)) &&
+      Number(level.price)>0
+    );
 
   return {
-    visible:levels.filter(level=>
-      Number(level?.price)>=low &&
-      Number(level?.price)<=high
-    ),
-    offscreen:levels.filter(level=>
-      Number(level?.price)<low ||
-      Number(level?.price)>high
-    )
+    visible:levels,
+    offscreen:[]
   };
 }
 
 function levelColor(level){
-  if(level?.kind==='stop')return '#ff6679';
-  if(level?.kind==='entry')return '#55d9ff';
-  if(level?.kind==='tp')return '#4de6a1';
-  return '#a98bff';
+  const kind=String(level?.kind||'').toLowerCase();
+  if(kind==='stop')return '#ff6679';
+  if(kind==='entry')return '#55d9ff';
+  if(kind==='tp')return '#4de6a1';
+  if(kind==='tp2')return '#a98bff';
+  return '#91a6b0';
 }
 
-// V30.23: horizontal overlays are normal line series instead of candlestick
-// markLine. This keeps LIVE / ENTRY / SL / TP identical in PRICE and MARKET CAP,
-// including very small price values such as 0.00000x.
+function levelLineTypeV33(level){
+  const kind=String(level?.kind||'').toLowerCase();
+  if(kind==='stop')return 'dotted';
+  if(kind==='tp')return 'dashed';
+  if(kind==='tp2')return 'solid';
+  return 'solid';
+}
+
+function chartLevelLabelBackgroundV33(){
+  return document.documentElement.getAttribute('data-theme')==='light'
+    ? 'rgba(255,255,255,.94)'
+    : 'rgba(3,7,10,.88)';
+}
+
+// V33: strategy rail is integrated into the plot. Labels sit INSIDE the
+// chart edge, while the numeric Y-axis remains outside and unobstructed.
 function chartHorizontalLevelSeries(labels,visibleLevels,liveValue){
   const count=Array.isArray(labels)?labels.length:0;
   if(!count)return [];
 
   const constantData=value=>
     Array.from({length:count},()=>Number(value));
+
+  const labelBg=chartLevelLabelBackgroundV33();
 
   const rows=(Array.isArray(visibleLevels)?visibleLevels:[])
     .filter(level=>Number.isFinite(Number(level?.price)) && Number(level.price)>0)
@@ -3479,26 +3472,30 @@ function chartHorizontalLevelSeries(labels,visibleLevels,liveValue){
       emphasis:{disabled:true},
       lineStyle:{
         color:levelColor(level),
-        width:1,
-        type:'dashed',
-        opacity:.76
+        width:String(level?.kind||'')==='entry' ? 1.35 : 1.1,
+        type:levelLineTypeV33(level),
+        opacity:.90
       },
       endLabel:{
         show:true,
         formatter:()=>chartLevelTagV32(level),
         color:levelColor(level),
-        backgroundColor:'rgba(3,7,10,.82)',
+        backgroundColor:labelBg,
+        borderColor:levelColor(level),
+        borderWidth:.6,
         borderRadius:3,
         padding:[2,4],
-        distance:3,
+        distance:8,
+        align:'right',
+        verticalAlign:'middle',
         fontSize:8,
-        fontWeight:600
+        fontWeight:700
       },
       labelLayout:{
-        hideOverlap:true,
+        hideOverlap:false,
         moveOverlap:'shiftY'
       },
-      z:5
+      z:7
     }));
 
   const live=Number(liveValue);
@@ -3516,22 +3513,31 @@ function chartHorizontalLevelSeries(labels,visibleLevels,liveValue){
       tooltip:{show:false},
       emphasis:{disabled:true},
       lineStyle:{
-        color:'#55d9ff',
-        width:1,
-        type:'dashed',
-        opacity:.82
+        color:'#f5c451',
+        width:1.45,
+        type:'solid',
+        opacity:.96
       },
       endLabel:{
         show:true,
-        color:'#021014',
-        backgroundColor:'#55d9ff',
-        borderRadius:2,
+        color:'#171103',
+        backgroundColor:'#f5c451',
+        borderColor:'#f5c451',
+        borderWidth:.6,
+        borderRadius:3,
         padding:[2,4],
+        distance:8,
+        align:'right',
+        verticalAlign:'middle',
         fontSize:8,
-        formatter:()=>formatChartValue(live)
+        fontWeight:800,
+        formatter:()=>`LIVE ${formatChartValue(live)}`
       },
-      labelLayout:{hideOverlap:false},
-      z:6
+      labelLayout:{
+        hideOverlap:false,
+        moveOverlap:'shiftY'
+      },
+      z:8
     });
   }
 
@@ -3764,7 +3770,7 @@ function chartLevelBadgeV32(level){
   if(kind==='tp'){
     return {
       label:'TP1',
-      value:raw.replace(/^TP1\s*/i,'').replace(/\s*·\s*/g,' · ')||'—',
+      value:(raw.replace(/^TP1\s*/i,'').split('·')[0]||'').trim()||'—',
       kind:'tp'
     };
   }
@@ -3772,7 +3778,7 @@ function chartLevelBadgeV32(level){
   if(kind==='tp2'){
     return {
       label:'TP2',
-      value:raw.replace(/^TP2\s*/i,'').replace(/\s*·\s*/g,' · ')||'—',
+      value:(raw.replace(/^TP2\s*/i,'').split('·')[0]||'').trim()||'—',
       kind:'tp2'
     };
   }
@@ -3813,7 +3819,7 @@ function renderLegend(last,totalCandles,totalTicks,offscreenLevels=[]){
     ['TRADES',String(totalTicks||0),'meta']
   ];
 
-  const orderedKinds=['stop','tp','tp2'];
+  const orderedKinds=['entry','stop','tp','tp2'];
   const strategy=strategyLevels();
 
   for(const kind of orderedKinds){
