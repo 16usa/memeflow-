@@ -2240,38 +2240,28 @@ function latestCandleFor(points, timeframe) {
 }
 
 function strategyLevels() {
+  // V35 REAL ENTRY ONLY:
+  // Strategy levels exist only after the trading engine has actually opened
+  // a position. WATCH / WAITING / BLOCKED / BUY READY candidates must not
+  // invent an ENTRY from the current chart price or from a cached preview.
+  //
+  // LIVE remains visible independently via chartHorizontalLevelSeries(...).
+  // ENTRY / SL / TP1 / TP2 are derived only from the persisted fill price.
   if (!state.selectedMint) return [];
+
+  const position = state.positions.find(
+    p =>
+      String(p?.status || '').toUpperCase() === 'OPEN' &&
+      String(p?.mint || '') === String(state.selectedMint)
+  );
+
+  if (!position) return [];
+
+  const entrySol = num(position?.entryPriceSol);
+  if (!(entrySol > 0)) return [];
 
   const rate = solUsdRate();
   if (!(rate > 0)) return [];
-
-  const position = state.positions.find(
-    p => p.status === 'OPEN' && p.mint === state.selectedMint
-  );
-
-  let entrySol = num(position?.entryPriceSol);
-
-  if (!(entrySol > 0)) {
-    entrySol = chartRuntime.previewEntrySolByMint.get(state.selectedMint) ?? null;
-
-    if (!(entrySol > 0)) {
-      const points = rawPoints(state.selectedMint);
-      const last = points[points.length - 1];
-      entrySol = num(
-        last?.priceSol ?? last?.price,
-        candidatePrice(state.selected)
-      );
-
-      if (entrySol > 0) {
-        chartRuntime.previewEntrySolByMint.set(
-          state.selectedMint,
-          entrySol
-        );
-      }
-    }
-  }
-
-  if (!(entrySol > 0)) return [];
 
   const entry = chartValueFromUsdPrice(entrySol * rate);
   if (!(entry > 0)) return [];
@@ -2283,15 +2273,35 @@ function strategyLevels() {
   const tp2Sell = num($('tp2SellPct')?.value, state.settings?.tp2SellPct);
 
   return [
-    { label: 'ENTRY', price: entry, kind: 'entry' },
+    {
+      label:'ENTRY',
+      price:entry,
+      kind:'entry',
+      source:'executed-position'
+    },
     hard > 0
-      ? { label: `SL -${fmt(hard, 1)}%`, price: entry * (1 - hard / 100), kind: 'stop' }
+      ? {
+          label:`SL -${fmt(hard, 1)}%`,
+          price:entry * (1 - hard / 100),
+          kind:'stop',
+          source:'executed-position'
+        }
       : null,
     tp1 > 0
-      ? { label: `TP1 +${fmt(tp1, 0)}% · ${fmt(tp1Sell, 0)}%`, price: entry * (1 + tp1 / 100), kind: 'tp' }
+      ? {
+          label:`TP1 +${fmt(tp1, 0)}% · ${fmt(tp1Sell, 0)}%`,
+          price:entry * (1 + tp1 / 100),
+          kind:'tp',
+          source:'executed-position'
+        }
       : null,
     tp2 > 0
-      ? { label: `TP2 +${fmt(tp2, 0)}% · ${fmt(tp2Sell, 0)}%`, price: entry * (1 + tp2 / 100), kind: 'tp2' }
+      ? {
+          label:`TP2 +${fmt(tp2, 0)}% · ${fmt(tp2Sell, 0)}%`,
+          price:entry * (1 + tp2 / 100),
+          kind:'tp2',
+          source:'executed-position'
+        }
       : null
   ].filter(Boolean);
 }
@@ -2320,7 +2330,10 @@ const chartRuntime={
   },
   suppressZoom:false,
   resizeObserver:null,
-  pendingFx:null
+  pendingFx:null,
+  axisRailRows:[],
+  axisRailLowerVisible:false,
+  axisRailRaf:null
 };
 
 function chartTimeLabel(value){
@@ -3439,22 +3452,16 @@ function levelLineTypeV33(level){
   return 'solid';
 }
 
-function chartLevelLabelBackgroundV33(){
-  return document.documentElement.getAttribute('data-theme')==='light'
-    ? 'rgba(255,255,255,.94)'
-    : 'rgba(3,7,10,.88)';
-}
-
-// V33: strategy rail is integrated into the plot. Labels sit INSIDE the
-// chart edge, while the numeric Y-axis remains outside and unobstructed.
+// V34: right-axis rail renderer.
+// Strategy/live lines remain true ECharts Y-series for scale geometry,
+// but their labels + numeric values live in the SAME right-side rail
+// as the normal PRICE / MARKET CAP axis values.
 function chartHorizontalLevelSeries(labels,visibleLevels,liveValue){
   const count=Array.isArray(labels)?labels.length:0;
   if(!count)return [];
 
   const constantData=value=>
     Array.from({length:count},()=>Number(value));
-
-  const labelBg=chartLevelLabelBackgroundV33();
 
   const rows=(Array.isArray(visibleLevels)?visibleLevels:[])
     .filter(level=>Number.isFinite(Number(level?.price)) && Number(level.price)>0)
@@ -3475,25 +3482,6 @@ function chartHorizontalLevelSeries(labels,visibleLevels,liveValue){
         width:String(level?.kind||'')==='entry' ? 1.35 : 1.1,
         type:levelLineTypeV33(level),
         opacity:.90
-      },
-      endLabel:{
-        show:true,
-        formatter:()=>chartLevelTagV32(level),
-        color:levelColor(level),
-        backgroundColor:labelBg,
-        borderColor:levelColor(level),
-        borderWidth:.6,
-        borderRadius:3,
-        padding:[2,4],
-        distance:8,
-        align:'right',
-        verticalAlign:'middle',
-        fontSize:8,
-        fontWeight:700
-      },
-      labelLayout:{
-        hideOverlap:false,
-        moveOverlap:'shiftY'
       },
       z:7
     }));
@@ -3518,30 +3506,165 @@ function chartHorizontalLevelSeries(labels,visibleLevels,liveValue){
         type:'solid',
         opacity:.96
       },
-      endLabel:{
-        show:true,
-        color:'#171103',
-        backgroundColor:'#f5c451',
-        borderColor:'#f5c451',
-        borderWidth:.6,
-        borderRadius:3,
-        padding:[2,4],
-        distance:8,
-        align:'right',
-        verticalAlign:'middle',
-        fontSize:8,
-        fontWeight:800,
-        formatter:()=>`LIVE ${formatChartValue(live)}`
-      },
-      labelLayout:{
-        hideOverlap:false,
-        moveOverlap:'shiftY'
-      },
       z:8
     });
   }
 
   return rows;
+}
+
+function chartAxisRailClearV34(){
+  const rail=$('chartAxisRail');
+  if(rail)rail.innerHTML='';
+  chartRuntime.axisRailRows=[];
+}
+
+function chartAxisRailRowsV34(levels,liveValue){
+  const rows=(Array.isArray(levels)?levels:[])
+    .filter(level=>
+      Number.isFinite(Number(level?.price)) &&
+      Number(level.price)>0
+    )
+    .map(level=>({
+      kind:String(level.kind||'level'),
+      label:chartLevelTagV32(level),
+      price:Number(level.price),
+      color:levelColor(level)
+    }));
+
+  const live=Number(liveValue);
+  if(Number.isFinite(live) && live>0){
+    rows.push({
+      kind:'live',
+      label:'LIVE',
+      price:live,
+      color:'#f5c451'
+    });
+  }
+
+  return rows;
+}
+
+function chartAxisRailScheduleV34(){
+  if(chartRuntime.axisRailRaf)return;
+
+  chartRuntime.axisRailRaf=requestAnimationFrame(()=>{
+    chartRuntime.axisRailRaf=null;
+    chartAxisRailRenderV34();
+  });
+}
+
+function chartAxisRailRenderV34(){
+  const rail=$('chartAxisRail');
+  const api=chartRuntime.api;
+
+  if(!rail || !api){
+    return;
+  }
+
+  const source=Array.isArray(chartRuntime.axisRailRows)
+    ? chartRuntime.axisRailRows
+    : [];
+
+  if(!source.length){
+    rail.innerHTML='';
+    return;
+  }
+
+  const width=Number(api.getWidth?.()||0);
+  const height=Number(api.getHeight?.()||0);
+  if(!(width>0) || !(height>0))return;
+
+  const gutter=Math.max(64,Number(chartRightGutterV32())||0);
+
+  rail.style.left=`${Math.max(0,width-gutter+2)}px`;
+  rail.style.right='2px';
+
+  const top=Number(chartMainGridTopV32())||0;
+  const rawHeight=chartMainGridHeightV32(
+    Boolean(chartRuntime.axisRailLowerVisible)
+  );
+
+  const mainHeight=
+    typeof rawHeight==='string' && rawHeight.trim().endsWith('%')
+      ? height*(Number.parseFloat(rawHeight)||0)/100
+      : Number(rawHeight)||Math.max(0,height-top);
+
+  const minY=top+10;
+  const maxY=Math.min(
+    height-10,
+    top+mainHeight-10
+  );
+
+  const mapped=source
+    .map(row=>{
+      let y=null;
+      try{
+        y=Number(api.convertToPixel({yAxisIndex:0},row.price));
+      }catch{}
+
+      return {
+        ...row,
+        targetY:y,
+        y
+      };
+    })
+    .filter(row=>
+      Number.isFinite(row.y) &&
+      row.y>=top-2 &&
+      row.y<=top+mainHeight+2
+    )
+    .sort((a,b)=>a.targetY-b.targetY);
+
+  if(!mapped.length){
+    rail.innerHTML='';
+    return;
+  }
+
+  const gap=window.innerWidth<700 ? 18 : 20;
+
+  mapped[0].y=Math.max(minY,Math.min(maxY,mapped[0].targetY));
+
+  for(let i=1;i<mapped.length;i++){
+    mapped[i].y=Math.max(
+      mapped[i].targetY,
+      mapped[i-1].y+gap
+    );
+  }
+
+  if(mapped[mapped.length-1].y>maxY){
+    mapped[mapped.length-1].y=maxY;
+
+    for(let i=mapped.length-2;i>=0;i--){
+      mapped[i].y=Math.min(
+        mapped[i].y,
+        mapped[i+1].y-gap
+      );
+    }
+
+    if(mapped[0].y<minY){
+      const shift=minY-mapped[0].y;
+      for(const row of mapped){
+        row.y+=shift;
+      }
+    }
+  }
+
+  rail.innerHTML=mapped.map(row=>{
+    const kind=String(row.kind||'level').toLowerCase();
+    const value=formatChartValue(row.price);
+    const shift=row.y-row.targetY;
+
+    return (
+      `<div class="chart-axis-marker-v34 ${esc(kind)}"`+
+      ` style="top:${row.y.toFixed(1)}px;`+
+      `--mf-level-color:${esc(row.color)};`+
+      `--mf-level-shift:${shift.toFixed(1)}px">`+
+        `<span>${esc(row.label)}</span>`+
+        `<strong>${esc(value)}</strong>`+
+      `</div>`
+    );
+  }).join('');
 }
 
 // V30.19: keep sparse timeframes visually dense without inventing candles.
@@ -3690,6 +3813,7 @@ function ensureChartEngine(){
 
   chartRuntime.api.on('datazoom',()=>{
     captureChartViewport();
+    chartAxisRailScheduleV34();
   });
 
   if(chartTouchUi()){
@@ -3713,12 +3837,14 @@ function ensureChartEngine(){
   if(typeof ResizeObserver==='function'){
     chartRuntime.resizeObserver=new ResizeObserver(()=>{
       try{chartRuntime.api?.resize?.()}catch{}
+      chartAxisRailScheduleV34();
       resizeBreakoutFxCanvas();
     });
     chartRuntime.resizeObserver.observe(host);
   }else{
     window.addEventListener('resize',()=>{
       try{chartRuntime.api?.resize?.()}catch{}
+      chartAxisRailScheduleV34();
       resizeBreakoutFxCanvas();
     },{passive:true});
   }
@@ -3738,10 +3864,12 @@ function chartCandle(candle){
 
 // MEMEFLOW_CHART_INFORMATION_HIERARCHY_V32
 function chartRightGutterV32(){
+  // V34: this gutter is shared by ordinary Y-axis numbers and
+  // LIVE / ENTRY / SL / TP1 / TP2 axis markers.
   if(state.chartMetric==='marketCap'){
-    return window.innerWidth<700 ? 48 : 56;
+    return window.innerWidth<700 ? 88 : 100;
   }
-  return window.innerWidth<700 ? 80 : 88;
+  return window.innerWidth<700 ? 116 : 128;
 }
 
 function chartMainGridTopV32(){
@@ -3957,6 +4085,7 @@ function drawChart(){
     if(!ensureChartEngine())return;
 
   if(!state.selectedMint){
+    chartAxisRailClearV34();
     chartRuntime.api.clear();
     $('chartEmpty').style.display='grid';
     $('chartLegend').innerHTML='';
@@ -3973,6 +4102,7 @@ function drawChart(){
   );
 
   if(!candles.length){
+    chartAxisRailClearV34();
     chartRuntime.api.clear();
     $('chartEmpty').style.display='grid';
     $('chartEmpty').innerHTML=
@@ -4381,6 +4511,12 @@ function drawChart(){
   chartRuntime.mint=state.selectedMint;
   chartRuntime.timeframe=state.timeframe;
   chartRuntime.metric=state.chartMetric;
+  chartRuntime.axisRailRows=chartAxisRailRowsV34(
+    levelInfo.visible,
+    last.close
+  );
+  chartRuntime.axisRailLowerVisible=lowerIndicatorVisible;
+  chartAxisRailScheduleV34();
   chartRuntime.candleCount=candles.length;
   chartRuntime.lastCandleTime=last.t;
   chartRuntime.forceFit=false;
