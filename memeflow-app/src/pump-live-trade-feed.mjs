@@ -4,12 +4,13 @@
 
 import crypto from 'node:crypto';
 
-const VERSION='V14.0';
+const VERSION='V15.0';
 const PUMP_PROGRAM='6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P';
 const DISC=crypto.createHash('sha256').update('event:TradeEvent').digest().subarray(0,8);
 const B58='123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
 
 // MEMEFLOW_QUOTE_AWARE_PUMP_PRICE_V14
+// MEMEFLOW_QUOTE_AWARE_PUMP_PRICE_V15
 // Pump create_v2 can trade against a quote mint other than SOL.
 // Internal engine still uses SOL-equivalent price, so USDC is converted
 // to SOL only AFTER deriving the real USD execution price.
@@ -110,14 +111,25 @@ export function decodeTradeEvent(buf){
 }
 function programData(log){const m=/^Program data:\s*([A-Za-z0-9+/=]+)\s*$/.exec(String(log||'').trim());if(!m)return null;try{return Buffer.from(m[1],'base64')}catch{return null}}
 function marketFromEvent(e,token,solUsd){
-  const quoteMint=String(e?.quoteMint||token?.quoteMint||'').trim();
+  // V15: CreateEvent quoteMint is canonical when already known. A partially
+  // decoded newer TradeEvent must never override it with garbage/stale bytes.
+  const tokenQuoteMint=String(token?.quoteMint||'').trim();
+  const eventQuoteMint=String(e?.quoteMint||'').trim();
+  const quoteMint=tokenQuoteMint||eventQuoteMint;
+  const hasQuoteTail=Boolean(
+    e?.quoteAmount!==null&&e?.quoteAmount!==undefined ||
+    e?.virtualQuoteReserves!==null&&e?.virtualQuoteReserves!==undefined ||
+    e?.realQuoteReserves!==null&&e?.realQuoteReserves!==undefined
+  );
 
   const quoteKind=
-    !quoteMint||quoteMint===DEFAULT_PUBKEY||quoteMint===WSOL_MINT
-      ? 'SOL'
-      : quoteMint===USDC_MINT
-        ? 'USDC'
-        : 'UNSUPPORTED';
+    !quoteMint
+      ? (hasQuoteTail?'UNSUPPORTED':'SOL')
+      : quoteMint===DEFAULT_PUBKEY||quoteMint===WSOL_MINT
+        ? 'SOL'
+        : quoteMint===USDC_MINT
+          ? 'USDC'
+          : 'UNSUPPORTED';
 
   const decimals=Math.max(
     0,
@@ -582,6 +594,19 @@ export function startPumpLiveTradeFeed(opts={}){
       if(Number.isFinite(liveSupply)&&liveSupply>0)patch.totalSupply=liveSupply;
       if(Number.isFinite(liveMarketCapSol)&&liveMarketCapSol>0)patch.marketCapSol=liveMarketCapSol;
       if(Number.isFinite(liveMarketCapUsd)&&liveMarketCapUsd>0)patch.marketCapUsd=liveMarketCapUsd;
+
+      // MEMEFLOW_QUOTE_STALE_MARK_PURGE_V15
+      // V14 correctly blocked unsafe execution but an old V13 price could
+      // survive in persisted token state and still be displayed. Explicitly
+      // invalidate those fields. Store may retain historical peak internally,
+      // but every market/display/trading consumer below is now fail-closed.
+      if(m.quotePricingReady!==true){
+        patch.priceSol=null;
+        patch.marketCapSol=null;
+        patch.marketCapUsd=null;
+        patch.liquiditySol=null;
+        patch.liquidityUsd=null;
+      }
 
       const updated=store?.setToken?.(e.mint,patch);
       if(!updated)return;

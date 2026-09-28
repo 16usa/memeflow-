@@ -10,6 +10,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
+import {decodeTradeEvent as decodePumpTradeEvent} from './pump-live-trade-feed.mjs'; // MEMEFLOW_CHART_QUOTE_BACKFILL_V15
 
 const DISC = crypto
   .createHash('sha256')
@@ -18,6 +19,9 @@ const DISC = crypto
   .subarray(0, 8);
 
 const B58 = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+const DEFAULT_PUBKEY='11111111111111111111111111111111';
+const WSOL_MINT='So11111111111111111111111111111111111111112';
+const USDC_MINT='EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
 
 function b58(buf) {
   let x = 0n;
@@ -89,16 +93,72 @@ function programData(log) {
   }
 }
 
-function marketPriceSol(event) {
-  if (
-    event?.virtualSolReserves > 0n &&
-    event?.virtualTokenReserves > 0n
-  ) {
-    return (
-      (Number(event.virtualSolReserves) / 1e9) /
-      (Number(event.virtualTokenReserves) / 1e6)
-    );
+function tokenDecimalsFromTx(tx,mint,fallback=6){
+  const rows=[
+    ...(tx?.meta?.preTokenBalances||[]),
+    ...(tx?.meta?.postTokenBalances||[])
+  ];
+  for(const row of rows){
+    if(String(row?.mint||'')!==String(mint||''))continue;
+    const d=Number(row?.uiTokenAmount?.decimals);
+    if(Number.isInteger(d)&&d>=0&&d<=12)return d;
   }
+  const n=Number(fallback);
+  return Number.isInteger(n)&&n>=0&&n<=12?n:6;
+}
+
+function marketPoint(event,{token={},solUsd=null,decimals=6}={}){
+  const tokenQuote=String(token?.quoteMint||'').trim();
+  const eventQuote=String(event?.quoteMint||'').trim();
+  const quoteMint=tokenQuote||eventQuote;
+  const hasQuoteTail=Boolean(
+    event?.quoteAmount!==null&&event?.quoteAmount!==undefined ||
+    event?.virtualQuoteReserves!==null&&event?.virtualQuoteReserves!==undefined ||
+    event?.realQuoteReserves!==null&&event?.realQuoteReserves!==undefined
+  );
+
+  const kind=
+    !quoteMint
+      ? (hasQuoteTail?'UNSUPPORTED':'SOL')
+      : quoteMint===DEFAULT_PUBKEY||quoteMint===WSOL_MINT
+        ? 'SOL'
+        : quoteMint===USDC_MINT
+          ? 'USDC'
+          : 'UNSUPPORTED';
+
+  const rate=Number(solUsd);
+
+  if(kind==='SOL'){
+    if(!(event?.virtualSolReserves>0n&&event?.virtualTokenReserves>0n))return null;
+    const priceSol=
+      (Number(event.virtualSolReserves)/1e9)/
+      (Number(event.virtualTokenReserves)/(10**decimals));
+    if(!(Number.isFinite(priceSol)&&priceSol>0))return null;
+    return {
+      priceSol,
+      solAmount:Number(event.solAmount||0n)/1e9,
+      source:'pump-history-backfill'
+    };
+  }
+
+  if(kind==='USDC'){
+    const quoteRaw=event?.quoteAmount??event?.solAmount;
+    const tokenRaw=event?.tokenAmount;
+    if(!(quoteRaw>0n&&tokenRaw>0n&&Number.isFinite(rate)&&rate>0))return null;
+    const quoteUsd=Number(quoteRaw)/1e6;
+    const tokenUi=Number(tokenRaw)/(10**decimals);
+    if(!(quoteUsd>0&&tokenUi>0))return null;
+    const priceUsd=quoteUsd/tokenUi;
+    const priceSol=priceUsd/rate;
+    if(!(Number.isFinite(priceSol)&&priceSol>0))return null;
+    return {
+      priceSol,
+      priceUsd,
+      solAmount:quoteUsd/rate,
+      source:'pump-history-backfill-quote-aware'
+    };
+  }
+
   return null;
 }
 
@@ -141,9 +201,12 @@ function fallbackKey(point) {
 }
 
 export class ChartHistoryArchive {
-  constructor({ dataDir, rpc, pageSize = 1000, txConcurrency = 1 } = {}) {
-    this.root = path.join(String(dataDir || 'data'), 'chart-history-v30-10');
+  constructor({ dataDir, rpc, pageSize = 1000, txConcurrency = 1, getToken = null, getSolUsd = null } = {}) {
+    // Fresh namespace guarantees that pre-V15 wrong non-SOL candles/meta are never reused.
+    this.root = path.join(String(dataDir || 'data'), 'chart-history-v30-10-quote-v15');
     this.rpc = rpc;
+    this.getToken = typeof getToken==='function'?getToken:()=>null;
+    this.getSolUsd = typeof getSolUsd==='function'?getSolUsd:()=>null;
     this.pageSize = Math.max(100, Math.min(1000, Number(pageSize) || 1000));
     this.txConcurrency = Math.max(1, Math.min(6, Number(txConcurrency) || 3));
     this.inFlight = new Map();
@@ -318,14 +381,25 @@ export class ChartHistoryArchive {
       for (const log of logs) {
         const buf = programData(log);
         if (!buf) continue;
-        const event = decodeTradeEvent(buf);
+        const event = decodePumpTradeEvent(buf);
         if (!event) continue;
 
         const index = eventIndex++;
         if (event.mint !== mint) continue;
 
-        const priceSol = marketPriceSol(event);
-        if (!(Number.isFinite(priceSol) && priceSol > 0)) continue;
+        const token=this.getToken?.(mint)||{};
+        const decimals=tokenDecimalsFromTx(
+          tx,
+          mint,
+          token?.tokenDecimals??token?.decimals??6
+        );
+        const market=marketPoint(event,{
+          token,
+          solUsd:this.getSolUsd?.(),
+          decimals
+        });
+        if(!market)continue;
+        const priceSol=market.priceSol;
 
         const eventAt = (
           event.timestamp !== null &&
@@ -342,10 +416,10 @@ export class ChartHistoryArchive {
           t: eventAt,
           priceSol,
           markPrice: priceSol,
-          source: 'pump-history-backfill',
+          source: market.source,
           isBuy: event.isBuy === true,
-          solAmount: Number(event.solAmount) / 1e9,
-          tokenAmount: Number(event.tokenAmount) / 1e6
+          solAmount: market.solAmount,
+          tokenAmount: Number(event.tokenAmount) / (10**decimals)
         }));
       }
 

@@ -146,7 +146,11 @@ export function liveCardMarketSnapshot({
       ? Math.max(0,now-tokenTradeAt)
       : Number.POSITIVE_INFINITY;
 
+  // MEMEFLOW_QUOTE_STALE_MARK_GUARD_V15
+  const quoteTokenPriceTrusted=token?.quotePricingReady!==false;
+
   const tokenHasTradeEvidence=Boolean(
+    quoteTokenPriceTrusted&&
     tokenPrice!==null&&
     tokenPrice>0&&
     tokenTradeAt!==null&&

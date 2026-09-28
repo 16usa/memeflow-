@@ -719,7 +719,9 @@ const __mfChartArchive=new ChartHistoryArchive({
   dataDir,
   rpc:__mfChartHistoryRpc,
   pageSize:250,
-  txConcurrency:1
+  txConcurrency:1,
+  getToken:mint=>store.state.tokens?.[String(mint||'')]||null,
+  getSolUsd:()=>solUsdOracle.get()
 });
 const PUMP='6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P',ALLOW_ANON=process.env.ALLOW_ANONYMOUS_PAPER!=='false';
 const OWNER_ACCESS_KEY=process.env.OWNER_ACCESS_KEY||'';
@@ -1025,9 +1027,7 @@ function __mfEnsureChartBackfill(mint){
   mint=String(mint||'').trim();
   if(!__mfValidChartMint(mint))return;
 
-  // Historical pre-V14 non-SOL points were priced with SOL semantics.
-  // Do not backfill them into the canonical chart.
-  if(__mfChartQuoteKindV14(mint)!=='SOL')return;
+  // V15 backfill is quote-aware for SOL and USDC.
   if(__mfChartBackfillJobs.has(mint))return;
 
   try{
@@ -1036,7 +1036,10 @@ function __mfEnsureChartBackfill(mint){
   }catch{}
 
   const job=__mfChartArchive.ensureBackfill(mint,{
-    onProgress:()=>__mfBroadcastChartSnapshot(mint)
+    onProgress:()=>{
+      __mfOpenPositionArchiveWarmedV22.delete(mint);
+      __mfBroadcastChartSnapshot(mint);
+    }
   })
     .then(()=>__mfBroadcastChartSnapshot(mint))
     .catch(error=>{
@@ -2095,7 +2098,12 @@ function candidateView(d){
   const buyPressure=finite(t.buyPressure??t.momentum);
   const market5m=__mfCandidateMarket5mV4(d.mint,t);
   const normalizedSupply=__mfNormalizePumpSupplyV5(t);
-  const livePriceSol=finite(market5m.currentPriceSol)??finite(t.priceSol);
+  // MEMEFLOW_QUOTE_STALE_DISPLAY_GUARD_V15
+  // A persisted pre-fix price is never allowed to leak into the UI.
+  // Correct quote-aware archive/live TradeEvents remain valid.
+  const livePriceSol=
+    finite(market5m.currentPriceSol) ??
+    (t?.quotePricingReady===false?null:finite(t.priceSol));
 
   // MEMEFLOW_TERMINAL_CANDIDATE_VIEW_RUNTIME_V31
   // candidateView() is used directly by /api/ai/decisions and /api/chart/config.
@@ -2138,6 +2146,9 @@ function candidateView(d){
     source:t.source||'Solana on-chain',
     launchPlatform:t.launchPlatform||null,
     protocol:t.protocol||t.launchPlatform||null,
+    quoteMint:t.quoteMint||null,
+    quotePricingReady:t.quotePricingReady!==false,
+    quotePricingMode:t.quotePricingMode||null,
     price:livePriceSol,
     priceSol:livePriceSol,
     totalSupply:normalizedSupply,
@@ -2184,7 +2195,7 @@ volume5mSol:market5m.volume5mSol,
       ),
     walletRiskPending:d.walletRiskPending===true,
     preOpenRiskStatus:t.preOpenRiskStatus||null,
-    routeApproved:t.priceSol!=null,
+    routeApproved:t.quotePricingReady!==false&&livePriceSol!=null,
     holderFresh:t.holderFresh,
     positionSize:null,
     quoteAgeMs:t.lastPriceAt?Math.max(0,Date.now()-t.lastPriceAt):null,
@@ -2436,7 +2447,10 @@ function __mfLiveCardViewV14(token,decision){
     finite(t?.buyPressure??t?.momentum);
 
   const priceSol=
-    finite(t?.priceSol??t?.price);
+    finite(market5m?.currentPriceSol) ??
+    (t?.quotePricingReady===false
+      ? null
+      : finite(t?.priceSol??t?.price));
 
   const liquiditySol=
     finite(t?.liquiditySol??t?.liquidity);
@@ -2469,6 +2483,9 @@ function __mfLiveCardViewV14(token,decision){
     launchPlatform:t?.launchPlatform||t?.protocol||'pump',
     protocol:t?.protocol||t?.launchPlatform||'pump',
     source:t?.source||null,
+    quoteMint:t?.quoteMint||null,
+    quotePricingReady:t?.quotePricingReady!==false,
+    quotePricingMode:t?.quotePricingMode||null,
 
     uri:t?.uri||t?.metadataUrl||null,
     metadataUri:t?.metadataUrl||t?.uri||null,

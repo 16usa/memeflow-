@@ -652,6 +652,16 @@ export class PaperEngine {
   openPosition(userId, token, decision, rawSettings = {}, idempotencyKey = null) {
     const settings = this.settings(rawSettings);
 
+    // MEMEFLOW_QUOTE_ENTRY_FAIL_CLOSED_V15
+    // Applies to normal automation AND copy trading. Never size a position
+    // from an unresolved/non-canonical quote price.
+    if(token?.quotePricingReady===false){
+      return {
+        ok:false,
+        code:'QUOTE_PRICE_NOT_READY'
+      };
+    }
+
     const strategySource=
       String(decision?.strategySource||'')
         .trim()

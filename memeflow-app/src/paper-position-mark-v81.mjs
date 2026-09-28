@@ -93,6 +93,8 @@ export function resolvePaperPositionMarkV81({
 
   const openedAtMs = finiteTime(position?.openedAtMs);
   const entryPriceSol = finitePositive(position?.entryPriceSol);
+  // MEMEFLOW_QUOTE_MARK_FAIL_CLOSED_V15
+  const quotePriceBlocked=token?.quotePricingReady===false;
 
   const tradePriceSol = finitePositive(tradeMarkPriceSol);
   const tradeAtMs = finiteTime(tradeMarkAt);
@@ -125,6 +127,7 @@ export function resolvePaperPositionMarkV81({
   const hasTradeEvidence = tokenTradeEvidence(token || {});
 
   if (
+    !quotePriceBlocked &&
     tokenPriceSol !== null &&
     hasTradeEvidence &&
     timestampIsPostEntry(
@@ -145,6 +148,7 @@ export function resolvePaperPositionMarkV81({
   }
 
   if (
+    !quotePriceBlocked &&
     tokenPriceSol !== null &&
     usableFreshTimestamp(
       tokenAtMs,
@@ -172,6 +176,7 @@ export function resolvePaperPositionMarkV81({
   );
 
   if (
+    !quotePriceBlocked &&
     enginePriceSol !== null &&
     usableFreshTimestamp(
       engineAtMs,
