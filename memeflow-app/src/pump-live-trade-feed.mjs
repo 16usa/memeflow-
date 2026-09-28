@@ -4,10 +4,18 @@
 
 import crypto from 'node:crypto';
 
-const VERSION='V13.0';
+const VERSION='V14.0';
 const PUMP_PROGRAM='6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P';
 const DISC=crypto.createHash('sha256').update('event:TradeEvent').digest().subarray(0,8);
 const B58='123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+
+// MEMEFLOW_QUOTE_AWARE_PUMP_PRICE_V14
+// Pump create_v2 can trade against a quote mint other than SOL.
+// Internal engine still uses SOL-equivalent price, so USDC is converted
+// to SOL only AFTER deriving the real USD execution price.
+const DEFAULT_PUBKEY='11111111111111111111111111111111';
+const WSOL_MINT='So11111111111111111111111111111111111111112';
+const USDC_MINT='EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
 
 function envList(name){return String(process.env[name]||'').split(',').map(x=>x.trim()).filter(Boolean)}
 async function makeWS(url){if(typeof globalThis.WebSocket==='function')return new globalThis.WebSocket(url);const mod=await import('ws');return new mod.WebSocket(url)}
@@ -46,20 +54,203 @@ export function decodeTradeEvent(buf){
   if(buf.length>=o+8){creatorFeeBasisPoints=u64(buf,o);o+=8}
   if(buf.length>=o+8){creatorFee=u64(buf,o);o+=8}
 
+  // Newer Pump TradeEvent tail. EOF tolerant for legacy SOL events.
+  let trackVolume=null;
+  let totalUnclaimedTokens=null,totalClaimedTokens=null,currentSolVolume=null;
+  let lastUpdateTimestamp=null,ixName=null,mayhemMode=null;
+  let cashbackFeeBasisPoints=null,cashbackFee=null;
+  let buybackFeeBasisPoints=null,buybackFee=null;
+  let quoteMint=null,quoteAmount=null;
+  let virtualQuoteReserves=null,realQuoteReserves=null;
+
+  try{
+    if(buf.length>=o+1)trackVolume=buf[o++]!==0;
+    if(buf.length>=o+8){totalUnclaimedTokens=u64(buf,o);o+=8}
+    if(buf.length>=o+8){totalClaimedTokens=u64(buf,o);o+=8}
+    if(buf.length>=o+8){currentSolVolume=u64(buf,o);o+=8}
+    if(buf.length>=o+8){lastUpdateTimestamp=buf.readBigInt64LE(o);o+=8}
+
+    if(buf.length>=o+4){
+      const n=buf.readUInt32LE(o);o+=4;
+      if(n>256||buf.length<o+n)throw Error('invalid TradeEvent ix_name');
+      ixName=buf.subarray(o,o+n).toString('utf8');o+=n;
+    }
+
+    if(buf.length>=o+1)mayhemMode=buf[o++]!==0;
+    if(buf.length>=o+8){cashbackFeeBasisPoints=u64(buf,o);o+=8}
+    if(buf.length>=o+8){cashbackFee=u64(buf,o);o+=8}
+    if(buf.length>=o+8){buybackFeeBasisPoints=u64(buf,o);o+=8}
+    if(buf.length>=o+8){buybackFee=u64(buf,o);o+=8}
+
+    // Vec<Shareholder>: u32 length + (Pubkey 32 + u16 share_bps) per row.
+    if(buf.length>=o+4){
+      const count=buf.readUInt32LE(o);o+=4;
+      const bytes=count*34;
+      if(count>128||buf.length<o+bytes)throw Error('invalid TradeEvent shareholders');
+      o+=bytes;
+    }
+
+    if(buf.length>=o+32){quoteMint=pk(buf,o);o+=32}
+    if(buf.length>=o+8){quoteAmount=u64(buf,o);o+=8}
+    if(buf.length>=o+8){virtualQuoteReserves=u64(buf,o);o+=8}
+    if(buf.length>=o+8){realQuoteReserves=u64(buf,o);o+=8}
+  }catch{
+    // Legacy events remain valid. quoteMint can still come from CreateEvent.
+  }
+
   return {
     mint,user,isBuy,solAmount,tokenAmount,timestamp,
     virtualSolReserves,virtualTokenReserves,realSolReserves,realTokenReserves,
-    feeRecipient,feeBasisPoints,fee,creator,creatorFeeBasisPoints,creatorFee
+    feeRecipient,feeBasisPoints,fee,creator,creatorFeeBasisPoints,creatorFee,
+    trackVolume,totalUnclaimedTokens,totalClaimedTokens,currentSolVolume,
+    lastUpdateTimestamp,ixName,mayhemMode,
+    cashbackFeeBasisPoints,cashbackFee,buybackFeeBasisPoints,buybackFee,
+    quoteMint,quoteAmount,virtualQuoteReserves,realQuoteReserves
   };
 }
 function programData(log){const m=/^Program data:\s*([A-Za-z0-9+/=]+)\s*$/.exec(String(log||'').trim());if(!m)return null;try{return Buffer.from(m[1],'base64')}catch{return null}}
-function marketFromEvent(e){
-  let priceSol=null,liquiditySol=null;
-  if(e.virtualSolReserves!==null&&e.virtualTokenReserves!==null&&e.virtualSolReserves>0n&&e.virtualTokenReserves>0n){
-    priceSol=(Number(e.virtualSolReserves)/1e9)/(Number(e.virtualTokenReserves)/1e6);
+function marketFromEvent(e,token,solUsd){
+  const quoteMint=String(e?.quoteMint||token?.quoteMint||'').trim();
+
+  const quoteKind=
+    !quoteMint||quoteMint===DEFAULT_PUBKEY||quoteMint===WSOL_MINT
+      ? 'SOL'
+      : quoteMint===USDC_MINT
+        ? 'USDC'
+        : 'UNSUPPORTED';
+
+  const decimals=Math.max(
+    0,
+    Math.min(
+      12,
+      Math.floor(Number(token?.decimals??token?.tokenDecimals??6))
+    )
+  );
+
+  let priceSol=null;
+  let priceUsd=null;
+  let liquiditySol=null;
+  let liquidityUsd=null;
+
+  if(quoteKind==='SOL'){
+    if(
+      e.virtualSolReserves!==null&&
+      e.virtualTokenReserves!==null&&
+      e.virtualSolReserves>0n&&
+      e.virtualTokenReserves>0n
+    ){
+      priceSol=
+        (Number(e.virtualSolReserves)/1e9)/
+        (Number(e.virtualTokenReserves)/(10**decimals));
+    }
+
+    if(e.realSolReserves!==null){
+      liquiditySol=Number(e.realSolReserves)/1e9;
+    }
+
+    const usd=Number(solUsd);
+    if(Number.isFinite(priceSol)&&priceSol>0&&Number.isFinite(usd)&&usd>0){
+      priceUsd=priceSol*usd;
+    }
+    if(Number.isFinite(liquiditySol)&&Number.isFinite(usd)&&usd>0){
+      liquidityUsd=liquiditySol*usd;
+    }
   }
-  if(e.realSolReserves!==null)liquiditySol=Number(e.realSolReserves)/1e9;
-  return {priceSol,liquiditySol};
+
+  if(quoteKind==='USDC'){
+    // For quote-paired Pump trades, use the REAL quote execution amount.
+    // Do NOT treat it as lamports and multiply it by SOL/USD.
+    const quoteRaw=e.quoteAmount??e.solAmount;
+    const tokenRaw=e.tokenAmount;
+    const usd=Number(solUsd);
+
+    if(
+      quoteRaw!==null&&quoteRaw!==undefined&&
+      tokenRaw!==null&&tokenRaw!==undefined&&
+      quoteRaw>0n&&tokenRaw>0n
+    ){
+      const quoteUi=Number(quoteRaw)/1e6;
+      const tokenUi=Number(tokenRaw)/(10**decimals);
+
+      if(quoteUi>0&&tokenUi>0){
+        priceUsd=quoteUi/tokenUi;
+
+        if(Number.isFinite(usd)&&usd>0){
+          priceSol=priceUsd/usd;
+        }
+      }
+    }
+
+    if(
+      e.realQuoteReserves!==null&&
+      e.realQuoteReserves!==undefined
+    ){
+      liquidityUsd=Number(e.realQuoteReserves)/1e6;
+
+      if(Number.isFinite(usd)&&usd>0){
+        liquiditySol=liquidityUsd/usd;
+      }
+    }
+  }
+
+  const quotePricingReady=
+    Number.isFinite(priceSol)&&
+    priceSol>0&&
+    (
+      quoteKind==='SOL'||
+      quoteKind==='USDC'
+    );
+
+  return {
+    quoteMint:quoteMint||null,
+    quoteKind,
+    quotePricingReady,
+    priceSol,
+    priceUsd,
+    liquiditySol,
+    liquidityUsd
+  };
+}
+
+function canonicalEventForMarket(e,m,solUsd){
+  if(m?.quoteKind!=='USDC'){
+    return {
+      ...e,
+      quoteMint:m?.quoteMint||e?.quoteMint||null,
+      marketQuoteKind:m?.quoteKind||'SOL'
+    };
+  }
+
+  let normalizedSolAmount=e.solAmount;
+
+  const quoteRaw=e.quoteAmount??e.solAmount;
+  const usd=Number(solUsd);
+
+  if(
+    quoteRaw!==null&&quoteRaw!==undefined&&
+    quoteRaw>0n&&
+    Number.isFinite(usd)&&
+    usd>0
+  ){
+    const quoteUsd=Number(quoteRaw)/1e6;
+    const equivalentSol=quoteUsd/usd;
+
+    normalizedSolAmount=
+      BigInt(
+        Math.max(
+          0,
+          Math.round(equivalentSol*1e9)
+        )
+      );
+  }
+
+  return {
+    ...e,
+    solAmount:normalizedSolAmount,
+    quoteAmount:e.quoteAmount??e.solAmount,
+    quoteMint:m.quoteMint,
+    marketQuoteKind:'USDC'
+  };
 }
 
 // MEMEFLOW_LIVE_MARKET_CAP_V1
@@ -278,28 +469,46 @@ export function startPumpLiveTradeFeed(opts={}){
     }catch(err){metrics.lastError='holder:'+String(err?.message||err)}
 
     try{
-      const m=marketFromEvent(e);
+      const solUsd=typeof getSolUsd==='function'?getSolUsd():null;
+      const m=marketFromEvent(e,known,solUsd);
+      const canonicalEvent=canonicalEventForMarket(e,m,solUsd);
+
       const mergedForFeatures={
         ...known,...(holderSnap||{}),
-        priceSol:Number.isFinite(m.priceSol)&&m.priceSol>0?m.priceSol:known.priceSol,
-        liquiditySol:Number.isFinite(m.liquiditySol)&&m.liquiditySol>=0?m.liquiditySol:known.liquiditySol
+        priceSol:
+          m.quotePricingReady===true&&
+          Number.isFinite(m.priceSol)&&
+          m.priceSol>0
+            ? m.priceSol
+            : known.priceSol,
+        liquiditySol:
+          m.quotePricingReady===true&&
+          Number.isFinite(m.liquiditySol)&&
+          m.liquiditySol>=0
+            ? m.liquiditySol
+            : known.liquiditySol
       };
-      const solUsd=typeof getSolUsd==='function'?getSolUsd():null;
-      const opp=opportunityEngine?.update?.(e,{
-        creator:mergedForFeatures.creator||e.creator||null,
-        priceSol:mergedForFeatures.priceSol,
-        liquiditySol:mergedForFeatures.liquiditySol,
-        holderCount:mergedForFeatures.holderCount,
-        top10Pct:mergedForFeatures.top10Pct,
-        developerPct:mergedForFeatures.developerPct??mergedForFeatures.developerSharePct,
-        holderFresh:mergedForFeatures.holderFresh===true,
-        totalSupplyRaw:mergedForFeatures.tokenTotalSupplyRaw,
-        totalSupply:mergedForFeatures.totalSupply,
-        initialRealTokenReservesRaw:mergedForFeatures.initialRealTokenReservesRaw||mergedForFeatures.realTokenReservesRaw,
-        launchSlot:mergedForFeatures.createSlot??mergedForFeatures.slot,
-        launchSignature:mergedForFeatures.createSignature||mergedForFeatures.signature,
-        solUsd
-      })||{};
+
+      const opp=
+        m.quotePricingReady===true
+          ? (
+              opportunityEngine?.update?.(canonicalEvent,{
+                creator:mergedForFeatures.creator||e.creator||null,
+                priceSol:mergedForFeatures.priceSol,
+                liquiditySol:mergedForFeatures.liquiditySol,
+                holderCount:mergedForFeatures.holderCount,
+                top10Pct:mergedForFeatures.top10Pct,
+                developerPct:mergedForFeatures.developerPct??mergedForFeatures.developerSharePct,
+                holderFresh:mergedForFeatures.holderFresh===true,
+                totalSupplyRaw:mergedForFeatures.tokenTotalSupplyRaw,
+                totalSupply:mergedForFeatures.totalSupply,
+                initialRealTokenReservesRaw:mergedForFeatures.initialRealTokenReservesRaw||mergedForFeatures.realTokenReservesRaw,
+                launchSlot:mergedForFeatures.createSlot??mergedForFeatures.slot,
+                launchSignature:mergedForFeatures.createSignature||mergedForFeatures.signature,
+                solUsd
+              })||{}
+            )
+          : {};
 
       const liveSupply=normalizedPumpSupply(mergedForFeatures);
       const liveMarketCapSol=
@@ -332,20 +541,44 @@ export function startPumpLiveTradeFeed(opts={}){
       const patch={
         ...holderObservedPatch,
         ...opp,
-        marketSource:'ws-direct-trade-event-v13',
-        lastPriceAt:Date.now(),
-        lastMarketActivityAt:Date.now(),
-        marketCapUpdatedAt:Date.now(),
-        liveMarketCapSource:'pump-trade-price-x-supply',
+        marketSource:
+          m.quotePricingReady===true
+            ? 'ws-direct-trade-event-v14'
+            : 'quote-pricing-blocked-v14',
+        liveMarketCapSource:
+          m.quotePricingReady===true
+            ? 'pump-trade-price-x-supply-v14'
+            : 'quote-pricing-blocked-v14',
         eventSlot:e.slot??null,
-        eventSignature:e.signature||null,
+        eventSignature:
+          m.quotePricingReady===true
+            ? e.signature||null
+            : null,
+        quoteMint:m.quoteMint||known?.quoteMint||null,
+        quotePricingReady:m.quotePricingReady===true,
+        quotePricingMode:m.quoteKind,
+        quotePriceUsd:
+          Number.isFinite(m.priceUsd)&&m.priceUsd>0
+            ? m.priceUsd
+            : null,
         virtualSolReservesRaw:e.virtualSolReserves?.toString?.()||null,
         virtualTokenReservesRaw:e.virtualTokenReserves?.toString?.()||null,
         realSolReservesRaw:e.realSolReserves?.toString?.()||null,
-        realTokenReservesRaw:e.realTokenReserves?.toString?.()||null
+        realTokenReservesRaw:e.realTokenReserves?.toString?.()||null,
+        virtualQuoteReservesRaw:e.virtualQuoteReserves?.toString?.()||null,
+        realQuoteReservesRaw:e.realQuoteReserves?.toString?.()||null,
+        quoteAmountRaw:(e.quoteAmount??null)?.toString?.()||null
       };
+
+      if(m.quotePricingReady===true){
+        patch.lastPriceAt=Date.now();
+        patch.lastMarketActivityAt=Date.now();
+        patch.marketCapUpdatedAt=Date.now();
+      }
+
       if(Number.isFinite(m.priceSol)&&m.priceSol>0)patch.priceSol=m.priceSol;
       if(Number.isFinite(m.liquiditySol)&&m.liquiditySol>=0)patch.liquiditySol=m.liquiditySol;
+      if(Number.isFinite(m.liquidityUsd)&&m.liquidityUsd>=0)patch.liquidityUsd=m.liquidityUsd;
       if(Number.isFinite(liveSupply)&&liveSupply>0)patch.totalSupply=liveSupply;
       if(Number.isFinite(liveMarketCapSol)&&liveMarketCapSol>0)patch.marketCapSol=liveMarketCapSol;
       if(Number.isFinite(liveMarketCapUsd)&&liveMarketCapUsd>0)patch.marketCapUsd=liveMarketCapUsd;
@@ -360,7 +593,9 @@ export function startPumpLiveTradeFeed(opts={}){
       // Every confirmed Pump TradeEvent updates OPEN PAPER positions using
       // the same canonical token snapshot that drives Score / State.
       try{
-        onTokenUpdate?.(e.mint,updated);
+        if(m.quotePricingReady===true){
+          onTokenUpdate?.(e.mint,updated);
+        }
       }catch(err){
         metrics.lastError=
           'paper-lifecycle:'+String(err?.message||err);
@@ -376,8 +611,10 @@ export function startPumpLiveTradeFeed(opts={}){
 
       // One TradeEvent -> one evaluation, after holder + market + momentum are
       // already merged into the same canonical token snapshot.
-      try{__v1226Evaluate(updated,e.mint,'trade-event-complete')}catch{}
-      try{publishTrade?.(e.mint,e,updated)}catch{}
+      if(m.quotePricingReady===true){
+        try{__v1226Evaluate(updated,e.mint,'trade-event-complete')}catch{}
+        try{publishTrade?.(e.mint,canonicalEvent,updated)}catch{}
+      }
       try{publish?.(e.mint)}catch{}
     }catch(err){
       metrics.lastError='market:'+String(err?.message||err);

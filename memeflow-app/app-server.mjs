@@ -941,12 +941,44 @@ function __mfOpenChartStream(req,res,mint){
 // This is display-only and does not change AI/risk/trading decisions.
 const __mfChartBackfillJobs=new Map();
 
+// MEMEFLOW_QUOTE_AWARE_CHART_V14
+function __mfChartQuoteKindV14(mint){
+  const token=store?.state?.tokens?.[String(mint||'')]||{};
+  const q=String(token?.quoteMint||'').trim();
+
+  if(
+    !q ||
+    q==='11111111111111111111111111111111' ||
+    q==='So11111111111111111111111111111111111111112'
+  )return 'SOL';
+
+  if(q==='EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'){
+    return 'USDC';
+  }
+
+  return 'UNSUPPORTED';
+}
+
+function __mfQuoteSafeChartPointsV14(mint,points){
+  const rows=Array.isArray(points)?points:[];
+  if(__mfChartQuoteKindV14(mint)==='SOL')return rows;
+
+  // Old archive points were written before quote-aware pricing and may be
+  // off by SOL/USD. Only V14 quote-aware live points are trusted.
+  return rows.filter(point=>
+    String(point?.source||'').includes('quote-aware')
+  );
+}
+
 function __mfChartSnapshotPayload(mint){
   mint=String(mint||'').trim();
   const hot=chartTradeHistory.get(mint)||[];
   let points=[];
   try{
-    points=__mfChartArchive.mergePointsSync(mint,hot);
+    points=__mfQuoteSafeChartPointsV14(
+      mint,
+      __mfChartArchive.mergePointsSync(mint,hot)
+    );
   }catch(error){
     console.warn('[chart-snapshot]',mint,error?.message||error);
     points=Array.isArray(hot)?hot.slice():[];
@@ -992,6 +1024,10 @@ function __mfBroadcastChartSnapshot(mint){
 function __mfEnsureChartBackfill(mint){
   mint=String(mint||'').trim();
   if(!__mfValidChartMint(mint))return;
+
+  // Historical pre-V14 non-SOL points were priced with SOL semantics.
+  // Do not backfill them into the canonical chart.
+  if(__mfChartQuoteKindV14(mint)!=='SOL')return;
   if(__mfChartBackfillJobs.has(mint))return;
 
   try{
@@ -1930,7 +1966,10 @@ function __mfOpenPositionMarket5mV22(mint,t,now=Date.now()){
 
   if(!__mfOpenPositionArchiveWarmedV22.has(mint)){
     try{
-      const merged=__mfChartArchive.mergePointsSync(mint,rows);
+      const merged=__mfQuoteSafeChartPointsV14(
+        mint,
+        __mfChartArchive.mergePointsSync(mint,rows)
+      );
 
       if(Array.isArray(merged)){
         rows=merged
@@ -2560,6 +2599,29 @@ function __mfEntryAdmissionForUser(
   settingsOverride=null,
   now=Date.now()
 ){
+  // MEMEFLOW_QUOTE_PRICING_ENTRY_GUARD_V14
+  // Never allow BUY READY / execution from a price whose quote currency
+  // has not been normalized into the canonical SOL-equivalent price.
+  if(token?.quotePricingReady===false){
+    return {
+      admitted:false,
+      state:'PENDING',
+      failedGates:[],
+      waitingGates:[{
+        name:'Quote pricing',
+        key:'quotePricingReady',
+        status:'WAITING',
+        pass:false,
+        reason:'waiting for canonical quote price',
+        retryable:true,
+        source:'quotePricingReady'
+      }],
+      hasStableFailure:false,
+      hasRetryableFailure:false,
+      reasons:['waiting for canonical quote price']
+    };
+  }
+
   try{
     const settings=
       settingsOverride &&
@@ -3001,7 +3063,12 @@ function publishTrade(mint,event,tokenOverride=null){
   const tradeSource=
     event?.marketProtocol==='pumpswap'
       ? 'pumpswap-trade-event'
-      : 'pump-trade-event';
+      : (
+          event?.marketQuoteKind &&
+          event.marketQuoteKind!=='SOL'
+            ? 'pump-trade-event-quote-aware'
+            : 'pump-trade-event'
+        );
   const point={
     id,
     t:at,
@@ -3692,7 +3759,18 @@ function __ingestPumpCreateEventDirect(
       ? Number(e.virtualSolReserves)
       : NaN;
 
+  // MEMEFLOW_QUOTE_AWARE_CREATE_PRICE_V14
+  // A non-SOL quote token must wait for a real quote-aware TradeEvent.
+  // Never label its quote price as SOL.
+  const createQuoteMint=String(e.quoteMint||'').trim();
+
+  const createSolQuote=
+    !createQuoteMint ||
+    createQuoteMint==='11111111111111111111111111111111' ||
+    createQuoteMint==='So11111111111111111111111111111111111111112';
+
   const priceSol=
+    createSolQuote &&
     Number.isFinite(vt) &&
     vt>0 &&
     Number.isFinite(vs) &&
@@ -3785,6 +3863,14 @@ function __ingestPumpCreateEventDirect(
       e.tokenTotalSupply?.toString?.()||null,
 
     quoteMint:e.quoteMint||null,
+    quotePricingReady:
+      createSolQuote &&
+      Number.isFinite(priceSol) &&
+      priceSol>0,
+    quotePricingMode:
+      createSolQuote
+        ? 'SOL'
+        : 'WAITING_LIVE_QUOTE',
     virtualQuoteReservesRaw:e.virtualQuoteReserves?.toString?.()||null,
     createSlot:slot,
     createSignature:signature,
@@ -9762,7 +9848,10 @@ const initialSize=finite(position.initialSizeSol);
 
     if(!_points.length){
       try{
-        _points=__mfChartArchive.mergePointsSync(_mint,[])||[];
+        _points=__mfQuoteSafeChartPointsV14(
+          _mint,
+          __mfChartArchive.mergePointsSync(_mint,[])||[]
+        );
       }catch{
         _points=[];
       }
