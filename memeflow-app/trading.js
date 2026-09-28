@@ -3452,6 +3452,26 @@ function levelLineTypeV33(level){
   return 'solid';
 }
 
+// V38: line styling follows site separators.
+// Keep semantic colors, but render all chart levels as thin 1px rails
+// with calmer opacity so they feel like native divider lines, not thick overlays.
+function chartLevelLineWidthV38(){
+  return 1;
+}
+
+function chartLevelLineOpacityV38(level){
+  const kind=String(level?.kind||'').toLowerCase();
+  if(kind==='entry')return .76;
+  if(kind==='stop')return .70;
+  if(kind==='tp')return .74;
+  if(kind==='tp2')return .74;
+  return .72;
+}
+
+function chartLiveLineOpacityV38(){
+  return .78;
+}
+
 // V34: right-axis rail renderer.
 // Strategy/live lines remain true ECharts Y-series for scale geometry,
 // but their labels + numeric values live in the SAME right-side rail

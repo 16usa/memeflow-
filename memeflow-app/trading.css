@@ -2295,3 +2295,11 @@ body.mf-page-trading.mf-trading-terminal .chart-axis-marker-v34.live{
   }
 }
 /* ===== /MEMEFLOW_CHART_AXIS_RAIL_V34 ===== */
+
+
+/* ===== MEMEFLOW_CHART_LINE_STYLE_V38_CSS ===== */
+body.mf-page-trading.mf-trading-terminal .chart-axis-marker-v34::before{
+  height:1px;
+  opacity:.58;
+}
+/* ===== /MEMEFLOW_CHART_LINE_STYLE_V38_CSS ===== */
