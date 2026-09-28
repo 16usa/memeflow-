@@ -1800,3 +1800,138 @@ body.mf-page-trading.mf-trading-terminal
     padding-left:7px !important;
   }
 }
+
+
+/* ===== MEMEFLOW_CHART_COMPACT_LAYOUT_V31 ===== */
+body.mf-page-trading.mf-trading-terminal .chart-head{
+  box-sizing:border-box;
+  width:100%;
+  min-width:0;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) max-content;
+  align-items:center;
+  column-gap:12px;
+}
+
+body.mf-page-trading.mf-trading-terminal .chart-head .token-title{
+  min-width:0;
+  overflow:hidden;
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+body.mf-page-trading.mf-trading-terminal .chart-head .token-title > div:last-child{
+  min-width:0;
+}
+
+body.mf-page-trading.mf-trading-terminal .price-toggle{
+  width:max-content;
+  min-width:0;
+  max-width:min(52vw,360px);
+  justify-self:end;
+  padding-left:8px;
+  display:grid;
+  justify-items:end;
+}
+
+body.mf-page-trading.mf-trading-terminal
+.price-toggle[data-metric="marketCap"]{
+  max-width:min(46vw,300px);
+}
+
+body.mf-page-trading.mf-trading-terminal .token-price,
+body.mf-page-trading.mf-trading-terminal .token-market{
+  max-width:100%;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+body.mf-page-trading.mf-trading-terminal .chart-legend{
+  top:6px;
+  left:10px;
+  right:10px;
+  max-width:none;
+  width:auto;
+  display:block;
+  pointer-events:none;
+}
+
+body.mf-page-trading.mf-trading-terminal .chart-legend-grid-v31{
+  width:100%;
+  display:grid;
+  grid-template-columns:repeat(6,minmax(0,1fr));
+  gap:4px;
+}
+
+body.mf-page-trading.mf-trading-terminal .chart-legend-cell-v31{
+  box-sizing:border-box;
+  min-width:0;
+  min-height:24px;
+  padding:3px 5px;
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr);
+  align-items:center;
+  gap:4px;
+  border:1px solid rgba(111,154,172,.10);
+  border-radius:5px;
+  background:rgba(15,20,26,.82);
+  overflow:hidden;
+}
+
+body.mf-page-trading.mf-trading-terminal .chart-legend-cell-v31 b{
+  min-width:0;
+  opacity:.72;
+  white-space:nowrap;
+}
+
+body.mf-page-trading.mf-trading-terminal .chart-legend-cell-v31 em{
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  font-style:normal;
+}
+
+body.mf-page-trading.mf-trading-terminal .chart-legend-cell-v31.stop{
+  border-color:rgba(255,102,121,.18);
+}
+
+body.mf-page-trading.mf-trading-terminal .chart-legend-cell-v31.tp,
+body.mf-page-trading.mf-trading-terminal .chart-legend-cell-v31.tp2{
+  border-color:rgba(77,230,161,.15);
+}
+
+@media (max-width:700px){
+  body.mf-page-trading.mf-trading-terminal .chart-head{
+    column-gap:8px;
+  }
+
+  body.mf-page-trading.mf-trading-terminal .price-toggle{
+    max-width:48vw;
+  }
+
+  body.mf-page-trading.mf-trading-terminal
+  .price-toggle[data-metric="marketCap"]{
+    max-width:42vw;
+  }
+
+  body.mf-page-trading.mf-trading-terminal .chart-legend-grid-v31{
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:3px;
+  }
+
+  body.mf-page-trading.mf-trading-terminal .chart-legend-cell-v31{
+    min-height:22px;
+    padding:2px 4px;
+    gap:3px;
+  }
+
+  body.mf-page-trading.mf-trading-terminal .chart-legend-cell-v31.level em{
+    white-space:normal;
+    line-height:1.08;
+    max-height:2.16em;
+  }
+}
+/* ===== /MEMEFLOW_CHART_COMPACT_LAYOUT_V31 ===== */

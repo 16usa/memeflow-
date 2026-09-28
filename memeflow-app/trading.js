@@ -3715,34 +3715,68 @@ function chartCandle(candle){
   };
 }
 
+// MEMEFLOW_CHART_COMPACT_LAYOUT_V31
+function chartRightGutterV31(){
+  if(state.chartMetric==='marketCap'){
+    return window.innerWidth<700 ? 58 : 64;
+  }
+  return window.innerWidth<700 ? 88 : 96;
+}
+
+function chartMainGridTopV31(){
+  return window.innerWidth<700 ? 84 : 62;
+}
+
+function chartMainGridHeightV31(lowerIndicatorVisible){
+  if(lowerIndicatorVisible){
+    return window.innerWidth<700 ? '47%' : '52%';
+  }
+  return window.innerWidth<700 ? '68%' : '74%';
+}
+
 function renderLegend(last,totalCandles,totalTicks,offscreenLevels=[]){
+  const root=$('chartLegend');
+
   if(!last){
-    $('chartLegend').innerHTML='';
+    root.innerHTML='';
     return;
   }
 
-  const parts=[
-    `<span>O ${formatChartValue(last.open)}</span>`,
-    `<span>H ${formatChartValue(last.high)}</span>`,
-    `<span>L ${formatChartValue(last.low)}</span>`,
-    `<span>C ${formatChartValue(last.close)}</span>`
+  const cells=[
+    ['O',formatChartValue(last.open),'ohlc'],
+    ['H',formatChartValue(last.high),'ohlc'],
+    ['L',formatChartValue(last.low),'ohlc'],
+    ['C',formatChartValue(last.close),'ohlc']
   ];
 
   if(totalCandles!==null && totalCandles!==undefined){
-    parts.push(
-      `<span>${totalCandles} candles · ${totalTicks||0} trades</span>`
+    cells.push(
+      ['CANDLES',String(totalCandles),'meta'],
+      ['TRADES',String(totalTicks||0),'meta']
     );
   }
 
   for(const level of offscreenLevels.slice(0,3)){
     const current=Number(last.close);
     const arrow=Number(level.price)>current?'↑':'↓';
-    parts.push(
-      `<span>${arrow} ${esc(level.label)}</span>`
-    );
+    const kind=String(level.kind||'level').toLowerCase();
+
+    cells.push([
+      `${arrow} ${kind==='stop'?'SL':kind==='tp'?'TP1':kind==='tp2'?'TP2':'LEVEL'}`,
+      String(level.label||'—'),
+      `level ${kind}`
+    ]);
   }
 
-  $('chartLegend').innerHTML=parts.join('');
+  root.innerHTML=
+    `<div class="chart-legend-grid-v31">`+
+      cells.map(([label,value,kind])=>
+        `<span class="chart-legend-cell-v31 ${esc(kind)}">`+
+          `<b>${esc(label)}</b>`+
+          `<em>${esc(value)}</em>`+
+        `</span>`
+      ).join('')+
+    `</div>`;
 }
 
 function scheduleChart(){
@@ -4092,15 +4126,15 @@ function drawChart(){
       grid:[
         {
           left:10,
-          right:76,
-          top:42,
-          height:lowerIndicatorVisible ? '55%' : '78%',
+          right:chartRightGutterV31(),
+          top:chartMainGridTopV31(),
+          height:chartMainGridHeightV31(lowerIndicatorVisible),
           containLabel:false
         },
         {
           show:lowerIndicatorVisible,
           left:10,
-          right:76,
+          right:chartRightGutterV31(),
           top:lowerIndicatorVisible ? '77%' : '94%',
           height:lowerIndicatorVisible ? '15%' : 0,
           containLabel:false
