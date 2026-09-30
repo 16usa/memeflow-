@@ -211,7 +211,7 @@ body .mf-site-header :is(
   display:block !important;
 
   color:var(--mf214-title) !important;
-  font-family:var(--mf-terminal-font, "IBM Plex Mono","SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace) !important;
+  font-family:var(--mf-font-sans) !important;
   font-size:var(--mf214-title-size) !important;
   font-weight:var(--mf214-title-weight) !important;
   line-height:var(--mf214-title-line) !important;
@@ -238,7 +238,7 @@ body .mf-site-header :is(
   display:block !important;
 
   color:var(--mf214-sub) !important;
-  font-family:var(--mf-terminal-font, "IBM Plex Mono","SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace) !important;
+  font-family:var(--mf-font-sans) !important;
   font-size:var(--mf214-sub-size) !important;
   font-weight:var(--mf214-sub-weight) !important;
   line-height:var(--mf214-sub-line) !important;

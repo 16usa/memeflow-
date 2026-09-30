@@ -2190,7 +2190,7 @@ body.mf-page-trading.mf-trading-terminal .chart-axis-marker-v34{
   white-space:nowrap;
   overflow:hidden;
   box-shadow:none;
-  font-family:"IBM Plex Mono",monospace;
+  font-family:var(--mf-font-sans);
   font-size:6.6px;
   line-height:1;
   letter-spacing:0;

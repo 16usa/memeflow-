@@ -1,7 +1,7 @@
 :root{
   color-scheme:dark;
   background:#010408;
-  font-family:"IBM Plex Mono","SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+  font-family:var(--mf-font-sans);
 }
 
 *{
@@ -67,7 +67,7 @@ body{
   box-shadow:0 8px 24px rgba(0,0,0,.20);
   backdrop-filter:blur(14px);
   -webkit-backdrop-filter:blur(14px);
-  font:800 9px/1 system-ui,-apple-system,sans-serif;
+  font:800 var(--mf-font-sans);
   letter-spacing:.10em;
   cursor:pointer;
   -webkit-tap-highlight-color:transparent;
@@ -139,7 +139,7 @@ body{
   border-radius:12px;
   background:rgba(27,20,10,.82);
   color:#ffd99d;
-  font:700 10px/1.35 system-ui,-apple-system,sans-serif;
+  font:700 var(--mf-font-sans);
   text-align:center;
   backdrop-filter:blur(14px);
   -webkit-backdrop-filter:blur(14px);

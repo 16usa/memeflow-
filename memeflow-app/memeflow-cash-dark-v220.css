@@ -19,7 +19,7 @@ html:not([data-theme="light"]){
   --mf-cash-muted:#878787;
   --mf-cash-faint:#595959;
 
-  --mf-cash-font:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display","Helvetica Neue",Arial,sans-serif;
+  --mf-cash-font:var(--mf-font-sans);
 
   --mf-neutral-text-1:var(--mf-cash-text);
   --mf-neutral-text-2:var(--mf-cash-text-soft);
@@ -101,7 +101,7 @@ html:not([data-theme="light"]) select,
 html:not([data-theme="light"]) textarea,
 html:not([data-theme="light"]) option,
 html:not([data-theme="light"]) optgroup{
-  font-family:var(--mf-cash-font) !important;
+  font-family:var(--mf-font-sans) !important;
 }
 
 html:not([data-theme="light"]) :where(
@@ -113,7 +113,7 @@ html:not([data-theme="light"]) :where(
   [class*="mono"],
   [class*="address"]
 ){
-  font-family:var(--mf-cash-font) !important;
+  font-family:var(--mf-font-sans) !important;
 }
 
 html:not([data-theme="light"]) body:where(

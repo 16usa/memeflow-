@@ -1,10 +1,10 @@
-@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&display=swap");
+500;600;700&display=swap");
 
 /* MEMEFLOW GLOBAL TERMINAL FONT V207.2
    Family only. No sizes, spacing, colors, geometry, pseudo-elements or SVG ownership.
 */
 :root{
-  --mf-terminal-font:"IBM Plex Mono","SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+  --mf-terminal-font:var(--mf-font-sans);
 }
 html,
 body,
@@ -14,5 +14,5 @@ select,
 textarea,
 option,
 optgroup{
-  font-family:var(--mf-terminal-font)!important;
+  font-family:var(--mf-font-sans)!important;
 }

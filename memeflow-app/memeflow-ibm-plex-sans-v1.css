@@ -16,14 +16,12 @@
 
 @import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;1,100;1,200;1,300;1,400;1,500;1,600;1,700&display=swap");
 
+:root{--mf-font-sans:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;}
+
 html body,
 html body *:not(.material-icons):not(.material-icons-outlined):not(.material-icons-round):not(.material-icons-sharp):not(.material-symbols-outlined):not(.material-symbols-rounded):not([class^="fa-"]):not([class*=" fa-"]) {
   font-family:
-    "IBM Plex Sans",
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif !important;
+    var(--mf-font-sans) !important;
 }
 
 html body button,
@@ -32,9 +30,5 @@ html body select,
 html body textarea,
 html body option {
   font-family:
-    "IBM Plex Sans",
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif !important;
+    var(--mf-font-sans) !important;
 }
