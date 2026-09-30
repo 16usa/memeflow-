@@ -1,0 +1,226 @@
+/* MEMEFLOW TOKEN FLOW MARKET GRID V235
+   One shared metric header for all token cards + real TradeEvent time windows.
+   Keeps the existing text sizes/colors of the page except for control-state opacity.
+*/
+
+body.mf-page-system-tokens{
+  --mf-v235-line:#252525;
+  --mf-v235-radius:14px;
+  --mf-v235-row-x:10px;
+  --mf-v235-col-gap:7px;
+}
+
+/* =========================
+   MARKET WINDOW + COLUMN HEAD
+   ========================= */
+body.mf-page-system-tokens .mf-market-grid-v235{
+  width:100%;
+  min-width:0;
+  margin:0;
+  overflow:hidden;
+  border:0.5px solid var(--mf-v235-line);
+  border-radius:var(--mf-v235-radius);
+  background:#000;
+  box-shadow:none;
+}
+
+body.mf-page-system-tokens .mf-market-window-v235{
+  min-height:40px;
+  padding:0 12px;
+  display:flex;
+  align-items:center;
+  justify-content:flex-start;
+  gap:20px;
+  border-bottom:0.5px solid var(--mf-v235-line);
+  background:#000;
+}
+
+body.mf-page-system-tokens .mf-market-window-v235 button{
+  position:relative;
+  min-width:0;
+  min-height:40px;
+  margin:0;
+  padding:0;
+  border:0;
+  border-radius:0;
+  background:transparent;
+  box-shadow:none;
+  color:inherit;
+  font:inherit;
+  opacity:.46;
+  cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+}
+
+body.mf-page-system-tokens .mf-market-window-v235 button::after{
+  content:"";
+  position:absolute;
+  right:0;
+  bottom:0;
+  left:0;
+  height:1px;
+  transform:scaleX(0);
+  transform-origin:center;
+  background:currentColor;
+  opacity:.82;
+}
+
+body.mf-page-system-tokens .mf-market-window-v235 button.is-active{
+  opacity:1;
+}
+
+body.mf-page-system-tokens .mf-market-window-v235 button.is-active::after{
+  transform:scaleX(1);
+}
+
+body.mf-page-system-tokens .mf-market-columns-v235{
+  width:100%;
+  min-width:0;
+  min-height:42px;
+  padding:6px var(--mf-v235-row-x);
+  display:grid;
+  grid-template-columns:
+    minmax(0,2.58fr)
+    minmax(45px,.74fr)
+    minmax(49px,.80fr)
+    minmax(43px,.64fr);
+  grid-template-rows:1fr 1fr;
+  column-gap:var(--mf-v235-col-gap);
+  row-gap:0;
+  align-items:center;
+  background:#000;
+  box-sizing:border-box;
+}
+
+body.mf-page-system-tokens .mf-market-token-head-v235{
+  grid-column:1;
+  grid-row:1 / span 2;
+  min-width:0;
+  padding-left:50px;
+  align-self:center;
+  opacity:.48;
+}
+
+body.mf-page-system-tokens .mf-market-head-v235{
+  position:relative;
+  width:100%;
+  height:100%;
+  min-width:0;
+  margin:0;
+  padding:0;
+  display:flex;
+  align-items:center;
+  justify-content:flex-start;
+  gap:4px;
+  border:0;
+  border-radius:0;
+  background:transparent;
+  box-shadow:none;
+  color:inherit;
+  font:inherit;
+  text-align:left;
+  opacity:.48;
+  cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+}
+
+body.mf-page-system-tokens .mf-market-head-v235[data-mf-market-sort="volume"]{grid-column:2;grid-row:1;}
+body.mf-page-system-tokens .mf-market-head-v235[data-mf-market-sort="transactions"]{grid-column:2;grid-row:2;}
+body.mf-page-system-tokens .mf-market-head-v235[data-mf-market-sort="mc"]{grid-column:3;grid-row:1;}
+body.mf-page-system-tokens .mf-market-head-v235[data-mf-market-sort="change"]{grid-column:3;grid-row:2;}
+body.mf-page-system-tokens .mf-market-head-v235[data-mf-market-sort="score"]{grid-column:4;grid-row:1 / span 2;align-self:stretch;}
+
+body.mf-page-system-tokens .mf-market-head-v235.is-active{
+  opacity:1;
+}
+
+body.mf-page-system-tokens .mf-market-sort-arrow-v235{
+  display:inline-block;
+  min-width:8px;
+  opacity:0;
+}
+
+body.mf-page-system-tokens .mf-market-head-v235.is-active .mf-market-sort-arrow-v235{
+  opacity:.8;
+}
+
+/* =========================
+   CARD VALUES ONLY
+   Repeated VOL/TX/MC/5m%/SCORE labels are removed from every card.
+   ========================= */
+body.mf-page-system-tokens .token-list > .flow-token :is(
+  .mf-regular-market-stat,
+  .mf-open-market-stat
+) > span,
+body.mf-page-system-tokens .token-list > .flow-token .mf-score-slot > span{
+  display:none !important;
+}
+
+body.mf-page-system-tokens .token-list > .flow-token :is(
+  .mf-regular-market-stat,
+  .mf-open-market-stat,
+  .mf-score-slot
+) > strong{
+  margin:0 !important;
+  align-self:flex-start !important;
+}
+
+/* P&L stays explicitly labeled on OPEN POSITION because it is not Score. */
+body.mf-page-system-tokens .token-list > .flow-token .mf-open-pnl-slot > span{
+  display:block !important;
+}
+
+@media (min-width:761px){
+  body.mf-page-system-tokens{
+    --mf-v235-row-x:14px;
+    --mf-v235-col-gap:12px;
+  }
+
+  body.mf-page-system-tokens .mf-market-columns-v235{
+    grid-template-columns:
+      minmax(0,2.60fr)
+      minmax(68px,.82fr)
+      minmax(72px,.90fr)
+      minmax(58px,.68fr);
+  }
+
+  body.mf-page-system-tokens .mf-market-token-head-v235{
+    padding-left:58px;
+  }
+}
+
+@media (max-width:760px){
+  body.mf-page-system-tokens .mf-market-window-v235{
+    min-height:38px;
+    padding-inline:10px;
+    gap:17px;
+  }
+
+  body.mf-page-system-tokens .mf-market-window-v235 button{
+    min-height:38px;
+  }
+}
+
+@media (max-width:390px){
+  body.mf-page-system-tokens{
+    --mf-v235-row-x:8px;
+    --mf-v235-col-gap:5px;
+  }
+
+  body.mf-page-system-tokens .mf-market-window-v235{
+    gap:14px;
+    padding-inline:8px;
+  }
+
+  body.mf-page-system-tokens .mf-market-columns-v235{
+    grid-template-columns:
+      minmax(0,2.62fr)
+      minmax(42px,.72fr)
+      minmax(46px,.78fr)
+      minmax(40px,.62fr);
+  }
+
+  body.mf-page-system-tokens .mf-market-token-head-v235{
+    padding-left:47px;
+  }
+}

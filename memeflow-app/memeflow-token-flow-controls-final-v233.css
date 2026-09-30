@@ -1,0 +1,253 @@
+/* MEMEFLOW TOKEN FLOW CONTROLS FINAL V233
+
+   User-requested final cleanup:
+   - REMOVE the whole ALL / 1H / 6H / 24H row entirely
+   - Search and Analyze have NO gray/internal fill
+   - Search and Analyze use only a clean 0.5px outline
+   - Search icon is a proper 16px SVG
+   - Search placeholder/input gets a readable normal size
+   - Header, counters and token cards are untouched
+*/
+
+body.mf-page-system-tokens{
+  --mf-v233-line:#252525;
+  --mf-v233-line-focus:rgba(255,255,255,.28);
+  --mf-v233-radius:14px;
+}
+
+/* Old age-window control is physically removed from HTML by the installer.
+   Hide defensively in case a stale fragment is ever injected. */
+body.mf-page-system-tokens .mf-time-window-v47c{
+  display:none !important;
+}
+
+/* ================================================================
+   SEARCH + ANALYZE
+   No outer slab. No inner fill. Just two precise outlined controls.
+   ================================================================ */
+
+body.mf-page-system-tokens .flow-toolbar{
+  position:sticky !important;
+  top:0 !important;
+  z-index:70 !important;
+
+  width:100% !important;
+  min-width:0 !important;
+  min-height:48px !important;
+  height:auto !important;
+
+  margin:0 !important;
+  padding:0 !important;
+  gap:8px !important;
+
+  display:grid !important;
+  grid-template-columns:minmax(0,1fr) 126px !important;
+  align-items:center !important;
+
+  border:0 !important;
+  outline:0 !important;
+  border-radius:0 !important;
+
+  background:transparent !important;
+  background-color:transparent !important;
+  background-image:none !important;
+  box-shadow:none !important;
+  backdrop-filter:none !important;
+  -webkit-backdrop-filter:none !important;
+}
+
+body.mf-page-system-tokens .flow-toolbar::before,
+body.mf-page-system-tokens .flow-toolbar::after{
+  content:none !important;
+  display:none !important;
+}
+
+/* Search control: same restrained outline language as page modules. */
+body.mf-page-system-tokens .flow-toolbar .search-wrap{
+  width:100% !important;
+  min-width:0 !important;
+  height:48px !important;
+  min-height:48px !important;
+  max-height:48px !important;
+
+  margin:0 !important;
+  padding:0 14px !important;
+  gap:10px !important;
+
+  display:flex !important;
+  align-items:center !important;
+
+  border:0.5px solid var(--mf-v233-line) !important;
+  outline:0 !important;
+  border-radius:var(--mf-v233-radius) !important;
+
+  background:transparent !important;
+  background-color:transparent !important;
+  background-image:none !important;
+  box-shadow:none !important;
+}
+
+/* Proper magnifying-glass icon. */
+body.mf-page-system-tokens .flow-toolbar .mf-search-icon-v233{
+  width:16px !important;
+  height:16px !important;
+  min-width:16px !important;
+  min-height:16px !important;
+
+  display:grid !important;
+  place-items:center !important;
+  flex:0 0 16px !important;
+
+  margin:0 !important;
+  padding:0 !important;
+  opacity:.84 !important;
+}
+
+body.mf-page-system-tokens .flow-toolbar .mf-search-icon-v233 svg{
+  width:16px !important;
+  height:16px !important;
+  display:block !important;
+  fill:none !important;
+  stroke:currentColor !important;
+  stroke-width:1.8 !important;
+  stroke-linecap:round !important;
+  stroke-linejoin:round !important;
+}
+
+/* Search text only: user explicitly requested a normal readable size. */
+body.mf-page-system-tokens .flow-toolbar #tokenSearch{
+  width:100% !important;
+  min-width:0 !important;
+  height:46px !important;
+  min-height:0 !important;
+
+  margin:0 !important;
+  padding:0 !important;
+
+  border:0 !important;
+  outline:0 !important;
+  border-radius:0 !important;
+
+  background:transparent !important;
+  background-color:transparent !important;
+  background-image:none !important;
+  box-shadow:none !important;
+
+  font-size:13px !important;
+  line-height:1.25 !important;
+  letter-spacing:0 !important;
+}
+
+body.mf-page-system-tokens .flow-toolbar #tokenSearch::placeholder{
+  opacity:.62 !important;
+}
+
+/* Remove the old telemetry text from this compact control area. */
+body.mf-page-system-tokens .flow-toolbar .refresh-info{
+  width:126px !important;
+  min-width:126px !important;
+  height:48px !important;
+
+  margin:0 !important;
+  padding:0 !important;
+
+  display:block !important;
+}
+
+body.mf-page-system-tokens .flow-toolbar .refresh-info > #lastUpdate{
+  display:none !important;
+}
+
+/* Analyze: no fill, same 0.5px frame and radius as Search. */
+body.mf-page-system-tokens .flow-toolbar #refreshButton{
+  width:126px !important;
+  min-width:126px !important;
+  height:48px !important;
+  min-height:48px !important;
+  max-height:48px !important;
+
+  margin:0 !important;
+  padding:0 15px !important;
+
+  border:0.5px solid var(--mf-v233-line) !important;
+  outline:0 !important;
+  border-radius:var(--mf-v233-radius) !important;
+
+  background:transparent !important;
+  background-color:transparent !important;
+  background-image:none !important;
+  box-shadow:none !important;
+}
+
+/* Quiet interaction; no filled hover state. */
+body.mf-page-system-tokens .flow-toolbar .search-wrap:focus-within,
+body.mf-page-system-tokens .flow-toolbar #refreshButton:hover,
+body.mf-page-system-tokens .flow-toolbar #refreshButton:focus-visible{
+  border-color:var(--mf-v233-line-focus) !important;
+  background:transparent !important;
+  background-color:transparent !important;
+  box-shadow:none !important;
+}
+
+/* Disabled/scanning must also stay transparent. */
+body.mf-page-system-tokens .flow-toolbar #refreshButton:disabled{
+  background:transparent !important;
+  background-color:transparent !important;
+  background-image:none !important;
+  box-shadow:none !important;
+}
+
+/* Mobile refinement. */
+@media(max-width:760px){
+  body.mf-page-system-tokens .flow-toolbar{
+    grid-template-columns:minmax(0,1fr) 118px !important;
+    gap:7px !important;
+  }
+
+  body.mf-page-system-tokens .flow-toolbar .search-wrap{
+    height:46px !important;
+    min-height:46px !important;
+    max-height:46px !important;
+    padding-inline:13px !important;
+    gap:9px !important;
+  }
+
+  body.mf-page-system-tokens .flow-toolbar #tokenSearch{
+    height:44px !important;
+    font-size:13px !important;
+  }
+
+  body.mf-page-system-tokens .flow-toolbar .refresh-info,
+  body.mf-page-system-tokens .flow-toolbar #refreshButton{
+    width:118px !important;
+    min-width:118px !important;
+    height:46px !important;
+    min-height:46px !important;
+    max-height:46px !important;
+  }
+}
+
+@media(max-width:390px){
+  body.mf-page-system-tokens .flow-toolbar{
+    grid-template-columns:minmax(0,1fr) 104px !important;
+    gap:6px !important;
+  }
+
+  body.mf-page-system-tokens .flow-toolbar .search-wrap{
+    padding-inline:11px !important;
+  }
+
+  body.mf-page-system-tokens .flow-toolbar .mf-search-icon-v233,
+  body.mf-page-system-tokens .flow-toolbar .mf-search-icon-v233 svg{
+    width:15px !important;
+    height:15px !important;
+    min-width:15px !important;
+    min-height:15px !important;
+  }
+
+  body.mf-page-system-tokens .flow-toolbar .refresh-info,
+  body.mf-page-system-tokens .flow-toolbar #refreshButton{
+    width:104px !important;
+    min-width:104px !important;
+  }
+}

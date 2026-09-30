@@ -1,0 +1,1341 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta
+    name="viewport"
+    content="width=device-width,initial-scale=1,viewport-fit=cover"
+  >
+  <meta
+    http-equiv="Cache-Control"
+    content="no-cache, no-store, must-revalidate"
+  >
+  <title>MEMEFLOW · Owner Intelligence</title>
+  <link
+    rel="stylesheet"
+    href="/owner-intelligence.css?v=unknown-v4-20260829-072410"
+  >
+  <link rel="stylesheet" href="/memeflow-x-canonical-v186.css?v=typography-role-system-v186-20260922">
+<!-- MEMEFLOW_TYPOGRAPHY_V204 -->
+<link rel="stylesheet" href="/memeflow-typography-v204.css?v=204-20260922">
+<!-- /MEMEFLOW_TYPOGRAPHY_V204 -->
+<!-- MEMEFLOW_GLOBAL_TERMINAL_FONT_V207_2 -->
+<link rel="stylesheet" href="/memeflow-terminal-font-v207-2.css?v=2072-20260922">
+<!-- /MEMEFLOW_GLOBAL_TERMINAL_FONT_V207_2 -->
+<link rel="stylesheet" href="/site-header-unify-v213.css?v=214">
+<link rel="stylesheet" href="/memeflow-cash-dark-v220.css?v=pump-routing-dark-v222-20260928">
+</head>
+
+<body class="mf-page-owner-intelligence">
+  <div class="oi-shell">
+
+    <header class="oi-top">
+      <div>
+        <div class="oi-kicker">OWNER ONLY</div>
+        <h1>OWNER INTELLIGENCE</h1>
+        <p>
+          MEMEFLOW Strategy Coach · performance · diagnostics ·
+          shadow validation
+        </p>
+      </div>
+
+      <div class="oi-top-actions">
+        <a
+          class="oi-btn ghost"
+          href="/trading.html"
+        >
+          TRADING TERMINAL
+        </a>
+
+        <button
+          class="oi-btn"
+          id="refreshBtn"
+          type="button"
+        >
+          REFRESH
+        </button>
+      </div>
+    </header>
+
+    <!-- MEMEFLOW_OWNER_ACCESS_UI_V1 -->
+    <section
+      id="accessError"
+      class="oi-access oi-owner-login"
+      hidden
+    >
+      <div class="oi-owner-lock">OWNER ONLY</div>
+
+      <h2>OWNER ACCESS REQUIRED</h2>
+
+      <p>
+        This dashboard contains platform-wide trading analytics
+        and owner controls.
+      </p>
+
+      <div class="oi-owner-key-wrap">
+        <input
+          id="ownerAccessKey"
+          type="password"
+          autocomplete="off"
+          autocapitalize="off"
+          spellcheck="false"
+          placeholder="Owner Access Key"
+        >
+
+        <button
+          id="ownerUnlockBtn"
+          class="oi-btn primary"
+          type="button"
+        >
+          UNLOCK OWNER
+        </button>
+      </div>
+
+      <div
+        id="ownerAccessMessage"
+        class="oi-owner-access-message"
+      ></div>
+
+      <small>
+        The key is sent only to MEMEFLOW's existing
+        /api/owner/claim endpoint and is not stored in this page.
+      </small>
+    </section>
+
+    <main id="ownerApp" hidden>
+
+      <section class="oi-notice">
+        <div>
+          <strong>
+            OpenAI is not in the realtime trading loop.
+          </strong>
+          <span>
+            API is called only when the owner presses ANALYZE
+            or sends an Owner Chat message.
+          </span>
+        </div>
+
+        <div
+          class="oi-ai-status"
+          id="aiStatus"
+        >
+          AI —
+        </div>
+      </section>
+
+      <section class="oi-grid oi-grid-4">
+        <article class="oi-stat">
+          <span>REALIZED P&L</span>
+          <strong id="pnlValue">—</strong>
+          <small id="pnlSub">—</small>
+        </article>
+
+        <article class="oi-stat">
+          <span>WIN RATE</span>
+          <strong id="winRateValue">—</strong>
+          <small id="winRateSub">—</small>
+        </article>
+
+        <article class="oi-stat">
+          <span>OPEN POSITIONS</span>
+          <strong id="positionsValue">—</strong>
+          <small id="positionsSub">—</small>
+        </article>
+
+        <article class="oi-stat">
+          <span>ENGINE</span>
+          <strong id="engineValue">—</strong>
+          <small id="engineSub">—</small>
+        </article>
+      </section>
+
+      <section class="oi-grid oi-grid-2">
+
+        <article class="oi-panel">
+          <div class="oi-panel-head">
+            <div>
+              <span class="oi-eyebrow">
+                REALTIME ENGINE
+              </span>
+              <h2>Decision state</h2>
+            </div>
+          </div>
+
+          <div
+            id="decisionStats"
+            class="oi-decision-stats"
+          ></div>
+
+          <div class="oi-divider"></div>
+
+          <h3>Top blockers / reasons</h3>
+          <div
+            id="reasonList"
+            class="oi-list"
+          ></div>
+        </article>
+
+        <article class="oi-panel">
+          <div class="oi-panel-head">
+            <div>
+              <span class="oi-eyebrow">
+                SYSTEM
+              </span>
+              <h2>Health</h2>
+            </div>
+          </div>
+
+          <div
+            id="healthList"
+            class="oi-list"
+          ></div>
+        </article>
+
+      </section>
+
+      
+      <!-- MEMEFLOW_SHADOW_PROMOTION_REPORT_V23_14_UI -->
+      <section
+        id="promotionMonitor"
+        class="oi-panel oi-promotion-monitor"
+      >
+        <div class="oi-panel-head">
+          <div>
+            <span class="oi-eyebrow">
+              V22 vs V23 · SHADOW ONLY
+            </span>
+            <h2>AI Brain Promotion Readiness</h2>
+            <p>
+              One owner-only view of paired outcomes, calibration,
+              drift and every promotion gate. V22 remains in control.
+            </p>
+          </div>
+
+          <span
+            id="promotionStatusBadge"
+            class="oi-ai-status"
+          >
+            LOADING
+          </span>
+        </div>
+
+        <div class="oi-grid oi-grid-4">
+          <article class="oi-stat">
+            <span>READINESS</span>
+            <strong id="promotionReadiness">—</strong>
+            <small id="promotionReadinessSub">manual review only</small>
+          </article>
+
+          <article class="oi-stat">
+            <span>PAIRED 5M</span>
+            <strong id="promotionPaired">—</strong>
+            <small id="promotionPairedSub">target 100</small>
+          </article>
+
+          <article class="oi-stat">
+            <span>POSITIVE / NEGATIVE</span>
+            <strong id="promotionBalance">—</strong>
+            <small>minimum 20 / 20</small>
+          </article>
+
+          <article class="oi-stat">
+            <span>CURRENT VERDICT</span>
+            <strong id="promotionVerdict">—</strong>
+            <small id="promotionAuthority">V22 authority</small>
+          </article>
+        </div>
+
+        <div class="oi-promotion-meter">
+          <div
+            id="promotionMeterFill"
+            class="oi-promotion-meter-fill"
+          ></div>
+        </div>
+
+        <div class="oi-grid oi-grid-2 oi-promotion-details">
+          <div>
+            <h3>V22 vs V23</h3>
+            <div id="promotionBenchmark" class="oi-list"></div>
+          </div>
+
+          <div>
+            <h3>Calibration / Drift</h3>
+            <div id="promotionHealth" class="oi-list"></div>
+          </div>
+        </div>
+
+        <div class="oi-divider"></div>
+
+        <div class="oi-promotion-check-head">
+          <h3>Promotion gates</h3>
+          <span id="promotionGateSummary">—</span>
+        </div>
+
+        <div
+          id="promotionChecks"
+          class="oi-promotion-checks"
+        ></div>
+
+        <div
+          id="promotionBlocker"
+          class="oi-promotion-blocker"
+        >
+          Waiting for shadow evidence.
+        </div>
+      </section>
+
+      <!-- MEMEFLOW_TOKEN_INTELLIGENCE_SCORECARD_V23_15_UI -->
+      <section
+        id="tokenScorecardMonitor"
+        class="oi-panel oi-scorecard-monitor"
+      >
+        <div class="oi-panel-head">
+          <div>
+            <span class="oi-eyebrow">
+              PER TOKEN · V23 SHADOW
+            </span>
+            <h2>Token Intelligence Scorecards</h2>
+            <p>
+              Explainability view only — probability, confidence,
+              wallets, trajectory, patterns, calibration and blockers.
+              This is not a second MEMEFLOW Score.
+            </p>
+          </div>
+
+          <span
+            id="tokenScorecardStatus"
+            class="oi-ai-status"
+          >
+            LOADING
+          </span>
+        </div>
+
+        <div class="oi-grid oi-grid-4">
+          <article class="oi-stat">
+            <span>TRACKED</span>
+            <strong id="tokenScorecardTracked">—</strong>
+            <small>active scorecards</small>
+          </article>
+
+          <article class="oi-stat">
+            <span>WITH PROBABILITY</span>
+            <strong id="tokenScorecardProbable">—</strong>
+            <small>usable shadow forecast</small>
+          </article>
+
+          <article class="oi-stat">
+            <span>HIGH READINESS</span>
+            <strong id="tokenScorecardReady">—</strong>
+            <small>≥75% evidence ready</small>
+          </article>
+
+          <article class="oi-stat">
+            <span>AVG READINESS</span>
+            <strong id="tokenScorecardAverage">—</strong>
+            <small>diagnostic only</small>
+          </article>
+        </div>
+
+        <div class="oi-scorecard-search">
+          <input
+            id="tokenScorecardMint"
+            type="text"
+            autocomplete="off"
+            autocapitalize="off"
+            spellcheck="false"
+            placeholder="Paste token mint to inspect"
+          >
+          <button
+            id="tokenScorecardInspectBtn"
+            class="oi-btn"
+            type="button"
+          >
+            INSPECT TOKEN
+          </button>
+        </div>
+
+        <div
+          id="tokenScorecardDetail"
+          class="oi-scorecard-detail"
+          hidden
+        ></div>
+
+        <div class="oi-divider"></div>
+
+        <div class="oi-promotion-check-head">
+          <h3>Tracked token evidence</h3>
+          <span id="tokenScorecardListSummary">—</span>
+        </div>
+
+        <div
+          id="tokenScorecardList"
+          class="oi-scorecard-list"
+        ></div>
+      </section>
+
+      <!-- MEMEFLOW_SHADOW_OUTCOME_REVIEW_V23_16_UI -->
+      <section
+        id="outcomeReviewMonitor"
+        class="oi-panel oi-outcome-review"
+      >
+        <div class="oi-panel-head">
+          <div>
+            <span class="oi-eyebrow">
+              5M POSTMORTEM · SHADOW ONLY
+            </span>
+            <h2>V23 Outcome Review</h2>
+            <p>
+              Shows where the shadow forecast was right or wrong and
+              which evidence was present at the frozen anchor.
+              Attribution tags are diagnostic hints, not causal proof.
+            </p>
+          </div>
+
+          <span
+            id="outcomeReviewStatus"
+            class="oi-ai-status"
+          >
+            LOADING
+          </span>
+        </div>
+
+        <div class="oi-grid oi-grid-4">
+          <article class="oi-stat">
+            <span>REVIEWED 5M</span>
+            <strong id="outcomeReviewScored">—</strong>
+            <small>directional outcomes</small>
+          </article>
+
+          <article class="oi-stat">
+            <span>HIT RATE</span>
+            <strong id="outcomeReviewHitRate">—</strong>
+            <small>shadow forecast only</small>
+          </article>
+
+          <article class="oi-stat">
+            <span>FALSE + / FALSE −</span>
+            <strong id="outcomeReviewErrors">—</strong>
+            <small>miss type balance</small>
+          </article>
+
+          <article class="oi-stat">
+            <span>HIGH-CONF MISSES</span>
+            <strong id="outcomeReviewHighMiss">—</strong>
+            <small>priority review queue</small>
+          </article>
+        </div>
+
+        <div class="oi-grid oi-grid-2">
+          <div>
+            <h3>Top miss associations</h3>
+            <div
+              id="outcomeReviewTags"
+              class="oi-list"
+            ></div>
+          </div>
+
+          <div>
+            <h3>Recent 5m reviews</h3>
+            <div
+              id="outcomeReviewList"
+              class="oi-outcome-review-list"
+            ></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- MEMEFLOW_SHADOW_ERROR_PATTERN_LEARNER_V23_17_UI -->
+      <section
+        id="errorPatternMonitor"
+        class="oi-panel oi-error-pattern-monitor"
+      >
+        <div class="oi-panel-head">
+          <div>
+            <span class="oi-eyebrow">
+              RECURRING MISS STRUCTURE · SHADOW
+            </span>
+            <h2>V23 Error Pattern Learner</h2>
+            <p>
+              Finds repeated pre-outcome evidence combinations that
+              occur disproportionately in V23 misses. Bayesian
+              shrinkage and minimum support reduce fake certainty.
+              Associations are not causal proof.
+            </p>
+          </div>
+
+          <span
+            id="errorPatternStatus"
+            class="oi-ai-status"
+          >
+            LOADING
+          </span>
+        </div>
+
+        <div class="oi-grid oi-grid-4">
+          <article class="oi-stat">
+            <span>SCORED 5M</span>
+            <strong id="errorPatternScored">—</strong>
+            <small>hit + miss observations</small>
+          </article>
+
+          <article class="oi-stat">
+            <span>BASE MISS RATE</span>
+            <strong id="errorPatternBaseline">—</strong>
+            <small>all directional 5m rows</small>
+          </article>
+
+          <article class="oi-stat">
+            <span>MATURE PATTERNS</span>
+            <strong id="errorPatternMature">—</strong>
+            <small>support + Bayesian gate</small>
+          </article>
+
+          <article class="oi-stat">
+            <span>HIGH RISK</span>
+            <strong id="errorPatternHigh">—</strong>
+            <small>strongest recurring associations</small>
+          </article>
+        </div>
+
+        <div class="oi-divider"></div>
+
+        <div class="oi-promotion-check-head">
+          <h3>Top recurring miss associations</h3>
+          <span>diagnostic only · no auto-correction</span>
+        </div>
+
+        <div
+          id="errorPatternList"
+          class="oi-error-pattern-list"
+        ></div>
+      </section>
+
+      <!-- MEMEFLOW_SHADOW_ERROR_AWARE_CONFIDENCE_V23_18_UI -->
+      <section
+        id="errorAwareConfidenceMonitor"
+        class="oi-panel oi-error-aware-monitor"
+      >
+        <div class="oi-panel-head">
+          <div>
+            <span class="oi-eyebrow">
+              ERROR-AWARE TRUST · SHADOW ONLY
+            </span>
+            <h2>V23 Confidence Penalty</h2>
+            <p>
+              Mature V23.17 miss associations can reduce confidence
+              in the current shadow forecast. Probability is unchanged;
+              V22 remains the only trading authority.
+            </p>
+          </div>
+
+          <span
+            id="errorAwareConfidenceStatus"
+            class="oi-ai-status"
+          >
+            LOADING
+          </span>
+        </div>
+
+        <div class="oi-grid oi-grid-4">
+          <article class="oi-stat">
+            <span>PREDICTIONS</span>
+            <strong id="errorAwarePredictions">—</strong>
+            <small>evaluated for known error patterns</small>
+          </article>
+
+          <article class="oi-stat">
+            <span>PENALIZED</span>
+            <strong id="errorAwarePenalized">—</strong>
+            <small>matched mature patterns</small>
+          </article>
+
+          <article class="oi-stat">
+            <span>MEAN PENALTY</span>
+            <strong id="errorAwareMeanPenalty">—</strong>
+            <small>confidence haircut only</small>
+          </article>
+
+          <article class="oi-stat">
+            <span>MAX PENALTY</span>
+            <strong id="errorAwareMaxPenalty">—</strong>
+            <small>hard cap 40%</small>
+          </article>
+        </div>
+
+        <div class="oi-divider"></div>
+
+        <div class="oi-promotion-check-head">
+          <h3>Recent error-aware confidence</h3>
+          <span>probability unchanged · no auto-correction</span>
+        </div>
+
+        <div
+          id="errorAwareConfidenceList"
+          class="oi-error-aware-list"
+        ></div>
+      </section>
+
+      <!-- MEMEFLOW_SHADOW_ERROR_AWARE_BENCHMARK_V23_19_UI -->
+      <section
+        id="errorAwareBenchmarkMonitor"
+        class="oi-panel oi-error-aware-benchmark"
+      >
+        <div class="oi-panel-head">
+          <div>
+            <span class="oi-eyebrow">
+              PAIRED 5M VALIDATION · SHADOW
+            </span>
+            <h2>V23.18 Challenger Benchmark</h2>
+            <p>
+              Raw V23 is compared against a benchmark-only probability
+              shrunk toward 50% according to V23.18 confidence.
+              The live V23 probability is never changed.
+            </p>
+          </div>
+
+          <span
+            id="errorAwareBenchmarkVerdict"
+            class="oi-ai-status"
+          >
+            LOADING
+          </span>
+        </div>
+
+        <div class="oi-grid oi-grid-4">
+          <article class="oi-stat">
+            <span>PAIRED 5M</span>
+            <strong id="errorAwareBenchmarkPaired">—</strong>
+            <small>target 100</small>
+          </article>
+
+          <article class="oi-stat">
+            <span>CLASS BALANCE</span>
+            <strong id="errorAwareBenchmarkBalance">—</strong>
+            <small>positive / negative</small>
+          </article>
+
+          <article class="oi-stat">
+            <span>BRIER Δ</span>
+            <strong id="errorAwareBenchmarkBrier">—</strong>
+            <small>positive favors challenger</small>
+          </article>
+
+          <article class="oi-stat">
+            <span>LOG-LOSS Δ</span>
+            <strong id="errorAwareBenchmarkLogLoss">—</strong>
+            <small>positive favors challenger</small>
+          </article>
+        </div>
+
+        <div class="oi-grid oi-grid-2">
+          <div>
+            <h3>Raw V23</h3>
+            <div
+              id="errorAwareBenchmarkRaw"
+              class="oi-list"
+            ></div>
+          </div>
+
+          <div>
+            <h3>Error-aware challenger</h3>
+            <div
+              id="errorAwareBenchmarkChallenger"
+              class="oi-list"
+            ></div>
+          </div>
+        </div>
+
+        <div
+          id="errorAwareBenchmarkReason"
+          class="oi-promotion-blocker"
+          data-state="blocked"
+        >
+          Waiting for paired 5m outcomes.
+        </div>
+      </section>
+
+      <!-- MEMEFLOW_SHADOW_POLICY_CANDIDATE_BUILDER_V23_20_UI -->
+      <section
+        id="policyCandidateMonitor"
+        class="oi-panel oi-policy-candidate"
+      >
+        <div class="oi-panel-head">
+          <div>
+            <span class="oi-eyebrow">
+              POLICY CANDIDATE · SHADOW ONLY
+            </span>
+            <h2>V23.20 Policy Candidate</h2>
+            <p>
+              Converts a validated V23.19 benchmark win into a concrete
+              rule for the next shadow simulator. Nothing is applied to
+              V22, Settings, State, Score, BUY or SELL.
+            </p>
+          </div>
+
+          <span
+            id="policyCandidateStatus"
+            class="oi-ai-status"
+          >
+            LOADING
+          </span>
+        </div>
+
+        <div class="oi-grid oi-grid-4">
+          <article class="oi-stat">
+            <span>MODE</span>
+            <strong id="policyCandidateMode">—</strong>
+            <small>conservative / balanced</small>
+          </article>
+
+          <article class="oi-stat">
+            <span>MIN PENALTY</span>
+            <strong id="policyCandidateMinPenalty">—</strong>
+            <small>required V23.18 haircut</small>
+          </article>
+
+          <article class="oi-stat">
+            <span>MAX ADJ CONF</span>
+            <strong id="policyCandidateMaxConfidence">—</strong>
+            <small>candidate guard threshold</small>
+          </article>
+
+          <article class="oi-stat">
+            <span>MATURE PATTERNS</span>
+            <strong id="policyCandidatePatterns">—</strong>
+            <small>V23.17 support</small>
+          </article>
+        </div>
+
+        <div class="oi-grid oi-grid-2">
+          <div>
+            <h3>Readiness gates</h3>
+            <div
+              id="policyCandidateGates"
+              class="oi-promotion-checks"
+            ></div>
+          </div>
+
+          <div>
+            <h3>Candidate specification</h3>
+            <div
+              id="policyCandidateSpec"
+              class="oi-list"
+            ></div>
+          </div>
+        </div>
+
+        <div
+          id="policyCandidateBlocker"
+          class="oi-promotion-blocker"
+          data-state="blocked"
+        >
+          Waiting for V23.19 evidence.
+        </div>
+      </section>
+
+      <!-- MEMEFLOW_SHADOW_POLICY_SIMULATOR_V23_21_UI -->
+      <section
+        id="policySimulationMonitor"
+        class="oi-panel oi-policy-simulation"
+      >
+        <div class="oi-panel-head">
+          <div>
+            <span class="oi-eyebrow">
+              POLICY IMPACT · SHADOW SIMULATION
+            </span>
+            <h2>V23.21 Policy Simulator</h2>
+            <p>
+              Replays the V23.20 candidate against completed frozen 5m
+              outcomes. Measures protection versus opportunity cost.
+              Nothing is applied to live trading.
+            </p>
+          </div>
+
+          <span
+            id="policySimulationStatus"
+            class="oi-ai-status"
+          >
+            LOADING
+          </span>
+        </div>
+
+        <div class="oi-grid oi-grid-4">
+          <article class="oi-stat">
+            <span>EVALUABLE</span>
+            <strong id="policySimulationEvaluable">—</strong>
+            <small>completed directional 5m rows</small>
+          </article>
+
+          <article class="oi-stat">
+            <span>AFFECTED</span>
+            <strong id="policySimulationAffected">—</strong>
+            <small>rows candidate would downgrade</small>
+          </article>
+
+          <article class="oi-stat">
+            <span>NEGATIVE BLOCKED</span>
+            <strong id="policySimulationNegativeBlocked">—</strong>
+            <small>bad outcomes intercepted</small>
+          </article>
+
+          <article class="oi-stat">
+            <span>POSITIVE MISSED</span>
+            <strong id="policySimulationPositiveMissed">—</strong>
+            <small>opportunity cost</small>
+          </article>
+        </div>
+
+        <div class="oi-grid oi-grid-2">
+          <div>
+            <h3>Impact</h3>
+            <div
+              id="policySimulationImpact"
+              class="oi-list"
+            ></div>
+          </div>
+
+          <div>
+            <h3>Review gates</h3>
+            <div
+              id="policySimulationGates"
+              class="oi-promotion-checks"
+            ></div>
+          </div>
+        </div>
+
+        <div
+          id="policySimulationVerdict"
+          class="oi-promotion-blocker"
+          data-state="blocked"
+        >
+          Waiting for a V23.20 candidate and completed outcomes.
+        </div>
+      </section>
+
+      <!-- MEMEFLOW_SHADOW_POLICY_REVIEW_GATE_V23_22_UI -->
+      <section
+        id="policyReviewMonitor"
+        class="oi-panel oi-policy-review"
+      >
+        <div class="oi-panel-head">
+          <div>
+            <span class="oi-eyebrow">
+              FINAL READINESS · MANUAL REVIEW ONLY
+            </span>
+            <h2>V23.22 Policy Review Gate</h2>
+            <p>
+              Combines the V23.20 candidate, V23.21 simulation,
+              V23.19 forecast benchmark, calibration and drift into
+              one final owner review-readiness verdict. There is no
+              apply endpoint and nothing can auto-promote.
+            </p>
+          </div>
+
+          <span
+            id="policyReviewStatus"
+            class="oi-ai-status"
+          >
+            LOADING
+          </span>
+        </div>
+
+        <div class="oi-grid oi-grid-4">
+          <article class="oi-stat">
+            <span>EVALUABLE</span>
+            <strong id="policyReviewEvaluable">—</strong>
+            <small>review gate target 150</small>
+          </article>
+
+          <article class="oi-stat">
+            <span>AFFECTED</span>
+            <strong id="policyReviewAffected">—</strong>
+            <small>review gate target 20</small>
+          </article>
+
+          <article class="oi-stat">
+            <span>NEG PRECISION</span>
+            <strong id="policyReviewPrecision">—</strong>
+            <small>target ≥65%</small>
+          </article>
+
+          <article class="oi-stat">
+            <span>OPPORTUNITY COST</span>
+            <strong id="policyReviewOpportunityCost">—</strong>
+            <small>target ≤10%</small>
+          </article>
+        </div>
+
+        <div class="oi-grid oi-grid-2">
+          <div>
+            <h3>Final gates</h3>
+            <div
+              id="policyReviewGates"
+              class="oi-promotion-checks"
+            ></div>
+          </div>
+
+          <div>
+            <h3>Review packet</h3>
+            <div
+              id="policyReviewPacket"
+              class="oi-list"
+            ></div>
+          </div>
+        </div>
+
+        <div
+          id="policyReviewVerdict"
+          class="oi-promotion-blocker"
+          data-state="blocked"
+        >
+          Not eligible for manual policy review yet.
+        </div>
+      </section>
+
+      <!-- MEMEFLOW_V23_E2E_READINESS_FREEZE_V23_23_UI -->
+      <section
+        id="v23ReadinessMonitor"
+        class="oi-panel oi-v23-readiness"
+      >
+        <div class="oi-panel-head">
+          <div>
+            <span class="oi-eyebrow">
+              V23 CLOSURE · END-TO-END FREEZE
+            </span>
+            <h2>V23.23 Readiness & Freeze</h2>
+            <p>
+              Final architecture audit for the complete V23 shadow chain.
+              Architecture freeze and real-evidence activation readiness are
+              shown separately. V22 remains the only trading authority.
+            </p>
+          </div>
+
+          <span
+            id="v23ReadinessStatus"
+            class="oi-ai-status"
+          >
+            LOADING
+          </span>
+        </div>
+
+        <div class="oi-grid oi-grid-4">
+          <article class="oi-stat">
+            <span>COMPONENTS</span>
+            <strong id="v23ReadinessComponents">—</strong>
+            <small>present / expected</small>
+          </article>
+
+          <article class="oi-stat">
+            <span>ARCHITECTURE</span>
+            <strong id="v23ReadinessArchitecture">—</strong>
+            <small>freeze status</small>
+          </article>
+
+          <article class="oi-stat">
+            <span>EVIDENCE</span>
+            <strong id="v23ReadinessEvidence">—</strong>
+            <small>real outcome readiness</small>
+          </article>
+
+          <article class="oi-stat">
+            <span>NEXT MAJOR</span>
+            <strong id="v23ReadinessNext">V24</strong>
+            <small>controlled integration</small>
+          </article>
+        </div>
+
+        <div class="oi-grid oi-grid-2">
+          <div>
+            <h3>Closure checks</h3>
+            <div
+              id="v23ReadinessChecks"
+              class="oi-promotion-checks"
+            ></div>
+          </div>
+
+          <div>
+            <h3>V24 handoff</h3>
+            <div
+              id="v23ReadinessHandoff"
+              class="oi-list"
+            ></div>
+          </div>
+        </div>
+
+        <div
+          id="v23ReadinessVerdict"
+          class="oi-promotion-blocker"
+          data-state="blocked"
+        >
+          Auditing V23 architecture.
+        </div>
+      </section>
+
+      <!-- MEMEFLOW_V24_CONTROLLED_POLICY_BRIDGE_V24_0_UI -->
+      <section
+        id="v24PolicyBridgeMonitor"
+        class="oi-panel oi-v24-policy-bridge"
+      >
+        <div class="oi-panel-head">
+          <div>
+            <span class="oi-eyebrow">
+              V24 CONTROLLED INTEGRATION
+            </span>
+            <h2>V24.0 Policy Bridge</h2>
+            <p>
+              First one-way bridge from frozen V23 intelligence into the
+              V22 decision path. It can only downgrade BUY READY to WATCH.
+              Default mode is OFF and the bridge kill switch defaults ON.
+            </p>
+          </div>
+
+          <span
+            id="v24PolicyBridgeStatus"
+            class="oi-ai-status"
+          >
+            LOADING
+          </span>
+        </div>
+
+        <div class="oi-grid oi-grid-4">
+          <article class="oi-stat">
+            <span>MODE</span>
+            <strong id="v24PolicyBridgeMode">—</strong>
+            <small>OFF / SHADOW / ENFORCE</small>
+          </article>
+
+          <article class="oi-stat">
+            <span>KILL SWITCH</span>
+            <strong id="v24PolicyBridgeKill">—</strong>
+            <small>bridge-local control</small>
+          </article>
+
+          <article class="oi-stat">
+            <span>WOULD DOWNGRADE</span>
+            <strong id="v24PolicyBridgeShadowCount">—</strong>
+            <small>shadow observations</small>
+          </article>
+
+          <article class="oi-stat">
+            <span>ENFORCED</span>
+            <strong id="v24PolicyBridgeEnforcedCount">—</strong>
+            <small>BUY READY → WATCH</small>
+          </article>
+        </div>
+
+        <div class="oi-grid oi-grid-2">
+          <div>
+            <h3>Bridge contract</h3>
+            <div
+              id="v24PolicyBridgeContract"
+              class="oi-list"
+            ></div>
+          </div>
+
+          <div>
+            <h3>Readiness</h3>
+            <div
+              id="v24PolicyBridgeReadiness"
+              class="oi-list"
+            ></div>
+          </div>
+        </div>
+
+        <div
+          id="v24PolicyBridgeVerdict"
+          class="oi-promotion-blocker"
+          data-state="blocked"
+        >
+          Loading controlled integration status.
+        </div>
+      </section>
+
+      <!-- MEMEFLOW_V24_PROBATION_EVIDENCE_GATE_V24_2_UI -->
+      <section id="v24ProbationGateMonitor" class="oi-panel oi-v24-probation-gate">
+        <div class="oi-panel-head">
+          <div>
+            <span class="oi-eyebrow">V24 PROBATION · EVIDENCE GATE</span>
+            <h2>V24.2 Probation Evidence Gate</h2>
+            <p>
+              Converts V24.1 completed 5m outcomes into a conservative
+              owner-review verdict using sample balance, resolution quality,
+              SHADOW exposure and a 95% Wilson precision lower bound.
+              It cannot enable ENFORCE.
+            </p>
+          </div>
+          <span id="v24ProbationGateStatus" class="oi-ai-status">LOADING</span>
+        </div>
+
+        <div class="oi-grid oi-grid-4">
+          <article class="oi-stat">
+            <span>DIRECTIONAL</span>
+            <strong id="v24ProbationGateDirectional">—</strong>
+            <small>target ≥100</small>
+          </article>
+          <article class="oi-stat">
+            <span>SHADOW SAMPLE</span>
+            <strong id="v24ProbationGateShadow">—</strong>
+            <small>target ≥50</small>
+          </article>
+          <article class="oi-stat">
+            <span>NEG PRECISION</span>
+            <strong id="v24ProbationGatePrecision">—</strong>
+            <small>target ≥65%</small>
+          </article>
+          <article class="oi-stat">
+            <span>WILSON LOWER 95%</span>
+            <strong id="v24ProbationGateWilson">—</strong>
+            <small>target ≥55%</small>
+          </article>
+        </div>
+
+        <div class="oi-grid oi-grid-2">
+          <div>
+            <h3>Probation gates</h3>
+            <div id="v24ProbationGateChecks" class="oi-promotion-checks"></div>
+          </div>
+          <div>
+            <h3>Review packet</h3>
+            <div id="v24ProbationGatePacket" class="oi-list"></div>
+          </div>
+        </div>
+
+        <div id="v24ProbationGateVerdict"
+             class="oi-promotion-blocker"
+             data-state="blocked">
+          Building V24 probation evidence.
+        </div>
+      </section>
+
+      <!-- MEMEFLOW_PLATFORM_LEARNING_V2_UI -->
+      <section class="oi-panel">
+        <div class="oi-panel-head">
+          <div>
+            <span class="oi-eyebrow">
+              ALL USERS · LOCAL DATASET
+            </span>
+            <h2>Platform Learning</h2>
+            <p>
+              Aggregated trading outcomes from the entire MEMEFLOW platform.
+              No OpenAI API is used to collect or calculate these statistics.
+            </p>
+          </div>
+
+          <span class="oi-ai-status online">
+            LOCAL · FREE
+          </span>
+        </div>
+
+        <div class="oi-grid oi-grid-4">
+          <article class="oi-stat">
+            <span>USERS IN DATASET</span>
+            <strong id="platformUsers">—</strong>
+            <small>anonymous identities</small>
+          </article>
+
+          <article class="oi-stat">
+            <span>CLOSED POSITIONS</span>
+            <strong id="platformPositions">—</strong>
+            <small id="platformTrades">— trade events</small>
+          </article>
+
+          <article class="oi-stat">
+            <span>PLATFORM WIN RATE</span>
+            <strong id="platformWinRate">—</strong>
+            <small id="platformWinsLosses">—</small>
+          </article>
+
+          <article class="oi-stat">
+            <span>PLATFORM P&L</span>
+            <strong id="platformPnl">—</strong>
+            <small>selected 30-day window</small>
+          </article>
+        </div>
+
+        <div class="oi-divider"></div>
+
+        <div class="oi-grid oi-grid-2">
+          <div>
+            <h3>Score → outcome</h3>
+            <div id="platformScoreFactors" class="oi-factor-table"></div>
+          </div>
+
+          <div>
+            <h3>Holders → outcome</h3>
+            <div id="platformHolderFactors" class="oi-factor-table"></div>
+          </div>
+
+          <div>
+            <h3>Top 10 → outcome</h3>
+            <div id="platformTop10Factors" class="oi-factor-table"></div>
+          </div>
+
+          <div>
+            <h3>Buy pressure → outcome</h3>
+            <div id="platformPressureFactors" class="oi-factor-table"></div>
+          </div>
+        </div>
+
+        <div class="oi-divider"></div>
+
+        <div class="oi-grid oi-grid-2">
+          <div>
+            <h3>Exit reasons</h3>
+            <div id="platformExitReasons" class="oi-list"></div>
+          </div>
+
+          <div>
+            <h3>Strategy sources</h3>
+            <div id="platformStrategySources" class="oi-list"></div>
+          </div>
+        </div>
+
+        <div class="oi-privacy-note">
+          Learning dataset stores a one-way anonymous user hash.
+          Raw user IDs, wallet addresses and emails are not stored
+          in the analytics database.
+        </div>
+      </section>
+
+<section class="oi-panel oi-coach">
+
+        <div class="oi-panel-head oi-coach-head">
+          <div>
+            <span class="oi-eyebrow">
+              OPENAI · OWNER ONLY
+            </span>
+            <h2>AI Strategy Coach</h2>
+            <p>
+              Reviews aggregated MEMEFLOW results.
+              Does not trade automatically.
+            </p>
+          </div>
+
+          <button
+            class="oi-btn primary"
+            id="analyzeBtn"
+            type="button"
+          >
+            ANALYZE PERFORMANCE
+          </button>
+        </div>
+
+        <div class="oi-focus">
+          <input
+            id="focusInput"
+            type="text"
+            maxlength="1200"
+            placeholder="Optional: What should OpenAI focus on? Example: Why are we missing winners?"
+          >
+        </div>
+
+        <div
+          id="coachEmpty"
+          class="oi-empty"
+        >
+          No AI report yet. Press ANALYZE PERFORMANCE when
+          you want the owner coach to review the engine.
+        </div>
+
+        <div
+          id="coachReport"
+          hidden
+        >
+          <div class="oi-report-summary">
+            <div>
+              <span>EXECUTIVE SUMMARY</span>
+              <p id="executiveSummary"></p>
+            </div>
+
+            <div>
+              <span>PERFORMANCE</span>
+              <p id="performanceAssessment"></p>
+            </div>
+
+            <div>
+              <span>SYSTEM HEALTH</span>
+              <p id="healthAssessment"></p>
+            </div>
+          </div>
+
+          <h3>Findings</h3>
+          <div
+            id="findingsList"
+            class="oi-findings"
+          ></div>
+
+          <h3>Recommended changes</h3>
+          <div
+            id="proposalList"
+            class="oi-proposals"
+          ></div>
+        </div>
+      </section>
+
+      <section class="oi-grid oi-grid-2">
+
+        <article class="oi-panel">
+          <div class="oi-panel-head">
+            <div>
+              <span class="oi-eyebrow">
+                SETTINGS SAFETY
+              </span>
+              <h2>Owner audit log</h2>
+            </div>
+          </div>
+
+          <div
+            id="auditList"
+            class="oi-list"
+          ></div>
+        </article>
+
+        <article class="oi-panel">
+          <div class="oi-panel-head">
+            <div>
+              <span class="oi-eyebrow">
+                OWNER · OPENAI
+              </span>
+              <h2>Strategy Chat</h2>
+            </div>
+          </div>
+
+          <div
+            id="ownerChat"
+            class="oi-chat"
+          >
+            <div class="oi-chat-message assistant">
+              Ask about engine performance, bad entries,
+              missed opportunities, filters, scoring logic
+              or a new function you should add.
+            </div>
+          </div>
+
+          <div class="oi-chat-compose">
+            <textarea
+              id="chatInput"
+              rows="3"
+              placeholder="Example: Which filter should I investigate first and why?"
+            ></textarea>
+
+            <button
+              class="oi-btn primary"
+              id="chatSendBtn"
+              type="button"
+            >
+              SEND
+            </button>
+          </div>
+        </article>
+
+      </section>
+
+    </main>
+  </div>
+
+  <script
+    type="module"
+    src="/owner-intelligence.js?v=unknown-v4-20260829-072410"
+  ></script>
+</body>
+</html>

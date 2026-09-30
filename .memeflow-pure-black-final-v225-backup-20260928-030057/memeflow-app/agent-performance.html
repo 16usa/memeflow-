@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+<!-- MEMEFLOW_LIGHT_THEME_BOOT_V1 -->
+<script id="mfThemeBootV1">
+(() => {
+  try {
+    const value = localStorage.getItem('memeflow.theme.v1');
+    const theme = value === 'light' ? 'light' : 'dark';
+    document.documentElement.dataset.theme = theme;
+    document.documentElement.style.colorScheme = theme;
+  } catch {
+    document.documentElement.dataset.theme = 'dark';
+  }
+})();
+</script>
+<!-- /MEMEFLOW_LIGHT_THEME_BOOT_V1 -->
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<title>MEMEFLOW · Agent Performance</title>
+<link rel="stylesheet" href="/memeflow-brand.css?v=gorilla-pair-v159-20260919">
+<link rel="stylesheet" href="/memeflow-nav.css?v=global-right-drawer-frameless-v2-20260829">
+
+<link rel="stylesheet" href="/agent-performance.css?v=public-agent-performance-v1">
+<!-- MEMEFLOW_AGENT_PERFORMANCE_THEME_V38 -->
+<!-- /MEMEFLOW_AGENT_PERFORMANCE_THEME_V38 -->
+<!-- MEMEFLOW_AGENT_PERFORMANCE_THEME_V38 -->
+<link rel="stylesheet" href="/memeflow-theme.css?v=dark-header-transparent-v1-20260901">
+<link rel="stylesheet" href="/memeflow-layout-spacing-v54.css?v=layout-spacing-v54-20260905">
+<link rel="stylesheet" href="/memeflow-component-geometry-v55.css?v=component-geometry-v55-20260905">
+<link rel="stylesheet" href="/memeflow-surface-hierarchy-v57.css?v=surface-hierarchy-v57-20260905">
+<link rel="stylesheet" href="/memeflow-interaction-states-v58.css?v=interaction-states-v58-20260905">
+
+
+<!-- MEMEFLOW_AGENT_PERFORMANCE_LIGHT_V56 -->
+<link rel="stylesheet" href="/agent-performance-light-v56.css?v=agent-performance-light-v56-20260905">
+<!-- /MEMEFLOW_AGENT_PERFORMANCE_LIGHT_V56 -->
+<script src="/memeflow-theme.js?v=light-theme-v1-20260830" defer></script>
+<!-- /MEMEFLOW_AGENT_PERFORMANCE_THEME_V38 -->
+
+
+<!-- MEMEFLOW_RESPONSIVE_FINAL_V62 -->
+<link rel="stylesheet" href="/memeflow-responsive-final-v62.css?v=responsive-final-v62-20260905">
+<!-- /MEMEFLOW_RESPONSIVE_FINAL_V62 -->
+<!-- MEMEFLOW_COMPONENT_CONSISTENCY_V63 -->
+<link rel="stylesheet" href="/memeflow-component-consistency-v63.css?v=component-consistency-v63-20260905">
+<!-- /MEMEFLOW_COMPONENT_CONSISTENCY_V63 -->
+<!-- MEMEFLOW_ACCESSIBILITY_USABILITY_V64A -->
+<link rel="stylesheet" href="/memeflow-accessibility-usability-v64a.css?v=accessibility-v64a-20260905">
+<!-- /MEMEFLOW_ACCESSIBILITY_USABILITY_V64A -->
+<!-- MEMEFLOW_FINAL_VISUAL_QA_V65 -->
+<!-- /MEMEFLOW_FINAL_VISUAL_QA_V65 -->
+<!-- MEMEFLOW_DARK_X_SURFACE_V131_ASSET -->
+<!-- /MEMEFLOW_DARK_X_SURFACE_V131_ASSET -->
+  <link rel="stylesheet" href="/memeflow-x-canonical-v186.css?v=typography-role-system-v186-20260922">
+<!-- MEMEFLOW_AGENT_PERFORMANCE_COMPACT_V197 -->
+<link rel="stylesheet" href="/memeflow-agent-performance-compact-v197.css?v=197-20260922">
+<!-- /MEMEFLOW_AGENT_PERFORMANCE_COMPACT_V197 -->
+<!-- MEMEFLOW_TYPOGRAPHY_V204 -->
+<link rel="stylesheet" href="/memeflow-typography-v204.css?v=204-20260922">
+<!-- /MEMEFLOW_TYPOGRAPHY_V204 -->
+<!-- MEMEFLOW_GLOBAL_TERMINAL_FONT_V207_2 -->
+<link rel="stylesheet" href="/memeflow-terminal-font-v207-2.css?v=2072-20260922">
+<!-- /MEMEFLOW_GLOBAL_TERMINAL_FONT_V207_2 -->
+
+<link rel="stylesheet" href="/memeflow-header.css?v=canonical-v218-20260927">
+<link rel="stylesheet" href="/memeflow-cash-dark-v220.css?v=pure-black-half-px-v224-20260928">
+</head>
+<body class="mf-final-visual-qa-v65 mf-accessibility-v64a mf-component-consistency-v63 mf-agent-performance-page mf-layout-rhythm-v54 mf-page-agent-performance mf-component-geometry-v55 mf-surface-hierarchy-v57 mf-interaction-states-v58">
+<!-- MEMEFLOW_PUBLIC_AGENT_PERFORMANCE_V1 -->
+<main class="ap-page">
+<header class="ap-header mf-site-header">
+  <div class="header-left">
+    <div class="brand-mark" aria-hidden="true"><img class="mf-brand-img" src="/brand/memeflow-gorilla-dark.png?v=gorilla-pair-v159" alt=""></div>
+    <div class="header-title"><span>APE TRADING</span><strong>Agent Performance</strong></div>
+  </div>
+  <div class="ap-live-pill" id="enginePill"><i></i><span>DATA</span></div>
+</header>
+
+<section class="ap-hero">
+  <div>
+    <span class="ap-eyebrow">ALL USERS · LOCAL DATASET</span>
+    <h1>Agent Performance</h1>
+    <p>Recorded MEMEFLOW trading outcomes across the platform, shown in a simple public format. Strategy sources are separated so MEMEFLOW activity is not silently mixed with copy trading.</p>
+  </div>
+  <div class="ap-source"><span>DATA SOURCE</span><strong>Local analytics</strong><small id="updatedAt">Loading…</small></div>
+</section>
+
+<section class="ap-controls">
+  <div class="ap-periods">
+    <button data-days="7">7D</button>
+    <button data-days="30" class="active">30D</button>
+    <button data-days="90">90D</button>
+  </div>
+  <button id="refreshBtn" class="ap-refresh">Refresh</button>
+</section>
+
+<div id="errorBox" class="ap-error" hidden></div>
+
+<section class="ap-kpis">
+  <article><span>USERS IN DATASET</span><strong id="usersValue">—</strong><small>anonymous identities</small></article>
+  <article><span>CLOSED POSITIONS</span><strong id="positionsValue">—</strong><small id="tradesValue">— trade events</small></article>
+  <article class="primary"><span>WIN RATE</span><strong id="winRateValue">—</strong><small id="recordValue">—</small></article>
+  <article><span>NET P&amp;L</span><strong id="pnlValue">—</strong><small id="pnlWindow">selected window</small></article>
+</section>
+
+<section class="ap-grid">
+  <article class="ap-panel">
+    <div class="ap-head"><div><span class="ap-eyebrow">RESULT AT A GLANCE</span><h2>Recorded outcomes</h2></div><b id="datasetMode">LOCAL DATA</b></div>
+    <div class="ap-outcome">
+      <div class="ap-donut-box">
+        <div class="ap-donut" id="outcomeDonut"><div><strong id="evaluableValue">—</strong><span>evaluable</span></div></div>
+        <div class="ap-legend"><span><i class="win"></i>Wins <b id="winsLegend">—</b></span><span><i class="loss"></i>Losses <b id="lossesLegend">—</b></span><span><i class="flat"></i>Flat <b id="flatLegend">—</b></span></div>
+      </div>
+      <div class="ap-summary">
+        <div><span>Average P&amp;L</span><strong id="avgPnlValue">—</strong></div>
+        <div><span>Average time in trade</span><strong id="holdValue">—</strong></div>
+        <div><span>Outcome coverage</span><strong id="coverageValue">—</strong></div>
+        <div><span>Unknown historical outcomes</span><strong id="unknownValue">—</strong></div>
+      </div>
+    </div>
+    <p class="ap-note"><strong>How to read this:</strong> win rate uses only closed positions with known realized P&amp;L. Flat trades are separate. Historical rows without a final P&amp;L are not counted as losses.</p>
+  </article>
+
+  <article class="ap-panel">
+    <div class="ap-head"><div><span class="ap-eyebrow">OUTCOME MIX</span><h2>Wins vs losses</h2></div></div>
+    <div class="ap-bars">
+      <div><span>Wins</span><em><i id="winsBar"></i></em><strong id="winsPct">—</strong></div>
+      <div class="loss"><span>Losses</span><em><i id="lossesBar"></i></em><strong id="lossesPct">—</strong></div>
+      <div class="flat"><span>Flat</span><em><i id="flatBar"></i></em><strong id="flatPct">—</strong></div>
+    </div>
+    <div class="ap-engine"><span>ENGINE</span><strong id="engineStatus">—</strong><small id="engineSub">live scanner status</small></div>
+  </article>
+</section>
+
+<section class="ap-factors">
+  <article class="ap-panel"><div class="ap-head"><div><span class="ap-eyebrow">ENTRY QUALITY</span><h2>Score → outcome</h2></div></div><div id="scoreFactors"></div></article>
+  <article class="ap-panel"><div class="ap-head"><div><span class="ap-eyebrow">MARKET DEPTH</span><h2>Holders → outcome</h2></div></div><div id="holderFactors"></div></article>
+  <article class="ap-panel"><div class="ap-head"><div><span class="ap-eyebrow">CONCENTRATION</span><h2>Top 10 → outcome</h2></div></div><div id="top10Factors"></div></article>
+  <article class="ap-panel"><div class="ap-head"><div><span class="ap-eyebrow">MOMENTUM</span><h2>Buy pressure → outcome</h2></div></div><div id="pressureFactors"></div></article>
+</section>
+
+<section class="ap-bottom">
+  <article class="ap-panel"><div class="ap-head"><div><span class="ap-eyebrow">WHY TRADES ENDED</span><h2>Exit reasons</h2></div></div><div id="exitReasons"></div></article>
+  <article class="ap-panel"><div class="ap-head"><div><span class="ap-eyebrow">WHERE RESULTS CAME FROM</span><h2>Strategy sources</h2></div></div><div id="strategySources"></div><p class="ap-note">This shows how many recorded positions came from MEMEFLOW, copy trading, or another strategy source.</p></article>
+</section>
+
+<section class="ap-privacy"><b>✓</b><p><strong>Aggregate statistics only.</strong> The analytics dataset stores a one-way anonymous user hash. Raw user IDs, wallet addresses and emails are not stored in this analytics database. OpenAI is not used to calculate these statistics.</p></section>
+<footer><span>MEMEFLOW · Public performance transparency</span><a href="/trading.html">Open Trading Terminal →</a></footer>
+</main>
+<script src="/memeflow-nav.js?v=global-right-drawer-v1" defer></script>
+<script src="/agent-performance.js?v=public-agent-performance-v1" defer></script>
+</body>
+</html>

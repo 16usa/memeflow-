@@ -111,7 +111,38 @@
 <!-- /MEMEFLOW_GLOBAL_TERMINAL_FONT_V207_2 -->
 
 <link rel="stylesheet" href="/memeflow-header.css?v=canonical-v218-20260927">
-<link rel="stylesheet" href="/memeflow-cash-dark-v220.css?v=cash-dark-v220-20260927">
+<link rel="stylesheet" href="/memeflow-cash-dark-v220.css?v=pure-black-half-px-v224-20260928">
+<!-- MEMEFLOW_PURE_BLACK_FINAL_V225_ASSET -->
+<link rel="stylesheet" href="/memeflow-pure-black-final-v225.css?v=225-20260928">
+<!-- /MEMEFLOW_PURE_BLACK_FINAL_V225_ASSET -->
+<!-- MEMEFLOW_TRUE_BLACK_ENFORCER_V226_ASSET -->
+<script src="/memeflow-true-black-enforcer-v226.js?v=226-20260928" defer></script>
+<!-- /MEMEFLOW_TRUE_BLACK_ENFORCER_V226_ASSET -->
+<!-- MEMEFLOW_TOKEN_FLOW_PREMIUM_LAYOUT_V228_ASSET -->
+<link rel="stylesheet" href="/memeflow-token-flow-premium-layout-v228.css?v=228-20260928">
+<!-- /MEMEFLOW_TOKEN_FLOW_PREMIUM_LAYOUT_V228_ASSET -->
+<!-- MEMEFLOW_TOKEN_CARDS_PREMIUM_V229_ASSET -->
+<link rel="stylesheet" href="/memeflow-token-cards-premium-v229.css?v=229-20260928">
+<!-- /MEMEFLOW_TOKEN_CARDS_PREMIUM_V229_ASSET -->
+<!-- MEMEFLOW_TOKEN_CARDS_SEPARATE_V230_ASSET -->
+<link rel="stylesheet" href="/memeflow-token-cards-separate-v230.css?v=230-20260928">
+<!-- /MEMEFLOW_TOKEN_CARDS_SEPARATE_V230_ASSET -->
+<!-- MEMEFLOW_REMOVE_TOKEN_LIST_FRAME_V231_ASSET -->
+<link rel="stylesheet" href="/memeflow-remove-token-list-frame-v231.css?v=231-20260928">
+<!-- /MEMEFLOW_REMOVE_TOKEN_LIST_FRAME_V231_ASSET -->
+<!-- MEMEFLOW_TOKEN_FLOW_SEARCH_CLEANUP_V232_ASSET -->
+<link rel="stylesheet" href="/memeflow-token-flow-search-cleanup-v232.css?v=232-20260928">
+<!-- /MEMEFLOW_TOKEN_FLOW_SEARCH_CLEANUP_V232_ASSET -->
+<!-- MEMEFLOW_TOKEN_FLOW_CONTROLS_FINAL_V233_ASSET -->
+<link rel="stylesheet" href="/memeflow-token-flow-controls-final-v233.css?v=233-20260928">
+<!-- /MEMEFLOW_TOKEN_FLOW_CONTROLS_FINAL_V233_ASSET -->
+<!-- MEMEFLOW_TOKEN_FLOW_SEARCH_REFINEMENT_V234_ASSET -->
+<link rel="stylesheet" href="/memeflow-token-flow-search-refinement-v234.css?v=234-20260928">
+<!-- /MEMEFLOW_TOKEN_FLOW_SEARCH_REFINEMENT_V234_ASSET -->
+<!-- MEMEFLOW_TOKEN_FLOW_COMPACT_SORT_V242_ASSET -->
+<link rel="stylesheet" href="/memeflow-token-flow-compact-sort-v242.css?v=246-20260928">
+<!-- /MEMEFLOW_TOKEN_FLOW_COMPACT_SORT_V242_ASSET -->
+<link rel="stylesheet" href="memeflow-ibm-plex-sans-v1.css">
 </head>
 
 <body class="mf-final-visual-qa-v65 mf-accessibility-v64a mf-component-consistency-v63 mf-token-flow-v36 mf-layout-rhythm-v54 mf-page-system-tokens mf-component-geometry-v55 mf-surface-hierarchy-v57 mf-interaction-states-v58">
@@ -214,19 +245,15 @@
       </button>
 
     </section>
-    <section class="mf-time-window-v47c" aria-label="Token age window">
-      <button type="button" class="is-active" data-mf-age-window-v47c="all">ALL</button>
-      <button type="button" data-mf-age-window-v47c="60">1H</button>
-      <button type="button" data-mf-age-window-v47c="360">6H</button>
-      <button type="button" data-mf-age-window-v47c="1440">24H</button>
-      <span>SMART RANK</span>
-    </section>
-
-
     <section class="flow-toolbar">
 
       <div class="search-wrap">
-        <span>⌕</span>
+        <span class="mf-search-icon-v233" aria-hidden="true">
+          <svg viewBox="0 0 24 24" focusable="false">
+            <circle cx="11" cy="11" r="6.5"></circle>
+            <path d="M16 16l4 4"></path>
+          </svg>
+        </span>
 
         <input
           id="tokenSearch"
@@ -234,7 +261,7 @@
           autocomplete="off"
           autocapitalize="off"
           spellcheck="false"
-          placeholder="Paste Pump.fun URL or mint"
+          placeholder="Search token or paste Pump.fun mint"
           aria-label="Paste Pump.fun URL or Solana mint to analyze"
         />
       </div>
@@ -262,7 +289,60 @@
       hidden
     ></section>
 
+
     <section
+      id="mfCompactSortV242"
+      class="mf-compact-sort-v242"
+      aria-label="Token timeframe and sorting"
+    >
+      <div class="mf-compact-row-v242">
+        <div class="mf-timeframes-v242" aria-label="Market timeframe">
+          <button type="button" data-mf-v242-timeframe="1m">1M</button>
+          <button type="button" data-mf-v242-timeframe="5m">5M</button>
+          <button type="button" data-mf-v242-timeframe="15m">15M</button>
+          <button type="button" data-mf-v242-timeframe="1h">1H</button>
+          <button type="button" data-mf-v242-timeframe="6h">6H</button>
+        </div>
+
+        <span class="mf-compact-divider-v242" aria-hidden="true"></span>
+
+        <div class="mf-sorters-v242" aria-label="Sort tokens">
+          <button type="button" data-mf-v242-sort="volume"><span>VOL</span><i></i></button>
+          <button type="button" data-mf-v242-sort="transactions"><span>TX</span><i></i></button>
+          <button type="button" data-mf-v242-sort="mc"><span>MC</span><i></i></button>
+          <button type="button" data-mf-v242-sort="change"><span>Δ%</span><i></i></button>
+          <button type="button" data-mf-v242-sort="score"><span>SCORE</span><i></i></button>
+        </div>
+
+        <button
+          id="mfCompactInfoV242"
+          class="mf-compact-info-v242"
+          type="button"
+          aria-label="Explain market metrics"
+          aria-expanded="false"
+          aria-controls="mfCompactHelpV242"
+        >!</button>
+
+        <div
+          id="mfCompactHelpV242"
+          class="mf-compact-help-v242"
+          role="dialog"
+          aria-label="Market metrics explanation"
+          hidden
+        >
+          <div class="mf-help-title-v242">Market metrics</div>
+          <div><b>1M–6H</b><span>Window used for VOL, TX and Δ%.</span></div>
+          <div><b>VOL</b><span>Trading volume during the selected window.</span></div>
+          <div><b>TX</b><span>Transactions during the selected window.</span></div>
+          <div><b>MC</b><span>Current live market cap.</span></div>
+          <div><b>Δ%</b><span>Price change during the selected window.</span></div>
+          <div><b>SCORE</b><span>Current system score.</span></div>
+          <div class="mf-help-foot-v242">Tap a metric to sort high → low. Tap it again for low → high.</div>
+        </div>
+      </div>
+    </section>
+
+<section
       id="tokenList"
       class="token-list"
     >
@@ -307,7 +387,7 @@
   <script src="/global-instant-prune-v1.js?v=1"></script>
   <script
     type="module"
-    src="/system-tokens.js?v=token-avatar-wrapper-v51-20260904"
+    src="/system-tokens.js?v=token-flow-card-layout-v244-20260928"
      data-patch="MEMEFLOW_CANONICAL_TOKEN_IMAGE_CACHE_BUST_V5"
   ></script>
 <script src="/memeflow-nav.js?v=global-right-drawer-v2-how-it-works" defer></script>

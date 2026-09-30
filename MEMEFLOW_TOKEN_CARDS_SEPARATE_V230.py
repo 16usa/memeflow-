@@ -1,0 +1,582 @@
+#!/usr/bin/env python3
+from pathlib import Path
+from datetime import datetime
+import subprocess
+import sys
+
+EXPECTED_REPO_FRAGMENT = "16usa/memeflow-"
+CSS_NAME = "memeflow-token-cards-separate-v230.css"
+MARKER = "MEMEFLOW_TOKEN_CARDS_SEPARATE_V230_ASSET"
+
+def fail(msg):
+    print(f"\n[FAIL] {msg}")
+    sys.exit(1)
+
+root = Path.cwd()
+app = root / "memeflow-app"
+if not app.is_dir() and root.name == "memeflow-app":
+    app = root
+
+if not app.is_dir():
+    fail("memeflow-app not found. Run from the existing Replit workspace Shell.")
+
+try:
+    origin = subprocess.check_output(
+        ["git", "config", "--get", "remote.origin.url"],
+        cwd=root,
+        text=True,
+        stderr=subprocess.DEVNULL,
+    ).strip()
+except Exception:
+    origin = ""
+
+if origin and EXPECTED_REPO_FRAGMENT not in origin:
+    fail(f"Unexpected git origin: {origin}")
+
+html_path = app / "system-tokens.html"
+css_path = app / CSS_NAME
+
+if not html_path.is_file():
+    fail(f"Missing required file: {html_path}")
+
+premium_css = r"""/* MEMEFLOW TOKEN CARDS SEPARATE V230
+   Separate premium token cards with subtle status fills.
+
+   DO NOT change:
+   - header
+   - text colors
+   - text sizes
+   - wording / data
+   - token order
+   - scanner / ranking / filter logic
+   - semantic state colors
+   - dark/light theme logic
+
+   Goal:
+   keep the aligned V229 grid, but convert rows into separate premium cards.
+*/
+
+body.mf-page-system-tokens{
+  --mf-v230-card-radius: 14px;
+  --mf-v230-card-gap: 8px;
+  --mf-v230-row-x: 10px;
+  --mf-v230-row-y: 9px;
+  --mf-v230-col-gap: 7px;
+  --mf-v230-avatar: 42px;
+  --mf-v230-stroke: rgba(255,255,255,.12);
+  --mf-v230-stroke-strong: rgba(255,255,255,.16);
+  --mf-v230-neutral-fill-a: rgba(86, 96, 110, .10);
+  --mf-v230-neutral-fill-b: rgba(56, 64, 72, .05);
+  --mf-v230-buy-fill-a: rgba(173, 126, 18, .16);
+  --mf-v230-buy-fill-b: rgba(110, 80, 10, .08);
+  --mf-v230-watch-fill-a: rgba(52, 86, 190, .15);
+  --mf-v230-watch-fill-b: rgba(42, 58, 110, .07);
+  --mf-v230-wait-fill-a: rgba(70, 84, 112, .12);
+  --mf-v230-wait-fill-b: rgba(48, 58, 78, .06);
+  --mf-v230-block-fill-a: rgba(160, 46, 62, .14);
+  --mf-v230-block-fill-b: rgba(96, 28, 38, .07);
+  --mf-v230-open-fill-a: rgba(19, 160, 110, .14);
+  --mf-v230-open-fill-b: rgba(10, 95, 64, .07);
+}
+
+/* ================================================================
+   LIST BECOMES STACK OF SEPARATE PREMIUM CARDS
+   ================================================================ */
+
+body.mf-page-system-tokens .token-list{
+  width:100% !important;
+  min-width:0 !important;
+  margin:0 !important;
+  padding:0 !important;
+
+  display:flex !important;
+  flex-direction:column !important;
+  gap:var(--mf-v230-card-gap) !important;
+
+  overflow:visible !important;
+  border-radius:0 !important;
+  box-sizing:border-box !important;
+}
+
+/* Each row becomes its own card while preserving aligned data rails. */
+body.mf-page-system-tokens .token-list > .flow-token{
+  --mf-v230-fill-a: var(--mf-v230-neutral-fill-a);
+  --mf-v230-fill-b: var(--mf-v230-neutral-fill-b);
+
+  position:relative !important;
+  isolation:isolate !important;
+
+  width:100% !important;
+  min-width:0 !important;
+  min-height:70px !important;
+
+  margin:0 !important;
+  padding: var(--mf-v230-row-y) var(--mf-v230-row-x) !important;
+
+  display:grid !important;
+  grid-template-columns:
+    minmax(0,2.58fr)
+    minmax(45px,.74fr)
+    minmax(49px,.80fr)
+    minmax(43px,.64fr) !important;
+  grid-template-rows:minmax(0,1fr) minmax(0,1fr) !important;
+
+  column-gap:var(--mf-v230-col-gap) !important;
+  row-gap:3px !important;
+
+  align-items:center !important;
+  align-content:center !important;
+
+  border:0.5px solid var(--mf-v230-stroke) !important;
+  border-radius:var(--mf-v230-card-radius) !important;
+  box-shadow:none !important;
+  box-sizing:border-box !important;
+  overflow:hidden !important;
+
+  background:
+    linear-gradient(90deg,
+      var(--mf-v230-fill-a) 0%,
+      var(--mf-v230-fill-b) 18%,
+      rgba(0,0,0,0) 52%),
+    #000 !important;
+}
+
+/* Slightly stronger ring on hover/selected-capable interfaces, harmless on mobile */
+body.mf-page-system-tokens .token-list > .flow-token:hover{
+  border-color:var(--mf-v230-stroke-strong) !important;
+}
+
+/* Status rail becomes a deliberate premium accent instead of a table divider. */
+body.mf-page-system-tokens .token-list > .flow-token::before{
+  left:0 !important;
+  top:11px !important;
+  bottom:11px !important;
+  width:1px !important;
+  border-radius:0 1px 1px 0 !important;
+}
+
+/* Soft overlay to give the card body a refined inner structure. */
+body.mf-page-system-tokens .token-list > .flow-token::after{
+  content:"" !important;
+  position:absolute !important;
+  inset:0 !important;
+  pointer-events:none !important;
+  z-index:-1 !important;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.025) 0%, rgba(255,255,255,0) 22%),
+    linear-gradient(90deg, rgba(255,255,255,.02) 0%, rgba(255,255,255,0) 16%);
+}
+
+/* Neutral gray fill for rows that would otherwise look empty. */
+body.mf-page-system-tokens .token-list > .flow-token{
+  --mf-v230-fill-a: var(--mf-v230-neutral-fill-a);
+  --mf-v230-fill-b: var(--mf-v230-neutral-fill-b);
+}
+
+/* Broad status matching: support class-based and data-status-based implementations. */
+body.mf-page-system-tokens .token-list > .flow-token:is(
+  [data-status*="buy"],
+  [data-status*="ready"],
+  [class*="buy-ready"],
+  [class*="buyready"],
+  [class*="status-buy"]
+){
+  --mf-v230-fill-a: var(--mf-v230-buy-fill-a);
+  --mf-v230-fill-b: var(--mf-v230-buy-fill-b);
+}
+
+body.mf-page-system-tokens .token-list > .flow-token:is(
+  [data-status*="watch"],
+  [class*="watch"],
+  [class*="status-watch"]
+){
+  --mf-v230-fill-a: var(--mf-v230-watch-fill-a);
+  --mf-v230-fill-b: var(--mf-v230-watch-fill-b);
+}
+
+body.mf-page-system-tokens .token-list > .flow-token:is(
+  [data-status*="waiting"],
+  [data-status*="wait"],
+  [class*="waiting"],
+  [class*="status-wait"]
+){
+  --mf-v230-fill-a: var(--mf-v230-wait-fill-a);
+  --mf-v230-fill-b: var(--mf-v230-wait-fill-b);
+}
+
+body.mf-page-system-tokens .token-list > .flow-token:is(
+  [data-status*="blocked"],
+  [data-status*="block"],
+  [class*="blocked"],
+  [class*="status-block"]
+){
+  --mf-v230-fill-a: var(--mf-v230-block-fill-a);
+  --mf-v230-fill-b: var(--mf-v230-block-fill-b);
+}
+
+body.mf-page-system-tokens .token-list > .flow-token:is(
+  [data-status*="open"],
+  [data-status*="position"],
+  [class*="open-position"],
+  [class*="openposition"],
+  [class*="status-open"]
+){
+  --mf-v230-fill-a: var(--mf-v230-open-fill-a);
+  --mf-v230-fill-b: var(--mf-v230-open-fill-b);
+}
+
+/* ================================================================
+   KEEP THE V229 GRID / RAILS
+   ================================================================ */
+
+body.mf-page-system-tokens .token-list > .flow-token > .token-primary{
+  grid-column:1 !important;
+  grid-row:1 / span 2 !important;
+  width:100% !important;
+  min-width:0 !important;
+  margin:0 !important;
+  padding:0 !important;
+  align-self:center !important;
+  justify-self:stretch !important;
+}
+
+body.mf-page-system-tokens .token-list > .flow-token .token-head{
+  width:100% !important;
+  min-width:0 !important;
+  min-height:var(--mf-v230-avatar) !important;
+  margin:0 !important;
+  padding:0 !important;
+  display:grid !important;
+  grid-template-columns:var(--mf-v230-avatar) minmax(0,1fr) !important;
+  gap:8px !important;
+  align-items:center !important;
+}
+
+body.mf-page-system-tokens .token-list > .flow-token :is(
+  .token-avatar,
+  .mf-token-avatar-anchor-v51,
+  .mf-token-avatar-anchor-v51 > .token-avatar
+){
+  position:relative !important;
+  inset:auto !important;
+  width:var(--mf-v230-avatar) !important;
+  height:var(--mf-v230-avatar) !important;
+  min-width:var(--mf-v230-avatar) !important;
+  min-height:var(--mf-v230-avatar) !important;
+  max-width:var(--mf-v230-avatar) !important;
+  max-height:var(--mf-v230-avatar) !important;
+  margin:0 !important;
+  padding:0 !important;
+  align-self:center !important;
+  justify-self:start !important;
+  flex:none !important;
+}
+
+body.mf-page-system-tokens .token-list > .flow-token .token-meta{
+  width:100% !important;
+  min-width:0 !important;
+  margin:0 !important;
+  padding:0 !important;
+  display:grid !important;
+  grid-template-rows:auto auto !important;
+  align-content:center !important;
+  gap:4px !important;
+}
+
+body.mf-page-system-tokens .token-list > .flow-token .token-top{
+  width:100% !important;
+  min-width:0 !important;
+  margin:0 !important;
+  padding:0 !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:flex-start !important;
+  gap:6px !important;
+}
+
+body.mf-page-system-tokens .token-list > .flow-token .token-name{
+  min-width:0 !important;
+  max-width:none !important;
+  flex:1 1 auto !important;
+  overflow:hidden !important;
+  text-overflow:ellipsis !important;
+  white-space:nowrap !important;
+}
+
+body.mf-page-system-tokens .token-list > .flow-token .mf-token-age-chip-v47c{
+  flex:0 0 auto !important;
+  margin-left:0 !important;
+}
+
+body.mf-page-system-tokens .token-list > .flow-token .mf-token-subline-v47c{
+  width:100% !important;
+  min-width:0 !important;
+  min-height:12px !important;
+  margin:0 !important;
+  padding:0 !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:flex-start !important;
+}
+
+body.mf-page-system-tokens .token-list > .flow-token > :is(
+  .mf-open-market-strip,
+  .mf-regular-market-strip
+){
+  display:contents !important;
+}
+
+body.mf-page-system-tokens
+.token-list > .flow-token
+> .mf-open-market-strip > .mf-open-market-stat:nth-child(-n+2),
+body.mf-page-system-tokens
+.token-list > .flow-token
+> .mf-regular-market-strip > .mf-regular-market-stat:nth-child(-n+2){
+  display:none !important;
+}
+
+/* VOL / TX */
+body.mf-page-system-tokens
+.token-list > .flow-token
+> .mf-open-market-strip > .mf-open-market-stat:nth-child(3),
+body.mf-page-system-tokens
+.token-list > .flow-token
+> .mf-regular-market-strip > .mf-regular-market-stat:nth-child(3){
+  grid-column:2 !important;
+  grid-row:1 !important;
+}
+
+body.mf-page-system-tokens
+.token-list > .flow-token
+> .mf-open-market-strip > .mf-open-market-stat:nth-child(4),
+body.mf-page-system-tokens
+.token-list > .flow-token
+> .mf-regular-market-strip > .mf-regular-market-stat:nth-child(4){
+  grid-column:2 !important;
+  grid-row:2 !important;
+}
+
+/* MC / 5M */
+body.mf-page-system-tokens
+.token-list > .flow-token
+> .mf-open-market-strip > .mf-open-market-stat:nth-child(5),
+body.mf-page-system-tokens
+.token-list > .flow-token
+> .mf-regular-market-strip > .mf-regular-market-stat:nth-child(5){
+  grid-column:3 !important;
+  grid-row:1 !important;
+}
+
+body.mf-page-system-tokens
+.token-list > .flow-token
+> .mf-open-market-strip > .mf-open-market-stat:nth-child(6),
+body.mf-page-system-tokens
+.token-list > .flow-token
+> .mf-regular-market-strip > .mf-regular-market-stat:nth-child(6){
+  grid-column:3 !important;
+  grid-row:2 !important;
+}
+
+body.mf-page-system-tokens
+.token-list > .flow-token
+> :is(.mf-open-market-strip,.mf-regular-market-strip)
+> :is(.mf-open-market-stat,.mf-regular-market-stat){
+  min-width:0 !important;
+  width:100% !important;
+  height:100% !important;
+  margin:0 !important;
+  padding:0 !important;
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:flex-start !important;
+  justify-content:center !important;
+  align-self:stretch !important;
+  justify-self:stretch !important;
+  gap:2px !important;
+  text-align:left !important;
+  border:0 !important;
+}
+
+body.mf-page-system-tokens .token-list > .flow-token > :is(
+  .mf-score-slot,
+  .mf-open-pnl-slot
+){
+  grid-column:4 !important;
+  grid-row:1 / span 2 !important;
+  width:100% !important;
+  min-width:0 !important;
+  height:100% !important;
+  margin:0 !important;
+  padding:0 !important;
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:flex-start !important;
+  justify-content:center !important;
+  align-self:stretch !important;
+  justify-self:stretch !important;
+  gap:3px !important;
+  text-align:left !important;
+}
+
+/* Expanded details remain part of the same card. */
+body.mf-page-system-tokens .token-list > .flow-token.expanded{
+  min-height:70px !important;
+  align-content:start !important;
+}
+
+body.mf-page-system-tokens .token-list > .flow-token .token-details{
+  grid-column:1 / -1 !important;
+  grid-row:auto !important;
+  width:100% !important;
+  min-width:0 !important;
+  margin:10px 0 0 !important;
+  padding:10px 0 2px !important;
+  border-left:0 !important;
+  border-right:0 !important;
+  border-bottom:0 !important;
+  border-radius:0 !important;
+  box-shadow:none !important;
+}
+
+body.mf-page-system-tokens .token-list > .flow-token .detail-block{
+  min-width:0 !important;
+  margin:0 !important;
+  border-radius:10px !important;
+}
+
+/* Hide the lower empty state whenever actual tokens are present. */
+body.mf-page-system-tokens .token-list:has(> .flow-token) ~ .empty-state{
+  display:none !important;
+}
+
+body.mf-page-system-tokens .empty-state{
+  width:100% !important;
+  min-height:72px !important;
+  margin:10px 0 0 !important;
+  padding:14px 12px !important;
+  display:grid !important;
+  place-content:center !important;
+  text-align:center !important;
+  border-radius:12px !important;
+}
+
+/* Desktop tuning */
+@media (min-width:761px){
+  body.mf-page-system-tokens{
+    --mf-v230-card-gap: 10px;
+    --mf-v230-row-x: 14px;
+    --mf-v230-row-y: 11px;
+    --mf-v230-col-gap: 12px;
+    --mf-v230-avatar: 46px;
+  }
+
+  body.mf-page-system-tokens .token-list > .flow-token{
+    min-height:78px !important;
+    grid-template-columns:
+      minmax(0,2.60fr)
+      minmax(68px,.82fr)
+      minmax(72px,.90fr)
+      minmax(58px,.68fr) !important;
+  }
+}
+
+@media (max-width:390px){
+  body.mf-page-system-tokens{
+    --mf-v230-card-gap: 7px;
+    --mf-v230-row-x: 8px;
+    --mf-v230-row-y: 8px;
+    --mf-v230-col-gap: 5px;
+    --mf-v230-avatar: 40px;
+  }
+
+  body.mf-page-system-tokens .token-list > .flow-token{
+    min-height:66px !important;
+    grid-template-columns:
+      minmax(0,2.62fr)
+      minmax(42px,.72fr)
+      minmax(46px,.78fr)
+      minmax(40px,.62fr) !important;
+  }
+
+  body.mf-page-system-tokens .token-list > .flow-token .token-head{
+    gap:7px !important;
+  }
+}
+"""
+
+html = html_path.read_text(encoding="utf-8")
+original_html = html
+original_css = css_path.read_text(encoding="utf-8") if css_path.exists() else None
+changed = False
+
+if original_css != premium_css:
+    css_path.write_text(premium_css, encoding="utf-8")
+    changed = True
+
+if MARKER not in html:
+    block = (
+        f'<!-- {MARKER} -->\n'
+        f'<link rel="stylesheet" href="/{CSS_NAME}?v=230-20260928">\n'
+        f'<!-- /{MARKER} -->\n'
+    )
+    idx = html.lower().rfind("</head>")
+    if idx < 0:
+        fail("</head> not found in system-tokens.html")
+
+    html = html[:idx] + block + html[idx:]
+    html_path.write_text(html, encoding="utf-8")
+    changed = True
+
+if not changed:
+    print("\n[OK] V230 is already installed. No files changed.")
+    sys.exit(0)
+
+stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+backup_dir = root / f".memeflow-token-cards-separate-v230-backup-{stamp}"
+backup_dir.mkdir(parents=True, exist_ok=False)
+
+backup_html = backup_dir / html_path.relative_to(root)
+backup_html.parent.mkdir(parents=True, exist_ok=True)
+backup_html.write_text(original_html, encoding="utf-8")
+
+if original_css is not None:
+    backup_css = backup_dir / css_path.relative_to(root)
+    backup_css.parent.mkdir(parents=True, exist_ok=True)
+    backup_css.write_text(original_css, encoding="utf-8")
+
+try:
+    subprocess.run(
+        [
+            "git", "diff", "--check", "--",
+            "memeflow-app/system-tokens.html",
+            f"memeflow-app/{CSS_NAME}"
+        ],
+        cwd=root,
+        check=True
+    )
+except Exception:
+    print("[WARN] git diff --check could not run.")
+
+print("\n[OK] MEMEFLOW TOKEN CARDS SEPARATE V230 installed.")
+print(f"[BACKUP] {backup_dir}")
+print("\nV230 changes:")
+print("  • Token Flow rows become separate premium cards")
+print("  • each card keeps the aligned V229 internal grid")
+print("  • default gray cards now have a subtle neutral fill")
+print("  • buy/watch/waiting/blocked/open support subtle status fills")
+print("  • left status rail remains and works together with the fill")
+print("  • cards use 0.5px border and shared radius")
+print("  • lower 'No tokens found' block hides when list is not empty")
+print("\nNOT changed:")
+print("  • header")
+print("  • text colors")
+print("  • text sizes")
+print("  • token info / order")
+print("  • scanner / filter / ranking logic")
+print("  • dark/light theme logic")
+print("\nNo process/server restart was performed.")
+print("\nPush after visual check:")
+print(
+    f'git add memeflow-app/system-tokens.html memeflow-app/{CSS_NAME} && '
+    'git commit -m "Make Token Flow rows separate premium cards" && git push'
+)

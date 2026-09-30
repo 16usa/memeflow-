@@ -1,0 +1,53 @@
+/* MEMEFLOW TOKEN FLOW SORT UI FIX V236 */
+body.mf-page-system-tokens #mfMarketGridV235{
+  display:block !important;
+  visibility:visible !important;
+  opacity:1 !important;
+  width:100% !important;
+  min-width:0 !important;
+  height:auto !important;
+  margin:0 !important;
+  padding:0 !important;
+  position:relative !important;
+  z-index:2 !important;
+  overflow:hidden !important;
+  border:0.5px solid #252525 !important;
+  border-radius:14px !important;
+  background:#000 !important;
+  box-shadow:none !important;
+}
+
+body.mf-page-system-tokens #mfMarketGridV235 .mf-market-window-v235{
+  display:flex !important;
+  visibility:visible !important;
+  min-height:42px !important;
+  padding:0 14px !important;
+  align-items:center !important;
+  gap:20px !important;
+  border-bottom:0.5px solid #252525 !important;
+  background:#000 !important;
+}
+
+body.mf-page-system-tokens #mfMarketGridV235 .mf-market-window-v235 button{
+  display:inline-flex !important;
+  visibility:visible !important;
+  align-items:center !important;
+  min-height:42px !important;
+}
+
+body.mf-page-system-tokens #mfMarketGridV235 .mf-market-columns-v235{
+  display:grid !important;
+  visibility:visible !important;
+  min-height:44px !important;
+}
+
+body.mf-page-system-tokens #mfMarketGridV235 :is(.mf-market-token-head-v235,.mf-market-head-v235){
+  visibility:visible !important;
+}
+
+@media(max-width:760px){
+  body.mf-page-system-tokens #mfMarketGridV235 .mf-market-window-v235{
+    padding-inline:12px !important;
+    gap:18px !important;
+  }
+}

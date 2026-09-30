@@ -4065,8 +4065,9 @@ function mfTradingChartPaletteV2(){
     };
   }
 
+  /* MEMEFLOW_PURE_BLACK_FINAL_V225_CHART: real dark canvas, not transparent. */
   return {
-    background:'transparent',
+    background:'#000000',
     text:'#536f7b',
     pointerLabelBg:'#0b171d',
     pointerLabelText:'#cfe0e7',

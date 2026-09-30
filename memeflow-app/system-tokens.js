@@ -3366,6 +3366,266 @@ if(document.readyState==='loading'){
 }
 
 
+
+// MEMEFLOW_TOKEN_FLOW_COMPACT_SORT_V242
+const __MF_TIMEFRAMES_V242=new Set(['1m','5m','15m','1h','6h']);
+let __mfTimeframeV242='5m';
+let __mfSortV242={key:'score',direction:'desc'};
+let __mfWindowBusyV242=false;
+let __mfWindowRowsV242=new Map();
+
+function __mfBaseMetricsV242(row){return isOpenPositionRow(row)?openPositionMetrics(row):regularMarketMetrics(row);}
+function __mfMetricsV242(row){
+  const base=__mfBaseMetricsV242(row);
+  if(__mfTimeframeV242==='5m')return base;
+  const windowRow=__mfWindowRowsV242.get(String(row?.mint||''));
+  return {...base,
+    volume5mSol:windowRow?.coverageComplete===true?windowRow?.volumeSol:null,
+    volume5mUsd:windowRow?.coverageComplete===true?windowRow?.volumeUsd:null,
+    transactions5m:windowRow?.coverageComplete===true?windowRow?.transactions:null,
+    priceChange5mPct:windowRow?.coverageComplete===true?windowRow?.changePct:null,
+    marketCapSol:finite(windowRow?.marketCapSol)?windowRow.marketCapSol:base?.marketCapSol,
+    marketCapUsd:finite(windowRow?.marketCapUsd)?windowRow.marketCapUsd:base?.marketCapUsd,
+    marketCapSource:windowRow?.marketCapSource||base?.marketCapSource
+  };
+}
+function __mfSortValueV242(row,key){
+  if(key==='score'){const v=row?.decision?.score??row?.score;return finite(v)?Number(v):null;}
+  const m=__mfMetricsV242(row);
+  if(key==='volume'){const v=m?.volume5mUsd??m?.volume5mSol;return finite(v)?Number(v):null;}
+  if(key==='transactions')return finite(m?.transactions5m)?Number(m.transactions5m):null;
+  if(key==='mc'){const v=m?.marketCapUsd??m?.marketCapSol;return finite(v)?Number(v):null;}
+  if(key==='change')return finite(m?.priceChange5mPct)?Number(m.priceChange5mPct):null;
+  return null;
+}
+function __mfSortRowsV242(rows){
+  const source=Array.isArray(rows)?rows.slice():[];const open=[];const rest=[];
+  source.forEach((row,index)=>{(stateKey(row?.decision?.state)==='open'?open:rest).push({row,index});});
+  const key=__mfSortV242.key;const dir=__mfSortV242.direction==='asc'?1:-1;
+  rest.sort((a,b)=>{
+    const av=__mfSortValueV242(a.row,key),bv=__mfSortValueV242(b.row,key);const ak=finite(av),bk=finite(bv);
+    if(ak&&!bk)return -1;if(!ak&&bk)return 1;if(ak&&bk&&Number(av)!==Number(bv))return dir*(Number(av)-Number(bv));
+    return a.index-b.index;
+  });
+  return [...open.map(x=>x.row),...rest.map(x=>x.row)];
+}
+const __mfFilteredRowsBeforeV242=filteredRows;
+filteredRows=function(){return __mfSortRowsV242(__mfFilteredRowsBeforeV242());};
+
+function __mfSyncControlsV242(){
+  const root=document.getElementById('mfCompactSortV242');if(!root)return;
+  root.classList.toggle('is-loading',__mfWindowBusyV242);
+  root.querySelectorAll('[data-mf-v242-timeframe]').forEach(button=>{
+    const active=String(button.dataset.mfV242Timeframe||'')===__mfTimeframeV242;
+    button.classList.toggle('is-active',active);button.setAttribute('aria-pressed',active?'true':'false');
+  });
+  root.querySelectorAll('[data-mf-v242-sort]').forEach(button=>{
+    const active=String(button.dataset.mfV242Sort||'')===__mfSortV242.key;
+    button.classList.toggle('is-active',active);button.setAttribute('aria-pressed',active?'true':'false');
+    const arrow=button.querySelector('i');if(arrow)arrow.textContent=active?(__mfSortV242.direction==='asc'?'↑':'↓'):'';
+  });
+}
+function __mfRowByMintV242(mint){return mergedRows().find(row=>String(row?.mint||'')===String(mint||''))||null;}
+function __mfPatchCardWindowV242(card){
+  if(!card)return;const mint=String(card.dataset.mint||'').trim();if(!mint)return;
+  const row=__mfRowByMintV242(mint);if(!row)return;const metrics=__mfMetricsV242(row);
+  const strip=card.querySelector('.mf-regular-market-strip,.mf-open-market-strip');if(!strip)return;
+  const cells=[...strip.querySelectorAll('.mf-regular-market-stat,.mf-open-market-stat')];
+  const volume=cells[2]?.querySelector('strong'),tx=cells[3]?.querySelector('strong'),mc=cells[4]?.querySelector('strong'),change=cells[5]?.querySelector('strong');
+  if(volume)volume.textContent=isOpenPositionRow(row)?openVolumeLabel(metrics):regularVolumeLabel(metrics);
+  if(tx)tx.textContent=finite(metrics?.transactions5m)?fmt(metrics.transactions5m,0):'—';
+  if(mc)mc.textContent=isOpenPositionRow(row)?openMarketCapLabel(metrics):regularMarketCapLabel(metrics);
+  if(change){change.textContent=signedPercent(metrics?.priceChange5mPct);change.classList.remove('is-profit','is-loss','is-flat');change.classList.add(marketMoveClass(metrics?.priceChange5mPct));}
+}
+function __mfPatchAllCardsV242(){document.querySelectorAll('.flow-token[data-mint]').forEach(__mfPatchCardWindowV242);}
+
+async function __mfFetchWindowV242({rerender=true}={}){
+  if(__mfTimeframeV242==='5m'){
+    __mfWindowRowsV242.clear();if(rerender){render();queueMicrotask(__mfPatchAllCardsV242);}return true;
+  }
+  if(__mfWindowBusyV242)return false;
+  const mints=[...new Set(mergedRows().map(row=>String(row?.mint||'').trim()).filter(Boolean))].slice(0,200);
+  if(!mints.length)return false;
+  __mfWindowBusyV242=true;__mfSyncControlsV242();
+  try{
+    const payload=await __mfPostJsonV18('/api/system/token-flow-window-batch',{mints,timeframe:__mfTimeframeV242},{timeoutMs:8000});
+    const rows=Array.isArray(payload?.rows)?payload.rows:[];
+    __mfWindowRowsV242=new Map(rows.filter(row=>row?.mint).map(row=>[String(row.mint),row]));
+    if(rerender){state.page=1;render();queueMicrotask(__mfPatchAllCardsV242);}else __mfPatchAllCardsV242();
+    return true;
+  }catch(error){
+    console.warn('[token-flow-v242] window fetch failed',error);__mfWindowRowsV242.clear();
+    if(rerender){render();queueMicrotask(__mfPatchAllCardsV242);}return false;
+  }finally{__mfWindowBusyV242=false;__mfSyncControlsV242();}
+}
+async function __mfSetTimeframeV242(next){
+  next=String(next||'').toLowerCase();if(!__MF_TIMEFRAMES_V242.has(next)||next===__mfTimeframeV242)return;
+  __mfTimeframeV242=next;__mfWindowRowsV242.clear();__mfSyncControlsV242();
+  if(next==='5m'){state.page=1;render();queueMicrotask(__mfPatchAllCardsV242);return;}
+  await __mfFetchWindowV242({rerender:true});
+}
+function __mfSetSortV242(key){
+  if(!['volume','transactions','mc','change','score'].includes(key))return;
+  __mfSortV242=__mfSortV242.key===key?{key,direction:__mfSortV242.direction==='desc'?'asc':'desc'}:{key,direction:'desc'};
+  state.page=1;render();__mfSyncControlsV242();queueMicrotask(__mfPatchAllCardsV242);
+}
+function __mfToggleHelpV242(force){
+  const help=document.getElementById('mfCompactHelpV242'),button=document.getElementById('mfCompactInfoV242');if(!help||!button)return;
+  const open=typeof force==='boolean'?force:help.hidden;help.hidden=!open;button.setAttribute('aria-expanded',open?'true':'false');
+}
+function __mfBindCompactSortV242(){
+  const root=document.getElementById('mfCompactSortV242');if(!root||root.dataset.bound==='1'){__mfSyncControlsV242();return;}
+  root.dataset.bound='1';root.addEventListener('click',event=>{
+    const info=event.target.closest?.('#mfCompactInfoV242');if(info){event.preventDefault();event.stopPropagation();__mfToggleHelpV242();return;}
+    const tf=event.target.closest?.('[data-mf-v242-timeframe]');if(tf){event.preventDefault();event.stopPropagation();void __mfSetTimeframeV242(tf.dataset.mfV242Timeframe);return;}
+    const sort=event.target.closest?.('[data-mf-v242-sort]');if(sort){event.preventDefault();event.stopPropagation();__mfSetSortV242(String(sort.dataset.mfV242Sort||''));}
+  });__mfSyncControlsV242();
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{__mfBindCompactSortV242();queueMicrotask(__mfPatchAllCardsV242);},{once:true});
+else{__mfBindCompactSortV242();queueMicrotask(__mfPatchAllCardsV242);}
+setInterval(()=>{if(__mfTimeframeV242==='5m'){__mfPatchAllCardsV242();return;}void __mfFetchWindowV242({rerender:false});},10_000);
+document.addEventListener('click',event=>{const root=document.getElementById('mfCompactSortV242');if(root&&!root.contains(event.target))__mfToggleHelpV242(false);});
+document.addEventListener('keydown',event=>{if(event.key==='Escape')__mfToggleHelpV242(false);});
+
+
+// ===== MEMEFLOW_TOKEN_FLOW_POLISH_V243_JS =====
+function __mfCompactMarketCapV243(value){
+  if(!finite(value))return '—';
+  const number=Number(value);
+  const abs=Math.abs(number);
+  if(abs>=1_000_000_000)return `${Math.round(number/100_000_000)/10}B`;
+  if(abs>=1_000_000)return `${Math.round(number/100_000)/10}M`;
+  if(abs>=1_000)return `${Math.round(number/1_000)}K`;
+  return `${Math.round(number)}`;
+}
+
+regularMarketCapLabel=function(metrics){
+  if(!trustedMarketCapSource(metrics))return '—';
+  if(finite(metrics?.marketCapUsd))return `$${__mfCompactMarketCapV243(metrics.marketCapUsd)}`;
+  if(finite(metrics?.marketCapSol))return `${__mfCompactMarketCapV243(metrics.marketCapSol)} SOL`;
+  return '—';
+};
+
+openMarketCapLabel=function(metrics){
+  if(!trustedMarketCapSource(metrics))return '—';
+  if(finite(metrics?.marketCapUsd))return `$${__mfCompactMarketCapV243(metrics.marketCapUsd)}`;
+  if(finite(metrics?.marketCapSol))return `${__mfCompactMarketCapV243(metrics.marketCapSol)} SOL`;
+  return '—';
+};
+// ===== /MEMEFLOW_TOKEN_FLOW_POLISH_V243_JS =====
+
+// ===== MEMEFLOW_TOKEN_FLOW_CARD_LAYOUT_V244_JS =====
+function __mfV244FindMetaCandidate(root){
+  if(!root)return null;
+  const selectors=[
+    '[class*="holders"]',
+    '[class*="holder"]',
+    '[data-role*="holders"]',
+    '[data-mf-role*="holders"]'
+  ];
+  for(const selector of selectors){
+    const node=root.querySelector(selector);
+    if(node)return node;
+  }
+  const nodes=[...root.querySelectorAll('div,span,p,small')];
+  for(const node of nodes){
+    const text=String(node.textContent||'').trim();
+    if(!text)continue;
+    if(text.length>14)continue;
+    if(!/\d/.test(text))continue;
+    if(node.closest('.mf-token-age-chip-v47c'))continue;
+    if(node.closest('.token-top'))continue;
+    if(node.querySelector('svg, i'))return node;
+  }
+  return null;
+}
+
+function __mfV244FindActionCandidate(root){
+  if(!root)return null;
+  const selectors=[
+    '[aria-expanded]',
+    '[class*="toggle"]',
+    '[class*="expand"]',
+    '[data-role*="detail"]',
+    '[data-mf-role*="detail"]'
+  ];
+  for(const selector of selectors){
+    const node=root.querySelector(selector);
+    if(node && !node.closest('.token-avatar'))return node;
+  }
+  const buttons=[...root.querySelectorAll('button')];
+  for(const button of buttons){
+    if(button.closest('.token-avatar'))continue;
+    if(button.closest('.token-top'))continue;
+    return button;
+  }
+  return null;
+}
+
+function __mfBuildCardMetaRowV244(card){
+  const primary=card?.querySelector?.('.token-primary');
+  if(!primary)return;
+  if(primary.dataset.mfV244Built==='1')return;
+  primary.dataset.mfV244Built='1';
+
+  const meta=primary.querySelector('.token-meta') || primary;
+  const top=meta.querySelector('.token-top') || meta.firstElementChild || meta;
+
+  const existing=meta.querySelector('.mf-v244-meta-row');
+  if(existing)return;
+
+  const row=document.createElement('div');
+  row.className='mf-v244-meta-row';
+
+  const holdersSource=__mfV244FindMetaCandidate(primary);
+  if(holdersSource){
+    const holdersItem=document.createElement('div');
+    holdersItem.className='mf-v244-meta-item mf-v244-holders';
+    holdersItem.innerHTML=holdersSource.innerHTML || holdersSource.textContent || '';
+    row.appendChild(holdersItem);
+    holdersSource.style.display='none';
+  }
+
+  const ageChip=primary.querySelector('.mf-token-age-chip-v47c');
+  if(ageChip){
+    const ageItem=document.createElement('div');
+    ageItem.className='mf-v244-meta-item mf-v244-age';
+    ageItem.textContent=String(ageChip.textContent || '').trim();
+    row.appendChild(ageItem);
+    ageChip.style.display='none';
+  }
+
+  const actionSource=__mfV244FindActionCandidate(primary);
+  if(actionSource){
+    const actionItem=document.createElement('div');
+    actionItem.className='mf-v244-meta-item mf-v244-action';
+    actionItem.innerHTML=actionSource.innerHTML || actionSource.textContent || '•';
+    row.appendChild(actionItem);
+    actionSource.style.display='none';
+  }
+
+  if(!row.children.length)return;
+
+  if(top && top.parentNode===meta){
+    top.insertAdjacentElement('afterend',row);
+  }else{
+    meta.appendChild(row);
+  }
+}
+
+function __mfApplyCardLayoutV244(){
+  document.querySelectorAll('.flow-token[data-mint]').forEach(__mfBuildCardMetaRowV244);
+}
+
+if(document.readyState==='loading'){
+  document.addEventListener('DOMContentLoaded',()=>{__mfApplyCardLayoutV244();},{once:true});
+}else{
+  __mfApplyCardLayoutV244();
+}
+
+setInterval(()=>{__mfApplyCardLayoutV244();},1200);
+// ===== /MEMEFLOW_TOKEN_FLOW_CARD_LAYOUT_V244_JS =====
+
 // MEMEFLOW_TOKEN_SCAN_V27
 let __mfTokenScanBusyV27=false;
 

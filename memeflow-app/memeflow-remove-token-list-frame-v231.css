@@ -1,0 +1,45 @@
+/* MEMEFLOW REMOVE TOKEN LIST OUTER FRAME V231
+   Removes ONLY the old large frame around the whole token stack.
+   Individual V230 token cards remain unchanged.
+*/
+
+body.mf-page-system-tokens .token-list{
+  border:0 !important;
+  outline:0 !important;
+  border-radius:0 !important;
+  box-shadow:none !important;
+
+  background:transparent !important;
+  background-color:transparent !important;
+  background-image:none !important;
+
+  overflow:visible !important;
+}
+
+body.mf-page-system-tokens .token-list::before,
+body.mf-page-system-tokens .token-list::after{
+  content:none !important;
+  display:none !important;
+}
+
+/* Make sure no wrapper around the stack recreates the big rectangle. */
+body.mf-page-system-tokens :where(
+  .token-list-wrap,
+  .token-list-shell,
+  .tokens-list-wrap,
+  .tokens-list-shell
+){
+  border:0 !important;
+  outline:0 !important;
+  border-radius:0 !important;
+  box-shadow:none !important;
+  background:transparent !important;
+  background-image:none !important;
+}
+
+/* Preserve the separate premium cards themselves. */
+body.mf-page-system-tokens .token-list > .flow-token{
+  border-width:0.5px !important;
+  border-style:solid !important;
+  border-radius:14px !important;
+}

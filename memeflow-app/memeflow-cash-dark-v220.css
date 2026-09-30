@@ -444,3 +444,611 @@ body.mf-page-trading.mf-trading-terminal
   background-image:none !important;
 }
 /* /MEMEFLOW_TRADING_DARK_WHITE_BLEED_GUARD_V221 */
+
+/* ========================================================================
+   MEMEFLOW_PUMP_ROUTING_DARK_V222
+   Dark-theme visual contract copied from Pump-Fee-Routing:
+   canvas #0A0A0A; panel #111111; nested #171717; line #252525;
+   primary #FFFFFF; soft #B9B9B9; muted #8B8B8B; faint #666666.
+   Border language: 1px solid neutral line, restrained radii, no shadows.
+   Light theme and semantic trading/status colors are intentionally untouched.
+   ======================================================================== */
+
+html:not([data-theme="light"]){
+  color-scheme:dark;
+
+  --mf-pfr-bg:#0A0A0A;
+  --mf-pfr-panel:#111111;
+  --mf-pfr-panel-2:#171717;
+  --mf-pfr-control:#101010;
+  --mf-pfr-hover:#191919;
+  --mf-pfr-line:#252525;
+  --mf-pfr-text:#FFFFFF;
+  --mf-pfr-soft:#B9B9B9;
+  --mf-pfr-muted:#8B8B8B;
+  --mf-pfr-faint:#666666;
+
+  --mf-cash-bg:var(--mf-pfr-bg);
+  --mf-cash-surface:var(--mf-pfr-panel);
+  --mf-cash-surface-2:var(--mf-pfr-panel-2);
+  --mf-cash-surface-hover:var(--mf-pfr-hover);
+  --mf-cash-line:var(--mf-pfr-line);
+  --mf-cash-line-strong:var(--mf-pfr-line);
+  --mf-cash-text:var(--mf-pfr-text);
+  --mf-cash-text-soft:#F5F5F5;
+  --mf-cash-muted:var(--mf-pfr-muted);
+  --mf-cash-faint:var(--mf-pfr-faint);
+
+  --mf-neutral-text-1:var(--mf-pfr-text);
+  --mf-neutral-text-2:#F5F5F5;
+  --mf-neutral-text-3:var(--mf-pfr-muted);
+  --mf-neutral-text-4:var(--mf-pfr-faint);
+
+  --mf-text-primary:var(--mf-pfr-text);
+  --mf-text-secondary:var(--mf-pfr-soft);
+  --mf-text-tertiary:var(--mf-pfr-muted);
+  --mf-text-faint:var(--mf-pfr-faint);
+
+  --bg:var(--mf-pfr-bg) !important;
+  --panel:var(--mf-pfr-panel) !important;
+  --panel-solid:var(--mf-pfr-panel) !important;
+  --panel-2:var(--mf-pfr-panel-2) !important;
+  --surface:var(--mf-pfr-panel) !important;
+  --surface2:var(--mf-pfr-panel-2) !important;
+  --surface3:var(--mf-pfr-hover) !important;
+  --surface-2:var(--mf-pfr-panel-2) !important;
+  --line:var(--mf-pfr-line) !important;
+  --line2:var(--mf-pfr-line) !important;
+  --line-strong:var(--mf-pfr-line) !important;
+  --text:#F5F5F5 !important;
+  --muted:var(--mf-pfr-muted) !important;
+  --faint:var(--mf-pfr-faint) !important;
+
+  --mf-app-bg:var(--mf-pfr-bg) !important;
+  --mf-app-surface:var(--mf-pfr-panel) !important;
+  --mf-app-surface-2:var(--mf-pfr-panel-2) !important;
+  --mf-app-surface-3:var(--mf-pfr-hover) !important;
+  --mf-app-panel-top:var(--mf-pfr-panel) !important;
+  --mf-app-panel-bottom:var(--mf-pfr-panel) !important;
+  --mf-app-line:var(--mf-pfr-line) !important;
+  --mf-app-line-strong:var(--mf-pfr-line) !important;
+  --mf-app-soft:var(--mf-pfr-panel-2) !important;
+  --mf-app-soft-hover:var(--mf-pfr-hover) !important;
+  --mf-app-text:#F5F5F5 !important;
+  --mf-app-muted:var(--mf-pfr-muted) !important;
+
+  --mf-nav-bg:var(--mf-pfr-bg) !important;
+  --mf-nav-surface:var(--mf-pfr-panel) !important;
+  --mf-nav-surface-2:var(--mf-pfr-panel-2) !important;
+  --mf-nav-line:var(--mf-pfr-line) !important;
+  --mf-nav-line-strong:var(--mf-pfr-line) !important;
+  --mf-nav-text:#F5F5F5 !important;
+  --mf-nav-muted:var(--mf-pfr-muted) !important;
+
+  --hiw-bg:var(--mf-pfr-bg) !important;
+  --hiw-panel:var(--mf-pfr-panel) !important;
+  --hiw-panel-strong:var(--mf-pfr-panel-2) !important;
+  --hiw-line:var(--mf-pfr-line) !important;
+  --hiw-line-strong:var(--mf-pfr-line) !important;
+  --hiw-text:#F5F5F5 !important;
+  --hiw-muted:var(--mf-pfr-muted) !important;
+  --hiw-muted-2:var(--mf-pfr-faint) !important;
+
+  --v-bg:var(--mf-pfr-bg) !important;
+  --v-panel:var(--mf-pfr-panel) !important;
+  --v-panel2:var(--mf-pfr-panel-2) !important;
+  --v-line:var(--mf-pfr-line) !important;
+  --v-line2:var(--mf-pfr-line) !important;
+  --v-text:#F5F5F5 !important;
+  --v-muted:var(--mf-pfr-muted) !important;
+  --v-muted2:var(--mf-pfr-faint) !important;
+
+  --mf-v63-line-dark:var(--mf-pfr-line);
+}
+
+html:not([data-theme="light"]),
+html:not([data-theme="light"]) body,
+html:not([data-theme="light"]) body:where(
+  .mf-page-index,.mf-page-system,.mf-page-system-tokens,.mf-page-trading,
+  .mf-page-settings,.mf-page-smart-vault,.mf-page-how-it-works,
+  .mf-page-agent-performance,.mf-page-x100,.mf-page-owner-intelligence,
+  .mf-page-system-source
+){
+  background:var(--mf-pfr-bg) !important;
+  background-color:var(--mf-pfr-bg) !important;
+  background-image:none !important;
+  color:#F5F5F5 !important;
+}
+
+html:not([data-theme="light"]) .mf-site-header,
+html:not([data-theme="light"]) .mf-site-header:not(.mf-site-header--sticky),
+html:not([data-theme="light"]) .mf-site-header.mf-site-header--sticky{
+  background:var(--mf-pfr-bg) !important;
+  background-color:var(--mf-pfr-bg) !important;
+  background-image:none !important;
+  border-bottom:1px solid var(--mf-pfr-line) !important;
+  box-shadow:none !important;
+}
+
+html:not([data-theme="light"]) .mf-nav-drawer{
+  background:#0D0D0D !important;
+  background-image:none !important;
+  border-color:var(--mf-pfr-line) !important;
+  box-shadow:none !important;
+}
+html:not([data-theme="light"]) .mf-nav-link{
+  border-color:var(--mf-pfr-line) !important;
+  box-shadow:none !important;
+}
+html:not([data-theme="light"]) .mf-nav-link:hover,
+html:not([data-theme="light"]) .mf-nav-link:focus-visible,
+html:not([data-theme="light"]) .mf-nav-link[aria-current="page"]{
+  background:var(--mf-pfr-hover) !important;
+}
+
+/* Main modules: source project #111111 + 1px #252525 frame. */
+html:not([data-theme="light"]) body:where(
+  .mf-page-index,.mf-page-system,.mf-page-system-tokens,.mf-page-trading,
+  .mf-page-settings,.mf-page-smart-vault,.mf-page-how-it-works,
+  .mf-page-agent-performance,.mf-page-x100,.mf-page-owner-intelligence,
+  .mf-page-system-source
+) :where(
+  .panel,.sidebar,.chart-panel,.flow-hero,.flow-toolbar,.pagination,
+  .execution-preview,.advanced-intelligence,.mf293-settings-panel,
+  .mf293-settings-group,.mf-vault-card,.mf-vault-status-panel,
+  .mf-hiw-status-card,.mf-hiw-map-shell,.mf-hiw-card,.mf-hiw-money,
+  .mf-hiw-cta,.ap-panel,.ap-source,.activity-panel,.mf-infra
+){
+  background:var(--mf-pfr-panel) !important;
+  background-color:var(--mf-pfr-panel) !important;
+  background-image:none !important;
+  border-width:1px !important;
+  border-style:solid !important;
+  border-color:var(--mf-pfr-line) !important;
+  border-radius:15px !important;
+  box-shadow:none !important;
+}
+
+/* Nested modules/rows: source project #171717. */
+html:not([data-theme="light"]) body:where(
+  .mf-page-index,.mf-page-system,.mf-page-system-tokens,.mf-page-trading,
+  .mf-page-settings,.mf-page-smart-vault,.mf-page-how-it-works,
+  .mf-page-agent-performance,.mf-page-x100,.mf-page-owner-intelligence,
+  .mf-page-system-source
+) :where(
+  .metric,.approval-row,.selected-metrics > div,.control-section,.search-wrap,
+  .mf-time-window-v47c,.wallet-stat,.wallet-security,.wallet-session-note,
+  .wallet-rule,.subscription-metric,.settings-summary > div,
+  .system-health-summary > div,.data-row,.settings-context,.settings-group,
+  .mode-option label,.profile-option label,.toggle-row,.execution-readiness,
+  .primary-blocker,.signal-explainer,.execution-check-list,.production-empty,
+  .mf293-field,.mf-agent-item,.mf-agent-event,.mf-vault-stat,
+  .mf-vault-control-row,.mf-vault-checklist > div,.mf-hiw-node,.mf-hiw-step,
+  .mf-hiw-map-detail,.ap-kpis article,.ap-summary > div,.factor,.rank,.empty
+){
+  background:var(--mf-pfr-panel-2) !important;
+  background-color:var(--mf-pfr-panel-2) !important;
+  background-image:none !important;
+  border-width:1px !important;
+  border-style:solid !important;
+  border-color:var(--mf-pfr-line) !important;
+  border-radius:12px !important;
+  box-shadow:none !important;
+}
+
+/* Neutral inputs/controls: source #101010 field treatment. */
+html:not([data-theme="light"]) :where(
+  input,select,textarea,.mf-theme-segmented,.setting-field input,
+  .setting-field select,.mf-vault-btn:not(.mf-vault-btn-primary),
+  .btn:not(.primary),.ghost-btn,.wallet-btn,.tool-btn
+){
+  background:var(--mf-pfr-control) !important;
+  background-color:var(--mf-pfr-control) !important;
+  border-color:var(--mf-pfr-line) !important;
+  box-shadow:none !important;
+}
+
+/* Divider language: one clean 1px solid #252525 line. */
+html:not([data-theme="light"]) :where(
+  .panel-head,.panel-foot,.indicator-bar,.selected-metrics,
+  .selected-metrics > div,.details,.tx-details,.data-row,.event,
+  .mf-vault-card-head,.mf-nav-link,.mf293-settings-head,
+  .mf293-settings-footer,.mf-hiw-topbar,.mf-hiw-faq details,footer
+){
+  border-color:var(--mf-pfr-line) !important;
+  box-shadow:none !important;
+}
+
+/* Neutral text hierarchy from Pump-Fee-Routing. */
+html:not([data-theme="light"]) :where(
+  h1,h2,h3,h4,h5,h6,strong,.brand-title,.token-name,.candidate-name
+){
+  color:var(--mf-pfr-text);
+}
+html:not([data-theme="light"]) :where(
+  .muted,.sub,.subtitle,.hint,.note,.eyebrow
+){
+  color:var(--mf-pfr-muted);
+}
+
+/* Trading plot shell follows the same grayscale contract. */
+html:not([data-theme="light"]) body.mf-page-trading :where(
+  .chart-wrap,#chartCanvas
+){
+  background:var(--mf-pfr-bg) !important;
+}
+html:not([data-theme="light"]) body.mf-page-trading :where(
+  .chart-ohlc-cell-v32,.chart-status-cell-v32
+){
+  background:var(--mf-pfr-panel) !important;
+  border-color:var(--mf-pfr-line) !important;
+  box-shadow:none !important;
+}
+
+/* Semantic colors (BUY READY / WATCH / SL / TP / LIVE / P&L) are preserved. */
+html:not([data-theme="light"]) :where(
+  .state-pill,.status-pill,.status-chip,.live-badge,.tx-status,
+  [class*="is-profit"],[class*="is-loss"],
+  [class*="positive"],[class*="negative"]
+){
+  box-shadow:none !important;
+}
+
+/* ========================================================================
+   /MEMEFLOW_PUMP_ROUTING_DARK_V222
+   ======================================================================== */
+
+/* ========================================================================
+   MEMEFLOW_PURE_BLACK_HALF_PX_V224
+
+   Dark theme only:
+   - page canvas = pure black
+   - every neutral block/module = pure black
+   - no gradients on neutral surfaces
+   - frames + divider lines = 0.5px
+   - semantic status/accent colors remain untouched
+   ======================================================================== */
+
+html:not([data-theme="light"]){
+  --mf-v224-black:#000000;
+  --mf-v224-line:#252525;
+
+  --bg:var(--mf-v224-black) !important;
+  --panel:var(--mf-v224-black) !important;
+  --panel-solid:var(--mf-v224-black) !important;
+  --panel-2:var(--mf-v224-black) !important;
+  --surface:var(--mf-v224-black) !important;
+  --surface2:var(--mf-v224-black) !important;
+  --surface3:var(--mf-v224-black) !important;
+  --surface-2:var(--mf-v224-black) !important;
+
+  --mf-app-bg:var(--mf-v224-black) !important;
+  --mf-app-surface:var(--mf-v224-black) !important;
+  --mf-app-surface-2:var(--mf-v224-black) !important;
+  --mf-app-surface-3:var(--mf-v224-black) !important;
+  --mf-app-panel-top:var(--mf-v224-black) !important;
+  --mf-app-panel-bottom:var(--mf-v224-black) !important;
+  --mf-app-soft:var(--mf-v224-black) !important;
+  --mf-app-soft-hover:var(--mf-v224-black) !important;
+
+  --mf-nav-bg:var(--mf-v224-black) !important;
+  --mf-nav-surface:var(--mf-v224-black) !important;
+  --mf-nav-surface-2:var(--mf-v224-black) !important;
+
+  --hiw-bg:var(--mf-v224-black) !important;
+  --hiw-panel:var(--mf-v224-black) !important;
+  --hiw-panel-strong:var(--mf-v224-black) !important;
+
+  --v-bg:var(--mf-v224-black) !important;
+  --v-panel:var(--mf-v224-black) !important;
+  --v-panel2:var(--mf-v224-black) !important;
+
+  --line:var(--mf-v224-line) !important;
+  --line2:var(--mf-v224-line) !important;
+  --line-strong:var(--mf-v224-line) !important;
+  --mf-app-line:var(--mf-v224-line) !important;
+  --mf-app-line-strong:var(--mf-v224-line) !important;
+  --mf-nav-line:var(--mf-v224-line) !important;
+  --mf-nav-line-strong:var(--mf-v224-line) !important;
+  --hiw-line:var(--mf-v224-line) !important;
+  --hiw-line-strong:var(--mf-v224-line) !important;
+  --v-line:var(--mf-v224-line) !important;
+  --v-line2:var(--mf-v224-line) !important;
+  --mf-v63-line-dark:var(--mf-v224-line) !important;
+}
+
+html:not([data-theme="light"]),
+html:not([data-theme="light"]) body,
+html:not([data-theme="light"]) body:where(
+  .mf-page-index,
+  .mf-page-system,
+  .mf-page-system-tokens,
+  .mf-page-trading,
+  .mf-page-settings,
+  .mf-page-smart-vault,
+  .mf-page-how-it-works,
+  .mf-page-agent-performance,
+  .mf-page-x100,
+  .mf-page-owner-intelligence,
+  .mf-page-system-source
+){
+  background:#000000 !important;
+  background-color:#000000 !important;
+  background-image:none !important;
+}
+
+/* All neutral structural blocks are pure black. */
+html:not([data-theme="light"]) body:where(
+  .mf-page-index,
+  .mf-page-system,
+  .mf-page-system-tokens,
+  .mf-page-trading,
+  .mf-page-settings,
+  .mf-page-smart-vault,
+  .mf-page-how-it-works,
+  .mf-page-agent-performance,
+  .mf-page-x100,
+  .mf-page-owner-intelligence,
+  .mf-page-system-source
+) :where(
+  .panel,
+  .sidebar,
+  .chart-panel,
+  .candidates-panel,
+  .approvals-panel,
+  .positions-panel,
+  .control-panel,
+  .history-panel,
+  .flow-hero,
+  .flow-toolbar,
+  .pagination,
+  .execution-preview,
+  .advanced-intelligence,
+  .mf293-settings-panel,
+  .mf293-settings-group,
+  .mf293-settings-head,
+  .mf293-settings-body,
+  .mf293-settings-footer,
+  .mf-vault-card,
+  .mf-vault-status-panel,
+  .mf-vault-stat,
+  .mf-vault-control-row,
+  .mf-vault-checklist > div,
+  .mf-hiw-status-card,
+  .mf-hiw-map-shell,
+  .mf-hiw-card,
+  .mf-hiw-node,
+  .mf-hiw-step,
+  .mf-hiw-map-detail,
+  .mf-hiw-money,
+  .mf-hiw-cta,
+  .ap-panel,
+  .ap-source,
+  .ap-kpis article,
+  .ap-summary > div,
+  .factor,
+  .rank,
+  .empty,
+  .activity-panel,
+  .mf-infra,
+  .metric,
+  .approval-row,
+  .selected-metrics > div,
+  .control-section,
+  .search-wrap,
+  .mf-time-window-v47c,
+  .wallet-stat,
+  .wallet-security,
+  .wallet-session-note,
+  .wallet-rule,
+  .subscription-metric,
+  .settings-summary > div,
+  .system-health-summary > div,
+  .data-row,
+  .settings-context,
+  .settings-group,
+  .mode-option label,
+  .profile-option label,
+  .toggle-row,
+  .execution-readiness,
+  .primary-blocker,
+  .signal-explainer,
+  .execution-check-list,
+  .production-empty,
+  .mf293-field,
+  .mf-agent-item,
+  .mf-agent-event
+){
+  background:#000000 !important;
+  background-color:#000000 !important;
+  background-image:none !important;
+  box-shadow:none !important;
+}
+
+/* Header/nav are also pure black. */
+html:not([data-theme="light"]) .mf-site-header,
+html:not([data-theme="light"]) .mf-nav-drawer{
+  background:#000000 !important;
+  background-color:#000000 !important;
+  background-image:none !important;
+  box-shadow:none !important;
+}
+
+/* Restore/normalize block frames at exactly 0.5px. */
+html:not([data-theme="light"]) body:where(
+  .mf-page-index,
+  .mf-page-system,
+  .mf-page-system-tokens,
+  .mf-page-trading,
+  .mf-page-settings,
+  .mf-page-smart-vault,
+  .mf-page-how-it-works,
+  .mf-page-agent-performance,
+  .mf-page-x100,
+  .mf-page-owner-intelligence,
+  .mf-page-system-source
+) :where(
+  .panel,
+  .sidebar,
+  .chart-panel,
+  .candidates-panel,
+  .approvals-panel,
+  .positions-panel,
+  .control-panel,
+  .history-panel,
+  .flow-hero,
+  .flow-toolbar,
+  .pagination,
+  .execution-preview,
+  .advanced-intelligence,
+  .mf293-settings-panel,
+  .mf293-settings-group,
+  .mf-vault-card,
+  .mf-vault-status-panel,
+  .mf-hiw-status-card,
+  .mf-hiw-map-shell,
+  .mf-hiw-card,
+  .mf-hiw-money,
+  .mf-hiw-cta,
+  .ap-panel,
+  .ap-source,
+  .activity-panel,
+  .mf-infra
+){
+  border-width:0.5px !important;
+  border-style:solid !important;
+  border-color:var(--mf-v224-line) !important;
+  box-shadow:none !important;
+}
+
+/* Nested neutral framed elements = same 0.5px contract. */
+html:not([data-theme="light"]) :where(
+  .metric,
+  .approval-row,
+  .wallet-stat,
+  .wallet-security,
+  .wallet-session-note,
+  .wallet-rule,
+  .subscription-metric,
+  .settings-summary > div,
+  .system-health-summary > div,
+  .settings-context,
+  .settings-group,
+  .mode-option label,
+  .profile-option label,
+  .toggle-row,
+  .execution-readiness,
+  .primary-blocker,
+  .signal-explainer,
+  .execution-check-list,
+  .production-empty,
+  .mf293-field,
+  .mf-agent-item,
+  .mf-agent-event,
+  .mf-vault-stat,
+  .mf-vault-control-row,
+  .mf-vault-checklist > div,
+  .mf-hiw-node,
+  .mf-hiw-step,
+  .mf-hiw-map-detail,
+  .ap-kpis article,
+  .ap-summary > div,
+  .factor,
+  .rank,
+  .empty
+){
+  border-width:0.5px !important;
+  border-style:solid !important;
+  border-color:var(--mf-v224-line) !important;
+  box-shadow:none !important;
+}
+
+/* Every structural divider line = exactly 0.5px. */
+html:not([data-theme="light"]) :where(
+  .panel-head,
+  .panel-foot,
+  .chart-head,
+  .timeframes,
+  .indicator-bar,
+  .selected-metrics,
+  .candidate-filter,
+  .candidate,
+  .data-row,
+  .event,
+  .details,
+  .tx-details,
+  .mf-vault-card-head,
+  .mf293-settings-head,
+  .mf293-settings-footer,
+  .mf-hiw-topbar,
+  .mf-hiw-faq details,
+  .home-route-rail span,
+  footer
+){
+  border-color:var(--mf-v224-line) !important;
+  box-shadow:none !important;
+}
+
+/* Explicit bottom-divider normalization. */
+html:not([data-theme="light"]) :where(
+  .panel-head,
+  .chart-head,
+  .timeframes,
+  .indicator-bar,
+  .selected-metrics,
+  .candidate-filter,
+  .candidate,
+  .data-row,
+  .event,
+  .details,
+  .tx-details,
+  .mf-vault-card-head,
+  .mf293-settings-head,
+  .mf-hiw-topbar,
+  .mf-hiw-faq details
+){
+  border-bottom-width:0.5px !important;
+  border-bottom-style:solid !important;
+}
+
+/* Input/control borders follow the same half-pixel language. */
+html:not([data-theme="light"]) :where(
+  input,
+  select,
+  textarea,
+  .mf-theme-segmented,
+  .setting-field input,
+  .setting-field select,
+  .mf-vault-btn,
+  .btn,
+  .ghost-btn,
+  .wallet-btn,
+  .tool-btn,
+  .decision-badge,
+  .state-dot,
+  .tiny-state,
+  .mode-badge,
+  .approval-count,
+  .chart-axis-marker-v34,
+  .token-avatar
+){
+  border-width:0.5px !important;
+}
+
+/* Trading chart shell itself is pure black. */
+html:not([data-theme="light"]) body.mf-page-trading :where(
+  .chart-wrap,
+  #chartCanvas,
+  .chart-ohlc-cell-v32,
+  .chart-status-cell-v32
+){
+  background:#000000 !important;
+  background-color:#000000 !important;
+  background-image:none !important;
+  box-shadow:none !important;
+}
+
+/* Do not alter light theme. */
+/* ========================================================================
+   /MEMEFLOW_PURE_BLACK_HALF_PX_V224
+   ======================================================================== */

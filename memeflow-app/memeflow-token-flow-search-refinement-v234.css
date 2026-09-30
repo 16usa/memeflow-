@@ -1,0 +1,195 @@
+/* MEMEFLOW TOKEN FLOW SEARCH REFINEMENT V234
+   - search field has no inner fill
+   - clean 0.5px module-style outline
+   - readable placeholder and input text
+   - cleaner icon sizing/alignment
+   - analyze button visually matches search field
+*/
+
+body.mf-page-system-tokens{
+  --mf-v234-line:#252525;
+  --mf-v234-line-strong:rgba(255,255,255,.20);
+  --mf-v234-line-focus:rgba(255,255,255,.28);
+  --mf-v234-text:rgba(255,255,255,.92);
+  --mf-v234-text-dim:rgba(255,255,255,.40);
+  --mf-v234-radius:18px;
+}
+
+body.mf-page-system-tokens .flow-toolbar{
+  background:transparent !important;
+  background-color:transparent !important;
+  background-image:none !important;
+  box-shadow:none !important;
+  border:0 !important;
+  outline:0 !important;
+  padding:0 !important;
+  gap:12px !important;
+  display:grid !important;
+  grid-template-columns:minmax(0,1fr) 132px !important;
+  align-items:stretch !important;
+}
+
+body.mf-page-system-tokens .flow-toolbar::before,
+body.mf-page-system-tokens .flow-toolbar::after{
+  content:none !important;
+  display:none !important;
+}
+
+body.mf-page-system-tokens .flow-toolbar .search-wrap{
+  height:56px !important;
+  min-height:56px !important;
+  max-height:56px !important;
+  width:100% !important;
+  min-width:0 !important;
+  display:flex !important;
+  align-items:center !important;
+  gap:10px !important;
+  padding:0 18px !important;
+  border:0.5px solid var(--mf-v234-line) !important;
+  border-radius:var(--mf-v234-radius) !important;
+  background:transparent !important;
+  background-color:transparent !important;
+  background-image:none !important;
+  box-shadow:none !important;
+  outline:0 !important;
+}
+
+body.mf-page-system-tokens .flow-toolbar .search-wrap:hover,
+body.mf-page-system-tokens .flow-toolbar .search-wrap:focus-within{
+  border-color:var(--mf-v234-line-focus) !important;
+  background:transparent !important;
+  background-color:transparent !important;
+  box-shadow:none !important;
+}
+
+body.mf-page-system-tokens .flow-toolbar .mf-search-icon-v233,
+body.mf-page-system-tokens .flow-toolbar .mf-search-icon-v234{
+  width:18px !important;
+  height:18px !important;
+  min-width:18px !important;
+  min-height:18px !important;
+  flex:0 0 18px !important;
+  display:grid !important;
+  place-items:center !important;
+  color:rgba(255,255,255,.78) !important;
+  opacity:1 !important;
+}
+
+body.mf-page-system-tokens .flow-toolbar .mf-search-icon-v233 svg,
+body.mf-page-system-tokens .flow-toolbar .mf-search-icon-v234 svg{
+  width:18px !important;
+  height:18px !important;
+  display:block !important;
+  fill:none !important;
+  stroke:currentColor !important;
+  stroke-width:1.8 !important;
+  stroke-linecap:round !important;
+  stroke-linejoin:round !important;
+}
+
+body.mf-page-system-tokens .flow-toolbar #tokenSearch,
+body.mf-page-system-tokens .flow-toolbar input[type="search"]{
+  flex:1 1 auto !important;
+  width:100% !important;
+  min-width:0 !important;
+  height:54px !important;
+  min-height:0 !important;
+  margin:0 !important;
+  padding:0 !important;
+  border:0 !important;
+  outline:0 !important;
+  border-radius:0 !important;
+  background:transparent !important;
+  background-color:transparent !important;
+  background-image:none !important;
+  box-shadow:none !important;
+  appearance:none !important;
+  -webkit-appearance:none !important;
+  color:var(--mf-v234-text) !important;
+  caret-color:#ffffff !important;
+  font-size:13px !important;
+  font-weight:500 !important;
+  line-height:1.2 !important;
+  letter-spacing:0 !important;
+  text-shadow:none !important;
+  opacity:1 !important;
+}
+
+body.mf-page-system-tokens .flow-toolbar #tokenSearch::placeholder,
+body.mf-page-system-tokens .flow-toolbar input[type="search"]::placeholder{
+  color:var(--mf-v234-text-dim) !important;
+  opacity:1 !important;
+  font-size:13px !important;
+  font-weight:500 !important;
+  letter-spacing:0 !important;
+}
+
+body.mf-page-system-tokens .flow-toolbar .refresh-info{
+  width:132px !important;
+  min-width:132px !important;
+  height:56px !important;
+  min-height:56px !important;
+  display:block !important;
+}
+
+body.mf-page-system-tokens .flow-toolbar .refresh-info > #lastUpdate{
+  display:none !important;
+}
+
+body.mf-page-system-tokens .flow-toolbar #refreshButton{
+  width:132px !important;
+  min-width:132px !important;
+  height:56px !important;
+  min-height:56px !important;
+  max-height:56px !important;
+  padding:0 18px !important;
+  border:0.5px solid var(--mf-v234-line) !important;
+  border-radius:var(--mf-v234-radius) !important;
+  background:transparent !important;
+  background-color:transparent !important;
+  background-image:none !important;
+  box-shadow:none !important;
+  outline:0 !important;
+  color:rgba(255,255,255,.92) !important;
+}
+
+body.mf-page-system-tokens .flow-toolbar #refreshButton:hover,
+body.mf-page-system-tokens .flow-toolbar #refreshButton:focus-visible,
+body.mf-page-system-tokens .flow-toolbar #refreshButton:disabled{
+  border-color:var(--mf-v234-line-focus) !important;
+  background:transparent !important;
+  background-color:transparent !important;
+  background-image:none !important;
+  box-shadow:none !important;
+}
+
+@media (max-width:760px){
+  body.mf-page-system-tokens .flow-toolbar{
+    grid-template-columns:minmax(0,1fr) 122px !important;
+    gap:10px !important;
+  }
+  body.mf-page-system-tokens .flow-toolbar .search-wrap{
+    height:54px !important;
+    min-height:54px !important;
+    max-height:54px !important;
+    padding:0 16px !important;
+    gap:9px !important;
+  }
+  body.mf-page-system-tokens .flow-toolbar #tokenSearch,
+  body.mf-page-system-tokens .flow-toolbar input[type="search"]{
+    height:52px !important;
+    font-size:12.5px !important;
+  }
+  body.mf-page-system-tokens .flow-toolbar #tokenSearch::placeholder,
+  body.mf-page-system-tokens .flow-toolbar input[type="search"]::placeholder{
+    font-size:12.5px !important;
+  }
+  body.mf-page-system-tokens .flow-toolbar .refresh-info,
+  body.mf-page-system-tokens .flow-toolbar #refreshButton{
+    width:122px !important;
+    min-width:122px !important;
+    height:54px !important;
+    min-height:54px !important;
+    max-height:54px !important;
+  }
+}
