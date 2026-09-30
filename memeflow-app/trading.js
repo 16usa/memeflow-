@@ -4268,7 +4268,7 @@ function drawChart(){
       backgroundColor:chartTheme.background,
       textStyle:{
         color:chartTheme.text,
-        fontFamily:'IBM Plex Sans',
+        fontFamily:'IBM Plex Mono',
         fontSize:8
       },
       axisPointer:{

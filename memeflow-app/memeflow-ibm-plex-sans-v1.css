@@ -1,5 +1,5 @@
 /* ==========================================================================
-   MEMFLOW — IBM Plex Sans typography layer
+   MEMFLOW — IBM Plex Mono typography layer
 
    FONT FAMILY ONLY.
    Intentionally does NOT set:
@@ -14,9 +14,9 @@
    This file is designed to load LAST.
    ========================================================================== */
 
-@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;1,100;1,200;1,300;1,400;1,500;1,600;1,700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;1,100;1,200;1,300;1,400;1,500;1,600;1,700&display=swap");
 
-:root{--mf-font-sans:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;}
+:root{--mf-font-sans:"IBM Plex Mono","SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;}
 
 html body,
 html body *:not(.material-icons):not(.material-icons-outlined):not(.material-icons-round):not(.material-icons-sharp):not(.material-symbols-outlined):not(.material-symbols-rounded):not([class^="fa-"]):not([class*=" fa-"]) {
