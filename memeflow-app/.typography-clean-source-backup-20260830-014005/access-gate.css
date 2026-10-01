@@ -163,7 +163,7 @@
 #mf-ag-wallet-connect{
   width:100%;
   cursor:pointer;
-  font-family:inherit;
+  font-family:"Inter",sans-serif;
 }
 
 #mf-ag-wallet-connect:active{

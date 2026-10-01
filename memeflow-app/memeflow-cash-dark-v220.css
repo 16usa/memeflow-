@@ -101,7 +101,7 @@ html:not([data-theme="light"]) select,
 html:not([data-theme="light"]) textarea,
 html:not([data-theme="light"]) option,
 html:not([data-theme="light"]) optgroup{
-  font-family:var(--mf-font-sans) !important;
+  font-family:"Inter",sans-serif;
 }
 
 html:not([data-theme="light"]) :where(
@@ -113,7 +113,7 @@ html:not([data-theme="light"]) :where(
   [class*="mono"],
   [class*="address"]
 ){
-  font-family:var(--mf-font-sans) !important;
+  font-family:"Inter",sans-serif;
 }
 
 html:not([data-theme="light"]) body:where(

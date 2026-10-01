@@ -12,5 +12,5 @@ select,
 textarea,
 option,
 optgroup{
-  font-family:var(--mf-font-sans)!important;
+  font-family:"Inter",sans-serif;
 }

@@ -3,7 +3,7 @@
    No universal selector / pseudo-elements / SVG override.
 */
 html,body,button,input,select,textarea,option,optgroup{
-  font-family:var(--mf-font-sans) !important;
+  font-family:"Inter",sans-serif;
 }
 body{
   font-size:11px!important;

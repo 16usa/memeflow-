@@ -1,7 +1,7 @@
 :root{
   color-scheme:dark;
   background:#010408;
-  font-family:var(--mf-font-sans);
+  font-family:"Inter",sans-serif;
 }
 
 *{

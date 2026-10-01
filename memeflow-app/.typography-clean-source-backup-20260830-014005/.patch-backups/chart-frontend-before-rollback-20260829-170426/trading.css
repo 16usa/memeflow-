@@ -14,7 +14,7 @@
   --yellow: #efc66a;
   --purple: #a98bff;
   --blue: #6a99ff;
-  font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif;
+  font-family:"Inter",sans-serif;
 }
 
 * { box-sizing: border-box; }
@@ -396,7 +396,7 @@ button { cursor: pointer; }
   align-items: center;
   gap: 6px;
   color: #526b76;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family:"Inter",sans-serif;
   font-size: 7px;
 }
 
@@ -767,7 +767,7 @@ button { cursor: pointer; }
   border: 1px solid rgba(111, 154, 172, .035);
   border-radius: 8px;
   color: #647d88;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family:"Inter",sans-serif;
   font-size: 7px;
   line-height: 1.4;
   text-overflow: ellipsis;
@@ -1055,7 +1055,7 @@ button { cursor: pointer; }
   transition:
     opacity .38s ease,
     transform .38s ease;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family:"Inter",sans-serif;
   font-size: 10px;
   line-height: 1;
   text-shadow: 0 1px 10px rgba(0,0,0,.9);
@@ -1468,7 +1468,7 @@ button { cursor: pointer; }
   margin-top: 4px;
   overflow: hidden;
   color: #58717c;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family:"Inter",sans-serif;
   font-size: 6.5px;
   text-overflow: ellipsis;
   white-space: nowrap;

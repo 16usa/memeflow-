@@ -20,8 +20,7 @@
 
 html body,
 html body *:not(.material-icons):not(.material-icons-outlined):not(.material-icons-round):not(.material-icons-sharp):not(.material-symbols-outlined):not(.material-symbols-rounded):not([class^="fa-"]):not([class*=" fa-"]) {
-  font-family:
-    var(--mf-font-sans) !important;
+  font-family:"Inter",sans-serif;
 }
 
 html body button,
@@ -29,6 +28,5 @@ html body input,
 html body select,
 html body textarea,
 html body option {
-  font-family:
-    var(--mf-font-sans) !important;
+  font-family:"Inter",sans-serif;
 }

@@ -8,7 +8,7 @@
    ========================================================================== */
 
 body:is(.mf-page-agent-performance,.mf-agent-performance-page){
-  font-family:var(--mf-font-sans) !important;
+  font-family:"Inter",sans-serif;
 }
 
 /* PAGE */
@@ -26,7 +26,7 @@ body:is(.mf-page-agent-performance,.mf-agent-performance-page) .ap-hero{
 }
 body:is(.mf-page-agent-performance,.mf-agent-performance-page) .ap-hero .eyebrow,
 body:is(.mf-page-agent-performance,.mf-agent-performance-page) .ap-hero>span:first-child{
-  font-family:var(--mf-font-sans) !important;
+  font-family:"Inter",sans-serif;
   font-size:11px!important;
   font-weight:500!important;
   line-height:1.1!important;
@@ -34,7 +34,7 @@ body:is(.mf-page-agent-performance,.mf-agent-performance-page) .ap-hero>span:fir
 }
 body:is(.mf-page-agent-performance,.mf-agent-performance-page) .ap-hero h1{
   margin:5px 0 5px!important;
-  font-family:var(--mf-font-sans) !important;
+  font-family:"Inter",sans-serif;
   font-size:15px!important;
   font-weight:700!important;
   line-height:1.04!important;
@@ -63,7 +63,7 @@ body:is(.mf-page-agent-performance,.mf-agent-performance-page) .ap-source{
 body:is(.mf-page-agent-performance,.mf-agent-performance-page) .ap-source span,
 body:is(.mf-page-agent-performance,.mf-agent-performance-page) .ap-source small{
   margin:0!important;
-  font-family:var(--mf-font-sans) !important;
+  font-family:"Inter",sans-serif;
   font-size:11px!important;
   font-weight:500!important;
   line-height:1.15!important;
@@ -71,7 +71,7 @@ body:is(.mf-page-agent-performance,.mf-agent-performance-page) .ap-source small{
 }
 body:is(.mf-page-agent-performance,.mf-agent-performance-page) .ap-source strong{
   margin:2px 0 0!important;
-  font-family:var(--mf-font-sans) !important;
+  font-family:"Inter",sans-serif;
   font-size:11px!important;
   font-weight:600!important;
   line-height:1.1!important;
@@ -135,7 +135,7 @@ body:is(.mf-page-agent-performance,.mf-agent-performance-page) .ap-kpis article{
 body:is(.mf-page-agent-performance,.mf-agent-performance-page) .ap-kpis span,
 body:is(.mf-page-agent-performance,.mf-agent-performance-page) .ap-kpis small{
   margin:0!important;
-  font-family:var(--mf-font-sans) !important;
+  font-family:"Inter",sans-serif;
   font-size:11px!important;
   font-weight:500!important;
   line-height:1.1!important;
@@ -144,7 +144,7 @@ body:is(.mf-page-agent-performance,.mf-agent-performance-page) .ap-kpis small{
 body:is(.mf-page-agent-performance,.mf-agent-performance-page) .ap-kpis strong{
   display:block!important;
   margin:4px 0 1px!important;
-  font-family:var(--mf-font-sans) !important;
+  font-family:"Inter",sans-serif;
   font-size:13px!important;
   font-weight:600!important;
   line-height:1.05!important;
@@ -171,7 +171,7 @@ body:is(.mf-page-agent-performance,.mf-agent-performance-page) .ap-head{
 body:is(.mf-page-agent-performance,.mf-agent-performance-page) .ap-head>b,
 body:is(.mf-page-agent-performance,.mf-agent-performance-page) .ap-head>span,
 body:is(.mf-page-agent-performance,.mf-agent-performance-page) .ap-head small{
-  font-family:var(--mf-font-sans) !important;
+  font-family:"Inter",sans-serif;
   font-size:11px!important;
   font-weight:500!important;
   line-height:1.1!important;
@@ -180,7 +180,7 @@ body:is(.mf-page-agent-performance,.mf-agent-performance-page) .ap-head small{
 body:is(.mf-page-agent-performance,.mf-agent-performance-page) .ap-head h2,
 body:is(.mf-page-agent-performance,.mf-agent-performance-page) .ap-head strong{
   margin:0!important;
-  font-family:var(--mf-font-sans) !important;
+  font-family:"Inter",sans-serif;
   font-size:13px!important;
   font-weight:700!important;
   line-height:1.08!important;
@@ -194,7 +194,7 @@ body:is(.mf-page-agent-performance,.mf-agent-performance-page) .ap-donut{
   margin:4px auto 6px!important;
 }
 body:is(.mf-page-agent-performance,.mf-agent-performance-page) .ap-donut span{
-  font-family:var(--mf-font-sans) !important;
+  font-family:"Inter",sans-serif;
   font-size:11px!important;
   font-weight:500!important;
   line-height:1.05!important;
@@ -202,7 +202,7 @@ body:is(.mf-page-agent-performance,.mf-agent-performance-page) .ap-donut span{
 body:is(.mf-page-agent-performance,.mf-agent-performance-page) .ap-legend{
   margin:5px 0 7px!important;
   gap:8px!important;
-  font-family:var(--mf-font-sans) !important;
+  font-family:"Inter",sans-serif;
   font-size:11px!important;
   font-weight:500!important;
   line-height:1.15!important;
@@ -221,7 +221,7 @@ body:is(.mf-page-agent-performance,.mf-agent-performance-page) .ap-summary>div{
 }
 body:is(.mf-page-agent-performance,.mf-agent-performance-page) .ap-summary span{
   display:block!important;
-  font-family:var(--mf-font-sans) !important;
+  font-family:"Inter",sans-serif;
   font-size:11px!important;
   font-weight:500!important;
   line-height:1.1!important;
@@ -229,7 +229,7 @@ body:is(.mf-page-agent-performance,.mf-agent-performance-page) .ap-summary span{
 body:is(.mf-page-agent-performance,.mf-agent-performance-page) .ap-summary strong{
   display:block!important;
   margin-top:3px!important;
-  font-family:var(--mf-font-sans) !important;
+  font-family:"Inter",sans-serif;
   font-size:11px!important;
   font-weight:600!important;
   line-height:1.08!important;
@@ -250,13 +250,13 @@ body:is(.mf-page-agent-performance,.mf-agent-performance-page) .ap-engine{
 }
 body:is(.mf-page-agent-performance,.mf-agent-performance-page) .ap-engine span,
 body:is(.mf-page-agent-performance,.mf-agent-performance-page) .ap-engine small{
-  font-family:var(--mf-font-sans) !important;
+  font-family:"Inter",sans-serif;
   font-size:11px!important;
   font-weight:500!important;
   line-height:1.15!important;
 }
 body:is(.mf-page-agent-performance,.mf-agent-performance-page) .ap-engine strong{
-  font-family:var(--mf-font-sans) !important;
+  font-family:"Inter",sans-serif;
   font-size:11px!important;
   font-weight:600!important;
   line-height:1.1!important;
@@ -281,14 +281,14 @@ body:is(.mf-page-agent-performance,.mf-agent-performance-page) .factor-top{
   gap:8px!important;
 }
 body:is(.mf-page-agent-performance,.mf-agent-performance-page) .factor-top span{
-  font-family:var(--mf-font-sans) !important;
+  font-family:"Inter",sans-serif;
   font-size:11px!important;
   font-weight:500!important;
   line-height:1.1!important;
   letter-spacing:0!important;
 }
 body:is(.mf-page-agent-performance,.mf-agent-performance-page) .factor-top :where(strong,b){
-  font-family:var(--mf-font-sans) !important;
+  font-family:"Inter",sans-serif;
   font-size:11px!important;
   font-weight:600!important;
   line-height:1.1!important;
@@ -304,7 +304,7 @@ body:is(.mf-page-agent-performance,.mf-agent-performance-page) .rank:first-of-ty
   margin-top:0!important;
 }
 body:is(.mf-page-agent-performance,.mf-agent-performance-page) .rank strong{
-  font-family:var(--mf-font-sans) !important;
+  font-family:"Inter",sans-serif;
   font-size:11px!important;
   font-weight:600!important;
   line-height:1.1!important;
@@ -313,7 +313,7 @@ body:is(.mf-page-agent-performance,.mf-agent-performance-page) .rank strong{
 body:is(.mf-page-agent-performance,.mf-agent-performance-page) .rank span,
 body:is(.mf-page-agent-performance,.mf-agent-performance-page) .rank .meta,
 body:is(.mf-page-agent-performance,.mf-agent-performance-page) .meta{
-  font-family:var(--mf-font-sans) !important;
+  font-family:"Inter",sans-serif;
   font-size:11px!important;
   font-weight:500!important;
   line-height:1.12!important;
@@ -336,13 +336,13 @@ body:is(.mf-page-agent-performance,.mf-agent-performance-page) .ap-bars>div{
   min-height:38px!important;
   padding:6px 7px!important;
   border-radius:8px!important;
-  font-family:var(--mf-font-sans) !important;
+  font-family:"Inter",sans-serif;
   font-size:11px!important;
   font-weight:500!important;
   line-height:1.12!important;
 }
 body:is(.mf-page-agent-performance,.mf-agent-performance-page) .ap-bars strong{
-  font-family:var(--mf-font-sans) !important;
+  font-family:"Inter",sans-serif;
   font-size:11px!important;
   font-weight:600!important;
   line-height:1.1!important;
@@ -372,7 +372,7 @@ body:is(.mf-page-agent-performance,.mf-agent-performance-page) .ap-privacy{
   line-height:1.3!important;
 }
 body:is(.mf-page-agent-performance,.mf-agent-performance-page) .ap-privacy strong{
-  font-family:var(--mf-font-sans) !important;
+  font-family:"Inter",sans-serif;
   font-size:11px!important;
   font-weight:600!important;
   line-height:1.15!important;
@@ -385,7 +385,7 @@ body:is(.mf-page-agent-performance,.mf-agent-performance-page) footer{
   align-items:center!important;
   justify-content:space-between!important;
   gap:8px!important;
-  font-family:var(--mf-font-sans) !important;
+  font-family:"Inter",sans-serif;
   font-size:11px!important;
   font-weight:500!important;
   line-height:1.15!important;

@@ -14,7 +14,7 @@
   --yellow: #efc66a;
   --purple: #a98bff;
   --blue: #6a99ff;
-  font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif;
+  font-family:"Inter",sans-serif;
 }
 
 * { box-sizing: border-box; }
@@ -396,7 +396,7 @@ button { cursor: pointer; }
   align-items: center;
   gap: 6px;
   color: #526b76;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family:"Inter",sans-serif;
   font-size: 7px;
 }
 
@@ -703,7 +703,7 @@ button { cursor: pointer; }
   border: 1px solid rgba(111, 154, 172, .10);
   border-radius: 8px;
   color: #647d88;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family:"Inter",sans-serif;
   font-size: 7px;
   line-height: 1.4;
   text-overflow: ellipsis;

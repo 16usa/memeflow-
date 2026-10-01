@@ -1,0 +1,21 @@
+/* ==========================================================================
+   MEMEFLOW GLOBAL INTER ONLY V2
+   One text font across MEMEFLOW: Inter.
+   This file owns font-family only.
+   ========================================================================== */
+
+html,
+body,
+body *:not(svg):not(svg *),
+button,
+input,
+select,
+textarea,
+option,
+optgroup,
+code,
+pre,
+kbd,
+samp{
+  font-family:"Inter",sans-serif !important;
+}

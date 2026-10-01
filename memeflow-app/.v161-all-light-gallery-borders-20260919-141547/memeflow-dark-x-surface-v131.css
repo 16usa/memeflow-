@@ -631,7 +631,7 @@ body.mf-page-trading.mf-trading-terminal
 
   box-shadow: none !important;
 
-  font-family: inherit !important;
+  font-family:"Inter",sans-serif;
   font-size: 9px !important;
   line-height: 1.05 !important;
   font-weight: 500 !important;
@@ -693,7 +693,7 @@ body.mf-page-trading.mf-trading-terminal
   box-sizing: border-box !important;
   box-shadow: none !important;
 
-  font-family: inherit !important;
+  font-family:"Inter",sans-serif;
   font-style: normal !important;
   font-size: 9px !important;
   line-height: 1.05 !important;
@@ -736,7 +736,7 @@ body.mf-page-trading.mf-trading-terminal
   box-sizing: border-box !important;
   box-shadow: none !important;
 
-  font-family: inherit !important;
+  font-family:"Inter",sans-serif;
   font-style: normal !important;
   font-size: 9px !important;
   line-height: 1.05 !important;
