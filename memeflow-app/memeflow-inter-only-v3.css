@@ -1,0 +1,21 @@
+/* ==========================================================================
+   MEMEFLOW GLOBAL INTER ONLY V3
+   ONE text font across the entire MEMEFLOW site: Inter.
+   Keeps icon-font elements excluded so icons are not broken.
+   ========================================================================== */
+
+html,
+body,
+body *:not(svg):not(svg *):not(.fa):not(.fas):not(.far):not(.fab):not(.fal):not(.fad):not(.material-icons):not(.material-symbols-outlined):not(.material-symbols-rounded):not(.material-symbols-sharp),
+button,
+input,
+select,
+textarea,
+option,
+optgroup,
+code,
+pre,
+kbd,
+samp{
+  font-family:"Inter",sans-serif !important;
+}
