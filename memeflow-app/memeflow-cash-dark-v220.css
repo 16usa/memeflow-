@@ -1052,3 +1052,11 @@ html:not([data-theme="light"]) body.mf-page-trading :where(
 /* ========================================================================
    /MEMEFLOW_PURE_BLACK_HALF_PX_V224
    ======================================================================== */
+
+/* MF_SYSTEM_3D_GALLERY_BORDER_3PX_V1 */
+body.mf-page-system .mfpg-variant2-clean-v1 .mfpg-card {
+  border-width: 3px !important;
+  border-style: solid !important;
+  border-color: #2f3336 !important;
+}
+/* /MF_SYSTEM_3D_GALLERY_BORDER_3PX_V1 */
