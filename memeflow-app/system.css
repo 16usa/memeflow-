@@ -1745,7 +1745,7 @@ html.mf-live-inspector-standalone-layout-v1{
   margin:0;
   padding:0;
   overflow:hidden;
-  border:1px solid #2f3336;
+  border:3px solid #2f3336;
   border-radius:clamp(12px, 1.45vw, 17px);
   outline:0;
   background:#000000;
