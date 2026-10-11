@@ -1405,225 +1405,40 @@ function mfPumpSparklineV3(row) {
 }
 
 function tokenTemplate(row, index) {
-  const key =
-    stateKey(row?.decision?.state);
-
-  const label =
-    stateLabel(row?.decision?.state);
-
-  const top =
-    top10(row);
-
-  const dev =
-    developer(row);
-
-  const pressure =
-    buyPressure(row);
-
-  const price =
-    priceSol(row);
-
-  const age =
-    tokenAge(row);
-
-  const score =
-    tokenScore(row);
-
-  const staticIdentity =
-    __mfStaticIdentityForRowV16(row);
-
-  const avatar =
-    staticIdentity.image;
-
-  const staticName =
-    staticIdentity.name;
-
-  // MEMEFLOW_TOKEN_AVATAR_PUMPFUN_LINK_V50
-  // MEMEFLOW_TOKEN_AVATAR_WRAPPER_V51
-  const pumpUrlV50 =
-    tokenExternalLinks(row).pump;
-
-  const pnl =
-    key === 'open'
-      ? openPositionPnlPct(row?.__openPosition)
-      : null;
-
-  return `
-    <article
-      class="flow-token ${key}"
-      data-index="${index}"
-      data-mint="${escapeHtml(row?.mint || '')}"
-    >
-
-      <div class="token-primary">
-
-        <div class="token-head">
-
-          ${
-            pumpUrlV50
-              ? `<a
-                  class="mf-token-avatar-anchor-v51"
-                  href="${escapeHtml(pumpUrlV50)}"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label="Open token on Pump.fun"
-                  title="Open on Pump.fun"
-                >
-                  <div class="token-avatar ${key} ${avatar ? 'has-image' : 'fallback-only'}">
-                    ${
-                      avatar
-                        ? `<img
-                            src="${escapeHtml(avatar)}"
-                            alt=""
-                            loading="lazy"
-                            decoding="async"
-                            onerror="this.parentElement.classList.add('is-broken')"
-                          >`
-                        : ''
-                    }
-                    <span>${escapeHtml(avatarFallback(row))}</span>
-                  </div>
-                  <img
-                    class="mf-pump-avatar-badge-v51"
-                    src="https://pump.fun/pump-logomark.svg"
-                    alt=""
-                    aria-hidden="true"
-                    loading="lazy"
-                    decoding="async"
-                    referrerpolicy="no-referrer"
-                  >
-                </a>`
-              : `<div class="token-avatar ${key} ${avatar ? 'has-image' : 'fallback-only'}">
-                  ${
-                    avatar
-                      ? `<img
-                          src="${escapeHtml(avatar)}"
-                          alt=""
-                          loading="lazy"
-                          decoding="async"
-                          onerror="this.parentElement.classList.add('is-broken')"
-                        >`
-                      : ''
-                  }
-                  <span>${escapeHtml(avatarFallback(row))}</span>
-                </div>`
-          }
-
-          <div class="token-meta">
-
-            <div class="token-top">
-
-              <strong class="token-mint token-name">
-                ${escapeHtml(staticName)}
-              </strong>
-
-              <span class="mf-token-age-chip-v47c">
-                ${escapeHtml(compactTokenAge(tokenAge(row)))}
-              </span>
-
-              
-
-</div>
-
-            <div class="mf-token-subline-v47c">
-              <span class="mf-holder-mini-v47c" aria-label="Holders">
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <circle cx="9" cy="8" r="3"></circle>
-                  <circle cx="17" cy="9" r="2.5"></circle>
-                  <path d="M3.5 19c.4-3.3 2.2-5 5.5-5s5.1 1.7 5.5 5M14 14.5c3.5-.5 5.7 1 6.3 4.5"></path>
-                </svg>
-                <span class="mf-holder-mini-value-v47c">${escapeHtml(holderCount(row))}</span>
-              </span>
-            </div>
-
-            
-
-          </div>
-
-        </div>
-
-      </div>
-
-      <div class="token-metric ${key === 'open' ? 'mf-open-pnl-slot' : 'mf-score-slot'}">
-        <span>${key === 'open' ? 'P&L' : 'Score'}</span>
-        <strong class="${key === 'open' ? openPositionPnlClass(pnl) : ''}">
-          ${
-            key === 'open'
-              ? formatSignedPnlPct(pnl)
-              : (finite(score) ? fmt(score, 0) : '—')
-          }
-        </strong>
-      </div>
-
-      <div class="token-metric">
-        <span>Holders</span>
-        <strong>
-          ${escapeHtml(holderCount(row))}
-        </strong>
-      </div>
-
-      <div class="token-metric">
-        <span>Top 10</span>
-        <strong>
-          ${finite(top) ? `${fmt(top, 1)}%` : '—'}
-        </strong>
-      </div>
-
-      <div class="token-metric">
-        <span>Buy pressure</span>
-        <strong>
-          ${finite(pressure) ? `${fmt(pressure, 2)}×` : '—'}
-        </strong>
-      </div>
-
-      <div class="token-metric">
-        <span>Age</span>
-        <strong>
-          ${finite(age) ? `${fmt(age, 1)}m` : '—'}
-        </strong>
-      </div>
-
-      <div class="token-metric">
-        <span>Price SOL</span>
-        <strong>
-          ${finite(price) ? fmt(price, 9) : '—'}
-        </strong>
-      </div>
-
-      ${
-        key === 'open'
-          ? openMarketStripTemplate(row)
-          : regularMarketStripTemplate(row)
-      }
-<div class="mf-v3-chart" data-mf-chart-v3>${mfPumpSparklineV3(row)}</div>
-<div class="token-details">
-
-        <div class="mf-card-analysis-v13" data-mf-card-analysis>
-          <div class="mf-card-analysis-status" data-mf-card-analysis-status>
-            Open Details to run a fresh on-demand analysis.
-          </div>
-          <div data-mf-card-analysis-body></div>
-        </div>
-
-        <div class="mf-card-static-context-v15">
-          <div class="mf-card-context-row-v15">
-            <span>Signal</span>
-            <strong>${escapeHtml(tokenReason(row))}</strong>
-          </div>
-          <div class="mf-card-context-row-v15">
-            <span>Risk</span>
-            <strong>${escapeHtml(tokenGateSummary(row))}</strong>
-          </div>
-          <div class="mf-card-context-row-v15">
-            <span>Mint</span>
-            <strong class="mf-card-mint-v15">${escapeHtml(shortMint(row?.mint || ''))}</strong>
-          </div>
-        </div>
-
-      </div>
-
-    </article>
-  `;
+  const key=stateKey(row?.decision?.state);
+  const identity=__mfStaticIdentityForRowV16(row);
+  const name=identity.name||shortMint(row?.mint||'');
+  const avatar=identity.image;
+  const pump=tokenExternalLinks(row).pump;
+  const score=tokenScore(row);
+  const pnl=key==='open'?openPositionPnlPct(row?.__openPosition):null;
+  const metric=(label,value,extra='')=>`<div class="mf9-stat ${extra}"><span>${label}</span><strong>${value}</strong></div>`;
+  const num=(v,d=0)=>finite(v)?fmt(v,d):'—';
+  const cap=row?.market?.marketCapUsd??row?.marketCapUsd;
+  const vol=row?.market?.volume5mUsd??row?.volume5mUsd;
+  const tx=row?.market?.transactions5m??row?.transactions5m;
+  const change=row?.market?.priceChange5mPct??row?.priceChange5mPct;
+  const cash=v=>finite(v)?'$'+fmt(v,Number(v)<1000?1:0):'—';
+  const image=`<span class="mf9-avatar">${avatar?`<img src="${escapeHtml(avatar)}" alt="" loading="lazy" onerror="this.style.display='none'">`:''}<b>${escapeHtml(avatarFallback(row))}</b></span>`;
+  const chart=mfPumpSparklineV3(row);
+  return `<article class="flow-token mf9-card ${key}" data-index="${index}" data-mint="${escapeHtml(row?.mint||'')}">
+    <div class="mf9-header">
+      ${pump?`<a class="mf9-image-link" href="${escapeHtml(pump)}" target="_blank" rel="noopener noreferrer">${image}</a>`:image}
+      <div class="mf9-identity"><strong class="mf9-name">${escapeHtml(name)}</strong><span class="mf9-age">${escapeHtml(compactTokenAge(tokenAge(row)))}</span><small>${escapeHtml(stateLabel(row?.decision?.state))}</small></div>
+      <div class="mf9-highlight"><small>${key==='open'?'P&L':'SCORE'}</small><strong>${key==='open'?formatSignedPnlPct(pnl):num(score)}</strong></div>
+    </div>
+    <div class="mf9-chart">${chart}</div>
+    <div class="mf9-stats">
+      ${metric('MC',cash(cap))}${metric('VOL 5M',cash(vol))}${metric('TX 5M',num(tx))}${metric('5M %',finite(change)?`${Number(change)>0?'+':''}${num(change,1)}%`:'—',Number(change)>=0?'mf9-up':'mf9-down')}
+      ${metric('HOLDERS',escapeHtml(holderCount(row)))}${metric('TOP 10',finite(top10(row))?num(top10(row),1)+'%':'—')}${metric('BUY PRESSURE',finite(buyPressure(row))?num(buyPressure(row),2)+'×':'—')}${metric('PRICE SOL',num(priceSol(row),9))}
+    </div>
+    <div class="mf9-actions"><span class="mf9-mint">${escapeHtml(shortMint(row?.mint||''))}</span><button type="button" class="details-button mf9-analyze" aria-expanded="false">ANALYZE ↗</button></div>
+    <div class="token-details mf9-modal" role="dialog" aria-modal="true" aria-label="Token analysis">
+      <div class="mf9-modal-head"><strong>${escapeHtml(name)} · ANALYSIS</strong><button type="button" class="mf9-close" aria-label="Close analysis">✕</button></div>
+      <div class="mf9-modal-scroll"><div class="mf-card-analysis-v13" data-mf-card-analysis><div class="mf-card-analysis-status" data-mf-card-analysis-status>Open analysis to load current data.</div><div data-mf-card-analysis-body></div></div>
+      <div class="mf-card-static-context-v15"><div class="mf-card-context-row-v15"><span>Signal</span><strong>${escapeHtml(tokenReason(row))}</strong></div><div class="mf-card-context-row-v15"><span>Risk</span><strong>${escapeHtml(tokenGateSummary(row))}</strong></div><div class="mf-card-context-row-v15"><span>Mint</span><strong>${escapeHtml(row?.mint||'—')}</strong></div></div></div>
+    </div>
+  </article>`;
 }
 
 function render() {
@@ -5430,3 +5245,7 @@ window.addEventListener('scroll', __mfContinuousScrollScheduleV1, {passive:true}
 window.addEventListener('resize', __mfContinuousScrollScheduleV1, {passive:true});
 requestAnimationFrame(__mfContinuousScrollCheckV1);
 /* ===== /MEMEFLOW_TOKEN_FLOW_CONTINUOUS_COMPACT_V1 ===== */
+
+// MF9_MODAL_CLOSE_HANDLER
+document.addEventListener('click',event=>{const close=event.target.closest('.mf9-close');if(!close)return;event.stopPropagation();const card=close.closest('.mf9-card');if(card){card.classList.remove('expanded');card.querySelector('.details-button')?.setAttribute('aria-expanded','false');}});
+document.addEventListener('keydown',event=>{if(event.key!=='Escape')return;document.querySelectorAll('.mf9-card.expanded').forEach(card=>card.classList.remove('expanded'));});
