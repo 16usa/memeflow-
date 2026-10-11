@@ -1384,6 +1384,26 @@ function __mfStaticIdentityForRowV16(row){
 }
 
 
+/* MF_PUMP_CARDS_V3_JS: use only real available market-cap samples; never synthesize price action. */
+function mfPumpSparklineV3(row) {
+  const sources = [row?.marketCapHistory, row?.market?.marketCapHistory, row?.market?.history, row?.market?.marketCapSeries, row?.marketCapSeries];
+  let values = [];
+  for (const src of sources) {
+    if (!Array.isArray(src)) continue;
+    const arr = src.map(p => {
+      if (typeof p === 'number') return p;
+      if (!p || typeof p !== 'object') return NaN;
+      return Number(p.marketCapUsd ?? p.marketCap ?? p.mcUsd ?? p.value);
+    }).filter(n => Number.isFinite(n) && n >= 0);
+    if (arr.length >= 2) { values = arr.slice(-60); break; }
+  }
+  if (values.length < 2) return '<div class="mf-v3-chart-empty" aria-label="Market cap history unavailable">MC HISTORY UNAVAILABLE</div>';
+  const lo = Math.min(...values), hi = Math.max(...values), span = hi - lo || 1;
+  const points = values.map((v,i) => `${(i*300/(values.length-1)).toFixed(1)},${(76-(v-lo)*66/span).toFixed(1)}`).join(' ');
+  const positive = values[values.length-1] >= values[0];
+  return `<svg class="mf-v3-spark ${positive ? 'up':'down'}" viewBox="0 0 300 88" preserveAspectRatio="none" role="img" aria-label="Market capitalization history"><polyline points="${points}" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke" /></svg>`;
+}
+
 function tokenTemplate(row, index) {
   const key =
     stateKey(row?.decision?.state);
@@ -1575,6 +1595,7 @@ function tokenTemplate(row, index) {
           ? openMarketStripTemplate(row)
           : regularMarketStripTemplate(row)
       }
+<div class="mf-v3-chart" data-mf-chart-v3>${mfPumpSparklineV3(row)}</div>
 <div class="token-details">
 
         <div class="mf-card-analysis-v13" data-mf-card-analysis>
