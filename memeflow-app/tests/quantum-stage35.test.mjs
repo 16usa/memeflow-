@@ -1,0 +1,12 @@
+import assert from 'node:assert/strict';
+import {audit} from '../scripts/quantum-stage35-candidate-audit.mjs';
+const now=1_800_000_000_000;const at=now-12*60000;const mint='MintOne';
+const event={mint,at,priceAt:at-1000,priceSol:10,stage29ShadowDecision:{state:'CANDIDATE',reason:'TEST'},observedPattern:{direction:'BEARISH'},quantumScore:{score:80},quantumRisk:{risk:12}};
+const r=audit([event],[{mint,priceAt:at+5*60000,priceSol:9}],now);
+assert.equal(r.tradeAuthority,false);assert.equal(r.thresholdsChanged,false);assert.equal(r.validated,false);
+assert.equal(r.byHorizon[5].byState.CANDIDATE.matured,1);assert.equal(r.byHorizon[5].byState.CANDIDATE.meanReturnPct,-10);
+assert.equal(r.byHorizon[5].byState.CANDIDATE.meanScore,80);assert.equal(r.byHorizon[5].byState.CANDIDATE.meanRisk,12);
+assert.equal(r.byHorizon[5].byState.CANDIDATE.byPattern.BEARISH.matured,1);
+assert.equal(r.byHorizon[5].byState.CANDIDATE.byReason.TEST.matured,1);
+assert.equal(r.byHorizon[15].byState.CANDIDATE.missing,0);assert.equal(r.candidateFiveMinuteCases.length,1);
+console.log('Stage 35 tests passed (11 assertions)');

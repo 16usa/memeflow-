@@ -1,0 +1,18 @@
+import assert from 'node:assert/strict';
+import {decisions,measure} from '../scripts/quantum-stage26-performance.mjs';
+const start=1_700_000_000_000;
+const mk=(at,state='BUY READY')=>({version:25,mint:'abc',at,state,priceSol:2,quantumState:'WAITING',quantumScore:48});
+const ds=decisions([mk(start),mk(start+1000),{...mk(start+2000),state:'WATCH'}, {...mk(start+10000),version:24}]);
+assert.equal(ds.length,2);assert.equal(ds[0].at,start);
+const snap=[{mint:'abc',priceSol:3,priceAt:start+5*60000+1000}];
+const result=measure(ds,snap,start+65*60000);
+assert.equal(result.groups[5].memflowBuyReady.matured,1);
+assert.equal(result.groups[5].memflowBuyReady.meanReturnPct,50);
+assert.equal(result.groups[5].memflowBuyReadyQuantumWaiting.matured,1);
+assert.equal(result.groups[15].memflowBuyReady.matured,0);
+assert.equal(result.groups[15].memflowBuyReady.missingFollowup,1);
+assert.equal(result.groups[60].memflowBuyReady.matured,0);
+assert.equal(result.quantumAccuracyVerified,false);
+const bad=measure([mk(start)],[{mint:'abc',priceSol:100,priceAt:start+5*60000-1}],start+6*60000);
+assert.equal(bad.groups[5].memflowBuyReady.matured,0);
+console.log('Stage 26 offline performance tests passed (10 assertions). NOT live accuracy validation.');

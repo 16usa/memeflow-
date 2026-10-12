@@ -1,0 +1,11 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+const source=fs.readFileSync(new URL('../app-server.mjs',import.meta.url),'utf8');
+assert.match(source,/MEMEFLOW_QUANTUM_STAGE15_EXECUTION_GATE/);
+assert.match(source,/if\(String\(side\|\|'\'\)\.trim\(\)\.toUpperCase\(\)!=='BUY'\)return;/);
+assert.match(source,/includePreOpenRisk:true/);
+assert.match(source,/decision\?\.scoreAuthority!=='quantum-decision-engine'\|\|decision\?\.state!=='BUY READY'/);
+assert.match(source,/executeTrade:async\(args\)=>\{\s*__mfQuantumExecutionBuyGate/);
+assert.match(source,/__mfQuantumExecutionBuyGate\(\{uid:u\.id,mint,side\}\);\s*const result=await __mfSmartVaultD4\.executeTrade/);
+assert.equal((source.match(/__mfSmartVaultD4\.executeTrade\(/g)||[]).length,2);
+console.log('Stage 15 static checks passed (NOT live-trading validation)');

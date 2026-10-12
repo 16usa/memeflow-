@@ -3,10 +3,13 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import {defaultSettings,normalizeSettings} from './settings.mjs';
 import {TokenRegistry} from './token-registry.mjs';
+// MEMEFLOW_STAGE24_SHADOW_CAPTURE_IMPORT
+import {createStage24Capture} from './quantum-stage24-capture.mjs';
 
 export class JsonStore {
   constructor(dir){
     this.dir=dir;this.file=path.join(dir,'state.json');
+    this.stage24Capture=createStage24Capture({dataDir:dir,enabled:process.env.MEMEFLOW_STAGE24_SHADOW_CAPTURE==='1'});
     this.backupFile=path.join(dir,'state.json.bak'); // MEMEFLOW_CRASH_SAFE_STATE_RECOVERY_V53
     this._stateLoadSource='defaults';
     this._stateLoadRecovery=null;
@@ -837,6 +840,8 @@ export class JsonStore {
   setDecision(uid,mint,d){
     const key=uid+':'+mint,now=Date.now();
     this.state.decisions[key]={...d,userId:uid,mint,updatedAt:now};
+    // MEMEFLOW_STAGE24_SHADOW_CAPTURE: observe only; failures cannot affect decisions.
+    try{this.stage24Capture?.observe({mint,token:this.state.tokens?.[mint],decision:this.state.decisions[key]})}catch{}
     if(!this._uidDec[uid])this._uidDec[uid]=new Map();
     const m=this._uidDec[uid];
     m.set(key,now);

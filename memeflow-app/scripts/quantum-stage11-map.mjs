@@ -1,0 +1,13 @@
+// Quantum Stage 11: read-only source-level decision path inventory.
+// Does not change modes, files, wallet state, or execution.
+import fs from 'node:fs';
+import path from 'node:path';
+import {fileURLToPath} from 'node:url';
+const app=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
+const files=['app-server.mjs','src/evaluate.mjs','src/settings-gate.mjs','src/quantum-decision-engine.mjs','src/liveeval.mjs','src/recovery.mjs','src/paper-engine.mjs'];
+const patterns=[['evaluate_call',/\bevaluate\s*\(/g],['entry_admission_call',/\bevaluateEntryAdmission\s*\(/g],['settings_admission_call',/\bevaluateSettingsAdmission\s*\(/g],['v24_bridge_call',/\b__mfApplyV24PolicyBridge\s*\(/g],['quantum_decision_call',/\bquantumDecision\s*\(/g],['execution',/\b(?:executeTrade|executeBuy|placeOrder|submitTransaction|sendTransaction)\s*\(/g]];
+const hits=[];let missing=[];
+for(const f of files){const full=path.join(app,f);if(!fs.existsSync(full)){missing.push(f);continue;}const lines=fs.readFileSync(full,'utf8').split(/\r?\n/);for(let i=0;i<lines.length;i++){const line=lines[i];for(const [kind,re] of patterns){re.lastIndex=0;if(!re.test(line))continue;const trimmed=line.trim();const classification=/^\s*(?:\/\/|\*)/.test(line)?'comment':/\b(?:function|export function|const|let)\s+\w+\s*=/.test(line)&&kind.endsWith('_call')?'review_definition_or_call':'review_runtime_path';hits.push({file:f,line:i+1,kind,classification,code:trimmed.slice(0,230),context:lines.slice(Math.max(0,i-2),Math.min(lines.length,i+3)).map(x=>x.trim()).join(' | ').slice(0,600)});}}}
+const groups={};for(const h of hits){(groups[h.kind]??=[]).push(h)}
+const report={audit:'QUANTUM_STAGE11_SOURCE_MAP',mode:'READ_ONLY',checkedAt:new Date().toISOString(),missingFiles:missing,counts:Object.fromEntries(Object.entries(groups).map(([k,v])=>[k,v.length])),findings:hits,conclusions:['Text matches do not prove runtime authority. Inspect each call site and branches before deleting legacy logic.','SHADOW and ENFORCE have different decision paths. This audit does not enable either mode.','This audit does not validate live market data, paper trading, or execution safety.'],readyForLive:false};
+const out=process.argv.includes('--json');if(out)console.log(JSON.stringify(report,null,2));else{console.log('Quantum Stage 11 — READ-ONLY decision-path map');console.log('Files missing:',missing.join(', ')||'none');for(const [kind,items] of Object.entries(groups)){console.log(`\n${kind}: ${items.length}`);for(const x of items)console.log(`  ${x.file}:${x.line} [${x.classification}] ${x.code}`)}console.log('\nLIVE READY: NO. This is a source inventory, not proof of full migration.');}

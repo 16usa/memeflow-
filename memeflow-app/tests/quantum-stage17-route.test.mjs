@@ -1,0 +1,13 @@
+import assert from 'node:assert/strict';
+import {spawnSync} from 'node:child_process';
+import path from 'node:path';
+import {fileURLToPath} from 'node:url';
+const script=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../scripts/quantum-stage17-route-audit.mjs');
+const result=spawnSync(process.execPath,[script],{encoding:'utf8',timeout:15000});
+assert.equal(result.status,0,`Stage 17 audit failed: ${result.stderr}\n${result.stdout}`);
+const report=JSON.parse(result.stdout);
+assert.equal(report.failed,0);
+assert.equal(report.liveReady,false);
+assert.equal(report.transactions,0);
+assert.ok(report.passed>=12);
+console.log(`Stage 17 read-only route assertions passed (${report.passed}/${report.passed}); NOT live validation`);

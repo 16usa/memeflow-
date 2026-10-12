@@ -1,0 +1,12 @@
+import assert from 'node:assert/strict';
+import {assessQuantumEntry,validatePaperOutcomes} from '../src/quantum-stage19-policy.mjs';
+const good={score:80,risk:20,pattern:{ready:true,probability:80,confidence:75}};
+assert.equal(assessQuantumEntry(good).eligible,true);
+assert.equal(assessQuantumEntry({...good,risk:85}).proposedState,'BLOCKED');
+assert.equal(assessQuantumEntry({...good,score:50}).eligible,false);
+assert.equal(assessQuantumEntry({...good,pattern:{ready:false}}).proposedState,'WAITING');
+assert.equal(assessQuantumEntry({...good,pattern:{ready:true,probability:30,confidence:75}}).eligible,false);
+const outcomes=validatePaperOutcomes([{predictedEligible:true,observedPositive:true},{predictedEligible:true,observedPositive:false}]);
+assert.equal(outcomes.precision,.5);
+assert.equal(outcomes.validated,false);
+console.log('Stage 19 policy unit tests passed (6 checks). NOT live validation.');

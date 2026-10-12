@@ -1,0 +1,10 @@
+import assert from 'node:assert/strict';
+import {register,summarize} from '../scripts/quantum-stage38-forward.mjs';
+const cutoff=1000;
+const mk=(mint,at,acc,status='MATURED',ret=10)=>({mint,at,quantumState:'CANDIDATE',horizonMin:5,preEntry:{status:'OBSERVED',accelerationPct:acc},status,returnPct:ret});
+const rows=[mk('old',999,40),mk('a',1001,31),mk('b',1002,20,'MATURED',-5),mk('c',1003,null,'MISSING_FOLLOWUP',null),mk('a',1001,31)];
+const registered=register(rows,[],cutoff);
+assert.equal(registered.length,3);assert.equal(registered[0].eligible,true);assert.equal(registered[1].eligible,false);assert.equal(registered[2].eligible,null);
+assert.equal(register(rows,registered,cutoff).length,0);
+const s=summarize(registered,rows);assert.equal(s.registered,3);assert.equal(s.matured,2);assert.equal(s.missingFollowup,1);assert.equal(s.pass.meanReturnPct,10);assert.equal(s.fail.meanReturnPct,-5);assert.equal(s.tradeAuthority,false);
+console.log('Stage 38 tests passed (11 assertions)');

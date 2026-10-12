@@ -1,0 +1,14 @@
+import assert from 'node:assert/strict';
+import {inspectPricePattern} from '../src/quantum-stage27-pattern.mjs';
+import {quantumStage27Advisory} from '../src/quantum-stage27-shadow.mjs';
+const now=1800000000000;
+assert.equal(inspectPricePattern([],now).ready,false);
+assert.equal(inspectPricePattern([{at:now,priceSol:1}],now).direction,'UNKNOWN');
+const rising=Array.from({length:10},(_,i)=>({at:now-90000+i*10000,priceSol:1+i*.01}));
+const p=inspectPricePattern(rising,now);
+assert.equal(p.ready,true);assert.equal(p.direction,'BULLISH');assert.equal(p.probability,null);assert.equal(p.validated,false);
+assert.equal(inspectPricePattern(rising,now+180000).ready,false);
+assert.equal(inspectPricePattern(rising.map(x=>({...x,priceSol:-1})),now).ready,false);
+const advisory=quantumStage27Advisory({priceHistory:rising},{state:'BUY READY'},now);
+assert.equal(advisory.autonomousEntryReady,false);assert.equal(advisory.legacyDecisionUnchanged,true);
+console.log('Stage 27 offline pattern tests passed (9 assertions). SHADOW ONLY; no predictive accuracy validated.');

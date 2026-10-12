@@ -1,0 +1,14 @@
+import assert from 'node:assert/strict';
+import {spawnSync} from 'node:child_process';
+import path from 'node:path';
+import {fileURLToPath} from 'node:url';
+const app=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
+const run=spawnSync(process.execPath,[path.join(app,'scripts/quantum-stage12-audit.mjs')],{encoding:'utf8',env:{...process.env,MEMEFLOW_QUANTUM_MODE:'SHADOW'}});
+assert.equal(run.status,0,run.stderr||run.stdout);
+const report=JSON.parse(run.stdout);
+assert.equal(report.mode,'READ_ONLY');
+assert.equal(report.liveReady,false);
+assert.equal(report.checks.quantumEnginePresent,true);
+assert.equal(report.checks.quantumSwitch,true);
+assert.ok(report.files['app-server.mjs'].hits.length>0);
+console.log('Stage 12 read-only source audit assertions passed; NOT live validation');

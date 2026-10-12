@@ -1,0 +1,7 @@
+import assert from 'node:assert/strict';
+import {diagnose} from '../scripts/quantum-stage32-diagnostics.mjs';
+const now=1_000_000_000;
+const event=(mint,state,at=now-900_000)=>({mint,at,priceAt:at,priceSol:1,quantumScore:70,quantumRisk:10,observedPattern:{direction:'BULLISH',returnPct:8,observations:20},stage29ShadowDecision:{state,reason:'TEST'},state:'WATCH'});
+const events=[event('A','CANDIDATE'),event('B','BLOCKED'),event('C','WATCH'),event('D','WAITING'),event('E','WATCH')];
+const snaps=[{mint:'A',priceAt:now-900_000+300_000,priceSol:1.2},{mint:'B',priceAt:now-900_000+100_000,priceSol:.9},{mint:'C',priceAt:now-900_000+500_000,priceSol:1.1},{mint:'D',priceAt:now-900_000+800_000,priceSol:1.1}];
+const r=diagnose(events,snaps,now);assert.equal(r.decisions,5);assert.equal(r.tradeAuthority,false);assert.equal(r.byHorizon[5].reasons.MATCHED,1);assert.equal(r.byHorizon[5].reasons.ONLY_BEFORE_WINDOW,1);assert.equal(r.byHorizon[5].reasons.ONLY_AFTER_WINDOW,2);assert.equal(r.byHorizon[5].reasons.NO_LATER_PRICE,1);assert.equal(r.byHorizon[5].byQuantum.CANDIDATE.matured,1);assert.equal(r.byHorizon[5].byQuantum.CANDIDATE.meanReturnPct,20);assert.equal(r.byHorizon[5].byQuantum.CANDIDATE.patternDirections.BULLISH,1);assert.equal(r.rows.length,20);assert.equal(r.rows.find(x=>x.mint==='A'&&x.horizonMin===5).quantumScore,70);assert.equal(r.rows.find(x=>x.mint==='A'&&x.horizonMin===5).decisionReason,'TEST');assert.equal(r.rows.find(x=>x.mint==='A'&&x.horizonMin===5).status,'MATURED');console.log('Stage 32 tests passed (12 assertions)');

@@ -1,0 +1,14 @@
+import assert from 'node:assert/strict';
+import {quantumDecision} from '../src/quantum-decision-engine.mjs';
+const token={priceSol:0.0001,holderCount:200,top10Pct:8,developerPct:1,buyPressure:100,suspectedRiskyWalletsPct:2,insidersPct:1};
+const intel={shadowTokenPattern:{ready:true,patternProbabilityPositivePct:85,matchConfidencePct:80}};
+const baseline=quantumDecision(token,{},intel);
+assert.equal(baseline.state,'BUY READY');
+assert.equal(quantumDecision(token,{minScore:99},intel).state,'WATCH');
+assert.equal(quantumDecision(token,{minConfidence:101},intel).state,'WATCH');
+assert.equal(quantumDecision(token,{maxSuspectedRiskyWalletsPct:1},intel).state,'BLOCKED');
+assert.equal(quantumDecision(token,{maxInsidersPct:0},intel).state,'BLOCKED');
+assert.equal(quantumDecision({...token,insidersPct:null},{maxInsidersPct:3},intel).state,'WAITING');
+assert.equal(quantumDecision(token,{},{}).state,'WAITING');
+assert.equal(quantumDecision({...token,dead:true},{},intel).state,'BLOCKED');
+console.log('Quantum Stage 9 settings tests passed (simulation only)');

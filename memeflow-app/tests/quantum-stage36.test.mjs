@@ -1,0 +1,12 @@
+import assert from 'node:assert/strict';
+import {preEntryPath,validate} from '../scripts/quantum-stage36-entry-validation.mjs';
+const t=1000000,mint='TEST';const event={mint,at:t,priceAt:t,priceSol:110,stage29ShadowDecision:{state:'CANDIDATE',reason:'TEST'}};
+const snapshots=[{mint,priceAt:t-60000,priceSol:100},{mint,priceAt:t-25000,priceSol:105},{mint,priceAt:t-10000,priceSol:108}];
+const r=preEntryPath(event,snapshots);
+assert.equal(r.status,'OBSERVED');assert.equal(r.points,4);assert.equal(r.return60sPct,10);assert.equal(r.return30sPct,+(100*(110/105-1)).toFixed(3));assert.equal(r.drawdownFrom120sPeakPct,0);
+assert.equal(preEntryPath(event,[]).return30sPct,null);
+assert.equal(preEntryPath({...event,priceAt:t-61000},[]).status,'STALE_BASELINE');
+assert.equal(preEntryPath(null,[]).status,'INVALID_EVENT');
+const out=validate([event],[...snapshots,{mint,priceAt:t+300000,priceSol:100}],t+500000);
+assert.equal(out.tradeAuthority,false);assert.equal(out.thresholdsChanged,false);assert.equal(out.byState.CANDIDATE.matured,1);assert.equal(out.candidateNonPositive.matured,1);assert.equal(out.candidatePositive.matured,0);
+console.log('Stage 36 tests passed (12 assertions)');
