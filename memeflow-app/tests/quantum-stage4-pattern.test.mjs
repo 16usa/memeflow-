@@ -1,0 +1,15 @@
+import assert from 'node:assert/strict';
+import {resolveQuantumPattern} from '../src/quantum-pattern-provider.mjs';
+import {quantumDecision} from '../src/quantum-decision-engine.mjs';
+const now=Date.now();
+const snapshot={snapshot:{observedAt:now,shadowTokenPattern:{ready:true,status:'PATTERN_MATCH',patternProbabilityPositivePct:78,matchConfidencePct:65}}};
+const ok=resolveQuantumPattern(snapshot,{now});
+assert.equal(ok.shadowTokenPattern.ready,true);
+assert.equal(ok.shadowTokenPattern.patternProbabilityPositivePct,78);
+assert.equal(resolveQuantumPattern(snapshot,{now:now+180000}).shadowTokenPattern.ready,false);
+assert.equal(resolveQuantumPattern({snapshot:{shadowTokenPattern:snapshot.snapshot.shadowTokenPattern}},{now}).shadowTokenPattern.ready,false);
+assert.equal(resolveQuantumPattern(null,{now}).shadowTokenPattern.ready,false);
+const token={priceSol:0.00001,holderCount:150,top10Pct:12,developerPct:2,buyPressure:90};
+assert.equal(quantumDecision(token,{},ok).quantum.pattern.ready,true);
+assert.equal(quantumDecision(token,{},resolveQuantumPattern(null,{now})).state,'WAITING');
+console.log('Quantum Stage 4 pattern integration tests passed');

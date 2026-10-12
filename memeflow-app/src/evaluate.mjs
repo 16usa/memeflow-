@@ -1,4 +1,13 @@
 import {evaluateSettingsGate,tokenAgeMinutes} from './settings-gate.mjs';
+import {quantumDecision} from './quantum-decision-engine.mjs';
+import {resolveQuantumPattern} from './quantum-pattern-provider.mjs';
+// MEMEFLOW_QUANTUM_STAGE4_PATTERN_PROVIDER
+let quantumPatternProvider=null;
+export function configureQuantumPatternProvider(provider){
+  if(typeof provider!=='function')throw new TypeError('Quantum pattern provider must be a function');
+  quantumPatternProvider=provider;
+}
+
 import {qualityScoreFromToken} from './opportunity-engine.mjs';
 
 // MEMEFLOW_UNIFIED_ANALYSIS_ENGINE_V21
@@ -25,6 +34,23 @@ function evidenceCompleteness(token={}){
 }
 
 export function evaluate(token,s={},options={}){
+  // MEMEFLOW_QUANTUM_STAGE2_ROUTING
+  // Provider reads the existing V23 history; missing/stale data fails closed.
+  // Explicit test injection remains supported via options.quantumIntelligence.
+  let quantumIntel=options?.quantumIntelligence??token?.quantumIntelligence??null;
+  if(quantumIntel==null && quantumPatternProvider && token?.mint){
+    try { quantumIntel=resolveQuantumPattern(quantumPatternProvider(token.mint)); }
+    catch { quantumIntel={shadowTokenPattern:{ready:false,status:'PATTERN_PROVIDER_ERROR'}}; }
+  }
+  const quantum=quantumDecision(token,s,{...(quantumIntel||{}),__quantumPreOpen:options?.includePreOpenRisk===true});
+  // MEMEFLOW_QUANTUM_STAGE3_SINGLE_AUTHORITY
+  // Quantum is the sole ANALYTICAL authority when explicitly enabled.
+  // No legacy score, trend, or settings analytics are evaluated in this mode.
+  // Keep the live execution switch separate: this module never places orders.
+  // Missing pattern evidence must remain WAITING, not silently use legacy score.
+  const quantumMode=String(process.env.MEMEFLOW_QUANTUM_MODE||'SHADOW').trim().toUpperCase();
+  if(quantumMode==='ENFORCE')return quantum;
+
   const includePreOpenRisk=options?.includePreOpenRisk===true;
   const policy=evaluateSettingsGate(token,s,{includePreOpenRisk});
   const reasons=[...policy.reasons];
@@ -148,6 +174,7 @@ export function evaluate(token,s={},options={}){
   ];
 
   return {
+    quantumShadow:quantum,
     analysisVersion:'MEMEFLOW_UNIFIED_ANALYSIS_V21',
     scoreAuthority:'evaluate',
     state,

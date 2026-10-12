@@ -1,0 +1,16 @@
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {quantumDecision} from '../src/quantum-decision-engine.mjs';
+const token={priceSol:0.00001,holderCount:120,top10Pct:10,developerPct:2,buyPressure:70,suspectedRiskyWalletsPct:70,insidersPct:5};
+const pattern={shadowTokenPattern:{ready:true,patternProbabilityPositivePct:90,matchConfidencePct:90}};
+const base=quantumDecision(token,{},pattern);
+const fail=quantumDecision(token,{maxSuspectedRiskyWalletsPct:20},{...pattern,__quantumPreOpen:true});
+assert.equal(fail.state,'BLOCKED');
+assert.equal(fail.quantum.score,base.quantum.score);
+const unknown=quantumDecision({...token,suspectedRiskyWalletsPct:null},{maxSuspectedRiskyWalletsPct:20},{...pattern,__quantumPreOpen:true});
+assert.equal(unknown.state,'BLOCKED');
+const source=readFileSync(new URL('../app-server.mjs',import.meta.url),'utf8');
+assert.match(source,/QUANTUM_EXECUTION_NOT_VALIDATED/);
+assert.match(source,/MEMEFLOW_QUANTUM_STAGE5_GUARDS/);
+assert.match(source,/scoreSource:String\(process\.env\.MEMEFLOW_QUANTUM_MODE/);
+console.log('Quantum Stage 5 safety tests passed');

@@ -1,5 +1,5 @@
 import http from 'node:http';import fs from 'node:fs';import path from 'node:path';import crypto from 'node:crypto';import zlib from 'node:zlib';import {fileURLToPath} from 'node:url';
-import {JsonStore,sessionId,defaults} from './src/store.mjs';import {RpcPool,validPubkey,decodeCurve,decodeCreateData,decodePumpCreate,decodePumpCreateEventLog} from './src/solana.mjs';import {evaluate,tokenAgeMinutes} from './src/evaluate.mjs';import {evaluateSettingsAdmission,evaluateEntryAdmission,settingsContextSignature} from './src/settings-gate.mjs';import {validateSettings,PROFILE_PRESETS} from './src/settings.mjs';import {StripeBilling} from './src/billing.mjs';
+import {JsonStore,sessionId,defaults} from './src/store.mjs';import {RpcPool,validPubkey,decodeCurve,decodeCreateData,decodePumpCreate,decodePumpCreateEventLog} from './src/solana.mjs';import {evaluate,tokenAgeMinutes,configureQuantumPatternProvider} from './src/evaluate.mjs';import {evaluateSettingsAdmission,evaluateEntryAdmission,settingsContextSignature} from './src/settings-gate.mjs';import {validateSettings,PROFILE_PRESETS} from './src/settings.mjs';import {StripeBilling} from './src/billing.mjs';
 import {OpenAIIntelligence} from './src/openai-intelligence.mjs';import {PaperEngine} from './src/paper-engine.mjs';import {PlatformTradeAnalytics} from './src/platform-trade-analytics.mjs';import {CopyTradingManager} from './src/copy-trading.mjs'; // MEMEFLOW_COPY_TRADING_V1
 import './src/copy-trading-multi-wallet-v3.mjs'; // MEMEFLOW_COPY_TRADING_MULTI_WALLET_V3
 import {makeEnrichDiag,makeHolderMetrics,enrichHolders,makeHolderQueue} from './src/enrich.mjs';
@@ -40,6 +40,8 @@ import {createSmartVaultD4Adapter} from './smart-vault/devnet-executor-d4/runtim
 const root=path.dirname(fileURLToPath(import.meta.url)),dataDir=path.resolve(root,process.env.DATA_DIR||'data'),store=new JsonStore(dataDir);
 const opportunityEngine=createOpportunityEngine(); // MEMEFLOW_OPPORTUNITY_ENGINE_V1
 const tokenIntelligenceShadowV23=createTokenIntelligenceShadowV23({dataDir}); // Frozen V23 intelligence
+// MEMEFLOW_QUANTUM_STAGE4_PATTERN_PROVIDER
+configureQuantumPatternProvider(mint=>tokenIntelligenceShadowV23.inspect(mint));
 const v24ControlledPolicyBridge=createV24ControlledPolicyBridgeV24_0({
   dataDir,
   mode:process.env.MEMEFLOW_V24_POLICY_BRIDGE_MODE||'OFF',
@@ -56,6 +58,7 @@ const v24ControlledPolicyBridge=createV24ControlledPolicyBridgeV24_0({
 }); // V24.0 defaults OFF + killed; only BUY READY -> WATCH can ever be enforced
 
 function __mfApplyV24PolicyBridge(uid,token,decision){
+  if(String(process.env.MEMEFLOW_QUANTUM_MODE||'SHADOW').toUpperCase()==='ENFORCE')return decision;
   return v24ControlledPolicyBridge.apply({
     uid,
     token,
@@ -2368,6 +2371,7 @@ function __mfLiveDecisionForUserV14(uid,token,settingsOverride=null,admissionOve
     freshState==='WAITING' &&
     !freshScoreKnown &&
     persistedScoreKnown &&
+    String(process.env.MEMEFLOW_QUANTUM_MODE||'SHADOW').trim().toUpperCase()!=='ENFORCE' &&
     String(persisted?.scoreAuthority||'evaluate')==='evaluate'
   ){
     const lastScore=Math.max(
@@ -2394,7 +2398,7 @@ function __mfLiveDecisionForUserV14(uid,token,settingsOverride=null,admissionOve
     decision={
       ...decision,
       scoreFresh:true,
-      scoreSource:'evaluate-live'
+      scoreSource:String(process.env.MEMEFLOW_QUANTUM_MODE||'SHADOW').trim().toUpperCase()==='ENFORCE'?'quantum-live':'evaluate-live'
     };
   }
 
@@ -11465,6 +11469,8 @@ async function __mfHandleDecision(
   token,
   decision
 ){
+  // MEMEFLOW_QUANTUM_STAGE5_GUARDS: analysis-only until separately validated.
+  if(String(process.env.MEMEFLOW_QUANTUM_MODE||'SHADOW').trim().toUpperCase()==='ENFORCE')return {action:'NONE',reason:'QUANTUM_EXECUTION_NOT_VALIDATED'};
   if(
     !uid ||
     !token?.mint ||

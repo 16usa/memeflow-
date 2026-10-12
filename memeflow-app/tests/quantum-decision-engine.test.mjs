@@ -1,0 +1,10 @@
+import assert from 'node:assert/strict';
+import {quantumDecision} from '../src/quantum-decision-engine.mjs';
+const good={priceSol:0.00001,holderCount:120,top10Pct:10,developerPct:2,buyPressure:95,suspectedRiskyWalletsPct:5};
+const pattern={shadowTokenPattern:{ready:true,patternProbabilityPositivePct:80,matchConfidencePct:70}};
+assert.equal(quantumDecision(good,{},pattern).state,'BUY READY');
+assert.equal(quantumDecision({...good,dead:true},{},pattern).state,'BLOCKED');
+assert.equal(quantumDecision({...good,top10Pct:100,developerPct:100,suspectedRiskyWalletsPct:100},{},pattern).state,'BLOCKED');
+assert.equal(quantumDecision(good,{},{}).state,'WAITING');
+assert.equal(quantumDecision({...good,priceSol:null},{},pattern).state,'WAITING');
+console.log('Quantum decision engine tests passed');
