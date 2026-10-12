@@ -2329,7 +2329,11 @@ function __mfLiveDecisionForUserV14(uid,token,settingsOverride=null,admissionOve
   if(!mint)return null;
   const settings=settingsOverride&&typeof settingsOverride==='object'?settingsOverride:(store.settings(uid)||{});
   const admission=admissionOverride&&typeof admissionOverride==='object'?admissionOverride:__mfEntryAdmissionForUser(token,uid,settings);
-  const eligible=admission?.admitted===true;
+  // MEMEFLOW_QUANTUM_STAGE8_ADMISSION_ISOLATION
+  // In ENFORCE, the legacy entry filter cannot veto Quantum's analytical state.
+  // This does NOT authorize order execution; Stage 5 quarantine remains mandatory.
+  const quantumAnalysisMode=String(process.env.MEMEFLOW_QUANTUM_MODE||'SHADOW').trim().toUpperCase()==='ENFORCE';
+  const eligible=quantumAnalysisMode || admission?.admitted===true;
   const isOpen=__mfOpenPositionMints().has(mint);
   const admissionState=String(admission?.state||(eligible?'ADMITTED':'PENDING')).trim().toUpperCase();
   const admissionReasons=Array.isArray(admission?.reasons)?admission.reasons.filter(x=>typeof x==='string'&&x.trim()).map(x=>x.trim()):[];
@@ -2439,6 +2443,7 @@ function __mfLiveDecisionForUserV14(uid,token,settingsOverride=null,admissionOve
       isOpen
         ? true
         : (
+            !quantumAnalysisMode &&
             eligible &&
             liveTruth.pass===true &&
             String(decision?.state||'').toUpperCase()==='BUY READY'
@@ -4439,7 +4444,7 @@ function reevaluateUser(uid){
             settings
           );
 
-        if(admission?.admitted!==true){
+        if(String(process.env.MEMEFLOW_QUANTUM_MODE||'SHADOW').trim().toUpperCase()!=='ENFORCE' && admission?.admitted!==true){
           __mfClearDecisionForUserMint(uid,token.mint);
           __mfEntryAdmissionState.set(
             uid+':'+token.mint,
